@@ -90,19 +90,30 @@ nonisolated public enum MountRules: Sendable {
         heading: Float, forward: Float, right: Float, cameraYaw: Float, deltaTime: Float,
         turnRate: Float = MountSettings.vanilla.turnRate
     ) -> MountSteer {
-        let push = SIMD2(forward, right)
-        let amount = min(simd_length(push), 1)
-        guard amount > 0.001, deltaTime > 0 else {
+        let amount = min(simd_length(SIMD2(forward, right)), 1)
+        guard
+            deltaTime > 0,
+            let turn = wantedTurn(
+                heading: heading, forward: forward, right: right, cameraYaw: cameraYaw
+            )
+        else {
             return MountSteer(heading: heading, throttle: 0)
         }
-        let ahead = SIMD2(cos(cameraYaw), sin(cameraYaw))
-        let side = SIMD2(sin(cameraYaw), -cos(cameraYaw))
-        let wanted = ahead * forward + side * right
-        let target = atan2(wanted.y, wanted.x)
-        let turn = remainder(target - heading, 2 * Float.pi)
         let limit = turnRate * deltaTime
         let next = heading + min(max(turn, -limit), limit)
         return MountSteer(heading: remainder(next, 2 * Float.pi), throttle: amount)
+    }
+
+    /// The signed angle, in radians, from `heading` to the direction the player pushes.
+    /// Nil while the player pushes no direction.
+    public static func wantedTurn(
+        heading: Float, forward: Float, right: Float, cameraYaw: Float
+    ) -> Float? {
+        guard simd_length(SIMD2(forward, right)) > 0.001 else { return nil }
+        let ahead = SIMD2(cos(cameraYaw), sin(cameraYaw))
+        let side = SIMD2(sin(cameraYaw), -cos(cameraYaw))
+        let wanted = ahead * forward + side * right
+        return remainder(atan2(wanted.y, wanted.x) - heading, 2 * Float.pi)
     }
 
     /// The input a rider keeps. On horseback the game allows melee weapons, bows, and

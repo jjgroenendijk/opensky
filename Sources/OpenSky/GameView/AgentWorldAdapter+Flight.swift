@@ -3,8 +3,10 @@
 // orders (docs/engine/dragon-flight.md).
 
 import OpenSkyActorPresentation
+import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyPlayer
 
 extension AgentWorldAdapter {
@@ -61,6 +63,9 @@ extension AgentWorldAdapter {
             "phase": .string("\(mounts.phase)"),
             "speed": .init(drive.motion.speed),
             "heading": .init(drive.heading),
+            "turnRateDegrees": .init(drive.turnRamp.rate * 180 / .pi),
+            "sprintAllowed": .bool(drive.bridge.isSprintAllowed),
+            "stamina": mountStamina(drive.mount),
             "flight": drive.flight.map { .object(Self.flightJSON($0)) } ?? .null,
             "orders": drive.kind == .dragon ? [
                 "landingRequested": .bool(orders.landingRequested),
@@ -70,6 +75,17 @@ extension AgentWorldAdapter {
                 "breath": .string("\(orders.breath)"),
                 "breathCooldown": .init(orders.breathCooldown)
             ] : .null
+        ]
+    }
+
+    private func mountStamina(_ key: ReferenceKey) -> AgentJSON {
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
+        else { return .null }
+        return [
+            "current": .init(runtime.current(of: holder).stamina),
+            "maximum": .init(runtime.maximums(of: holder).stamina)
         ]
     }
 

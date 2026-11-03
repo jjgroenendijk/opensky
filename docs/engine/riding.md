@@ -55,7 +55,10 @@ The mount runs its own graph through a second locomotion bridge and its own caps
 graph only follows: it reads the mount's speed, turn, and sprint.
 
 - The movement keys, read against the camera's yaw, name a direction. The mount turns toward it
-  at `iHorseTurnDegreesPerSecond` (45) degrees a second and moves forward.
+  and moves forward. The turn starts slow: each second the turn is held, its rate grows by
+  `iHorseTurnDegreesRampUpPerSecond` (80) degrees a second, up to `iHorseTurnDegreesPerSecond`
+  (45). When the mount faces the direction, or the keys are released, the rate drops back to
+  0. [INFO] The start value of 0 and the reset are OpenSky's reading of the setting names.
 - Walk and run speeds come from the movement type `Horse_Default_MT`; sprint uses the run speed of
   `Horse_Sprint_MT`.
 - Jump raises `forwardJumpStart` while moving and `standingRearUp` while standing.
@@ -66,6 +69,24 @@ graph only follows: it reads the mount's speed, turn, and sprint.
   weapon writes `iCombatStance` on the mount ([actor state graph](/engine/actor-state-graph.md)).
 - A door is refused with `sNotAllowedToUseAutoDoorsWhileonHorse`
   ([interaction](/engine/interaction.md)).
+
+## Sprint and stamina
+
+A ridden horse sprints on its own stamina, not the rider's (UESP "Skyrim:Horses"). Each second
+of sprinting costs the same as the player's sprint at no worn weight: `fSprintStaminaDrainMult`
+times `fSprintStaminaWeightBase`, 7 stamina on the install
+([actor values](/engine/actor-value-store.md)). When the stamina reaches 0, the sprint becomes a
+run. The horse regenerates like any actor, and it may sprint again as soon as its stamina is
+above 0. The rider's stamina is not spent.
+
+While the player rides a horse, the HUD is in `HorseMode`, and its stamina meter shows the
+horse's stamina ([HUD](/rendering/hud.md)).
+
+[INFO] The drain rule for a horse and the meter swap are OpenSky's reading; no source states
+them. Both settings `iHorseTurnDegrees*` are not in the install's plugins, so their values are
+the Creation Kit defaults.
+
+## Rider state
 
 While mounted, the player's `iState` takes `iState_NPCHorse`, or `iState_HorseSprint` while the
 mount sprints.
@@ -83,6 +104,4 @@ the dismount. A mount that dies or unloads drops the rider at once.
 ## Where OpenSky differs
 
 - [INFO] The ridden mount's capsule (radius 40, height 160) is OpenSky's value.
-- [INFO] `iHorseTurnDegreesRampUpPerSecond` is not used; the turn rate is constant.
-- [INFO] Horse stamina is not spent while sprinting.
 - [INFO] The camera eye sits the player's standing eye height above the saddle.

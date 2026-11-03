@@ -5,8 +5,11 @@ import Foundation
 import OpenSkyGameData
 
 nonisolated public struct MountSettings: Equatable, Sendable {
-    /// `iHorseTurnDegreesPerSecond`: how fast a ridden horse turns.
+    /// `iHorseTurnDegreesPerSecond`: the fastest a ridden horse turns.
     public var turnDegreesPerSecond: Float = 45
+    /// `iHorseTurnDegreesRampUpPerSecond`: how much faster, in degrees a second, the turn
+    /// grows each second it is held.
+    public var turnRampUpDegreesPerSecond: Float = 80
     /// `fMountedMaxLookingDown`: how far, in degrees, a rider may look down.
     public var maximumLookDownDegrees: Float = 40
     /// `sStealHorse`: the question before riding somebody else's horse.
@@ -34,6 +37,10 @@ nonisolated public struct MountSettings: Equatable, Sendable {
         turnDegreesPerSecond * .pi / 180
     }
 
+    public var turnRampUp: Float {
+        turnRampUpDegreesPerSecond * .pi / 180
+    }
+
     public var maximumLookDown: Float {
         maximumLookDownDegrees * .pi / 180
     }
@@ -46,6 +53,9 @@ nonisolated public struct MountSettings: Equatable, Sendable {
         var settings = vanilla
         if let turn = store.integer("iHorseTurnDegreesPerSecond"), turn > 0 {
             settings.turnDegreesPerSecond = Float(turn)
+        }
+        if let ramp = store.integer("iHorseTurnDegreesRampUpPerSecond"), ramp > 0 {
+            settings.turnRampUpDegreesPerSecond = Float(ramp)
         }
         if let down = store.number("fMountedMaxLookingDown"), down > 0 {
             settings.maximumLookDownDegrees = down
