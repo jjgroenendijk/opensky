@@ -136,6 +136,8 @@ nonisolated public final class CellSceneBuilder {
     public let loadOrderPlugins: [(name: String, file: ESMFile)]
     /// Door transitions, base objects, and cells read the load order through it.
     var loadOrderIndex: LoadOrderRecordIndex?
+    /// Keeps each plugin's FormID index between sessions; nil walks every plugin.
+    public var formIDIndexStore: (any FormIDIndexStore)?
     /// MSTT/TREE/FURN/ACTI/CONT/DOOR; checked when a base is not a STAT.
     public var modelBaseIndex: [UInt32: ModelBase]?
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.

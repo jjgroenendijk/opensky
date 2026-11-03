@@ -337,7 +337,9 @@ targets += foundation(
 // it read converted assets from it (docs/engine/asset-cache.md).
 targets += foundation(
     "OpenSkyAssetCache",
-    dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyGameData"],
+    dependencies: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData"
+    ],
     tests: ["OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyFormatsTesting"]
 )
 targets += foundation(

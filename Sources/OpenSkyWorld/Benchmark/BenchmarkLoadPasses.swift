@@ -57,6 +57,7 @@ nonisolated public enum BenchmarkLoadPasses {
             builder.textures.assetCache = cache
             builder.meshes.assetCache = cache
             builder.collisionModels?.assetCache = cache
+            builder.formIDIndexStore = RecordIndexCacheFolder(cacheRoot: cache.store.root)
         }
         if LoadOptimisations.isOn(.prebuildIndexes) {
             builder.prepareIndexes(worldspace: place.worldspace)

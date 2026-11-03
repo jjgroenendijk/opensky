@@ -341,8 +341,9 @@ nonisolated extension CellSceneBuilder {
         if let loadOrderIndex {
             return loadOrderIndex
         }
+        let store = LoadOptimisations.isOn(.recordIndexCache) ? formIDIndexStore : nil
         let index = loadPhases.measure(.recordIndex) {
-            LoadOrderRecordIndex(plugins: loadOrderPlugins, space: formIDResolver)
+            LoadOrderRecordIndex(plugins: loadOrderPlugins, space: formIDResolver, store: store)
         }
         loadOrderIndex = index
         return index

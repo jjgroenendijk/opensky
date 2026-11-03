@@ -168,6 +168,8 @@ nonisolated extension CellProviderIndexes {
         builder.decodesInParallel = assets.decodesInParallel
         builder.leveling = context.leveling
         builder.loadPhases = assets.loadPhases
+        builder.formIDIndexStore = assets.cache
+            .map { RecordIndexCacheFolder(cacheRoot: $0.store.root) }
         // The record stores build in parallel meanwhile, so this overlaps them.
         if LoadOptimisations.isOn(.prebuildIndexes) {
             builder.prepareIndexes(worldspace: FirstRenderCell.worldspaceEditorID)

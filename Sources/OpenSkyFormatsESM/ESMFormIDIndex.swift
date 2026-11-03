@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct ESMFormIDIndex: Sendable {
-    private struct Entry: Sendable {
+    struct Entry: Sendable {
         let formID: UInt32
         let offset: UInt32
         /// CELL whose persistent or temporary children hold the record; 0 when none.
@@ -33,7 +33,13 @@ nonisolated public struct ESMFormIDIndex: Sendable {
 
     private let data: Data
     /// Sorted by FormID; only the first record of a duplicated FormID is kept.
-    private let entries: [Entry]
+    let entries: [Entry]
+
+    /// An index read back from a saved copy (`ESMFormIDIndex+Saved.swift`).
+    init(data: Data, entries: [Entry]) {
+        self.data = data
+        self.entries = entries
+    }
 
     /// A group to walk on one core, with the groups around it.
     private struct Unit: Sendable {
@@ -86,7 +92,9 @@ nonisolated public struct ESMFormIDIndex: Sendable {
         guard formID != 0, let entry = entry(for: formID) else { return nil }
         let offset = Int(entry.offset)
         var reader = BinaryReader(data, offset: offset)
-        guard let header = try? ESMRecord.Header(reader: &reader) else { return nil }
+        // A saved index that no longer fits the file finds another record here.
+        guard let header = try? ESMRecord.Header(reader: &reader), header.formID == formID
+        else { return nil }
         let dataStart = offset + ESMRecord.Header.size
         return ESMRecord(
             header: header,

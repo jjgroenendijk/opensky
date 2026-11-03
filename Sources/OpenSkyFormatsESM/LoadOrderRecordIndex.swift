@@ -49,12 +49,17 @@ nonisolated public struct LoadOrderRecordIndex: Sendable {
 
     /// The first plugin's cells are read through its own groups, so only the later
     /// plugins get a children table.
-    public init(plugins: [(name: String, file: ESMFile)], space: FormIDResolver? = nil) {
-        self.init(LoadOrderPlugins(plugins, space: space))
+    public init(
+        plugins: [(name: String, file: ESMFile)],
+        space: FormIDResolver? = nil,
+        store: (any FormIDIndexStore)? = nil
+    ) {
+        self.init(LoadOrderPlugins(plugins, space: space), store: store)
     }
 
-    /// Each plugin is indexed on its own core.
-    public init(_ loadOrder: LoadOrderPlugins) {
+    /// Each plugin is indexed on its own core. `store` keeps each plugin's own
+    /// index between sessions; the load-order rules apply after it is read.
+    public init(_ loadOrder: LoadOrderPlugins, store: (any FormIDIndexStore)? = nil) {
         self.loadOrder = loadOrder
         let inParallel = LoadOptimisations.isOn(.parallelFormIDIndex)
         sources = ParallelDecode.mapInOrder(
@@ -62,7 +67,7 @@ nonisolated public struct LoadOrderRecordIndex: Sendable {
         ) { plugin in
             Source(
                 plugin: plugin,
-                index: ESMFormIDIndex(file: plugin.file),
+                index: ESMFormIDIndex.loading(file: plugin.file, store: store),
                 placed: plugin.position == 0 ? Placed() : Self.placed(in: plugin)
             )
         }
