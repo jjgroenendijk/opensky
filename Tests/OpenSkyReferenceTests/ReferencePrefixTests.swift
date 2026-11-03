@@ -96,9 +96,10 @@ struct ReferencePrefixTests {
             + "[Display]\r\nbBorderless=1\r\nbFull Screen=0\r\niSize W=800\r\niSize H=600\r\n")
     }
 
-    @Test func gameIniKeepsTheGameRunningBehindOtherApps() {
+    @Test func gameIniKeepsTheGameRunningAndTheCameraStill() {
         #expect(ReferencePrefsIni.applyGameIni(to: "[General]\r\nsLanguage=ENGLISH\r\n")
-            == "[General]\r\nsLanguage=ENGLISH\r\nbAlwaysActive=1\r\n")
+            == "[General]\r\nsLanguage=ENGLISH\r\nbAlwaysActive=1\r\n"
+            + "[Camera]\r\nfAutoVanityModeDelay=86400\r\n")
     }
 
     @Test func presetSetsItsKeysAndKeepsTheOthers() {

@@ -123,6 +123,45 @@ std::string Dialog()
         ",\"dialog\":{{\"text\":{},\"buttons\":[{}]}}", Quoted(data->bodyText.c_str()), buttons);
 }
 
+// The reference the last `prid` line picked. The game's own `prid` sets the console menu's
+// selection, which a line run from here never reads.
+RE::ObjectRefHandle selection;
+
+std::string Selection()
+{
+    const auto selected = selection.get();
+    if (!selected) {
+        return "";
+    }
+    return std::format(
+        ",\"selected\":{{\"formID\":{},\"loaded\":{},\"disabled\":{}}}", selected->GetFormID(),
+        selected->Is3DLoaded(), selected->IsDisabled());
+}
+
+// `prid <hex FormID>` picks the reference that later lines without a target act on.
+void Pick(std::string_view hex)
+{
+    RE::FormID id = 0;
+    const auto end = hex.data() + hex.size();
+    auto *reference = std::from_chars(hex.data(), end, id, 16).ec == std::errc{}
+                          ? RE::TESForm::LookupByID<RE::TESObjectREFR>(id)
+                          : nullptr;
+    selection = reference ? reference->CreateRefHandle() : RE::ObjectRefHandle{};
+}
+
+// A line runs against the picked reference, as typed in the console after `prid`.
+void RunAgainstSelection(const std::string &line)
+{
+    auto *factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::Script>();
+    auto *script = factory ? factory->Create() : nullptr;
+    if (!script) {
+        return;
+    }
+    script->SetCommand(line);
+    script->CompileAndRun(selection.get().get());
+    delete script;
+}
+
 // `answer <index>` presses that button of the open message box.
 void Answer(std::string_view digits)
 {
@@ -149,6 +188,7 @@ std::string Snapshot(const std::string &lastBatch)
     if (player && !mainMenu && !loading) {
         json += Place(player);
         json += View();
+        json += Selection();
         json += Scenes();
     }
     return json + "}\n";
@@ -159,6 +199,11 @@ void RunLine(const std::string &line)
     constexpr auto loadVerb = "load "sv;
     constexpr auto answerVerb = "answer "sv;
     constexpr auto saveVerb = "save "sv;
+    constexpr auto pickVerb = "prid "sv;
+    if (line.starts_with(pickVerb)) {
+        Pick(std::string_view(line).substr(pickVerb.size()));
+        return;
+    }
     // A save started inside the UI task queue never finishes, so it waits for the main one.
     if (line.starts_with(saveVerb)) {
         SKSE::GetTaskInterface()->AddTask([name = line.substr(saveVerb.size())] {
@@ -178,6 +223,6 @@ void RunLine(const std::string &line)
         }
         return;
     }
-    RE::Console::ExecuteCommand(line.c_str());
+    RunAgainstSelection(line);
 }
 } // namespace bridge

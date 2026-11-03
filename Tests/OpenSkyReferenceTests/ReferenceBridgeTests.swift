@@ -68,6 +68,19 @@ struct ReferenceBridgeTests {
         #expect(state.isAt(.interior(editorID: "whiterunbanneredmare")))
     }
 
+    @Test func selectedReferenceDecodes() throws {
+        let state = try decode("""
+        {"version":1,"batch":"","mainMenu":false,"loading":false,\
+        "selected":{"formID":641236,"loaded":true,"disabled":true}}
+        """)
+        #expect(state.selected == ReferenceSelection(
+            formID: 0x0009_C8D4,
+            loaded: true,
+            disabled: true
+        ))
+        #expect(try decode(exterior).selected == nil)
+    }
+
     @Test func mainMenuHasNoView() throws {
         let state = try decode(#"{"version":1,"batch":"","mainMenu":true,"loading":false}"#)
         #expect(state.view == nil)

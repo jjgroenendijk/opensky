@@ -28,6 +28,8 @@ nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
     public var firstPerson: Bool?
     /// The open message box. The game waits until one of its buttons is pressed.
     public var dialog: ReferenceDialog?
+    /// The reference `prid` picked. Later lines without a target act on it.
+    public var selected: ReferenceSelection?
     /// The playing scenes, while the player stands in the world.
     public var scenes: [ReferenceScene]?
 
