@@ -35,6 +35,8 @@ final class AgentTeleportJob {
     private var referenceLookup: Result<ReferenceLookup?, AgentFailure>?
     /// Where a reference outside the loaded cells stands, once its cell has loaded.
     private var exactFeet: SIMD3<Float>?
+    /// The `--ref` found offline, so a loaded actor is met where it stands now.
+    private var lookedUpReference: String?
     /// A saved facing; other moves keep the current one.
     private var exactYaw: Float?
     /// Radians up; a move without one looks level.
@@ -74,6 +76,7 @@ final class AgentTeleportJob {
                 reference = try adapter.resolveReference(text)
             } catch where error.code == .notFound {
                 guard let formID = FormID(token: text) else { throw error }
+                lookedUpReference = text
                 phase = .lookingUp
                 try startReferenceLookup(formID)
                 return
@@ -160,6 +163,7 @@ final class AgentTeleportJob {
                 streamer.interiorScene?.location == .interior(cell)
             else { return .wait }
             useCOCMarker(in: streamer.interiorScene?.references, grid: nil)
+            useLoadedReference()
             if let exactFeet, let gameSession = game.gameSession {
                 place(
                     at: exactFeet,
@@ -249,6 +253,7 @@ final class AgentTeleportJob {
     private func snapToGround(in grid: CellCoordinate) {
         guard let gameSession = game.gameSession, let streamer = game.streamer else { return }
         useCOCMarker(in: streamer.composition.cells[grid]?.references, grid: grid)
+        useLoadedReference()
         if let exactFeet {
             place(at: exactFeet, gameSession: gameSession, streamer: streamer)
             return
@@ -299,6 +304,20 @@ final class AgentTeleportJob {
 }
 
 extension AgentTeleportJob {
+    /// In front of a looked-up actor once its cell has loaded, not inside it.
+    private func useLoadedReference() {
+        guard let text = lookedUpReference else { return }
+        lookedUpReference = nil
+        do throws(AgentFailure) {
+            let reference = try adapter.resolveReference(text)
+            if let spot = Self.standingSpot(of: reference.key, game: game) {
+                exactFeet = spot
+            }
+        } catch {
+            return
+        }
+    }
+
     // MARK: - References outside the loaded cells
 
     private func startReferenceLookup(_ formID: FormID) throws(AgentFailure) {
