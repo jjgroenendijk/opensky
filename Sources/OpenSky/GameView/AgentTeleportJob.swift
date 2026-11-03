@@ -32,7 +32,7 @@ final class AgentTeleportJob {
     private var phase: Phase
     private var deadline: Double?
     private var lookup: Result<CellDirectoryEntry?, AgentFailure>?
-    private var referenceLookup: Result<ExteriorPlacement?, AgentFailure>?
+    private var referenceLookup: Result<ReferenceLookup?, AgentFailure>?
     /// Where a reference outside the loaded cells stands, once its cell has loaded.
     private var exactFeet: SIMD3<Float>?
     /// A saved facing; other moves keep the current one.
@@ -200,16 +200,19 @@ final class AgentTeleportJob {
 
     private func finishLookup() throws(AgentFailure) {
         if let referenceLookup {
-            guard let found = try referenceLookup.get() else {
-                throw AgentFailure(
-                    .notFound,
-                    "no exterior reference with that FormID in the load order"
-                )
+            self.referenceLookup = nil
+            switch try referenceLookup.get() {
+            case nil:
+                throw AgentFailure(.notFound, "no reference with that FormID in the load order")
+            case let .exterior(found):
+                exactFeet = found.placement.position
+                worldspace = found.worldspace
+                enterGrid(CellCoordinate(containing: found.placement.position))
+                return
+            case let .interior(feet, entry):
+                exactFeet = feet
+                lookup = .success(entry)
             }
-            exactFeet = found.placement.position
-            worldspace = found.worldspace
-            enterGrid(CellCoordinate(containing: found.placement.position))
-            return
         }
         guard let lookup else { return }
         guard let entry = try lookup.get() else {
@@ -228,18 +231,6 @@ final class AgentTeleportJob {
                 throw AgentFailure(.notReady, "a door transition is still loading")
             }
             phase = .loadingInterior(cell)
-        }
-    }
-
-    // MARK: - References outside the loaded cells
-
-    private func startReferenceLookup(_ formID: FormID) throws(AgentFailure) {
-        guard let root = adapter.dataRoot else {
-            throw AgentFailure(.notReady, "no game data is loaded")
-        }
-        Task { [weak self] in
-            let result = await Self.findReference(formID, in: root)
-            self?.referenceLookup = result
         }
     }
 
@@ -308,6 +299,18 @@ final class AgentTeleportJob {
 }
 
 extension AgentTeleportJob {
+    // MARK: - References outside the loaded cells
+
+    private func startReferenceLookup(_ formID: FormID) throws(AgentFailure) {
+        guard let root = adapter.dataRoot else {
+            throw AgentFailure(.notReady, "no game data is loaded")
+        }
+        Task { [weak self] in
+            let result = await Self.findReference(formID, in: root)
+            self?.referenceLookup = result
+        }
+    }
+
     @concurrent
     nonisolated private static func findCell(
         _ find: @Sendable (LoadOrderPlugins) -> CellDirectoryEntry?,
@@ -325,13 +328,28 @@ extension AgentTeleportJob {
         try ActiveLoadOrder.open(root: root).plugins
     }
 
+    /// An interior reference also needs its cell's way in, found in the same read.
+    nonisolated private enum ReferenceLookup: Sendable {
+        case exterior(ExteriorPlacement)
+        case interior(feet: SIMD3<Float>, entry: CellDirectoryEntry?)
+    }
+
     @concurrent
     nonisolated private static func findReference(
         _ formID: FormID,
         in root: GameDataRoot
-    ) async -> Result<ExteriorPlacement?, AgentFailure> {
+    ) async -> Result<ReferenceLookup?, AgentFailure> {
         do {
-            return try .success(CellDirectory.exteriorPlacement(of: formID, in: loadOrder(root)))
+            let plugins = try loadOrder(root)
+            switch CellDirectory.location(of: formID, in: plugins) {
+            case nil:
+                return .success(nil)
+            case let .exterior(found):
+                return .success(.exterior(found))
+            case let .interior(cell, placement):
+                let entry = CellDirectory.find(formID: cell, in: plugins)
+                return .success(.interior(feet: placement.position, entry: entry))
+            }
         } catch {
             return .failure(AgentFailure(.failed, "could not read the load order: \(error)"))
         }

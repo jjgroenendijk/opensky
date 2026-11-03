@@ -136,7 +136,7 @@ Every teleport ends with the player standing on the ground below the placed spot
 | `debug teleport --cell <editorID>` | Goes to any cell in the load order, such as `--cell WhiterunBanneredMare` |
 | `debug teleport --x <n> --y <n> [--worldspace <editorID>]` | Goes to an exterior cell grid. `--worldspace DLC2SolstheimWorld` goes to another worldspace first |
 | `debug teleport --pos x,y,z` | Moves to a position in the current cell or worldspace. Interior positions are local |
-| `debug teleport --ref <ref>` | Moves next to a placed reference |
+| `debug teleport --ref <ref>` | Moves next to a placed object or actor. One outside the loaded cells is found by FormID in any exterior or interior cell |
 | `debug view --pos x,y,z --yaw <deg> [--pitch <deg>] [--worldspace <editorID> \| --interior <formID>] [--hour <h>] [--weather <formID>]` | Sets a whole view at once, as `reference follow` sends it. `--pos` is the feet. A `--yaw` of 0 looks east (+X) and turns towards north. A positive `--pitch` looks up. `--hour` is 0 to 24 |
 | `debug time <hour>` | Sets the hour, 0 to 24, such as `debug time 13.5` |
 | `debug weather [<editorID>]` | Forces a weather. No ID clears the forced weather |

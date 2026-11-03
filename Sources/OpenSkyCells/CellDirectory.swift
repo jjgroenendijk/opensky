@@ -20,6 +20,12 @@ nonisolated public struct ExteriorPlacement: Equatable, Sendable {
     public let worldspace: String
 }
 
+/// Where a placed object or actor stands: in a worldspace, or in an interior cell.
+nonisolated public enum ReferenceLocation: Equatable, Sendable {
+    case exterior(ExteriorPlacement)
+    case interior(cell: FormID, placement: PlacedReference.Placement)
+}
+
 nonisolated public enum CellDirectory {
     /// Interior cells live under the CELL top group, exterior ones under WRLD.
     public static func find(
@@ -142,13 +148,65 @@ nonisolated public enum CellDirectory {
         return nil
     }
 
+    /// Where a `REFR` or `ACHR` stands, outside or inside, in the last plugin that places it.
+    public static func location(
+        of formID: FormID, in loadOrder: LoadOrderPlugins
+    ) -> ReferenceLocation? {
+        if let outside = exteriorPlacement(of: formID, in: loadOrder) {
+            return .exterior(outside)
+        }
+        guard let resolved = loadOrder.space.resolve(formID) else { return nil }
+        for plugin in loadOrder.plugins.reversed() {
+            guard
+                let top = plugin.file.topGroup(of: "CELL"), let children = try? top.children(),
+                let local = plugin.translation.source.localFormID(of: resolved)
+            else { continue }
+            let found = plugin.decode { placementInCell(of: local, in: children, cell: nil) }
+            if let found {
+                let cell = plugin.translation(FormID(stored: found.cell))
+                return .interior(cell: cell, placement: found.placement)
+            }
+        }
+        return nil
+    }
+
+    /// A cell's references sit in the children group labelled with the cell's FormID.
+    private static func placementInCell(
+        of formID: FormID, in children: [ESMGroup.Child], cell: UInt32?
+    ) -> (placement: PlacedReference.Placement, cell: UInt32)? {
+        for child in children {
+            switch child {
+            case let .record(record) where record.formID == formID.rawValue:
+                guard let cell, let placement = placement(of: record) else { continue }
+                return (placement, cell)
+            case let .group(group):
+                guard let nested = try? group.children() else { continue }
+                let owner = group.parentFormID ?? cell
+                if let found = placementInCell(of: formID, in: nested, cell: owner) {
+                    return found
+                }
+            case .record:
+                continue
+            }
+        }
+        return nil
+    }
+
+    private static func placement(of record: ESMRecord) -> PlacedReference.Placement? {
+        switch record.type {
+        case "REFR": (try? PlacedReference(record: record))?.placement
+        case "ACHR": (try? PlacedActor(record: record))?.placement
+        default: nil
+        }
+    }
+
     private static func placement(
         of formID: FormID, in children: [ESMGroup.Child]
     ) -> PlacedReference.Placement? {
         for child in children {
             switch child {
             case let .record(record) where record.formID == formID.rawValue:
-                return (try? PlacedReference(record: record))?.placement
+                return placement(of: record)
             case let .group(group):
                 guard let nested = try? group.children() else { continue }
                 if let found = placement(of: formID, in: nested) {
