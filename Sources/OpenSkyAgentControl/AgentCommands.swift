@@ -146,6 +146,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case setQuestStage(quest: String, stage: Int)
     case kill(String)
     case resurrect(String)
+    /// Cuts a dead actor's head off, as a severing killing blow does.
+    case decapitate(String)
     case overlay(name: String, enabled: Bool)
     /// The scene pass's debug channel, such as `wireframe`, or `off`.
     case channel(String)
@@ -220,11 +222,21 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "item": try parseItem(args)
         case "quest":
             try .setQuestStage(quest: args.string("id"), stage: args.int("stage"))
-        case "kill": try .kill(args.string("ref"))
-        case "resurrect": try .resurrect(args.string("ref"))
+        case "kill", "decapitate", "resurrect": try parseActorLife(name, args)
         case "racemenu": try .raceMenu(limited: args.bool("limited", default: false))
         case "skillsmenu": try parseSkillsMenu(args)
         default: try parseFurniture(name, args)
+        }
+    }
+
+    private static func parseActorLife(
+        _ name: String, _ args: AgentArguments
+    ) throws(AgentFailure) -> Self {
+        let reference = try args.string("ref")
+        switch name {
+        case "kill": return .kill(reference)
+        case "decapitate": return .decapitate(reference)
+        default: return .resurrect(reference)
         }
     }
 

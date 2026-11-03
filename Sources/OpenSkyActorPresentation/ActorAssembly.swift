@@ -24,11 +24,13 @@ nonisolated public protocol ActorAssetProvider {
     ) -> Result<Asset, ActorAssetFailure>
     /// `surface` lays per-shape textures over the model, such as ARMA swaps.
     /// `bodyWeight`, 0 to 1, blends a `_1.nif` model with its `_0.nif` sibling.
+    /// `cut` keeps one side of a decapitation's dismember partitions.
     func loadActorModel(
         path: String,
         skeleton: Skeleton?,
         surface: ModelSurfaceOverride?,
-        bodyWeight: Float?
+        bodyWeight: Float?,
+        keeping cut: DismemberCut?
     ) -> Result<Asset, ActorAssetFailure>
     /// A rigid model rewritten to ride one named skeleton bone. It caches under its
     /// own key, because the bone is part of the geometry.
@@ -44,12 +46,13 @@ nonisolated public protocol ActorAssetProvider {
         subtree: String?,
         skeleton: Skeleton?
     ) -> Result<Asset, ActorAssetFailure>
-    /// A head part with its texture set and tint applied.
+    /// A head part with its texture set and tint applied, cut as `cut` says.
     func loadActorHeadPart(
         path: String,
         textures: HeadPartTextures,
         tint: SIMD3<Float>?,
-        skeleton: Skeleton?
+        skeleton: Skeleton?,
+        keeping cut: DismemberCut?
     ) -> Result<Asset, ActorAssetFailure>
 }
 
@@ -69,7 +72,8 @@ nonisolated extension ActorAssetProvider {
         path: String,
         textures _: HeadPartTextures,
         tint _: SIMD3<Float>?,
-        skeleton: Skeleton?
+        skeleton: Skeleton?,
+        keeping _: DismemberCut?
     ) -> Result<Asset, ActorAssetFailure> {
         loadActorModel(path: path, skeleton: skeleton)
     }
@@ -79,7 +83,8 @@ nonisolated extension ActorAssetProvider {
         path: String,
         skeleton: Skeleton?,
         surface _: ModelSurfaceOverride?,
-        bodyWeight _: Float?
+        bodyWeight _: Float?,
+        keeping _: DismemberCut?
     ) -> Result<Asset, ActorAssetFailure> {
         loadActorModel(path: path, skeleton: skeleton)
     }
@@ -176,6 +181,7 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
                 role: .body(part),
                 surface: .skinned(part.surface, skinTone: visual.appearance.skinTone),
                 bodyWeight: visual.appearance.weight / 100,
+                cut: part.cut,
                 skeleton: skeleton,
                 models: &models,
                 skips: &skips
@@ -183,13 +189,16 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         }
         if visual.headSource == .assembled, !visual.headParts.parts.isEmpty {
             for part in visual.headParts.parts {
-                appendHeadPart(part, skeleton: skeleton, models: &models, skips: &skips)
+                appendHeadPart(
+                    part, cut: visual.headCut, skeleton: skeleton, models: &models, skips: &skips
+                )
             }
         } else if let facePath = visual.faceGenMeshPath {
             append(
                 path: facePath,
                 role: .faceGenHead(tintPath: visual.faceGenTintPath),
                 surface: visual.faceGenSurface,
+                cut: visual.headCut,
                 skeleton: skeleton,
                 models: &models,
                 skips: &skips
@@ -241,12 +250,14 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         role: ActorModelRole,
         surface: ModelSurfaceOverride? = nil,
         bodyWeight: Float? = nil,
+        cut: DismemberCut? = nil,
         skeleton: Provider.Skeleton?,
         models: inout [AssembledActorModel<Provider.Asset>],
         skips: inout [ActorAssemblySkip]
     ) {
         switch provider.loadActorModel(
-            path: path, skeleton: skeleton, surface: surface, bodyWeight: bodyWeight
+            path: path, skeleton: skeleton, surface: surface, bodyWeight: bodyWeight,
+            keeping: cut
         ) {
         case let .success(asset):
             models.append(AssembledActorModel(role: role, path: path, asset: asset))
@@ -260,6 +271,7 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
 
     private func appendHeadPart(
         _ part: ResolvedHeadPart,
+        cut: DismemberCut?,
         skeleton: Provider.Skeleton?,
         models: inout [AssembledActorModel<Provider.Asset>],
         skips: inout [ActorAssemblySkip]
@@ -272,7 +284,8 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
                 detail: part.detailTexture, faceTint: part.faceTintTexture
             ),
             tint: part.tint,
-            skeleton: skeleton
+            skeleton: skeleton,
+            keeping: cut
         ) {
         case let .success(asset):
             models.append(AssembledActorModel(role: role, path: part.modelPath, asset: asset))
@@ -329,13 +342,15 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
 
     /// The same placements at a transform supplied from outside, because the player
     /// body moves every frame. A `reference` lets a walk or a vehicle move the body.
+    /// `isCulled` false never culls, for a cut head that falls away from its bounds.
     public func renderPlacements(
         at transform: float4x4,
         faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:],
         owner: UInt32 = 0,
-        reference: UInt32 = 0
+        reference: UInt32 = 0,
+        isCulled: Bool = true
     ) -> [RenderPlacement] {
-        let posed = poseBounds?.transformed(by: transform)
+        let posed = isCulled ? poseBounds?.transformed(by: transform) : nil
         return models.map {
             let morphs: [ObjectIdentifier: FaceMorphBuffer] =
                 switch $0.role {

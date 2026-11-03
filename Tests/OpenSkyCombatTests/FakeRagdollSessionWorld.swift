@@ -12,7 +12,7 @@ import simd
 final class FakeRagdollSessionWorld: RagdollSessionWorld {
     static let skeleton = HKASkeleton(
         name: "rig",
-        bones: ["a", "b", "c"].map { HKABone(name: $0, lockTranslation: false) },
+        bones: ["Bone0", "Bone1", "Bone2"].map { HKABone(name: $0, lockTranslation: false) },
         parentIndices: [-1, 0, 1],
         referencePose: Array(
             repeating: HKABonePose(translation: .zero, rotation: .identityRotation, scale: .one),
@@ -33,8 +33,10 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     var acceptsCorpseSearch = true
     private(set) var searchedCorpses: [ReferenceKey] = []
     var ragdollStepWorld = DynamicStepWorld()
-    /// The nodes a death's weapon drop hides; empty drops nothing.
-    var droppedWeaponNodes: [String] = []
+    /// Whether a death's weapon drop finds a weapon in the hand.
+    var dropsWeapon = false
+    /// The animated pose by bone name every resident reports.
+    var animatedBones: [String: float4x4] = [:]
     var severable: String?
     var keptCorpses: Set<ReferenceKey> = []
     private(set) var removedCorpses: [ReferenceKey] = []
@@ -73,7 +75,7 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     }
 
     func animatedPose(of key: ReferenceKey) -> [String: float4x4]? {
-        ragdollResidents.contains { $0.key == key } ? [:] : nil
+        ragdollResidents.contains { $0.key == key } ? animatedBones : nil
     }
 
     func raisePlayerGraphEvent(_ name: String) -> Bool {
@@ -89,8 +91,8 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
         return acceptsCorpseSearch
     }
 
-    func dropWeapon(of _: ReferenceKey) -> [String] {
-        droppedWeaponNodes
+    func dropWeapon(of _: ReferenceKey) -> Bool {
+        dropsWeapon
     }
 
     func severableNode(of _: ReferenceKey) -> String? {

@@ -21,6 +21,8 @@ nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Senda
     public var wasLooted: Bool
     /// The skeleton node a decapitation cut off, such as `NPC Head [Head]`, or nil.
     public var severedNode: String?
+    /// Where the cut head came to rest, in world space, or nil while it still falls.
+    public var severedHeadRest: ReferenceTransformOverride?
 
     /// The value an actor takes the moment it dies, before anything has settled.
     public static let justDied = ActorDeathState(isDead: true)
@@ -33,8 +35,10 @@ nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Senda
         isDead: Bool,
         restingTransform: ReferenceTransformOverride? = nil,
         wasLooted: Bool = false,
-        severedNode: String? = nil
+        severedNode: String? = nil,
+        severedHeadRest: ReferenceTransformOverride? = nil
     ) {
+        self.severedHeadRest = severedHeadRest
         self.isDead = isDead
         self.restingTransform = restingTransform
         self.wasLooted = wasLooted

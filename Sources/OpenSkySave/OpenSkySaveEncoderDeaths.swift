@@ -1,5 +1,5 @@
-// DETH chunk writing. Each entry carries its cell. The resting transform is optional: a
-// corpse still falling has none, and a mid-air pose would float on reload.
+// DETH chunk writing. Each entry carries its cell. The resting transforms are optional: a
+// corpse or a cut head still falling has none, and a mid-air pose would float on reload.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -33,6 +33,11 @@ nonisolated extension OpenSkySaveEncoder {
                 payload.writeUInt8(each.state.isDead ? 1 : 0)
                 payload.writeUInt8(each.state.wasLooted ? 1 : 0)
                 writeRestingTransform(each.state.restingTransform, into: &payload)
+                payload.writeUInt8(each.state.severedNode == nil ? 0 : 1)
+                if let node = each.state.severedNode {
+                    writeString(node, into: &payload)
+                }
+                writeRestingTransform(each.state.severedHeadRest, into: &payload)
             }
         }
     }

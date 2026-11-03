@@ -38,6 +38,9 @@ the detail and the sources it did find.
 | Arrow gravity unit | Read as the record value with no scale | [projectiles format](/formats/projectiles.md) |
 | Trap scales, speed, repeat interval | OpenSky's numbers | [traps](/engine/traps.md) |
 | Combat style choice | Not confirmed against the game | [combat style](/formats/combat-style.md) |
+| Body parts on the head side of a cut | 30, 31, 41 to 44, 50, 55, 130 to 132, 141 to 143, 150 | [ragdoll](/engine/ragdoll.md#decapitation) |
+| Cut head sphere | 10 units radius, 5 kg | [ragdoll](/engine/ragdoll.md#decapitation) |
+| Cut head launch | 120 units/s away, 160 units/s up, 6 rad/s turn | [ragdoll](/engine/ragdoll.md#decapitation) |
 
 ## Magic
 

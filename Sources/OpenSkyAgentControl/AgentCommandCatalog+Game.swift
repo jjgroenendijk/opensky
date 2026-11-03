@@ -149,6 +149,10 @@ nonisolated extension AgentCommandCatalog {
         command("debug.kill", "Kill an actor.", positionals: [required("ref", refHelp)]),
         command("debug.resurrect", "Resurrect an actor.", positionals: [required("ref", refHelp)]),
         command(
+            "debug.decapitate", "Cut a dead actor's head off, as a severing killing blow does.",
+            positionals: [required("ref", refHelp)]
+        ),
+        command(
             "debug.subgraph", "Send an event or set a variable on an actor's sub-graphs.",
             positionals: [required("ref", refHelp)],
             options: [

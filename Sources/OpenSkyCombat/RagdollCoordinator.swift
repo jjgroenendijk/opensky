@@ -40,8 +40,13 @@ public final class RagdollCoordinator {
     /// The push of a death in progress, read when the ragdoll spawns, which waits
     /// for the death graph's hand-off.
     var deathImpulses: [ReferenceKey: SIMD3<Float>] = [:]
-    /// Nodes hidden on a body this session: a dropped weapon's.
-    var hiddenNodes: [ReferenceKey: Set<String>] = [:]
+    /// Each cut head of a resident body, falling or at rest.
+    public internal(set) var severedHeads: [ReferenceKey: SeveredHead] = [:]
+    /// Whether the scene holds cut-head poses, so an empty frame clears them once.
+    var hasPublishedHeads = false
+    /// The simulated bones each corpse was last drawn with, so a cut starts where the
+    /// body lies even when its ragdoll is gone or restarts.
+    var drawnRagdollBones: [ReferenceKey: [String: float4x4]] = [:]
     /// When each dead actor died, or was first seen dead.
     var deathTimes: [ReferenceKey: Float] = [:]
     var deathRandom = ConditionRandom()
@@ -84,6 +89,7 @@ public final class RagdollCoordinator {
         runtime.motor = controls.powered.map(RagdollMotor.init)
         runtime.contactEvent = controls.contactEvent
         runtime.advance(by: delta)
+        advanceSeveredHeads(by: delta)
         return recoveries + murders
     }
 
@@ -91,22 +97,27 @@ public final class RagdollCoordinator {
     /// a ragdoll once its instance is gone.
     public func publishPoses() -> [RagdollCommand] {
         guard let runtime else { return [] }
-        let hidden = hiddenNodesByResident()
-        guard !runtime.world.ragdolls.isEmpty || !hidden.isEmpty || hasPublishedPoses
-        else { return [] }
+        var commands: [RagdollCommand] = []
+        let heads = severedHeadPoses()
+        if !heads.isEmpty || hasPublishedHeads {
+            commands.append(.publishSeveredHeads(heads))
+            hasPublishedHeads = !heads.isEmpty
+        }
+        guard !runtime.world.ragdolls.isEmpty || hasPublishedPoses else { return commands }
         var poses: [UInt32: [String: float4x4]] = [:]
         for entry in runtime.world.ragdolls {
             guard
                 let actor = ragdollActor(for: entry.key),
                 let animated = world.animatedPose(of: entry.key)
             else { continue }
-            poses[actor.reference.rawValue] = entry.instance.blendedBoneMatrices(
+            let bones = entry.instance.blendedBoneMatrices(
                 animated: animated, worldToActor: actor.actorToWorld.inverse
             )
+            poses[actor.reference.rawValue] = bones
+            drawnRagdollBones[entry.key] = bones
         }
-        hidePoseNodes(hidden, in: &poses)
         hasPublishedPoses = !poses.isEmpty
-        return [.publishPoses(poses)]
+        return commands + [.publishPoses(poses)]
     }
 
     /// A sweep, not a hook, because health reaches zero from several places.

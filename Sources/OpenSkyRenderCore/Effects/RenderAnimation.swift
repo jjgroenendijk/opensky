@@ -28,6 +28,8 @@ nonisolated extension RenderAnimation {
 nonisolated public protocol SharedPoseAnimation: RenderAnimation {
     /// The actor's form ID, which keys its ragdoll pose override.
     var actorFormID: UInt32 { get }
+    /// True for an actor's cut head, which takes its pose from the severed-head table.
+    var posesSeveredHead: Bool { get }
     /// Each bone's parent index in the shared pose, -1 for a root. A ragdoll
     /// override moves the bones it does not name with their ancestors.
     var poseParents: [Int] { get }

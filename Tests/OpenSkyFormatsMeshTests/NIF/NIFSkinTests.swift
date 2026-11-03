@@ -141,6 +141,7 @@ struct NIFSkinTests {
         #expect(model.skippedShapeCount == 0)
         #expect(mesh.positions == Self.positions)
         #expect(mesh.indices == [0, 1, 2])
+        #expect(skinning.bodyParts == [MeshBodyPart(bodyPart: 32, indices: 0 ..< 3)])
         #expect(skinning.weights == Array(repeating: SIMD4(1, 0, 0, 0), count: 3))
         #expect(skinning.boneIndices == Array(repeating: .zero, count: 3))
         #expect(skinning.bindPoseMatrices.count == 1)

@@ -162,6 +162,8 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
     public let sheathNodes: [String: String]
     /// The armour addon models the actor wears; one that names a graph runs it as a sub-graph.
     public let armorAddons: [WornArmorAddon]
+    /// True for the cut head of `actor`, which the scene poses from its own table.
+    public let posesSeveredHead: Bool
 
     /// The clip currently playing: the idle one, or a bounded combat override.
     public var clip: ActorAnimationClip {
@@ -175,9 +177,11 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         female: Bool = false,
         transform: float4x4 = matrix_identity_float4x4,
         sheathNodes: [String: String] = [:],
-        armorAddons: [WornArmorAddon] = []
+        armorAddons: [WornArmorAddon] = [],
+        posesSeveredHead: Bool = false
     ) {
         self.actor = actor
+        self.posesSeveredHead = posesSeveredHead
         self.sheathNodes = sheathNodes
         self.armorAddons = armorAddons
         self.female = female

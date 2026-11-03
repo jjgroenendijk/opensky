@@ -7,8 +7,10 @@ import OpenSkyGameData
 import OpenSkyRendering
 
 nonisolated extension CellSceneBuilder {
+    /// `severedHead` marks the cut head of a decapitated actor, posed apart from its body.
     nonisolated public func makeAnimationPlayback(
-        assembly: ActorAssembly<ActorRenderAsset>
+        assembly: ActorAssembly<ActorRenderAsset>,
+        severedHead: Bool = false
     ) -> Result<ActorAnimationPlayback, ActorAnimationLoadError> {
         guard let skeletonPath = assembly.visual.skeletonPath else {
             return .failure(.unsupportedSkeleton("<missing>"))
@@ -45,7 +47,8 @@ nonisolated extension CellSceneBuilder {
             female: assembly.visual.appearance.isFemale.value,
             transform: assembly.transform,
             sheathNodes: assembly.visual.sheathNodes,
-            armorAddons: assembly.visual.wornArmorAddons
+            armorAddons: assembly.visual.wornArmorAddons,
+            posesSeveredHead: severedHead
         ))
     }
 

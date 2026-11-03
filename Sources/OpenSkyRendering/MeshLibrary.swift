@@ -131,7 +131,8 @@ nonisolated public final class MeshLibrary {
         attachmentBone: String? = nil,
         attachmentSubtree: String? = nil,
         surface: ModelSurfaceOverride? = nil,
-        bodyWeight: Float? = nil
+        bodyWeight: Float? = nil,
+        keeping cut: DismemberCut? = nil
     ) throws -> RenderModel {
         let pathKey = try meshKey(for: path)
         let key = cacheKey(
@@ -141,7 +142,8 @@ nonisolated public final class MeshLibrary {
             attachmentBone: attachmentBone,
             attachmentSubtree: attachmentSubtree,
             surface: surface,
-            bodyWeight: bodyWeight
+            bodyWeight: bodyWeight,
+            cut: cut
         )
         touchedKeys.insert(key)
         if let hit = cache[key] {
@@ -151,7 +153,7 @@ nonisolated public final class MeshLibrary {
 
         return try loadPhases.measure(.mesh) {
             let plain = terrainLODClipMask == nil && surface == nil && attachmentBone == nil
-                && !explicitActorSkeleton
+                && !explicitActorSkeleton && cut == nil
             if plain, let ready = readyModel(key: key, pathKey: pathKey) {
                 return ready
             }
@@ -170,6 +172,9 @@ nonisolated public final class MeshLibrary {
                     model, heavyPathKey: pathKey, weight: bodyWeight,
                     actorSkeleton: actorSkeleton
                 )
+            }
+            if let cut {
+                model = model.keeping(cut)
             }
             if let surface {
                 model = surface.applied(to: model)
@@ -391,7 +396,8 @@ nonisolated extension MeshLibrary {
         attachmentBone: String? = nil,
         attachmentSubtree: String? = nil,
         surface: ModelSurfaceOverride? = nil,
-        bodyWeight: Float? = nil
+        bodyWeight: Float? = nil,
+        cut: DismemberCut? = nil
     ) -> String {
         var key = path
         if let terrainLODClipMask {
@@ -411,6 +417,9 @@ nonisolated extension MeshLibrary {
         }
         if let bodyWeight {
             key += "|weight:\(Self.weightStep(bodyWeight))"
+        }
+        if let cut {
+            key += "|keep:" + cut.cacheKey
         }
         return key
     }

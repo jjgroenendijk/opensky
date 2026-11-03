@@ -5,7 +5,9 @@
 import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyWorldState
 import simd
 
@@ -49,7 +51,7 @@ extension RagdollCoordinator {
         return direction * force
     }
 
-    private func source(of hit: CombatHitRecord) -> SIMD3<Float>? {
+    func source(of hit: CombatHitRecord) -> SIMD3<Float>? {
         if let origin = hit.origin {
             return origin
         }
@@ -62,12 +64,8 @@ extension RagdollCoordinator {
 
     /// The rolls at the moment of death: the weapon falls, and a qualifying blow cuts.
     func applyDeathEffects(of hit: CombatHitRecord?, to key: ReferenceKey) {
-        if deathRandom.percent() < deathSettings.dropWeaponChance {
-            let nodes = world.dropWeapon(of: key)
-            if !nodes.isEmpty {
-                hiddenNodes[key, default: []].formUnion(nodes)
-                deathEffects.droppedWeapons += 1
-            }
+        if deathRandom.percent() < deathSettings.dropWeaponChance, world.dropWeapon(of: key) {
+            deathEffects.droppedWeapons += 1
         }
         if hit?.canSever == true, deathRandom.percent() < deathSettings.dismemberChance {
             dismember(key)
@@ -75,7 +73,7 @@ extension RagdollCoordinator {
     }
 
     /// Cuts off `key`'s head. The node is kept with the death, so the body stays
-    /// headless after a save.
+    /// headless after a save; the cell rebuild draws the body and the head apart.
     /// - Returns: false for a living actor, one already cut, or one with no head part.
     @discardableResult
     public func dismember(_ key: ReferenceKey) -> Bool {
@@ -85,16 +83,86 @@ extension RagdollCoordinator {
             let node = world.severableNode(of: key),
             let pose = world.ragdollPose(of: key)
         else { return false }
+        let drawn = drawnPose(of: key, pose: pose)
         var cut = state
         cut.severedNode = node
         store.set(cut, for: key, in: pose.cell)
-        let local = (world.animatedPose(of: key)?[node] ?? matrix_identity_float4x4).columns.3
-        let position = pose.actorToWorld * local
-        world.showDismemberment(
-            of: key, node: node, at: SIMD3(position.x, position.y, position.z)
+        let local = (drawn[node] ?? matrix_identity_float4x4).columns.3
+        let world4 = pose.actorToWorld * local
+        let position = SIMD3(world4.x, world4.y, world4.z)
+        world.showDismemberment(of: key, node: node, at: position)
+        let blow = recentHit(on: key).flatMap(source(of:)).map { position - $0 }
+        severedHeads[key] = SeveredHead(
+            key: key, cell: pose.cell, node: node, pose: drawn,
+            actorToWorld: pose.actorToWorld, away: blow ?? .zero
         )
         deathEffects.dismemberments += 1
         return true
+    }
+
+    /// The pose `key` is drawn in now: the clip's, with the ragdoll's bones laid over it
+    /// and their children carried along. A head cut from a fallen body starts at its neck.
+    func drawnPose(of key: ReferenceKey, pose: RagdollActorPose) -> [String: float4x4] {
+        let animated = world.animatedPose(of: key) ?? [:]
+        let live = runtime?.world.ragdolls.first { $0.key == key }?.instance
+        guard
+            let simulated = live?.blendedBoneMatrices(
+                animated: animated, worldToActor: pose.actorToWorld.inverse
+            ) ?? drawnRagdollBones[key]
+        else { return animated }
+        let names = pose.skeleton.bones.map(\.name)
+        let base = SkeletonPose(
+            bones: SkeletonBoneIndex(names: names),
+            matrices: names.map { animated[$0] ?? matrix_identity_float4x4 }
+        )
+        let posed = base.overriding(simulated, parents: pose.skeleton.parentIndices).named
+        return animated.merging(posed) { _, drawn in drawn }
+    }
+
+    /// Steps every head, and keeps where a head came to rest in its body's death state.
+    func advanceSeveredHeads(by delta: Float) {
+        let step = world.ragdollStepWorld
+        for key in severedHeads.keys.sorted() {
+            guard var head = severedHeads[key] else { continue }
+            head.advance(by: delta, world: step)
+            if
+                head.body.isSleeping, !head.isRestRecorded,
+                var state = store.component(ActorDeathState.self, for: key)
+            {
+                state.severedHeadRest = head.restTransform
+                store.set(state, for: key, in: head.body.placingCell)
+                head.isRestRecorded = true
+            }
+            severedHeads[key] = head
+        }
+    }
+
+    /// The pose of every resident cut head. A cut body that loads with no head in flight,
+    /// as after a save, drops its head where the neck is. A head stays while its cell
+    /// is resident and its body is cut, even through a frame its body has no pose.
+    func severedHeadPoses() -> [UInt32: [String: float4x4]] {
+        let cells = world.residentRagdollCells
+        severedHeads = severedHeads.filter { key, head in
+            cells.contains(head.body.placingCell)
+                && store.component(ActorDeathState.self, for: key)?.severedNode != nil
+        }
+        var poses: [UInt32: [String: float4x4]] = [:]
+        for resident in world.ragdollResidents {
+            let key = resident.key
+            let state = store.component(ActorDeathState.self, for: key)
+            guard
+                let node = state?.severedNode,
+                let pose = world.ragdollPose(of: key),
+                let head = severedHeads[key] ?? SeveredHead(
+                    key: key, cell: pose.cell, node: node,
+                    pose: drawnPose(of: key, pose: pose),
+                    actorToWorld: pose.actorToWorld, rest: state?.severedHeadRest
+                )
+            else { continue }
+            severedHeads[key] = head
+            poses[pose.reference.rawValue] = head.bonePose(actorToWorld: pose.actorToWorld)
+        }
+        return poses
     }
 
     /// With more dead loaded than `iRemoveExcessDeadCount`, the oldest bodies no quest
@@ -115,39 +183,9 @@ extension RagdollCoordinator {
             runtime.removeRagdoll(key)
             deathTimes[key] = nil
             recentHits[key] = nil
-            hiddenNodes[key] = nil
+            severedHeads[key] = nil
+            drawnRagdollBones[key] = nil
             deathEffects.removedBodies += 1
-        }
-    }
-
-    /// The nodes to hide on each resident body: a dropped weapon's and a cut head's.
-    func hiddenNodesByResident() -> [ReferenceKey: Set<String>] {
-        var hidden = hiddenNodes
-        for resident in world.ragdollResidents {
-            if let node = store.component(ActorDeathState.self, for: resident.key)?.severedNode {
-                hidden[resident.key, default: []].insert(node)
-            }
-        }
-        return hidden.filter { !$0.value.isEmpty }
-    }
-
-    /// Lays the hidden nodes over `poses`, each one shrunk to a point with its children.
-    func hidePoseNodes(
-        _ hidden: [ReferenceKey: Set<String>], in poses: inout [UInt32: [String: float4x4]]
-    ) {
-        for (key, nodes) in hidden {
-            guard let pose = world.ragdollPose(of: key), let animated = world.animatedPose(of: key)
-            else { continue }
-            let reference = pose.reference.rawValue
-            let current = animated.merging(poses[reference] ?? [:]) { _, simulated in simulated }
-            let collapsed = PoseNodeHiding.collapsed(
-                nodes,
-                names: pose.skeleton.boneNames,
-                parents: pose.skeleton.parentIndices,
-                pose: current
-            )
-            guard !collapsed.isEmpty else { continue }
-            poses[reference, default: [:]].merge(collapsed) { _, hiddenMatrix in hiddenMatrix }
         }
     }
 }
@@ -166,39 +204,5 @@ nonisolated public enum ExcessDeadRule {
         return oldest.prefix(dead.count - limit)
             .filter { now - $0.diedAt >= settings.excessDeadSeconds }
             .map(\.key)
-    }
-}
-
-/// Hides skeleton nodes by shrinking each one, and every bone under it, to the node's
-/// origin. Skinned vertices on those bones fold into one point, so the part vanishes.
-nonisolated public enum PoseNodeHiding {
-    public static func collapsed(
-        _ nodes: Set<String>,
-        names: [String],
-        parents: [Int],
-        pose: [String: float4x4]
-    ) -> [String: float4x4] {
-        var anchors: [Int?] = Array(repeating: nil, count: names.count)
-        var resolved = Array(repeating: false, count: names.count)
-        func anchor(of index: Int, depth: Int) -> Int? {
-            guard depth <= names.count else { return nil }
-            if resolved[index] {
-                return anchors[index]
-            }
-            let parent = parents.indices.contains(index) ? parents[index] : -1
-            let found = nodes.contains(names[index]) ? index
-                : names.indices.contains(parent) ? anchor(of: parent, depth: depth + 1) : nil
-            anchors[index] = found
-            resolved[index] = true
-            return found
-        }
-        var result: [String: float4x4] = [:]
-        for index in names.indices {
-            guard let root = anchor(of: index, depth: 0), let matrix = pose[names[root]] else {
-                continue
-            }
-            result[names[index]] = float4x4(columns: (.zero, .zero, .zero, matrix.columns.3))
-        }
-        return result
     }
 }
