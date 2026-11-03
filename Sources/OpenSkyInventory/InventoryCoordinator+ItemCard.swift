@@ -71,7 +71,7 @@ extension InventoryCoordinator {
         case .ingredient: .ingredient
         case .key: .key
         case .soulGem: .soulGem
-        case .miscellaneous, .apparatus: .misc
+        case .miscellaneous, .apparatus, .light: .misc
         }
     }
 
@@ -88,6 +88,7 @@ extension InventoryCoordinator {
             } ?? "Potion"
         case .ingredient: "Ingredient"
         case .key: "Key"
+        case .light: "Light"
         case .miscellaneous: "Misc"
         case .scroll: "Scroll"
         case .soulGem: "Soul gem"

@@ -108,6 +108,7 @@ the detail and the sources it did find.
 | Speech check values | Listed on the page | [speech checks](/engine/speech-checks.md) |
 | Perk sky camera vectors and turn speed | OpenSky's numbers | [perk sky](/engine/perk-sky.md) |
 | Inventory count step | 10 for up and down | [inventory menu](/engine/inventory-menu.md) |
+| Tab of a carried light (torch) | Misc | [inventory menu](/engine/inventory-menu.md) |
 | `GetGoldValue` for a non-item | -1 | [inventory state](/engine/inventory-state.md) |
 
 ## World, time, and sound

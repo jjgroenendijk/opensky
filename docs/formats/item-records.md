@@ -41,6 +41,9 @@ Every carried item repeats the same fields:
 Gems, ingots, tools, gold, and clutter. Only the shared fields and the 8-byte `DATA`
 (line 8303).
 
+A `LIGH` with the "can be carried" flag, such as a torch, is an item too. Its name, value,
+and weight are in the [lighting records](/formats/lighting.md#ligh) page.
+
 ## KEYM, SLGM, and APPA
 
 Keys, soul gems, and alchemy apparatus. Each has the shared fields and the 8-byte `DATA`.

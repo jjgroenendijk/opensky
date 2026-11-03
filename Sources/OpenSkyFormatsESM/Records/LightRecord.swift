@@ -17,6 +17,7 @@ nonisolated public struct LightRecord: Sendable {
         let flags: Flags
         let falloff: Float
         let flicker: FlickerEffect
+        let itemValue: ItemValue
     }
 
     /// DATA offsets 28 to 39. Read raw; docs/formats/lighting.md has the units.
@@ -39,6 +40,7 @@ nonisolated public struct LightRecord: Sendable {
             self.rawValue = rawValue
         }
 
+        public static let canBeCarried = Flags(rawValue: 0x0002)
         public static let negative = Flags(rawValue: 0x0004)
         public static let flicker = Flags(rawValue: 0x0008)
         public static let offByDefault = Flags(rawValue: 0x0020)
@@ -61,6 +63,8 @@ nonisolated public struct LightRecord: Sendable {
     public let falloffExponent: Float
     public let flicker: FlickerEffect
     public let fade: Float
+    /// DATA value and weight, which only a light that can be carried uses.
+    public let itemValue: ItemValue
 
     /// One of the three shadow types; without one the light is a plain omnidirectional light.
     public var castsShadows: Bool {
@@ -127,6 +131,7 @@ nonisolated public struct LightRecord: Sendable {
         falloffExponent = decoded.falloff
         flicker = decoded.flicker
         self.fade = fade
+        itemValue = decoded.itemValue
     }
 
     private static func decodeData(_ reader: inout BinaryReader) throws -> DecodedData {
@@ -141,10 +146,12 @@ nonisolated public struct LightRecord: Sendable {
             intensityAmplitude: reader.readFloat32(),
             movementAmplitude: reader.readFloat32()
         )
-        reader.skip(8) // value, weight
+        let itemValue = try ItemValue(
+            value: Int32(bitPattern: reader.readUInt32()), weight: reader.readFloat32()
+        )
         return DecodedData(
             time: time, radius: radius, color: color, flags: flags, falloff: falloff,
-            flicker: flicker
+            flicker: flicker, itemValue: itemValue
         )
     }
 

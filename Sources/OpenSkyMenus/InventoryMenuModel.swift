@@ -130,7 +130,7 @@ nonisolated public struct InventoryMenuCategory: Equatable, Sendable {
             tab(.ingredients, [.ingredient]),
             tab(.books, [.book]),
             tab(.keys, [.key]),
-            tab(.misc, [.miscellaneous, .soulGem, .apparatus])
+            tab(.misc, [.miscellaneous, .soulGem, .apparatus, .light])
         ]
     }
 
