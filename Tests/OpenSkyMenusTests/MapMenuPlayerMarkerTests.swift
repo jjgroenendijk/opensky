@@ -42,6 +42,16 @@ struct MapMenuPlayerMarkerTests {
     }
 
     @Test @MainActor
+    func theMarkerGoesWhereTheMapLooks() {
+        let world = FakeMapWorld(sites: [])
+        world.playerPosition = SIMD3(17404, -14834, -1294)
+        let menu = MapMenuCoordinator(menuMode: MenuModeController(), world: world)
+        menu.open(.world)
+        menu.placePlayerMarker()
+        #expect(world.playerSetMarker?.position == SIMD3(17404, -14834, 0))
+    }
+
+    @Test @MainActor
     func placingOnAnUndiscoveredLocationAsks() throws {
         let (menu, world) = Self.openMap([Self.site(1, at: 1000)])
         menu.placePlayerMarker()

@@ -213,7 +213,9 @@ extension AgentWorldAdapter {
         return [
             "mode": .init(game.mapMenu.mode?.rawValue), "selected": .init(snapshot.selected),
             "lastResult": .init(snapshot.lastResult), "playerMarker": .init(snapshot.playerMarker),
-            "compassPlayerMarker": compass ?? .null
+            "compassPlayerMarker": compass ?? .null,
+            "focus": game.mapMenu.camera.map { .array([.init($0.focus.x), .init($0.focus.y)]) }
+                ?? .null
         ]
     }
 

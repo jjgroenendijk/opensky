@@ -140,7 +140,7 @@ extension MapWorldAdapter: MapMenuWorld {
     }
 
     var playerPosition: SIMD3<Float>? {
-        game.gameSession?.locomotion.status.feetPosition
+        game.gameSession?.walkController.feetPosition
     }
 
     var playerCell: CellSceneLocation? {
@@ -264,7 +264,7 @@ extension MapWorldAdapter: MapMenuWorld {
         guard
             let renderer = game.renderer, let gameSession = game.gameSession,
             let streamer = game.streamer else { return false }
-        let from = gameSession.locomotion.status.feetPosition
+        let from = gameSession.walkController.feetPosition
         let walk = game.worldData?
             .movementConfiguration.travelSpeed.value ?? 80
         let seconds = FastTravelRule.gameSeconds(
