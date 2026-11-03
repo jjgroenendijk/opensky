@@ -29,6 +29,13 @@ struct GraphicsSettingsTests {
         #expect(GraphicsOptions.all.allSatisfy { $0.id.rawValue == "graphics.\($0.key)" })
     }
 
+    @Test func statusTextNamesWhyAnOptionIsUnavailable() throws {
+        #expect(try option("fBlockLevel0Distance").statusText == "applied")
+        let unavailable = try #require(GraphicsOptions.all.first { $0.unavailableReason != nil })
+        let reason = try #require(unavailable.unavailableReason)
+        #expect(unavailable.statusText == "unavailable: \(reason)")
+    }
+
     @Test func aToggleReadsAsZeroOrOneAndJunkIsIgnored() throws {
         let toggle = try #require(GraphicsOptions.all.first { $0.isToggle })
         let text = "[\(toggle.section)]\n\(toggle.key)=7\n[TerrainManager]\nfTreeLoadDistance=abc\n"
