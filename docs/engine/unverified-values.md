@@ -73,6 +73,7 @@ the detail and the sources it did find.
 | Head tracking | 384 units; angles in degrees; behind angle and neck share | [head tracking](/engine/head-tracking.md) |
 | Face morph settings | Units read as seconds and emotion points; offsets as radians | [face morphs](/engine/face-morphs.md) |
 | Navigation | 128-unit ledge rule; 512-unit gait rule | [navigation](/engine/navigation.md) |
+| `GetCurrentAIProcedure` of procedures not measured | -1 | [world condition functions](/engine/condition-functions-world.md#packages) |
 | Package fallback on a blocked path | A guess at the game's rule | [package schedules](/engine/package-schedules.md) |
 | Scene package wait | A scene does not wait forever on its package | [scenes](/engine/scenes.md) |
 | Follower commands | 0.5 s wait; acts at 128 units | [follower commands](/engine/follower-commands.md) |

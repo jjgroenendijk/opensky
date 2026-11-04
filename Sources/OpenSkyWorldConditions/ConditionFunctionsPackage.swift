@@ -1,7 +1,8 @@
 // Package condition functions, indices from xEdit wbDefinitionsTES5.pas: 161
 // GetIsCurrentPackage, 325 GetWithinPackageLocation, 611 IsNullPackageData, 612
 // GetNumericPackageData, 49 GetSleeping, 255 GetOffersServicesNow, 503
-// GetAllowWorldInteractions. See docs/engine/condition-functions-world.md#packages.
+// GetAllowWorldInteractions, 143 GetCurrentAIProcedure.
+// See docs/engine/condition-functions-world.md#packages.
 
 import Foundation
 import OpenSkyConditions
@@ -120,6 +121,18 @@ nonisolated extension ConditionFunctions {
             }
         })
         installPackageFlags(&registry)
+        registry.register(ConditionFunction(index: 143, name: "GetCurrentAIProcedure") { call in
+            packageFacts(call) { facts in facts.map { Self.procedureNumber($0.procedure) } ?? 0 }
+        })
+    }
+
+    /// The number the reference game answered for each procedure; an actor with no
+    /// package answered 0, and every procedure not measured answers -1.
+    static func procedureNumber(_ procedure: PackageProcedureKind) -> Float {
+        switch procedure {
+        case .travel, .sit: 17
+        default: -1
+        }
     }
 
     private static func installPackageFlags(_ registry: inout ConditionFunctionRegistry) {

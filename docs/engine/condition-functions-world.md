@@ -67,6 +67,19 @@ its `UNAM` index. An actor that runs no package has no data, so each data functi
   (UESP "Skyrim Mod:Mod File Format/PACK").
 - `GetAllowWorldInteractions` (503) reads the `PKDT` interrupt flag bit 9, "World
   Interactions" (xEdit `wbPKDTInterruptFlags`).
+- `GetCurrentAIProcedure` (143) answers a number for the procedure the actor runs. The CK
+  wiki says the numbers are not known (<https://ck.uesp.net/wiki/GetCurrentAIProcedure>), so
+  they were read in the [reference game](/tools/reference-game.md) (1.7.104), through the
+  bridge's `condition` line on actors in Whiterun:
+
+  | Procedure | Answer |
+  | --- | --- |
+  | Travel, and Sit (also while seated) | 17 |
+  | Sandbox, Sleep, Patrol | -1 |
+  | No package: the player, an actor in combat | 0 |
+
+  Every other procedure answers -1, OpenSky's choice. The one vanilla use, the idle
+  `CheckCorpse`, asks for 6, which no measured procedure answered.
 
 ## Script-set actor state
 
