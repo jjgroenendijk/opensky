@@ -265,8 +265,9 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 - `IsEssential`, `IsProtected`, and `IsUnique` read the `ACBS` flags 0x02, 0x800, and 0x20 of
   the actor's own `NPC_` record (UESP "Skyrim Mod:Mod File Format/NPC_"), not a template's.
   A script's `SetEssential` is not read here yet. The player fails as unavailable.
-- `IsBleedingOut` and `IsCommandedActor` return 0. OpenSky has no bleedout and no commanded
-  actors yet, and the `Actor` natives of the same names answer the same.
+- `IsBleedingOut` reads the actor's bleedout state ([bleedout](/engine/ragdoll.md#bleedout)).
+- `IsCommandedActor` returns 0. OpenSky has no commanded actors yet, and the `Actor` native of
+  the same name answers the same.
 - `IsChild` reads the race's `DATA` flag 0x04 (xEdit `dev-4.1.6`, `wbRACE_DATAFlags01`).
 - `GetIsRace` compares the race the actor's values were derived from. An actor whose race
   is not known fails as unavailable.

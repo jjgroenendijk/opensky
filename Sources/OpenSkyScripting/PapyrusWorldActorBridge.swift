@@ -105,7 +105,7 @@ public protocol PapyrusWorldActorBridge: AnyObject, Sendable {
     ) -> PapyrusActorState?
 
     /// Adds `amount` to one of `key`'s values, capped at its maximum. Never
-    /// resurrects: `Resurrect` is not implemented.
+    /// resurrects; `resurrectActor(_:)` does that.
     /// - Returns: the state as stored afterwards, or nil when there was no actor.
     @discardableResult
     func restoreActorValue(

@@ -114,5 +114,3 @@ whether the loading movie is up.
 - [WARNING] Not confirmed: `Skyrim.esm` has a `UILoadscreenMist` sound descriptor, which
   suggests the game plays a mist sound and draws mist behind the model. OpenSky does neither.
   This, the base camera, and the light wait for a reference capture.
-- The tip text comes from the `Skyrim.esm` string tables only, so a DLC screen may show the
-  wrong text or none.

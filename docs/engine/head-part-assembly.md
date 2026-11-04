@@ -40,11 +40,13 @@ parts loop.
 
 ## Differences from the baked head
 
-- The face part gets no tint layers and no `FTST` face texture set. Skin color comes only
-  from the texture set.
+- An NPC's face part gets no tint layers and no `FTST` face texture set. Skin color comes
+  only from the texture set. The player's head gets its tint layers and chargen morphs from
+  the race menu ([drawn head](/engine/race-menu.md#the-drawn-head)).
 - The assembled head is static. It has no expression morphs (`.tri`), so it does not
   blink or speak.
-- Race morphs and chargen sliders are not applied. The face part keeps its default shape.
+- An NPC's race morphs and chargen sliders are not applied. Its face part keeps its default
+  shape.
 
 On the install, Heimskr's assembled head covers the same pixels as his baked head with an
 intersection-over-union above 0.85.
