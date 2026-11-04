@@ -123,8 +123,10 @@ struct SkyObjectDrawer {
         for shape in mesh.shapes {
             guard let texture = sky.texture(key: shape.texture) else { continue }
             let palette = sky.texture(key: shape.palette)
-            let effect = RenderEffectMaterial(shading: shape.effect, palette: palette)
+            let shading = shape.shading(at: renderer.animationTime)
+            let effect = RenderEffectMaterial(shading: shading.effect, palette: palette)
             var uniforms = SkyObjectUniforms()
+            uniforms.uvTransform = shading.uvTransform
             uniforms.rotation = rotation
             uniforms.color = tint
             uniforms.falloff = effect.falloff

@@ -418,6 +418,7 @@ extension NIFFixture {
     public static func bsLightingShaderProperty(
         shaderType: UInt32 = 0,
         nameIndex: UInt32 = 0xFFFF_FFFF,
+        controllerRef: Int32 = -1,
         shaderFlags1: UInt32 = 0x8240_0301,
         shaderFlags2: UInt32 = 0x8021,
         uvOffset: SIMD2<Float> = .zero,
@@ -435,7 +436,7 @@ extension NIFFixture {
     ) -> Data {
         var out = Data()
         out.appendUInt32(shaderType)
-        out.append(objectNETPrefix(nameIndex: nameIndex))
+        out.append(objectNETPrefix(nameIndex: nameIndex, controllerRef: controllerRef))
         out.appendUInt32(shaderFlags1)
         out.appendUInt32(shaderFlags2)
         out.appendFloat32(uvOffset.x)

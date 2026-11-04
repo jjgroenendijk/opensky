@@ -229,14 +229,14 @@ nonisolated extension NIFFile.Flattener {
     private func resolveMaterial(key: SlotKey) throws -> Material {
         var shader: NIFLightingShaderProperty?
         var textures: NIFShaderTextureSet?
-
         if let index = key.shaderPropertyBlock {
             let block = try block(at: index)
             if
                 block.typeName == NIFFile.effectShaderType,
                 let material = try? effectMaterial(
                     block: block,
-                    alphaBlock: key.alphaPropertyBlock
+                    alphaBlock: key.alphaPropertyBlock,
+                    animation: shaderAnimation(key)
                 )
             {
                 return material
@@ -249,20 +249,7 @@ nonisolated extension NIFFile.Flattener {
                 return try NIFSkyShaderProperty(reader: &reader, header: file.header).material
             }
             if block.typeName == "BSLightingShaderProperty" {
-                let property = try NIFLightingShaderProperty(
-                    data: block.data,
-                    header: file.header
-                )
-                shader = property
-                if property.textureSetRef >= 0 {
-                    let setBlock = try self.block(at: Int(property.textureSetRef))
-                    if setBlock.typeName == "BSShaderTextureSet" {
-                        textures = try NIFShaderTextureSet(
-                            data: setBlock.data,
-                            header: file.header
-                        )
-                    }
-                }
+                (shader, textures) = try lightingShader(block)
             }
         }
         let alpha = try alphaProperty(at: key.alphaPropertyBlock)
@@ -288,8 +275,26 @@ nonisolated extension NIFFile.Flattener {
             tintTexture: shader?.isFaceGen == true ? textures?.faceTintPath : nil,
             tintsSkin: shader?.isSkinTint ?? false,
             shading: shader?.surfaceShading(textures: textures) ?? .plain,
-            drawState: shader?.drawState ?? .standard
+            drawState: shader?.drawState ?? .standard,
+            animation: shaderAnimation(key)
         )
+    }
+
+    private func lightingShader(
+        _ block: NIFFile.Block
+    ) throws -> (NIFLightingShaderProperty, NIFShaderTextureSet?) {
+        let property = try NIFLightingShaderProperty(data: block.data, header: file.header)
+        guard property.textureSetRef >= 0 else { return (property, nil) }
+        let setBlock = try self.block(at: Int(property.textureSetRef))
+        guard setBlock.typeName == "BSShaderTextureSet" else { return (property, nil) }
+        return try (property, NIFShaderTextureSet(data: setBlock.data, header: file.header))
+    }
+
+    /// The shader's controllers on their own clock; nil when none moves or they fail.
+    private func shaderAnimation(_ key: SlotKey) -> MaterialAnimation? {
+        key.shaderPropertyBlock.flatMap {
+            try? NIFShaderAnimation.animation(ofShader: $0, file: file)
+        }
     }
 }
 
@@ -326,7 +331,9 @@ nonisolated extension NIFFile.Flattener {
 
     /// The static path draws an effect shape with its source texture, palette, and
     /// alpha property, additive blends included.
-    func effectMaterial(block: NIFFile.Block, alphaBlock: Int?) throws -> Material {
+    func effectMaterial(
+        block: NIFFile.Block, alphaBlock: Int?, animation: MaterialAnimation? = nil
+    ) throws -> Material {
         let effect = try NIFEffectShaderProperty(data: block.data, header: file.header)
         let alpha = try alphaProperty(at: alphaBlock)
         let fallback = Material.fallback
@@ -345,7 +352,8 @@ nonisolated extension NIFFile.Flattener {
             alphaTestThreshold: (alpha?.testEnabled ?? false) ? alpha?.testThreshold : nil,
             additiveBlend: alpha?.additiveBlend,
             effect: shading,
-            drawState: effect.drawState
+            drawState: effect.drawState,
+            animation: animation
         )
     }
 

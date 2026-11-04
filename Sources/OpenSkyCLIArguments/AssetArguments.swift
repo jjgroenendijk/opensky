@@ -70,7 +70,9 @@ public struct NIFArguments: CLICommandArguments {
     @OptionGroup public var asset: AssetPathArgument
     @Flag(help: "Also print the node tree, unlit shapes, and controller sequences.")
     public var sequences = false
-    @Flag(help: "Also print the node controllers that play on their own clock, and bone LOD.")
+    @Flag(
+        help: "Also print the shader and node controllers on their own clock, and bone LOD."
+    )
     public var controllers = false
 
     public init() {}

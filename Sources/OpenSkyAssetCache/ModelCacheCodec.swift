@@ -123,6 +123,7 @@ nonisolated public enum ModelCacheCodec {
         out.bool(material.tintsSkin)
         encode(material.shading, into: &out)
         encode(material.drawState, into: &out)
+        encode(material.animation, into: &out)
     }
 
     private static func encode(_ shading: SurfaceShading, into out: inout CachePayloadWriter) {
@@ -191,13 +192,15 @@ nonisolated public enum ModelCacheCodec {
         let tintsSkin = try input.bool()
         let surface = try surfaceShading(&input)
         let state = try drawState(&input)
+        let animation = try materialAnimation(&input)
         return Material(
             diffuseTexture: diffuse, normalTexture: normal, uvOffset: uvOffset, uvScale: uvScale,
             alpha: alpha, glossiness: glossiness, specularColor: specularColor,
             specularStrength: specularStrength, doubleSided: doubleSided, alphaBlend: alphaBlend,
             alphaTestThreshold: threshold, additiveBlend: additive, effect: shading,
             waterSurface: waterSurface,
-            tintTexture: tintTexture, tintsSkin: tintsSkin, shading: surface, drawState: state
+            tintTexture: tintTexture, tintsSkin: tintsSkin, shading: surface, drawState: state,
+            animation: animation
         )
     }
 

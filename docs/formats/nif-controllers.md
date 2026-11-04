@@ -103,8 +103,32 @@ roll, and scale. A target Ptr of -1 is resolved by the look-at name.
   a lag bone, and a bone LOD controller move nodes of a placed mesh
   ([object animation](/engine/object-animation.md#node-controllers)). The rules follow.
 
-The shader property controllers are on the [NIF sequences](/formats/nif-sequences.md) page.
+- Shader property controllers that play on their own clock. See the next section.
+
 Lightning bolts have no consumer yet.
+
+### Shader property controllers
+
+A shader property's controller chain starts at its `NiObjectNET` controller ref. Each
+`BSEffectShaderProperty...Controller` or `BSLightingShaderProperty...Controller` drives one
+value. An active controller (flag bit 3) that no manager feeds (bit 5 clear) and whose
+interpolator has more than one key plays on its own clock: its frequency, phase, start, stop,
+and cycle type map the renderer's animation time into the keys. A manager-fed controller plays
+only through its sequence ([NIF sequences](/formats/nif-sequences.md)).
+
+The variable numbers come from nif.xml:
+
+| Enum | Values OpenSky draws |
+| --- | --- |
+| `EffectShaderControlledVariable` | 0 emissive multiple, 1 to 4 falloff start and stop angle and opacity, 5 alpha, 6 U offset, 7 U scale, 8 V offset, 9 V scale |
+| `EffectShaderControlledColor` | 0 emissive colour |
+| `LightingShaderControlledFloat` | 0 refraction strength, 8 environment map scale, 9 glossiness, 10 specular strength, 11 emissive multiple, 12 alpha, 20 U offset, 21 U scale, 22 V offset, 23 V scale |
+| `LightingShaderControlledColor` | 0 specular colour, 1 emissive colour |
+
+Other lighting values (the parallax and multi-layer values, numbers 1 to 7 and 13 to 19)
+are listed by `openskycli nif <path> --controllers` but not drawn. On an effect shape the
+alpha and the emissive colour change the effect base colour. The weather aurora
+`meshes\sky\skyrimaurora.nif` has seven float controllers, so its streaks scroll.
 
 ### Node controller rules
 
