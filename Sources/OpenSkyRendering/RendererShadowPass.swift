@@ -93,7 +93,8 @@ extension Renderer {
 
     /// Sun-shadow far bound for the active quality.
     public var activeShadowDistance: Float {
-        shadowQuality == .low ? Self.shadowDistanceLow : Self.shadowDistance
+        let distance = shadowSettings.distance ?? Self.shadowDistance
+        return shadowQuality == .low ? min(distance, Self.shadowDistanceLow) : distance
     }
 
     /// PCF kernel radius bound into FrameUniforms: 0 -> single compare tap
@@ -126,7 +127,7 @@ extension Renderer {
     /// Per-cascade far bounds packed for the shader, padded with the last real
     /// bound (mirrors ShadowCascadeMath.cascadeIndex padding).
     public func shadowCascadeSplitBounds() -> SIMD4<Float> {
-        let lastFar = shadowCascades.last?.splitFar ?? Self.shadowDistance
+        let lastFar = shadowCascades.last?.splitFar ?? activeShadowDistance
         func far(_ index: Int) -> Float {
             index < shadowCascades.count ? shadowCascades[index].splitFar : lastFar
         }
@@ -199,7 +200,7 @@ extension Renderer {
             sunDirection: sunTravelDirection,
             cascadeCount: shadowCascadeCount,
             lambda: Self.shadowSplitLambda,
-            shadowMapResolution: ShadowConstant.mapResolution.rawValue,
+            shadowMapResolution: shadow.map.width,
             casterBackup: Self.shadowCasterBackup,
             residentBounds: residentCasterBounds()
         ))

@@ -43,6 +43,9 @@ extension Renderer {
         shadingTerms = SurfaceShadingSetting.terms(store: store)
         lightAnimationEnabled = store.bool(.lightAnimation)
         particleSortingEnabled = store.bool(.particleSorting)
+        shadowSettings = ShadowSettings(
+            distance: store.value(.shadowDistance), resolution: store.value(.shadowMapResolution)
+        )
         let caps = PlayerSettingsCatalog.frameRateCapOptions
         frameRateCap = caps[min(max(Int(store.value(.frameRateCap)), 0), caps.count - 1)]
     }

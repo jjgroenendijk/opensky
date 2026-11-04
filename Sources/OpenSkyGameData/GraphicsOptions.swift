@@ -85,17 +85,8 @@ nonisolated public enum GraphicsOptions {
             .viewDistance, "Large object grid", "General", "uLargeRefLODGridSize",
             "OpenSky has no large reference LOD yet"
         ),
-        option(
-            .shadows,
-            "Shadow distance",
-            "Display",
-            "fShadowDistance",
-            "OpenSky sizes its shadow cascades itself"
-        ),
-        option(
-            .shadows, "Shadow resolution", "Display", "iShadowMapResolution",
-            "OpenSky picks its shadow map size itself"
-        ),
+        option(.shadows, "Shadow distance", "Display", "fShadowDistance"),
+        option(.shadows, "Shadow resolution", "Display", "iShadowMapResolution"),
         option(
             .shadows,
             "Focus shadows",

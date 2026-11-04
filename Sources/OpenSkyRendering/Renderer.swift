@@ -92,7 +92,11 @@ public final class Renderer: NSObject {
     /// (depth32Float, ShadowConstantCascadeCount slices). The array is created
     /// once, always resident, and bound at TextureIndexShadowMap every scene
     /// pass so validation stays clean even with shadows disabled.
-    public let shadow: ShadowResources
+    public internal(set) var shadow: ShadowResources
+    /// The game's shadow distance and map size (`RendererShadowSettings.swift`).
+    public var shadowSettings = ShadowSettings() {
+        didSet { resizeShadowMapIfNeeded() }
+    }
     /// Sun shadow switch. Default on; ANDed
     /// with `shadowQuality` so it flips shadows without discarding the tier.
     public var sunShadowsEnabled = true

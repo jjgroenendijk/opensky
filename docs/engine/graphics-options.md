@@ -31,15 +31,20 @@ runtime and are never copied into the repository or a test fixture.
 
 ## What OpenSky applies
 
-OpenSky applies the four terrain distances today: `fBlockLevel0Distance`, `fBlockLevel1Distance`,
-`fBlockMaximumDistance`, and `fTreeLoadDistance`. It also applies `uGridsToLoad`, the side of the
-full-detail cell grid ([cell streaming](/engine/cell-streaming.md#the-desired-grid)). No preset file
-sets it, so OpenSky adds it to the list, and a preset leaves it unchanged. It also applies `bDecals`
-and `uMaxDecals` ([impacts and decals](/rendering/decals.md)).
+Each row is an option OpenSky applies, and how. A preset file sets most of them, and the
+player's own `SkyrimPrefs.ini` shows through as the default.
 
-Every other option is shown, saved, and disabled, with one line that says why it does
-nothing yet, such as "OpenSky draws no decals on actors yet". So a player sees what the game would
-change, and an option that starts to work only needs its reason removed.
+| Option | How OpenSky applies it |
+| --- | --- |
+| `fBlockLevel0Distance`, `fBlockLevel1Distance`, `fBlockMaximumDistance`, `fTreeLoadDistance` | The terrain and tree LOD distances ([terrain](/engine/terrain.md)) |
+| `uGridsToLoad` | The side of the full-detail cell grid ([cell streaming](/engine/cell-streaming.md#the-desired-grid)). No preset sets it, so a preset leaves it unchanged |
+| `bDecals`, `uMaxDecals` | Decals on, and the most decals kept ([impacts and decals](/rendering/decals.md)) |
+| `fShadowDistance` | The far end of the last sun shadow cascade. 0 keeps OpenSky's 12288 units. The low shadow quality caps it at 8192 |
+| `iShadowMapResolution` | The width and height of each cascade slice: a power of two from 512 to 4096. A change builds a new map while the game runs |
+
+An option that is not in this table is shown, saved, and disabled, with one line that says why it
+does nothing yet. So a player sees what the game would change, and an option that starts to work
+only needs its reason removed.
 
 ## OpenSky's own groups
 

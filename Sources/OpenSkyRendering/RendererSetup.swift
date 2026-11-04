@@ -77,7 +77,8 @@ nonisolated public struct ShadowPipelines: Sendable {
 nonisolated public struct ShadowResources {
     public let pipelines: ShadowPipelines
     public let sampler: MTLSamplerState
-    public let map: MTLTexture
+    /// Replaced when the player picks another shadow map resolution.
+    public internal(set) var map: MTLTexture
 }
 
 extension Renderer {

@@ -76,7 +76,7 @@ extension Renderer {
             shadowCascadeSplits: shadowCascadeSplitBounds(),
             cameraForward: frameInput.view.forward,
             shadowsEnabled: shadowsActiveThisFrame ? 1 : 0,
-            shadowInverseResolution: 1 / Float(ShadowConstant.mapResolution.rawValue),
+            shadowInverseResolution: 1 / Float(shadow.map.width),
             shadowSampleRadius: shadowSampleRadius,
             weatherSkyEnabled: weatherSky == nil ? 0 : skyCelestial != nil
                 && frameCelestial != nil ? 2 : 1,

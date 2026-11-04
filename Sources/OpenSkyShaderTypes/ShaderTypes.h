@@ -153,7 +153,6 @@ typedef NS_ENUM(EnumBackingType, LightingConstant)
 typedef NS_ENUM(EnumBackingType, ShadowConstant)
 {
     ShadowConstantCascadeCount = 3,
-    ShadowConstantMapResolution = 2048,
 };
 
 typedef NS_ENUM(EnumBackingType, SamplerIndex)
@@ -322,7 +321,7 @@ typedef struct
     vector_float3 cameraForward;
     /// 0 -> shaders skip shadow sampling entirely (map may be stale/empty).
     unsigned int shadowsEnabled;
-    /// 1.0 / ShadowConstantMapResolution — PCF tap offset in UV space.
+    /// 1.0 / the shadow map width — PCF tap offset in UV space.
     float shadowInverseResolution;
     /// PCF kernel radius: 0 -> one hardware depth-compare tap; r > 0 -> a
     /// (2r+1)^2 tap box (1 gives 3x3). Read only when shadowsEnabled != 0.
