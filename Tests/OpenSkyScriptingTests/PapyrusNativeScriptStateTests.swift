@@ -28,7 +28,8 @@ struct PapyrusNativeScriptStateTests {
         fixture.session.worldState.component(ScriptedReferenceState.self, for: fixture.key)
     }
 
-    @Test func aFlagIsSetReadAndClearedToNoState() throws {
+    /// Ghost is also a record flag, so clearing it stores false: that hides the record's flag.
+    @Test func aRecordFlagIsSetReadAndClearedToFalse() throws {
         let fixture = try Fixture.make()
         #expect(call(fixture, "Actor", "IsGhost", returnType: .boolean) ==
             .returned(.boolean(false)))
@@ -38,7 +39,7 @@ struct PapyrusNativeScriptStateTests {
         #expect(call(fixture, "Actor", "SetGhost", [.boolean(false)]) == .returned(.none))
         #expect(call(fixture, "Actor", "IsGhost", returnType: .boolean) ==
             .returned(.boolean(false)))
-        #expect(state(fixture) == nil)
+        #expect(state(fixture)?.flag(ScriptedStateName.ghost) == false)
     }
 
     @Test func valuesAndFormLinksReadBack() throws {

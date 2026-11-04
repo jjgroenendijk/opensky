@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScriptingInterface
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {
@@ -20,7 +21,11 @@ extension PapyrusWorldStateBridge {
             for key in store.sortedDirtyKeys() {
                 states[key] = store.component(ScriptedReferenceState.self, for: key)
             }
-            return ScriptedStateConditionResolution(states: states)
+            var equipped: [ReferenceKey: ReferenceKey] = [:]
+            for entry in references?.residentEntries() ?? [] where entry.placedActor != nil {
+                equipped[entry.key] = equippedShout(of: entry.key)
+            }
+            return ScriptedStateConditionResolution(states: states, equippedShouts: equipped)
         }
     }
 

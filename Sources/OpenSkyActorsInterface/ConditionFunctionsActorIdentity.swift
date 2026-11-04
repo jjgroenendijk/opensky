@@ -74,9 +74,11 @@ nonisolated extension ConditionFunctions {
         installRecordFlags(&registry)
     }
 
-    /// The base record's `ACBS` flags (<https://ck.uesp.net/wiki/IsEssential>).
+    /// The base record's `ACBS` flags with what scripts and quest aliases changed
+    /// (<https://ck.uesp.net/wiki/IsEssential>, <https://ck.uesp.net/wiki/GetIsGhost>).
     private static func installRecordFlags(_ registry: inout ConditionFunctionRegistry) {
         let flags: [String: (UInt16, ActorBase.Flags)] = [
+            "GetIsGhost": (237, .ghost),
             "IsEssential": (354, .essential),
             "IsProtected": (476, .protected),
             "IsUnique": (641, .unique)

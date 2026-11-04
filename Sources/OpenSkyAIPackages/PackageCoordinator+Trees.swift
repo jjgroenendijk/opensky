@@ -77,7 +77,7 @@ extension PackageCoordinator {
         case .fighting:
             return package.general.flags.contains(.ignoreCombat)
                 || runtime.source(for: actor) == .situation(.combat)
-        case .dead: return false
+        case .dead, .aiDisabled: return false
         }
     }
 

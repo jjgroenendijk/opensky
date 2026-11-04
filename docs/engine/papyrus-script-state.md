@@ -34,12 +34,12 @@ Signatures and defaults are from the Creation Kit wiki script pages, for example
 
 | Script | Setters | Reads |
 | --- | --- | --- |
-| `Actor` | `SetGhost`, `SetPlayerTeammate`, `SetDoingFavor`, `SetAlert`, `SetAllowFlying`, `SetIntimidated`, `SetBribed`, `SetUnconscious` | `IsGhost`, `IsPlayerTeammate`, `IsDoingFavor`, `IsAlerted`, `IsAllowedToFly`, `IsIntimidated`, `IsBribed`, `IsUnconscious` |
-| `Actor` | `SetRestrained`, `SetNoBleedoutRecovery`, `SetNotShowOnStealthMeter`, `SetDontMove`, `SetAttackActorOnSight`, `SetHeadTracking`, `SetPlayerResistingArrest`, `AllowBleedoutDialogue`, `AllowPCDialogue` | none |
-| `Actor` | `EnableAI(bool abEnable = true)` | `IsAIEnabled` |
+| `Actor` | `SetPlayerTeammate`, `SetDoingFavor`, `SetAlert`, `SetAllowFlying`, `SetIntimidated`, `SetBribed`, `SetUnconscious` | `IsGhost`, `IsPlayerTeammate`, `IsDoingFavor`, `IsAlerted`, `IsAllowedToFly`, `IsIntimidated`, `IsBribed`, `IsUnconscious` |
+| `Actor` | `SetRestrained`, `SetNoBleedoutRecovery`, `SetDontMove`, `SetAttackActorOnSight`, `SetHeadTracking`, `SetPlayerResistingArrest`, `AllowBleedoutDialogue`, `AllowPCDialogue` | none |
+| `Actor` | `EnableAI(bool abEnable = true)` | `IsAIEnabled`, the AI packages, and combat |
 | `Actor` | `SetAlpha`, `SetVoiceRecoveryTime`, `SetCriticalStage` | `GetVoiceRecoveryTime` |
 | `Actor` | `SetForcedLandingMarker`, `SetCrimeFaction`, `SetLookAt`, `ClearLookAt` | `GetCrimeFaction` |
-| `ActorBase` | `SetEssential`, `SetInvulnerable`, `SetProtected` | none |
+| `Actor`, `ActorBase` | `SetGhost`, `SetNotShowOnStealthMeter`, `SetEssential`, `SetInvulnerable`, `SetProtected` | see [record flags](#record-flags) |
 | `ObjectReference` | `IgnoreFriendlyHits`, `SetNoFavorAllowed`, `BlockActivation` | `IsActivationBlocked` |
 | `Location` | `SetCleared`, `SetKeywordData(Keyword, float)` | `IsCleared`, `GetKeywordData(Keyword)` |
 | `Cell` | `SetPublic` | none |
@@ -55,6 +55,17 @@ The engine writes some entries itself, for conditions that ask about the past: t
 an actor, the player's friendly hits, the last actor that hit the player, and the destruction
 progress ([recorded events](/engine/condition-functions-world.md#recorded-events),
 [Papyrus destruction](/engine/papyrus-destruction.md)).
+
+## Record flags
+
+Five setters change a flag the `ACBS` of the `NPC_` record also holds: ghost, not shown on
+the stealth meter, essential, protected, and invulnerable. `SetGhost` and
+`SetNotShowOnStealthMeter` change the one actor. The `ActorBase` setters change every actor
+of the base. A read starts from the record's flags, applies what a script set or cleared, and
+then adds the essential and protected flags of every quest alias that holds the actor
+(<https://ck.uesp.net/wiki/SetEssential_-_ActorBase>). `IsGhost`, `IsEssential`, the condition
+functions `GetIsGhost`, `IsEssential`, and `IsProtected`, and the bleedout rule all read the
+same result.
 
 ## Faction reactions
 
@@ -73,8 +84,10 @@ and in `GetReaction` ([hostility](/engine/hostility.md)).
 ## Words and shouts
 
 `Game.TeachWord(WordOfPower)` and `Game.UnlockWord(WordOfPower)` set a flag per word on the
-player, and `Game.IsWordUnlocked` reads the second. `Actor.AddShout`, `RemoveShout`,
+player, and `Game.IsWordUnlocked` reads the second. `UnlockWord` also teaches the word
+(<https://ck.uesp.net/wiki/UnlockWord_-_Game>). `Actor.AddShout`, `RemoveShout`,
 `EquipShout`, `UnequipShout`, and `GetEquippedShout` keep the shouts an actor knows and wears.
+They count the shouts the actor's record gives as well as the ones a script added.
 `RemoveShout` answers whether the actor knew the shout, and takes it off when it was equipped.
 The [shout runtime](/engine/shouts.md) reads them to know which words the player may shout.
 
@@ -106,20 +119,17 @@ has every group locked (see [Player death](/engine/ragdoll.md#player-death)).
 `FormList.AddForm` appends a form once. `RemoveAddedForm` removes a form a script added, and
 `Revert` removes every added form. The `FormList` reads see the plugin entries first, then the
 added forms. `LeveledItem`, `LeveledActor`, and `LeveledSpell` keep `AddForm` and `Revert` the same
-way.
+way, and each added entry keeps its level and, for `LeveledItem`, its count. The leveled roll
+reads the added entries ([leveled lists](/engine/leveled-lists.md#script-changes)).
 
 ## Where OpenSky differs
 
-- The state is recorded, and in most cases nothing else reads it yet. The AI does not read
-  `EnableAI`, the HUD does not read `SetNotShowOnStealthMeter`, and leveled lists do not read
-  added forms. The input layer reads the player controls.
-- A read does not fall back to the record. `IsGhost` on an actor whose `NPC_` record has the ghost
-  flag reads false until a script sets it.
-- `UnlockWord` does not also teach the word. No source this project checked says whether it
-  does.
-- A shout an actor's record gives is not known to `RemoveShout` or `GetEquippedShout`; only
-  the shouts a script added are.
-- A leveled-list entry keeps its form, not its level or count.
+- The state is recorded, and in most cases nothing else reads it yet. The HUD has no stealth
+  meter, so `SetNotShowOnStealthMeter` changes only the flag reads. The input layer reads the
+  player controls.
+- The condition function `GetEquippedShout` sees a record shout of an actor that was resident
+  when the script state last changed. An actor that loaded after that change answers only the
+  shout a script equipped.
 - No open source says where `AddForm` puts a form in `GetAt` order. OpenSky puts it after the
   plugin entries.
 - `SetCrimeFaction(None)` removes the script's faction, so `GetCrimeFaction` answers the `CRIF`

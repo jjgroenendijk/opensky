@@ -12,9 +12,20 @@ nonisolated public struct ScriptedStateConditionResolution: ConditionResolution,
     public static let empty = ScriptedStateConditionResolution(states: nil)
 
     private let states: [ReferenceKey: ScriptedReferenceState]?
+    /// The shout each resident actor has ready, the record's one included.
+    private let equippedShouts: [ReferenceKey: ReferenceKey]
 
-    public init(states: [ReferenceKey: ScriptedReferenceState]?) {
+    public init(
+        states: [ReferenceKey: ScriptedReferenceState]?,
+        equippedShouts: [ReferenceKey: ReferenceKey] = [:]
+    ) {
         self.states = states
+        self.equippedShouts = equippedShouts
+    }
+
+    /// A script's `EquipShout` first, then what the actor readied when the state was built.
+    public func equippedShout(of key: ReferenceKey) -> ReferenceKey? {
+        state(of: key)?.form(ScriptedStateName.equippedShout) ?? equippedShouts[key]
     }
 
     /// The state of `key`, empty when no script changed it. Nil when nothing was wired.
@@ -44,6 +55,14 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let cleared = "cleared"
     public static let essential = "essential"
     public static let protected = "protected"
+    /// On an actor: `UnequipShout` took off the shout its record readies.
+    public static let shoutUnequipped = "shoutUnequipped"
+    /// On an actor: `EnableAI(false)` stopped its AI.
+    public static let aiDisabled = "aiDisabled"
+    /// On the actor's base: `ActorBase.SetInvulnerable`.
+    public static let invulnerable = "invulnerable"
+    /// On an actor: `Actor.SetNotShowOnStealthMeter`.
+    public static let notShowOnStealthMeter = "notShowOnStealthMeter"
     public static let equippedShout = "equippedShout"
     public static let doingFavor = "doingFavor"
     public static let talkedToPlayer = "talkedToPlayer"
@@ -96,7 +115,6 @@ nonisolated extension ConditionFunctions {
         // The run-on's flag, false until a script sets it, as the matching native reads.
         let flags: [String: (index: UInt16, flag: String)] = [
             "GetIsAlerted": (91, ScriptedStateName.alerted),
-            "GetIsGhost": (237, ScriptedStateName.ghost),
             "GetRestrained": (244, ScriptedStateName.restrained),
             "IsBribedbyPlayer": (402, ScriptedStateName.bribed),
             "GetPlayerTeammate": (453, ScriptedStateName.playerTeammate),
@@ -139,8 +157,8 @@ nonisolated extension ConditionFunctions {
                 return .failure(.unresolvedParameter(579))
             }
             return call.referenceKey().flatMap { key in
-                Self.scriptState(call, of: key).map {
-                    Self.isTrue($0.form(ScriptedStateName.equippedShout) == shout)
+                Self.scriptState(call, of: key).map { _ in
+                    Self.isTrue(call.context.scriptedState.equippedShout(of: key) == shout)
                 }
             }
         })

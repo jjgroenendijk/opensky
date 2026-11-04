@@ -87,6 +87,8 @@ nonisolated public enum PackageActorActivity: Equatable, Sendable {
     case free
     case fighting
     case dead
+    /// A script's `EnableAI(false)`: the actor runs no package and stands still.
+    case aiDisabled
 }
 
 extension PackageWorld {

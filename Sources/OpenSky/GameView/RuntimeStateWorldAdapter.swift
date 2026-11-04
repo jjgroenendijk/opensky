@@ -164,9 +164,9 @@ final class RuntimeStateWorldAdapter {
         state.isInPairedAnimation = game.idleWorld.idles.pairedAnimation(of: holder.key) != nil
         state.raceKeywords = baseline.race == nil ? nil : baseline.raceKeywords
         state.injuredHealthPercent = baseline.injuredHealthPercent
-        if holder.key != .player {
-            state.recordFlags = baseline.recordFlags
-        }
+        let record = holder.key == .player ? nil : baseline.recordFlags
+        state.recordFlags = game.scripts.bridge?.actorFlags(of: holder.key, record: record)
+            ?? record
         state.action = actionFacts(of: holder.key, isDead: isDead)
         // OpenSky weighs only the player's load; an NPC carries any weight.
         state.isOverEncumbered = holder.key == .player ? playerIsOverEncumbered() : false

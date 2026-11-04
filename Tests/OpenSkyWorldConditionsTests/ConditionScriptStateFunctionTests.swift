@@ -43,14 +43,16 @@ struct ConditionScriptStateFunctionTests {
     }
 
     @Test func flagFunctionsReadTheRunOnsScriptState() throws {
-        let ghost = Self.states([Self.subject: ScriptedReferenceState(flags: ["ghost": true])])
-        #expect(try Self.evaluate(237, equals: 1, ghost) == .true)
-        #expect(try Self.evaluate(244, equals: 0, ghost) == .true)
+        let restrained = Self.states([
+            Self.subject: ScriptedReferenceState(flags: ["restrained": true])
+        ])
+        #expect(try Self.evaluate(244, equals: 1, restrained) == .true)
+        #expect(try Self.evaluate(91, equals: 0, restrained) == .true)
         let teammate = Self.states([
             Self.subject: ScriptedReferenceState(flags: ["playerTeammate": true])
         ])
         #expect(try Self.evaluate(453, equals: 1, teammate) == .true)
-        let unwired = try Self.evaluate(237, equals: 0) { _ in }
+        let unwired = try Self.evaluate(244, equals: 0) { _ in }
         #expect(unwired.failures == [.unavailableData(.scriptState)])
     }
 
@@ -105,7 +107,7 @@ struct ConditionScriptStateFunctionTests {
         )
         state.isSprinting = true
         state.isSwimming = false
-        state.recordFlags = [.essential, .unique]
+        state.recordFlags = [.essential, .unique, .ghost]
         let set = { (context: inout ConditionContext) in
             context.actors = ActorStateResolution(states: [Self.subject: state])
         }
@@ -113,6 +115,7 @@ struct ConditionScriptStateFunctionTests {
         #expect(try Self.evaluate(185, equals: 0, set) == .true)
         #expect(try Self.evaluate(354, equals: 1, set) == .true)
         #expect(try Self.evaluate(476, equals: 0, set) == .true)
+        #expect(try Self.evaluate(237, equals: 1, set) == .true)
         #expect(try Self.evaluate(641, equals: 1, set) == .true)
         state.recordFlags = nil
         let unknown = try Self.evaluate(354, equals: 0) { context in

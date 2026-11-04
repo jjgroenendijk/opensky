@@ -302,6 +302,21 @@ struct QuestAliasTests {
         #expect(snapshot.reference(alias: 0, in: quest) == key(0x0500))
     }
 
+    /// An Essential or Protected alias gives its flag to the actor it holds, and only while
+    /// the quest runs.
+    @Test func aRunningAliasGivesItsEssentialAndProtectedFlags() throws {
+        let quests = try runtime(
+            WorldStateStore(),
+            aliases: forced(id: 0, name: "Arniel", reference: arniel, flags: 1 << 6)
+                + forced(id: 1, name: "Book", reference: book, flags: 1 << 10)
+        )
+        try quests.startQuest(quest)
+        #expect(quests.aliasResolution().aliasFlags(holding: key(0x0500)) == .essential)
+        #expect(quests.aliasResolution().aliasFlags(holding: key(0x0501)) == .protected)
+        _ = try quests.stopQuest(quest)
+        #expect(quests.aliasResolution().aliasFlags(holding: key(0x0500)).isEmpty)
+    }
+
     /// The component normalizes on the way in, which is what keeps two stores
     /// that filled the same aliases byte-identical.
     @Test func theComponentSortsAndDeduplicatesItsFills() {

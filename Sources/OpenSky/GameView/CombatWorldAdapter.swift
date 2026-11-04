@@ -34,6 +34,7 @@ import OpenSkyWorldState
 /// What `CombatWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol CombatWorldHost: AnyObject {
+    var aiWorld: AIWorldAdapter { get }
     var actorGraphs: ActorGraphCoordinator { get }
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
     var actorValues: ActorValueCoordinator { get }
