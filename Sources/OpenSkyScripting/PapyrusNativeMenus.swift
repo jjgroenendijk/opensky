@@ -241,8 +241,11 @@ extension PapyrusNativeFunctions {
     private static func installIdentityNatives(into registry: inout PapyrusNativeRegistry) {
         installRaceNatives(into: &registry)
         for name in ["GetActorBase", "GetLeveledActorBase"] {
-            withReference("Actor", name, into: &registry) { _, world, _, key in
-                let base = key == .player ? FormID(0x7) : world.baseObject(of: key)
+            withReference("Actor", name, into: &registry) { _, world, menus, key in
+                var base = key == .player ? FormID(0x7) : world.baseObject(of: key)
+                if name == "GetLeveledActorBase", key != .player, let placed = base {
+                    base = menus.leveledBase(of: key, base: placed)
+                }
                 guard
                     let base, let baseKey = world.referenceKey(forFormID: base),
                     let handle = world.objectHandle(for: baseKey)

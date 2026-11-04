@@ -111,10 +111,24 @@ and the difficulty.
 hops: the list, the chosen entry, the player level it rolls at, whether that level is frozen,
 the encounter level, and the difficulty.
 
+## Script changes
+
+Scripts change a list in two ways. `AddForm` adds an entry with a level and, on a
+`LeveledItem`, a count ([Papyrus script state](/engine/papyrus-script-state.md#added-forms)).
+`GlobalVariable.SetValue` changes the global an `LVLG` names. `LeveledScriptEdits` holds both
+for the one shared roller, so every resolver sees them. The Papyrus bridge fills it after
+each `AddForm`, `Revert`, and global write, and after a load. An added entry comes after the
+plugin entries. Each change raises a revision that `LeveledRoll` carries, so memos derive
+again.
+
+Papyrus `GetLeveledActorBase` answers the `NPC_` the last leveled hop of the actor's chain
+chose (<https://ck.uesp.net/wiki/GetLeveledActorBase_-_Actor>).
+
 ## Where OpenSky differs
 
 - A frozen roll keeps the player level, not the picked entries. A record change between two
   sessions, such as a new plugin, changes what the same level picks.
-- Papyrus `GetLeveledActorBase` returns the placed base, not a rolled base, because OpenSky
-  makes no new base records.
-- `LVLG` reads the global's plugin value, not a value a script set.
+- Papyrus `GetLeveledActorBase` returns the chosen `NPC_`, not a new base record, because
+  OpenSky makes none.
+- A placed actor does not keep its picked entries. A script change to a list can change what
+  an actor already in the world picks the next time it derives.

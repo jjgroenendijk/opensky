@@ -55,9 +55,9 @@ extension PapyrusNativeFunctions {
             .returned(.boolean(bridge.scriptedState(of: key)
                     .flag(ScriptedStateName.bleedingOut) == true))
         }
-        // OpenSky has no commanded actors, so nobody is one.
-        scriptState("Actor", "IsCommandedActor", into: &registry) { _, _, _ in
-            .returned(.boolean(false))
+        // A summon or a raised corpse while its effect runs.
+        scriptState("Actor", "IsCommandedActor", into: &registry) { _, bridge, key in
+            .returned(.boolean(bridge.magicNatives.isCommandedActor?(key) ?? false))
         }
         // `AddAchievement(int)`: OpenSky reports to no platform, so nothing happens.
         registry.register(PapyrusNativeFunction(

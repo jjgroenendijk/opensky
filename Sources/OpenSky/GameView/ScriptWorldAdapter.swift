@@ -36,6 +36,7 @@ import simd
 /// What `ScriptWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol ScriptWorldHost: AnyObject {
+    var worldData: WorldDataStores? { get }
     var actorGraphs: ActorGraphCoordinator { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
@@ -122,6 +123,9 @@ final class ScriptWorldAdapter {
         wireGameNatives(bridge: bridge, provider: provider)
         bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
         bridge.formIDResolver = provider.scriptFormIDResolver
+        bridge.leveledEdits = { [weak game] in
+            game?.worldData?.actorValueBaselines?.leveling.scriptEdits
+        }
         bridge.playerNatives
             .playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
         bridge.playerNatives.dismount = { [weak game] actor in

@@ -66,15 +66,18 @@ nonisolated public struct LeveledRoll: Hashable, Sendable {
     public let playerLevel: Int
     public let encounterLevel: Int
     public let difficulty: LeveledActorDifficulty
+    /// The `LeveledScriptEdits` revision the roll saw.
+    public let revision: Int
 
     public init(
         seed: UInt64, playerLevel: Int, encounterLevel: Int,
-        difficulty: LeveledActorDifficulty = .none
+        difficulty: LeveledActorDifficulty = .none, revision: Int = 0
     ) {
         self.seed = seed
         self.playerLevel = playerLevel
         self.encounterLevel = encounterLevel
         self.difficulty = difficulty
+        self.revision = revision
     }
 
     /// What an item or spell list asks at.
@@ -98,17 +101,20 @@ nonisolated public struct LeveledListRoller: Sendable {
     public let playerLevel: PlayerLevelSource
     public let settings: LeveledListSettings
     public let placements: LeveledPlacements
+    public let scriptEdits: LeveledScriptEdits
     private let chanceNoneGlobal: @Sendable (FormID) -> Float?
 
     public init(
         playerLevel: PlayerLevelSource = PlayerLevelSource(),
         settings: LeveledListSettings = .fallback,
         placements: LeveledPlacements = LeveledPlacements(),
+        scriptEdits: LeveledScriptEdits = LeveledScriptEdits(),
         chanceNoneGlobal: @escaping @Sendable (FormID) -> Float? = { _ in nil }
     ) {
         self.playerLevel = playerLevel
         self.settings = settings
         self.placements = placements
+        self.scriptEdits = scriptEdits
         self.chanceNoneGlobal = chanceNoneGlobal
     }
 
@@ -149,7 +155,8 @@ nonisolated public struct LeveledListRoller: Sendable {
             encounterLevel: EncounterLevel.level(
                 playerLevel: playerLevel, zone: placement?.zone, settings: settings
             ),
-            difficulty: placement?.difficulty ?? .none
+            difficulty: placement?.difficulty ?? .none,
+            revision: scriptEdits.revision
         )
     }
 
@@ -158,9 +165,11 @@ nonisolated public struct LeveledListRoller: Sendable {
         LeveledRequest(level: max(1, level), playerLevel: playerLevel.level)
     }
 
-    /// `LVLG` when it names a global with a value, else `LVLD`.
+    /// `LVLG` when it names a global with a value, else `LVLD`. A script's value of
+    /// the global wins over the plugin's.
     public func chanceNone(of list: LeveledList) -> Float {
-        list.chanceNoneGlobal.flatMap(chanceNoneGlobal) ?? Float(list.chanceNone)
+        guard let global = list.chanceNoneGlobal else { return Float(list.chanceNone) }
+        return scriptEdits.global(global) ?? chanceNoneGlobal(global) ?? Float(list.chanceNone)
     }
 
     /// `count` asked of `list` by the owner `seed` names.
@@ -169,7 +178,8 @@ nonisolated public struct LeveledListRoller: Sendable {
     ) -> [LeveledPick] {
         var random = SplitMix64(seed: LeveledListRoll.seed(seed, UInt64(list.formID.rawValue)))
         return LeveledListRoll.roll(
-            list, count: count, request: request, chanceNone: chanceNone(of: list),
+            scriptEdits.edited(list), count: count, request: request,
+            chanceNone: chanceNone(of: list),
             settings: settings.specialLoot, random: &random
         )
     }
@@ -178,7 +188,7 @@ nonisolated public struct LeveledListRoller: Sendable {
     public func actorEntry(_ list: LeveledList, roll: LeveledRoll) -> LeveledList.Entry? {
         var random = SplitMix64(seed: LeveledListRoll.seed(roll.seed, UInt64(list.formID.rawValue)))
         return LeveledListRoll.actorEntry(
-            list,
+            scriptEdits.edited(list),
             encounterLevel: roll.encounterLevel,
             difficulty: roll.difficulty,
             settings: settings,

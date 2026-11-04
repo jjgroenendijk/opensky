@@ -37,6 +37,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Quest mutation API for the `Quest` natives. Nil without QUST data, where they fail
     /// with `PapyrusQuestBridgeError.noQuestData`. See `PapyrusWorldStateBridgeQuests.swift`.
     public var questRuntime: (any QuestAccess)?
+    /// The shared roller's script changes; nil in a session without leveled lists.
+    public var leveledEdits: () -> LeveledScriptEdits? = { nil }
     /// Quests whose alias fill failed while scripts were attached at wire-up. Counted,
     /// not thrown: a quest running from its DNAM flag has no `Start` call to refuse.
     public var questAliasFillFailures = 0
