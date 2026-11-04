@@ -124,6 +124,7 @@ typedef NS_ENUM(EnumBackingType, PostEffectFlag)
     PostEffectFlagVolumetricLight = 1 << 1,
     PostEffectFlagDepthOfField = 1 << 2,
     PostEffectFlagLensFlare = 1 << 3,
+    PostEffectFlagAntiAliasing = 1 << 4,
 };
 
 /// The screen-space effects of the image-space composite (docs/rendering/post-effects.md).

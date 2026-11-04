@@ -87,7 +87,8 @@ fragment float4 imageSpaceFragment(
     float2 size = float2(scene.get_width(), scene.get_height());
     float2 texel = 1.0 / size;
     float2 uv = in.position.xy * texel;
-    float3 color = scene.sample(linearClamp, uv).rgb;
+    float3 color = (post.effects & PostEffectFlagAntiAliasing) != 0 ? postFXAA(scene, uv, texel)
+                                                            : scene.sample(linearClamp, uv).rgb;
     imageSpaceMeasure(in.position.xy, color, uniforms, luminance);
     if (uniforms.grading.w > 0.5) {
         color = imageSpaceBlur(scene, linearClamp, uv, texel, uniforms.grading.w, color);

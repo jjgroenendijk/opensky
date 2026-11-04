@@ -14,12 +14,14 @@ nonisolated public struct PostEffectSettings: Equatable, Sendable {
     public var depthOfField = false
     /// `[ImageSpace] bLensFlare`.
     public var lensFlare = false
+    /// `[Display] bFXAAEnabled`.
+    public var fxaa = false
 
     public init() {}
 
     /// Whether the composite must read neighbour pixels and the scene depth.
     public var isActive: Bool {
-        ambientOcclusion || volumetricLight || depthOfField || lensFlare
+        ambientOcclusion || volumetricLight || depthOfField || lensFlare || fxaa
     }
 
     /// Cascade taps along each pixel's ray, by quality; unverified.

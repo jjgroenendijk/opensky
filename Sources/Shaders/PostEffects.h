@@ -36,6 +36,41 @@ static inline float3 postNeighbourStep(float3 world, float3 ahead, float3 behind
     return dot(forward, forward) < dot(back, back) ? forward : back;
 }
 
+// Perceptual brightness: the square root of linear luminance.
+static inline float postLuma(float3 color)
+{
+    return sqrt(max(dot(color, float3(0.2126, 0.7152, 0.0722)), 0.0));
+}
+
+// FXAA (fast approximate anti-aliasing): where the four diagonal neighbours differ in
+// brightness, find the edge direction from them and average along it.
+static inline float3 postFXAA(texture2d<float> scene, float2 uv, float2 texel)
+{
+    float3 middle = scene.sample(postLinear, uv).rgb;
+    float northWest = postLuma(scene.sample(postLinear, uv + float2(-1, -1) * texel).rgb);
+    float northEast = postLuma(scene.sample(postLinear, uv + float2(1, -1) * texel).rgb);
+    float southWest = postLuma(scene.sample(postLinear, uv + float2(-1, 1) * texel).rgb);
+    float southEast = postLuma(scene.sample(postLinear, uv + float2(1, 1) * texel).rgb);
+    float centre = postLuma(middle);
+    float lowest = min(centre, min(min(northWest, northEast), min(southWest, southEast)));
+    float highest = max(centre, max(max(northWest, northEast), max(southWest, southEast)));
+    if (highest - lowest < max(0.0312, highest * 0.125)) {
+        return middle;
+    }
+    float2 direction = float2(
+        (southWest + southEast) - (northWest + northEast),
+        (northWest + southWest) - (northEast + southEast));
+    float reduce = max((northWest + northEast + southWest + southEast) * 0.03125, 1.0 / 128.0);
+    float scale = 1.0 / (min(abs(direction.x), abs(direction.y)) + reduce);
+    direction = clamp(direction * scale, -8.0, 8.0) * texel;
+    float3 near = 0.5 * (scene.sample(postLinear, uv - direction / 6.0).rgb
+                         + scene.sample(postLinear, uv + direction / 6.0).rgb);
+    float3 wide = near * 0.5 + 0.25 * (scene.sample(postLinear, uv - direction * 0.5).rgb
+                                       + scene.sample(postLinear, uv + direction * 0.5).rgb);
+    float wideLuma = postLuma(wide);
+    return (wideLuma < lowest || wideLuma > highest) ? near : wide;
+}
+
 typedef struct
 {
     float2 uv;

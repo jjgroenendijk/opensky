@@ -48,6 +48,9 @@ extension Renderer {
                 PostEffectSettings.depthOfFieldRadius * Float(targetHeight) / 1080
             )
         }
+        if postEffects.fxaa {
+            uniforms.effects |= UInt32(PostEffectFlag.antiAliasing.rawValue)
+        }
         if postEffects.lensFlare, let sun = sunScreenPosition(viewProjection) {
             uniforms.effects |= UInt32(PostEffectFlag.lensFlare.rawValue)
             uniforms.lensFlare = SIMD4(

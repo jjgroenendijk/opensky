@@ -2,7 +2,7 @@
 type: Subsystem
 title: Screen-space post effects
 description: The effects the image-space composite draws from the scene colour and depth -
-  ambient occlusion, volumetric light, depth of field, and lens flare - which game option turns each one on, and its values.
+  FXAA, ambient occlusion, volumetric light, depth of field, and lens flare - which game option turns each one on, and its values.
 tags: [rendering, image-space, metal]
 ---
 
@@ -19,6 +19,20 @@ shader.
 The shader rebuilds a pixel's world position from its depth with the inverse of the frame's
 view-projection matrix. Upscaled frames add a sub-pixel jitter, which this matrix leaves out.
 A frame with no perspective projection, or in a render debug view, draws no effect.
+
+## FXAA
+
+`[Display] bFXAAEnabled`. FXAA (fast approximate anti-aliasing) smooths stair-step edges. It
+runs first, on the colour the other effects start from.
+
+- The brightness of a pixel is the square root of its linear luminance.
+- Where the pixel and its 4 diagonal neighbours differ by less than 0.0312, or less than 1/8
+  of the brightest, the pixel stays as it is.
+- Otherwise the neighbours give the edge direction. Two taps at 1/6 of the step average to a
+  near result, and two more at 1/2 widen it. The wide result wins unless its brightness
+  leaves the neighbours' range.
+
+With an upscaler on, FXAA runs on the smaller scene image, before the upscaler.
 
 ## Ambient occlusion
 
