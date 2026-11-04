@@ -59,7 +59,7 @@ extension PapyrusNativeFunctions {
         into registry: inout PapyrusNativeRegistry
     ) {
         registerMutation(&registry, ["Start"]) { _, world, key in
-            try .returned(.boolean(world.startQuest(for: key)))
+            try latent(.boolean(world.startQuest(for: key)), quest: key, world: world)
         }
         registerMutation(&registry, ["Stop"]) { _, world, key in
             try world.stopQuest(for: key)
@@ -81,8 +81,22 @@ extension PapyrusNativeFunctions {
             guard let stage = stageArgument(call, at: 0) else {
                 return failure(call, "\(call.functionName) needs a stage index")
             }
-            return try .returned(.boolean(world.setQuestStage(stage, for: key)))
+            return try latent(
+                .boolean(world.setQuestStage(stage, for: key)),
+                quest: key,
+                world: world
+            )
         }
+    }
+
+    /// The answer once the fragments the call queued have run.
+    private static func latent(
+        _ value: PapyrusValue, quest: ReferenceKey, world: any PapyrusWorldBridge
+    ) -> PapyrusNativeResult {
+        guard let runtime = (world as? PapyrusWorldStateBridge)?.world else {
+            return .returned(value)
+        }
+        return runtime.awaitQuestFragments(of: quest, answering: value)
     }
 
     /// `SetObjectiveDisplayed(int aiObjective, bool abDisplayed = true, bool

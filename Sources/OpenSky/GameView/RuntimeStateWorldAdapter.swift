@@ -386,6 +386,8 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         // queued cell rebuilds re-attach scripts.
         game.scripts.restore(instances: file.scripts, timers: file.timers)
         game.scripts.bridge?.publishFactionReactions()
+        game.scripts.bridge?.publishLeveledEdits()
+        restoreRuntimeExtras()
         game.combatWorld.run(game.combat.prepareForPersistence())
         game.messages.reloadHelpRecords()
         game.questNotices.reset()

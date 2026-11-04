@@ -207,7 +207,8 @@ alone.
 - A detection event holds the refill for `fCombatStealthPointRegenDetectedEventWaitTime` (10). The
   CK wiki says a projectile that hits something makes a detection event. OpenSky makes one when
   the target's projectile lands and an aggressive observer is in detection range of the impact.
-  The wiki also has the event put the observer in its Alert state; OpenSky does not do that yet.
+  The event also puts each such observer in its Alert state: an unaware observer becomes
+  suspicious of the target, and the impact is the place it searches.
 
 The pool sets the pair's state, which combat reads. Crime witnesses read the level's own state,
 because the wiki says the pool is for aggression, not for seeing a theft.

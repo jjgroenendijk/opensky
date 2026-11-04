@@ -26,6 +26,8 @@ extension PapyrusWorldRuntime {
         var dispatched = 0
         var faulted = resumes.faulted
         drainQueue(dispatched: &dispatched, faulted: &faulted)
+        answerLatentQuestWaits()
+        retireShutDownQuests()
         retireDrainedInstances()
         let report = PapyrusTickReport(
             steps: 1,

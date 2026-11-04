@@ -289,7 +289,14 @@ extension StoryWorldAdapter: SceneWorld {
     }
 
     /// The line's seconds plus `fGameplayVoiceFilePadding`, the gap before the next line.
+    /// A speaker with no loaded body ends the line at once, as the reference game does.
     func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
+        if
+            speaker != .player, let streamer = game.streamer,
+            streamer.residentActorEntry(key: speaker) == nil
+        {
+            return 0
+        }
         let texts = responseTexts(of: info)
         let speech = game.dialogue.speechTimers
         let seconds = voiceTimer.map {

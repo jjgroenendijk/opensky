@@ -19,11 +19,15 @@ nonisolated extension DialogueMenuModel {
     public static func rowText(
         topic: DialogueTopic,
         info: TopicInfo?,
+        shared: TopicInfo? = nil,
         strings: LocalizedStrings?
     ) -> String {
-        let prompt = text(info?.prompt, kind: .strings, strings: strings)
-        if let prompt, !prompt.isEmpty {
-            return prompt
+        // An INFO with no prompt of its own shows the prompt of the INFO it shares.
+        for source in [info, shared] {
+            let prompt = text(source?.prompt, kind: .strings, strings: strings)
+            if let prompt, !prompt.isEmpty {
+                return prompt
+            }
         }
         let name = text(topic.name, kind: .strings, strings: strings)
         if let name, !name.isEmpty {
@@ -77,10 +81,12 @@ extension DialogueMenuModel {
         selection.offers.compactMap { offer in
             guard let topic = runtime.dialogue.topic(offer.topic) else { return nil }
             let info = runtime.dialogue.info(offer.info)
+            let shared = runtime.dialogue.responseSource(ofInfo: offer.info)
             return DialogueTopicEntry(
                 info: offer.info,
-                text: rowText(topic: topic, info: info, strings: strings),
-                endsConversation: info?.flags.contains(.goodbye) ?? false
+                text: rowText(topic: topic, info: info, shared: shared, strings: strings),
+                endsConversation: info?.flags.contains(.goodbye) ?? false,
+                isNew: !runtime.hasBeenSaid(offer.info)
             )
         }
     }

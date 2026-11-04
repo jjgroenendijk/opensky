@@ -101,9 +101,9 @@ the index. OpenSky writes `iSelectedIndex` and then calls `UpdateList`, which mo
 clips.
 
 Row fields are `text`, `topicIndex`, `topicIsNew`, and `responseHash`. The list draws a row
-through the entry clip's own `SetEntryText`, not by reading named fields. `topicIsNew` is always
-false: OpenSky does not track whether the player heard a topic, and "said" state per `INFO` is a
-different question. `responseHash` carries the winning `INFO` FormID.
+through the entry clip's own `SetEntryText`, not by reading named fields. `topicIsNew` is true
+until the winning `INFO` has been said, read from its [said-state](/engine/dialogue.md#said-state).
+`responseHash` carries the winning `INFO` FormID.
 
 ## Who owns the selection
 

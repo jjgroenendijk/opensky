@@ -21,6 +21,8 @@ public final class CrimeReporter: CrimeReporting {
     public weak var world: (any CrimeWorld)?
     /// Takes `ADCR` and `ASSU`.
     public weak var storyEvents: (any StoryEventReporting)?
+    /// The kind of the last crime that cost gold in each crime faction, for `ARRT`.
+    public private(set) var lastCrimeTypes: [ReferenceKey: StoryCrimeType] = [:]
     /// The crime faction and the gold, each time a crime by the player costs gold.
     public var onPlayerBounty: ((ReferenceKey, Int32) -> Void)?
     /// Each crime that cost gold, with who saw it, so the report can wait for a guard.
@@ -226,6 +228,7 @@ public final class CrimeReporter: CrimeReporting {
             default: runtime.witnesses.witnesses(of: event.perpetrator)
             }
             onCrimeCharged?(event, outcome, witnesses)
+            lastCrimeTypes[faction] = event.kind.storyCrimeType
             storyEvents?.reportStoryEvent(.crimeGold(
                 criminal: event.perpetrator,
                 victim: event.victim,

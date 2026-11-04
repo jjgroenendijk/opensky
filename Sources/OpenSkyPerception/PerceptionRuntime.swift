@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import simd
 
 @MainActor
@@ -106,20 +107,6 @@ public final class PerceptionRuntime {
     /// `target` struck someone: its pool waits `fCombatStealthPointRegenAttackedWaitTime`.
     public func noteAttack(by target: ReferenceKey) {
         holdRefill(of: target, for: stealthPoints.attackedWait)
-    }
-
-    /// A detection event of `owner` at `position`, such as a landed arrow (CK wiki
-    /// "Category:Detection"). An aggressive observer within range makes the pool wait.
-    public func noteDetectionEvent(owner: ReferenceKey, at position: SIMD3<Float>) {
-        let heard = observers.contains { observer in
-            observer.isAggressive && observer.key != owner
-                && DetectionFormula.isInRange(
-                    distance: simd_distance(observer.feet, position), settings: settings,
-                    isExterior: observer.isExterior, isFlying: observer.isFlying
-                )
-        }
-        guard heard else { return }
-        holdRefill(of: owner, for: stealthPoints.detectedEventWait)
     }
 
     private func holdRefill(of target: ReferenceKey, for seconds: Float) {
@@ -336,3 +323,31 @@ public final class PerceptionRuntime {
 }
 
 extension PerceptionRuntime: DetectionObserving {}
+
+extension PerceptionRuntime {
+    /// A detection event of `owner` at `position`, such as a landed arrow (CK wiki
+    /// "Category:Detection"). An aggressive observer within range makes the pool wait
+    /// and turns alert: suspicious of the owner, with the event as the place to search.
+    public func noteDetectionEvent(owner: ReferenceKey, at position: SIMD3<Float>) {
+        let hearing = observers.filter { observer in
+            observer.isAggressive && observer.key != owner
+                && DetectionFormula.isInRange(
+                    distance: simd_distance(observer.feet, position), settings: settings,
+                    isExterior: observer.isExterior, isFlying: observer.isFlying
+                )
+        }
+        guard !hearing.isEmpty else { return }
+        holdRefill(of: owner, for: stealthPoints.detectedEventWait)
+        for observer in hearing {
+            let key = DetectionPairKey(observer: observer.key, target: owner)
+            var pair = pairs[key] ?? .unaware
+            if pair.state == .unaware {
+                pair.level = max(pair.level, settings.suspiciousLevel.value)
+                pair.state = .suspicious
+                pair.levelState = .suspicious
+            }
+            pair.lastKnownPosition = position
+            pairs[key] = pair
+        }
+    }
+}

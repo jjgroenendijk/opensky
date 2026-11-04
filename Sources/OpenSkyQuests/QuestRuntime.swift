@@ -181,7 +181,7 @@ public struct QuestRuntime: QuestAccess {
             state = state.starting()
         }
         state = state.reachingStage(index)
-        if !before.isStageDone(index) {
+        if !before.isStageDone(index) || resolved.quest.allowsRepeatedStages {
             state = state.applying(items ?? stage.defaultItems, of: stage)
         }
         if flags.contains(.shutDownStage) {

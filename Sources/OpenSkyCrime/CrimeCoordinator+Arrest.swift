@@ -103,14 +103,15 @@ extension CrimeCoordinator: CrimeArrestSession {
     }
 
     /// `ARRT`, and `JAIL` when the player serves time. The location is left for
-    /// the story manager to fill. `ARRT` names no crime type yet.
+    /// the story manager to fill. `ARRT` names the faction's last crime that cost gold.
     private func reportArrest(_ settlement: ArrestSettlement) {
         guard
             case let .confront(guardKey, faction, _) = guards.active,
             faction == settlement.faction
         else { return }
         storyEvents?.reportStoryEvent(.arrest(
-            guardActor: guardKey, criminal: .player, location: nil, crime: .steal
+            guardActor: guardKey, criminal: .player, location: nil,
+            crime: reporter?.lastCrimeTypes[faction] ?? .steal
         ))
         guard settlement.sentenceDays > 0 else { return }
         storyEvents?.reportStoryEvent(.jail(

@@ -27,6 +27,10 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         didSet {
             world?.attachOnUse = { [weak self] in self?.attachOnUse($0) ?? false }
             world?.scriptsOfTarget = { [weak self] in self?.scriptsOfTarget($0) ?? [] }
+            world?.isQuestRunning = { [weak self] key in
+                guard let self, let resolved = try? resolveQuest(key) else { return false }
+                return (try? resolved.runtime.state(of: resolved.quest.formID))?.isRunning ?? false
+            }
         }
     }
 

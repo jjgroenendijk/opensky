@@ -79,14 +79,14 @@ when it has no `R1`.
 | `CRFT` | The player crafts an item | `R1` player, `R2` workbench, `O1` the created base object |
 | `ASSU` | An assault is reported | `R1` attacker, `R2` victim |
 | `ADCR` | A crime costs crime gold | `R1` criminal, `R2` victim, `F1` crime faction, `V1` gold, `V2` crime type |
-| `ARRT` | The player accepts an arrest | `R1` guard, `R2` player, `V1` crime type, always 0 |
+| `ARRT` | The player accepts an arrest | `R1` guard, `R2` player, `V1` crime type |
 | `JAIL` | The arrest sends the player to jail | `R1` guard, `F1` crime faction, `V1` bounty |
 | `ESJA` | The player leaves the jail cell without serving | `R1` player, `F1` crime faction |
 | `STIJ` | The player serves a sentence | `F1` crime faction, `V1` bounty, `V2` days |
 | `LOCK` | The player picks a lock | `R1` player, `R2` the locked reference |
 | `CAST` | The player casts a spell | `R1` player, `R2` aimed target, `F1` spell |
-| `AIPL` | The player takes, steals, pickpockets, or buys an item | `R1` source container, `F1` item, `V1` acquire type |
-| `REMP` | The player drops, stores, or sells an item | `R1` container, `F1` item, `V1` remove type |
+| `AIPL` | The player takes, steals, pickpockets, or buys an item | `R1` source container, `R2` owner, `F1` item, `V1` acquire type |
+| `REMP` | The player drops, stores, or sells an item | `R1` container, `R2` owner, `F1` item, `V1` remove type |
 | `CHRR` | A script changes a relationship rank | `R1`, `R2` the actors, `V1` old rank, `V2` new rank |
 | `ADIA` | Two actors start a conversation | `R1` the speaker, `R2` the listener |
 | `AHEL` | An actor says hello in passing | `R1` the walker, `R2` the actor greeted |
@@ -175,6 +175,8 @@ starts `EscapeJailAchievementQuest` and `EscapeJailQuest`, with no condition fai
 ## Not done yet
 
 - The events in "Events that do not fire from play" above.
-- `AIPL` and `REMP` name no owner in `R2`, and eating and items a script moves fire neither
-  event.
-- `ARRT` names no crime type, because the bounty does not record which crime it is for.
+- `AIPL` and `REMP` name the owner in `R2` only for a pickpocket, a trade, and a container an
+  actor owns. An item picked up from the world, and a faction's container, name no owner.
+  Eating and items a script moves fire neither event.
+- `ARRT` names the kind of the faction's last crime that cost gold. The bounty does not record
+  which crimes it is for, and a load forgets the kind, so it reads steal then.

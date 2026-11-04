@@ -20,11 +20,14 @@ nonisolated public struct DialogueTopicEntry: Equatable, Sendable {
     /// Whether the winning response ends the conversation, so a goodbye row can
     /// be told apart from one that leads on without choosing it first.
     public let endsConversation: Bool
+    /// Whether the player has not heard the winning response yet; the row shows bright.
+    public let isNew: Bool
 
-    public init(info: FormID, text: String, endsConversation: Bool) {
+    public init(info: FormID, text: String, endsConversation: Bool, isNew: Bool = false) {
         self.info = info
         self.text = text
         self.endsConversation = endsConversation
+        self.isNew = isNew
     }
 }
 

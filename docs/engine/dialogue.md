@@ -287,12 +287,16 @@ Who speaks:
 The ambient pass runs every 15 frames. A line chosen while the delay of `fSpeechDelay` runs is
 queued; the queue is not saved.
 
+## Dialogue views
+
+Topics are scoped by branch, not by dialogue view (`DLVW`): "Dialogue Views do not have any
+in-game functional effect" ([Dialogue Views Tab](https://ck.uesp.net/wiki/Dialogue_Views_Tab)).
+
 ## Not done yet
 
-- Topics are scoped by branch, not by dialogue view (`DLVW`). Views are an editor layout, and no
-  open source says the game reads them at run time.
 - Scene topics are spoken only by the [scene runtime](/engine/scenes.md).
-- A topic row shows the chosen `INFO`'s own prompt (`RNAM`), not the shared target's.
+- A topic row shows the chosen `INFO`'s own prompt (`RNAM`), and the shared target's prompt only
+  when the `INFO` has none. No source says which the game shows.
 
 ## Measured coverage
 

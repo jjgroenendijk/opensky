@@ -203,3 +203,27 @@ struct PerceptionRuntimeTests {
         #expect(run() == run())
     }
 }
+
+extension PerceptionRuntimeTests {
+    /// A detection event puts an aggressive observer in range in its Alert state, with the
+    /// event as the place to search (CK wiki "Category:Detection").
+    @Test func aDetectionEventMakesAnAggressiveObserverSuspicious() {
+        var observer = PerceptionFixture.observer(feet: SIMD3(0, 0, 0), facing: .pi)
+        observer.isAggressive = true
+        let world = FakePerceptionWorld(
+            observers: [observer],
+            targets: [PerceptionFixture.target(
+                feet: SIMD3(3000, 0, 0),
+                gait: nil,
+                isSneaking: true
+            )]
+        )
+        let runtime = PerceptionRuntime(settings: settings, world: world)
+        advance(runtime, steps: 1)
+        let impact = SIMD3<Float>(50, 0, 0)
+        runtime.noteDetectionEvent(owner: .player, at: impact)
+        let pair = runtime.state(observer: PerceptionFixture.guardKey, target: .player)
+        #expect(pair.state == .suspicious)
+        #expect(pair.lastKnownPosition == impact)
+    }
+}
