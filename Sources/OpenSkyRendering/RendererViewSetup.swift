@@ -15,7 +15,9 @@ extension Renderer {
         view.colorspace = highDynamicRange ? CGColorSpace(name: CGColorSpace.linearSRGB) : nil
     }
 
-    public static func configure(view: MTKView) {
+    /// Returns the colour format the view draws in.
+    @discardableResult
+    public static func configure(view: MTKView) -> MTLPixelFormat {
         if view.colorPixelFormat != .rgba16Float {
             view.colorPixelFormat = .bgra8Unorm_srgb
         }
@@ -28,6 +30,7 @@ extension Renderer {
         // The image-space pass copies the drawable's color, which needs a non-framebuffer-only
         // texture.
         view.framebufferOnly = false
+        return view.colorPixelFormat
     }
 
     /// Commits the frame's last command buffer. Commit feedback reports when the GPU

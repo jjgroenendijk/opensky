@@ -53,8 +53,11 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
             layer.innerScale.y
         )
         projected = shading.projected.map {
-            RenderProjectedMaterial($0, diffuse: load($0.diffuseTexture, .color),
-                                    normal: load($0.normalTexture, .data))
+            RenderProjectedMaterial(
+                $0,
+                diffuse: load($0.diffuseTexture, .color),
+                normal: load($0.normalTexture, .data)
+            )
         }
     }
 

@@ -277,8 +277,8 @@ fragment float4 waterFragment(
     float3 sky = mix(draw.reflectionColor, frame.fogFarColor, 0.35);
     float3 mirrored = reflect(-view, normal);
     if (frame.screenSpaceReflections != 0 && draw.depthAndSun.w > 0.5) {
-        float4 hit = waterScreenReflection(
-            in.worldPosition, mirrored, frame, draw, sceneDepth, sceneColor);
+        float4 hit =
+            waterScreenReflection(in.worldPosition, mirrored, frame, draw, sceneDepth, sceneColor);
         sky = mix(sky, hit.rgb, hit.a);
     }
     float3 color = mix(body * (frame.ambientColor + frame.sunColor * 0.6), sky, reflection);

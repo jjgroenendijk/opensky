@@ -39,8 +39,8 @@ vertex ParticleVertexOut particleVertex(
 
 // Rain occlusion: the top-down view keeps the highest surface over each texel, so a
 // drop below it, by more than a little, is under a roof.
-static bool precipitationOccluded(
-    float3 world, constant FrameUniforms &frame, depth2d_array<float> auxiliary)
+static bool
+precipitationOccluded(float3 world, constant FrameUniforms &frame, depth2d_array<float> auxiliary)
 {
     if (frame.precipitationOcclusionEnabled == 0) {
         return false;
@@ -68,8 +68,8 @@ fragment float4 particleFragment(
     depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]])
 {
-    if ((effect.flags & EffectFlagPrecipitation) != 0
-        && precipitationOccluded(in.worldPosition, frame, auxiliary)) {
+    if ((effect.flags & EffectFlagPrecipitation) != 0 &&
+        precipitationOccluded(in.worldPosition, frame, auxiliary)) {
         discard_fragment();
     }
     float3 toEye = normalize(frame.cameraPosition - in.worldPosition);

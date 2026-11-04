@@ -113,6 +113,7 @@ public final class Renderer: NSObject {
     public var shadowSettings = ShadowSettings() {
         didSet { resizeShadowMapIfNeeded() }
     }
+
     /// Sun shadow switch. Default on; ANDed
     /// with `shadowQuality` so it flips shadows without discarding the tier.
     public var sunShadowsEnabled = true
@@ -319,12 +320,8 @@ public final class Renderer: NSObject {
     public let colorPixelFormat: MTLPixelFormat
     var postEffectDepth: MTLTexture?
     var sceneProjection = matrix_identity_float4x4
-    /// `bIBLFEnable`: specular surfaces reflect the six-axis ambient light.
-    public var imageBasedLightingEnabled = false
-    /// `bEnableImprovedSnow`: LTEX snow ground takes the snow shading.
-    public var improvedSnowEnabled = false
-    /// `bEnableProjecteUVDiffuseNormals`: directional materials draw their textures.
-    public var projectedTexturesEnabled = false
+    /// The game's surface switches that change shader inputs (`SurfaceFeatureSwitches.swift`).
+    public var surfaceFeatures = SurfaceFeatureSwitches()
     var refraction = RefractionState()
     /// Terrain bends its lighting by the TX01 normal maps of its texture sets.
     public var terrainNormalMapsEnabled = true
@@ -380,8 +377,7 @@ public final class Renderer: NSObject {
         frameIndex = GPUFactory.maxFramesInFlight
         endFrameEvent.signaledValue = UInt64(frameIndex - 1)
 
-        Self.configure(view: view)
-        colorPixelFormat = view.colorPixelFormat
+        colorPixelFormat = Self.configure(view: view)
 
         let library = try shaderLibrary ?? Self.makeBundledShaderLibrary(device: device)
         let compiler = try pipelineCache ?? PipelineCache(device: device, fileURL: nil)

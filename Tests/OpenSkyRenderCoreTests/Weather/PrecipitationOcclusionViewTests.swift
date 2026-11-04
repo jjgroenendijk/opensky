@@ -22,8 +22,10 @@ struct PrecipitationOcclusionViewTests {
         let roof = project(camera + SIMD3(0, 0, 300)).z
         let ground = project(camera - SIMD3(0, 0, 100)).z
         #expect(roof < ground)
-        #expect(project(camera + SIMD3(0, 0, PrecipitationOcclusionView.reachAbove)).z.magnitude < 1e-4)
-        #expect(abs(project(camera - SIMD3(0, 0, PrecipitationOcclusionView.reachBelow)).z - 1) < 1e-4)
+        #expect(project(camera + SIMD3(0, 0, PrecipitationOcclusionView.reachAbove)).z
+            .magnitude < 1e-4)
+        #expect(abs(project(camera - SIMD3(0, 0, PrecipitationOcclusionView.reachBelow)).z - 1) <
+            1e-4)
     }
 
     @Test

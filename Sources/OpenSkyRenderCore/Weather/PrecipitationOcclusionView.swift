@@ -15,7 +15,7 @@ nonisolated public enum PrecipitationOcclusionView {
     /// bottom. The centre snaps to whole texels, so roofs do not shimmer as the camera moves.
     public static func matrix(camera: SIMD3<Float>) -> float4x4 {
         let texel = 2 * halfSize / Float(resolution)
-        let centre = (SIMD2(camera.x, camera.y) / texel).rounded() * texel
+        let centre = (SIMD2(camera.x, camera.y) / texel).rounded(.toNearestOrEven) * texel
         let top = camera.z + reachAbove
         let range = reachAbove + reachBelow
         return float4x4(columns: (

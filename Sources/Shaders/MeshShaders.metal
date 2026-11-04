@@ -427,9 +427,10 @@ fragment float4 staticMeshFragment(
         return blendOutput(lit, alpha, in.worldPosition, frame, draw);
     }
     SurfaceNormal normal = surfaceNormal(in, tangentFrame, uv, terms, maps, trilinear);
-    float shadow = draw.receivesShadows != 0
-                       ? sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler)
-                       : 1.0;
+    float shadow =
+        draw.receivesShadows != 0
+            ? sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler)
+            : 1.0;
     if (rayTracedShadows) {
         float traced =
             draw.receivesShadows != 0

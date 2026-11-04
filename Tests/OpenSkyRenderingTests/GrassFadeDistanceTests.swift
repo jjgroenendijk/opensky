@@ -14,7 +14,9 @@ struct GrassFadeDistanceTests {
     func missingOrHugeValuesStayInRange() {
         #expect(GrassRenderPolicy.drawDistance(fadeStart: 0) == nil)
         #expect(GrassRenderPolicy.drawDistance(fadeStart: .infinity) == nil)
-        #expect(GrassRenderPolicy.drawDistance(fadeStart: 1e9) == GrassRenderPolicy.maximumDrawDistance)
-        #expect(GrassRenderPolicy.drawDistance(fadeStart: 10) == GrassRenderPolicy.minimumDrawDistance)
+        #expect(GrassRenderPolicy.drawDistance(fadeStart: 1e9) == GrassRenderPolicy
+            .maximumDrawDistance)
+        #expect(GrassRenderPolicy.drawDistance(fadeStart: 10) == GrassRenderPolicy
+            .minimumDrawDistance)
     }
 }

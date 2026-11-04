@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
+import OpenSkyGameData
 import OpenSkyRendering
 
 /// The `MATO` records, and each directional material once resolved.

@@ -33,7 +33,7 @@ struct ImageSpaceDepthOfFieldTests {
         #expect(blended.depthOfField == SIMD3(0.25, 3000, 300))
     }
 
-    @Test func displayClampKeepsTheStrengthAShare() throws {
+    @Test func displayClampKeepsTheStrengthAShare() {
         var parameters = ImageSpaceParameters()
         parameters.depthOfField = SIMD3(3, -10, 500)
         #expect(parameters.clampedForDisplay.depthOfField == SIMD3(1, 0, 500))

@@ -9,7 +9,7 @@ extension Renderer {
     func projectedParameters(_ projected: RenderProjectedMaterial?) -> SIMD4<Float> {
         guard let projected else { return .zero }
         var parameters = projected.parameters
-        parameters.w = projected.mode(texturesEnabled: projectedTexturesEnabled)
+        parameters.w = projected.mode(texturesEnabled: surfaceFeatures.projectedTextures)
         return parameters
     }
 }

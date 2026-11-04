@@ -1,6 +1,8 @@
 // Object LOD keeps its large references apart, so the ring that draws their full models
 // can hide them (docs/engine/distant-lod.md).
 
+import OpenSkyRenderResources
+
 nonisolated extension RenderModel {
     /// The suffix of the merged shapes that hold an object LOD block's large references.
     public static let largeReferenceShapeSuffix = "-largeref"

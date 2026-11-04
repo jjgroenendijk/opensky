@@ -12,8 +12,8 @@ static bool cullPlaneKeeps(float4 plane, float3 lower, float3 upper)
 static float cullFade(device const CullInstance &instance, constant CullParameters &parameters)
 {
     uint category = uint(instance.boundsMin.w);
-    if (category == 0 || category > 3 || instance.boundsMax.w <= 0.0
-        || parameters.fadeViewer.w <= 0.0) {
+    if (category == 0 || category > 3 || instance.boundsMax.w <= 0.0 ||
+        parameters.fadeViewer.w <= 0.0) {
         return 0.0;
     }
     float scale = parameters.fadeScales[category - 1];

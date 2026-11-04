@@ -200,9 +200,10 @@ fragment float4 grassFragment(
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
-    float shadow = draw.receivesShadows != 0
-                       ? sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler)
-                       : 1.0;
+    float shadow =
+        draw.receivesShadows != 0
+            ? sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler)
+            : 1.0;
     float3 illumination =
         frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame);
     float3 lit = diffuse.rgb * linearVertexColour(in.color.rgb, frame) * illumination;

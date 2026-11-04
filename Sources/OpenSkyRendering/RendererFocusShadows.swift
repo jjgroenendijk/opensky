@@ -13,12 +13,9 @@ struct FocusShadowFrame {
     /// The largest bias any view needs, in depth units.
     var bias: Float = 0
 
-    /// Four matrices for the frame uniforms; identity pads the unused ones.
-    var uniformMatrices: (float4x4, float4x4, float4x4, float4x4) {
-        func matrix(_ index: Int) -> float4x4 {
-            index < views.count ? views[index] : matrix_identity_float4x4
-        }
-        return (matrix(0), matrix(1), matrix(2), matrix(3))
+    /// One of the frame uniforms' four matrices; identity pads the unused ones.
+    func view(_ index: Int) -> float4x4 {
+        index < views.count ? views[index] : matrix_identity_float4x4
     }
 }
 
@@ -38,7 +35,8 @@ extension Renderer {
             frame.views.append(matrix)
             frame.bias = max(
                 frame.bias,
-                FocusShadowMath.receiverBiasUnits / FocusShadowMath.depthRange(bounds: target.bounds)
+                FocusShadowMath.receiverBiasUnits / FocusShadowMath
+                    .depthRange(bounds: target.bounds)
             )
             return AuxiliaryShadowView(
                 slice: slice, viewProjection: matrix,

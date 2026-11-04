@@ -82,6 +82,8 @@ public final class GPUCullScene {
     /// Per frame slot: the room-culled counter, then `roomWordCount` bitset words.
     let rooms: MTLBuffer
     let roomWordCount: Int
+    /// The reference fade the next `encode` writes into each view's parameters.
+    var fade = CullFade(distances: .off, viewer: .zero)
     let instanceCount: Int
     let groups: [GPUCullGroup]
     /// The GPU group of each `scene.opaque` group, nil for a CPU group.
@@ -198,7 +200,6 @@ public final class GPUCullScene {
     /// cull only the camera view: a hidden room still casts shadows into a seen one.
     func encode(
         frustums: [Frustum],
-        fade: CullFade,
         roomVisibility: RoomVisibility?,
         slot: Int,
         resources: GPUCullingResources,
@@ -218,7 +219,7 @@ public final class GPUCullScene {
         let width = CullConstant.threadgroupWidth.rawValue
         for (view, frustum) in frustums.enumerated() {
             let parameterAddress = writeParameters(
-                frustum, fade: fade, roomWords: view == 0 ? roomWords : 0, view: view, slot: slot
+                frustum, roomWords: view == 0 ? roomWords : 0, view: view, slot: slot
             )
             resetArguments(view: view, slot: slot)
             table.setAddress(parameterAddress, index: CullBufferIndex.parameters.rawValue)
@@ -262,7 +263,6 @@ public final class GPUCullScene {
 
     private func writeParameters(
         _ frustum: Frustum,
-        fade: CullFade,
         roomWords: Int,
         view: Int,
         slot: Int

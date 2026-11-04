@@ -119,7 +119,7 @@ extension Renderer {
             layerCount: UInt32(min(item.layerTextures.count, TerrainConstant.maxLayers.rawValue)),
             pointLightCount: UInt32(pointLightCount),
             normalMapsEnabled: terrainNormalMapsEnabled ? 1 : 0,
-            snowLayers: improvedSnowEnabled ? item.snowLayers : 0
+            snowLayers: surfaceFeatures.improvedSnow ? item.snowLayers : 0
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<TerrainDrawUniforms>.size)

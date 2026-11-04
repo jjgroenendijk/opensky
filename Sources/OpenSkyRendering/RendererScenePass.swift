@@ -39,25 +39,14 @@ extension Renderer {
     /// come from the injected SceneCamera.
     private func updateFrameUniforms(slot: Int, viewProjection: float4x4) -> Int {
         let offset = Self.alignedFrameUniformsSize * slot
-        let interiorLighting = activeLighting
-        // Weather is an exterior-only source: interiors keep their own baked
-        // CELL/LGTM lighting untouched (weatherLight nil there). The sky
-        // palette applies only when the scene actually draws a sky.
-        let weatherLight = interiorLighting == nil ? frameInput.weather : nil
-        let covered = effects.loadingCover != nil
-        let weatherSky = scene.sky != nil && !covered ? weatherLight : nil
-        let ambient = weatherLight?.directionalAmbient
-            ?? interiorLighting?.directionalAmbient ?? .black
-        let fog = resolveFrameFog(weatherLight: covered ? nil : weatherLight)
-        let grassDistance = clampedGrassDrawDistance
+        let light = frameLight()
+        let (ambient, fog, weatherSky) = (light.ambient, light.fog, light.weatherSky)
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,
             cameraPosition: frameInput.view.position,
-            sunDirection: interiorLighting?.directionalDirection ?? exteriorSunTravelDirection,
-            sunColor: weatherLight?.sunlightColor
-                ?? interiorLighting?.directionalColor ?? camera.sunColor,
-            ambientColor: weatherLight?.ambientColor
-                ?? interiorLighting?.ambientColor ?? camera.ambientColor,
+            sunDirection: light.sunDirection,
+            sunColor: light.sunColor,
+            ambientColor: light.ambientColor,
             directionalAmbientPositiveX: ambient.positiveX,
             directionalAmbientNegativeX: ambient.negativeX,
             directionalAmbientPositiveY: ambient.positiveY,
@@ -85,28 +74,23 @@ extension Renderer {
             weatherHorizonColor: weatherSky?.horizon ?? .zero,
             weatherSunColor: weatherSky?.sun ?? .zero,
             weatherGlareColor: weatherSky?.sunGlare ?? .zero,
-
             cameraRight: frameInput.view.right,
             cameraUp: simd_normalize(simd_cross(frameInput.view.right, frameInput.view.forward)),
-            grassWind: frameInput.wind.direction * frameInput.wind.speed
-                * simd_clamp(grassWindScale, 0, GrassRenderPolicy.maximumWindScale),
-            grassFadeDistances: SIMD2(
-                max(
-                    grassDistance * GrassRenderPolicy.fadeStartShare,
-                    GrassRenderPolicy.minimumDrawDistance * 0.5
-                ),
-                grassDistance
-            ),
+            grassWind: frameGrassWind,
+            grassFadeDistances: frameGrassFadeDistances,
             debugMode: renderDebug.mode.rawValue,
             shadingTerms: shadingTerms.rawValue,
             sceneDepthUnproject: sceneDepthUnproject,
             terrainLODBrightening: terrainLODBrightness.uniform,
             precipitationOcclusion: precipitationOcclusionView ?? matrix_identity_float4x4,
             precipitationOcclusionEnabled: precipitationOcclusionView == nil ? 0 : 1,
-            focusShadowViewProjections: focusShadows.uniformMatrices,
+            focusShadowViewProjections: (
+                focusShadows.view(0), focusShadows.view(1),
+                focusShadows.view(2), focusShadows.view(3)
+            ),
             focusShadowCount: UInt32(focusShadows.views.count),
             focusShadowBias: focusShadows.bias,
-            imageBasedLighting: imageBasedLightingEnabled ? 1 : 0,
+            imageBasedLighting: surfaceFeatures.imageBasedLighting ? 1 : 0,
             screenSpaceReflections: waterDepth.reflects ? 1 : 0
         )
         frameUniformBuffer.contents().advanced(by: offset)
@@ -157,14 +141,6 @@ extension Renderer {
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
         return offset
-    }
-
-    private var clampedGrassDrawDistance: Float {
-        simd_clamp(
-            grassDrawDistance,
-            GrassRenderPolicy.minimumDrawDistance,
-            GrassRenderPolicy.maximumDrawDistance
-        )
     }
 
     /// Writes the group's frustum-surviving instance transforms tightly

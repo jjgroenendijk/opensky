@@ -87,7 +87,11 @@ extension Renderer {
             encoder.label = "Auxiliary Shadow View \(view.slice)"
             configureShadowEncoder(encoder)
             let context = ShadowCascadeContext(
-                cascade: ShadowCascade(viewProjection: view.viewProjection, splitNear: 0, splitFar: 0),
+                cascade: ShadowCascade(
+                    viewProjection: view.viewProjection,
+                    splitNear: 0,
+                    splitFar: 0
+                ),
                 frustum: Frustum(viewProjection: view.viewProjection),
                 encoder: encoder,
                 cullView: -1
