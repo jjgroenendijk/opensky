@@ -40,7 +40,7 @@ public final class NodeControllerCoordinator {
 
     weak let world: (any NodeControllerWorld)?
     private(set) var running: [UInt32: Running] = [:]
-    /// Off holds every mesh in the pose it has.
+    /// Off holds every controller in the pose it has; billboards keep turning.
     public var isEnabled = true
 
     public init(world: any NodeControllerWorld) {
@@ -64,17 +64,22 @@ public final class NodeControllerCoordinator {
         }
     }
 
-    /// Steps every mesh in reference order and publishes its moved nodes.
+    /// Steps every mesh in reference order and publishes its moved nodes. Off stops the
+    /// controller clock, but billboards still turn: the game turns them with the camera.
     public func tick(deltaTime: Float) {
-        guard isEnabled, deltaTime > 0 else { return }
+        guard deltaTime > 0 else { return }
         let viewer = world?.nodeControllerViewer
         for reference in running.keys.sorted() {
             guard let entry = running[reference] else { continue }
             let placement = Self.transform(entry.mesh.placement)
-            entry.animator.step(
-                deltaTime: deltaTime, placement: placement,
-                cameraDistance: viewer.map { simd_distance($0.eye, placement.translation) }
-            )
+            if isEnabled {
+                entry.animator.step(
+                    deltaTime: deltaTime, placement: placement,
+                    cameraDistance: viewer.map { simd_distance($0.eye, placement.translation) }
+                )
+            } else if entry.mesh.rig.animation.billboardNodes.isEmpty {
+                continue
+            }
             if let viewer {
                 entry.animator.face(viewer.local(to: entry.mesh.placement))
             }
