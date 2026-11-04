@@ -7,4 +7,5 @@ nonisolated extension PlayerSettingID {
     public static let fadeActors = Self("graphics.fLODFadeOutMultActors")
     public static let fadeItems = Self("graphics.fLODFadeOutMultItems")
     public static let fadeObjects = Self("graphics.fLODFadeOutMultObjects")
+    public static let grassFadeStart = Self("graphics.fGrassStartFadeDistance")
 }

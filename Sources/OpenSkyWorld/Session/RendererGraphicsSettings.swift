@@ -47,6 +47,9 @@ extension Renderer {
             actors: store.value(.fadeActors), items: store.value(.fadeItems),
             objects: store.value(.fadeObjects)
         )
+        if let grass = GrassRenderPolicy.drawDistance(fadeStart: store.value(.grassFadeStart)) {
+            grassDrawDistance = grass
+        }
         shadowSettings = ShadowSettings(
             distance: store.value(.shadowDistance), resolution: store.value(.shadowMapResolution)
         )

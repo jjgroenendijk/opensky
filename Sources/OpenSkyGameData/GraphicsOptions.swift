@@ -78,7 +78,7 @@ nonisolated public enum GraphicsOptions {
         option(.viewDistance, "Actor fade", "LOD", "fLODFadeOutMultActors"),
         option(.viewDistance, "Item fade", "LOD", "fLODFadeOutMultItems"),
         option(.viewDistance, "Object fade", "LOD", "fLODFadeOutMultObjects"),
-        option(.viewDistance, "Grass fade", "Grass", "fGrassStartFadeDistance", fixedFades),
+        option(.viewDistance, "Grass fade", "Grass", "fGrassStartFadeDistance"),
         option(.viewDistance, "Mesh LOD 1 fade", "Display", "fMeshLODLevel1FadeDist", fixedFades),
         option(.viewDistance, "Mesh LOD 2 fade", "Display", "fMeshLODLevel2FadeDist", fixedFades),
         option(

@@ -91,7 +91,10 @@ extension Renderer {
             grassWind: frameInput.wind.direction * frameInput.wind.speed
                 * simd_clamp(grassWindScale, 0, GrassRenderPolicy.maximumWindScale),
             grassFadeDistances: SIMD2(
-                max(grassDistance * 0.7, GrassRenderPolicy.minimumDrawDistance * 0.5),
+                max(
+                    grassDistance * GrassRenderPolicy.fadeStartShare,
+                    GrassRenderPolicy.minimumDrawDistance * 0.5
+                ),
                 grassDistance
             ),
             debugMode: renderDebug.mode.rawValue,
