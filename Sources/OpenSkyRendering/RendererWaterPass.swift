@@ -20,6 +20,11 @@ public struct WaterDepthState {
     var waterReads = false
     /// This frame copies the depth, for the water or for a soft effect in view.
     var copies = false
+    /// `bScreenSpaceReflectionEnabled`: the water reflects the scene drawn before it.
+    public var screenSpaceReflections = false
+    var colorCopy: MTLTexture?
+    /// This frame's water reads the colour copy too.
+    var reflects = false
 
     public init() {}
 
@@ -40,6 +45,7 @@ extension Renderer {
         waterDepth.waterReads = perspective && waterDepth.enabled && !scene.water.isEmpty
             && effectiveRenderLayers.contains(.water)
         waterDepth.copies = waterDepth.waterReads || perspective && softEffectsInView()
+        waterDepth.reflects = waterDepth.waterReads && waterDepth.screenSpaceReflections
     }
 
     /// `FrameUniforms.sceneDepthUnproject`.
@@ -165,16 +171,29 @@ extension Renderer {
         state: ScenePassState,
         frameOffset: Int
     ) -> ScenePassState? {
-        guard let depth = descriptor.depthAttachment.texture else {
+        guard
+            let depth = descriptor.depthAttachment.texture,
+            let colour = descriptor.colorAttachments[0].texture
+        else {
             state.encoder.endEncoding()
             return nil
         }
+        var copies = [ScenePassCopy(source: depth, target: \.waterDepth.copy, label: "Water")]
+        if waterDepth.reflects {
+            copies.append(
+                ScenePassCopy(source: colour, target: \.waterDepth.colorCopy, label: "Water")
+            )
+        }
         let split = splitScenePass(
-            descriptor: descriptor, state: state, frameOffset: frameOffset,
-            copy: ScenePassCopy(source: depth, target: \.waterDepth.copy, label: "Water")
+            descriptor: descriptor, state: state, frameOffset: frameOffset, copies: copies
         )
         if let copy = waterDepth.copy {
             argumentTable.setTexture(copy.gpuResourceID, index: TextureIndex.sceneDepth.rawValue)
+        }
+        if waterDepth.reflects, let colorCopy = waterDepth.colorCopy {
+            argumentTable.setTexture(
+                colorCopy.gpuResourceID, index: TextureIndex.sceneColor.rawValue
+            )
         }
         return split
     }

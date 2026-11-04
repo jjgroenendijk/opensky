@@ -106,7 +106,8 @@ extension Renderer {
             focusShadowViewProjections: focusShadows.uniformMatrices,
             focusShadowCount: UInt32(focusShadows.views.count),
             focusShadowBias: focusShadows.bias,
-            imageBasedLighting: imageBasedLightingEnabled ? 1 : 0
+            imageBasedLighting: imageBasedLightingEnabled ? 1 : 0,
+            screenSpaceReflections: waterDepth.reflects ? 1 : 0
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)

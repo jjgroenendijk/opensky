@@ -56,6 +56,7 @@ extension Renderer {
         frameInterpolationEnabled = store.bool(.frameInterpolation)
         meshShaderGrassEnabled = store.bool(.meshShaderGrass)
         waterDepth.enabled = store.bool(.waterDepth)
+        waterDepth.screenSpaceReflections = store.bool(.screenSpaceReflections)
         terrainNormalMapsEnabled = store.bool(.terrainNormalMaps)
         shadingTerms = SurfaceShadingSetting.terms(store: store)
         lightAnimationEnabled = store.bool(.lightAnimation)

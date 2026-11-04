@@ -90,8 +90,7 @@ nonisolated public enum GraphicsOptions {
             .lighting, "Volumetric lighting quality", "Display", "iVolumetricLightingQuality"
         ),
         option(
-            .lighting, "Screen-space reflections", "Display", "bScreenSpaceReflectionEnabled",
-            "OpenSky has no screen-space reflections yet"
+            .lighting, "Screen-space reflections", "Display", "bScreenSpaceReflectionEnabled"
         ),
         option(.lighting, "High dynamic range target", "Display", "bUse64bitsHDRRenderTarget"),
         option(.antiAliasing, "Temporal anti-aliasing", "Display", "bUseTAA"),

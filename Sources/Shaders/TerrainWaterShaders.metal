@@ -170,11 +170,57 @@ static float3 waterNormal(float2 xy, float time, constant WaterDrawUniforms &dra
     return normalize(float3(-slope, 1.0));
 }
 
+// Screen-space reflection: the reflected ray steps through the scene drawn before the
+// water, with steps that grow by a quarter each time. The first step behind a stored
+// surface, and close to it, is the hit. rgb the colour, a its weight: lower near the
+// screen edge and for far hits.
+static float4 waterScreenReflection(
+    float3 origin,
+    float3 direction,
+    constant FrameUniforms &frame,
+    constant WaterDrawUniforms &draw,
+    depth2d<float> sceneDepth,
+    texture2d<float> sceneColor)
+{
+    constexpr sampler nearest(filter::nearest, address::clamp_to_edge);
+    constexpr sampler linear(filter::linear, address::clamp_to_edge);
+    float stepLength = 24.0;
+    float3 point = origin;
+    for (int step = 0; step < 24; ++step) {
+        point += direction * stepLength;
+        stepLength *= 1.25;
+        float4 clip = frame.viewProjectionMatrix * float4(point, 1.0);
+        if (clip.w <= 0.0) {
+            break;
+        }
+        float3 ndc = clip.xyz / clip.w;
+        float2 uv = ndc.xy * float2(0.5, -0.5) + 0.5;
+        if (any(uv < 0.0) || any(uv > 1.0)) {
+            break;
+        }
+        float stored = sceneDepth.sample(nearest, uv);
+        if (stored >= 1.0 || ndc.z <= stored) {
+            continue;
+        }
+        float pointDepth = draw.depthUnproject.y / (ndc.z + draw.depthUnproject.x);
+        float surfaceDepth = draw.depthUnproject.y / (stored + draw.depthUnproject.x);
+        if (pointDepth - surfaceDepth > stepLength * 2.0) {
+            break;
+        }
+        float2 border = min(uv, 1.0 - uv);
+        float edge = saturate(min(border.x, border.y) * 10.0);
+        float distanceFade = 1.0 - float(step) / 24.0;
+        return float4(sceneColor.sample(linear, uv).rgb, edge * distanceFade);
+    }
+    return 0.0;
+}
+
 fragment float4 waterFragment(
     WaterVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
     constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
-    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]])
+    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
+    texture2d<float> sceneColor [[texture(TextureIndexSceneColor)]])
 {
     if (debugViewActive) {
         // A water plane is flat and untextured, so the normal is the plane's
@@ -210,9 +256,14 @@ fragment float4 waterFragment(
     float fresnel = baseReflect + (1.0 - baseReflect) * pow(1.0 - saturate(dot(normal, view)), 5.0);
     float reflection = saturate(fresnel * draw.surface.z);
     float3 sky = mix(draw.reflectionColor, frame.fogFarColor, 0.35);
+    float3 mirrored = reflect(-view, normal);
+    if (frame.screenSpaceReflections != 0 && draw.depthAndSun.w > 0.5) {
+        float4 hit = waterScreenReflection(
+            in.worldPosition, mirrored, frame, draw, sceneDepth, sceneColor);
+        sky = mix(sky, hit.rgb, hit.a);
+    }
     float3 color = mix(body * (frame.ambientColor + frame.sunColor * 0.6), sky, reflection);
 
-    float3 mirrored = reflect(-view, normal);
     float sunAlign = saturate(dot(mirrored, -frame.sunDirection));
     float specular = pow(sunAlign, max(draw.surface.w * 0.25, 8.0)) * draw.depthAndSun.x;
     color += frame.sunColor * specular;

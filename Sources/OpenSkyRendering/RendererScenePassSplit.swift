@@ -1,6 +1,6 @@
-// Splitting the scene pass: the encoder ends, one attachment is copied, and a second
-// encoder continues on the same targets. Water reads the depth copy, refraction shapes
-// the colour copy.
+// Splitting the scene pass: the encoder ends, attachments are copied, and a second
+// encoder continues on the same targets. Water reads the depth copy and, for its
+// screen-space reflections, the colour copy; refraction shapes read the colour copy.
 
 import Metal
 
@@ -17,16 +17,21 @@ extension Renderer {
         descriptor: MTL4RenderPassDescriptor,
         state: ScenePassState,
         frameOffset: Int,
-        copy: ScenePassCopy
+        copies: [ScenePassCopy]
     ) -> ScenePassState? {
         state.encoder.endEncoding()
+        let targets = copies.compactMap {
+            keptCopy(matching: $0.source, at: $0.target, label: $0.label)
+        }
         guard
-            let target = keptCopy(matching: copy.source, at: copy.target, label: copy.label),
+            let label = copies.first?.label, targets.count == copies.count,
             let blit = commandBuffer.makeComputeCommandEncoder()
         else { return nil }
-        blit.label = "\(copy.label)Copy"
+        blit.label = "\(label)Copy"
         blit.barrier(afterQueueStages: .fragment, beforeStages: .blit, visibilityOptions: .device)
-        blit.copy(sourceTexture: copy.source, destinationTexture: target)
+        for (copy, target) in zip(copies, targets) {
+            blit.copy(sourceTexture: copy.source, destinationTexture: target)
+        }
         blit.barrier(afterStages: .blit, beforeQueueStages: .fragment, visibilityOptions: .device)
         blit.endEncoding()
         guard
@@ -35,7 +40,7 @@ extension Renderer {
             )
         else { return nil }
         bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
-        encoder.label = copy.label
+        encoder.label = label
         encoder.setTriangleFillMode(state.fillMode)
         var next = ScenePassState(encoder: encoder, slot: state.slot, frustum: state.frustum)
         next.fillMode = state.fillMode

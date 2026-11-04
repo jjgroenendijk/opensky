@@ -377,6 +377,8 @@ typedef struct
     float focusShadowBias;
     /// 1: specular surfaces reflect the directional ambient light.
     unsigned int imageBasedLighting;
+    /// 1: the water reflects the scene colour copy bound at TextureIndexSceneColor.
+    unsigned int screenSpaceReflections;
 } FrameUniforms;
 
 /// Per-group material scalars for one instanced static-mesh draw, shared by every

@@ -43,7 +43,9 @@ extension Renderer {
         guard
             let split = splitScenePass(
                 descriptor: descriptor, state: state, frameOffset: frameOffset,
-                copy: ScenePassCopy(source: colour, target: \.refraction.copy, label: "Refraction")
+                copies: [
+                    ScenePassCopy(source: colour, target: \.refraction.copy, label: "Refraction")
+                ]
             )
         else { return false }
         state = split

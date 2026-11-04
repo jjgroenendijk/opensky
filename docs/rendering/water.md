@@ -55,10 +55,26 @@ the ground ([effect shapes](/formats/nif-materials.md#effect-shapes)); the copy 
 the water itself. It can be turned off in Environment > Water; the water then uses a fixed middle
 depth and stays half see-through.
 
+## Screen-space reflections
+
+With the game's `[Display] bScreenSpaceReflectionEnabled` on, the depth split also copies the
+colour drawn so far, and the water reflects it:
+
+- The reflected view ray starts at the water pixel and takes up to 24 steps. The first step is
+  24 units long, and each step is a quarter longer than the one before.
+- Each step is projected to the screen. The first point behind a stored surface is a hit, if it
+  lies less than two step lengths behind it. Sky pixels never hit.
+- The hit colour replaces the reflection colour by a weight that falls toward the screen edge
+  and with the step count. A ray that leaves the screen or finds no hit keeps the colour.
+
+The water and the blended layers after it are not in the copy, so they do not reflect. With the
+water depth switch off, nothing is copied and the reflection stays a colour.
+
 ## Where OpenSky differs
 
 - The game samples noise normal textures (`WATR NAM2`-`NAM4`). OpenSky computes the normal from
   sine waves with the same wind, tile size, and amplitude, so it needs no texture and no fallback
   when vanilla rivers leave those paths empty.
-- There is no real reflection of the scene and no refraction offset. The reflection is a color.
+- There is no refraction offset, and no reflection of what lies off screen. Without the game's
+  screen-space reflection option, the reflection is a colour.
 - The sun sparkle fields, displacement, rain simulation, and under-water fog are not drawn.
