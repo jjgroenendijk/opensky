@@ -202,6 +202,20 @@ Windows reference game through the bridge plugin's scene readout
 So OpenSky starts and plays such scenes too. Their lines are silent, because the speaker has
 no loaded body to speak from.
 
+A line whose speaker has no loaded body ends at once. Read again on 2026-11-04 (1.7.104), with
+the bridge's `processLevel` readout: from Riverwood, `WindhelmIntroScene` ran its 2.5 s timer,
+then all five lines in about 0.5 s, twice. Both speakers were at process level 3, the lowest.
+OpenSky gives such a line no length, so it ends on the next tick.
+
+Some far-away scenes wait in their first phase, and the rule is not known yet.
+`WindhelmOengulHermirScene3`, `RiftenGrandPlazaScene30`, and `RiftenBeggarSnilfScene` stayed in
+phase 0 for 45 s with enabled actors at process level 3, the same level as the Windhelm
+speakers, and no actor of theirs played in another scene. Their first lines have no condition
+that fails. Each of the waiting scenes has the flag "Begin on Quest Start"; `WindhelmIntroScene`
+does not. Their quests could not be started again from the console after a stop, so a scene
+started with `StartScene` could not be compared with the same scene started by its quest.
+OpenSky plays these scenes on; the wait is tracked in a `gap` issue.
+
 ## Observed on the install
 
 `Skyrim.esm` has 1,706 scenes the catalog can name. Of the scenes whose actors are all
