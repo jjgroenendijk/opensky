@@ -12,7 +12,7 @@ struct ReferenceFadeTests {
     func reachGrowsWithRadiusAndMultiplier() throws {
         let small = try #require(fades.reach(.object, radius: 1))
         #expect(small == 15 * 16 * 32)
-        #expect(fades.reach(.object, radius: 100) == 15 * 16 * 100)
+        #expect(fades.reach(.object, radius: 100) == Float(15 * 16 * 100))
         #expect(fades.reach(.none, radius: 100) == nil)
     }
 
@@ -32,6 +32,11 @@ struct ReferenceFadeTests {
     func zeroMultiplierNeverFades() {
         let viewer = SIMD3<Float>(1e6, 0, 0)
         #expect(ReferenceFadeDistances.off.isOn == false)
-        #expect(ReferenceFadeDistances.off.fade(.object, lower: lower, upper: upper, viewer: viewer) == 0)
+        #expect(ReferenceFadeDistances.off.fade(
+            .object,
+            lower: lower,
+            upper: upper,
+            viewer: viewer
+        ) == 0)
     }
 }

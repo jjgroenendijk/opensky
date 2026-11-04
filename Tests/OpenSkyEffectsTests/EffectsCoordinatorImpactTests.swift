@@ -1,5 +1,5 @@
-// An impact through the effects coordinator: its model as a timed effect, its
-// decal on the ground under a struck actor, and the switches that turn each off.
+// An impact through the effects coordinator: its model as a timed effect, its decal
+// on a struck actor or the ground under it, and the switches that turn each off.
 
 import Foundation
 @testable import OpenSkyAudio
@@ -47,9 +47,21 @@ struct EffectsCoordinatorImpactTests {
         return try Impact(record: record)
     }
 
+    @Test func anActorHitMarksTheActorWhileSkinDecalsAreOn() throws {
+        let world = FeetWorld()
+        let effects = EffectsCoordinator(world: world)
+        try effects.showImpact(
+            Self.impact(model: nil), decal: Self.decal, at: SIMD3(12, 22, 60), on: .actor(.player)
+        )
+        #expect(effects.skinDecals.decals.decals.count == 1)
+        #expect(Array(effects.skinDecals.owners.values) == [.player])
+        #expect(effects.decals.decals.isEmpty)
+    }
+
     @Test func anActorHitShowsTheModelAndMarksTheGroundUnderIt() throws {
         let world = FeetWorld()
         let effects = EffectsCoordinator(world: world)
+        effects.skinDecalsEnabled = false
         try effects.showImpact(
             Self.impact(model: "Effects\\ImpactEffects\\Blood.nif"),
             decal: Self.decal, at: SIMD3(12, 22, 60), on: .actor(.player)

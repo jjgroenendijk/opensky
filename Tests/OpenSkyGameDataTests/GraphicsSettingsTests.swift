@@ -21,9 +21,13 @@ struct GraphicsSettingsTests {
     @Test func everyOptionHasOneIdAndEveryOptionIsApplied() {
         let ids = GraphicsOptions.all.map(\.id)
         #expect(Set(ids).count == ids.count)
-        #expect(GraphicsOptions.all.allSatisfy { $0.unavailableReason == nil })
-        #expect(GraphicsOptions.definitions.allSatisfy(\.isApplied))
-        #expect(GraphicsOptions.all.allSatisfy { $0.id.rawValue == "graphics.\($0.key)" })
+        let options = GraphicsOptions.all
+        let allAvailable = options.allSatisfy { $0.unavailableReason == nil }
+        let allApplied = GraphicsOptions.definitions.allSatisfy(\.isApplied)
+        let idsFollowKeys = options.allSatisfy { $0.id.rawValue == "graphics.\($0.key)" }
+        #expect(allAvailable)
+        #expect(allApplied)
+        #expect(idsFollowKeys)
     }
 
     @Test func statusTextNamesWhyAnOptionIsUnavailable() throws {

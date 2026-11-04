@@ -13,7 +13,8 @@ struct LargeReferenceRingTests {
         func rings(_ x: Int32, _ y: Int32) -> Int64 {
             LargeReferenceRing.distance(from: .init(x: 0, y: 0), to: objects(at: .init(x: x, y: y)))
         }
-        #expect(rings(-4, -4) == 0)
+        #expect(rings(0, 0) == 0)
+        #expect(rings(-4, -4) == 1)
         #expect(rings(4, 0) == 4)
         #expect(rings(-8, 8) == 8)
     }
