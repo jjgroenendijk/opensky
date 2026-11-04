@@ -180,6 +180,15 @@ struct ActorStateGraphCoreTests {
         #expect(ActorStateGraphCore.getUpType(swimming: false) == 1)
     }
 
+    @Test func thePlayerGetsTheReferenceGamesAttackTiming() {
+        let writes = Dictionary(uniqueKeysWithValues: ActorStateGraphCore.writes(
+            ActorStateGraphInputs(), sprintAllowed: true, wantsBlock: false, stateValue: nil
+        ))
+        #expect(writes[ActorStateGraphNames.attackPowerStartTime] == .real(0.366_666_7))
+        #expect(writes[ActorStateGraphNames.attackIntroLength] == .real(0))
+        #expect(writes[ActorStateGraphNames.attackComboStartFraction] == .real(0.5))
+    }
+
     @Test func aGraphWithNoConstantGetsNoState() {
         let writes = ActorStateGraphCore.writes(
             ActorStateGraphInputs(), sprintAllowed: true, wantsBlock: false, stateValue: nil

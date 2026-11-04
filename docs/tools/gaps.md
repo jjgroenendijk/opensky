@@ -147,19 +147,22 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   as done, because it sends `X` to the scripts. The folder is the one above
   `animations` or `behaviors`, so `canine\animations` meets `canine\behaviors wolf`. A
   footstep name that no tag can match, such as `FootFornt` or a tag with a line break after it,
-  counts as done, because it plays nothing.
+  counts as done, because it plays nothing. So does an event the reference game was seen to
+  ignore ([events the game ignores](/engine/animation-events.md#events-the-game-ignores)).
 - A graph variable counts as done when engine code sets or reads it, when a script sets it with
   `SetAnimationVariableBool`, `SetAnimationVariableInt`, or `SetAnimationVariableFloat`, or when
   its role is not "engine input". The census gives each variable one role, checked in this order:
   1. Engine input: a graph binds it to a member that takes a world position, such as
      `BSLookAtModifier.targetLocation`.
-  2. Computed by graph nodes: an expression assignment or a modifier output writes it.
-  3. Read by nothing: no node, condition, or expression reads it, and no script reads it.
-  4. Authored constant: a graph file gives it a non-zero start value.
-  5. Engine input: it is on the Creation Kit list of animation variables
+  2. Left at the graph's value by the game: the reference game was seen not to write it
+     ([variables left unwritten](/engine/actor-state-graph.md#variables-left-unwritten)).
+  3. Computed by graph nodes: an expression assignment or a modifier output writes it.
+  4. Read by nothing: no node, condition, or expression reads it, and no script reads it.
+  5. Authored constant: a graph file gives it a non-zero start value.
+  6. Engine input: it is on the Creation Kit list of animation variables
      (<https://ck.uesp.net/wiki/List_of_Animation_Variables>), or a script reads it with
      `GetAnimationVariableBool`, `GetAnimationVariableInt`, or `GetAnimationVariableFloat`.
-  6. Authored constant: everything else.
+  7. Authored constant: everything else.
   A variable a perk sets through Set Boolean Graph Variable counts as set, because the combat
   runtime writes it. So does an `iState_*` constant the engine reads, and a variable a state
   machine publishes through `isActive`, `currentStateId`, or its sync variable

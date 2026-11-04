@@ -182,7 +182,15 @@ extension AgentWorldAdapter {
             "perkState": gameSession.locomotion.actorState.taggedPerkState
                 .map { .string($0.displayName) } ?? .null,
             "iState": gameSession.locomotion.graph?.variable(named: ActorGraphNames.state)
-                .map { .init($0.intValue) } ?? .null
+                .map { .init($0.intValue) } ?? .null,
+            "iGetUpType": gameSession.locomotion.graph?
+                .variable(named: ActorStateGraphNames.getUpType)
+                .map { .init($0.intValue) } ?? .null,
+            "attackTiming": .object(Dictionary(uniqueKeysWithValues: ActorStateGraphCore
+                    .attackTiming.map { entry in
+                        let value = gameSession.locomotion.graph?.variable(named: entry.name)
+                        return (entry.name, value.map { AgentJSON($0.realValue) } ?? .null)
+                    }))
         ]
         return .object(result)
     }

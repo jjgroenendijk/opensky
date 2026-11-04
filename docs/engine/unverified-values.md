@@ -93,6 +93,9 @@ the detail and the sources it did find.
 | Actor graph update order | OpenSky's order | [actor state graph](/engine/actor-state-graph.md) |
 | Damped graph variables | OpenSky's blend and damping rates | [actor state graph](/engine/actor-state-graph.md) |
 | Drunk state in a save | Not confirmed | [actor state graph](/engine/actor-state-graph.md) |
+| Player attack timing during an attack | The values read at rest, every step | [actor state graph](/engine/actor-state-graph.md#attack-timing) |
+| `IsInCastState` on the player | 1 while either hand casts | [actor state graph](/engine/actor-state-graph.md#variables-left-unwritten) |
+| Creature sound cues with no `SoundPlay` prefix | Play nothing | [animation events](/engine/animation-events.md#events-the-game-ignores) |
 | Additive clip order | OpenSky's order | [behaviour runtime](/engine/behavior-runtime.md) |
 | Two clip rules | Not confirmed | [behaviour clips](/engine/behavior-clips.md) |
 | Animation and skeleton split | A guess from the objects | [HKX behaviour](/formats/hkx-behavior.md) |
