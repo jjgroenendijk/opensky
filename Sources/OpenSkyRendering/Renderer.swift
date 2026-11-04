@@ -321,6 +321,8 @@ public final class Renderer: NSObject {
     var sceneProjection = matrix_identity_float4x4
     /// `bIBLFEnable`: specular surfaces reflect the six-axis ambient light.
     public var imageBasedLightingEnabled = false
+    /// `bEnableImprovedSnow`: LTEX snow ground takes the snow shading.
+    public var improvedSnowEnabled = false
     var refraction = RefractionState()
     /// Terrain bends its lighting by the TX01 normal maps of its texture sets.
     public var terrainNormalMapsEnabled = true

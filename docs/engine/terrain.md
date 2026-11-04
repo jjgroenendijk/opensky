@@ -66,6 +66,18 @@ along +v. The other two are almost flat and give no answer.
 
 Ray-traced shadows still test the vertex normal.
 
+## Snow ground
+
+A land texture with the Skyrim SE snow flag (`LTEX` `INAM`) is snow ground. With the game's
+`[Display] bEnableImprovedSnow` on, the snow share of a pixel blends from the base and the
+layers by the same weights as the colour. That share adds, times the sun shadow:
+
+- a broad sun sheen, `sun * 0.25 * (N.H)^24`;
+- fine glints: one cell in about 67 of a fixed 4-unit world grid adds `sun * 2 * (N.H)^6`.
+
+The game's snow shader is not documented. This sheen and glint pattern, and their values,
+are OpenSky's own.
+
 ## Placement
 
 The cell's south-west corner goes to `(gridX * 4096, gridY * 4096, 0)`. So a vertex lands at its

@@ -43,6 +43,7 @@ player's own `SkyrimPrefs.ini` shows through as the default.
 | `fShadowDistance` | The far end of the last sun shadow cascade. 0 keeps OpenSky's 12288 units. The low shadow quality caps it at 8192 |
 | `iShadowMapResolution` | The width and height of each cascade slice: a power of two from 512 to 4096. A change builds a new map while the game runs |
 | `iNumFocusShadow` | Up to 4 actors nearest the camera get a sharp sun-shadow map of their own ([shadows](/rendering/shadows.md#focus-shadows)). 0 draws none |
+| `bEnableImprovedSnow` | Ground whose land texture has the snow flag gets a sun sheen and glints ([terrain](/engine/terrain.md#snow-ground)) |
 | `bUsePrecipitationOcclusion` | A top-down depth view around the camera hides each rain or snow drop under a roof ([precipitation](/rendering/precipitation.md#roof-occlusion)). Off lets rain fall through roofs |
 | `bToggleSparkles` | The glint of sparkle-snow shapes (shader type 14) ([surface shading](/rendering/surface-shading.md)). Both it and the "Snow and ice sparkle" switch must be on |
 | `fLODFadeOutMultActors`, `fLODFadeOutMultItems`, `fLODFadeOutMultObjects` | A placed reference is drawn up to multiplier x 16 x its bound radius (at least 32) from the camera, and dissolves over the last 15% of that reach. Actors use the actor value, references a rigid body moves the item value, other statics the object value. A faded reference casts no shadow. 0 never fades |

@@ -27,6 +27,10 @@ nonisolated public struct TerrainDrawItem: Sendable {
     public let normalMatrix: float4x4
     /// World-space AABB for frustum culling; nil -> never culled.
     public let bounds: ModelBounds?
+    /// Bit n: layer n is LTEX snow ground; `snowBaseBit`: the base is.
+    public let snowLayers: UInt32
+
+    public static let snowBaseBit = UInt32(1) << UInt32(TerrainConstant.maxLayers.rawValue)
 
     public init(
         mesh: RenderMesh,
@@ -36,8 +40,10 @@ nonisolated public struct TerrainDrawItem: Sendable {
         normals: TerrainNormalMaps,
         modelMatrix: float4x4,
         normalMatrix: float4x4,
-        bounds: ModelBounds?
+        bounds: ModelBounds?,
+        snowLayers: UInt32 = 0
     ) {
+        self.snowLayers = snowLayers
         self.mesh = mesh
         self.weightsBuffer = weightsBuffer
         self.material = material

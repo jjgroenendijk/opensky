@@ -29,6 +29,8 @@ nonisolated public struct TerrainBuild {
 nonisolated struct TerrainTextureKeys: Equatable {
     let diffuse: String
     let normal: String?
+    /// LTEX `INAM`: the ground takes the snow shader.
+    var isSnow = false
 }
 
 /// One patch's layer textures and aligned opacities, capped at the shader maximum.
@@ -38,6 +40,8 @@ nonisolated private struct ResolvedTerrainLayers {
     var resolvedNormals = 0
     var opacities: [[Float]] = []
     var skipped = 0
+    /// Bit n: layer n is snow ground.
+    var snowLayers: UInt32 = 0
 }
 
 nonisolated private struct TerrainItemBuild {
@@ -107,6 +111,8 @@ nonisolated extension CellSceneBuilder {
                     base: textures.texture(key: baseNormalKey, usage: .data),
                     layers: resolved.normals
                 )
+                let baseSnow = patch.baseTexture.flatMap { terrainTextureKeys(for: $0) }?
+                    .isSnow == true
                 built.items.append(TerrainDrawItem(
                     mesh: upload.mesh,
                     weightsBuffer: upload.weightsBuffer,
@@ -118,7 +124,9 @@ nonisolated extension CellSceneBuilder {
                     normals: normals,
                     modelMatrix: transform,
                     normalMatrix: normalMatrix,
-                    bounds: world
+                    bounds: world,
+                    snowLayers: resolved.snowLayers
+                        | (baseSnow ? TerrainDrawItem.snowBaseBit : 0)
                 ))
                 built.layerCount += resolved.textures.count
                 if let world {
@@ -196,6 +204,9 @@ nonisolated extension CellSceneBuilder {
                 resolved.skipped += 1
                 Self.logger.warning("terrain quadrant over the layer cap, extra dropped")
                 continue
+            }
+            if keys.isSnow {
+                resolved.snowLayers |= 1 << UInt32(resolved.textures.count)
             }
             resolved.textures.append(textures.texture(key: keys.diffuse, usage: .color))
             resolved.normals.append(textures.texture(key: keys.normal, usage: .data))
@@ -277,7 +288,8 @@ nonisolated extension CellSceneBuilder {
         else { return nil }
         return TerrainTextureKeys(
             diffuse: diffuse,
-            normal: txst.normalPath.flatMap { NIFShaderTextureSet.vfsKey(for: $0) }
+            normal: txst.normalPath.flatMap { NIFShaderTextureSet.vfsKey(for: $0) },
+            isSnow: ltex.isSnow
         )
     }
 

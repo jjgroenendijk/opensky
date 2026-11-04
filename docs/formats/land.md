@@ -107,8 +107,8 @@ material instead. For footsteps, OpenSky takes the texture with the most weight 
 vertex and uses its material. See [material types](/formats/material-type.md).
 
 The decoder also reads `HNAM` (Havok friction and restitution, one byte each), `SNAM`
-(specular exponent, one byte), and `INAM` (Skyrim SE snow flag, uint32). Terrain does not
-use them yet.
+(specular exponent, one byte), and `INAM` (Skyrim SE snow flag, uint32). Terrain uses only
+`INAM`, for the [snow ground](/engine/terrain.md#snow-ground) shading.
 
 ## TXST
 

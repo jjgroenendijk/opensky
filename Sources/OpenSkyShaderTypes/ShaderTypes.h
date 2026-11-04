@@ -505,6 +505,9 @@ typedef struct
     unsigned int pointLightCount;
     /// 0 shades with the vertex normal alone.
     unsigned int normalMapsEnabled;
+    /// Bit n: layer n takes the snow shading; bit TerrainConstantMaxLayers: the base.
+    /// 0 while the improved snow option is off.
+    unsigned int snowLayers;
 } TerrainDrawUniforms;
 
 /// One water surface. Colors and shading decode from WATR DNAM (docs/formats/water.md).

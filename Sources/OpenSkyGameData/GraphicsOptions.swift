@@ -98,13 +98,7 @@ nonisolated public enum GraphicsOptions {
         option(.effects, "Depth of field", "ImageSpace", "bDoDepthOfField"),
         option(.effects, "Lens flare", "ImageSpace", "bLensFlare"),
         option(.effects, "Snow sparkles", "Display", "bToggleSparkles"),
-        option(
-            .effects,
-            "Improved snow",
-            "Display",
-            "bEnableImprovedSnow",
-            "OpenSky has no improved snow shader"
-        ),
+        option(.effects, "Improved snow", "Display", "bEnableImprovedSnow"),
         option(
             .effects, "Projected diffuse normals", "Display", "bEnableProjecteUVDiffuseNormals",
             "OpenSky has no projected UV shader"
