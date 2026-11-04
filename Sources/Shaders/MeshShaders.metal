@@ -336,6 +336,7 @@ fragment float4 staticMeshFragment(
     texture2d<float> backLightMap [[texture(TextureIndexSurfaceBackLight)]],
     texture2d<float> sceneColour [[texture(TextureIndexSceneColor)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
     depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
@@ -409,7 +410,7 @@ fragment float4 staticMeshFragment(
     }
     SurfaceNormal normal = surfaceNormal(in, tangentFrame, uv, terms, maps, trilinear);
     float shadow = draw.receivesShadows != 0
-                       ? sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler)
+                       ? sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler)
                        : 1.0;
     if (rayTracedShadows) {
         float traced =

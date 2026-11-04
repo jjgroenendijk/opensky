@@ -103,18 +103,15 @@ static inline int sunShadowCascadeIndex(float3 worldPosition, constant FrameUnif
     return cascade;
 }
 
-// Sun-shadow attenuation for one world-space receiver. Returns 1.0 (lit) when
-// shadows are off or the point is outside every cascade map. PCF radius comes
-// from FrameUniforms.shadowSampleRadius (0 = 1 tap, 1 = 3x3).
-static inline float sunShadowFactor(
+// Sun-shadow attenuation from the cascades. Returns 1.0 (lit) when the point is
+// outside every cascade map. PCF radius comes from FrameUniforms.shadowSampleRadius
+// (0 = 1 tap, 1 = 3x3).
+static inline float cascadeShadowFactor(
     float3 worldPosition,
     constant FrameUniforms &frame,
     depth2d_array<float> shadowMap,
     sampler shadowSampler)
 {
-    if (frame.shadowsEnabled == 0) {
-        return 1.0;
-    }
     int cascade = sunShadowCascadeIndex(worldPosition, frame);
     if (cascade < 0) {
         return 1.0;
@@ -141,6 +138,54 @@ static inline float sunShadowFactor(
         }
     }
     return sum / taps;
+}
+
+// The focus shadows: sharp maps around the actors nearest the camera
+// (docs/rendering/shadows.md). 1.0 where no focus map covers the point.
+static inline float focusShadowFactor(
+    float3 worldPosition,
+    constant FrameUniforms &frame,
+    depth2d_array<float> auxiliary,
+    sampler shadowSampler)
+{
+    float lit = 1.0;
+    uint count = min(frame.focusShadowCount, uint(ShadowConstantFocusCount));
+    float texel = 1.0 / float(auxiliary.get_width());
+    for (uint view = 0; view < count; ++view) {
+        float4 clip = frame.focusShadowViewProjections[view] * float4(worldPosition, 1.0);
+        float3 ndc = clip.xyz / clip.w;
+        if (any(abs(ndc.xy) > 1.0) || ndc.z < 0.0 || ndc.z > 1.0) {
+            continue;
+        }
+        float2 uv = ndc.xy * float2(0.5, -0.5) + 0.5;
+        float compareDepth = ndc.z - frame.focusShadowBias;
+        float sum = 0.0;
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                float2 offset = float2(dx, dy) * texel;
+                sum += auxiliary.sample_compare(shadowSampler, uv + offset, view, compareDepth);
+            }
+        }
+        lit = min(lit, sum / 9.0);
+    }
+    return lit;
+}
+
+// Sun-shadow attenuation for one world-space receiver: the darker of the cascades and
+// the focus shadows. 1.0 (lit) when shadows are off.
+static inline float sunShadowFactor(
+    float3 worldPosition,
+    constant FrameUniforms &frame,
+    depth2d_array<float> shadowMap,
+    depth2d_array<float> auxiliary,
+    sampler shadowSampler)
+{
+    if (frame.shadowsEnabled == 0) {
+        return 1.0;
+    }
+    return min(
+        cascadeShadowFactor(worldPosition, frame, shadowMap, shadowSampler),
+        focusShadowFactor(worldPosition, frame, auxiliary, shadowSampler));
 }
 
 // x: how far between fog near and far, 0 to 1. y: how much fog covers the point.

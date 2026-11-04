@@ -116,7 +116,7 @@ extension Renderer {
 
     /// Direction the sun travels (sun -> scene), matching the scene pass's
     /// FrameUniforms.sunDirection source.
-    private var sunTravelDirection: SIMD3<Float> {
+    var sunTravelDirection: SIMD3<Float> {
         scene.lighting?.directionalDirection ?? exteriorSunTravelDirection
     }
 
@@ -176,7 +176,8 @@ extension Renderer {
             viewProjections: [projection * frameInput.view.viewMatrix()]
                 + cascades.map(\.viewProjection)
         )
-        guard encodeAuxiliaryShadowViews(slot: slot) else { return false }
+        guard encodeAuxiliaryShadowViews(slot: slot, sunShadows: !cascades.isEmpty)
+        else { return false }
         guard !cascades.isEmpty else { return true }
 
         var state = ShadowPassState(slot: slot, base: slot * shadowInstanceSlotCapacity)

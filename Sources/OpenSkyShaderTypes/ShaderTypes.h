@@ -368,6 +368,11 @@ typedef struct
     matrix_float4x4 precipitationOcclusion;
     /// 1 when the occlusion slice of the auxiliary shadow array holds this frame's roofs.
     unsigned int precipitationOcclusionEnabled;
+    /// World to each focus shadow's clip space; the first `focusShadowCount` are drawn.
+    matrix_float4x4 focusShadowViewProjections[ShadowConstantFocusCount];
+    unsigned int focusShadowCount;
+    /// Receiver depth bias of the focus views, in their depth units.
+    float focusShadowBias;
 } FrameUniforms;
 
 /// Per-group material scalars for one instanced static-mesh draw, shared by every

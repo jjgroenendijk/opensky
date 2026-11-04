@@ -48,6 +48,8 @@ extension Renderer {
             objects: store.value(.fadeObjects)
         )
         precipitationOcclusionEnabled = store.bool(.precipitationOcclusion)
+        let focus = store.value(.focusShadows)
+        focusShadowCount = focus.isFinite ? Int(min(max(focus, 0), 4)) : 0
         meshLODDistances = MeshLODDistances(
             level1: store.value(.meshLODLevel1), level2: store.value(.meshLODLevel2)
         )

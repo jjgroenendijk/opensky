@@ -12,4 +12,5 @@ nonisolated extension PlayerSettingID {
     public static let meshLODLevel2 = Self("graphics.fMeshLODLevel2FadeDist")
     public static let decalsPerFrame = Self("graphics.iMaxDecalsPerFrame")
     public static let precipitationOcclusion = Self("graphics.bUsePrecipitationOcclusion")
+    public static let focusShadows = Self("graphics.iNumFocusShadow")
 }

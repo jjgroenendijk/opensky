@@ -67,13 +67,15 @@ struct AuxiliaryShadowView {
     let viewProjection: float4x4
     /// Layers left out, such as actors under the rain.
     let excluding: RenderLayer
+    let drawsTerrain: Bool
 }
 
 extension Renderer {
     /// Draws this frame's auxiliary views. False only when an encoder cannot be made.
-    func encodeAuxiliaryShadowViews(slot: Int) -> Bool {
+    func encodeAuxiliaryShadowViews(slot: Int, sunShadows: Bool) -> Bool {
         precipitationOcclusionView = nil
-        let views = auxiliaryViews()
+        focusShadows = FocusShadowFrame()
+        let views = auxiliaryViews(sunShadows: sunShadows)
         guard !views.isEmpty, let resources = auxiliaryShadowResources() else { return true }
         var state = ShadowPassState(
             slot: slot, base: slot * AuxiliaryShadowResources.instanceLimit,
@@ -98,7 +100,9 @@ extension Renderer {
                 frameDrawGroups.shadowAlphaTested, list: .alphaTested, in: context,
                 excluding: view.excluding, state: &state
             )
-            encodeShadowTerrain(in: context, state: &state)
+            if view.drawsTerrain {
+                encodeShadowTerrain(in: context, state: &state)
+            }
             if number == views.count - 1 {
                 encoder.barrier(
                     afterStages: .fragment,
@@ -112,15 +116,18 @@ extension Renderer {
     }
 
     /// The views the options ask for this frame; records each one for the scene pass.
-    private func auxiliaryViews() -> [AuxiliaryShadowView] {
+    private func auxiliaryViews(sunShadows: Bool) -> [AuxiliaryShadowView] {
         var views: [AuxiliaryShadowView] = []
         if precipitationOcclusionEnabled, !precipitation.drawItems.isEmpty {
             let matrix = PrecipitationOcclusionView.matrix(camera: frameInput.view.position)
             precipitationOcclusionView = matrix
             views.append(AuxiliaryShadowView(
                 slice: ShadowConstant.precipitationSlice.rawValue, viewProjection: matrix,
-                excluding: .actors
+                excluding: .actors, drawsTerrain: true
             ))
+        }
+        if sunShadows {
+            views += focusViews()
         }
         return views
     }

@@ -103,6 +103,10 @@ public final class Renderer: NSObject {
     public var precipitationOcclusionEnabled = true
     /// This frame's rain occlusion view, when it was drawn.
     var precipitationOcclusionView: float4x4?
+    /// The game's `iNumFocusShadow`, 0 to 4 (`RendererFocusShadows.swift`).
+    public var focusShadowCount = 0
+    /// This frame's focus views, for the frame uniforms.
+    var focusShadows = FocusShadowFrame()
     /// Where `BSLODTriShape` meshes switch detail (`RendererMeshLOD.swift`).
     public var meshLODDistances = MeshLODDistances.off
     /// The game's shadow distance and map size (`RendererShadowSettings.swift`).

@@ -102,7 +102,10 @@ extension Renderer {
             sceneDepthUnproject: sceneDepthUnproject,
             terrainLODBrightening: terrainLODBrightness.uniform,
             precipitationOcclusion: precipitationOcclusionView ?? matrix_identity_float4x4,
-            precipitationOcclusionEnabled: precipitationOcclusionView == nil ? 0 : 1
+            precipitationOcclusionEnabled: precipitationOcclusionView == nil ? 0 : 1,
+            focusShadowViewProjections: focusShadows.uniformMatrices,
+            focusShadowCount: UInt32(focusShadows.views.count),
+            focusShadowBias: focusShadows.bias
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)

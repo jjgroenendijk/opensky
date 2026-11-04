@@ -78,6 +78,7 @@ fragment float4 terrainFragment(
     array<texture2d<float>, TerrainConstantMaxLayers> layerNormalMaps
     [[texture(TextureIndexTerrainLayerNormal0)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
     raytracing::instance_acceleration_structure rayScene
@@ -111,7 +112,7 @@ fragment float4 terrainFragment(
     }
     float3 normal = normalMaps ? terrainShadingNormal(in, normalXY) : normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
-    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
+    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler);
     if (rayTracedShadows) {
         float traced = rayTracedSunShadow(in.worldPosition, normalize(in.normal), frame, rayScene);
         if (rayShadowView) {

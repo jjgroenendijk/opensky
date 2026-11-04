@@ -182,6 +182,7 @@ fragment float4 grassFragment(
     constant GrassDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
     texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
 {
@@ -200,7 +201,7 @@ fragment float4 grassFragment(
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
     float shadow = draw.receivesShadows != 0
-                       ? sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler)
+                       ? sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler)
                        : 1.0;
     float3 illumination =
         frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame);

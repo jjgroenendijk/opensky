@@ -133,6 +133,7 @@ fragment float4 decalFragment(
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
     texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
 {
@@ -142,7 +143,7 @@ fragment float4 decalFragment(
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
-    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
+    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler);
     float3 illumination =
         frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame);
     return float4(applyFog(diffuse.rgb * illumination, in.worldPosition, frame), diffuse.a);

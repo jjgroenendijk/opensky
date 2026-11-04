@@ -83,13 +83,7 @@ nonisolated public enum GraphicsOptions {
         ),
         option(.shadows, "Shadow distance", "Display", "fShadowDistance"),
         option(.shadows, "Shadow resolution", "Display", "iShadowMapResolution"),
-        option(
-            .shadows,
-            "Focus shadows",
-            "Display",
-            "iNumFocusShadow",
-            "OpenSky has no focus shadows"
-        ),
+        option(.shadows, "Focus shadows", "Display", "iNumFocusShadow"),
         option(.lighting, "Ambient occlusion", "Display", "bSAOEnable", noSSAO),
         option(
             .lighting,
