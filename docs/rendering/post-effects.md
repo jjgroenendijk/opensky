@@ -90,6 +90,9 @@ screen centre.
   hidden behind a hill or a roof draws no flare.
 - 5 soft discs in fixed tints sit at 0.4, 0.7, 1.1, 1.5, and 1.9 of the way from the sun to
   the centre and past it. They take the sun colour, and fade as the sun nears the screen edge.
+- The strength is 0.6 times the sun disc's alpha and the weather's Sun Glare, the `WTHR`
+  `DATA` byte read as 0 to 1 ([UESP WTHR](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WTHR)).
+  A storm with no glare hides the sun, so it draws no flare.
 
 ## Where OpenSky differs
 

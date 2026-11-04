@@ -1,4 +1,4 @@
-// The sun's screen position for the lens flare.
+// The sun's screen position and the strength of the lens flare.
 
 @testable import OpenSkyRenderCore
 import simd
@@ -41,5 +41,19 @@ struct LensFlareMathTests {
         #expect(LensFlareMath.sunScreenPosition(
             viewProjection: Self.viewProjection, camera: .zero, toSun: SIMD3(0, 1, -0.2)
         ) == nil)
+    }
+
+    @Test func theWeatherGlareAndTheSunAlphaScaleTheFlare() {
+        var sky = CelestialSky.resolve(
+            hour: 12, daysPassed: 0, climate: nil, weathers: [], settings: SkySettings()
+        )
+        sky.sunAlpha = 1
+        sky.weatherGlare = 0.5
+        #expect(LensFlareMath.strength(sky) == PostEffectSettings.lensFlareStrength * 0.5)
+        sky.weatherGlare = 0
+        #expect(LensFlareMath.strength(sky) == 0)
+        sky.weatherGlare = 1
+        sky.sunAlpha = 0
+        #expect(LensFlareMath.strength(sky) == 0)
     }
 }

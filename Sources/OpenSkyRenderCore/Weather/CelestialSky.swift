@@ -68,6 +68,8 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
     /// 0 while the sun is down; fades by `fSunAlphaTransTime` at the horizon.
     public var sunAlpha: Float
     public var glareScale: Float
+    /// The weathers' `DATA` Sun Glare, 0 to 1, without the glare sprite's floor.
+    public var weatherGlare: Float
     public var starsAxis: SIMD3<Float>
     /// Radians the stars have turned about `starsAxis`.
     public var starsAngle: Float
@@ -103,6 +105,7 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
             lightDirection: -lightSource(path.position(reach: settings.sunDirXExtreme)),
             sunAlpha: path.discAlpha(fadeHours: settings.sunAlphaTransTime),
             glareScale: max(settings.sunMinimumGlareScale, glare),
+            weatherGlare: glare,
             starsAxis: axisLength > 1e-6 ? settings.starsRotateAxis / axisLength : SIMD3(0, 0, 1),
             // Negative turn: a star on the east horizon climbs, as the sun does.
             starsAngle: -2 * .pi * (rotation - rotation.rounded(.down)),

@@ -51,11 +51,15 @@ extension Renderer {
         if postEffects.fxaa {
             uniforms.effects |= UInt32(PostEffectFlag.antiAliasing.rawValue)
         }
-        if postEffects.lensFlare, let sun = sunScreenPosition(viewProjection) {
-            uniforms.effects |= UInt32(PostEffectFlag.lensFlare.rawValue)
-            uniforms.lensFlare = SIMD4(
-                sun, PostEffectSettings.lensFlareStrength, drawableAspectRatio
-            )
+        if
+            postEffects.lensFlare, let sky = frameCelestial,
+            let sun = sunScreenPosition(viewProjection)
+        {
+            let strength = LensFlareMath.strength(sky)
+            if strength > 0 {
+                uniforms.effects |= UInt32(PostEffectFlag.lensFlare.rawValue)
+                uniforms.lensFlare = SIMD4(sun.x, sun.y, strength, drawableAspectRatio)
+            }
         }
         return uniforms.effects == 0 ? nil : uniforms
     }

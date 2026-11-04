@@ -3,6 +3,11 @@
 import simd
 
 nonisolated public enum LensFlareMath {
+    /// A weather with no sun glare, such as a storm, hides the sun and so its flare.
+    public static func strength(_ sky: CelestialSky) -> Float {
+        PostEffectSettings.lensFlareStrength * sky.sunAlpha * min(max(sky.weatherGlare, 0), 1)
+    }
+
     /// The sun's texture coordinate (0 to 1, y down), or nil when it is behind the camera
     /// or below the horizon. `toSun` points from the camera toward the sun.
     public static func sunScreenPosition(
