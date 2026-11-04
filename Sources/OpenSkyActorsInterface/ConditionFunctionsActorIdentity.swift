@@ -66,10 +66,9 @@ nonisolated extension ConditionFunctions {
                 }
             })
         }
-        // OpenSky has no commanded actors yet, so nobody is one; the `Actor` native of the
-        // same name answers the same.
+        // A summon or a raised corpse while its effect runs, as the `Actor` native answers.
         registry.register(ConditionFunction(index: 700, name: "IsCommandedActor") { call in
-            call.actorState().map { _ in 0 }
+            call.actorState().map { Self.isTrue($0.isCommanded) }
         })
         installRecordFlags(&registry)
     }
