@@ -76,6 +76,22 @@ struct DistantLODSelectionTests {
         ])
     }
 
+    @Test func theSplitMultiplierMovesTheFinerSplitsOut() throws {
+        let configuration = TerrainLODConfiguration(
+            level0Distance: 12288,
+            level1Distance: 32768,
+            maximumDistance: 131_072,
+            treeLoadDistance: 65536,
+            splitDistanceMultiplier: 1.5
+        )
+        let bands = try DistantLODSelection.bands(
+            settings: settings(),
+            configuration: configuration
+        )
+
+        #expect(bands.map(\.outerRadius) == [5, 12, 24, 32])
+    }
+
     @Test func aWiderLoadedGridPushesTheFirstBandOut() throws {
         let configuration = TerrainLODConfiguration(
             level0Distance: 12288,

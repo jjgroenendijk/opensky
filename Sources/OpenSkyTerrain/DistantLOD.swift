@@ -86,19 +86,19 @@ nonisolated public enum DistantLODSelection: Sendable {
 
     /// Maps world-unit INI thresholds onto every available LOD level. Skyrim
     /// exposes explicit L4, L8, and maximum thresholds. OpenSky splits the
-    /// remaining L16/L32 interval at 2x L8 (clamped to maximum), preserving
-    /// the source format's power-of-two coarsening without gaps.
+    /// remaining L16/L32 interval at 2x L8; `fSplitDistanceMult` scales each split.
     public static func bands(
         settings: LODSettings,
         configuration: TerrainLODConfiguration
     ) -> [DistantLODBand] {
         guard configuration.isValid else { return [] }
+        let split = configuration.splitDistanceMultiplier
         let worldDistances = [
-            configuration.level0Distance,
-            configuration.level1Distance,
-            min(configuration.maximumDistance, configuration.level1Distance * 2),
+            configuration.level0Distance * split,
+            configuration.level1Distance * split,
+            configuration.level1Distance * 2 * split,
             configuration.maximumDistance
-        ]
+        ].map { min($0, configuration.maximumDistance) }
         var inner = configuration.loadedGridRadius
         return zip(settings.levels, worldDistances).map { level, distance in
             let requested = Int32(ceil(distance / TerrainMeshBuilder.cellSize))
