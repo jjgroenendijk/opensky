@@ -38,6 +38,7 @@ add_library(OpenSkyBridge SHARED
     src/Channel.cpp
     src/Plugin.cpp
     src/State.cpp
+    src/Watch.cpp
     src/WineShim.cpp)
 set_target_properties(OpenSkyBridge PROPERTIES
     CXX_STANDARD 23

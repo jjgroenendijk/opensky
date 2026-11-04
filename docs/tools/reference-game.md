@@ -259,6 +259,34 @@ when the save has it on, and the next long fall kills the player and reloads the
 `coc` can leave the game in third person; `cgf "Game.ForceFirstPerson"` turns it back, and
 `firstPerson` in the state shows the result.
 
+### Recording graph variables
+
+Two more bridge lines let a batch set up a scene and record an actor's behaviour graph:
+
+| Line | What it does |
+| --- | --- |
+| `spawn <FormID>` | Places that base object at the player and picks the new reference |
+| `watch <seconds> <variable>...` | Records the picked reference, or the player with no pick, each frame |
+
+`watch` writes `OpenSkyBridge/watch.jsonl` when it ends. Each frame gives one line with the
+time, the frame length, the position, the heading, and each variable as `[real, int, bool]`.
+The game stores every variable as one word, so read the field that matches the variable's
+type. Each animation event the actor sends gives one line with its tag and payload. Start the
+watch once the actor is loaded: events from a graph built after the watch starts are lost.
+
+`state.json` names the spawned reference under `selected`, so a second actor can be spawned
+and its FormID used in `startcombat`. For example, to record a melee bandit fighting a mage:
+
+```sh
+openskycli reference send 'spawn 1BCD8' 'setav health 100000'
+openskycli reference send 'spawn 39D33' 'setav health 100000' "startcombat $MELEE" \
+  "prid $MELEE" "startcombat $MAGE" 'watch 45 iState IsAttacking IsInCastState'
+```
+
+[WARNING] Nothing drives the player's attacks or casts yet. Button events the plugin sent
+through the game's input device manager did not move the player under Wine (observed
+2026-11-04), so a recording of the player shows it at rest.
+
 ## Same view, two games
 
 Put both games in first person first. The console has no command for the camera mode.

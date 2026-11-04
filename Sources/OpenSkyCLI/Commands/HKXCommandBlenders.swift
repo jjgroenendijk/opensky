@@ -42,6 +42,26 @@ enum HKXBlenderDump {
         }
     }
 
+    /// `Class "node" member=variable` for each binding whose variable contains `text`.
+    static func printBindings(file: HKXFile, containing text: String) throws {
+        let graph = try HKXObjectGraph(file: file)
+        let variables = (try? HKBBehaviorCensus.census(of: file))?.variables.map(\.name) ?? []
+        let wanted = text.lowercased()
+        for ref in graph.objectRefs {
+            let target = HKXPointerTarget(
+                sectionIndex: ref.sectionIndex,
+                dataOffset: ref.dataOffset
+            )
+            guard let object = HKBClassRegistry.decode(at: target, in: graph) else { continue }
+            let bound = boundMembers(of: object, in: graph, variables: variables)
+                .split(separator: " ")
+                .filter { $0.split(separator: "=").last?.lowercased().contains(wanted) == true }
+            guard !bound.isEmpty else { continue }
+            Swift.print("\(object.className) \"\(object.nodeName ?? "")\" "
+                + bound.joined(separator: " "))
+        }
+    }
+
     private static func describeChild(
         _ target: HKXPointerTarget?, in graph: HKXObjectGraph, variables: [String?]
     ) -> String {

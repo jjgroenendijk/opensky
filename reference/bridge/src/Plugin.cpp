@@ -3,6 +3,7 @@
 // draws nothing (docs/tools/reference-game.md).
 #include "Channel.h"
 #include "State.h"
+#include "Watch.h"
 
 #include <atomic>
 #include <chrono>
@@ -52,10 +53,27 @@ void WriteSnapshot()
     }
 }
 
+// While a watch runs, one sample task waits in the queue at a time, so it samples each frame.
+[[noreturn]] void SampleEachFrame()
+{
+    static std::atomic_bool sampleQueued = false;
+    const auto *tasks = SKSE::GetTaskInterface();
+    while (true) {
+        if (bridge::IsWatching() && !sampleQueued.exchange(true)) {
+            tasks->AddTask([] {
+                bridge::SampleWatch();
+                sampleQueued = false;
+            });
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+}
+
 void OnMessage(SKSE::MessagingInterface::Message *message)
 {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
         std::thread(Poll).detach();
+        std::thread(SampleEachFrame).detach();
     }
 }
 } // namespace

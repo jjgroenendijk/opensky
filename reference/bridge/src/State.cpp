@@ -1,5 +1,7 @@
 #include "State.h"
 
+#include "Watch.h"
+
 #include <charconv>
 #include <cmath>
 #include <format>
@@ -149,6 +151,19 @@ void Pick(std::string_view hex)
     selection = reference ? reference->CreateRefHandle() : RE::ObjectRefHandle{};
 }
 
+// `spawn <hex FormID>` places that base object at the player and picks the new reference.
+void Spawn(std::string_view hex)
+{
+    RE::FormID id = 0;
+    const auto end = hex.data() + hex.size();
+    auto *base = std::from_chars(hex.data(), end, id, 16).ec == std::errc{}
+                     ? RE::TESForm::LookupByID<RE::TESBoundObject>(id)
+                     : nullptr;
+    auto *player = RE::PlayerCharacter::GetSingleton();
+    const auto placed = base && player ? player->PlaceObjectAtMe(base, false) : nullptr;
+    selection = placed ? placed->CreateRefHandle() : RE::ObjectRefHandle{};
+}
+
 // A line runs against the picked reference, as typed in the console after `prid`.
 void RunAgainstSelection(const std::string &line)
 {
@@ -200,6 +215,19 @@ void RunLine(const std::string &line)
     constexpr auto answerVerb = "answer "sv;
     constexpr auto saveVerb = "save "sv;
     constexpr auto pickVerb = "prid "sv;
+    constexpr auto spawnVerb = "spawn "sv;
+    constexpr auto watchVerb = "watch "sv;
+    if (line.starts_with(spawnVerb)) {
+        Spawn(std::string_view(line).substr(spawnVerb.size()));
+        return;
+    }
+    // Without a picked reference, the watch records the player.
+    if (line.starts_with(watchVerb)) {
+        auto picked = selection.get();
+        RE::TESObjectREFR *target = picked ? picked.get() : RE::PlayerCharacter::GetSingleton();
+        StartWatch(std::string_view(line).substr(watchVerb.size()), target);
+        return;
+    }
     if (line.starts_with(pickVerb)) {
         Pick(std::string_view(line).substr(pickVerb.size()));
         return;

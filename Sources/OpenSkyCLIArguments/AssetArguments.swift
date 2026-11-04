@@ -123,6 +123,14 @@ public struct HKXArguments: CLICommandArguments {
     @Flag(help: "List every blender: flags, bound blend parameter, and each child.")
     public var blenders = false
     @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "List each node member bound to a variable whose name contains this text.",
+            valueName: "text"
+        )
+    )
+    public var bindings: String?
+    @Option(
         parsing: .unconditionalSingleValue,
         help: "Step the actor graph, raise this event, print each state reached. Repeatable."
     )
