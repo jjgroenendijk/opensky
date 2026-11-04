@@ -108,5 +108,7 @@ The models and textures load off the main actor. Until they land, that object do
 count under `sky`. `openskycli render --weather <WTHR> --time-of-day <hour>` prints the same in its
 `[INFO] sky` line.
 
-Not drawn yet: the aurora's own animation (its effect shader controllers) and the weather's moon
-glare colour (`NAM0` index 16).
+A sky mesh's shader controllers play on the renderer's animation time, so the aurora streaks
+scroll ([shader property controllers](/formats/nif-controllers.md#shader-property-controllers)).
+
+Not drawn yet: the weather's moon glare colour (`NAM0` index 16).

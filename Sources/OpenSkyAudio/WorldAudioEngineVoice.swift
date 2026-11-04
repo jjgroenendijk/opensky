@@ -1,6 +1,6 @@
-// Voice playback and the playback clock. A `.fuz` is a lip-sync blob plus a RIFF/XWMA
-// stream; the payload goes to `XWMFile` and streams like any `.xwm` effect, so
-// `AudioSourceStreamer` knows one container. The lip blob is returned to the caller.
+// Voice playback and the playback clock. A `.fuz` is a lip-sync blob plus a RIFF
+// stream. An xWMA payload streams like any `.xwm` effect; a WAVE payload, from a loose
+// `.wav` line, plays from one buffer. The lip blob is returned to the caller.
 // See docs/engine/audio-decoding.md.
 
 import AVFAudio
@@ -37,9 +37,9 @@ extension WorldAudioEngine {
         gain: Float = 1
     ) throws -> VoicePlayback {
         let container = try FUZFile(data: fuzData)
-        let audio = try container.audio()
+        let audio = try AudioFileAsset(data: container.audioData)
         let sourceID = try playPositional(
-            file: audio,
+            asset: audio,
             request: AudioPlayRequest(
                 name: name,
                 category: .voice,
@@ -51,10 +51,20 @@ extension WorldAudioEngine {
         sources.first { $0.id == sourceID }?.voiceClock = clock
         return VoicePlayback(
             sourceID: sourceID,
-            duration: audio.declaredDuration,
+            duration: Self.duration(of: audio),
             lipData: container.lipData,
             clock: clock
         )
+    }
+
+    /// A `.wav` line's length from its frames; an `.xwm` line's from its packet table.
+    nonisolated static func duration(of audio: AudioFileAsset) -> Double? {
+        switch audio {
+        case let .wav(file):
+            file.format.sampleRate > 0
+                ? Double(file.frameCount) / Double(file.format.sampleRate) : nil
+        case let .xwm(file): file.declaredDuration
+        }
     }
 
     /// Seconds a source has played, or nil. Subtracts its start from

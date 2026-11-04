@@ -99,6 +99,8 @@ typedef struct
     /// EffectFlag bits; 0 for a card.
     unsigned int effectFlags;
     unsigned int padding;
+    /// Mesh only: UV offset in xy, scale in zw.
+    vector_float4 uvTransform;
 } SkyObjectUniforms;
 
 #endif /* EffectShaderTypes_h */

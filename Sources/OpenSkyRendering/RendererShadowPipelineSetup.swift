@@ -77,6 +77,14 @@ extension Renderer {
                 label: "ShadowMorphedSkinned", vertex: "shadowMorphedSkinnedVertex",
                 fragment: nil, skinned: true, morphed: true
             ),
+            skinnedAlphaTest: make(
+                label: "ShadowSkinnedAlphaTest", vertex: "shadowSkinnedVertex",
+                fragment: "shadowAlphaTestFragment", skinned: true
+            ),
+            morphedSkinnedAlphaTest: make(
+                label: "ShadowMorphedSkinnedAlphaTest", vertex: "shadowMorphedSkinnedVertex",
+                fragment: "shadowAlphaTestFragment", skinned: true, morphed: true
+            ),
             terrain: make(
                 label: "ShadowTerrain", vertex: "shadowTerrainVertex",
                 fragment: nil, skinned: false

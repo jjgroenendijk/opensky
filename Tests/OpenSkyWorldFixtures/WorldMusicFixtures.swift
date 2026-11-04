@@ -24,14 +24,18 @@ public enum MusicFixture {
         public var fadeSeconds: Float?
         /// TNAM links in authored order. Zero entries are null separators.
         public var tracks: [UInt32] = []
+        /// PNAM priority, 1 highest; nil omits the field.
+        public var priority: UInt16?
 
         public init(
             formID: UInt32,
             editorID: String = "MUSExplore",
             flags: UInt32 = 0,
             fadeSeconds: Float? = nil,
-            tracks: [UInt32] = []
+            tracks: [UInt32] = [],
+            priority: UInt16? = nil
         ) {
+            self.priority = priority
             self.formID = formID
             self.editorID = editorID
             self.flags = flags
@@ -78,6 +82,12 @@ public enum MusicFixture {
                 var wnam = Data()
                 wnam.appendFloat32(fade)
                 fields += ESMFixture.field("WNAM", wnam)
+            }
+            if let priority = type.priority {
+                var pnam = Data()
+                pnam.appendUInt16(priority)
+                pnam.appendUInt16(0)
+                fields += ESMFixture.field("PNAM", pnam)
             }
             if !type.tracks.isEmpty {
                 fields += ESMFixture.field("TNAM", type.tracks.reduce(Data()) { $0 + uint32($1) })

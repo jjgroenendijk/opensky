@@ -31,29 +31,37 @@ extension PapyrusNativeFunctions {
 
     /// `Apply(float afStrength = 1.0)`, `ApplyCrossFade(float afFadeDuration = 1.0)`,
     /// `PopTo(ImageSpaceModifier, float afStrength = 1.0)`, `Remove()`, and the global
-    /// `RemoveCrossFade(float afFadeDuration = 1.0)`. Fade times are not modelled.
+    /// `RemoveCrossFade(float afFadeDuration = 1.0)`. A cross-fade reaches full strength
+    /// and goes away over the script's fade time.
     private static func installImageSpaceModifiers(into registry: inout PapyrusNativeRegistry) {
         scriptState("ImageSpaceModifier", "Apply", into: &registry) { call, bridge, key in
             let strength = float(call, at: 0) ?? 1
-            bridge.effectPresenter?.applyImageSpaceModifier(key, strength: strength, held: false)
+            bridge.effectPresenter?.applyImageSpaceModifier(
+                key, strength: strength, held: false, fadeSeconds: 0
+            )
             return .returned(.none)
         }
         scriptState("ImageSpaceModifier", "Remove", into: &registry) { _, bridge, key in
-            bridge.effectPresenter?.removeImageSpaceModifier(key)
+            bridge.effectPresenter?.removeImageSpaceModifier(key, fadeSeconds: 0)
             return .returned(.none)
         }
         scriptState("ImageSpaceModifier", "PopTo", into: &registry) { call, bridge, key in
             guard let next = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)) else {
                 return failure(call, "PopTo needs an image space modifier")
             }
-            bridge.effectPresenter?.removeImageSpaceModifier(key)
+            bridge.effectPresenter?.removeImageSpaceModifier(key, fadeSeconds: 0)
             let strength = float(call, at: 1) ?? 1
-            bridge.effectPresenter?.applyImageSpaceModifier(next, strength: strength, held: false)
+            bridge.effectPresenter?.applyImageSpaceModifier(
+                next, strength: strength, held: false, fadeSeconds: 0
+            )
             return .returned(.none)
         }
-        scriptState("ImageSpaceModifier", "ApplyCrossFade", into: &registry) { _, bridge, key in
-            removeCrossFade(bridge)
-            bridge.effectPresenter?.applyImageSpaceModifier(key, strength: 1, held: true)
+        scriptState("ImageSpaceModifier", "ApplyCrossFade", into: &registry) { call, bridge, key in
+            let fade = fadeSeconds(call)
+            removeCrossFade(bridge, fade: fade)
+            bridge.effectPresenter?.applyImageSpaceModifier(
+                key, strength: 1, held: true, fadeSeconds: fade
+            )
             bridge.updateScriptedState(of: .player) { $0.setForm(crossFadeModifierName, key) }
             return .returned(.none)
         }
@@ -63,16 +71,22 @@ extension PapyrusNativeFunctions {
             guard let bridge = context.world as? PapyrusWorldStateBridge else {
                 return needsWorld(call)
             }
-            removeCrossFade(bridge)
+            removeCrossFade(bridge, fade: fadeSeconds(call))
             return .returned(.none)
         })
     }
 
-    private static func removeCrossFade(_ bridge: PapyrusWorldStateBridge) {
+    /// The first argument, `afFadeDuration`, default 1 s; never negative.
+    private static func fadeSeconds(_ call: PapyrusNativeCall) -> Float {
+        let value = float(call, at: 0) ?? 1
+        return value.isFinite ? max(value, 0) : 1
+    }
+
+    private static func removeCrossFade(_ bridge: PapyrusWorldStateBridge, fade: Float) {
         guard let held = bridge.scriptedState(of: .player).form(crossFadeModifierName) else {
             return
         }
-        bridge.effectPresenter?.removeImageSpaceModifier(held)
+        bridge.effectPresenter?.removeImageSpaceModifier(held, fadeSeconds: fade)
         bridge.updateScriptedState(of: .player) { $0.setForm(crossFadeModifierName, nil) }
     }
 

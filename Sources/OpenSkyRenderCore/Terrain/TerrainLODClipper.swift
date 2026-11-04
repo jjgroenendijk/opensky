@@ -39,6 +39,13 @@ nonisolated public struct TerrainLODClipMask: Equatable, Hashable, Sendable {
         return visibleCellIndexes.contains(localY * Int(level) + localX)
     }
 
+    /// A cell inside the block that this mask leaves to another source. The block's own
+    /// outer edge already carries the file's skirts.
+    func cuts(localX: Int, localY: Int) -> Bool {
+        localX >= 0 && localX < Int(level) && localY >= 0 && localY < Int(level)
+            && !contains(localX: localX, localY: localY)
+    }
+
     public func contains(_ cell: CellCoordinate, blockOrigin: CellCoordinate) -> Bool {
         contains(
             localX: Int(cell.x - blockOrigin.x),
@@ -81,7 +88,7 @@ nonisolated public enum TerrainLODClipper: Sendable {
         )
     }
 
-    private struct Vertex {
+    struct Vertex {
         let position: SIMD3<Float>
         let modelPosition: SIMD3<Float>
         let normal: SIMD3<Float>?
@@ -89,6 +96,15 @@ nonisolated public enum TerrainLODClipper: Sendable {
         let bitangent: SIMD3<Float>?
         let uv: SIMD2<Float>?
         let color: SIMD4<Float>?
+
+        /// The same vertex `depth` units down in model space.
+        func lowered(by depth: Float) -> Vertex {
+            let drop = SIMD3<Float>(0, 0, depth)
+            return Vertex(
+                position: position - drop, modelPosition: modelPosition - drop, normal: normal,
+                tangent: tangent, bitangent: bitangent, uv: uv, color: color
+            )
+        }
 
         func interpolated(to other: Vertex, amount: Float) -> Vertex {
             Vertex(
@@ -237,11 +253,16 @@ nonisolated public enum TerrainLODClipper: Sendable {
         let maxX = triangle.map(\.modelPosition.x).max() ?? 0
         let minY = triangle.map(\.modelPosition.y).min() ?? 0
         let maxY = triangle.map(\.modelPosition.y).max() ?? 0
-        let lowerX = max(0, Int(floor(minX / cellSize)))
-        let upperX = min(Int(mask.level) - 1, Int(floor((maxX - 0.001) / cellSize)))
-        let lowerY = max(0, Int(floor(minY / cellSize)))
-        let upperY = min(Int(mask.level) - 1, Int(floor((maxY - 0.001) / cellSize)))
-        guard lowerX <= upperX, lowerY <= upperY else { return [] }
+        // A vertical skirt on the block's edge has no width, so it takes the inside cell.
+        let last = Int(mask.level) - 1
+        let lowerX = min(max(0, Int(floor(minX / cellSize))), last)
+        let upperX = min(max(lowerX, Int(floor((maxX - 0.001) / cellSize))), last)
+        let lowerY = min(max(0, Int(floor(minY / cellSize))), last)
+        let upperY = min(max(lowerY, Int(floor((maxY - 0.001) / cellSize))), last)
+        guard
+            minX < Float(last + 1) * cellSize + 0.01, minY < Float(last + 1) * cellSize + 0.01,
+            maxX > -0.01, maxY > -0.01
+        else { return [] }
 
         var output: [[Vertex]] = []
         for y in lowerY ... upperY {
@@ -258,6 +279,14 @@ nonisolated public enum TerrainLODClipper: Sendable {
                 for index in 1 ..< polygon.count - 1 {
                     output.append([polygon[0], polygon[index], polygon[index + 1]])
                 }
+                let cuts = CutEdges(
+                    west: (west, mask.cuts(localX: x - 1, localY: y)),
+                    east: (east, mask.cuts(localX: x + 1, localY: y)),
+                    south: (south, mask.cuts(localX: x, localY: y - 1)),
+                    north: (north, mask.cuts(localX: x, localY: y + 1))
+                )
+                guard isGround(triangle) else { continue }
+                output += skirts(along: polygon, cuts: cuts, depth: skirtDepth(level: mask.level))
             }
         }
         return output
@@ -310,13 +339,13 @@ nonisolated public enum TerrainLODClipper: Sendable {
         return keepGreater ? value >= boundary : value <= boundary
     }
 
+    /// Area in 3D, so a vertical skirt triangle on a cell line is kept.
     private static func hasArea(_ triangle: [Vertex]) -> Bool {
         guard triangle.count == 3 else { return false }
         let first = triangle[0].modelPosition
-        let second = triangle[1].modelPosition
-        let third = triangle[2].modelPosition
-        let twiceArea = (second.x - first.x) * (third.y - first.y)
-            - (second.y - first.y) * (third.x - first.x)
-        return abs(twiceArea) > 0.001
+        let twiceArea = simd_length(simd_cross(
+            triangle[1].modelPosition - first, triangle[2].modelPosition - first
+        ))
+        return twiceArea > 0.001
     }
 }

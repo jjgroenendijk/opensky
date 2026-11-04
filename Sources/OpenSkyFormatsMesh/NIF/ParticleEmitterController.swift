@@ -2,6 +2,7 @@
 // the controller's time. Layout and timing: docs/formats/nif-particles.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import simd
 
 /// nif.xml `CycleType`: what happens when time passes the controller's stop time.
@@ -35,24 +36,15 @@ nonisolated public struct ControllerTiming: Equatable, Sendable {
 
     /// Maps a playback time in seconds into the key range.
     public func controllerTime(at seconds: Float) -> Float {
-        let scaled = seconds * frequency + phase
-        let span = stopTime - startTime
-        guard span.isFinite, span > 0 else { return scaled }
-        let offset = scaled - startTime
-        switch cycle {
-        case .clamp:
-            return simd_clamp(scaled, startTime, stopTime)
-        case .loop:
-            return startTime + positiveRemainder(offset, span)
-        case .reverse:
-            let folded = positiveRemainder(offset, span * 2)
-            return startTime + (folded <= span ? folded : span * 2 - folded)
-        }
+        clock.time(at: seconds)
     }
 
-    private func positiveRemainder(_ value: Float, _ divisor: Float) -> Float {
-        let remainder = value.truncatingRemainder(dividingBy: divisor)
-        return remainder < 0 ? remainder + divisor : remainder
+    /// The same timing as the engine-side clock.
+    public var clock: ControllerClock {
+        ControllerClock(
+            cycle: ControllerClock.Cycle(rawValue: cycle.rawValue) ?? .clamp,
+            frequency: frequency, phase: phase, startTime: startTime, stopTime: stopTime
+        )
     }
 }
 

@@ -76,6 +76,8 @@ extension PapyrusWorldStateBridge {
         let gazing = sunGazeModifier != nil && isPlayerSunGazing
         defer { wasSunGazing = gazing }
         guard gazing, !wasSunGazing, let modifier = sunGazeModifier else { return }
-        _ = effectPresenter?.applyImageSpaceModifier(modifier, strength: 1, held: false)
+        _ = effectPresenter?.applyImageSpaceModifier(
+            modifier, strength: 1, held: false, fadeSeconds: 0
+        )
     }
 }

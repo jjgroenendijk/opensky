@@ -83,9 +83,11 @@ struct NodeControllerCoordinatorTests {
             placement: MatrixMath.translation([0, 100, 0])
         )]
         let nodes = NodeControllerCoordinator(world: world)
+        nodes.isEnabled = false
         nodes.sync()
         nodes.tick(deltaTime: 0.1)
-        // The camera sits at mesh x 100, y -100, so +Z turns that way.
+        // The camera sits at mesh x 100, y -100, so +Z turns that way, also with the
+        // "Animated objects" setting off.
         let bone = try #require(pose.snapshot.bones.first)
         let facing = bone.rotation.act([0, 0, 1])
         #expect(simd_length(facing - simd_normalize(SIMD3(1, -1, 0))) < 1e-4)

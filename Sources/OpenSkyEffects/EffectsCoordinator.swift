@@ -132,16 +132,21 @@ public final class EffectsCoordinator {
         _ key: ReferenceKey,
         strength: Float,
         looping: Bool = false,
+        fadeIn: Float = 0,
         on imageSpace: inout ImageSpaceState
     ) -> Bool {
         guard let adapter = records.imageSpaceAdapters.record(key) else { return false }
-        imageSpace.modifiers.start(adapter.record, key: key, strength: strength, looping: looping)
+        imageSpace.modifiers.start(
+            adapter.record, key: key, strength: strength, looping: looping, fadeIn: fadeIn
+        )
         return true
     }
 
-    /// Stops every running instance of the `IMAD` `key` on `imageSpace`.
-    public func stopModifier(_ key: ReferenceKey, on imageSpace: inout ImageSpaceState) {
-        imageSpace.modifiers.stop(key: key)
+    /// Stops every running instance of the `IMAD` `key` on `imageSpace`, over `fadeOut` s.
+    public func stopModifier(
+        _ key: ReferenceKey, fadeOut: Float = 0, on imageSpace: inout ImageSpaceState
+    ) {
+        imageSpace.modifiers.stop(key: key, fadeOut: fadeOut)
     }
 
     /// One landed spell: the modifier when the player was hit, and the hit shader and art

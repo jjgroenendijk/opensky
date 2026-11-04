@@ -44,6 +44,8 @@ nonisolated public struct Material: Hashable, Sendable {
     public let tintsSkin: Bool
     public let shading: SurfaceShading
     public let drawState: MaterialDrawState
+    /// Shader values the mesh animates on its own clock; nil when none move.
+    public let animation: MaterialAnimation?
 
     public init(
         diffuseTexture: String?,
@@ -63,7 +65,8 @@ nonisolated public struct Material: Hashable, Sendable {
         tintTexture: String? = nil,
         tintsSkin: Bool = false,
         shading: SurfaceShading = .plain,
-        drawState: MaterialDrawState = .standard
+        drawState: MaterialDrawState = .standard,
+        animation: MaterialAnimation? = nil
     ) {
         self.diffuseTexture = diffuseTexture
         self.normalTexture = normalTexture
@@ -83,6 +86,7 @@ nonisolated public struct Material: Hashable, Sendable {
         self.tintsSkin = tintsSkin
         self.shading = shading
         self.drawState = drawState
+        self.animation = animation
     }
 
     /// Neutral stand-in for shapes without a lighting shader: untextured,

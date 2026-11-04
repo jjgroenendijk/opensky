@@ -515,17 +515,17 @@ extension Renderer {
         prepareBoneMatricesOnce(for: mesh, slot: slot)
     }
 
-    /// Skinned casters always use the skinned depth pipeline (skips alpha
-    /// discard for skinned cutouts -> conservative solid shadow).
+    /// A cutout keeps its holes in the shadow, skinned or not.
     private func shadowPipeline(
         group: DrawGroup,
         alphaTested: Bool
     ) -> MTLRenderPipelineState {
+        let pipelines = shadow.pipelines
         if group.faceMorph != nil {
-            return shadow.pipelines.morphedSkinned
+            return alphaTested ? pipelines.morphedSkinnedAlphaTest : pipelines.morphedSkinned
         }
         if group.mesh.isSkinned {
-            return shadow.pipelines.skinned
+            return alphaTested ? pipelines.skinnedAlphaTest : pipelines.skinned
         }
         return alphaTested ? shadow.pipelines.alphaTest : shadow.pipelines.staticCaster
     }

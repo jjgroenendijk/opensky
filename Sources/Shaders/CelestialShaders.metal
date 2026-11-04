@@ -32,7 +32,7 @@ vertex SkyObjectVertexOut skyMeshVertex(
     SkyObjectVertexOut out;
     out.position = skyObjectClip(offset, frame);
     out.color = source.color;
-    out.texcoord = source.texcoord;
+    out.texcoord = source.texcoord * object.uvTransform.zw + object.uvTransform.xy;
     out.normal = (object.rotation * float4(source.normal.xyz, 0.0)).xyz;
     out.toEye = -offset;
     return out;

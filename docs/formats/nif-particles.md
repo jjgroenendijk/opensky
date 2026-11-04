@@ -340,8 +340,8 @@ billboards; drawing the rock meshes per particle is not done.
 
 OpenSky walks the scene graph from the footer roots. It adds up the `NiNode` transforms, stops
 at depth 64, and stops on loops. The walk differs from the mesh walk (see
-[NIF](/formats/nif.md)): it does not enter a `NiSwitchNode`, so a particle system below one is
-not found, and it does not drop hidden or `EditorMarker` subtrees. Each `NiParticleSystem`,
+[NIF](/formats/nif.md)): it does not drop hidden or `EditorMarker` subtrees. Like the mesh
+walk, it enters only the active child of a `NiSwitchNode`. Each `NiParticleSystem`,
 `BSStripParticleSystem`, or `NiMeshParticleSystem` becomes one particle system with its world
 transform, capacity, emitters, modifiers, effect shader, and alpha property.
 

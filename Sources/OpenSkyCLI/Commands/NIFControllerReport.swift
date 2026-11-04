@@ -6,6 +6,7 @@ import OpenSkyFormatsMesh
 
 enum NIFControllerReport {
     static func print(file: NIFFile) {
+        printShaderControllers(file: file)
         let animation: NIFNodeAnimation
         do {
             animation = try NIFNodeAnimation(file: file)
@@ -31,6 +32,30 @@ enum NIFControllerReport {
         for (level, group) in lod.levels.enumerated() {
             Swift.print("bone LOD level \(level): "
                 + group.map { name($0, animation) }.joined(separator: ", "))
+        }
+    }
+
+    /// Shader property controllers with the nif.xml name of the variable each drives.
+    private static func printShaderControllers(file: NIFFile) {
+        let entries: [NIFShaderControllerEntry]
+        do {
+            entries = try NIFShaderAnimation.controllers(in: file)
+        } catch {
+            printError("[WARNING] shader controllers failed: \(String(describing: error))")
+            return
+        }
+        Swift.print("shader controllers: \(entries.count)")
+        for entry in entries {
+            let timing = entry.timing
+            let state = entry.isManagerControlled ? "sequence"
+                : entry.isActive ? "active" : "inactive"
+            let variable = entry.variableName ?? "variable \(entry.variable)"
+            Swift.print(
+                "controller \(entry.kind.rawValue) on block \(entry.shaderBlock) \(state)"
+                    + " \(timing.cycle) \(format(timing.startTime))-\(format(timing.stopTime))"
+                    + " x\(format(timing.frequency)): \(variable)"
+                    + ", \(entry.keyCount) keys" + (entry.target == nil ? ", not drawn" : "")
+            )
         }
     }
 

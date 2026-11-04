@@ -57,8 +57,14 @@ nonisolated extension NIFFile {
 
                 let block = file.blocks[index]
                 parents[index] = parents[index] ?? visit.parent
-                if NIFNode.traversedTypes.contains(block.typeName) {
-                    let node = try NIFNode(data: block.data, header: file.header)
+                if
+                    NIFNode.traversedTypes.contains(block.typeName)
+                    || block.typeName == NIFSwitchNode.typeName
+                {
+                    // A switch node shows its active child only, as the mesh walk does.
+                    let node = block.typeName == NIFSwitchNode.typeName
+                        ? try NIFSwitchNode(data: block.data, header: file.header).activeNode
+                        : try NIFNode(data: block.data, header: file.header)
                     let world = visit.parent * node.object.localTransform
                     stack.push(
                         children: node.children,

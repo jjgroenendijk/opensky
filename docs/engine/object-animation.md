@@ -151,8 +151,9 @@ turns to the free-fly camera by its mode
 ([billboard nodes](/formats/nif-sequences.md#billboard-nodes)), and the nodes below it
 follow. The cell build also parses a mesh whose bytes name `NiBillboardNode`. A static
 draw keeps a billboard at its authored rest. So does a reference that an object graph or
-a door sequence animates, and so does every billboard while the "Animated objects" setting
-is off. Effect models turn their billboard bones the same way.
+a door sequence animates. The "Animated objects" setting off stops the controller clock,
+but billboards keep turning, because they follow the camera, not time. Effect models turn
+their billboard bones the same way.
 
 `NodeControllerCoordinator` steps each such mesh on the main actor, in reference order, after the
 sequence doors. Each mesh has its own clock, which starts when the mesh first loads and keeps

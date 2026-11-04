@@ -19,6 +19,19 @@ nonisolated public struct SkyMeshGeometry: Sendable {
         public let texture: String?
         public let palette: String?
         public let effect: EffectShading
+        /// UV offset in xy, scale in zw.
+        public let uvTransform: SIMD4<Float>
+        /// The source material, kept only when its shader values animate.
+        public let animated: Material?
+
+        /// The effect shading and UV transform at `seconds` of animation time.
+        func shading(at seconds: Float) -> (effect: EffectShading, uvTransform: SIMD4<Float>) {
+            guard let animated, let animation = animated.animation else {
+                return (effect, uvTransform)
+            }
+            let moved = animation.apply(to: animated, at: seconds)
+            return (moved.effect ?? effect, SIMD4(lowHalf: moved.uvOffset, highHalf: moved.uvScale))
+        }
     }
 
     /// A shape without effect shading still fades by its vertex alpha.
@@ -42,7 +55,15 @@ nonisolated public struct SkyMeshGeometry: Sendable {
                 indices: range,
                 texture: material?.diffuseTexture.flatMap(SkyCelestial.key),
                 palette: usesPalette ? effect.paletteTexture.flatMap(SkyCelestial.key) : nil,
-                effect: effect
+                effect: effect,
+                uvTransform: material
+                    .map { SIMD4(lowHalf: $0.uvOffset, highHalf: $0.uvScale) } ?? SIMD4(
+                        0,
+                        0,
+                        1,
+                        1
+                    ),
+                animated: material?.animation == nil ? nil : material
             )
         }
     }

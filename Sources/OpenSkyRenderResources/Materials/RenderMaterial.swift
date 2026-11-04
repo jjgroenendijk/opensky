@@ -32,6 +32,8 @@ nonisolated public struct RenderMaterial: Sendable {
     public let faceTint: MTLTexture?
     public let surface: RenderSurfaceMaterial
     public let drawState: MaterialDrawState
+    /// The source material, kept only when its shader values animate.
+    public let animatedSource: Material?
 
     public init(material: Material, textureProvider: TextureProvider) {
         diffuse = textureProvider(material.diffuseTexture, .color)
@@ -52,11 +54,48 @@ nonisolated public struct RenderMaterial: Sendable {
         faceTint = material.tintTexture.map { textureProvider($0, .color) }
         surface = RenderSurfaceMaterial(material: material, textureProvider: textureProvider)
         drawState = material.drawState
+        animatedSource = material.animation == nil ? nil : material
     }
 
     /// Every texture a draw of this material binds, for the residency set.
     public var textures: [MTLTexture] {
         [diffuse] + [normal, faceTint, effect?.palette, effect?.sourceVolume].compactMap(\.self)
             + surface.textures
+    }
+}
+
+/// The draw uniform values a material animation can change.
+nonisolated public struct MaterialScalars: Sendable {
+    public var uvOffset: SIMD2<Float>
+    public var uvScale: SIMD2<Float>
+    public var alpha: Float
+    public var effectBaseColor: SIMD4<Float>
+    public var effectBaseColorScale: Float
+    public var effectFalloff: SIMD4<Float>
+    public var specular: SIMD4<Float>
+    public var emissive: SIMD4<Float>
+}
+
+nonisolated extension RenderMaterial {
+    /// The scalars at `seconds` of animation time; the stored values when nothing animates.
+    public func scalars(at seconds: Float) -> MaterialScalars {
+        guard let source = animatedSource, let animation = source.animation else {
+            return MaterialScalars(
+                uvOffset: uvOffset, uvScale: uvScale, alpha: alpha,
+                effectBaseColor: effect?.baseColor ?? .zero,
+                effectBaseColorScale: effect?.baseColorScale ?? 1,
+                effectFalloff: effect?.falloff ?? .zero,
+                specular: surface.specular, emissive: surface.emissive
+            )
+        }
+        let moved = animation.apply(to: source, at: seconds)
+        return MaterialScalars(
+            uvOffset: moved.uvOffset, uvScale: moved.uvScale, alpha: moved.alpha,
+            effectBaseColor: moved.effect?.baseColor ?? .zero,
+            effectBaseColorScale: moved.effect?.baseColorScale ?? 1,
+            effectFalloff: moved.effect?.falloff ?? .zero,
+            specular: SIMD4(moved.specularColor * moved.specularStrength, moved.glossiness),
+            emissive: SIMD4(moved.shading.emissiveColor, moved.shading.emissiveMultiple)
+        )
     }
 }

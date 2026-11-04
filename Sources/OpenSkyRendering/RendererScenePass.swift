@@ -111,10 +111,11 @@ extension Renderer {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         let material = group.material
         let effect = material.effect
+        let scalars = material.scalars(at: animationTime)
         var uniforms = DrawUniforms(
-            uvOffset: material.uvOffset,
-            uvScale: material.uvScale,
-            materialAlpha: material.alpha * alphaScale,
+            uvOffset: scalars.uvOffset,
+            uvScale: scalars.uvScale,
+            materialAlpha: scalars.alpha * alphaScale,
             alphaThreshold: material.alphaTestThreshold ?? 0,
             pointLightCount: UInt32(pointLightCount),
             receivesShadows: group.receivesShadows ? 1 : 0,
@@ -122,15 +123,15 @@ extension Renderer {
             // Only the blended pass runs after the scene depth copy, so only it fades soft.
             effectFlags: (effect?.flags ?? 0)
                 & (group.drawsBlended ? ~0 : ~UInt32(EffectFlag.soft.rawValue)),
-            effectBaseColor: effect?.baseColor ?? .zero,
-            effectFalloff: effect?.falloff ?? .zero,
-            effectBaseColorScale: effect?.baseColorScale ?? 1,
+            effectBaseColor: scalars.effectBaseColor,
+            effectFalloff: scalars.effectFalloff,
+            effectBaseColorScale: scalars.effectBaseColorScale,
             effectSoftDepth: effect?.softDepth ?? 0,
             effectLightingInfluence: effect?.lightingInfluence ?? 0,
             additiveBlend: UInt32(material.additiveBlend?.rawValue ?? 0),
             materialFlags: material.surface.flags,
-            specular: material.surface.specular,
-            emissive: material.surface.emissive,
+            specular: scalars.specular,
+            emissive: scalars.emissive,
             lightingEffects: material.surface.lightingEffects,
             tintColor: material.surface.tintColor,
             multiLayer: material.surface.multiLayer,

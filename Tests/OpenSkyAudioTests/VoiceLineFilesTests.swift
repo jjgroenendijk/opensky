@@ -39,6 +39,21 @@ struct VoiceLineFilesTests {
         #expect(silent.lipData == nil)
     }
 
+    @Test("a loose .wav line joins when no .xwm is there, and plays as PCM")
+    func looseWAV() throws {
+        let wav = WAVFixture.file(channels: 1, sampleRate: 100, bits: 16, samples: [0, 1, 2, 3])
+        let joined = try FUZFile(data: Self.contents("line.fuz", files: ["line.wav": wav]))
+        #expect(joined.audioData == wav)
+        let asset = try AudioFileAsset(data: joined.audioData)
+        #expect(WorldAudioEngine.duration(of: asset) == 0.04)
+
+        let audio = XWMFixture.file(packetCount: 2)
+        let both = try FUZFile(
+            data: Self.contents("line.fuz", files: ["line.wav": wav, "line.xwm": audio])
+        )
+        #expect(both.audioData == audio, "a loose .xwm wins over a loose .wav")
+    }
+
     @Test("with nothing on disk the .fuz read's error comes back")
     func missing() {
         #expect(throws: Missing.self) {
