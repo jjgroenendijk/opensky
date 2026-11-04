@@ -62,9 +62,9 @@ player's own `SkyrimPrefs.ini` shows through as the default.
 | `bUseTAA` | With the render scale off, runs the MetalFX temporal scaler at 100 percent, which anti-aliases ([upscaling](/rendering/upscaling.md#the-render-scale)). A chosen render scale wins |
 | `bUse64bitsHDRRenderTarget` | The window draws into a half-float target in linear sRGB instead of 8-bit sRGB, so scene colour above 1 lasts until the tone mapping ([image space](/rendering/image-space.md#where-opensky-differs)). Offscreen frames and screenshots follow it. It applies at the next game start |
 
-An option that is not in this table is shown, saved, and disabled, with one line that says why it
-does nothing yet. So a player sees what the game would change, and an option that starts to work
-only needs its reason removed.
+Every preset key is in this table. A key added later without a system is shown, saved, and
+disabled, with one line that says why it does nothing yet. So a player sees what the game would
+change, and an option that starts to work only needs its reason removed.
 
 ## OpenSky's own groups
 

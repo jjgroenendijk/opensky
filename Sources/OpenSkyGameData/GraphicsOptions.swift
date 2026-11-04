@@ -61,7 +61,6 @@ nonisolated public enum GraphicsOptions {
         )
     }
 
-
     public static let all: [GraphicsOption] = [
         option(.viewDistance, "Near terrain detail", "TerrainManager", "fBlockLevel0Distance"),
         option(.viewDistance, "Middle terrain detail", "TerrainManager", "fBlockLevel1Distance"),

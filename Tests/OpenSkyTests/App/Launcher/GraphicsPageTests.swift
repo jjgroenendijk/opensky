@@ -129,19 +129,16 @@ struct GraphicsPageTests {
         #expect(page.presetLabel.stringValue.hasPrefix("Unavailable: "))
     }
 
-    @Test func anUnavailableOptionIsOffAndSaysWhy() throws {
+    @Test func everyOptionCanBeChanged() throws {
         let page = makePage()
-        let row = try #require(page.optionRows.first { $0.option.unavailableReason != nil })
-        let control = try #require(find(
-            "GraphicsOption\(row.option.key)Control",
-            in: row.view
-        ) as? NSControl)
-        #expect(!control.isEnabled)
-        let note = try #require(find(
-            "GraphicsOption\(row.option.key)StatsLabel",
-            in: row.view
-        ) as? NSTextField)
-        #expect(note.stringValue.hasPrefix("Unavailable: "))
+        #expect(page.optionRows.count == GraphicsOptions.all.count)
+        for row in page.optionRows {
+            let control = try #require(find(
+                "GraphicsOption\(row.option.key)Control",
+                in: row.view
+            ) as? NSControl)
+            #expect(control.isEnabled, "\(row.option.key)")
+        }
     }
 
     @Test func anAppliedDistanceSavesATypedNumber() throws {
