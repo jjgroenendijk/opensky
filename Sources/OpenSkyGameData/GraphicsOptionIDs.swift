@@ -13,4 +13,5 @@ nonisolated extension PlayerSettingID {
     public static let decalsPerFrame = Self("graphics.iMaxDecalsPerFrame")
     public static let precipitationOcclusion = Self("graphics.bUsePrecipitationOcclusion")
     public static let focusShadows = Self("graphics.iNumFocusShadow")
+    public static let snowSparkles = Self("graphics.bToggleSparkles")
 }

@@ -121,13 +121,7 @@ nonisolated public enum GraphicsOptions {
             "OpenSky has no depth of field yet"
         ),
         option(.effects, "Lens flare", "ImageSpace", "bLensFlare", "OpenSky has no lens flare yet"),
-        option(
-            .effects,
-            "Snow sparkles",
-            "Display",
-            "bToggleSparkles",
-            "OpenSky has no snow sparkles"
-        ),
+        option(.effects, "Snow sparkles", "Display", "bToggleSparkles"),
         option(
             .effects,
             "Improved snow",
@@ -172,7 +166,7 @@ nonisolated public enum GraphicsOptions {
         case "fTreeLoadDistance": Double(fallback.treeLoadDistance)
         case "uGridsToLoad": Double(TerrainLODConfiguration.defaultGridsToLoad)
         case "fSplitDistanceMult": 1
-        case "bDecals", "bUsePrecipitationOcclusion": 1
+        case "bDecals", "bUsePrecipitationOcclusion", "bToggleSparkles": 1
         case "uMaxDecals": 100
         default: 0
         }

@@ -63,7 +63,8 @@ flag keeps hair "from going too bright under lights".
 The sparkle parameters of shader type 14 have no public description. Their vanilla values
 are, for example, (7.2, 150, 1.2, 1.1) on the ice icicles and (3, 100, 5, 100) in Windhelm.
 OpenSky reads x as cells per 1/64 of the texture, y as the glint power, and z as its
-strength, and does not use w. This is an OpenSky model, not the game's formula.
+strength, and does not use w. This is an OpenSky model, not the game's formula. The game's
+`[Display] bToggleSparkles` turns the term off, as does the "Snow and ice sparkle" switch.
 
 Ambient is the six-axis directional ambient (`DALC`), plus the single ambient colour while
 "Base ambient light" is on. The emissive colour times its multiple adds to the light, scaled

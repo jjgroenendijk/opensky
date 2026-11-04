@@ -30,11 +30,16 @@ nonisolated extension SurfaceShadingSetting {
 }
 
 extension SurfaceShadingSetting {
+    /// The game's `bToggleSparkles` turns the sparkle term off with its own switch.
     public static func terms(store: PlayerSettingsStore) -> SurfaceShadingTerm {
-        allCases.reduce(into: []) { terms, setting in
+        var terms: SurfaceShadingTerm = allCases.reduce(into: []) { terms, setting in
             if store.bool(setting.id) {
                 terms.insert(setting.term)
             }
         }
+        if !store.bool(.snowSparkles) {
+            terms.remove(.sparkle)
+        }
+        return terms
     }
 }
