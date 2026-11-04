@@ -157,6 +157,7 @@ Any pair that worked still morphs.
 
 ## Not done yet
 
-- Race sliders and character creation morphs.
+- Race sliders and chargen morphs on an NPC's assembled head. The player's head takes them
+  ([race menu](/engine/race-menu.md#the-drawn-head)).
 - Body morphs other than weight ([actor resolution](/engine/actor-resolution.md)).
 - Mood and combat expressions (`Mood*`, `CombatAnger`, `CombatShout`).

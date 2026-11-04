@@ -36,7 +36,8 @@ dirty counts, and the save by the same path as any other change.
 | `float GetActorValueMax(string)` | The value with every modifier and no damage | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 | `bool IsEssential()` | A script's `SetEssential` on the base, else the `ACBS` essential flag; false for the player | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 | `Race ActorBase.GetRace()`, `bool ActorBase.IsUnique()` | The race after "use traits" inheritance; the base record's own `ACBS` unique flag | [ActorBase Script](https://ck.uesp.net/wiki/ActorBase_Script) |
-| `bool IsBleedingOut()`, `bool IsCommandedActor()` | False: OpenSky has no bleedout and no commanded actors | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
+| `bool IsBleedingOut()` | Whether the actor kneels in [bleedout](/engine/ragdoll.md#bleedout) | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
+| `bool IsCommandedActor()` | False: OpenSky has no commanded actors | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 | `bool HasLOS(ObjectReference)` | The perception pair's line of sight; a pair perception does not track fails | [HasLOS - Actor](https://ck.uesp.net/wiki/HasLOS_-_Actor) |
 | `bool IsDetectedBy(Actor)` | Whether the other actor's pair with this one is detected | [IsDetectedBy - Actor](https://ck.uesp.net/wiki/IsDetectedBy_-_Actor) |
 | `Package GetCurrentPackage()` | The package the AI runs now, or `None` | [GetCurrentPackage - Actor](https://ck.uesp.net/wiki/GetCurrentPackage_-_Actor) |

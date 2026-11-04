@@ -105,7 +105,5 @@ The game opens a topic from the Help page of the journal.
 
 ## Differences from the game
 
-- `LocalizedStrings` reads the string tables of `Skyrim.esm` only. A message from a DLC
-  plugin may show the wrong text or none.
 - Without the `MessageBox` movie, for example with menu movies off, the box is drawn as
   OpenSky overlay text.

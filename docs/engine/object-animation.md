@@ -77,10 +77,8 @@ does not declare fails the native, so the script gets the default value.
 
 ## Where OpenSky differs
 
-- `BGSGamebryoSequenceGenerator` has no decoder. A graph state that plays one holds the last
-  pose. The blade project has three.
-- Tagfile (`.hkt`) projects are not read, so the activators and the ballista that ship as
-  tagfiles stay static.
+- `BGSGamebryoSequenceGenerator` is decoded but not played. A graph state that plays one holds
+  the last pose. The blade project has three.
 - The moving part has no collision body. A swinging blade does not hit; the trigger volume
   does.
 - `FURN`, `CONT`, and `MSTT` references are not checked for a graph.

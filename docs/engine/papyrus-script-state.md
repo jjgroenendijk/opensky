@@ -110,9 +110,9 @@ way.
 
 ## Where OpenSky differs
 
-- The state is recorded, and in most cases nothing else reads it yet. The input layer does not
-  read the player controls, the AI does not read `EnableAI`, death does not read `SetEssential`,
-  the HUD does not read `SetNotShowOnStealthMeter`, and leveled lists do not read added forms.
+- The state is recorded, and in most cases nothing else reads it yet. The AI does not read
+  `EnableAI`, the HUD does not read `SetNotShowOnStealthMeter`, and leveled lists do not read
+  added forms. The input layer reads the player controls.
 - A read does not fall back to the record. `IsGhost` on an actor whose `NPC_` record has the ghost
   flag reads false until a script sets it.
 - `UnlockWord` does not also teach the word. No source this project checked says whether it

@@ -113,5 +113,5 @@ Resume ([system menu](/engine/system-menu.md)).
 
 - The movie's `Favor` mode, for follower command mode, and its menu modes (`DialogueMode`,
   `BarterMode`, `InventoryMode`, `BookMode`, `TweenMode`, and `WorldMapMode`) are not driven.
-  OpenSky has no follower command mode yet, and a menu takes the one SWF layer, so the HUD is not
-  drawn under a menu at all.
+  [Follower command mode](/engine/follower-commands.md) does not switch the HUD, and a menu takes
+  the one SWF layer, so the HUD is not drawn under a menu at all.
