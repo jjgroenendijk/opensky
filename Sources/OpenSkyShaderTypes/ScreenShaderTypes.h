@@ -117,6 +117,35 @@ typedef struct
     vector_float4 toneMapping;
 } ImageSpaceUniforms;
 
+/// PostEffectUniforms.effects bits: the screen-space effects the composite draws.
+typedef NS_ENUM(EnumBackingType, PostEffectFlag)
+{
+    PostEffectFlagAmbientOcclusion = 1 << 0,
+    PostEffectFlagVolumetricLight = 1 << 1,
+    PostEffectFlagDepthOfField = 1 << 2,
+    PostEffectFlagLensFlare = 1 << 3,
+    PostEffectFlagAntiAliasing = 1 << 4,
+};
+
+/// The screen-space effects of the image-space composite (docs/rendering/post-effects.md).
+typedef struct
+{
+    /// Clip space back to world space, to rebuild a pixel's position from its depth.
+    matrix_float4x4 inverseViewProjection;
+    /// x, y: projection m00 and m11, to turn a world radius into a screen radius.
+    vector_float4 projection;
+    /// x radius in world units, y strength, z bias; w unused.
+    vector_float4 ambientOcclusion;
+    /// x strength, y march steps, z reach in world units, w phase asymmetry.
+    vector_float4 volumetricLight;
+    /// x strength, y focus distance, z range in world units, w full blur radius in pixels.
+    vector_float4 depthOfField;
+    /// xy the sun's texture coordinate, z strength, w the target's width over its height.
+    vector_float4 lensFlare;
+    /// PostEffectFlag bits.
+    unsigned int effects;
+} PostEffectUniforms;
+
 /// One effect-shader membrane drawn additively over its target's meshes
 /// (docs/rendering/visual-effects.md). Colors are linear and premultiplied by alpha.
 typedef struct

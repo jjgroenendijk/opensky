@@ -1,8 +1,9 @@
 #include "ShaderCommon.h"
+#include "PostEffects.h"
 
 // Image-space composite: one fullscreen triangle over a copy of the scene color.
-// Order: blur, double vision, tone mapping, saturation, brightness, contrast, tint, fade
-// (docs/rendering/image-space.md). The blur is a cheap two-ring disc.
+// Order: blur, double vision, the screen-space effects, tone mapping, saturation, brightness,
+// contrast, tint, fade (docs/rendering/image-space.md). The blur is a cheap two-ring disc.
 constant float3 imageSpaceLuminance = float3(0.2126, 0.7152, 0.0722);
 
 static float3 imageSpaceBlur(
@@ -73,15 +74,22 @@ static float4 imageSpaceGrade(float3 color, constant ImageSpaceUniforms &uniform
 
 fragment float4 imageSpaceFragment(
     SkyVertexOut in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
     constant ImageSpaceUniforms &uniforms [[buffer(BufferIndexImageSpaceUniforms)]],
+    constant PostEffectUniforms &post [[buffer(BufferIndexPostEffectUniforms)]],
     device atomic_uint *luminance [[buffer(BufferIndexImageSpaceLuminance)]],
-    texture2d<float> scene [[texture(TextureIndexSceneColor)]])
+    texture2d<float> scene [[texture(TextureIndexSceneColor)]],
+    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
+    depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    sampler shadowCompare [[sampler(SamplerIndexShadowCompare)]])
 {
     constexpr sampler linearClamp(filter::linear, address::clamp_to_edge);
     float2 size = float2(scene.get_width(), scene.get_height());
     float2 texel = 1.0 / size;
     float2 uv = in.position.xy * texel;
-    float3 color = scene.sample(linearClamp, uv).rgb;
+    float3 color = (post.effects & PostEffectFlagAntiAliasing) != 0
+                       ? postFXAA(scene, uv, texel)
+                       : scene.sample(linearClamp, uv).rgb;
     imageSpaceMeasure(in.position.xy, color, uniforms, luminance);
     if (uniforms.grading.w > 0.5) {
         color = imageSpaceBlur(scene, linearClamp, uv, texel, uniforms.grading.w, color);
@@ -90,6 +98,11 @@ fragment float4 imageSpaceFragment(
     if (doubleVision > 0.0) {
         float3 ghost = scene.sample(linearClamp, uv + float2(0.02 * doubleVision, 0.0)).rgb;
         color = mix(color, ghost, 0.5 * doubleVision);
+    }
+    if (post.effects != 0) {
+        float depth = sceneDepth.sample(postNearest, uv);
+        PostPixel pixel = {uv, texel, in.position.xy, depth, postWorldPosition(uv, depth, post)};
+        color = postApply(color, pixel, frame, post, scene, sceneDepth, shadowMap, shadowCompare);
     }
     return imageSpaceGrade(color, uniforms);
 }

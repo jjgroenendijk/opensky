@@ -148,6 +148,8 @@ nonisolated public final class RenderMesh: Sendable {
     public let vertexBuffer: MTLBuffer
     public let indexBuffer: MTLBuffer
     public let indexCount: Int
+    /// See `Mesh.lodIndexCounts`.
+    public let lodIndexCounts: [Int]
     public let skinningBuffer: MTLBuffer?
     public let boneMatrixBuffer: MTLBuffer?
     private let skinningPalette: SkinningPalette?
@@ -214,6 +216,7 @@ nonisolated public final class RenderMesh: Sendable {
         self.vertexBuffer = vertexBuffer
         self.indexBuffer = indexBuffer
         indexCount = mesh.indices.count
+        lodIndexCounts = mesh.lodIndexCounts
         skinningBuffer = skinBuffers.attributes
         boneMatrixBuffer = skinBuffers.matrices
         skinningPalette = skinBuffers.palette
@@ -236,6 +239,7 @@ nonisolated public final class RenderMesh: Sendable {
         self.vertexBuffer = vertexBuffer
         self.indexBuffer = indexBuffer
         indexCount = layout.indexCount
+        lodIndexCounts = layout.lodIndexCounts
         skinningBuffer = nil
         boneMatrixBuffer = nil
         skinningPalette = nil
@@ -272,6 +276,7 @@ nonisolated public final class RenderMesh: Sendable {
         vertexBuffer = source.vertexBuffer
         indexBuffer = source.indexBuffer
         indexCount = source.indexCount
+        lodIndexCounts = source.lodIndexCounts
         skinningBuffer = source.skinningBuffer
         self.boneMatrixBuffer = boneMatrixBuffer
         skinningPalette = palette

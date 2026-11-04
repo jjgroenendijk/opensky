@@ -1,6 +1,7 @@
 #include "ShaderCommon.h"
 #include "SurfaceShading.h"
 #include "EffectShading.h"
+#include "ProjectedMaterial.h"
 
 // Static-mesh path: diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
@@ -24,6 +25,8 @@ static inline float3 undoTerrainLODBrightening(float3 albedo, float2 curve)
 // scrolls its normal map half a texture per second. Both are OpenSky choices.
 constant float refractionReach = 0.1;
 constant float fireRefractionScroll = 0.5;
+// How much ambient light a specular surface reflects; an OpenSky choice.
+constant float imageBasedLightingStrength = 0.5;
 
 // Instanced: matrices come from the per-instance transform
 // array, bound at the draw group's base offset — instance_id starts at 0
@@ -228,6 +231,16 @@ static float3 emittedLight(
     return emitted;
 }
 
+// Image-based lighting: the six-axis ambient seen along the reflected view, stronger at
+// grazing angles (Schlick's Fresnel from a base reflectance of 0.04).
+static float3 ambientReflection(LightGeometry geometry, constant FrameUniforms &frame)
+{
+    float3 reflected = reflect(-geometry.toEye, geometry.normal);
+    float facing = saturate(dot(geometry.normal, geometry.toEye));
+    float fresnel = 0.04 + 0.96 * pow(1.0 - facing, 5.0);
+    return directionalAmbient(reflected, frame) * (fresnel * imageBasedLightingStrength);
+}
+
 static float3 litSurface(
     StaticVertexOut in,
     LitInput input,
@@ -265,6 +278,9 @@ static float3 litSurface(
             mask = maps.backLight.sample(trilinear, input.uv).r;
         }
         specular = draw.specular.rgb * mask * sums.specular;
+        if (frame.imageBasedLighting != 0) {
+            specular += draw.specular.rgb * mask * ambientReflection(geometry, frame);
+        }
     }
     if (hasTerm(terms, ShadingTermSparkle)) {
         float glint = sparkle(input.uv, geometry, -frame.sunDirection, draw.multiLayer);
@@ -334,8 +350,11 @@ fragment float4 staticMeshFragment(
     texture2d<float> environmentMask [[texture(TextureIndexSurfaceEnvironmentMask)]],
     texture2d<float> layerMap [[texture(TextureIndexSurfaceLayer)]],
     texture2d<float> backLightMap [[texture(TextureIndexSurfaceBackLight)]],
+    texture2d<float> projectedDiffuse [[texture(TextureIndexProjectedDiffuse)]],
+    texture2d<float> projectedNormal [[texture(TextureIndexProjectedNormal)]],
     texture2d<float> sceneColour [[texture(TextureIndexSceneColor)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
     depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
@@ -408,9 +427,10 @@ fragment float4 staticMeshFragment(
         return blendOutput(lit, alpha, in.worldPosition, frame, draw);
     }
     SurfaceNormal normal = surfaceNormal(in, tangentFrame, uv, terms, maps, trilinear);
-    float shadow = draw.receivesShadows != 0
-                       ? sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler)
-                       : 1.0;
+    float shadow =
+        draw.receivesShadows != 0
+            ? sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler)
+            : 1.0;
     if (rayTracedShadows) {
         float traced =
             draw.receivesShadows != 0
@@ -423,6 +443,12 @@ fragment float4 staticMeshFragment(
     }
     float3 vertexColour = linearVertexColour(in.color.rgb, frame);
     float3 albedo = diffuse.rgb * vertexColour;
+    if (draw.projectedParameters.w > 0.5) {
+        ProjectedLayer layer = projectedLayer(
+            in.worldPosition, normal.world, draw, projectedDiffuse, projectedNormal, trilinear);
+        albedo = mix(albedo, layer.albedo, layer.blend);
+        normal.world = normalize(mix(normal.world, layer.normal, layer.blend));
+    }
     if (hasTerm(terms, ShadingTermLandscapeNoise)) {
         float noise = detailMap.sample(trilinear, in.worldPosition.xy * landscapeNoiseTile).r;
         albedo *= mix(1.0, noise / landscapeNoiseMean, 0.5);

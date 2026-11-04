@@ -50,6 +50,7 @@ extension RenderCommand {
         navigationOverlayGraph: RuntimeNavigationGraph? = nil,
         detectionOverlay: PerceptionRuntime? = nil,
         frames: Int = 1,
+        afterFirstFrame: (GameSession) -> Void = { _ in },
         configure: (GameSession) throws -> Void = { _ in },
         inspect: (GameSession) -> Void = { _ in }
     ) throws -> OffscreenFrame {
@@ -85,6 +86,7 @@ extension RenderCommand {
         }
         try configure(gameSession)
         var texture = try renderer.renderOffscreen(width: size.width, height: size.height)
+        afterFirstFrame(gameSession)
         for _ in 1 ..< max(frames, 1) {
             texture = try renderer.renderOffscreen(width: size.width, height: size.height)
         }

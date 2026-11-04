@@ -30,7 +30,7 @@ nonisolated public final class RenderModel: Sendable {
         }
     }
 
-    private init(meshes: [RenderMesh], renderMaterials: [RenderMaterial]) {
+    init(meshes: [RenderMesh], renderMaterials: [RenderMaterial]) {
         self.meshes = meshes
         materials = renderMaterials
     }

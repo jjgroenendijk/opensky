@@ -50,6 +50,11 @@ extension CellStreamer {
         composition.distantLOD?.blockCount ?? 0
     }
 
+    /// Large references past the loaded grid drawn with their full model.
+    public var largeReferenceCount: Int {
+        composition.distantLOD?.largeReferenceCount ?? 0
+    }
+
     public var composedCellCount: Int {
         composition.cellCount
     }

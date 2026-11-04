@@ -46,12 +46,27 @@ The decal texture is the `TXST` `TX00` diffuse. Its size and color come from `DO
 The decals draw after the effect membranes, lit by the sun, ambient light, and shadow, with
 fog. The random values come from a fixed seed, so a run places the same decals each time.
 
-`[Display] uMaxDecals` limits the live decals; the oldest goes first. `[Decals] bDecals`
-turns decals off ([graphics options](/engine/graphics-options.md)).
+`[Display] uMaxDecals` limits the live decals; the oldest goes first. `[Display]
+iMaxDecalsPerFrame` limits the decals placed in one frame; later ones that frame are dropped.
+`[Decals] bDecals` turns decals off ([graphics options](/engine/graphics-options.md)).
+
+## Skin decals
+
+With `[Decals] bSkinnedDecals` on, a hit on an actor puts its decal on the actor instead of on
+the ground:
+
+- The decal faces out from the actor's middle, toward the hit point, level with the ground.
+- It is kept in the actor's own frame (its feet, turned to its facing), so it moves and turns
+  with the actor. Each frame with skin decals rebuilds the decal batches.
+- Its width and height are at most 16 units.
+- `[Display] uMaxSkinDecals` limits the live skin decals, 35 when the settings give none.
+  `iMaxSkinDecalsPerFrame` limits those placed in one frame. `bDecals` off also turns them off.
 
 ## Approximations
 
-- OpenSky has no skin decals. A hit on an actor puts its decal on the ground under the actor.
+- A skin decal is a flat quad that follows the actor's feet frame, not its bones. It does
+  not bend with the body or move with an arm. The 16-unit size cap and the default limit of 35
+  are OpenSky's own.
 - A decal is one flat quad. It does not wrap around a corner or follow uneven ground.
 - The 2 x 2 subtexture grid is a reading of the vanilla blood textures, not a confirmed rule.
 - Vanilla footstep `IPCT` records have a dust model and no decal, so steps leave no marks.

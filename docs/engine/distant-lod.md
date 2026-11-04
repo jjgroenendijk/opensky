@@ -19,14 +19,18 @@ with no gaps:
 
 | Level | Inner radius | Outer radius | Content |
 | --- | --- | --- | --- |
-| 4 | Loaded radius (2) | `fBlockLevel0Distance` | Terrain and objects |
-| 8 | Previous outer | `fBlockLevel1Distance` | Terrain and objects |
-| 16 | Previous outer | `min(maximum, 2 * level1)` | Terrain and objects |
+| 4 | Loaded radius (2) | `split * fBlockLevel0Distance`, at least one ring | Terrain and objects |
+| 8 | Previous outer | `split * fBlockLevel1Distance` | Terrain and objects |
+| 16 | Previous outer | `split * 2 * level1` | Terrain and objects |
 | 32 | Previous outer | `fBlockMaximumDistance` | Terrain |
 
 Skyrim has two near distances and one maximum, but the files have four levels. The level 16
 limit (`2 * level1`, capped at the maximum) is OpenSky's own choice. It keeps each level coarser
 than the last, with no gaps between them.
+
+`split` is `fSplitDistanceMult`, and each scaled distance stops at the maximum. A small split,
+such as 0.5 in the Low preset, could leave no level 4 ring. A level 8 block would then touch the
+full-detail cells, and the cracks between them would show. So level 4 always keeps one ring.
 
 The block grid starts at the origin in the LOD settings file, not at cell 0. A block that is not
 on the settings stride is dropped.
@@ -78,6 +82,39 @@ takes about 0.9 s cold and now finishes within about 1.1 s of the start, long be
 But both builds read from the same disk, so the near grid gets slower by almost the same time.
 "Start area ready" went from 6.2 s to 6.1 s with the asset cache, and stayed at about 6.7 s from the
 archives. Background priority made it worse: its throttled reads finished the ring last.
+
+## Large references
+
+A large reference is a placed object whose base is at least 512 units in size, such as a
+mountain or a bridge. The `WRLD` `RNAM` field lists them by cell. Each plugin's copy of the
+`WRLD` lists only its own: on the install, `Skyrim.esm`'s `Tamriel` holds about 160,000 and
+the winning override 18. So OpenSky joins the lists of every plugin. In the game they keep their
+full model out to `uLargeRefLODGridSize` cells, 11 by default, instead of the 5 of `uGridsToLoad`
+(UESP "Skyrim Mod:Mod File Format/WRLD", `RNAM`). OpenSky reads the setting from the INI files
+and the Graphics page as "Large object grid", and turns the grid side into rings like
+`uGridsToLoad`: 11 gives 5. A value at or below the loaded grid turns the ring off.
+
+Each ring build, on the build queue:
+
+1. Object LOD blocks merge their large references into separate shapes. On the real install,
+   `tamriel.4.4.-8.bto` holds `obj-LargeRef`, `objsnow-LargeRef`, `objHD-LargeRef`, and
+   `objsnowHD-LargeRef`, each with a `BSDistantObjectLargeRefExtraData` block. A block that
+   reaches into the ring drops every shape whose name ends in `-LargeRef`.
+2. The ring's cells are every cell inside the large radius, plus every cell of a block from
+   step 1, minus the loaded grid. The second part means a large reference never goes missing
+   when its block reaches only partly into the ring.
+3. In those cells, the references that `RNAM` lists are read from their cell and drawn with
+   their full model, as the cell build places them. A reference that starts disabled stays
+   hidden.
+
+The quick first ring of a session keeps the `-LargeRef` shapes, because its builder cannot
+read the plugins. Once the near grid is in, the same center is built once more with the large
+references. `openskycli game state frame` reports `largeReferences`, and `openskycli render`
+prints the count with the LOD line.
+
+The game hides a large reference's LOD per cell; OpenSky hides it per block, so the ring of
+full models is square to the block grid and can reach a few cells past the setting. The
+references do not take runtime changes, such as a reference that a quest disables later.
 
 ## Tree LOD
 

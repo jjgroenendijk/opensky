@@ -154,6 +154,22 @@ the detail and the sources it did find.
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
 | Image space modifier weights | Two constants; at most 16 at once | [image space](/rendering/image-space.md) |
 | Surface shading strength, tiling, refraction rate | OpenSky's values | [surface shading](/rendering/surface-shading.md) |
+| Shadow map size cap | 4096; the game allows more | [graphics options](/engine/graphics-options.md) |
+| Reference fade reach | Multiplier x 16 x bound radius, 15% dissolve | [graphics options](/engine/graphics-options.md) |
+| `BSLODTriShape` level counts | Prefixes when falling, else runs | [NIF](/formats/nif.md#nitrishape) |
+| Rain occlusion view size | 4,096 units square, 1,024 texels | [precipitation](/rendering/precipitation.md#roof-occlusion) |
+| Focus shadow reach and size | 2,048 units, 1,024 texels, 256-unit backup | [shadows](/rendering/shadows.md#focus-shadows) |
+| Image-based lighting | Six-axis ambient along the reflection, Fresnel 0.04, strength 0.5 | [surface shading](/rendering/surface-shading.md#lights) |
+| Water screen-space reflection march | 24 steps from 24 units, each 1.25 times longer | [water](/rendering/water.md#screen-space-reflections) |
+| Snow ground sheen and glints | Sheen 0.25 at power 24; glints in 1.5% of 4-unit cells, 2 at power 6 | [terrain](/engine/terrain.md#snow-ground) |
+| Directional material blend | `edge * falloff scale + bias`; 512-unit tile; first textured shape of the `MATO` model | [surface shading](/rendering/surface-shading.md#directional-materials) |
+| Skin decal size and limit | At most 16 units; 35 kept when unset | [decals](/rendering/decals.md#skin-decals) |
+| Terrain split distance | `fSplitDistanceMult` scales the level 4, 8, and 16 reach; level 32 keeps `fBlockMaximumDistance` | [graphics options](/engine/graphics-options.md) |
+| Large reference LOD hidden per block | The game's per-cell rule is not known | [distant LOD](/engine/distant-lod.md#large-references) |
+| Ambient occlusion radius and strength | 48 units, 12 taps, strength 1.2, bias 0.05, fade 2,048 to 4,096 units | [post effects](/rendering/post-effects.md#ambient-occlusion) |
+| Volumetric light steps and strength | 8, 16, 32 steps; 4,096 units; strength 0.05; asymmetry 0.6 | [post effects](/rendering/post-effects.md#volumetric-light) |
+| Depth of field blur | Far side only; 8 pixels at 1080 lines; modifier moves toward its value | [post effects](/rendering/post-effects.md#depth-of-field) |
+| Lens flare pattern | 5 ghosts, strength 0.6 times sun alpha and weather Sun Glare, 9 visibility taps | [post effects](/rendering/post-effects.md#lens-flare) |
 | Water UV density | 2 quads per repeat | [scene drawing](/rendering/scene-drawing.md) |
 | Clear colour under water | OpenSky's choice | [Metal 4 renderer](/rendering/metal4-renderer.md) |
 | Light flicker curves, period unit, slow factor | OpenSky's values | [lighting](/formats/lighting.md) |

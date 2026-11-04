@@ -8,6 +8,29 @@ static bool cullPlaneKeeps(float4 plane, float3 lower, float3 upper)
     return !(dot(plane.xyz, farthest) + plane.w < 0.0);
 }
 
+// Mirrors `ReferenceFadeDistances.fade`: 0 whole, up to 1 dissolved, 2 past its reach.
+static float cullFade(device const CullInstance &instance, constant CullParameters &parameters)
+{
+    uint category = uint(instance.boundsMin.w);
+    if (category == 0 || category > 3 || instance.boundsMax.w <= 0.0 ||
+        parameters.fadeViewer.w <= 0.0) {
+        return 0.0;
+    }
+    float scale = parameters.fadeScales[category - 1];
+    if (scale <= 0.0) {
+        return 0.0;
+    }
+    float3 lower = instance.boundsMin.xyz;
+    float3 upper = instance.boundsMax.xyz;
+    float reach = scale * max(length(upper - lower) * 0.5, parameters.fadeScales.w);
+    float distance = length((lower + upper) * 0.5 - parameters.fadeViewer.xyz);
+    if (distance >= reach) {
+        return 2.0;
+    }
+    float start = reach * (1.0 - parameters.fadeViewer.w);
+    return distance <= start ? 0.0 : (distance - start) / (reach - start);
+}
+
 kernel void cullInstances(
     device const CullInstance *instances [[buffer(CullBufferIndexInstances)]],
     constant CullParameters &parameters [[buffer(CullBufferIndexParameters)]],
@@ -38,9 +61,15 @@ kernel void cullInstances(
             }
         }
     }
+    float fade = cullFade(instance, parameters);
+    if (fade > 1.0) {
+        return;
+    }
     uint countWord = instance.group * CullConstantArgumentWords + 1;
     uint slot = atomic_fetch_add_explicit(&arguments[countWord], 1, memory_order_relaxed);
-    output[instance.outputBase + slot] = instance.transform;
+    InstanceTransform transform = instance.transform;
+    transform.grassParameters.w = fade;
+    output[instance.outputBase + slot] = transform;
 }
 
 // Temporal upscaling motion (docs/rendering/upscaling.md). Motion is last frame's

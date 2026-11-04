@@ -82,6 +82,8 @@ public final class GPUCullScene {
     /// Per frame slot: the room-culled counter, then `roomWordCount` bitset words.
     let rooms: MTLBuffer
     let roomWordCount: Int
+    /// The reference fade the next `encode` writes into each view's parameters.
+    var fade = CullFade(distances: .off, viewer: .zero)
     let instanceCount: Int
     let groups: [GPUCullGroup]
     /// The GPU group of each `scene.opaque` group, nil for a CPU group.
@@ -270,6 +272,10 @@ public final class GPUCullScene {
                 frustum.left, frustum.right, frustum.bottom,
                 frustum.top, frustum.near, frustum.far
             ),
+            fadeViewer: SIMD4(
+                fade.viewer, fade.distances.isOn ? ReferenceFadeDistances.fadeBand : 0
+            ),
+            fadeScales: fade.distances.shaderScales,
             instanceCount: UInt32(instanceCount),
             roomWordCount: UInt32(roomWords),
             padding0: 0, padding1: 0
@@ -299,6 +305,8 @@ private struct GPUCullSceneBuilder {
     mutating func add(_ group: DrawGroup) -> Int? {
         guard
             !group.instances.isEmpty,
+            // A LOD mesh picks its detail level per instance on the CPU.
+            group.mesh.lodIndexCounts.isEmpty,
             // A region's emittance changes with the hour, so it is written every frame.
             group.instances.allSatisfy({ $0.referenceFormID == 0 && $0.emittance?.region == nil })
         else { return nil }
@@ -332,7 +340,7 @@ private struct GPUCullSceneBuilder {
                 instanceColor: instance.instanceColor(regions: [:]),
                 grassParameters: .zero
             ),
-            boundsMin: SIMD4(bounds?.min ?? .zero, 0),
+            boundsMin: SIMD4(bounds?.min ?? .zero, Float(instance.fadeCategory.rawValue)),
             boundsMax: SIMD4(bounds?.max ?? .zero, bounds == nil ? 0 : 1),
             group: UInt32(group),
             outputBase: UInt32(outputBase),

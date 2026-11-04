@@ -13,6 +13,12 @@ nonisolated public struct ShadowCascade: Sendable {
     public var viewProjection: simd_float4x4
     public var splitNear: Float
     public var splitFar: Float
+
+    public init(viewProjection: simd_float4x4, splitNear: Float, splitFar: Float) {
+        self.viewProjection = viewProjection
+        self.splitNear = splitNear
+        self.splitFar = splitFar
+    }
 }
 
 /// Camera, sun, and cascade settings for `ShadowCascadeMath.makeCascades`.

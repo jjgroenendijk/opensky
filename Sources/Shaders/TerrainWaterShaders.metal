@@ -66,6 +66,20 @@ static float3 terrainShadingNormal(TerrainVertexOut in, float2 blendedXY)
     return normalize(tangent * blendedXY.x + bitangent * blendedXY.y + vertexNormal * z);
 }
 
+// Snow ground (LTEX INAM) under the improved snow option: a broad sun sheen and fine
+// glints in a fixed world-space pattern, so the snow looks crisp in the sun.
+static float3 terrainSnowSheen(float3 world, float3 normal, constant FrameUniforms &frame)
+{
+    float3 toEye = normalize(frame.cameraPosition - world);
+    float3 halfway = normalize(toEye - frame.sunDirection);
+    float facing = saturate(dot(normal, halfway));
+    float sheen = pow(facing, 24.0) * 0.25;
+    float2 cell = floor(world.xy * 0.25);
+    float seed = fract(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453);
+    float glint = seed > 0.985 ? pow(facing, 6.0) * 2.0 : 0.0;
+    return frame.sunColor * (sheen + glint);
+}
+
 fragment float4 terrainFragment(
     TerrainVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
@@ -78,6 +92,7 @@ fragment float4 terrainFragment(
     array<texture2d<float>, TerrainConstantMaxLayers> layerNormalMaps
     [[texture(TextureIndexTerrainLayerNormal0)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
     raytracing::instance_acceleration_structure rayScene
@@ -100,10 +115,12 @@ fragment float4 terrainFragment(
     float2 normalXY =
         normalMaps ? terrainNormalXY(baseNormalMap.sample(trilinear, in.texcoord)) : float2(0.0);
     uint count = min(draw.layerCount, uint(TerrainConstantMaxLayers));
+    float snow = (draw.snowLayers >> uint(TerrainConstantMaxLayers)) & 1u;
     for (uint layer = 0; layer < count; ++layer) {
         float weight = saturate(weights[layer]);
         float3 layerColor = layerMaps[layer].sample(trilinear, in.texcoord).rgb;
         albedo = mix(albedo, layerColor, weight);
+        snow = mix(snow, float((draw.snowLayers >> layer) & 1u), weight);
         if (normalMaps) {
             float4 texel = layerNormalMaps[layer].sample(trilinear, in.texcoord);
             normalXY = mix(normalXY, terrainNormalXY(texel), weight);
@@ -111,7 +128,7 @@ fragment float4 terrainFragment(
     }
     float3 normal = normalMaps ? terrainShadingNormal(in, normalXY) : normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
-    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
+    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler);
     if (rayTracedShadows) {
         float traced = rayTracedSunShadow(in.worldPosition, normalize(in.normal), frame, rayScene);
         if (rayShadowView) {
@@ -123,6 +140,9 @@ fragment float4 terrainFragment(
         frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame) +
         pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
     float3 lit = albedo * linearVertexColour(in.color.rgb, frame) * illumination;
+    if (snow > 0.0) {
+        lit += terrainSnowSheen(in.worldPosition, normal, frame) * (shadow * snow);
+    }
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
 
@@ -169,11 +189,57 @@ static float3 waterNormal(float2 xy, float time, constant WaterDrawUniforms &dra
     return normalize(float3(-slope, 1.0));
 }
 
+// Screen-space reflection: the reflected ray steps through the scene drawn before the
+// water, with steps that grow by a quarter each time. The first step behind a stored
+// surface, and close to it, is the hit. rgb the colour, a its weight: lower near the
+// screen edge and for far hits.
+static float4 waterScreenReflection(
+    float3 origin,
+    float3 direction,
+    constant FrameUniforms &frame,
+    constant WaterDrawUniforms &draw,
+    depth2d<float> sceneDepth,
+    texture2d<float> sceneColor)
+{
+    constexpr sampler nearest(filter::nearest, address::clamp_to_edge);
+    constexpr sampler linear(filter::linear, address::clamp_to_edge);
+    float stepLength = 24.0;
+    float3 point = origin;
+    for (int step = 0; step < 24; ++step) {
+        point += direction * stepLength;
+        stepLength *= 1.25;
+        float4 clip = frame.viewProjectionMatrix * float4(point, 1.0);
+        if (clip.w <= 0.0) {
+            break;
+        }
+        float3 ndc = clip.xyz / clip.w;
+        float2 uv = ndc.xy * float2(0.5, -0.5) + 0.5;
+        if (any(uv < 0.0) || any(uv > 1.0)) {
+            break;
+        }
+        float stored = sceneDepth.sample(nearest, uv);
+        if (stored >= 1.0 || ndc.z <= stored) {
+            continue;
+        }
+        float pointDepth = draw.depthUnproject.y / (ndc.z + draw.depthUnproject.x);
+        float surfaceDepth = draw.depthUnproject.y / (stored + draw.depthUnproject.x);
+        if (pointDepth - surfaceDepth > stepLength * 2.0) {
+            break;
+        }
+        float2 border = min(uv, 1.0 - uv);
+        float edge = saturate(min(border.x, border.y) * 10.0);
+        float distanceFade = 1.0 - float(step) / 24.0;
+        return float4(sceneColor.sample(linear, uv).rgb, edge * distanceFade);
+    }
+    return 0.0;
+}
+
 fragment float4 waterFragment(
     WaterVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
     constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
-    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]])
+    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
+    texture2d<float> sceneColor [[texture(TextureIndexSceneColor)]])
 {
     if (debugViewActive) {
         // A water plane is flat and untextured, so the normal is the plane's
@@ -209,9 +275,14 @@ fragment float4 waterFragment(
     float fresnel = baseReflect + (1.0 - baseReflect) * pow(1.0 - saturate(dot(normal, view)), 5.0);
     float reflection = saturate(fresnel * draw.surface.z);
     float3 sky = mix(draw.reflectionColor, frame.fogFarColor, 0.35);
+    float3 mirrored = reflect(-view, normal);
+    if (frame.screenSpaceReflections != 0 && draw.depthAndSun.w > 0.5) {
+        float4 hit =
+            waterScreenReflection(in.worldPosition, mirrored, frame, draw, sceneDepth, sceneColor);
+        sky = mix(sky, hit.rgb, hit.a);
+    }
     float3 color = mix(body * (frame.ambientColor + frame.sunColor * 0.6), sky, reflection);
 
-    float3 mirrored = reflect(-view, normal);
     float sunAlign = saturate(dot(mirrored, -frame.sunDirection));
     float specular = pow(sunAlign, max(draw.surface.w * 0.25, 8.0)) * draw.depthAndSun.x;
     color += frame.sunColor * specular;

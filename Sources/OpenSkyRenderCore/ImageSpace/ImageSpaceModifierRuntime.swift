@@ -109,6 +109,13 @@ nonisolated extension ImageSpaceParameters {
             (sample.values[.doubleVisionStrength] ?? 0) * strength
         )
         result.radialBlur = max(radialBlur, (sample.values[.radialBlurStrength] ?? 0) * strength)
+        let focus: [ImageSpaceChannel] = [
+            .depthOfFieldStrength, .depthOfFieldDistance, .depthOfFieldRange
+        ]
+        for (index, channel) in focus.enumerated() {
+            guard let value = sample.values[channel] else { continue }
+            result.depthOfField[index] += (value - depthOfField[index]) * strength
+        }
         result.tint = Self.layer(tint, over: sample.tint, strength: strength)
         result.fade = Self.layer(fade, over: sample.fade, strength: strength)
         return result

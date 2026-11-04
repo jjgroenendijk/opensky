@@ -100,8 +100,6 @@ nonisolated public struct OffscreenBenchResult: Sendable {
 }
 
 extension Renderer {
-    static let offscreenColorFormat = MTLPixelFormat.bgra8Unorm_srgb
-
     /// Color (shared, CPU-readable) + depth (private) render targets for
     /// offscreen frames.
     private func makeOffscreenTargets(
@@ -109,7 +107,7 @@ extension Renderer {
         height: Int
     ) throws -> (color: MTLTexture, depth: MTLTexture) {
         let colorDescriptor = MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat: Self.offscreenColorFormat,
+            pixelFormat: colorPixelFormat,
             width: width,
             height: height,
             mipmapped: false

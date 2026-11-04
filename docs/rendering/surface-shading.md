@@ -63,7 +63,8 @@ flag keeps hair "from going too bright under lights".
 The sparkle parameters of shader type 14 have no public description. Their vanilla values
 are, for example, (7.2, 150, 1.2, 1.1) on the ice icicles and (3, 100, 5, 100) in Windhelm.
 OpenSky reads x as cells per 1/64 of the texture, y as the glint power, and z as its
-strength, and does not use w. This is an OpenSky model, not the game's formula.
+strength, and does not use w. This is an OpenSky model, not the game's formula. The game's
+`[Display] bToggleSparkles` turns the term off, as does the "Snow and ice sparkle" switch.
 
 Ambient is the six-axis directional ambient (`DALC`), plus the single ambient colour while
 "Base ambient light" is on. The emissive colour times its multiple adds to the light, scaled
@@ -72,6 +73,33 @@ reference's `XEMI` light, or its `XEMI` region's weather colour at this hour
 ([effect shapes](/formats/nif-materials.md#effect-shapes)), instead. A reference without one
 keeps the NIF colour. The sun terms
 use the sun shadow.
+
+With the game's `[Display] bIBLFEnable` on, a specular surface also reflects the ambient
+light (image-based lighting). The six-axis ambient is read along the reflected view
+direction, times Schlick's Fresnel `0.04 + 0.96 * (1 - N.V)^5`, times 0.5. The specular
+colour and mask scale it like the specular row. The game samples a captured environment
+instead; this six-axis form and the 0.5 strength are OpenSky's own.
+
+## Directional materials
+
+A static whose `STAT` `DNAM` names a `MATO` gets that material on the faces that point along
+the `MATO` projection vector, such as snow on the tops of rocks
+([environment shading records](/formats/environment-shading.md#mato)). The surface override of
+every placed reference of the static carries it, and every lit shape of the model takes it.
+
+- A face whose normal is more than the `DNAM` max angle from the projection vector gets none.
+- Between that angle and the vector, `edge` runs from 0 to 1. The blend is
+  `edge * falloff scale + falloff bias`, clamped to 0 to 1.
+- With the game's `[Display] bEnableProjecteUVDiffuseNormals` on, the blend mixes in the
+  diffuse and normal maps of the `MATO` model's first textured shape. They are laid on the world
+  XY plane and repeat every 512 units at a material UV scale of 1. The normal map's XY tilts the
+  normal around world up.
+- With it off, the blend mixes in the `MATO` single-pass colour, or white when the record has
+  none.
+
+How the game reads the falloff values, the noise UV scale, and the normal dampener is not
+documented. The blend above, the 512-unit tile, and the texture source are OpenSky's own. The
+noise that breaks up the game's edge is not drawn.
 
 ## Albedo
 

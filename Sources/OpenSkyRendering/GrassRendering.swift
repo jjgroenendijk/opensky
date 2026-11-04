@@ -20,6 +20,16 @@ nonisolated public enum GrassRenderPolicy: Sendable {
     public static let maximumWindScale: Float = 2
     /// Shader displacement at full weather wind + maximum UI wind scale.
     public static let maximumSwayDisplacement: Float = 192
+    /// Grass starts to thin out at this share of the draw distance.
+    public static let fadeStartShare: Float = 0.7
+
+    /// The draw distance whose fade starts at the game's `fGrassStartFadeDistance`;
+    /// nil when the setting gives none.
+    public static func drawDistance(fadeStart: Double) -> Float? {
+        guard fadeStart.isFinite, fadeStart > 0 else { return nil }
+        let distance = Float(min(fadeStart, 1e6)) / fadeStartShare
+        return min(max(distance, minimumDrawDistance), maximumDrawDistance)
+    }
 }
 
 /// One loaded GRAS model placement before it expands into mesh draw groups.

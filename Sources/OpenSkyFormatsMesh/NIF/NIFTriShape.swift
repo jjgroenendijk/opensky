@@ -55,6 +55,8 @@ nonisolated public struct NIFTriShape: Sendable {
     public let boneIndices: [SIMD4<UInt16>]
     /// Flat triangle list, three indices each, all < positions.count.
     public let indices: [UInt16]
+    /// `BSLODTriShape`: the triangle count of each detail level; empty otherwise.
+    public internal(set) var lodTriangleCounts: [UInt32] = []
 
     public init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)

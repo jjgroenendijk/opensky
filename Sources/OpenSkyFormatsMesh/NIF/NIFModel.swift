@@ -178,7 +178,10 @@ nonisolated extension NIFFile {
                 colors: opacityColours(geometry.colors, shape: shape),
                 indices: geometry.indices,
                 materialSlot: slotIndex,
-                skinning: geometry.skinning
+                skinning: geometry.skinning,
+                lodIndexCounts: MeshLODLevels.indexCounts(
+                    triangleCounts: shape.lodTriangleCounts, indexCount: geometry.indices.count
+                )
             ))
             meshBlocks.append(index)
         }

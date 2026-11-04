@@ -37,7 +37,10 @@ right-handed and maps z to Metal's 0 to 1, like the perspective projection.
 
 ## The pre-pass
 
-The shadow map is a `depth32Float` 2048 by 2048 array with 3 slices. Each cascade gets one
+The shadow map is a `depth32Float` array with 3 slices, 2048 by 2048 unless the game's
+`iShadowMapResolution` asks for another power of two from 512 to 4096
+([graphics options](/engine/graphics-options.md)). A new size builds a new array while the game
+runs; the old one goes once the frames that use it finish. Each cascade gets one
 depth-only encoder, cleared to 1. The pre-pass runs on the same command buffer before the scene
 pass, in the window and offscreen alike.
 
@@ -73,13 +76,26 @@ it.
 
 | Quality | Cascades | Distance | PCF |
 | --- | --- | --- | --- |
-| High (default) | 3 | 12,288 units (3 exterior cells) | 3 by 3 |
-| Low | 2 | 8,192 units | One tap |
+| High (default) | 3 | `fShadowDistance`, or 12,288 units (3 exterior cells) when it is 0 | 3 by 3 |
+| Low | 2 | The high distance, at most 8,192 units | One tap |
 | Off | 0 | | The pre-pass is skipped |
 
 Low keeps all 3 slices allocated and draws fewer, so changing quality allocates nothing. The shader's
 padding already handles 2 cascades. The on and off switch is separate from quality, so turning shadows
 back on keeps the chosen quality.
+
+## Focus shadows
+
+The game's `[Display] iNumFocusShadow` gives up to 4 actors their own sharp shadow map. Each frame,
+the actors nearest the camera, within 2,048 units, each get one 1,024 by 1,024 slice of a second
+depth array (the same array that holds the [rain occlusion view](/rendering/precipitation.md#roof-occlusion)).
+The view looks along the sun, fitted to the actor's box, and starts 256 units before it toward the
+sun. Only actors draw into it, culled on the CPU, into rings of their own.
+
+The shader takes the darker of the cascade result and every focus map that covers the point, with a
+3 by 3 PCF and a receiver bias of 2 world units. So an actor's own shadow, and its shadow on the
+ground near it, stay sharp where the cascade is coarse. The focus views draw only while the sun
+cascades draw.
 
 ## Choosing the quality
 

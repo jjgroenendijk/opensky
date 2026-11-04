@@ -39,6 +39,8 @@ public final class EffectsCoordinator {
     public private(set) var failedModels: Set<String> = []
     /// Marks impacts leave on surfaces.
     public internal(set) var decals = DecalRuntime()
+    /// Marks on actors, which move with them.
+    public internal(set) var skinDecals = SkinDecalRuntime()
     /// Impact models (dust, sparks, blood spray) show where a hit or step lands.
     public var impactModelsEnabled = true
     public internal(set) var impactCount = 0
@@ -182,6 +184,8 @@ public final class EffectsCoordinator {
         renderer: Renderer
     ) throws {
         visualEffects.advance(seconds)
+        decals.beginFrame()
+        skinDecals.decals.beginFrame()
         stepBlood(seconds, renderer: renderer)
         let world = world
         let effectModels = visualEffects.models(camera: world?.effectCamera) { anchor in

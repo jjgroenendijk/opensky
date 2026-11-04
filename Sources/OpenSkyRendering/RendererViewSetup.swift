@@ -1,14 +1,26 @@
 // MTKView configuration and the timed frame commit, split from Renderer.swift
 // (file-length limits).
 
+import CoreGraphics
 import Metal
 import MetalKit
 import OpenSkyRenderCore
 import Synchronization
 
 extension Renderer {
-    public static func configure(view: MTKView) {
-        view.colorPixelFormat = .bgra8Unorm_srgb
+    /// `bUse64bitsHDRRenderTarget`: a half-float drawable in linear sRGB keeps scene
+    /// colour above 1 until the tone mapping. Call it before the renderer is made.
+    public static func prepareColorTarget(of view: MTKView, highDynamicRange: Bool) {
+        view.colorPixelFormat = highDynamicRange ? .rgba16Float : .bgra8Unorm_srgb
+        view.colorspace = highDynamicRange ? CGColorSpace(name: CGColorSpace.linearSRGB) : nil
+    }
+
+    /// Returns the colour format the view draws in.
+    @discardableResult
+    public static func configure(view: MTKView) -> MTLPixelFormat {
+        if view.colorPixelFormat != .rgba16Float {
+            view.colorPixelFormat = .bgra8Unorm_srgb
+        }
         // Depth plus stencil: SWF clip masks need a stencil attachment; the 3D passes
         // ignore it.
         view.depthStencilPixelFormat = .depth32Float_stencil8
@@ -18,6 +30,7 @@ extension Renderer {
         // The image-space pass copies the drawable's color, which needs a non-framebuffer-only
         // texture.
         view.framebufferOnly = false
+        return view.colorPixelFormat
     }
 
     /// Commits the frame's last command buffer. Commit feedback reports when the GPU

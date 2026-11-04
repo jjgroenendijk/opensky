@@ -71,6 +71,8 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     /// MenuSceneVertex array and MenuSceneUniforms of one menu-scene draw.
     BufferIndexMenuSceneVertices = 27,
     BufferIndexMenuSceneUniforms = 28,
+    /// PostEffectUniforms of the image-space composite.
+    BufferIndexPostEffectUniforms = 29,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -116,6 +118,12 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     TextureIndexTerrainLayerNormal0 = 17,
     /// An effect shape's source when the file is a volume, after the terrain normal slots.
     TextureIndexEffectSourceVolume = 25,
+    /// Focus shadows and the precipitation occlusion map (depth2d_array). The cascade
+    /// array stands in until an option builds it.
+    TextureIndexAuxiliaryShadowMap = 26,
+    /// A static's directional material: the MATO diffuse and normal maps.
+    TextureIndexProjectedDiffuse = 27,
+    TextureIndexProjectedNormal = 28,
     /// A lit mesh binds NIF texture-set slot N at index N, over the terrain layer
     /// slots, which only terrain draws read. Every draw binds all of them.
     TextureIndexSurfaceNormal = 1,
@@ -153,7 +161,10 @@ typedef NS_ENUM(EnumBackingType, LightingConstant)
 typedef NS_ENUM(EnumBackingType, ShadowConstant)
 {
     ShadowConstantCascadeCount = 3,
-    ShadowConstantMapResolution = 2048,
+    /// Slices of the auxiliary array: the focus shadows, then the precipitation view.
+    ShadowConstantFocusCount = 4,
+    ShadowConstantPrecipitationSlice = 4,
+    ShadowConstantAuxiliarySliceCount = 5,
 };
 
 typedef NS_ENUM(EnumBackingType, SamplerIndex)
@@ -200,6 +211,8 @@ typedef NS_ENUM(EnumBackingType, EffectFlag)
     EffectFlagExternalEmittance = 1 << 8,
     /// The source is a volume, bound at TextureIndexEffectSourceVolume.
     EffectFlagSourceVolume = 1 << 9,
+    /// Rain or snow: hidden where the precipitation occlusion map has a roof above it.
+    EffectFlagPrecipitation = 1 << 10,
 };
 
 /// Lit-mesh shading terms: DrawUniforms.materialFlags says which a material has,
@@ -322,7 +335,7 @@ typedef struct
     vector_float3 cameraForward;
     /// 0 -> shaders skip shadow sampling entirely (map may be stale/empty).
     unsigned int shadowsEnabled;
-    /// 1.0 / ShadowConstantMapResolution — PCF tap offset in UV space.
+    /// 1.0 / the shadow map width — PCF tap offset in UV space.
     float shadowInverseResolution;
     /// PCF kernel radius: 0 -> one hardware depth-compare tap; r > 0 -> a
     /// (2r+1)^2 tap box (1 gives 3x3). Read only when shadowsEnabled != 0.
@@ -356,6 +369,19 @@ typedef struct
     vector_float4 sceneDepthUnproject;
     /// Terrain LOD brightening the noise term undoes: x = gain, y = exponent, in gamma.
     vector_float2 terrainLODBrightening;
+    /// World to the top-down occlusion view: xy to clip, z to depth from its top.
+    matrix_float4x4 precipitationOcclusion;
+    /// 1 when the occlusion slice of the auxiliary shadow array holds this frame's roofs.
+    unsigned int precipitationOcclusionEnabled;
+    /// World to each focus shadow's clip space; the first `focusShadowCount` are drawn.
+    matrix_float4x4 focusShadowViewProjections[ShadowConstantFocusCount];
+    unsigned int focusShadowCount;
+    /// Receiver depth bias of the focus views, in their depth units.
+    float focusShadowBias;
+    /// 1: specular surfaces reflect the directional ambient light.
+    unsigned int imageBasedLighting;
+    /// 1: the water reflects the scene colour copy bound at TextureIndexSceneColor.
+    unsigned int screenSpaceReflections;
 } FrameUniforms;
 
 /// Per-group material scalars for one instanced static-mesh draw, shared by every
@@ -399,6 +425,12 @@ typedef struct
     /// x inner thickness, y refraction scale, zw inner texture scale. A sparkle
     /// shape stores its four sparkle parameters here instead.
     vector_float4 multiLayer;
+    /// Directional material: xyz the world direction, w the cosine of its max angle.
+    vector_float4 projectedDirection;
+    /// x falloff scale, y falloff bias, z material UV scale, w 0 none, 1 colour, 2 textures.
+    vector_float4 projectedParameters;
+    /// rgb single-pass colour, a noise UV scale.
+    vector_float4 projectedColor;
 } DrawUniforms;
 
 /// Per-GROUP GRAS material + mesh-height controls. Fade/wind are per-frame;
@@ -467,72 +499,6 @@ typedef struct
     vector_float4 grassParameters;
 } InstanceTransform;
 
-/// GPU frustum culling (docs/rendering/gpu-culling.md): compute buffer slots.
-typedef NS_ENUM(EnumBackingType, CullBufferIndex)
-{
-    CullBufferIndexInstances = 0,
-    CullBufferIndexParameters = 1,
-    CullBufferIndexOutput = 2,
-    CullBufferIndexArguments = 3,
-    /// Room-culled counter, then the visible-room bitset (docs/rendering/room-portal-culling.md).
-    CullBufferIndexRooms = 4,
-};
-
-typedef NS_ENUM(EnumBackingType, CullConstant)
-{
-    /// 32-bit words in one MTLDrawIndexedPrimitivesIndirectArguments; instance count is word 1.
-    CullConstantArgumentWords = 5,
-    CullConstantThreadgroupWidth = 64,
-};
-
-/// One static instance the cull pass tests, written once per scene.
-typedef struct
-{
-    InstanceTransform transform;
-    /// World AABB. boundsMax.w is 1 when the instance has bounds, 0 when it is never culled.
-    vector_float4 boundsMin;
-    vector_float4 boundsMax;
-    /// Indirect-argument entry the survivor counts into.
-    unsigned int group;
-    /// First output slot of the group.
-    unsigned int outputBase;
-    /// Interior room index; 0xFFFFFFFF when the instance is in no single room.
-    unsigned int room;
-    unsigned int padding0;
-} CullInstance;
-
-/// One view's frustum planes, inward-facing, as `Frustum` builds them.
-typedef struct
-{
-    vector_float4 planes[6];
-    unsigned int instanceCount;
-    /// Words in the room bitset; 0 turns room culling off for this view.
-    unsigned int roomWordCount;
-    unsigned int padding0;
-    unsigned int padding1;
-} CullParameters;
-
-/// Temporal upscaling (docs/rendering/upscaling.md). Motion is last frame's screen
-/// position minus this frame's, in texture coordinates, with the jitter removed.
-typedef struct
-{
-    /// Undoes this frame's jittered view-projection, from depth to world.
-    matrix_float4x4 inverseJitteredViewProjection;
-    matrix_float4x4 viewProjection;
-    matrix_float4x4 previousViewProjection;
-    /// Depth below this is the first-person arms, which move with the camera.
-    float nearDepthLimit;
-    float padding0;
-    float padding1;
-    float padding2;
-} UpscaleMotionUniforms;
-
-typedef struct
-{
-    matrix_float4x4 current;
-    matrix_float4x4 previous;
-} MotionInstance;
-
 /// Terrain splat path (docs/rendering/scene-drawing.md): one draw per quadrant blends the
 /// BTXT base with up to TerrainConstantMaxLayers ATXT diffuses by per-vertex
 /// VTXT weights. Shares the DrawUniforms ring (both fit one 256-byte slot).
@@ -548,6 +514,9 @@ typedef struct
     unsigned int pointLightCount;
     /// 0 shades with the vertex normal alone.
     unsigned int normalMapsEnabled;
+    /// Bit n: layer n takes the snow shading; bit TerrainConstantMaxLayers: the base.
+    /// 0 while the improved snow option is off.
+    unsigned int snowLayers;
 } TerrainDrawUniforms;
 
 /// One water surface. Colors and shading decode from WATR DNAM (docs/formats/water.md).
@@ -584,6 +553,7 @@ typedef struct
     float alphaThreshold;
 } ShadowDrawUniforms;
 
+#include "CullingShaderTypes.h"
 #include "EffectShaderTypes.h"
 #include "ScreenShaderTypes.h"
 #include "MenuSceneShaderTypes.h"

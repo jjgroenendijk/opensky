@@ -155,6 +155,27 @@ nonisolated public struct LoadOrderPlugins: Sendable {
         return merged(records: records, results: results, type: type, skipped: &skipped)
     }
 
+    /// Every plugin's decoded version of each `type` record, lowest priority first,
+    /// for data the game reads from every plugin, such as the `WRLD` `RNAM` lists.
+    public func decodeEveryVersion<Value>(
+        of type: FourCC,
+        skipped: inout SkippedRecords,
+        using decode: (ESMRecord) throws -> Value
+    ) -> [UInt32: [Value]] {
+        var versions: [UInt32: [Value]] = [:]
+        for (plugin, list) in zip(plugins, liveRecordsByPlugin(of: type, skipped: &skipped)) {
+            for record in list {
+                do {
+                    let value = try plugin.decode { try decode(record) }
+                    versions[plugin.formID(of: record).rawValue, default: []].append(value)
+                } catch {
+                    skipped.note(type, error: error)
+                }
+            }
+        }
+        return versions
+    }
+
     /// Each plugin's live `type` records, lowest priority first.
     func liveRecordsByPlugin(of type: FourCC, skipped: inout SkippedRecords) -> [[ESMRecord]] {
         plugins.map { $0.file.liveRecords(of: type, skipped: &skipped) }

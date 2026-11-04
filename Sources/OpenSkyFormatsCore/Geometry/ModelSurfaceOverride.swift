@@ -21,6 +21,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     public let faceTintTexture: String?
     /// The race's skin texture set, laid over the skin-tint shapes only.
     public let skinTextures: SkinTextures?
+    /// A static's directional material, laid over every lit shape.
+    public let projected: ProjectedMaterial?
 
     /// The textures one named shape draws instead of its own.
     public struct ShapeTextures: Hashable, Sendable {
@@ -63,8 +65,10 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         skinTone: SIMD3<Float>? = nil,
         detailTexture: String? = nil,
         faceTintTexture: String? = nil,
-        skinTextures: SkinTextures? = nil
+        skinTextures: SkinTextures? = nil,
+        projected: ProjectedMaterial? = nil
     ) {
+        self.projected = projected
         self.faceTintTexture = faceTintTexture
         self.skinTextures = skinTextures
         self.diffuseTexture = diffuseTexture
@@ -84,14 +88,14 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             diffuseTexture: surface?.diffuseTexture, normalTexture: surface?.normalTexture,
             tint: surface?.tint, shapes: surface?.shapes ?? [], skinTone: skinTone,
             detailTexture: surface?.detailTexture, faceTintTexture: surface?.faceTintTexture,
-            skinTextures: surface?.skinTextures
+            skinTextures: surface?.skinTextures, projected: surface?.projected
         )
     }
 
     public var isEmpty: Bool {
         diffuseTexture == nil && normalTexture == nil && tint == nil && shapes.isEmpty
             && skinTone == nil && detailTexture == nil && faceTintTexture == nil
-            && skinTextures == nil
+            && skinTextures == nil && projected == nil
     }
 
     /// Part of a mesh cache key: two overrides that draw alike key alike.
@@ -101,6 +105,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             + (detailTexture.map { "|detail:" + $0 } ?? "")
             + (faceTintTexture.map { "|facetint:" + $0 } ?? "")
             + (skinTextures.map { "|skintex:" + $0.cacheKey } ?? "")
+            + (projected.map { "|" + $0.cacheKey } ?? "")
         let shapes = shapes.map {
             "\($0.shapeName.lowercased())=\($0.diffuseTexture ?? "-"),\($0.normalTexture ?? "-")"
         }
@@ -127,7 +132,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
                     lightMask: skin?.lightMask, specular: skin?.specular
                 ),
                 replacesTint: tint != nil,
-                skinTone: material.tintsSkin ? skinTone : nil
+                skinTone: material.tintsSkin ? skinTone : nil,
+                projected: projected
             )
         }
         for index in meshes.indices {
@@ -144,7 +150,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
                     faceTint: nil, lightMask: nil, specular: nil
                 ),
                 replacesTint: false,
-                skinTone: nil
+                skinTone: nil,
+                projected: projected
             ))
             meshes[index] = Self.mesh(mesh, colors: mesh.colors, materialSlot: materials.count - 1)
         }
@@ -172,9 +179,13 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         _ material: Material,
         textures: Textures,
         replacesTint: Bool,
-        skinTone: SIMD3<Float>?
+        skinTone: SIMD3<Float>?,
+        projected: ProjectedMaterial?
     ) -> Material {
         var shading = material.shading
+        if let projected, material.effect == nil, !material.waterSurface {
+            shading.projected = projected
+        }
         if replacesTint {
             shading.tintColor = nil
         }
@@ -203,6 +214,9 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             doubleSided: material.doubleSided,
             alphaBlend: material.alphaBlend,
             alphaTestThreshold: material.alphaTestThreshold,
+            additiveBlend: material.additiveBlend,
+            effect: material.effect,
+            waterSurface: material.waterSurface,
             tintTexture: textures.faceTint ?? material.tintTexture,
             tintsSkin: material.tintsSkin,
             shading: shading,

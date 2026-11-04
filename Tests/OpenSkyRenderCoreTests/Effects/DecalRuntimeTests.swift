@@ -59,6 +59,18 @@ struct DecalRuntimeTests {
         #expect(runtime.decals.map(\.id) == [3])
     }
 
+    @Test func thePerFrameCapDropsTheRestOfTheFrame() throws {
+        let look = try #require(Self.blood)
+        var runtime = DecalRuntime()
+        runtime.perFrameLimit = 2
+        for index in 0 ..< 3 {
+            runtime.place(look, at: SIMD3(Float(index), 0, 0), normal: SIMD3(0, 0, 1))
+        }
+        #expect(runtime.decals.count == 2)
+        runtime.beginFrame()
+        #expect(runtime.place(look, at: .zero, normal: SIMD3(0, 0, 1)) != nil)
+    }
+
     @Test func offOrADegenerateNormalPlacesNothing() throws {
         let look = try #require(Self.blood)
         var runtime = DecalRuntime()

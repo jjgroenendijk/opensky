@@ -125,6 +125,7 @@ nonisolated extension NIFTriShape {
             ),
             indices: data.indices
         )
+        lodTriangleCounts = shape.lodSizes
     }
 
     /// The `NIFTriShape` behind any geometry block, or nil for a type that holds none.

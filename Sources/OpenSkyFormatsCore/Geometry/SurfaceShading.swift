@@ -77,6 +77,8 @@ nonisolated public struct SurfaceShading: Hashable, Sendable {
     public var innerLayerTexture: String?
     /// Slot 7: back light map, or the specular map of a model-space shape.
     public var backLightTexture: String?
+    /// A placed static's directional material; only a surface override sets it.
+    public var projected: ProjectedMaterial?
 
     public struct MultiLayer: Hashable, Sendable {
         public var thickness: Float = 5
@@ -107,7 +109,8 @@ nonisolated public struct SurfaceShading: Hashable, Sendable {
     public var textureKeys: [String] {
         [
             glowTexture, detailTexture, environmentTexture, environmentMaskTexture,
-            innerLayerTexture, backLightTexture
+            innerLayerTexture, backLightTexture, projected?.diffuseTexture,
+            projected?.normalTexture
         ].compactMap(\.self)
     }
 }

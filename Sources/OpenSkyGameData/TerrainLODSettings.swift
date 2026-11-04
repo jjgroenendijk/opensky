@@ -16,6 +16,8 @@ nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {
     public static let defaultGridsToLoad: Float = 5
     /// An OpenSky limit, so a typo cannot ask for thousands of full-detail cells.
     public static let maximumLoadedGridRadius: Int32 = 10
+    /// The game's default `uLargeRefLODGridSize` (UESP "Mod File Format/WRLD", `RNAM`).
+    public static let defaultLargeReferenceGridSize: Float = 11
 
     public let level0Distance: Float
     public let level1Distance: Float
@@ -23,12 +25,17 @@ nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {
     public let treeLoadDistance: Float
     /// Rings of full-detail cells around the centre cell; distant LOD starts past them.
     public let loadedGridRadius: Int32
+    /// The game's `fSplitDistanceMult`: scales where terrain blocks split into finer levels.
+    public let splitDistanceMultiplier: Float
+    /// Rings of cells whose large references draw their full model; never below the loaded grid.
+    public let largeReferenceRadius: Int32
 
     public var isValid: Bool {
         level0Distance.isFinite && level0Distance > 0
             && level1Distance.isFinite && level1Distance >= level0Distance
             && maximumDistance.isFinite && maximumDistance >= level1Distance
             && treeLoadDistance.isFinite && treeLoadDistance > 0
+            && splitDistanceMultiplier.isFinite && splitDistanceMultiplier > 0
     }
 
     public init(
@@ -36,13 +43,17 @@ nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {
         level1Distance: Float,
         maximumDistance: Float,
         treeLoadDistance: Float,
-        loadedGridRadius: Int32 = 2
+        loadedGridRadius: Int32 = 2,
+        splitDistanceMultiplier: Float = 1,
+        largeReferenceRadius: Int32 = 5
     ) {
         self.level0Distance = level0Distance
         self.level1Distance = level1Distance
         self.maximumDistance = maximumDistance
         self.treeLoadDistance = treeLoadDistance
         self.loadedGridRadius = loadedGridRadius
+        self.splitDistanceMultiplier = splitDistanceMultiplier
+        self.largeReferenceRadius = max(largeReferenceRadius, loadedGridRadius)
     }
 
     /// `uGridsToLoad` is the grid's full side, always odd in the game: 5 gives 2 rings.
@@ -123,6 +134,10 @@ nonisolated public enum TerrainLODSettings: Sendable {
             treeLoadDistance: distance("fTreeLoadDistance"),
             loadedGridRadius: TerrainLODConfiguration.loadedGridRadius(
                 gridsToLoad: distance("uGridsToLoad")
+            ),
+            splitDistanceMultiplier: splitMultiplier(distance("fSplitDistanceMult")),
+            largeReferenceRadius: TerrainLODConfiguration.loadedGridRadius(
+                gridsToLoad: distance("uLargeRefLODGridSize")
             )
         )
         guard
@@ -134,6 +149,11 @@ nonisolated public enum TerrainLODSettings: Sendable {
         )
     }
 
+    /// 0 or a value that is not finite keeps the even split, 1.
+    static func splitMultiplier(_ value: Float) -> Float {
+        value.isFinite && value > 0 ? min(value, 100) : 1
+    }
+
     public static func resolve(_ ini: INISettings) -> TerrainLODConfigurationSnapshot {
         let fallback = TerrainLODConfiguration.fallback
         let level0 = ini.float(section: section, key: "fBlockLevel0Distance")
@@ -141,6 +161,8 @@ nonisolated public enum TerrainLODSettings: Sendable {
         let maximum = ini.float(section: section, key: "fBlockMaximumDistance")
         let tree = ini.float(section: section, key: "fTreeLoadDistance")
         let grids = ini.float(section: "General", key: "uGridsToLoad")
+        let split = ini.float(section: section, key: "fSplitDistanceMult")
+        let largeGrid = ini.float(section: "General", key: "uLargeRefLODGridSize")
         let configuration = TerrainLODConfiguration(
             level0Distance: level0?.value ?? fallback.level0Distance,
             level1Distance: level1?.value ?? fallback.level1Distance,
@@ -148,6 +170,11 @@ nonisolated public enum TerrainLODSettings: Sendable {
             treeLoadDistance: tree?.value ?? fallback.treeLoadDistance,
             loadedGridRadius: TerrainLODConfiguration.loadedGridRadius(
                 gridsToLoad: grids?.value ?? TerrainLODConfiguration.defaultGridsToLoad
+            ),
+            splitDistanceMultiplier: splitMultiplier(split?.value ?? 1),
+            largeReferenceRadius: TerrainLODConfiguration.loadedGridRadius(
+                gridsToLoad: largeGrid?.value
+                    ?? TerrainLODConfiguration.defaultLargeReferenceGridSize
             )
         )
         guard configuration.isValid else {

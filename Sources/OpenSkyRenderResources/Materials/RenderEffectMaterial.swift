@@ -61,6 +61,13 @@ nonisolated public struct RenderEffectMaterial: Sendable {
         palette: nil
     )
 
+    /// Plain particles that the precipitation occlusion map can hide.
+    public static let precipitation: RenderEffectMaterial = {
+        var copy = plainParticles
+        copy.flags |= UInt32(EffectFlag.precipitation.rawValue)
+        return copy
+    }()
+
     /// `material` with the vertex colour and alpha flags on, for particle colours.
     public static func forParticles(_ material: RenderEffectMaterial) -> RenderEffectMaterial {
         var copy = material

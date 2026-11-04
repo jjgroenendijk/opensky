@@ -55,6 +55,12 @@ nonisolated public struct WorldspaceLargeReferenceCell: Equatable, Sendable {
         }
         self.references = references
     }
+
+    /// The `RNAM` lists of one `WRLD` record, without the rest of the record.
+    public static func decodeAll(record: ESMRecord) throws -> [Self] {
+        var fields = try RecordFields(record: record, type: "WRLD")
+        return fields.readAll("RNAM") { try Self(&$0) }
+    }
 }
 
 nonisolated public struct WorldspaceDetails: Equatable, Sendable {

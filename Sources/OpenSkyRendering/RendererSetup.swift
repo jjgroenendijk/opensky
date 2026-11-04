@@ -77,7 +77,8 @@ nonisolated public struct ShadowPipelines: Sendable {
 nonisolated public struct ShadowResources {
     public let pipelines: ShadowPipelines
     public let sampler: MTLSamplerState
-    public let map: MTLTexture
+    /// Replaced when the player picks another shadow map resolution.
+    public internal(set) var map: MTLTexture
 }
 
 extension Renderer {
@@ -196,10 +197,10 @@ extension Renderer {
     /// Textures: base diffuse + the terrain layer array.
     public static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        // Highest buffer index is the menu-scene uniforms.
-        descriptor.maxBufferBindCount = BufferIndex.menuSceneUniforms.rawValue + 1
-        // The effect source volume is the highest slot.
-        descriptor.maxTextureBindCount = TextureIndex.effectSourceVolume.rawValue + 1
+        // Highest buffer index is the post-effect uniforms.
+        descriptor.maxBufferBindCount = BufferIndex.postEffectUniforms.rawValue + 1
+        // The projected normal map is the highest slot.
+        descriptor.maxTextureBindCount = TextureIndex.projectedNormal.rawValue + 1
         // Trilinear + shadow-compare + UI clamp + SWF repeat.
         descriptor.maxSamplerStateBindCount = 4
         return try device.makeArgumentTable(descriptor: descriptor)

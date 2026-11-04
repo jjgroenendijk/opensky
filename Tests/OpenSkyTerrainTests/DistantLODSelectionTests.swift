@@ -76,6 +76,22 @@ struct DistantLODSelectionTests {
         ])
     }
 
+    @Test func theSplitMultiplierMovesTheFinerSplitsOut() throws {
+        let configuration = TerrainLODConfiguration(
+            level0Distance: 12288,
+            level1Distance: 32768,
+            maximumDistance: 131_072,
+            treeLoadDistance: 65536,
+            splitDistanceMultiplier: 1.5
+        )
+        let bands = try DistantLODSelection.bands(
+            settings: settings(),
+            configuration: configuration
+        )
+
+        #expect(bands.map(\.outerRadius) == [5, 12, 24, 32])
+    }
+
     @Test func aWiderLoadedGridPushesTheFirstBandOut() throws {
         let configuration = TerrainLODConfiguration(
             level0Distance: 12288,
@@ -88,7 +104,22 @@ struct DistantLODSelectionTests {
             settings: settings(),
             configuration: configuration
         )
-        #expect(bands.first == DistantLODBand(level: 4, innerRadius: 5, outerRadius: 5))
-        #expect(bands.dropFirst().first == DistantLODBand(level: 8, innerRadius: 5, outerRadius: 8))
+        #expect(bands.first == DistantLODBand(level: 4, innerRadius: 5, outerRadius: 6))
+        #expect(bands.dropFirst().first == DistantLODBand(level: 8, innerRadius: 6, outerRadius: 8))
+    }
+
+    @Test func aSmallSplitKeepsOneFineRingAroundTheLoadedGrid() throws {
+        let configuration = TerrainLODConfiguration(
+            level0Distance: 15000,
+            level1Distance: 25000,
+            maximumDistance: 100_000,
+            treeLoadDistance: 12500,
+            splitDistanceMultiplier: 0.5
+        )
+        let bands = try DistantLODSelection.bands(
+            settings: settings(),
+            configuration: configuration
+        )
+        #expect(bands.first == DistantLODBand(level: 4, innerRadius: 2, outerRadius: 3))
     }
 }

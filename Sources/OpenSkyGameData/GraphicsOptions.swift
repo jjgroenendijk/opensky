@@ -61,118 +61,49 @@ nonisolated public enum GraphicsOptions {
         )
     }
 
-    private static let noSSAO = "OpenSky has no screen-space ambient occlusion yet"
-    private static let noSkinDecals = "OpenSky draws no decals on actors yet"
-    private static let fixedFades = "OpenSky fades objects at fixed distances today"
-
     public static let all: [GraphicsOption] = [
         option(.viewDistance, "Near terrain detail", "TerrainManager", "fBlockLevel0Distance"),
         option(.viewDistance, "Middle terrain detail", "TerrainManager", "fBlockLevel1Distance"),
         option(.viewDistance, "Far terrain distance", "TerrainManager", "fBlockMaximumDistance"),
         option(.viewDistance, "Tree distance", "TerrainManager", "fTreeLoadDistance"),
         option(.viewDistance, "Full-detail cell grid", "General", "uGridsToLoad"),
+        option(.viewDistance, "Terrain split distance", "TerrainManager", "fSplitDistanceMult"),
+        option(.viewDistance, "Actor fade", "LOD", "fLODFadeOutMultActors"),
+        option(.viewDistance, "Item fade", "LOD", "fLODFadeOutMultItems"),
+        option(.viewDistance, "Object fade", "LOD", "fLODFadeOutMultObjects"),
+        option(.viewDistance, "Grass fade", "Grass", "fGrassStartFadeDistance"),
+        option(.viewDistance, "Mesh LOD 1 fade", "Display", "fMeshLODLevel1FadeDist"),
+        option(.viewDistance, "Mesh LOD 2 fade", "Display", "fMeshLODLevel2FadeDist"),
+        option(.viewDistance, "Large object grid", "General", "uLargeRefLODGridSize"),
+        option(.shadows, "Shadow distance", "Display", "fShadowDistance"),
+        option(.shadows, "Shadow resolution", "Display", "iShadowMapResolution"),
+        option(.shadows, "Focus shadows", "Display", "iNumFocusShadow"),
+        option(.lighting, "Ambient occlusion", "Display", "bSAOEnable"),
+        option(.lighting, "Image-based lighting", "Display", "bIBLFEnable"),
+        option(.lighting, "Volumetric lighting", "Display", "bVolumetricLightingEnable"),
         option(
-            .viewDistance, "Terrain split distance", "TerrainManager", "fSplitDistanceMult",
-            "OpenSky splits terrain blocks by its own rule"
-        ),
-        option(.viewDistance, "Actor fade", "LOD", "fLODFadeOutMultActors", fixedFades),
-        option(.viewDistance, "Item fade", "LOD", "fLODFadeOutMultItems", fixedFades),
-        option(.viewDistance, "Object fade", "LOD", "fLODFadeOutMultObjects", fixedFades),
-        option(.viewDistance, "Grass fade", "Grass", "fGrassStartFadeDistance", fixedFades),
-        option(.viewDistance, "Mesh LOD 1 fade", "Display", "fMeshLODLevel1FadeDist", fixedFades),
-        option(.viewDistance, "Mesh LOD 2 fade", "Display", "fMeshLODLevel2FadeDist", fixedFades),
-        option(
-            .viewDistance, "Large object grid", "General", "uLargeRefLODGridSize",
-            "OpenSky has no large reference LOD yet"
-        ),
-        option(
-            .shadows,
-            "Shadow distance",
-            "Display",
-            "fShadowDistance",
-            "OpenSky sizes its shadow cascades itself"
+            .lighting, "Volumetric lighting quality", "Display", "iVolumetricLightingQuality"
         ),
         option(
-            .shadows, "Shadow resolution", "Display", "iShadowMapResolution",
-            "OpenSky picks its shadow map size itself"
+            .lighting, "Screen-space reflections", "Display", "bScreenSpaceReflectionEnabled"
         ),
+        option(.lighting, "High dynamic range target", "Display", "bUse64bitsHDRRenderTarget"),
+        option(.antiAliasing, "Temporal anti-aliasing", "Display", "bUseTAA"),
+        option(.antiAliasing, "FXAA", "Display", "bFXAAEnabled"),
+        option(.effects, "Depth of field", "ImageSpace", "bDoDepthOfField"),
+        option(.effects, "Lens flare", "ImageSpace", "bLensFlare"),
+        option(.effects, "Snow sparkles", "Display", "bToggleSparkles"),
+        option(.effects, "Improved snow", "Display", "bEnableImprovedSnow"),
         option(
-            .shadows,
-            "Focus shadows",
-            "Display",
-            "iNumFocusShadow",
-            "OpenSky has no focus shadows"
+            .effects, "Projected diffuse normals", "Display", "bEnableProjecteUVDiffuseNormals"
         ),
-        option(.lighting, "Ambient occlusion", "Display", "bSAOEnable", noSSAO),
-        option(
-            .lighting,
-            "Image-based lighting",
-            "Display",
-            "bIBLFEnable",
-            "OpenSky has no image-based lighting"
-        ),
-        option(
-            .lighting, "Volumetric lighting", "Display", "bVolumetricLightingEnable",
-            "OpenSky has no volumetric lighting yet"
-        ),
-        option(
-            .lighting, "Volumetric lighting quality", "Display", "iVolumetricLightingQuality",
-            "OpenSky has no volumetric lighting yet"
-        ),
-        option(
-            .lighting, "Screen-space reflections", "Display", "bScreenSpaceReflectionEnabled",
-            "OpenSky has no screen-space reflections yet"
-        ),
-        option(
-            .lighting, "High dynamic range target", "Display", "bUse64bitsHDRRenderTarget",
-            "OpenSky picks its render target formats itself"
-        ),
-        option(
-            .antiAliasing, "Temporal anti-aliasing", "Display", "bUseTAA",
-            "The MetalFX temporal upscaler smooths edges instead"
-        ),
-        option(.antiAliasing, "FXAA", "Display", "bFXAAEnabled", "OpenSky has no FXAA"),
-        option(
-            .effects,
-            "Depth of field",
-            "ImageSpace",
-            "bDoDepthOfField",
-            "OpenSky has no depth of field yet"
-        ),
-        option(.effects, "Lens flare", "ImageSpace", "bLensFlare", "OpenSky has no lens flare yet"),
-        option(
-            .effects,
-            "Snow sparkles",
-            "Display",
-            "bToggleSparkles",
-            "OpenSky has no snow sparkles"
-        ),
-        option(
-            .effects,
-            "Improved snow",
-            "Display",
-            "bEnableImprovedSnow",
-            "OpenSky has no improved snow shader"
-        ),
-        option(
-            .effects, "Projected diffuse normals", "Display", "bEnableProjecteUVDiffuseNormals",
-            "OpenSky has no projected UV shader"
-        ),
-        option(
-            .effects, "Rain occlusion", "Display", "bUsePrecipitationOcclusion",
-            "OpenSky does not hide rain under roofs yet"
-        ),
+        option(.effects, "Rain occlusion", "Display", "bUsePrecipitationOcclusion"),
         option(.decals, "Decals", "Decals", "bDecals"),
-        option(.decals, "Skin decals", "Decals", "bSkinnedDecals", noSkinDecals),
-        option(
-            .decals, "Decals per frame", "Display", "iMaxDecalsPerFrame",
-            "OpenSky places every decal the frame asks for"
-        ),
-        option(
-            .decals, "Skin decals per frame", "Display", "iMaxSkinDecalsPerFrame", noSkinDecals
-        ),
+        option(.decals, "Skin decals", "Decals", "bSkinnedDecals"),
+        option(.decals, "Decals per frame", "Display", "iMaxDecalsPerFrame"),
+        option(.decals, "Skin decals per frame", "Display", "iMaxSkinDecalsPerFrame"),
         option(.decals, "Decal limit", "Display", "uMaxDecals"),
-        option(.decals, "Skin decal limit", "Display", "uMaxSkinDecals", noSkinDecals)
+        option(.decals, "Skin decal limit", "Display", "uMaxSkinDecals")
     ]
 
     /// Store rows for every option. A toggle stores 0 or 1; a number keeps the INI value.
@@ -196,8 +127,11 @@ nonisolated public enum GraphicsOptions {
         case "fBlockMaximumDistance": Double(fallback.maximumDistance)
         case "fTreeLoadDistance": Double(fallback.treeLoadDistance)
         case "uGridsToLoad": Double(TerrainLODConfiguration.defaultGridsToLoad)
-        case "bDecals": 1
+        case "uLargeRefLODGridSize": Double(TerrainLODConfiguration.defaultLargeReferenceGridSize)
+        case "fSplitDistanceMult": 1
+        case "bDecals", "bSkinnedDecals", "bUsePrecipitationOcclusion", "bToggleSparkles": 1
         case "uMaxDecals": 100
+        case "uMaxSkinDecals": 35
         default: 0
         }
     }

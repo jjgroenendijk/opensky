@@ -272,7 +272,10 @@ index. A wrong byte count, bad values, or a different vertex count rejects the s
 ## NiTriShape
 
 The older geometry block, still used by some Skyrim SE meshes. `BSLODTriShape` is the same
-block with three uint32 triangle counts at the end, one per level of detail. After the
+block with three uint32 triangle counts at the end, one per level of detail. Falling counts are
+taken as prefixes of the triangle list: level n draws the first `count[n]` triangles. Other
+counts are taken as runs, and level n leaves out the last n runs. Counts that do not fit the
+list give one level. This reading is OpenSky's; no source states it. After the
 shared fields (`nif.xml` `NiGeometry` at stream 100):
 
 | Type | Field | Notes |

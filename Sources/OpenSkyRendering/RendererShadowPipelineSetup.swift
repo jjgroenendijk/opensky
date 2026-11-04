@@ -4,6 +4,7 @@
 // attachment, so their depth format binds at pass time.
 
 import Metal
+import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
@@ -102,12 +103,15 @@ extension Renderer {
 
     /// One shared cascade array: depth32Float, 2D array of
     /// ShadowConstantCascadeCount slices, private (GPU-only) storage.
-    private static func makeShadowMap(device: MTLDevice) throws -> MTLTexture {
+    static func makeShadowMap(
+        device: MTLDevice,
+        resolution: Int = ShadowSettings.defaultResolution
+    ) throws -> MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2DArray
         descriptor.pixelFormat = .depth32Float
-        descriptor.width = ShadowConstant.mapResolution.rawValue
-        descriptor.height = ShadowConstant.mapResolution.rawValue
+        descriptor.width = resolution
+        descriptor.height = resolution
         descriptor.arrayLength = ShadowConstant.cascadeCount.rawValue
         descriptor.usage = [.renderTarget, .shaderRead]
         descriptor.storageMode = .private

@@ -86,23 +86,27 @@ nonisolated public enum DistantLODSelection: Sendable {
 
     /// Maps world-unit INI thresholds onto every available LOD level. Skyrim
     /// exposes explicit L4, L8, and maximum thresholds. OpenSky splits the
-    /// remaining L16/L32 interval at 2x L8 (clamped to maximum), preserving
-    /// the source format's power-of-two coarsening without gaps.
+    /// remaining L16/L32 interval at 2x L8; `fSplitDistanceMult` scales each split.
     public static func bands(
         settings: LODSettings,
         configuration: TerrainLODConfiguration
     ) -> [DistantLODBand] {
         guard configuration.isValid else { return [] }
+        let split = configuration.splitDistanceMultiplier
         let worldDistances = [
-            configuration.level0Distance,
-            configuration.level1Distance,
-            min(configuration.maximumDistance, configuration.level1Distance * 2),
+            configuration.level0Distance * split,
+            configuration.level1Distance * split,
+            configuration.level1Distance * 2 * split,
             configuration.maximumDistance
-        ]
+        ].map { min($0, configuration.maximumDistance) }
         var inner = configuration.loadedGridRadius
+        // The finest band keeps at least one ring, so a small split never puts a coarse
+        // block, with its cracks, against the full-detail cells.
+        var least = inner + 1
         return zip(settings.levels, worldDistances).map { level, distance in
             let requested = Int32(ceil(distance / TerrainMeshBuilder.cellSize))
-            let outer = max(inner, requested)
+            let outer = max(inner, requested, least)
+            least = 0
             defer { inner = outer }
             return DistantLODBand(level: level, innerRadius: inner, outerRadius: outer)
         }
@@ -255,6 +259,12 @@ nonisolated public struct DistantLODScene: Sendable {
     public let treeBlockCount: Int
     public let missingTreeBlockCount: Int
     public let treeInstanceCount: Int
+    /// Cells past the loaded grid whose large references draw their full model.
+    public let largeReferenceCells: Set<CellCoordinate>
+    /// Built without the large-reference ring, which a later build adds.
+    public let largeReferencesPending: Bool
+    /// Large references drawn with their full model.
+    public let largeReferenceCount: Int
 
     public init(
         renderScene: RenderScene,
@@ -263,7 +273,10 @@ nonisolated public struct DistantLODScene: Sendable {
         missingBlockCount: Int,
         treeBlockCount: Int = 0,
         missingTreeBlockCount: Int = 0,
-        treeInstanceCount: Int = 0
+        treeInstanceCount: Int = 0,
+        largeReferenceCells: Set<CellCoordinate> = [],
+        largeReferencesPending: Bool = false,
+        largeReferenceCount: Int = 0
     ) {
         self.renderScene = renderScene
         self.assets = assets
@@ -272,6 +285,9 @@ nonisolated public struct DistantLODScene: Sendable {
         self.treeBlockCount = treeBlockCount
         self.missingTreeBlockCount = missingTreeBlockCount
         self.treeInstanceCount = treeInstanceCount
+        self.largeReferenceCells = largeReferenceCells
+        self.largeReferencesPending = largeReferencesPending
+        self.largeReferenceCount = largeReferenceCount
     }
 
     /// The same ring, drawn with the worldspace's fitted terrain LOD curve.
@@ -288,15 +304,39 @@ nonisolated public struct DistantLODScene: Sendable {
         ]))
     }
 
-    private func replacing(renderScene: RenderScene) -> DistantLODScene {
+    /// The same ring with the full models of its large references, and their assets.
+    public func adding(largeReferences: [RenderPlacement], assets added: CellAssets)
+        -> DistantLODScene
+    {
+        guard !largeReferences.isEmpty else { return self }
+        return replacing(
+            renderScene: RenderScene(merging: [
+                renderScene, RenderScene(instances: largeReferences)
+            ]),
+            assets: CellAssets(
+                meshKeys: assets.meshKeys.union(added.meshKeys),
+                textureKeys: assets.textureKeys.union(added.textureKeys)
+            ),
+            largeReferenceCount: largeReferenceCount + largeReferences.count
+        )
+    }
+
+    private func replacing(
+        renderScene: RenderScene,
+        assets: CellAssets? = nil,
+        largeReferenceCount: Int? = nil
+    ) -> DistantLODScene {
         DistantLODScene(
             renderScene: renderScene,
-            assets: assets,
+            assets: assets ?? self.assets,
             blockCount: blockCount,
             missingBlockCount: missingBlockCount,
             treeBlockCount: treeBlockCount,
             missingTreeBlockCount: missingTreeBlockCount,
-            treeInstanceCount: treeInstanceCount
+            treeInstanceCount: treeInstanceCount,
+            largeReferenceCells: largeReferenceCells,
+            largeReferencesPending: largeReferencesPending,
+            largeReferenceCount: largeReferenceCount ?? self.largeReferenceCount
         )
     }
 }
@@ -332,10 +372,12 @@ nonisolated public final class DistantLODBuilder {
         )
     }
 
+    /// Without `largeReferences`, the object LOD keeps its large-reference shapes.
     public func build(
         worldspace: String,
         center: CellCoordinate,
-        hiddenCells: Set<CellCoordinate>
+        hiddenCells: Set<CellCoordinate>,
+        largeReferences: Bool = true
     ) throws -> DistantLODScene {
         _ = meshes.drainTouchedKeys()
         _ = textures.drainTouchedKeys()
@@ -355,9 +397,15 @@ nonisolated public final class DistantLODBuilder {
         defer { meshes.dropPredecoded() }
         var placements: [RenderPlacement] = []
         var missing = 0
+        let largeRadius = configuration.largeReferenceRadius
+        let ringWanted = largeRadius > configuration.loadedGridRadius
+        let ringActive = ringWanted && largeReferences
         for block in selected {
+            let hides = ringActive && LargeReferenceRing.hidesLargeReferences(
+                of: block, center: center, radius: largeRadius
+            )
             do {
-                try placements.append(placement(for: block))
+                try placements.append(placement(for: block, hidingLargeReferences: hides))
             } catch {
                 missing += 1
             }
@@ -380,14 +428,24 @@ nonisolated public final class DistantLODBuilder {
             missingBlockCount: missing,
             treeBlockCount: trees.blockCount,
             missingTreeBlockCount: trees.missingBlockCount,
-            treeInstanceCount: trees.placements.count
+            treeInstanceCount: trees.placements.count,
+            largeReferenceCells: ringActive ? LargeReferenceRing.cells(
+                center: center, radius: largeRadius,
+                loadedRadius: configuration.loadedGridRadius,
+                hiddenCells: hiddenCells, blocks: selected
+            ) : [],
+            largeReferencesPending: ringWanted && !largeReferences
         )
     }
 
-    private func placement(for block: DistantLODBlock) throws -> RenderPlacement {
-        let model = try block.clipMask.map {
+    private func placement(
+        for block: DistantLODBlock,
+        hidingLargeReferences: Bool
+    ) throws -> RenderPlacement {
+        let full = try block.clipMask.map {
             try meshes.model(path: block.path, terrainLODClipMask: $0)
         } ?? meshes.model(path: block.path)
+        let model = hidingLargeReferences ? full.withoutLargeReferences() : full
         // BTR vertices are block-local; BTO vertices are already world-space.
         let transform = block.kind == .terrain
             ? MatrixMath.translation(SIMD3(

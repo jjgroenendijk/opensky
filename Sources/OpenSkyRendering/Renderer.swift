@@ -92,7 +92,28 @@ public final class Renderer: NSObject {
     /// (depth32Float, ShadowConstantCascadeCount slices). The array is created
     /// once, always resident, and bound at TextureIndexShadowMap every scene
     /// pass so validation stays clean even with shadows disabled.
-    public let shadow: ShadowResources
+    public internal(set) var shadow: ShadowResources
+    /// How far actors, items, and objects stay drawn (`RendererReferenceFade.swift`).
+    public var referenceFades = ReferenceFadeDistances.off
+    /// The depth array of the focus shadows and the rain occlusion view, built on first use.
+    var auxiliaryShadow: AuxiliaryShadowResources?
+    /// Set when the device could not make the auxiliary array.
+    var auxiliaryShadowUnavailable = false
+    /// The game's `bUsePrecipitationOcclusion` (`RendererAuxiliaryShadows.swift`).
+    public var precipitationOcclusionEnabled = true
+    /// This frame's rain occlusion view, when it was drawn.
+    var precipitationOcclusionView: float4x4?
+    /// The game's `iNumFocusShadow`, 0 to 4 (`RendererFocusShadows.swift`).
+    public var focusShadowCount = 0
+    /// This frame's focus views, for the frame uniforms.
+    var focusShadows = FocusShadowFrame()
+    /// Where `BSLODTriShape` meshes switch detail (`RendererMeshLOD.swift`).
+    public var meshLODDistances = MeshLODDistances.off
+    /// The game's shadow distance and map size (`RendererShadowSettings.swift`).
+    public var shadowSettings = ShadowSettings() {
+        didSet { resizeShadowMapIfNeeded() }
+    }
+
     /// Sun shadow switch. Default on; ANDed
     /// with `shadowQuality` so it flips shadows without discarding the tier.
     public var sunShadowsEnabled = true
@@ -293,6 +314,14 @@ public final class Renderer: NSObject {
     var eyeAdaptationClock = FrameSimClock()
     /// Scene depth under the water surface (RendererWaterPass.swift).
     public var waterDepth = WaterDepthState()
+    /// Screen-space effects the composite draws (RendererPostEffects.swift).
+    public var postEffects = PostEffectSettings()
+    /// The drawable's format; offscreen frames match it, so every pipeline fits both.
+    public let colorPixelFormat: MTLPixelFormat
+    var postEffectDepth: MTLTexture?
+    var sceneProjection = matrix_identity_float4x4
+    /// The game's surface switches that change shader inputs (`SurfaceFeatureSwitches.swift`).
+    public var surfaceFeatures = SurfaceFeatureSwitches()
     var refraction = RefractionState()
     /// Terrain bends its lighting by the TX01 normal maps of its texture sets.
     public var terrainNormalMapsEnabled = true
@@ -348,7 +377,7 @@ public final class Renderer: NSObject {
         frameIndex = GPUFactory.maxFramesInFlight
         endFrameEvent.signaledValue = UInt64(frameIndex - 1)
 
-        Self.configure(view: view)
+        colorPixelFormat = Self.configure(view: view)
 
         let library = try shaderLibrary ?? Self.makeBundledShaderLibrary(device: device)
         let compiler = try pipelineCache ?? PipelineCache(device: device, fileURL: nil)

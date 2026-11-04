@@ -18,22 +18,25 @@ struct GraphicsSettingsTests {
         try #require(GraphicsOptions.all.first { $0.key == key })
     }
 
-    @Test func everyOptionHasOneIdAndAppliedOnesAreTheDistancesAndDecals() {
+    @Test func everyOptionHasOneIdAndEveryOptionIsApplied() {
         let ids = GraphicsOptions.all.map(\.id)
         #expect(Set(ids).count == ids.count)
-        let applied = GraphicsOptions.all.filter { $0.unavailableReason == nil }.map(\.key)
-        #expect(applied == [
-            "fBlockLevel0Distance", "fBlockLevel1Distance", "fBlockMaximumDistance",
-            "fTreeLoadDistance", "uGridsToLoad", "bDecals", "uMaxDecals"
-        ])
-        #expect(GraphicsOptions.all.allSatisfy { $0.id.rawValue == "graphics.\($0.key)" })
+        let options = GraphicsOptions.all
+        let allAvailable = options.allSatisfy { $0.unavailableReason == nil }
+        let allApplied = GraphicsOptions.definitions.allSatisfy(\.isApplied)
+        let idsFollowKeys = options.allSatisfy { $0.id.rawValue == "graphics.\($0.key)" }
+        #expect(allAvailable)
+        #expect(allApplied)
+        #expect(idsFollowKeys)
     }
 
     @Test func statusTextNamesWhyAnOptionIsUnavailable() throws {
         #expect(try option("fBlockLevel0Distance").statusText == "applied")
-        let unavailable = try #require(GraphicsOptions.all.first { $0.unavailableReason != nil })
-        let reason = try #require(unavailable.unavailableReason)
-        #expect(unavailable.statusText == "unavailable: \(reason)")
+        let unavailable = GraphicsOption(
+            group: .effects, title: "Test", section: "Display", key: "bTest",
+            unavailableReason: "no system yet"
+        )
+        #expect(unavailable.statusText == "unavailable: no system yet")
     }
 
     @Test func aToggleReadsAsZeroOrOneAndJunkIsIgnored() throws {

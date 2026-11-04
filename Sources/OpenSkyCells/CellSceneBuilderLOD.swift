@@ -20,7 +20,11 @@ nonisolated extension CellSceneBuilder {
         let water = builder.area(worldspace: lodWorld).map {
             distantWater(worldspace: worldspaceEditorID, area: $0, hiddenCells: hiddenCells)
         } ?? []
-        return water.isEmpty ? lod : lod.adding(water: water)
+        let withWater = water.isEmpty ? lod : lod.adding(water: water)
+        let largeReferences = largeReferencePlacements(
+            worldspaceEditorID: worldspaceEditorID, cells: lod.largeReferenceCells
+        )
+        return withWater.adding(largeReferences: largeReferences, assets: drainTouchedAssets())
     }
 
     /// A child worldspace with the `PNAM` LOD flag draws its parent's LOD files,

@@ -477,6 +477,7 @@ extension AgentWorldAdapter {
             "memoryMB": MemoryFootprint.physFootprintMB().map(AgentJSON.number) ?? .null,
             "interpolation": interpolationState(),
             "terrainLOD": terrainLODState(),
+            "largeReferences": game.streamer.map { .init($0.largeReferenceCount) } ?? .null,
             "screenFade": screenFadeState(),
             "gpuMemory": gpuMemoryState()
         ]

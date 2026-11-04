@@ -39,25 +39,14 @@ extension Renderer {
     /// come from the injected SceneCamera.
     private func updateFrameUniforms(slot: Int, viewProjection: float4x4) -> Int {
         let offset = Self.alignedFrameUniformsSize * slot
-        let interiorLighting = activeLighting
-        // Weather is an exterior-only source: interiors keep their own baked
-        // CELL/LGTM lighting untouched (weatherLight nil there). The sky
-        // palette applies only when the scene actually draws a sky.
-        let weatherLight = interiorLighting == nil ? frameInput.weather : nil
-        let covered = effects.loadingCover != nil
-        let weatherSky = scene.sky != nil && !covered ? weatherLight : nil
-        let ambient = weatherLight?.directionalAmbient
-            ?? interiorLighting?.directionalAmbient ?? .black
-        let fog = resolveFrameFog(weatherLight: covered ? nil : weatherLight)
-        let grassDistance = clampedGrassDrawDistance
+        let light = frameLight()
+        let (ambient, fog, weatherSky) = (light.ambient, light.fog, light.weatherSky)
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,
             cameraPosition: frameInput.view.position,
-            sunDirection: interiorLighting?.directionalDirection ?? exteriorSunTravelDirection,
-            sunColor: weatherLight?.sunlightColor
-                ?? interiorLighting?.directionalColor ?? camera.sunColor,
-            ambientColor: weatherLight?.ambientColor
-                ?? interiorLighting?.ambientColor ?? camera.ambientColor,
+            sunDirection: light.sunDirection,
+            sunColor: light.sunColor,
+            ambientColor: light.ambientColor,
             directionalAmbientPositiveX: ambient.positiveX,
             directionalAmbientNegativeX: ambient.negativeX,
             directionalAmbientPositiveY: ambient.positiveY,
@@ -76,7 +65,7 @@ extension Renderer {
             shadowCascadeSplits: shadowCascadeSplitBounds(),
             cameraForward: frameInput.view.forward,
             shadowsEnabled: shadowsActiveThisFrame ? 1 : 0,
-            shadowInverseResolution: 1 / Float(ShadowConstant.mapResolution.rawValue),
+            shadowInverseResolution: 1 / Float(shadow.map.width),
             shadowSampleRadius: shadowSampleRadius,
             weatherSkyEnabled: weatherSky == nil ? 0 : skyCelestial != nil
                 && frameCelestial != nil ? 2 : 1,
@@ -85,19 +74,24 @@ extension Renderer {
             weatherHorizonColor: weatherSky?.horizon ?? .zero,
             weatherSunColor: weatherSky?.sun ?? .zero,
             weatherGlareColor: weatherSky?.sunGlare ?? .zero,
-
             cameraRight: frameInput.view.right,
             cameraUp: simd_normalize(simd_cross(frameInput.view.right, frameInput.view.forward)),
-            grassWind: frameInput.wind.direction * frameInput.wind.speed
-                * simd_clamp(grassWindScale, 0, GrassRenderPolicy.maximumWindScale),
-            grassFadeDistances: SIMD2(
-                max(grassDistance * 0.7, GrassRenderPolicy.minimumDrawDistance * 0.5),
-                grassDistance
-            ),
+            grassWind: frameGrassWind,
+            grassFadeDistances: frameGrassFadeDistances,
             debugMode: renderDebug.mode.rawValue,
             shadingTerms: shadingTerms.rawValue,
             sceneDepthUnproject: sceneDepthUnproject,
-            terrainLODBrightening: terrainLODBrightness.uniform
+            terrainLODBrightening: terrainLODBrightness.uniform,
+            precipitationOcclusion: precipitationOcclusionView ?? matrix_identity_float4x4,
+            precipitationOcclusionEnabled: precipitationOcclusionView == nil ? 0 : 1,
+            focusShadowViewProjections: (
+                focusShadows.view(0), focusShadows.view(1),
+                focusShadows.view(2), focusShadows.view(3)
+            ),
+            focusShadowCount: UInt32(focusShadows.views.count),
+            focusShadowBias: focusShadows.bias,
+            imageBasedLighting: surfaceFeatures.imageBasedLighting ? 1 : 0,
+            screenSpaceReflections: waterDepth.reflects ? 1 : 0
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -139,19 +133,14 @@ extension Renderer {
             emissive: material.surface.emissive,
             lightingEffects: material.surface.lightingEffects,
             tintColor: material.surface.tintColor,
-            multiLayer: material.surface.multiLayer
+            multiLayer: material.surface.multiLayer,
+            projectedDirection: material.surface.projected?.direction ?? .zero,
+            projectedParameters: projectedParameters(material.surface.projected),
+            projectedColor: material.surface.projected?.color ?? .zero
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
         return offset
-    }
-
-    private var clampedGrassDrawDistance: Float {
-        simd_clamp(
-            grassDrawDistance,
-            GrassRenderPolicy.minimumDrawDistance,
-            GrassRenderPolicy.maximumDrawDistance
-        )
     }
 
     /// Writes the group's frustum-surviving instance transforms tightly
@@ -166,24 +155,7 @@ extension Renderer {
         let base = state.slot * instanceSlotCapacity + state.instanceCursor
         var written = 0
         for placed in group.instances {
-            // The live pose of a reference a rigid body owns, and the baked one
-            // for everything else (RendererDynamicPose.swift).
-            let instance = drawn(placed)
-            if roomCulling.visibility?.contains(room: instance.room) == false {
-                state.stats.culledInstances += 1
-                state.stats.roomCulledInstances += 1
-                continue
-            }
-            if let bounds = instance.bounds, !state.frustum.intersects(bounds) {
-                state.stats.culledInstances += 1
-                continue
-            }
-            var transforms = InstanceTransform(
-                modelMatrix: instance.modelMatrix,
-                normalMatrix: instance.normalMatrix,
-                instanceColor: instance.instanceColor(regions: regionEmittance),
-                grassParameters: SIMD4(0, 0, 0, fadeOut(of: instance))
-            )
+            guard var transforms = visibleTransform(of: placed, state: &state) else { continue }
             instanceTransformBuffer.contents()
                 .advanced(by: (base + written) * stride)
                 .copyMemory(from: &transforms, byteCount: MemoryLayout<InstanceTransform>.size)
@@ -192,6 +164,34 @@ extension Renderer {
         state.instanceCursor += written
         state.stats.drawnInstances += written
         return (written, base * stride)
+    }
+
+    /// The transform `placed` draws with, or nil when a cull drops it.
+    func visibleTransform(
+        of placed: DrawInstance,
+        state: inout ScenePassState
+    ) -> InstanceTransform? {
+        // The live pose of a reference a rigid body owns, and the baked one
+        // for everything else (RendererDynamicPose.swift).
+        let instance = drawn(placed)
+        if roomCulling.visibility?.contains(room: instance.room) == false {
+            state.stats.culledInstances += 1
+            state.stats.roomCulledInstances += 1
+            return nil
+        }
+        guard
+            instance.bounds.map(state.frustum.intersects) != false,
+            let distanceFade = distanceFade(of: instance)
+        else {
+            state.stats.culledInstances += 1
+            return nil
+        }
+        return InstanceTransform(
+            modelMatrix: instance.modelMatrix,
+            normalMatrix: instance.normalMatrix,
+            instanceColor: instance.instanceColor(regions: regionEmittance),
+            grassParameters: SIMD4(0, 0, 0, max(fadeOut(of: instance), distanceFade))
+        )
     }
 
     /// The pipelines one `encode(groups:)` call picks from, by mesh kind.
@@ -300,7 +300,7 @@ extension Renderer {
             applyDrawState(of: group.material, mode: mode, state: state)
         }
         state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
-        state.encoder.drawInstances(of: group.mesh, visible)
+        drawVisible(group.mesh, visible, state: state)
     }
 
     /// The fragment declares every surface slot, so the diffuse fills a 2D slot and
@@ -319,7 +319,9 @@ extension Renderer {
             (surface.detail, .surfaceDetail),
             (surface.environmentMask, .surfaceEnvironmentMask),
             (material.faceTint ?? surface.innerLayer, .surfaceLayer),
-            (surface.backLight, .surfaceBackLight)
+            (surface.backLight, .surfaceBackLight),
+            (surface.projected?.diffuse, .projectedDiffuse),
+            (surface.projected?.normal, .projectedNormal)
         ]
         for (texture, index) in slots {
             argumentTable.setTexture(texture.map(streamedBinding) ?? diffuse, index: index.rawValue)
@@ -352,6 +354,9 @@ extension Renderer {
         case let .drawn(visible):
             return visible
         case .cpu:
+            if meshLODDistances.isOn, group.mesh.lodIndexCounts.count == 3 {
+                return writeVisibleLevels(of: group, state: &state)
+            }
             let run = writeVisibleInstances(of: group, state: &state)
             guard run.written > 0 else { return nil }
             return .packed(
@@ -408,6 +413,10 @@ extension Renderer {
         argumentTable.setTexture(
             shadow.map.gpuResourceID,
             index: TextureIndex.shadowMap.rawValue
+        )
+        argumentTable.setTexture(
+            (auxiliaryShadow?.map ?? shadow.map).gpuResourceID,
+            index: TextureIndex.auxiliaryShadowMap.rawValue
         )
         argumentTable.setSamplerState(
             shadow.sampler.gpuResourceID,

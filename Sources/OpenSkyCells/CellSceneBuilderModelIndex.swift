@@ -119,7 +119,8 @@ nonisolated extension CellSceneBuilder {
                 recordType: "STAT",
                 modelPath: stat.modelPath,
                 isEditorMarker: stat.isEditorMarker,
-                alternateTextures: stat.model?.alternateTextures ?? []
+                alternateTextures: stat.model?.alternateTextures ?? [],
+                directionalMaterial: stat.directionalMaterial
             )
         }
         if let base = modelBaseIndex[formID] {

@@ -84,6 +84,18 @@ struct INISettingsTests {
         #expect(radius("[General]\nuGridsToLoad=0") == 0)
     }
 
+    @Test func largeReferenceGridNeverShrinksBelowTheLoadedGrid() {
+        func radius(_ text: String) -> Int32 {
+            let ini = INISettings(sources: [INISettingsSource(
+                name: "Skyrim.ini", file: INIFile(data: Data(text.utf8))
+            )])
+            return TerrainLODSettings.resolve(ini).configuration.largeReferenceRadius
+        }
+        #expect(radius("") == 5)
+        #expect(radius("[General]\nuLargeRefLODGridSize=15") == 7)
+        #expect(radius("[General]\nuLargeRefLODGridSize=3\nuGridsToLoad=7") == 3)
+    }
+
     @Test func localizationLanguageUsesIniAndFallsBackPastInvalidValues() {
         let settings = INISettings(sources: [
             INISettingsSource(
