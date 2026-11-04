@@ -146,6 +146,8 @@ nonisolated public final class CellSceneBuilder {
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
     public var exteriorPersistentRefs: [UInt32: [PlacedReference]] = [:]
     var exteriorPersistentPools: [UInt32: EnableParentPool] = [:]
+    /// Each worldspace's `RNAM` references by cell, over every plugin.
+    var largeReferenceIndex: [UInt32: [CellCoordinate: Set<UInt32>]] = [:]
     /// Keyed by WRLD FormID, with the same ownership rule as the persistent refs.
     public var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
     public var actorTemplateResolver: ActorTemplateResolver?

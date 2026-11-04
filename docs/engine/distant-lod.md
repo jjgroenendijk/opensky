@@ -82,7 +82,9 @@ archives. Background priority made it worse: its throttled reads finished the ri
 ## Large references
 
 A large reference is a placed object whose base is at least 512 units in size, such as a
-mountain or a bridge. The `WRLD` `RNAM` field lists them by cell. In the game they keep their
+mountain or a bridge. The `WRLD` `RNAM` field lists them by cell. Each plugin's copy of the
+`WRLD` lists only its own: on the install, `Skyrim.esm`'s `Tamriel` holds about 160,000 and
+the winning override 18. So OpenSky joins the lists of every plugin. In the game they keep their
 full model out to `uLargeRefLODGridSize` cells, 11 by default, instead of the 5 of `uGridsToLoad`
 (UESP "Skyrim Mod:Mod File Format/WRLD", `RNAM`). OpenSky reads the setting from the INI files
 and the Graphics page as "Large object grid", and turns the grid side into rings like

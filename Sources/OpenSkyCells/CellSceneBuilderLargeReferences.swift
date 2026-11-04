@@ -53,17 +53,28 @@ nonisolated extension CellSceneBuilder {
             let world = worldspaceIndexBuildingIfNeeded().values
                 .first(where: { $0.editorID == worldspaceEditorID })
         else { return [:] }
-        var listed: [CellCoordinate: Set<UInt32>] = [:]
-        for entry in world.details.largeReferences {
+        return largeReferenceIndex(world: world.formID.rawValue).filter { cells.contains($0.key) }
+    }
+
+    /// Each plugin's `WRLD` lists only the large references it adds, so the lists of
+    /// every plugin are joined, as `RNAM` counts on the install show.
+    nonisolated private func largeReferenceIndex(world: UInt32) -> [CellCoordinate: Set<UInt32>] {
+        if let cached = largeReferenceIndex[world] {
+            return cached
+        }
+        var skipped = SkippedRecords()
+        let versions = loadOrderIndexBuildingIfNeeded().loadOrder.decodeEveryVersion(
+            of: "WRLD", skipped: &skipped,
+            using: WorldspaceLargeReferenceCell.decodeAll(record:)
+        )
+        var index: [CellCoordinate: Set<UInt32>] = [:]
+        for entry in (versions[world] ?? []).joined() {
             for reference in entry.references {
-                let cell = CellCoordinate(
-                    x: Int32(reference.cell.x), y: Int32(reference.cell.y)
-                )
-                if cells.contains(cell) {
-                    listed[cell, default: []].insert(reference.reference.rawValue)
-                }
+                let cell = CellCoordinate(x: Int32(reference.cell.x), y: Int32(reference.cell.y))
+                index[cell, default: []].insert(reference.reference.rawValue)
             }
         }
-        return listed
+        largeReferenceIndex[world] = index
+        return index
     }
 }
