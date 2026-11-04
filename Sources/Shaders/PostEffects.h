@@ -63,10 +63,10 @@ static inline float3 postFXAA(texture2d<float> scene, float2 uv, float2 texel)
     float reduce = max((northWest + northEast + southWest + southEast) * 0.03125, 1.0 / 128.0);
     float scale = 1.0 / (min(abs(direction.x), abs(direction.y)) + reduce);
     direction = clamp(direction * scale, -8.0, 8.0) * texel;
-    float3 near = 0.5 * (scene.sample(postLinear, uv - direction / 6.0).rgb
-                         + scene.sample(postLinear, uv + direction / 6.0).rgb);
-    float3 wide = near * 0.5 + 0.25 * (scene.sample(postLinear, uv - direction * 0.5).rgb
-                                       + scene.sample(postLinear, uv + direction * 0.5).rgb);
+    float3 near = 0.5 * (scene.sample(postLinear, uv - direction / 6.0).rgb +
+                         scene.sample(postLinear, uv + direction / 6.0).rgb);
+    float3 wide = near * 0.5 + 0.25 * (scene.sample(postLinear, uv - direction * 0.5).rgb +
+                                       scene.sample(postLinear, uv + direction * 0.5).rgb);
     float wideLuma = postLuma(wide);
     return (wideLuma < lowest || wideLuma > highest) ? near : wide;
 }
@@ -85,16 +85,23 @@ typedef struct
 static inline float postAmbientOcclusion(
     PostPixel pixel, float3 camera, depth2d<float> depth, constant PostEffectUniforms &post)
 {
+    float range = distance(pixel.world, camera);
+    float fade = 1.0 - smoothstep(0.5, 1.0, range / max(post.ambientOcclusion.w, 1.0));
+    if (fade <= 0.0) {
+        return 1.0;
+    }
     float3 normal = normalize(cross(
-        postNeighbourStep(pixel.world, postWorldAt(pixel.uv + float2(pixel.texel.x, 0), depth, post),
-                          postWorldAt(pixel.uv - float2(pixel.texel.x, 0), depth, post)),
-        postNeighbourStep(pixel.world, postWorldAt(pixel.uv + float2(0, pixel.texel.y), depth, post),
-                          postWorldAt(pixel.uv - float2(0, pixel.texel.y), depth, post))));
+        postNeighbourStep(
+            pixel.world, postWorldAt(pixel.uv + float2(pixel.texel.x, 0), depth, post),
+            postWorldAt(pixel.uv - float2(pixel.texel.x, 0), depth, post)),
+        postNeighbourStep(
+            pixel.world, postWorldAt(pixel.uv + float2(0, pixel.texel.y), depth, post),
+            postWorldAt(pixel.uv - float2(0, pixel.texel.y), depth, post))));
     if (dot(normal, camera - pixel.world) < 0.0) {
         normal = -normal;
     }
     float radius = post.ambientOcclusion.x;
-    float2 reach = radius * post.projection.xy * 0.5 / max(distance(pixel.world, camera), 1.0);
+    float2 reach = radius * post.projection.xy * 0.5 / max(range, 1.0);
     reach = min(reach, float2(0.1));
     float turn = postNoise(pixel.pixel) * 6.2831853;
     float sum = 0.0;
@@ -108,7 +115,7 @@ static inline float postAmbientOcclusion(
         float rise = dot(toTap * rsqrt(max(distanceSquared, 1.0e-4)), normal);
         sum += max(rise - post.ambientOcclusion.z, 0.0) * falloff;
     }
-    return saturate(1.0 - post.ambientOcclusion.y * sum / 12.0);
+    return saturate(1.0 - fade * post.ambientOcclusion.y * sum / 12.0);
 }
 
 // One cascade tap per march step; the march takes many steps, so each takes one tap.
@@ -142,23 +149,27 @@ static inline float3 postVolumetricLight(
     if (frame.shadowsEnabled == 0) {
         return 0.0;
     }
-    float3 toPixel = (sky ? postWorldPosition(pixel.uv, 0.5, post) : pixel.world)
-        - frame.cameraPosition;
+    float3 toPixel =
+        (sky ? postWorldPosition(pixel.uv, 0.5, post) : pixel.world) - frame.cameraPosition;
     float maximum = post.volumetricLight.z;
     float reach = sky ? maximum : min(length(toPixel), maximum);
     float3 direction = normalize(toPixel);
-    int steps = max(int(post.volumetricLight.y), 1);
-    float offset = postNoise(pixel.pixel);
-    float lit = 0.0;
-    for (int step = 0; step < steps; ++step) {
-        float along = (float(step) + offset) / float(steps) * reach;
-        lit += postSunLit(frame.cameraPosition + direction * along, frame, shadowMap, compare);
+    // A sky ray leaves the cascades at their edges, which cut hard bands into the sky.
+    float lit = 1.0;
+    if (!sky) {
+        int steps = max(int(post.volumetricLight.y), 1);
+        float offset = postNoise(pixel.pixel);
+        float sum = 0.0;
+        for (int step = 0; step < steps; ++step) {
+            float along = (float(step) + offset) / float(steps) * reach;
+            sum += postSunLit(frame.cameraPosition + direction * along, frame, shadowMap, compare);
+        }
+        lit = sum / float(steps);
     }
-    lit /= float(steps);
     float asymmetry = post.volumetricLight.w;
     float cosine = dot(direction, -frame.sunDirection);
-    float phase = (1.0 - asymmetry * asymmetry)
-        / pow(1.0 + asymmetry * asymmetry - 2.0 * asymmetry * cosine, 1.5);
+    float phase = (1.0 - asymmetry * asymmetry) /
+                  pow(1.0 + asymmetry * asymmetry - 2.0 * asymmetry * cosine, 1.5);
     float scatter = 1.0 - exp(-reach / maximum);
     return frame.sunColor * (lit * phase * scatter * post.volumetricLight.x);
 }
@@ -189,8 +200,8 @@ static inline float3 postDepthOfField(
             float angle = (float(tap) + 0.5 * float(ring)) * 0.7853982;
             float2 tapUV = pixel.uv + float2(cos(angle), sin(angle)) * reach * pixel.texel;
             float tapDepth = depth.sample(postNearest, tapUV);
-            if (tapDepth < 1.0
-                && distance(postWorldPosition(tapUV, tapDepth, post), camera) < field.y) {
+            if (tapDepth < 1.0 &&
+                distance(postWorldPosition(tapUV, tapDepth, post), camera) < field.y) {
                 continue;
             }
             sum += scene.sample(postLinear, tapUV).rgb;
@@ -219,7 +230,9 @@ static inline float postSunVisibility(float2 sun, float2 texel, depth2d<float> d
 // Lens flare: soft ghost discs on the line from the sun through the screen centre, in
 // the sun colour, while the sun is in view and not hidden.
 static inline float3 postLensFlare(
-    PostPixel pixel, constant FrameUniforms &frame, constant PostEffectUniforms &post,
+    PostPixel pixel,
+    constant FrameUniforms &frame,
+    constant PostEffectUniforms &post,
     depth2d<float> depth)
 {
     float2 sun = post.lensFlare.xy;
@@ -229,9 +242,9 @@ static inline float3 postLensFlare(
     }
     constexpr float along[5] = {0.4, 0.7, 1.1, 1.5, 1.9};
     constexpr float size[5] = {0.05, 0.025, 0.08, 0.04, 0.12};
-    constexpr float3 tint[5] = {float3(1.0, 0.8, 0.5), float3(0.6, 1.0, 0.7),
-                                float3(0.5, 0.7, 1.0), float3(1.0, 0.6, 0.9),
-                                float3(0.7, 0.8, 1.0)};
+    constexpr float3 tint[5] = {
+        float3(1.0, 0.8, 0.5), float3(0.6, 1.0, 0.7), float3(0.5, 0.7, 1.0), float3(1.0, 0.6, 0.9),
+        float3(0.7, 0.8, 1.0)};
     float2 axis = float2(0.5) - sun;
     float3 sum = 0.0;
     for (int ghost = 0; ghost < 5; ++ghost) {

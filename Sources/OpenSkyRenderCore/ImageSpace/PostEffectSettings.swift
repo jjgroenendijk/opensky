@@ -35,6 +35,9 @@ nonisolated public struct PostEffectSettings: Equatable, Sendable {
     public static let ambientOcclusionStrength: Float = 1.2
     /// Ignores occluders closer to the surface plane than this share of their distance.
     public static let ambientOcclusionBias: Float = 0.05
+    /// Past this distance depth precision makes the normals noisy, so occlusion fades
+    /// out by here; unverified.
+    public static let ambientOcclusionFadeDistance: Float = 4096
     /// The depth of field blur radius at full strength, in pixels of a 1080-pixel-high
     /// frame; unverified.
     public static let depthOfFieldRadius: Float = 8

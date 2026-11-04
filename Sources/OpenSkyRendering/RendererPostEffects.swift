@@ -31,7 +31,8 @@ extension Renderer {
             uniforms.ambientOcclusion = SIMD4(
                 PostEffectSettings.ambientOcclusionRadius,
                 PostEffectSettings.ambientOcclusionStrength,
-                PostEffectSettings.ambientOcclusionBias, 0
+                PostEffectSettings.ambientOcclusionBias,
+                PostEffectSettings.ambientOcclusionFadeDistance
             )
         }
         if postEffects.volumetricLight {

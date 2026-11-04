@@ -47,6 +47,8 @@ the sky reaches.
   normal, less a bias of 0.05), times `1 - d² / r²` for its distance `d` in the radius `r`.
 - The result is `1 - 1.2 * mean`, clamped to 0 to 1, and multiplies the colour. The sky is
   not changed.
+- The effect fades out between 2,048 and 4,096 units from the camera. Far away, depth
+  precision makes the normals noisy, and the noise would darken the whole distant view.
 
 ## Volumetric light
 
@@ -62,6 +64,8 @@ through the air between the camera and a surface makes shafts where shadows brea
   `(1 - g²) / (1 + g² - 2g cos θ)^1.5`, where θ is the angle between the ray and the sun.
 - The added colour is the sun colour times the lit share, the phase, `1 - exp(-length / 4096)`,
   and a strength of 0.05. The sky pixels take the full length.
+- A sky pixel does not march: its lit share is 1. A sky ray leaves the cascades at their
+  edges, and those edges would cut a hard disc and bands into the sky.
 - With shadows off, nothing is added.
 
 ## Depth of field
