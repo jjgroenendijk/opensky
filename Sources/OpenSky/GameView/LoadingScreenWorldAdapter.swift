@@ -26,6 +26,7 @@ import simd
 /// What `LoadingScreenWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol LoadingScreenWorldHost: MenuInputConsumer {
+    var followerCommandWorld: FollowerCommandWorldAdapter { get }
     var hud: HUDCoordinator { get }
     var journal: JournalCoordinator { get }
     var loadingScreens: LoadingScreenCoordinator { get }
@@ -81,6 +82,7 @@ final class LoadingScreenWorldAdapter {
                 return
             }
             game.loadingScreens.destinationReady(location: location(of: scene), at: now)
+            game.followerCommandWorld.bringFollowers(into: scene)
         }
         gameSession.frameSteps.register(.loadingScreen) { [weak self] _ in
             guard let self else { return }
