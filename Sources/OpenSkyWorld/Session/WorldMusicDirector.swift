@@ -448,8 +448,9 @@ private enum TrackStart {
 // MARK: - Scripted music
 
 extension WorldMusicDirector {
-    /// `MusicType.Add`: the type plays over the cell's music. Adding it again moves it to
-    /// the top. Returns nil on success or a short failure reason.
+    /// `MusicType.Add`: the type joins the stack, and the stack's top plays over the
+    /// cell's music. Adding it again makes it the newest. Returns nil on success or a
+    /// short failure reason.
     @discardableResult
     public func addScriptedMusic(_ id: FormID) -> MusicRefusal? {
         guard let musicStore else {
@@ -461,20 +462,32 @@ extension WorldMusicDirector {
             lastMusicRefusal = .noPlayableTrack(id)
             return lastMusicRefusal
         }
+        let before = playingScriptedMusic
         scriptedMusic.removeAll { $0 == id }
         scriptedMusic.append(id)
-        play(selection)
+        if playingScriptedMusic != before {
+            playScriptedTop()
+        }
         return nil
     }
 
-    /// `MusicType.Remove`: the next scripted type plays, or the cell's music when none is left.
+    /// `MusicType.Remove`: the stack's next top plays, or the cell's music when none is left.
     public func removeScriptedMusic(_ id: FormID) {
         guard let index = scriptedMusic.lastIndex(of: id) else { return }
-        let wasPlaying = index == scriptedMusic.count - 1
+        let before = playingScriptedMusic
         scriptedMusic.remove(at: index)
-        guard wasPlaying else { return }
-        if let next = scriptedMusic.last, let musicStore {
-            play(MusicSelection.resolve(musicType: next, musicStore: musicStore))
+        guard playingScriptedMusic != before else { return }
+        playScriptedTop()
+    }
+
+    /// The scripted type that sounds: the highest `MUSC` priority, the newest on a tie.
+    public var playingScriptedMusic: FormID? {
+        ScriptedMusicStack.top(scriptedMusic) { musicStore?.musicType($0)?.priority }
+    }
+
+    private func playScriptedTop() {
+        if let top = playingScriptedMusic, let musicStore {
+            play(MusicSelection.resolve(musicType: top, musicStore: musicStore))
         } else {
             play(contextSelection)
         }

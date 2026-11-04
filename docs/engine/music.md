@@ -71,12 +71,15 @@ interrupt the fight music. A load order with no combat playlist keeps the curren
 why. The `MUSCombat` prefix has the same limits as the town prefix. See
 [combat](/engine/combat.md).
 
+### Scripted music
+
 Scripts add music with `MusicType.Add()` and take it away with `MusicType.Remove()`. The
-director keeps these types in a stack. The newest one plays over the cell's music, and a cell
-change only updates what the stack returns to. Removing the newest type plays the next one,
-or the cell's music when the stack is empty. Combat still wins: scripted music waits for the
-fight to end. The game orders the stack by each `MUSC` priority; OpenSky does not read the
-priority yet and plays the newest type. The stack is not saved.
+director keeps these types in a stack. The type with the highest `MUSC` priority (`PNAM`, 1 is
+the highest) plays over the cell's music; on a tie the newest one plays. A type without `PNAM`
+ranks as 100, the lowest; that default is OpenSky's choice. A cell change only updates what the
+stack returns to. Removing the playing type plays the next top, or the cell's music when the
+stack is empty. Combat still wins: scripted music waits for the fight to end. The stack is not
+saved.
 
 There is no dungeon state. Vanilla has `MUSDungeon...` records, but game systems OpenSky does not
 have yet start them. Adding a state for them now would be a guess.
@@ -108,7 +111,7 @@ What happens at the end of a track:
 - Neither flag: repeat the one track while the selection stays the same. That is how a
   single-track `MUSC` behaves.
 
-`Ducks Current Track`, `Does Not Queue`, and the `MUSC` priority are decoded but not used. They
+`Ducks Current Track` and `Does Not Queue` are decoded but not used. They
 matter only when two playlists can play at once.
 
 ## Finding the shipped file
