@@ -11,6 +11,8 @@ nonisolated public struct ReferenceScene: Codable, Equatable, Sendable {
         public var loaded: Bool
         public var disabled: Bool?
         public var dead: Bool?
+        /// The AI process level, high 0 to low 3; -1 for no actor or no process.
+        public var processLevel: Int32?
     }
 
     public var formID: UInt32

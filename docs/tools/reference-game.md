@@ -245,13 +245,24 @@ because the game's main task queue stops while a message box pauses the game.
 
 Each line runs alone, so the plugin keeps the reference a `prid <FormID>` line picks, and
 runs every later line against it, as the console does. `state.json` names it under
-`selected`, with `loaded` and `disabled`, so a batch can check that the pick worked:
+`selected`, with `loaded`, `disabled`, the actor's running `package` (0 for none), and its AI
+`processLevel` (high 0 to low 3), so a batch can check that the pick worked:
 
 ```sh
 openskycli reference send 'prid 0009C8D4' 'disable'
 ```
 
 `prid 0` clears the pick.
+
+A line run from the bridge prints nothing anyone can read, so a condition function's answer
+needs its own line. `condition <name>` asks a function that takes no parameter about the
+picked reference, and `state.json` holds the answer under `condition`:
+
+```sh
+openskycli reference send 'prid 1A67F' 'condition GetCurrentAIProcedure'
+```
+
+Each scene actor in `scenes` also carries its `processLevel`.
 
 Some console commands are toggles that the state does not report. `tgm` turns god mode off
 when the save has it on, and the next long fall kills the player and reloads the save.

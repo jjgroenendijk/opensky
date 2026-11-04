@@ -32,6 +32,7 @@ nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
     public var selected: ReferenceSelection?
     /// The playing scenes, while the player stands in the world.
     public var scenes: [ReferenceScene]?
+    public var condition: ReferenceConditionAnswer?
 
     /// True once the player stands in a loaded cell, outside the main menu and loading.
     public var inWorld: Bool {
