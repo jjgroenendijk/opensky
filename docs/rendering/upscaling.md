@@ -24,7 +24,9 @@ Reference: Apple, "MetalFX" framework documentation (`MTLFXTemporalScalerDescrip
 
 The render scale is the input size as a share of the output size: off, 50, 59, 67, 75, 85,
 or 100 percent. Off draws at full size and creates no scaler. 100 percent keeps the size but
-still runs the scaler, which then works as temporal anti-aliasing. MetalFX on Apple silicon
+still runs the scaler, which then works as temporal anti-aliasing. The game's `[Display] bUseTAA`
+option picks that setup when the render scale is off: 100 percent with the temporal scaler. A
+render scale the player chose wins over it. MetalFX on Apple silicon
 upscales at most two times on each axis, so 50 percent is the lowest choice.
 
 The player settings `rendering.renderScale` and `rendering.upscaler` store the choices, so the next

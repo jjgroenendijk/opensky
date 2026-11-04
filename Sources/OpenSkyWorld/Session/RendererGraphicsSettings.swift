@@ -47,8 +47,12 @@ extension Renderer {
         textureStreaming.enabled = store.bool(.textureStreaming)
         textureStreaming.budgetBytes = Self.textureBudgetBytes(store: store, device: device)
         rayTracedShadows.enabled = store.bool(.rayTracedShadows)
-        renderScale = RenderScale(store: store)
-        upscaler = UpscalerKind(store: store)
+        let upscale = RenderScale.resolve(
+            RenderScale(store: store), upscaler: UpscalerKind(store: store),
+            temporalAntiAliasing: store.bool(.temporalAntiAliasing)
+        )
+        renderScale = upscale.scale
+        upscaler = upscale.upscaler
         frameInterpolationEnabled = store.bool(.frameInterpolation)
         meshShaderGrassEnabled = store.bool(.meshShaderGrass)
         waterDepth.enabled = store.bool(.waterDepth)

@@ -53,6 +53,7 @@ player's own `SkyrimPrefs.ini` shows through as the default.
 | `bDoDepthOfField` | Blurs what lies past the image space's `DNAM` focus distance ([post effects](/rendering/post-effects.md#depth-of-field)) |
 | `bLensFlare` | Ghost discs from the sun while it is in view and not hidden ([post effects](/rendering/post-effects.md#lens-flare)) |
 | `bFXAAEnabled` | FXAA smooths edges in the image-space composite ([post effects](/rendering/post-effects.md#fxaa)) |
+| `bUseTAA` | With the render scale off, runs the MetalFX temporal scaler at 100 percent, which anti-aliases ([upscaling](/rendering/upscaling.md#the-render-scale)). A chosen render scale wins |
 
 An option that is not in this table is shown, saved, and disabled, with one line that says why it
 does nothing yet. So a player sees what the game would change, and an option that starts to work

@@ -103,10 +103,7 @@ nonisolated public enum GraphicsOptions {
             .lighting, "High dynamic range target", "Display", "bUse64bitsHDRRenderTarget",
             "OpenSky picks its render target formats itself"
         ),
-        option(
-            .antiAliasing, "Temporal anti-aliasing", "Display", "bUseTAA",
-            "The MetalFX temporal upscaler smooths edges instead"
-        ),
+        option(.antiAliasing, "Temporal anti-aliasing", "Display", "bUseTAA"),
         option(.antiAliasing, "FXAA", "Display", "bFXAAEnabled"),
         option(.effects, "Depth of field", "ImageSpace", "bDoDepthOfField"),
         option(.effects, "Lens flare", "ImageSpace", "bLensFlare"),

@@ -20,6 +20,7 @@ nonisolated public struct RenderScale: Equatable, Sendable {
     /// 0 is off: the scene renders at the display size and nothing upscales.
     public static let percentOptions = [0, 50, 59, 67, 75, 85, 100]
     public static let off = RenderScale(percent: 0)
+    public static let native = RenderScale(percent: 100)
 
     /// 0, or 50 through 100. MetalFX upscales at most 2x on each axis on Apple silicon.
     public let percent: Int
@@ -36,6 +37,17 @@ nonisolated public struct RenderScale: Equatable, Sendable {
 
     public var isOn: Bool {
         percent > 0
+    }
+
+    /// `bUseTAA` with the render scale off runs the temporal scaler at full size, for its
+    /// anti-aliasing. A chosen render scale and upscaler stay as they are.
+    public static func resolve(
+        _ scale: Self,
+        upscaler: UpscalerKind,
+        temporalAntiAliasing: Bool
+    ) -> (scale: Self, upscaler: UpscalerKind) {
+        guard temporalAntiAliasing, !scale.isOn else { return (scale, upscaler) }
+        return (.native, .temporal)
     }
 
     public var settingIndex: Int {
