@@ -43,6 +43,10 @@ extension Renderer {
         shadingTerms = SurfaceShadingSetting.terms(store: store)
         lightAnimationEnabled = store.bool(.lightAnimation)
         particleSortingEnabled = store.bool(.particleSorting)
+        referenceFades = ReferenceFadeDistances(
+            actors: store.value(.fadeActors), items: store.value(.fadeItems),
+            objects: store.value(.fadeObjects)
+        )
         shadowSettings = ShadowSettings(
             distance: store.value(.shadowDistance), resolution: store.value(.shadowMapResolution)
         )

@@ -46,6 +46,7 @@ extension Renderer {
         guard
             cullScene.encode(
                 frustums: viewProjections.map(Frustum.init(viewProjection:)),
+                fade: CullFade(distances: referenceFades, viewer: frameInput.view.position),
                 roomVisibility: roomCulling.visibility,
                 slot: slot,
                 resources: gpuCull.resources,

@@ -198,6 +198,7 @@ public final class GPUCullScene {
     /// cull only the camera view: a hidden room still casts shadows into a seen one.
     func encode(
         frustums: [Frustum],
+        fade: CullFade,
         roomVisibility: RoomVisibility?,
         slot: Int,
         resources: GPUCullingResources,
@@ -217,7 +218,7 @@ public final class GPUCullScene {
         let width = CullConstant.threadgroupWidth.rawValue
         for (view, frustum) in frustums.enumerated() {
             let parameterAddress = writeParameters(
-                frustum, roomWords: view == 0 ? roomWords : 0, view: view, slot: slot
+                frustum, fade: fade, roomWords: view == 0 ? roomWords : 0, view: view, slot: slot
             )
             resetArguments(view: view, slot: slot)
             table.setAddress(parameterAddress, index: CullBufferIndex.parameters.rawValue)
@@ -261,6 +262,7 @@ public final class GPUCullScene {
 
     private func writeParameters(
         _ frustum: Frustum,
+        fade: CullFade,
         roomWords: Int,
         view: Int,
         slot: Int
@@ -270,6 +272,10 @@ public final class GPUCullScene {
                 frustum.left, frustum.right, frustum.bottom,
                 frustum.top, frustum.near, frustum.far
             ),
+            fadeViewer: SIMD4(
+                fade.viewer, fade.distances.isOn ? ReferenceFadeDistances.fadeBand : 0
+            ),
+            fadeScales: fade.distances.shaderScales,
             instanceCount: UInt32(instanceCount),
             roomWordCount: UInt32(roomWords),
             padding0: 0, padding1: 0
@@ -332,7 +338,7 @@ private struct GPUCullSceneBuilder {
                 instanceColor: instance.instanceColor(regions: [:]),
                 grassParameters: .zero
             ),
-            boundsMin: SIMD4(bounds?.min ?? .zero, 0),
+            boundsMin: SIMD4(bounds?.min ?? .zero, Float(instance.fadeCategory.rawValue)),
             boundsMax: SIMD4(bounds?.max ?? .zero, bounds == nil ? 0 : 1),
             group: UInt32(group),
             outputBase: UInt32(outputBase),

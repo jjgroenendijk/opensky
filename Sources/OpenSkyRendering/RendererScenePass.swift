@@ -174,7 +174,10 @@ extension Renderer {
                 state.stats.roomCulledInstances += 1
                 continue
             }
-            if let bounds = instance.bounds, !state.frustum.intersects(bounds) {
+            guard
+                instance.bounds.map(state.frustum.intersects) != false,
+                let distanceFade = distanceFade(of: instance)
+            else {
                 state.stats.culledInstances += 1
                 continue
             }
@@ -182,7 +185,7 @@ extension Renderer {
                 modelMatrix: instance.modelMatrix,
                 normalMatrix: instance.normalMatrix,
                 instanceColor: instance.instanceColor(regions: regionEmittance),
-                grassParameters: SIMD4(0, 0, 0, fadeOut(of: instance))
+                grassParameters: SIMD4(0, 0, 0, max(fadeOut(of: instance), distanceFade))
             )
             instanceTransformBuffer.contents()
                 .advanced(by: (base + written) * stride)

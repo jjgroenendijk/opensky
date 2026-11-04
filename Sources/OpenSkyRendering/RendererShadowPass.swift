@@ -353,7 +353,10 @@ extension Renderer {
             // Same substitution the scene pass makes, so a moving body's shadow
             // travels with it (RendererDynamicPose.swift).
             let instance = drawn(placed)
-            if let bounds = instance.bounds, !context.frustum.intersects(bounds) {
+            if
+                instance.bounds.map(context.frustum.intersects) == false
+                || distanceFade(of: instance) == nil
+            {
                 state.stats.culledInstances += 1
                 continue
             }

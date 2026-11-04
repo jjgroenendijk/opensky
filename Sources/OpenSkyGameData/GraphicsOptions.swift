@@ -75,9 +75,9 @@ nonisolated public enum GraphicsOptions {
             .viewDistance, "Terrain split distance", "TerrainManager", "fSplitDistanceMult",
             "OpenSky splits terrain blocks by its own rule"
         ),
-        option(.viewDistance, "Actor fade", "LOD", "fLODFadeOutMultActors", fixedFades),
-        option(.viewDistance, "Item fade", "LOD", "fLODFadeOutMultItems", fixedFades),
-        option(.viewDistance, "Object fade", "LOD", "fLODFadeOutMultObjects", fixedFades),
+        option(.viewDistance, "Actor fade", "LOD", "fLODFadeOutMultActors"),
+        option(.viewDistance, "Item fade", "LOD", "fLODFadeOutMultItems"),
+        option(.viewDistance, "Object fade", "LOD", "fLODFadeOutMultObjects"),
         option(.viewDistance, "Grass fade", "Grass", "fGrassStartFadeDistance", fixedFades),
         option(.viewDistance, "Mesh LOD 1 fade", "Display", "fMeshLODLevel1FadeDist", fixedFades),
         option(.viewDistance, "Mesh LOD 2 fade", "Display", "fMeshLODLevel2FadeDist", fixedFades),

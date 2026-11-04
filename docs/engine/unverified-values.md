@@ -152,6 +152,7 @@ the detail and the sources it did find.
 | Image space modifier weights | Two constants; at most 16 at once | [image space](/rendering/image-space.md) |
 | Surface shading strength, tiling, refraction rate | OpenSky's values | [surface shading](/rendering/surface-shading.md) |
 | Shadow map size cap | 4096; the game allows more | [graphics options](/engine/graphics-options.md) |
+| Reference fade reach | Multiplier x 16 x bound radius, 15% dissolve | [graphics options](/engine/graphics-options.md) |
 | Water UV density | 2 quads per repeat | [scene drawing](/rendering/scene-drawing.md) |
 | Clear colour under water | OpenSky's choice | [Metal 4 renderer](/rendering/metal4-renderer.md) |
 | Light flicker curves, period unit, slow factor | OpenSky's values | [lighting](/formats/lighting.md) |

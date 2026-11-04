@@ -41,6 +41,7 @@ player's own `SkyrimPrefs.ini` shows through as the default.
 | `bDecals`, `uMaxDecals` | Decals on, and the most decals kept ([impacts and decals](/rendering/decals.md)) |
 | `fShadowDistance` | The far end of the last sun shadow cascade. 0 keeps OpenSky's 12288 units. The low shadow quality caps it at 8192 |
 | `iShadowMapResolution` | The width and height of each cascade slice: a power of two from 512 to 4096. A change builds a new map while the game runs |
+| `fLODFadeOutMultActors`, `fLODFadeOutMultItems`, `fLODFadeOutMultObjects` | A placed reference is drawn up to multiplier x 16 x its bound radius (at least 32) from the camera, and dissolves over the last 15% of that reach. Actors use the actor value, references a rigid body moves the item value, other statics the object value. A faded reference casts no shadow. 0 never fades |
 
 An option that is not in this table is shown, saved, and disabled, with one line that says why it
 does nothing yet. So a player sees what the game would change, and an option that starts to work

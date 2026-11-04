@@ -489,6 +489,7 @@ typedef struct
 {
     InstanceTransform transform;
     /// World AABB. boundsMax.w is 1 when the instance has bounds, 0 when it is never culled.
+    /// boundsMin.w is the `ReferenceFadeCategory` raw value.
     vector_float4 boundsMin;
     vector_float4 boundsMax;
     /// Indirect-argument entry the survivor counts into.
@@ -504,6 +505,10 @@ typedef struct
 typedef struct
 {
     vector_float4 planes[6];
+    /// xyz the camera; w the share of the reach the dissolve covers, 0 for no fades.
+    vector_float4 fadeViewer;
+    /// `ReferenceFadeDistances.shaderScales`.
+    vector_float4 fadeScales;
     unsigned int instanceCount;
     /// Words in the room bitset; 0 turns room culling off for this view.
     unsigned int roomWordCount;

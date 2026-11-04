@@ -4,4 +4,7 @@
 nonisolated extension PlayerSettingID {
     public static let shadowDistance = Self("graphics.fShadowDistance")
     public static let shadowMapResolution = Self("graphics.iShadowMapResolution")
+    public static let fadeActors = Self("graphics.fLODFadeOutMultActors")
+    public static let fadeItems = Self("graphics.fLODFadeOutMultItems")
+    public static let fadeObjects = Self("graphics.fLODFadeOutMultObjects")
 }

@@ -93,6 +93,8 @@ public final class Renderer: NSObject {
     /// once, always resident, and bound at TextureIndexShadowMap every scene
     /// pass so validation stays clean even with shadows disabled.
     public internal(set) var shadow: ShadowResources
+    /// How far actors, items, and objects stay drawn (`RendererReferenceFade.swift`).
+    public var referenceFades = ReferenceFadeDistances.off
     /// The game's shadow distance and map size (`RendererShadowSettings.swift`).
     public var shadowSettings = ShadowSettings() {
         didSet { resizeShadowMapIfNeeded() }
