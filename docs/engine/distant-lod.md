@@ -44,6 +44,16 @@ triangles, and interpolates position, normal, tangent, bitangent, UV, and color 
 Neighbor masks split the area exactly, so no ground is missing or drawn twice at any border.
 Clipped models are cached by file path and cell set.
 
+### Skirts
+
+The vanilla terrain blocks have vertices exactly 1000, 2000, 3000, and 4000 units below the land
+at levels 4, 8, 16, and 32 (measured in #1530). They read as skirts: vertical strips that hang
+from a block's outer edge and hide the step to a neighbour of another level, whose edge heights
+differ. The clip keeps a vertical triangle that lies on an owned cell's side. A cut side, where
+the cell beyond is inside the block but owned by another source, gets a new skirt of the same
+depth for that level, facing both ways. The skirt reading is not confirmed against the game,
+and the cut depth is OpenSky's choice.
+
 Object LOD blocks (`.bto`) that are only partly owned are dropped, because their geometry does
 not say which cell each part belongs to. This affects distant objects, not terrain.
 
