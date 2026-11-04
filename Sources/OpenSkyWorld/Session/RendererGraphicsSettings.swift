@@ -25,6 +25,7 @@ extension PostEffectSettings {
         ambientOcclusion = store.bool(.ambientOcclusion)
         volumetricLight = store.bool(.volumetricLight)
         depthOfField = store.bool(.depthOfField)
+        lensFlare = store.bool(.lensFlare)
         let quality = store.value(.volumetricQuality)
         volumetricQuality = quality.isFinite ? Int(min(max(quality, 0), 2)) : 1
     }

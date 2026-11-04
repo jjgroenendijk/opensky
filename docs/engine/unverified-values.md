@@ -159,6 +159,7 @@ the detail and the sources it did find.
 | Ambient occlusion radius and strength | 48 units, 12 taps, strength 1.2, bias 0.05 | [post effects](/rendering/post-effects.md#ambient-occlusion) |
 | Volumetric light steps and strength | 8, 16, 32 steps; 4,096 units; strength 0.05; asymmetry 0.6 | [post effects](/rendering/post-effects.md#volumetric-light) |
 | Depth of field blur | Far side only; 8 pixels at 1080 lines; modifier moves toward its value | [post effects](/rendering/post-effects.md#depth-of-field) |
+| Lens flare pattern | 5 ghosts, strength 0.6, 9 visibility taps | [post effects](/rendering/post-effects.md#lens-flare) |
 | Water UV density | 2 quads per repeat | [scene drawing](/rendering/scene-drawing.md) |
 | Clear colour under water | OpenSky's choice | [Metal 4 renderer](/rendering/metal4-renderer.md) |
 | Light flicker curves, period unit, slow factor | OpenSky's values | [lighting](/formats/lighting.md) |

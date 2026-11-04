@@ -12,12 +12,14 @@ nonisolated public struct PostEffectSettings: Equatable, Sendable {
     public var volumetricQuality = 1
     /// `[ImageSpace] bDoDepthOfField`: the image space's `DNAM` focus blur.
     public var depthOfField = false
+    /// `[ImageSpace] bLensFlare`.
+    public var lensFlare = false
 
     public init() {}
 
     /// Whether the composite must read neighbour pixels and the scene depth.
     public var isActive: Bool {
-        ambientOcclusion || volumetricLight || depthOfField
+        ambientOcclusion || volumetricLight || depthOfField || lensFlare
     }
 
     /// Cascade taps along each pixel's ray, by quality; unverified.
@@ -34,6 +36,8 @@ nonisolated public struct PostEffectSettings: Equatable, Sendable {
     /// The depth of field blur radius at full strength, in pixels of a 1080-pixel-high
     /// frame; unverified.
     public static let depthOfFieldRadius: Float = 8
+    /// How bright the flare ghosts get; unverified.
+    public static let lensFlareStrength: Float = 0.6
     /// How bright the lit air gets; unverified.
     public static let volumetricStrength: Float = 0.05
     /// The ray stops here, in world units; the air gets no thicker past it.

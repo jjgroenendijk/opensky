@@ -109,7 +109,7 @@ nonisolated public enum GraphicsOptions {
         ),
         option(.antiAliasing, "FXAA", "Display", "bFXAAEnabled", "OpenSky has no FXAA"),
         option(.effects, "Depth of field", "ImageSpace", "bDoDepthOfField"),
-        option(.effects, "Lens flare", "ImageSpace", "bLensFlare", "OpenSky has no lens flare yet"),
+        option(.effects, "Lens flare", "ImageSpace", "bLensFlare"),
         option(.effects, "Snow sparkles", "Display", "bToggleSparkles"),
         option(
             .effects,

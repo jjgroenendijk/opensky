@@ -48,7 +48,22 @@ extension Renderer {
                 PostEffectSettings.depthOfFieldRadius * Float(targetHeight) / 1080
             )
         }
+        if postEffects.lensFlare, let sun = sunScreenPosition(viewProjection) {
+            uniforms.effects |= UInt32(PostEffectFlag.lensFlare.rawValue)
+            uniforms.lensFlare = SIMD4(
+                sun, PostEffectSettings.lensFlareStrength, drawableAspectRatio
+            )
+        }
         return uniforms.effects == 0 ? nil : uniforms
+    }
+
+    /// Outdoors under a sky only; nil when the sun is behind the camera or set.
+    private func sunScreenPosition(_ viewProjection: float4x4) -> SIMD2<Float>? {
+        guard frameCelestial != nil else { return nil }
+        return LensFlareMath.sunScreenPosition(
+            viewProjection: viewProjection, camera: frameInput.view.position,
+            toSun: -exteriorSunTravelDirection
+        )
     }
 
     /// Nil when the grade needs a depth copy and none can be made.

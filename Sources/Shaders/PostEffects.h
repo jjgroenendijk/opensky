@@ -165,6 +165,49 @@ static inline float3 postDepthOfField(
     return sum / weight;
 }
 
+// The share of 9 depth taps around the sun that see the sky; 0 when it is off screen.
+static inline float postSunVisibility(float2 sun, float2 texel, depth2d<float> depth)
+{
+    if (any(sun < 0.0) || any(sun > 1.0)) {
+        return 0.0;
+    }
+    float open = 0.0;
+    for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            float2 tapUV = sun + float2(dx, dy) * 6.0 * texel;
+            open += depth.sample(postNearest, tapUV) >= 1.0 ? 1.0 : 0.0;
+        }
+    }
+    return open / 9.0;
+}
+
+// Lens flare: soft ghost discs on the line from the sun through the screen centre, in
+// the sun colour, while the sun is in view and not hidden.
+static inline float3 postLensFlare(
+    PostPixel pixel, constant FrameUniforms &frame, constant PostEffectUniforms &post,
+    depth2d<float> depth)
+{
+    float2 sun = post.lensFlare.xy;
+    float visible = postSunVisibility(sun, pixel.texel, depth);
+    if (visible <= 0.0) {
+        return 0.0;
+    }
+    constexpr float along[5] = {0.4, 0.7, 1.1, 1.5, 1.9};
+    constexpr float size[5] = {0.05, 0.025, 0.08, 0.04, 0.12};
+    constexpr float3 tint[5] = {float3(1.0, 0.8, 0.5), float3(0.6, 1.0, 0.7),
+                                float3(0.5, 0.7, 1.0), float3(1.0, 0.6, 0.9),
+                                float3(0.7, 0.8, 1.0)};
+    float2 axis = float2(0.5) - sun;
+    float3 sum = 0.0;
+    for (int ghost = 0; ghost < 5; ++ghost) {
+        float2 offset = (pixel.uv - (sun + axis * along[ghost])) * float2(post.lensFlare.w, 1.0);
+        float edge = length(offset) / size[ghost];
+        sum += tint[ghost] * (1.0 - smoothstep(0.6, 1.0, edge)) * 0.2;
+    }
+    float centred = 1.0 - saturate(length(axis) * 1.2);
+    return frame.sunColor * sum * (visible * centred * post.lensFlare.z);
+}
+
 // Every effect the frame turned on, in order, over the colour of one pixel.
 static inline float3 postApply(
     float3 color,
@@ -185,6 +228,9 @@ static inline float3 postApply(
     }
     if ((post.effects & PostEffectFlagVolumetricLight) != 0) {
         color += postVolumetricLight(pixel, sky, frame, post, shadowMap, compare);
+    }
+    if ((post.effects & PostEffectFlagLensFlare) != 0) {
+        color += postLensFlare(pixel, frame, post, depth);
     }
     return color;
 }

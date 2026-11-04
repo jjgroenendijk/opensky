@@ -123,6 +123,7 @@ typedef NS_ENUM(EnumBackingType, PostEffectFlag)
     PostEffectFlagAmbientOcclusion = 1 << 0,
     PostEffectFlagVolumetricLight = 1 << 1,
     PostEffectFlagDepthOfField = 1 << 2,
+    PostEffectFlagLensFlare = 1 << 3,
 };
 
 /// The screen-space effects of the image-space composite (docs/rendering/post-effects.md).
@@ -138,6 +139,8 @@ typedef struct
     vector_float4 volumetricLight;
     /// x strength, y focus distance, z range in world units, w full blur radius in pixels.
     vector_float4 depthOfField;
+    /// xy the sun's texture coordinate, z strength, w the target's width over its height.
+    vector_float4 lensFlare;
     /// PostEffectFlag bits.
     unsigned int effects;
 } PostEffectUniforms;

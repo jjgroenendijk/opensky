@@ -2,7 +2,7 @@
 type: Subsystem
 title: Screen-space post effects
 description: The effects the image-space composite draws from the scene colour and depth -
-  ambient occlusion, volumetric light, and depth of field - which game option turns each one on, and its values.
+  ambient occlusion, volumetric light, depth of field, and lens flare - which game option turns each one on, and its values.
 tags: [rendering, image-space, metal]
 ---
 
@@ -65,6 +65,18 @@ moves each value toward its own, by the modifier's strength.
   a sharp foreground does not bleed into the blur behind it.
 - A strength of 0 draws nothing.
 
+## Lens flare
+
+`[ImageSpace] bLensFlare`. Bright ghost discs appear on the line from the sun through the
+screen centre.
+
+- Only outdoors under a sky, and only while the sun is above the horizon and in front of the
+  camera.
+- 9 depth taps around the sun's screen position count how much of it is open sky. A sun
+  hidden behind a hill or a roof draws no flare.
+- 5 soft discs in fixed tints sit at 0.4, 0.7, 1.1, 1.5, and 1.9 of the way from the sun to
+  the centre and past it. They take the sun colour, and fade as the sun nears the screen edge.
+
 ## Where OpenSky differs
 
 - Ambient occlusion multiplies the whole colour, sun light included. In the game it darkens
@@ -74,3 +86,5 @@ moves each value toward its own, by the modifier's strength.
 - Depth of field blurs only behind the focus. The `DNAM` sky and blur radius code is not
   decoded, so the radius is OpenSky's own and the sky always blurs. How a modifier's depth of
   field channel combines with the base is not documented.
+- The lens flare is OpenSky's own pattern. The game draws its sun flare from data OpenSky
+  does not read.

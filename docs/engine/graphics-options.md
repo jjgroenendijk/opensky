@@ -51,6 +51,7 @@ player's own `SkyrimPrefs.ini` shows through as the default.
 | `bSAOEnable` | Screen-space ambient occlusion in the image-space composite ([post effects](/rendering/post-effects.md#ambient-occlusion)) |
 | `bVolumetricLightingEnable`, `iVolumetricLightingQuality` | Sun shafts from a march through the sun cascades; quality 0, 1, or 2 takes 8, 16, or 32 steps ([post effects](/rendering/post-effects.md#volumetric-light)) |
 | `bDoDepthOfField` | Blurs what lies past the image space's `DNAM` focus distance ([post effects](/rendering/post-effects.md#depth-of-field)) |
+| `bLensFlare` | Ghost discs from the sun while it is in view and not hidden ([post effects](/rendering/post-effects.md#lens-flare)) |
 
 An option that is not in this table is shown, saved, and disabled, with one line that says why it
 does nothing yet. So a player sees what the game would change, and an option that starts to work
