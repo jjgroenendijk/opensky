@@ -7,6 +7,7 @@
 #include "ShaderCommon.h"
 
 constexpr sampler postNearest(filter::nearest, address::clamp_to_edge);
+constexpr sampler postLinear(filter::linear, address::clamp_to_edge);
 
 // A pixel's world position, rebuilt from its stored depth.
 static inline float3 postWorldPosition(float2 uv, float depth, constant PostEffectUniforms &post)
@@ -127,17 +128,58 @@ static inline float3 postVolumetricLight(
     return frame.sunColor * (lit * phase * scatter * post.volumetricLight.x);
 }
 
+// Depth of field: past the focus distance the blur grows over the range, up to the
+// strength. Two rings of eight taps; a tap nearer than the focus distance is skipped,
+// so a sharp foreground does not bleed into the blur behind it.
+static inline float3 postDepthOfField(
+    float3 color,
+    PostPixel pixel,
+    bool sky,
+    float3 camera,
+    texture2d<float> scene,
+    depth2d<float> depth,
+    constant PostEffectUniforms &post)
+{
+    float4 field = post.depthOfField;
+    float far = sky ? 1.0 : saturate((distance(pixel.world, camera) - field.y) / max(field.z, 1.0));
+    float amount = saturate(field.x) * far;
+    if (amount <= 0.0) {
+        return color;
+    }
+    float3 sum = color;
+    float weight = 1.0;
+    for (int ring = 1; ring <= 2; ++ring) {
+        float reach = field.w * amount * float(ring) * 0.5;
+        for (int tap = 0; tap < 8; ++tap) {
+            float angle = (float(tap) + 0.5 * float(ring)) * 0.7853982;
+            float2 tapUV = pixel.uv + float2(cos(angle), sin(angle)) * reach * pixel.texel;
+            float tapDepth = depth.sample(postNearest, tapUV);
+            if (tapDepth < 1.0
+                && distance(postWorldPosition(tapUV, tapDepth, post), camera) < field.y) {
+                continue;
+            }
+            sum += scene.sample(postLinear, tapUV).rgb;
+            weight += 1.0;
+        }
+    }
+    return sum / weight;
+}
+
 // Every effect the frame turned on, in order, over the colour of one pixel.
 static inline float3 postApply(
     float3 color,
     PostPixel pixel,
     constant FrameUniforms &frame,
     constant PostEffectUniforms &post,
+    texture2d<float> scene,
     depth2d<float> depth,
     depth2d_array<float> shadowMap,
     sampler compare)
 {
     bool sky = pixel.depth >= 1.0;
+    if ((post.effects & PostEffectFlagDepthOfField) != 0) {
+        color = postDepthOfField(color, pixel, sky, frame.cameraPosition, scene, depth, post);
+    }
     if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky) {
         color *= postAmbientOcclusion(pixel, frame.cameraPosition, depth, post);
     }

@@ -70,10 +70,14 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
     public var blurRadius: Float = 0
     public var doubleVision: Float = 0
     public var radialBlur: Float = 0
+    /// `DNAM` strength, focus distance, and range in world units.
+    public var depthOfField = SIMD3<Float>.zero
     public var hdr = ImageSpaceHDR()
 
     /// No change to the frame.
     public static let neutral = Self()
+    /// Strength is a share; distance and range are world units.
+    static let depthOfFieldLimit = SIMD3<Float>(1, 1_000_000, 1_000_000)
 
     public init() {}
 
@@ -88,6 +92,9 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
         }
         if let hdr = imageSpace.hdr {
             self.hdr = ImageSpaceHDR(hdr)
+        }
+        if let field = imageSpace.depthOfField {
+            depthOfField = SIMD3(field.strength, field.distance, field.range)
         }
     }
 
@@ -105,7 +112,9 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
         func sum(_ path: KeyPath<Self, Float>) -> Float {
             normalized.reduce(0) { $0 + $1.value[keyPath: path] * $1.weight }
         }
-        func sum(_ path: KeyPath<Self, SIMD4<Float>>) -> SIMD4<Float> {
+        func sum<Vector: SIMD>(_ path: KeyPath<Self, Vector>) -> Vector
+            where Vector.Scalar == Float
+        {
             normalized.reduce(.zero) { $0 + $1.value[keyPath: path] * $1.weight }
         }
         var result = Self()
@@ -117,6 +126,7 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
         result.blurRadius = sum(\.blurRadius)
         result.doubleVision = sum(\.doubleVision)
         result.radialBlur = sum(\.radialBlur)
+        result.depthOfField = sum(\.depthOfField)
         result.hdr = ImageSpaceHDR
             .blend(normalized.map { (value: $0.value.hdr, weight: $0.weight) })
         return result
@@ -132,6 +142,7 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
         result.fade = simd_clamp(fade, .zero, SIMD4(repeating: 1))
         result.blurRadius = simd_clamp(blurRadius, 0, 32)
         result.doubleVision = simd_clamp(doubleVision, 0, 1)
+        result.depthOfField = simd_clamp(depthOfField, .zero, Self.depthOfFieldLimit)
         return result
     }
 }

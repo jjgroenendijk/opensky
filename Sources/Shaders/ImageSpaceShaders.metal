@@ -100,7 +100,8 @@ fragment float4 imageSpaceFragment(
     if (post.effects != 0) {
         float depth = sceneDepth.sample(postNearest, uv);
         PostPixel pixel = {uv, texel, in.position.xy, depth, postWorldPosition(uv, depth, post)};
-        color = postApply(color, pixel, frame, post, sceneDepth, shadowMap, shadowCompare);
+        color = postApply(
+            color, pixel, frame, post, scene, sceneDepth, shadowMap, shadowCompare);
     }
     return imageSpaceGrade(color, uniforms);
 }

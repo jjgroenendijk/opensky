@@ -207,10 +207,10 @@ extension Renderer {
         } else if !toneMaps {
             eyeAdaptation.reset()
         }
-        let post = postEffectUniforms()
+        guard let target = descriptor.colorAttachments[0].texture else { return nil }
+        let post = postEffectUniforms(parameters, targetHeight: target.height)
         let grades = frameInput.imageSpace.passEnabled && (toneMaps || !parameters.isNeutral)
-        guard grades || post != nil, let target = descriptor.colorAttachments[0].texture
-        else { return nil }
+        guard grades || post != nil else { return nil }
         let toneMapping = toneMaps
             ? SIMD4(
                 eyeAdaptation.exposure(strength: parameters.hdr.eyeAdaptStrength),

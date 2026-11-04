@@ -2,7 +2,7 @@
 type: Subsystem
 title: Screen-space post effects
 description: The effects the image-space composite draws from the scene colour and depth -
-  ambient occlusion and volumetric light - which game option turns each one on, and its values.
+  ambient occlusion, volumetric light, and depth of field - which game option turns each one on, and its values.
 tags: [rendering, image-space, metal]
 ---
 
@@ -50,9 +50,27 @@ through the air between the camera and a surface makes shafts where shadows brea
   and a strength of 0.05. The sky pixels take the full length.
 - With shadows off, nothing is added.
 
+## Depth of field
+
+`[ImageSpace] bDoDepthOfField`. The current image space's `DNAM` gives a strength, a focus
+distance, and a range ([image space records](/formats/image-spaces.md)). Weather and cell
+image spaces blend these values by weight. A running modifier with a depth of field channel
+moves each value toward its own, by the modifier's strength.
+
+- The blur is 0 up to the focus distance. It grows over the range, and is full past
+  distance + range. The sky is always full.
+- Full blur is the strength, clamped to 0 to 1, times a radius of 8 pixels at a
+  1080-pixel-high frame.
+- Two rings of 8 taps average the colour. A tap nearer than the focus distance is skipped, so
+  a sharp foreground does not bleed into the blur behind it.
+- A strength of 0 draws nothing.
+
 ## Where OpenSky differs
 
 - Ambient occlusion multiplies the whole colour, sun light included. In the game it darkens
   only the ambient light. The radius, the strength, and the tap count are OpenSky's own.
 - Volumetric light uses OpenSky's own strength and reach for every weather. The game's
   weathers name a `VOLI` volumetric lighting record, which OpenSky does not read.
+- Depth of field blurs only behind the focus. The `DNAM` sky and blur radius code is not
+  decoded, so the radius is OpenSky's own and the sky always blurs. How a modifier's depth of
+  field channel combines with the base is not documented.

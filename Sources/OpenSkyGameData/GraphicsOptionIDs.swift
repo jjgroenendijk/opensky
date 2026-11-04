@@ -16,5 +16,6 @@ nonisolated extension PlayerSettingID {
     public static let snowSparkles = Self("graphics.bToggleSparkles")
     public static let ambientOcclusion = Self("graphics.bSAOEnable")
     public static let volumetricLight = Self("graphics.bVolumetricLightingEnable")
+    public static let depthOfField = Self("graphics.bDoDepthOfField")
     public static let volumetricQuality = Self("graphics.iVolumetricLightingQuality")
 }

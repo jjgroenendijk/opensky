@@ -14,7 +14,10 @@ struct PostEffectDepthCopy {
 
 extension Renderer {
     /// Nil when no effect is on, or the frame has no perspective depth to read.
-    func postEffectUniforms() -> PostEffectUniforms? {
+    func postEffectUniforms(
+        _ parameters: ImageSpaceParameters,
+        targetHeight: Int
+    ) -> PostEffectUniforms? {
         guard postEffects.isActive, waterDepth.unproject != nil, !isRenderDebugActive
         else { return nil }
         let viewProjection = sceneProjection * frameInput.view.viewMatrix()
@@ -38,7 +41,14 @@ extension Renderer {
                 PostEffectSettings.volumetricReach, PostEffectSettings.volumetricAsymmetry
             )
         }
-        return uniforms
+        if postEffects.depthOfField, parameters.depthOfField.x > 0 {
+            uniforms.effects |= UInt32(PostEffectFlag.depthOfField.rawValue)
+            uniforms.depthOfField = SIMD4(
+                parameters.depthOfField,
+                PostEffectSettings.depthOfFieldRadius * Float(targetHeight) / 1080
+            )
+        }
+        return uniforms.effects == 0 ? nil : uniforms
     }
 
     /// Nil when the grade needs a depth copy and none can be made.

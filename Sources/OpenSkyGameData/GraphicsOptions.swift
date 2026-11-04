@@ -108,13 +108,7 @@ nonisolated public enum GraphicsOptions {
             "The MetalFX temporal upscaler smooths edges instead"
         ),
         option(.antiAliasing, "FXAA", "Display", "bFXAAEnabled", "OpenSky has no FXAA"),
-        option(
-            .effects,
-            "Depth of field",
-            "ImageSpace",
-            "bDoDepthOfField",
-            "OpenSky has no depth of field yet"
-        ),
+        option(.effects, "Depth of field", "ImageSpace", "bDoDepthOfField"),
         option(.effects, "Lens flare", "ImageSpace", "bLensFlare", "OpenSky has no lens flare yet"),
         option(.effects, "Snow sparkles", "Display", "bToggleSparkles"),
         option(
