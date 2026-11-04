@@ -1,5 +1,5 @@
-// The player settings the effects follow: the game's decal options and
-// OpenSky's impact-model switch.
+// The player settings the effects follow: the game's decal and skin decal options
+// and OpenSky's impact-model switch.
 
 import OpenSkyGameData
 import OpenSkyRenderCore
@@ -14,5 +14,12 @@ extension EffectsCoordinator {
             .defaultLimit
         let perFrame = store.value(.decalsPerFrame)
         decals.perFrameLimit = perFrame.isFinite && perFrame > 0 ? Int(min(perFrame, 10000)) : 0
+        skinDecalsEnabled = store.bool(.decals) && store.bool(.skinDecals)
+        let skinLimit = store.value(.skinDecalLimit)
+        skinDecals.decals.limit = skinLimit.isFinite && skinLimit > 0
+            ? Int(min(skinLimit, 10000)) : SkinDecalRuntime.defaultLimit
+        let skinPerFrame = store.value(.skinDecalsPerFrame)
+        skinDecals.decals.perFrameLimit = skinPerFrame.isFinite && skinPerFrame > 0
+            ? Int(min(skinPerFrame, 10000)) : 0
     }
 }

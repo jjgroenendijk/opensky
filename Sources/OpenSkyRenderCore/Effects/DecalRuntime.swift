@@ -31,6 +31,20 @@ nonisolated public struct DecalLook: Equatable, Sendable {
         hasSubtextures = !decal.flags.contains(.noSubtextures)
     }
 
+    init(
+        texture: String,
+        width: ClosedRange<Float>,
+        height: ClosedRange<Float>,
+        color: SIMD3<Float>,
+        hasSubtextures: Bool
+    ) {
+        self.texture = texture
+        self.width = width
+        self.height = height
+        self.color = color
+        self.hasSubtextures = hasSubtextures
+    }
+
     private static func range(_ low: Float, _ high: Float) -> ClosedRange<Float> {
         let lower = low.isFinite ? max(min(low, high), 0) : high
         return lower ... high

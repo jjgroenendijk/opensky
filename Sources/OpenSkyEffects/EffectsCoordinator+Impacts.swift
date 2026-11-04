@@ -16,8 +16,7 @@ import simd
 nonisolated public enum ImpactSurface: Equatable, Sendable {
     /// A surface with a known normal, such as a wall an arrow struck.
     case surface(normal: SIMD3<Float>)
-    /// An actor's body. OpenSky has no skin decals, so the mark goes on the
-    /// ground under the actor.
+    /// An actor's body. With skin decals off, the mark goes on the ground under it.
     case actor(ReferenceKey)
     /// The ground under a foot.
     case ground
@@ -57,6 +56,13 @@ extension EffectsCoordinator {
             let key = NIFShaderTextureSet.vfsKey(for: decal.diffusePath),
             let look = DecalLook(texture: key, decal: decal.decal)
         else { return }
+        if
+            case let .actor(key) = surface, skinDecals.decals.enabled,
+            let frame = world?.effectTransform(of: key)
+        {
+            skinDecals.place(look, on: key, at: position, ownerTransform: frame)
+            return
+        }
         if decals.place(look, at: decalPosition(position, on: surface), normal: normal) != nil {
             decalsChanged = true
         }
@@ -91,7 +97,20 @@ extension EffectsCoordinator {
 
     public func clearDecals() {
         decals.removeAll()
+        skinDecals.removeAll()
         decalsChanged = true
+    }
+
+    /// The game's `bSkinnedDecals`; off clears the marks on actors.
+    public var skinDecalsEnabled: Bool {
+        get { skinDecals.decals.enabled }
+        set {
+            skinDecals.decals.enabled = newValue
+            if !newValue {
+                skinDecals.removeAll()
+                decalsChanged = true
+            }
+        }
     }
 
     private func surfaceNormal(_ surface: ImpactSurface) -> SIMD3<Float> {
@@ -154,12 +173,14 @@ extension EffectsCoordinator {
     }
 
     /// Hands the renderer the decals, one batch per texture, after a change.
+    /// Skin decals move with their actors, so a frame with any rebuilds the batches.
     func syncDecals(renderer: Renderer) throws {
-        guard decalsChanged, let meshes else { return }
-        decalsChanged = false
+        let onActors = skinDecals.worldDecals { [world] in world?.effectTransform(of: $0) }
+        guard decalsChanged || !onActors.isEmpty, let meshes else { return }
+        decalsChanged = !onActors.isEmpty
         var order: [String] = []
         var byTexture: [String: [DecalInstance]] = [:]
-        for decal in decals.decals {
+        for decal in decals.decals + onActors {
             if byTexture[decal.look.texture] == nil {
                 order.append(decal.look.texture)
             }

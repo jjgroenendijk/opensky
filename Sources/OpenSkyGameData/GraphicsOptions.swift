@@ -61,7 +61,6 @@ nonisolated public enum GraphicsOptions {
         )
     }
 
-    private static let noSkinDecals = "OpenSky draws no decals on actors yet"
 
     public static let all: [GraphicsOption] = [
         option(.viewDistance, "Near terrain detail", "TerrainManager", "fBlockLevel0Distance"),
@@ -104,13 +103,11 @@ nonisolated public enum GraphicsOptions {
         ),
         option(.effects, "Rain occlusion", "Display", "bUsePrecipitationOcclusion"),
         option(.decals, "Decals", "Decals", "bDecals"),
-        option(.decals, "Skin decals", "Decals", "bSkinnedDecals", noSkinDecals),
+        option(.decals, "Skin decals", "Decals", "bSkinnedDecals"),
         option(.decals, "Decals per frame", "Display", "iMaxDecalsPerFrame"),
-        option(
-            .decals, "Skin decals per frame", "Display", "iMaxSkinDecalsPerFrame", noSkinDecals
-        ),
+        option(.decals, "Skin decals per frame", "Display", "iMaxSkinDecalsPerFrame"),
         option(.decals, "Decal limit", "Display", "uMaxDecals"),
-        option(.decals, "Skin decal limit", "Display", "uMaxSkinDecals", noSkinDecals)
+        option(.decals, "Skin decal limit", "Display", "uMaxSkinDecals")
     ]
 
     /// Store rows for every option. A toggle stores 0 or 1; a number keeps the INI value.
@@ -135,8 +132,9 @@ nonisolated public enum GraphicsOptions {
         case "fTreeLoadDistance": Double(fallback.treeLoadDistance)
         case "uGridsToLoad": Double(TerrainLODConfiguration.defaultGridsToLoad)
         case "fSplitDistanceMult": 1
-        case "bDecals", "bUsePrecipitationOcclusion", "bToggleSparkles": 1
+        case "bDecals", "bSkinnedDecals", "bUsePrecipitationOcclusion", "bToggleSparkles": 1
         case "uMaxDecals": 100
+        case "uMaxSkinDecals": 35
         default: 0
         }
     }
