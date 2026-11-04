@@ -10,4 +10,5 @@ nonisolated extension PlayerSettingID {
     public static let grassFadeStart = Self("graphics.fGrassStartFadeDistance")
     public static let meshLODLevel1 = Self("graphics.fMeshLODLevel1FadeDist")
     public static let meshLODLevel2 = Self("graphics.fMeshLODLevel2FadeDist")
+    public static let decalsPerFrame = Self("graphics.iMaxDecalsPerFrame")
 }

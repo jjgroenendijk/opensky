@@ -46,8 +46,9 @@ The decal texture is the `TXST` `TX00` diffuse. Its size and color come from `DO
 The decals draw after the effect membranes, lit by the sun, ambient light, and shadow, with
 fog. The random values come from a fixed seed, so a run places the same decals each time.
 
-`[Display] uMaxDecals` limits the live decals; the oldest goes first. `[Decals] bDecals`
-turns decals off ([graphics options](/engine/graphics-options.md)).
+`[Display] uMaxDecals` limits the live decals; the oldest goes first. `[Display]
+iMaxDecalsPerFrame` limits the decals placed in one frame; later ones that frame are dropped.
+`[Decals] bDecals` turns decals off ([graphics options](/engine/graphics-options.md)).
 
 ## Approximations
 

@@ -38,7 +38,7 @@ player's own `SkyrimPrefs.ini` shows through as the default.
 | --- | --- |
 | `fBlockLevel0Distance`, `fBlockLevel1Distance`, `fBlockMaximumDistance`, `fTreeLoadDistance` | The terrain and tree LOD distances ([terrain](/engine/terrain.md)) |
 | `uGridsToLoad` | The side of the full-detail cell grid ([cell streaming](/engine/cell-streaming.md#the-desired-grid)). No preset sets it, so a preset leaves it unchanged |
-| `bDecals`, `uMaxDecals` | Decals on, and the most decals kept ([impacts and decals](/rendering/decals.md)) |
+| `bDecals`, `uMaxDecals`, `iMaxDecalsPerFrame` | Decals on, the most decals kept, and the most placed in one frame; the rest of that frame's decals are dropped ([impacts and decals](/rendering/decals.md)) |
 | `fShadowDistance` | The far end of the last sun shadow cascade. 0 keeps OpenSky's 12288 units. The low shadow quality caps it at 8192 |
 | `iShadowMapResolution` | The width and height of each cascade slice: a power of two from 512 to 4096. A change builds a new map while the game runs |
 | `fLODFadeOutMultActors`, `fLODFadeOutMultItems`, `fLODFadeOutMultObjects` | A placed reference is drawn up to multiplier x 16 x its bound radius (at least 32) from the camera, and dissolves over the last 15% of that reach. Actors use the actor value, references a rigid body moves the item value, other statics the object value. A faded reference casts no shadow. 0 never fades |

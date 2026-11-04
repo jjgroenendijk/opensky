@@ -154,10 +154,7 @@ nonisolated public enum GraphicsOptions {
         ),
         option(.decals, "Decals", "Decals", "bDecals"),
         option(.decals, "Skin decals", "Decals", "bSkinnedDecals", noSkinDecals),
-        option(
-            .decals, "Decals per frame", "Display", "iMaxDecalsPerFrame",
-            "OpenSky places every decal the frame asks for"
-        ),
+        option(.decals, "Decals per frame", "Display", "iMaxDecalsPerFrame"),
         option(
             .decals, "Skin decals per frame", "Display", "iMaxSkinDecalsPerFrame", noSkinDecals
         ),

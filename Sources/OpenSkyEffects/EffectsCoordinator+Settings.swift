@@ -12,5 +12,7 @@ extension EffectsCoordinator {
         let limit = store.value(.decalLimit)
         decalLimit = limit.isFinite && limit > 0 ? Int(min(limit, 10000)) : DecalRuntime
             .defaultLimit
+        let perFrame = store.value(.decalsPerFrame)
+        decals.perFrameLimit = perFrame.isFinite && perFrame > 0 ? Int(min(perFrame, 10000)) : 0
     }
 }

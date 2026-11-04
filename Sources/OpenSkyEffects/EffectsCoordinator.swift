@@ -182,6 +182,7 @@ public final class EffectsCoordinator {
         renderer: Renderer
     ) throws {
         visualEffects.advance(seconds)
+        decals.beginFrame()
         stepBlood(seconds, renderer: renderer)
         let world = world
         let effectModels = visualEffects.models(camera: world?.effectCamera) { anchor in

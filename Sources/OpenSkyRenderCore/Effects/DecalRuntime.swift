@@ -64,6 +64,9 @@ nonisolated public struct DecalRuntime: Sendable {
         didSet { trim() }
     }
 
+    /// The game's `iMaxDecalsPerFrame`: places past it in one frame are dropped. 0 is no cap.
+    public var perFrameLimit = 0
+    public private(set) var placedThisFrame = 0
     public private(set) var decals: [Decal] = []
     public private(set) var placedTotal = 0
     private var nextID = 1
@@ -79,7 +82,11 @@ nonisolated public struct DecalRuntime: Sendable {
         at position: SIMD3<Float>,
         normal: SIMD3<Float>
     ) -> Int? {
-        guard enabled, limit > 0, simd_length_squared(normal) > 1e-8 else { return nil }
+        guard
+            enabled, limit > 0, simd_length_squared(normal) > 1e-8,
+            perFrameLimit <= 0 || placedThisFrame < perFrameLimit
+        else { return nil }
+        placedThisFrame += 1
         let up = simd_normalize(normal)
         let (tangent, bitangent) = Self.basis(around: up, angle: random.unit() * 2 * .pi)
         let width = Self.pick(look.width, random.unit())
@@ -99,6 +106,11 @@ nonisolated public struct DecalRuntime: Sendable {
         decals.append(decal)
         trim()
         return decal.id
+    }
+
+    /// Starts a new frame's count for `perFrameLimit`.
+    public mutating func beginFrame() {
+        placedThisFrame = 0
     }
 
     public mutating func removeAll() {
