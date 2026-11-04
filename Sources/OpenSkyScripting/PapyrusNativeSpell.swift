@@ -164,8 +164,8 @@ extension PapyrusNativeFunctions {
     /// `Cast(ObjectReference akSource, ObjectReference akTarget = None)`
     /// (<https://ck.uesp.net/wiki/Cast_-_Spell>) and `RemoteCast(ObjectReference akSource,
     /// Actor akBlameActor, ObjectReference akTarget = None)`
-    /// (<https://ck.uesp.net/wiki/RemoteCast_-_Spell>). Both cast "instantaneously"; the
-    /// blamed actor is not used, because a landed spell reports no crime yet.
+    /// (<https://ck.uesp.net/wiki/RemoteCast_-_Spell>). Both cast "instantaneously". The
+    /// blamed actor is the caster of the hit, and casts when the source is no actor.
     private static func installSpellCast(into registry: inout PapyrusNativeRegistry) {
         for (name, targetIndex) in [("Cast", 1), ("RemoteCast", 2)] {
             registry.register(PapyrusNativeFunction(
@@ -187,7 +187,9 @@ extension PapyrusNativeFunctions {
                 }
                 let target = objectArgument(call, at: targetIndex)
                     .flatMap { world.referenceKey(for: $0) }
-                guard world.castSpell(spell, from: caster, at: target) else {
+                let blame = name == "RemoteCast"
+                    ? objectArgument(call, at: 1).flatMap { world.referenceKey(for: $0) } : nil
+                guard world.castSpell(spell, from: caster, at: target, blame: blame) else {
                     return failure(call, "\(name) has no caster runtime or no such spell")
                 }
                 return .returned(.none)

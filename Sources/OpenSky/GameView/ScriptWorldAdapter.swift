@@ -302,6 +302,9 @@ final class ScriptWorldAdapter {
         provider: WorldDataStores
     ) {
         bridge.magicNatives.casterRuntime = { [weak game] in game?.magic.caster }
+        bridge.magicNatives.isCommandedActor = { [weak game] key in
+            game?.magic.commanded.contains { $0.actor == key } ?? false
+        }
         bridge.magicEffectStore = provider.magicEffectStore
         bridge.formListStore = provider.formListStore
         bridge.keywordStore = provider.locationStore?.keywords

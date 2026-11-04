@@ -253,6 +253,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         guard let gameSession = game.gameSession else { return }
         gameSession.gameTime.globalResolution = resolution
         gameSession.weather?.setGlobalResolution(resolution, reroll: reroll)
+        game.scripts.bridge?.publishLeveledEdits()
     }
 
     var musicStore: MusicRecordStore? {

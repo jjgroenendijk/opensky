@@ -160,6 +160,9 @@ public struct ActiveEffectRuntime {
                 }
                 if application.isInstant {
                     tally.noteInstant()
+                    if !resolved.effect.scriptData.scripts.isEmpty {
+                        pulse(application, source: source, caster: caster, on: target)
+                    }
                 } else if
                     let effect = storeTimed(
                         application,
@@ -348,5 +351,25 @@ public struct ActiveEffectRuntime {
         } else {
             store.set(state, for: holder.key, in: holder.cell)
         }
+    }
+}
+
+extension ActiveEffectRuntime {
+    /// Stores a zero-duration effect and removes it again, so its scripts see
+    /// `OnEffectStart` and then `OnEffectFinish`, as in the game.
+    private func pulse(
+        _ application: MagicEffectApplication,
+        source: ActiveEffectSource,
+        caster: ReferenceKey?,
+        on target: ActorValueHolder
+    ) {
+        let state = state(of: target)
+        let effect = ActiveEffect(
+            sequence: state.nextSequence, source: source, effect: application.effect,
+            caster: caster, mode: application.mode, isDetrimental: application.isDetrimental,
+            duration: 0, values: []
+        )
+        write(state.adding(effect), for: target)
+        write(state, for: target)
     }
 }

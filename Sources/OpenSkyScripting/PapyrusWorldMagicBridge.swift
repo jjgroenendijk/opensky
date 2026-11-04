@@ -90,8 +90,19 @@ public protocol PapyrusWorldMagicBridge: AnyObject, Sendable {
     /// - Returns: false when there is no caster runtime, when this load order
     ///   carries no such record, or when the source is not an actor the
     ///   session tracks values for.
+    /// `blame` is the actor `RemoteCast` credits with the hit.
     @discardableResult
     func castSpell(
-        _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?
+        _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?,
+        blame: ReferenceKey?
     ) -> Bool
+}
+
+extension PapyrusWorldMagicBridge {
+    @discardableResult
+    public func castSpell(
+        _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?
+    ) -> Bool {
+        castSpell(spell, from: source, at: target, blame: nil)
+    }
 }

@@ -12,17 +12,23 @@ import OpenSkyFormatsESM
 nonisolated public struct PapyrusInstanceKey: Hashable, Comparable, Sendable {
     public let reference: ReferenceKey
     public let scriptName: String
+    /// The magic effect run an `ActiveMagicEffect` instance serves; each run has its own.
+    public let effectRun: UInt64?
 
-    public init(reference: ReferenceKey, scriptName: String) {
+    public init(reference: ReferenceKey, scriptName: String, effectRun: UInt64? = nil) {
         self.reference = reference
         self.scriptName = PapyrusName.key(scriptName)
+        self.effectRun = effectRun
     }
 
     public static func < (left: Self, right: Self) -> Bool {
         if left.reference != right.reference {
             return left.reference < right.reference
         }
-        return left.scriptName < right.scriptName
+        if left.scriptName != right.scriptName {
+            return left.scriptName < right.scriptName
+        }
+        return (left.effectRun ?? 0) < (right.effectRun ?? 0)
     }
 }
 

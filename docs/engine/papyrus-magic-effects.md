@@ -37,7 +37,14 @@ For an effect that started, in this order:
    `OnEffectStart(akTarget, akCaster)`.
 
 For an effect that ended, each instance that served it gets `OnEffectFinish(akTarget, akCaster)`.
-An instance that serves no other effect then retires, once its queued events have run. A potion
+Each run has its own instances, so two runs of one effect on one actor get two instances. An
+instance retires once its queued events have run.
+
+Two kinds of effect exist only for their scripts:
+
+- An effect with zero duration is stored and removed in the same step. Its scripts get
+  `OnEffectStart` and then `OnEffectFinish`.
+- An effect whose archetype OpenSky does not apply is stored with no values, for its duration. A potion
 that nobody cast has `None` as the caster.
 
 An instance sits on the target actor, so the target's other events, such as `OnHit` and

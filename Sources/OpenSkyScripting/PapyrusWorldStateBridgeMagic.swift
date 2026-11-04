@@ -127,12 +127,14 @@ extension PapyrusWorldStateBridge {
 
     @discardableResult
     public func castSpell(
-        _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?
+        _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?,
+        blame: ReferenceKey?
     ) -> Bool {
+        let blamed = blame.flatMap(actorHolder(for:))
         guard
             let caster = magicNatives.casterRuntime?(),
             let record = caster.spellbookAccess.record(spell),
-            let holder = actorHolder(for: source)
+            let holder = actorHolder(for: source) ?? blamed
         else { return false }
         guard
             let target,
@@ -142,7 +144,7 @@ extension PapyrusWorldStateBridge {
             _ = caster.apply(record, caster: holder)
             return true
         }
-        return castAtNamedTarget(record, caster: holder, target: target)
+        return castAtNamedTarget(record, caster: blamed ?? holder, target: target)
     }
 
     /// Applies a cast whose script named the target. It skips the aim ray and hands

@@ -20,9 +20,9 @@ struct PapyrusMagicEffectScriptTests {
     private static let effectKey = ReferenceKey.plugin(name: "base.esm", objectID: effectID)
     private static let casterKey = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0xCCC)
     private static let effectScript = "FireEffectScript"
+    /// The instance of the first run in a session.
     private static let instanceKey = PapyrusInstanceKey(
-        reference: .player,
-        scriptName: effectScript
+        reference: .player, scriptName: effectScript, effectRun: 1
     )
 
     private let session: PapyrusWorldFixture.Session
@@ -115,13 +115,32 @@ struct PapyrusMagicEffectScriptTests {
         #expect(session.dispatch.notes.filter { $0 == "oninit" }.count == 2)
     }
 
-    @Test func twoRunsShareOneInstanceUntilTheLastEnds() {
+    @Test func twoRunsOfOneEffectHaveTheirOwnInstances() {
         write([Self.effect(sequence: 1), Self.effect(sequence: 2)])
+        #expect(session.world.effectScripts.instanceKeys.count == 2)
         write([Self.effect(sequence: 2)])
-        #expect(session.world.instancesByKey[Self.instanceKey] != nil)
-        write([])
         #expect(session.world.instancesByKey[Self.instanceKey] == nil)
+        #expect(session.world.effectScripts.instanceKeys.count == 1)
+        write([])
         #expect(session.dispatch.notes.filter { $0 == "oneffectfinish" }.count == 2)
+    }
+
+    /// A zero-duration effect is stored and removed in one step, as the magic runtime
+    /// does; each cast still gets its own start and finish.
+    @Test func aZeroDurationEffectCastTwiceStartsAndFinishesTwice() {
+        for _ in 0 ..< 2 {
+            session.worldState.set(
+                ActiveEffectState(effects: [Self.effect(sequence: 1)]),
+                for: .player
+            )
+            session.worldState.reset(.activeEffects, for: .player)
+        }
+        session.bridge.queueMagicEffectEvents()
+        PapyrusWorldFixture.drain(session.world)
+        for note in ["oninit", "oneffectstart", "oneffectfinish"] {
+            #expect(session.dispatch.notes.filter { $0 == note }.count == 2)
+        }
+        #expect(session.world.effectScripts.instanceKeys.isEmpty)
     }
 
     @Test func nativesAnswerForTheRunAndTheInstanceIsNotTheActorsScript() throws {
