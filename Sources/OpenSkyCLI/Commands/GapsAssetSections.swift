@@ -70,14 +70,7 @@ extension GapsGatherer {
     func animations() -> [GapSection] {
         var census = HKXGapCensus()
         let unread = forEachFile(suffixes: [".hkx"]) { census.record(data: $1, path: $0) }
-        let handledEvents = Set(
-            (CombatGraphNames.observedEvents + ArcheryGraphNames.observedEvents
-                + ShoutGraphNames.observedEvents + SpellFireGraphNames.observedEvents
-                + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents
-                + AnimationObjectEvent.handledEvents + animationObjectUnloadEvents()
-                + DragonFlightGraphNames.observedEvents + PairedAnimationCore.endEvents)
-                .map { $0.lowercased() }
-        )
+        let handledEvents = engineHandledEvents()
         let footsteps = footstepTags()
         let scripts = scriptAnimationCensus()
         let ownHandled = handledEvents.union(footsteps).union(census.hearing.heardEvents())
@@ -113,7 +106,8 @@ extension GapsGatherer {
                 usesUnit: "clips",
                 notes: [
                     "done means engine code reacts to it, a script registers for it, "
-                        + "or a graph of the clip's own folder or of an effect art waits for it"
+                        + "a graph of the clip's own folder or of an effect art waits for it, "
+                        + "or the game was seen to ignore it"
                 ]
             ),
             GapSection(
@@ -277,6 +271,19 @@ extension GapsGatherer {
     }
 
     /// Footstep tags (`FSTP` `ANAM`): annotation events the footstep sounds answer.
+    /// The events some OpenSky system reacts to, or the game was seen to ignore.
+    private func engineHandledEvents() -> Set<String> {
+        Set(
+            (CombatGraphNames.observedEvents + ArcheryGraphNames.observedEvents
+                + ShoutGraphNames.observedEvents + SpellFireGraphNames.observedEvents
+                + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents
+                + AnimationObjectEvent.handledEvents + animationObjectUnloadEvents()
+                + DragonFlightGraphNames.observedEvents + PairedAnimationCore.endEvents
+                + IgnoredAnimationEvents.names)
+                .map { $0.lowercased() }
+        )
+    }
+
     private func footstepTags() -> Set<String> {
         let store = FootstepStore(loadOrder: plugins)
         return Set(store.footsteps.values.compactMap { $0.tag?.lowercased() })

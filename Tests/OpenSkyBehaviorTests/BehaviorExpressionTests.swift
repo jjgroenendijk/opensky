@@ -70,6 +70,8 @@ struct BehaviorExpressionTests {
         #expect(role("myLocalBlend", read) == .authoredConstant)
         #expect(role("bCastReady", ["BSIsActiveModifier.bIsActive0"]) == .graphComputed)
         #expect(role("lookTarget", ["BSLookAtModifier.targetLocation"]) == .engineInput)
+        #expect(role("weapChangeStartFraction", read) == .leftUnwritten)
+        #expect(role("IsInCastStateDamped", read) == .leftUnwritten)
         #expect(BehaviorVariableRoles.isGraphWritten(
             uses: ["BSInterpValueModifier.result"], assignedUse: "expression assignment"
         ))

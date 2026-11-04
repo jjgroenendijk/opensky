@@ -69,6 +69,10 @@ nonisolated public enum BehaviorVariableRoles: Sendable {
         "BSTweenerModifier.targetRotation"
     ]
 
+    /// Listed variables the reference game left at the graph's value through attacks,
+    /// casts, and weapon draws (docs/engine/actor-state-graph.md#variables-left-unwritten).
+    public static let leftUnwritten: Set = ["weapChangeStartFraction", "IsInCastStateDamped"]
+
     private static let engineVariablesLowercased = Set(engineVariables.map { $0.lowercased() })
 
     /// What `name` is for. `uses` are `Class.member` paths, `isAuthored` says a graph
@@ -79,6 +83,9 @@ nonisolated public enum BehaviorVariableRoles: Sendable {
     ) -> BehaviorVariableRole {
         if !uses.isDisjoint(with: worldInputMembers) {
             return .engineInput
+        }
+        if leftUnwritten.contains(name) {
+            return .leftUnwritten
         }
         if isGraphWritten(uses: uses, assignedUse: HKXGapCensus.assignedUse) {
             return .graphComputed
@@ -110,4 +117,6 @@ nonisolated public enum BehaviorVariableRole: String, CaseIterable, Equatable, S
     case authoredConstant = "authored constants"
     /// No graph node and no script reads it, so no value it holds changes anything.
     case unread = "read by nothing"
+    /// The game itself never writes it, so the graph's start value stands.
+    case leftUnwritten = "left at the graph's value by the game"
 }

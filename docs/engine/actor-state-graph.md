@@ -36,17 +36,48 @@ The locomotion bridge writes these each step, to both the third-person and the f
 | `IsBeastRace` | bool | The race has the `IsBeastRace` keyword | The unarmed attack selector |
 | `iGetUpType` | int32 | 2 while swimming, else 1 | The get-up pose matcher |
 | `weapAdj` | real | The player's weight / 100 | The expression that weights the [body-weight layer](/engine/behavior-clips.md#body-weight-layer) |
+| `attackPowerStartTime`, `attackIntroLength`, `attackComboStartFraction` | real | 0.3666667, 0, and 0.5 ([attack timing](#attack-timing)) | Attack blends |
 | `iState` | int32 | The value of one `iState_*` constant | State conditions |
 
 The hand selectors list their children in the `iRightHandType` order: 0 unarmed, 1 to 4 one-handed,
 5 two-handed sword, 6 two-handed axe, 7 bow, 8 staff, 12 crossbow. A sheathed weapon picks the
 unarmed child, so OpenSky writes 0 then. The `IsBeastRace` keyword is the default object `KWBR`
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOBJ>). The pose matcher under
-`iGetUpType` has three children: 0 reanimate, 1 get up, 2 swimming. OpenSky never writes 0,
-because it has no reanimation.
+`iGetUpType` has three children: 0 reanimate, 1 get up, 2 swimming.
+
+In the reference game, a living bandit reads `iGetUpType` 0 until something knocks it down.
+It reads 1 from the frame `pushactoraway` starts the ragdoll (observed 2026-11-04). So 0 is the
+graph's start value, and the game writes the value when a get-up starts. OpenSky writes 1 or 2
+each step instead, which picks the same child.
+
+[WARNING] A reanimated corpse was not observed: a reanimate spell cast from the console did not
+raise the corpse. OpenSky raises a reanimated corpse without a get-up, so no graph reads
+`iGetUpType` 0 there yet.
 
 [WARNING] The sign of `Pitch` on the spine twist is not yet checked against the game. The look
 distance of `TargetLocation` is OpenSky's own.
+
+## Attack timing
+
+The game gives the player's graphs three fixed values. They do not change with the attack or
+with how long the attack key is held. Read from the reference game through the bridge
+([reference game](/tools/reference-game.md#recording-graph-variables)), observed 2026-11-04:
+
+| Variable | The player | A bandit NPC |
+| --- | --- | --- |
+| `attackPowerStartTime` | 0.366667 | 0 |
+| `attackIntroLength` | 0 | 0 |
+| `attackComboStartFraction` | 0.5 | 0 |
+
+The NPC values stay 0 through its normal attacks, power attacks, and weapon draws. Both actors
+use the same graph files, so the player's values come from the game, not from the graph.
+OpenSky writes the player's values each step and leaves NPC graphs alone. In `0_master.hkx` the clip
+`DW1HM1HM_PowerAttackStab` takes `attackPowerStartTime` as its `startTime`, so the player's
+dual-wield power stab starts 0.37 seconds into the clip (`openskycli hkx <graph> --bindings
+attack` lists the bindings).
+
+[WARNING] The player was read only at rest. Keys sent to the game under Wine do not reach the
+player, so no player attack was recorded.
 
 ## How `iState` is encoded
 
@@ -174,12 +205,20 @@ start value, such as `fMinSpeed`, `TurnMin`, `RotMax`, `SpeedAcc`, `PitchAcc`, `
 `iCharacterSelector`, and `iSyncTurnDirection`. No script reads them, so OpenSky keeps the
 graph's own value ([gap report](/tools/gaps.md)).
 
+The game leaves two names from the list at the graph's value, so OpenSky does too. The gap
+report counts them as "left at the graph's value by the game". Observed 2026-11-04:
+
+- `weapChangeStartFraction` reads 0 on the player at rest, and stays 0 on a bandit while it
+  draws its weapon.
+- `IsInCastStateDamped` stays 0 on a mage bandit through a whole cast, while `IsCastingLeft`
+  is 1 and `iState` is `iState_NPCMagicCasting`. `IsInCastState` stays 0 too.
+
+[WARNING] No player cast was observed. OpenSky writes `IsInCastState` 1 while the player casts,
+and no source confirms that the game does.
+
 These still need a value from the engine, and no OpenSky system can give it yet:
 
-- `attackIntroLength`, `attackPowerStartTime`, and `weapChangeStartFraction`: the game times
-  attack and weapon-change blends with them. No source gives the value.
 - `PitchOffset`, `TweenPosition`, and `TweenRotation`: dragon flight.
-- `IsInCastStateDamped`: a damped copy of `IsInCastState`. No source gives the damping rate.
 
 Perk flags such as `bPerkQuickShot` come from the perk entry point Set Boolean Graph Variable
 ([perk states](#perk-states)).

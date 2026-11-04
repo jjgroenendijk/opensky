@@ -34,6 +34,10 @@ enum HKXCommand {
             try HKXBlenderDump.print(file: file)
             return
         }
+        if let text = arguments.bindings {
+            try HKXBlenderDump.printBindings(file: file, containing: text)
+            return
+        }
         if let text = arguments.transitions {
             try printTransitions(file, containing: text)
             return

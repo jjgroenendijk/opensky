@@ -44,13 +44,17 @@ nonisolated public enum ActorStateGraphNames: Sendable {
     public static let getUpType = "iGetUpType"
     /// The player's weight as 0 to 1, for the body-weight layer (`ActorGraphNames`). Real.
     public static let weaponAdjust = ActorGraphNames.weaponAdjust
+    /// Attack blend timing the game gives the player's graphs only; NPC graphs keep 0.
+    public static let attackPowerStartTime = "attackPowerStartTime"
+    public static let attackIntroLength = "attackIntroLength"
+    public static let attackComboStartFraction = "attackComboStartFraction"
 
     /// Every input, in write order.
     public static let inputs = [
         headTracking, targetLocation, cameraFromX, cameraFromY, cameraFromZ, pitch,
         sprintOK, wantBlock, wantCastLeft, wantCastRight, wantCastVoice, inCastState,
         combatStance, rightHandEquipped, leftHandEquipped, isBeastRace, getUpType,
-        weaponAdjust, state
+        weaponAdjust, attackPowerStartTime, attackIntroLength, attackComboStartFraction, state
     ]
 
     // MARK: - Outputs the graph publishes

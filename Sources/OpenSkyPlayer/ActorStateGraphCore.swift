@@ -151,13 +151,23 @@ nonisolated public enum ActorStateGraphCore: Sendable {
                 .real(ActorGraphCore.weaponAdjust(weight: inputs.weight))
             )
         ]
+        writes += attackTiming.map { ($0.name, .real($0.value)) }
         if let stateValue {
             writes.append((ActorStateGraphNames.state, .int(stateValue)))
         }
         return writes
     }
 
-    /// The player is alive, so a get-up never uses the reanimate pose matcher.
+    /// The player's attack timing, as read from the reference game's player graph
+    /// (docs/engine/actor-state-graph.md#attack-timing). Constant for every attack.
+    public static let attackTiming: [(name: String, value: Float)] = [
+        (ActorStateGraphNames.attackPowerStartTime, 0.366_666_7),
+        (ActorStateGraphNames.attackIntroLength, 0),
+        (ActorStateGraphNames.attackComboStartFraction, 0.5)
+    ]
+
+    /// The game writes 1 when a get-up starts and 2 in deep water; 0, the reanimate pose
+    /// matcher, is only the graph's start value.
     public static func getUpType(swimming: Bool) -> Int32 {
         swimming ? 2 : 1
     }

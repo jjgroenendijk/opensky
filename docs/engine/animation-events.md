@@ -169,12 +169,29 @@ events" ([gap report](/tools/gaps.md)).
 - An NPC's cast release frame. An NPC's spell is timed by a clock and does not wait for
   `MLh_SpellFire_Event` or `MRh_SpellFire_Event`. The player's release does wait
   ([release events](#release-events)).
-- `StartAnimationDriven`: about 29 creature graphs declare it and none waits for it, so the engine
-  reads it. It likely moves the actor by the clip's root motion; no source confirms it.
+
+## Events the game ignores
+
+Some events reach no graph listener and no engine system. The game takes no action on them,
+so OpenSky does not either, and `make gaps` counts them as done. A wolf fighting a bandit in the
+reference game was recorded through the bridge, observed 2026-11-04
+([reference game](/tools/reference-game.md#recording-graph-variables)):
+
+- `StartAnimationDriven`, sent by about 29 creature attack clips. The wolf sent it at the hit
+  frame of each power attack, and its `bAnimationDriven` stayed 0 before and after. The graph
+  variable, not the event, says whether the animation moves the actor
+  ([graph outputs](/engine/actor-state-graph.md#outputs-the-graph-publishes)).
 - The sync markers `SyncLeft`, `SyncRight`, `SyncPoint`, `SyncRun`, `SyncB_Right`, and
-  `SyncF_Left` on creature run and walk clips. Many graphs declare them and none waits for them.
-  OpenSky keeps blended clips in phase by their length instead
+  `SyncF_Left`. The wolf sent them on each walk and run step. They mark points in the clip for
+  the graph's own clip sync. OpenSky keeps blended clips in phase by their length instead
   ([behavior clips](/engine/behavior-clips.md)).
-- Creature sound cues with no `SoundPlay` prefix, such as `NPCScribAttack1`, `BenthicAOE` and
-  `NPCGiantFootDistantR`, and the storm atronach's `L1_Start` and `R1_Start` marks. Their graph
-  declares them and nothing waits for them. No source says what the game does with them.
+- Creature sound cues with no `SoundPlay` prefix, such as `NPCScribAttack1`, `NPCDogIdleSniff`,
+  and `BenthicAOE`, and the storm atronach's `L1_Start`, `L1_Stop`, `R1_Start`, and `R1_Stop`.
+  The canine bite clip carries the cue of every canine at once: each wolf bite sent
+  `NPCWolfAttackA`, `NPCDogAttack`, `NPCDogHuskyAttack`, and `NPCDogDeathHoundAttackA`, and each
+  is a `SNDR` editor ID. If the game played a bare name as a sound, a wolf would bark like a
+  dog and a death hound on each bite.
+- `Open` on one dragon clip. Only the door graphs wait for an event of that name.
+
+[WARNING] The sound itself was not recorded, because the bridge cannot name a playing sound.
+Where a wolf's bite sound comes from is not known yet.
