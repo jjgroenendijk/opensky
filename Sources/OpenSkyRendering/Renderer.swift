@@ -315,6 +315,8 @@ public final class Renderer: NSObject {
     public var waterDepth = WaterDepthState()
     /// Screen-space effects the composite draws (RendererPostEffects.swift).
     public var postEffects = PostEffectSettings()
+    /// The drawable's format; offscreen frames match it, so every pipeline fits both.
+    public let colorPixelFormat: MTLPixelFormat
     var postEffectDepth: MTLTexture?
     var sceneProjection = matrix_identity_float4x4
     var refraction = RefractionState()
@@ -373,6 +375,7 @@ public final class Renderer: NSObject {
         endFrameEvent.signaledValue = UInt64(frameIndex - 1)
 
         Self.configure(view: view)
+        colorPixelFormat = view.colorPixelFormat
 
         let library = try shaderLibrary ?? Self.makeBundledShaderLibrary(device: device)
         let compiler = try pipelineCache ?? PipelineCache(device: device, fileURL: nil)

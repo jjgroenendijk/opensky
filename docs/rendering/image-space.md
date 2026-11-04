@@ -65,8 +65,10 @@ player sees.
 
 ## Where OpenSky differs
 
-- The scene renders into an 8-bit target, so tone mapping works on display-range color.
-  Bloom, the sunlight scale, and the sky scale are decoded and blended but not drawn.
+- The scene renders into an 8-bit target, so tone mapping works on display-range color. With
+  the game's `bUse64bitsHDRRenderTarget` on, the target is half-float in linear sRGB instead,
+  and colour above 1 reaches the tone mapping. Bloom, the sunlight scale, and the sky scale
+  are decoded and blended but not drawn.
 - Radial blur and motion blur are decoded but not drawn. Depth of field draws as a
   [post effect](/rendering/post-effects.md#depth-of-field) when its game option is on. The blur radius
   is a 12-tap disc blur, and double vision is one ghost image offset to the side.

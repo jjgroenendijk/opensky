@@ -20,5 +20,6 @@ nonisolated extension PlayerSettingID {
     public static let lensFlare = Self("graphics.bLensFlare")
     public static let fxaa = Self("graphics.bFXAAEnabled")
     public static let temporalAntiAliasing = Self("graphics.bUseTAA")
+    public static let highDynamicRangeTarget = Self("graphics.bUse64bitsHDRRenderTarget")
     public static let volumetricQuality = Self("graphics.iVolumetricLightingQuality")
 }

@@ -99,10 +99,7 @@ nonisolated public enum GraphicsOptions {
             .lighting, "Screen-space reflections", "Display", "bScreenSpaceReflectionEnabled",
             "OpenSky has no screen-space reflections yet"
         ),
-        option(
-            .lighting, "High dynamic range target", "Display", "bUse64bitsHDRRenderTarget",
-            "OpenSky picks its render target formats itself"
-        ),
+        option(.lighting, "High dynamic range target", "Display", "bUse64bitsHDRRenderTarget"),
         option(.antiAliasing, "Temporal anti-aliasing", "Display", "bUseTAA"),
         option(.antiAliasing, "FXAA", "Display", "bFXAAEnabled"),
         option(.effects, "Depth of field", "ImageSpace", "bDoDepthOfField"),

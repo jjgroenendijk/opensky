@@ -124,6 +124,9 @@ final class GameViewController: NSViewController {
         // without it the renderer shows `DemoScene`.
         let loaded = cellSession.take()
         let provider = loaded?.data
+        Renderer.prepareColorTarget(
+            of: mtkView, highDynamicRange: playerSettingsStore.bool(.highDynamicRangeTarget)
+        )
 
         do {
             let newGameSession = try sessionStart.measure(.renderer) {
