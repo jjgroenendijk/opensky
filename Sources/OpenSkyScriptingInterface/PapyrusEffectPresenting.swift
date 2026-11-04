@@ -15,9 +15,13 @@ public protocol PapyrusEffectPresenting: AnyObject {
     @discardableResult
     func stopEffect(_ effect: ReferenceKey, on target: ReferenceKey) -> Bool
 
-    /// Starts an `IMAD`. A held one stays until removed. False when the form is no `IMAD`.
+    /// Starts an `IMAD`, reaching its strength over `fadeSeconds`. A held one stays until
+    /// removed. False when the form is no `IMAD`.
     @discardableResult
-    func applyImageSpaceModifier(_ modifier: ReferenceKey, strength: Float, held: Bool) -> Bool
+    func applyImageSpaceModifier(
+        _ modifier: ReferenceKey, strength: Float, held: Bool, fadeSeconds: Float
+    ) -> Bool
 
-    func removeImageSpaceModifier(_ modifier: ReferenceKey)
+    /// Removes the `IMAD`, fading it out over `fadeSeconds`; 0 removes it at once.
+    func removeImageSpaceModifier(_ modifier: ReferenceKey, fadeSeconds: Float)
 }

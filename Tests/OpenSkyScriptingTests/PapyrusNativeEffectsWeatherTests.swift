@@ -30,13 +30,19 @@ private final class FakeEffects: PapyrusEffectPresenting {
         return playing.count < before
     }
 
-    func applyImageSpaceModifier(_ modifier: ReferenceKey, strength: Float, held: Bool) -> Bool {
+    var fades: [ReferenceKey: Float] = [:]
+
+    func applyImageSpaceModifier(
+        _ modifier: ReferenceKey, strength: Float, held: Bool, fadeSeconds: Float
+    ) -> Bool {
         modifiers[modifier] = held
+        fades[modifier] = fadeSeconds
         return true
     }
 
-    func removeImageSpaceModifier(_ modifier: ReferenceKey) {
+    func removeImageSpaceModifier(_ modifier: ReferenceKey, fadeSeconds: Float) {
         modifiers[modifier] = nil
+        fades[modifier] = fadeSeconds
     }
 }
 
@@ -114,10 +120,12 @@ struct PapyrusNativeEffectsWeatherTests {
 
         _ = call(fixture, "ImageSpaceModifier", "Apply", on: fixture.receiver)
         #expect(effects.modifiers[fixture.key] == false)
-        _ = call(fixture, "ImageSpaceModifier", "ApplyCrossFade", on: handle)
+        _ = call(fixture, "ImageSpaceModifier", "ApplyCrossFade", on: handle, [.float(2.5)])
         #expect(effects.modifiers[modifier] == true)
+        #expect(effects.fades[modifier] == 2.5)
         _ = call(fixture, "ImageSpaceModifier", "RemoveCrossFade", on: nil)
         #expect(effects.modifiers[modifier] == nil)
+        #expect(effects.fades[modifier] == 1, "the fade time defaults to 1 s")
         _ = call(fixture, "ImageSpaceModifier", "Remove", on: fixture.receiver)
         #expect(effects.modifiers.isEmpty)
     }

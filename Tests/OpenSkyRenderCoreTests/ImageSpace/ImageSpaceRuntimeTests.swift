@@ -92,6 +92,19 @@ struct ImageSpaceRuntimeTests {
         #expect(runtime.instances.isEmpty)
     }
 
+    @Test func aCrossFadeRampsInAndOutOverItsFadeTime() throws {
+        var runtime = ImageSpaceModifierRuntime()
+        try runtime.start(Self.brightnessRamp(), key: Self.flash, looping: true, fadeIn: 2)
+        runtime.advance(1)
+        #expect(abs(runtime.instances[0].currentStrength - 0.5) < 0.0001)
+        runtime.advance(1)
+        runtime.stop(key: Self.flash, fadeOut: 4)
+        runtime.advance(1)
+        #expect(abs(runtime.instances[0].currentStrength - 0.75) < 0.0001)
+        runtime.advance(3)
+        #expect(runtime.instances.isEmpty)
+    }
+
     @Test func aRepeatedOneShotRestartsInsteadOfStacking() throws {
         var runtime = ImageSpaceModifierRuntime()
         let adapter = try Self.brightnessRamp()

@@ -17,15 +17,18 @@ extension EffectsWorldAdapter: PapyrusEffectPresenting {
         effects.detach(effect, from: .actor(target)) > 0
     }
 
-    func applyImageSpaceModifier(_ modifier: ReferenceKey, strength: Float, held: Bool) -> Bool {
+    func applyImageSpaceModifier(
+        _ modifier: ReferenceKey, strength: Float, held: Bool, fadeSeconds: Float
+    ) -> Bool {
         guard let gameSession = game.gameSession else { return false }
         return effects.startModifier(
-            modifier, strength: strength, looping: held, on: &gameSession.imageSpace
+            modifier, strength: strength, looping: held, fadeIn: fadeSeconds,
+            on: &gameSession.imageSpace
         )
     }
 
-    func removeImageSpaceModifier(_ modifier: ReferenceKey) {
+    func removeImageSpaceModifier(_ modifier: ReferenceKey, fadeSeconds: Float) {
         guard let gameSession = game.gameSession else { return }
-        effects.stopModifier(modifier, on: &gameSession.imageSpace)
+        effects.stopModifier(modifier, fadeOut: fadeSeconds, on: &gameSession.imageSpace)
     }
 }

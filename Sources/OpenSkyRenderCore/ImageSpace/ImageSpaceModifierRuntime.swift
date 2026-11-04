@@ -14,9 +14,39 @@ nonisolated public struct ImageSpaceModifierInstance: Equatable, Sendable {
     public let strength: Float
     public let looping: Bool
     public internal(set) var elapsed: Float = 0
+    /// Seconds the instance takes to reach its strength; 0 starts at full strength.
+    public let fadeIn: Float
+    /// Set by a timed removal: the elapsed time it began and how long it lasts.
+    public internal(set) var fadeOut: (start: Float, duration: Float)?
 
     public var remaining: Float? {
-        looping ? nil : max(0, adapter.playbackDuration - elapsed)
+        if let fadeOut {
+            return max(0, fadeOut.start + fadeOut.duration - elapsed)
+        }
+        return looping ? nil : max(0, adapter.playbackDuration - elapsed)
+    }
+
+    /// `strength` times the fade-in and fade-out weights now.
+    public var currentStrength: Float {
+        var weight: Float = fadeIn > 0 ? min(elapsed / fadeIn, 1) : 1
+        if let fadeOut {
+            let gone = fadeOut.duration > 0 ? (elapsed - fadeOut.start) / fadeOut.duration : 1
+            weight *= simd_clamp(1 - gone, 0, 1)
+        }
+        return strength * weight
+    }
+
+    var isFadedOut: Bool {
+        guard let fadeOut else { return false }
+        return elapsed >= fadeOut.start + fadeOut.duration
+    }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.key == rhs.key && lhs.name == rhs.name && lhs.adapter == rhs.adapter
+            && lhs.strength == rhs.strength && lhs.looping == rhs.looping
+            && lhs.elapsed == rhs.elapsed && lhs.fadeIn == rhs.fadeIn
+            && lhs.fadeOut?.start == rhs.fadeOut?.start
+            && lhs.fadeOut?.duration == rhs.fadeOut?.duration
     }
 }
 
@@ -34,7 +64,8 @@ nonisolated public struct ImageSpaceModifierRuntime: Equatable, Sendable {
         _ adapter: ImageSpaceAdapter,
         key: ReferenceKey,
         strength: Float = 1,
-        looping: Bool = false
+        looping: Bool = false,
+        fadeIn: Float = 0
     ) {
         if !looping {
             instances.removeAll { $0.key == key && !$0.looping }
@@ -47,13 +78,22 @@ nonisolated public struct ImageSpaceModifierRuntime: Equatable, Sendable {
             name: adapter.editorID ?? key.description,
             adapter: adapter,
             strength: strength.isFinite ? simd_clamp(strength, 0, 1) : 0,
-            looping: looping
+            looping: looping,
+            fadeIn: fadeIn.isFinite ? max(fadeIn, 0) : 0
         ))
     }
 
-    /// Stops every running instance of the record `key`.
-    public mutating func stop(key: ReferenceKey) {
-        instances.removeAll { $0.key == key }
+    /// Stops every running instance of the record `key`, at once or over `fadeOut` seconds.
+    public mutating func stop(key: ReferenceKey, fadeOut: Float = 0) {
+        guard fadeOut.isFinite, fadeOut > 0 else {
+            instances.removeAll { $0.key == key }
+            return
+        }
+        for index in instances.indices where instances[index].key == key {
+            let current = instances[index]
+            guard current.fadeOut == nil else { continue }
+            instances[index].fadeOut = (current.elapsed, fadeOut)
+        }
     }
 
     /// Ages every instance and drops the one-shots past their duration.
@@ -62,8 +102,9 @@ nonisolated public struct ImageSpaceModifierRuntime: Equatable, Sendable {
         for index in instances.indices {
             instances[index].elapsed += seconds
         }
-        instances
-            .removeAll { $0.adapter.sample(elapsed: $0.elapsed, looping: $0.looping).isFinished }
+        instances.removeAll {
+            $0.isFadedOut || $0.adapter.sample(elapsed: $0.elapsed, looping: $0.looping).isFinished
+        }
     }
 
     /// `baseline` with every instance applied, oldest first.
@@ -71,7 +112,7 @@ nonisolated public struct ImageSpaceModifierRuntime: Equatable, Sendable {
         instances.reduce(baseline) { result, instance in
             result.applying(
                 instance.adapter.sample(elapsed: instance.elapsed, looping: instance.looping),
-                strength: instance.strength
+                strength: instance.currentStrength
             )
         }
     }
