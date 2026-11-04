@@ -10,9 +10,11 @@ extension PapyrusWorldRuntime {
     ///
     /// `PapyrusValue.object` and `.array` are not persistable (their identity
     /// is runtime-allocated with no world meaning) and snapshot as `.none`.
+    /// Effect instances are left out: a load attaches them again from the active effects.
     public func instanceStates() -> [PapyrusInstanceState] {
         instancesByKey.keys.sorted().compactMap { key in
             guard
+                key.effectRun == nil,
                 let handle = instancesByKey[key],
                 let instance = runtime.instance(for: handle)
             else {

@@ -70,7 +70,9 @@ stronger of the two. The frequency setting is used as the strength, which is Ope
 
 ## Where OpenSky differs from the game
 
-- The cooldown is not saved. A load starts with no cooldown.
+- A save keeps the time left of the cooldown, on the player's script state
+  ([SCRS](/formats/opensky-save-world-chunks.md#scrs-script-state)), not its full length. The
+  readout after a load shows the time left as the length.
 - When no graph raises `Voice_SpellFire_Event` within 1.5 s of the release, the spell fires
   anyway. This keeps a shout working on a body with no graph. The game has no such wait.
 - The graph picks the exhale clip; the engine does not tell it how many words were shouted.

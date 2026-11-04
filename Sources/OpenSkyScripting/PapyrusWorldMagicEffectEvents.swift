@@ -39,8 +39,19 @@ extension PapyrusWorldStateBridge {
     }
 
     /// Starts the next read at the journal's end, so a load is not read as new effects.
+    /// The effects the save brought back get their script instances again, quietly, so
+    /// their end still sends `OnEffectFinish`. Their script variables start fresh.
     public func skipMagicEffectJournal() {
         effectJournalCursor = worldState.nextJournalSequence
+        guard let world else { return }
+        for key in worldState.sortedDirtyKeys() {
+            let effects = worldState.component(ActiveEffectState.self, for: key)?.effects ?? []
+            for effect in effects where world.effectScripts.runs[
+                PapyrusActiveEffectID(target: key, sequence: effect.sequence)
+            ] == nil {
+                startScripts(of: effect, on: key, in: world, announces: false)
+            }
+        }
     }
 
     private static func effects(in value: WorldStateComponentValue?) -> [ActiveEffect] {
@@ -53,6 +64,13 @@ extension PapyrusWorldStateBridge {
         in world: PapyrusWorldRuntime
     ) {
         queueMagicEffectApply(effect, on: target, in: world)
+        startScripts(of: effect, on: target, in: world, announces: true)
+    }
+
+    private func startScripts(
+        of effect: ActiveEffect, on target: ReferenceKey, in world: PapyrusWorldRuntime,
+        announces: Bool
+    ) {
         guard
             let store = magicEffectStore,
             let record = store.effect(key: effect.effect),
@@ -68,7 +86,8 @@ extension PapyrusWorldStateBridge {
                 caster: effect.caster
             ),
             scripts: record.effect.scriptData.scripts,
-            formIDResolver: resolver
+            formIDResolver: resolver,
+            announces: announces
         )
     }
 
