@@ -104,7 +104,22 @@ struct DistantLODSelectionTests {
             settings: settings(),
             configuration: configuration
         )
-        #expect(bands.first == DistantLODBand(level: 4, innerRadius: 5, outerRadius: 5))
-        #expect(bands.dropFirst().first == DistantLODBand(level: 8, innerRadius: 5, outerRadius: 8))
+        #expect(bands.first == DistantLODBand(level: 4, innerRadius: 5, outerRadius: 6))
+        #expect(bands.dropFirst().first == DistantLODBand(level: 8, innerRadius: 6, outerRadius: 8))
+    }
+
+    @Test func aSmallSplitKeepsOneFineRingAroundTheLoadedGrid() throws {
+        let configuration = TerrainLODConfiguration(
+            level0Distance: 15000,
+            level1Distance: 25000,
+            maximumDistance: 100_000,
+            treeLoadDistance: 12500,
+            splitDistanceMultiplier: 0.5
+        )
+        let bands = try DistantLODSelection.bands(
+            settings: settings(),
+            configuration: configuration
+        )
+        #expect(bands.first == DistantLODBand(level: 4, innerRadius: 2, outerRadius: 3))
     }
 }

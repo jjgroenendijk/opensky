@@ -100,9 +100,13 @@ nonisolated public enum DistantLODSelection: Sendable {
             configuration.maximumDistance
         ].map { min($0, configuration.maximumDistance) }
         var inner = configuration.loadedGridRadius
+        // The finest band keeps at least one ring, so a small split never puts a coarse
+        // block, with its cracks, against the full-detail cells.
+        var least = inner + 1
         return zip(settings.levels, worldDistances).map { level, distance in
             let requested = Int32(ceil(distance / TerrainMeshBuilder.cellSize))
-            let outer = max(inner, requested)
+            let outer = max(inner, requested, least)
+            least = 0
             defer { inner = outer }
             return DistantLODBand(level: level, innerRadius: inner, outerRadius: outer)
         }

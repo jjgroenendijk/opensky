@@ -19,14 +19,18 @@ with no gaps:
 
 | Level | Inner radius | Outer radius | Content |
 | --- | --- | --- | --- |
-| 4 | Loaded radius (2) | `fBlockLevel0Distance` | Terrain and objects |
-| 8 | Previous outer | `fBlockLevel1Distance` | Terrain and objects |
-| 16 | Previous outer | `min(maximum, 2 * level1)` | Terrain and objects |
+| 4 | Loaded radius (2) | `split * fBlockLevel0Distance`, at least one ring | Terrain and objects |
+| 8 | Previous outer | `split * fBlockLevel1Distance` | Terrain and objects |
+| 16 | Previous outer | `split * 2 * level1` | Terrain and objects |
 | 32 | Previous outer | `fBlockMaximumDistance` | Terrain |
 
 Skyrim has two near distances and one maximum, but the files have four levels. The level 16
 limit (`2 * level1`, capped at the maximum) is OpenSky's own choice. It keeps each level coarser
 than the last, with no gaps between them.
+
+`split` is `fSplitDistanceMult`, and each scaled distance stops at the maximum. A small split,
+such as 0.5 in the Low preset, could leave no level 4 ring. A level 8 block would then touch the
+full-detail cells, and the cracks between them would show. So level 4 always keeps one ring.
 
 The block grid starts at the origin in the LOD settings file, not at cell 0. A block that is not
 on the settings stride is dropped.
