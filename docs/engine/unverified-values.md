@@ -73,6 +73,7 @@ the detail and the sources it did find.
 | Head tracking | 384 units; angles in degrees; behind angle and neck share | [head tracking](/engine/head-tracking.md) |
 | Face morph settings | Units read as seconds and emotion points; offsets as radians | [face morphs](/engine/face-morphs.md) |
 | Navigation | 128-unit ledge rule; 512-unit gait rule | [navigation](/engine/navigation.md) |
+| `GetCurrentAIProcedure` of procedures not measured | -1 | [world condition functions](/engine/condition-functions-world.md#packages) |
 | Package fallback on a blocked path | A guess at the game's rule | [package schedules](/engine/package-schedules.md) |
 | Scene package wait | A scene does not wait forever on its package | [scenes](/engine/scenes.md) |
 | Follower commands | 0.5 s wait; acts at 128 units | [follower commands](/engine/follower-commands.md) |
@@ -196,3 +197,5 @@ the detail and the sources it did find.
 | `.seq` FormID reading | Through the master list first | [SEQ](/formats/seq.md) |
 | Input device for prompts | Not confirmed | [AS2 input](/engine/as2-input.md) |
 | Inventory menu callbacks | Two not confirmed | [inventory menu](/engine/inventory-menu.md) |
+| Topic row prompt of a shared `INFO` | Own `RNAM`, else the shared target's | [dialogue](/engine/dialogue.md) |
+| Follower place after a load door | 64 units apart beside the player | [follower commands](/engine/follower-commands.md#load-doors) |

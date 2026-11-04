@@ -12,15 +12,22 @@ import OpenSkyScriptingInterface
 extension PapyrusWorldRuntime {
     /// Starts the scripts of one effect run on its target and queues `OnEffectStart`.
     /// A script still loading attaches once it loads, unless the run ended first.
+    /// `announces` false attaches an effect a save brought back, with no `OnInit` or start.
     public func startEffectScripts(
         _ run: PapyrusActiveEffectRun,
         scripts: [AttachedScript],
-        formIDResolver: FormIDResolver
+        formIDResolver: FormIDResolver,
+        announces: Bool = true
     ) {
         let live = scripts.filter { !$0.isRemoved }
         guard !live.isEmpty else { return }
         effectScripts.begin(run)
-        attachEffectScripts(run, scripts: live, formIDResolver: formIDResolver)
+        attachEffectScripts(
+            run,
+            scripts: live,
+            formIDResolver: formIDResolver,
+            announces: announces
+        )
     }
 
     /// Ends one effect run: queues `OnEffectFinish` on each instance that served it,
@@ -41,21 +48,31 @@ extension PapyrusWorldRuntime {
     private func attachEffectScripts(
         _ run: PapyrusActiveEffectRun,
         scripts: [AttachedScript],
-        formIDResolver: FormIDResolver
+        formIDResolver: FormIDResolver,
+        announces: Bool
     ) {
         if scriptsLoading(scripts.map(\.name)) {
             deferUntilScriptsLoad { [weak self] in
                 guard let self, effectScripts.runs[run.id] != nil else { return }
-                attachEffectScripts(run, scripts: scripts, formIDResolver: formIDResolver)
+                attachEffectScripts(
+                    run, scripts: scripts, formIDResolver: formIDResolver, announces: announces
+                )
             }
             return
         }
+        guard let serial = effectScripts.serials[run.id] else { return }
         for script in scripts {
-            let key = PapyrusInstanceKey(reference: run.id.target, scriptName: script.name)
+            let key = PapyrusInstanceKey(
+                reference: run.id.target, scriptName: script.name, effectRun: serial
+            )
+            if !announces {
+                firedOnInit.insert(key)
+            }
             guard instancesByKey[key] != nil || makeEffectInstance(key, script, formIDResolver)
             else { continue }
             effectScripts.attach(key, to: run.id)
             retiringKeys.remove(key)
+            guard announces else { continue }
             enqueue(PapyrusScriptEvent(
                 target: key,
                 functionName: PapyrusEngineEvents.onEffectStart,

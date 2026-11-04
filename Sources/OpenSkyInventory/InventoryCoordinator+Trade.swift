@@ -55,7 +55,9 @@ extension InventoryCoordinator {
         case .store:
             try runtime.inventory.transfer(item, count: count, from: .player, to: container)
             storyEvents?.reportStoryEvent(.removeItem(
-                item, reference: container.key, owner: nil, how: .putInContainer
+                item, reference: container.key,
+                owner: ContainerSession(runtime: runtime, container: container).actorOwner,
+                how: .putInContainer
             ))
             return .stored(name)
         case .buy:
@@ -67,7 +69,7 @@ extension InventoryCoordinator {
                 return .tooExpensive
             }
             storyEvents?.reportStoryEvent(.addItem(
-                item, from: container.key, owner: nil, how: .buy
+                item, from: container.key, owner: merchant, how: .buy
             ))
             reportTrade(bought)
             return .bought(item: name, gold: bought.gold)
@@ -80,7 +82,7 @@ extension InventoryCoordinator {
                 return .merchantShort(price: price, gold: gold)
             }
             storyEvents?.reportStoryEvent(.removeItem(
-                item, reference: container.key, owner: nil, how: .given
+                item, reference: container.key, owner: merchant, how: .given
             ))
             reportTrade(sold)
             return .sold(item: name, gold: sold.gold)
@@ -153,7 +155,7 @@ extension InventoryCoordinator {
             default: .container
             }
             storyEvents?.reportStoryEvent(.addItem(
-                stack.item, from: session.container.key, owner: nil, how: how
+                stack.item, from: session.container.key, owner: session.actorOwner, how: how
             ))
         }
     }

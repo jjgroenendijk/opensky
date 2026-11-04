@@ -142,15 +142,16 @@ opening cells load, and the cart horses wait for this event before the opening c
 
 ## Where OpenSky differs
 
-- `SetStage` and `Start` are latent in the game: they wait for the quest to start and its fragments
-  to finish. OpenSky writes the state, queues the fragments, and returns. `Start` sets the start-up
-  stage before it returns, so the stage and its objectives are there at once
-  ([Start - Quest](https://ck.uesp.net/wiki/Start_-_Quest)). The fragments run on a later tick, so
-  a script that reads state right after sees the value before its fragment ran.
-- A fragment runs only on the change into a stage. Setting a stage already reached runs nothing,
-  because setting a stage is idempotent. The `QUST` allow-repeated-stages flag is decoded and not
-  used: nothing open says what the game does with it, and a guess would run fragments twice.
-- A shut-down stage stops the quest but does not retire its instances, so the fragment that stage
-  queued still runs. Only `Stop` retires them.
+- `SetStage` and `Start` are latent: they return once the fragments the call queued have run
+  ([SetCurrentStageID - Quest](https://ck.uesp.net/wiki/SetCurrentStageID_-_Quest)). OpenSky
+  checks this after each script step, so the caller resumes on the step after its fragments.
+  A fragment on an instance whose call is waiting does not hold the caller. In the game the
+  latent call frees the script, so the fragment runs first. In OpenSky it runs after the
+  caller.
+- A fragment runs on the change into a stage. Setting a stage already reached runs nothing,
+  unless the quest has the "Allow Repeated Stages" flag (`DNAM` `0x08`): then each `SetStage`
+  runs the stage's items again ([Quest Data Tab](https://ck.uesp.net/wiki/Quest_Data_Tab)).
+- A shut-down stage stops the quest. Its instances retire once the fragments that stage queued
+  have run, unless the quest started again before that.
 - Quests start from the `.seq` start-game pass, from `Start`, from a start-up stage, or from the
   [story manager](/engine/story-manager.md).

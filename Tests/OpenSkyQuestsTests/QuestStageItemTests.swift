@@ -16,9 +16,9 @@ import Testing
 struct QuestStageItemTests {
     private let quest = FormID(0x0100)
 
-    private func runtime() throws -> QuestRuntime {
+    private func runtime(flags: UInt16 = 0x0001) throws -> QuestRuntime {
         var fields: Data = QuestFixture.editorID("Items")
-        fields += QuestFixture.general(flags: 0x0001, type: 1)
+        fields += QuestFixture.general(flags: flags, type: 1)
         fields += QuestFixture.stage(10)
         fields += QuestFixture.logEntry(text: "first")
         fields += QuestFixture.logEntry(text: "second")
@@ -69,6 +69,15 @@ struct QuestStageItemTests {
         try quests.setStage(20, on: quest)
         let again = try quests.setStage(10, on: quest)
         #expect(again.journalLog?.stage == 20)
+    }
+
+    /// "Allow Repeated Stages" (`DNAM` `0x08`) applies the items each time.
+    @Test func aRepeatedStageAppliesItsItemsAgainWhenTheQuestAllowsIt() throws {
+        let quests = try runtime(flags: 0x0009)
+        try quests.setStage(10, on: quest)
+        try quests.setStage(20, on: quest)
+        let again = try quests.setStage(10, on: quest)
+        #expect(again.journalLog?.stage == 10)
     }
 
     @Test func failAllObjectivesFailsCompletedOnesToo() throws {

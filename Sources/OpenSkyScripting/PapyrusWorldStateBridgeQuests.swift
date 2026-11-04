@@ -61,9 +61,10 @@ extension PapyrusWorldStateBridge {
     }
 
     /// Sets one stage, then enqueues the fragments of every item whose conditions pass
-    /// when it was not reached before. A stopped quest starts, so scripts attach before
-    /// fragments queue. A shut-down stage stops the quest but keeps its instances, so
-    /// this call's fragments still run; `Stop` retires them.
+    /// when it was not reached before, or each time when the quest allows repeated stages. A
+    /// stopped quest starts, so scripts attach before
+    /// fragments queue. A shut-down stage stops the quest; its instances retire once
+    /// this call's fragments have run.
     @discardableResult
     public func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool {
         let resolved = try resolveQuest(key)
@@ -74,13 +75,16 @@ extension PapyrusWorldStateBridge {
         if state.isRunning || !before.isRunning {
             attachQuestScripts(resolved.quest, key: key)
         }
-        if !before.isStageDone(stage) {
+        if !before.isStageDone(stage) || resolved.quest.allowsRepeatedStages {
             let chosen = items ?? resolved.quest.stages.first { $0.index == stage }?
                 .defaultItems ?? []
             world?.queueQuestFragments(
                 of: resolved.quest, stage: stage, key: key,
                 logEntries: Set(chosen.map(Int32.init))
             )
+        }
+        if !state.isRunning {
+            world?.retireAfterShutDown(key)
         }
         if state.isFailed, !before.isFailed {
             storyNatives.questFailed?(id)
@@ -192,12 +196,12 @@ extension PapyrusWorldStateBridge {
 
     /// One quest named by a Papyrus handle: the record behind it and the
     /// runtime that mutates it.
-    private struct ResolvedQuestBridge {
+    struct ResolvedQuestBridge {
         let quest: Quest
         let runtime: any QuestAccess
     }
 
-    private func resolveQuest(_ key: ReferenceKey) throws -> ResolvedQuestBridge {
+    func resolveQuest(_ key: ReferenceKey) throws -> ResolvedQuestBridge {
         guard let questRuntime else {
             throw PapyrusQuestBridgeError.noQuestData
         }

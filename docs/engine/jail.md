@@ -86,10 +86,15 @@ under "Major Crimes", and the ledger counts it. The escape
 fires `ESJA` with the player as `R1` and the faction as `F1`, and counts "Jail Escapes". The
 belongings stay in the `PLCN` chest for the player to find.
 
+## Saving
+
+A save keeps the stay on the player's script state
+([SCRS](/formats/opensky-save-world-chunks.md#scrs-script-state)): the faction, the gold, the
+days, the marker, the chest, and the outfit. The cell of the arrest is not kept. After a load the
+cell the player stands in counts as the jail cell.
+
 ## Not done yet
 
-- The stay lives in the session, not in a save. A save made in the cell loads as a free player
-  whose belongings are still in the chest.
 - `SendPlayerToJail`'s two parameters are not read.
 - Quest items are moved to the chest like any other item. The game hides them instead.
 - Followers do not go to the `WAIT` marker.

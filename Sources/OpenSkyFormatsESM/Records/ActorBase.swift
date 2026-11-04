@@ -31,6 +31,11 @@ nonisolated public struct ActorBase: Sendable {
         public static let pcLevelMult = Flags(rawValue: 0x0000_0080)
         /// UESP NPC_ ACBS: only the player can kill a protected actor.
         public static let protected = Flags(rawValue: 0x0000_0800)
+        /// UESP NPC_ ACBS: "Doesn't affect stealth meter".
+        public static let notShowOnStealthMeter = Flags(rawValue: 0x0000_0040)
+        /// UESP NPC_ ACBS: "Ghost/non-interactable", as on ghosts and Nocturnal.
+        public static let ghost = Flags(rawValue: 0x2000_0000)
+        public static let invulnerable = Flags(rawValue: 0x8000_0000)
     }
 
     /// The ACBS words the actor-value derivation reads: one Creation Kit tab and

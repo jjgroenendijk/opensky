@@ -177,3 +177,10 @@ extension MagicCoordinator {
         return outcome
     }
 }
+
+extension MagicCoordinator {
+    /// The player's shout cooldown a save brought back, in seconds.
+    public func restoreShoutCooldown(_ seconds: Float) {
+        shoutMachine.startCooldown(seconds)
+    }
+}

@@ -18,6 +18,8 @@ nonisolated public struct Quest: Sendable {
         }
 
         public static let startGameEnabled = Flags(rawValue: 1 << 0)
+        /// Each `SetStage` of a stage runs its items again (UESP QUST `DNAM`).
+        public static let allowRepeatedStages = Flags(rawValue: 1 << 3)
         public static let runOnce = Flags(rawValue: 1 << 8)
     }
 
@@ -207,3 +209,11 @@ nonisolated public enum QuestSkipKind: SkipTallyKind {
 }
 
 public typealias QuestTally = SkipTally<QuestSkipKind>
+
+nonisolated extension Quest {
+    /// "A journal entry will be displayed (and quest stage results run) every time SetStage
+    /// is called" (<https://ck.uesp.net/wiki/Quest_Data_Tab>).
+    public var allowsRepeatedStages: Bool {
+        flags.contains(.allowRepeatedStages)
+    }
+}

@@ -26,6 +26,7 @@ import simd
 /// What `FollowerCommandWorldAdapter` reads from the session. `GameSessionScope` conforms.
 @MainActor
 protocol FollowerCommandWorldHost: AnyObject {
+    var worldState: WorldStateStore { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var aiWorld: AIWorldAdapter { get }

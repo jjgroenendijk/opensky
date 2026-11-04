@@ -66,17 +66,18 @@ nonisolated extension ConditionFunctions {
                 }
             })
         }
-        // OpenSky has no commanded actors yet, so nobody is one; the `Actor` native of the
-        // same name answers the same.
+        // A summon or a raised corpse while its effect runs, as the `Actor` native answers.
         registry.register(ConditionFunction(index: 700, name: "IsCommandedActor") { call in
-            call.actorState().map { _ in 0 }
+            call.actorState().map { Self.isTrue($0.isCommanded) }
         })
         installRecordFlags(&registry)
     }
 
-    /// The base record's `ACBS` flags (<https://ck.uesp.net/wiki/IsEssential>).
+    /// The base record's `ACBS` flags with what scripts and quest aliases changed
+    /// (<https://ck.uesp.net/wiki/IsEssential>, <https://ck.uesp.net/wiki/GetIsGhost>).
     private static func installRecordFlags(_ registry: inout ConditionFunctionRegistry) {
         let flags: [String: (UInt16, ActorBase.Flags)] = [
+            "GetIsGhost": (237, .ghost),
             "IsEssential": (354, .essential),
             "IsProtected": (476, .protected),
             "IsUnique": (641, .unique)

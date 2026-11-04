@@ -25,6 +25,8 @@ public struct PapyrusActorNatives {
 public struct PapyrusMagicNatives {
     /// The spellbook and cast loop.
     public var casterRuntime: (() -> (any SpellCasting)?)?
+    /// Whether a summon or a raised corpse serves a caster now.
+    public var isCommandedActor: ((ReferenceKey) -> Bool)?
     /// One dispel over the session's `ActiveEffectRuntime` value, with the write-back;
     /// answers how many effects went.
     public var dispelEffects: ((ActorValueHolder, @escaping (ActiveEffect) -> Bool) -> Int)?

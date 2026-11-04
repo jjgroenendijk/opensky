@@ -44,6 +44,19 @@ nonisolated public struct QuestAliasResolution: Sendable {
         tables.values.contains { $0.holds(key) }
     }
 
+    /// The flags of every alias that holds `key`. A stopped quest clears its table, so
+    /// only running quests count, as the Essential and Protected flags need.
+    public func aliasFlags(holding key: ReferenceKey) -> Quest.Alias.Flags {
+        var flags: Quest.Alias.Flags = []
+        for (questKey, table) in tables where table.holds(key) {
+            guard let quest = defaults.quest(key: questKey) else { continue }
+            for fill in table.fills where fill.reference == key {
+                flags.formUnion(quest.alias(id: fill.aliasID)?.flags ?? [])
+            }
+        }
+        return flags
+    }
+
     /// The filled table of the quest stored under `key`, empty when nothing filled it.
     public func table(forKey key: ReferenceKey) -> QuestAliasState {
         tables[key] ?? .empty

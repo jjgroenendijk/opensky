@@ -19,13 +19,17 @@ nonisolated extension ConditionFunctions {
                 return .success(Self.isTrue(isOver))
             }
         })
-        // Each fighting side is one group. A fighting NPC is in the group of every NPC
-        // that fights the player; the player fights alone.
+        // A combat group is every living actor that fights the same target. An actor with
+        // no known target counts the NPCs that fight, as one side against the player.
         registry.register(ConditionFunction(index: 415, name: "GetGroupMemberCount") { call in
             call.referenceKey().flatMap { key in
                 call.actorState().map { state in
                     guard !state.isDead, state.combatActivity != .notFighting else { return 0 }
-                    return key == .player ? 1 : Float(call.context.actors.fightingNonPlayerCount)
+                    let actors = call.context.actors
+                    guard let target = state.combatTarget else {
+                        return key == .player ? 1 : Float(actors.fightingNonPlayerCount)
+                    }
+                    return Float(actors.fightingCount(against: target))
                 }
             }
         })

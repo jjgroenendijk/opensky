@@ -249,6 +249,9 @@ byte, 1 for true. Values: a uint32 count, then a name and a float32. Form links:
 count, then a name and a key. Added forms: a uint32 count, then that many keys, in the order
 the script added them. Names are lowercased and sorted. Minimum size: 24 bytes per entry.
 
+Names that start with `engine:` hold engine state with no component of its own, on the player:
+the shout cooldown and a jail stay ([jail](/engine/jail.md#saving)).
+
 ## CRST: cell resets
 
 One list for the player: per cell the player has left, the cell, then the game hour it left as

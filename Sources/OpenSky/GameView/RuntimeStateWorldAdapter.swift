@@ -164,10 +164,11 @@ final class RuntimeStateWorldAdapter {
         state.isInPairedAnimation = game.idleWorld.idles.pairedAnimation(of: holder.key) != nil
         state.raceKeywords = baseline.race == nil ? nil : baseline.raceKeywords
         state.injuredHealthPercent = baseline.injuredHealthPercent
-        if holder.key != .player {
-            state.recordFlags = baseline.recordFlags
-        }
+        let record = holder.key == .player ? nil : baseline.recordFlags
+        state.recordFlags = game.scripts.bridge?.actorFlags(of: holder.key, record: record)
+            ?? record
         state.action = actionFacts(of: holder.key, isDead: isDead)
+        state.isCommanded = game.magic.commanded.contains { $0.actor == holder.key }
         // OpenSky weighs only the player's load; an NPC carries any weight.
         state.isOverEncumbered = holder.key == .player ? playerIsOverEncumbered() : false
         state.holdsWeapon = game.inventory.conditionEquipment(of: holder.key).map { facts in
@@ -252,6 +253,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         guard let gameSession = game.gameSession else { return }
         gameSession.gameTime.globalResolution = resolution
         gameSession.weather?.setGlobalResolution(resolution, reroll: reroll)
+        game.scripts.bridge?.publishLeveledEdits()
     }
 
     var musicStore: MusicRecordStore? {
@@ -324,6 +326,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
     func sessionContents(summary: SaveSummary?, thumbnail: SaveThumbnail?) -> OpenSkySaveContents {
         game.streamer?.persistNPCMovementForSave()
         game.combatWorld.run(game.combat.prepareForPersistence())
+        storeRuntimeExtras()
         return OpenSkySaveContents(
             snapshot: game.worldState.snapshot(),
             metadata: SaveCreationMetadata(
@@ -383,6 +386,8 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         // queued cell rebuilds re-attach scripts.
         game.scripts.restore(instances: file.scripts, timers: file.timers)
         game.scripts.bridge?.publishFactionReactions()
+        game.scripts.bridge?.publishLeveledEdits()
+        restoreRuntimeExtras()
         game.combatWorld.run(game.combat.prepareForPersistence())
         game.messages.reloadHelpRecords()
         game.questNotices.reset()

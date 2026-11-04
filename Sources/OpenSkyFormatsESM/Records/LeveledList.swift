@@ -48,7 +48,7 @@ nonisolated public struct LeveledList: Sendable {
     /// LVLD — percent chance the list resolves to nothing.
     public let chanceNone: UInt8
     public let flags: Flags
-    public let entries: [Entry]
+    public private(set) var entries: [Entry]
     public let bounds: ObjectBounds?
     /// LLCT — the entry count as written. Advisory; `entries` is what decoded.
     public let declaredEntryCount: UInt8?
@@ -116,5 +116,21 @@ nonisolated public struct LeveledList: Sendable {
         self.chanceNone = chanceNone
         self.flags = flags
         self.entries = entries
+    }
+}
+
+nonisolated extension LeveledList.Entry {
+    /// An entry a script adds with `AddForm`; it has no owner or item health.
+    public init(addedForm reference: FormID, level: UInt16, count: UInt32) {
+        self.init(level: level, reference: reference, count: count)
+    }
+}
+
+nonisolated extension LeveledList {
+    /// The list with `added` after its plugin entries.
+    public func appending(_ added: [Entry]) -> LeveledList {
+        var list = self
+        list.entries += added
+        return list
     }
 }

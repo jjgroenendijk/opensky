@@ -259,8 +259,9 @@ extension CombatWorldAdapter: CombatWorld {
         game.magic.influence(of: key)
     }
 
+    /// An actor whose AI a script turned off does not fight either.
     func packageIgnoresCombat(_ key: ReferenceKey) -> Bool {
-        game.packages.ignoresCombat(key)
+        game.packages.ignoresCombat(key) || game.aiWorld.isAIDisabled(key)
     }
 
     func level(of key: ReferenceKey) -> Int? {

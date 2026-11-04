@@ -37,7 +37,14 @@ For an effect that started, in this order:
    `OnEffectStart(akTarget, akCaster)`.
 
 For an effect that ended, each instance that served it gets `OnEffectFinish(akTarget, akCaster)`.
-An instance that serves no other effect then retires, once its queued events have run. A potion
+Each run has its own instances, so two runs of one effect on one actor get two instances. An
+instance retires once its queued events have run.
+
+Two kinds of effect exist only for their scripts:
+
+- An effect with zero duration is stored and removed in the same step. Its scripts get
+  `OnEffectStart` and then `OnEffectFinish`.
+- An effect whose archetype OpenSky does not apply is stored with no values, for its duration. A potion
 that nobody cast has `None` as the caster.
 
 An instance sits on the target actor, so the target's other events, such as `OnHit` and
@@ -60,11 +67,6 @@ The update-timer natives on `ActiveMagicEffect` work as on `Form`
 
 ## Where OpenSky differs from the game
 
-- An instance is keyed by the target and the script name. Two runs of one effect on one actor
-  share one instance, which gets `OnEffectStart` twice. It retires when the last run ends. In the
-  game, each run has its own instance.
-- An effect with zero duration is applied once and never stored, so its scripts never run. In the
-  game, its scripts get `OnEffectStart` and then `OnEffectFinish`.
-- An effect whose archetype OpenSky does not apply yet is not stored, so its scripts do not run.
-- Effect instances are not saved. After a load, the effects that still run have no script
-  instances, and their end sends no `OnEffectFinish`.
+- Effect instances are not saved. After a load, each effect that still runs gets new
+  instances, with no `OnInit` and no `OnEffectStart`, so its end still sends `OnEffectFinish`.
+  Their script variables start from their defaults.

@@ -111,6 +111,14 @@ public final class PapyrusWorldRuntime {
     /// Newest fragment enqueued, worded like a `recentEvents` entry. Nil until
     /// a stage with a fragment is set.
     public var lastQuestFragment: String?
+    /// `SetStage` and `Start` calls waiting for their quest's fragments to run.
+    var latentQuestWaits: [PapyrusLatentQuestWait] = []
+    /// High, so these tokens never meet the shell's own wait tokens.
+    var nextLatentQuestToken: UInt64 = 1 << 62
+    /// Quests a shut-down stage stopped; their instances retire once the fragments ran.
+    var shutDownQuests: Set<ReferenceKey> = []
+    /// Whether a quest runs again, so a restart keeps the instances a shut-down would retire.
+    public var isQuestRunning: (ReferenceKey) -> Bool = { _ in false }
     /// The single main-actor FIFO event queue; global order is preserved.
     public var eventQueue: [PapyrusScriptEvent] = []
     /// The next queue position a running drain reads. `retire` moves it back when it

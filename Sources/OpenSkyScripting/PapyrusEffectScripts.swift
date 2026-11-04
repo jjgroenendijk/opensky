@@ -35,14 +35,18 @@ nonisolated public struct PapyrusActiveEffectRun: Equatable, Sendable {
     }
 }
 
-/// The running effects and the instances that serve them. An instance is keyed by the
-/// target and the script name, so two runs of one effect on one actor share it.
+/// The running effects and the instances that serve them. Each run has its own
+/// instances, keyed by the target, the script name, and the run.
 nonisolated public struct PapyrusEffectScripts: Equatable, Sendable {
     public private(set) var runs: [PapyrusActiveEffectID: PapyrusActiveEffectRun] = [:]
     /// The runs each instance serves, oldest first.
     public private(set) var runsByInstance: [PapyrusInstanceKey: [PapyrusActiveEffectID]] = [:]
     /// Instances whose last run ended. Each retires once its `OnEffectFinish` has run.
     public private(set) var finishing: Set<PapyrusInstanceKey> = []
+    /// A number per run that is never reused, so a later run with the same effect
+    /// sequence still gets new instances.
+    public private(set) var serials: [PapyrusActiveEffectID: UInt64] = [:]
+    private var nextSerial: UInt64 = 1
 
     public init() {}
 
@@ -56,6 +60,8 @@ nonisolated public struct PapyrusEffectScripts: Equatable, Sendable {
 
     public mutating func begin(_ run: PapyrusActiveEffectRun) {
         runs[run.id] = run
+        serials[run.id] = nextSerial
+        nextSerial &+= 1
     }
 
     /// Records that `instance` serves the run `id`. False when the run already ended.
@@ -78,6 +84,7 @@ nonisolated public struct PapyrusEffectScripts: Equatable, Sendable {
         _ id: PapyrusActiveEffectID
     ) -> (served: [PapyrusInstanceKey], idle: [PapyrusInstanceKey]) {
         runs[id] = nil
+        serials[id] = nil
         var served: [PapyrusInstanceKey] = []
         var idle: [PapyrusInstanceKey] = []
         for (instance, ids) in runsByInstance where ids.contains(id) {

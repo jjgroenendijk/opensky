@@ -20,7 +20,7 @@ registered. The counts are the References column.
 | `bool RemoveSpell(Spell)` | 311 | Forgets the spell and clears any hand holding it | [RemoveSpell - Actor](https://ck.uesp.net/wiki/RemoveSpell_-_Actor) |
 | `bool AddSpell(Spell, bool abVerbose = true)` | 278 | Teaches it. False if already known | [AddSpell - Actor](https://ck.uesp.net/wiki/AddSpell_-_Actor) |
 | `Cast(ObjectReference akSource, ObjectReference akTarget = None)` | 277 | Casts the spell at once from `akSource` | [Cast - Spell](https://ck.uesp.net/wiki/Cast_-_Spell) |
-| `RemoteCast(ObjectReference akSource, Actor akBlameActor, ObjectReference akTarget = None)` | 6 | As `Cast`. The blamed actor is not used, because a landed spell reports no crime yet | [RemoteCast - Spell](https://ck.uesp.net/wiki/RemoteCast_-_Spell) |
+| `RemoteCast(ObjectReference akSource, Actor akBlameActor, ObjectReference akTarget = None)` | 6 | As `Cast`, with the blamed actor as the caster of the hit. A source that is no actor casts as the blamed actor | [RemoteCast - Spell](https://ck.uesp.net/wiki/RemoteCast_-_Spell) |
 | `bool HasSpell(Form)` | 72 | Whether the actor knows it | [HasSpell - Actor](https://ck.uesp.net/wiki/HasSpell_-_Actor) |
 | `Spell GetEquippedSpell(int aiSource)` | 40 | The spell ready at that source, or `None` | [GetEquippedSpell - Actor](https://ck.uesp.net/wiki/GetEquippedSpell_-_Actor) |
 | `EquipSpell(Spell, int aiSource)` | 37 | Readies it, teaching it first if needed | [EquipSpell - Actor](https://ck.uesp.net/wiki/EquipSpell_-_Actor) |

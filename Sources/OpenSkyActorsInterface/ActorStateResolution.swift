@@ -54,6 +54,8 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var isSwimming: Bool?
     /// The base record's `ACBS` flags. Nil for the player, who has no NPC_ record here.
     public var recordFlags: ActorBase.Flags?
+    /// Whether a summon or a raised corpse serves a caster now.
+    public var isCommanded = false
     /// What the actor is doing in a fight. Nil when nothing observes it.
     public var action: ActorActionFacts?
     /// Carried weight above the carry weight. Nil when nothing weighs the inventory.
@@ -170,6 +172,11 @@ nonisolated public struct ActorStateResolution: Sendable {
         states.count { $0.key != .player && !$0.value.isDead
             && $0.value.combatActivity != .notFighting
         }
+    }
+
+    /// Living actors that fight `target`: one combat group.
+    public func fightingCount(against target: ReferenceKey) -> Int {
+        states.count { !$0.value.isDead && $0.value.combatTarget == target }
     }
 
     /// Who `key` is fighting, or nil when it is fighting nobody and when

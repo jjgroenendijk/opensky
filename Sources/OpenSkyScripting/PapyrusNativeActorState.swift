@@ -10,7 +10,7 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension PapyrusNativeFunctions {
-    static let aiDisabledName = "aiDisabled"
+    static let aiDisabledName = ScriptedStateName.aiDisabled
 
     public static func installActorState(into registry: inout PapyrusNativeRegistry) {
         // `int GetCombatState()`: 0 not in combat, 1 in combat, 2 searching, which are
@@ -42,6 +42,10 @@ extension PapyrusNativeFunctions {
         scriptState("Actor", "EnableAI", into: &registry) { call, bridge, key in
             let enabled = boolean(call, at: 0, default: true)
             bridge.updateScriptedState(of: key) { $0.setFlag(aiDisabledName, enabled ? nil : true) }
+            // An actor with no AI fights no more; the combat loop then leaves it out.
+            if !enabled {
+                bridge.stopActorCombat(key)
+            }
             return .returned(.none)
         }
         scriptState("Actor", "IsAIEnabled", into: &registry) { _, bridge, key in
@@ -51,9 +55,9 @@ extension PapyrusNativeFunctions {
             .returned(.boolean(bridge.scriptedState(of: key)
                     .flag(ScriptedStateName.bleedingOut) == true))
         }
-        // OpenSky has no commanded actors, so nobody is one.
-        scriptState("Actor", "IsCommandedActor", into: &registry) { _, _, _ in
-            .returned(.boolean(false))
+        // A summon or a raised corpse while its effect runs.
+        scriptState("Actor", "IsCommandedActor", into: &registry) { _, bridge, key in
+            .returned(.boolean(bridge.magicNatives.isCommandedActor?(key) ?? false))
         }
         // `AddAchievement(int)`: OpenSky reports to no platform, so nothing happens.
         registry.register(PapyrusNativeFunction(

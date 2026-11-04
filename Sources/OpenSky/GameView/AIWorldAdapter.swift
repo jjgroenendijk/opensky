@@ -28,6 +28,7 @@ import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
@@ -298,7 +299,14 @@ extension AIWorldAdapter {
         if game.worldState.component(ActorDeathState.self, for: actor)?.isDead == true {
             return .dead
         }
+        if isAIDisabled(actor) {
+            return .aiDisabled
+        }
         return game.combat.loop?.phase(of: actor)?.isEngaged == true ? .fighting : .free
+    }
+
+    func isAIDisabled(_ actor: ReferenceKey) -> Bool {
+        game.scripts.bridge?.scriptedState(of: actor).flag(ScriptedStateName.aiDisabled) == true
     }
 
     func packageMoverHasRoom(for actor: ReferenceKey) -> Bool {

@@ -27,6 +27,10 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         didSet {
             world?.attachOnUse = { [weak self] in self?.attachOnUse($0) ?? false }
             world?.scriptsOfTarget = { [weak self] in self?.scriptsOfTarget($0) ?? [] }
+            world?.isQuestRunning = { [weak self] key in
+                guard let self, let resolved = try? resolveQuest(key) else { return false }
+                return (try? resolved.runtime.state(of: resolved.quest.formID))?.isRunning ?? false
+            }
         }
     }
 
@@ -37,6 +41,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Quest mutation API for the `Quest` natives. Nil without QUST data, where they fail
     /// with `PapyrusQuestBridgeError.noQuestData`. See `PapyrusWorldStateBridgeQuests.swift`.
     public var questRuntime: (any QuestAccess)?
+    /// The shared roller's script changes; nil in a session without leveled lists.
+    public var leveledEdits: () -> LeveledScriptEdits? = { nil }
     /// Quests whose alias fill failed while scripts were attached at wire-up. Counted,
     /// not thrown: a quest running from its DNAM flag has no `Start` call to refuse.
     public var questAliasFillFailures = 0

@@ -126,13 +126,13 @@ nonisolated extension DialogueMenuMovieBridge {
     // MARK: - Rows
 
     /// One topic row, with the field names `swf action-sweep` reads off the movie.
-    /// `topicIsNew` is false because OpenSky does not track heard topics, and
-    /// `responseHash` carries the winning INFO's FormID.
+    /// `topicIsNew` is true until the winning INFO has been said, and `responseHash`
+    /// carries the winning INFO's FormID.
     public static func topicRow(_ entry: DialogueTopicEntry, index: Int) -> [String: AS2Value] {
         [
             "text": .string(entry.text),
             "topicIndex": .integer(index),
-            "topicIsNew": .boolean(false),
+            "topicIsNew": .boolean(entry.isNew),
             "responseHash": .number(Double(entry.info.rawValue))
         ]
     }

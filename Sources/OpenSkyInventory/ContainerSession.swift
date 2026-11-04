@@ -59,6 +59,16 @@ public final class ContainerSession {
         runtime.crime?.verdict(on: container.key) ?? .unowned
     }
 
+    /// The actor that owns the container, for the story events: a placed actor's own
+    /// inventory, else the `NPC_` base that `XOWN` names. A faction owner names none.
+    public var actorOwner: ReferenceKey? {
+        if case .actor = container.owner {
+            return container.key
+        }
+        guard case let .actor(base)? = ownership.owner else { return nil }
+        return base
+    }
+
     /// Whether taking `item` is theft. A friend's allowance can cover a cheap item.
     public func ownership(of item: FormID) -> OwnershipVerdict {
         runtime.crime?.verdict(on: container.key, item: item) ?? .unowned

@@ -79,6 +79,16 @@ std::string View()
     }
     return json;
 }
+// The actor's AI process level, high 0 to low 3, or -1 for no actor or no process.
+int ProcessLevel(RE::TESObjectREFR *reference)
+{
+    if (!reference || !reference->Is(RE::FormType::ActorCharacter)) {
+        return -1;
+    }
+    const auto *process = static_cast<RE::Actor *>(reference)->GetActorRuntimeData().currentProcess;
+    return process ? static_cast<int>(process->processLevel.get()) : -1;
+}
+
 // Playing scenes, each with its phase and whether each actor is loaded, disabled, or dead, to
 // compare scene rules with OpenSky (docs/engine/scenes.md).
 std::string Scenes()
@@ -98,10 +108,10 @@ std::string Scenes()
                                                 : RE::NiPointer<RE::TESObjectREFR>{};
             actors += std::format(
                 "{}{{\"alias\":{},\"referenceFormID\":{},\"loaded\":{},\"disabled\":{},"
-                "\"dead\":{}}}",
+                "\"dead\":{},\"processLevel\":{}}}",
                 actors.empty() ? "" : ",", alias, reference ? reference->GetFormID() : 0,
                 reference && reference->Is3DLoaded(), reference && reference->IsDisabled(),
-                reference && reference->IsDead(false));
+                reference && reference->IsDead(false), ProcessLevel(reference.get()));
         }
         scenes += std::format(
             "{}{{\"formID\":{},\"phase\":{},\"actors\":[{}]}}", scenes.empty() ? "" : ",",
@@ -135,9 +145,17 @@ std::string Selection()
     if (!selected) {
         return "";
     }
+    // The running package of an actor, to match `GetCurrentAIProcedure` with its procedure.
+    RE::FormID package = 0;
+    if (selected->Is(RE::FormType::ActorCharacter)) {
+        const auto *current = static_cast<RE::Actor *>(selected.get())->GetCurrentPackage();
+        package = current ? current->GetFormID() : 0;
+    }
     return std::format(
-        ",\"selected\":{{\"formID\":{},\"loaded\":{},\"disabled\":{}}}", selected->GetFormID(),
-        selected->Is3DLoaded(), selected->IsDisabled());
+        ",\"selected\":{{\"formID\":{},\"loaded\":{},\"disabled\":{},\"package\":{},"
+        "\"processLevel\":{}}}",
+        selected->GetFormID(), selected->Is3DLoaded(), selected->IsDisabled(), package,
+        ProcessLevel(selected.get()));
 }
 
 // `prid <hex FormID>` picks the reference that later lines without a target act on.
@@ -149,6 +167,23 @@ void Pick(std::string_view hex)
                           ? RE::TESForm::LookupByID<RE::TESObjectREFR>(id)
                           : nullptr;
     selection = reference ? reference->CreateRefHandle() : RE::ObjectRefHandle{};
+}
+
+// The answer of the last `condition` line, as a JSON member.
+std::string lastCondition;
+
+// `condition <name>` asks a condition function with no parameters about the picked
+// reference, so a number the console prints reaches OpenSky.
+void AskCondition(std::string_view name)
+{
+    const auto *command = RE::SCRIPT_FUNCTION::LocateScriptCommand(name);
+    auto picked = selection.get();
+    double result = 0;
+    const bool answered = command && command->conditionFunction && picked &&
+                          command->conditionFunction(picked.get(), nullptr, nullptr, result);
+    lastCondition = std::format(
+        ",\"condition\":{{\"name\":{},\"answered\":{},\"value\":{}}}",
+        Quoted(std::string(name).c_str()), answered, Number(static_cast<float>(result)));
 }
 
 // `spawn <hex FormID>` places that base object at the player and picks the new reference.
@@ -205,6 +240,7 @@ std::string Snapshot(const std::string &lastBatch)
         json += View();
         json += Selection();
         json += Scenes();
+        json += lastCondition;
     }
     return json + "}\n";
 }
@@ -217,6 +253,11 @@ void RunLine(const std::string &line)
     constexpr auto pickVerb = "prid "sv;
     constexpr auto spawnVerb = "spawn "sv;
     constexpr auto watchVerb = "watch "sv;
+    constexpr auto conditionVerb = "condition "sv;
+    if (line.starts_with(conditionVerb)) {
+        AskCondition(std::string_view(line).substr(conditionVerb.size()));
+        return;
+    }
     if (line.starts_with(spawnVerb)) {
         Spawn(std::string_view(line).substr(spawnVerb.size()));
         return;

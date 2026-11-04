@@ -21,10 +21,11 @@ extension RagdollWorldAdapter {
         if bridge.scriptedState(of: key).flag(ScriptedStateName.deferredKill) == true {
             return .deferred
         }
-        if baseFlag(ScriptedStateName.essential, .essential, of: key) {
+        let flags = bridge.actorFlags(of: key) ?? []
+        if flags.contains(.essential) {
             return .bleedsOut
         }
-        if killer != .player, baseFlag(ScriptedStateName.protected, .protected, of: key) {
+        if killer != .player, flags.contains(.protected) {
             return .bleedsOut
         }
         return .dies
@@ -94,16 +95,5 @@ extension RagdollWorldAdapter {
             }
         }
         _ = game.actorGraphWorld.graphs.raise(RagdollGraphNames.bleedOutStop, on: key)
-    }
-
-    /// A script's `SetEssential` or `SetProtected` on the base wins over the record flag.
-    private func baseFlag(_ name: String, _ flag: ActorBase.Flags, of key: ReferenceKey) -> Bool {
-        guard
-            let bridge = game.scripts.bridge,
-            let base = game.streamer?.referenceEntry(key: key)?.placedActor?.base
-        else { return false }
-        let scripted = bridge.referenceKey(forFormID: base)
-            .flatMap { bridge.scriptedState(of: $0).flag(name) }
-        return scripted ?? game.menuWorld.recordFlags(ofBase: base)?.contains(flag) ?? false
     }
 }

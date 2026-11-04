@@ -110,7 +110,8 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         guard let data = effect.effect.data else {
             return .skip(.undecodedEffect)
         }
-        guard applies(data) else {
+        // A scripted effect still runs for its scripts, even when its archetype does nothing.
+        guard applies(data) || !effect.effect.scriptData.scripts.isEmpty else {
             return .skip(.unimplementedArchetype(data.archetype))
         }
         let rule = MagicArchetypeRule.rule(for: data.archetype)

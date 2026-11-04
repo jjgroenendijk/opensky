@@ -142,6 +142,8 @@ nonisolated extension Quest {
             public static let essential = Flags(rawValue: 1 << 6)
             /// Ref. A disabled reference may fill the alias.
             public static let allowDisabled = Flags(rawValue: 1 << 7)
+            /// Ref. Makes the target protected while the quest runs.
+            public static let protected = Flags(rawValue: 1 << 10)
             /// Ref. Find Matching Reference prefers the match closest to the player.
             public static let matchClosest = Flags(rawValue: 1 << 13)
         }

@@ -19,6 +19,7 @@ import OpenSkyProgression
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd
@@ -47,6 +48,7 @@ extension GameSessionScope {
             progressionWorld.run(progression.takeCommands())
             updateQuestNotices()
             hud.updatePlayerModes(hudModeInputs(gameSession))
+            hud.setActivateLocked(playerControlLocks.disabled.contains(.activate))
             hud.updateFrame()
         }
         // The engine reads the world's sound records once, so it starts after they load.

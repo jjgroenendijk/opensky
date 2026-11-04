@@ -14,6 +14,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyLaunch
 import OpenSkyLoading
+import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyProgression
@@ -28,6 +29,7 @@ import OpenSkyWorldState
 /// What `MenuWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MenuWorldHost: MenuInputConsumer {
+    var magic: MagicCoordinator { get }
     var agentWorld: AgentWorldAdapter { get }
     var audio: AudioCoordinator { get }
     var cameraInput: CameraInputState { get }
@@ -370,6 +372,22 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
 
     func recordFlags(ofBase base: FormID) -> ActorBase.Flags? {
         identityRecords?.templates.actors[base.rawValue]?.flags
+    }
+
+    func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID? {
+        guard let templates = game.worldData?.actorValueBaselines?.resolver?.templates
+        else { return base }
+        let roll = game.worldState.leveledRoll(of: actor, base: base, with: templates.leveling)
+        return templates.rolling(roll).leveledBase(of: base)
+    }
+
+    func recordShouts(ofBase base: FormID) -> [ReferenceKey] {
+        guard
+            let spells = identityRecords?.templates.actors[base.rawValue]?.spells,
+            let bridge = game.scripts.bridge
+        else { return [] }
+        let shouts = game.magic.shouts
+        return spells.compactMap(bridge.referenceKey(forFormID:)).filter { shouts[$0] != nil }
     }
 
     func voiceType(ofBase base: FormID) -> FormID? {

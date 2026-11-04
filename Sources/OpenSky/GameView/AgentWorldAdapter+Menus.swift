@@ -223,6 +223,8 @@ extension AgentWorldAdapter {
         [
             "loaded": .bool(game.hud.isLoaded), "cartMode": .bool(game.hud.isCartMode),
             "modes": .array(game.hud.shownModes.map { .string($0.rawValue) }),
+            "activatePrompt": .init(game.hud.effectivePrompt),
+            "activateLocked": .bool(game.hud.isActivateLocked),
             "notifications": .array(game.hud.shownNotifications.map { .string($0) }),
             "bigNotices": .array(game.hud.shownBigNotices.map { notice in
                 .string("\(notice.title) | \(notice.status)")

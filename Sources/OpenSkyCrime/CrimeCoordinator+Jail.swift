@@ -130,3 +130,10 @@ extension CrimeCoordinator {
         }
     }
 }
+
+extension CrimeCoordinator {
+    /// A stay a save brought back. The jail cell is found again from the player's cell.
+    public func restoreJailStay(_ stay: JailStay?) {
+        jailStay = stay
+    }
+}

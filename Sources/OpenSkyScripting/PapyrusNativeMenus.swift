@@ -33,6 +33,10 @@ public protocol PapyrusMenuBridge: AnyObject {
     func race(ofBase base: FormID) -> FormID?
     /// The base record's own `ACBS` flags, or nil for an unknown base.
     func recordFlags(ofBase base: FormID) -> ActorBase.Flags?
+    /// The shouts the base's `SPLO` list gives, in record order.
+    func recordShouts(ofBase base: FormID) -> [ReferenceKey]
+    /// The base the leveled list chose for this placed actor.
+    func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID?
     /// The `VTCK` voice type after template inheritance.
     func voiceType(ofBase base: FormID) -> FormID?
     /// The base record's own `GNAM` gift filter form list.
@@ -47,6 +51,16 @@ public protocol PapyrusMenuBridge: AnyObject {
     func showGiftMenu(
         actor: ReferenceKey, giving: Bool, filter: [ReferenceKey?]?, showsStolenItems: Bool
     )
+}
+
+extension PapyrusMenuBridge {
+    public func leveledBase(of _: ReferenceKey, base: FormID) -> FormID? {
+        base
+    }
+
+    public func recordShouts(ofBase _: FormID) -> [ReferenceKey] {
+        []
+    }
 }
 
 extension PapyrusNativeFunctions {
@@ -201,7 +215,7 @@ extension PapyrusNativeFunctions {
         }
     }
 
-    private static func installIdentityNatives(into registry: inout PapyrusNativeRegistry) {
+    private static func installRaceNatives(into registry: inout PapyrusNativeRegistry) {
         withReference("Actor", "GetRace", into: &registry) { _, world, menus, key in
             guard
                 let race = menus.race(of: key),
@@ -222,9 +236,16 @@ extension PapyrusNativeFunctions {
             menus.setRace(of: key, to: race)
             return .returned(.none)
         }
+    }
+
+    private static func installIdentityNatives(into registry: inout PapyrusNativeRegistry) {
+        installRaceNatives(into: &registry)
         for name in ["GetActorBase", "GetLeveledActorBase"] {
-            withReference("Actor", name, into: &registry) { _, world, _, key in
-                let base = key == .player ? FormID(0x7) : world.baseObject(of: key)
+            withReference("Actor", name, into: &registry) { _, world, menus, key in
+                var base = key == .player ? FormID(0x7) : world.baseObject(of: key)
+                if name == "GetLeveledActorBase", key != .player, let placed = base {
+                    base = menus.leveledBase(of: key, base: placed)
+                }
                 guard
                     let base, let baseKey = world.referenceKey(forFormID: base),
                     let handle = world.objectHandle(for: baseKey)
@@ -241,15 +262,14 @@ extension PapyrusNativeFunctions {
         withForm("ActorBase", "IsUnique", into: &registry) { _, _, menus, form in
             .returned(.boolean(menus.recordFlags(ofBase: form)?.contains(.unique) == true))
         }
-        // A script's `SetEssential` on the base wins over the record flag.
-        withReference("Actor", "IsEssential", into: &registry) { _, world, menus, key in
-            guard key != .player, let base = world.baseObject(of: key) else {
-                return .returned(.boolean(false))
+        // The record flag with what scripts and quest aliases changed.
+        let actorFlags: [(String, ActorBase.Flags)] = [
+            ("IsEssential", .essential), ("IsGhost", .ghost)
+        ]
+        for (name, flag) in actorFlags {
+            scriptState("Actor", name, into: &registry) { _, world, key in
+                .returned(.boolean(world.actorFlags(of: key)?.contains(flag) == true))
             }
-            let scripted = world.referenceKey(forFormID: base)
-                .flatMap { world.scriptedState(of: $0).flag(ScriptedStateName.essential) }
-            let recorded = menus.recordFlags(ofBase: base)?.contains(.essential)
-            return .returned(.boolean(scripted ?? recorded ?? false))
         }
         withForm("ActorBase", "GetGiftFilter", into: &registry) { _, world, menus, form in
             .returned(menus.giftFilter(ofBase: form).map { formHandle($0, in: world) } ?? .none)

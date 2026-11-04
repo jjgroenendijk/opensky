@@ -32,7 +32,7 @@ extension PapyrusNativeFunctions {
     }
 
     private static let scriptedFlags: [ScriptedFlag] = [
-        ScriptedFlag("Actor", "SetGhost", "IsGhost", ScriptedStateName.ghost),
+        ScriptedFlag("Actor", "SetGhost", ScriptedStateName.ghost),
         ScriptedFlag(
             "Actor",
             "SetPlayerTeammate",
@@ -50,7 +50,9 @@ extension PapyrusNativeFunctions {
             "Actor", "SetNoBleedoutRecovery", "GetNoBleedoutRecovery",
             ScriptedStateName.noBleedoutRecovery
         ),
-        ScriptedFlag("Actor", "SetNotShowOnStealthMeter", "notShowOnStealthMeter"),
+        ScriptedFlag(
+            "Actor", "SetNotShowOnStealthMeter", ScriptedStateName.notShowOnStealthMeter
+        ),
         ScriptedFlag("Actor", "SetDontMove", "dontMove"),
         ScriptedFlag("Actor", "SetAttackActorOnSight", "attackActorOnSight"),
         ScriptedFlag("Actor", "SetHeadTracking", "headTracking"),
@@ -60,11 +62,16 @@ extension PapyrusNativeFunctions {
         ScriptedFlag("ObjectReference", "IgnoreFriendlyHits", "ignoreFriendlyHits"),
         ScriptedFlag("ObjectReference", "SetNoFavorAllowed", "noFavorAllowed"),
         ScriptedFlag("ActorBase", "SetEssential", ScriptedStateName.essential),
-        ScriptedFlag("ActorBase", "SetInvulnerable", "invulnerable"),
+        ScriptedFlag("ActorBase", "SetInvulnerable", ScriptedStateName.invulnerable),
         ScriptedFlag("ActorBase", "SetProtected", ScriptedStateName.protected),
         ScriptedFlag("Location", "SetCleared", "IsCleared", ScriptedStateName.cleared),
         ScriptedFlag("Cell", "SetPublic", "public"),
         ScriptedFlag("Quest", "SetActive", "IsActive", "active")
+    ]
+
+    private static let recordFlagNames: Set<String> = [
+        ScriptedStateName.ghost, ScriptedStateName.notShowOnStealthMeter,
+        ScriptedStateName.essential, ScriptedStateName.protected, ScriptedStateName.invulnerable
     ]
 
     /// One `Actor` number a setter stores; the getter reads 0 until it is set.
@@ -99,7 +106,11 @@ extension PapyrusNativeFunctions {
             scriptState(flag.script, flag.setter, into: &registry) { call, bridge, key in
                 let isSet = boolean(call, at: 0, default: true)
                 let wasSet = bridge.scriptedState(of: key).flag(flag.name) == true
-                bridge.updateScriptedState(of: key) { $0.setFlag(flag.name, isSet ? true : nil) }
+                // A flag the record also holds keeps false, so it hides the record's flag.
+                let cleared: Bool? = recordFlagNames.contains(flag.name) ? false : nil
+                bridge.updateScriptedState(of: key) {
+                    $0.setFlag(flag.name, isSet ? true : cleared)
+                }
                 if
                     flag.name == ScriptedStateName.cleared, isSet, !wasSet,
                     let name = bridge.formName(of: key)
@@ -126,6 +137,14 @@ extension PapyrusNativeFunctions {
                 .returned(.float(bridge.scriptedState(of: key).value(value.setter) ?? 0))
             }
         }
+        installScriptedForms(into: &registry)
+        installKeywordData(into: &registry)
+        installOwnership(into: &registry)
+        installPlayerControls(into: &registry)
+        installAddedForms(into: &registry)
+    }
+
+    private static func installScriptedForms(into registry: inout PapyrusNativeRegistry) {
         for form in scriptedForms {
             scriptState("Actor", form.setter, into: &registry) { call, bridge, key in
                 let link = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
@@ -137,10 +156,6 @@ extension PapyrusNativeFunctions {
             bridge.updateScriptedState(of: key) { $0.setForm("lookAt", nil) }
             return .returned(.none)
         }
-        installKeywordData(into: &registry)
-        installOwnership(into: &registry)
-        installPlayerControls(into: &registry)
-        installAddedForms(into: &registry)
     }
 
     /// `SetDoingFavor` also tells the session when the state changes, so the actor says

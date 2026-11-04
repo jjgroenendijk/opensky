@@ -15,4 +15,7 @@ public protocol DialogueAccess {
 
     /// The greeting `speaker` opens with, or nil when none applies.
     func greeting(for speaker: ReferenceKey) -> DialogueTopicOffer?
+
+    /// Whether any speaker has said the response `id`.
+    func hasBeenSaid(_ id: FormID) -> Bool
 }

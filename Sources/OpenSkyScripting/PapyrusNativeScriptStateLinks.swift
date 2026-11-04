@@ -106,20 +106,39 @@ extension PapyrusNativeFunctions {
     }
 
     /// `AddForm`, `RemoveAddedForm`, and `Revert` on a form list, and `AddForm` and
-    /// `Revert` on the leveled lists. A leveled entry keeps its form, not its level or count.
+    /// `Revert` on the leveled lists, whose entries keep their level and count.
     static func installAddedForms(into registry: inout PapyrusNativeRegistry) {
         for script in ["FormList", "LeveledItem", "LeveledActor", "LeveledSpell"] {
+            let leveled = script != "FormList"
             scriptState(script, "AddForm", into: &registry) { call, bridge, key in
                 guard let form = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                 else { return failure(call, "AddForm needs a form") }
                 bridge.updateScriptedState(of: key) { state in
-                    guard !state.addedForms.contains(form) else { return }
-                    state.setAddedForms(state.addedForms + [form])
+                    if !state.addedForms.contains(form) {
+                        state.setAddedForms(state.addedForms + [form])
+                    }
+                    guard leveled else { return }
+                    let level = integer(call, at: 1) ?? 1
+                    let count = script == "LeveledItem" ? integer(call, at: 2) ?? 1 : 1
+                    state.setValue(PapyrusWorldStateBridge.addedLevelName(form), Float(level))
+                    state.setValue(PapyrusWorldStateBridge.addedCountName(form), Float(count))
+                }
+                if leveled {
+                    bridge.publishLeveledEdits()
                 }
                 return .returned(.none)
             }
             scriptState(script, "Revert", into: &registry) { _, bridge, key in
-                bridge.updateScriptedState(of: key) { $0.setAddedForms([]) }
+                bridge.updateScriptedState(of: key) { state in
+                    for form in state.addedForms where leveled {
+                        state.setValue(PapyrusWorldStateBridge.addedLevelName(form), nil)
+                        state.setValue(PapyrusWorldStateBridge.addedCountName(form), nil)
+                    }
+                    state.setAddedForms([])
+                }
+                if leveled {
+                    bridge.publishLeveledEdits()
+                }
                 return .returned(.none)
             }
         }

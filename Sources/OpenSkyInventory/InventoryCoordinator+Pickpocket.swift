@@ -197,7 +197,7 @@ extension InventoryCoordinator {
             actor: .player, action: .pickpocket, amount: Float(isGold ? count : value * count)
         ))
         storyEvents?.reportStoryEvent(.addItem(
-            item, from: target.key, owner: nil, how: .pickpocket
+            item, from: target.key, owner: target.key, how: .pickpocket
         ))
         return .took(item: name, chance: Int(chance))
     }

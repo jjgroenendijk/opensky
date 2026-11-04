@@ -89,11 +89,18 @@ struct PapyrusNativeQuestTests {
             "SetStage", fixture, receiver: fixture.handle,
             arguments: [.integer(20)], returnType: .boolean
         ) == .returned(.boolean(true)))
-        #expect(call(
+        // The stage queues a fragment, so the latent call waits for it to run.
+        let fragmentSet = call(
             "SetStage", fixture, receiver: fixture.handle,
             arguments: [.integer(Int32(PapyrusQuestFixture.fragmentStage))],
             returnType: .boolean
-        ) == .returned(.boolean(true)))
+        )
+        let waits = if case .suspended = fragmentSet {
+            true
+        } else {
+            false
+        }
+        #expect(waits)
 
         for name in ["GetStage", "GetCurrentStageID"] {
             #expect(call(

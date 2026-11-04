@@ -109,6 +109,13 @@ is no crime. UESP says "you may be held responsible for the crime". OpenSky alwa
 crime against the player, run past the witnesses as the player's own crime is. Items taken by
 theft arrive marked stolen.
 
+## Load doors
+
+When the player passes a load door, each living teammate comes along: the UESP Followers page
+says a zone change (a loading screen) brings followers to the player
+(<https://en.uesp.net/wiki/Skyrim:Followers>). OpenSky moves each one into the destination
+cell, 64 units apart beside the player. A follower that waits on a command stays.
+
 ## Settings
 
 The Creation Kit wiki settings table lists three `fFavorRequest*` settings without a use. Each

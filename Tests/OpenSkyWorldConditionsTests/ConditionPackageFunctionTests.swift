@@ -80,6 +80,15 @@ struct ConditionPackageFunctionTests {
         #expect(try Self.outcome(503, equals: 0, facts: [:]) == .true)
     }
 
+    @Test func theProcedureNumberIsTheMeasuredOne() throws {
+        let traveller: [ReferenceKey: ActorPackageFacts] = [
+            Self.subject: ActorPackageFacts(package: Self.package, procedure: .travel)
+        ]
+        #expect(try Self.outcome(143, equals: 17, facts: traveller) == .true)
+        #expect(try Self.outcome(143, equals: -1, facts: Self.running) == .true)
+        #expect(try Self.outcome(143, equals: 0, facts: [:]) == .true)
+    }
+
     @Test func anUnwiredContextFailsWithAReason() throws {
         #expect(try Self.outcome(161, equals: 0, facts: nil)
             .failures == [.unavailableData(.package)])

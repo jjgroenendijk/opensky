@@ -24,13 +24,9 @@ extension RagdollWorldAdapter {
         }
     }
 
-    /// A script's `SetEssential` on the player's base, `Player` (0x7).
+    /// A script's `SetEssential` on the player's base, `Player` (0x7), or a quest alias.
     private var isPlayerEssential: Bool {
-        guard
-            let bridge = game.scripts.bridge,
-            let base = bridge.referenceKey(forFormID: MenuRecordData.playerBase)
-        else { return false }
-        return bridge.scriptedState(of: base).flag(ScriptedStateName.essential) == true
+        game.scripts.bridge?.actorFlags(of: .player)?.contains(.essential) == true
     }
 
     private var deathTexts: GameSettingTexts<PlayerDeathText> {
