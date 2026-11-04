@@ -149,7 +149,10 @@ extension Renderer {
             emissive: material.surface.emissive,
             lightingEffects: material.surface.lightingEffects,
             tintColor: material.surface.tintColor,
-            multiLayer: material.surface.multiLayer
+            multiLayer: material.surface.multiLayer,
+            projectedDirection: material.surface.projected?.direction ?? .zero,
+            projectedParameters: projectedParameters(material.surface.projected),
+            projectedColor: material.surface.projected?.color ?? .zero
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
@@ -340,7 +343,9 @@ extension Renderer {
             (surface.detail, .surfaceDetail),
             (surface.environmentMask, .surfaceEnvironmentMask),
             (material.faceTint ?? surface.innerLayer, .surfaceLayer),
-            (surface.backLight, .surfaceBackLight)
+            (surface.backLight, .surfaceBackLight),
+            (surface.projected?.diffuse, .projectedDiffuse),
+            (surface.projected?.normal, .projectedNormal)
         ]
         for (texture, index) in slots {
             argumentTable.setTexture(texture.map(streamedBinding) ?? diffuse, index: index.rawValue)

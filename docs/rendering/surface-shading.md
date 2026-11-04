@@ -80,6 +80,27 @@ direction, times Schlick's Fresnel `0.04 + 0.96 * (1 - N.V)^5`, times 0.5. The s
 colour and mask scale it like the specular row. The game samples a captured environment
 instead; this six-axis form and the 0.5 strength are OpenSky's own.
 
+## Directional materials
+
+A static whose `STAT` `DNAM` names a `MATO` gets that material on the faces that point along
+the `MATO` projection vector, such as snow on the tops of rocks
+([environment shading records](/formats/environment-shading.md#mato)). The surface override of
+every placed reference of the static carries it, and every lit shape of the model takes it.
+
+- A face whose normal is more than the `DNAM` max angle from the projection vector gets none.
+- Between that angle and the vector, `edge` runs from 0 to 1. The blend is
+  `edge * falloff scale + falloff bias`, clamped to 0 to 1.
+- With the game's `[Display] bEnableProjecteUVDiffuseNormals` on, the blend mixes in the
+  diffuse and normal maps of the `MATO` model's first textured shape. They are laid on the world
+  XY plane and repeat every 512 units at a material UV scale of 1. The normal map's XY tilts the
+  normal around world up.
+- With it off, the blend mixes in the `MATO` single-pass colour, or white when the record has
+  none.
+
+How the game reads the falloff values, the noise UV scale, and the normal dampener is not
+documented. The blend above, the 512-unit tile, and the texture source are OpenSky's own. The
+noise that breaks up the game's edge is not drawn.
+
 ## Albedo
 
 The albedo starts as diffuse times vertex colour. Then, in this order:

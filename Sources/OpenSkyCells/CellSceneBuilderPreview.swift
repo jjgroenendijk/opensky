@@ -101,7 +101,7 @@ nonisolated extension CellSceneBuilder {
             return subject
         }
         return previewMesh(
-            path: path, surface: surface(for: resolved.alternateTextures),
+            path: path, surface: surface(for: resolved),
             placement: placement, scale: scale
         )
     }

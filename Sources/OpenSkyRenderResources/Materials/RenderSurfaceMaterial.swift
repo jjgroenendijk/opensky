@@ -20,6 +20,8 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
     public let lightingEffects: SIMD4<Float>
     public let tintColor: SIMD4<Float>
     public let multiLayer: SIMD4<Float>
+    /// A static's directional material; nil textures draw its single-pass colour.
+    public let projected: RenderProjectedMaterial?
 
     public init(material: Material, textureProvider: TextureProvider) {
         let shading = material.shading
@@ -50,10 +52,17 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
             layer.innerScale.x,
             layer.innerScale.y
         )
+        projected = shading.projected.map {
+            RenderProjectedMaterial($0, diffuse: load($0.diffuseTexture, .color),
+                                    normal: load($0.normalTexture, .data))
+        }
     }
 
     public var textures: [MTLTexture] {
-        [glow, detail, environment, environmentMask, innerLayer, backLight].compactMap(\.self)
+        [
+            glow, detail, environment, environmentMask, innerLayer, backLight,
+            projected?.diffuse, projected?.normal
+        ].compactMap(\.self)
     }
 
     private static let termBits: [(SurfaceShading.Terms, ShadingTerm)] = [

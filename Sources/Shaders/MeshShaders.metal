@@ -1,6 +1,7 @@
 #include "ShaderCommon.h"
 #include "SurfaceShading.h"
 #include "EffectShading.h"
+#include "ProjectedMaterial.h"
 
 // Static-mesh path: diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
@@ -349,6 +350,8 @@ fragment float4 staticMeshFragment(
     texture2d<float> environmentMask [[texture(TextureIndexSurfaceEnvironmentMask)]],
     texture2d<float> layerMap [[texture(TextureIndexSurfaceLayer)]],
     texture2d<float> backLightMap [[texture(TextureIndexSurfaceBackLight)]],
+    texture2d<float> projectedDiffuse [[texture(TextureIndexProjectedDiffuse)]],
+    texture2d<float> projectedNormal [[texture(TextureIndexProjectedNormal)]],
     texture2d<float> sceneColour [[texture(TextureIndexSceneColor)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
@@ -439,6 +442,12 @@ fragment float4 staticMeshFragment(
     }
     float3 vertexColour = linearVertexColour(in.color.rgb, frame);
     float3 albedo = diffuse.rgb * vertexColour;
+    if (draw.projectedParameters.w > 0.5) {
+        ProjectedLayer layer = projectedLayer(
+            in.worldPosition, normal.world, draw, projectedDiffuse, projectedNormal, trilinear);
+        albedo = mix(albedo, layer.albedo, layer.blend);
+        normal.world = normalize(mix(normal.world, layer.normal, layer.blend));
+    }
     if (hasTerm(terms, ShadingTermLandscapeNoise)) {
         float noise = detailMap.sample(trilinear, in.worldPosition.xy * landscapeNoiseTile).r;
         albedo *= mix(1.0, noise / landscapeNoiseMean, 0.5);

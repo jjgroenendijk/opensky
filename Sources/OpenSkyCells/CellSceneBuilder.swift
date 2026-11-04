@@ -64,6 +64,8 @@ nonisolated public struct ResolvedBase: Sendable {
     public let isEditorMarker: Bool
     /// MODS: the texture sets that replace single shapes of the model.
     public let alternateTextures: [ModelData.AlternateTexture]
+    /// STAT `DNAM`: the `MATO` laid over its upward faces.
+    public var directionalMaterial: StaticObject.DirectionalMaterial?
 }
 
 /// One resolved placement, sortable into instancing-ready order.
@@ -132,6 +134,7 @@ nonisolated public final class CellSceneBuilder {
     /// Built on first use, like every index below.
     public var statIndex: [UInt32: StaticObject]?
     public var textureSetIndex: [UInt32: TextureSet]?
+    var directionalMaterials = DirectionalMaterialCache()
     /// Every active plugin, lowest priority first; `file` alone when none are given.
     public let loadOrderPlugins: [(name: String, file: ESMFile)]
     /// Door transitions, base objects, and cells read the load order through it.
@@ -533,7 +536,7 @@ nonisolated extension CellSceneBuilder {
                 )
                 continue
             }
-            let surface = surface(for: resolved.alternateTextures)
+            let surface = surface(for: resolved)
             if
                 var instance = loadInstance(
                     ref: ref, modelPath: modelPath, surface: surface,

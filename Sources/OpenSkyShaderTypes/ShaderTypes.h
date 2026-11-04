@@ -121,6 +121,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Focus shadows and the precipitation occlusion map (depth2d_array). The cascade
     /// array stands in until an option builds it.
     TextureIndexAuxiliaryShadowMap = 26,
+    /// A static's directional material: the MATO diffuse and normal maps.
+    TextureIndexProjectedDiffuse = 27,
+    TextureIndexProjectedNormal = 28,
     /// A lit mesh binds NIF texture-set slot N at index N, over the terrain layer
     /// slots, which only terrain draws read. Every draw binds all of them.
     TextureIndexSurfaceNormal = 1,
@@ -422,6 +425,12 @@ typedef struct
     /// x inner thickness, y refraction scale, zw inner texture scale. A sparkle
     /// shape stores its four sparkle parameters here instead.
     vector_float4 multiLayer;
+    /// Directional material: xyz the world direction, w the cosine of its max angle.
+    vector_float4 projectedDirection;
+    /// x falloff scale, y falloff bias, z material UV scale, w 0 none, 1 colour, 2 textures.
+    vector_float4 projectedParameters;
+    /// rgb single-pass colour, a noise UV scale.
+    vector_float4 projectedColor;
 } DrawUniforms;
 
 /// Per-GROUP GRAS material + mesh-height controls. Fade/wind are per-frame;

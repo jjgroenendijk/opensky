@@ -323,6 +323,8 @@ public final class Renderer: NSObject {
     public var imageBasedLightingEnabled = false
     /// `bEnableImprovedSnow`: LTEX snow ground takes the snow shading.
     public var improvedSnowEnabled = false
+    /// `bEnableProjecteUVDiffuseNormals`: directional materials draw their textures.
+    public var projectedTexturesEnabled = false
     var refraction = RefractionState()
     /// Terrain bends its lighting by the TX01 normal maps of its texture sets.
     public var terrainNormalMapsEnabled = true

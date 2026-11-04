@@ -100,8 +100,7 @@ nonisolated public enum GraphicsOptions {
         option(.effects, "Snow sparkles", "Display", "bToggleSparkles"),
         option(.effects, "Improved snow", "Display", "bEnableImprovedSnow"),
         option(
-            .effects, "Projected diffuse normals", "Display", "bEnableProjecteUVDiffuseNormals",
-            "OpenSky has no projected UV shader"
+            .effects, "Projected diffuse normals", "Display", "bEnableProjecteUVDiffuseNormals"
         ),
         option(.effects, "Rain occlusion", "Display", "bUsePrecipitationOcclusion"),
         option(.decals, "Decals", "Decals", "bDecals"),
