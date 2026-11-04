@@ -110,6 +110,8 @@ public final class CellStreamer {
     public var requestedLODCenter: CellCoordinate?
     /// The center whose distant ring was last integrated or failed.
     public internal(set) var settledLODCenter: CellCoordinate?
+    /// The center whose quick first ring was rebuilt once to add its large references.
+    var largeReferenceRequestCenter: CellCoordinate?
     /// Once settled coverage exists, recenter builds stay offscreen here.
     /// Old full cells + LOD remain composed until replacement LOD arrives,
     /// then full grid + ring swap in one recompose.
@@ -515,6 +517,7 @@ extension CellStreamer {
         core = CellStreamCore()
         requestedLODCenter = nil
         settledLODCenter = nil
+        largeReferenceRequestCenter = nil
         coverageTransitionActive = false
         lastEmittedRegions = nil
         grid = CellGridManager(initialPosition: position, radius: grid.radius)

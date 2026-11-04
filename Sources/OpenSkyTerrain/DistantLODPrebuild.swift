@@ -46,7 +46,10 @@ nonisolated public struct DistantLODPrebuild: Sendable {
                 meshes: meshes,
                 textures: textures,
                 configurationStore: configurationStore
-            ).build(worldspace: worldspace, center: center, hiddenCells: hiddenCells)
+            ).build(
+                worldspace: worldspace, center: center, hiddenCells: hiddenCells,
+                largeReferences: false
+            )
         }
     }
 }

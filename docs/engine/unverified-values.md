@@ -161,6 +161,7 @@ the detail and the sources it did find.
 | Snow ground sheen and glints | Sheen 0.25 at power 24; glints in 1.5% of 4-unit cells, 2 at power 6 | [terrain](/engine/terrain.md#snow-ground) |
 | Directional material blend | `edge * falloff scale + bias`; 512-unit tile; first textured shape of the `MATO` model | [surface shading](/rendering/surface-shading.md#directional-materials) |
 | Skin decal size and limit | At most 16 units; 35 kept when unset | [decals](/rendering/decals.md#skin-decals) |
+| Large reference LOD hidden per block | The game's per-cell rule is not known | [distant LOD](/engine/distant-lod.md#large-references) |
 | Ambient occlusion radius and strength | 48 units, 12 taps, strength 1.2, bias 0.05 | [post effects](/rendering/post-effects.md#ambient-occlusion) |
 | Volumetric light steps and strength | 8, 16, 32 steps; 4,096 units; strength 0.05; asymmetry 0.6 | [post effects](/rendering/post-effects.md#volumetric-light) |
 | Depth of field blur | Far side only; 8 pixels at 1080 lines; modifier moves toward its value | [post effects](/rendering/post-effects.md#depth-of-field) |

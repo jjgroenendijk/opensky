@@ -75,10 +75,7 @@ nonisolated public enum GraphicsOptions {
         option(.viewDistance, "Grass fade", "Grass", "fGrassStartFadeDistance"),
         option(.viewDistance, "Mesh LOD 1 fade", "Display", "fMeshLODLevel1FadeDist"),
         option(.viewDistance, "Mesh LOD 2 fade", "Display", "fMeshLODLevel2FadeDist"),
-        option(
-            .viewDistance, "Large object grid", "General", "uLargeRefLODGridSize",
-            "OpenSky has no large reference LOD yet"
-        ),
+        option(.viewDistance, "Large object grid", "General", "uLargeRefLODGridSize"),
         option(.shadows, "Shadow distance", "Display", "fShadowDistance"),
         option(.shadows, "Shadow resolution", "Display", "iShadowMapResolution"),
         option(.shadows, "Focus shadows", "Display", "iNumFocusShadow"),
@@ -131,6 +128,7 @@ nonisolated public enum GraphicsOptions {
         case "fBlockMaximumDistance": Double(fallback.maximumDistance)
         case "fTreeLoadDistance": Double(fallback.treeLoadDistance)
         case "uGridsToLoad": Double(TerrainLODConfiguration.defaultGridsToLoad)
+        case "uLargeRefLODGridSize": Double(TerrainLODConfiguration.defaultLargeReferenceGridSize)
         case "fSplitDistanceMult": 1
         case "bDecals", "bSkinnedDecals", "bUsePrecipitationOcclusion", "bToggleSparkles": 1
         case "uMaxDecals": 100

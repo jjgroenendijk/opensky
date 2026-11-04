@@ -169,7 +169,8 @@ enum RenderCommand {
             print("[INFO] distant LOD: \(lod.blockCount) blocks, "
                 + "\(lod.missingBlockCount) unavailable, \(lod.treeBlockCount) tree blocks, "
                 + "\(lod.missingTreeBlockCount) unavailable tree blocks, "
-                + "\(lod.treeInstanceCount) trees, terrain gain "
+                + "\(lod.treeInstanceCount) trees, "
+                + "\(lod.largeReferenceCount) large references, terrain gain "
                 + String(format: "%.3f", lod.renderScene.terrainLODBrightness?.gain ?? .nan))
         }
         var scenes = cellScenes.map(\.renderScene)

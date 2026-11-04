@@ -38,6 +38,7 @@ player's own `SkyrimPrefs.ini` shows through as the default.
 | --- | --- |
 | `fBlockLevel0Distance`, `fBlockLevel1Distance`, `fBlockMaximumDistance`, `fTreeLoadDistance` | The terrain and tree LOD distances ([terrain](/engine/terrain.md)) |
 | `uGridsToLoad` | The side of the full-detail cell grid ([cell streaming](/engine/cell-streaming.md#the-desired-grid)). No preset sets it, so a preset leaves it unchanged |
+| `uLargeRefLODGridSize` | The side of the grid where large references keep their full model; the object LOD hides theirs ([distant LOD](/engine/distant-lod.md#large-references)). 11 by default |
 | `fSplitDistanceMult` | Scales the distances where terrain and object LOD blocks split into the finer levels 4, 8, and 16. The level 32 reach stays at `fBlockMaximumDistance`. 0 keeps 1 |
 | `bDecals`, `uMaxDecals`, `iMaxDecalsPerFrame` | Decals on, the most decals kept, and the most placed in one frame; the rest of that frame's decals are dropped ([impacts and decals](/rendering/decals.md)) |
 | `bSkinnedDecals`, `uMaxSkinDecals`, `iMaxSkinDecalsPerFrame` | A hit on an actor marks the actor, not the ground; the mark moves with it. The most kept and the most placed in one frame ([skin decals](/rendering/decals.md#skin-decals)) |

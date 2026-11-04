@@ -79,6 +79,37 @@ But both builds read from the same disk, so the near grid gets slower by almost 
 "Start area ready" went from 6.2 s to 6.1 s with the asset cache, and stayed at about 6.7 s from the
 archives. Background priority made it worse: its throttled reads finished the ring last.
 
+## Large references
+
+A large reference is a placed object whose base is at least 512 units in size, such as a
+mountain or a bridge. The `WRLD` `RNAM` field lists them by cell. In the game they keep their
+full model out to `uLargeRefLODGridSize` cells, 11 by default, instead of the 5 of `uGridsToLoad`
+(UESP "Skyrim Mod:Mod File Format/WRLD", `RNAM`). OpenSky reads the setting from the INI files
+and the Graphics page as "Large object grid", and turns the grid side into rings like
+`uGridsToLoad`: 11 gives 5. A value at or below the loaded grid turns the ring off.
+
+Each ring build, on the build queue:
+
+1. Object LOD blocks merge their large references into separate shapes. On the real install,
+   `tamriel.4.4.-8.bto` holds `obj-LargeRef`, `objsnow-LargeRef`, `objHD-LargeRef`, and
+   `objsnowHD-LargeRef`, each with a `BSDistantObjectLargeRefExtraData` block. A block that
+   reaches into the ring drops every shape whose name ends in `-LargeRef`.
+2. The ring's cells are every cell inside the large radius, plus every cell of a block from
+   step 1, minus the loaded grid. The second part means a large reference never goes missing
+   when its block reaches only partly into the ring.
+3. In those cells, the references that `RNAM` lists are read from their cell and drawn with
+   their full model, as the cell build places them. A reference that starts disabled stays
+   hidden.
+
+The quick first ring of a session keeps the `-LargeRef` shapes, because its builder cannot
+read the plugins. Once the near grid is in, the same center is built once more with the large
+references. `openskycli game state frame` reports `largeReferences`, and `openskycli render`
+prints the count with the LOD line.
+
+The game hides a large reference's LOD per cell; OpenSky hides it per block, so the ring of
+full models is square to the block grid and can reach a few cells past the setting. The
+references do not take runtime changes, such as a reference that a quest disables later.
+
 ## Tree LOD
 
 Each tree type gets one cached model of two crossed planes. The tree positions (`.btt`) are
