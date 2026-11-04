@@ -197,3 +197,5 @@ the detail and the sources it did find.
 | `.seq` FormID reading | Through the master list first | [SEQ](/formats/seq.md) |
 | Input device for prompts | Not confirmed | [AS2 input](/engine/as2-input.md) |
 | Inventory menu callbacks | Two not confirmed | [inventory menu](/engine/inventory-menu.md) |
+| Topic row prompt of a shared `INFO` | Own `RNAM`, else the shared target's | [dialogue](/engine/dialogue.md) |
+| Follower place after a load door | 64 units apart beside the player | [follower commands](/engine/follower-commands.md#load-doors) |

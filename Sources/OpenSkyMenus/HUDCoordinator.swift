@@ -236,8 +236,11 @@ public final class HUDCoordinator {
         sync.markersNeedUpdate = true
     }
 
+    /// The game shows no prompt while a script locks the activate control.
+    public private(set) var isActivateLocked = false
+
     public var effectivePrompt: String? {
-        HUDCore.effectivePrompt(settings, target: interactionTarget)
+        isActivateLocked ? nil : HUDCore.effectivePrompt(settings, target: interactionTarget)
     }
 
     public func effectiveMarkers(cameraPosition: SIMD3<Float>) -> [HUDCompassMarker] {
@@ -328,5 +331,14 @@ extension HUDCoordinator {
             cameraHeading: world?.viewCamera.map { HUDCore.headingDegrees($0.yaw) },
             scale: settings.scale
         )
+    }
+}
+
+extension HUDCoordinator {
+    public func setActivateLocked(_ locked: Bool) {
+        guard locked != isActivateLocked else { return }
+        let oldPrompt = effectivePrompt
+        isActivateLocked = locked
+        sync.promptNeedsUpdate = sync.promptNeedsUpdate || oldPrompt != effectivePrompt
     }
 }
