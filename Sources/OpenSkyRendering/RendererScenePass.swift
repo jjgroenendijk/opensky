@@ -105,7 +105,8 @@ extension Renderer {
             precipitationOcclusionEnabled: precipitationOcclusionView == nil ? 0 : 1,
             focusShadowViewProjections: focusShadows.uniformMatrices,
             focusShadowCount: UInt32(focusShadows.views.count),
-            focusShadowBias: focusShadows.bias
+            focusShadowBias: focusShadows.bias,
+            imageBasedLighting: imageBasedLightingEnabled ? 1 : 0
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)

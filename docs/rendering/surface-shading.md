@@ -74,6 +74,12 @@ reference's `XEMI` light, or its `XEMI` region's weather colour at this hour
 keeps the NIF colour. The sun terms
 use the sun shadow.
 
+With the game's `[Display] bIBLFEnable` on, a specular surface also reflects the ambient
+light (image-based lighting). The six-axis ambient is read along the reflected view
+direction, times Schlick's Fresnel `0.04 + 0.96 * (1 - N.V)^5`, times 0.5. The specular
+colour and mask scale it like the specular row. The game samples a captured environment
+instead; this six-axis form and the 0.5 strength are OpenSky's own.
+
 ## Albedo
 
 The albedo starts as diffuse times vertex colour. Then, in this order:

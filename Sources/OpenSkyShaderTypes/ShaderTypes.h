@@ -375,6 +375,8 @@ typedef struct
     unsigned int focusShadowCount;
     /// Receiver depth bias of the focus views, in their depth units.
     float focusShadowBias;
+    /// 1: specular surfaces reflect the directional ambient light.
+    unsigned int imageBasedLighting;
 } FrameUniforms;
 
 /// Per-group material scalars for one instanced static-mesh draw, shared by every

@@ -66,6 +66,7 @@ extension Renderer {
         )
         precipitationOcclusionEnabled = store.bool(.precipitationOcclusion)
         postEffects = PostEffectSettings(store: store)
+        imageBasedLightingEnabled = store.bool(.imageBasedLighting)
         let focus = store.value(.focusShadows)
         focusShadowCount = focus.isFinite ? Int(min(max(focus, 0), 4)) : 0
         meshLODDistances = MeshLODDistances(
