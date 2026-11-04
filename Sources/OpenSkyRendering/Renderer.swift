@@ -95,6 +95,8 @@ public final class Renderer: NSObject {
     public internal(set) var shadow: ShadowResources
     /// How far actors, items, and objects stay drawn (`RendererReferenceFade.swift`).
     public var referenceFades = ReferenceFadeDistances.off
+    /// Where `BSLODTriShape` meshes switch detail (`RendererMeshLOD.swift`).
+    public var meshLODDistances = MeshLODDistances.off
     /// The game's shadow distance and map size (`RendererShadowSettings.swift`).
     public var shadowSettings = ShadowSettings() {
         didSet { resizeShadowMapIfNeeded() }

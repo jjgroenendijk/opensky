@@ -169,27 +169,7 @@ extension Renderer {
         let base = state.slot * instanceSlotCapacity + state.instanceCursor
         var written = 0
         for placed in group.instances {
-            // The live pose of a reference a rigid body owns, and the baked one
-            // for everything else (RendererDynamicPose.swift).
-            let instance = drawn(placed)
-            if roomCulling.visibility?.contains(room: instance.room) == false {
-                state.stats.culledInstances += 1
-                state.stats.roomCulledInstances += 1
-                continue
-            }
-            guard
-                instance.bounds.map(state.frustum.intersects) != false,
-                let distanceFade = distanceFade(of: instance)
-            else {
-                state.stats.culledInstances += 1
-                continue
-            }
-            var transforms = InstanceTransform(
-                modelMatrix: instance.modelMatrix,
-                normalMatrix: instance.normalMatrix,
-                instanceColor: instance.instanceColor(regions: regionEmittance),
-                grassParameters: SIMD4(0, 0, 0, max(fadeOut(of: instance), distanceFade))
-            )
+            guard var transforms = visibleTransform(of: placed, state: &state) else { continue }
             instanceTransformBuffer.contents()
                 .advanced(by: (base + written) * stride)
                 .copyMemory(from: &transforms, byteCount: MemoryLayout<InstanceTransform>.size)
@@ -198,6 +178,34 @@ extension Renderer {
         state.instanceCursor += written
         state.stats.drawnInstances += written
         return (written, base * stride)
+    }
+
+    /// The transform `placed` draws with, or nil when a cull drops it.
+    func visibleTransform(
+        of placed: DrawInstance,
+        state: inout ScenePassState
+    ) -> InstanceTransform? {
+        // The live pose of a reference a rigid body owns, and the baked one
+        // for everything else (RendererDynamicPose.swift).
+        let instance = drawn(placed)
+        if roomCulling.visibility?.contains(room: instance.room) == false {
+            state.stats.culledInstances += 1
+            state.stats.roomCulledInstances += 1
+            return nil
+        }
+        guard
+            instance.bounds.map(state.frustum.intersects) != false,
+            let distanceFade = distanceFade(of: instance)
+        else {
+            state.stats.culledInstances += 1
+            return nil
+        }
+        return InstanceTransform(
+            modelMatrix: instance.modelMatrix,
+            normalMatrix: instance.normalMatrix,
+            instanceColor: instance.instanceColor(regions: regionEmittance),
+            grassParameters: SIMD4(0, 0, 0, max(fadeOut(of: instance), distanceFade))
+        )
     }
 
     /// The pipelines one `encode(groups:)` call picks from, by mesh kind.
@@ -306,7 +314,7 @@ extension Renderer {
             applyDrawState(of: group.material, mode: mode, state: state)
         }
         state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
-        state.encoder.drawInstances(of: group.mesh, visible)
+        drawVisible(group.mesh, visible, state: state)
     }
 
     /// The fragment declares every surface slot, so the diffuse fills a 2D slot and
@@ -358,6 +366,9 @@ extension Renderer {
         case let .drawn(visible):
             return visible
         case .cpu:
+            if meshLODDistances.isOn, group.mesh.lodIndexCounts.count == 3 {
+                return writeVisibleLevels(of: group, state: &state)
+            }
             let run = writeVisibleInstances(of: group, state: &state)
             guard run.written > 0 else { return nil }
             return .packed(

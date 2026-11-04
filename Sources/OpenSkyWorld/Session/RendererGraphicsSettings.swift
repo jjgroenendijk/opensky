@@ -47,6 +47,9 @@ extension Renderer {
             actors: store.value(.fadeActors), items: store.value(.fadeItems),
             objects: store.value(.fadeObjects)
         )
+        meshLODDistances = MeshLODDistances(
+            level1: store.value(.meshLODLevel1), level2: store.value(.meshLODLevel2)
+        )
         if let grass = GrassRenderPolicy.drawDistance(fadeStart: store.value(.grassFadeStart)) {
             grassDrawDistance = grass
         }

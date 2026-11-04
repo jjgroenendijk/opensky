@@ -15,6 +15,8 @@ nonisolated public struct ReadyMeshLayout: Equatable, Sendable {
     /// Nil for a mesh with no vertex.
     public let bounds: ModelBounds?
     public let uvPerUnit: Float
+    /// See `Mesh.lodIndexCounts`.
+    public let lodIndexCounts: [Int]
     /// False for a skinned mesh, an empty one, or one whose indices pass its vertices.
     /// Such a model loads through the whole decode, which reports the problem.
     public let isReady: Bool
@@ -94,6 +96,7 @@ nonisolated enum ReadyModelLayoutCodec {
         out.int(mesh.materialSlot)
         out.int(mesh.positions.count)
         out.int(mesh.indices.count)
+        out.array(mesh.lodIndexCounts.map(UInt32.init))
         out.array(bounds.map { [$0.min, $0.max] } ?? [])
         out.value(MeshUVDensity.uvPerUnit(
             positions: mesh.positions, uvs: mesh.uvs, indices: mesh.indices
@@ -113,6 +116,7 @@ nonisolated enum ReadyModelLayoutCodec {
         let slot = try input.int()
         let vertexCount = try input.int()
         let indexCount = try input.int()
+        let levels = try input.array(UInt32.self).map(Int.init)
         let corners = try input.array(SIMD3<Float>.self)
         let uvPerUnit = try input.value(Float.self)
         let ready = try input.bool()
@@ -124,13 +128,15 @@ nonisolated enum ReadyModelLayoutCodec {
         )
         guard
             vertexCount >= 0, indexCount >= 0, vertices.count == expected.0,
-            indices.count == expected.1, corners.isEmpty || corners.count == 2
+            indices.count == expected.1, corners.isEmpty || corners.count == 2,
+            levels.allSatisfy({ $0 > 0 && $0 <= indexCount })
         else { throw CachePayloadError.badCount(vertexCount) }
         return ReadyMeshLayout(
             name: name, transform: transform, materialSlot: slot, vertexCount: vertexCount,
             indexCount: indexCount,
             bounds: corners.count == 2 ? ModelBounds(min: corners[0], max: corners[1]) : nil,
-            uvPerUnit: uvPerUnit, isReady: ready, vertexRange: vertices, indexRange: indices
+            uvPerUnit: uvPerUnit, lodIndexCounts: levels, isReady: ready,
+            vertexRange: vertices, indexRange: indices
         )
     }
 

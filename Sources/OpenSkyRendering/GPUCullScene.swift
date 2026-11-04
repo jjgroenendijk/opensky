@@ -305,6 +305,8 @@ private struct GPUCullSceneBuilder {
     mutating func add(_ group: DrawGroup) -> Int? {
         guard
             !group.instances.isEmpty,
+            // A LOD mesh picks its detail level per instance on the CPU.
+            group.mesh.lodIndexCounts.isEmpty,
             // A region's emittance changes with the hour, so it is written every frame.
             group.instances.allSatisfy({ $0.referenceFormID == 0 && $0.emittance?.region == nil })
         else { return nil }

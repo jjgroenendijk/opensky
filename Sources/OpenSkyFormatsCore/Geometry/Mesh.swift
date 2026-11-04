@@ -27,6 +27,8 @@ nonisolated public struct Mesh: Sendable {
     /// Nil for rigid geometry. Skinned meshes carry four influences per
     /// vertex + bind-pose matrices for the GPU skinning path.
     public let skinning: MeshSkinning?
+    /// The index count of each detail level (`MeshLODLevels`); empty for one level.
+    public let lodIndexCounts: [Int]
 
     public init(
         name: String?,
@@ -39,7 +41,8 @@ nonisolated public struct Mesh: Sendable {
         colors: [SIMD4<Float>],
         indices: [UInt16],
         materialSlot: Int,
-        skinning: MeshSkinning? = nil
+        skinning: MeshSkinning? = nil,
+        lodIndexCounts: [Int] = []
     ) {
         self.name = name
         self.transform = transform
@@ -52,6 +55,7 @@ nonisolated public struct Mesh: Sendable {
         self.indices = indices
         self.materialSlot = materialSlot
         self.skinning = skinning
+        self.lodIndexCounts = lodIndexCounts
     }
 }
 
