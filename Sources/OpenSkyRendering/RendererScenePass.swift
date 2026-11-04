@@ -100,7 +100,9 @@ extension Renderer {
             debugMode: renderDebug.mode.rawValue,
             shadingTerms: shadingTerms.rawValue,
             sceneDepthUnproject: sceneDepthUnproject,
-            terrainLODBrightening: terrainLODBrightness.uniform
+            terrainLODBrightening: terrainLODBrightness.uniform,
+            precipitationOcclusion: precipitationOcclusionView ?? matrix_identity_float4x4,
+            precipitationOcclusionEnabled: precipitationOcclusionView == nil ? 0 : 1
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -425,6 +427,10 @@ extension Renderer {
         argumentTable.setTexture(
             shadow.map.gpuResourceID,
             index: TextureIndex.shadowMap.rawValue
+        )
+        argumentTable.setTexture(
+            (auxiliaryShadow?.map ?? shadow.map).gpuResourceID,
+            index: TextureIndex.auxiliaryShadowMap.rawValue
         )
         argumentTable.setSamplerState(
             shadow.sampler.gpuResourceID,

@@ -37,6 +37,24 @@ vertex ParticleVertexOut particleVertex(
     return out;
 }
 
+// Rain occlusion: the top-down view keeps the highest surface over each texel, so a
+// drop below it, by more than a little, is under a roof.
+static bool precipitationOccluded(
+    float3 world, constant FrameUniforms &frame, depth2d_array<float> auxiliary)
+{
+    if (frame.precipitationOcclusionEnabled == 0) {
+        return false;
+    }
+    float4 view = frame.precipitationOcclusion * float4(world, 1.0);
+    float2 uv = view.xy * float2(0.5, -0.5) + 0.5;
+    if (any(uv < 0.0) || any(uv > 1.0) || view.z <= 0.0 || view.z >= 1.0) {
+        return false;
+    }
+    constexpr sampler nearest(filter::nearest, address::clamp_to_edge);
+    float roof = auxiliary.sample(nearest, uv, ShadowConstantPrecipitationSlice);
+    return view.z > roof + 0.002;
+}
+
 // A particle shades like an effect shape that faces the eye: the particle colour is
 // its vertex colour (docs/rendering/particles.md).
 fragment float4 particleFragment(
@@ -47,8 +65,13 @@ fragment float4 particleFragment(
     texture2d<float> sourceMap [[texture(TextureIndexDiffuse)]],
     texture2d<float> palette [[texture(TextureIndexEffectPalette)]],
     depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
+    depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]])
 {
+    if ((effect.flags & EffectFlagPrecipitation) != 0
+        && precipitationOccluded(in.worldPosition, frame, auxiliary)) {
+        discard_fragment();
+    }
     float3 toEye = normalize(frame.cameraPosition - in.worldPosition);
     float4 shaded = effectShade(
         sourceMap.sample(trilinear, in.texcoord), in.color, toEye, toEye,

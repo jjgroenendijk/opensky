@@ -47,6 +47,7 @@ extension Renderer {
             actors: store.value(.fadeActors), items: store.value(.fadeItems),
             objects: store.value(.fadeObjects)
         )
+        precipitationOcclusionEnabled = store.bool(.precipitationOcclusion)
         meshLODDistances = MeshLODDistances(
             level1: store.value(.meshLODLevel1), level2: store.value(.meshLODLevel2)
         )

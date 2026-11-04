@@ -145,10 +145,7 @@ nonisolated public enum GraphicsOptions {
             .effects, "Projected diffuse normals", "Display", "bEnableProjecteUVDiffuseNormals",
             "OpenSky has no projected UV shader"
         ),
-        option(
-            .effects, "Rain occlusion", "Display", "bUsePrecipitationOcclusion",
-            "OpenSky does not hide rain under roofs yet"
-        ),
+        option(.effects, "Rain occlusion", "Display", "bUsePrecipitationOcclusion"),
         option(.decals, "Decals", "Decals", "bDecals"),
         option(.decals, "Skin decals", "Decals", "bSkinnedDecals", noSkinDecals),
         option(.decals, "Decals per frame", "Display", "iMaxDecalsPerFrame"),
@@ -181,7 +178,7 @@ nonisolated public enum GraphicsOptions {
         case "fTreeLoadDistance": Double(fallback.treeLoadDistance)
         case "uGridsToLoad": Double(TerrainLODConfiguration.defaultGridsToLoad)
         case "fSplitDistanceMult": 1
-        case "bDecals": 1
+        case "bDecals", "bUsePrecipitationOcclusion": 1
         case "uMaxDecals": 100
         default: 0
         }

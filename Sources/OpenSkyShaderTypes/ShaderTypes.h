@@ -116,6 +116,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     TextureIndexTerrainLayerNormal0 = 17,
     /// An effect shape's source when the file is a volume, after the terrain normal slots.
     TextureIndexEffectSourceVolume = 25,
+    /// Focus shadows and the precipitation occlusion map (depth2d_array). The cascade
+    /// array stands in until an option builds it.
+    TextureIndexAuxiliaryShadowMap = 26,
     /// A lit mesh binds NIF texture-set slot N at index N, over the terrain layer
     /// slots, which only terrain draws read. Every draw binds all of them.
     TextureIndexSurfaceNormal = 1,
@@ -153,6 +156,10 @@ typedef NS_ENUM(EnumBackingType, LightingConstant)
 typedef NS_ENUM(EnumBackingType, ShadowConstant)
 {
     ShadowConstantCascadeCount = 3,
+    /// Slices of the auxiliary array: the focus shadows, then the precipitation view.
+    ShadowConstantFocusCount = 4,
+    ShadowConstantPrecipitationSlice = 4,
+    ShadowConstantAuxiliarySliceCount = 5,
 };
 
 typedef NS_ENUM(EnumBackingType, SamplerIndex)
@@ -199,6 +206,8 @@ typedef NS_ENUM(EnumBackingType, EffectFlag)
     EffectFlagExternalEmittance = 1 << 8,
     /// The source is a volume, bound at TextureIndexEffectSourceVolume.
     EffectFlagSourceVolume = 1 << 9,
+    /// Rain or snow: hidden where the precipitation occlusion map has a roof above it.
+    EffectFlagPrecipitation = 1 << 10,
 };
 
 /// Lit-mesh shading terms: DrawUniforms.materialFlags says which a material has,
@@ -355,6 +364,10 @@ typedef struct
     vector_float4 sceneDepthUnproject;
     /// Terrain LOD brightening the noise term undoes: x = gain, y = exponent, in gamma.
     vector_float2 terrainLODBrightening;
+    /// World to the top-down occlusion view: xy to clip, z to depth from its top.
+    matrix_float4x4 precipitationOcclusion;
+    /// 1 when the occlusion slice of the auxiliary shadow array holds this frame's roofs.
+    unsigned int precipitationOcclusionEnabled;
 } FrameUniforms;
 
 /// Per-group material scalars for one instanced static-mesh draw, shared by every

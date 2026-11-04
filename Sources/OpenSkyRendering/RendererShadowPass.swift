@@ -57,23 +57,26 @@ nonisolated public struct ShadowDrawStats: Equatable, Sendable {
 extension Renderer {
     /// Per-cascade encode context: the open depth encoder plus the cascade's
     /// transform, caster-culling frustum, and this frame's ring slot.
-    private struct ShadowCascadeContext {
+    struct ShadowCascadeContext {
         let cascade: ShadowCascade
         let frustum: Frustum
         let encoder: MTL4RenderCommandEncoder
-        /// The cull view: 0 is the camera, so cascade `i` is `1 + i`.
+        /// The cull view: 0 is the camera, so cascade `i` is `1 + i`. Negative culls on
+        /// the CPU, for the auxiliary views the GPU cull does not know.
         let cullView: Int
     }
 
     /// Running cursors + stats threaded through one frame's cascade encodes.
     /// `base` is this frame slot's shadow instance-ring origin; `instanceCursor`
     /// advances as each cascade appends its surviving-caster run.
-    private struct ShadowPassState {
+    struct ShadowPassState {
         let slot: Int
         let base: Int
         var instanceCursor = 0
         var drawCursor = 0
         var stats = ShadowDrawStats()
+        /// Nil writes into the cascade rings; an auxiliary view has its own.
+        var rings: AuxiliaryShadowRings?
     }
 
     // MARK: - Quality parameters
@@ -173,6 +176,7 @@ extension Renderer {
             viewProjections: [projection * frameInput.view.viewMatrix()]
                 + cascades.map(\.viewProjection)
         )
+        guard encodeAuxiliaryShadowViews(slot: slot) else { return false }
         guard !cascades.isEmpty else { return true }
 
         var state = ShadowPassState(slot: slot, base: slot * shadowInstanceSlotCapacity)
@@ -215,14 +219,7 @@ extension Renderer {
         for (index, cascade) in cascades.enumerated() {
             guard let encoder = makeShadowEncoder(cascade: index) else { return false }
             encoder.label = "Shadow Cascade \(index)"
-            encoder.setArgumentTable(argumentTable, stages: [.vertex, .fragment])
-            encoder.setDepthStencilState(depthState)
-            encoder.setFrontFacing(.counterClockwise)
-            encoder.setDepthBias(Self.shadowDepthBias, slopeScale: Self.shadowSlopeScale, clamp: 0)
-            argumentTable.setSamplerState(
-                sampler.gpuResourceID,
-                index: SamplerIndex.trilinear.rawValue
-            )
+            configureShadowEncoder(encoder)
             let context = ShadowCascadeContext(
                 cascade: cascade,
                 frustum: Frustum(viewProjection: cascade.viewProjection),
@@ -257,6 +254,18 @@ extension Renderer {
         return true
     }
 
+    /// The depth state, winding, bias, and sampler every shadow view draws with.
+    func configureShadowEncoder(_ encoder: MTL4RenderCommandEncoder) {
+        encoder.setArgumentTable(argumentTable, stages: [.vertex, .fragment])
+        encoder.setDepthStencilState(depthState)
+        encoder.setFrontFacing(.counterClockwise)
+        encoder.setDepthBias(Self.shadowDepthBias, slopeScale: Self.shadowSlopeScale, clamp: 0)
+        argumentTable.setSamplerState(
+            sampler.gpuResourceID,
+            index: SamplerIndex.trilinear.rawValue
+        )
+    }
+
     /// World-AABB union of every resident caster (opaque + alphaTested +
     /// terrain), used to clamp each cascade's caster backup. Only movable casters
     /// merge here; the rest was built with the scene. nil when any caster is
@@ -276,10 +285,11 @@ extension Renderer {
     /// Per group: cull per instance against this cascade's frustum, append the
     /// survivors' transforms into the shadow instance ring, draw once with the
     /// surviving instanceCount. Pipeline switches lazily on caster kind.
-    private func encodeCasterGroups(
+    func encodeCasterGroups(
         _ groups: [DrawGroup],
         list: GPUCullList,
         in context: ShadowCascadeContext,
+        excluding: RenderLayer = [],
         state: inout ShadowPassState
     ) {
         let alphaTested = list == .alphaTested
@@ -287,7 +297,7 @@ extension Renderer {
         // The same mask the scene pass uses. Hiding the statics while their
         // shadows still fell on the terrain would make the tool actively
         // misleading — the frame would show a shadow with no caster.
-        let layers = effectiveRenderLayers
+        let layers = effectiveRenderLayers.subtracting(excluding)
         for (index, group) in groups.enumerated()
             where group.castsShadows && layers.contains(group.layer)
         {
@@ -319,10 +329,11 @@ extension Renderer {
         in context: ShadowCascadeContext,
         state: inout ShadowPassState
     ) -> VisibleInstances? {
-        switch gpuVisibility(
+        let visibility = context.cullView < 0 ? .cpu : gpuVisibility(
             of: index, in: list, view: context.cullView, slot: state.slot,
             frustum: context.frustum
-        ) {
+        )
+        switch visibility {
         case .skipped:
             return nil
         case let .drawn(visible):
@@ -332,7 +343,8 @@ extension Renderer {
             guard run.written > 0 else { return nil }
             return .packed(
                 count: run.written,
-                address: shadowInstanceBuffer.gpuAddress + UInt64(run.byteOffset)
+                address: (state.rings?.instances ?? shadowInstanceBuffer).gpuAddress
+                    + UInt64(run.byteOffset)
             )
         }
     }
@@ -348,8 +360,10 @@ extension Renderer {
     ) -> (written: Int, byteOffset: Int) {
         let stride = MemoryLayout<InstanceTransform>.stride
         let base = state.base + state.instanceCursor
+        let buffer = state.rings?.instances ?? shadowInstanceBuffer
+        let room = state.rings.map { $0.instanceLimit - state.instanceCursor } ?? .max
         var written = 0
-        for placed in group.instances {
+        for placed in group.instances where written < room {
             // Same substitution the scene pass makes, so a moving body's shadow
             // travels with it (RendererDynamicPose.swift).
             let instance = drawn(placed)
@@ -366,7 +380,7 @@ extension Renderer {
                 instanceColor: SIMD4(1, 1, 1, 1),
                 grassParameters: .zero
             )
-            shadowInstanceBuffer.contents()
+            buffer.contents()
                 .advanced(by: (base + written) * stride)
                 .copyMemory(from: &transform, byteCount: MemoryLayout<InstanceTransform>.size)
             written += 1
@@ -385,13 +399,14 @@ extension Renderer {
         in context: ShadowCascadeContext,
         state: inout ShadowPassState
     ) {
-        let uniformOffset = writeShadowDrawUniforms(
-            slot: state.slot,
-            draw: state.drawCursor,
-            lightViewProjection: context.cascade.viewProjection,
-            modelMatrix: matrix_identity_float4x4,
-            material: group.material
-        )
+        guard
+            let uniformOffset = writeShadowDrawUniforms(
+                state: state,
+                lightViewProjection: context.cascade.viewProjection,
+                modelMatrix: matrix_identity_float4x4,
+                material: group.material
+            )
+        else { return }
         state.drawCursor += 1
         state.stats.drawCalls += 1
         argumentTable.setAddress(
@@ -399,7 +414,7 @@ extension Renderer {
             index: BufferIndex.vertices.rawValue
         )
         argumentTable.setAddress(
-            shadowDrawUniformBuffer.gpuAddress + UInt64(uniformOffset),
+            (state.rings?.draws ?? shadowDrawUniformBuffer).gpuAddress + UInt64(uniformOffset),
             index: BufferIndex.drawUniforms.rawValue
         )
         argumentTable.setAddress(
@@ -420,7 +435,7 @@ extension Renderer {
         context.encoder.drawInstances(of: group.mesh, visible)
     }
 
-    private func encodeShadowTerrain(
+    func encodeShadowTerrain(
         in context: ShadowCascadeContext,
         state: inout ShadowPassState
     ) {
@@ -436,13 +451,14 @@ extension Renderer {
                 encoder.setRenderPipelineState(shadow.pipelines.terrain)
                 pipelineBound = true
             }
-            let uniformOffset = writeShadowDrawUniforms(
-                slot: state.slot,
-                draw: state.drawCursor,
-                lightViewProjection: context.cascade.viewProjection,
-                modelMatrix: item.modelMatrix,
-                material: item.material
-            )
+            guard
+                let uniformOffset = writeShadowDrawUniforms(
+                    state: state,
+                    lightViewProjection: context.cascade.viewProjection,
+                    modelMatrix: item.modelMatrix,
+                    material: item.material
+                )
+            else { return }
             state.drawCursor += 1
             state.stats.drawCalls += 1
             state.stats.drawnInstances += 1
@@ -451,7 +467,8 @@ extension Renderer {
                 index: BufferIndex.vertices.rawValue
             )
             argumentTable.setAddress(
-                shadowDrawUniformBuffer.gpuAddress + UInt64(uniformOffset),
+                (state.rings?.draws ?? shadowDrawUniformBuffer).gpuAddress
+                    + UInt64(uniformOffset),
                 index: BufferIndex.drawUniforms.rawValue
             )
             encoder.setCullMode(.back)
@@ -468,9 +485,12 @@ extension Renderer {
     // MARK: - Shared binds
 
     /// Depth-only render pass targeting one cascade slice of the shadow array.
-    private func makeShadowEncoder(cascade: Int) -> MTL4RenderCommandEncoder? {
+    func makeShadowEncoder(
+        cascade: Int,
+        target: MTLTexture? = nil
+    ) -> MTL4RenderCommandEncoder? {
         let descriptor = MTL4RenderPassDescriptor()
-        descriptor.depthAttachment.texture = shadow.map
+        descriptor.depthAttachment.texture = target ?? shadow.map
         descriptor.depthAttachment.slice = cascade
         descriptor.depthAttachment.loadAction = .clear
         descriptor.depthAttachment.storeAction = .store
@@ -512,14 +532,17 @@ extension Renderer {
     /// Writes one ShadowDrawUniforms into the shadow draw ring at
     /// (slot, draw). Ring stride is ShadowConstantCascadeCount * the draw-slot
     /// capacity, so every cascade's draws for the frame fit without collision.
+    /// Nil when an auxiliary view's ring is full; the draw is then skipped.
     private func writeShadowDrawUniforms(
-        slot: Int,
-        draw: Int,
+        state: ShadowPassState,
         lightViewProjection: float4x4,
         modelMatrix: float4x4,
         material: RenderMaterial
-    ) -> Int {
-        let capacity = Self.shadowDrawCapacity(drawUniformSlotCapacity)
+    ) -> Int? {
+        let (slot, draw) = (state.slot, state.drawCursor)
+        let buffer = state.rings?.draws ?? shadowDrawUniformBuffer
+        let capacity = state.rings?.drawLimit ?? Self.shadowDrawCapacity(drawUniformSlotCapacity)
+        guard draw < capacity else { return nil }
         let offset = Self.alignedDrawUniformsSize * (slot * capacity + draw)
         var uniforms = ShadowDrawUniforms(
             lightViewProjection: lightViewProjection,
@@ -528,7 +551,7 @@ extension Renderer {
             uvScale: material.uvScale,
             alphaThreshold: material.alphaTestThreshold ?? 0
         )
-        shadowDrawUniformBuffer.contents().advanced(by: offset)
+        buffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<ShadowDrawUniforms>.size)
         return offset
     }

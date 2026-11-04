@@ -154,6 +154,7 @@ the detail and the sources it did find.
 | Shadow map size cap | 4096; the game allows more | [graphics options](/engine/graphics-options.md) |
 | Reference fade reach | Multiplier x 16 x bound radius, 15% dissolve | [graphics options](/engine/graphics-options.md) |
 | `BSLODTriShape` level counts | Prefixes when falling, else runs | [NIF](/formats/nif.md#nitrishape) |
+| Rain occlusion view size | 4,096 units square, 1,024 texels | [precipitation](/rendering/precipitation.md#roof-occlusion) |
 | Water UV density | 2 quads per repeat | [scene drawing](/rendering/scene-drawing.md) |
 | Clear colour under water | OpenSky's choice | [Metal 4 renderer](/rendering/metal4-renderer.md) |
 | Light flicker curves, period unit, slow factor | OpenSky's values | [lighting](/formats/lighting.md) |

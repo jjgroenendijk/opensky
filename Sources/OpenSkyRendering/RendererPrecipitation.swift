@@ -20,7 +20,13 @@ extension Renderer {
             deltaTime: deltaTime,
             exterior: scene.sky != nil && scene.lighting == nil,
             enabled: precipitationEnabled,
-            collisionQuery: frameInput.collisionQuery
+            collisionQuery: precipitationCameraRoofCheck ? frameInput.collisionQuery : nil
         ))
+    }
+
+    /// The game hides rain per drop with its occlusion map; this whole-volume check under
+    /// the camera stands in only when the option is on and the GPU could not build the map.
+    private var precipitationCameraRoofCheck: Bool {
+        precipitationOcclusionEnabled && auxiliaryShadowUnavailable
     }
 }

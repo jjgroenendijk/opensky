@@ -2,7 +2,7 @@
 type: Subsystem
 title: Precipitation volumes
 description: Rain and snow as two camera-following particle volumes - intensity from the WTHR
-  classification and the weather transition, storm sky darkening, the moving volume, single-ray roof
+  classification and the weather transition, storm sky darkening, the moving volume, per-drop roof
   occlusion, and the Weather controls.
 tags: [rendering, precipitation, weather, particles, collision, metal]
 ---
@@ -49,13 +49,23 @@ drawing. Going back to clear weather sets the birth rate to zero, and existing p
 
 ## Roof occlusion
 
-While precipitation is active, one ray goes up from the camera, up to 4,096 units, through the
-loaded [static collision](/engine/collision-world.md). The broad phase asks each cell's tree for a
-thin vertical box. The narrow phase tests triangle soups, convex hull faces, and boxes exactly, from
-both sides. Curved shapes use their world box, which is safe. Any hit clears the volume until the
-ray is open again. This is a single-point roof test on purpose.
+The game's `[Display] bUsePrecipitationOcclusion` turns roof occlusion on
+([graphics options](/engine/graphics-options.md)). While rain or snow falls, the shadow pass draws
+one more depth view: it looks straight down on a 4,096-unit square around the camera, from 6,000
+units above the camera to 4,000 below, at 1,024 texels a side. It keeps the highest caster over
+each texel. Actors are left out. The view lives in a second depth array beside the sun cascades,
+built the first time an option needs it.
+
+The particle shader compares each drop with that depth. A drop more than a little below the
+highest surface is under a roof and is discarded. So rain still falls outside a window seen from
+under a roof.
+
+When the GPU cannot make the depth array, one ray goes up from the camera, up to 4,096 units,
+through the loaded [static collision](/engine/collision-world.md). Any hit clears the whole
+volume until the ray is open again. When the option is off, rain falls through roofs, as in the
+game.
 
 ## Not done
 
-- Roof masks from several rays, precipitation collision, splashes, and snow building up.
+- Precipitation collision, splashes, and snow building up.
 - Streak shapes separate from the square billboards.

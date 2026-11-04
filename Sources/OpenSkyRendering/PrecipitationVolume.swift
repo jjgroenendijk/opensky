@@ -34,6 +34,7 @@ nonisolated public struct PrecipitationUpdate {
     public let deltaTime: Float
     public let exterior: Bool
     public let enabled: Bool
+    /// Nil when nothing hides rain under a roof, or when the occlusion map does it per drop.
     public let collisionQuery: CapsuleWorldCollider.CandidateQuery?
 }
 
@@ -63,6 +64,7 @@ nonisolated public final class PrecipitationVolume {
             definition: Self.rainDefinition,
             placementTransform: matrix_identity_float4x4,
             texture: Self.makeRainTexture(device: device),
+            effect: .precipitation,
             seed: 0x5241_494E,
             sourcePath: "(generated rain)"
         )
@@ -71,6 +73,7 @@ nonisolated public final class PrecipitationVolume {
             definition: Self.snowDefinition,
             placementTransform: matrix_identity_float4x4,
             texture: Self.makeSnowTexture(device: device),
+            effect: .precipitation,
             seed: 0x534E_4F57,
             sourcePath: "(generated snow)"
         )

@@ -95,6 +95,14 @@ public final class Renderer: NSObject {
     public internal(set) var shadow: ShadowResources
     /// How far actors, items, and objects stay drawn (`RendererReferenceFade.swift`).
     public var referenceFades = ReferenceFadeDistances.off
+    /// The depth array of the focus shadows and the rain occlusion view, built on first use.
+    var auxiliaryShadow: AuxiliaryShadowResources?
+    /// Set when the device could not make the auxiliary array.
+    var auxiliaryShadowUnavailable = false
+    /// The game's `bUsePrecipitationOcclusion` (`RendererAuxiliaryShadows.swift`).
+    public var precipitationOcclusionEnabled = true
+    /// This frame's rain occlusion view, when it was drawn.
+    var precipitationOcclusionView: float4x4?
     /// Where `BSLODTriShape` meshes switch detail (`RendererMeshLOD.swift`).
     public var meshLODDistances = MeshLODDistances.off
     /// The game's shadow distance and map size (`RendererShadowSettings.swift`).
