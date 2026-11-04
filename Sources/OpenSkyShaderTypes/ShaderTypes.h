@@ -71,6 +71,8 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     /// MenuSceneVertex array and MenuSceneUniforms of one menu-scene draw.
     BufferIndexMenuSceneVertices = 27,
     BufferIndexMenuSceneUniforms = 28,
+    /// PostEffectUniforms of the image-space composite.
+    BufferIndexPostEffectUniforms = 29,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)

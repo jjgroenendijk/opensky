@@ -197,8 +197,8 @@ extension Renderer {
     /// Textures: base diffuse + the terrain layer array.
     public static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        // Highest buffer index is the menu-scene uniforms.
-        descriptor.maxBufferBindCount = BufferIndex.menuSceneUniforms.rawValue + 1
+        // Highest buffer index is the post-effect uniforms.
+        descriptor.maxBufferBindCount = BufferIndex.postEffectUniforms.rawValue + 1
         // The auxiliary shadow array is the highest slot.
         descriptor.maxTextureBindCount = TextureIndex.auxiliaryShadowMap.rawValue + 1
         // Trilinear + shadow-compare + UI clamp + SWF repeat.

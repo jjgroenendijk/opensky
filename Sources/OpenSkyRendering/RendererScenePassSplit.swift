@@ -21,7 +21,7 @@ extension Renderer {
     ) -> ScenePassState? {
         state.encoder.endEncoding()
         guard
-            let target = copyTarget(matching: copy.source, at: copy.target, label: copy.label),
+            let target = keptCopy(matching: copy.source, at: copy.target, label: copy.label),
             let blit = commandBuffer.makeComputeCommandEncoder()
         else { return nil }
         blit.label = "\(copy.label)Copy"
@@ -46,7 +46,7 @@ extension Renderer {
     }
 
     /// The kept copy when it still matches `source`, else a new one in the residency set.
-    private func copyTarget(
+    func keptCopy(
         matching source: MTLTexture,
         at path: ReferenceWritableKeyPath<Renderer, MTLTexture?>,
         label: String

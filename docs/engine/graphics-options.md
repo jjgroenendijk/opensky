@@ -48,6 +48,7 @@ player's own `SkyrimPrefs.ini` shows through as the default.
 | `fLODFadeOutMultActors`, `fLODFadeOutMultItems`, `fLODFadeOutMultObjects` | A placed reference is drawn up to multiplier x 16 x its bound radius (at least 32) from the camera, and dissolves over the last 15% of that reach. Actors use the actor value, references a rigid body moves the item value, other statics the object value. A faded reference casts no shadow. 0 never fades |
 | `fGrassStartFadeDistance` | Grass starts to thin out at this distance, and is gone at the distance / 0.7, inside 512 to 16384 units. 0 keeps OpenSky's 8192-unit grass reach |
 | `fMeshLODLevel1FadeDist`, `fMeshLODLevel2FadeDist` | Past each distance from the camera, a `BSLODTriShape` instance draws its next coarser level ([NIF](/formats/nif.md#nitrishape)). Such meshes stay on the CPU cull path, which writes the instances grouped by level. Shadows keep full detail. 0 never switches |
+| `bSAOEnable` | Screen-space ambient occlusion in the image-space composite ([post effects](/rendering/post-effects.md#ambient-occlusion)) |
 
 An option that is not in this table is shown, saved, and disabled, with one line that says why it
 does nothing yet. So a player sees what the game would change, and an option that starts to work

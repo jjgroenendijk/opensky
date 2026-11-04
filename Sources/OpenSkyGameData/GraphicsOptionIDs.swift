@@ -14,4 +14,5 @@ nonisolated extension PlayerSettingID {
     public static let precipitationOcclusion = Self("graphics.bUsePrecipitationOcclusion")
     public static let focusShadows = Self("graphics.iNumFocusShadow")
     public static let snowSparkles = Self("graphics.bToggleSparkles")
+    public static let ambientOcclusion = Self("graphics.bSAOEnable")
 }

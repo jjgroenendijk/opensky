@@ -19,6 +19,13 @@ extension UpscalerKind {
     }
 }
 
+extension PostEffectSettings {
+    public init(store: PlayerSettingsStore) {
+        self.init()
+        ambientOcclusion = store.bool(.ambientOcclusion)
+    }
+}
+
 extension GameSession {
     /// The renderer's GPU features, and the tone mapping the frame input carries.
     public func applyGraphicsSettings(_ store: PlayerSettingsStore) {
@@ -48,6 +55,7 @@ extension Renderer {
             objects: store.value(.fadeObjects)
         )
         precipitationOcclusionEnabled = store.bool(.precipitationOcclusion)
+        postEffects = PostEffectSettings(store: store)
         let focus = store.value(.focusShadows)
         focusShadowCount = focus.isFinite ? Int(min(max(focus, 0), 4)) : 0
         meshLODDistances = MeshLODDistances(

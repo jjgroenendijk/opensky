@@ -313,6 +313,10 @@ public final class Renderer: NSObject {
     var eyeAdaptationClock = FrameSimClock()
     /// Scene depth under the water surface (RendererWaterPass.swift).
     public var waterDepth = WaterDepthState()
+    /// Screen-space effects the composite draws (RendererPostEffects.swift).
+    public var postEffects = PostEffectSettings()
+    var postEffectDepth: MTLTexture?
+    var sceneProjection = matrix_identity_float4x4
     var refraction = RefractionState()
     /// Terrain bends its lighting by the TX01 normal maps of its texture sets.
     public var terrainNormalMapsEnabled = true

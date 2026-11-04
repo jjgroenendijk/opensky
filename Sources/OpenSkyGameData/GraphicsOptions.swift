@@ -61,7 +61,6 @@ nonisolated public enum GraphicsOptions {
         )
     }
 
-    private static let noSSAO = "OpenSky has no screen-space ambient occlusion yet"
     private static let noSkinDecals = "OpenSky draws no decals on actors yet"
 
     public static let all: [GraphicsOption] = [
@@ -84,7 +83,7 @@ nonisolated public enum GraphicsOptions {
         option(.shadows, "Shadow distance", "Display", "fShadowDistance"),
         option(.shadows, "Shadow resolution", "Display", "iShadowMapResolution"),
         option(.shadows, "Focus shadows", "Display", "iNumFocusShadow"),
-        option(.lighting, "Ambient occlusion", "Display", "bSAOEnable", noSSAO),
+        option(.lighting, "Ambient occlusion", "Display", "bSAOEnable"),
         option(
             .lighting,
             "Image-based lighting",

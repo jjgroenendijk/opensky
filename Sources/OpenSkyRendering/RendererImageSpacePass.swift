@@ -19,6 +19,8 @@ public final class ImageSpacePassResources {
     /// Grades the pixel in tile memory, so the scene pass needs no copy and no stored depth.
     public let tilePipeline: MTLRenderPipelineState
     public let uniformBuffer: MTLBuffer
+    /// The `PostEffectUniforms` per frame slot.
+    public let postUniformBuffer: MTLBuffer
     /// The tone-mapping luminance sum and sample count per frame slot.
     public let luminanceBuffer: MTLBuffer
     /// Sized to the last target; replaced when the target size or format changes.
@@ -28,6 +30,7 @@ public final class ImageSpacePassResources {
     public private(set) var storedDepth: MTLTexture?
 
     static let uniformStride = (MemoryLayout<ImageSpaceUniforms>.size + 0xFF) & -0x100
+    static let postUniformStride = (MemoryLayout<PostEffectUniforms>.size + 0xFF) & -0x100
 
     init(
         device: MTLDevice,
@@ -51,6 +54,14 @@ public final class ImageSpacePassResources {
         else { throw RendererError.bufferAllocationFailed }
         buffer.label = "ImageSpaceUniforms"
         uniformBuffer = buffer
+        guard
+            let post = device.makeBuffer(
+                length: Self.postUniformStride * GPUFactory.maxFramesInFlight,
+                options: .storageModeShared
+            )
+        else { throw RendererError.bufferAllocationFailed }
+        post.label = "PostEffectUniforms"
+        postUniformBuffer = post
         guard
             let luminance = device.makeBuffer(
                 length: Self.luminanceStride * GPUFactory.maxFramesInFlight,
@@ -165,12 +176,17 @@ public final class ImageSpacePassResources {
 /// The grade one frame draws.
 struct ImageSpaceGrade {
     let uniforms: ImageSpaceUniforms
-    /// Blur and double vision sample other pixels, which tile memory cannot reach.
+    /// The screen-space effects; nil when none is on.
+    let post: PostEffectUniforms?
+    /// Blur, double vision, and the screen-space effects sample other pixels, which
+    /// tile memory cannot reach.
     let splitsPass: Bool
 
-    init(uniforms: ImageSpaceUniforms, alwaysSplits: Bool) {
+    init(uniforms: ImageSpaceUniforms, post: PostEffectUniforms? = nil, alwaysSplits: Bool) {
         self.uniforms = uniforms
-        splitsPass = alwaysSplits || uniforms.grading.w > 0.5 || uniforms.extra.x > 0
+        self.post = post
+        splitsPass = alwaysSplits || post != nil || uniforms.grading.w > 0.5
+            || uniforms.extra.x > 0
     }
 }
 
@@ -191,9 +207,9 @@ extension Renderer {
         } else if !toneMaps {
             eyeAdaptation.reset()
         }
-        guard
-            frameInput.imageSpace.passEnabled, toneMaps || !parameters.isNeutral,
-            let target = descriptor.colorAttachments[0].texture
+        let post = postEffectUniforms()
+        let grades = frameInput.imageSpace.passEnabled && (toneMaps || !parameters.isNeutral)
+        guard grades || post != nil, let target = descriptor.colorAttachments[0].texture
         else { return nil }
         let toneMapping = toneMaps
             ? SIMD4(
@@ -203,8 +219,10 @@ extension Renderer {
             : SIMD4(1, 0, 0, 0)
         return ImageSpaceGrade(
             uniforms: Self.uniforms(
-                parameters, targetHeight: target.height, toneMapping: toneMapping
+                grades ? parameters : .neutral, targetHeight: target.height,
+                toneMapping: toneMapping
             ),
+            post: post,
             alwaysSplits: imageSpaceAlwaysSplits
         )
     }
@@ -292,11 +310,18 @@ extension Renderer {
         guard
             let target = descriptor.colorAttachments[0].texture,
             let copy = imageSpacePass.copyTarget(matching: target, residency: residencySet),
+            let depthCopy = postEffectDepthCopy(grade, descriptor: descriptor),
             let blit = commandBuffer.makeComputeCommandEncoder()
         else { return nil }
         blit.label = "ImageSpaceCopy"
         blit.barrier(afterQueueStages: .fragment, beforeStages: .blit, visibilityOptions: .device)
         blit.copy(sourceTexture: target, destinationTexture: copy)
+        if let depth = descriptor.depthAttachment.texture, let destination = depthCopy.copy {
+            blit.copy(sourceTexture: depth, destinationTexture: destination)
+            argumentTable.setTexture(
+                destination.gpuResourceID, index: TextureIndex.sceneDepth.rawValue
+            )
+        }
         blit.barrier(afterStages: .blit, beforeQueueStages: .fragment, visibilityOptions: .device)
         blit.endEncoding()
         guard
@@ -331,6 +356,14 @@ extension Renderer {
             imageSpacePass.luminanceBuffer.gpuAddress
                 + UInt64(ImageSpacePassResources.luminanceStride * slot),
             index: BufferIndex.imageSpaceLuminance.rawValue
+        )
+        var post = grade.post ?? PostEffectUniforms()
+        let postOffset = ImageSpacePassResources.postUniformStride * slot
+        imageSpacePass.postUniformBuffer.contents().advanced(by: postOffset)
+            .copyMemory(from: &post, byteCount: MemoryLayout<PostEffectUniforms>.size)
+        argumentTable.setAddress(
+            imageSpacePass.postUniformBuffer.gpuAddress + UInt64(postOffset),
+            index: BufferIndex.postEffectUniforms.rawValue
         )
     }
 

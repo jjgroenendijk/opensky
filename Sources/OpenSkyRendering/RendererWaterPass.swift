@@ -35,6 +35,7 @@ extension Renderer {
     /// Runs before the frame uniforms, which tell the shaders whether the copy is bound.
     func planSceneDepthCopy(projection: float4x4) {
         waterDepth.unproject = WaterDepthState.unproject(projection)
+        sceneProjection = projection
         let perspective = waterDepth.unproject != nil && !isRenderDebugActive
         waterDepth.waterReads = perspective && waterDepth.enabled && !scene.water.isEmpty
             && effectiveRenderLayers.contains(.water)
