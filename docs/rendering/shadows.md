@@ -45,8 +45,8 @@ depth-only encoder, cleared to 1. The pre-pass runs on the same command buffer b
 pass, in the window and offscreen alike.
 
 Casters are opaque and alpha-test groups, static and skinned, and terrain. Water, sky, and distant
-LOD never cast. Alpha-test groups keep their cutout in the shadow (sample the texture, discard).
-Skinned cutouts cast solid, which is safe but not exact.
+LOD never cast. Alpha-test groups keep their cutout in the shadow (sample the texture, discard), skinned
+and morphed ones included, so hair and fur cards cast a cut-out shadow.
 
 Each cascade draws only the instances whose box meets that cascade's frustum. An instance with no
 box is drawn. The survivors go in the shadow pass's own instance ring, sized cascades times the
@@ -112,4 +112,3 @@ second frame (33.33 ms) with some room over measured Whiterun runs. The benchmar
 ## Not done
 
 - Shadows from interior point lights.
-- Alpha cutouts on skinned casters in the depth pass.

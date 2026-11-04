@@ -69,6 +69,9 @@ nonisolated public struct ShadowPipelines: Sendable {
     public let alphaTest: MTLRenderPipelineState
     public let skinned: MTLRenderPipelineState
     public let morphedSkinned: MTLRenderPipelineState
+    /// Skinned cutouts, such as hair and fur cards: sample the texture and discard.
+    public let skinnedAlphaTest: MTLRenderPipelineState
+    public let morphedSkinnedAlphaTest: MTLRenderPipelineState
     public let terrain: MTLRenderPipelineState
 }
 
