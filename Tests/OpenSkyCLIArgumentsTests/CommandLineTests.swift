@@ -73,7 +73,10 @@ struct CommandLineTests {
                 "--imad-at",
                 "1",
                 "--size",
-                "640x360"
+                "640x360",
+                "--set",
+                "graphics.bSAOEnable=on,graphics.bLensFlare=1",
+                "--face-sun"
             ],
             as: RenderArguments.self
         )
@@ -81,6 +84,8 @@ struct CommandLineTests {
         #expect(shot.timeOfDay == 6)
         #expect(shot.effects.imadAt == 1)
         #expect(shot.size == PixelSize(width: 640, height: 360))
+        #expect(shot.effects.settings?.items == ["graphics.bSAOEnable=on", "graphics.bLensFlare=1"])
+        #expect(shot.effects.faceSun)
         #expect(exitCode(["screenshot", "--out", "a.png"]) == OpenSkyCommandLine.usageExitCode)
     }
 

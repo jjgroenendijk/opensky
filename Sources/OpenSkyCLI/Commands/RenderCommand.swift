@@ -43,7 +43,9 @@ enum RenderCommand {
         }
 
         // One shared builder so the 5x5 + LOD dedup cache residency.
-        let builder = try makeBuilder(context: context, device: device)
+        let builder = try makeBuilder(
+            context: context, device: device, settings: options.effects.settings
+        )
         let built = try buildRenderScene(builder: builder, options: options)
         let (cellScenes, scene) = (built.cellScenes, built.scene)
         let detection = options.detectionOverlay
@@ -62,7 +64,13 @@ enum RenderCommand {
             navigationOverlayGraph: options.navmeshOverlay
                 ? makeNavigationGraph(cellScenes) : nil,
             detectionOverlay: detection?.runtime,
-            frames: options.effects.frames,
+            frames: options.effects.faceSun ? max(options.effects.frames, 2)
+                : options.effects.frames,
+            afterFirstFrame: { gameSession in
+                if options.effects.faceSun {
+                    faceSun(gameSession, from: camera)
+                }
+            },
             configure: { gameSession in
                 try applyEffects(options.effects, to: gameSession, scene: EffectCaptureScene(
                     context: context, builder: builder,
@@ -204,13 +212,19 @@ enum RenderCommand {
     /// `--neighbors` grid) shares the STAT index and dedups mesh/texture
     /// residency across cells — `--neighbors` calls this once, `buildScene`
     /// calls it once per invocation.
+    /// `settings` go over the saved player settings, so the view distances follow them.
     static func makeBuilder(
         context: CLIContext,
-        device: MTLDevice
+        device: MTLDevice,
+        settings: [PlayerSettingID: Double] = [:]
     ) throws -> CellSceneBuilder {
         try ColdCellBuilder.makeBuilder(
-            root: context.root, loadOrder: context.loadOrder(), files: context.makeFileSystem(),
-            device: device, recorder: nil
+            loadOrder: context.loadOrder(), files: context.makeFileSystem(),
+            device: device, recorder: nil,
+            terrainLOD: ColdCellBuilder.terrainLODStore(
+                root: context.root,
+                settings: savedSettings(overriddenBy: settings)
+            )
         )
     }
 }

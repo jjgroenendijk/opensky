@@ -166,7 +166,7 @@ the number. A summary line goes to stderr.
 
 | Command | What it checks |
 | --- | --- |
-| `render --out <file> [...]` | Builds a cell, renders it offscreen, and writes a PNG. Use it for a cell or effect check; `preview` frames one record, and `game screenshot` captures the running app |
+| `render --out <file> [--set id=value,...] [...]` | Builds a cell, renders it offscreen, and writes a PNG. Use it for a cell or effect check; `preview` frames one record, and `game screenshot` captures the running app. `--set` applies player settings as the app does, such as `graphics.bSAOEnable=on`. The view distances come from the saved settings file, with `--set` over it. `--face-sun` turns the camera to the sun after the first frame, to check the lens flare; it needs `--weather` and a day hour |
 | `preview --record\|--ref\|--mesh\|--cell <id> [--stage studio\|cell] [--angles all] [...]` | One record, placed reference, mesh, or cell rendered offscreen from fixed angles, with a PNG and a JSON report per view. A blank view exits 1 ([preview render](/tools/preview-render.md)) |
 
 ### The app

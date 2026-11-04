@@ -62,6 +62,8 @@ public struct EffectCaptureArguments: ParsableArguments, Sendable {
     public var membrane: String?
     @Flag(help: "Frame the first actor from about two meters away.")
     public var frameActor = false
+    @Flag(help: "Turn the camera to the sun after the first frame, to check the lens flare.")
+    public var faceSun = false
     @Option(parsing: .unconditional, help: ArgumentHelp("Force a weather.", valueName: "edid"))
     public var weather: String?
     @Option(
@@ -77,6 +79,14 @@ public struct EffectCaptureArguments: ParsableArguments, Sendable {
         )
     )
     public var shadingOff: CommaList?
+    @Option(
+        name: .customLong("set"), parsing: .unconditional,
+        help: ArgumentHelp(
+            "Player settings for this render, comma-separated, as the app applies them.",
+            valueName: "id=value,..."
+        )
+    )
+    public var settings: CommaList?
 
     public init() {}
 

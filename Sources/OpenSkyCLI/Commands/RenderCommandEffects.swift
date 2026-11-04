@@ -23,7 +23,9 @@ struct EffectCaptureOptions {
     var membrane: String?
     var weather: String?
     var frames = 1
+    var faceSun = false
     var shadingOff: [SurfaceShadingSetting] = []
+    var settings: [PlayerSettingID: Double] = [:]
 
     var needsRecords: Bool {
         imageSpace != nil || modifier != nil || membrane != nil || weather != nil
@@ -39,7 +41,16 @@ struct EffectCaptureOptions {
         options.membrane = arguments.membrane
         options.weather = arguments.weather
         options.frames = arguments.frames
+        options.faceSun = arguments.faceSun
         options.shadingOff = try shadingSettings(arguments.shadingOff)
+        for pair in arguments.settings?.items ?? [] {
+            do {
+                let (id, value) = try BenchmarkRequest.parseSetting(String(pair))
+                options.settings[PlayerSettingID(id)] = value
+            } catch {
+                throw CLIError.usage("--set: \(error)")
+            }
+        }
         return options
     }
 
@@ -91,12 +102,50 @@ struct EffectCaptureScene {
 }
 
 extension RenderCommand {
+    /// Turns `camera` toward the sun the weather placed, with the sun off the centre so
+    /// the flare ghosts spread along the screen.
+    static func faceSun(_ gameSession: GameSession, from camera: SceneCamera) {
+        guard let sky = gameSession.celestialSky, sky.sunDirection.z > 0 else {
+            print("[WARNING] face sun: no sun above the horizon; pass --weather and a day hour")
+            return
+        }
+        let toSun = simd_normalize(sky.sunDirection)
+        let right = simd_normalize(simd_cross(toSun, SIMD3(0, 0, 1)))
+        let look = simd_normalize(toSun + right * 0.25 - SIMD3(0, 0, 0.15))
+        gameSession.didReplaceCamera(SceneCamera(
+            eye: camera.eye, target: camera.eye + look * 1000,
+            sunDirection: camera.sunDirection, sunColor: camera.sunColor,
+            ambientColor: camera.ambientColor
+        ))
+        print("[INFO] face sun: camera turned to the sun at \(toSun)")
+    }
+
+    /// The saved settings file with `overrides` set over it; nil keeps the INI defaults.
+    static func savedSettings(overriddenBy overrides: [PlayerSettingID: Double]) -> Data? {
+        let saved = PlayerSettingsFile.savedData()
+        guard !overrides.isEmpty else { return saved }
+        let catalog = PlayerSettingsCatalog.vanilla
+        var model = saved.flatMap { try? PlayerSettingsModel(decoding: $0, catalog: catalog) }
+            ?? PlayerSettingsModel()
+        for (id, value) in overrides {
+            model.set(id, to: value, in: catalog)
+        }
+        return model.encoded()
+    }
+
     /// Applies `options` to a renderer built for one capture.
     static func applyEffects(
         _ options: EffectCaptureOptions, to gameSession: GameSession, scene: EffectCaptureScene
     ) throws {
         let renderer = gameSession.renderer
         let file = scene.builder.file
+        if !options.settings.isEmpty {
+            let store = PlayerSettingsStore(persistence: nil)
+            for (id, value) in options.settings {
+                store.set(id, to: value)
+            }
+            gameSession.applyGraphicsSettings(store)
+        }
         gameSession.imageSpace.passEnabled = !options.imageSpaceOff
         gameSession.imageSpace.toneMapping.enabled = !options.toneMappingOff
         for setting in options.shadingOff {

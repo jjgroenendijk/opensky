@@ -473,6 +473,14 @@ grep -q 'image space: pass on, baseline BleakFallsTEST01' "$log" \
   || fail "forced image space did not reach the frame"
 grep -E 'rain live [1-9][0-9]*, .*spgd RainParticles' "$log" >/dev/null \
   || fail "forced rain drew no SPGD-fed drops"
+
+# Graphics page settings reach an offscreen render: the post effects all on.
+post_png="$log_dir/probe-post-effects.png"
+run "offscreen render (graphics settings)" render --out "$post_png" --weather SkyrimClear \
+  --time-of-day 17 --face-sun --set \
+  graphics.bSAOEnable=on,graphics.bVolumetricLightingEnable=on,graphics.bDoDepthOfField=on,graphics.bLensFlare=on,graphics.bFXAAEnabled=on
+[ -s "$post_png" ] || fail "graphics settings render wrote no PNG"
+grep -q 'face sun: camera turned' "$log" || fail "face sun did not turn the camera"
 echo "[ OK ] effects capture: $fx_png"
 
 # Preview gate: a studio render of one base record must draw every angle and
