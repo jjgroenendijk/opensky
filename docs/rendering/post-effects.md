@@ -2,7 +2,7 @@
 type: Subsystem
 title: Screen-space post effects
 description: The effects the image-space composite draws from the scene colour and depth -
-  ambient occlusion - which game option turns each one on, and its values.
+  ambient occlusion and volumetric light - which game option turns each one on, and its values.
 tags: [rendering, image-space, metal]
 ---
 
@@ -34,7 +34,25 @@ the sky reaches.
 - The result is `1 - 1.2 * mean`, clamped to 0 to 1, and multiplies the colour. The sky is
   not changed.
 
+## Volumetric light
+
+`[Display] bVolumetricLightingEnable` and `iVolumetricLightingQuality`. Sun light that falls
+through the air between the camera and a surface makes shafts where shadows break it.
+
+- The ray from the camera to the pixel, at most 4,096 units long, takes a fixed number of
+  steps: 8, 16, or 32 for quality 0, 1, or 2. A per-pixel noise offset turns the step bands
+  into grain.
+- Each step takes one tap of the [sun cascades](/rendering/shadows.md). The share of lit
+  steps is the light along the ray.
+- A Henyey-Greenstein phase with asymmetry 0.6 makes the air brightest toward the sun:
+  `(1 - g²) / (1 + g² - 2g cos θ)^1.5`, where θ is the angle between the ray and the sun.
+- The added colour is the sun colour times the lit share, the phase, `1 - exp(-length / 4096)`,
+  and a strength of 0.05. The sky pixels take the full length.
+- With shadows off, nothing is added.
+
 ## Where OpenSky differs
 
 - Ambient occlusion multiplies the whole colour, sun light included. In the game it darkens
   only the ambient light. The radius, the strength, and the tap count are OpenSky's own.
+- Volumetric light uses OpenSky's own strength and reach for every weather. The game's
+  weathers name a `VOLI` volumetric lighting record, which OpenSky does not read.

@@ -31,6 +31,13 @@ extension Renderer {
                 PostEffectSettings.ambientOcclusionBias, 0
             )
         }
+        if postEffects.volumetricLight {
+            uniforms.effects |= UInt32(PostEffectFlag.volumetricLight.rawValue)
+            uniforms.volumetricLight = SIMD4(
+                PostEffectSettings.volumetricStrength, Float(postEffects.volumetricSteps),
+                PostEffectSettings.volumetricReach, PostEffectSettings.volumetricAsymmetry
+            )
+        }
         return uniforms
     }
 

@@ -121,6 +121,7 @@ typedef struct
 typedef NS_ENUM(EnumBackingType, PostEffectFlag)
 {
     PostEffectFlagAmbientOcclusion = 1 << 0,
+    PostEffectFlagVolumetricLight = 1 << 1,
 };
 
 /// The screen-space effects of the image-space composite (docs/rendering/post-effects.md).
@@ -132,6 +133,8 @@ typedef struct
     vector_float4 projection;
     /// x radius in world units, y strength, z bias; w unused.
     vector_float4 ambientOcclusion;
+    /// x strength, y march steps, z reach in world units, w phase asymmetry.
+    vector_float4 volumetricLight;
     /// PostEffectFlag bits.
     unsigned int effects;
 } PostEffectUniforms;

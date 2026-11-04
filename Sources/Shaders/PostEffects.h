@@ -75,17 +75,74 @@ static inline float postAmbientOcclusion(
     return saturate(1.0 - post.ambientOcclusion.y * sum / 12.0);
 }
 
+// One cascade tap per march step; the march takes many steps, so each takes one tap.
+static inline float postSunLit(
+    float3 world, constant FrameUniforms &frame, depth2d_array<float> shadowMap, sampler compare)
+{
+    int cascade = sunShadowCascadeIndex(world, frame);
+    if (cascade < 0) {
+        return 1.0;
+    }
+    float4 clip = frame.shadowViewProjections[cascade] * float4(world, 1.0);
+    float3 ndc = clip.xyz / clip.w;
+    if (any(abs(ndc.xy) > 1.0) || ndc.z < 0.0 || ndc.z > 1.0) {
+        return 1.0;
+    }
+    float2 uv = ndc.xy * float2(0.5, -0.5) + 0.5;
+    return shadowMap.sample_compare(compare, uv, cascade, ndc.z - shadowReceiverBias);
+}
+
+// Volumetric light: the ray from the camera to the pixel steps through the sun cascades.
+// The share of lit steps, a forward-scattering phase, and the ray length set how much
+// sun light the air adds.
+static inline float3 postVolumetricLight(
+    PostPixel pixel,
+    bool sky,
+    constant FrameUniforms &frame,
+    constant PostEffectUniforms &post,
+    depth2d_array<float> shadowMap,
+    sampler compare)
+{
+    if (frame.shadowsEnabled == 0) {
+        return 0.0;
+    }
+    float3 toPixel = (sky ? postWorldPosition(pixel.uv, 0.5, post) : pixel.world)
+        - frame.cameraPosition;
+    float maximum = post.volumetricLight.z;
+    float reach = sky ? maximum : min(length(toPixel), maximum);
+    float3 direction = normalize(toPixel);
+    int steps = max(int(post.volumetricLight.y), 1);
+    float offset = postNoise(pixel.pixel);
+    float lit = 0.0;
+    for (int step = 0; step < steps; ++step) {
+        float along = (float(step) + offset) / float(steps) * reach;
+        lit += postSunLit(frame.cameraPosition + direction * along, frame, shadowMap, compare);
+    }
+    lit /= float(steps);
+    float asymmetry = post.volumetricLight.w;
+    float cosine = dot(direction, -frame.sunDirection);
+    float phase = (1.0 - asymmetry * asymmetry)
+        / pow(1.0 + asymmetry * asymmetry - 2.0 * asymmetry * cosine, 1.5);
+    float scatter = 1.0 - exp(-reach / maximum);
+    return frame.sunColor * (lit * phase * scatter * post.volumetricLight.x);
+}
+
 // Every effect the frame turned on, in order, over the colour of one pixel.
 static inline float3 postApply(
     float3 color,
     PostPixel pixel,
     constant FrameUniforms &frame,
     constant PostEffectUniforms &post,
-    depth2d<float> depth)
+    depth2d<float> depth,
+    depth2d_array<float> shadowMap,
+    sampler compare)
 {
     bool sky = pixel.depth >= 1.0;
     if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky) {
         color *= postAmbientOcclusion(pixel, frame.cameraPosition, depth, post);
+    }
+    if ((post.effects & PostEffectFlagVolumetricLight) != 0) {
+        color += postVolumetricLight(pixel, sky, frame, post, shadowMap, compare);
     }
     return color;
 }

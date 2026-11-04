@@ -79,7 +79,9 @@ fragment float4 imageSpaceFragment(
     constant PostEffectUniforms &post [[buffer(BufferIndexPostEffectUniforms)]],
     device atomic_uint *luminance [[buffer(BufferIndexImageSpaceLuminance)]],
     texture2d<float> scene [[texture(TextureIndexSceneColor)]],
-    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]])
+    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
+    depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    sampler shadowCompare [[sampler(SamplerIndexShadowCompare)]])
 {
     constexpr sampler linearClamp(filter::linear, address::clamp_to_edge);
     float2 size = float2(scene.get_width(), scene.get_height());
@@ -98,7 +100,7 @@ fragment float4 imageSpaceFragment(
     if (post.effects != 0) {
         float depth = sceneDepth.sample(postNearest, uv);
         PostPixel pixel = {uv, texel, in.position.xy, depth, postWorldPosition(uv, depth, post)};
-        color = postApply(color, pixel, frame, post, sceneDepth);
+        color = postApply(color, pixel, frame, post, sceneDepth, shadowMap, shadowCompare);
     }
     return imageSpaceGrade(color, uniforms);
 }

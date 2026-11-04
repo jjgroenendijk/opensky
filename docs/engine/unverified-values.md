@@ -157,6 +157,7 @@ the detail and the sources it did find.
 | Rain occlusion view size | 4,096 units square, 1,024 texels | [precipitation](/rendering/precipitation.md#roof-occlusion) |
 | Focus shadow reach and size | 2,048 units, 1,024 texels, 256-unit backup | [shadows](/rendering/shadows.md#focus-shadows) |
 | Ambient occlusion radius and strength | 48 units, 12 taps, strength 1.2, bias 0.05 | [post effects](/rendering/post-effects.md#ambient-occlusion) |
+| Volumetric light steps and strength | 8, 16, 32 steps; 4,096 units; strength 0.05; asymmetry 0.6 | [post effects](/rendering/post-effects.md#volumetric-light) |
 | Water UV density | 2 quads per repeat | [scene drawing](/rendering/scene-drawing.md) |
 | Clear colour under water | OpenSky's choice | [Metal 4 renderer](/rendering/metal4-renderer.md) |
 | Light flicker curves, period unit, slow factor | OpenSky's values | [lighting](/formats/lighting.md) |

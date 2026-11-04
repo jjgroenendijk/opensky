@@ -23,6 +23,9 @@ extension PostEffectSettings {
     public init(store: PlayerSettingsStore) {
         self.init()
         ambientOcclusion = store.bool(.ambientOcclusion)
+        volumetricLight = store.bool(.volumetricLight)
+        let quality = store.value(.volumetricQuality)
+        volumetricQuality = quality.isFinite ? Int(min(max(quality, 0), 2)) : 1
     }
 }
 

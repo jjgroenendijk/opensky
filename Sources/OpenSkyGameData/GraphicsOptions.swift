@@ -91,13 +91,9 @@ nonisolated public enum GraphicsOptions {
             "bIBLFEnable",
             "OpenSky has no image-based lighting"
         ),
+        option(.lighting, "Volumetric lighting", "Display", "bVolumetricLightingEnable"),
         option(
-            .lighting, "Volumetric lighting", "Display", "bVolumetricLightingEnable",
-            "OpenSky has no volumetric lighting yet"
-        ),
-        option(
-            .lighting, "Volumetric lighting quality", "Display", "iVolumetricLightingQuality",
-            "OpenSky has no volumetric lighting yet"
+            .lighting, "Volumetric lighting quality", "Display", "iVolumetricLightingQuality"
         ),
         option(
             .lighting, "Screen-space reflections", "Display", "bScreenSpaceReflectionEnabled",
