@@ -20,6 +20,16 @@ nonisolated public struct WaterSurfaceFields: Equatable, Sendable {
     public let amplitudes: SIMD3<Float>
     public let sunSpecularMagnitude: Float
     public let sunSparklePower: Float
+    /// The fields below default to calm values for a record built in code.
+    public internal(set) var sunSparkleMagnitude: Float = 0
+    public internal(set) var refractionMagnitude: Float = 0
+    public internal(set) var noiseFalloff: Float = 0
+    public internal(set) var displacement = WaterDisplacementFields()
+    /// Under-water fog: amount, then near and far planes in game units.
+    public internal(set) var underwaterFogAmount: Float = 0
+    public internal(set) var underwaterFogNear: Float = 0
+    public internal(set) var underwaterFogFar: Float = 0
+    public internal(set) var aboveWaterFogAmount: Float = 0
 
     public init(
         sunSpecularPower: Float, reflectivity: Float, fresnelAmount: Float,
@@ -59,5 +69,41 @@ nonisolated public struct WaterSurfaceFields: Equatable, Sendable {
             uvScales: float3(at: 172), amplitudes: float3(at: 184),
             sunSpecularMagnitude: float(at: 204), sunSparklePower: float(at: 224)
         )
+        sunSparkleMagnitude = try float(at: 200)
+        refractionMagnitude = try float(at: 152)
+        noiseFalloff = try float(at: 96)
+        displacement = try WaterDisplacementFields(
+            startingSize: float(at: 72), force: float(at: 76), velocity: float(at: 80),
+            falloff: float(at: 84), dampener: float(at: 88)
+        )
+        aboveWaterFogAmount = try float(at: 132)
+        underwaterFogAmount = try float(at: 140)
+        underwaterFogNear = try float(at: 144)
+        underwaterFogFar = try float(at: 148)
+    }
+}
+
+/// `DNAM` displacement simulator: the rings a body in the water sends out.
+nonisolated public struct WaterDisplacementFields: Equatable, Sendable {
+    public var startingSize: Float = 0
+    public var force: Float = 0
+    public var velocity: Float = 0
+    public var falloff: Float = 0
+    public var dampener: Float = 0
+
+    public init() {}
+
+    public init(
+        startingSize: Float,
+        force: Float,
+        velocity: Float,
+        falloff: Float,
+        dampener: Float
+    ) {
+        self.startingSize = startingSize
+        self.force = force
+        self.velocity = velocity
+        self.falloff = falloff
+        self.dampener = dampener
     }
 }

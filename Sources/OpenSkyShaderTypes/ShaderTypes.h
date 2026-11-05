@@ -159,6 +159,11 @@ typedef NS_ENUM(EnumBackingType, LightingConstant)
     LightingConstantMaxPointLights = 8,
 };
 
+typedef NS_ENUM(EnumBackingType, WaterConstant)
+{
+    WaterConstantMaxRipples = 8,
+};
+
 /// Cascaded sun-shadow-map config. CascadeCount also sizes the FrameUniforms
 /// cascade arrays; MapResolution is one shadow-array slice edge.
 typedef NS_ENUM(EnumBackingType, ShadowConstant)
@@ -547,6 +552,16 @@ typedef struct
     vector_float2 flowVelocity;
     /// Projection terms (m22, m32): view depth = y / (ndcDepth + x).
     vector_float2 depthUnproject;
+    /// x refraction magnitude, y sun sparkle magnitude, z sun sparkle power, w 1 when the
+    /// three noise maps are bound at TextureIndexSurfaceNormal, Glow, and Detail.
+    vector_float4 detail;
+    /// Displacement rings: starting size, force, velocity, dampener.
+    vector_float4 displacement;
+    /// x displacement falloff, y rain 0 to 1, z live ring count, w 1 when the scene colour
+    /// copy is bound for refraction.
+    vector_float4 rings;
+    /// Each ring: x, y, age in seconds, strength.
+    vector_float4 ripples[WaterConstantMaxRipples];
 } WaterDrawUniforms;
 
 /// Per-draw slot for the sun-shadow depth pre-pass; fits one 256-byte uniform

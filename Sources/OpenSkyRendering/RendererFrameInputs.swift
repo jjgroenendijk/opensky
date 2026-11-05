@@ -22,6 +22,7 @@ extension Renderer {
         let weather = interior == nil ? frameInput.weather : nil
         let covered = effects.loadingCover != nil
         let scales = lightScales
+        let aboveWater = resolveFrameFog(weatherLight: covered ? nil : weather)
         return FrameLight(
             sunDirection: interior?.directionalDirection ?? exteriorSunTravelDirection,
             sunColor: (weather?.sunlightColor ?? interior?.directionalColor ?? camera.sunColor)
@@ -30,7 +31,7 @@ extension Renderer {
                 ?? camera.ambientColor,
             ambient: weather?.directionalAmbient ?? interior?.directionalAmbient ?? .black,
             weatherSky: scene.sky != nil && !covered ? weather?.scalingSky(by: scales.sky) : nil,
-            fog: resolveFrameFog(weatherLight: covered ? nil : weather)
+            fog: waterAboveCamera.map(underwaterFog) ?? aboveWater
         )
     }
 

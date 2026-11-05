@@ -89,6 +89,14 @@ nonisolated public struct WaterSample: Equatable, Sendable {
     var isUnderwater: Bool {
         waterHeight.map { position.z < $0 } ?? false
     }
+
+    /// In the water and less than `wadingDepth` below its surface, so it stirs it.
+    var isWading: Bool {
+        waterHeight.map { position.z < $0 && position.z > $0 - Self.wadingDepth } ?? false
+    }
+
+    /// Feet deeper than this swim under the surface; OpenSky's value.
+    static let wadingDepth: Float = 150
 }
 
 nonisolated public enum WaterImpacts {

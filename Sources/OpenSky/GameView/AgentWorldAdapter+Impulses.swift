@@ -24,6 +24,7 @@ extension AgentWorldAdapter {
                 "waterKnockdownVelocity": .init(impulses.water.knockdownVelocity)
             ],
             "splashCount": .init(impulses.splashCount),
+            "waterRings": .init(game.renderer?.waterRipples.ripples.count ?? 0),
             "events": .array(impulses.events.map(eventJSON))
         ]
     }

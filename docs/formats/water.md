@@ -75,8 +75,13 @@ any other. Both sizes share these offsets. Each color byte maps to 0...1.
 | 40 | RGBX | Shallow color |
 | 44 | RGBX | Deep color |
 | 48 | RGBX | Reflection color |
+| 72, 76, 80, 84, 88 | float32 | Displacement starting size, force, velocity, falloff, dampener |
+| 96 | float32 | Noise falloff |
 | 100 | float32 x3 | Noise wind direction, one per layer, in degrees |
 | 112 | float32 x3 | Noise wind speed, one per layer |
+| 132 | float32 | Above-water fog amount |
+| 140, 144, 148 | float32 | Under-water fog amount, near plane, far plane |
+| 152 | float32 | Refraction magnitude |
 | 172 | float32 x3 | Noise UV scale, one per layer |
 | 184 | float32 x3 | Noise amplitude scale, one per layer |
 | 196 | float32 | Reflection magnitude |
@@ -85,15 +90,17 @@ any other. Both sizes share these offsets. Each color byte maps to 0...1.
 | 224 | float32 | Sun sparkle power |
 | 228 | float32 | Flowmap scale (232-byte size only, not read) |
 
-The rest of `DNAM` (rain and displacement simulation, under-water fog, depth factors) stays
-unread. The fields around it, such as opacity, flags, material, sounds, velocities, and noise
-texture paths, are read as xEdit dev-4.1.6 names them. The [water renderer](/rendering/water.md)
-uses `ANAM` opacity and `NAM0` linear velocity. A cell with a missing or unknown `WATR` gets
-fixed fallback colors.
+These offsets follow the field order of the UESP WATR page. The rest of `DNAM` stays unread,
+among it five floats at 52 to 68 that the UESP page leaves unnamed. The fields around it, such as
+opacity, flags, material, sounds, velocities, and noise texture paths, are read as xEdit dev-4.1.6
+names them. The [water renderer](/rendering/water.md) uses `ANAM` opacity and `NAM0` linear
+velocity. A cell with a missing or unknown `WATR` gets fixed fallback colors.
 
 Vanilla values (Skyrim.esm, 2026-10-08): wind directions lie in 0...360, wind speeds in
 0.007...0.45, UV scales in 100...10000, amplitudes in 0...1, and sun specular powers in
 1000...8400. Rivers such as `RiverWaterFlowNE` (`0E717C`) set `ANAM` 50 and a `NAM0` velocity of
-about 3 units per second, and leave `NAM2`-`NAM4` empty. Creeks set `ANAM` 0.
+about 3 units per second. Creeks set `ANAM` 0. All 58 `WATR` records of the install name
+`NAM2`-`NAM4` (2026-11-05): 55 name `Data\Textures\Water\DefaultWater.dds` three times and 3
+name `DLC2TenticleTile_n.dds`. 4 of them also name `RiverFlow.dds` in `NAM5`.
 
 Real data check: `WhiterunExterior17` (Tamriel 5,-4) has water and gives one plane.

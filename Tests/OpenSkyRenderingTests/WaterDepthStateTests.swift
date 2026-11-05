@@ -1,5 +1,7 @@
 import OpenSkyFormatsCore
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
+import OpenSkyShaderTypes
 import simd
 import Testing
 
@@ -22,5 +24,27 @@ struct WaterDepthStateTests {
             left: -1, right: 1, bottom: -1, top: 1, nearZ: 0, farZ: 10
         ))
         #expect(WaterDepthState.unproject(projection) == nil)
+    }
+}
+
+struct WaterNoiseTexturePathTests {
+    @Test func theRecordPathLosesItsDataFolder() {
+        #expect(
+            WaterNoiseTextures.filePath("Data\\Textures\\Water\\DefaultWater.dds")
+                == "textures\\water\\defaultwater.dds"
+        )
+        #expect(
+            WaterNoiseTextures.filePath("data/Textures/Water/RiverFlow.dds")
+                == "textures\\water\\riverflow.dds"
+        )
+        #expect(WaterNoiseTextures.filePath("") == nil)
+    }
+
+    @Test func theShaderRingArrayPadsWithZeros() {
+        var uniforms = WaterDrawUniforms()
+        uniforms.ripples.7 = SIMD4(9, 9, 9, 9)
+        WaterRippleField.write([SIMD4(1, 2, 3, 4)], into: &uniforms.ripples)
+        #expect(uniforms.ripples.0 == SIMD4(1, 2, 3, 4))
+        #expect(uniforms.ripples.7 == .zero)
     }
 }

@@ -21,6 +21,17 @@ nonisolated public struct WaterShading: Equatable, Sendable {
     public var amplitudes: SIMD3<Float>
     /// NAM0 linear velocity, game units per second.
     public var flowVelocity: SIMD2<Float>
+    /// `NAM2`-`NAM4` noise normal maps, one per layer, as the record spells them; empty
+    /// for a layer without one.
+    public var noiseTextures: [String] = []
+    public var sunSparkleMagnitude: Float = 0
+    public var sunSparklePower: Float = 0
+    public var refractionMagnitude: Float = 0
+    /// Displacement rings: starting size, force, velocity, dampener; then falloff.
+    public var displacement = SIMD4<Float>.zero
+    public var displacementFalloff: Float = 0
+    /// Under-water fog: near plane, far plane, amount.
+    public var underwaterFog = SIMD3<Float>(0, 1000, 0)
 
     public init(
         opacity: Float, fresnelAmount: Float, reflectivity: Float,

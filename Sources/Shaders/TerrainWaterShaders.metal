@@ -137,13 +137,13 @@ fragment float4 terrainFragment(
         }
         shadow = min(shadow, traced);
     }
-    float3 illumination =
-        frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame) +
-        pointLighting(
-            in.worldPosition, normal, pointLights, draw.pointLightCount,
-            pointShadowsAt(
-                in.worldPosition, normalize(in.normal), pointLights, draw.pointLightCount,
-                pointShadowMap, shadowSampler));
+    float3 illumination = frame.sunColor * lambert * shadow + baseAmbient(frame) +
+                          directionalAmbient(normal, frame) +
+                          pointLighting(
+                              in.worldPosition, normal, pointLights, draw.pointLightCount,
+                              pointShadowsAt(
+                                  in.worldPosition, normalize(in.normal), pointLights,
+                                  draw.pointLightCount, pointShadowMap, shadowSampler));
     float3 lit = albedo * linearVertexColour(in.color.rgb, frame) * illumination;
     if (snow > 0.0) {
         lit += terrainSnowSheen(in.worldPosition, normal, frame) * (shadow * snow);
@@ -151,8 +151,8 @@ fragment float4 terrainFragment(
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
 
-// Water: WATR colors and shading over three scrolling noise layers. The game samples
-// noise textures; OpenSky sums sine waves with the same wind, tile size, and slope
+// Water: WATR colors and shading over three scrolling noise layers: the record's noise
+// normal maps, or sine waves with the same wind, tile size, and slope until they load
 // (docs/rendering/water.md). Scene depth, when bound, sets the see-through depth.
 
 typedef struct
@@ -192,6 +192,82 @@ static float3 waterNormal(float2 xy, float time, constant WaterDrawUniforms &dra
         }
     }
     return normalize(float3(-slope, 1.0));
+}
+
+// The NAM2-NAM4 noise maps: each layer scrolls along its wind at its speed, in tiles of
+// its UV scale, and its amplitude scales the slope of its tangent-space normal.
+static float2 waterNoiseSlope(
+    float2 xy,
+    float time,
+    constant WaterDrawUniforms &draw,
+    texture2d<float> layer0,
+    texture2d<float> layer1,
+    texture2d<float> layer2,
+    sampler trilinear)
+{
+    float2 flowing = xy - draw.flowVelocity * time;
+    float2 slope = 0.0;
+    for (int layer = 0; layer < 3; ++layer) {
+        float tile = max(draw.uvScales[layer], 50.0);
+        float angle = draw.windDirections[layer];
+        float2 uv = flowing / tile + float2(cos(angle), sin(angle)) * draw.windSpeeds[layer] * time;
+        float3 texel = layer == 0   ? layer0.sample(trilinear, uv).xyz
+                       : layer == 1 ? layer1.sample(trilinear, uv).xyz
+                                    : layer2.sample(trilinear, uv).xyz;
+        slope += (texel.xy * 2.0 - 1.0) * draw.amplitudes[layer];
+    }
+    return slope;
+}
+
+// One ring around a point: a wave crest that runs out at the displacement velocity, as
+// wide as the starting size, fading with the dampener over its life and with distance.
+static float2 waterRingSlope(float2 xy, float4 ring, constant WaterDrawUniforms &draw)
+{
+    float2 offset = xy - ring.xy;
+    float distanceOut = length(offset);
+    float width = max(draw.displacement.x, 4.0);
+    float front = ring.z * max(draw.displacement.z, 8.0);
+    float band = (distanceOut - front) / width;
+    if (abs(band) > 3.0 || distanceOut < 0.001) {
+        return 0.0;
+    }
+    float life = pow(saturate(draw.displacement.w), ring.z * 30.0) * saturate(1.0 - ring.z / 3.0);
+    float spread = 1.0 / (1.0 + distanceOut * max(draw.rings.x, 0.0) * 0.01);
+    float wave = cos(band * 3.1415927) * exp(-band * band);
+    return offset / distanceOut * (wave * ring.w * max(draw.displacement.y, 0.2) * life * spread);
+}
+
+// Rain: a 48-unit grid, one drop per cell at a random place and time, each a short ring.
+static float2 waterRainSlope(float2 xy, float time, float rain)
+{
+    if (rain <= 0.0) {
+        return 0.0;
+    }
+    float2 slope = 0.0;
+    float2 cell = floor(xy / 48.0);
+    for (int dy = -1; dy <= 1; ++dy) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            float2 id = cell + float2(dx, dy);
+            float3 random = fract(
+                sin(float3(
+                    dot(id, float2(127.1, 311.7)), dot(id, float2(269.5, 183.3)),
+                    dot(id, float2(419.2, 371.9)))) *
+                43758.5453);
+            if (random.z > rain) {
+                continue;
+            }
+            float age = fract(time * 1.25 + random.z * 7.0) * 0.8;
+            float2 offset = xy - (id + random.xy) * 48.0;
+            float distanceOut = length(offset);
+            float band = (distanceOut - age * 30.0) / 3.0;
+            if (abs(band) > 3.0 || distanceOut < 0.001) {
+                continue;
+            }
+            float wave = cos(band * 3.1415927) * exp(-band * band) * (1.0 - age / 0.8);
+            slope += offset / distanceOut * wave * 0.35;
+        }
+    }
+    return slope;
 }
 
 // Screen-space reflection: the reflected ray steps through the scene drawn before the
@@ -244,7 +320,11 @@ fragment float4 waterFragment(
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
     constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
     depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
-    texture2d<float> sceneColor [[texture(TextureIndexSceneColor)]])
+    texture2d<float> sceneColor [[texture(TextureIndexSceneColor)]],
+    texture2d<float> noise0 [[texture(TextureIndexSurfaceNormal)]],
+    texture2d<float> noise1 [[texture(TextureIndexSurfaceGlow)]],
+    texture2d<float> noise2 [[texture(TextureIndexSurfaceDetail)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]])
 {
     if (debugViewActive) {
         // A water plane is flat and untextured, so the normal is the plane's
@@ -255,7 +335,19 @@ fragment float4 waterFragment(
     }
     float3 toCamera = frame.cameraPosition - in.worldPosition;
     float3 view = normalize(toCamera);
-    float3 normal = waterNormal(in.worldPosition.xy, frame.animationTime, draw);
+    float time = frame.animationTime;
+    float3 normal = waterNormal(in.worldPosition.xy, time, draw);
+    if (draw.detail.w > 0.5) {
+        float2 slope =
+            waterNoiseSlope(in.worldPosition.xy, time, draw, noise0, noise1, noise2, trilinear);
+        normal = normalize(float3(slope, 1.0));
+    }
+    float2 ringSlope = waterRainSlope(in.worldPosition.xy, time, draw.rings.y);
+    uint ringCount = min(uint(draw.rings.z), uint(WaterConstantMaxRipples));
+    for (uint ring = 0; ring < ringCount; ++ring) {
+        ringSlope += waterRingSlope(in.worldPosition.xy, draw.ripples[ring], draw);
+    }
+    normal = normalize(float3(normal.xy / max(normal.z, 0.05) + ringSlope, 1.0));
     if (view.z < 0.0) {
         normal = -normal;
     }
@@ -290,11 +382,29 @@ fragment float4 waterFragment(
 
     float sunAlign = saturate(dot(mirrored, -frame.sunDirection));
     float specular = pow(sunAlign, max(draw.surface.w * 0.25, 8.0)) * draw.depthAndSun.x;
-    color += frame.sunColor * specular;
+    // Sparkle: the sharp glints of the same normal, by the sparkle power and magnitude.
+    float sparkle =
+        draw.detail.y > 0.0 ? pow(sunAlign, max(draw.detail.z, 1.0)) * draw.detail.y : 0.0;
+    color += frame.sunColor * (specular + sparkle);
 
     // Shallow water shows the ground through it; deep or edge-on water hides it.
     float seeThrough = 1.0 - smoothstep(0.0, max(draw.depthAndSun.z, 1.0) * 2.0, rayDepth);
     float bodyAlpha = mix(1.0, draw.surface.x, seeThrough);
-    float alpha = saturate(max(bodyAlpha, reflection) + specular);
+    float alpha = saturate(max(bodyAlpha, reflection) + specular + sparkle);
+    if (draw.rings.w > 0.5) {
+        // Refraction: the ground under the surface, bent by the normal. A bent sample
+        // that lands on something in front of the water keeps the straight one.
+        float2 screen = in.position.xy / float2(sceneColor.get_width(), sceneColor.get_height());
+        float bend = draw.detail.x * saturate(rayDepth / max(draw.depthAndSun.z, 1.0));
+        float2 bent = clamp(screen + normal.xy * bend, 0.0, 1.0);
+        constexpr sampler linearClamp(filter::linear, address::clamp_to_edge);
+        constexpr sampler nearestClamp(filter::nearest, address::clamp_to_edge);
+        float stored = sceneDepth.sample(nearestClamp, bent);
+        float bentDepth = draw.depthUnproject.y / (stored + draw.depthUnproject.x);
+        float surfaceDepth = dot(-toCamera, frame.cameraForward);
+        float2 under = bentDepth > surfaceDepth ? bent : screen;
+        float3 ground = sceneColor.sample(linearClamp, under).rgb;
+        return float4(mix(ground, applyFog(color, in.worldPosition, frame), alpha), 1.0);
+    }
     return float4(applyFog(color, in.worldPosition, frame), alpha);
 }

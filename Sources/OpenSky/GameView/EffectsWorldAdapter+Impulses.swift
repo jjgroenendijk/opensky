@@ -55,6 +55,14 @@ extension EffectsWorldAdapter: ImpulseWorld {
         }
     }
 
+    func waterContacts(_ contacts: [WaterSample]) {
+        game.renderer?.updateWaders(contacts.compactMap { contact in
+            contact.waterHeight.map {
+                (key: contact.key, position: SIMD3(contact.position.x, contact.position.y, $0))
+            }
+        })
+    }
+
     func waterHeight(at position: SIMD2<Float>) -> Float? {
         game.streamer?.sampleWaterHeight(at: position)
     }
@@ -93,6 +101,9 @@ extension EffectsWorldAdapter: ImpulseWorld {
 
     func showSplash(_ splash: SplashEvent) {
         effects.showModel(splash.model, at: splash.position, cause: .impact)
+        game.renderer?.addWaterRipple(
+            at: splash.position, strength: splash.weight == .heavy ? 1 : 0.6
+        )
         guard splash.weight != .silent else { return }
         game.audio.soundDirector?.playAnimationSound(
             editorID: Self.splashSound, source: splash.source ?? .player, at: splash.position

@@ -172,6 +172,10 @@ the detail and the sources it did find.
 | Sunlight and sky scale | Applied only with the HDR target; sky scale skips clouds | [image space](/rendering/image-space.md#bloom-and-light-scales) |
 | Shadow lights at once | 4 nearest the camera, skipped past 4,096 units outside the sphere; 512-texel faces | [shadows](/rendering/shadows.md#point-light-shadows) |
 | Point shadow planes and bias | Near plane 8 units; 2-unit normal offset; `XLIG` depth bias unused | [shadows](/rendering/shadows.md#point-light-shadows) |
+| Water refraction | Normal x, y times the refraction magnitude in screen units, scaled by depth to the fog far plane | [water](/rendering/water.md#refraction) |
+| Water rings | Closed-form crests; 8 rings of 3 s; wading ring every 48 units at strength 0.4, under 150 units deep; floors 8, 4, 0.2 | [water](/rendering/water.md#displacement-and-rain) |
+| Rain rings | 48-unit grid, 0.8 s drops, 24-unit rings | [water](/rendering/water.md#displacement-and-rain) |
+| Under-water fog colour | The deep colour | [water](/rendering/water.md#under-the-water) |
 | Surface shading strength, tiling, refraction rate | OpenSky's values | [surface shading](/rendering/surface-shading.md) |
 | Shadow map size cap | 4096; the game allows more | [graphics options](/engine/graphics-options.md) |
 | Reference fade reach | Multiplier x 16 x bound radius, 15% dissolve | [graphics options](/engine/graphics-options.md) |
