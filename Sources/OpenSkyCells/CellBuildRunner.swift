@@ -32,7 +32,8 @@ nonisolated public protocol CellSceneProvider {
 
     func buildDistantLOD(
         center: CellCoordinate,
-        hiddenCells: Set<CellCoordinate>
+        hiddenCells: Set<CellCoordinate>,
+        state: WorldStateSnapshot
     ) throws -> DistantLODScene?
 
     /// Resolves + builds the destination of one placed teleport door. An exterior
@@ -67,7 +68,8 @@ nonisolated public protocol CellSceneProvider {
 nonisolated extension CellSceneProvider {
     public func buildDistantLOD(
         center _: CellCoordinate,
-        hiddenCells _: Set<CellCoordinate>
+        hiddenCells _: Set<CellCoordinate>,
+        state _: WorldStateSnapshot
     ) throws -> DistantLODScene? {
         nil
     }
@@ -152,13 +154,15 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
 
     public func buildDistantLOD(
         center: CellCoordinate,
-        hiddenCells: Set<CellCoordinate>
+        hiddenCells: Set<CellCoordinate>,
+        state: WorldStateSnapshot
     ) throws -> DistantLODScene? {
         try builder.textures.batchLoads {
             try builder.buildDistantLOD(
                 worldspaceEditorID: worldspace,
                 center: center,
-                hiddenCells: hiddenCells
+                hiddenCells: hiddenCells,
+                state: state
             )
         }
     }
@@ -293,7 +297,9 @@ nonisolated public protocol CellBuildRunning: AnyObject {
     /// dropping the given assets a departed cell no longer needs.
     func enqueueEviction(droppingMeshKeys: Set<String>, droppingTextureKeys: Set<String>)
     @discardableResult
-    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool
+    func enqueueDistantLOD(
+        center: CellCoordinate, hiddenCells: Set<CellCoordinate>, state: WorldStateSnapshot
+    ) -> Bool
     func drainCompletedDistantLOD() -> [DistantLODBuildResult]
     /// Builds the first ring beside the cell builds, at most once; its result
     /// arrives through `drainCompletedDistantLOD`. False when the runner cannot.
@@ -310,7 +316,8 @@ nonisolated extension CellBuildRunning {
     @discardableResult
     public func enqueueDistantLOD(
         center _: CellCoordinate,
-        hiddenCells _: Set<CellCoordinate>
+        hiddenCells _: Set<CellCoordinate>,
+        state _: WorldStateSnapshot
     ) -> Bool {
         false
     }
@@ -448,14 +455,18 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
     @discardableResult
     public func enqueueDistantLOD(
         center: CellCoordinate,
-        hiddenCells: Set<CellCoordinate>
+        hiddenCells: Set<CellCoordinate>,
+        state: WorldStateSnapshot
     ) -> Bool {
         let isNew = bookkeeping.withLock { $0.pendingLOD.insert(center).inserted }
         guard isNew else { return false }
         queue.async { [self] in
             let (result, worldspace) = provider.withLock { provider in
                 (
-                    Result { try provider.buildDistantLOD(center: center, hiddenCells: hiddenCells)
+                    Result {
+                        try provider.buildDistantLOD(
+                            center: center, hiddenCells: hiddenCells, state: state
+                        )
                     },
                     provider.worldspaceEditorID
                 )

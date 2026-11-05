@@ -267,6 +267,10 @@ nonisolated public struct DistantLODScene: Sendable {
     public let largeReferenceCount: Int
     /// Cell segments of object LOD large-reference shapes the ring hid.
     public let hiddenLargeReferenceSegments: Int
+    /// Is Full LOD references drawn past the loaded grid.
+    public private(set) var fullLODReferenceCount = 0
+    /// Object IDs whose enable change must rebuild the ring.
+    public private(set) var watchedObjectIDs: Set<UInt32> = []
 
     public init(
         renderScene: RenderScene,
@@ -325,12 +329,30 @@ nonisolated public struct DistantLODScene: Sendable {
         )
     }
 
+    /// The same ring with the Is Full LOD references past the loaded grid, and their assets.
+    public func adding(fullLODReferences: [RenderPlacement], assets added: CellAssets)
+        -> DistantLODScene
+    {
+        guard !fullLODReferences.isEmpty else { return self }
+        var scene = replacing(
+            renderScene: RenderScene(merging: [
+                renderScene, RenderScene(instances: fullLODReferences)
+            ]),
+            assets: CellAssets(
+                meshKeys: assets.meshKeys.union(added.meshKeys),
+                textureKeys: assets.textureKeys.union(added.textureKeys)
+            )
+        )
+        scene.fullLODReferenceCount = fullLODReferenceCount + fullLODReferences.count
+        return scene
+    }
+
     private func replacing(
         renderScene: RenderScene,
         assets: CellAssets? = nil,
         largeReferenceCount: Int? = nil
     ) -> DistantLODScene {
-        DistantLODScene(
+        var scene = DistantLODScene(
             renderScene: renderScene,
             assets: assets ?? self.assets,
             blockCount: blockCount,
@@ -343,6 +365,16 @@ nonisolated public struct DistantLODScene: Sendable {
             largeReferenceCount: largeReferenceCount ?? self.largeReferenceCount,
             hiddenLargeReferenceSegments: hiddenLargeReferenceSegments
         )
+        scene.fullLODReferenceCount = fullLODReferenceCount
+        scene.watchedObjectIDs = watchedObjectIDs
+        return scene
+    }
+
+    /// The same ring, rebuilt when one of `objectIDs` is enabled or disabled.
+    public func watching(_ objectIDs: Set<UInt32>) -> DistantLODScene {
+        var scene = self
+        scene.watchedObjectIDs.formUnion(objectIDs)
+        return scene
     }
 }
 

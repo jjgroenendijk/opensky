@@ -117,17 +117,34 @@ Each ring build, on the build queue:
    whole, and then every cell of its block joins the ring, so no large reference goes
    missing.
 3. In those cells, the references that `RNAM` lists are read from their cell and drawn with
-   their full model, as the cell build places them. A reference that starts disabled stays
-   hidden.
+   their full model, as the cell build places them. Each takes the enable state its own cell
+   would give it: the world state, then its enable parent.
 
 The quick first ring of a session keeps the `-LargeRef` shapes, because its builder cannot
 read the plugins. Once the near grid is in, the same center is built once more with the large
 references. The start area stays behind the loading screen until that second build is in or
-has failed, so the first view already shows the full models and no swap is seen. `openskycli game state frame` reports `largeReferences` and
-`hiddenLargeReferenceLOD`, the count of cell segments the ring hid. `openskycli render` prints
-the large-reference count with the LOD line.
+has failed, so the first view already shows the full models and no swap is seen.
+`openskycli game state frame` reports `largeReferences` and `hiddenLargeReferenceLOD`, the
+count of cell segments the ring hid. `openskycli render` prints the large-reference count with
+the LOD line.
 
-The references do not take runtime changes, such as a reference that a quest disables later.
+The ring remembers the object IDs of the references it draws and of their enable parents. When
+a script or a quest enables or disables one of them, the ring of the current center is built
+again, so the reference appears or goes. The match is by object ID, so a ring may rebuild once
+too often, never too seldom.
+
+## Is Full LOD references
+
+A reference with the record flag `0x10000` (xEdit "Is Full LOD", "Never Fades" on a light)
+draws its full model at every distance in the worldspace. On the install 1,022 references carry
+it, 951 of them persistent. Each ring build adds the worldspace's persistent ones whose cell is
+not loaded, in their enable state, and watches them as it watches the large references.
+`state frame` reports them as `fullLODReferences`.
+
+[WARNING] The 71 temporary Is Full LOD references are drawn only when their cell is loaded,
+because finding them needs a walk of every exterior cell. The objects merged into the object
+LOD blocks do not follow enable changes: the vanilla blocks were built with them, and only
+generated LOD could leave them out.
 
 ## Tree LOD
 

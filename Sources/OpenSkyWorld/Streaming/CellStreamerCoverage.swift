@@ -61,7 +61,9 @@ extension CellStreamer {
             && largeReferenceRequestCenter != grid.center
         guard nearGridResolved, requestedLODCenter != grid.center || addsLargeReferences
         else { return }
-        if runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident) {
+        if runner.enqueueDistantLOD(
+            center: grid.center, hiddenCells: core.resident, state: stateSource()
+        ) {
             requestedLODCenter = grid.center
             largeReferenceRequestCenter = addsLargeReferences ? grid.center : nil
         }

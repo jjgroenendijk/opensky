@@ -53,6 +53,9 @@ nonisolated public struct PlacedReference: Sendable {
     public let isInitiallyDisabled: Bool
     /// Record-header flag 0x4000_0000 (xEdit "No Respawn"): a cell reset leaves it alone.
     public var isNoRespawn = false
+    /// Record-header flag 0x10000 (xEdit "Is Full LOD", "Never Fades" on a light): the full
+    /// model draws at every distance in the worldspace.
+    public var isFullLOD = false
     /// NAME — the base object this reference places.
     public let base: FormID
     /// DATA placement as decoded. `var` because a cell build lays a runtime
@@ -110,6 +113,7 @@ nonisolated public struct PlacedReference: Sendable {
         formID = FormID(record.formID)
         isInitiallyDisabled = record.isInitiallyDisabled
         isNoRespawn = record.flags.rawValue & 0x4000_0000 != 0
+        isFullLOD = record.flags.rawValue & 0x0001_0000 != 0
 
         var base: FormID?
         var placement: Placement?
