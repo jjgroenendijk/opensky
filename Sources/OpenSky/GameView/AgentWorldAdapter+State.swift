@@ -479,6 +479,7 @@ extension AgentWorldAdapter {
             "terrainLOD": terrainLODState(),
             "largeReferences": game.streamer.map { .init($0.largeReferenceCount) } ?? .null,
             "screenFade": screenFadeState(),
+            "postEffects": postEffectState(),
             "gpuMemory": gpuMemoryState()
         ]
     }

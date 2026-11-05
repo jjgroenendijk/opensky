@@ -45,8 +45,12 @@ the sky reaches.
   angle.
 - A tap darkens the pixel by how far it rises above the surface plane (the cosine to the
   normal, less a bias of 0.05), times `1 - d² / r²` for its distance `d` in the radius `r`.
-- The result is `1 - 1.2 * mean`, clamped to 0 to 1, and multiplies the colour. The sky is
-  not changed.
+- The result is `ao = 1 - 1.2 * mean`, clamped to 0 to 1. The sky is not changed.
+- It darkens only the ambient part of the light. That share is the brightness of the
+  ambient light (the base ambient plus the directional ambient for the normal), divided by
+  the ambient light plus the sun light: the sun colour times `cos` of the sun angle, times
+  one tap of the sun cascades. The colour is multiplied by `1 - share * (1 - ao)`. So a
+  crease in full sun stays almost as bright, and a crease in shade darkens fully.
 - The effect fades out between 2,048 and 4,096 units from the camera. Far away, depth
   precision makes the normals noisy, and the noise would darken the whole distant view.
 
@@ -55,32 +59,66 @@ the sky reaches.
 `[Display] bVolumetricLightingEnable` and `iVolumetricLightingQuality`. Sun light that falls
 through the air between the camera and a surface makes shafts where shadows break it.
 
-- The ray from the camera to the pixel, at most 4,096 units long, takes a fixed number of
+Each weather names 4 `VOLI` volumetric lighting records in `WTHR` `HNAM`, one per time of
+day ([UESP VOLI](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/VOLI)). They blend with
+the same time-of-day and weather-transition weights as the sky colours. An interior, or a
+weather without the link, uses the fallback values in brackets below. Each field maps to the
+shader like this:
+
+| `VOLI` field | Use | Fallback |
+| --- | --- | --- |
+| `CNAM` intensity | strength = 0.025 × intensity | 2 |
+| `DNAM` custom colour contribution `c` | light = sun colour × (1 - c) + colour × c | 0 |
+| `ENAM` to `GNAM` colour | as above | 1, 1, 1 |
+| `HNAM` density contribution | how much the density noise thins the air | 0 |
+| `INAM` density size | one noise cell is 64 × size units | 10 |
+| `JNAM` wind speed | the noise drifts 4 × speed units per second along X | 0 |
+| `KNAM` falling speed | the noise falls 64 × speed units per second | 0 |
+| `LNAM` phase contribution `p` | phase = mix(1, Henyey-Greenstein, p) | 1 |
+| `MNAM` phase scattering `g` | the Henyey-Greenstein asymmetry | 0.6 |
+| `NNAM` sampling range factor | the ray reach = 102.4 × factor units | 40 |
+
+The vanilla records all use colour 1, 1, 1, custom colour 0, density 0.3, size 10, wind 15,
+falling 0.3, and range 40. Intensity runs 1 to 4, and `p` and `g` run 0.7 to 0.85.
+
+- The ray from the camera to the pixel, at most the reach long, takes a fixed number of
   steps: 8, 16, or 32 for quality 0, 1, or 2. A per-pixel noise offset turns the step bands
   into grain.
-- Each step takes one tap of the [sun cascades](/rendering/shadows.md). The share of lit
-  steps is the light along the ray.
-- A Henyey-Greenstein phase with asymmetry 0.6 makes the air brightest toward the sun:
+- Each step takes one tap of the [sun cascades](/rendering/shadows.md), times the air density
+  there: `1 - density × noise`, where the noise is smooth value noise from 0 to 1. The mean
+  over the steps is the light along the ray.
+- The Henyey-Greenstein phase makes the air brightest toward the sun:
   `(1 - g²) / (1 + g² - 2g cos θ)^1.5`, where θ is the angle between the ray and the sun.
-- The added colour is the sun colour times the lit share, the phase, `1 - exp(-length / 4096)`,
-  and a strength of 0.05. The sky pixels take the full length.
+- The added colour is the light times the lit share, the phase, `1 - exp(-length / reach)`,
+  and the strength. The sky pixels take the full length.
 - A sky pixel does not march: its lit share is 1. A sky ray leaves the cascades at their
   edges, and those edges would cut a hard disc and bands into the sky.
 - With shadows off, nothing is added.
 
 ## Depth of field
 
-`[ImageSpace] bDoDepthOfField`. The current image space's `DNAM` gives a strength, a focus
-distance, and a range ([image space records](/formats/image-spaces.md)). Weather and cell
-image spaces blend these values by weight. A running modifier with a depth of field channel
-moves each value toward its own, by the modifier's strength.
+`[ImageSpace] bDoDepthOfField`. The current image space's `DNAM` gives a strength, a clear
+distance, a range, and a code for the blur radius and the sky
+([image space records](/formats/image-spaces.md#depth-of-field)). Weather and cell image
+spaces blend the numbers by weight; the sky flag comes from the heaviest one. A running
+modifier with a depth of field channel moves each value toward its own, by the modifier's
+strength.
 
-- The blur is 0 up to the focus distance. It grows over the range, and is full past
-  distance + range. The sky is always full.
-- Full blur is the strength, clamped to 0 to 1, times a radius of 8 pixels at a
-  1080-pixel-high frame.
-- Two rings of 8 taps average the colour. A tap nearer than the focus distance is skipped, so
-  a sharp foreground does not bleed into the blur behind it.
+- The CK wiki ([ImageSpace Modifiers](https://ck.uesp.net/wiki/ImageSpace_Modifiers)) says
+  the distance "contains a clean, non-blurred view", and a distance higher than the range
+  "will create a blurred foreground with a clear background". So the blur is 0 at the
+  distance and full at the range, on whichever side the range is. Example: distance 0 and
+  range 2,000 blur everything past 2,000 units fully; distance 500 and range 100 blur
+  everything nearer than 100 units fully.
+- A modifier's `DNAM` front and back flags pick the side instead: front blurs nearer than
+  the distance, back blurs past it, and both blur both sides.
+- The sky counts as infinitely far. "No Sky", in the image space code or a modifier's flag,
+  keeps it sharp.
+- Full blur is the strength, clamped to 0 to 1, times `2 + 2 × radius` pixels at a
+  1080-pixel-high frame, for the Creation Kit's "Blur Radius" of 0 to 7. A record without the
+  code uses radius 3, which is 8 pixels.
+- Two rings of 8 taps average the colour. A tap that is itself sharp is skipped, so a sharp
+  shape does not bleed into the blur around it.
 - A strength of 0 draws nothing.
 
 ## Lens flare
@@ -100,12 +138,13 @@ screen centre.
 
 ## Where OpenSky differs
 
-- Ambient occlusion multiplies the whole colour, sun light included. In the game it darkens
-  only the ambient light. The radius, the strength, and the tap count are OpenSky's own.
-- Volumetric light uses OpenSky's own strength and reach for every weather. The game's
-  weathers name a `VOLI` volumetric lighting record, which OpenSky does not read.
-- Depth of field blurs only behind the focus. The `DNAM` sky and blur radius code is not
-  decoded, so the radius is OpenSky's own and the sky always blurs. How a modifier's depth of
-  field channel combines with the base is not documented.
-- The lens flare is OpenSky's own pattern. The game draws its sun flare from data OpenSky
-  does not read.
+- Ambient occlusion splits the light into ambient and sun from the frame's light values, not
+  from the surface's own lighting. Point lights count as neither, so a crease lit only by a
+  torch keeps OpenSky's ambient share. The radius, the strength, and the tap count are
+  OpenSky's own.
+- The volumetric light's scales from `VOLI` fields to world units and strength are OpenSky's
+  reading of the field names. The noise drifts along X, because no wind direction is known.
+- A modifier's "Use Target" flag, which focuses on the crosshair target, is not used.
+- The lens flare is OpenSky's own pattern. The game names a `LENS` lens flare record, but the
+  vanilla install has none (Skyrim.esm, Update.esm, and the three DLC files have no `LENS`
+  group), so there is no data to draw from.

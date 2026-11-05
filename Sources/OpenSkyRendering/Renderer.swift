@@ -65,11 +65,6 @@ public final class Renderer: NSObject {
     public var renderDebugAppliesOffscreen = false
     /// The colour an offscreen frame clears to; the sky, when drawn, covers it.
     public var offscreenBackground = SIMD3<Double>(0, 0, 0)
-    /// The scene's own depth state: test and write.
-    public var depthState: MTLDepthStencilState {
-        materialDepthStates.state(test: true, write: true)
-    }
-
     public let waterDepthState: MTLDepthStencilState
     let materialDepthStates: MaterialDepthStates
     public let sampler: MTLSamplerState
@@ -328,6 +323,8 @@ public final class Renderer: NSObject {
     public var waterDepth = WaterDepthState()
     /// Screen-space effects the composite draws (RendererPostEffects.swift).
     public var postEffects = PostEffectSettings()
+    /// The weather's `VOLI` look of the volumetric light.
+    public var volumetricLight = VolumetricLightValues.fallback
     /// The drawable's format; offscreen frames match it, so every pipeline fits both.
     public let colorPixelFormat: MTLPixelFormat
     var postEffectDepth: MTLTexture?
@@ -339,12 +336,6 @@ public final class Renderer: NSObject {
     public var terrainNormalMapsEnabled = true
     /// The lit-mesh terms the frame draws; each can be turned off.
     public var shadingTerms = SurfaceShadingTerm.all
-    /// The noise term undoes it; off, the LOD texture is drawn as stored.
-    public var terrainLODBrightness: TerrainLODBrightness {
-        guard shadingTerms.contains(.landscapeNoise) else { return .identity }
-        return scene.terrainLODBrightness ?? .vanilla
-    }
-
     /// Bound in the environment slot of a material without a cube map.
     public let blackCube: MTLTexture
     /// Bound in the effect volume slot of a material whose source is not a volume.
@@ -404,8 +395,8 @@ public final class Renderer: NSObject {
             pipelines.morphedSkinnedOpaque, pipelines.morphedSkinnedAlphaTest
         )
         (terrainPipeline, waterPipeline) = (pipelines.terrain, pipelines.water)
-        (particlePipelines, debugPipelines) = (pipelines.particles, pipelines.debug)
-        ribbonPipelines = pipelines.ribbons
+        (particlePipelines, debugPipelines, ribbonPipelines) =
+            (pipelines.particles, pipelines.debug, pipelines.ribbons)
         (materialDepthStates, waterDepthState) = try Self.makeDepthStates(device: device)
         sampler = try Self.makeSampler(device: device)
         ((shadow, uiResources), (worldOverlayResources, swf)) =
@@ -426,25 +417,36 @@ public final class Renderer: NSObject {
         drawUniformSlotCapacity = rings.drawCapacity
         instanceTransformBuffer = rings.instanceBuffer
         instanceSlotCapacity = rings.instanceCapacity
-        shadowDrawUniformBuffer = rings.shadowDrawBuffer
-        shadowInstanceBuffer = rings.shadowInstanceBuffer
+        (shadowDrawUniformBuffer, shadowInstanceBuffer) =
+            (rings.shadowDrawBuffer, rings.shadowInstanceBuffer)
 
         residencySet = try GPUFactory.makeResidencySet(
             device: device,
             allocations: [
-                frameUniformBuffer, drawUniformBuffer, pointLightBuffer,
-                instanceTransformBuffer, shadowDrawUniformBuffer, shadowInstanceBuffer,
-                shadow.map, uiResources.atlasTexture, uiResources.vertexBuffer,
-                uiResources.uniformBuffer, worldOverlayResources.vertexBuffer,
+                frameUniformBuffer, shadow.map, worldOverlayResources.vertexBuffer,
                 swf.whiteTexture, swf.fallbackRamp, imageSpacePass.uniformBuffer,
                 imageSpacePass.luminanceBuffer, blackCube, greyVolume
-            ] + effects.residentBuffers
-                + self.scene.residencyAllocations + precipitation.residencyAllocations
+            ] + rings.residencyAllocations + uiResources.residencyAllocations
+                + effects.residentBuffers + self.scene.residencyAllocations
+                + precipitation.residencyAllocations
         )
         commandQueue.addResidencySet(residencySet)
 
         super.init()
         // A failed save only costs the next launch a compile.
         try? compiler.saveIfNeeded()
+    }
+}
+
+extension Renderer {
+    /// The scene's own depth state: test and write.
+    public var depthState: MTLDepthStencilState {
+        materialDepthStates.state(test: true, write: true)
+    }
+
+    /// The noise term undoes it; off, the LOD texture is drawn as stored.
+    public var terrainLODBrightness: TerrainLODBrightness {
+        guard shadingTerms.contains(.landscapeNoise) else { return .identity }
+        return scene.terrainLODBrightness ?? .vanilla
     }
 }

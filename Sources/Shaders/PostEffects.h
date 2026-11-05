@@ -80,16 +80,10 @@ typedef struct
     float3 world;
 } PostPixel;
 
-// Ambient occlusion: twelve depth taps on a spiral around the pixel. A tap above the
-// surface plane and inside the radius darkens the pixel, more when it is near.
-static inline float postAmbientOcclusion(
+// The surface normal from the depth of the four neighbours, turned to face the camera.
+static inline float3 postSurfaceNormal(
     PostPixel pixel, float3 camera, depth2d<float> depth, constant PostEffectUniforms &post)
 {
-    float range = distance(pixel.world, camera);
-    float fade = 1.0 - smoothstep(0.5, 1.0, range / max(post.ambientOcclusion.w, 1.0));
-    if (fade <= 0.0) {
-        return 1.0;
-    }
     float3 normal = normalize(cross(
         postNeighbourStep(
             pixel.world, postWorldAt(pixel.uv + float2(pixel.texel.x, 0), depth, post),
@@ -97,8 +91,22 @@ static inline float postAmbientOcclusion(
         postNeighbourStep(
             pixel.world, postWorldAt(pixel.uv + float2(0, pixel.texel.y), depth, post),
             postWorldAt(pixel.uv - float2(0, pixel.texel.y), depth, post))));
-    if (dot(normal, camera - pixel.world) < 0.0) {
-        normal = -normal;
+    return dot(normal, camera - pixel.world) < 0.0 ? -normal : normal;
+}
+
+// Ambient occlusion: twelve depth taps on a spiral around the pixel. A tap above the
+// surface plane and inside the radius darkens the pixel, more when it is near.
+static inline float postAmbientOcclusion(
+    PostPixel pixel,
+    float3 normal,
+    float3 camera,
+    depth2d<float> depth,
+    constant PostEffectUniforms &post)
+{
+    float range = distance(pixel.world, camera);
+    float fade = 1.0 - smoothstep(0.5, 1.0, range / max(post.ambientOcclusion.w, 1.0));
+    if (fade <= 0.0) {
+        return 1.0;
     }
     float radius = post.ambientOcclusion.x;
     float2 reach = radius * post.projection.xy * 0.5 / max(range, 1.0);
@@ -135,6 +143,54 @@ static inline float postSunLit(
     return shadowMap.sample_compare(compare, uv, cascade, ndc.z - shadowReceiverBias);
 }
 
+// The ambient part of the light on a surface: occlusion darkens only that part, so a
+// sunlit wall in a corner stays bright. Point lights are not counted.
+static inline float postAmbientShare(
+    PostPixel pixel,
+    float3 normal,
+    constant FrameUniforms &frame,
+    depth2d_array<float> shadowMap,
+    sampler compare)
+{
+    float ambient = postLuma(baseAmbient(frame) + directionalAmbient(normal, frame));
+    float sun = postLuma(frame.sunColor) * saturate(dot(normal, -frame.sunDirection));
+    if (sun > 0.0 && frame.shadowsEnabled != 0) {
+        sun *= postSunLit(pixel.world, frame, shadowMap, compare);
+    }
+    return ambient / max(ambient + sun, 1.0e-4);
+}
+
+// Value noise from 0 to 1 over a lattice of unit cells, smooth between the corners.
+static inline float postHash(float3 cell)
+{
+    return fract(sin(dot(cell, float3(127.1, 311.7, 74.7))) * 43758.5453);
+}
+
+static inline float postValueNoise(float3 position)
+{
+    float3 cell = floor(position);
+    float3 t = position - cell;
+    t = t * t * (3.0 - 2.0 * t);
+    float bottom =
+        mix(mix(postHash(cell), postHash(cell + float3(1, 0, 0)), t.x),
+            mix(postHash(cell + float3(0, 1, 0)), postHash(cell + float3(1, 1, 0)), t.x), t.y);
+    float top =
+        mix(mix(postHash(cell + float3(0, 0, 1)), postHash(cell + float3(1, 0, 1)), t.x),
+            mix(postHash(cell + float3(0, 1, 1)), postHash(cell + float3(1, 1, 1)), t.x), t.y);
+    return mix(bottom, top, t.z);
+}
+
+// VOLI density: drifting noise thins the air by up to the density share.
+static inline float postAirDensity(float3 world, float time, constant PostEffectUniforms &post)
+{
+    float4 density = post.volumetricDensity;
+    if (density.x <= 0.0) {
+        return 1.0;
+    }
+    float3 moved = world - float3(density.z, 0.0, -density.w) * time;
+    return 1.0 - density.x * postValueNoise(moved / max(density.y, 1.0));
+}
+
 // Volumetric light: the ray from the camera to the pixel steps through the sun cascades.
 // The share of lit steps, a forward-scattering phase, and the ray length set how much
 // sun light the air adds.
@@ -162,21 +218,45 @@ static inline float3 postVolumetricLight(
         float sum = 0.0;
         for (int step = 0; step < steps; ++step) {
             float along = (float(step) + offset) / float(steps) * reach;
-            sum += postSunLit(frame.cameraPosition + direction * along, frame, shadowMap, compare);
+            float3 point = frame.cameraPosition + direction * along;
+            sum += postSunLit(point, frame, shadowMap, compare) *
+                   postAirDensity(point, frame.animationTime, post);
         }
         lit = sum / float(steps);
     }
     float asymmetry = post.volumetricLight.w;
     float cosine = dot(direction, -frame.sunDirection);
-    float phase = (1.0 - asymmetry * asymmetry) /
-                  pow(1.0 + asymmetry * asymmetry - 2.0 * asymmetry * cosine, 1.5);
+    float forward = (1.0 - asymmetry * asymmetry) /
+                    pow(1.0 + asymmetry * asymmetry - 2.0 * asymmetry * cosine, 1.5);
+    float phase = mix(1.0, forward, post.volumetricPhase.x);
     float scatter = 1.0 - exp(-reach / maximum);
-    return frame.sunColor * (lit * phase * scatter * post.volumetricLight.x);
+    float3 light = frame.sunColor * post.volumetricColour.w + post.volumetricColour.rgb;
+    return light * (lit * phase * scatter * post.volumetricLight.x);
 }
 
-// Depth of field: past the focus distance the blur grows over the range, up to the
-// strength. Two rings of eight taps; a tap nearer than the focus distance is skipped,
-// so a sharp foreground does not bleed into the blur behind it.
+// How much one depth blurs, 0 to 1. CK wiki: clear at the distance and full at the
+// range; a distance past the range blurs the foreground. A modifier can pick the sides.
+static inline float postFocusBlur(float range, constant PostEffectUniforms &post)
+{
+    float clear = post.depthOfField.y;
+    float full = post.depthOfField.z;
+    float span = max(abs(full - clear), 1.0);
+    float nearBlur = saturate((clear - range) / span);
+    float farBlur = saturate((range - clear) / span);
+    switch (uint(post.depthOfFieldMode.y)) {
+    case 1:
+        return nearBlur;
+    case 2:
+        return farBlur;
+    case 3:
+        return max(nearBlur, farBlur);
+    default:
+        return full >= clear ? farBlur : nearBlur;
+    }
+}
+
+// Depth of field: two rings of eight taps, as wide as the pixel's blur. A tap that is
+// itself sharp is skipped, so a sharp shape does not bleed into the blur around it.
 static inline float3 postDepthOfField(
     float3 color,
     PostPixel pixel,
@@ -187,8 +267,9 @@ static inline float3 postDepthOfField(
     constant PostEffectUniforms &post)
 {
     float4 field = post.depthOfField;
-    float far = sky ? 1.0 : saturate((distance(pixel.world, camera) - field.y) / max(field.z, 1.0));
-    float amount = saturate(field.x) * far;
+    float blur = sky ? postFocusBlur(1.0e9, post) * post.depthOfFieldMode.x
+                     : postFocusBlur(distance(pixel.world, camera), post);
+    float amount = saturate(field.x) * blur;
     if (amount <= 0.0) {
         return color;
     }
@@ -200,8 +281,12 @@ static inline float3 postDepthOfField(
             float angle = (float(tap) + 0.5 * float(ring)) * 0.7853982;
             float2 tapUV = pixel.uv + float2(cos(angle), sin(angle)) * reach * pixel.texel;
             float tapDepth = depth.sample(postNearest, tapUV);
-            if (tapDepth < 1.0 &&
-                distance(postWorldPosition(tapUV, tapDepth, post), camera) < field.y) {
+            float tapBlur =
+                tapDepth >= 1.0
+                    ? postFocusBlur(1.0e9, post) * post.depthOfFieldMode.x
+                    : postFocusBlur(
+                          distance(postWorldPosition(tapUV, tapDepth, post), camera), post);
+            if (tapBlur <= 0.0) {
                 continue;
             }
             sum += scene.sample(postLinear, tapUV).rgb;
@@ -272,7 +357,10 @@ static inline float3 postApply(
         color = postDepthOfField(color, pixel, sky, frame.cameraPosition, scene, depth, post);
     }
     if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky) {
-        color *= postAmbientOcclusion(pixel, frame.cameraPosition, depth, post);
+        float3 normal = postSurfaceNormal(pixel, frame.cameraPosition, depth, post);
+        float occlusion = postAmbientOcclusion(pixel, normal, frame.cameraPosition, depth, post);
+        float share = postAmbientShare(pixel, normal, frame, shadowMap, compare);
+        color *= 1.0 - share * (1.0 - occlusion);
     }
     if ((post.effects & PostEffectFlagVolumetricLight) != 0) {
         color += postVolumetricLight(pixel, sky, frame, post, shadowMap, compare);

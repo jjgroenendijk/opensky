@@ -32,6 +32,10 @@ extension Renderer {
         public let instanceCapacity: Int
         public let shadowDrawBuffer: MTLBuffer
         public let shadowInstanceBuffer: MTLBuffer
+
+        public var residencyAllocations: [MTLAllocation] {
+            [drawBuffer, pointLightBuffer, instanceBuffer, shadowDrawBuffer, shadowInstanceBuffer]
+        }
     }
 
     /// Allocates every per-frame ring for a scene — shared by init and the

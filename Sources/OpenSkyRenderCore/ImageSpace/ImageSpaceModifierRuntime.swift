@@ -163,8 +163,18 @@ nonisolated extension ImageSpaceParameters {
             guard let value = sample.values[channel] else { continue }
             result.depthOfField[index] += (value - depthOfField[index]) * strength
         }
+        if
+            sample.values[.depthOfFieldStrength] != nil, strength > 0,
+            let flags = sample.depthOfFieldFlags
+        {
+            result.depthOfFieldSides = DepthOfFieldSides(flags: flags)
+            result.depthOfFieldKeepsSkySharp = flags & 0x04 != 0
+        }
         if let color = sample.tint {
-            result.tint = Self.averageTint([tint, SIMD4(color.x, color.y, color.z, color.w * strength)])
+            result.tint = Self.averageTint([
+                tint,
+                SIMD4(color.x, color.y, color.z, color.w * strength)
+            ])
         }
         result.fade = Self.layer(fade, over: sample.fade, strength: strength)
         return result

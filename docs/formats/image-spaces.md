@@ -30,6 +30,19 @@ install with a field census.
 
 505 records: `DNAM` is 12 or 16 bytes.
 
+### Depth of field
+
+The uint16 at offset 14 is the high half of a little-endian float32, and the 2 bytes before
+it are its low half. The float is `2 + 4n` for a code `n` from 0 to 15, which matches the 16
+values xEdit lists. OpenSky reads `n / 2` as the Creation Kit's "Blur Radius", 0 to 7, and an
+odd `n` as its "No Sky" box. Example: 16736 is the float 14, so `n` is 3: radius 1, No Sky.
+
+The install uses the codes 16384 (2.0, `n` 0), 16576 (6.0, `n` 1), 16736, 16784, 16816,
+16848, 16880, 16904, 16920, 16936, 16952, 16968, 16984, and 17000 (58.0, `n` 14). 19 records
+have the 12-byte form without the code. The radius and sky reading of `n` is OpenSky's; the
+Creation Kit wiki names both boxes but not their bits
+([ImageSpace](https://ck.uesp.net/wiki/ImageSpace)).
+
 ## IMAD header
 
 `DNAM` is 244 bytes in all 264 records.

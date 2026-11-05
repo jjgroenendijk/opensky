@@ -73,6 +73,11 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
     public var motionBlur: Float = 0
     /// `DNAM` strength, focus distance, and range in world units.
     public var depthOfField = SIMD3<Float>.zero
+    /// The Creation Kit's depth of field "Blur Radius", 0 to 7; 3 when the record has none.
+    public var depthOfFieldBlurRadius: Float = 3
+    /// The Creation Kit's "No Sky": the depth of field leaves the sky sharp.
+    public var depthOfFieldKeepsSkySharp = false
+    public var depthOfFieldSides = DepthOfFieldSides.byOrder
     public var hdr = ImageSpaceHDR()
 
     /// No change to the frame.
@@ -96,6 +101,8 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
         }
         if let field = imageSpace.depthOfField {
             depthOfField = SIMD3(field.strength, field.distance, field.range)
+            depthOfFieldBlurRadius = field.blurRadius.map(Float.init) ?? depthOfFieldBlurRadius
+            depthOfFieldKeepsSkySharp = field.keepsSkySharp ?? false
         }
     }
 
@@ -126,11 +133,14 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
         result.fade = sum(\.fade)
         result.blurRadius = sum(\.blurRadius)
         result.doubleVision = sum(\.doubleVision)
-        result.radialBlur = normalized.max { $0.weight < $1.weight }?.value.radialBlur
-            ?? ImageSpaceRadialBlur()
+        let heaviest = normalized.max { $0.weight < $1.weight }?.value
+        result.radialBlur = heaviest?.radialBlur ?? ImageSpaceRadialBlur()
         result.radialBlur.strength = sum(\.radialBlur.strength)
         result.motionBlur = sum(\.motionBlur)
         result.depthOfField = sum(\.depthOfField)
+        result.depthOfFieldBlurRadius = sum(\.depthOfFieldBlurRadius)
+        result.depthOfFieldKeepsSkySharp = heaviest?.depthOfFieldKeepsSkySharp ?? false
+        result.depthOfFieldSides = heaviest?.depthOfFieldSides ?? .byOrder
         result.hdr = ImageSpaceHDR
             .blend(normalized.map { (value: $0.value.hdr, weight: $0.weight) })
         return result
@@ -149,6 +159,8 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
         result.radialBlur = radialBlur.clamped
         result.motionBlur = motionBlur.isFinite ? simd_clamp(motionBlur, 0, 1) : 0
         result.depthOfField = simd_clamp(depthOfField, .zero, Self.depthOfFieldLimit)
+        result.depthOfFieldBlurRadius = depthOfFieldBlurRadius.isFinite
+            ? simd_clamp(depthOfFieldBlurRadius, 0, 7) : 3
         return result
     }
 }
@@ -188,5 +200,18 @@ nonisolated public struct ImageSpaceRadialBlur: Equatable, Sendable {
         let rising = simd_clamp((radius - start) * rampUp, 0, 1)
         guard downStart > start else { return rising }
         return rising * simd_clamp(1 - (radius - downStart) * rampDown, 0, 1)
+    }
+}
+
+/// Which side of the clear distance blurs. CK wiki "ImageSpace Modifiers": a distance
+/// past the range blurs the foreground; a modifier's front and back flags choose instead.
+nonisolated public enum DepthOfFieldSides: UInt32, Equatable, Sendable {
+    case byOrder = 0
+    case front = 1
+    case back = 2
+    case both = 3
+
+    init(flags: UInt8) {
+        self = Self(rawValue: UInt32(flags & 0x03)) ?? .byOrder
     }
 }

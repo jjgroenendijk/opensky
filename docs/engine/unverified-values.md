@@ -190,8 +190,11 @@ the detail and the sources it did find.
 | Terrain split distance | `fSplitDistanceMult` scales the level 4, 8, and 16 reach; level 32 keeps `fBlockMaximumDistance` | [graphics options](/engine/graphics-options.md) |
 | Large reference LOD hidden per block | The game's per-cell rule is not known | [distant LOD](/engine/distant-lod.md#large-references) |
 | Ambient occlusion radius and strength | 48 units, 12 taps, strength 1.2, bias 0.05, fade 2,048 to 4,096 units | [post effects](/rendering/post-effects.md#ambient-occlusion) |
-| Volumetric light steps and strength | 8, 16, 32 steps; 4,096 units; strength 0.05; asymmetry 0.6 | [post effects](/rendering/post-effects.md#volumetric-light) |
-| Depth of field blur | Far side only; 8 pixels at 1080 lines; modifier moves toward its value | [post effects](/rendering/post-effects.md#depth-of-field) |
+| Ambient occlusion share | Ambient over ambient plus sun, from frame light values; point lights not counted | [post effects](/rendering/post-effects.md#ambient-occlusion) |
+| Volumetric light steps | 8, 16, 32 steps by quality | [post effects](/rendering/post-effects.md#volumetric-light) |
+| `VOLI` field scales | strength 0.025 × intensity; reach 102.4 × range; cell 64 × size; drift 4 × wind along X; fall 64 × falling; fallback values for interiors | [post effects](/rendering/post-effects.md#volumetric-light) |
+| Depth of field blur | Clear at distance, full at range; `2 + 2 × radius` pixels at 1080 lines, radius 3 without a code; modifier moves toward its value | [post effects](/rendering/post-effects.md#depth-of-field) |
+| `IMGS` `DNAM` blur code | High half of float `2 + 4n`; radius `n / 2`, odd `n` is No Sky | [image spaces](/formats/image-spaces.md#depth-of-field) |
 | Lens flare pattern | 5 ghosts, strength 0.6 times sun alpha and weather Sun Glare, 9 visibility taps | [post effects](/rendering/post-effects.md#lens-flare) |
 | Water UV density | 2 quads per repeat | [scene drawing](/rendering/scene-drawing.md) |
 | Clear colour under water | OpenSky's choice | [Metal 4 renderer](/rendering/metal4-renderer.md) |

@@ -142,12 +142,22 @@ typedef struct
     matrix_float4x4 inverseViewProjection;
     /// x, y: projection m00 and m11, to turn a world radius into a screen radius.
     vector_float4 projection;
-    /// x radius in world units, y strength, z bias; w unused.
+    /// x radius in world units, y strength, z bias, w fade distance.
     vector_float4 ambientOcclusion;
     /// x strength, y march steps, z reach in world units, w phase asymmetry.
     vector_float4 volumetricLight;
-    /// x strength, y focus distance, z range in world units, w full blur radius in pixels.
+    /// VOLI: rgb the record colour times its share, w the share of the sun colour.
+    vector_float4 volumetricColour;
+    /// VOLI density noise: x share, y cell size in world units, z drift and w fall in
+    /// world units per second.
+    vector_float4 volumetricDensity;
+    /// VOLI: x the share of the forward phase against an even one; yzw unused.
+    vector_float4 volumetricPhase;
+    /// x strength, y clear distance, z distance where the blur is full, w full blur
+    /// radius in pixels.
     vector_float4 depthOfField;
+    /// x 1 blurs the sky, y the blurred sides (`DepthOfFieldSides`); zw unused.
+    vector_float4 depthOfFieldMode;
     /// xy the sun's texture coordinate, z strength, w the target's width over its height.
     vector_float4 lensFlare;
     /// PostEffectFlag bits.

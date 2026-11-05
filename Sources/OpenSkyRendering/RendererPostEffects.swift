@@ -37,16 +37,18 @@ extension Renderer {
         }
         if postEffects.volumetricLight {
             uniforms.effects |= UInt32(PostEffectFlag.volumetricLight.rawValue)
-            uniforms.volumetricLight = SIMD4(
-                PostEffectSettings.volumetricStrength, Float(postEffects.volumetricSteps),
-                PostEffectSettings.volumetricReach, PostEffectSettings.volumetricAsymmetry
-            )
+            setVolumetricLight(&uniforms)
         }
         if postEffects.depthOfField, parameters.depthOfField.x > 0 {
             uniforms.effects |= UInt32(PostEffectFlag.depthOfField.rawValue)
+            let pixels = PostEffectSettings
+                .depthOfFieldPixels(blurRadius: parameters.depthOfFieldBlurRadius)
             uniforms.depthOfField = SIMD4(
-                parameters.depthOfField,
-                PostEffectSettings.depthOfFieldRadius * Float(targetHeight) / 1080
+                parameters.depthOfField, pixels * Float(targetHeight) / 1080
+            )
+            uniforms.depthOfFieldMode = SIMD4(
+                parameters.depthOfFieldKeepsSkySharp ? 0 : 1,
+                Float(parameters.depthOfFieldSides.rawValue), 0, 0
             )
         }
         if postEffects.fxaa {
@@ -63,6 +65,27 @@ extension Renderer {
             }
         }
         return uniforms.effects == 0 ? nil : uniforms
+    }
+
+    /// The weather's `VOLI` values (docs/rendering/post-effects.md#volumetric-light).
+    private func setVolumetricLight(_ uniforms: inout PostEffectUniforms) {
+        let look = volumetricLight.clamped
+        uniforms.volumetricLight = SIMD4(
+            PostEffectSettings.volumetricStrengthPerIntensity * look.intensity,
+            Float(postEffects.volumetricSteps),
+            PostEffectSettings.volumetricReachPerSamplingRange * look.samplingRangeFactor,
+            look.phaseFunctionScattering
+        )
+        uniforms.volumetricColour = SIMD4(
+            look.color * look.customColorContribution, 1 - look.customColorContribution
+        )
+        uniforms.volumetricDensity = SIMD4(
+            look.densityContribution,
+            PostEffectSettings.volumetricCellPerDensitySize * look.densitySize,
+            PostEffectSettings.volumetricDriftPerWindSpeed * look.densityWindSpeed,
+            PostEffectSettings.volumetricFallPerFallingSpeed * look.densityFallingSpeed
+        )
+        uniforms.volumetricPhase = SIMD4(look.phaseFunctionContribution, 0, 0, 0)
     }
 
     /// Outdoors under a sky only; nil when the sun is behind the camera or set.

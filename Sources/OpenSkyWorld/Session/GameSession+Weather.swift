@@ -134,7 +134,15 @@ extension GameSession {
         imageSpace.screenFade.advance(deltaTime)
         guard let links = imageSpaceLinks else {
             imageSpace.baseline = .none
+            renderer.volumetricLight = .fallback
             return
+        }
+        renderer.volumetricLight = if links.interior == nil, weatherEnabled, let weather {
+            weather.volumetricLight(
+                hour: timeOfDay, records: links.records, plugin: links.weatherPlugin
+            )
+        } else {
+            .fallback
         }
         let context: ImageSpaceContext = if let interior = links.interior {
             .interior(cellImageSpace: interior.imageSpace)

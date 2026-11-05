@@ -38,4 +38,43 @@ struct ImageSpaceDepthOfFieldTests {
         parameters.depthOfField = SIMD3(3, -10, 500)
         #expect(parameters.clampedForDisplay.depthOfField == SIMD3(1, 0, 500))
     }
+
+    static func coded(_ word: UInt16) throws -> ImageSpace {
+        try ImageSpace(record: Fixture.record("IMGS", fields: [
+            ("DNAM", Fixture.f32(1, 0, 2000) + Fixture.u16(0, word))
+        ]))
+    }
+
+    @Test func theBlurCodeIsTheHighHalfOfAFloat() throws {
+        let plain = try #require(Self.coded(16384).depthOfField)
+        #expect(plain.blurCode == 0)
+        #expect(plain.blurRadius == 0)
+        #expect(plain.keepsSkySharp == false)
+        let sharpSky = try #require(Self.coded(16736).depthOfField)
+        #expect(sharpSky.blurCode == 3)
+        #expect(sharpSky.blurRadius == 1)
+        #expect(sharpSky.keepsSkySharp == true)
+        let widest = try #require(Self.coded(17000).depthOfField)
+        #expect(widest.blurRadius == 7)
+        #expect(try Self.coded(0xFFFF).depthOfField?.blurCode == nil)
+    }
+
+    @Test func theCodeReachesTheParameters() throws {
+        let parameters = try ImageSpaceParameters(Self.coded(16736))
+        #expect(parameters.depthOfFieldBlurRadius == 1)
+        #expect(parameters.depthOfFieldKeepsSkySharp)
+        let uncoded = try ImageSpaceParameters(
+            Self.imageSpace(strength: 1, distance: 0, range: 100)
+        )
+        #expect(uncoded.depthOfFieldBlurRadius == 3)
+        #expect(!uncoded.depthOfFieldKeepsSkySharp)
+        #expect(PostEffectSettings.depthOfFieldPixels(blurRadius: 3) == 8)
+    }
+
+    @Test func modifierFlagsPickTheSides() {
+        #expect(DepthOfFieldSides(flags: 0x01) == .front)
+        #expect(DepthOfFieldSides(flags: 0x06) == .back)
+        #expect(DepthOfFieldSides(flags: 0x03) == .both)
+        #expect(DepthOfFieldSides(flags: 0x04) == .byOrder)
+    }
 }
