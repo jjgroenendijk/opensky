@@ -42,22 +42,34 @@ nonisolated extension CellSceneBuilder {
         return asset
     }
 
+    /// The graph's bones merged with the billboards and lag bones of the mesh. Nil when
+    /// the mesh has none, so the object poses on the graph's own skeleton.
+    func objectPoseRig(modelPath: String, asset: BehaviorProjectAsset) -> EffectPoseRig? {
+        guard
+            let nodes = nodeControllerRig(modelPath: modelPath),
+            let rig = EffectPoseRig(nodes: nodes, graph: asset.skeleton), rig.addsNodes
+        else { return nil }
+        return rig
+    }
+
     /// A pose buffer and playback for each animated instance.
     func animatedObjects(
         _ instances: [ResolvedInstance]
     ) -> [(object: CellAnimatedObject, playback: any RenderAnimation)] {
         instances.compactMap { instance in
             guard let asset = instance.animated else { return nil }
+            let nodes = objectPoseRig(modelPath: instance.modelPath, asset: asset)
             let pose = PlayerPoseBuffer()
             let playback = PlayerAnimationPlayback(
-                skeleton: asset.skeleton, pose: pose, models: [instance.model]
+                skeleton: nodes?.skeleton ?? asset.skeleton, pose: pose, models: [instance.model]
             )
             let parts = instance.model.meshes.compactMap { mesh in
                 mesh.skinning.map { TrapContactPart(skinning: $0, bounds: mesh.localBounds) }
             }
             let object = CellAnimatedObject(
                 reference: instance.formID, asset: asset, pose: pose,
-                contactShape: TrapContactShape(boneNames: asset.skeleton.boneNames, parts: parts)
+                contactShape: TrapContactShape(boneNames: asset.skeleton.boneNames, parts: parts),
+                nodes: nodes, placement: instance.transform
             )
             return (object, playback)
         }

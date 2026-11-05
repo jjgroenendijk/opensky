@@ -221,7 +221,7 @@ nonisolated extension CellSceneBuilder {
         details: WaterDetails
     ) -> WaterShading {
         let velocity = details.linearVelocity ?? .zero
-        return WaterShading(
+        var shading = WaterShading(
             opacity: Float(min(details.opacity ?? 30, 100)) / 100,
             fresnelAmount: surface.fresnelAmount,
             reflectivity: surface.reflectivity,
@@ -235,5 +235,21 @@ nonisolated extension CellSceneBuilder {
             amplitudes: surface.amplitudes,
             flowVelocity: SIMD2(velocity.x, velocity.y)
         )
+        shading.noiseTextures = details.noiseTextures.prefix(3).map { $0 ?? "" }
+        shading.sunSparkleMagnitude = surface.sunSparkleMagnitude
+        shading.sunSparklePower = surface.sunSparklePower
+        shading.refractionMagnitude = surface.refractionMagnitude
+        let rings = surface.displacement
+        shading.displacement = SIMD4(
+            rings.startingSize,
+            rings.force,
+            rings.velocity,
+            rings.dampener
+        )
+        shading.displacementFalloff = rings.falloff
+        shading.underwaterFog = SIMD3(
+            surface.underwaterFogNear, surface.underwaterFogFar, surface.underwaterFogAmount
+        )
+        return shading
     }
 }

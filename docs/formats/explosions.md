@@ -65,6 +65,9 @@ On detonation OpenSky:
 4. Starts the `MNAM` image-space modifier. Its strength falls linearly from 1 at the center
    to 0 at the image-space radius, measured to the camera.
 5. Places the placed object: a `HAZD` spawns a hazard, a `DEBR` throws debris.
+6. Lights the blast with the `DATA` light for the same 2 s, fading out linearly.
+7. Plays the `DATA` impact data set at the center, as an impact on the ground with no
+   material: its model, decal, and sound.
 
 A projectile with the alternate-trigger flag also detonates in the air: when its flight time
 reaches the `PROJ` explosion timer, or when an actor other than the shooter comes within the
@@ -73,7 +76,8 @@ proximity distance. Such a projectile leaves no stuck arrow.
 Simplifications:
 
 - Force does not push actors or loose objects. It only sets the debris launch speed.
-- The light, the impact data set, the spawn projectile, and the vertical offset are not used.
+- The spawn projectile and the vertical offset are not used.
+- The light's 2 s and its fade, and the impact on no material, are OpenSky's choices.
 - Damage has no line-of-sight check and ignores the "ignore line of sight" flag.
 - On the install, an `EXPL` placed object is a `HAZD` 4 times, an `ACTI` 11 times, an `EXPL`
   once, and another type 23 times. None is a `DEBR`. Placed objects of other types are

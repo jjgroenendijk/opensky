@@ -151,34 +151,44 @@ extension MagicWorldAdapter {
     }
 
     /// Hands the renderer this frame's spell lights: a self-cast light floats beside its
-    /// actor, an aimed one stays where it landed.
+    /// actor, an aimed one stays where it landed. A casting light floats at the same
+    /// place while its caster readies the spell. Projectile and flash lights follow.
     func publishMagicLights() {
         guard let renderer = game.renderer else { return }
-        let lights = game.effectsWorld.effects.records.lights
-        let settings = game.magic.holdSettings
-        renderer.transientPointLights = game.magic.magicLights.compactMap { light in
-            guard
-                case let .plugin(name, objectID) = light.light,
-                let record = lights.record(ResolvedFormID(plugin: name, objectID: objectID))?
-                    .record,
-                record.radius > 0
-            else { return nil }
-            let position: SIMD3<Float>
-            switch light.anchor {
-            case let .point(point):
-                position = point
-            case let .actor(key):
-                guard let ray = aimRay(of: key) else { return nil }
-                position = MagicHoldCore.lightPosition(
-                    eye: ray.origin, forward: ray.direction, settings: settings
-                )
+        let effects = game.effectsWorld
+        let spells = game.magic.magicLights.compactMap { light -> RenderPointLight? in
+            let position: SIMD3<Float>? = switch light.anchor {
+            case let .point(point): point
+            case let .actor(key): handLightPosition(of: key)
             }
-            return RenderPointLight(
-                position: position, radius: Float(record.radius),
-                color: record.color * max(0, record.fade),
-                falloffExponent: max(0.01, record.falloffExponent)
-            )
+            return position.flatMap { effects.renderLight(light.light, at: $0, strength: 1) }
         }
+        let casting = castingLights.keys.sorted { "\($0)" < "\($1)" }.compactMap { caster in
+            castingLights[caster].flatMap { light in
+                handLightPosition(of: caster).flatMap {
+                    effects.renderLight(light, at: $0, strength: 1)
+                }
+            }
+        }
+        renderer.transientPointLights = spells + casting + effects.projectileAndFlashLights()
+    }
+
+    private func handLightPosition(of key: ReferenceKey) -> SIMD3<Float>? {
+        guard let ray = aimRay(of: key) else { return nil }
+        return MagicHoldCore.lightPosition(
+            eye: ray.origin, forward: ray.direction, settings: game.magic.holdSettings
+        )
+    }
+
+    /// Shows or drops the `MGEF` casting light of `caster`, written in `plugin`.
+    func showCastingLight(
+        _ light: FormID, plugin: String, caster: ReferenceKey, shown: Bool
+    ) {
+        guard shown else {
+            castingLights[caster] = nil
+            return
+        }
+        castingLights[caster] = game.effectsWorld.effects.records.resolve(light, fromPlugin: plugin)
     }
 
     private func feet(of key: ReferenceKey) -> SIMD3<Float>? {

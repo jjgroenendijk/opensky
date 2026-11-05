@@ -7,9 +7,11 @@ import OpenSkyFormatsESM
 @MainActor
 public protocol PapyrusEffectPresenting: AnyObject {
     /// Attaches an `RFCT` or `EFSH` to `target`; a nil duration lasts until stopped.
-    /// False when the form draws nothing.
+    /// An `RFCT` that faces its target turns toward `facing`. False when it draws nothing.
     @discardableResult
-    func playEffect(_ effect: ReferenceKey, on target: ReferenceKey, duration: Float?) -> Bool
+    func playEffect(
+        _ effect: ReferenceKey, on target: ReferenceKey, duration: Float?, facing: ReferenceKey?
+    ) -> Bool
 
     /// Removes the effect from `target`. False when none was playing.
     @discardableResult

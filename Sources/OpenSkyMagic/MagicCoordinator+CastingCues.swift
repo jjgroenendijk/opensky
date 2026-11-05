@@ -97,9 +97,14 @@ extension MagicCoordinator {
         for cue in cues {
             guard
                 let spell = caster?.spellbook.record(cue.spell),
-                let effect = spell.effects.max(by: { $0.cost < $1.cost })?.effect,
-                let command = command(for: cue, effect: effect, caster: key)
+                let effect = spell.effects.max(by: { $0.cost < $1.cost })?.effect
             else { continue }
+            if case .art = cue.what, let light = effect.effect.data?.castingLight {
+                pendingCommands.append(.castingLight(
+                    light, plugin: effect.sourcePlugin, caster: key, starts: cue.starts
+                ))
+            }
+            guard let command = command(for: cue, effect: effect, caster: key) else { continue }
             pendingCommands.append(command)
             castingCueCount += 1
             if cue.starts {

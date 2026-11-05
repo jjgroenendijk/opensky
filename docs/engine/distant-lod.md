@@ -108,23 +108,25 @@ Each ring build, on the build queue:
 
 1. Object LOD blocks merge their large references into separate shapes. On the real install,
    `tamriel.4.4.-8.bto` holds `obj-LargeRef`, `objsnow-LargeRef`, `objHD-LargeRef`, and
-   `objsnowHD-LargeRef`, each with a `BSDistantObjectLargeRefExtraData` block. A block that
-   reaches into the ring drops every shape whose name ends in `-LargeRef`.
-2. The ring's cells are every cell inside the large radius, plus every cell of a block from
-   step 1, minus the loaded grid. The second part means a large reference never goes missing
-   when its block reaches only partly into the ring.
+   `objsnowHD-LargeRef`, each with a `BSDistantObjectLargeRefExtraData` block. Each shape
+   holds one segment per cell ([LOD format](/formats/lod.md#large-references)). A block that
+   reaches into the ring drops the segments of the cells inside the large radius, and keeps
+   the rest.
+2. The ring's cells are every cell inside the large radius, minus the loaded grid. A
+   `-LargeRef` shape without segments, as a tool other than the game's might write, drops
+   whole, and then every cell of its block joins the ring, so no large reference goes
+   missing.
 3. In those cells, the references that `RNAM` lists are read from their cell and drawn with
    their full model, as the cell build places them. A reference that starts disabled stays
    hidden.
 
 The quick first ring of a session keeps the `-LargeRef` shapes, because its builder cannot
 read the plugins. Once the near grid is in, the same center is built once more with the large
-references. `openskycli game state frame` reports `largeReferences`, and `openskycli render`
-prints the count with the LOD line.
+references. `openskycli game state frame` reports `largeReferences` and
+`hiddenLargeReferenceLOD`, the count of cell segments the ring hid. `openskycli render` prints
+the large-reference count with the LOD line.
 
-The game hides a large reference's LOD per cell; OpenSky hides it per block, so the ring of
-full models is square to the block grid and can reach a few cells past the setting. The
-references do not take runtime changes, such as a reference that a quest disables later.
+The references do not take runtime changes, such as a reference that a quest disables later.
 
 ## Tree LOD
 

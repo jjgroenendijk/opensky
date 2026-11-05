@@ -17,6 +17,8 @@ nonisolated public struct ReadyMeshLayout: Equatable, Sendable {
     public let uvPerUnit: Float
     /// See `Mesh.lodIndexCounts`.
     public let lodIndexCounts: [Int]
+    /// See `Mesh.objectLODSegment`.
+    public let objectLODSegment: Int?
     /// False for a skinned mesh, an empty one, or one whose indices pass its vertices.
     /// Such a model loads through the whole decode, which reports the problem.
     public let isReady: Bool
@@ -97,6 +99,7 @@ nonisolated enum ReadyModelLayoutCodec {
         out.int(mesh.positions.count)
         out.int(mesh.indices.count)
         out.array(mesh.lodIndexCounts.map(UInt32.init))
+        out.int(mesh.objectLODSegment ?? -1)
         out.array(bounds.map { [$0.min, $0.max] } ?? [])
         out.value(MeshUVDensity.uvPerUnit(
             positions: mesh.positions, uvs: mesh.uvs, indices: mesh.indices
@@ -117,6 +120,7 @@ nonisolated enum ReadyModelLayoutCodec {
         let vertexCount = try input.int()
         let indexCount = try input.int()
         let levels = try input.array(UInt32.self).map(Int.init)
+        let segment = try input.int()
         let corners = try input.array(SIMD3<Float>.self)
         let uvPerUnit = try input.value(Float.self)
         let ready = try input.bool()
@@ -135,7 +139,8 @@ nonisolated enum ReadyModelLayoutCodec {
             name: name, transform: transform, materialSlot: slot, vertexCount: vertexCount,
             indexCount: indexCount,
             bounds: corners.count == 2 ? ModelBounds(min: corners[0], max: corners[1]) : nil,
-            uvPerUnit: uvPerUnit, lodIndexCounts: levels, isReady: ready,
+            uvPerUnit: uvPerUnit, lodIndexCounts: levels,
+            objectLODSegment: segment >= 0 ? segment : nil, isReady: ready,
             vertexRange: vertices, indexRange: indices
         )
     }

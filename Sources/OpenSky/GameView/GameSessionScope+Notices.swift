@@ -20,7 +20,9 @@ extension GameSessionScope {
     }
 
     func makeSequenceDoors() -> SequenceDoorCoordinator {
-        let doors = SequenceDoorCoordinator(world: objectAnimationWorld)
+        let doors = SequenceDoorCoordinator(
+            world: objectAnimationWorld, viewer: { [unowned self] in billboardViewer }
+        )
         doors.isEnabled = objectBehaviors.isEnabled
         return doors
     }

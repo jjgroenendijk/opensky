@@ -111,10 +111,18 @@ typedef struct
     vector_float4 fade;
     /// saturation, brightness, contrast, blur radius in target pixels.
     vector_float4 grading;
-    /// x double-vision strength; yzw unused.
+    /// x double-vision strength, y motion blur 0 to 1, zw radial blur centre in UV.
     vector_float4 extra;
     /// x exposure, y white point (0 is none), z 1 to measure luminance, w unused.
     vector_float4 toneMapping;
+    /// Radial blur: strength, ramp up, start, ramp down.
+    vector_float4 radialBlur;
+    /// x radial blur down start; yzw unused.
+    vector_float4 radialBlurEnd;
+    /// Bloom: radius in target pixels, threshold, scale, receive threshold. Off at scale 0.
+    vector_float4 bloom;
+    /// Maps this frame's clip position at the far plane to last frame's, for motion blur.
+    matrix_float4x4 reprojection;
 } ImageSpaceUniforms;
 
 /// PostEffectUniforms.effects bits: the screen-space effects the composite draws.
@@ -134,12 +142,22 @@ typedef struct
     matrix_float4x4 inverseViewProjection;
     /// x, y: projection m00 and m11, to turn a world radius into a screen radius.
     vector_float4 projection;
-    /// x radius in world units, y strength, z bias; w unused.
+    /// x radius in world units, y strength, z bias, w fade distance.
     vector_float4 ambientOcclusion;
     /// x strength, y march steps, z reach in world units, w phase asymmetry.
     vector_float4 volumetricLight;
-    /// x strength, y focus distance, z range in world units, w full blur radius in pixels.
+    /// VOLI: rgb the record colour times its share, w the share of the sun colour.
+    vector_float4 volumetricColour;
+    /// VOLI density noise: x share, y cell size in world units, z drift and w fall in
+    /// world units per second.
+    vector_float4 volumetricDensity;
+    /// VOLI: x the share of the forward phase against an even one; yzw unused.
+    vector_float4 volumetricPhase;
+    /// x strength, y clear distance, z distance where the blur is full, w full blur
+    /// radius in pixels.
     vector_float4 depthOfField;
+    /// x 1 blurs the sky, y the blurred sides (`DepthOfFieldSides`); zw unused.
+    vector_float4 depthOfFieldMode;
     /// xy the sun's texture coordinate, z strength, w the target's width over its height.
     vector_float4 lensFlare;
     /// PostEffectFlag bits.

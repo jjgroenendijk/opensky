@@ -19,8 +19,9 @@ struct AuxiliaryShadowRings {
 
 /// The auxiliary depth array and its rings. Views past the ring limits drop casters.
 final class AuxiliaryShadowResources {
-    static let instanceLimit = 16384
-    static let drawLimit = 4096
+    /// Room for the point light faces too: up to 24 views in an interior.
+    static let instanceLimit = 32768
+    static let drawLimit = 8192
 
     let map: MTLTexture
     let rings: AuxiliaryShadowRings
@@ -61,6 +62,12 @@ final class AuxiliaryShadowResources {
     }
 }
 
+/// The array an auxiliary view draws into.
+enum AuxiliaryShadowTarget {
+    case auxiliary
+    case pointLights
+}
+
 /// One auxiliary view this frame: its slice and its world-to-clip matrix.
 struct AuxiliaryShadowView {
     let slice: Int
@@ -68,6 +75,7 @@ struct AuxiliaryShadowView {
     /// Layers left out, such as actors under the rain.
     let excluding: RenderLayer
     let drawsTerrain: Bool
+    var target = AuxiliaryShadowTarget.auxiliary
 }
 
 extension Renderer {
@@ -75,6 +83,7 @@ extension Renderer {
     func encodeAuxiliaryShadowViews(slot: Int, sunShadows: Bool) -> Bool {
         precipitationOcclusionView = nil
         focusShadows = FocusShadowFrame()
+        pointShadows = PointShadowFrame()
         let views = auxiliaryViews(sunShadows: sunShadows)
         guard !views.isEmpty, let resources = auxiliaryShadowResources() else { return true }
         var state = ShadowPassState(
@@ -82,7 +91,8 @@ extension Renderer {
             rings: resources.rings
         )
         for (number, view) in views.enumerated() {
-            guard let encoder = makeShadowEncoder(cascade: view.slice, target: resources.map)
+            let target = view.target == .pointLights ? pointShadowMap?.map : resources.map
+            guard let target, let encoder = makeShadowEncoder(cascade: view.slice, target: target)
             else { return false }
             encoder.label = "Auxiliary Shadow View \(view.slice)"
             configureShadowEncoder(encoder)
@@ -133,7 +143,7 @@ extension Renderer {
         if sunShadows {
             views += focusViews()
         }
-        return views
+        return views + pointShadowViews()
     }
 
     /// The array, built and made resident on first use; nil when the device refuses it.

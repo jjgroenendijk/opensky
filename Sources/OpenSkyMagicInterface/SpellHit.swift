@@ -45,6 +45,8 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
     public var disallowsAbsorb = false
     /// `SPIT` "Area Effect Ignores LOS": bystanders behind a wall are caught too.
     public var areaIgnoresLineOfSight = false
+    /// The `MGEF` `IPDS` of the entry that names the projectile: what its impact shows.
+    public var impactDataSet: FormID?
 
     public var source: ActiveEffectSource {
         ActiveEffectSource(kind: .spell, record: spell)
@@ -62,6 +64,7 @@ nonisolated public struct SpellPayload: Equatable, Sendable {
         payload.baseCost = baseCost
         payload.disallowsAbsorb = disallowsAbsorb
         payload.areaIgnoresLineOfSight = areaIgnoresLineOfSight
+        payload.impactDataSet = impactDataSet
         return payload
     }
 }

@@ -129,7 +129,8 @@ nonisolated extension CellSceneBuilder {
                 recordType: base.recordType,
                 modelPath: base.modelPath,
                 isEditorMarker: base.isEditorMarker,
-                alternateTextures: base.details.model?.alternateTextures ?? []
+                alternateTextures: base.details.model?.alternateTextures ?? [],
+                treeData: base.details.treeData
             )
         }
         return nil

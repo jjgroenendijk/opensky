@@ -45,7 +45,18 @@ extension CombatWorldAdapter: CombatWorld {
         }
         game.scripts.bridge?.recordHit(hit, targetWasHostile: wasHostile)
         speakCombatLines(for: hit)
+        rumbleWeapon(for: hit)
         return game.scripts.runtime?.queueOnHit(hit) ?? 0
+    }
+
+    /// The player's own weapon blow shakes the controller with the weapon's Rumble tab.
+    private func rumbleWeapon(for hit: ScriptHitEvent) {
+        guard
+            hit.aggressor == .player, hit.delivery == .melee || hit.delivery == .ranged,
+            let source = hit.source,
+            let weapon = game.worldData?.inventoryBaselines?.items.weapon(source)
+        else { return }
+        game.controllerRumble.weapon(weapon.rumble)
     }
 
     /// An NPC aggressor may call out its attack and an NPC target its hurt, each held back
@@ -373,6 +384,10 @@ extension CombatWorldAdapter: CombatWorld {
     /// A playback failure is logged by the engine and leaves the hit silent. The
     /// file loads off the main actor and is kept, so a repeated impact does not read it.
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
+        playImpact(impact, at: position, gain: 1)
+    }
+
+    func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>, gain: Float) {
         showImpact(impact, at: position)
         guard
             let engine = game.gameSession?.worldAudio, engine.isRunning,
@@ -382,7 +397,8 @@ extension CombatWorldAdapter: CombatWorld {
             let path = sound.filePaths.first
         else { return }
         let request = AudioPlayRequest(
-            name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position
+            name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position,
+            gain: gain, soundCategory: sound.descriptor.category
         )
         assets.request(path) { result in
             _ = try? engine.playPositional(asset: result.get(), request: request)

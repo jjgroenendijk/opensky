@@ -58,7 +58,7 @@ struct EffectCatalogTests {
         let effects = try EffectsCoordinator(records: Self.records())
         #expect(effects
             .attach(Self.key(0x801), to: .actor(.player), cause: .debug, duration: nil) != nil)
-        effects.showModel("fx/blast.nif", at: .zero, cause: .explosion)
+        effects.showModel("fx/blast.nif", at: .point(.zero), cause: .explosion)
         #expect(effects.visualEffects.instances.count == 2)
         effects.removeAll(cause: .debug)
         #expect(effects.visualEffects.instances.map(\.cause) == [.explosion])

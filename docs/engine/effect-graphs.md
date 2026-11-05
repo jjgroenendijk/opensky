@@ -54,6 +54,8 @@ two natives, and SKSE adds no native for them.
 - `PlaySubGraphAnimation` sends its event the same way an actor event goes.
   `SetSubGraphFloatVariable` sets the variable on each sub-graph that declares it. From then on,
   that graph keeps the script's value and no longer takes the actor's.
+- A `BGSGamebryoSequenceGenerator` the graph reaches names a NIF sequence of the effect's own
+  mesh. The effect's particle systems play it ([particles](/rendering/particles.md#sequences)).
 - An event that an effect graph fires goes back to `handle` as an event of the actor. It does
   not go back to the effect graphs, so a graph cannot hear its own event twice.
 
@@ -75,7 +77,8 @@ actor without a running graph has no pose buffer, so its addon graphs move nothi
 
 `openskycli game state effects [ref]` lists each running sub-graph: the effect id or the armour
 addon (`armorAddon`), the actor (null at a point), the point, the name, the project, the active
-state, the last actor event the graph took, and how many it took. With a reference, it lists
+state, the last actor event the graph took, how many it took, and the NIF sequences the last step
+played (`sequences`). With a reference, it lists
 only the sub-graphs on that actor.
 
 ## Where OpenSky differs

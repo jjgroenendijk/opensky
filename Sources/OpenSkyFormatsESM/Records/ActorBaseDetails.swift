@@ -12,11 +12,21 @@ nonisolated public struct ActorSoundType: Equatable, Sendable {
         public var sound: FormID?
         /// CSDC, a percent.
         public var chance: UInt8?
+
+        public init(sound: FormID?, chance: UInt8? = nil) {
+            self.sound = sound
+            self.chance = chance
+        }
     }
 
     /// 0 left foot to 21 play random or loop. See the page.
     public var type: UInt32
     public var entries: [Entry] = []
+
+    public init(type: UInt32, entries: [Entry] = []) {
+        self.type = type
+        self.entries = entries
+    }
 }
 
 /// One TINI layer of a face tint.

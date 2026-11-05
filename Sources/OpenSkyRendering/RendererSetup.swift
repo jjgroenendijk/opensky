@@ -41,6 +41,8 @@ nonisolated public struct RenderPipelines: Sendable {
     public let terrain: MTLRenderPipelineState
     public let water: MTLRenderPipelineState
     public let particles: ParticlePipelines
+    /// Ribbon bands: strips, rain streaks, and lightning.
+    public let ribbons: ParticlePipelines
     /// Render-debug twins of the five geometry paths, built up front so a mode change
     /// binds a state instead of compiling one.
     public let debug: DebugRenderPipelines
@@ -203,7 +205,7 @@ extension Renderer {
         // Highest buffer index is the post-effect uniforms.
         descriptor.maxBufferBindCount = BufferIndex.postEffectUniforms.rawValue + 1
         // The projected normal map is the highest slot.
-        descriptor.maxTextureBindCount = TextureIndex.projectedNormal.rawValue + 1
+        descriptor.maxTextureBindCount = TextureIndex.pointShadowMap.rawValue + 1
         // Trilinear + shadow-compare + UI clamp + SWF repeat.
         descriptor.maxSamplerStateBindCount = 4
         return try device.makeArgumentTable(descriptor: descriptor)
@@ -292,6 +294,7 @@ extension Renderer {
             particles: makeParticlePipelines(
                 library: library, compiler: compiler, view: view
             ),
+            ribbons: makeRibbonPipelines(library: library, compiler: compiler, view: view),
             debug: makeDebugPipelines(library: library, compiler: compiler, view: view)
         )
     }
@@ -312,6 +315,19 @@ extension Renderer {
             staticMesh: make(skinned: false, morphed: false),
             skinned: make(skinned: true, morphed: false),
             morphed: make(skinned: true, morphed: true)
+        )
+    }
+
+    private static func makeRibbonPipelines(
+        library: MTLLibrary,
+        compiler: PipelineCache,
+        view: MTKView
+    ) throws -> ParticlePipelines {
+        try makeBlendPipelines(
+            BlendPipelineNames(
+                vertex: "ribbonVertex", fragment: "particleFragment", label: "Ribbons"
+            ),
+            library: library, compiler: compiler, view: view
         )
     }
 

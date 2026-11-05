@@ -96,6 +96,9 @@ nonisolated public enum MusicState: String, Equatable, Sendable, CaseIterable {
     /// `WorldMusicDirector.setCombatActive(_:)` selects a MUSC directly, so leaving
     /// combat restores the interrupted selection.
     case combat
+    /// One selection for a moment, such as a level up or a cleared dungeon, named by
+    /// the default objects. When its track ends, the interrupted music comes back.
+    case special
 
     public var displayName: String {
         switch self {
@@ -103,6 +106,7 @@ nonisolated public enum MusicState: String, Equatable, Sendable, CaseIterable {
         case .town: "town"
         case .exploration: "exploration"
         case .combat: "combat"
+        case .special: "special"
         }
     }
 }

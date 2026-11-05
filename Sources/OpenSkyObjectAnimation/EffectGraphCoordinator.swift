@@ -30,6 +30,8 @@ nonisolated public struct EffectGraphRow: Equatable, Sendable {
     /// The last actor event the graph declares and so took; nil before the first.
     public let lastEvent: String?
     public let takenCount: Int
+    /// The NIF sequences the graph's last step played, in walk order.
+    public let sequences: [String]
 
     public var actor: ReferenceKey? {
         guard case let .actor(key) = anchor else { return nil }
@@ -179,6 +181,11 @@ public final class EffectGraphCoordinator {
         running[.effect(id)]?.bones ?? []
     }
 
+    /// The NIF sequences the effect's graph played at its last step, in walk order.
+    public func sequences(ofEffect id: Int) -> [String] {
+        running[.effect(id)]?.instance.gamebryoSequences ?? []
+    }
+
     /// One row per running sub-graph, in sub-graph order.
     public var rows: [EffectGraphRow] {
         running.keys.sorted().compactMap { id in
@@ -187,7 +194,8 @@ public final class EffectGraphCoordinator {
                 id: id, anchor: entry.attachment.anchor,
                 name: entry.attachment.name, project: entry.project,
                 activeState: entry.instance.activeStates.last?.stateName,
-                lastEvent: entry.lastEvent, takenCount: entry.takenCount
+                lastEvent: entry.lastEvent, takenCount: entry.takenCount,
+                sequences: entry.instance.gamebryoSequences
             )
         }
     }

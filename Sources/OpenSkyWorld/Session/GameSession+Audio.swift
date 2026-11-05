@@ -17,6 +17,7 @@ extension GameSession {
     /// the clock mark but skips the tick entirely: sources hold their state and
     /// the listener pose stays where it was when the pause began.
     public func updateAudioFromWallClock() {
+        updateSoundMix(now: renderer.wallClock.now)
         let delta = audioClock.advance(to: renderer.wallClock.now, paused: worldSimPaused)
         guard !worldSimPaused else {
             // A paused frame does no audio work at all, so the measured cost of
@@ -47,6 +48,11 @@ extension GameSession {
         // `sources`, which is how the playlist knows to advance.
         defer { musicDirector?.tick(deltaTime: deltaTime) }
         defer { soundDirector?.tickAmbience(deltaTime: deltaTime) }
+        defer {
+            soundDirector?.updateActorLoops(
+                actorSoundSources?() ?? [], listener: freeFlyCamera.position
+            )
+        }
         defer { routeFootstepEvents() }
         worldAudio.updateListener(
             worldPosition: freeFlyCamera.position,
@@ -58,6 +64,16 @@ extension GameSession {
             deltaTime: deltaTime,
             purgeRadius: loadedGridRadius + 1
         )
+    }
+
+    /// Steps the sound mix on the wall clock, so a menu's fade runs while the world is paused.
+    func updateSoundMix(now: Double) {
+        let seconds = soundMixWallTime.map { Float(max(now - $0, 0)) } ?? 0
+        soundMixWallTime = now
+        guard let worldAudio else { return }
+        var inputs = soundMixInputs?() ?? SoundMixInputs()
+        inputs.submerged = breath.isSubmerged
+        worldAudio.advanceSoundMix(inputs, seconds: seconds)
     }
 
     /// Drains the bridge's graph events into the footstep director. Always drains, so no

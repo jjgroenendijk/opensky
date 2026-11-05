@@ -423,7 +423,10 @@ extension AgentWorldAdapter {
             )
         }
         renderer.shadowQuality = quality
-        return ["shadows": .string(quality.rawValue)]
+        return [
+            "shadows": .string(quality.rawValue),
+            "shadowLights": .number(Double(renderer.pointShadowLightCount))
+        ]
     }
 
     private static func layer(named name: String) -> RenderLayer? {

@@ -41,6 +41,14 @@ public protocol AudioWorld: AnyObject {
     func lipSyncTarget(for speaker: ReferenceKey) -> LipSyncPlayback?
     /// Where `speaker`'s voice comes from, in native units; nil when it is not loaded.
     func speakerHeadPosition(of speaker: ReferenceKey) -> SIMD3<Float>?
+    /// Whether `speaker` is the actor the player is in conversation with.
+    func isConversationSpeaker(_ speaker: ReferenceKey) -> Bool
+}
+
+extension AudioWorld {
+    public func isConversationSpeaker(_: ReferenceKey) -> Bool {
+        false
+    }
 }
 
 public final class AudioCoordinator {

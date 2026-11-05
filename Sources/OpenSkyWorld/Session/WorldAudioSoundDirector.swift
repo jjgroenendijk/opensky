@@ -15,6 +15,8 @@ private struct ResolvedSoundFile {
     let path: String
     let category: AudioCategory
     let outputModel: FormID?
+    let soundCategory: FormID?
+    let rumbleSend: SoundDescriptor.RumbleSend?
 }
 
 /// One sound waiting for its file: where it plays, and whether it is still wanted.
@@ -60,6 +62,8 @@ public final class WorldAudioSoundDirector {
     /// Animation loops by source and descriptor, like the interaction loops above.
     var animationLoopTokens: [AnimationSoundKey: Int] = [:]
     var animationLoopSourceIDs: [AnimationSoundKey: Int] = [:]
+    /// The creature breath and movement loops that play, with where they play.
+    public internal(set) var actorLoops: [ActorLoop: SIMD3<Float>] = [:]
     /// Lowercased SNDR editor ID -> FormID, built on the first animation sound.
     var soundIDsByEditorID: [String: FormID]?
     /// The sounds scripts play, by their Papyrus instance ID.
@@ -70,6 +74,8 @@ public final class WorldAudioSoundDirector {
     /// SFX on use-key activation. Off by default until the user enables audio;
     /// the control writes back here.
     public var sfxEnabled = true
+    /// Shakes the controller for a sound whose output model allows rumble.
+    public var rumble: ((SoundRumble) -> Void)?
     /// Continuous ambience bed. Same default policy as `sfxEnabled`. Toggling
     /// it takes effect immediately: switching off retires the playing bed,
     /// switching back on restarts the bed the last context resolved.
@@ -284,7 +290,8 @@ extension WorldAudioSoundDirector {
                 name: resolved.path,
                 category: resolved.category,
                 worldPosition: pending.position ?? .zero,
-                loops: pending.loops
+                loops: pending.loops,
+                soundCategory: resolved.soundCategory
             )
             request.outputModel = profile
             let routing = pending.position == nil ? .nonPositional : AudioRoutingDecision.routing(
@@ -298,6 +305,9 @@ extension WorldAudioSoundDirector {
                 engine.stopSource(id: sourceID)
                 return
             }
+            if profile?.allowsRumble == true, let send = resolved.rumbleSend {
+                rumbleFor(source: sourceID, send: send, seconds: asset.duration)
+            }
             lastSFXDescription = resolved.path
             lastSFXError = nil
         } catch {
@@ -309,6 +319,18 @@ extension WorldAudioSoundDirector {
                 "[WARNING] \(kind, privacy: .public) play failed: \(reason, privacy: .public)"
             )
         }
+    }
+
+    /// The rumble follows the level the listener hears when the sound starts.
+    private func rumbleFor(source id: Int, send: SoundDescriptor.RumbleSend, seconds: Float?) {
+        guard let rumble, let source = engine.sources.first(where: { $0.id == id }) else { return }
+        let level = engine.effectiveGain(of: source) * source.distanceGain
+        let event = SoundRumble(
+            small: send.small * level, big: send.big * level,
+            seconds: min(seconds ?? SoundRumble.maximumSeconds, SoundRumble.maximumSeconds)
+        )
+        guard event.small > 0 || event.big > 0 else { return }
+        rumble(event)
     }
 
     /// A descriptor with several files plays one of them at random, as the game does.
@@ -325,7 +347,9 @@ extension WorldAudioSoundDirector {
         return ResolvedSoundFile(
             path: path,
             category: resolved.audioCategory ?? .effects,
-            outputModel: resolved.descriptor.outputModel
+            outputModel: resolved.descriptor.outputModel,
+            soundCategory: resolved.descriptor.category,
+            rumbleSend: resolved.descriptor.rumbleSend
         )
     }
 }

@@ -204,8 +204,10 @@ Checked on the vanilla install: 525 of 912 particle NIFs hold sequences, and 142
 feeds it. Cycle types are 0 (loop) or 2 (clamp). Common emitter sequence names are `mIdle`,
 `Waiting`, `mBegin`, `mLoop`, and `mEnd`.
 
-A NIF does not say which sequence plays first; the game starts them from animation events.
-OpenSky's pick is in [particle playback](/rendering/particles.md).
+A NIF does not say which sequence plays first; the effect's behaviour graph plays them.
+OpenSky decodes the controllers once for the default pick and once for each sequence that
+feeds the system, so the graph can switch between them
+([particle playback](/rendering/particles.md#sequences)).
 
 ## Parameter modifiers
 
@@ -233,16 +235,17 @@ items marked "inferred" are OpenSky's reading, not confirmed against the game:
   `percentage` of its speed each 1/30 second (inferred). Past the range the drag fades to
   none over `rangeFalloff`. Vanilla ranges are `FLT_MAX`, so the drag applies everywhere.
 - Rotation. Each particle starts at the angle plus or minus its variation, and spins at the
-  speed plus or minus its variation. With random speed sign, half spin the other way. The
-  billboard turns in the screen plane; the axis is ignored, because a billboard has one
-  free turn.
+  speed plus or minus its variation. With random speed sign, half spin the other way. A
+  billboard turns in the screen plane, because it has one free turn. A mesh particle spins
+  about the axis, or about its own random axis when random axis is set.
 - Sub-texture. A particle picks its start frame, loop start frame, and frame count, each
   plus up to its fudge at random (inferred). It plays the frame count over its life. Past
   the end frame it goes back to the loop start frame. The frames index the subtexture
   offsets of `NiPSysData`.
 - Inherit velocity. A new particle in a world-space system takes, with the given chance in
-  percent, the emitter's velocity times the multiplier plus or minus the variation. OpenSky
-  uses the velocity of the particle system, not of the inherit object.
+  percent, the inherit object's velocity times the multiplier plus or minus the variation.
+  The object is a node; when a controller or graph moves it, such as a weapon tip, its own
+  speed counts. Without an object, the system's velocity is used.
 - Age death and spawn. A particle dies at the end of its life. With spawn on death set, it
   first spawns children that start at its place and speed. A particle spawns while its
   generation is at most the generation count, so a count of 0 spawns once (inferred). On the
@@ -325,8 +328,9 @@ uint32 generation pool sizes, and a Ref to the node whose children are the parti
 `NiPSysMeshUpdateModifier` holds a Ref list of meshes; `BSPSysHavokUpdateModifier` adds a
 Ref to a modifier it drives. On the install, only
 `effects\dragoncrash\fxdragoncrashfurrow01.nif` uses them: three systems whose particles
-are rock `NiTriShape` meshes. OpenSky simulates these systems like the others and draws
-billboards; drawing the rock meshes per particle is not done.
+are rock `NiTriShape` meshes. OpenSky draws the pool's meshes at each particle of an
+effect ([particles](/rendering/particles.md#mesh-particles)); a placed one still draws
+billboards.
 
 ## Not read
 
@@ -343,7 +347,8 @@ at depth 64, and stops on loops. The walk differs from the mesh walk (see
 [NIF](/formats/nif.md)): it does not drop hidden or `EditorMarker` subtrees. Like the mesh
 walk, it enters only the active child of a `NiSwitchNode`. Each `NiParticleSystem`,
 `BSStripParticleSystem`, or `NiMeshParticleSystem` becomes one particle system with its world
-transform, capacity, emitters, modifiers, effect shader, and alpha property.
+transform, capacity, emitters, modifiers, effect shader, and alpha property, and the names
+of the nodes above it.
 
 All vanilla effect NIFs checked (109 files, 216 systems) decode without errors. In
 Whiterun, every particle system has an effect shader and an alpha property.

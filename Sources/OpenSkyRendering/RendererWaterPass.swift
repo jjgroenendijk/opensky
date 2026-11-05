@@ -23,8 +23,10 @@ public struct WaterDepthState {
     /// `bScreenSpaceReflectionEnabled`: the water reflects the scene drawn before it.
     public var screenSpaceReflections = false
     var colorCopy: MTLTexture?
-    /// This frame's water reads the colour copy too.
+    /// This frame's water reflects the colour copy.
     var reflects = false
+    /// This frame copies the colour, for the refraction and the reflection.
+    var copiesColour = false
 
     public init() {}
 
@@ -46,6 +48,7 @@ extension Renderer {
             && effectiveRenderLayers.contains(.water)
         waterDepth.copies = waterDepth.waterReads || perspective && softEffectsInView()
         waterDepth.reflects = waterDepth.waterReads && waterDepth.screenSpaceReflections
+        waterDepth.copiesColour = waterDepth.waterReads
     }
 
     /// `FrameUniforms.sceneDepthUnproject`.
@@ -69,11 +72,13 @@ extension Renderer {
         slot: Int,
         draw: Int,
         item: WaterDrawItem,
-        depthBound: Bool
+        depthBound: Bool,
+        noiseMapped: Bool
     ) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         let look = item.look
         let shading = look.shading
+        let rings = waterRipples.live(at: animationTime)
         var uniforms = WaterDrawUniforms(
             modelMatrix: item.modelMatrix,
             shallowColor: look.shallowColor,
@@ -92,8 +97,19 @@ extension Renderer {
             uvScales: SIMD4(shading.uvScales, 0),
             amplitudes: SIMD4(shading.amplitudes, 0),
             flowVelocity: shading.flowVelocity,
-            depthUnproject: waterDepth.unproject ?? .zero
+            depthUnproject: waterDepth.unproject ?? .zero,
+            detail: SIMD4(
+                shading.refractionMagnitude, shading.sunSparkleMagnitude,
+                shading.sunSparklePower, noiseMapped ? 1 : 0
+            ),
+            displacement: shading.displacement,
+            rings: SIMD4(
+                shading.displacementFalloff, frameRainOnWater, Float(rings.count),
+                depthBound && waterDepth.copiesColour ? 1 : 0
+            ),
+            ripples: (.zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero)
         )
+        WaterRippleField.write(rings, into: &uniforms.ripples)
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<WaterDrawUniforms>.size)
         return offset
@@ -140,8 +156,16 @@ extension Renderer {
         depthBound: Bool,
         state: inout ScenePassState
     ) {
+        let noise = waterNoiseTextures?.layers(item.look.shading.noiseTextures)
+        if let noise {
+            let slots: [TextureIndex] = [.surfaceNormal, .surfaceGlow, .surfaceDetail]
+            for (map, index) in zip(noise, slots) {
+                argumentTable.setTexture(map.gpuResourceID, index: index.rawValue)
+            }
+        }
         let uniformOffset = updateWaterDrawUniforms(
-            slot: state.slot, draw: state.drawCursor, item: item, depthBound: depthBound
+            slot: state.slot, draw: state.drawCursor, item: item, depthBound: depthBound,
+            noiseMapped: noise != nil
         )
         state.drawCursor += 1
         state.stats.drawCalls += 1
@@ -179,7 +203,7 @@ extension Renderer {
             return nil
         }
         var copies = [ScenePassCopy(source: depth, target: \.waterDepth.copy, label: "Water")]
-        if waterDepth.reflects {
+        if waterDepth.copiesColour {
             copies.append(
                 ScenePassCopy(source: colour, target: \.waterDepth.colorCopy, label: "Water")
             )
@@ -190,7 +214,7 @@ extension Renderer {
         if let copy = waterDepth.copy {
             argumentTable.setTexture(copy.gpuResourceID, index: TextureIndex.sceneDepth.rawValue)
         }
-        if waterDepth.reflects, let colorCopy = waterDepth.colorCopy {
+        if waterDepth.copiesColour, let colorCopy = waterDepth.colorCopy {
             argumentTable.setTexture(
                 colorCopy.gpuResourceID, index: TextureIndex.sceneColor.rawValue
             )

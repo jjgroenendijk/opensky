@@ -28,6 +28,20 @@ nonisolated public struct SoundCategory: Sendable {
     public let defaultMenuValue: Float?
     public let skipped: FieldTally
 
+    public init(
+        formID: FormID, editorID: String?, flags: Flags = [], parent: FormID?,
+        staticVolumeMultiplier: Float? = nil, defaultMenuValue: Float? = nil
+    ) {
+        self.formID = formID
+        self.editorID = editorID
+        name = nil
+        self.flags = flags
+        self.parent = parent
+        self.staticVolumeMultiplier = staticVolumeMultiplier
+        self.defaultMenuValue = defaultMenuValue
+        skipped = FieldTally()
+    }
+
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "SNCT" else {
             throw ESMError.malformed("expected SNCT record, got \(record.type)")
@@ -103,6 +117,24 @@ nonisolated public struct SoundDescriptor: Sendable {
         public let staticAttenuationDecibels: Float
     }
 
+    /// `LNAM` byte 3: how much of the sound's level drives each rumble motor, 0 to 1.
+    public struct RumbleSend: Equatable, Sendable {
+        public let small: Float
+        public let big: Float
+
+        public init(small: Float, big: Float) {
+            self.small = small
+            self.big = big
+        }
+
+        /// Each nibble counts sevens of a percent: small in the low four bits, big in the high.
+        public init?(byte: UInt8) {
+            guard byte != 0 else { return nil }
+            small = min(Float(byte & 0x0F) * 7 / 100, 1)
+            big = min(Float(byte >> 4) * 7 / 100, 1)
+        }
+    }
+
     public let formID: FormID
     public let editorID: String?
     public let descriptorType: UInt32?
@@ -111,6 +143,8 @@ nonisolated public struct SoundDescriptor: Sendable {
     public let tracks: [String]
     public let outputModel: FormID?
     public let looping: Looping?
+    /// Nil when the descriptor sends nothing to the rumble motors.
+    public let rumbleSend: RumbleSend?
     public let parameters: Parameters?
     /// CTDA run that gates playback.
     public let conditions: [Condition]
@@ -133,6 +167,7 @@ nonisolated public struct SoundDescriptor: Sendable {
         var tracks: [String] = []
         var outputModel: FormID?
         var looping: Looping?
+        var rumbleSend: RumbleSend?
         var parameters: Parameters?
 
         // Field layouts:
@@ -155,6 +190,8 @@ nonisolated public struct SoundDescriptor: Sendable {
                 outputModel = try Self.readOptionalFormID(&reader, size: field.data.count)
             case "LNAM":
                 looping = try Self.readLooping(&reader, size: field.data.count)
+                rumbleSend = field.data.count == 4
+                    ? RumbleSend(byte: field.data[field.data.startIndex + 3]) : nil
             case "BNAM":
                 parameters = try Self.readParameters(&reader, size: field.data.count)
             default:
@@ -173,6 +210,7 @@ nonisolated public struct SoundDescriptor: Sendable {
         self.tracks = tracks
         self.outputModel = outputModel
         self.looping = looping
+        self.rumbleSend = rumbleSend
         self.parameters = parameters
     }
 

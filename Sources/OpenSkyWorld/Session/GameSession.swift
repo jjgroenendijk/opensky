@@ -148,6 +148,12 @@ public final class GameSession: RenderFrameDriver {
     public var worldAudio: WorldAudioEngine?
     /// Region sound director, ticked from the pause-aware audio hook. Nil until audio is on.
     public var soundDirector: WorldAudioSoundDirector?
+    /// The actors whose breath and movement loops may play; the app supplies them.
+    public var actorSoundSources: (() -> [ActorSoundSource])?
+    /// The menu, loading, and dialogue state the sound mix follows; the app supplies it.
+    public var soundMixInputs: (() -> SoundMixInputs)?
+    /// The wall-clock time of the last sound mix step, which also runs in menus.
+    var soundMixWallTime: Double?
     /// Music director, ticked from the pause-aware audio hook. Nil until audio is on.
     public var musicDirector: WorldMusicDirector?
     /// Footstep director, fed from the pause-aware audio hook with the bridge's graph

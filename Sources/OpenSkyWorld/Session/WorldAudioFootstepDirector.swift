@@ -230,7 +230,8 @@ public final class WorldAudioFootstepDirector {
         // The SNCT chain places vanilla footstep descriptors under
         // `AudioCategoryFST`; the fallback is for a chain that reaches no menu category.
         let request = AudioPlayRequest(
-            name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position
+            name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position,
+            soundCategory: sound.descriptor.category
         )
         var reason: AudioTriggerRefusal?
         assets.request(path) { [weak self] result in

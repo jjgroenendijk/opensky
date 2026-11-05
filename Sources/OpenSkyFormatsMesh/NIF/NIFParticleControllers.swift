@@ -15,9 +15,32 @@ nonisolated enum NIFParticleControllerDecoder {
 
     /// Every particle controller from `ref` along the next-controller links.
     static func controllers(from ref: Int32, file: NIFFile) throws -> ParticleControllerSet {
+        try chain(from: ref, file: file, feeds: FeedCache()).set
+    }
+
+    /// The chain's controllers as each named sequence feeds them, by lowercased sequence
+    /// name. A sequence that feeds none of the chain's controllers is left out.
+    static func sequenceControllers(
+        from ref: Int32, file: NIFFile
+    ) throws -> [String: ParticleControllerSet] {
+        guard ref >= 0 else { return [:] }
+        var result: [String: ParticleControllerSet] = [:]
+        for sequence in try NIFControllerSequenceDecoder.sequences(file: file) {
+            guard let name = sequence.name?.lowercased(), result[name] == nil else { continue }
+            let fed = try chain(from: ref, file: file, feeds: FeedCache(sequence: sequence))
+            if fed.usedSequence {
+                result[name] = fed.set
+            }
+        }
+        return result
+    }
+
+    private static func chain(
+        from ref: Int32, file: NIFFile, feeds: FeedCache
+    ) throws -> (set: ParticleControllerSet, usedSequence: Bool) {
         // A system with controllers steps only when one is `NiPSysUpdateCtlr`.
         var set = ParticleControllerSet(updatesSimulation: ref < 0)
-        var feeds = FeedCache()
+        var feeds = feeds
         var next = ref
         var visited: Set<Int32> = []
         while next >= 0 {
@@ -58,7 +81,7 @@ nonisolated enum NIFParticleControllerDecoder {
                 set.updatesSimulation = true
             }
         }
-        return set
+        return (set, feeds.usedSequence)
     }
 
     static let visibilityControllerType = "NiVisController"
@@ -81,10 +104,17 @@ nonisolated enum NIFParticleControllerDecoder {
     }
 
     /// The default sequence feeds, read once per chain and only when a controller needs them.
+    /// With `sequence` set, that sequence's feed wins where it feeds the controller.
     private struct FeedCache {
+        var sequence: NIFControllerSequenceDecoder.DecodedSequence?
+        private(set) var usedSequence = false
         private var feeds: [Int32: SequenceFeed]?
 
         mutating func feed(_ index: Int32, _ file: NIFFile) throws -> SequenceFeed? {
+            if let own = sequence?.feeds[index] {
+                usedSequence = true
+                return own
+            }
             let all = try feeds ?? NIFControllerSequenceDecoder.defaultFeeds(file: file)
             feeds = all
             return all[index]

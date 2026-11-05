@@ -62,13 +62,14 @@ Only one state is written anywhere in the records, so the others are derived:
 | Exploration | Every other exterior, also one with no playlist | The fallback. It does not prove an exploration playlist exists |
 | Combat | The combat loop says so | Not derived from the cell. See below |
 
-Combat does not come from the cell. When combat starts, the director selects the first `MUSC`
-whose editor ID starts with `MUSCombat` (ignoring case), found by FormID so the choice is the
-same every run. It remembers the selection it interrupted. When combat ends, it returns to
-exactly that selection, without selecting again. So a fight that started in a town ends with the
-town's playlist. A cell crossed during the fight changes what combat will return to, but does not
-interrupt the fight music. A load order with no combat playlist keeps the current music and says
-why. The `MUSCombat` prefix has the same limits as the town prefix. See
+Combat does not come from the cell. When combat starts, the director selects the battle music
+of the default objects (`DOBJ` `BTMS`, see below). A load order without it falls back to the
+first `MUSC` whose editor ID starts with `MUSCombat` (ignoring case), found by FormID so the
+choice is the same every run. It remembers the selection it interrupted. When combat ends, it
+returns to exactly that selection, without selecting again. So a fight that started in a town ends
+with the town's playlist. A cell crossed during the fight changes what combat will return to, but
+does not interrupt the fight music. A load order with no combat playlist keeps the current music and
+says why. The `MUSCombat` prefix has the same limits as the town prefix. See
 [combat](/engine/combat.md).
 
 ### Scripted music
@@ -81,8 +82,30 @@ stack returns to. Removing the playing type plays the next top, or the cell's mu
 stack is empty. Combat still wins: scripted music waits for the fight to end. The stack is not
 saved.
 
-There is no dungeon state. Vanilla has `MUSDungeon...` records, but game systems OpenSky does not
-have yet start them. Adding a state for them now would be a guess.
+### Dungeons
+
+Dungeon music needs no state of its own. The dungeon interiors name it in their `XCMO`: on the
+install, 95 cells name `MUSDungeon`, 114 `MUSDungeonFort`, 113 `MUSDungeonCave`, 42
+`MUSDungeonIce`, 6 `MUSDungeonDLCVampireCastle`, and 16 `DLC2MUSDungeonApocrypha`. So the
+interior state plays it, and combat returns to it.
+
+### Special music
+
+The default objects (`DOBJ`) name the music of single moments
+([UESP DOBJ](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DOBJ)):
+
+| Tag | Moment | Vanilla `MUSC` | OpenSky starts it |
+| --- | --- | --- | --- |
+| `BTMS` | Battle | `MUSCombat` | When combat music starts |
+| `DTMS` | Death | `MUSSpecialDeath` | When the player dies |
+| `LUMS` | Level up | `MUSSpecialSuccess` | With the "level up" notice |
+| `DCMS` | Dungeon cleared | `MUSDungeonCleared` | With the "cleared" notice |
+| `SCMS` | Success | `MUSSpecialSuccess` | Never: no source says what starts it |
+
+Each plugin's `DOBJ` is merged by tag; the last plugin wins. A special moment plays one track
+and does not loop. When the track ends, the music it interrupted comes back. A cell change during
+the moment changes only what comes back. Combat cuts the moment short and later returns to what
+the moment interrupted. During combat, a special moment does not start.
 
 ## Playlists
 

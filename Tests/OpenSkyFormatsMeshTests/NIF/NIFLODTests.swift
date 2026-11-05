@@ -80,7 +80,40 @@ struct NIFLODTests {
         #expect(parsed.segments.map(\.flags) == [0xA5])
         #expect(parsed.segments.map(\.startIndex) == [0])
         #expect(parsed.segments.map(\.primitiveCount) == [1])
-        #expect(try file.model().meshes.count == 1)
+        #expect(try file.model().meshes.map(\.objectLODSegment) == [nil])
+    }
+
+    @Test func largeReferenceShapeSplitsIntoOneMeshPerFilledSegment() throws {
+        let vertex = Data(count: 20)
+        var payload = NIFFixture.bsTriShape(
+            prefix: NIFFixture.avObjectPrefix(nameIndex: 0, extraDataRefs: [2]),
+            shaderPropertyRef: 1,
+            attributes: Self.attributes,
+            strideDwords: 5,
+            vertexRecords: Array(repeating: vertex, count: 6),
+            triangles: [0, 1, 2, 3, 4, 5]
+        )
+        payload.appendUInt32(3)
+        for (start, count) in [(UInt32(0), UInt32(1)), (0, 0), (3, 1)] {
+            payload.append(0)
+            payload.appendUInt32(start)
+            payload.appendUInt32(count)
+        }
+        var largeReference = Data()
+        largeReference.appendUInt32(.max)
+        largeReference.append(1)
+        let file = try NIFFile(data: NIFFixture.file(
+            blocks: [
+                .init("BSSubIndexTriShape", payload),
+                .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty()),
+                .init("BSDistantObjectLargeRefExtraData", largeReference)
+            ],
+            strings: ["obj-LargeRef"]
+        ))
+        let meshes = try file.model().meshes
+        #expect(meshes.map(\.objectLODSegment) == [0, 2])
+        #expect(meshes.map(\.positions.count) == [3, 3])
+        #expect(meshes.map(\.indices) == [[0, 1, 2], [0, 1, 2]])
     }
 
     @Test func rejectsSubIndexSegmentOutsideTriangles() throws {

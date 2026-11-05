@@ -6,6 +6,7 @@ import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyObjectAnimation
 import OpenSkyPhysics
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -249,14 +250,14 @@ nonisolated extension CellSceneBuilder {
         var instances = instances + addOnInstances(for: instances)
         let vehicles = animatedVehicles(&instances, followers: geometry.vehicleFollowers)
         let doors = animatedDoors(&instances)
-        let nodes = animatedNodes(&instances)
+        var nodes = animatedNodes(&instances)
+        let objects = animatedObjects(instances)
         let actors = geometry.actors
-        let particles = makeParticlePlaybacks(instances: instances)
+        let particles = particlePlaybacks(instances: instances, nodes: &nodes)
         // A simulated reference draws at its live pose, so it keeps its FormID.
         let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
             .union(geometry.vehicleFollowers)
         let placed = renderPlacements(instances, simulated: simulated)
-        let objects = animatedObjects(instances)
         let bounds = unionedBounds(placements: placed + actors.placements, geometry: geometry)
         let renderScene = RenderScene(
             instances: placed + actors.placements,
@@ -309,6 +310,24 @@ nonisolated extension CellSceneBuilder {
         return scene
     }
 
+    /// Every particle system of the cell; a node animation keeps its own reference's.
+    nonisolated private func particlePlaybacks(
+        instances: [ResolvedInstance], nodes: inout [(
+            mesh: CellNodeAnimation,
+            playback: any RenderAnimation
+        )]
+    ) -> [ParticlePlayback] {
+        let particlesByReference = makeParticlePlaybacks(instances: instances)
+        let byReference = Dictionary(
+            particlesByReference.map { ($0.reference, $0.playbacks) },
+            uniquingKeysWith: +
+        )
+        for index in nodes.indices {
+            nodes[index].mesh.particles = byReference[nodes[index].mesh.reference] ?? []
+        }
+        return particlesByReference.flatMap(\.playbacks)
+    }
+
     nonisolated private func renderPlacements(
         _ instances: [ResolvedInstance],
         simulated: Set<UInt32>
@@ -322,23 +341,24 @@ nonisolated extension CellSceneBuilder {
                 referenceFormID: simulated.contains(instance.formID) ? instance.formID : 0
             )
             placement.emittance = instance.emittance
+            placement.treeMotion = instance.treeMotion
             return placement
         }
     }
 
     nonisolated private func makeParticlePlaybacks(
         instances: [ResolvedInstance]
-    ) -> [ParticlePlayback] {
-        var result: [ParticlePlayback] = []
+    ) -> [(reference: UInt32, playbacks: [ParticlePlayback])] {
+        var result: [(reference: UInt32, playbacks: [ParticlePlayback])] = []
         for instance in instances {
             do {
-                result += try meshes.particlePlaybacks(
+                try result.append((instance.formID, meshes.particlePlaybacks(
                     path: instance.modelPath,
                     surface: instance.surface,
                     placementTransform: instance.transform,
                     formID: instance.formID,
                     emittance: instance.emittance
-                )
+                )))
             } catch {
                 let reason = String(describing: error)
                 let source = instance.modelPath

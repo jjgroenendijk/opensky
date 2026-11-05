@@ -3,6 +3,7 @@
 // (docs/engine/impulses.md).
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyEffects
@@ -37,9 +38,24 @@ extension EffectsWorldAdapter: ImpulseWorld {
                 key: body.key, reference: body.reference, position: body.position,
                 velocity: body.linearVelocity, mass: body.definition.mass,
                 boundingRadius: body.definition.boundingRadius,
-                kind: ImpulseBodyKind(collisionLayer: body.definition.collisionLayer)
+                kind: ImpulseBodyKind(collisionLayer: body.definition.collisionLayer),
+                material: body.definition.colliderShapes.lazy.compactMap(\.material).first
             )
         }
+    }
+
+    /// The body's material names the impact data set; the surface it hit is not known, so
+    /// the set's most common entry plays.
+    func playCollision(_ collision: BodyCollision) {
+        guard
+            let store = game.worldData?.footstepStore,
+            let dataSet = store.materialParents.impactDataSet(of: collision.material),
+            let impact = MeleeImpactResolver(footsteps: store).resolve(
+                dataSet: dataSet,
+                material: nil
+            )
+        else { return }
+        game.combatWorld.playImpact(impact, at: collision.position, gain: collision.gain)
     }
 
     func applyBodyImpulse(_ impulse: BodyImpulse) {
@@ -53,6 +69,14 @@ extension EffectsWorldAdapter: ImpulseWorld {
         game.hazardWorld.hazardCandidates().filter { target in
             target.key == .player || game.actorWorld.combatActor(key: target.key)?.isDead == false
         }
+    }
+
+    func waterContacts(_ contacts: [WaterSample]) {
+        game.renderer?.updateWaders(contacts.compactMap { contact in
+            contact.waterHeight.map {
+                (key: contact.key, position: SIMD3(contact.position.x, contact.position.y, $0))
+            }
+        })
     }
 
     func waterHeight(at position: SIMD2<Float>) -> Float? {
@@ -92,7 +116,10 @@ extension EffectsWorldAdapter: ImpulseWorld {
     }
 
     func showSplash(_ splash: SplashEvent) {
-        effects.showModel(splash.model, at: splash.position, cause: .impact)
+        effects.showModel(splash.model, at: .point(splash.position), cause: .impact)
+        game.renderer?.addWaterRipple(
+            at: splash.position, strength: splash.weight == .heavy ? 1 : 0.6
+        )
         guard splash.weight != .silent else { return }
         game.audio.soundDirector?.playAnimationSound(
             editorID: Self.splashSound, source: splash.source ?? .player, at: splash.position

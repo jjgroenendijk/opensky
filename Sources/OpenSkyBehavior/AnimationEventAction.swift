@@ -5,11 +5,13 @@
 import Foundation
 
 nonisolated public enum AnimationEventAction: Equatable, Sendable {
-    /// Plays the `SNDR` with this editor ID at the source. `node` names the bone or
-    /// node of `SoundPlayAt`; the sound still plays at the source's position.
+    /// Plays the `SNDR` with this editor ID at the source, or at the bone or node that
+    /// `SoundPlayAt` names in `node`.
     case playSound(editorID: String, node: String?)
     /// Ends the loop of this `SNDR` that the same source started.
     case stopSound(editorID: String)
+    /// Lets that loop finish its current pass, then end.
+    case releaseSound(editorID: String)
     /// Shakes the camera from the source, with a strength in 0...1.
     case cameraShake(strength: Float)
     /// Lets the source's head turn toward a target again, or holds it forward.
@@ -30,7 +32,7 @@ nonisolated public enum AnimationEventAction: Equatable, Sendable {
     static let soundPlayAt = "SoundPlayAt"
     static let function = "Func"
     static let soundStop = "SoundStop"
-    /// Ends a loop at its next cycle in the game. OpenSky has no release stage, so it stops.
+    /// Ends a loop at the end of its current pass.
     static let soundRelease = "SoundRelease"
     static let cameraShake = "CameraShake"
     static let headTrackingOn = "HeadTrackingOn"
@@ -62,8 +64,10 @@ nonisolated public enum AnimationEventAction: Equatable, Sendable {
             return .raiseEvent(name: first)
         case soundPlayAt.lowercased():
             return .playSound(editorID: first, node: parts.count > 1 ? parts[1] : nil)
-        case soundStop.lowercased(), soundRelease.lowercased():
+        case soundStop.lowercased():
             return .stopSound(editorID: first)
+        case soundRelease.lowercased():
+            return .releaseSound(editorID: first)
         case cameraShake.lowercased():
             return shake(text[text.index(after: dot)...])
         default:

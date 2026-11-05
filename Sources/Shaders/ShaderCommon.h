@@ -37,8 +37,87 @@ static inline float3 baseAmbient(constant FrameUniforms &frame)
     return (frame.shadingTerms & uint(ShadingTermBaseAmbient)) != 0 ? frame.ambientColor : 0.0;
 }
 
+// The point lights' cube shadows (docs/rendering/shadows.md#point-light-shadows). Face
+// order and axes match PointShadowMath.swift: +X, -X, +Y, -Y with Z up, then +Z, -Z
+// with Y up; right = cross(forward, up).
+struct PointShadows
+{
+    float4 low;
+    float4 high;
+};
+
+constant PointShadows pointShadowsLit = {float4(1.0), float4(1.0)};
+
+static inline float pointShadowAt(PointShadows shadows, uint index)
+{
+    return index < 4 ? shadows.low[index] : shadows.high[min(index, 7u) - 4];
+}
+
+static inline float pointShadowFactor(
+    float3 worldPosition,
+    float3 normal,
+    PointLightUniform light,
+    depth2d_array<float> map,
+    sampler compare)
+{
+    if (light.shadow.x < 0.0) {
+        return 1.0;
+    }
+    float3 offset = worldPosition + normal * light.shadow.w - light.positionRadius.xyz;
+    float3 axis = abs(offset);
+    uint face;
+    float3 forward;
+    float3 up = float3(0.0, 0.0, 1.0);
+    if (axis.x >= axis.y && axis.x >= axis.z) {
+        face = offset.x > 0.0 ? 0u : 1u;
+        forward = float3(sign(offset.x), 0.0, 0.0);
+    } else if (axis.y >= axis.z) {
+        face = offset.y > 0.0 ? 2u : 3u;
+        forward = float3(0.0, sign(offset.y), 0.0);
+    } else {
+        face = offset.z > 0.0 ? 4u : 5u;
+        forward = float3(0.0, 0.0, sign(offset.z));
+        up = float3(0.0, 1.0, 0.0);
+    }
+    float near = light.shadow.y;
+    float far = light.shadow.z;
+    float distanceAlong = dot(offset, forward);
+    if (distanceAlong <= near || distanceAlong >= far) {
+        return 1.0;
+    }
+    float3 right = cross(forward, up);
+    float2 ndc = float2(dot(offset, right), dot(offset, up)) / distanceAlong;
+    float2 uv = ndc * float2(0.5, -0.5) + 0.5;
+    float depth = far / (far - near) * (1.0 - near / distanceAlong);
+    return map.sample_compare(compare, uv, uint(light.shadow.x) + face, depth);
+}
+
+static inline PointShadows pointShadowsAt(
+    float3 worldPosition,
+    float3 normal,
+    const device PointLightUniform *lights,
+    uint count,
+    depth2d_array<float> map,
+    sampler compare)
+{
+    PointShadows shadows = pointShadowsLit;
+    for (uint index = 0; index < min(count, 8u); ++index) {
+        float lit = pointShadowFactor(worldPosition, normal, lights[index], map, compare);
+        if (index < 4) {
+            shadows.low[index] = lit;
+        } else {
+            shadows.high[index - 4] = lit;
+        }
+    }
+    return shadows;
+}
+
 static inline float3 pointLighting(
-    float3 worldPosition, float3 normal, const device PointLightUniform *lights, uint count)
+    float3 worldPosition,
+    float3 normal,
+    const device PointLightUniform *lights,
+    uint count,
+    PointShadows shadows = pointShadowsLit)
 {
     float3 sum = 0.0;
     for (uint index = 0; index < count; ++index) {
@@ -48,7 +127,8 @@ static inline float3 pointLighting(
         float radial = saturate(1.0 - distanceToLight / radius);
         float attenuation = pow(radial, max(lights[index].colorFalloff.w, 0.01));
         float lambert = saturate(dot(normal, toLight / max(distanceToLight, 0.0001)));
-        sum += lights[index].colorFalloff.rgb * attenuation * lambert;
+        sum +=
+            lights[index].colorFalloff.rgb * attenuation * lambert * pointShadowAt(shadows, index);
     }
     return sum;
 }

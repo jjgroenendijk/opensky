@@ -352,9 +352,9 @@ final class GameSessionScope {
     /// Traps, doors, and levers that a behaviour graph runs.
     lazy var objectAnimationWorld = ObjectAnimationWorldAdapter(game: self)
     lazy var objectBehaviors = ObjectBehaviorCoordinator(
-        settings: playerSettings.store,
-        world: objectAnimationWorld,
-        files: { [unowned self] in audioFileSystem }
+        settings: playerSettings.store, world: objectAnimationWorld,
+        files: { [unowned self] in audioFileSystem },
+        viewer: { [unowned self] in billboardViewer }
     )
     lazy var sequenceDoors = makeSequenceDoors()
     lazy var nodeControllers = makeNodeControllers()

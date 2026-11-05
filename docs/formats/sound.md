@@ -31,11 +31,18 @@ what the settings do.
 | `SNAM` | FormID | Alternate descriptor |
 | `ANAM` | zstring | One sound file path. Repeats, in order |
 | `ONAM` | FormID | Output model |
-| `LNAM` | 4 bytes | Looping, in byte 1 |
+| `LNAM` | 4 bytes | Looping in byte 1, rumble send in byte 3 |
 | `BNAM` | 6 bytes | Below |
 
 `LNAM` byte 1: `0` no loop, `8` loop, `16` fast envelope, `32` slow envelope. OpenSky keeps
 any other value as unknown. It does not guess what it means.
+
+`LNAM` byte 3 is the rumble send: the low four bits times 7 are the small motor's percent, the
+high four bits times 7 the big motor's
+([SNDR](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SNDR)). The Creation Kit calls it
+how much of the sound's level drives each motor
+([Sound Descriptor](https://ck.uesp.net/wiki/Sound_Descriptor)). It applies only when the
+output model sets Allows Rumble ([output models](/formats/sound-output-reverb.md)).
 
 `BNAM`:
 

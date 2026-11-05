@@ -99,6 +99,7 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
         state.receivesShadows = (has(.receiveShadows) || has(.assumeShadowmask))
             && !state.distantLOD
         state.screenDoor = has(.screendoorAlphaFade)
+        state.windWeighted = isTreeAnimated
         return state
     }
 

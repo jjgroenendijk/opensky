@@ -5,6 +5,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
+import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
@@ -48,6 +49,10 @@ final class ActorGraphWorldAdapter {
     private var gaits: [ReferenceKey: LocomotionGait] = [:]
     /// Each mover's ground material, which picks its footstep sound.
     private var groundMaterials: [ReferenceKey: FormID] = [:]
+    /// The movers whose last drive moved them, for their movement loops.
+    var movers: Set<ReferenceKey> = []
+    /// Each rolled actor base's sound types, after its audio template.
+    var actorSounds: [LeveledActorRollKey: ActorSounds] = [:]
     /// Each rolled actor base's race graph project and weight.
     private var graphBases: [LeveledActorRollKey: GraphBase] = [:]
 
@@ -75,6 +80,7 @@ final class ActorGraphWorldAdapter {
             guard let store, Self.settings.contains(id) else { return }
             self?.graphs.load(settings: store)
         }
+        gameSession.actorSoundSources = { [weak self] in self?.actorSoundSources() ?? [] }
         gameSession.worldTick.register(.actorGraphs) { [weak self] delta in
             self?.graphs.tick(deltaTime: delta)
         }
@@ -85,6 +91,11 @@ final class ActorGraphWorldAdapter {
         let moving = update.intent != .still
         gaits[update.actor] = update.gait
         groundMaterials[update.actor] = update.groundMaterial
+        if moving {
+            movers.insert(update.actor)
+        } else {
+            movers.remove(update.actor)
+        }
         graphs.setMotion(
             ActorGraphMotion(
                 isMoving: moving,

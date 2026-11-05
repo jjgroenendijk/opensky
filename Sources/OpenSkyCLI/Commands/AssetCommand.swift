@@ -9,6 +9,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPreview
+import simd
 
 enum AssetCommand {
     static func runNIF(context: CLIContext, arguments: NIFArguments) throws {
@@ -115,6 +116,17 @@ enum AssetCommand {
             print("body parts \(mesh.name ?? "-"): " + parts.map {
                 "\($0.bodyPart) (\($0.indices.count / 3) triangles)"
             }.joined(separator: ", "))
+        }
+        for mesh in model.meshes {
+            guard let segment = mesh.objectLODSegment else { continue }
+            let cells = mesh.positions.map { position in
+                let moved = mesh.transform * SIMD4(position, 1)
+                return SIMD2(moved.x, moved.y) / 4096
+            }
+            let low = cells.reduce(SIMD2(repeating: Float.infinity)) { simd_min($0, $1) }
+            let high = cells.reduce(SIMD2(repeating: -Float.infinity)) { simd_max($0, $1) }
+            print("LOD segment \(segment) \(mesh.name ?? "-"): \(mesh.indices.count / 3) "
+                + "triangles, cells x \(low.x)...\(high.x), y \(low.y)...\(high.y)")
         }
     }
 

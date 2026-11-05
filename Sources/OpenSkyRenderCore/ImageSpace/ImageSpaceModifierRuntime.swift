@@ -107,14 +107,19 @@ nonisolated public struct ImageSpaceModifierRuntime: Equatable, Sendable {
         }
     }
 
-    /// `baseline` with every instance applied, oldest first.
+    /// `baseline` with every instance applied, oldest first. The tint is the
+    /// alpha-weighted average over all of them, so it does not depend on the order.
     public func apply(to baseline: ImageSpaceParameters) -> ImageSpaceParameters {
-        instances.reduce(baseline) { result, instance in
-            result.applying(
-                instance.adapter.sample(elapsed: instance.elapsed, looping: instance.looping),
-                strength: instance.currentStrength
-            )
+        let samples = instances.map {
+            ($0.adapter.sample(elapsed: $0.elapsed, looping: $0.looping), $0.currentStrength)
         }
+        var result = samples.reduce(baseline) { $0.applying($1.0, strength: $1.1) }
+        result.tint = ImageSpaceParameters.averageTint(
+            [baseline.tint] + samples.compactMap { sample, strength in
+                sample.tint.map { SIMD4($0.x, $0.y, $0.z, $0.w * strength) }
+            }
+        )
+        return result
     }
 }
 
@@ -144,12 +149,13 @@ nonisolated extension ImageSpaceParameters {
                 add: sample.values[.hdr(index: channel, add: true)]
             )
         }
-        result.blurRadius += (sample.values[.blurRadius] ?? 0) * strength
+        result.blurRadius = max(blurRadius, (sample.values[.blurRadius] ?? 0) * strength)
+        result.motionBlur = max(motionBlur, (sample.values[.motionBlurStrength] ?? 0) * strength)
         result.doubleVision = max(
             doubleVision,
             (sample.values[.doubleVisionStrength] ?? 0) * strength
         )
-        result.radialBlur = max(radialBlur, (sample.values[.radialBlurStrength] ?? 0) * strength)
+        result.radialBlur = radialBlur.strongest(sample, strength: strength)
         let focus: [ImageSpaceChannel] = [
             .depthOfFieldStrength, .depthOfFieldDistance, .depthOfFieldRange
         ]
@@ -157,9 +163,32 @@ nonisolated extension ImageSpaceParameters {
             guard let value = sample.values[channel] else { continue }
             result.depthOfField[index] += (value - depthOfField[index]) * strength
         }
-        result.tint = Self.layer(tint, over: sample.tint, strength: strength)
+        if
+            sample.values[.depthOfFieldStrength] != nil, strength > 0,
+            let flags = sample.depthOfFieldFlags
+        {
+            result.depthOfFieldSides = DepthOfFieldSides(flags: flags)
+            result.depthOfFieldKeepsSkySharp = flags & 0x04 != 0
+        }
+        if let color = sample.tint {
+            result.tint = Self.averageTint([
+                tint,
+                SIMD4(color.x, color.y, color.z, color.w * strength)
+            ])
+        }
         result.fade = Self.layer(fade, over: sample.fade, strength: strength)
         return result
+    }
+
+    /// CK wiki "ImageSpace Modifiers": the RGB is the average weighted by alpha, and the
+    /// alpha is the highest one.
+    static func averageTint(_ tints: [SIMD4<Float>]) -> SIMD4<Float> {
+        let weight = tints.reduce(0) { $0 + max($1.w, 0) }
+        guard weight > 0 else { return tints.first ?? .zero }
+        let rgb = tints.reduce(SIMD3<Float>.zero) {
+            $0 + SIMD3($1.x, $1.y, $1.z) * max($1.w, 0)
+        } / weight
+        return SIMD4(rgb, tints.map(\.w).max() ?? 0)
     }
 
     /// Lays a modifier color over a base color. Amounts combine like alpha.
@@ -178,5 +207,21 @@ nonisolated extension ImageSpaceParameters {
             SIMD3(repeating: combined > 0 ? amount / combined : 1)
         )
         return SIMD4(rgb, combined)
+    }
+}
+
+nonisolated extension ImageSpaceRadialBlur {
+    /// The CK wiki keeps the highest blur, so the strongest modifier gives the whole shape.
+    func strongest(_ sample: ImageSpaceAdapterSample, strength scale: Float) -> Self {
+        let candidate = (sample.values[.radialBlurStrength] ?? 0) * scale
+        guard candidate > strength else { return self }
+        var result = Self()
+        result.strength = candidate
+        result.rampUp = sample.values[.radialBlurRampUp] ?? 0
+        result.start = sample.values[.radialBlurStart] ?? 0
+        result.rampDown = sample.values[.radialBlurRampDown] ?? 0
+        result.downStart = sample.values[.radialBlurDownStart] ?? 0
+        result.center = sample.radialBlurCenter ?? result.center
+        return result
     }
 }

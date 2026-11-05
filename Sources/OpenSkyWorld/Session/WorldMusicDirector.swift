@@ -40,6 +40,8 @@ public final class WorldMusicDirector {
     private var desiredSelection = MusicSelection.silent(state: .exploration)
     /// The selection combat interrupted, held for as long as the fight lasts.
     /// Non-nil is also what "combat music is playing" means.
+    /// The selection a special moment, such as a level up, interrupted.
+    private var preSpecialSelection: MusicSelection?
     private var preCombatSelection: MusicSelection?
     /// The music types scripts added with `MusicType.Add`, newest last. The newest plays
     /// over the cell's music until a script removes it.
@@ -124,6 +126,10 @@ public final class WorldMusicDirector {
         // rather than interrupting the fight's own music.
         guard preCombatSelection == nil else {
             preCombatSelection = selection
+            return
+        }
+        guard preSpecialSelection == nil else {
+            preSpecialSelection = selection
             return
         }
         adopt(selection)
@@ -227,7 +233,9 @@ public final class WorldMusicDirector {
             lastMusicRefusal = .noPlayableCombatTrack
             return lastMusicRefusal
         }
-        preCombatSelection = desiredSelection
+        // Combat cuts a special moment short and returns to what that interrupted.
+        preCombatSelection = preSpecialSelection ?? desiredSelection
+        preSpecialSelection = nil
         adopt(selection, force: true)
         lastMusicRefusal = nil
         return nil
@@ -244,17 +252,6 @@ public final class WorldMusicDirector {
         preCombatSelection = nil
         adopt(previous, force: true)
         return nil
-    }
-
-    /// The first MUSC whose editor id follows the combat naming convention, by
-    /// FormID so the choice is the same on every run.
-    private static func combatMusicType(in store: MusicRecordStore) -> FormID? {
-        store.musicTypes.values
-            .filter {
-                $0.editorID?.lowercased().hasPrefix(MusicSelection.combatEditorIDPrefix) == true
-            }
-            .min { $0.formID.rawValue < $1.formID.rawValue }?
-            .formID
     }
 
     /// What the readout shows. Derived from live engine sources: the id
@@ -333,6 +330,11 @@ public final class WorldMusicDirector {
     }
 
     private func advancePlaylist() {
+        if desiredSelection.state == .special, let back = preSpecialSelection {
+            preSpecialSelection = nil
+            adopt(back, force: true)
+            return
+        }
         switch desiredSelection.advance {
         case .cycle:
             guard !desiredSelection.tracks.isEmpty else { return }
@@ -348,6 +350,44 @@ public final class WorldMusicDirector {
 
 /// Starting, crossfading, and retiring the music sources.
 extension WorldMusicDirector {
+    /// Plays the default objects' music for `kind` once, then returns to the music it
+    /// interrupted. During combat the fight's music stays.
+    @discardableResult
+    public func playSpecialMusic(_ kind: SpecialMusic) -> MusicRefusal? {
+        guard let musicStore else {
+            lastMusicRefusal = .noMusicData
+            return lastMusicRefusal
+        }
+        guard let id = musicStore.specialMusic[kind] else {
+            lastMusicRefusal = .noSpecialMusic(kind.rawValue)
+            return lastMusicRefusal
+        }
+        let selection = MusicSelection.resolve(musicType: id, musicStore: musicStore)
+            .labelled(.special)
+        guard !selection.isSilent else {
+            lastMusicRefusal = .noPlayableTrack(id)
+            return lastMusicRefusal
+        }
+        guard preCombatSelection == nil else { return nil }
+        preSpecialSelection = preSpecialSelection ?? desiredSelection
+        adopt(selection, force: true)
+        return nil
+    }
+
+    /// The default objects' battle music; else the first MUSC whose editor id follows
+    /// the combat naming convention, by FormID so the choice is the same on every run.
+    private static func combatMusicType(in store: MusicRecordStore) -> FormID? {
+        if let battle = store.specialMusic[.battle], store.musicType(battle) != nil {
+            return battle
+        }
+        return store.musicTypes.values
+            .filter {
+                $0.editorID?.lowercased().hasPrefix(MusicSelection.combatEditorIDPrefix) == true
+            }
+            .min { $0.formID.rawValue < $1.formID.rawValue }?
+            .formID
+    }
+
     /// Starts one playable track as a non-positional music source. A failure sets
     /// `lastMusicError`. `MusicRecordStore.loadAudioFile` falls back to the `.xwm`
     /// sibling, and the source is named after the file that loaded.
@@ -364,6 +404,7 @@ extension WorldMusicDirector {
                     // the other policies want the source to end so the director
                     // sees the track finish.
                     loops: desiredSelection.advance == .repeatCurrent
+                        && desiredSelection.state != .special
                 )
             )
             return .started(id)
@@ -497,6 +538,8 @@ extension WorldMusicDirector {
     private func play(_ selection: MusicSelection) {
         if preCombatSelection != nil {
             preCombatSelection = selection
+        } else if preSpecialSelection != nil {
+            preSpecialSelection = selection
         } else {
             adopt(selection, force: true)
         }

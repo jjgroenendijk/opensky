@@ -23,6 +23,9 @@ extension GameSession {
         if let files = provider?.scriptFileSystem {
             renderer.skyClouds = try SkyClouds(fileSystem: files, device: renderer.device)
             renderer.skyCelestial = try SkyCelestial(fileSystem: files, device: renderer.device)
+            renderer.waterNoiseTextures = try WaterNoiseTextures(
+                fileSystem: files, device: renderer.device
+            )
         }
     }
 
@@ -37,6 +40,9 @@ extension GameSession {
         let device = renderer.device
         renderer.skyClouds = try SkyClouds(fileSystem: fileSystem, device: device, immediate: true)
         renderer.skyCelestial = try SkyCelestial(
+            fileSystem: fileSystem, device: device, immediate: true
+        )
+        renderer.waterNoiseTextures = try WaterNoiseTextures(
             fileSystem: fileSystem, device: device, immediate: true
         )
     }
@@ -128,7 +134,15 @@ extension GameSession {
         imageSpace.screenFade.advance(deltaTime)
         guard let links = imageSpaceLinks else {
             imageSpace.baseline = .none
+            renderer.volumetricLight = .fallback
             return
+        }
+        renderer.volumetricLight = if links.interior == nil, weatherEnabled, let weather {
+            weather.volumetricLight(
+                hour: timeOfDay, records: links.records, plugin: links.weatherPlugin
+            )
+        } else {
+            .fallback
         }
         let context: ImageSpaceContext = if let interior = links.interior {
             .interior(cellImageSpace: interior.imageSpace)

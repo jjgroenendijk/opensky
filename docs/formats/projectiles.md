@@ -43,6 +43,9 @@ UESP and xEdit agree on every member. Vanilla writes 92 bytes:
 xEdit marks `DATA` "optional from element 22", the decal link, so 84 bytes is also valid.
 OpenSky accepts any `DATA` of 16 bytes or more, because flags through range hold the whole
 flight model, and a mod may write a short struct.
+`MODL` is the model drawn in flight and `NAM1` the muzzle flash model. OpenSky reads the
+light, the muzzle flash light, and the muzzle flash duration too
+([what a projectile shows](/engine/spell-delivery.md#what-a-projectile-shows)).
 UESP calls 0x3C "uint32 always 0"; xEdit calls it `Sound - Disable`. The offset is the same.
 "Always 0" describes vanilla data, not the field, so OpenSky follows xEdit. `VNAM` is the
 sound level.

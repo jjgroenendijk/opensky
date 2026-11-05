@@ -108,6 +108,7 @@ public final class ProjectileRuntime {
         nextID += 1
         firedCount += 1
         live.append(projectile)
+        world.projectileLaunched(projectile)
         return projectile
     }
 
@@ -239,7 +240,7 @@ public final class ProjectileRuntime {
         impactCount += 1
         let applied = applyArrow(projectile, impact: impact)
         let spellHit = applySpell(projectile, impact: impact)
-        playImpact(of: impact)
+        playImpact(of: impact, payload: projectile.payload)
         pushStruckBody(projectile, impact: impact)
         detonateExplosion(of: projectile, at: impact.position, source: impact.reference)
         let didStick = !detonated && stick(projectile, at: impact)

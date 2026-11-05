@@ -65,9 +65,11 @@ public enum NIFParticleParameterFixture: Sendable {
         return out
     }
 
-    public static func inheritVelocity(chance: Float, multiplier: Float) -> Data {
+    public static func inheritVelocity(
+        chance: Float, multiplier: Float, objectRef: Int32 = -1
+    ) -> Data {
         var out = NIFParticleFixture.modifierBase()
-        out.appendUInt32(0xFFFF_FFFF) // Inherit Object
+        out.appendUInt32(UInt32(bitPattern: objectRef)) // Inherit Object
         out.appendFloat32(chance)
         out.appendFloat32(multiplier)
         out.appendFloat32(0) // Velocity Variation
@@ -80,6 +82,32 @@ public enum NIFParticleParameterFixture: Sendable {
         for value in [frames.x, 0, frames.y, frames.z, 0, frames.w, 0] {
             out.appendFloat32(value)
         }
+        return out
+    }
+
+    /// nif.xml `BSProceduralLightningController` aimed at the block at `targetRef`, with no
+    /// interpolators and the given bolt fields.
+    public static func lightningController(
+        targetRef: Int32, subdivisions: UInt16, branches: UInt16, length: Float, width: Float
+    ) -> Data {
+        var out = Data()
+        out.appendUInt32(0xFFFF_FFFF) // Next Controller
+        out.appendUInt16(0x8) // Flags: active
+        for value: Float in [1, 0, 0, 1] { // Frequency, phase, start, stop
+            out.appendFloat32(value)
+        }
+        out.appendUInt32(UInt32(bitPattern: targetRef))
+        for _ in 0 ..< 9 {
+            out.appendUInt32(0xFFFF_FFFF)
+        }
+        out.appendUInt16(subdivisions)
+        out.appendUInt16(branches)
+        out.appendUInt16(0) // Branch variation
+        for value in [length, 0, width, 0.75, 20] { // Length var, child mult, arc offset
+            out.appendFloat32(value)
+        }
+        out.append(contentsOf: [1, 1, 1]) // Fade main, fade children, animate arc
+        out.appendUInt32(0xFFFF_FFFF) // Shader property
         return out
     }
 

@@ -41,6 +41,26 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
     public let visibility: ParticleVisibilityTrack?
     /// An `NiPSysUpdateCtlr` is on the system. Without one the game does not step it.
     public let updatesSimulation: Bool
+    /// The names of the nodes above the system, lowercased, nearest first. A node a
+    /// controller or graph moves carries the emitter with it.
+    public var ancestorNodes: [String] = []
+    /// The node whose children are the meshes an `NiMeshParticleSystem` draws, or -1.
+    public var meshPool: Int32 = -1
+    /// A `BSStripParticleSystem`: its particles draw as one ribbon in birth order.
+    public var isStrip = false
+    /// The bolt of a lightning controller; such a definition has no emitters.
+    public var lightning: ParticleLightning?
+    /// The controllers as each named sequence feeds them, by lowercased sequence name; an
+    /// effect graph switches to one when it plays that sequence.
+    public var sequenceControllers: [String: ParticleControllerSet] = [:]
+
+    /// The controllers the default sequence feeds.
+    public var defaultControllers: ParticleControllerSet {
+        ParticleControllerSet(
+            emitters: emitterControllers, modifiers: modifierControllers,
+            visibility: visibility, updatesSimulation: updatesSimulation
+        )
+    }
 
     public init(
         name: String?,

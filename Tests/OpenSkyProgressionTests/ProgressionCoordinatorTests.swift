@@ -210,6 +210,7 @@ struct ProgressionCoordinatorTests {
             return
         }
         #expect(first.hasPrefix("\(name) rose to "))
-        #expect(commands.last == .showNotification(ProgressionTexts.vanilla.levelUpAvailable))
+        #expect(commands.contains(.showNotification(ProgressionTexts.vanilla.levelUpAvailable)))
+        #expect(commands.contains(.playLevelUpMusic))
     }
 }

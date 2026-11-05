@@ -100,8 +100,24 @@ A Skyrim SE `BSSubIndexTriShape` is a full `BSTriShape`, then:
 | uint32 per segment | Start index | Into the triangle index list |
 | uint32 per segment | Triangle count | `start + count * 3 <= index count` |
 
-OpenSky reads and checks the segments, but draws the whole shape. Particle bytes in the
-`BSTriShape` part are skipped by their stated size first.
+Particle bytes in the `BSTriShape` part are skipped by their stated size first.
+
+### Large references
+
+A shape with a `BSDistantObjectLargeRefExtraData` block (byte 1) holds the merged large
+references of the block. Its segments split it by cell: a block of level `n` has `n * n`
+segments, and segment `k` holds the references of cell `(x + k / n, y + k % n)`, where `(x, y)`
+is the block's first cell. The segments run north first, then east. A cell without large
+references has an empty segment.
+
+Observed in `tamriel.4.4.-4.bto` (cells 4 to 7 east, -4 to -1 north): `obj-LargeRef` has 16
+segments. Segment 0 lies in cell (4, -4), segment 3 in cell (4, -1), and segment 6 in cell
+(5, -2). A large reference can reach past its cell, so the triangles of a segment can too.
+`openskycli nif <key>` prints each segment's triangles and the cells its bounds cover.
+
+OpenSky splits such a shape into one mesh per segment that holds triangles, so the
+[large-reference ring](/engine/distant-lod.md#large-references) can hide one cell. Other
+`BSSubIndexTriShape` blocks draw whole.
 
 ## Trees: LST and BTT
 

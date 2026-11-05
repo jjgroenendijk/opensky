@@ -28,6 +28,7 @@ import simd
 /// What `RagdollWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol RagdollWorldHost: AnyObject {
+    var audio: AudioCoordinator { get }
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorValues: ActorValueCoordinator { get }

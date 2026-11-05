@@ -38,6 +38,26 @@ nonisolated public struct ImageSpace: Equatable, Sendable {
         public let range: Float
         /// The packed sky and blur-radius code; xEdit lists 16 known values.
         public let skyBlurRadius: UInt16?
+
+        /// The word is the high half of a float 2 + 4n, n 0 to 15: n / 2 is the blur
+        /// radius 0 to 7, and an odd n keeps the sky sharp (docs/formats/image-spaces.md).
+        public var blurCode: Int? {
+            guard let skyBlurRadius else { return nil }
+            let value = Float(bitPattern: UInt32(skyBlurRadius) << 16)
+            guard value.isFinite else { return nil }
+            let code = ((value - 2) / 4).rounded()
+            return (0 ... 15).contains(code) ? Int(code) : nil
+        }
+
+        /// 0 to 7, as the Creation Kit's depth of field "Blur Radius".
+        public var blurRadius: Int? {
+            blurCode.map { $0 / 2 }
+        }
+
+        /// The Creation Kit's "No Sky": the sky stays sharp.
+        public var keepsSkySharp: Bool? {
+            blurCode.map { $0 % 2 == 1 }
+        }
     }
 
     public let formID: FormID

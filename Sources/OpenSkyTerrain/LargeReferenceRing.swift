@@ -26,8 +26,37 @@ nonisolated public enum LargeReferenceRing {
         block.kind == .objects && distance(from: center, to: block) <= Int64(radius)
     }
 
-    /// The ring's cells, plus every cell of an object block it hides shapes from, so no
-    /// large reference of that block goes missing. The loaded grid draws its own.
+    /// The cell segment `segment` of a block's large-reference shape holds. The segments
+    /// run north first, then east (docs/formats/lod.md, "Large references").
+    public static func cell(ofSegment segment: Int, in block: DistantLODBlock) -> CellCoordinate? {
+        let level = Int(block.level)
+        guard segment >= 0, segment < level * level else { return nil }
+        return CellCoordinate(
+            x: block.origin.x + Int32(segment / level),
+            y: block.origin.y + Int32(segment % level)
+        )
+    }
+
+    /// A segment whose cell the ring draws with full models. A segment past the block's
+    /// cells follows the whole block.
+    public static func hidesSegment(
+        _ segment: Int,
+        of block: DistantLODBlock,
+        center: CellCoordinate,
+        radius: Int32
+    ) -> Bool {
+        guard let cell = cell(ofSegment: segment, in: block) else {
+            return hidesLargeReferences(of: block, center: center, radius: radius)
+        }
+        let rings = max(
+            abs(Int64(cell.x) - Int64(center.x)), abs(Int64(cell.y) - Int64(center.y))
+        )
+        return block.kind == .objects && rings <= Int64(radius)
+    }
+
+    /// The ring's cells, plus every cell of each block in `blocks` whose large-reference
+    /// shape hides whole, so no large reference of it goes missing. The loaded grid draws
+    /// its own.
     public static func cells(
         center: CellCoordinate,
         radius: Int32,

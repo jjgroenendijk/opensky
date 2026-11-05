@@ -17,11 +17,19 @@ import simd
 public protocol EffectsWorld: AnyObject {
     /// An actor's feet, facing its heading; nil when it is not resident.
     func effectTransform(of actor: ReferenceKey) -> float4x4?
+    /// The actor's posed bones in world space by name; empty when it has no pose.
+    func effectBones(of actor: ReferenceKey) -> [String: float4x4]
     /// The view, for effects that ride the camera; nil before a renderer exists.
     var effectCamera: VisualEffectRuntime.CameraPose? { get }
     /// The meshes a membrane on `actor` covers; nil when none are drawn.
     func membraneTarget(of actor: ReferenceKey) -> MembraneTarget?
     func detonateEffectExplosion(_ explosion: ReferenceKey, at position: SIMD3<Float>)
+}
+
+extension EffectsWorld {
+    public func effectBones(of _: ReferenceKey) -> [String: float4x4] {
+        [:]
+    }
 }
 
 public final class EffectsCoordinator {
@@ -60,6 +68,8 @@ public final class EffectsCoordinator {
     public let bloodSettings: BloodEffectSettings
     var screenBloodTextures: ScreenBloodTextures?
     var drewScreenBlood = false
+    /// Short lights: muzzle flashes and blasts (EffectsCoordinator+Flashes.swift).
+    public internal(set) var flashLights: [FlashLight] = []
 
     /// Without records there is no game, and every effect draws nothing.
     public init(
@@ -82,10 +92,13 @@ public final class EffectsCoordinator {
         _ key: ReferenceKey,
         to anchor: EffectAnchor,
         cause: VisualEffectCause,
-        duration: Float?
+        duration: Float?,
+        facing: ReferenceKey? = nil
     ) -> Int? {
         guard let spec = records.visualEffectSpec(key) else { return nil }
-        return visualEffects.attach(spec, to: anchor, cause: cause, duration: duration)
+        return visualEffects.attach(
+            spec, to: anchor, cause: cause, duration: duration, facing: facing
+        )
     }
 
     /// Removes the `RFCT`, `EFSH`, or `ARTO` named by `key` from `anchor`. Returns how
@@ -116,14 +129,14 @@ public final class EffectsCoordinator {
     }
 
     /// Shows a bare model, such as an explosion's `MODL`, at a point for a while.
-    public func showModel(_ path: String, at position: SIMD3<Float>, cause: VisualEffectCause) {
+    public func showModel(
+        _ path: String,
+        at anchor: EffectAnchor,
+        cause: VisualEffectCause,
+        duration: Float = instantArtDuration
+    ) {
         let spec = VisualEffectSpec(name: path, artModel: path, membrane: nil)
-        visualEffects.attach(
-            spec,
-            to: .point(position),
-            cause: cause,
-            duration: Self.instantArtDuration
-        )
+        visualEffects.attach(spec, to: anchor, cause: cause, duration: duration)
     }
 
     /// Starts one `IMAD` on `imageSpace`. False when the key names none.
@@ -189,19 +202,20 @@ public final class EffectsCoordinator {
         renderer: Renderer
     ) throws {
         visualEffects.advance(seconds)
+        ageFlashLights(seconds)
         decals.beginFrame()
         skinDecals.decals.beginFrame()
         stepBlood(seconds, renderer: renderer)
         let world = world
         let effectModels = visualEffects.models(camera: world?.effectCamera) { anchor in
-            switch anchor {
-            case let .actor(key): world?.effectTransform(of: key)
-            case let .point(position): Self.translation(position)
-            case let .surface(position, normal): Self.surfaceTransform(position, normal: normal)
-            }
+            Self.locate(anchor, world: world)
         }
         let posed = posing?.pose(effectModels, deltaTime: seconds) ?? [:]
         let models = effectModels + extraModels
+        try syncParticles(models, posed: posed, renderer: renderer)
+        let meshParticles = effectParticles.keys.sorted()
+            .flatMap { effectParticles[$0]?.playbacks ?? [] }
+            .flatMap { $0.meshPlacements() }
         if !models.isEmpty || drewModels {
             let placements = effectModels.compactMap { model -> RenderPlacement? in
                 if let id = model.instanceID, let copy = posed[id] {
@@ -211,13 +225,12 @@ public final class EffectsCoordinator {
                     )
                 }
                 return placement(model)
-            } + extraModels.compactMap(placement)
+            } + extraModels.compactMap(placement) + meshParticles
             try renderer.setEffectPlacements(
                 placements, animations: posed.keys.sorted().compactMap { posed[$0]?.animation }
             )
             drewModels = !models.isEmpty
         }
-        try syncParticles(models, renderer: renderer)
         try syncDecals(renderer: renderer)
         try renderer.setMembranes(visualEffects.membranes { anchor in
             guard case let .actor(key) = anchor else { return nil }
@@ -282,6 +295,15 @@ public final class EffectsCoordinator {
         } catch {
             failedModels.insert(model.path)
             return nil
+        }
+    }
+
+    static func locate(_ anchor: EffectAnchor, world: (any EffectsWorld)?) -> float4x4? {
+        switch anchor {
+        case let .actor(key): world?.effectTransform(of: key)
+        case let .point(position): translation(position)
+        case let .surface(position, normal): surfaceTransform(position, normal: normal)
+        case let .facing(position, forward): VisualEffectRuntime.facing(position, forward: forward)
         }
     }
 

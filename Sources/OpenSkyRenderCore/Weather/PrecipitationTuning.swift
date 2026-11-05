@@ -58,6 +58,8 @@ nonisolated public struct PrecipitationTuning: Equatable, Sendable {
     public var snow: PrecipitationScale
     /// The record's editor ID, nil for the fallback.
     public var source: String?
+    /// Length over width of a rain streak: the rain record's particle size Y over X.
+    public var rainStreakAspect = Self.aspect(PrecipitationAnchor.rain.size)
 
     public init(rain: PrecipitationScale, snow: PrecipitationScale, source: String?) {
         self.rain = rain
@@ -73,12 +75,19 @@ nonisolated public struct PrecipitationTuning: Equatable, Sendable {
         switch data.type {
         case 0:
             rain = Self.scale(data, against: .rain)
+            rainStreakAspect = Self.aspect(data.particleSize)
         case 1:
             snow = Self.scale(data, against: .snow)
         default:
             return
         }
         source = record.editorID ?? "\(record.formID)"
+    }
+
+    /// Size Y over size X, kept to 1 ... 16 so a broken record still draws a streak.
+    public static func aspect(_ size: SIMD2<Float>) -> Float {
+        guard size.x > 0, size.y.isFinite, size.x.isFinite else { return 1 }
+        return min(max(size.y / size.x, 1), 16)
     }
 
     /// Ratios to the anchor. Size compares the particle area, so a longer, thinner

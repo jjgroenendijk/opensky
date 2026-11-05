@@ -109,21 +109,34 @@ nonisolated public struct MaterialParents: Equatable, Sendable {
     public static let maximumDepth = 16
 
     private let parents: [UInt32: FormID]
+    private let impactDataSets: [UInt32: FormID]
 
-    public init(parents: [FormID: FormID]) {
+    public init(parents: [FormID: FormID], impactDataSets: [FormID: FormID] = [:]) {
         self.parents = Dictionary(
             uniqueKeysWithValues: parents.map { ($0.key.rawValue, $0.value) }
+        )
+        self.impactDataSets = Dictionary(
+            uniqueKeysWithValues: impactDataSets.map { ($0.key.rawValue, $0.value) }
         )
     }
 
     public init(materials: [MaterialType]) {
         var parents: [FormID: FormID] = [:]
+        var impactDataSets: [FormID: FormID] = [:]
         for material in materials {
             if let parent = material.parent, !parent.isNull {
                 parents[material.formID] = parent
             }
+            if let dataSet = material.impactDataSet {
+                impactDataSets[material.formID] = dataSet
+            }
         }
-        self.init(parents: parents)
+        self.init(parents: parents, impactDataSets: impactDataSets)
+    }
+
+    /// The `HNAM` impact data set of `material` or its nearest parent that names one.
+    public func impactDataSet(of material: FormID?) -> FormID? {
+        chain(from: material).lazy.compactMap { impactDataSets[$0.rawValue] }.first
     }
 
     public static let empty = MaterialParents(parents: [:])

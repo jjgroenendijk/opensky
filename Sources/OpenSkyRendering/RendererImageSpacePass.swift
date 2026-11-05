@@ -28,6 +28,8 @@ public final class ImageSpacePassResources {
     /// The depth the split pass stores between its two encoders. The scene depth is
     /// memoryless, so it cannot outlive one encoder.
     public private(set) var storedDepth: MTLTexture?
+    /// Last frame's view-projection, for the motion blur.
+    var previousViewProjection: float4x4?
 
     static let uniformStride = (MemoryLayout<ImageSpaceUniforms>.size + 0xFF) & -0x100
     static let postUniformStride = (MemoryLayout<PostEffectUniforms>.size + 0xFF) & -0x100
@@ -186,7 +188,8 @@ struct ImageSpaceGrade {
         self.uniforms = uniforms
         self.post = post
         splitsPass = alwaysSplits || post != nil || uniforms.grading.w > 0.5
-            || uniforms.extra.x > 0
+            || uniforms.extra.x > 0 || uniforms.extra.y > 0 || uniforms.radialBlur.x > 0
+            || uniforms.bloom.z > 0
     }
 }
 
@@ -209,7 +212,12 @@ extension Renderer {
         }
         guard let target = descriptor.colorAttachments[0].texture else { return nil }
         let post = postEffectUniforms(parameters, targetHeight: target.height)
-        let grades = frameInput.imageSpace.passEnabled && (toneMaps || !parameters.isNeutral)
+        let viewProjection = sceneProjection * frameInput.view.viewMatrix()
+        let previous = imageSpacePass.previousViewProjection ?? viewProjection
+        imageSpacePass.previousViewProjection = viewProjection
+        let blooms = target.pixelFormat == .rgba16Float && parameters.hdr.bloomScale > 0
+        let grades = frameInput.imageSpace.passEnabled
+            && (toneMaps || blooms || !parameters.isNeutral)
         guard grades || post != nil else { return nil }
         let toneMapping = toneMaps
             ? SIMD4(
@@ -220,7 +228,11 @@ extension Renderer {
         return ImageSpaceGrade(
             uniforms: Self.uniforms(
                 grades ? parameters : .neutral, targetHeight: target.height,
-                toneMapping: toneMapping
+                toneMapping: toneMapping,
+                motion: ImageSpaceMotion(
+                    blooms: grades && blooms,
+                    reprojection: previous * viewProjection.inverse
+                )
             ),
             post: post,
             alwaysSplits: imageSpaceAlwaysSplits
@@ -385,23 +397,49 @@ extension Renderer {
         return next
     }
 
-    /// The blur radius is authored for a 1080-pixel-high frame and scales with the target.
+    /// The blur and bloom radii are authored for a 1080-pixel-high frame and scale with
+    /// the target.
     static func uniforms(
         _ parameters: ImageSpaceParameters,
         targetHeight: Int,
-        toneMapping: SIMD4<Float> = SIMD4(1, 0, 0, 0)
+        toneMapping: SIMD4<Float> = SIMD4(1, 0, 0, 0),
+        motion: ImageSpaceMotion = ImageSpaceMotion()
     ) -> ImageSpaceUniforms {
-        ImageSpaceUniforms(
+        let pixels = Float(targetHeight) / 1080
+        let radial = parameters.radialBlur
+        let hdr = parameters.hdr
+        return ImageSpaceUniforms(
             tint: parameters.tint,
             fade: parameters.fade,
             grading: SIMD4(
                 parameters.saturation,
                 parameters.brightness,
                 parameters.contrast,
-                parameters.blurRadius * Float(targetHeight) / 1080
+                parameters.blurRadius * pixels
             ),
-            extra: SIMD4(parameters.doubleVision, 0, 0, 0),
-            toneMapping: toneMapping
+            extra: SIMD4(
+                lowHalf: SIMD2(parameters.doubleVision, parameters.motionBlur),
+                highHalf: radial.center
+            ),
+            toneMapping: toneMapping,
+            radialBlur: SIMD4(radial.strength, radial.rampUp, radial.start, radial.rampDown),
+            radialBlurEnd: SIMD4(radial.downStart, 0, 0, 0),
+            bloom: motion.blooms
+                ? SIMD4(
+                    hdr.bloomBlurRadius * ImageSpaceMotion.bloomPixelsPerRadius * pixels,
+                    hdr.bloomThreshold, hdr.bloomScale, hdr.receiveBloomThreshold
+                )
+                : .zero,
+            reprojection: motion.reprojection
         )
     }
+}
+
+/// The per-frame inputs of the grade that the image-space values do not hold.
+struct ImageSpaceMotion {
+    /// The `IMGS` bloom radius runs 1 to 7 (CK wiki); one step is this many pixels at 1080.
+    static let bloomPixelsPerRadius: Float = 4
+    var blooms = false
+    /// Last frame's view-projection times the inverse of this one's.
+    var reprojection = matrix_identity_float4x4
 }

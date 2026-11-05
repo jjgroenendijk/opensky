@@ -142,6 +142,7 @@ the detail and the sources it did find.
 | Wind speed unit and one setting's meaning | Guesses from xEdit and the name | [weather](/engine/weather.md) |
 | Weather global meaning | OpenSky's reading | [weather format](/formats/weather.md) |
 | Sun and moon paths | OpenSky's reading of the settings | [celestial sky](/engine/celestial-sky.md) |
+| Moon glare card | 4 moon widths across, the climate's sun glare texture | [celestial sky](/engine/celestial-sky.md#drawing) |
 | Location tie rule | Inferred | [locations](/formats/locations.md) |
 | Terrain with no height | No guessed height | [terrain](/engine/terrain.md) |
 | World sound roll interval | OpenSky's interval | [world sounds](/engine/world-sfx.md) |
@@ -150,13 +151,32 @@ the detail and the sources it did find.
 | Notification timing | Limit of 3 at once | [messages](/engine/messages.md) |
 | Movie track, colour matrix, skip keys | First track; BT.601; not confirmed | [movies](/engine/movies.md) |
 | Custom marker aim and questions | 5% of the map camera height; the question order | [world map](/engine/world-map.md#custom-marker) |
+| Speaker matrix on two speakers | Centre and surrounds add at -3 dB, LFE dropped, the mono row only | [sound output](/formats/sound-output-reverb.md#output-model-mapping) |
+| Special music triggers | Level up with the notice, cleared with the notice, death when the player dies | [music](/engine/music.md#special-music) |
 
 ## Rendering
 
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
+| Lightning bolt growth | Midpoint bends halving each level, branches 0.3 to 0.5 long, a new bolt every 0.1 s blended from the last | [particles](/rendering/particles.md#ribbons) |
+| Ribbon texture direction | U along the band for strips and bolts | [particles](/rendering/particles.md#ribbons) |
+| Particle sequence switch | A played sequence restarts the controllers it feeds from 0; others keep the default sequence's keys | [particles](/rendering/particles.md#sequences) |
+| Rain streak shape | Length over width from the `SPGD` size Y over X, 1 to 16, with the square's area | [precipitation](/rendering/precipitation.md#streaks) |
+| Strip particle order | One band through the particles in birth order | [particles](/rendering/particles.md#ribbons) |
+| Mesh particle size | The particle size scales the pool mesh | [particles](/rendering/particles.md#mesh-particles) |
+| Billboard minimised turn (modes 0, 3) | Shortest turn of own +Z to the target, from nif.xml's "minimized rotation" | [NIF sequences](/formats/nif-sequences.md#billboard-nodes) |
 | Image space modifier weights | Two constants; at most 16 at once | [image space](/rendering/image-space.md) |
+| Radial blur shape | 8 taps reaching `strength` percent to the centre; radius as a share of centre-to-corner; centre in 0-1 screen units | [image space](/rendering/image-space.md#blur-effects) |
+| Motion blur trail | Camera turn only; 3 × `s / (1 - s)` frames, capped at a tenth of the screen | [image space](/rendering/image-space.md#blur-effects) |
+| Bloom pattern | Three rings of 8 taps; 4 pixels per radius step at 1080; receive threshold unused | [image space](/rendering/image-space.md#bloom-and-light-scales) |
+| Sunlight and sky scale | Applied only with the HDR target; sky scale skips clouds | [image space](/rendering/image-space.md#bloom-and-light-scales) |
+| Shadow lights at once | 4 nearest the camera, skipped past 4,096 units outside the sphere; 512-texel faces | [shadows](/rendering/shadows.md#point-light-shadows) |
+| Point shadow planes and bias | Near plane 8 units; 2-unit normal offset; `XLIG` depth bias unused | [shadows](/rendering/shadows.md#point-light-shadows) |
+| Water refraction | Normal x, y times the refraction magnitude in screen units, scaled by depth to the fog far plane | [water](/rendering/water.md#refraction) |
+| Water rings | Closed-form crests; 8 rings of 3 s; wading ring every 48 units at strength 0.4, under 150 units deep; floors 8, 4, 0.2 | [water](/rendering/water.md#displacement-and-rain) |
+| Rain rings | 48-unit grid, 0.8 s drops, 24-unit rings | [water](/rendering/water.md#displacement-and-rain) |
+| Under-water fog colour | The deep colour | [water](/rendering/water.md#under-the-water) |
 | Surface shading strength, tiling, refraction rate | OpenSky's values | [surface shading](/rendering/surface-shading.md) |
 | Shadow map size cap | 4096; the game allows more | [graphics options](/engine/graphics-options.md) |
 | Reference fade reach | Multiplier x 16 x bound radius, 15% dissolve | [graphics options](/engine/graphics-options.md) |
@@ -171,8 +191,11 @@ the detail and the sources it did find.
 | Terrain split distance | `fSplitDistanceMult` scales the level 4, 8, and 16 reach; level 32 keeps `fBlockMaximumDistance` | [graphics options](/engine/graphics-options.md) |
 | Large reference LOD hidden per block | The game's per-cell rule is not known | [distant LOD](/engine/distant-lod.md#large-references) |
 | Ambient occlusion radius and strength | 48 units, 12 taps, strength 1.2, bias 0.05, fade 2,048 to 4,096 units | [post effects](/rendering/post-effects.md#ambient-occlusion) |
-| Volumetric light steps and strength | 8, 16, 32 steps; 4,096 units; strength 0.05; asymmetry 0.6 | [post effects](/rendering/post-effects.md#volumetric-light) |
-| Depth of field blur | Far side only; 8 pixels at 1080 lines; modifier moves toward its value | [post effects](/rendering/post-effects.md#depth-of-field) |
+| Ambient occlusion share | Ambient over ambient plus sun, from frame light values; point lights not counted | [post effects](/rendering/post-effects.md#ambient-occlusion) |
+| Volumetric light steps | 8, 16, 32 steps by quality | [post effects](/rendering/post-effects.md#volumetric-light) |
+| `VOLI` field scales | strength 0.025 × intensity; reach 102.4 × range; cell 64 × size; drift 4 × wind along X; fall 64 × falling; fallback values for interiors | [post effects](/rendering/post-effects.md#volumetric-light) |
+| Depth of field blur | Clear at distance, full at range; `2 + 2 × radius` pixels at 1080 lines, radius 3 without a code; modifier moves toward its value | [post effects](/rendering/post-effects.md#depth-of-field) |
+| `IMGS` `DNAM` blur code | High half of float `2 + 4n`; radius `n / 2`, odd `n` is No Sky | [image spaces](/formats/image-spaces.md#depth-of-field) |
 | Lens flare pattern | 5 ghosts, strength 0.6 times sun alpha and weather Sun Glare, 9 visibility taps | [post effects](/rendering/post-effects.md#lens-flare) |
 | Water UV density | 2 quads per repeat | [scene drawing](/rendering/scene-drawing.md) |
 | Clear colour under water | OpenSky's choice | [Metal 4 renderer](/rendering/metal4-renderer.md) |
@@ -202,3 +225,15 @@ the detail and the sources it did find.
 | Inventory menu callbacks | Two not confirmed | [inventory menu](/engine/inventory-menu.md) |
 | Topic row prompt of a shared `INFO` | Own `RNAM`, else the shared target's | [dialogue](/engine/dialogue.md) |
 | Follower place after a load door | 64 units apart beside the player | [follower commands](/engine/follower-commands.md#load-doors) |
+| Projectile model facing and lights | `PROJ` model +Y along the velocity; flight light at full colour; muzzle flash light fades linearly over the flash duration | [spell delivery](/engine/spell-delivery.md#what-a-projectile-shows) |
+| Explosion light and impact | `EXPL` light for 2 s, fading linearly; impact data set played on no material | [explosions](/formats/explosions.md#runtime) |
+| Casting light position | In front of the caster's eye, where a held Light spell floats | [spellcasting](/engine/spellcasting.md) |
+| Face-target aim point | The facing object's origin, an actor's feet | [visual effects](/rendering/visual-effects.md#where-effects-come-from) |
+| Creature loop reach and count | Loops play for the nearest 8 actors within 3000 units | [creature sounds](/engine/actor-sounds.md#loops-come-from-the-sound-types) |
+| Creature loop states | Conscious loop while alive and not unconscious; movement loop while the mover moves; a `CSDC` chance of 0 never plays | [creature sounds](/engine/actor-sounds.md#loops-come-from-the-sound-types) |
+| Music and dialogue duck levels | Music falls to 0.4 and `SFDC`/`NDSC` sounds to 0.5 in a conversation; `SFDC`/`NDSC` fade over the music seconds | [sound mix](/engine/sound-mix.md#what-a-category-does) |
+| Sound rumble | Strength is the `LNAM` send times the level at the start; at most 1 s | [sound mix](/engine/sound-mix.md#rumble) |
+| Weapon rumble timing | Every blow the player's weapon lands | [sound mix](/engine/sound-mix.md#rumble) |
+| Body collision sound | A speed loss of 150 units/s is a hit; level 0.25 to 1 up to a loss of 800; 15 quiet steps; the impact set's most common entry | [impulses](/engine/impulses.md#collision-sounds) |
+| Tree sway and leaf flutter | `treeSwayTilt` 0.1, leaf side share 0.5, leaf fade at 4096 units, defaults leaf amplitude 3 and frequency 1 | [trees](/rendering/trees.md) |
+| Skin decal bone | The body bone with the nearest origin to the hit; weapon, shield, quiver, camera, magic, arrow, and root nodes skipped | [decals](/rendering/decals.md#skin-decals) |

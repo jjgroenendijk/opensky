@@ -20,6 +20,10 @@ nonisolated public struct UIResources {
     public let vertexBuffer: MTLBuffer
     public let uniformBuffer: MTLBuffer
     public let glyphAtlas: UIGlyphAtlas
+
+    public var residencyAllocations: [MTLAllocation] {
+        [atlasTexture, vertexBuffer, uniformBuffer]
+    }
 }
 
 extension Renderer {

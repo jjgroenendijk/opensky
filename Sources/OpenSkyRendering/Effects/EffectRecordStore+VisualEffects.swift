@@ -18,7 +18,8 @@ nonisolated extension EffectRecordStore {
                         .flatMap(artModel),
                     membrane: resolve(resolved.record.shader, from: resolved).flatMap(membrane),
                     attachesToCamera: resolved.record.attachesToCamera,
-                    inheritsRotation: resolved.record.inheritsRotation
+                    inheritsRotation: resolved.record.inheritsRotation,
+                    facesTarget: resolved.record.facesTarget
                 )
             }
         case "EFSH":

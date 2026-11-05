@@ -74,6 +74,8 @@ nonisolated public struct RenderPlacement: Sendable {
     public let owner: UInt32
     /// The reference's emittance (`XEMI`), for shapes with external emittance.
     public var emittance: EmittanceSource?
+    /// A TREE's wind motion.
+    public var treeMotion: TreeMotion?
 
     public init(
         model: RenderModel,
@@ -125,6 +127,8 @@ nonisolated public struct DrawInstance: Sendable {
     public var room = RoomPortalGraph.noRoom
     /// See `RenderPlacement.emittance`.
     public var emittance: EmittanceSource?
+    /// See `RenderPlacement.treeMotion`.
+    public var treeMotion: TreeMotion?
 
     /// The `InstanceTransform.instanceColor` of a static, with this frame's region colours.
     public func instanceColor(regions: [UInt32: SIMD3<Float>]) -> SIMD4<Float> {
@@ -339,6 +343,27 @@ nonisolated public struct RenderScene: Sendable {
     /// The distant LOD's fitted curve; nil draws with the vanilla one.
     public var terrainLODBrightness: TerrainLODBrightness?
 
+    /// One mesh of a placement as a draw. A see-through surface casts no sun shadow.
+    private static func instance(
+        of placement: RenderPlacement, mesh: RenderMesh, state: MaterialDrawState, seeThrough: Bool
+    ) -> DrawInstance {
+        let modelMatrix = placement.transform * mesh.localTransform
+        var instance = DrawInstance(
+            modelMatrix: modelMatrix,
+            normalMatrix: MatrixMath.normalMatrix(modelMatrix),
+            bounds: placement.bounds,
+            castsShadows: placement.castsShadows && !seeThrough && state.castsShadows,
+            receivesPointLights: placement.receivesPointLights && !state.distantLOD,
+            receivesShadows: placement.receivesShadows && state.receivesShadows,
+            referenceFormID: placement.referenceFormID,
+            layer: placement.layer,
+            owner: placement.owner
+        )
+        instance.emittance = placement.emittance
+        instance.treeMotion = placement.treeMotion
+        return instance
+    }
+
     public init(
         instances: [RenderPlacement],
         animations: [any RenderAnimation] = [],
@@ -372,22 +397,10 @@ nonisolated public struct RenderScene: Sendable {
                 let faceMorph = placement.faceMorphs[ObjectIdentifier(mesh)]
                 let seeThrough = DrawGroup.drawsBlended(material)
                     || DrawGroup.drawsRefraction(material)
-                let modelMatrix = placement.transform * mesh.localTransform
-                let state = material.drawState
-                var instance = DrawInstance(
-                    modelMatrix: modelMatrix,
-                    normalMatrix: MatrixMath.normalMatrix(modelMatrix),
-                    bounds: placement.bounds,
-                    // A see-through surface casts no sun shadow.
-                    castsShadows: placement.castsShadows && !seeThrough && state.castsShadows,
-                    receivesPointLights: placement.receivesPointLights && !state.distantLOD,
-                    receivesShadows: placement.receivesShadows && state.receivesShadows,
-                    referenceFormID: placement.referenceFormID,
-                    layer: placement.layer,
-                    owner: placement.owner
+                var instance = Self.instance(
+                    of: placement, mesh: mesh, state: material.drawState, seeThrough: seeThrough
                 )
                 instance.room = Self.room(of: placement, in: rooms)
-                instance.emittance = placement.emittance
                 // Blended groups ride the alpha-tested list, so culling and
                 // streaming need no third list; the scene pass draws them last.
                 if material.alphaTestThreshold == nil, !seeThrough {

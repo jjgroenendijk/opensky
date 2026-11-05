@@ -1,6 +1,6 @@
 // PROJ record: the flight half of an arrow. AMMO holds the gameplay half.
-// It decodes only the DATA members an arrow reads, and accepts a DATA of 16 bytes
-// or more. `gravityFactor` scales world gravity; it is not an acceleration.
+// It decodes the DATA members flight and its visuals read, and accepts a DATA of
+// 16 bytes or more. `gravityFactor` scales world gravity; it is not an acceleration.
 // Layout documented in docs/formats/projectiles.md.
 
 import Foundation
@@ -84,6 +84,12 @@ nonisolated public struct Projectile: Equatable, Sendable {
     public let explosionProximity: Float
     /// DATA +0x20 — with `alternateTrigger`, the seconds of flight that detonate it.
     public let explosionTimer: Float
+    /// DATA +0x10 — LIGH carried along in flight; nil when unset.
+    public let light: FormID?
+    /// DATA +0x14 — LIGH shown at launch with the muzzle flash; nil when unset.
+    public let muzzleFlashLight: FormID?
+    /// DATA +0x2C — seconds the muzzle flash model and light show.
+    public let muzzleFlashDuration: Float
     /// DATA +0x58 — COLL collision layer. The owning plugin is needed to
     /// resolve it; `CollisionLayerStore.collisionLayer(for:fromPlugin:)`
     /// exposes the resolved record.
@@ -160,6 +166,9 @@ nonisolated public struct Projectile: Equatable, Sendable {
         explosionProximity = data.explosionProximity
         explosionTimer = data.explosionTimer
         collisionLayer = data.collisionLayer
+        light = data.light
+        muzzleFlashLight = data.muzzleFlashLight
+        muzzleFlashDuration = data.muzzleFlashDuration
     }
 
     /// Test seam: a record's decoded values without a file behind them.
@@ -197,6 +206,9 @@ nonisolated public struct Projectile: Equatable, Sendable {
         explosionProximity = 0
         explosionTimer = 0
         self.collisionLayer = collisionLayer
+        light = nil
+        muzzleFlashLight = nil
+        muzzleFlashDuration = 0
         soundLevel = nil
         details = ProjectileDetails()
         skipped = FieldTally()
@@ -228,6 +240,9 @@ nonisolated public struct Projectile: Equatable, Sendable {
         var explosionProximity: Float = 0
         var explosionTimer: Float = 0
         var collisionLayer: FormID?
+        var light: FormID?
+        var muzzleFlashLight: FormID?
+        var muzzleFlashDuration: Float = 0
 
         init() {}
 
@@ -246,15 +261,16 @@ nonisolated public struct Projectile: Equatable, Sendable {
             speed = try reader.readFloat32()
             range = try reader.readFloat32()
             guard size >= 0x50 else { return }
-            // 0x10 light, 0x14 muzzle-flash light, 0x18 tracer chance: skipped
-            // by seeking, so a member this decoder does not want cannot be
-            // misread on the way past.
+            light = try Self.link(&reader)
+            muzzleFlashLight = try Self.link(&reader)
+            // 0x18 tracer chance.
             reader.seek(to: 0x1C)
             explosionProximity = try reader.readFloat32()
             explosionTimer = try reader.readFloat32()
             explosion = try Self.link(&reader)
             sound = try Self.link(&reader)
-            // 0x2C muzzle-flash duration, 0x30 fade duration.
+            muzzleFlashDuration = try reader.readFloat32()
+            // 0x30 fade duration.
             reader.seek(to: 0x34)
             impactForce = try reader.readFloat32()
             // 0x38 countdown sound.

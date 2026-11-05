@@ -121,10 +121,18 @@ public final class EffectModelPoser: EffectModelPosing {
                 animator: entry.animator
             )
             entry.copy.pose.publish(bones)
-            posed[id] = PosedEffectModel(model: entry.copy.model, animation: entry.copy.playback)
+            posed[id] = PosedEffectModel(
+                model: entry.copy.model, animation: entry.copy.playback,
+                nodeDeltas: entry.rig.nodeDeltas(bones)
+            )
         }
         release(Set(running.keys).subtracting(seen))
         return posed
+    }
+
+    /// The first sequence the effect's graph plays; a graph plays one per state.
+    public func playedSequence(ofEffect id: Int) -> String? {
+        graphs.sequences(ofEffect: id).first
     }
 
     /// One row per posed effect, in effect order.

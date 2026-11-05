@@ -73,7 +73,10 @@ public enum MusicFixture {
     public static let paletteTag: UInt32 = 0x23F6_78C3
     public static let silentTag: UInt32 = 0xA1A9_C4D5
 
-    public static func makeStore(types: [TypeSpec], tracks: [TrackSpec]) -> MusicRecordStore {
+    /// `defaultObjects` adds one `DOBJ` with these (tag, FormID) entries, such as `LUMS`.
+    public static func makeStore(
+        types: [TypeSpec], tracks: [TrackSpec], defaultObjects: [(String, UInt32)] = []
+    ) -> MusicRecordStore {
         var muscBytes = Data()
         for type in types {
             var fields = ESMFixture.field("EDID", ESMFixture.zstring(type.editorID))
@@ -108,9 +111,18 @@ public enum MusicFixture {
             }
             mustBytes += ESMFixture.record("MUST", formID: track.formID, data: fields)
         }
-        let plugin = ESMFixture.tes4()
+        var plugin = ESMFixture.tes4()
             + ESMFixture.topGroup("MUSC", contents: muscBytes)
             + ESMFixture.topGroup("MUST", contents: mustBytes)
+        if !defaultObjects.isEmpty {
+            let dnam = defaultObjects.reduce(Data()) { data, entry in
+                data + Data(entry.0.utf8.prefix(4)) + uint32(entry.1)
+            }
+            let record = ESMFixture.record(
+                "DOBJ", formID: 0x31, data: ESMFixture.field("DNAM", dnam)
+            )
+            plugin += ESMFixture.topGroup("DOBJ", contents: record)
+        }
         do {
             return try MusicRecordStore(file: ESMFile(data: plugin))
         } catch {

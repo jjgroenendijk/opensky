@@ -109,8 +109,26 @@ struct WeaponRecordTests {
             localized: false
         )
         #expect(weapon.skill == nil)
+        #expect(weapon.rumble == Weapon.Rumble(left: 0, right: 0, seconds: 0))
         // 200 is outside the documented 0...9 set, so it decodes as unknown.
         #expect(weapon.animationType == nil)
+    }
+
+    @Test func weaponReadsItsRumbleTab() throws {
+        var dnam = InventoryFixture.weaponDNAM(animation: 1, speed: 1, reach: 1, flags: 0, skill: 6)
+        for (offset, value) in [(0x34, Float(0.5)), (0x38, 0.25), (0x3C, 0.3)] {
+            withUnsafeBytes(of: value.bitPattern.littleEndian) {
+                dnam.replaceSubrange(offset ..< offset + 4, with: $0)
+            }
+        }
+        let weapon = try Weapon(
+            record: InventoryFixture.record(ESMFixture.record(
+                "WEAP",
+                data: ESMFixture.field("DNAM", dnam)
+            )),
+            localized: false
+        )
+        #expect(weapon.rumble == Weapon.Rumble(left: 0.5, right: 0.25, seconds: 0.3))
     }
 
     @Test func rejectsWrongTypeAndTruncatedStructs() {

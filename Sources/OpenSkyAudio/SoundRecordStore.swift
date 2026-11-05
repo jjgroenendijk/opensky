@@ -22,6 +22,8 @@ nonisolated public final class SoundRecordStore {
     public let sounds: [UInt32: SoundMarker]
     public let descriptors: [UInt32: SoundDescriptor]
     public let categories: [UInt32: SoundCategory]
+    /// The categories the default objects give a rule, such as the menu pause.
+    public let categoryRoles: [SoundCategoryRole: FormID]
     public let skippedRecords: SkippedRecords
 
     public convenience init(file: ESMFile) {
@@ -38,6 +40,7 @@ nonisolated public final class SoundRecordStore {
         categories = loadOrder.indexRecords(of: "SNCT", skipped: &skipped) {
             try SoundCategory(record: $0, localized: $1)
         }
+        categoryRoles = SoundCategoryRole.roles(in: loadOrder, skipped: &skipped)
         skippedRecords = skipped
     }
 

@@ -53,12 +53,15 @@ nonisolated public struct ImpulseBody: Equatable, Sendable {
     public let mass: Float
     public let boundingRadius: Float
     public let kind: ImpulseBodyKind
+    /// The `MATT` of the body's first collision shape.
+    public let material: FormID?
 
     public init(
         key: ReferenceKey, reference: FormID, position: SIMD3<Float>,
         velocity: SIMD3<Float> = .zero, mass: Float, boundingRadius: Float,
-        kind: ImpulseBodyKind
+        kind: ImpulseBodyKind, material: FormID? = nil
     ) {
+        self.material = material
         self.key = key
         self.reference = reference
         self.position = position

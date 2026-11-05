@@ -6,6 +6,7 @@
 import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsMesh
 import simd
 
 /// What the door coordinator reads from the session.
@@ -21,20 +22,28 @@ public final class SequenceDoorCoordinator {
         var door: CellSequenceDoor
         var motion: SequenceDoorMotion
         var needsPublish = true
+        /// The billboards and lag bones of the mesh, when its rig adds them.
+        var animator: NIFNodeAnimator?
 
         init(door: CellSequenceDoor, motion: SequenceDoorMotion) {
             self.door = door
             self.motion = motion
+            animator = door.nodes?.nodes.map { NIFNodeAnimator(animation: $0.animation) }
         }
     }
 
     weak let world: (any SequenceDoorWorld)?
     private(set) var running: [UInt32: Running] = [:]
-    /// Off holds every door in the pose it has.
+    /// The camera billboards turn to; nil leaves them at rest.
+    private let viewer: () -> NIFBillboard.Viewer?
+    /// Off holds every door in the pose it has; billboards keep turning.
     public var isEnabled = true
 
-    public init(world: any SequenceDoorWorld) {
+    public init(
+        world: any SequenceDoorWorld, viewer: @escaping () -> NIFBillboard.Viewer? = { nil }
+    ) {
         self.world = world
+        self.viewer = viewer
     }
 
     /// Adopts new doors at their saved state and drops departed ones. A rebuilt cell
@@ -46,6 +55,8 @@ public final class SequenceDoorCoordinator {
             if let current = running[door.reference] {
                 if current.door.pose !== door.pose {
                     current.door = door
+                    current.animator = door.nodes?.nodes
+                        .map { NIFNodeAnimator(animation: $0.animation) }
                     current.needsPublish = true
                 }
                 continue
@@ -77,14 +88,34 @@ public final class SequenceDoorCoordinator {
                 commands += keys.map { .textKey($0, reference: reference) }
                 entry.needsPublish = entry.needsPublish || entry.motion != before
             }
+            let rig = entry.door.rig
+            if entry.door.nodes != nil {
+                publishNodes(entry, deltaTime: isEnabled ? deltaTime : 0)
+            }
             guard entry.needsPublish else { continue }
             entry.needsPublish = false
-            let rig = entry.door.rig
             let leaves = rig.leafTransforms(entry.motion.motion, at: entry.motion.time)
-            entry.door.pose.publish(leaves.map { HKABonePose(transform: $0) })
+            if entry.door.nodes == nil {
+                entry.door.pose.publish(leaves.map { HKABonePose(transform: $0) })
+            }
             commands.append(.setLeaves(rig.leafDeltas(leaves), reference: reference))
         }
         return commands
+    }
+
+    /// Steps the mesh's lag bones, turns its billboards, and publishes leaves and nodes.
+    private func publishNodes(_ entry: Running, deltaTime: Float) {
+        guard let nodes = entry.door.nodes else { return }
+        let placement = entry.door.placement
+        entry.animator?.step(
+            deltaTime: deltaTime, placement: NodeControllerCoordinator.transform(placement)
+        )
+        if let camera = viewer() {
+            entry.animator?.face(camera.local(to: placement))
+        }
+        let leaves = entry.door.rig.leafTransforms(entry.motion.motion, at: entry.motion.time)
+        let local = leaves.map { HKABonePose(transform: $0) }
+        entry.door.pose.publish(nodes.bonePoses(graph: local, animator: entry.animator))
     }
 
     /// The `GetOpenState` code of a resident sequence door, or nil for any other

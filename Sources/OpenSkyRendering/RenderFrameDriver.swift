@@ -54,5 +54,6 @@ extension Renderer {
         }
         prepareClouds()
         prepareCelestial()
+        prepareWaterTextures()
     }
 }

@@ -53,6 +53,9 @@ final class GraphicsPageViewController: NSViewController {
     let lightAnimationControl = NSButton(
         checkboxWithTitle: "Flickering lights", target: nil, action: nil
     )
+    let shadowLightsControl = NSButton(
+        checkboxWithTitle: "Shadows from lights", target: nil, action: nil
+    )
     let particleSortingControl = NSButton(
         checkboxWithTitle: "Sort particles far to near", target: nil, action: nil
     )
@@ -180,7 +183,8 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(waterDepthControl), layout.toggle(terrainNormalMapsControl),
                 layout.toggle(impactEffectsControl), layout.toggle(screenBloodControl),
                 layout.toggle(toneMappingControl),
-                layout.toggle(lightAnimationControl), layout.toggle(particleSortingControl),
+                layout.toggle(lightAnimationControl), layout.toggle(shadowLightsControl),
+                layout.toggle(particleSortingControl),
                 layout.toggle(pipelineCacheControl),
                 layout.buttons([clearPipelineCacheControl]),
                 layout.toggle(parallelDecodeControl)

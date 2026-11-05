@@ -51,6 +51,7 @@ nonisolated public final class PrecipitationVolume {
         didSet {
             rain.setSpawnScale(tuning.rain)
             snow.setSpawnScale(tuning.snow)
+            rain.setStreakAspect(tuning.rainStreakAspect)
         }
     }
 
@@ -77,6 +78,7 @@ nonisolated public final class PrecipitationVolume {
             seed: 0x534E_4F57,
             sourcePath: "(generated snow)"
         )
+        rain.setStreakAspect(tuning.rainStreakAspect)
     }
 
     public func update(_ update: PrecipitationUpdate) {

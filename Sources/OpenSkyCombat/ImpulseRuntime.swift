@@ -30,6 +30,15 @@ public protocol ImpulseWorld: ImpulseBodyWorld {
     @discardableResult
     func applyPhysicsDamage(_ amount: Float, to actor: ReferenceKey) -> Bool
     func showSplash(_ splash: SplashEvent)
+    /// The actors and bodies that stand in water this frame, at the surface.
+    func waterContacts(_ contacts: [WaterSample])
+    /// Plays the sound of a loose body hitting something.
+    func playCollision(_ collision: BodyCollision)
+}
+
+extension ImpulseWorld {
+    public func waterContacts(_: [WaterSample]) {}
+    public func playCollision(_: BodyCollision) {}
 }
 
 /// What set a push off, for the readout.
@@ -43,6 +52,7 @@ nonisolated public enum ImpulseEvent: Equatable, Sendable {
     case push(ReferenceKey, impulse: Float, cause: ImpulseCause)
     case splash(SplashEvent)
     case physicsDamage(body: ReferenceKey, actor: ReferenceKey, damage: Float)
+    case collision(BodyCollision)
 }
 
 @MainActor
@@ -59,6 +69,7 @@ public final class ImpulseRuntime {
     private var touching: Set<[ReferenceKey]> = []
     /// Actors that fast water knocked down and that have not left it yet.
     private var inFastWater: Set<ReferenceKey> = []
+    private var collisions = BodyCollisionTracker()
 
     public init(
         settings: ImpulseSettings = .vanilla,
@@ -76,6 +87,10 @@ public final class ImpulseRuntime {
         let bodies = world.impulseBodies()
         splash(actors: actors, bodies: bodies, world: world)
         strike(actors: actors, bodies: bodies, world: world)
+        for collision in collisions.update(bodies) {
+            world.playCollision(collision)
+            record(.collision(collision))
+        }
         knockInFastWater(actors, world: world)
     }
 
@@ -109,6 +124,7 @@ public final class ImpulseRuntime {
         for event in splashes.update(samples, settings: water) {
             play(event)
         }
+        world.waterContacts(samples.filter(\.isWading))
     }
 
     private func strike(actors: [MeleeTarget], bodies: [ImpulseBody], world: any ImpulseWorld) {

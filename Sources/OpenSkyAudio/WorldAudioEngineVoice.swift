@@ -6,6 +6,7 @@
 import AVFAudio
 import Foundation
 import OpenSkyFormatsAudio
+import OpenSkyFormatsESM
 import simd
 
 /// What a started voice line hands back: the source to track, how long the
@@ -34,7 +35,8 @@ extension WorldAudioEngine {
         fuzData: Data,
         name: String,
         worldPosition: SIMD3<Float>,
-        gain: Float = 1
+        gain: Float = 1,
+        soundCategory: FormID? = nil
     ) throws -> VoicePlayback {
         let container = try FUZFile(data: fuzData)
         let audio = try AudioFileAsset(data: container.audioData)
@@ -44,7 +46,8 @@ extension WorldAudioEngine {
                 name: name,
                 category: .voice,
                 worldPosition: worldPosition,
-                gain: gain
+                gain: gain,
+                soundCategory: soundCategory
             )
         )
         let clock = VoicePlaybackClock()

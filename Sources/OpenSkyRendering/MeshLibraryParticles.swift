@@ -3,6 +3,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
+import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 import simd
@@ -20,10 +21,8 @@ nonisolated extension MeshLibrary {
         guard let definitions = particleDefinitions[key] else { return [] }
         var playbacks: [ParticlePlayback] = []
         for (index, definition) in definitions.enumerated() {
-            guard
-                definition.maxParticles > 0,
-                definition.emitters.contains(where: \.active),
-                let shader = definition.effectShader
+            let emits = definition.maxParticles > 0 && definition.emitters.contains(where: \.active)
+            guard emits || definition.lightning != nil, let shader = definition.effectShader
             else { continue }
             let texture = textures.texture(key: shader.sourceTexturePath, usage: .color)
             let seed = (UInt64(formID) << 32) ^ UInt64(index + 1)
@@ -37,9 +36,28 @@ nonisolated extension MeshLibrary {
                 },
                 emittance: emittance,
                 seed: seed,
-                sourcePath: pathKey
+                sourcePath: pathKey,
+                meshModel: particleMeshModel(pathKey: pathKey, definition: definition, index: index)
             ))
         }
         return playbacks
+    }
+
+    /// The meshes a mesh particle system draws per particle; nil for a billboard system
+    /// or a pool that does not load, which then draws billboards.
+    private func particleMeshModel(
+        pathKey: String, definition: ParticleSystemDefinition, index: Int
+    ) -> RenderModel? {
+        guard definition.meshPool >= 0 else { return nil }
+        let key = pathKey + "|particle-mesh:\(index)"
+        if let known = particleMeshModels[key] {
+            return known
+        }
+        let model = (try? fileSystem.contents(forPath: pathKey))
+            .flatMap { try? NIFFile(data: $0) }
+            .flatMap { try? $0.particleMeshModel(pool: definition.meshPool) }
+            .flatMap { $0.meshes.isEmpty ? nil : try? makeRenderModel($0, key: key) }
+        particleMeshModels[key] = .some(model)
+        return model
     }
 }

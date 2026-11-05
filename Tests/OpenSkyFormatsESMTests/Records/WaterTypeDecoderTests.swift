@@ -39,7 +39,9 @@ struct WaterTypeDecoderTests {
         }
         let singles: [(Int, Float)] = [
             (16, 1021), (20, 0.8), (24, 0.1), (32, -10), (36, 150),
-            (196, 0.42), (200, 2.89), (204, 4.65), (224, 3521)
+            (196, 0.42), (200, 2.89), (204, 4.65), (224, 3521),
+            (72, 4), (76, 0.5), (80, 120), (84, 0.3), (88, 0.95), (96, 0.7),
+            (132, 0.25), (140, 0.9), (144, 10), (148, 600), (152, 0.06)
         ]
         for (offset, value) in singles {
             put(value, at: offset)
@@ -68,6 +70,16 @@ struct WaterTypeDecoderTests {
         #expect(surface.amplitudes == SIMD3(0.9, 0.92, 0.65))
         #expect(surface.sunSpecularMagnitude == 4.65)
         #expect(surface.sunSparklePower == 3521)
+        #expect(surface.sunSparkleMagnitude == 2.89)
+        #expect(surface.refractionMagnitude == 0.06)
+        #expect(surface.noiseFalloff == 0.7)
+        #expect(surface.displacement == WaterDisplacementFields(
+            startingSize: 4, force: 0.5, velocity: 120, falloff: 0.3, dampener: 0.95
+        ))
+        #expect(surface.aboveWaterFogAmount == 0.25)
+        #expect(surface.underwaterFogAmount == 0.9)
+        #expect(surface.underwaterFogNear == 10)
+        #expect(surface.underwaterFogFar == 600)
     }
 
     @Test func skipsUnknownDNAMVariant() throws {

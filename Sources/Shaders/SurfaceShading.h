@@ -118,7 +118,8 @@ static void addPointLights(
     float3 worldPosition,
     const device PointLightUniform *lights,
     uint count,
-    uint terms)
+    uint terms,
+    PointShadows shadows)
 {
     for (uint index = 0; index < count; ++index) {
         float3 toLight = lights[index].positionRadius.xyz - worldPosition;
@@ -127,7 +128,9 @@ static void addPointLights(
         float radial = saturate(1.0 - distanceToLight / radius);
         float attenuation = pow(radial, max(lights[index].colorFalloff.w, 0.01));
         float3 direction = toLight / max(distanceToLight, 0.0001);
-        addLight(sums, geometry, direction, lights[index].colorFalloff.rgb * attenuation, terms);
+        float3 colour =
+            lights[index].colorFalloff.rgb * attenuation * pointShadowAt(shadows, index);
+        addLight(sums, geometry, direction, colour, terms);
     }
 }
 

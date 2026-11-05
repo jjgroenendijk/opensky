@@ -107,9 +107,28 @@ surface there. It stops at that surface when it reaches it. So a cone passes thr
 that appears in front of it between two looks. The settings' names give the look ahead; how the game
 uses the result is OpenSky's reading. An actor in the way is still hit first.
 
-A spell projectile is not drawn yet: no model, no muzzle flash, and no impact art. There is no aim
-assist. Vanilla nudges a cast toward a target, and OpenSky aims exactly where the camera points, as
-it does for arrows.
+There is no aim assist. Vanilla nudges a cast toward a target, and OpenSky aims exactly where the
+camera points, as it does for arrows.
+
+## What a projectile shows
+
+Every projectile in flight, an arrow or a spell, draws what its `PROJ` names
+([projectile records](/formats/projectiles.md)):
+
+- The `MODL` model at the projectile, with its +Y along the velocity. Its particle systems run
+  and follow it.
+- The `DATA` light (offset 0x10) at the projectile, at its full colour.
+- With the muzzle flash flag (0x08): the `NAM1` model at the launch point, along the shot, and
+  the muzzle flash light (0x14), for the muzzle flash duration (0x2C). The light fades out
+  over that time.
+
+When a spell lands, its impact plays from the `MGEF` impact data set of the effect that names the
+projectile, on the material it struck: the model, the decal, and the sound. An arrow keeps the
+ammunition's chain. The `PROJ` explosion then goes off with its own model, light, and impact data
+([explosions](/formats/explosions.md#runtime)).
+
+The light fades and the use of the velocity for the model's facing are OpenSky's choices. The
+fade duration (0x30) and the decal link (0x54) are read by xEdit but not used.
 
 ## What a landed spell reaches
 

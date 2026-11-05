@@ -18,3 +18,18 @@ nonisolated extension WeatherSystem {
         return .exterior(weathers: weathers, timeOfDay: timeOfDayWeights(hour: hour))
     }
 }
+
+nonisolated extension WeatherSystem {
+    /// The `HNAM` volumetric light of the weather blend at `hour`; `records` resolves
+    /// the links as spelled in `plugin`.
+    public func volumetricLight(
+        hour: Float, records: EffectRecordStore, plugin: String
+    ) -> VolumetricLightValues {
+        let weathers = blendedWeathers.map {
+            (links: store.weather($0.weather)?.sky.volumetricLighting, weight: $0.weight)
+        }
+        return VolumetricLightValues.resolve(
+            weathers: weathers, timeOfDay: timeOfDayWeights(hour: hour)
+        ) { records.volumetricLighting.resolve($0, fromPlugin: plugin)?.record }
+    }
+}

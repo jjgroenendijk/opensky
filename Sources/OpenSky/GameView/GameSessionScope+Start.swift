@@ -4,6 +4,7 @@
 import AppKit
 import MetalKit
 import OpenSkyActorPresentation
+import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyEffects
@@ -180,6 +181,10 @@ extension GameSessionScope {
 
     var terrainLODConfigurationStore: TerrainLODConfigurationStore {
         services.terrainLODConfigurationStore
+    }
+
+    var soundMixTimings: SoundMixTimings {
+        services.soundMixTimings
     }
 }
 

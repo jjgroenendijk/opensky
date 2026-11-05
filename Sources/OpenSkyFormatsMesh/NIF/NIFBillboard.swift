@@ -48,7 +48,8 @@ nonisolated public enum NIFBillboard {
         mode: UInt16, rotation: simd_quatf, origin: SIMD3<Float>, viewer: Viewer
     ) -> simd_quatf? {
         let toEye = viewer.eye - origin
-        switch mode {
+        // nif.xml stores the mode in the lowest 3 bits; 9 is 1 again.
+        switch mode & 0x7 {
         case 1, 9:
             // Turns about its own +Y; +Z goes toward the eye.
             let axis = rotation.act([0, 1, 0])
@@ -59,11 +60,31 @@ nonisolated public enum NIFBillboard {
             let axis = rotation.act([0, 0, 1])
             guard let front = flattened(toEye, across: axis) else { return nil }
             return basis(x: simd_cross(-front, axis), y: -front, z: axis)
-        case 0, 2:
+        case 0:
+            return minimised(rotation, to: viewer.forward.map { -$0 } ?? toEye)
+        case 2:
             return facing(viewer.forward.map { -$0 } ?? toEye, up: viewer.up)
+        case 3:
+            return minimised(rotation, to: toEye)
         default:
             return facing(toEye, up: viewer.up)
         }
+    }
+
+    /// nif.xml "minimized rotation": the shortest turn that takes own +Z to `front`, so
+    /// the node keeps as much of its authored roll as it can.
+    private static func minimised(_ rotation: simd_quatf, to front: SIMD3<Float>) -> simd_quatf? {
+        guard simd_length(front) > 1e-6 else { return nil }
+        let from = rotation.act([0, 0, 1])
+        let to = simd_normalize(front)
+        let turn = if simd_dot(from, to) < -0.9999 {
+            // Opposite: half a turn about own +Y.
+            simd_quatf(angle: .pi, axis: rotation.act([0, 1, 0]))
+        } else {
+            simd_quatf(from: from, to: to)
+        }
+        let result = (turn * rotation).normalized
+        return result.vector.x.isFinite ? result : nil
     }
 
     /// +Z along `front`, +Y as near `up` as the turn allows.

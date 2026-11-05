@@ -41,9 +41,11 @@ protocol CombatWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
+    var controllerRumble: ControllerRumble { get }
     var crime: CrimeCoordinator { get }
     var dialogue: DialogueCoordinator { get }
     var effects: EffectsCoordinator { get }
+    var effectsWorld: EffectsWorldAdapter { get }
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
@@ -186,6 +188,8 @@ final class CombatWorldAdapter {
                 )
             case let .showDefaultBlood(target, position, melee):
                 showDefaultBlood(on: target, at: position, melee: melee)
+            case let .muzzleFlash(visuals, position, direction):
+                game.effectsWorld.showMuzzleFlash(visuals, at: position, along: direction)
             }
         }
     }

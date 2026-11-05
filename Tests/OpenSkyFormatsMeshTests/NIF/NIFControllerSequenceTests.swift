@@ -24,6 +24,16 @@ struct NIFControllerSequenceTests {
         #expect(controller.birthRate(at: 1) == 7)
     }
 
+    @Test func eachSequenceThatFeedsTheChainKeepsItsOwnControllers() throws {
+        let system = try #require(NIFFile(data: managedFile()).particleSystems().first)
+        #expect(system.sequenceControllers.keys.sorted() == ["fire", "midle"])
+        let fire = try #require(system.sequenceControllers["fire"]?.emitters.first)
+        #expect(fire.birthRate.map(\.value) == [99])
+        #expect(fire.timing.cycle == .clamp)
+        #expect(fire.timing.stopTime == 1)
+        #expect(system.sequenceControllers["midle"] == system.defaultControllers)
+    }
+
     @Test func multiTargetControllerDecodesLikeTheBase() throws {
         let controllers =
             try NIFFile(data: managedFile(controllerType: "BSPSysMultiTargetEmitterCtlr"))

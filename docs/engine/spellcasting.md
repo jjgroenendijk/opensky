@@ -237,7 +237,8 @@ hands while preparing to cast": it shows from the press until the hand is idle a
 shows the dual casting art when the effect has one. NPC casters get the same cues.
 
 - [WARNING] No effect anchor names a hand bone, so the art rides the actor.
-- The casting light is not drawn, because no effect places a light on an actor yet.
+- The `MGEF` casting light shows while the casting art shows. No anchor names a hand, so it
+  floats where a held Light spell floats: in front of the caster's eye, along its aim.
 
 ## Saving
 

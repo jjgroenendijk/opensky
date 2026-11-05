@@ -167,7 +167,7 @@ nonisolated extension NIFFile {
                 slotIndex = materials.count - 1
                 slotIndexes[key] = slotIndex
             }
-            try meshes.append(Mesh(
+            let mesh = try Mesh(
                 name: shape.object.name,
                 transform: parent * shape.object.localTransform,
                 positions: geometry.positions,
@@ -182,8 +182,13 @@ nonisolated extension NIFFile {
                 lodIndexCounts: MeshLODLevels.indexCounts(
                     triangleCounts: shape.lodTriangleCounts, indexCount: geometry.indices.count
                 )
+            )
+            let pieces = try mesh.splitByObjectLODSegment(file.largeReferenceSegments(
+                of: block,
+                at: index
             ))
-            meshBlocks.append(index)
+            meshes += pieces
+            meshBlocks += pieces.map { _ in index }
         }
 
         public struct ShapeGeometry: Sendable {
@@ -304,13 +309,17 @@ nonisolated extension NIFFile {
 }
 
 nonisolated extension NIFFile.Flattener {
-    /// A lit shape uses its vertex colour and alpha only when its flags say so.
+    /// A lit shape uses its vertex colour and alpha only when its flags say so. A
+    /// Tree_Anim shape keeps its alpha too: there it is the wind weight.
     func opacityColours(_ colours: [SIMD4<Float>], shape: NIFTriShape) throws -> [SIMD4<Float>] {
         guard shape.shaderPropertyRef >= 0 else { return colours }
         let block = try block(at: Int(shape.shaderPropertyRef))
         guard block.typeName == "BSLightingShaderProperty" else { return colours }
         let shader = try NIFLightingShaderProperty(data: block.data, header: file.header)
-        let (rgb, alpha) = (shader.usesVertexColors, shader.usesVertexAlpha)
+        let (rgb, alpha) = (
+            shader.usesVertexColors,
+            shader.usesVertexAlpha || shader.isTreeAnimated
+        )
         guard !rgb || !alpha else { return colours }
         return colours.map {
             SIMD4(rgb ? $0.x : 1, rgb ? $0.y : 1, rgb ? $0.z : 1, alpha ? $0.w : 1)

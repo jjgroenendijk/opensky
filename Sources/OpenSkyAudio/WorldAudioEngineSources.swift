@@ -7,6 +7,7 @@ import AVFAudio
 import Foundation
 import OpenSkyFormatsAudio
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 /// How a source reaches the main mixer. Explicit rather than inferred from the
@@ -30,13 +31,17 @@ public final class ActiveAudioSource {
     public let routing: AudioRouting
     /// World position in native Skyrim units. Meaningless (and always zero)
     /// for a non-positional source.
-    public let worldPosition: SIMD3<Float>
+    public internal(set) var worldPosition: SIMD3<Float>
     /// Exterior cell the position falls in — the purge key for cell unload.
-    public let cell: CellCoordinate
+    public internal(set) var cell: CellCoordinate
     /// Per-source gain, multiplied with the category, master and fade gains.
     public let gain: Float
     /// Continuous source: it restarts at the beginning instead of ending.
     public let loops: Bool
+    /// The sound category the mix reads; see docs/engine/sound-mix.md.
+    public let soundCategory: FormID?
+    /// Paused by the sound mix, as in a menu; the mix plays it again.
+    public var mixPaused = false
     /// The output model's distance curve, nil when the environment node attenuates.
     public let attenuation: AttenuationCurve?
     /// The curve's gain at the listener's distance, updated each tick.
@@ -86,8 +91,10 @@ public final class ActiveAudioSource {
         let position = located ? request.worldPosition : .zero
         worldPosition = position
         cell = CellCoordinate(containing: position)
-        gain = request.gain
+        let speakers = routing == .nonPositional ? request.outputModel?.speakers : nil
+        gain = request.gain * (speakers?.gain ?? 1)
         loops = request.loops
+        soundCategory = request.soundCategory
         self.node = node
         self.streamer = streamer
     }
@@ -107,6 +114,8 @@ nonisolated public struct AudioPlayRequest: Sendable {
     public var loops = false
     /// The SNDR's output model, nil for the engine defaults.
     public var outputModel: OutputModelProfile?
+    /// The SNDR's `SNCT`; nil takes the category `category` maps to.
+    public var soundCategory: FormID?
 
     /// Request for a source with no world position — music, ambience and other
     /// 2D material routed straight into a category submix.
@@ -126,13 +135,15 @@ nonisolated public struct AudioPlayRequest: Sendable {
         category: AudioCategory,
         worldPosition: SIMD3<Float>,
         gain: Float = 1,
-        loops: Bool = false
+        loops: Bool = false,
+        soundCategory: FormID? = nil
     ) {
         self.name = name
         self.category = category
         self.worldPosition = worldPosition
         self.gain = gain
         self.loops = loops
+        self.soundCategory = soundCategory
     }
 }
 
@@ -327,6 +338,51 @@ extension WorldAudioEngine {
         return true
     }
 
+    /// Moves a positional source, so a loop follows the actor that makes it.
+    @discardableResult
+    public func moveSource(id: Int, to worldPosition: SIMD3<Float>) -> Bool {
+        guard
+            let source = sources.first(where: { $0.id == id }),
+            source.routing == .positional,
+            worldPosition.x.isFinite, worldPosition.y.isFinite, worldPosition.z.isFinite
+        else { return false }
+        source.worldPosition = worldPosition
+        source.cell = CellCoordinate(containing: worldPosition)
+        let position = AudioSpace.listenerPosition(fromWorld: worldPosition)
+        source.node.position = AVAudio3DPoint(x: position.x, y: position.y, z: position.z)
+        return true
+    }
+
+    /// Lets a looping source finish its current pass, then end like a one-shot. A
+    /// source that does not loop plays on. False when no source has the id.
+    @discardableResult
+    public func releaseSource(id: Int) -> Bool {
+        guard let source = sources.first(where: { $0.id == id }) else { return false }
+        guard source.loops else { return true }
+        if let streamer = source.streamer {
+            streamer.requestRelease()
+            return true
+        }
+        // A silent frame that interrupts at the loop point ends the loop there.
+        let format = source.node.outputFormat(forBus: 0)
+        guard let silence = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1) else {
+            stop(source)
+            return true
+        }
+        silence.frameLength = 1
+        if let channels = silence.floatChannelData {
+            for channel in 0 ..< Int(format.channelCount) {
+                channels[channel][0] = 0
+            }
+        }
+        source.node.scheduleBuffer(silence, at: nil, options: .interruptsAtLoop) {
+            Task { @MainActor in
+                source.bufferFinished = true
+            }
+        }
+        return true
+    }
+
     /// Detaches sources whose stream completed; called from the audio tick.
     /// `onSourceFinished` fires only here, so it means "played to the end", not
     /// stopped or evicted. Dialogue subtitles rely on that.
@@ -368,6 +424,7 @@ extension WorldAudioEngine {
     public func applyVolume(to source: ActiveAudioSource) {
         let categoryFactor = source.isPositional ? audibleVolume(for: source.category) : 1
         source.node.volume = categoryFactor * source.gain * source.fadeGain * source.distanceGain
+            * mixLevel(of: source).gain
     }
 
     /// Effective gain of one source as the listener hears it before distance
@@ -375,6 +432,7 @@ extension WorldAudioEngine {
     /// factor is zero while the category is muted or another one is soloed.
     public func effectiveGain(of source: ActiveAudioSource) -> Float {
         masterVolume * audibleVolume(for: source.category) * source.gain * source.fadeGain
+            * mixLevel(of: source).gain
     }
 
     // MARK: - Internals
@@ -415,7 +473,9 @@ extension WorldAudioEngine {
         engine.attach(node)
         engine.connect(node, to: mixer, format: format)
         // Category volume is the submix's job on this path; see applyVolume.
-        node.volume = request.gain
+        let speakers = request.outputModel?.speakers
+        node.volume = request.gain * (speakers?.gain ?? 1)
+        node.pan = speakers?.pan ?? 0
         return node
     }
 

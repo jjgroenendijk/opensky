@@ -124,6 +124,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// A static's directional material: the MATO diffuse and normal maps.
     TextureIndexProjectedDiffuse = 27,
     TextureIndexProjectedNormal = 28,
+    /// Cube faces of the shadow-casting point lights (depth2d_array, 6 slices a light).
+    /// The cascade array stands in until a shadow light builds it.
+    TextureIndexPointShadowMap = 29,
     /// A lit mesh binds NIF texture-set slot N at index N, over the terrain layer
     /// slots, which only terrain draws read. Every draw binds all of them.
     TextureIndexSurfaceNormal = 1,
@@ -156,6 +159,11 @@ typedef NS_ENUM(EnumBackingType, LightingConstant)
     LightingConstantMaxPointLights = 8,
 };
 
+typedef NS_ENUM(EnumBackingType, WaterConstant)
+{
+    WaterConstantMaxRipples = 8,
+};
+
 /// Cascaded sun-shadow-map config. CascadeCount also sizes the FrameUniforms
 /// cascade arrays; MapResolution is one shadow-array slice edge.
 typedef NS_ENUM(EnumBackingType, ShadowConstant)
@@ -165,6 +173,9 @@ typedef NS_ENUM(EnumBackingType, ShadowConstant)
     ShadowConstantFocusCount = 4,
     ShadowConstantPrecipitationSlice = 4,
     ShadowConstantAuxiliarySliceCount = 5,
+    /// Shadow-casting point lights drawn at once, each with 6 cube faces.
+    ShadowConstantPointLightCount = 4,
+    ShadowConstantPointFaceCount = 6,
 };
 
 typedef NS_ENUM(EnumBackingType, SamplerIndex)
@@ -358,6 +369,8 @@ typedef struct
     vector_float2 grassWind;
     /// x=fade start, y=hard draw distance in world units.
     vector_float2 grassFadeDistances;
+    /// Tree wind: xy direction, z speed 0 to 1, w distance where leaf flutter ends.
+    vector_float4 treeWind;
     /// DebugViewMode for this frame. Read only by pipelines that define
     /// FunctionConstantDebugView; DebugViewModeOff outside the Render Debug
     /// section.
@@ -431,6 +444,9 @@ typedef struct
     vector_float4 projectedParameters;
     /// rgb single-pass colour, a noise UV scale.
     vector_float4 projectedColor;
+    /// Tree wind: x sway, y sway frequency, z leaf amplitude, w leaf frequency. A w above
+    /// 0 marks the vertex alpha as the leaf's wind weight (docs/rendering/trees.md).
+    vector_float4 windMotion;
 } DrawUniforms;
 
 /// Per-GROUP GRAS material + mesh-height controls. Fade/wind are per-frame;
@@ -483,6 +499,9 @@ typedef struct
     vector_float4 positionRadius;
     /// rgb radiance, w radial falloff exponent.
     vector_float4 colorFalloff;
+    /// x first slice of its cube at TextureIndexPointShadowMap, or -1 for none; y near
+    /// plane; z far plane; w receiver offset along the normal, in world units.
+    vector_float4 shadow;
 } PointLightUniform;
 
 /// Per-INSTANCE transforms for the static-mesh path, in a tightly packed
@@ -538,6 +557,16 @@ typedef struct
     vector_float2 flowVelocity;
     /// Projection terms (m22, m32): view depth = y / (ndcDepth + x).
     vector_float2 depthUnproject;
+    /// x refraction magnitude, y sun sparkle magnitude, z sun sparkle power, w 1 when the
+    /// three noise maps are bound at TextureIndexSurfaceNormal, Glow, and Detail.
+    vector_float4 detail;
+    /// Displacement rings: starting size, force, velocity, dampener.
+    vector_float4 displacement;
+    /// x displacement falloff, y rain 0 to 1, z live ring count, w 1 when the scene colour
+    /// copy is bound for refraction.
+    vector_float4 rings;
+    /// Each ring: x, y, age in seconds, strength.
+    vector_float4 ripples[WaterConstantMaxRipples];
 } WaterDrawUniforms;
 
 /// Per-draw slot for the sun-shadow depth pre-pass; fits one 256-byte uniform

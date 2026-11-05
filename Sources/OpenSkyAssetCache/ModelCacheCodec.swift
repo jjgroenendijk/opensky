@@ -216,6 +216,7 @@ nonisolated public enum ModelCacheCodec {
         out.array(mesh.indices)
         out.int(mesh.materialSlot)
         out.array(mesh.lodIndexCounts.map(UInt32.init))
+        out.int(mesh.objectLODSegment ?? -1)
         out.bool(mesh.skinning != nil)
         guard let skinning = mesh.skinning else { return }
         out.array(skinning.weights)
@@ -244,11 +245,13 @@ nonisolated public enum ModelCacheCodec {
         let indices = try input.array(UInt16.self)
         let slot = try input.int()
         let levels = try input.array(UInt32.self).map(Int.init)
+        let segment = try input.int()
         let skinning = try input.bool() ? try skinning(&input) : nil
         return Mesh(
             name: name, transform: transform, positions: positions, normals: normals,
             tangents: tangents, bitangents: bitangents, uvs: uvs, colors: colors, indices: indices,
-            materialSlot: slot, skinning: skinning, lodIndexCounts: levels
+            materialSlot: slot, skinning: skinning, lodIndexCounts: levels,
+            objectLODSegment: segment >= 0 ? segment : nil
         )
     }
 

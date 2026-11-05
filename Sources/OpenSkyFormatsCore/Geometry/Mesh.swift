@@ -29,6 +29,9 @@ nonisolated public struct Mesh: Sendable {
     public let skinning: MeshSkinning?
     /// The index count of each detail level (`MeshLODLevels`); empty for one level.
     public let lodIndexCounts: [Int]
+    /// The segment of an object LOD large-reference shape this piece came from; segment
+    /// `k` holds the large references of one cell (docs/formats/lod.md).
+    public let objectLODSegment: Int?
 
     public init(
         name: String?,
@@ -42,7 +45,8 @@ nonisolated public struct Mesh: Sendable {
         indices: [UInt16],
         materialSlot: Int,
         skinning: MeshSkinning? = nil,
-        lodIndexCounts: [Int] = []
+        lodIndexCounts: [Int] = [],
+        objectLODSegment: Int? = nil
     ) {
         self.name = name
         self.transform = transform
@@ -56,6 +60,7 @@ nonisolated public struct Mesh: Sendable {
         self.materialSlot = materialSlot
         self.skinning = skinning
         self.lodIndexCounts = lodIndexCounts
+        self.objectLODSegment = objectLODSegment
     }
 }
 

@@ -5,6 +5,7 @@
 import AppKit
 import Metal
 import OpenSkyAssetCache
+import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyGameData
@@ -113,6 +114,11 @@ final class GameLaunchContext {
         cellSession = nil
         controller.startupErrorMessage = gameDataErrorMessage
         controller.terrainLODConfigurationStore = terrainLODConfigurationStore
+        controller.soundMixTimings = gameDataRoot.map { root in
+            SoundMixTimings(ini: INISettings.load(
+                candidates: TerrainLODSettings.iniCandidates(installURL: root.installURL)
+            ))
+        } ?? SoundMixTimings()
         controller.settingsCatalog = gameDataRoot.map { root in
             PlayerSettingsCatalog.vanilla.applyingINIDefaults(INISettings.load(
                 candidates: PlayerSettingsCatalog.iniCandidates(installURL: root.installURL)

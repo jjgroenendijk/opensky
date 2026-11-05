@@ -231,7 +231,8 @@ extension AgentWorldAdapter {
             "lastRumble": game.controllerRumble.lastRumble.map { rumble in
                 [
                     "big": [.init(rumble.bigSeconds), .init(rumble.bigStrength)],
-                    "small": [.init(rumble.smallSeconds), .init(rumble.smallStrength)]
+                    "small": [.init(rumble.smallSeconds), .init(rumble.smallStrength)],
+                    "cause": game.controllerRumble.lastRumbleCause.map(AgentJSON.string) ?? .null
                 ]
             } ?? .null,
             "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
@@ -328,6 +329,11 @@ extension AgentWorldAdapter {
                 ?? .null,
             "eyeTexture": eyeTexture(of: actor.key),
             "severed": severedState(of: actor.key),
+            "soundLoops": .array(
+                (game.gameSession?.soundDirector?.actorLoopNames(of: actor.key) ?? [])
+                    .map(AgentJSON.string)
+            ),
+            "skinDecals": .array(skinDecalBones(of: actor.key).map(AgentJSON.string)),
             "constraints": physicsConstraints(of: actor.key),
             "graph": graph
         ])
@@ -453,6 +459,8 @@ extension AgentWorldAdapter {
             "sunDirection": .init(sky.sunDirection), "lightDirection": .init(sky.lightDirection),
             "sunAlpha": .init(sky.sunAlpha), "glareScale": .init(sky.glareScale),
             "starsAngleDegrees": .init(sky.starsAngle * 180 / .pi),
+            "moonGlare": game.gameSession?.currentResolvedWeather
+                .map { .init($0.moonGlare) } ?? .null,
             "moons": .array(sky.moons.map { moon in
                 [
                     "moon": .string(moon.moon.rawValue), "phase": .string(moon.phase.textureSuffix),
@@ -478,7 +486,14 @@ extension AgentWorldAdapter {
             "interpolation": interpolationState(),
             "terrainLOD": terrainLODState(),
             "largeReferences": game.streamer.map { .init($0.largeReferenceCount) } ?? .null,
+            "hiddenLargeReferenceLOD": game.streamer.map {
+                .init($0.hiddenLargeReferenceSegments)
+            } ?? .null,
             "screenFade": screenFadeState(),
+            "postEffects": postEffectState(),
+            "projectileVisuals": projectileVisualState(),
+            "soundMix": soundMixState(),
+            "treeWind": treeWindState(),
             "gpuMemory": gpuMemoryState()
         ]
     }

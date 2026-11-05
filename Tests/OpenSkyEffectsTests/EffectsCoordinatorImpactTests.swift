@@ -96,4 +96,20 @@ struct EffectsCoordinatorImpactTests {
         #expect(effects.decals.decals.count == 2)
         withExtendedLifetime(world) {}
     }
+
+    @Test func aFlashLightFadesAndGoes() {
+        let effects = EffectsCoordinator()
+        let light = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x900)
+        effects.addFlashLight(light, at: SIMD3(1, 2, 3), duration: 2)
+        effects.addFlashLight(light, at: .zero, duration: 0)
+        #expect(effects.flashLights.count == 1)
+        effects.ageFlashLights(0.5)
+        #expect(effects.flashLights.first?.strength == 0.75)
+        effects.ageFlashLights(2)
+        #expect(effects.flashLights.isEmpty)
+        for _ in 0 ... EffectsCoordinator.flashLightLimit {
+            effects.addFlashLight(light, at: .zero, duration: 1)
+        }
+        #expect(effects.flashLights.count == EffectsCoordinator.flashLightLimit)
+    }
 }

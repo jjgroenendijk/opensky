@@ -1,6 +1,7 @@
 // App side of training: the nearest actor's class, the player's gold, and the
 // notice. The rule is in `ProgressionCoordinator+Training.swift`.
 
+import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -9,6 +10,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyQuestsInterface
+import OpenSkyWorld
 
 extension ProgressionWorldAdapter {
     func nearestTrainer() -> TrainerOffer? {
@@ -56,6 +58,7 @@ extension ProgressionWorldAdapter {
             switch command {
             case let .showNotification(text): game.hud.showNotification(text)
             case let .incrementStat(name): game.worldState.incrementMiscStat(name)
+            case .playLevelUpMusic: game.audio.musicDirector?.playSpecialMusic(.levelUp)
             }
         }
     }

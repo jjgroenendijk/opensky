@@ -5,6 +5,7 @@
 import AppKit
 import MetalKit
 import OpenSkyActorPresentation
+import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyGameData
@@ -39,6 +40,9 @@ final class GameViewController: NSViewController {
     let sessionStart = SessionStartRecorder()
     /// Times the streamer's builds by asset phase; set only when a benchmark tour will run.
     var benchmarkLoadPhases: LoadPhaseRecorder?
+
+    /// The menu fade and music duck seconds from the INI files.
+    var soundMixTimings = SoundMixTimings()
 
     /// Thread-safe effective INI and settings LOD values shared with the off-main
     /// DistantLODBuilder. AppDelegate replaces this before view load.
@@ -192,6 +196,7 @@ final class GameViewController: NSViewController {
             worldLoadReport: worldLoadReport,
             benchmarkLoadPhases: benchmarkLoadPhases,
             terrainLODConfigurationStore: terrainLODConfigurationStore,
+            soundMixTimings: soundMixTimings,
             launch: GameLaunchChoice(
                 startsAtTitleScreen: startsAtTitleScreen,
                 launchStart: launchStart,

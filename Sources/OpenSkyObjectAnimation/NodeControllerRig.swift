@@ -8,6 +8,7 @@ import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsMesh
+import OpenSkyRendering
 import simd
 
 nonisolated public struct NodeControllerRig: Sendable {
@@ -67,6 +68,8 @@ nonisolated public struct CellNodeAnimation: Sendable {
     public let pose: PlayerPoseBuffer
     /// Where the cell placed the mesh; lag bones trail it and bone LOD measures from it.
     public let placement: float4x4
+    /// The mesh's particle systems; an emitter below a moved node moves with it.
+    public var particles: [ParticlePlayback] = []
 
     public init(
         reference: UInt32,

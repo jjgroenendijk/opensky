@@ -2,8 +2,9 @@
 #include "PostEffects.h"
 
 // Image-space composite: one fullscreen triangle over a copy of the scene color.
-// Order: blur, double vision, the screen-space effects, tone mapping, saturation, brightness,
-// contrast, tint, fade (docs/rendering/image-space.md). The blur is a cheap two-ring disc.
+// Order: blur, radial blur, motion blur, double vision, the screen-space effects, bloom,
+// tone mapping, saturation, brightness, contrast, tint, fade
+// (docs/rendering/image-space.md). The blur is a cheap two-ring disc.
 constant float3 imageSpaceLuminance = float3(0.2126, 0.7152, 0.0722);
 
 static float3 imageSpaceBlur(
@@ -26,6 +27,96 @@ static float3 imageSpaceBlur(
         }
     }
     return sum / count;
+}
+
+// Radial blur: taps on the line to the centre, weighted by the ramps of the CK wiki's
+// "ImageSpace Modifiers" page. The radius is a share of the centre-to-corner distance.
+static float3 imageSpaceRadialBlur(
+    texture2d<float> scene,
+    sampler linearClamp,
+    float2 uv,
+    float3 color,
+    constant ImageSpaceUniforms &uniforms)
+{
+    float4 shape = uniforms.radialBlur;
+    if (shape.x <= 0.0) {
+        return color;
+    }
+    float2 offset = uv - uniforms.extra.zw;
+    float radius = length(offset) * 1.4142136;
+    float weight = saturate((radius - shape.z) * shape.y);
+    float downStart = uniforms.radialBlurEnd.x;
+    if (downStart > shape.z) {
+        weight *= saturate(1.0 - (radius - downStart) * shape.w);
+    }
+    if (weight <= 0.0) {
+        return color;
+    }
+    float reach = shape.x * 0.01 * weight;
+    float3 sum = color;
+    for (int tap = 1; tap < 8; ++tap) {
+        sum += scene.sample(linearClamp, uv - offset * reach * float(tap) / 7.0).rgb;
+    }
+    return sum / 8.0;
+}
+
+// Motion blur: the camera's turn since last frame, from the pixel's far-plane direction.
+// The trail is that of a frame blend that keeps `strength` of the last frame.
+static float3 imageSpaceMotionBlur(
+    texture2d<float> scene,
+    sampler linearClamp,
+    float2 uv,
+    float3 color,
+    constant ImageSpaceUniforms &uniforms)
+{
+    float strength = saturate(uniforms.extra.y);
+    if (strength <= 0.0) {
+        return color;
+    }
+    float4 previous = uniforms.reprojection * float4(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, 1.0, 1.0);
+    if (previous.w <= 1.0e-5) {
+        return color;
+    }
+    float2 before = float2(previous.x, -previous.y) / previous.w * 0.5 + 0.5;
+    float2 trail = (before - uv) * (3.0 * strength / max(1.0 - strength, 0.05));
+    float span = length(trail);
+    if (span > 0.1) {
+        trail *= 0.1 / span;
+    }
+    float3 sum = color;
+    for (int tap = 1; tap < 8; ++tap) {
+        sum += scene.sample(linearClamp, uv + trail * float(tap) / 7.0).rgb;
+    }
+    return sum / 8.0;
+}
+
+// Bloom: three rings of eight taps over the bloom radius. Each tap adds what it holds
+// above the threshold, times the scale. Only an HDR target has colour above 1 to spread.
+static float3 imageSpaceBloom(
+    texture2d<float> scene,
+    sampler linearClamp,
+    float2 uv,
+    float2 texel,
+    float3 color,
+    constant ImageSpaceUniforms &uniforms)
+{
+    float4 bloom = uniforms.bloom;
+    if (bloom.z <= 0.0 || bloom.x <= 0.0) {
+        return color;
+    }
+    float3 glow = max(color - bloom.y, 0.0);
+    float total = 1.0;
+    for (int ring = 1; ring <= 3; ++ring) {
+        float reach = bloom.x * float(ring) / 3.0;
+        float weight = 1.0 / float(ring);
+        for (int tap = 0; tap < 8; ++tap) {
+            float angle = (float(tap) + 0.5 * float(ring)) * 0.7853982;
+            float2 offset = float2(cos(angle), sin(angle)) * reach * texel;
+            glow += max(scene.sample(linearClamp, uv + offset).rgb - bloom.y, 0.0) * weight;
+            total += weight;
+        }
+    }
+    return color + glow / total * bloom.z;
 }
 
 // HDR tone mapping: every 16th pixel each way adds its fixed-point log2 luminance to
@@ -94,6 +185,8 @@ fragment float4 imageSpaceFragment(
     if (uniforms.grading.w > 0.5) {
         color = imageSpaceBlur(scene, linearClamp, uv, texel, uniforms.grading.w, color);
     }
+    color = imageSpaceRadialBlur(scene, linearClamp, uv, color, uniforms);
+    color = imageSpaceMotionBlur(scene, linearClamp, uv, color, uniforms);
     float doubleVision = saturate(uniforms.extra.x);
     if (doubleVision > 0.0) {
         float3 ghost = scene.sample(linearClamp, uv + float2(0.02 * doubleVision, 0.0)).rgb;
@@ -104,11 +197,12 @@ fragment float4 imageSpaceFragment(
         PostPixel pixel = {uv, texel, in.position.xy, depth, postWorldPosition(uv, depth, post)};
         color = postApply(color, pixel, frame, post, scene, sceneDepth, shadowMap, shadowCompare);
     }
+    color = imageSpaceBloom(scene, linearClamp, uv, texel, color, uniforms);
     return imageSpaceGrade(color, uniforms);
 }
 
 /// The same grade without the copy: it reads the pixel from tile memory, so it serves
-/// frames with no blur and no double vision, which need neighbor pixels.
+/// frames with no blur, double vision, or bloom, which need neighbor pixels.
 fragment float4 imageSpaceTileFragment(
     SkyVertexOut in [[stage_in]],
     constant ImageSpaceUniforms &uniforms [[buffer(BufferIndexImageSpaceUniforms)]],

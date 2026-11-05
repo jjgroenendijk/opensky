@@ -9,7 +9,7 @@ import simd
 nonisolated extension NIFFile {
     /// Same depth cap as NIFModel: vanilla nests a handful of levels; deeper
     /// is malformed or hostile.
-    private static let maxParticleGraphDepth = 64
+    static let maxParticleGraphDepth = 64
 
     private static let particleSystemTypes: Set = [
         "NiParticleSystem", "BSStripParticleSystem", NIFMeshParticleData.systemTypeName
@@ -22,7 +22,43 @@ nonisolated extension NIFFile {
         for root in roots {
             try walker.walk(from: root)
         }
-        return try walker.found.map { try walker.decodeSystem(block: $0.block, parent: $0.parent) }
+        let parents = nodeParents()
+        return try walker.found.map { found in
+            var system = try walker.decodeSystem(block: found.block, parent: found.parent)
+            system.ancestorNodes = nodeNames(above: found.index, parents: parents)
+            system.meshPool = meshPool(of: found.block)
+            system.isStrip = found.block.typeName == "BSStripParticleSystem"
+            return system
+        } + lightningSystems()
+    }
+
+    /// The mesh pool node of a mesh particle system, or -1.
+    private func meshPool(of block: NIFFile.Block) -> Int32 {
+        guard
+            block.typeName == NIFMeshParticleData.systemTypeName,
+            let system = try? NIFParticleSystem(data: block.data, header: header),
+            system.dataRef >= 0, Int(system.dataRef) < blocks.count,
+            blocks[Int(system.dataRef)].typeName == NIFMeshParticleData.typeName
+        else { return -1 }
+        var reader = BinaryReader(blocks[Int(system.dataRef)].data)
+        return (try? NIFMeshParticleData(reader: &reader, header: header))?.particleMeshesRef ?? -1
+    }
+
+    /// The names of the node blocks above `block`, lowercased, nearest first. The step
+    /// limit stops a cyclic file.
+    func nodeNames(above block: Int, parents: [Int: Int]) -> [String] {
+        var names: [String] = []
+        var current = parents[block]
+        var steps = 0
+        while let index = current, steps < Self.maxParticleGraphDepth {
+            var reader = BinaryReader(blocks[index].data)
+            if let name = try? NIFObjectPrefix(reader: &reader, header: header).name {
+                names.append(name.lowercased())
+            }
+            current = parents[index]
+            steps += 1
+        }
+        return names
     }
 
     fileprivate struct ParticleWalker {
@@ -30,7 +66,7 @@ nonisolated extension NIFFile {
         let keepingRoot: Bool
         /// Systems in walk order. They decode after the walk, because a mesh
         /// emitter needs the transform of a shape found later.
-        var found: [(block: NIFFile.Block, parent: float4x4)] = []
+        var found: [FoundSystem] = []
         /// The parent transform of every block the walk reached.
         var parents: [Int: float4x4] = [:]
 
@@ -72,7 +108,7 @@ nonisolated extension NIFFile {
                         depth: visit.depth + 1
                     )
                 } else if NIFFile.particleSystemTypes.contains(block.typeName) {
-                    found.append((block, visit.parent))
+                    found.append(FoundSystem(index: index, block: block, parent: visit.parent))
                 }
                 // Any other type is a leaf we do not collect (geometry, shader
                 // properties, controllers…): subtree ends.
@@ -113,7 +149,7 @@ nonisolated extension NIFFile {
                     ))
                 }
             }
-            return try ParticleSystemDefinition(
+            var definition = try ParticleSystemDefinition(
                 name: system.object.name,
                 worldTransform: systemTransform,
                 worldSpace: system.worldSpace,
@@ -129,6 +165,9 @@ nonisolated extension NIFFile {
                     from: system.object.controllerRef, file: file
                 )
             )
+            definition.sequenceControllers = try NIFParticleControllerDecoder
+                .sequenceControllers(from: system.object.controllerRef, file: file)
+            return definition
         }
 
         /// A modifier whose refs need the graph: the bomb, gravity, drag, age death, the
@@ -166,6 +205,19 @@ nonisolated extension NIFFile {
                 return try ParticleModifier(drag.header, kind: .drag(
                     drag.drag.transformed(by: place(drag.dragObjectRef))
                 ))
+            case NIFInheritVelocityModifier.typeName:
+                let modifier = try NIFInheritVelocityModifier(reader: &reader, header: file.header)
+                var inherit = modifier.inherit
+                let ref = modifier.inheritObjectRef
+                if ref >= 0, Int(ref) < file.blocks.count, parents[Int(ref)] != nil {
+                    var prefix = BinaryReader(file.blocks[Int(ref)].data)
+                    let name = try NIFObjectPrefix(reader: &prefix, header: file.header).name
+                    inherit.objectNodes = (name.map { [$0.lowercased()] } ?? [])
+                        + file.nodeNames(above: Int(ref), parents: file.nodeParents())
+                    let origin = try place(ref).columns.3
+                    inherit.objectOrigin = SIMD3(origin.x, origin.y, origin.z)
+                }
+                return ParticleModifier(modifier.header, kind: .inheritVelocity(inherit))
             case NIFAgeDeathModifier.typeName:
                 let death = try NIFAgeDeathModifier(reader: &reader, header: file.header)
                 let spawn = death.spawnsOnDeath ? try spawn(at: death.spawnModifierRef) : nil
@@ -245,28 +297,6 @@ nonisolated extension NIFFile {
             return emitter.replacingShape(.mesh(source))
         }
 
-        /// Resolves the shader ref when it is a BSEffectShaderProperty. Other
-        /// shader types (e.g. BSLightingShaderProperty on a lit particle
-        /// shape) yield nil — legitimate content, same discipline as
-        /// NIFModel.resolveMaterial's fallback. Out-of-range refs throw.
-        private func effectShader(ref: Int32) throws -> NIFEffectShaderProperty? {
-            guard ref >= 0 else { return nil }
-            let shaderBlock = try block(at: Int(ref))
-            guard shaderBlock.typeName == "BSEffectShaderProperty" else { return nil }
-            return try NIFEffectShaderProperty(
-                data: shaderBlock.data,
-                header: file.header
-            )
-        }
-
-        /// Resolves the alpha ref when it is a NiAlphaProperty; nil otherwise.
-        private func alphaProperty(ref: Int32) throws -> NIFAlphaProperty? {
-            guard ref >= 0 else { return nil }
-            let alphaBlock = try block(at: Int(ref))
-            guard alphaBlock.typeName == "NiAlphaProperty" else { return nil }
-            return try NIFAlphaProperty(data: alphaBlock.data, header: file.header)
-        }
-
         /// Resolves the NiPSysData ref; nil ref -> no capacity. A ref to a
         /// non-data block is malformed, same discipline as the walk.
         private func decodeData(ref: Int32) throws -> NIFParticleData? {
@@ -299,5 +329,36 @@ nonisolated extension NIFFile {
             }
             return file.blocks[index]
         }
+    }
+}
+
+/// A particle system the walk reached, decoded once the walk is done.
+private struct FoundSystem {
+    let index: Int
+    let block: NIFFile.Block
+    let parent: float4x4
+}
+
+nonisolated extension NIFFile.ParticleWalker {
+    /// Resolves the shader ref when it is a BSEffectShaderProperty. Other
+    /// shader types (e.g. BSLightingShaderProperty on a lit particle
+    /// shape) yield nil — legitimate content, same discipline as
+    /// NIFModel.resolveMaterial's fallback. Out-of-range refs throw.
+    private func effectShader(ref: Int32) throws -> NIFEffectShaderProperty? {
+        guard ref >= 0 else { return nil }
+        let shaderBlock = try block(at: Int(ref))
+        guard shaderBlock.typeName == "BSEffectShaderProperty" else { return nil }
+        return try NIFEffectShaderProperty(
+            data: shaderBlock.data,
+            header: file.header
+        )
+    }
+
+    /// Resolves the alpha ref when it is a NiAlphaProperty; nil otherwise.
+    private func alphaProperty(ref: Int32) throws -> NIFAlphaProperty? {
+        guard ref >= 0 else { return nil }
+        let alphaBlock = try block(at: Int(ref))
+        guard alphaBlock.typeName == "NiAlphaProperty" else { return nil }
+        return try NIFAlphaProperty(data: alphaBlock.data, header: file.header)
     }
 }

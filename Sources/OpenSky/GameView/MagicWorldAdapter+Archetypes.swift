@@ -39,6 +39,8 @@ extension MagicWorldAdapter {
         case let .castingArt(art, plugin, caster, starts):
             game.effectsWorld.effects
                 .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)
+        case let .castingLight(light, plugin, caster, starts):
+            showCastingLight(light, plugin: plugin, caster: caster, shown: starts)
         case let .spellHit(event): game.effectsWorld.handleSpellHit(event)
         case let .notice(text): game.hud.showNotification(text)
         default: return false

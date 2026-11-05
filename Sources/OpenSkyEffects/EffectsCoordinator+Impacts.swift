@@ -60,7 +60,10 @@ extension EffectsCoordinator {
             case let .actor(key) = surface, skinDecals.decals.enabled,
             let frame = world?.effectTransform(of: key)
         {
-            skinDecals.place(look, on: key, at: position, ownerTransform: frame)
+            skinDecals.place(
+                look, on: key, at: position, ownerTransform: frame,
+                bones: world?.effectBones(of: key) ?? [:]
+            )
             return
         }
         if decals.place(look, at: decalPosition(position, on: surface), normal: normal) != nil {
@@ -142,14 +145,27 @@ extension EffectsCoordinator {
 
     /// Starts the particle systems of new effects, moves the emitters of moving ones, and
     /// drops those of effects that ended.
-    func syncParticles(_ models: [VisualEffectModel], renderer: Renderer) throws {
+    func syncParticles(
+        _ models: [VisualEffectModel], posed: [Int: PosedEffectModel] = [:], renderer: Renderer
+    ) throws {
         guard let meshes else { return }
         var live: [Int: EffectParticles] = [:]
         var changed = false
         for model in models {
             guard let id = model.instanceID else { continue }
+            defer {
+                if let sequence = posing?.playedSequence(ofEffect: id) {
+                    live[id]?.playbacks.forEach { $0.play(sequence: sequence) }
+                }
+            }
             if var existing = effectParticles[id] {
-                if existing.placement != model.transform {
+                if let nodes = posed[id]?.nodeDeltas {
+                    // A posed model's nodes move each frame, so its emitters follow them.
+                    for playback in existing.playbacks {
+                        playback.move(to: model.transform, nodeDeltas: nodes)
+                    }
+                    existing.placement = model.transform
+                } else if existing.placement != model.transform {
                     existing.playbacks.forEach { $0.move(to: model.transform) }
                     existing.placement = model.transform
                 }
@@ -175,7 +191,14 @@ extension EffectsCoordinator {
     /// Hands the renderer the decals, one batch per texture, after a change.
     /// Skin decals move with their actors, so a frame with any rebuilds the batches.
     func syncDecals(renderer: Renderer) throws {
-        let onActors = skinDecals.worldDecals { [world] in world?.effectTransform(of: $0) }
+        let onActors = skinDecals.worldDecals { [world] key in
+            world.map { world in
+                SkinDecalFrames(
+                    feet: world.effectTransform(of: key),
+                    bones: world.effectBones(of: key)
+                )
+            }
+        }
         guard decalsChanged || !onActors.isEmpty, let meshes else { return }
         decalsChanged = !onActors.isEmpty
         var order: [String] = []

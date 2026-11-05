@@ -24,13 +24,13 @@ struct AnimationEventActionTests {
         #expect(AnimationEventAction.parse("Sound: ") == nil)
     }
 
-    @Test func stopAndReleaseEndTheLoop() {
+    @Test func stopEndsTheLoopAndReleaseLetsItFinish() {
         #expect(AnimationEventAction.parse("SoundStop.TestLoopLPM")
             == .stopSound(editorID: "TestLoopLPM"))
         #expect(AnimationEventAction.parse("SoundStop.TestLoopLPM.Node01")
             == .stopSound(editorID: "TestLoopLPM"))
         #expect(AnimationEventAction.parse("SoundRelease.TestBark")
-            == .stopSound(editorID: "TestBark"))
+            == .releaseSound(editorID: "TestBark"))
     }
 
     @Test func cameraShakeReadsItsStrength() {

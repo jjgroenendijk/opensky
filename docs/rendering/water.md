@@ -21,15 +21,20 @@ water mesh in a cell without a water plane gets the same fallback.
 
 ## Surface
 
-- **Normal.** Each of the three noise layers adds three sine waves. Their directions spread
-  around the layer's wind direction. The layer's tile size sets the wave length, its wind speed
-  sets how fast the waves move in tiles per second, and its amplitude sets the slope. `NAM0`
-  linear velocity moves the whole pattern, so a river flows.
+- **Normal.** Each of the three noise layers samples its `NAM2`-`NAM4` normal map. The map
+  repeats every UV-scale units, scrolls along the layer's wind direction at its wind speed in
+  tiles per second, and its amplitude scales the slope. `NAM0` linear velocity moves the whole
+  pattern, so a river flows. Every vanilla water names `textures\water\defaultwater.dds`, a
+  2048 by 2048 BC1 tangent-space normal map, for all three layers. Until the maps load, each
+  layer adds three sine waves with the same wind, tile size, and amplitude instead.
+- **Rings.** Splash and wading rings, and rain rings, tilt the normal further; see
+  [Displacement and rain](#displacement-and-rain).
 - **Reflection.** A Schlick fresnel term starts at the fresnel amount and grows toward grazing
   angles. Reflectivity scales it. The reflected color is the `WATR` reflection color mixed with
   the far fog color, so it follows the sky a little.
 - **Sun.** The sun highlight uses the sun specular power (divided by 4, at least 8) and the sun
-  specular magnitude.
+  specular magnitude. The sparkle adds sharp glints of the same normal: the reflected sun
+  direction raised to the sun sparkle power, times the sun sparkle magnitude.
 - **Body.** The body color blends from the shallow color to the deep color over the fog near
   and far depths. Ambient light and some sunlight light it.
 
@@ -55,6 +60,36 @@ the ground ([effect shapes](/formats/nif-materials.md#effect-shapes)); the copy 
 the water itself. It can be turned off in Environment > Water; the water then uses a fixed middle
 depth and stays half see-through.
 
+## Refraction
+
+When the water reads the scene depth, the split also copies the colour drawn so far. The
+water then draws the ground below it itself and writes an opaque pixel. The ground sample
+moves by the normal's x and y times the `DNAM` refraction magnitude, in screen units, scaled
+up from 0 at the surface to 1 at the fog far depth. A moved sample that lands on something in
+front of the water, such as a leg standing in it, takes the straight sample.
+
+## Displacement and rain
+
+A splash starts a ring where it hits the surface: strength 1 for a heavy splash, 0.6 for a
+lighter one. An actor or body less than 150 units below the surface starts a strength 0.4
+ring each time it has moved 48 units. The newest 8 rings live 3 seconds.
+
+Each ring is a crest that runs out at the `DNAM` displacement velocity, as wide as the
+starting size. Its slope is the force times the strength. It fades with the dampener raised
+to 30 times its age, as a per-frame factor at 30 frames per second, and over its life. It
+falls off with distance by the falloff. Velocity, width, and force have floors of 8, 4, and
+0.2, so a record with zeros still shows a ring.
+
+Rain on exterior water draws its own rings: on a 48-unit grid, each cell holds one drop at a
+random place and time, if a random draw is below the rain intensity. A drop's ring grows to
+24 units over 0.8 seconds.
+
+## Under the water
+
+When the camera is inside a water item's bounds and below its top, the frame fog becomes the
+water's under-water fog: the `DNAM` near and far planes, the fog amount as the maximum, and
+the deep colour.
+
 ## Screen-space reflections
 
 With the game's `[Display] bScreenSpaceReflectionEnabled` on, the depth split also copies the
@@ -72,9 +107,13 @@ water depth switch off, nothing is copied and the reflection stays a colour.
 
 ## Where OpenSky differs
 
-- The game samples noise normal textures (`WATR NAM2`-`NAM4`). OpenSky computes the normal from
-  sine waves with the same wind, tile size, and amplitude, so it needs no texture and no fallback
-  when vanilla rivers leave those paths empty.
-- There is no refraction offset, and no reflection of what lies off screen. Without the game's
-  screen-space reflection option, the reflection is a colour.
-- The sun sparkle fields, displacement, rain simulation, and under-water fog are not drawn.
+- The `NAM5` flow map and the `FNAM` flow-map flags are read but not used, so a river's
+  surface follows only `NAM0`. The noise falloff is read but not used.
+- There is no reflection of what lies off screen. Without the game's screen-space reflection
+  option, the reflection is a colour.
+- The game simulates displacement on a height grid. OpenSky draws closed-form rings with the
+  `DNAM` displacement fields, so rings do not bounce off the shore or add up. The five `DNAM`
+  floats at offsets 52 to 68, which may be the rain simulator, are not read; the rain rings
+  use OpenSky's own sizes.
+- The refraction unit, the ring shape, and the under-water fog colour are OpenSky's readings.
+  The `WATR` `INAM` under-water image space is not applied.

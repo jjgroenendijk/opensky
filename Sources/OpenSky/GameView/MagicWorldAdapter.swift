@@ -63,6 +63,8 @@ final class MagicWorldAdapter {
     unowned let game: any MagicWorldHost
     /// The NPCs a Grab Actor effect holds through the ridden-actor hold.
     var grabbedActors: Set<ReferenceKey> = []
+    /// The `MGEF` casting light each readying caster shows, by caster.
+    var castingLights: [ReferenceKey: ReferenceKey] = [:]
 
     init(game: any MagicWorldHost) {
         self.game = game

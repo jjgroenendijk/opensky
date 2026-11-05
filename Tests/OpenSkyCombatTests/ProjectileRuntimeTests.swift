@@ -75,6 +75,31 @@ struct ProjectileRuntimeTests {
         #expect(runtime.live.count == 1)
     }
 
+    @Test func eachLaunchTellsTheWorldOnce() {
+        let world = FakeProjectileWorld()
+        let runtime = Self.runtime(world: world)
+        let first = runtime.fire(Self.shot(profile: Self.flatProfile()))
+        let second = runtime.fire(Self.shot(profile: Self.flatProfile()))
+        #expect(world.launched == [first?.id, second?.id].compactMap(\.self))
+        #expect(world.launched.count == 2)
+    }
+
+    @Test func theProjectileRecordGivesItsLook() {
+        let record = Projectile(
+            formID: FormID(0x0001_0000), flags: [], gravityFactor: 0, speed: 1000, range: 0,
+            modelPath: "Magic\\FireBoltProjectile.nif"
+        )
+        let visuals = ProjectileProfile(record: record).visuals
+        #expect(visuals.model == "Magic\\FireBoltProjectile.nif")
+        #expect(visuals.muzzleFlashModel == nil)
+        #expect(!visuals.hasMuzzleFlash)
+        var flash = ProjectileVisuals()
+        flash.muzzleFlashLight = FormID(0x0001_0001)
+        #expect(!flash.hasMuzzleFlash)
+        flash.muzzleFlashDuration = 0.2
+        #expect(flash.hasMuzzleFlash)
+    }
+
     @Test func anEmptyQuiverPutsNothingInTheAir() {
         let world = FakeProjectileWorld()
         world.arrowCount = 0

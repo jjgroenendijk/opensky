@@ -44,6 +44,36 @@ struct VisualEffectRuntimeTests {
         }
     }
 
+    @Test func aFaceTargetEffectTurnsTowardItsFacingObject() {
+        let target = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x701)
+        for faces in [true, false] {
+            var runtime = VisualEffectRuntime()
+            let beam = VisualEffectSpec(
+                name: "Beam", artModel: "fx/beam.nif", membrane: nil, facesTarget: faces
+            )
+            runtime.attach(
+                beam, to: .actor(Self.actor), cause: .script, duration: nil, facing: target
+            )
+            let transform = runtime.models { anchor in
+                var matrix = matrix_identity_float4x4
+                matrix.columns.3 = anchor == .actor(target)
+                    ? SIMD4(0, -100, 0, 1) : SIMD4(0, 0, 0, 1)
+                return matrix
+            }.first?.transform
+            #expect(transform?.columns.3 == SIMD4(0, 0, 0, 1))
+            #expect(transform?.columns.1 == (faces ? SIMD4(0, -1, 0, 0) : SIMD4(0, 1, 0, 0)))
+            #expect(transform?.columns.2 == SIMD4(0, 0, 1, 0))
+        }
+    }
+
+    @Test func aFacingAnchorPutsPlusYAlongTheShot() {
+        let transform = VisualEffectRuntime.facing(SIMD3(5, 6, 7), forward: SIMD3(2, 0, 0))
+        #expect(transform.columns.1 == SIMD4(1, 0, 0, 0))
+        #expect(transform.columns.2 == SIMD4(0, 0, 1, 0))
+        #expect(transform.columns.3 == SIMD4(5, 6, 7, 1))
+        #expect(simd_determinant(transform) > 0)
+    }
+
     @Test func anUnplacedAnchorDrawsNothing() {
         var runtime = VisualEffectRuntime()
         runtime.attach(Self.glow, to: .actor(Self.actor), cause: .race, duration: nil)

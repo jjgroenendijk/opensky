@@ -102,6 +102,18 @@ struct ListSoundPackageDetailTests {
         ] == Fixture.expectedIDs(4, from: 0x10))
     }
 
+    @Test func soundDescriptorReadsTheRumbleSend() throws {
+        let sndr = ESMFixture.field("LNAM", Data([0, 8, 0, 0x32]))
+        let descriptor = try SoundDescriptor(record: Fixture.record("SNDR", sndr))
+        #expect(descriptor.looping == .loop)
+        #expect(descriptor.rumbleSend == SoundDescriptor.RumbleSend(small: 0.14, big: 0.21))
+        let silent = try SoundDescriptor(record: Fixture.record(
+            "SNDR",
+            ESMFixture.field("LNAM", Data(count: 4))
+        ))
+        #expect(silent.rumbleSend == nil)
+    }
+
     @Test func soundRecordsKeepConditionsAndLegacyFields() throws {
         var ctda = Data(count: 32)
         ctda[8] = 35

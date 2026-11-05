@@ -61,7 +61,8 @@ final class MenuSoundPlayer {
         let request = AudioPlayRequest(
             name: path,
             category: resolved.audioCategory ?? .effects,
-            worldPosition: gameSession.freeFlyCamera.position
+            worldPosition: gameSession.freeFlyCamera.position,
+            soundCategory: resolved.descriptor.category
         )
         assets.request(path) { result in
             _ = try? engine.playPositional(asset: result.get(), request: request)
