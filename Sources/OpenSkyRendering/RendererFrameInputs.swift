@@ -1,3 +1,4 @@
+import Metal
 import OpenSkyFormatsESM
 import OpenSkyRenderCore
 import simd
@@ -20,15 +21,28 @@ extension Renderer {
         let interior = activeLighting
         let weather = interior == nil ? frameInput.weather : nil
         let covered = effects.loadingCover != nil
+        let scales = lightScales
         return FrameLight(
             sunDirection: interior?.directionalDirection ?? exteriorSunTravelDirection,
-            sunColor: weather?.sunlightColor ?? interior?.directionalColor ?? camera.sunColor,
+            sunColor: (weather?.sunlightColor ?? interior?.directionalColor ?? camera.sunColor)
+                * scales.sunlight,
             ambientColor: weather?.ambientColor ?? interior?.ambientColor
                 ?? camera.ambientColor,
             ambient: weather?.directionalAmbient ?? interior?.directionalAmbient ?? .black,
-            weatherSky: scene.sky != nil && !covered ? weather : nil,
+            weatherSky: scene.sky != nil && !covered ? weather?.scalingSky(by: scales.sky) : nil,
             fog: resolveFrameFog(weatherLight: covered ? nil : weather)
         )
+    }
+
+    /// The `IMGS` sunlight and sky scales. They push colour above 1, so they apply only
+    /// with the HDR target on, where tone mapping brings it back.
+    var lightScales: (sunlight: Float, sky: Float) {
+        guard colorPixelFormat == .rgba16Float else { return (1, 1) }
+        let hdr = frameInput.imageSpace.current(withScreenFade: false).hdr
+        func finite(_ value: Float) -> Float {
+            value.isFinite ? simd_clamp(value, 0, 8) : 1
+        }
+        return (finite(hdr.sunlightScale), finite(hdr.skyScale))
     }
 
     var clampedGrassDrawDistance: Float {

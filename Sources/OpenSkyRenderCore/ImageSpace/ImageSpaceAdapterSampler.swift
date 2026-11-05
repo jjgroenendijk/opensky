@@ -40,6 +40,8 @@ nonisolated public struct ImageSpaceAdapterSample: Equatable, Sendable {
     /// RGB, then the amount in `w`.
     public let tint: SIMD4<Float>?
     public let fade: SIMD4<Float>?
+    /// `DNAM` radial blur center; nil without a header.
+    public var radialBlurCenter: SIMD2<Float>?
     /// A one-shot modifier past its duration.
     public let isFinished: Bool
 }
@@ -88,6 +90,7 @@ nonisolated extension ImageSpaceAdapter {
             values: values,
             tint: ImageSpaceEnvelope.sample(tint, at: time),
             fade: ImageSpaceEnvelope.sample(fade, at: time),
+            radialBlurCenter: header?.radialBlurCenter,
             isFinished: finished
         )
     }

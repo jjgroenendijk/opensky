@@ -338,6 +338,18 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
         return result
     }
 
+    /// The sky dome colours times the `IMGS` sky scale; clouds keep theirs.
+    public func scalingSky(by scale: Float) -> ResolvedWeather {
+        guard scale != 1 else { return self }
+        var result = self
+        result.skyUpper *= scale
+        result.skyLower *= scale
+        result.horizon *= scale
+        result.sun *= scale
+        result.sunGlare *= scale
+        return result
+    }
+
     /// Day/night-blended fog scalars.
     private struct FogScalars {
         let near: Float
