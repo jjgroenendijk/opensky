@@ -6,14 +6,15 @@ import Foundation
 import OpenSkyGameData
 
 nonisolated public struct SkySettings: Equatable, Sendable {
-    /// Sun path in sky units: east-west reach, north-south offset, and depth at midnight.
+    /// Sun path in sky units: east-west reach and midday height, and offset north.
     public var sunXExtreme: Float = 400
     public var sunYExtreme: Float = 40
+    /// The light source's fixed height, negated.
     public var sunZExtreme: Float = -150
-    /// East-west reach of the light's path; smaller than `sunXExtreme`, so light stays steeper.
+    /// East-west reach of the light's source; smaller than `sunXExtreme`, so light stays steeper.
     public var sunDirXExtreme: Float = 200
     public var sunMinimumGlareScale: Float = 0.25
-    /// Game hours the sun disc takes to fade in after rising and out before setting.
+    /// Game hours the sun disc takes to fade in and out, centred on the horizon hours.
     public var sunAlphaTransTime: Float = 0.5
     public var masser = MoonSettings(size: 90, fadeStart: 35, fadeEnd: 20, speed: 0.25, zOffset: 35)
     public var secunda = MoonSettings(
@@ -75,12 +76,13 @@ nonisolated public struct SkySettings: Equatable, Sendable {
 nonisolated public struct MoonSettings: Equatable, Sendable {
     /// Width of the moon in sky units, on the same scale as the sun path.
     public var size: Float
-    /// Degrees from the sun: the moon starts to fade at `fadeStart` and is gone at `fadeEnd`.
+    /// Degrees of height along the moon's path: it starts to fade at `fadeStart` and is
+    /// gone at `fadeEnd`.
     public var fadeStart: Float
     public var fadeEnd: Float
-    /// How far the moon trails the point opposite the sun, in half turns.
+    /// Times 60: degrees along its path the moon moves per game hour.
     public var speed: Float
-    /// Degrees the moon's path tilts toward the south.
+    /// Degrees the moon's path tilts toward the east.
     public var zOffset: Float
 
     public init(size: Float, fadeStart: Float, fadeEnd: Float, speed: Float, zOffset: Float) {

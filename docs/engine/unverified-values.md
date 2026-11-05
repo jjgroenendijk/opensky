@@ -141,8 +141,6 @@ the detail and the sources it did find.
 | Weather global chance | A global that resolves replaces the entry's chance | [weather](/engine/weather.md) |
 | Wind speed unit and one setting's meaning | Guesses from xEdit and the name | [weather](/engine/weather.md) |
 | Weather global meaning | OpenSky's reading | [weather format](/formats/weather.md) |
-| Sun and moon paths | OpenSky's reading of the settings | [celestial sky](/engine/celestial-sky.md) |
-| Moon glare card | 4 moon widths across, the climate's sun glare texture | [celestial sky](/engine/celestial-sky.md#drawing) |
 | Location tie rule | Inferred | [locations](/formats/locations.md) |
 | Terrain with no height | No guessed height | [terrain](/engine/terrain.md) |
 | World sound roll interval | OpenSky's interval | [world sounds](/engine/world-sfx.md) |

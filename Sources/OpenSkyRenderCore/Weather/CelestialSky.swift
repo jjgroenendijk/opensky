@@ -96,20 +96,20 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
     ) -> CelestialSky {
         let hour = wrapHour(hour)
         let path = SunPath(hour: hour, timing: climate?.timing, settings: settings)
-        let sun = simd_normalize(path.position(reach: settings.sunXExtreme))
+        let sun = simd_normalize(path.disc)
         let glare = weathers.reduce(Float(0)) { $0 + ($1.weather.data?.sunGlare ?? 0) * $1.weight }
         let rotation = settings.starsRotateDays > 0 ? daysPassed / settings.starsRotateDays : 0
         let axisLength = simd_length(settings.starsRotateAxis)
         return CelestialSky(
             sunDirection: sun,
-            lightDirection: -lightSource(path.position(reach: settings.sunDirXExtreme)),
-            sunAlpha: path.discAlpha(fadeHours: settings.sunAlphaTransTime),
+            lightDirection: -lightSource(path.lightSource),
+            sunAlpha: path.discAlpha,
             glareScale: max(settings.sunMinimumGlareScale, glare),
             weatherGlare: glare,
             starsAxis: axisLength > 1e-6 ? settings.starsRotateAxis / axisLength : SIMD3(0, 0, 1),
             // Negative turn: a star on the east horizon climbs, as the sun does.
             starsAngle: -2 * .pi * (rotation - rotation.rounded(.down)),
-            moons: moons(path: path, sun: sun, climate: climate, days: daysPassed, settings),
+            moons: moons(climate: climate, days: daysPassed, settings),
             auroras: auroras(
                 weathers, hour: hour, sunBearing: atan2(sun.y, sun.x), settings: settings
             ),
@@ -119,8 +119,8 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
         )
     }
 
-    /// The sun by day; by night the same path mirrored above the horizon, so the
-    /// light moves without a jump at sunset and sunrise.
+    /// Kept above the horizon and above the lowest elevation, for settings that would
+    /// put the light below it.
     static func lightSource(_ position: SIMD3<Float>) -> SIMD3<Float> {
         var source = simd_normalize(SIMD3(position.x, position.y, abs(position.z)))
         let horizontal = simd_length(SIMD2(source.x, source.y))
@@ -132,36 +132,58 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
     }
 
     private static func moons(
-        path: SunPath, sun: SIMD3<Float>, climate: Climate?, days: Float, _ settings: SkySettings
+        climate: Climate?, days: Float, _ settings: SkySettings
     ) -> [MoonState] {
         guard let timing = climate?.timing else { return [] }
-        let phase = MoonPhase.at(daysPassed: days, phaseLengthDays: timing.phaseLengthDays)
         let present: [(Moon, MoonSettings)] = [
             timing.masser ? (.masser, settings.masser) : nil,
             timing.secunda ? (.secunda, settings.secunda) : nil
         ].compactMap(\.self)
         let distance = max(abs(settings.sunXExtreme), 1)
         return present.map { moon, tuning in
-            let direction = moonDirection(sunAngle: path.angle, tuning: tuning)
-            let fromSun = acos(simd_clamp(simd_dot(direction, sun), -1, 1)) * 180 / .pi
-            let span = tuning.fadeStart - tuning.fadeEnd
-            let sunFade = span > 0 ? simd_clamp((fromSun - tuning.fadeEnd) / span, 0, 1)
-                : (fromSun > tuning.fadeEnd ? 1 : 0)
+            let angle = moonPathAngle(daysPassed: days, tuning: tuning)
+            let phaseDays = moonPhaseDays(daysPassed: days, pathAngle: angle, tuning: tuning)
             return MoonState(
-                moon: moon, phase: phase, direction: direction,
+                moon: moon,
+                phase: MoonPhase.at(daysPassed: phaseDays, phaseLengthDays: timing.phaseLengthDays),
+                direction: moonDirection(pathAngle: angle, tuning: tuning),
                 halfSize: tuning.size * 0.5 / distance,
-                alpha: sunFade * smoothstep(-0.05, 0.05, direction.z)
+                alpha: moonFade(pathAngle: angle, tuning: tuning)
             )
         }
     }
 
-    /// Opposite the sun on its circle, trailing by `speed` half turns, on a path
-    /// tilted south by `zOffset` degrees.
-    static func moonDirection(sunAngle: Float, tuning: MoonSettings) -> SIMD3<Float> {
-        let angle = sunAngle + .pi - tuning.speed * .pi
+    /// Radians along the moon's path from where it rises: `speed` times 60 degrees per game
+    /// hour, at the top at midnight of day 0 (observed, docs/engine/celestial-sky.md#moons).
+    static func moonPathAngle(daysPassed: Float, tuning: MoonSettings) -> Float {
+        let degrees = Double(tuning.speed) * 1440 * Double(daysPassed) + 90
+        return Float(degrees.truncatingRemainder(dividingBy: 360) * .pi / 180)
+    }
+
+    /// A moon changes phase only while it is hidden, so one in its visible arc keeps the
+    /// phase of the moment it rose past its fade end.
+    static func moonPhaseDays(daysPassed: Float, pathAngle: Float, tuning: MoonSettings) -> Float {
+        let degrees = pathAngle * 180 / .pi
+        guard tuning.speed > 0, degrees > tuning.fadeEnd, degrees < 180 - tuning.fadeEnd else {
+            return daysPassed
+        }
+        return daysPassed - (degrees - tuning.fadeEnd) / (tuning.speed * 1440)
+    }
+
+    /// A circle tilted east by `zOffset` degrees: it rises north of east, is highest in
+    /// the east, and sets south of east.
+    static func moonDirection(pathAngle: Float, tuning: MoonSettings) -> SIMD3<Float> {
         let tilt = tuning.zOffset * .pi / 180
-        let up = sin(angle)
-        return simd_normalize(SIMD3(cos(angle), -up * sin(tilt), up * cos(tilt)))
+        return SIMD3(sin(tilt), cos(tilt) * cos(pathAngle), cos(tilt) * sin(pathAngle))
+    }
+
+    /// 0 below the fade end and 1 above the fade start, by the moon's height along its
+    /// path, not by its elevation.
+    static func moonFade(pathAngle: Float, tuning: MoonSettings) -> Float {
+        let height = asin(simd_clamp(sin(pathAngle), -1, 1)) * 180 / .pi
+        let span = tuning.fadeStart - tuning.fadeEnd
+        guard span > 0 else { return height > tuning.fadeEnd ? 1 : 0 }
+        return simd_clamp((height - tuning.fadeEnd) / span, 0, 1)
     }
 
     private static func auroras(
@@ -225,42 +247,55 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
     }
 }
 
-/// The sun's circle: east (+X) at the sunrise midpoint, highest at midday, west at the
-/// sunset midpoint, and down to `fSunZExtreme` at midnight.
+/// The sun's path: a triangle from the east horizon (+X) up to `fSunXExtreme` overhead
+/// and down to the west, `fSunYExtreme` north. By night it runs back east unseen.
+/// See docs/engine/celestial-sky.md#the-sun-path.
 nonisolated struct SunPath {
     let hour: Float
-    let rise: Float
-    let set: Float
+    /// Where the disc starts and ends its day run: the horizon hours widened by half the fade.
+    let start: Float
+    let end: Float
+    let fadeHours: Float
     let settings: SkySettings
 
     init(hour: Float, timing: Climate.Timing?, settings: SkySettings) {
         self.hour = hour
-        (rise, set) = TimeOfDayWeights.horizonHours(timing: timing)
+        let (rise, set) = TimeOfDayWeights.horizonHours(timing: timing)
+        fadeHours = max(settings.sunAlphaTransTime, 0)
+        start = rise - fadeHours / 2
+        end = set + fadeHours / 2
         self.settings = settings
     }
 
     var isDay: Bool {
-        hour >= rise && hour <= set
+        hour > start && hour < end
     }
 
-    /// 0 at sunrise, pi at sunset, 2 pi at the next sunrise.
-    var angle: Float {
+    /// 1 in the east, 0 overhead, -1 in the west; by night it runs from -1 back to 1.
+    var progress: Float {
+        let day = end - start
+        guard day > 0, day < 24 else { return 1 }
         if isDay {
-            return .pi * (hour - rise) / (set - rise)
+            return 1 - 2 * (hour - start) / day
         }
-        let night = CelestialSky.wrapHour(hour - set) / (24 - (set - rise))
-        return .pi * (1 + night)
+        return 2 * CelestialSky.wrapHour(hour - end) / (24 - day) - 1
     }
 
-    func position(reach: Float) -> SIMD3<Float> {
-        let angle = angle
-        let height = isDay ? reach * sin(angle) : -settings.sunZExtreme * sin(angle)
-        return SIMD3(reach * cos(angle), -settings.sunYExtreme, height)
+    var disc: SIMD3<Float> {
+        let east = settings.sunXExtreme * progress
+        return SIMD3(east, settings.sunYExtreme, abs(settings.sunXExtreme) - abs(east))
     }
 
-    func discAlpha(fadeHours: Float) -> Float {
+    /// Where the light comes from: the disc's east-west place scaled by `fSunDirXExtreme`,
+    /// at the fixed height `-fSunZExtreme`, so the light stays steep.
+    var lightSource: SIMD3<Float> {
+        let scale = settings.sunXExtreme != 0 ? settings.sunDirXExtreme / settings.sunXExtreme : 0
+        return SIMD3(disc.x * scale, settings.sunYExtreme * scale, -settings.sunZExtreme)
+    }
+
+    var discAlpha: Float {
         guard isDay else { return 0 }
         guard fadeHours > 0 else { return 1 }
-        return simd_clamp(min(hour - rise, set - hour) / fadeHours, 0, 1)
+        return simd_clamp(min(hour - start, end - hour) / fadeHours, 0, 1)
     }
 }

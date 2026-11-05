@@ -105,7 +105,7 @@ extension RenderCommand {
     /// Turns `camera` toward the sun the weather placed, with the sun off the centre so
     /// the flare ghosts spread along the screen.
     static func faceSun(_ gameSession: GameSession, from camera: SceneCamera) {
-        guard let sky = gameSession.celestialSky, sky.sunDirection.z > 0 else {
+        guard let sky = gameSession.celestialSky, sky.sunAlpha > 0 else {
             print("[WARNING] face sun: no sun above the horizon; pass --weather and a day hour")
             return
         }
