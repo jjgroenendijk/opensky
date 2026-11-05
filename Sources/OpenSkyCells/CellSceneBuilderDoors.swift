@@ -53,12 +53,18 @@ nonisolated extension CellSceneBuilder {
     ) -> [(door: CellSequenceDoor, playback: any RenderAnimation)] {
         var result: [(door: CellSequenceDoor, playback: any RenderAnimation)] = []
         for (index, instance) in instances.enumerated() where instance.isSequenceDoor {
-            guard
-                let rig = sequenceDoorRig(modelPath: instance.modelPath),
-                let copy = posedCopy(of: instance, skeleton: rig.skeleton)
+            guard let rig = sequenceDoorRig(modelPath: instance.modelPath) else { continue }
+            let nodes = nodeControllerRig(modelPath: instance.modelPath)
+                .flatMap { NodeControllerRig(animation: $0.animation, lagOnly: true) }
+                .flatMap { EffectPoseRig(nodes: $0, graph: rig.skeleton) }
+                .flatMap { $0.addsNodes ? $0 : nil }
+            guard let copy = posedCopy(of: instance, skeleton: nodes?.skeleton ?? rig.skeleton)
             else { continue }
             instances[index] = copy.instance
-            let door = CellSequenceDoor(reference: instance.formID, rig: rig, pose: copy.pose)
+            let door = CellSequenceDoor(
+                reference: instance.formID, rig: rig, pose: copy.pose,
+                nodes: nodes, placement: instance.transform
+            )
             result.append((door, copy.playback))
         }
         return result

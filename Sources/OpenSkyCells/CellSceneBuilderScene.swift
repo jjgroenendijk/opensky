@@ -250,13 +250,13 @@ nonisolated extension CellSceneBuilder {
         let vehicles = animatedVehicles(&instances, followers: geometry.vehicleFollowers)
         let doors = animatedDoors(&instances)
         let nodes = animatedNodes(&instances)
+        let objects = animatedObjects(instances)
         let actors = geometry.actors
         let particles = makeParticlePlaybacks(instances: instances)
         // A simulated reference draws at its live pose, so it keeps its FormID.
         let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
             .union(geometry.vehicleFollowers)
         let placed = renderPlacements(instances, simulated: simulated)
-        let objects = animatedObjects(instances)
         let bounds = unionedBounds(placements: placed + actors.placements, geometry: geometry)
         let renderScene = RenderScene(
             instances: placed + actors.placements,

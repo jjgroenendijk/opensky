@@ -25,8 +25,8 @@ struct NIFBillboardTests {
         ))
     }
 
-    @Test(arguments: [UInt16(3), 4])
-    func aFaceCentreModeTurnsPlusZToTheEye(mode: UInt16) throws {
+    @Test(arguments: [UInt16(4), 12])
+    func aRigidFaceCentreModeTurnsPlusZToTheEyeWithCameraUp(mode: UInt16) throws {
         let viewer = NIFBillboard.Viewer(eye: [100, 0, 0], forward: [0, 1, 0], up: [0, 0, 1])
         let rotation = try Self.turned(mode: mode, viewer: viewer)
         Self.expectClose(rotation.act([0, 0, 1]), [1, 0, 0])
@@ -38,6 +38,23 @@ struct NIFBillboardTests {
         let viewer = NIFBillboard.Viewer(eye: [50, -100, 0], forward: [0, 1, 0], up: [0, 0, 1])
         let rotation = try Self.turned(mode: mode, viewer: viewer)
         Self.expectClose(rotation.act([0, 0, 1]), [0, -1, 0])
+    }
+
+    @Test(arguments: [UInt16(0), 3])
+    func aMinimisedModeTakesTheShortestTurnAndKeepsItsRoll(mode: UInt16) throws {
+        let viewer = NIFBillboard.Viewer(eye: [100, 0, 0], forward: [-1, 0, 0], up: [0, 0, 1])
+        let rotation = try Self.turned(mode: mode, viewer: viewer)
+        Self.expectClose(rotation.act([0, 0, 1]), [1, 0, 0])
+        // The shortest turn from +Z to +X is about +Y, so +Y stays put.
+        Self.expectClose(rotation.act([0, 1, 0]), [0, 1, 0])
+    }
+
+    @Test func modeNineTurnsLikeModeOneFromItsLowBits() throws {
+        let authored = simd_quatf(angle: .pi / 2, axis: [1, 0, 0])
+        let viewer = NIFBillboard.Viewer(eye: [0, 100, 50], forward: nil, up: [0, 0, 1])
+        let nine = try Self.turned(mode: 9, rotation: authored, viewer: viewer)
+        let one = try Self.turned(mode: 1, rotation: authored, viewer: viewer)
+        Self.expectClose(nine.act([0, 0, 1]), one.act([0, 0, 1]))
     }
 
     @Test func rotateAboutUpKeepsTheOwnPlusYAxis() throws {

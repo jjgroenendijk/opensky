@@ -6,6 +6,8 @@
 import Foundation
 import OpenSkyActorPresentation
 import OpenSkyBehavior
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 
 /// What the object coordinator reads from the session.
@@ -42,6 +44,10 @@ public final class ObjectBehaviorCoordinator {
         let object: CellAnimatedObject
         let instance: BehaviorGraphInstance
         let clips: InstallBehaviorClipSource
+        /// The billboards and lag bones of the mesh, when its rig adds them.
+        var animator: NIFNodeAnimator?
+        /// The graph's own local bones, last published.
+        var graphBones: [HKABonePose] = []
 
         init(
             object: CellAnimatedObject,
@@ -51,6 +57,7 @@ public final class ObjectBehaviorCoordinator {
             self.object = object
             self.instance = instance
             self.clips = clips
+            animator = object.nodes?.nodes.map { NIFNodeAnimator(animation: $0.animation) }
         }
     }
 
@@ -68,17 +75,21 @@ public final class ObjectBehaviorCoordinator {
     private(set) var running: [UInt32: Running] = [:]
     private var waits: [UInt32: [Wait]] = [:]
     private var nextToken = firstToken
-    /// Off holds every object in the pose it has.
+    /// The camera billboards turn to; nil leaves them at rest.
+    private let viewer: () -> NIFBillboard.Viewer?
+    /// Off holds every object in the pose it has; billboards keep turning.
     public var isEnabled = true
 
     /// `settings` gives the persisted switch.
     public init(
         settings: PlayerSettingsStore? = nil,
         world: any ObjectBehaviorWorld,
-        files: @escaping () -> (any GameFileSource)?
+        files: @escaping () -> (any GameFileSource)?,
+        viewer: @escaping () -> NIFBillboard.Viewer? = { nil }
     ) {
         self.world = world
         self.files = files
+        self.viewer = viewer
         if let settings {
             isEnabled = settings.bool(.objectAnimation)
         }
@@ -108,11 +119,18 @@ public final class ObjectBehaviorCoordinator {
         for reference in running.keys.sorted() {
             guard let entry = running[reference] else { continue }
             entry.clips.drain()
-            guard isEnabled else { continue }
+            guard isEnabled else {
+                publishNodes(entry, deltaTime: 0)
+                continue
+            }
             let result = entry.instance.update(deltaTime: deltaTime)
             if !result.bones.isEmpty {
-                entry.object.pose.publish(result.bones)
+                entry.graphBones = result.bones
+                if entry.object.nodes == nil {
+                    entry.object.pose.publish(result.bones)
+                }
             }
+            publishNodes(entry, deltaTime: deltaTime)
             for name in result.firedEvents.compactMap(\.name) + result.unboundEvents {
                 world?.objectGraphFired(name, from: reference)
                 finishWaits(on: reference, event: name)
@@ -187,6 +205,19 @@ public final class ObjectBehaviorCoordinator {
         instance.activate()
         instance.prefetchReachableClips()
         return Running(object: object, instance: instance, clips: clips)
+    }
+
+    /// Steps the mesh's own lag bones, turns its billboards, and publishes the merged rig.
+    private func publishNodes(_ entry: Running, deltaTime: Float) {
+        guard let rig = entry.object.nodes else { return }
+        let placement = entry.object.placement
+        entry.animator?.step(
+            deltaTime: deltaTime, placement: NodeControllerCoordinator.transform(placement)
+        )
+        if let camera = viewer() {
+            entry.animator?.face(camera.local(to: placement))
+        }
+        entry.object.pose.publish(rig.bonePoses(graph: entry.graphBones, animator: entry.animator))
     }
 
     private func finishWaits(on reference: UInt32, event: String) {

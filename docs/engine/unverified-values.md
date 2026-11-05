@@ -156,6 +156,7 @@ the detail and the sources it did find.
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
+| Billboard minimised turn (modes 0, 3) | Shortest turn of own +Z to the target, from nif.xml's "minimized rotation" | [NIF sequences](/formats/nif-sequences.md#billboard-nodes) |
 | Image space modifier weights | Two constants; at most 16 at once | [image space](/rendering/image-space.md) |
 | Surface shading strength, tiling, refraction rate | OpenSky's values | [surface shading](/rendering/surface-shading.md) |
 | Shadow map size cap | 4096; the game allows more | [graphics options](/engine/graphics-options.md) |

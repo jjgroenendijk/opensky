@@ -93,14 +93,25 @@ the node so a local axis points at the camera. The mode names come from NifTools
 
 | Mode | nif.xml name | What OpenSky turns |
 | --- | --- | --- |
-| 0, 2 | `ALWAYS_FACE_CAMERA`, `RIGID_FACE_CAMERA` | +Z against the view direction, +Y toward camera up |
-| 3, 4 | `ALWAYS_FACE_CENTER`, `RIGID_FACE_CENTER` | +Z at the eye, +Y toward camera up |
+| 0 | `ALWAYS_FACE_CAMERA` | +Z against the view direction by the shortest turn |
+| 2 | `RIGID_FACE_CAMERA` | +Z against the view direction, +Y toward camera up |
+| 3 | `ALWAYS_FACE_CENTER` | +Z at the eye by the shortest turn |
+| 4 | `RIGID_FACE_CENTER` | +Z at the eye, +Y toward camera up |
 | 1, 9 | `ROTATE_ABOUT_UP`, `ROTATE_ABOUT_UP2` | about the node's own +Y; +Z toward the eye |
 | 5 | `BSROTATE_ABOUT_UP` | about the node's own +Z; -Y toward the eye |
 
-Other values turn like mode 4. The menu scene has no view direction, so there modes 0
-and 2 also turn +Z at the eye. OpenSky does not tell the minimised turn (0, 3) from the
-rigid one (2, 4).
+nif.xml keeps the mode in the lowest 3 bits, so OpenSky reads `mode & 7`: 9 turns like 1,
+and 8, 10, 11, and 12 like 0, 2, 3, and 4. The menu scene has no view direction, so there
+modes 0 and 2 also turn +Z at the eye.
+
+nif.xml calls modes 0 and 3 "minimized rotation" and modes 2 and 4 "non-minimized". OpenSky
+reads the minimised turn as the shortest rotation that takes the node's authored +Z to the
+target, so the node keeps its authored roll. The rigid turn builds the whole frame from the
+camera, with +Y toward camera up. The game's result for modes 0 and 3 is not yet compared.
+
+The billboards of a placed object that a behaviour graph or a sequence door moves turn
+too. Each billboard node becomes its own bone next to the graph's bones or the door's
+leaves, and rides the graph bone above it.
 
 How the axes were confirmed:
 

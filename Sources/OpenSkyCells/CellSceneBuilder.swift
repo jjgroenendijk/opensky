@@ -564,7 +564,9 @@ nonisolated extension CellSceneBuilder {
         do {
             let animated = behavior.flatMap {
                 try? meshes.animatedObjectModel(
-                    path: modelPath, bones: Set($0.skeleton.boneNames),
+                    path: modelPath,
+                    bones: Set(objectPoseRig(modelPath: modelPath, asset: $0)?.skeleton.boneNames
+                        ?? $0.skeleton.boneNames),
                     reference: ref.formID.rawValue, surface: surface
                 )
             }
