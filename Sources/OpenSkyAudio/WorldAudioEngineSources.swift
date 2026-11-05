@@ -30,9 +30,9 @@ public final class ActiveAudioSource {
     public let routing: AudioRouting
     /// World position in native Skyrim units. Meaningless (and always zero)
     /// for a non-positional source.
-    public let worldPosition: SIMD3<Float>
+    public internal(set) var worldPosition: SIMD3<Float>
     /// Exterior cell the position falls in — the purge key for cell unload.
-    public let cell: CellCoordinate
+    public internal(set) var cell: CellCoordinate
     /// Per-source gain, multiplied with the category, master and fade gains.
     public let gain: Float
     /// Continuous source: it restarts at the beginning instead of ending.
@@ -325,6 +325,21 @@ extension WorldAudioEngine {
     public func stopSource(id: Int) -> Bool {
         guard let source = sources.first(where: { $0.id == id }) else { return false }
         stop(source)
+        return true
+    }
+
+    /// Moves a positional source, so a loop follows the actor that makes it.
+    @discardableResult
+    public func moveSource(id: Int, to worldPosition: SIMD3<Float>) -> Bool {
+        guard
+            let source = sources.first(where: { $0.id == id }),
+            source.routing == .positional,
+            worldPosition.x.isFinite, worldPosition.y.isFinite, worldPosition.z.isFinite
+        else { return false }
+        source.worldPosition = worldPosition
+        source.cell = CellCoordinate(containing: worldPosition)
+        let position = AudioSpace.listenerPosition(fromWorld: worldPosition)
+        source.node.position = AVAudio3DPoint(x: position.x, y: position.y, z: position.z)
         return true
     }
 

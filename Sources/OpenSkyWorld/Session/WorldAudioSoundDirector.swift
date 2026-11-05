@@ -60,6 +60,8 @@ public final class WorldAudioSoundDirector {
     /// Animation loops by source and descriptor, like the interaction loops above.
     var animationLoopTokens: [AnimationSoundKey: Int] = [:]
     var animationLoopSourceIDs: [AnimationSoundKey: Int] = [:]
+    /// The creature breath and movement loops that play, with where they play.
+    public internal(set) var actorLoops: [ActorLoop: SIMD3<Float>] = [:]
     /// Lowercased SNDR editor ID -> FormID, built on the first animation sound.
     var soundIDsByEditorID: [String: FormID]?
     /// The sounds scripts play, by their Papyrus instance ID.

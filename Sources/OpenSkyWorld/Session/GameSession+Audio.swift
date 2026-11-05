@@ -47,6 +47,11 @@ extension GameSession {
         // `sources`, which is how the playlist knows to advance.
         defer { musicDirector?.tick(deltaTime: deltaTime) }
         defer { soundDirector?.tickAmbience(deltaTime: deltaTime) }
+        defer {
+            soundDirector?.updateActorLoops(
+                actorSoundSources?() ?? [], listener: freeFlyCamera.position
+            )
+        }
         defer { routeFootstepEvents() }
         worldAudio.updateListener(
             worldPosition: freeFlyCamera.position,

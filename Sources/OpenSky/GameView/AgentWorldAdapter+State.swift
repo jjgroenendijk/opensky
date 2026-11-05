@@ -328,6 +328,10 @@ extension AgentWorldAdapter {
                 ?? .null,
             "eyeTexture": eyeTexture(of: actor.key),
             "severed": severedState(of: actor.key),
+            "soundLoops": .array(
+                (game.gameSession?.soundDirector?.actorLoopNames(of: actor.key) ?? [])
+                    .map(AgentJSON.string)
+            ),
             "constraints": physicsConstraints(of: actor.key),
             "graph": graph
         ])

@@ -193,5 +193,6 @@ reference game was recorded through the bridge, observed 2026-11-04
   dog and a death hound on each bite.
 - `Open` on one dragon clip. Only the door graphs wait for an event of that name.
 
-[WARNING] The sound itself was not recorded, because the bridge cannot name a playing sound.
-Where a wolf's bite sound comes from is not known yet.
+A bare creature cue is still heard when it is a tag in the actor's own footstep set. A wolf's
+set answers `NPCWolfAttackA` and none of the dog cues, so it plays one sound
+([creature sounds](/engine/actor-sounds.md)).
