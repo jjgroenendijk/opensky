@@ -1,5 +1,5 @@
 // Fills a particle system's slot of its instance buffer each frame: square billboards,
-// or ribbon bands for lightning (docs/rendering/particles.md).
+// or ribbon bands for strips, rain streaks, and lightning (docs/rendering/particles.md).
 
 import Metal
 import OpenSkyFormatsCore
@@ -40,8 +40,16 @@ nonisolated extension ParticlePlayback {
         }
         var particles = simulator.particles.map(Self.faded)
         guard !particles.isEmpty else { return [] }
+        if simulator.definition.isStrip {
+            return ParticleRibbons.strip(particles).map { $0.instance(alongTextureV: false) }
+        }
         if let viewer, blendMode.dependsOnOrder {
             particles = ParticleDrawOrder.backToFront(particles, viewer: viewer, at: \.position)
+        }
+        let aspect = streakAspect
+        if aspect > 0 {
+            return ParticleRibbons.streaks(particles, aspect: aspect)
+                .map { $0.instance(alongTextureV: true) }
         }
         let offsets = simulator.definition.subtextureOffsets
         return particles.map { particle in
@@ -94,8 +102,12 @@ nonisolated extension ParticlePlayback {
         let reach = bolt.length + abs(bolt.lengthVariation)
         var lower = SIMD3<Float>(repeating: .greatestFiniteMagnitude)
         var upper = -lower
-        for corner in [SIMD3<Float>(-side, 0, -side), SIMD3(side, reach, side),
-                       SIMD3(-side, reach, side), SIMD3(side, 0, -side)] {
+        for corner in [
+            SIMD3<Float>(-side, 0, -side),
+            SIMD3(side, reach, side),
+            SIMD3(-side, reach, side),
+            SIMD3(side, 0, -side)
+        ] {
             let point = Self.point(model, corner)
             lower = simd_min(lower, point)
             upper = simd_max(upper, point)

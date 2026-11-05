@@ -18,15 +18,20 @@ nonisolated enum NIFControllerSequenceDecoder {
     /// The default sequence's feed for each controller, keyed by controller block index.
     /// Only the sequences that feed a controller compete for it.
     static func defaultFeeds(file: NIFFile) throws -> [Int32: SequenceFeed] {
-        let sequences = try file.blocks.indices
-            .filter { file.blocks[$0].typeName == sequenceType }
-            .map { try sequence(file.blocks[$0], file: file) }
+        let sequences = try sequences(file: file)
         var feeds: [Int32: SequenceFeed] = [:]
         for controller in Set(sequences.flatMap(\.feeds.keys)) {
             let candidates = sequences.filter { $0.feeds[controller] != nil }
             feeds[controller] = defaultSequence(candidates)?.feeds[controller]
         }
         return feeds
+    }
+
+    /// Every `NiControllerSequence` of the file, in block order.
+    static func sequences(file: NIFFile) throws -> [DecodedSequence] {
+        try file.blocks.indices
+            .filter { file.blocks[$0].typeName == sequenceType }
+            .map { try sequence(file.blocks[$0], file: file) }
     }
 
     /// A mesh names no default, and the game starts sequences from animation events. So

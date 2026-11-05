@@ -28,4 +28,12 @@ public protocol EffectModelPosing: AnyObject {
     /// Steps the models that move and returns their copies by instance id. A model left
     /// out draws the shared copy. An id missing from `models` has ended.
     func pose(_ models: [VisualEffectModel], deltaTime: Float) -> [Int: PosedEffectModel]
+    /// The NIF sequence the effect's graph plays now; nil without a graph or a sequence.
+    func playedSequence(ofEffect id: Int) -> String?
+}
+
+extension EffectModelPosing {
+    public func playedSequence(ofEffect _: Int) -> String? {
+        nil
+    }
 }

@@ -150,6 +150,11 @@ extension EffectsCoordinator {
         var changed = false
         for model in models {
             guard let id = model.instanceID else { continue }
+            defer {
+                if let sequence = posing?.playedSequence(ofEffect: id) {
+                    live[id]?.playbacks.forEach { $0.play(sequence: sequence) }
+                }
+            }
             if var existing = effectParticles[id] {
                 if let nodes = posed[id]?.nodeDeltas {
                     // A posed model's nodes move each frame, so its emitters follow them.

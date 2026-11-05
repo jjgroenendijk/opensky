@@ -130,6 +130,11 @@ public final class EffectModelPoser: EffectModelPosing {
         return posed
     }
 
+    /// The first sequence the effect's graph plays; a graph plays one per state.
+    public func playedSequence(ofEffect id: Int) -> String? {
+        graphs.sequences(ofEffect: id).first
+    }
+
     /// One row per posed effect, in effect order.
     public var rows: [PosedEffectRow] {
         running.keys.sorted().compactMap { id in

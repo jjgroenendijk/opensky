@@ -46,8 +46,21 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
     public var ancestorNodes: [String] = []
     /// The node whose children are the meshes an `NiMeshParticleSystem` draws, or -1.
     public var meshPool: Int32 = -1
+    /// A `BSStripParticleSystem`: its particles draw as one ribbon in birth order.
+    public var isStrip = false
     /// The bolt of a lightning controller; such a definition has no emitters.
     public var lightning: ParticleLightning?
+    /// The controllers as each named sequence feeds them, by lowercased sequence name; an
+    /// effect graph switches to one when it plays that sequence.
+    public var sequenceControllers: [String: ParticleControllerSet] = [:]
+
+    /// The controllers the default sequence feeds.
+    public var defaultControllers: ParticleControllerSet {
+        ParticleControllerSet(
+            emitters: emitterControllers, modifiers: modifierControllers,
+            visibility: visibility, updatesSimulation: updatesSimulation
+        )
+    }
 
     public init(
         name: String?,

@@ -65,7 +65,21 @@ through the loaded [static collision](/engine/collision-world.md). Any hit clear
 volume until the ray is open again. When the option is off, rain falls through roofs, as in the
 game.
 
-## Not done
+## Streaks
 
-- Precipitation collision, splashes, and snow building up.
-- Streak shapes separate from the square billboards.
+Rain draws each drop as a band along its velocity, not as a square
+([ribbons](/rendering/particles.md#ribbons)). The band's length over its width is the rain
+`SPGD` record's particle size Y over X, kept to 1 to 16, so a broken record still draws a
+streak. The band keeps the square's area. Snow stays a square flake.
+
+## Ground contact
+
+The occlusion view holds the terrain as well as the roofs. So a drop below the ground is
+discarded the same way as a drop below a roof, and rain stops at a roof edge. The drops are not
+stopped on the CPU.
+
+The game data names no splash and no snow cover. The `SPGD` `DATA` field has no splash or
+ground field ([UESP SPGD](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SPGD)), and the
+install has no rain splash mesh. Snow on the ground is authored: snow textures, the directional
+snow material, and drift meshes such as `effects\fxsnowdriftflat01.nif`. So OpenSky draws no
+splashes and builds up no snow. The reference game has not been checked for this yet.

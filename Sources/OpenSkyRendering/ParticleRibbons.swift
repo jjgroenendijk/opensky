@@ -1,5 +1,6 @@
-// Ribbon particle shapes: a camera-facing band between two points. A lightning
-// controller grows a bent bolt of them. See docs/rendering/particles.md#ribbons.
+// Ribbon particle shapes: a camera-facing band between two points. A strip particle
+// system joins its particles in birth order, rain stretches each drop along its fall, and a
+// lightning controller grows a bent bolt. See docs/rendering/particles.md#ribbons.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
@@ -21,6 +22,44 @@ nonisolated public struct RibbonSegment: Equatable, Sendable {
             uvRect: SIMD4(along.x, along.y, alongTextureV ? 1 : 0, 0),
             rotation: SIMD4(end, endWidth)
         )
+    }
+}
+
+nonisolated public enum ParticleRibbons {
+    /// A strip system's particles in birth order, oldest first, joined into one band. The
+    /// texture runs from the oldest end (0) to the newest (1).
+    public static func strip(_ particles: [SimulatedParticle]) -> [RibbonSegment] {
+        let ordered = particles.sorted { $0.age > $1.age }
+        guard ordered.count > 1 else { return [] }
+        let last = Float(ordered.count - 1)
+        return (0 ..< ordered.count - 1).map { index in
+            let from = ordered[index]
+            let to = ordered[index + 1]
+            return RibbonSegment(
+                start: from.position, end: to.position,
+                startWidth: from.radius * 2, endWidth: to.radius * 2,
+                color: (from.color + to.color) * 0.5,
+                along: SIMD2(Float(index) / last, Float(index + 1) / last)
+            )
+        }
+    }
+
+    /// Each drop as a streak along its velocity. `aspect` is length over width; the area
+    /// stays that of the square billboard.
+    public static func streaks(_ particles: [SimulatedParticle], aspect: Float) -> [RibbonSegment] {
+        let ratio = max(aspect, 1).squareRoot()
+        return particles.compactMap { particle in
+            let speed = simd_length(particle.velocity)
+            guard speed > 1e-4 else { return nil }
+            let direction = particle.velocity / speed
+            let half = particle.radius * ratio
+            let width = particle.radius * 2 / ratio
+            return RibbonSegment(
+                start: particle.position - direction * half,
+                end: particle.position + direction * half,
+                startWidth: width, endWidth: width, color: particle.color, along: SIMD2(0, 1)
+            )
+        }
     }
 }
 
@@ -49,7 +88,9 @@ nonisolated public struct LightningBolt: Sendable {
         let to = branches(generation: index + 1)
         var result: [RibbonSegment] = []
         for (first, second) in zip(from, to) where first.points.count == second.points.count {
-            let points = zip(first.points, second.points).map { simd_mix($0, $1, SIMD3(repeating: blend)) }
+            let points = zip(first.points, second.points).map { pair in
+                simd_mix(pair.0, pair.1, SIMD3(repeating: blend))
+            }
             result += Self.band(
                 points, width: first.width, fades: first.fades, color: color
             )
@@ -76,11 +117,18 @@ nonisolated public struct LightningBolt: Sendable {
             from: .zero, to: SIMD3(0, length, 0), levels: levels,
             amplitude: parameters.arcOffset, random: &random
         )
-        var result = [Branch(points: main, width: parameters.width, fades: parameters.fadesMainBolt)]
+        var result = [Branch(
+            points: main,
+            width: parameters.width,
+            fades: parameters.fadesMainBolt
+        )]
         let spread = parameters.branchVariation
         let count = max(parameters.branches + Int((signed(&random) * Float(spread)).rounded()), 0)
         for _ in 0 ..< count {
-            let startIndex = min(Int(Float(main.count - 1) * (0.1 + unit(&random) * 0.7)), main.count - 1)
+            let startIndex = min(
+                Int(Float(main.count - 1) * (0.1 + unit(&random) * 0.7)),
+                main.count - 1
+            )
             let start = main[startIndex]
             let sideways = SIMD3(signed(&random), 0, signed(&random))
             let direction = simd_normalize(SIMD3<Float>(0, 1, 0) + sideways * 0.6)

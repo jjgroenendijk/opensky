@@ -204,8 +204,10 @@ Checked on the vanilla install: 525 of 912 particle NIFs hold sequences, and 142
 feeds it. Cycle types are 0 (loop) or 2 (clamp). Common emitter sequence names are `mIdle`,
 `Waiting`, `mBegin`, `mLoop`, and `mEnd`.
 
-A NIF does not say which sequence plays first; the game starts them from animation events.
-OpenSky's pick is in [particle playback](/rendering/particles.md).
+A NIF does not say which sequence plays first; the effect's behaviour graph plays them.
+OpenSky decodes the controllers once for the default pick and once for each sequence that
+feeds the system, so the graph can switch between them
+([particle playback](/rendering/particles.md#sequences)).
 
 ## Parameter modifiers
 

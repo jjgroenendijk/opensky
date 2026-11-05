@@ -2,6 +2,7 @@
 // particle spawns. Modifier semantics and what OpenSky infers:
 // docs/formats/nif-particles.md#parameter-modifiers.
 
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyRenderCore
 import simd
@@ -170,5 +171,23 @@ nonisolated extension ParticleSimulator {
         child.radius = parent.initialRadius
         child.generation = min(parent.generation, .max - 1) + 1
         return child
+    }
+}
+
+/// Deterministic generator: stable frames/tests across processes and machines.
+nonisolated struct ParticleRandom {
+    private var generator: SplitMix64
+
+    init(seed: UInt64) {
+        generator = SplitMix64(seed: seed == 0 ? SplitMix64.increment : seed)
+    }
+
+    /// Uses the low 24 bits, unlike `SplitMix64.unitFloat()`, to keep existing streams.
+    mutating func unit() -> Float {
+        Float(generator.next() & 0x00FF_FFFF) / Float(0x0100_0000)
+    }
+
+    mutating func signed() -> Float {
+        unit() * 2 - 1
     }
 }

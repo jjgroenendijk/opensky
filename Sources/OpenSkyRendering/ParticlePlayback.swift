@@ -75,24 +75,6 @@ nonisolated public struct SimulatedParticle: Equatable, Sendable {
     public var frames = SIMD3<Float>.zero
 }
 
-/// Deterministic generator: stable frames/tests across processes and machines.
-nonisolated struct ParticleRandom {
-    private var generator: SplitMix64
-
-    init(seed: UInt64) {
-        generator = SplitMix64(seed: seed == 0 ? SplitMix64.increment : seed)
-    }
-
-    /// Uses the low 24 bits, unlike `SplitMix64.unitFloat()`, to keep existing streams.
-    mutating func unit() -> Float {
-        Float(generator.next() & 0x00FF_FFFF) / Float(0x0100_0000)
-    }
-
-    mutating func signed() -> Float {
-        unit() * 2 - 1
-    }
-}
-
 /// Pure simulation. An emitter with a `NiPSysEmitterCtlr` births at its keyed rate.
 /// One without falls back to about a quarter of capacity per average lifetime, an
 /// OpenSky choice and not an engine constant.
@@ -106,8 +88,12 @@ nonisolated public struct ParticleSimulator: Sendable {
     /// Scales new particles' speed and size. A faster particle lives shorter, so it
     /// still crosses the same distance. Existing particles keep their values.
     public var spawnScale = PrecipitationScale.identity
-    /// Seconds simulated since the last reset; the controllers' clock.
+    /// Seconds simulated since the last reset or sequence switch; the controllers' clock.
     public private(set) var elapsed: Float = 0
+    /// The controllers that play now: the default sequence's, or the played sequence's.
+    public private(set) var controllers: ParticleControllerSet
+    /// The lowercased sequence an effect graph last played; nil plays the default.
+    public internal(set) var sequence: String?
     var random: ParticleRandom
     /// The active modifiers of the current step, with their controllers applied.
     private(set) var activeModifiers: [ParticleModifier] = []
@@ -130,6 +116,7 @@ nonisolated public struct ParticleSimulator: Sendable {
         self.definition = definition
         self.placementTransform = placementTransform
         capacity = min(max(definition.maxParticles, 0), Self.maximumCapacity)
+        controllers = definition.defaultControllers
         random = ParticleRandom(seed: seed)
         particles.reserveCapacity(capacity)
     }
@@ -141,6 +128,8 @@ nonisolated public struct ParticleSimulator: Sendable {
         controlledAccumulators.removeAll()
         nextEmitter = 0
         elapsed = 0
+        controllers = definition.defaultControllers
+        sequence = nil
         activeModifiers = []
         emitterVelocity = .zero
         pendingDisplacement = .zero
@@ -175,38 +164,6 @@ nonisolated public struct ParticleSimulator: Sendable {
         trackInheritObject(model: model)
     }
 
-    /// The change of the nearest moved node in `chain`, or identity when none moved.
-    static func delta(of chain: [String], in deltas: [String: float4x4]) -> float4x4 {
-        guard !deltas.isEmpty else { return matrix_identity_float4x4 }
-        for name in chain {
-            if let delta = deltas[name] {
-                return delta
-            }
-        }
-        return matrix_identity_float4x4
-    }
-
-    /// The inherit object of the first inherit velocity modifier that names one.
-    private var inheritObject: ParticleInheritVelocity? {
-        for modifier in definition.modifiers {
-            if case let .inheritVelocity(inherit) = modifier.kind, !inherit.objectNodes.isEmpty {
-                return inherit
-            }
-        }
-        return nil
-    }
-
-    private mutating func trackInheritObject(model: float4x4) {
-        guard let inherit = inheritObject else { return }
-        let delta = Self.delta(of: inherit.objectNodes, in: nodeDeltas)
-        let point = model * delta * definition.worldTransform * SIMD4(inherit.objectOrigin, 1)
-        let position = SIMD3(point.x, point.y, point.z)
-        if let last = inheritPosition {
-            pendingInheritDisplacement += position - last
-        }
-        inheritPosition = position
-    }
-
     private mutating func moveEmitter(to placement: float4x4) {
         let change = placement * placementTransform.inverse
         pendingDisplacement += SIMD3(change.columns.3.x, change.columns.3.y, change.columns.3.z)
@@ -229,7 +186,7 @@ nonisolated public struct ParticleSimulator: Sendable {
             : pendingInheritDisplacement / deltaTime
         pendingInheritDisplacement = .zero
         activeModifiers = definition.modifiers
-            .map { $0.controlled(by: definition.modifierControllers, at: elapsed) }
+            .map { $0.controlled(by: controllers.modifiers, at: elapsed) }
             .filter(\.active).sorted { $0.order < $1.order }
         updateExisting(deltaTime: deltaTime, wind: wind)
         elapsed += deltaTime
@@ -248,7 +205,7 @@ nonisolated public struct ParticleSimulator: Sendable {
     /// The keyed birth rate of the controller that names this emitter. A file with
     /// one emitter and one unnamed controller pairs them.
     private func controllerRate(for emitter: ParticleEmitter) -> Float? {
-        let controllers = definition.emitterControllers
+        let controllers = controllers.emitters
         let named = controllers.first { $0.modifierName != nil && $0.modifierName == emitter.name }
         let only = controllers.count == 1 && definition.emitters.count == 1 ? controllers
             .first : nil
@@ -350,13 +307,20 @@ nonisolated public struct ParticleSimulator: Sendable {
     /// The active emitters, with their parameter controllers applied now.
     public var currentEmitters: [ParticleEmitter] {
         definition.emitters
-            .map { $0.controlled(by: definition.modifierControllers, at: elapsed) }
+            .map { $0.controlled(by: controllers.modifiers, at: elapsed) }
             .filter(\.active)
+    }
+
+    /// Plays `set` from its start; the living particles stay.
+    mutating func setControllers(_ set: ParticleControllerSet) {
+        controllers = set
+        elapsed = 0
+        controlledAccumulators.removeAll()
     }
 
     /// False while the system's `NiVisController` hides it.
     public var isVisible: Bool {
-        definition.visibility?.isVisible(at: elapsed) ?? true
+        controllers.visibility?.isVisible(at: elapsed) ?? true
     }
 
     private mutating func emit(deltaTime: Float, scale: Float) {
@@ -393,6 +357,40 @@ nonisolated public struct ParticleSimulator: Sendable {
     }
 }
 
+nonisolated extension ParticleSimulator {
+    /// The change of the nearest moved node in `chain`, or identity when none moved.
+    static func delta(of chain: [String], in deltas: [String: float4x4]) -> float4x4 {
+        guard !deltas.isEmpty else { return matrix_identity_float4x4 }
+        for name in chain {
+            if let delta = deltas[name] {
+                return delta
+            }
+        }
+        return matrix_identity_float4x4
+    }
+
+    /// The inherit object of the first inherit velocity modifier that names one.
+    private var inheritObject: ParticleInheritVelocity? {
+        for modifier in definition.modifiers {
+            if case let .inheritVelocity(inherit) = modifier.kind, !inherit.objectNodes.isEmpty {
+                return inherit
+            }
+        }
+        return nil
+    }
+
+    private mutating func trackInheritObject(model: float4x4) {
+        guard let inherit = inheritObject else { return }
+        let delta = Self.delta(of: inherit.objectNodes, in: nodeDeltas)
+        let point = model * delta * definition.worldTransform * SIMD4(inherit.objectOrigin, 1)
+        let position = SIMD3(point.x, point.y, point.z)
+        if let last = inheritPosition {
+            pendingInheritDisplacement += position - last
+        }
+        inheritPosition = position
+    }
+}
+
 /// Layout mirrored by ParticleInstance in ShaderTypes.h.
 nonisolated public struct ParticleGPUInstance: Sendable {
     public let positionSize: SIMD4<Float>
@@ -406,6 +404,8 @@ nonisolated public final class ParticlePlayback: Sendable {
     nonisolated private struct State {
         var simulator: ParticleSimulator
         var simulationTime: Float = 0
+        /// Length over width of a rain streak; 0 draws square billboards.
+        var streakAspect: Float = 0
     }
 
     public let name: String
@@ -528,8 +528,19 @@ nonisolated public final class ParticlePlayback: Sendable {
         state.withLock { $0.simulator.move(to: placement, nodeDeltas: nodeDeltas) }
     }
 
+    /// Plays the named NIF sequence's controller keys, as an effect graph asks.
+    public func play(sequence name: String) {
+        state.withLock { $0.simulator.play(sequence: name) }
+    }
+
     public func setSpawnScale(_ scale: PrecipitationScale) {
         state.withLock { $0.simulator.spawnScale = scale }
+    }
+
+    /// Draws each particle as a streak along its velocity, `aspect` times as long as wide;
+    /// 0 goes back to square billboards.
+    public func setStreakAspect(_ aspect: Float) {
+        state.withLock { $0.streakAspect = aspect.isFinite ? max(aspect, 0) : 0 }
     }
 
     /// Seconds played since the last reset; a lightning bolt grows on this clock.
@@ -539,7 +550,12 @@ nonisolated public final class ParticlePlayback: Sendable {
 
     /// True when this system draws ribbon bands instead of square billboards.
     public var drawsRibbons: Bool {
-        lightning != nil
+        let definition = simulator.definition
+        return lightning != nil || definition.isStrip || state.withLock { $0.streakAspect > 0 }
+    }
+
+    var streakAspect: Float {
+        state.withLock { $0.streakAspect }
     }
 
     public func reset() {

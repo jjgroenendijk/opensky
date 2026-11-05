@@ -204,6 +204,10 @@ nonisolated public final class BehaviorGraphInstance {
     public private(set) var stateTag: BehaviorStateTag?
     /// The tag being chosen by the update in progress.
     public var stateTagThisUpdate: BehaviorStateTag?
+    /// The NIF sequences the last update's `BGSGamebryoSequenceGenerator` nodes play, in
+    /// walk order: the graph's own mesh plays them, not the skeleton.
+    public private(set) var gamebryoSequences: [String] = []
+    var gamebryoSequencesThisUpdate: [String] = []
 
     /// What the update in progress raised that this graph declares no event for.
     public var unboundEvents: [String] = []
@@ -277,6 +281,7 @@ nonisolated public final class BehaviorGraphInstance {
         nodeStates = [:]
         activeStates = []
         stateTag = nil
+        gamebryoSequences = []
         pulledEventNames = [:]
         isActive = false
     }
@@ -301,6 +306,7 @@ nonisolated public final class BehaviorGraphInstance {
         reachedThisUpdate = []
         activeStatesThisUpdate = []
         stateTagThisUpdate = nil
+        gamebryoSequencesThisUpdate = []
         referencedResults = [:]
         pendingClipPhase = nil
         unboundEvents = []
@@ -313,6 +319,7 @@ nonisolated public final class BehaviorGraphInstance {
         let pose = skeleton.absolute(evaluateGenerator(at: root, depth: 0, deltaTime: step))
         activeStates = activeStatesThisUpdate
         stateTag = stateTagThisUpdate
+        gamebryoSequences = gamebryoSequencesThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
         // The memo names the references this update ran; stale, it would keep a
         // later deactivation from stopping a child.
@@ -470,7 +477,9 @@ nonisolated public final class BehaviorGraphInstance {
         }
         return .bool(value.intValue & (1 << bit) != 0)
     }
+}
 
+nonisolated extension BehaviorGraphInstance {
     /// True when `node`'s binding set names a binding that disables it.
     public func isDisabled(_ node: BehaviorCompiledNode) -> Bool {
         guard

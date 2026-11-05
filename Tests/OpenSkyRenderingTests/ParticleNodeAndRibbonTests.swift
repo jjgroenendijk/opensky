@@ -1,5 +1,5 @@
 // Emitters that ride moved nodes, the inherit object's velocity, the spin axis of mesh
-// particles, and lightning bolts.
+// particles, sequence switches, and the ribbon shapes: strips, rain streaks, and lightning bolts.
 
 @testable import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
@@ -24,7 +24,10 @@ struct ParticleNodeAndRibbonTests {
         simulator.move(
             to: matrix_identity_float4x4, nodeDeltas: ["arm": Self.translation([0, 0, 100])]
         )
-        simulator.advance(deltaTime: 0.1, wind: .calm, emissionScale: 1)
+        // The fallback rate of 8 a second needs a few steps for the first birth.
+        for _ in 0 ..< 3 {
+            simulator.advance(deltaTime: 0.1, wind: .calm, emissionScale: 1)
+        }
         #expect(!simulator.particles.isEmpty)
         for particle in simulator.particles {
             #expect(abs(particle.position.z - 100) < 1.5)
@@ -35,7 +38,10 @@ struct ParticleNodeAndRibbonTests {
         var inherit = ParticleInheritVelocity(chance: 100, multiplier: 1, variation: 0)
         inherit.objectNodes = ["tip"]
         var simulator = ParticleSimulator(
-            definition: Self.definition(modifiers: [Self.modifier(.inheritVelocity(inherit))], speed: 0),
+            definition: Self.definition(
+                modifiers: [Self.modifier(.inheritVelocity(inherit))],
+                speed: 0
+            ),
             placementTransform: matrix_identity_float4x4, seed: 5
         )
         // The system stays put while its inherit object swings 20 units a step along +Y.
@@ -60,7 +66,9 @@ struct ParticleNodeAndRibbonTests {
             definition: Self.definition(modifiers: [Self.modifier(.rotation(rotation))]),
             placementTransform: matrix_identity_float4x4, seed: 9
         )
-        simulator.advance(deltaTime: 0.1, wind: .calm, emissionScale: 1)
+        for _ in 0 ..< 3 {
+            simulator.advance(deltaTime: 0.1, wind: .calm, emissionScale: 1)
+        }
         let particle = simulator.particles.first
         #expect(particle.map { simd_distance($0.axis, [0, 1, 0]) < 1e-5 } == true)
         if var turned = particle {
@@ -91,6 +99,33 @@ struct ParticleNodeAndRibbonTests {
         #expect(Set(axes.map { Int($0.x * 1000) }).count > 1)
     }
 
+    @Test func aStripJoinsItsParticlesFromOldestToNewest() {
+        let particles = [3, 1, 2].map { age in
+            SimulatedParticle(
+                position: SIMD3(Float(age), 0, 0), velocity: .zero,
+                initialColor: SIMD4(repeating: 1), color: SIMD4(repeating: 1),
+                initialRadius: 1, radius: 1, age: Float(age), lifetime: 10, atlasIndex: 0
+            )
+        }
+        let bands = ParticleRibbons.strip(particles)
+        #expect(bands.count == 2)
+        #expect(bands.first?.start == SIMD3(3, 0, 0))
+        #expect(bands.last?.end == SIMD3(1, 0, 0))
+        #expect(bands.last?.along == SIMD2(0.5, 1))
+    }
+
+    @Test func aRainStreakLiesAlongItsFallAndKeepsItsArea() {
+        let drop = SimulatedParticle(
+            position: .zero, velocity: SIMD3(0, 0, -100), initialColor: SIMD4(repeating: 1),
+            color: SIMD4(repeating: 1), initialRadius: 4, radius: 4, age: 0, lifetime: 1,
+            atlasIndex: 0
+        )
+        let band = ParticleRibbons.streaks([drop], aspect: 4).first
+        #expect(band.map { simd_distance($0.start, [0, 0, 8]) < 1e-4 } == true)
+        #expect(band.map { abs($0.startWidth - 4) < 1e-4 } == true)
+        // 16 long by 4 wide is the 8 by 8 square's area.
+    }
+
     @Test func aLightningBoltReachesItsLengthAndCrawlsOverTime() throws {
         let file = try NIFFile(data: NIFFixture.file(
             blocks: [
@@ -118,6 +153,37 @@ struct ParticleNodeAndRibbonTests {
         #expect(later.count == now.count)
         #expect(zip(now, later).contains { simd_distance($0.end, $1.end) > 1e-3 })
         #expect(generator.segments(at: 0, color: SIMD4(repeating: 1)) == now)
+    }
+
+    @Test func aPlayedSequenceSwitchesTheBirthRateAndRestartsItsClock() {
+        let timing = ControllerTiming(
+            cycle: .loop, frequency: 1, phase: 0, startTime: 0, stopTime: 1
+        )
+        let rate = { (value: Float) in
+            ParticleEmitterController(
+                modifierName: "Sparks", timing: timing,
+                birthRate: [NIFKey(time: 0, value: value), NIFKey(time: 1, value: value)],
+                active: []
+            )
+        }
+        var definition = Self.definition(modifiers: [])
+        definition.sequenceControllers = [
+            "mcharge": ParticleControllerSet(emitters: [rate(0)]),
+            "mready": ParticleControllerSet(emitters: [rate(100)])
+        ]
+        var simulator = ParticleSimulator(
+            definition: definition, placementTransform: matrix_identity_float4x4, seed: 9
+        )
+        simulator.play(sequence: "mCharge")
+        simulator.advance(deltaTime: 0.1, wind: .calm, emissionScale: 1)
+        #expect(simulator.particles.isEmpty, "mCharge keys a birth rate of 0")
+        #expect(simulator.sequence == "mcharge")
+        simulator.play(sequence: "mReady")
+        #expect(simulator.elapsed == 0)
+        simulator.advance(deltaTime: 0.1, wind: .calm, emissionScale: 1)
+        #expect(simulator.particles.count >= 9)
+        simulator.play(sequence: "mCast")
+        #expect(simulator.controllers == definition.sequenceControllers["mready"])
     }
 
     private static func modifier(_ kind: ParticleModifier.Kind) -> ParticleModifier {

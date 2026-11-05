@@ -55,11 +55,23 @@ the on/off track is off, the emitter births nothing. A full system does not save
 later.
 
 A controller that a controller manager drives takes its keys and timing from one sequence.
-The game starts sequences from animation events, which OpenSky does not send to effects yet.
-So OpenSky plays one default sequence per controller, chosen among the sequences that feed
-it: the first whose name ends in `idle` (any case), else the first loop, else the first.
-This is an OpenSky policy, not a value read from the game. A controller with no keys in
-that sequence keeps its own keys.
+Until something plays a sequence, OpenSky plays one default sequence per controller, chosen
+among the sequences that feed it: the first whose name ends in `idle` (any case), else the
+first loop, else the first. This is an OpenSky policy, not a value read from the game. A
+controller with no keys in that sequence keeps its own keys.
+
+## Sequences
+
+An effect model's behaviour graph plays a NIF sequence with a `BGSGamebryoSequenceGenerator`
+([effect graphs](/engine/effect-graphs.md)). The hand effects of spells, for example, run
+`Magic\CastingBasic.hkx`, whose states play `mIntro`, `mCharge`, `mReady`, and `mCast`. The
+graph moves between these states on the actor's animation events, such as
+`MLh_SpellFire_Event`.
+
+Each particle system keeps its controllers as every sequence feeds them. When the graph plays a
+sequence that feeds the system, the system switches to those keys and timing and starts them
+from 0. The living particles stay. A controller the sequence does not feed keeps its
+default-sequence keys. A sequence that feeds none of the system's controllers changes nothing.
 
 An emitter without a controller fills about a quarter of the capacity per average lifespan,
 clamped to 6 to 60 births per second. Both rates are times the user's emission scale. An
@@ -105,6 +117,8 @@ and width, the end point and width, the colour, and the texture coordinate along
 
 | System | Bands |
 | --- | --- |
+| `BSStripParticleSystem` | One band through its particles in birth order, oldest first |
+| Rain | Each drop stretched along its velocity ([precipitation](/rendering/precipitation.md#streaks)) |
 | Lightning controller | A grown bolt; see below |
 
 A `BSProceduralLightningController` sits on an empty shape. nif.xml names its fields but not
@@ -124,7 +138,11 @@ how the bolt is built, so this is OpenSky's reading:
 - Every 0.1 s a new bolt grows from a new seed, and the drawn bolt blends from one to the
   next, so it crawls instead of jumping.
 
-The texture runs along the band in U. The interpolators of the vanilla bolts are blend
+A strip's texture runs from its oldest end, U 0, to its newest, U 1. A rain streak's
+texture runs along the band in V, because the generated streak mask is tall. A strip
+system's particles are not sorted, because the band joins them in birth order.
+
+The bolt's texture runs along the band in U. The interpolators of the vanilla bolts are blend
 interpolators that no sequence keys, so the fields are used as stored.
 
 ## Mesh particles
@@ -150,5 +168,5 @@ The renderer publishes the blended weather wind, and every live frame passes it 
 
 ## Not done
 
-- Switching sequences on animation events.
-- Collision and splashes for precipitation, which uses this path ([precipitation](/rendering/precipitation.md)).
+- Sequences of placed objects: an object's graph does not play them yet
+  ([object animation](/engine/object-animation.md#where-opensky-differs)).

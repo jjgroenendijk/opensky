@@ -125,6 +125,11 @@ nonisolated extension BehaviorGraphInstance {
             )
         case let reference as HKBBehaviorReferenceGenerator:
             return evaluateBehaviorReference(reference, deltaTime: deltaTime)
+        case let sequence as BGSGamebryoSequenceGenerator:
+            if let name = sequence.sequence, !name.isEmpty {
+                gamebryoSequencesThisUpdate.append(name)
+            }
+            return skeleton.restPose
         default:
             tally.noteUnevaluatedGenerator(object.className)
             return skeleton.restPose

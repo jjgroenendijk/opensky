@@ -158,6 +158,9 @@ the detail and the sources it did find.
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
 | Lightning bolt growth | Midpoint bends halving each level, branches 0.3 to 0.5 long, a new bolt every 0.1 s blended from the last | [particles](/rendering/particles.md#ribbons) |
 | Ribbon texture direction | U along the band for strips and bolts | [particles](/rendering/particles.md#ribbons) |
+| Particle sequence switch | A played sequence restarts the controllers it feeds from 0; others keep the default sequence's keys | [particles](/rendering/particles.md#sequences) |
+| Rain streak shape | Length over width from the `SPGD` size Y over X, 1 to 16, with the square's area | [precipitation](/rendering/precipitation.md#streaks) |
+| Strip particle order | One band through the particles in birth order | [particles](/rendering/particles.md#ribbons) |
 | Mesh particle size | The particle size scales the pool mesh | [particles](/rendering/particles.md#mesh-particles) |
 | Billboard minimised turn (modes 0, 3) | Shortest turn of own +Z to the target, from nif.xml's "minimized rotation" | [NIF sequences](/formats/nif-sequences.md#billboard-nodes) |
 | Image space modifier weights | Two constants; at most 16 at once | [image space](/rendering/image-space.md) |

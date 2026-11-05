@@ -78,7 +78,8 @@ extension AgentWorldAdapter {
             "project": .string(row.project),
             "state": .init(row.activeState),
             "lastEvent": .init(row.lastEvent),
-            "eventsTaken": .init(row.takenCount)
+            "eventsTaken": .init(row.takenCount),
+            "sequences": .array(row.sequences.map(AgentJSON.string))
         ]
         switch row.id {
         case let .effect(id):
