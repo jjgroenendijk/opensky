@@ -24,10 +24,14 @@ nonisolated public struct ResolvedCloudLayer: Equatable, Sendable {
         self.velocity = velocity
     }
 
-    /// xEdit shows a speed byte as `(raw - 127) / 1270`, so 127 is still.
+    /// The game's built-in `fWeatherCloudSpeedMax`; no vanilla plugin sets it.
+    public static let speedMax: Float = 0.1
+
+    /// Texture units per second: a tenth of `speedMax` times `raw / 127 - 1`, so 127 is
+    /// still (docs/engine/weather.md#clouds).
     public static func speed(_ raw: UInt8?) -> Float {
         guard let raw else { return 0 }
-        return (Float(raw) - 127) / 1270
+        return 0.1 * speedMax * (Float(raw) / 127 - 1)
     }
 
     /// The layers that have a texture, are not disabled, and are under the LNAM limit.

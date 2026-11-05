@@ -94,7 +94,7 @@ weather has 32 cloud layers. Layer textures use the signatures `00TX` to `@0TX` 
 | `LNAM` | 4 | Max cloud layers |
 | `MNAM` | 4 | Precipitation, an `SPGD` ([environment shading](/formats/environment-shading.md)) |
 | `NNAM` | 4 | Visual effect, an `RFCT` ([visual effects](/formats/visual-effects.md)) |
-| `RNAM`, `QNAM` | 32 | Y and X speed per layer, uint8; 127 is no movement. xEdit shows `(raw - 127) / 1270` |
+| `RNAM`, `QNAM` | 32 | Y and X speed per layer, uint8; 127 is no movement. xEdit shows `(raw - 127) / 1270`; the game's speed is in [weather](/engine/weather.md#clouds) |
 | `PNAM` | 512 | Color per layer: 4 times of day, RGBA bytes |
 | `JNAM` | 512 | Alpha per layer: 4 floats |
 | `NAM1` | 4 | Disabled layers, one bit per layer |
