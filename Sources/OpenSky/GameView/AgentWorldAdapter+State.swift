@@ -459,6 +459,8 @@ extension AgentWorldAdapter {
             "sunDirection": .init(sky.sunDirection), "lightDirection": .init(sky.lightDirection),
             "sunAlpha": .init(sky.sunAlpha), "glareScale": .init(sky.glareScale),
             "starsAngleDegrees": .init(sky.starsAngle * 180 / .pi),
+            "moonGlare": game.gameSession?.currentResolvedWeather
+                .map { .init($0.moonGlare) } ?? .null,
             "moons": .array(sky.moons.map { moon in
                 [
                     "moon": .string(moon.moon.rawValue), "phase": .string(moon.phase.textureSuffix),

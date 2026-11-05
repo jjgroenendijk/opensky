@@ -111,4 +111,7 @@ count under `sky`. `openskycli render --weather <WTHR> --time-of-day <hour>` pri
 A sky mesh's shader controllers play on the renderer's animation time, so the aurora streaks
 scroll ([shader property controllers](/formats/nif-controllers.md#shader-property-controllers)).
 
-Not drawn yet: the weather's moon glare colour (`NAM0` index 16).
+Each moon gets a glare card behind it, drawn with the climate's glare texture and added in
+the weather's moon glare colour (`NAM0` index 16) times the moon's alpha. The card is
+`Renderer.moonGlareScale` (4) moon widths across. That size is OpenSky's, and so is the use of
+the sun glare texture. `openskycli game state time` shows the colour as `sky.moonGlare`.

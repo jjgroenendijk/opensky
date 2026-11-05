@@ -247,6 +247,8 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
     public var precipitation: PrecipitationState
     /// Both weathers' layers during a transition, each faded by its weight.
     public var clouds: [ResolvedCloudLayer] = []
+    /// `NAM0` index 16, the colour each moon's glare adds.
+    public var moonGlare: SIMD3<Float> = .zero
 
     /// Resolves one weather at `hour` under `timing`. Missing NAM0/FNAM/DALC
     /// fields resolve to zero/disabled rather than throwing (mod-quirk rule).
@@ -259,7 +261,7 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
             return weights.blend(layer.sunrise, layer.day, layer.sunset, layer.night)
         }
         let fog = Self.resolveFog(weather.fog, weights: weights)
-        return ResolvedWeather(
+        var resolved = ResolvedWeather(
             skyUpper: color(.skyUpper),
             skyLower: color(.skyLower),
             horizon: color(.horizon),
@@ -283,6 +285,8 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
             precipitation: PrecipitationState(weather.data?.precipitation ?? .none),
             clouds: ResolvedCloudLayer.layers(of: weather.sky, weights: weights)
         )
+        resolved.moonGlare = color(.moonGlare)
+        return resolved
     }
 
     public static func blend(
@@ -295,7 +299,7 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
         func lerp(_ a: Float, _ b: Float) -> Float {
             a * (1 - time) + b * time
         }
-        return ResolvedWeather(
+        var blended = ResolvedWeather(
             skyUpper: mix(lhs.skyUpper, rhs.skyUpper),
             skyLower: mix(lhs.skyLower, rhs.skyLower),
             horizon: mix(lhs.horizon, rhs.horizon),
@@ -320,6 +324,8 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
             ),
             clouds: lhs.clouds.map { $0.fading(1 - time) } + rhs.clouds.map { $0.fading(time) }
         )
+        blended.moonGlare = mix(lhs.moonGlare, rhs.moonGlare)
+        return blended
     }
 
     /// Extra storm attenuation over the authored WTHR palette. Kept in the
@@ -332,6 +338,7 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
         result.horizon *= scale
         result.sun *= scale
         result.sunGlare *= scale
+        result.moonGlare *= scale
         for index in result.clouds.indices {
             result.clouds[index].color *= scale
         }
@@ -347,6 +354,7 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
         result.horizon *= scale
         result.sun *= scale
         result.sunGlare *= scale
+        result.moonGlare *= scale
         return result
     }
 

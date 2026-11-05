@@ -73,6 +73,18 @@ struct WeatherRuntimeTests {
         }
     }
 
+    @Test func moonGlareResolvesByHourAndBlends() throws {
+        let low = try #require(Self.store().weather(FormID(0x100)))
+        let high = try #require(Self.store().weather(FormID(0x200)))
+        let a = ResolvedWeather.resolve(low, hour: 0, timing: nil)
+        let b = ResolvedWeather.resolve(high, hour: 0, timing: nil)
+        #expect(abs(a.moonGlare.x - Float(0x40) / 255) < 1e-5)
+        #expect(ResolvedWeather.resolve(low, hour: 12, timing: nil).moonGlare == .zero)
+        let half = ResolvedWeather.blend(a, b, 0.5).moonGlare.x
+        #expect(abs(half - (a.moonGlare.x + b.moonGlare.x) / 2) < 1e-5)
+        #expect(a.applyingStormSkyDarkening().moonGlare == a.moonGlare)
+    }
+
     @Test func resolvedFogBlendsDayNight() throws {
         let weather = try #require(Self.store().weather(FormID(0x100)))
         let day = ResolvedWeather.resolve(weather, hour: 12, timing: nil)
@@ -356,6 +368,9 @@ extension WeatherRuntimeTests {
                 nam0.append(contentsOf: [skyUpperDay, skyUpperDay, skyUpperDay, 0]) // day
                 nam0.append(contentsOf: [0, 0, 0, 0]) // sunset
                 nam0.append(contentsOf: [0, 0, 0, 0]) // night
+            } else if index == 16 {
+                nam0.append(Data(count: 12))
+                nam0.append(contentsOf: [skyUpperDay, 0, 0, 0]) // moon glare, night
             } else {
                 nam0.append(Data(count: 16))
             }
