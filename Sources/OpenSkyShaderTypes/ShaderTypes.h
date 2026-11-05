@@ -124,6 +124,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// A static's directional material: the MATO diffuse and normal maps.
     TextureIndexProjectedDiffuse = 27,
     TextureIndexProjectedNormal = 28,
+    /// Cube faces of the shadow-casting point lights (depth2d_array, 6 slices a light).
+    /// The cascade array stands in until a shadow light builds it.
+    TextureIndexPointShadowMap = 29,
     /// A lit mesh binds NIF texture-set slot N at index N, over the terrain layer
     /// slots, which only terrain draws read. Every draw binds all of them.
     TextureIndexSurfaceNormal = 1,
@@ -165,6 +168,9 @@ typedef NS_ENUM(EnumBackingType, ShadowConstant)
     ShadowConstantFocusCount = 4,
     ShadowConstantPrecipitationSlice = 4,
     ShadowConstantAuxiliarySliceCount = 5,
+    /// Shadow-casting point lights drawn at once, each with 6 cube faces.
+    ShadowConstantPointLightCount = 4,
+    ShadowConstantPointFaceCount = 6,
 };
 
 typedef NS_ENUM(EnumBackingType, SamplerIndex)
@@ -483,6 +489,9 @@ typedef struct
     vector_float4 positionRadius;
     /// rgb radiance, w radial falloff exponent.
     vector_float4 colorFalloff;
+    /// x first slice of its cube at TextureIndexPointShadowMap, or -1 for none; y near
+    /// plane; z far plane; w receiver offset along the normal, in world units.
+    vector_float4 shadow;
 } PointLightUniform;
 
 /// Per-INSTANCE transforms for the static-mesh path, in a tightly packed

@@ -108,6 +108,13 @@ public final class Renderer: NSObject {
     public var focusShadowCount = 0
     /// This frame's focus views, for the frame uniforms.
     var focusShadows = FocusShadowFrame()
+    /// Cube shadows from shadow-casting point lights (`RendererPointShadows.swift`).
+    public var pointLightShadowsEnabled = true
+    /// The point light face array, built on first use.
+    var pointShadowMap: PointShadowResources?
+    var pointShadowUnavailable = false
+    /// This frame's shadow lights, for the point light uniforms.
+    var pointShadows = PointShadowFrame()
     /// Where `BSLODTriShape` meshes switch detail (`RendererMeshLOD.swift`).
     public var meshLODDistances = MeshLODDistances.off
     /// The game's shadow distance and map size (`RendererShadowSettings.swift`).

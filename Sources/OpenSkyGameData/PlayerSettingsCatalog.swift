@@ -204,6 +204,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         row("rendering.impactEffects", .opensky, .toggle, "Impact effects", 1, applied: true),
         row("rendering.screenBlood", .opensky, .toggle, "Screen blood", 1, applied: true),
         row("rendering.lightAnimation", .opensky, .toggle, "Flickering lights", 1, applied: true),
+        row("rendering.shadowLights", .opensky, .toggle, "Shadows from lights", 1, applied: true),
         row(
             "rendering.particleSorting", .opensky, .toggle, "Sort particles far to near", 1,
             applied: true
@@ -348,6 +349,8 @@ nonisolated extension PlayerSettingID {
     public static let screenBlood = Self("rendering.screenBlood")
     /// Placed lights flicker and pulse as their light records ask.
     public static let lightAnimation = Self("rendering.lightAnimation")
+    /// Shadow-casting placed lights, such as torches in a dungeon, cast cube shadows.
+    public static let shadowLights = Self("rendering.shadowLights")
     /// Blended particles and their systems draw far to near.
     public static let particleSorting = Self("rendering.particleSorting")
     /// The eye adapts to the scene brightness and the image space white point applies.

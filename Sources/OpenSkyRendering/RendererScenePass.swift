@@ -419,6 +419,10 @@ extension Renderer {
             (auxiliaryShadow?.map ?? shadow.map).gpuResourceID,
             index: TextureIndex.auxiliaryShadowMap.rawValue
         )
+        argumentTable.setTexture(
+            (pointShadowMap?.map ?? shadow.map).gpuResourceID,
+            index: TextureIndex.pointShadowMap.rawValue
+        )
         argumentTable.setSamplerState(
             shadow.sampler.gpuResourceID,
             index: SamplerIndex.shadowCompare.rawValue

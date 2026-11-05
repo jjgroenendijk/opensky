@@ -33,8 +33,7 @@ extension GraphicsPageViewController {
             interpolationUnsupportedReason ?? "Show a MetalFX frame between real frames"
         )
         checkbox(
-            rayTracedShadowsControl,
-            "RayTracedShadows",
+            rayTracedShadowsControl, "RayTracedShadows",
             "Trace one ray to the sun per pixel; needs an M3 or later"
         )
         checkbox(
@@ -42,8 +41,7 @@ extension GraphicsPageViewController {
             meshShaderUnsupportedReason ?? "Cull grass on the GPU with mesh shaders"
         )
         checkbox(
-            gpuCullingControl,
-            "GPUCulling",
+            gpuCullingControl, "GPUCulling",
             "Cull the static scene in a compute pass, not on the CPU"
         )
         checkbox(
@@ -68,6 +66,10 @@ extension GraphicsPageViewController {
         checkbox(
             lightAnimationControl, "LightAnimation",
             "Torches and fires flicker; some lights pulse"
+        )
+        checkbox(
+            shadowLightsControl, "ShadowLights",
+            "Shadow-casting lights, such as dungeon torches, cast shadows"
         )
         checkbox(
             particleSortingControl, "ParticleSorting",
@@ -203,7 +205,8 @@ extension GraphicsPageViewController {
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
             (impactEffectsControl, .impactEffects), (screenBloodControl, .screenBlood),
             (toneMappingControl, .toneMapping),
-            (lightAnimationControl, .lightAnimation), (particleSortingControl, .particleSorting),
+            (lightAnimationControl, .lightAnimation), (shadowLightsControl, .shadowLights),
+            (particleSortingControl, .particleSorting),
             (blinkingControl, .characterBlinking), (eyeMovementControl, .characterEyeMovement),
             (expressionsControl, .characterDialogueExpressions),
             (headTrackingControl, .characterHeadTracking),

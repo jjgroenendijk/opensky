@@ -60,6 +60,7 @@ extension Renderer {
         terrainNormalMapsEnabled = store.bool(.terrainNormalMaps)
         shadingTerms = SurfaceShadingSetting.terms(store: store)
         lightAnimationEnabled = store.bool(.lightAnimation)
+        pointLightShadowsEnabled = store.bool(.shadowLights)
         particleSortingEnabled = store.bool(.particleSorting)
         referenceFades = ReferenceFadeDistances(
             actors: store.value(.fadeActors), items: store.value(.fadeItems),

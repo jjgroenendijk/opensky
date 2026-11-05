@@ -24,24 +24,28 @@ extension Renderer {
         let pick = pointLightPick(near: position, limit: limit)
         let stride = MemoryLayout<PointLightUniform>.stride
         let first = (slot * drawUniformSlotCapacity + draw) * limit
-        let transient = transientPointLights.prefix(limit)
+        let transient = transientPointLights.prefix(limit).map { (light: $0, index: Int?.none) }
         let scenePicks = (0 ..< min(pick.count, limit - transient.count)).map {
-            scene.pointLights[Int(pick.indices[$0])]
+            let index = Int(pick.indices[$0])
+            return (light: scene.pointLights[index], index: Int?.some(index))
         }
-        let picked = Array(transient) + scenePicks
-        let ordered = picked.filter { !$0.castsShadows } + picked.filter(\.castsShadows)
-        for (index, light) in ordered.enumerated() {
+        let picked = transient + scenePicks
+        let ordered = picked.filter { !$0.light.castsShadows }
+            + picked.filter(\.light.castsShadows)
+        for (index, entry) in ordered.enumerated() {
+            let light = entry.light
             let live = light.animated(at: animationTime, enabled: lightAnimationEnabled)
             var uniform = PointLightUniform(
                 positionRadius: SIMD4(live.position, light.radius),
-                colorFalloff: SIMD4(live.color, light.falloffExponent)
+                colorFalloff: SIMD4(live.color, light.falloffExponent),
+                shadow: pointShadows.uniform(sceneIndex: entry.index, radius: light.radius)
             )
             pointLightBuffer.contents().advanced(by: (first + index) * stride)
                 .copyMemory(from: &uniform, byteCount: MemoryLayout<PointLightUniform>.size)
         }
         return PointLightRange(
             count: ordered.count,
-            unshadowedCount: ordered.count { !$0.castsShadows },
+            unshadowedCount: ordered.count { !$0.light.castsShadows },
             byteOffset: first * stride
         )
     }

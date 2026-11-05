@@ -209,6 +209,7 @@ struct LitInput
     float2 uv;
     float shadow;
     uint terms;
+    PointShadows pointShadows;
 };
 
 // The emissive colour, or the reference's emittance on an external-emittance shape.
@@ -257,7 +258,9 @@ static float3 litSurface(
                               draw.lightingEffects.x, draw.lightingEffects.y};
     LightSums sums = {0.0, 0.0, 0.0, 0.0, 0.0};
     addLight(sums, geometry, -frame.sunDirection, frame.sunColor * input.shadow, terms);
-    addPointLights(sums, geometry, in.worldPosition, pointLights, draw.pointLightCount, terms);
+    addPointLights(
+        sums, geometry, in.worldPosition, pointLights, draw.pointLightCount, terms,
+        input.pointShadows);
     if (hasTerm(terms, ShadingTermHairSoftLighting)) {
         // nif.xml: keeps hair from going too bright under lights.
         sums.diffuse = min(sums.diffuse, 1.0);
@@ -355,6 +358,7 @@ fragment float4 staticMeshFragment(
     texture2d<float> sceneColour [[texture(TextureIndexSceneColor)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
+    depth2d_array<float> pointShadowMap [[texture(TextureIndexPointShadowMap)]],
     depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
@@ -472,7 +476,13 @@ fragment float4 staticMeshFragment(
     } else if (hasTerm(terms, ShadingTermTintColor)) {
         albedo *= linearVertexColour(draw.tintColor.rgb, frame);
     }
-    LitInput input = {albedo, toEye, tangentFrame[1], uv, shadow, terms};
+    PointShadows pointShadows =
+        draw.receivesShadows != 0
+            ? pointShadowsAt(
+                  in.worldPosition, normalize(in.normal), pointLights, draw.pointLightCount,
+                  pointShadowMap, shadowSampler)
+            : pointShadowsLit;
+    LitInput input = {albedo, toEye, tangentFrame[1], uv, shadow, terms, pointShadows};
     float3 lit = litSurface(in, input, normal, frame, draw, pointLights, maps, trilinear);
     lit += reflectionLit ? 0.0 : reflected;
     return blendOutput(lit, alpha, in.worldPosition, frame, draw);

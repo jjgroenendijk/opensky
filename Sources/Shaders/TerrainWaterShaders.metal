@@ -93,6 +93,7 @@ fragment float4 terrainFragment(
     [[texture(TextureIndexTerrainLayerNormal0)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
+    depth2d_array<float> pointShadowMap [[texture(TextureIndexPointShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
     raytracing::instance_acceleration_structure rayScene
@@ -138,7 +139,11 @@ fragment float4 terrainFragment(
     }
     float3 illumination =
         frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame) +
-        pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
+        pointLighting(
+            in.worldPosition, normal, pointLights, draw.pointLightCount,
+            pointShadowsAt(
+                in.worldPosition, normalize(in.normal), pointLights, draw.pointLightCount,
+                pointShadowMap, shadowSampler));
     float3 lit = albedo * linearVertexColour(in.color.rgb, frame) * illumination;
     if (snow > 0.0) {
         lit += terrainSnowSheen(in.worldPosition, normal, frame) * (shadow * snow);

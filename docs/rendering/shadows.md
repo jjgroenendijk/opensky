@@ -2,8 +2,8 @@
 type: Subsystem
 title: Cascaded sun shadows
 description: The depth-only cascade pre-pass - cascade fitting and texel snapping, the clamp to
-  resident casters, per-cascade caster culling, the hazard barrier, PCF sampling of the sun term
-  only, quality levels, and the fly-path budget.
+  resident casters, per-cascade caster culling, the hazard barrier, PCF sampling of the sun term,
+  quality levels, point light cube shadows, and the fly-path budget.
 tags: [rendering, metal, shadows, engine]
 ---
 
@@ -97,6 +97,29 @@ The shader takes the darker of the cascade result and every focus map that cover
 ground near it, stay sharp where the cascade is coarse. The focus views draw only while the sun
 cascades draw.
 
+## Point light shadows
+
+A `LIGH` record with the shadow hemisphere, shadow omnidirectional, or shadow spotlight
+type ([CK wiki "Light"](https://ck.uesp.net/wiki/Light)) casts shadows. Each frame the 4
+shadow lights nearest the camera each get a cube: six 90-degree depth views of 512 by 512
+in one depth array. The distance of a light is measured to its sphere, so a light whose
+radius holds the camera counts as 0; a light more than 4,096 units outside its sphere is
+skipped. The cubes draw only while shadows are on.
+
+- Faces run +X, -X, +Y, -Y with Z up, then +Z, -Z with Y up. A face looks along its axis.
+  Its right vector is `cross(forward, up)`. The near plane is 8 units from the light, and
+  the far plane is the light's radius.
+- Casters are the same as for the sun: opaque and alpha-test groups, skinned ones, and
+  terrain. They go through the auxiliary rings, culled by each face's frustum.
+- The scene shader takes the face whose axis is the largest part of the offset from the
+  light, and compares one bilinear depth sample. The receiver first moves 2 units along its
+  normal against acne. The factor scales only that light's term, on meshes and terrain.
+
+All three shadow types draw as a full cube: a spotlight's cone and a hemisphere's half are
+not cut. The reference's `XLIG` shadow depth bias is read but not used. The launcher's
+graphics page holds the "Shadows from lights" switch, and `openskycli game debug shadows`
+reads how many lights drew a cube in `shadowLights`.
+
 ## Choosing the quality
 
 A new renderer starts at high. `openskycli game debug shadows <off|low|high>` changes the tier
@@ -111,4 +134,4 @@ second frame (33.33 ms) with some room over measured Whiterun runs. The benchmar
 
 ## Not done
 
-- Shadows from interior point lights.
+- A shadow spotlight's cone and a shadow hemisphere's half-space; both draw a full cube.
