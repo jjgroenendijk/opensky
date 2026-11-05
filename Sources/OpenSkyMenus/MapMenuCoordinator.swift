@@ -27,6 +27,8 @@ public protocol MapMenuWorld: AnyObject {
     var localMapFog: LocalMapFogState { get set }
     func showNotification(_ text: String)
     func showWorldNotice(_ notice: WorldNotice)
+    /// Plays the discovery music for a marker of `TNAM` type `markerType`.
+    func playDiscoveryMusic(markerType: UInt8)
     /// Counts one misc stat for the journal's Stats page.
     func incrementStat(_ name: String)
     var fastTravelContext: FastTravelContext { get }
@@ -112,7 +114,11 @@ public final class MapMenuCoordinator {
                 let site = sites.first(where: { $0.key == key })
             else { continue }
             world.storeMarkerState(site.state, for: key)
-            world.showWorldNotice(.locationDiscovered(name: name))
+            // A marker without a name is found quietly: no notice and no music.
+            if !name.isEmpty {
+                world.showWorldNotice(.locationDiscovered(name: name))
+                world.playDiscoveryMusic(markerType: site.iconType)
+            }
             world.incrementStat("Locations Discovered")
             discoveredCount += 1
         }

@@ -107,6 +107,30 @@ and does not loop. When the track ends, the music it interrupted comes back. A c
 the moment changes only what comes back. Combat cuts the moment short and later returns to what
 the moment interrupted. During combat, a special moment does not start.
 
+### Discovery music
+
+When the player discovers a map marker with a name, the game plays a discovery music type as a
+special moment. The marker's `TNAM` type alone picks it, found by editor ID; the location's
+keywords play no part:
+
+| Marker type | `MUSC` |
+| --- | --- |
+| 1 (city) | `MUSDiscoveryCity` |
+| 2 (town) | `MUSDiscoveryTown` |
+| 4, 7, 8, 12, 15 (cave, Nordic ruin, Dwemer ruin, dragon lair, mine) | `MUSDiscoveryDungeon` |
+| Any other | `MUSDiscoveryGeneric` |
+
+The hold capitals use their own marker types (36 to 52), so Whiterun, Solitude, Falkreath, and
+the others play the generic music. A marker without a name is discovered quietly. Combat music
+blocks it. `MUSDiscoveryHighHrothgar` is not picked by this rule.
+
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06. The
+reference game agreed on 2026-11-06: after `tmm 0`, the bridge's `marker` line moved the player
+to each marker, and its `music` state showed Town for Riverwood, Rorikstead, Ivarstead, and
+Dragon Bridge (type 2); Dungeon for Bleak Falls Barrow (7), Mzinchaleft (8), and Embershard
+Mine (15); and Generic for the capitals, Fort Greymoor (6), Pinewatch (30), and High Hrothgar
+(`.logs/issue-1793-discovery*.txt`, local only).
+
 ## Playlists
 
 The winning `MUSC` gives an ordered list of playable tracks.

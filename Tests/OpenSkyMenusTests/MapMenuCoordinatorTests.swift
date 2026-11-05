@@ -26,6 +26,7 @@ final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
     var notifications: [String] = []
     var notices: [WorldNotice] = []
     var stats: [String] = []
+    var discoveryMusic: [UInt8] = []
     var shownMarkers: [SIMD3<Float>] = []
     var travelled: [String] = []
     var mapWorldspaceName: String? = "Tamriel"
@@ -86,6 +87,10 @@ final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
         stats.append(name)
     }
 
+    func playDiscoveryMusic(markerType: UInt8) {
+        discoveryMusic.append(markerType)
+    }
+
     func showQuestMarkers(_ positions: [SIMD3<Float>]) {
         shownMarkers = positions
     }
@@ -144,6 +149,21 @@ struct MapMenuCoordinatorTests {
         #expect(world.localMapFog.exploredCount(.exterior(CellCoordinate(x: 0, y: 0))) > 0)
         menu.tick()
         #expect(world.notices.count == 1, "no repeat before the player moves")
+    }
+
+    @Test @MainActor
+    func aNamedDiscoveryPlaysItsMarkerTypesMusicAndANamelessOneIsQuiet() {
+        let town = MapMarkerSite(
+            key: Self.key(1), name: "Riverwood", position: .zero, state: Self.hidden, iconType: 2
+        )
+        let nameless = MapMarkerSite(
+            key: Self.key(2), name: "", position: .zero, state: Self.hidden, iconType: 7
+        )
+        let world = FakeMapWorld(sites: [town, nameless])
+        MapMenuCoordinator(menuMode: MenuModeController(), world: world).tick()
+        #expect(world.discoveryMusic == [2])
+        #expect(world.notices == [.locationDiscovered(name: "Riverwood")])
+        #expect(world.sites[1].state.isDiscovered)
     }
 
     @Test @MainActor
