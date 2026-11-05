@@ -27,6 +27,12 @@ public protocol MessageWorld: SWFLayerWorld {
     func messageKey(editorID: String) -> ReferenceKey?
     /// Receives keys while a box is open.
     var menuInputConsumer: (any MenuInputConsumer)? { get }
+    /// A notice the HUD showed, for what goes with it, such as the cleared-dungeon music.
+    func worldNoticeShown(_ notice: WorldNotice)
+}
+
+extension MessageWorld {
+    public func worldNoticeShown(_: WorldNotice) {}
 }
 
 public final class MessageCoordinator {
@@ -248,6 +254,7 @@ extension MessageCoordinator: PapyrusPresenting {
     @discardableResult
     public func postWorldNotice(_ notice: WorldNotice) -> Bool {
         let texts = world?.worldNoticeTexts ?? .vanilla
+        world?.worldNoticeShown(notice)
         switch WorldNoticeShape(notice, texts: texts) {
         case let .big(big):
             guard let hud else { return false }

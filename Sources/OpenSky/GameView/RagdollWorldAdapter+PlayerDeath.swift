@@ -1,12 +1,14 @@
 // The app side of the player's death: the messages, the reload of the newest save,
 // and the choice when there is none (docs/engine/ragdoll.md#player-death).
 
+import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 
 extension RagdollWorldAdapter {
     func advancePlayerDeath(delta: Float) {
@@ -44,6 +46,7 @@ extension RagdollWorldAdapter {
             }
         case .die:
             _ = game.scripts.bridge?.stopActorCombat(.player)
+            game.audio.musicDirector?.playSpecialMusic(.death)
             game.hud.showNotification(deathTexts[.reloading])
         case .reloadNewestSave:
             reloadNewestSave()

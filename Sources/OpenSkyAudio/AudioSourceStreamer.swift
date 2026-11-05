@@ -22,6 +22,8 @@ nonisolated public final class AudioSourceStreamer: Sendable {
         var chunksInFlight = 0
         var drained = false
         var stopped = false
+        /// A released loop plays to the end of its pass, then ends.
+        var released = false
         /// A looping pass that decoded nothing ends instead of rewinding, so an
         /// unusable file never spins the decode queue.
         var passProducedSamples = false
@@ -76,6 +78,13 @@ nonisolated public final class AudioSourceStreamer: Sendable {
             if !started {
                 markFinished()
             }
+        }
+    }
+
+    /// Lets a looping stream finish the pass it is in instead of rewinding.
+    public func requestRelease() {
+        queue.async { [self] in
+            state.withLock { $0.released = true }
         }
     }
 
@@ -153,7 +162,7 @@ nonisolated public final class AudioSourceStreamer: Sendable {
     private func rewindOrDrain(_ decode: inout DecodeState, decoder: WMADecoder) {
         guard
             Self.shouldRewind(
-                loops: loops,
+                loops: loops && !decode.released,
                 passProducedSamples: decode.passProducedSamples,
                 stopped: decode.stopped
             )

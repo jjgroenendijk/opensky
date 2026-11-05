@@ -3,6 +3,7 @@
 // The rules live in the coordinator. See docs/engine/messages.md.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyCamera
 import OpenSkyCells
 import OpenSkyConditions
@@ -22,6 +23,7 @@ import OpenSkyWorldState
 /// What `MessageWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MessageWorldHost: MenuInputConsumer {
+    var audio: AudioCoordinator { get }
     var cinematicCamera: CinematicCameraCoordinator { get }
     var cinematicWorld: CinematicCameraWorldAdapter { get }
     var hud: HUDCoordinator { get }
@@ -126,6 +128,12 @@ extension MessageWorldAdapter: MessageWorld {
 
     var worldNoticeTexts: GameSettingTexts<WorldNoticeText> {
         game.mapWorld.settingTexts()
+    }
+
+    func worldNoticeShown(_ notice: WorldNotice) {
+        if case .locationCleared = notice {
+            game.audio.musicDirector?.playSpecialMusic(.dungeonCleared)
+        }
     }
 
     func setHUDHelpMessage(_ text: String?) {

@@ -55,8 +55,9 @@ or an object's placed position. A source that is not loaded does nothing.
 | Event | Payload | Action |
 | --- | --- | --- |
 | `SoundPlay` | `SNDR` editor ID | Plays the sound at the source |
-| `SoundPlayAt` | `SNDR` editor ID, then a node name | Plays the sound at the source |
-| `SoundStop`, `SoundRelease` | `SNDR` editor ID, maybe a node name | Ends that source's loop of the sound |
+| `SoundPlayAt` | `SNDR` editor ID, then a node name | Plays the sound at that bone of the source |
+| `SoundStop` | `SNDR` editor ID, maybe a node name | Ends that source's loop of the sound |
+| `SoundRelease` | `SNDR` editor ID, maybe a node name | Lets that loop finish its current pass, then end |
 | `CameraShake` | Strength, such as `0.3` | Shakes the camera; a far source shakes it less |
 | `HeadTrackingOn`, `HeadTrackingOff` | none | Lets the head turn, or holds it forward |
 | `FlightLandingEffect`, `FlightForcefulLandStart`, `FlightCrashLand*` | none | Dust and touchdown of a landing dragon ([dragon flight](/engine/dragon-flight.md#clip-events)) |
@@ -147,10 +148,9 @@ where the body faces, until `HeadTrackingOn`.
 
 ## Where OpenSky differs
 
-- `SoundPlayAt` plays at the source, not at the named node, because the object graphs do not
-  give node positions to the audio code.
-- `SoundRelease` stops the loop at once. The game lets the loop end at its next cycle; OpenSky
-  has no release stage.
+- `SoundPlayAt` plays at the named bone of the player and of NPCs. An object graph does not
+  give its node positions yet, so an object's sound plays where the object stands. A source
+  without the named bone also plays where it stands.
 - `CameraShake` lasts `CameraShake.defaultDuration`. The payload gives only the strength, and no
   setting gives the length ([kill cam](/engine/kill-cam.md#camera-shake)).
 

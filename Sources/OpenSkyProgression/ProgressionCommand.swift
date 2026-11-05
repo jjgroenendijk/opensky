@@ -7,4 +7,6 @@ nonisolated public enum ProgressionCommand: Equatable, Sendable {
     case showNotification(String)
     /// Adds one to a misc stat, such as "Training Sessions".
     case incrementStat(String)
+    /// The level-up music sting (`DOBJ` `LUMS`), with the level-up notice.
+    case playLevelUpMusic
 }

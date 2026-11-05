@@ -260,6 +260,7 @@ public final class ProgressionCoordinator {
         }
         if report.levelsReady > announcedLevelsReady {
             pendingCommands.append(.showNotification(texts.levelUpAvailable))
+            pendingCommands.append(.playLevelUpMusic)
         }
         announcedLevelsReady = report.levelsReady
     }

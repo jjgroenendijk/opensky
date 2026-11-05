@@ -51,10 +51,16 @@ install with a field census.
 | `SOPM` value | OpenSky playback |
 | --- | --- |
 | Type 0 (HRTF) | 3D source on the environment node |
-| Type 1 (speaker output) | Flat source on the category submix. The speaker matrix is not used |
+| Type 1 (speaker output) | Flat source on the category submix, with the speaker matrix folded to two speakers |
 | No model, or no type | Mono plays in 3D, wider files play flat |
 | Flag 0x01 | The `ANAM` curve sets the gain: five points spread evenly from the minimum to the maximum distance, linear between them, full gain inside the minimum |
 | Reverb send percent | The source's reverb blend, 0 to 1 |
+
+OpenSky plays on two speakers. The mono row of `ONAM` sets the level of each ear: the front
+left and right speakers count fully, and the centre and the four surround speakers add at
+-3 dB (0.707) to their side; the LFE is dropped. The louder ear sets the gain, and the
+difference sets the balance. So `SOMUIDefault`, which sends mono only to the centre, plays at
+0.707 in both ears, and `SOMStereo` plays at full gain, centred.
 
 Type 1 sounds on the install still set flag 0x01, so a flat sound can still fade with
 distance. A curve source in 3D is placed at the reference distance in its true direction, so

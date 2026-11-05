@@ -26,6 +26,7 @@ import OpenSkyWorldState
 /// What `ProgressionWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol ProgressionWorldHost: AnyObject {
+    var audio: AudioCoordinator { get }
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var combat: CombatCoordinator { get }

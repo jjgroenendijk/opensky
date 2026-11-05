@@ -150,6 +150,8 @@ the detail and the sources it did find.
 | Notification timing | Limit of 3 at once | [messages](/engine/messages.md) |
 | Movie track, colour matrix, skip keys | First track; BT.601; not confirmed | [movies](/engine/movies.md) |
 | Custom marker aim and questions | 5% of the map camera height; the question order | [world map](/engine/world-map.md#custom-marker) |
+| Speaker matrix on two speakers | Centre and surrounds add at -3 dB, LFE dropped, the mono row only | [sound output](/formats/sound-output-reverb.md#output-model-mapping) |
+| Special music triggers | Level up with the notice, cleared with the notice, death when the player dies | [music](/engine/music.md#special-music) |
 
 ## Rendering
 

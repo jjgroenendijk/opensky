@@ -12,10 +12,14 @@ import simd
 public protocol AnimationEventWorld: AnyObject {
     /// Where `source` stands. Nil when it is not loaded.
     func animationEventPosition(of source: ReferenceKey) -> SIMD3<Float>?
+    /// Where the posed bone or node `node` of `source` is now. Nil when it has no such bone.
+    func animationEventPosition(of source: ReferenceKey, node: String) -> SIMD3<Float>?
     /// False when no `SNDR` has the editor ID.
     func playAnimationSound(editorID: String, source: ReferenceKey, at position: SIMD3<Float>)
         -> Bool
     func stopAnimationSound(editorID: String, source: ReferenceKey)
+    /// Lets the loop finish its current pass, then end.
+    func releaseAnimationSound(editorID: String, source: ReferenceKey)
     /// A far source shakes the camera less.
     func shakeCamera(from position: SIMD3<Float>, strength: Float)
     func setHeadTracking(_ enabled: Bool, for actor: ReferenceKey)
@@ -23,6 +27,16 @@ public protocol AnimationEventWorld: AnyObject {
     func sendScriptAnimationEvent(_ name: String, from source: ReferenceKey)
     /// Sends `name` to the behaviour graphs of the effects on `source`.
     func sendEffectGraphEvent(_ name: String, from source: ReferenceKey)
+}
+
+extension AnimationEventWorld {
+    public func animationEventPosition(of _: ReferenceKey, node _: String) -> SIMD3<Float>? {
+        nil
+    }
+
+    public func releaseAnimationSound(editorID: String, source: ReferenceKey) {
+        stopAnimationSound(editorID: editorID, source: source)
+    }
 }
 
 public final class AnimationEventCoordinator {
@@ -53,13 +67,18 @@ public final class AnimationEventCoordinator {
             return nil
         }
         switch action {
-        case let .playSound(editorID, _):
-            guard let position = world.animationEventPosition(of: source) else { return nil }
+        case let .playSound(editorID, node):
+            // `SoundPlayAt` names a bone; a source without it plays at its feet.
+            let atNode = node.flatMap { world.animationEventPosition(of: source, node: $0) }
+            guard let position = atNode ?? world.animationEventPosition(of: source)
+            else { return nil }
             if !world.playAnimationSound(editorID: editorID, source: source, at: position) {
                 missingSounds.insert(editorID)
             }
         case let .stopSound(editorID):
             world.stopAnimationSound(editorID: editorID, source: source)
+        case let .releaseSound(editorID):
+            world.releaseAnimationSound(editorID: editorID, source: source)
         case let .cameraShake(strength):
             guard let position = world.animationEventPosition(of: source) else { return nil }
             world.shakeCamera(from: position, strength: strength)
@@ -82,6 +101,7 @@ public final class AnimationEventCoordinator {
         switch action {
         case .playSound: "sound play"
         case .stopSound: "sound stop"
+        case .releaseSound: "sound release"
         case .cameraShake: "camera shake"
         case .headTracking: "head tracking"
         case .raiseEvent: "script event"

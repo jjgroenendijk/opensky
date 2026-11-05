@@ -20,6 +20,8 @@ nonisolated public struct ResolvedMusicType: Sendable {
 nonisolated public final class MusicRecordStore {
     public let musicTypes: [UInt32: MusicType]
     public let musicTracks: [UInt32: MusicTrack]
+    /// The `MUSC` each special moment plays, from the default objects.
+    public let specialMusic: [SpecialMusic: FormID]
     public let skippedRecords: SkippedRecords
 
     public convenience init(file: ESMFile) {
@@ -33,6 +35,7 @@ nonisolated public final class MusicRecordStore {
         musicTracks = loadOrder.indexRecords(of: "MUST", skipped: &skipped) {
             try MusicTrack(record: $0)
         }
+        specialMusic = SpecialMusic.types(in: loadOrder, skipped: &skipped)
         skippedRecords = skipped
     }
 

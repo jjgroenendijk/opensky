@@ -23,6 +23,7 @@ protocol AnimationEventWorldHost: AnyObject {
     var idleWorld: IdleWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
+    func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
 }
 
 final class AnimationEventWorldAdapter {
@@ -73,6 +74,10 @@ extension AnimationEventWorldAdapter: AnimationEventWorld {
 
     func stopAnimationSound(editorID: String, source: ReferenceKey) {
         game.gameSession?.soundDirector?.stopAnimationSound(editorID: editorID, source: source)
+    }
+
+    func releaseAnimationSound(editorID: String, source: ReferenceKey) {
+        game.gameSession?.soundDirector?.releaseAnimationSound(editorID: editorID, source: source)
     }
 
     func shakeCamera(from position: SIMD3<Float>, strength: Float) {

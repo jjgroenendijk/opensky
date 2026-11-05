@@ -86,7 +86,8 @@ public final class ActiveAudioSource {
         let position = located ? request.worldPosition : .zero
         worldPosition = position
         cell = CellCoordinate(containing: position)
-        gain = request.gain
+        let speakers = routing == .nonPositional ? request.outputModel?.speakers : nil
+        gain = request.gain * (speakers?.gain ?? 1)
         loops = request.loops
         self.node = node
         self.streamer = streamer
@@ -327,6 +328,36 @@ extension WorldAudioEngine {
         return true
     }
 
+    /// Lets a looping source finish its current pass, then end like a one-shot. A
+    /// source that does not loop plays on. False when no source has the id.
+    @discardableResult
+    public func releaseSource(id: Int) -> Bool {
+        guard let source = sources.first(where: { $0.id == id }) else { return false }
+        guard source.loops else { return true }
+        if let streamer = source.streamer {
+            streamer.requestRelease()
+            return true
+        }
+        // A silent frame that interrupts at the loop point ends the loop there.
+        let format = source.node.outputFormat(forBus: 0)
+        guard let silence = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1) else {
+            stop(source)
+            return true
+        }
+        silence.frameLength = 1
+        if let channels = silence.floatChannelData {
+            for channel in 0 ..< Int(format.channelCount) {
+                channels[channel][0] = 0
+            }
+        }
+        source.node.scheduleBuffer(silence, at: nil, options: .interruptsAtLoop) {
+            Task { @MainActor in
+                source.bufferFinished = true
+            }
+        }
+        return true
+    }
+
     /// Detaches sources whose stream completed; called from the audio tick.
     /// `onSourceFinished` fires only here, so it means "played to the end", not
     /// stopped or evicted. Dialogue subtitles rely on that.
@@ -415,7 +446,9 @@ extension WorldAudioEngine {
         engine.attach(node)
         engine.connect(node, to: mixer, format: format)
         // Category volume is the submix's job on this path; see applyVolume.
-        node.volume = request.gain
+        let speakers = request.outputModel?.speakers
+        node.volume = request.gain * (speakers?.gain ?? 1)
+        node.pan = speakers?.pan ?? 0
         return node
     }
 

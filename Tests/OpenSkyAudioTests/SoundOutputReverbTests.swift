@@ -131,4 +131,24 @@ struct SoundOutputReverbTests {
         #expect(text.contains("Record: DungeonHall, decay 2500 ms, room -6 dB, reverb 10 dB"))
         #expect(text.contains("Maps to: mediumHall, wet 4.0 dB"))
     }
+
+    @Test func aSpeakerMatrixFoldsToTwoSpeakers() throws {
+        let surround: [UInt8] = [100, 0, 0, 0, 100, 0, 100, 0]
+        let right: [UInt8] = [0, 100, 0, 0, 0, 100, 0, 100]
+        let centre = try #require(SpeakerFold(matrix: [
+            [0, 0, 100, 0, 0, 0, 0, 0],
+            surround,
+            right
+        ]))
+        #expect(abs(centre.gain - Float(0.5).squareRoot()) < 1e-5)
+        #expect(centre.pan == 0)
+        let leftOnly = try #require(SpeakerFold(matrix: [
+            [80, 0, 0, 0, 0, 0, 0, 0],
+            surround,
+            right
+        ]))
+        #expect(abs(leftOnly.gain - 0.8) < 1e-5)
+        #expect(leftOnly.pan == -1)
+        #expect(SpeakerFold(matrix: []) == nil)
+    }
 }

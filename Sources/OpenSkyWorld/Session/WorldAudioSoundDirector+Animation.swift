@@ -64,6 +64,15 @@ extension WorldAudioSoundDirector {
         stopAnimationLoop(AnimationSoundKey(source: source, editorID: editorID.lowercased()))
     }
 
+    /// Lets the loop of `editorID` that `source` started finish its pass, then end.
+    public func releaseAnimationSound(editorID: String, source: ReferenceKey) {
+        let key = AnimationSoundKey(source: source, editorID: editorID.lowercased())
+        animationLoopTokens[key] = nil
+        if let sourceID = animationLoopSourceIDs.removeValue(forKey: key) {
+            engine.releaseSource(id: sourceID)
+        }
+    }
+
     /// How many animation loops play, for the readout and tests.
     public var animationLoopCount: Int {
         animationLoopSourceIDs.count

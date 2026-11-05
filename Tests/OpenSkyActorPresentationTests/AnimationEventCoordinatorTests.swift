@@ -15,6 +15,8 @@ private struct PlayedSound {
 @MainActor
 private final class FakeAnimationEventWorld: AnimationEventWorld {
     var positions: [ReferenceKey: SIMD3<Float>] = [:]
+    var nodes: [String: SIMD3<Float>] = [:]
+    var released: [(String, ReferenceKey)] = []
     var knownSounds: Set<String> = []
     var played: [PlayedSound] = []
     var stopped: [(String, ReferenceKey)] = []
@@ -34,8 +36,16 @@ private final class FakeAnimationEventWorld: AnimationEventWorld {
         return knownSounds.contains(editorID)
     }
 
+    func animationEventPosition(of _: ReferenceKey, node: String) -> SIMD3<Float>? {
+        nodes[node]
+    }
+
     func stopAnimationSound(editorID: String, source: ReferenceKey) {
         stopped.append((editorID, source))
+    }
+
+    func releaseAnimationSound(editorID: String, source: ReferenceKey) {
+        released.append((editorID, source))
     }
 
     func shakeCamera(from position: SIMD3<Float>, strength: Float) {
@@ -73,6 +83,21 @@ struct AnimationEventCoordinatorTests {
         coordinator.handle("SoundPlay.TestClap", from: actor, reachesEffectGraphs: false)
         #expect(world.effectGraphEvents.map(\.0) == ["MLh_SpellFire_Event"])
         #expect(world.effectGraphEvents.first?.1 == actor)
+    }
+
+    @Test func soundPlayAtPlaysAtTheNamedNodeElseAtTheSource() {
+        let (coordinator, world) = make()
+        world.nodes = ["NPC Head [Head]": SIMD3(1, 2, 120)]
+        coordinator.handle("SoundPlayAt.TestClap.NPC Head [Head]", from: actor)
+        coordinator.handle("SoundPlayAt.TestClap.NoSuchNode", from: actor)
+        #expect(world.played.map(\.position) == [SIMD3(1, 2, 120), SIMD3(1, 2, 3)])
+    }
+
+    @Test func releaseLetsTheLoopFinish() {
+        let (coordinator, world) = make()
+        coordinator.handle("SoundRelease.TestLoop", from: actor)
+        #expect(world.released.map(\.0) == ["TestLoop"])
+        #expect(world.stopped.isEmpty)
     }
 
     @Test func aSoundPlaysWhereTheSourceStands() {
