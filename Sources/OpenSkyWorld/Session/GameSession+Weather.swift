@@ -144,14 +144,19 @@ extension GameSession {
         } else {
             .fallback
         }
-        let context: ImageSpaceContext = if let interior = links.interior {
+        let underwater = renderer.cameraWaterImageSpace
+        let context: ImageSpaceContext = if let underwater {
+            .underwater(imageSpace: underwater)
+        } else if let interior = links.interior {
             .interior(cellImageSpace: interior.imageSpace)
         } else if weatherEnabled, let weather {
             weather.imageSpaceContext(hour: timeOfDay)
         } else {
             .none
         }
-        let plugin = links.interior?.plugin ?? links.weatherPlugin
+        let plugin = underwater == nil
+            ? links.interior?.plugin ?? links.weatherPlugin
+            : links.weatherPlugin
         imageSpace.baseline = BaselineImageSpaceResolver.resolve(context) {
             links.resolve($0, plugin: plugin)
         }

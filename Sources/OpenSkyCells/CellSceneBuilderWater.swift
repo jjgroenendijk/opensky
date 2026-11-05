@@ -208,12 +208,14 @@ nonisolated extension CellSceneBuilder {
             let water = waterTypeIndexBuildingIfNeeded()[formID.rawValue],
             let colors = water.colors
         else { return .fallback }
-        return WaterLook(
+        var look = WaterLook(
             shallowColor: colors.shallow,
             deepColor: colors.deep,
             reflectionColor: colors.reflection,
             shading: water.surface.map { Self.shading($0, details: water.details) } ?? .standard
         )
+        look.underwaterImageSpace = water.details.imageSpace
+        return look
     }
 
     nonisolated private static func shading(

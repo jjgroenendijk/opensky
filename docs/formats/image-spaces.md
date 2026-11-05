@@ -85,6 +85,9 @@ count differs from the header is tallied.
 
 The baseline image space comes from the place the camera is in:
 
+- A camera under water uses the water type's `WATR` `INAM` image space, which the
+  [Creation Kit](https://ck.uesp.net/wiki/WaterType#imagespace-modifier) describes as
+  "applied when the player is under the water". It replaces the cell's and the weather's.
 - An interior cell uses its own `XCIM` image space. A cell without one is neutral.
 - An exterior uses `WTHR IMSP`: four image spaces, one per time of day (sunrise, day,
   sunset, night). OpenSky blends them by the time-of-day weights the sky colors use, and

@@ -1,6 +1,7 @@
 // How a water surface moves and catches light. The cell builder fills it from
 // WATR DNAM (docs/formats/water.md); the water fragment reads it.
 
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct WaterShading: Equatable, Sendable {
@@ -74,6 +75,8 @@ nonisolated public struct WaterLook: Equatable, Sendable {
     public var deepColor: SIMD3<Float>
     public var reflectionColor: SIMD3<Float>
     public var shading: WaterShading
+    /// `INAM`: the image space while the camera is under this water, in load-order space.
+    public var underwaterImageSpace: FormID?
 
     public init(
         shallowColor: SIMD3<Float>, deepColor: SIMD3<Float>, reflectionColor: SIMD3<Float>,

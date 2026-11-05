@@ -88,7 +88,9 @@ random place and time, if a random draw is below the rain intensity. A drop's ri
 
 When the camera is inside a water item's bounds and below its top, the frame fog becomes the
 water's under-water fog: the `DNAM` near and far planes, the fog amount as the maximum, and
-the deep colour.
+the deep colour. The water's `INAM` image space becomes the frame's baseline image space
+([image spaces](/formats/image-spaces.md#resolution)). In vanilla, `Update.esm` gives almost
+every water one shared image space, and the Dawnguard and Dragonborn waters their own.
 
 ## Screen-space reflections
 
@@ -120,4 +122,5 @@ water depth switch off, nothing is copied and the reflection stays a colour.
   use OpenSky's own sizes, because the `DNAM` rain simulator is unused
   ([water format](/formats/water.md#watr-colors-and-surface)).
 - The refraction unit, the ring shape, and the under-water fog colour are OpenSky's readings.
-  The `WATR` `INAM` under-water image space is not applied.
+- The under-water image space replaces the cell's or the weather's at once when the camera
+  crosses the surface. Whether the game blends between the two is not known.
