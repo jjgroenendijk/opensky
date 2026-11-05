@@ -6,6 +6,7 @@ import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyObjectAnimation
 import OpenSkyPhysics
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -249,10 +250,18 @@ nonisolated extension CellSceneBuilder {
         var instances = instances + addOnInstances(for: instances)
         let vehicles = animatedVehicles(&instances, followers: geometry.vehicleFollowers)
         let doors = animatedDoors(&instances)
-        let nodes = animatedNodes(&instances)
+        var nodes = animatedNodes(&instances)
         let objects = animatedObjects(instances)
         let actors = geometry.actors
-        let particles = makeParticlePlaybacks(instances: instances)
+        let particlesByReference = makeParticlePlaybacks(instances: instances)
+        let particles = particlesByReference.flatMap(\.playbacks)
+        let byReference = Dictionary(
+            particlesByReference.map { ($0.reference, $0.playbacks) },
+            uniquingKeysWith: +
+        )
+        for index in nodes.indices {
+            nodes[index].mesh.particles = byReference[nodes[index].mesh.reference] ?? []
+        }
         // A simulated reference draws at its live pose, so it keeps its FormID.
         let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
             .union(geometry.vehicleFollowers)
@@ -328,17 +337,17 @@ nonisolated extension CellSceneBuilder {
 
     nonisolated private func makeParticlePlaybacks(
         instances: [ResolvedInstance]
-    ) -> [ParticlePlayback] {
-        var result: [ParticlePlayback] = []
+    ) -> [(reference: UInt32, playbacks: [ParticlePlayback])] {
+        var result: [(reference: UInt32, playbacks: [ParticlePlayback])] = []
         for instance in instances {
             do {
-                result += try meshes.particlePlaybacks(
+                try result.append((instance.formID, meshes.particlePlaybacks(
                     path: instance.modelPath,
                     surface: instance.surface,
                     placementTransform: instance.transform,
                     formID: instance.formID,
                     emittance: instance.emittance
-                )
+                )))
             } catch {
                 let reason = String(describing: error)
                 let source = instance.modelPath

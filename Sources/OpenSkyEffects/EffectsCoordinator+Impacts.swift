@@ -142,14 +142,22 @@ extension EffectsCoordinator {
 
     /// Starts the particle systems of new effects, moves the emitters of moving ones, and
     /// drops those of effects that ended.
-    func syncParticles(_ models: [VisualEffectModel], renderer: Renderer) throws {
+    func syncParticles(
+        _ models: [VisualEffectModel], posed: [Int: PosedEffectModel] = [:], renderer: Renderer
+    ) throws {
         guard let meshes else { return }
         var live: [Int: EffectParticles] = [:]
         var changed = false
         for model in models {
             guard let id = model.instanceID else { continue }
             if var existing = effectParticles[id] {
-                if existing.placement != model.transform {
+                if let nodes = posed[id]?.nodeDeltas {
+                    // A posed model's nodes move each frame, so its emitters follow them.
+                    existing.playbacks.forEach {
+                        $0.move(to: model.transform, nodeDeltas: nodes)
+                    }
+                    existing.placement = model.transform
+                } else if existing.placement != model.transform {
                     existing.playbacks.forEach { $0.move(to: model.transform) }
                     existing.placement = model.transform
                 }

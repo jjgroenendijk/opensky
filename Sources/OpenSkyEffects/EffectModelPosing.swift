@@ -4,15 +4,22 @@
 
 import OpenSkyRenderCore
 import OpenSkyRendering
+import simd
 
 /// One effect drawn as its own copy, posed by `animation` each frame.
 nonisolated public struct PosedEffectModel: Sendable {
     public let model: RenderModel
     public let animation: any RenderAnimation
+    /// Each moved node's change from its rest in the model frame, by lowercased name, so
+    /// the particle systems below it move with it.
+    public let nodeDeltas: [String: float4x4]
 
-    public init(model: RenderModel, animation: any RenderAnimation) {
+    public init(
+        model: RenderModel, animation: any RenderAnimation, nodeDeltas: [String: float4x4] = [:]
+    ) {
         self.model = model
         self.animation = animation
+        self.nodeDeltas = nodeDeltas
     }
 }
 

@@ -96,6 +96,52 @@ origin. Inside an alpha or multiply system, the particles also draw far to near.
 systems are not sorted inside, because a sum does not depend on order. Rain and snow follow
 the camera and draw last.
 
+## Ribbons
+
+Some systems draw bands instead of squares. A band joins two points. Its width is set at each
+end, and it turns about its own length to face the eye. The bands use the same effect shading,
+blend pipelines, and depth rules as the squares, and the same instance layout: the start point
+and width, the end point and width, the colour, and the texture coordinate along the band.
+
+| System | Bands |
+| --- | --- |
+| Lightning controller | A grown bolt; see below |
+
+A `BSProceduralLightningController` sits on an empty shape. nif.xml names its fields but not
+how the bolt is built, so this is OpenSky's reading:
+
+- The main bolt runs from the shape's origin along its +Y for the length, plus or minus the
+  length variation. The vanilla `lightningbolt01.nif` has its `BeamEnd` node 512 units
+  along +Y, the same as its length field.
+- The bolt is halved `subdivisions` times (at most 8). Each new middle point moves sideways,
+  in the shape's XZ plane, by up to the arc offset, and by half as much at each next level.
+- `branches` plus or minus `branch variation` child bolts start at a random point on the
+  main bolt, lean up to about 30 degrees away from it, and are 0.3 to 0.5 of its length.
+  They are halved two times fewer, bend half as far, and are `child width multiplier` times
+  as wide.
+- With "fade main bolt" or "fade child bolts" set, a bolt narrows and fades to nothing at
+  its far end.
+- Every 0.1 s a new bolt grows from a new seed, and the drawn bolt blends from one to the
+  next, so it crawls instead of jumping.
+
+The texture runs along the band in U. The interpolators of the vanilla bolts are blend
+interpolators that no sequence keys, so the fields are used as stored.
+
+## Mesh particles
+
+An `NiMeshParticleSystem` draws the meshes of its pool node at each live particle, as an
+effect placement, instead of a square. Each particle turns by its rotation angle about its
+own axis: the rotation modifier's axis, or with random axis set, a random axis chosen at
+birth. The particle size scales the mesh. A placed (cell) mesh particle system still draws
+squares.
+
+## Emitters on moving nodes
+
+A system knows the names of the nodes above it. When an effect model or a placed mesh moves
+a node, by a controller, a lag bone, or its effect graph, a system below that node emits
+where the node is now. The inherit velocity modifier names an inherit object; a new particle
+takes that node's velocity, such as a weapon tip's, not the system's.
+
 ## Wind
 
 The renderer publishes the blended weather wind, and every live frame passes it to the active
@@ -105,5 +151,4 @@ The renderer publishes the blended weather wind, and every live frame passes it 
 ## Not done
 
 - Switching sequences on animation events.
-- Strip particles.
 - Collision and splashes for precipitation, which uses this path ([precipitation](/rendering/precipitation.md)).

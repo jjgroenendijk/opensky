@@ -156,6 +156,9 @@ the detail and the sources it did find.
 | Value or rule | OpenSky's choice | Page |
 | --- | --- | --- |
 | Particle lifetime and limits | OpenSky's policies | [particles](/rendering/particles.md) |
+| Lightning bolt growth | Midpoint bends halving each level, branches 0.3 to 0.5 long, a new bolt every 0.1 s blended from the last | [particles](/rendering/particles.md#ribbons) |
+| Ribbon texture direction | U along the band for strips and bolts | [particles](/rendering/particles.md#ribbons) |
+| Mesh particle size | The particle size scales the pool mesh | [particles](/rendering/particles.md#mesh-particles) |
 | Billboard minimised turn (modes 0, 3) | Shortest turn of own +Z to the target, from nif.xml's "minimized rotation" | [NIF sequences](/formats/nif-sequences.md#billboard-nodes) |
 | Image space modifier weights | Two constants; at most 16 at once | [image space](/rendering/image-space.md) |
 | Surface shading strength, tiling, refraction rate | OpenSky's values | [surface shading](/rendering/surface-shading.md) |

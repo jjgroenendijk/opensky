@@ -221,6 +221,11 @@ nonisolated public struct ParticleInheritVelocity: Equatable, Sendable {
     public var chance: Float
     public var multiplier: Float
     public var variation: Float
+    /// The inherit object and the nodes above it, lowercased, nearest first. Empty when the
+    /// modifier names no object; the particles then take the system's velocity.
+    public var objectNodes: [String] = []
+    /// The inherit object's origin in the system's space.
+    public var objectOrigin = SIMD3<Float>.zero
 
     public init(chance: Float, multiplier: Float, variation: Float) {
         self.chance = chance

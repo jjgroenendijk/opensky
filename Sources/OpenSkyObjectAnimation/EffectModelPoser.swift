@@ -121,7 +121,10 @@ public final class EffectModelPoser: EffectModelPosing {
                 animator: entry.animator
             )
             entry.copy.pose.publish(bones)
-            posed[id] = PosedEffectModel(model: entry.copy.model, animation: entry.copy.playback)
+            posed[id] = PosedEffectModel(
+                model: entry.copy.model, animation: entry.copy.playback,
+                nodeDeltas: entry.rig.nodeDeltas(bones)
+            )
         }
         release(Set(running.keys).subtracting(seen))
         return posed

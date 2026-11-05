@@ -105,8 +105,7 @@ nonisolated public struct NIFDragModifier: Equatable, Sendable {
     }
 }
 
-/// `BSPSysInheritVelocityModifier`. OpenSky takes the velocity of the system
-/// itself, not of the inherit object.
+/// `BSPSysInheritVelocityModifier`: new particles take the inherit object's velocity.
 nonisolated public struct NIFInheritVelocityModifier: Equatable, Sendable {
     public static let typeName = "BSPSysInheritVelocityModifier"
 

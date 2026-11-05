@@ -30,6 +30,22 @@ nonisolated extension NIFFile {
         )
     }
 
+    /// The meshes below the mesh pool node of a mesh particle system, in the pool node's
+    /// own space, so each particle draws them at its place.
+    public func particleMeshModel(pool: Int32) throws -> Model {
+        guard pool >= 0, Int(pool) < blocks.count else {
+            throw NIFError.malformed("particle mesh pool ref \(pool) out of range")
+        }
+        var flattener = try Flattener(file: self, skeleton: nil)
+        try flattener.walk(from: pool)
+        return Model(
+            meshes: flattener.meshes,
+            materials: flattener.materials,
+            skippedShapeCount: flattener.skippedShapeCount,
+            editorMarkerShapeCount: flattener.editorMarkerShapeCount
+        )
+    }
+
     /// The step limit stops a cyclic file.
     private static func hasAncestor(
         named name: String, of block: Int, parents: [Int: Int], names: [Int: String]

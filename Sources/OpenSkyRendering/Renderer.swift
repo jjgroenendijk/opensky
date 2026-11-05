@@ -52,6 +52,7 @@ public final class Renderer: NSObject {
     public let terrainPipeline: MTLRenderPipelineState
     public let waterPipeline: MTLRenderPipelineState
     public let particlePipelines: ParticlePipelines
+    public let ribbonPipelines: ParticlePipelines
     /// Render-debug twins of the five geometry paths, bound instead of their
     /// shipping counterparts while `renderDebug.mode` is not `.off`.
     public let debugPipelines: DebugRenderPipelines
@@ -393,6 +394,7 @@ public final class Renderer: NSObject {
         )
         (terrainPipeline, waterPipeline) = (pipelines.terrain, pipelines.water)
         (particlePipelines, debugPipelines) = (pipelines.particles, pipelines.debug)
+        ribbonPipelines = pipelines.ribbons
         (materialDepthStates, waterDepthState) = try Self.makeDepthStates(device: device)
         sampler = try Self.makeSampler(device: device)
         ((shadow, uiResources), (worldOverlayResources, swf)) =

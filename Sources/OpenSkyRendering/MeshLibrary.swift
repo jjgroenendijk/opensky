@@ -30,6 +30,8 @@ nonisolated public final class MeshLibrary {
     public let device: MTLDevice
     public let textures: TextureLibrary
     private var cache: [String: RenderModel] = [:]
+    /// The mesh pool of each mesh particle system, by model key and system index.
+    var particleMeshModels: [String: RenderModel?] = [:]
     /// Per-path count of shapes the flattener dropped (unsupported or empty), so
     /// scene build can report skips without re-parsing.
     private var skippedShapes: [String: Int] = [:]
@@ -109,7 +111,7 @@ nonisolated public final class MeshLibrary {
     }
 
     /// Records the textures the model asked for, so a cache hit can mark them touched.
-    private func makeRenderModel(_ model: Model, key: String) throws -> RenderModel {
+    func makeRenderModel(_ model: Model, key: String) throws -> RenderModel {
         textures.beginKeyCapture()
         do {
             let render = try RenderModel(

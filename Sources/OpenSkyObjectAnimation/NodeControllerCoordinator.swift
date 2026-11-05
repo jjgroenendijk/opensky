@@ -4,6 +4,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyFormatsMesh
+import OpenSkyRendering
 import simd
 
 /// What the node controller coordinator reads from the session.
@@ -83,7 +84,13 @@ public final class NodeControllerCoordinator {
             if let viewer {
                 entry.animator.face(viewer.local(to: entry.mesh.placement))
             }
-            entry.mesh.pose.publish(entry.mesh.rig.bonePoses(entry.animator))
+            let bones = entry.mesh.rig.bonePoses(entry.animator)
+            entry.mesh.pose.publish(bones)
+            guard !entry.mesh.particles.isEmpty else { continue }
+            let deltas = EffectPoseRig.deltas(skeleton: entry.mesh.rig.skeleton, poses: bones)
+            for playback in entry.mesh.particles {
+                playback.move(to: entry.mesh.placement, nodeDeltas: deltas)
+            }
         }
     }
 

@@ -202,6 +202,10 @@ public final class EffectsCoordinator {
         }
         let posed = posing?.pose(effectModels, deltaTime: seconds) ?? [:]
         let models = effectModels + extraModels
+        try syncParticles(models, posed: posed, renderer: renderer)
+        let meshParticles = effectParticles.keys.sorted()
+            .flatMap { effectParticles[$0]?.playbacks ?? [] }
+            .flatMap { $0.meshPlacements() }
         if !models.isEmpty || drewModels {
             let placements = effectModels.compactMap { model -> RenderPlacement? in
                 if let id = model.instanceID, let copy = posed[id] {
@@ -211,13 +215,12 @@ public final class EffectsCoordinator {
                     )
                 }
                 return placement(model)
-            } + extraModels.compactMap(placement)
+            } + extraModels.compactMap(placement) + meshParticles
             try renderer.setEffectPlacements(
                 placements, animations: posed.keys.sorted().compactMap { posed[$0]?.animation }
             )
             drewModels = !models.isEmpty
         }
-        try syncParticles(models, renderer: renderer)
         try syncDecals(renderer: renderer)
         try renderer.setMembranes(visualEffects.membranes { anchor in
             guard case let .actor(key) = anchor else { return nil }

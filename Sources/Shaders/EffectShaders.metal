@@ -37,6 +37,39 @@ vertex ParticleVertexOut particleVertex(
     return out;
 }
 
+// A ribbon band (docs/rendering/particles.md#ribbons): the instance holds the start point
+// and width in positionSize, the end point and width in rotation, and the texture coordinate
+// along the band in uvRect.xy; uvRect.z set runs it along the texture's V.
+vertex ParticleVertexOut ribbonVertex(
+    uint vertexID [[vertex_id]],
+    uint instanceID [[instance_id]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    const device ParticleInstance *particles [[buffer(BufferIndexParticleInstances)]])
+{
+    constexpr float2 corners[6] = {float2(-1, 0), float2(1, 0), float2(-1, 1),
+                                   float2(-1, 1), float2(1, 0), float2(1, 1)};
+    const device ParticleInstance &band = particles[instanceID];
+    float2 corner = corners[vertexID];
+    float3 start = band.positionSize.xyz;
+    float3 end = band.rotation.xyz;
+    float3 point = mix(start, end, corner.y);
+    float width = mix(band.positionSize.w, band.rotation.w, corner.y);
+    float3 along = end - start;
+    float3 toEye = frame.cameraPosition - point;
+    float3 side = cross(along, toEye);
+    float sideLength = length(side);
+    side = sideLength > 1e-5 ? side / sideLength : frame.cameraRight;
+    float3 world = point + side * (corner.x * width * 0.5);
+    ParticleVertexOut out;
+    out.position = frame.viewProjectionMatrix * float4(world, 1.0);
+    out.worldPosition = world;
+    float alongUV = mix(band.uvRect.x, band.uvRect.y, corner.y);
+    float acrossUV = corner.x * 0.5 + 0.5;
+    out.texcoord = band.uvRect.z > 0.5 ? float2(acrossUV, alongUV) : float2(alongUV, acrossUV);
+    out.color = band.color;
+    return out;
+}
+
 // Rain occlusion: the top-down view keeps the highest surface over each texel, so a
 // drop below it, by more than a little, is under a roof.
 static bool

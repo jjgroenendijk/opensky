@@ -105,6 +105,11 @@ nonisolated extension ParticleSimulator {
                 let speed = rotation.speed + random.signed() * rotation.speedVariation
                 let flips = rotation.randomSpeedSign && random.unit() < 0.5
                 particle.rotationSpeed = flips ? -speed : speed
+                if rotation.randomAxis {
+                    particle.axis = randomDirection()
+                } else if simd_length_squared(rotation.axis) > 1e-8 {
+                    particle.axis = simd_normalize(rotation.axis)
+                }
             case let .subTex(subTexture):
                 particle.frames = SIMD3(
                     subTexture.startFrame + random.unit() * subTexture.startFrameFudge,
@@ -119,7 +124,7 @@ nonisolated extension ParticleSimulator {
                 // A local-space system already carries its particles along.
                 guard definition.worldSpace, random.unit() * 100 < inherit.chance else { continue }
                 let share = inherit.multiplier + random.signed() * inherit.variation
-                particle.velocity += emitterVelocity * share
+                particle.velocity += inheritVelocity * share
             default:
                 break
             }

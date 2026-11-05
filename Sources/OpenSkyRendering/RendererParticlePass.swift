@@ -25,17 +25,17 @@ extension Renderer {
         // them filled; the geometry paths after this one get their mode back.
         state.encoder.setTriangleFillMode(.fill)
         defer { state.encoder.setTriangleFillMode(state.fillMode) }
-        var boundMode: ParticleBlendMode?
+        var bound: (mode: ParticleBlendMode, ribbons: Bool)?
         for item in items {
             let (offset, count) = item.prepareBuffer(
                 slot: state.slot, viewer: sorted ? frameInput.view.position : nil
             )
             guard count >= 1 else { continue }
-            if boundMode != item.blendMode {
-                state.encoder.setRenderPipelineState(
-                    particlePipelines.pipeline(for: item.blendMode)
-                )
-                boundMode = item.blendMode
+            let ribbons = item.drawsRibbons
+            if bound?.mode != item.blendMode || bound?.ribbons != ribbons {
+                let pipelines = ribbons ? ribbonPipelines : particlePipelines
+                state.encoder.setRenderPipelineState(pipelines.pipeline(for: item.blendMode))
+                bound = (item.blendMode, ribbons)
             }
             argumentTable.setAddress(
                 item.instanceBuffer.gpuAddress + UInt64(offset),

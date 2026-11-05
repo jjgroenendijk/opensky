@@ -84,8 +84,9 @@ nonisolated public struct EffectPoseRig: Sendable {
         if let nodes, let animator {
             for (index, node) in nodes.boneNodes.enumerated() {
                 var matrix = animator.modelTransform(of: node).matrix
-                if graphMoved, nodeBones[index] >= (graph?.bones.count ?? 0),
-                   let anchor = nodeAnchors[index]
+                if
+                    graphMoved, nodeBones[index] >= (graph?.bones.count ?? 0),
+                    let anchor = nodeAnchors[index]
                 {
                     matrix = matrices[anchor.bone] * anchor.restInverse * matrix
                 }
@@ -95,6 +96,33 @@ nonisolated public struct EffectPoseRig: Sendable {
         return matrices.map { HKABonePose(transform: $0) }
     }
 
+    /// Each bone's change from its rest in the model frame, by lowercased name.
+    public func nodeDeltas(_ poses: [HKABonePose]) -> [String: float4x4] {
+        Self.deltas(skeleton: skeleton, poses: poses)
+    }
+
+    /// Each root bone's change from its rest, by lowercased name; a bone at rest is left out.
+    public static func deltas(skeleton: HKASkeleton, poses: [HKABonePose]) -> [String: float4x4] {
+        var deltas: [String: float4x4] = [:]
+        for (index, pose) in poses.enumerated() where index < skeleton.bones.count {
+            let rest = SkeletonPoseMath.localMatrix(skeleton.referencePose[index])
+            let delta = SkeletonPoseMath.localMatrix(pose) * rest.inverse
+            guard !Self.isIdentity(delta) else { continue }
+            deltas[skeleton.bones[index].name.lowercased()] = delta
+        }
+        return deltas
+    }
+
+    private static func isIdentity(_ matrix: float4x4) -> Bool {
+        let difference = matrix - matrix_identity_float4x4
+        return [
+            difference.columns.0,
+            difference.columns.1,
+            difference.columns.2,
+            difference.columns.3
+        ].allSatisfy { simd_reduce_max(simd_abs($0)) < 1e-5 }
+    }
+
     /// The nearest node above `node` that the graph names. The step limit stops a cycle.
     private static func graphAncestor(
         of node: Int, in animation: NIFNodeAnimation, graphNames: [String]
@@ -102,8 +130,9 @@ nonisolated public struct EffectPoseRig: Sendable {
         var current = animation.nodes[node].parent
         var steps = 0
         while let index = current, steps < 64 {
-            if let name = animation.nodes[index].name?.lowercased(),
-               let bone = graphNames.firstIndex(of: name)
+            if
+                let name = animation.nodes[index].name?.lowercased(),
+                let bone = graphNames.firstIndex(of: name)
             {
                 return bone
             }
