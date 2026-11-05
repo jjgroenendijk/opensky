@@ -21,6 +21,7 @@ protocol AnimationEventWorldHost: AnyObject {
     var effectGraphs: EffectGraphCoordinator { get }
     var gameSession: GameSession? { get }
     var idleWorld: IdleWorldAdapter { get }
+    var objectBehaviors: ObjectBehaviorCoordinator { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
