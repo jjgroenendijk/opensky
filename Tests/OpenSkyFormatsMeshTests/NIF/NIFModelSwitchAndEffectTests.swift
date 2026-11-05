@@ -160,7 +160,7 @@ struct NIFModelSwitchAndEffectTests {
     }
 
     /// Tree branches carry wind weight in vertex alpha; it must not cut them away.
-    @Test func treeAnimatedShapeIgnoresVertexAlpha() throws {
+    @Test func treeAnimatedShapeKeepsVertexAlphaAsWindWeight() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2])),
             .init("BSTriShape", Self.colouredShape(shaderPropertyRef: 3, alpha: 51)),
@@ -176,10 +176,12 @@ struct NIFModelSwitchAndEffectTests {
                 NIFFixture.bsLightingShaderProperty(shaderFlags1: 0x8040_0308)
             )
         ]))
-        let meshes = try file.model().meshes
+        let model = try file.model()
+        let meshes = model.meshes
         #expect(meshes.count == 2)
-        #expect(meshes[0].colors.allSatisfy { $0.w == 1 })
-        #expect(meshes[1].colors.allSatisfy { abs($0.w - 0.2) < 0.01 })
+        #expect(meshes.allSatisfy { mesh in mesh.colors.allSatisfy { abs($0.w - 0.2) < 0.01 } })
+        #expect(model.materials[meshes[0].materialSlot].drawState.windWeighted)
+        #expect(!model.materials[meshes[1].materialSlot].drawState.windWeighted)
     }
 
     @Test func litShapeHasNoEffectShading() throws {

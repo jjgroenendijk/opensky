@@ -369,6 +369,8 @@ typedef struct
     vector_float2 grassWind;
     /// x=fade start, y=hard draw distance in world units.
     vector_float2 grassFadeDistances;
+    /// Tree wind: xy direction, z speed 0 to 1, w distance where leaf flutter ends.
+    vector_float4 treeWind;
     /// DebugViewMode for this frame. Read only by pipelines that define
     /// FunctionConstantDebugView; DebugViewModeOff outside the Render Debug
     /// section.
@@ -442,6 +444,9 @@ typedef struct
     vector_float4 projectedParameters;
     /// rgb single-pass colour, a noise UV scale.
     vector_float4 projectedColor;
+    /// Tree wind: x sway, y sway frequency, z leaf amplitude, w leaf frequency. A w above
+    /// 0 marks the vertex alpha as the leaf's wind weight (docs/rendering/trees.md).
+    vector_float4 windMotion;
 } DrawUniforms;
 
 /// Per-GROUP GRAS material + mesh-height controls. Fade/wind are per-frame;

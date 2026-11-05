@@ -60,6 +60,15 @@ extension Renderer {
             * simd_clamp(grassWindScale, 0, GrassRenderPolicy.maximumWindScale)
     }
 
+    /// The wind that sways trees this frame.
+    var frameTreeWind: SIMD4<Float> {
+        let direction = frameInput.wind.direction
+        return SIMD4(
+            direction.x, direction.y, simd_clamp(frameInput.wind.speed, 0, 1),
+            TreeWindPolicy.leafFadeDistance
+        )
+    }
+
     /// Where the grass fade starts and where the grass is gone.
     var frameGrassFadeDistances: SIMD2<Float> {
         let distance = clampedGrassDrawDistance

@@ -78,6 +78,7 @@ extension Renderer {
             cameraUp: simd_normalize(simd_cross(frameInput.view.right, frameInput.view.forward)),
             grassWind: frameGrassWind,
             grassFadeDistances: frameGrassFadeDistances,
+            treeWind: frameTreeWind,
             debugMode: renderDebug.mode.rawValue,
             shadingTerms: shadingTerms.rawValue,
             sceneDepthUnproject: sceneDepthUnproject,
@@ -137,7 +138,10 @@ extension Renderer {
             multiLayer: material.surface.multiLayer,
             projectedDirection: material.surface.projected?.direction ?? .zero,
             projectedParameters: projectedParameters(material.surface.projected),
-            projectedColor: material.surface.projected?.color ?? .zero
+            projectedColor: material.surface.projected?.color ?? .zero,
+            windMotion: TreeMotion.uniform(
+                group.instances.first?.treeMotion, windWeighted: material.drawState.windWeighted
+            )
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)

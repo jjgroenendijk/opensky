@@ -253,15 +253,7 @@ nonisolated extension CellSceneBuilder {
         var nodes = animatedNodes(&instances)
         let objects = animatedObjects(instances)
         let actors = geometry.actors
-        let particlesByReference = makeParticlePlaybacks(instances: instances)
-        let particles = particlesByReference.flatMap(\.playbacks)
-        let byReference = Dictionary(
-            particlesByReference.map { ($0.reference, $0.playbacks) },
-            uniquingKeysWith: +
-        )
-        for index in nodes.indices {
-            nodes[index].mesh.particles = byReference[nodes[index].mesh.reference] ?? []
-        }
+        let particles = particlePlaybacks(instances: instances, nodes: &nodes)
         // A simulated reference draws at its live pose, so it keeps its FormID.
         let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
             .union(geometry.vehicleFollowers)
@@ -318,6 +310,24 @@ nonisolated extension CellSceneBuilder {
         return scene
     }
 
+    /// Every particle system of the cell; a node animation keeps its own reference's.
+    nonisolated private func particlePlaybacks(
+        instances: [ResolvedInstance], nodes: inout [(
+            mesh: CellNodeAnimation,
+            playback: any RenderAnimation
+        )]
+    ) -> [ParticlePlayback] {
+        let particlesByReference = makeParticlePlaybacks(instances: instances)
+        let byReference = Dictionary(
+            particlesByReference.map { ($0.reference, $0.playbacks) },
+            uniquingKeysWith: +
+        )
+        for index in nodes.indices {
+            nodes[index].mesh.particles = byReference[nodes[index].mesh.reference] ?? []
+        }
+        return particlesByReference.flatMap(\.playbacks)
+    }
+
     nonisolated private func renderPlacements(
         _ instances: [ResolvedInstance],
         simulated: Set<UInt32>
@@ -331,6 +341,7 @@ nonisolated extension CellSceneBuilder {
                 referenceFormID: simulated.contains(instance.formID) ? instance.formID : 0
             )
             placement.emittance = instance.emittance
+            placement.treeMotion = instance.treeMotion
             return placement
         }
     }

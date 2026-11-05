@@ -15,6 +15,8 @@ nonisolated public struct MaterialDrawState: Hashable, Sendable {
     public var distantLOD = false
     /// Alpha is a dither pattern of whole pixels, not a blend.
     public var screenDoor = false
+    /// SLSF2 Tree_Anim: the vertex alpha is the wind weight of a leaf, not opacity.
+    public var windWeighted = false
 
     public init() {}
 

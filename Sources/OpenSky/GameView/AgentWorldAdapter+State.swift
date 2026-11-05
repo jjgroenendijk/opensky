@@ -487,6 +487,7 @@ extension AgentWorldAdapter {
             "postEffects": postEffectState(),
             "projectileVisuals": projectileVisualState(),
             "soundMix": soundMixState(),
+            "treeWind": treeWindState(),
             "gpuMemory": gpuMemoryState()
         ]
     }

@@ -304,13 +304,17 @@ nonisolated extension NIFFile {
 }
 
 nonisolated extension NIFFile.Flattener {
-    /// A lit shape uses its vertex colour and alpha only when its flags say so.
+    /// A lit shape uses its vertex colour and alpha only when its flags say so. A
+    /// Tree_Anim shape keeps its alpha too: there it is the wind weight.
     func opacityColours(_ colours: [SIMD4<Float>], shape: NIFTriShape) throws -> [SIMD4<Float>] {
         guard shape.shaderPropertyRef >= 0 else { return colours }
         let block = try block(at: Int(shape.shaderPropertyRef))
         guard block.typeName == "BSLightingShaderProperty" else { return colours }
         let shader = try NIFLightingShaderProperty(data: block.data, header: file.header)
-        let (rgb, alpha) = (shader.usesVertexColors, shader.usesVertexAlpha)
+        let (rgb, alpha) = (
+            shader.usesVertexColors,
+            shader.usesVertexAlpha || shader.isTreeAnimated
+        )
         guard !rgb || !alpha else { return colours }
         return colours.map {
             SIMD4(rgb ? $0.x : 1, rgb ? $0.y : 1, rgb ? $0.z : 1, alpha ? $0.w : 1)
