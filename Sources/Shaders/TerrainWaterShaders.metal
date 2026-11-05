@@ -342,6 +342,10 @@ fragment float4 waterFragment(
             waterNoiseSlope(in.worldPosition.xy, time, draw, noise0, noise1, noise2, trilinear);
         normal = normalize(float3(slope, 1.0));
     }
+    if (draw.amplitudes.w >= 0.0) {
+        float fade = saturate(1.0 - length(toCamera) / max(draw.amplitudes.w, 0.001));
+        normal = normalize(float3(normal.xy / max(normal.z, 0.05) * fade, 1.0));
+    }
     float2 ringSlope = waterRainSlope(in.worldPosition.xy, time, draw.rings.y);
     uint ringCount = min(uint(draw.rings.z), uint(WaterConstantMaxRipples));
     for (uint ring = 0; ring < ringCount; ++ring) {

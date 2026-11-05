@@ -550,6 +550,7 @@ typedef struct
     /// x=sun specular magnitude, y=fog near, z=fog far, w=1 when scene depth is bound.
     vector_float4 depthAndSun;
     /// Per noise layer: direction in radians, speed in tiles per second, tile size, slope.
+    /// amplitudes.w is the noise falloff distance; below 0, the noise does not fade.
     vector_float4 windDirections;
     vector_float4 windSpeeds;
     vector_float4 uvScales;

@@ -108,12 +108,16 @@ water depth switch off, nothing is copied and the reflection stays a colour.
 ## Where OpenSky differs
 
 - The `NAM5` flow map and the `FNAM` flow-map flags are read but not used, so a river's
-  surface follows only `NAM0`. The noise falloff is read but not used.
+  surface follows only `NAM0`.
+- The noise normals fade in a straight line from full strength at the camera to flat at the
+  noise falloff distance. The
+  [Creation Kit](https://ck.uesp.net/wiki/WaterType#noise-falloff) calls the falloff a
+  curve but does not give its shape.
 - There is no reflection of what lies off screen. Without the game's screen-space reflection
   option, the reflection is a colour.
 - The game simulates displacement on a height grid. OpenSky draws closed-form rings with the
-  `DNAM` displacement fields, so rings do not bounce off the shore or add up. The five `DNAM`
-  floats at offsets 52 to 68, which may be the rain simulator, are not read; the rain rings
-  use OpenSky's own sizes.
+  `DNAM` displacement fields, so rings do not bounce off the shore or add up. The rain rings
+  use OpenSky's own sizes, because the `DNAM` rain simulator is unused
+  ([water format](/formats/water.md#watr-colors-and-surface)).
 - The refraction unit, the ring shape, and the under-water fog colour are OpenSky's readings.
   The `WATR` `INAM` under-water image space is not applied.

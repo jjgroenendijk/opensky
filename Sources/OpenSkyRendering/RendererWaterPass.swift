@@ -95,7 +95,7 @@ extension Renderer {
             windDirections: SIMD4(shading.windDirections * (.pi / 180), 0),
             windSpeeds: SIMD4(shading.windSpeeds, 0),
             uvScales: SIMD4(shading.uvScales, 0),
-            amplitudes: SIMD4(shading.amplitudes, 0),
+            amplitudes: SIMD4(shading.amplitudes, shading.noiseFalloff ?? -1),
             flowVelocity: shading.flowVelocity,
             depthUnproject: waterDepth.unproject ?? .zero,
             detail: SIMD4(

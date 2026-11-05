@@ -76,7 +76,7 @@ any other. Both sizes share these offsets. Each color byte maps to 0...1.
 | 44 | RGBX | Deep color |
 | 48 | RGBX | Reflection color |
 | 72, 76, 80, 84, 88 | float32 | Displacement starting size, force, velocity, falloff, dampener |
-| 96 | float32 | Noise falloff |
+| 96 | float32 | Noise falloff: the distance from the camera where the noise normals reach 0 |
 | 100 | float32 x3 | Noise wind direction, one per layer, in degrees |
 | 112 | float32 x3 | Noise wind speed, one per layer |
 | 132 | float32 | Above-water fog amount |
@@ -90,8 +90,23 @@ any other. Both sizes share these offsets. Each color byte maps to 0...1.
 | 224 | float32 | Sun sparkle power |
 | 228 | float32 | Flowmap scale (232-byte size only, not read) |
 
-These offsets follow the field order of the UESP WATR page. The rest of `DNAM` stays unread,
-among it five floats at 52 to 68 that the UESP page leaves unnamed. The fields around it, such as
+These offsets follow the field order of the UESP WATR page and xEdit dev-4.1.6
+`wbDefinitionsTES5.pas`. xEdit names the rest of `DNAM`, and OpenSky does not read it:
+
+| `DNAM` offset | Type | xEdit name | Vanilla values |
+| --- | --- | --- | --- |
+| 0, 4, 8, 12 | float32 | Wind velocity, wind direction, wave amplitude, wave frequency (unused) | |
+| 28, 92, 124, 128, 136, 160 | float32 | No name | 92 is 0.05 in every record |
+| 52 | uint8, then 3 unused bytes | Texture blend | 0 or 50 |
+| 56, 60, 64, 68 | float32 | Rain simulator (unused) | 0.1, 0.6, 0.985, 2 in every record |
+| 156, 164, 168 | float32 | Specular power, radius, brightness | |
+| 208, 212, 216, 220 | float32 | Depth properties: reflections, refraction, normals, specular lighting | 0 to 1 |
+
+The bytes at 52 to 68, which the UESP page leaves unnamed, are the texture blend byte and the
+rain simulator. xEdit marks the rain simulator unused, and every vanilla record keeps its
+defaults, so the rain rings use OpenSky's own sizes. The
+[Creation Kit WaterType page](https://ck.uesp.net/wiki/WaterType) describes neither the
+texture blend nor the specular and depth fields. The fields around `DNAM`, such as
 opacity, flags, material, sounds, velocities, and noise texture paths, are read as xEdit dev-4.1.6
 names them. The [water renderer](/rendering/water.md) uses `ANAM` opacity and `NAM0` linear
 velocity. A cell with a missing or unknown `WATR` gets fixed fallback colors.

@@ -239,6 +239,7 @@ nonisolated extension CellSceneBuilder {
         shading.sunSparkleMagnitude = surface.sunSparkleMagnitude
         shading.sunSparklePower = surface.sunSparklePower
         shading.refractionMagnitude = surface.refractionMagnitude
+        shading.noiseFalloff = max(surface.noiseFalloff, 0)
         let rings = surface.displacement
         shading.displacement = SIMD4(
             rings.startingSize,

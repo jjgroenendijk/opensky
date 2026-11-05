@@ -45,6 +45,7 @@ extension CellSceneBuilderTests {
         let water = try #require(scene.renderScene.water.first)
         #expect(water.look.shading.opacity == 0.5)
         #expect(water.look.shading.windSpeeds == .zero)
+        #expect(water.look.shading.noiseFalloff == 0)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func cellWaterOverridesWRLD() throws {

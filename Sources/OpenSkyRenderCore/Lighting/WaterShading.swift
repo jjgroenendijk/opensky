@@ -30,6 +30,8 @@ nonisolated public struct WaterShading: Equatable, Sendable {
     /// Displacement rings: starting size, force, velocity, dampener; then falloff.
     public var displacement = SIMD4<Float>.zero
     public var displacementFalloff: Float = 0
+    /// Distance from the camera where the noise normals fade to flat. Nil: no fade.
+    public var noiseFalloff: Float?
     /// Under-water fog: near plane, far plane, amount.
     public var underwaterFog = SIMD3<Float>(0, 1000, 0)
 

@@ -176,6 +176,7 @@ the detail and the sources it did find.
 | Water refraction | Normal x, y times the refraction magnitude in screen units, scaled by depth to the fog far plane | [water](/rendering/water.md#refraction) |
 | Water rings | Closed-form crests; 8 rings of 3 s; wading ring every 48 units at strength 0.4, under 150 units deep; floors 8, 4, 0.2 | [water](/rendering/water.md#displacement-and-rain) |
 | Rain rings | 48-unit grid, 0.8 s drops, 24-unit rings | [water](/rendering/water.md#displacement-and-rain) |
+| Water noise falloff | Normals fade in a straight line to flat at the falloff distance | [water](/rendering/water.md#where-opensky-differs) |
 | Under-water fog colour | The deep colour | [water](/rendering/water.md#under-the-water) |
 | Surface shading strength, tiling, refraction rate | OpenSky's values | [surface shading](/rendering/surface-shading.md) |
 | Shadow map size cap | 4096; the game allows more | [graphics options](/engine/graphics-options.md) |
