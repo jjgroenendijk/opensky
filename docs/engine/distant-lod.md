@@ -122,7 +122,8 @@ Each ring build, on the build queue:
 
 The quick first ring of a session keeps the `-LargeRef` shapes, because its builder cannot
 read the plugins. Once the near grid is in, the same center is built once more with the large
-references. `openskycli game state frame` reports `largeReferences` and
+references. The start area stays behind the loading screen until that second build is in or
+has failed, so the first view already shows the full models and no swap is seen. `openskycli game state frame` reports `largeReferences` and
 `hiddenLargeReferenceLOD`, the count of cell segments the ring hid. `openskycli render` prints
 the large-reference count with the LOD line.
 

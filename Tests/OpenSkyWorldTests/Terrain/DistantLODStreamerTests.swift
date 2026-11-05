@@ -206,6 +206,34 @@ struct DistantLODStreamerTests {
         #expect(streamer.startAreaReady)
     }
 
+    @Test func aQuickFirstRingWaitsForItsLargeReferences() {
+        let runner = LODManualRunner()
+        runner.prebuilds = true
+        let streamer = CellStreamer(center: Self.center, radius: 1, runner: runner) { _, _ in }
+        let position = CellGridManager.cellCenter(of: Self.center)
+        streamer.update(cameraPosition: position)
+        runner.completeLOD(Self.center, scene: DistantLODScene(
+            renderScene: RenderScene(instances: []),
+            assets: CellAssets(),
+            blockCount: 5,
+            missingBlockCount: 0,
+            largeReferencesPending: true
+        ))
+        loadNearGrid(streamer, runner: runner, position: position)
+        streamer.update(cameraPosition: position)
+        #expect(runner.lodRequests == [Self.center])
+        #expect(!streamer.startAreaReady, "the LOD of the large references would swap in view")
+
+        runner.completeLOD(Self.center, scene: DistantLODScene(
+            renderScene: RenderScene(instances: []),
+            assets: CellAssets(),
+            blockCount: 5,
+            missingBlockCount: 0
+        ))
+        streamer.update(cameraPosition: position)
+        #expect(streamer.startAreaReady)
+    }
+
     @Test func aFailedDistantRingStillReadiesTheStartArea() {
         let runner = LODManualRunner()
         let streamer = CellStreamer(center: Self.center, radius: 1, runner: runner) { _, _ in }
