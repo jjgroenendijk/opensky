@@ -68,6 +68,25 @@ extension ReferenceArguments {
         public init() {}
     }
 
+    public struct Shot: CLICommandArguments {
+        public static let configuration = CommandConfiguration(
+            commandName: "shot",
+            abstract: "Capture only the Windows game window as a PNG, without OpenSky.",
+            discussion: """
+            Writes .logs/reference-shot/<UTC time>/reference.png unless --out names a file.
+            """
+        )
+        @OptionGroup public var global: GlobalOptions
+        @OptionGroup public var window: ReferenceWindowOptions
+        @Option(
+            parsing: .unconditional,
+            help: ArgumentHelp("The PNG file to write.", valueName: "file")
+        )
+        public var out: String?
+
+        public init() {}
+    }
+
     public struct Answer: CLICommandArguments {
         public static let configuration = CommandConfiguration(
             commandName: "answer",

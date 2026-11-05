@@ -68,8 +68,9 @@ takes its names or layouts. The bridge is an exception that the owner approved o
 - The plugin copies no code from CommonLibSSE-NG or SKSE. It uses the library as a
   dependency.
 - OpenSky's Swift code sees only the bridge's JSON state: place, angles, cell, hour,
-  weather, field of view, and the playing scenes with their phase index and whether each
-  actor is loaded, disabled, or dead. These are observed game behaviour, the same facts the
+  weather, field of view, the playing scenes with their phase index and whether each
+  actor is loaded, disabled, or dead, the sky objects' directions and colours, and the
+  playing music type. These are observed game behaviour, the same facts the
   console's `IsScenePlaying`, `IsDisabled`, and `GetDead` give one at a time.
 
 ## The channel

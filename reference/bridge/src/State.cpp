@@ -1,5 +1,7 @@
 #include "State.h"
 
+#include "Places.h"
+#include "Sky.h"
 #include "Watch.h"
 
 #include <charconv>
@@ -34,6 +36,23 @@ std::string EditorID(const RE::TESForm *form)
     return Quoted(name ? name : "");
 }
 
+// The player's location, its keywords, and its parent, for rules that read location types.
+std::string Location(RE::PlayerCharacter *player)
+{
+    auto *location = player->GetCurrentLocation();
+    if (!location) {
+        return "";
+    }
+    std::string keywords;
+    for (std::uint32_t index = 0; index < location->numKeywords; ++index) {
+        const auto *keyword = location->keywords[index];
+        keywords += (keywords.empty() ? "" : ",") + EditorID(keyword);
+    }
+    return std::format(
+        ",\"location\":{{\"editorID\":{},\"formID\":{},\"keywords\":[{}],\"parent\":{}}}",
+        EditorID(location), location->GetFormID(), keywords, EditorID(location->parentLoc));
+}
+
 std::string Place(RE::PlayerCharacter *player)
 {
     auto *cell = player->GetParentCell();
@@ -48,6 +67,7 @@ std::string Place(RE::PlayerCharacter *player)
     json += std::format(
         ",\"cellFormID\":{},\"cell\":{},\"interior\":{}", cell->GetFormID(), EditorID(cell),
         cell->IsInteriorCell());
+    json += Location(player);
     if (cell->IsInteriorCell()) {
         return json;
     }
@@ -65,7 +85,9 @@ std::string View()
 {
     std::string json;
     if (auto *calendar = RE::Calendar::GetSingleton()) {
-        json += std::format(",\"hour\":{}", Number(calendar->GetHour()));
+        json += std::format(
+            ",\"hour\":{},\"daysPassed\":{}", Number(calendar->GetHour()),
+            Number(calendar->GetDaysPassed()));
     }
     auto *sky = RE::Sky::GetSingleton();
     if (sky && sky->currentWeather) {
@@ -241,6 +263,9 @@ std::string Snapshot(const std::string &lastBatch)
         json += Selection();
         json += Scenes();
         json += lastCondition;
+        json += SkyState();
+        json += MusicState();
+        json += MarkerState();
     }
     return json + "}\n";
 }
@@ -254,6 +279,11 @@ void RunLine(const std::string &line)
     constexpr auto spawnVerb = "spawn "sv;
     constexpr auto watchVerb = "watch "sv;
     constexpr auto conditionVerb = "condition "sv;
+    constexpr auto markerVerb = "marker "sv;
+    if (line.starts_with(markerVerb)) {
+        GoToMarker(std::string_view(line).substr(markerVerb.size()));
+        return;
+    }
     if (line.starts_with(conditionVerb)) {
         AskCondition(std::string_view(line).substr(conditionVerb.size()));
         return;

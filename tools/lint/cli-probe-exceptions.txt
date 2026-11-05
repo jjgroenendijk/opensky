@@ -17,5 +17,6 @@ reference follow: it needs a running app and a running reference game.
 reference launch: it opens the reference game window, which the user sees.
 reference load: it needs a running reference game.
 reference send: it needs a running reference game.
+reference shot: it needs the reference game window on screen.
 reference state: it needs a running reference game.
 reference sync: it needs a running app and a running reference game.
