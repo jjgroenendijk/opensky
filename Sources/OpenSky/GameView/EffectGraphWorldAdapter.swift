@@ -77,7 +77,8 @@ extension EffectGraphWorldAdapter: EffectGraphWorld {
             guard let model = instance.spec.artModel else { return nil }
             let anchor: SubGraphAnchor = switch instance.anchor {
             case let .actor(actor): .actor(actor)
-            case let .point(position), let .surface(position, _): .point(position)
+            case let .point(position), let .surface(position, _), let .facing(position, _):
+                .point(position)
             }
             return AttachedSubGraph(
                 id: .effect(instance.id), anchor: anchor, name: instance.spec.name,

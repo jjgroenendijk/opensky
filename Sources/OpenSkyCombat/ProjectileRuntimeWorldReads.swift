@@ -3,19 +3,24 @@
 // `ProjectileRuntime`, which is at its body-length cap.
 
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import simd
 
 extension ProjectileRuntime {
     /// The IPCT chain for a hit, played where the world can play it.
     /// Internal rather than private so it can live here while `resolve` in the
     /// main file calls it.
-    public func playImpact(of impact: ProjectileImpact) {
+    public func playImpact(of impact: ProjectileImpact, payload: ProjectilePayload) {
         guard let world, let impacts else { return }
-        // An arrow resolves impact through the ammunition's chain. AMMO has no INAM, so
-        // the unarmed profile's nil data set is what an arrow carries. The lookup stays,
-        // so an AMMO impact link is a one-line change.
+        // A spell shows its MGEF impact data set. An arrow resolves through the
+        // ammunition's chain; AMMO has no INAM, so it carries the unarmed profile's
+        // nil data set.
         let material = impact.material ?? impact.target.flatMap { world.impactMaterial(of: $0) }
-        guard var resolved = impacts.resolve(weapon: .unarmed, material: material) else {
+        let spellImpact = payload.spell?.impactDataSet.flatMap {
+            impacts.resolve(dataSet: $0, material: material)
+        }
+        guard var resolved = spellImpact ?? impacts.resolve(weapon: .unarmed, material: material)
+        else {
             if let target = impact.target {
                 world.showDefaultBlood(on: target, at: impact.position, melee: false)
             }

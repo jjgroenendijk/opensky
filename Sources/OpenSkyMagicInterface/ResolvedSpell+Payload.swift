@@ -36,6 +36,8 @@ nonisolated extension ResolvedSpell {
         payload.disallowsAbsorb = data?.flags.contains(.disallowAbsorbReflect) ?? false
         payload.areaIgnoresLineOfSight = data?.flags
             .contains(.areaEffectIgnoresLineOfSight) ?? false
+        payload.impactDataSet = effects.lazy.compactMap { $0.effect?.effect.data }
+            .first { $0.projectile != nil }?.impactData
         return payload
     }
 }

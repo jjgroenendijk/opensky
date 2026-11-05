@@ -63,7 +63,7 @@ extension EffectsCoordinator {
         let model = melee && !bloodSettings.meleeParticleModel.isEmpty
             ? bloodSettings.meleeParticleModel : bloodSettings.particleModel
         if impactModelsEnabled, !model.isEmpty {
-            showModel(model, at: position, cause: .impact)
+            showModel(model, at: .point(position), cause: .impact)
         }
         guard
             let key = NIFShaderTextureSet.vfsKey(for: bloodSettings.decalTexture),
@@ -84,7 +84,7 @@ extension EffectsCoordinator {
     /// The cut of a dismemberment, when the race gives no effect of its own.
     public func showDismemberParticle(at position: SIMD3<Float>) {
         guard !bloodSettings.dismemberParticleModel.isEmpty else { return }
-        showModel(bloodSettings.dismemberParticleModel, at: position, cause: .impact)
+        showModel(bloodSettings.dismemberParticleModel, at: .point(position), cause: .impact)
     }
 
     /// Ages the blood and hands the renderer the splatters.

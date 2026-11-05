@@ -9,8 +9,12 @@ import OpenSkyScriptingInterface
 import OpenSkyWorld
 
 extension EffectsWorldAdapter: PapyrusEffectPresenting {
-    func playEffect(_ effect: ReferenceKey, on target: ReferenceKey, duration: Float?) -> Bool {
-        effects.attach(effect, to: .actor(target), cause: .script, duration: duration) != nil
+    func playEffect(
+        _ effect: ReferenceKey, on target: ReferenceKey, duration: Float?, facing: ReferenceKey?
+    ) -> Bool {
+        effects.attach(
+            effect, to: .actor(target), cause: .script, duration: duration, facing: facing
+        ) != nil
     }
 
     func stopEffect(_ effect: ReferenceKey, on target: ReferenceKey) -> Bool {

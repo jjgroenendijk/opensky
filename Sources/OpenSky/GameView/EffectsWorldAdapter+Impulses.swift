@@ -100,7 +100,7 @@ extension EffectsWorldAdapter: ImpulseWorld {
     }
 
     func showSplash(_ splash: SplashEvent) {
-        effects.showModel(splash.model, at: splash.position, cause: .impact)
+        effects.showModel(splash.model, at: .point(splash.position), cause: .impact)
         game.renderer?.addWaterRipple(
             at: splash.position, strength: splash.weight == .heavy ? 1 : 0.6
         )

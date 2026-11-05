@@ -12,6 +12,7 @@ private struct PlayingEffect {
     let effect: ReferenceKey
     let target: ReferenceKey
     let duration: Float?
+    let facing: ReferenceKey?
 }
 
 @MainActor
@@ -19,8 +20,12 @@ private final class FakeEffects: PapyrusEffectPresenting {
     var playing: [PlayingEffect] = []
     var modifiers: [ReferenceKey: Bool] = [:]
 
-    func playEffect(_ effect: ReferenceKey, on target: ReferenceKey, duration: Float?) -> Bool {
-        playing.append(PlayingEffect(effect: effect, target: target, duration: duration))
+    func playEffect(
+        _ effect: ReferenceKey, on target: ReferenceKey, duration: Float?, facing: ReferenceKey?
+    ) -> Bool {
+        playing.append(PlayingEffect(
+            effect: effect, target: target, duration: duration, facing: facing
+        ))
         return true
     }
 

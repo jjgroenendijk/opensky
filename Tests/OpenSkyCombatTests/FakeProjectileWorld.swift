@@ -58,6 +58,13 @@ final class FakeProjectileWorld: ProjectileWorld {
     private(set) var impacts: [ResolvedMeleeImpact] = []
     private(set) var raised: [String] = []
     private(set) var spellHits: [SpellHit] = []
+    /// The id of each projectile the runtime launched.
+    private(set) var launched: [Int] = []
+
+    func projectileLaunched(_ projectile: LiveProjectile) {
+        launched.append(projectile.id)
+    }
+
     /// Enchanted hits the runtime handed out.
     private(set) var enchantedHits: [WeaponEnchantmentHit] = []
     private(set) var variables: [String: BehaviorVariableValue] = [:]

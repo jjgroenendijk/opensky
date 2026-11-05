@@ -480,6 +480,7 @@ extension AgentWorldAdapter {
             "largeReferences": game.streamer.map { .init($0.largeReferenceCount) } ?? .null,
             "screenFade": screenFadeState(),
             "postEffects": postEffectState(),
+            "projectileVisuals": projectileVisualState(),
             "gpuMemory": gpuMemoryState()
         ]
     }

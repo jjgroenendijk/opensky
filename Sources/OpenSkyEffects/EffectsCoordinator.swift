@@ -60,6 +60,8 @@ public final class EffectsCoordinator {
     public let bloodSettings: BloodEffectSettings
     var screenBloodTextures: ScreenBloodTextures?
     var drewScreenBlood = false
+    /// Short lights: muzzle flashes and blasts (EffectsCoordinator+Flashes.swift).
+    public internal(set) var flashLights: [FlashLight] = []
 
     /// Without records there is no game, and every effect draws nothing.
     public init(
@@ -82,10 +84,13 @@ public final class EffectsCoordinator {
         _ key: ReferenceKey,
         to anchor: EffectAnchor,
         cause: VisualEffectCause,
-        duration: Float?
+        duration: Float?,
+        facing: ReferenceKey? = nil
     ) -> Int? {
         guard let spec = records.visualEffectSpec(key) else { return nil }
-        return visualEffects.attach(spec, to: anchor, cause: cause, duration: duration)
+        return visualEffects.attach(
+            spec, to: anchor, cause: cause, duration: duration, facing: facing
+        )
     }
 
     /// Removes the `RFCT`, `EFSH`, or `ARTO` named by `key` from `anchor`. Returns how
@@ -116,14 +121,14 @@ public final class EffectsCoordinator {
     }
 
     /// Shows a bare model, such as an explosion's `MODL`, at a point for a while.
-    public func showModel(_ path: String, at position: SIMD3<Float>, cause: VisualEffectCause) {
+    public func showModel(
+        _ path: String,
+        at anchor: EffectAnchor,
+        cause: VisualEffectCause,
+        duration: Float = instantArtDuration
+    ) {
         let spec = VisualEffectSpec(name: path, artModel: path, membrane: nil)
-        visualEffects.attach(
-            spec,
-            to: .point(position),
-            cause: cause,
-            duration: Self.instantArtDuration
-        )
+        visualEffects.attach(spec, to: anchor, cause: cause, duration: duration)
     }
 
     /// Starts one `IMAD` on `imageSpace`. False when the key names none.
@@ -189,16 +194,13 @@ public final class EffectsCoordinator {
         renderer: Renderer
     ) throws {
         visualEffects.advance(seconds)
+        ageFlashLights(seconds)
         decals.beginFrame()
         skinDecals.decals.beginFrame()
         stepBlood(seconds, renderer: renderer)
         let world = world
         let effectModels = visualEffects.models(camera: world?.effectCamera) { anchor in
-            switch anchor {
-            case let .actor(key): world?.effectTransform(of: key)
-            case let .point(position): Self.translation(position)
-            case let .surface(position, normal): Self.surfaceTransform(position, normal: normal)
-            }
+            Self.locate(anchor, world: world)
         }
         let posed = posing?.pose(effectModels, deltaTime: seconds) ?? [:]
         let models = effectModels + extraModels
@@ -285,6 +287,15 @@ public final class EffectsCoordinator {
         } catch {
             failedModels.insert(model.path)
             return nil
+        }
+    }
+
+    static func locate(_ anchor: EffectAnchor, world: (any EffectsWorld)?) -> float4x4? {
+        switch anchor {
+        case let .actor(key): world?.effectTransform(of: key)
+        case let .point(position): translation(position)
+        case let .surface(position, normal): surfaceTransform(position, normal: normal)
+        case let .facing(position, forward): VisualEffectRuntime.facing(position, forward: forward)
         }
     }
 

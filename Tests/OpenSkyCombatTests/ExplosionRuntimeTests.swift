@@ -21,6 +21,8 @@ final class FakeExplosionWorld: ExplosionWorld {
     private(set) var modifiers: [(ReferenceKey, Float)] = []
     private(set) var hazards: [ReferenceKey] = []
     private(set) var models: [String] = []
+    private(set) var lights: [ReferenceKey] = []
+    private(set) var impacts: [ReferenceKey] = []
 
     func explosionTargets() -> [MeleeTarget] {
         targets
@@ -51,6 +53,14 @@ final class FakeExplosionWorld: ExplosionWorld {
     func showExplosionModel(_ path: String, at position: SIMD3<Float>) {
         models.append(path)
     }
+
+    func showExplosionLight(_ light: ReferenceKey, at position: SIMD3<Float>) {
+        lights.append(light)
+    }
+
+    func playExplosionImpact(_ dataSet: ReferenceKey, at position: SIMD3<Float>) {
+        impacts.append(dataSet)
+    }
 }
 
 @MainActor
@@ -59,8 +69,10 @@ struct ExplosionRuntimeTests {
     static let plugin = "Effects.esm"
     static let npc = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x700)
 
-    static func explosion(_ formID: UInt32, placed: UInt32, sound: UInt32 = 0) -> Data {
-        let links = Fixture.u32(0, sound, 0, 0, placed, 0)
+    static func explosion(
+        _ formID: UInt32, placed: UInt32, sound: UInt32 = 0, light: UInt32 = 0, impacts: UInt32 = 0
+    ) -> Data {
+        let links = Fixture.u32(light, sound, 0, impacts, placed, 0)
         return Fixture.recordBytes("EXPL", formID: formID, fields: [
             ("EDID", Fixture.zstring("TestBlast\(formID)")),
             ("MODL", Fixture.zstring("fx/blast.nif")),
@@ -71,7 +83,7 @@ struct ExplosionRuntimeTests {
 
     static func records() throws -> EffectRecordStore {
         let file = try Fixture.plugin(records: [
-            explosion(0x900, placed: 0x901, sound: 0x902),
+            explosion(0x900, placed: 0x901, sound: 0x902, light: 0x903, impacts: 0x904),
             explosion(0x910, placed: 0x911),
             Fixture.recordBytes("HAZD", formID: 0x901, fields: [("EDID", Fixture.zstring("Fire"))]),
             Fixture.recordBytes("DEBR", formID: 0x911, fields: [
@@ -114,6 +126,8 @@ struct ExplosionRuntimeTests {
         #expect(world.sounds == [Self.key(0x902)])
         #expect(world.hazards == [Self.key(0x901)])
         #expect(world.models == ["fx/blast.nif"])
+        #expect(world.lights == [Self.key(0x903)])
+        #expect(world.impacts == [Self.key(0x904)])
         #expect(world.modifiers.first?.1 == 0.75)
         #expect(report.hazardPlaced)
         #expect(runtime.detonationTotal == 1)

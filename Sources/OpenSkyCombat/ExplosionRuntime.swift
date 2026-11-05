@@ -75,6 +75,12 @@ public final class ExplosionRuntime {
         if let model = spec.model {
             world?.showExplosionModel(model, at: position)
         }
+        if let light = spec.light {
+            world?.showExplosionLight(light, at: position)
+        }
+        if let dataSet = spec.impactDataSet {
+            world?.playExplosionImpact(dataSet, at: position)
+        }
         push(spec, radius: radius, at: position, source: source)
         let strength = startImageSpace(spec, at: position)
         let (hazard, thrown) = place(spec, at: position)
@@ -158,7 +164,7 @@ public final class ExplosionRuntime {
             default: ExplosionPlacement.other(placed, type: type)
             }
         }
-        return ExplosionSpec(
+        var spec = ExplosionSpec(
             name: explosion.editorID ?? "\(key)",
             damage: Self.clean(data?.damage),
             radius: Self.clean(data?.radius),
@@ -169,6 +175,9 @@ public final class ExplosionRuntime {
             placement: placement,
             model: explosion.model?.path
         )
+        spec.light = records.resolve(data?.light, from: resolved)
+        spec.impactDataSet = records.resolve(data?.impactDataSet, from: resolved)
+        return spec
     }
 
     private static func clean(_ value: Float?) -> Float {

@@ -1,10 +1,16 @@
-// The `postEffects` part of `state frame`: which screen effects are on, the depth of
-// field the image space asks for, and the weather's volumetric light
-// (docs/rendering/post-effects.md).
+// The `postEffects` and `projectileVisuals` parts of `state frame`: the screen effects,
+// and what flying projectiles and short flashes draw (docs/rendering/post-effects.md,
+// docs/engine/spell-delivery.md#what-a-projectile-shows).
 
 import Foundation
 import OpenSkyAgentControl
+import OpenSkyCombat
+import OpenSkyEffects
+import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRenderCore
+import OpenSkyRendering
+import OpenSkyWorld
 
 extension AgentWorldAdapter {
     func postEffectState() -> AgentJSON {
@@ -35,6 +41,24 @@ extension AgentWorldAdapter {
                 "scattering": .init(look.phaseFunctionScattering),
                 "samplingRange": .init(look.samplingRangeFactor)
             ]
+        ]
+    }
+
+    func projectileVisualState() -> AgentJSON {
+        let live = game.combat.archery?.projectiles.live ?? []
+        return [
+            "flying": .array(live.map { projectile in
+                [
+                    "id": .init(projectile.id),
+                    "model": projectile.profile.visuals.model.map(AgentJSON.string) ?? .null,
+                    "lit": .bool(projectile.profile.visuals.light != nil),
+                    "position": .init(projectile.position)
+                ]
+            }),
+            "flashLights": .array(game.effects.flashLights.map { flash in
+                ["light": .string(flash.light.description), "strength": .init(flash.strength)]
+            }),
+            "transientLights": .init(game.gameSession?.renderer.transientPointLights.count ?? 0)
         ]
     }
 }

@@ -72,6 +72,13 @@ nonisolated public struct EffectRecordStore: Sendable {
         resolve(id, fromPlugin: record.sourcePlugin)
     }
 
+    /// `key` in the load-order FormID space, which the impact and sound indexes use.
+    public func loadOrderFormID(_ key: ReferenceKey) -> FormID? {
+        guard case let .plugin(name, objectID) = key else { return nil }
+        return imageSpaces.index.resolver(ofPlugin: FormIDResolver.loadOrderSpaceName)?
+            .localFormID(of: ResolvedFormID(plugin: name, objectID: objectID))
+    }
+
     /// The record type behind `key`, or nil when no indexed record has it.
     public func recordType(_ key: ReferenceKey) -> FourCC? {
         guard

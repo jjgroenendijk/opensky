@@ -32,6 +32,8 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     public var impactForce: Float = 0
     /// A flame or cone PROJ: a spray that a wall stops through a look ahead, not a body.
     public var isCone = false
+    /// What the player sees of it (docs/engine/spell-delivery.md#what-a-projectile-shows).
+    public var visuals = ProjectileVisuals()
 
     public init(
         projectile: FormID? = nil,
@@ -61,6 +63,7 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
         )
         impactForce = Self.clean(record.impactForce)
         isCone = record.kind == .flame || record.kind == .cone
+        visuals = ProjectileVisuals(record: record)
         // A trap dart names `FireBallExp01` but leaves the explosion flag off.
         explosion = record.flags.contains(.explosion) ? record.explosion : nil
         if record.flags.contains(.alternateTrigger) {
@@ -79,5 +82,40 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     /// position becomes NaN and poisons every query it touches.
     private static func clean(_ value: Float) -> Float {
         value.isFinite ? max(0, value) : 0
+    }
+}
+
+/// The PROJ model, its light in flight, and its muzzle flash. Links are spelled in the
+/// item plugin, as `ProjectileProfile.explosion` is.
+nonisolated public struct ProjectileVisuals: Equatable, Sendable {
+    /// MODL, drawn along the flight.
+    public var model: String?
+    public var light: FormID?
+    /// NAM1, shown at the launch point; nil without the muzzle flash flag.
+    public var muzzleFlashModel: String?
+    public var muzzleFlashLight: FormID?
+    /// Seconds the muzzle flash shows.
+    public var muzzleFlashDuration: Float = 0
+
+    public init() {}
+
+    public init(record: Projectile) {
+        model = Self.path(record.modelPath)
+        light = record.light
+        guard record.flags.contains(.muzzleFlash) else { return }
+        muzzleFlashModel = Self.path(record.details.muzzleFlashModelPath)
+        muzzleFlashLight = record.muzzleFlashLight
+        let duration = record.muzzleFlashDuration
+        muzzleFlashDuration = duration.isFinite ? max(duration, 0) : 0
+    }
+
+    /// Whether launching shows anything at the muzzle.
+    public var hasMuzzleFlash: Bool {
+        muzzleFlashDuration > 0 && (muzzleFlashModel != nil || muzzleFlashLight != nil)
+    }
+
+    private static func path(_ path: String?) -> String? {
+        guard let path, !path.isEmpty else { return nil }
+        return path
     }
 }

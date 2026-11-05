@@ -30,6 +30,10 @@ nonisolated public struct ExplosionSpec: Equatable, Sendable {
     public let imageSpaceModifier: ReferenceKey?
     public let placement: ExplosionPlacement?
     public let model: String?
+    /// `DATA` light, shown at the blast for as long as the model.
+    public var light: ReferenceKey?
+    /// `DATA` impact data set, played on the surface under the blast.
+    public var impactDataSet: ReferenceKey?
 
     public init(
         name: String,
@@ -84,4 +88,13 @@ public protocol ExplosionWorld: AnyObject {
     func placeExplosionHazard(_ hazard: ReferenceKey, at position: SIMD3<Float>) -> Bool
     /// Shows the explosion's own model briefly at the blast.
     func showExplosionModel(_ path: String, at position: SIMD3<Float>)
+    /// Lights the blast briefly with a `LIGH`.
+    func showExplosionLight(_ light: ReferenceKey, at position: SIMD3<Float>)
+    /// Plays an `IPDS` on the surface under the blast.
+    func playExplosionImpact(_ dataSet: ReferenceKey, at position: SIMD3<Float>)
+}
+
+extension ExplosionWorld {
+    public func showExplosionLight(_: ReferenceKey, at _: SIMD3<Float>) {}
+    public func playExplosionImpact(_: ReferenceKey, at _: SIMD3<Float>) {}
 }

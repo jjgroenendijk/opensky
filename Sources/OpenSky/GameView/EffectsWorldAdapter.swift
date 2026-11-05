@@ -29,6 +29,7 @@ protocol EffectsWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
+    var combatWorld: CombatWorldAdapter { get }
     var effects: EffectsCoordinator { get set }
     var playerSettings: PlayerSettingsCoordinator { get }
     var worldData: WorldDataStores? { get }
@@ -189,7 +190,7 @@ final class EffectsWorldAdapter {
                 transform.columns.3 = SIMD4(hazard.position, 1)
                 return VisualEffectModel(path: path, transform: transform)
             }
-        return debris + hazards
+        return debris + hazards + projectileModels()
     }
 
     /// Lasting race-ability looks for actors that arrived, and their removal for
@@ -256,7 +257,7 @@ extension EffectsWorldAdapter: ExplosionWorld {
     }
 
     func showExplosionModel(_ path: String, at position: SIMD3<Float>) {
-        effects.showModel(path, at: position, cause: .explosion)
+        effects.showModel(path, at: .point(position), cause: .explosion)
     }
 }
 

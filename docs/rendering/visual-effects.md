@@ -24,10 +24,15 @@ The records are in [visual effect records](/formats/visual-effects.md),
 | A spell hit | The `MGEF` hit shader and hit effect art, on each target | The effect duration; for an instant spell, the shader's settle time or 2 s for art |
 | A race ability | The same links of each `RACE SPLO` ability, on each resident actor of the race | While the actor is resident |
 | An explosion | The `EXPL` model at the blast point | 2 s |
+| A projectile | The `PROJ` model along its flight, and its muzzle flash at the launch ([spell delivery](/engine/spell-delivery.md#what-a-projectile-shows)) | The flight; the muzzle flash duration |
 | An impact | The `IPCT` model at the contact point ([impacts and decals](/rendering/decals.md)) | 2 s |
 | A script | `VisualEffect.Play` or `EffectShader.Play` on a reference | The `afTime` argument, or until `Stop` when it is negative |
 
-An `RFCT` is resolved to its `ARTO` model and its `EFSH` membrane. Its flag 0x02 (attach to
+An `RFCT` is resolved to its `ARTO` model and its `EFSH` membrane. With its flag 0x01 (rotate
+to face target), a script's `VisualEffect.Play(akObject, afTime, akFacingObject)` turns the art
+each frame so its +Y points from the anchor to the facing object's origin
+([VisualEffect script](https://ck.uesp.net/wiki/VisualEffect_Script)). Without a facing object it
+keeps the anchor's facing. Its flag 0x02 (attach to
 camera) draws the art at the camera eye instead of the target. With flag 0x04 (inherit
 rotation) the art also turns with the view: its +Y points along the view and +Z up. The
 opening cart ride plays two such effects through `FXCameraAttachScript`:
@@ -121,6 +126,6 @@ OpenSky's numbers.
 - Art and membranes follow the actor's feet and facing, not a named bone. The `RFCT` node
   index is not used.
 - A posed model's particle systems do not follow its moved nodes; they stay at the node's rest.
-- [WARNING] The `RFCT` flag 0x01 (rotate to face target) is not used, because
-  `VisualEffect.Play` does not pass its facing object on yet.
+- The face-target turn points at the facing object's origin, its feet for an actor, not a
+  bone.
 - An actor's membrane covers every mesh drawn for that actor, including worn armor.

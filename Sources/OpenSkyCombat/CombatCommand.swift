@@ -24,6 +24,8 @@ nonisolated public enum CombatCommand: Equatable, Sendable {
     case drewBlood(CombatHitRecord, target: ReferenceKey)
     /// A hit on an actor with no impact data of its own: the default blood effects.
     case showDefaultBlood(on: ReferenceKey, at: SIMD3<Float>, melee: Bool)
+    /// A projectile left with a muzzle flash: its `NAM1` model and light at the launch.
+    case muzzleFlash(ProjectileVisuals, at: SIMD3<Float>, along: SIMD3<Float>)
     /// The player loosed an arrow; `power` below 1 is a dud.
     case playerBowShot(weapon: FormID?, ammunition: FormID?, power: Float)
 }

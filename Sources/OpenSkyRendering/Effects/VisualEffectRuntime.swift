@@ -13,6 +13,8 @@ nonisolated public enum EffectAnchor: Hashable, Sendable {
     case point(SIMD3<Float>)
     /// A point on a surface, with the model's up turned to the surface normal.
     case surface(SIMD3<Float>, normal: SIMD3<Float>)
+    /// A point, with the model's +Y turned along `forward`, such as a muzzle flash.
+    case facing(SIMD3<Float>, forward: SIMD3<Float>)
 }
 
 /// Why an effect is live, for the readout and for removing one source's effects.
@@ -30,16 +32,19 @@ nonisolated public struct VisualEffectSpec: Equatable, Sendable {
     public let attachesToCamera: Bool
     /// `RFCT` flag 0x04: a camera effect turns with the view, not only moves with it.
     public let inheritsRotation: Bool
+    /// `RFCT` flag 0x01: the art turns its +Y toward the object it was played facing.
+    public let facesTarget: Bool
 
     public init(
         name: String, artModel: String?, membrane: MembraneLook?,
-        attachesToCamera: Bool = false, inheritsRotation: Bool = false
+        attachesToCamera: Bool = false, inheritsRotation: Bool = false, facesTarget: Bool = false
     ) {
         self.name = name
         self.artModel = artModel
         self.membrane = membrane
         self.attachesToCamera = attachesToCamera
         self.inheritsRotation = inheritsRotation
+        self.facesTarget = facesTarget
     }
 
     /// Whether drawing it would show anything.
@@ -55,6 +60,8 @@ nonisolated public struct VisualEffectInstance: Equatable, Sendable {
     public let cause: VisualEffectCause
     /// Seconds it lives, or nil for one that stays until it is detached.
     public let duration: Float?
+    /// What a face-target effect turns toward; nil keeps the anchor's facing.
+    public var facing: ReferenceKey?
     public internal(set) var elapsed: Float = 0
 
     public var isExpired: Bool {
@@ -93,7 +100,8 @@ nonisolated public struct VisualEffectRuntime: Sendable {
         _ spec: VisualEffectSpec,
         to anchor: EffectAnchor,
         cause: VisualEffectCause,
-        duration: Float?
+        duration: Float?,
+        facing: ReferenceKey? = nil
     ) -> Int? {
         guard spec.isVisible else { return nil }
         if
@@ -109,7 +117,7 @@ nonisolated public struct VisualEffectRuntime: Sendable {
         attachedTotal += 1
         let clamped = duration.map { $0.isFinite ? max($0, 0) : 0 }
         instances.append(VisualEffectInstance(
-            id: id, spec: spec, anchor: anchor, cause: cause, duration: clamped
+            id: id, spec: spec, anchor: anchor, cause: cause, duration: clamped, facing: facing
         ))
         if instances.count > Self.limit {
             let victim = instances.firstIndex { $0.duration != nil } ?? 0
@@ -157,10 +165,33 @@ nonisolated public struct VisualEffectRuntime: Sendable {
             let spec = instance.spec
             let onCamera = spec.attachesToCamera
                 ? camera.map { $0.placement(turning: spec.inheritsRotation) } : nil
-            guard let path = spec.artModel, let transform = onCamera ?? locate(instance.anchor)
+            guard let path = spec.artModel, var transform = onCamera ?? locate(instance.anchor)
             else { return nil }
+            if spec.facesTarget, let facing = instance.facing, let toward = locate(.actor(facing)) {
+                transform = Self.turning(transform, toward: toward.columns.3)
+            }
             return VisualEffectModel(path: path, transform: transform, instanceID: instance.id)
         }
+    }
+
+    /// `transform` at its own place, with +Y toward `target`.
+    static func turning(_ transform: float4x4, toward target: SIMD4<Float>) -> float4x4 {
+        let origin = SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z)
+        let look = SIMD3(target.x, target.y, target.z) - origin
+        guard simd_length_squared(look) > 1e-6 else { return transform }
+        return facing(origin, forward: look)
+    }
+
+    /// At `position`, with +Y along `forward` and +Z as near world up as it can be,
+    /// the way an effect mesh is authored.
+    public static func facing(_ position: SIMD3<Float>, forward: SIMD3<Float>) -> float4x4 {
+        let ahead = simd_length_squared(forward) > 1e-8 ? simd_normalize(forward) : SIMD3(0, 1, 0)
+        let worldUp: SIMD3<Float> = abs(ahead.z) > 0.999 ? SIMD3(1, 0, 0) : SIMD3(0, 0, 1)
+        let right = simd_normalize(simd_cross(ahead, worldUp))
+        let up = simd_cross(right, ahead)
+        return float4x4(columns: (
+            SIMD4(right, 0), SIMD4(ahead, 0), SIMD4(up, 0), SIMD4(position, 1)
+        ))
     }
 
     /// Where the view is, for an effect that rides the camera.

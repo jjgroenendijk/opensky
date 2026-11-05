@@ -11,6 +11,7 @@ import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyDialogue
+import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyGameData
 import OpenSkyInventory
@@ -38,6 +39,7 @@ protocol AgentWorldHost: AnyObject {
     var playerControlLocks: PlayerControlLocks { get }
     func showControlRefusal(_ refusal: PlayerControlRefusal)
     var combatWorld: CombatWorldAdapter { get }
+    var effects: EffectsCoordinator { get }
     var dragonFlight: DragonFlightCoordinator { get }
     var dragonFlightWorld: DragonFlightWorldAdapter { get }
     var mounts: MountCoordinator { get }

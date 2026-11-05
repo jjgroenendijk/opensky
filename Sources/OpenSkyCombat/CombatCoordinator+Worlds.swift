@@ -267,6 +267,14 @@ extension CombatCoordinator: ProjectileWorld {
         isSneakAttack(by: shooter, on: target)
     }
 
+    public func projectileLaunched(_ projectile: LiveProjectile) {
+        let visuals = projectile.profile.visuals
+        guard visuals.hasMuzzleFlash else { return }
+        pendingCommands.append(.muzzleFlash(
+            visuals, at: projectile.launchPosition, along: projectile.launchDirection
+        ))
+    }
+
     public func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         pendingCommands.append(.playImpact(impact, at: position))
         pendingCommands.append(.detectionEvent(owner: .player, at: position))

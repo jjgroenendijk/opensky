@@ -46,6 +46,10 @@ nonisolated public struct VisualEffect: Equatable, Sendable {
     public let flags: UInt32
     public let skipped: FieldTally
 
+    public var facesTarget: Bool {
+        flags & 0x01 != 0
+    }
+
     public var attachesToCamera: Bool {
         flags & 0x02 != 0
     }

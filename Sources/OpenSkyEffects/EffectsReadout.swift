@@ -66,6 +66,7 @@ nonisolated public enum EffectsReadout {
         case let .actor(key): key == .player ? "player" : key.description
         case .point: "a point"
         case .surface: "a surface"
+        case .facing: "a muzzle"
         }
         let left = instance.duration.map { "\(number(max(0, $0 - instance.elapsed))) s left" }
             ?? "lasting"

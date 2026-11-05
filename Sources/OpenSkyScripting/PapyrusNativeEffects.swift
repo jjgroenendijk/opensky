@@ -12,16 +12,16 @@ extension PapyrusNativeFunctions {
     static let crossFadeModifierName = "crossFadeModifier"
 
     public static func installEffects(into registry: inout PapyrusNativeRegistry) {
-        // `Play(ObjectReference akObject, float afTime = -1.0, ...)`: a negative time
-        // plays until `Stop`.
+        // `Play(ObjectReference akObject, float afTime = -1.0, ObjectReference
+        // akFacingObject = None)`: a negative time plays until `Stop`.
         for script in ["VisualEffect", "EffectShader"] {
-            effect(script, "Play", into: &registry) { call, presenter, effect, target in
+            effect(script, "Play", into: &registry) { call, presenter, effect, target, facing in
                 let time = float(call, at: 1) ?? -1
                 let duration: Float? = time.isFinite && time >= 0 ? time : nil
-                presenter?.playEffect(effect, on: target, duration: duration)
+                presenter?.playEffect(effect, on: target, duration: duration, facing: facing)
                 return .returned(.none)
             }
-            effect(script, "Stop", into: &registry) { _, presenter, effect, target in
+            effect(script, "Stop", into: &registry) { _, presenter, effect, target, _ in
                 presenter?.stopEffect(effect, on: target)
                 return .returned(.none)
             }
@@ -90,20 +90,24 @@ extension PapyrusNativeFunctions {
         bridge.updateScriptedState(of: .player) { $0.setForm(crossFadeModifierName, nil) }
     }
 
-    /// Registers a native whose receiver is the effect form and whose first argument
-    /// is the reference it plays on.
+    /// Registers a native whose receiver is the effect form, whose first argument is
+    /// the reference it plays on, and whose third, when given, is the one it faces.
     private static func effect(
         _ script: String, _ name: String,
         into registry: inout PapyrusNativeRegistry,
         body: @escaping @MainActor (
-            PapyrusNativeCall, (any PapyrusEffectPresenting)?, ReferenceKey, ReferenceKey
+            PapyrusNativeCall, (any PapyrusEffectPresenting)?, ReferenceKey, ReferenceKey,
+            ReferenceKey?
         ) -> PapyrusNativeResult
     ) {
         scriptState(script, name, into: &registry) { call, bridge, effect in
             guard let target = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)) else {
                 return failure(call, "\(name) needs a reference to play on")
             }
-            return body(call, bridge.effectPresenter, effect, target.namingPlayer)
+            let facing = objectArgument(call, at: 2).flatMap(bridge.referenceKey(for:))
+            return body(
+                call, bridge.effectPresenter, effect, target.namingPlayer, facing?.namingPlayer
+            )
         }
     }
 }
