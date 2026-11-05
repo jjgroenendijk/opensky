@@ -55,6 +55,11 @@ extension CellStreamer {
         composition.distantLOD?.largeReferenceCount ?? 0
     }
 
+    /// Cell segments of object LOD large-reference shapes hidden for the ring.
+    public var hiddenLargeReferenceSegments: Int {
+        composition.distantLOD?.hiddenLargeReferenceSegments ?? 0
+    }
+
     public var composedCellCount: Int {
         composition.cellCount
     }

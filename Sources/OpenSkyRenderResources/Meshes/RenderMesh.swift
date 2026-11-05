@@ -150,6 +150,8 @@ nonisolated public final class RenderMesh: Sendable {
     public let indexCount: Int
     /// See `Mesh.lodIndexCounts`.
     public let lodIndexCounts: [Int]
+    /// See `Mesh.objectLODSegment`.
+    public let objectLODSegment: Int?
     public let skinningBuffer: MTLBuffer?
     public let boneMatrixBuffer: MTLBuffer?
     private let skinningPalette: SkinningPalette?
@@ -217,6 +219,7 @@ nonisolated public final class RenderMesh: Sendable {
         self.indexBuffer = indexBuffer
         indexCount = mesh.indices.count
         lodIndexCounts = mesh.lodIndexCounts
+        objectLODSegment = mesh.objectLODSegment
         skinningBuffer = skinBuffers.attributes
         boneMatrixBuffer = skinBuffers.matrices
         skinningPalette = skinBuffers.palette
@@ -240,6 +243,7 @@ nonisolated public final class RenderMesh: Sendable {
         self.indexBuffer = indexBuffer
         indexCount = layout.indexCount
         lodIndexCounts = layout.lodIndexCounts
+        objectLODSegment = layout.objectLODSegment
         skinningBuffer = nil
         boneMatrixBuffer = nil
         skinningPalette = nil
@@ -277,6 +281,7 @@ nonisolated public final class RenderMesh: Sendable {
         indexBuffer = source.indexBuffer
         indexCount = source.indexCount
         lodIndexCounts = source.lodIndexCounts
+        objectLODSegment = source.objectLODSegment
         skinningBuffer = source.skinningBuffer
         self.boneMatrixBuffer = boneMatrixBuffer
         skinningPalette = palette

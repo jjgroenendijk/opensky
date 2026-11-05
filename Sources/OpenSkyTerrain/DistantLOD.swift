@@ -265,6 +265,8 @@ nonisolated public struct DistantLODScene: Sendable {
     public let largeReferencesPending: Bool
     /// Large references drawn with their full model.
     public let largeReferenceCount: Int
+    /// Cell segments of object LOD large-reference shapes the ring hid.
+    public let hiddenLargeReferenceSegments: Int
 
     public init(
         renderScene: RenderScene,
@@ -276,7 +278,8 @@ nonisolated public struct DistantLODScene: Sendable {
         treeInstanceCount: Int = 0,
         largeReferenceCells: Set<CellCoordinate> = [],
         largeReferencesPending: Bool = false,
-        largeReferenceCount: Int = 0
+        largeReferenceCount: Int = 0,
+        hiddenLargeReferenceSegments: Int = 0
     ) {
         self.renderScene = renderScene
         self.assets = assets
@@ -288,6 +291,7 @@ nonisolated public struct DistantLODScene: Sendable {
         self.largeReferenceCells = largeReferenceCells
         self.largeReferencesPending = largeReferencesPending
         self.largeReferenceCount = largeReferenceCount
+        self.hiddenLargeReferenceSegments = hiddenLargeReferenceSegments
     }
 
     /// The same ring, drawn with the worldspace's fitted terrain LOD curve.
@@ -336,7 +340,8 @@ nonisolated public struct DistantLODScene: Sendable {
             treeInstanceCount: treeInstanceCount,
             largeReferenceCells: largeReferenceCells,
             largeReferencesPending: largeReferencesPending,
-            largeReferenceCount: largeReferenceCount ?? self.largeReferenceCount
+            largeReferenceCount: largeReferenceCount ?? self.largeReferenceCount,
+            hiddenLargeReferenceSegments: hiddenLargeReferenceSegments
         )
     }
 }
@@ -400,12 +405,15 @@ nonisolated public final class DistantLODBuilder {
         let largeRadius = configuration.largeReferenceRadius
         let ringWanted = largeRadius > configuration.loadedGridRadius
         let ringActive = ringWanted && largeReferences
+        var ring = LargeReferenceHiding(center: center, radius: largeRadius)
         for block in selected {
             let hides = ringActive && LargeReferenceRing.hidesLargeReferences(
                 of: block, center: center, radius: largeRadius
             )
             do {
-                try placements.append(placement(for: block, hidingLargeReferences: hides))
+                try placements.append(placement(
+                    for: block, hiding: hides ? { ring.hiding($0, of: block) } : nil
+                ))
             } catch {
                 missing += 1
             }
@@ -432,20 +440,22 @@ nonisolated public final class DistantLODBuilder {
             largeReferenceCells: ringActive ? LargeReferenceRing.cells(
                 center: center, radius: largeRadius,
                 loadedRadius: configuration.loadedGridRadius,
-                hiddenCells: hiddenCells, blocks: selected
+                hiddenCells: hiddenCells, blocks: ring.wholeBlocks
             ) : [],
-            largeReferencesPending: ringWanted && !largeReferences
+            largeReferencesPending: ringWanted && !largeReferences,
+            hiddenLargeReferenceSegments: ring.hiddenSegments
         )
     }
 
+    /// `hiding` takes the full model and returns the one to draw.
     private func placement(
         for block: DistantLODBlock,
-        hidingLargeReferences: Bool
+        hiding: ((RenderModel) -> RenderModel)?
     ) throws -> RenderPlacement {
         let full = try block.clipMask.map {
             try meshes.model(path: block.path, terrainLODClipMask: $0)
         } ?? meshes.model(path: block.path)
-        let model = hidingLargeReferences ? full.withoutLargeReferences() : full
+        let model = hiding?(full) ?? full
         // BTR vertices are block-local; BTO vertices are already world-space.
         let transform = block.kind == .terrain
             ? MatrixMath.translation(SIMD3(

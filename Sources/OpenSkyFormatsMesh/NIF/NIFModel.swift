@@ -167,7 +167,7 @@ nonisolated extension NIFFile {
                 slotIndex = materials.count - 1
                 slotIndexes[key] = slotIndex
             }
-            try meshes.append(Mesh(
+            let mesh = try Mesh(
                 name: shape.object.name,
                 transform: parent * shape.object.localTransform,
                 positions: geometry.positions,
@@ -182,8 +182,13 @@ nonisolated extension NIFFile {
                 lodIndexCounts: MeshLODLevels.indexCounts(
                     triangleCounts: shape.lodTriangleCounts, indexCount: geometry.indices.count
                 )
+            )
+            let pieces = try mesh.splitByObjectLODSegment(file.largeReferenceSegments(
+                of: block,
+                at: index
             ))
-            meshBlocks.append(index)
+            meshes += pieces
+            meshBlocks += pieces.map { _ in index }
         }
 
         public struct ShapeGeometry: Sendable {

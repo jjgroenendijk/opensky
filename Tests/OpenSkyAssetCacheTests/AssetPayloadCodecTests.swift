@@ -36,7 +36,7 @@ struct AssetPayloadCodecTests {
         let plain = Mesh(
             name: nil, transform: matrix_identity_float4x4, positions: [SIMD3(9, 9, 9)],
             normals: [], tangents: [SIMD3(1, 0, 0)], bitangents: [SIMD3(0, 1, 0)], uvs: [],
-            colors: [], indices: [0, 0, 0], materialSlot: 0
+            colors: [], indices: [0, 0, 0], materialSlot: 0, objectLODSegment: 3
         )
         var shading = SurfaceShading()
         shading.terms = [.modelSpaceNormals, .softLighting, .environment]
@@ -95,6 +95,7 @@ struct AssetPayloadCodecTests {
             #expect(left.colors == right.colors)
             #expect(left.indices == right.indices)
             #expect(left.materialSlot == right.materialSlot)
+            #expect(left.objectLODSegment == right.objectLODSegment)
             #expect(left.skinning?.weights == right.skinning?.weights)
             #expect(left.skinning?.boneIndices == right.skinning?.boneIndices)
             #expect(left.skinning?.bindPoseMatrices == right.skinning?.bindPoseMatrices)

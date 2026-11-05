@@ -33,6 +33,28 @@ struct LargeReferenceRingTests {
         #expect(!LargeReferenceRing.hidesLargeReferences(of: terrain, center: center, radius: 5))
     }
 
+    @Test func segmentsRunNorthFirstThenEast() {
+        let block = objects(at: .init(x: 4, y: -4))
+        #expect(LargeReferenceRing.cell(ofSegment: 0, in: block) == CellCoordinate(x: 4, y: -4))
+        #expect(LargeReferenceRing.cell(ofSegment: 3, in: block) == CellCoordinate(x: 4, y: -1))
+        #expect(LargeReferenceRing.cell(ofSegment: 6, in: block) == CellCoordinate(x: 5, y: -2))
+        #expect(LargeReferenceRing.cell(ofSegment: 16, in: block) == nil)
+    }
+
+    @Test func aSegmentHidesOnlyWhenTheRingCoversItsCell() {
+        let block = objects(at: .init(x: 4, y: 0))
+        func hides(_ segment: Int) -> Bool {
+            LargeReferenceRing.hidesSegment(
+                segment, of: block, center: .init(x: 0, y: 0), radius: 5
+            )
+        }
+        #expect(hides(0))
+        #expect(hides(7))
+        #expect(!hides(8))
+        #expect(!hides(15))
+        #expect(hides(99))
+    }
+
     @Test func cellsCoverTheRingAndHiddenBlocksButNotTheLoadedGrid() {
         let center = CellCoordinate(x: 0, y: 0)
         let cells = LargeReferenceRing.cells(

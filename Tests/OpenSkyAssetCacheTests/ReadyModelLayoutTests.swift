@@ -8,7 +8,9 @@ import simd
 import Testing
 
 struct ReadyModelLayoutTests {
-    static func quad(name: String, offset: Float, vertices: Int = 4) -> Mesh {
+    static func quad(
+        name: String, offset: Float, vertices: Int = 4, segment: Int? = nil
+    ) -> Mesh {
         let positions = (0 ..< vertices).map { index in
             SIMD3<Float>(Float(index % 2) + offset, Float(index / 2), 0)
         }
@@ -18,13 +20,13 @@ struct ReadyModelLayoutTests {
             normals: [SIMD3<Float>](repeating: SIMD3(0, 0, 1), count: vertices),
             tangents: [], bitangents: [],
             uvs: positions.map { SIMD2($0.x, $0.y) }, colors: [],
-            indices: [0, 1, 3, 0, 3, 2], materialSlot: 0
+            indices: [0, 1, 3, 0, 3, 2], materialSlot: 0, objectLODSegment: segment
         )
     }
 
     static var plainModel: Model {
         Model(
-            meshes: [quad(name: "A", offset: 0), quad(name: "B", offset: 5)],
+            meshes: [quad(name: "A", offset: 0), quad(name: "B", offset: 5, segment: 7)],
             materials: [.fallback], skippedShapeCount: 1, editorMarkerShapeCount: 2
         )
     }
@@ -45,6 +47,7 @@ struct ReadyModelLayoutTests {
         for (ready, mesh) in zip(layout.meshes, model.meshes) {
             #expect(ready.name == mesh.name)
             #expect(ready.transform == mesh.transform)
+            #expect(ready.objectLODSegment == mesh.objectLODSegment)
             #expect(ready.vertexCount == 4)
             #expect(ready.indexCount == 6)
             #expect(ready.vertexRange.lowerBound % ModelCacheCodec.blockAlignment == 0)

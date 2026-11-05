@@ -484,6 +484,9 @@ extension AgentWorldAdapter {
             "interpolation": interpolationState(),
             "terrainLOD": terrainLODState(),
             "largeReferences": game.streamer.map { .init($0.largeReferenceCount) } ?? .null,
+            "hiddenLargeReferenceLOD": game.streamer.map {
+                .init($0.hiddenLargeReferenceSegments)
+            } ?? .null,
             "screenFade": screenFadeState(),
             "postEffects": postEffectState(),
             "projectileVisuals": projectileVisualState(),
