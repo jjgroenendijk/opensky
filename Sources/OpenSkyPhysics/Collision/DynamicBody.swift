@@ -26,6 +26,18 @@ nonisolated public struct DynamicBodyColliderShape: Sendable {
     public let material: FormID?
 }
 
+/// Where a body last touched something, and that surface's `MATT`. Nil material: the
+/// shape names none, such as the land, whose material comes from its texture.
+nonisolated public struct DynamicSurfaceTouch: Equatable, Sendable {
+    public let material: FormID?
+    public let point: SIMD3<Float>
+
+    public init(material: FormID?, point: SIMD3<Float>) {
+        self.material = material
+        self.point = point
+    }
+}
+
 /// The unchanging half of a body: its collider, its inertia, and the material
 /// constants the solver reads. One definition per placed reference, shared by
 /// every step it lives through.
@@ -56,6 +68,11 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
     public let maximumLinearSpeed: Float
     /// Radians per second.
     public let maximumAngularSpeed: Float
+    /// The `MATT` of the first collider shape that names one.
+    public var material: FormID? {
+        colliderShapes.lazy.compactMap(\.material).first
+    }
+
     /// Farthest surface point from the centre of mass, over every volume.
     public let boundingRadius: Float
     /// The heaviest body's SkyrimLayer, which sets how hard a push moves it.
@@ -286,6 +303,8 @@ nonisolated public struct DynamicBody: Sendable {
     public var isSleeping = false
     /// Consecutive steps spent below the sleep thresholds.
     public var restingSteps = 0
+    /// The surface of the last contact, for the collision sound.
+    public var lastSurface: DynamicSurfaceTouch?
 
     public init(
         key: ReferenceKey,

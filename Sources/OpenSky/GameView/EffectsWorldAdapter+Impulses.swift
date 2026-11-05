@@ -11,6 +11,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
@@ -34,25 +35,36 @@ extension EffectsWorldAdapter: ImpulseWorld {
 
     func impulseBodies() -> [ImpulseBody] {
         (game.streamer?.dynamicBodies.bodies ?? []).map { body in
-            ImpulseBody(
+            var impulseBody = ImpulseBody(
                 key: body.key, reference: body.reference, position: body.position,
                 velocity: body.linearVelocity, mass: body.definition.mass,
                 boundingRadius: body.definition.boundingRadius,
                 kind: ImpulseBodyKind(collisionLayer: body.definition.collisionLayer),
-                material: body.definition.colliderShapes.lazy.compactMap(\.material).first
+                material: body.definition.material
             )
+            impulseBody.surfaceMaterial = surfaceMaterial(of: body.lastSurface)
+            return impulseBody
         }
     }
 
-    /// The body's material names the impact data set; the surface it hit is not known, so
-    /// the set's most common entry plays.
+    /// A shape without a `MATT`, such as the land, takes the land texture's under the point.
+    private func surfaceMaterial(of touch: DynamicSurfaceTouch?) -> FormID? {
+        guard let touch else { return nil }
+        if let material = touch.material {
+            return material
+        }
+        return game.streamer?.sampleTerrain(at: SIMD2(touch.point.x, touch.point.y))?.material
+    }
+
+    /// The body's material names the impact data set; the surface it hit picks the entry,
+    /// as a weapon's impact does.
     func playCollision(_ collision: BodyCollision) {
         guard
             let store = game.worldData?.footstepStore,
             let dataSet = store.materialParents.impactDataSet(of: collision.material),
             let impact = MeleeImpactResolver(footsteps: store).resolve(
                 dataSet: dataSet,
-                material: nil
+                material: collision.surface
             )
         else { return }
         game.combatWorld.playImpact(impact, at: collision.position, gain: collision.gain)

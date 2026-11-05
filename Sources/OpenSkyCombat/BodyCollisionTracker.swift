@@ -1,5 +1,5 @@
 // Finds loose bodies that hit something: a sudden loss of speed between two steps. The
-// sound comes from the body's material (docs/engine/impulses.md#collision-sounds).
+// sound comes from both materials (docs/engine/impulses.md#collision-sounds).
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -11,12 +11,18 @@ nonisolated public struct BodyCollision: Equatable, Sendable {
     /// Units per second the hit took off the body's velocity.
     public let speedLoss: Float
     public let material: FormID?
+    /// What the body hit. Nil when unknown.
+    public let surface: FormID?
 
-    public init(body: ReferenceKey, position: SIMD3<Float>, speedLoss: Float, material: FormID?) {
+    public init(
+        body: ReferenceKey, position: SIMD3<Float>, speedLoss: Float, material: FormID?,
+        surface: FormID? = nil
+    ) {
         self.body = body
         self.position = position
         self.speedLoss = speedLoss
         self.material = material
+        self.surface = surface
     }
 
     /// Louder for a harder hit: a quiet floor at the threshold, full level at `loudSpeedLoss`.
@@ -56,7 +62,8 @@ nonisolated public struct BodyCollisionTracker: Sendable {
             else { continue }
             quiet[body.key] = Self.quietSteps
             hits.append(BodyCollision(
-                body: body.key, position: body.position, speedLoss: loss, material: body.material
+                body: body.key, position: body.position, speedLoss: loss, material: body.material,
+                surface: body.surfaceMaterial
             ))
         }
         velocities = next

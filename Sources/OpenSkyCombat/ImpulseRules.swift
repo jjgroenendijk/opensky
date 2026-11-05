@@ -55,6 +55,8 @@ nonisolated public struct ImpulseBody: Equatable, Sendable {
     public let kind: ImpulseBodyKind
     /// The `MATT` of the body's first collision shape.
     public let material: FormID?
+    /// The `MATT` of the surface the body last touched. Nil when unknown.
+    public var surfaceMaterial: FormID?
 
     public init(
         key: ReferenceKey, reference: FormID, position: SIMD3<Float>,
