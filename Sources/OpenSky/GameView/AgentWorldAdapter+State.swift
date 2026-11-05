@@ -231,7 +231,8 @@ extension AgentWorldAdapter {
             "lastRumble": game.controllerRumble.lastRumble.map { rumble in
                 [
                     "big": [.init(rumble.bigSeconds), .init(rumble.bigStrength)],
-                    "small": [.init(rumble.smallSeconds), .init(rumble.smallStrength)]
+                    "small": [.init(rumble.smallSeconds), .init(rumble.smallStrength)],
+                    "cause": game.controllerRumble.lastRumbleCause.map(AgentJSON.string) ?? .null
                 ]
             } ?? .null,
             "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
@@ -485,6 +486,7 @@ extension AgentWorldAdapter {
             "screenFade": screenFadeState(),
             "postEffects": postEffectState(),
             "projectileVisuals": projectileVisualState(),
+            "soundMix": soundMixState(),
             "gpuMemory": gpuMemoryState()
         ]
     }

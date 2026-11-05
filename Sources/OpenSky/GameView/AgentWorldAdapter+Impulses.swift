@@ -5,6 +5,8 @@ import Foundation
 import OpenSkyAgentControl
 import OpenSkyCombat
 import OpenSkyFormatsESM
+import OpenSkyRenderCore
+import OpenSkyRendering
 import simd
 
 extension AgentWorldAdapter {
@@ -63,6 +65,12 @@ extension AgentWorldAdapter {
             [
                 "kind": "physicsDamage", "body": reference(body), "ref": reference(actor),
                 "damage": .init(damage)
+            ]
+        case let .collision(collision):
+            [
+                "kind": "collision", "ref": reference(collision.body),
+                "speedLoss": .init(collision.speedLoss), "gain": .init(collision.gain),
+                "material": collision.material.map { .string("\($0)") } ?? .null
             ]
         }
     }

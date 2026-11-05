@@ -7,6 +7,7 @@ import AVFAudio
 import Foundation
 import OpenSkyFormatsAudio
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import simd
 
 /// How a source reaches the main mixer. Explicit rather than inferred from the
@@ -37,6 +38,10 @@ public final class ActiveAudioSource {
     public let gain: Float
     /// Continuous source: it restarts at the beginning instead of ending.
     public let loops: Bool
+    /// The sound category the mix reads; see docs/engine/sound-mix.md.
+    public let soundCategory: FormID?
+    /// Paused by the sound mix, as in a menu; the mix plays it again.
+    public var mixPaused = false
     /// The output model's distance curve, nil when the environment node attenuates.
     public let attenuation: AttenuationCurve?
     /// The curve's gain at the listener's distance, updated each tick.
@@ -89,6 +94,7 @@ public final class ActiveAudioSource {
         let speakers = routing == .nonPositional ? request.outputModel?.speakers : nil
         gain = request.gain * (speakers?.gain ?? 1)
         loops = request.loops
+        soundCategory = request.soundCategory
         self.node = node
         self.streamer = streamer
     }
@@ -108,6 +114,8 @@ nonisolated public struct AudioPlayRequest: Sendable {
     public var loops = false
     /// The SNDR's output model, nil for the engine defaults.
     public var outputModel: OutputModelProfile?
+    /// The SNDR's `SNCT`; nil takes the category `category` maps to.
+    public var soundCategory: FormID?
 
     /// Request for a source with no world position — music, ambience and other
     /// 2D material routed straight into a category submix.
@@ -127,13 +135,15 @@ nonisolated public struct AudioPlayRequest: Sendable {
         category: AudioCategory,
         worldPosition: SIMD3<Float>,
         gain: Float = 1,
-        loops: Bool = false
+        loops: Bool = false,
+        soundCategory: FormID? = nil
     ) {
         self.name = name
         self.category = category
         self.worldPosition = worldPosition
         self.gain = gain
         self.loops = loops
+        self.soundCategory = soundCategory
     }
 }
 
@@ -414,6 +424,7 @@ extension WorldAudioEngine {
     public func applyVolume(to source: ActiveAudioSource) {
         let categoryFactor = source.isPositional ? audibleVolume(for: source.category) : 1
         source.node.volume = categoryFactor * source.gain * source.fadeGain * source.distanceGain
+            * mixLevel(of: source).gain
     }
 
     /// Effective gain of one source as the listener hears it before distance
@@ -421,6 +432,7 @@ extension WorldAudioEngine {
     /// factor is zero while the category is muted or another one is soloed.
     public func effectiveGain(of source: ActiveAudioSource) -> Float {
         masterVolume * audibleVolume(for: source.category) * source.gain * source.fadeGain
+            * mixLevel(of: source).gain
     }
 
     // MARK: - Internals

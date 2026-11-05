@@ -4,6 +4,8 @@
 
 import CoreHaptics
 import GameController
+import OpenSkyAudio
+import OpenSkyFormatsESM
 import OpenSkyMagic
 
 final class ControllerRumble {
@@ -12,11 +14,35 @@ final class ControllerRumble {
     var isEnabled: () -> Bool = { true }
     /// The last rumble asked for, for the `state player` read.
     private(set) var lastRumble: ShoutRumble?
+    /// What asked for the last rumble: `shout`, `weapon`, or `sound`.
+    private(set) var lastRumbleCause: String?
     private var engines: [String: CHHapticEngine] = [:]
 
     func shout(words: Int) {
-        guard isEnabled(), let rumble = settings.rumble(words: words) else { return }
+        guard let rumble = settings.rumble(words: words) else { return }
+        play(rumble, cause: "shout")
+    }
+
+    /// A weapon's Rumble tab: the left motor is the big one, the right the small one.
+    func weapon(_ rumble: Weapon.Rumble) {
+        guard rumble.seconds > 0, rumble.left > 0 || rumble.right > 0 else { return }
+        play(ShoutRumble(
+            bigSeconds: rumble.seconds, bigStrength: rumble.left,
+            smallSeconds: rumble.seconds, smallStrength: rumble.right
+        ), cause: "weapon")
+    }
+
+    func sound(_ rumble: SoundRumble) {
+        play(ShoutRumble(
+            bigSeconds: rumble.seconds, bigStrength: rumble.big,
+            smallSeconds: rumble.seconds, smallStrength: rumble.small
+        ), cause: "sound")
+    }
+
+    private func play(_ rumble: ShoutRumble, cause: String) {
+        guard isEnabled() else { return }
         lastRumble = rumble
+        lastRumbleCause = cause
         for controller in GCController.controllers() {
             guard let haptics = controller.haptics else { continue }
             if haptics.supportedLocalities.contains(.leftHandle) {

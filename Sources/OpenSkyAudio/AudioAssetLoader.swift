@@ -16,6 +16,16 @@ nonisolated public enum AudioFileAsset: Sendable {
             .isWAV(data) ? try .wav(WAVFile(data: data)) : try .xwm(XWMFile(data: data))
     }
 
+    /// Seconds of sound, or nil when the file does not say.
+    public var duration: Float? {
+        switch self {
+        case let .wav(file):
+            file.format
+                .sampleRate > 0 ? Float(file.frameCount) / Float(file.format.sampleRate) : nil
+        case let .xwm(file): file.declaredDuration.map(Float.init)
+        }
+    }
+
     public var channelCount: Int {
         switch self {
         case let .wav(file): file.format.channelCount

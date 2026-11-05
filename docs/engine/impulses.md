@@ -70,6 +70,20 @@ actor its bounding sphere touches. The damage is the heaviest `fPhysicsDamage<n>
 the body reaches (20 kg: 1, 50 kg: 5, 100 kg: 10), times
 `fPhysicsDamageSpeedBase + fPhysicsDamageSpeedMult * speed`. One contact hurts once.
 
+## Collision sounds
+
+A loose body that loses at least `BodyCollisionTracker.minimumSpeedLoss` (150) units per second
+between two steps has hit something, and makes a sound. The body's material (`MATT` of its first
+collision shape) names the impact data set in `HNAM`, through its parents if it names none
+([MATT](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MATT)). The set's impact plays its
+sound and its model at the body. A harder hit is louder: the level grows from 0.25 at the
+threshold to full at a loss of 800. After a hit the body stays silent for 15 steps, so a bounce
+or a slide does not rattle.
+
+[WARNING] OpenSky does not know the material of the surface the body hit, so the set's most
+common entry plays. The threshold, the levels, and the quiet steps are OpenSky's values, in the
+[unverified values](/engine/unverified-values.md).
+
 ## Water
 
 Water comes from the resident exterior cells: the `XCLW` height and the `WATR` linear
@@ -94,5 +108,5 @@ velocity of the cell's water type.
 ## Checking it in the game
 
 `openskycli game state impulses` shows the settings in use and the newest knocks, pushes,
-splashes, and physics hits. `openskycli game debug knock <ref> <damage>` knocks an actor back
-as a melee hit from the player would.
+splashes, physics hits, and collisions (`speedLoss`, `gain`, `material`). `openskycli game debug
+knock <ref> <damage>` knocks an actor back as a melee hit from the player would.

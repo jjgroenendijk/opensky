@@ -131,7 +131,7 @@ with magnitude 0.
 | field | type | meaning |
 | --- | --- | --- |
 | `DATA` | 10 bytes | uint32 value, float32 weight, uint16 damage |
-| `DNAM` | 100 bytes | animation type, speed, reach, flags, skill, stagger |
+| `DNAM` | 100 bytes | animation type, speed, reach, flags, rumble, skill, stagger |
 | `CRDT` | 16 or 24 bytes | critical hit data |
 | `EITM` | FormID | enchantment (`ENCH`) |
 | `EAMT` | uint16 | enchantment charge |
@@ -144,10 +144,11 @@ Record at line 10499, `DATA` 10530, `DNAM` 10535, `CRDT` 10604.
 
 `DNAM` offsets: `0x00` uint8 animation type (0 other, 1 one-hand sword, up to 9 crossbow),
 `0x04` float32 speed, `0x08` float32 reach, `0x0C` uint16 flags (`0x08` cannot drop, `0x20`
-embedded, `0x80` not playable), `0x4C` int32 skill as an actor value (-1 for none), `0x60`
-float32 stagger. The rest is padding, old Fallout fields, or rumble. Reach is a multiplier,
-not a distance: UESP gives melee reach as `fCombatDistance * NPCScale * WeaponReach`
-([melee combat](/engine/melee-combat.md)).
+embedded, `0x80` not playable), `0x34`, `0x38`, and `0x3C` float32 rumble left motor strength,
+right motor strength, and seconds (the Creation Kit's Rumble tab), `0x4C` int32 skill as an
+actor value (-1 for none), `0x60` float32 stagger. The rest is padding or old Fallout fields. Reach
+is a multiplier, not a distance: UESP gives melee reach as `fCombatDistance * NPCScale *
+WeaponReach` ([melee combat](/engine/melee-combat.md)).
 
 `CRDT` changed in SSE. The size picks the layout, not the form version, so older mod records
 still read:

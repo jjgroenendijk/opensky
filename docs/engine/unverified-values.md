@@ -230,3 +230,7 @@ the detail and the sources it did find.
 | Face-target aim point | The facing object's origin, an actor's feet | [visual effects](/rendering/visual-effects.md#where-effects-come-from) |
 | Creature loop reach and count | Loops play for the nearest 8 actors within 3000 units | [creature sounds](/engine/actor-sounds.md#loops-come-from-the-sound-types) |
 | Creature loop states | Conscious loop while alive and not unconscious; movement loop while the mover moves; a `CSDC` chance of 0 never plays | [creature sounds](/engine/actor-sounds.md#loops-come-from-the-sound-types) |
+| Music and dialogue duck levels | Music falls to 0.4 and `SFDC`/`NDSC` sounds to 0.5 in a conversation; `SFDC`/`NDSC` fade over the music seconds | [sound mix](/engine/sound-mix.md#what-a-category-does) |
+| Sound rumble | Strength is the `LNAM` send times the level at the start; at most 1 s | [sound mix](/engine/sound-mix.md#rumble) |
+| Weapon rumble timing | Every blow the player's weapon lands | [sound mix](/engine/sound-mix.md#rumble) |
+| Body collision sound | A speed loss of 150 units/s is a hit; level 0.25 to 1 up to a loss of 800; 15 quiet steps; the impact set's most common entry | [impulses](/engine/impulses.md#collision-sounds) |

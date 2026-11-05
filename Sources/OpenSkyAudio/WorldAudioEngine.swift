@@ -72,6 +72,8 @@ public final class WorldAudioEngine {
     /// the FIFO eviction walks). Written only by WorldAudioEngineSources.swift;
     /// internal rather than private(set) because that file is a satellite.
     public var sources: [ActiveAudioSource] = []
+    /// The sound category mix; nil plays every category at full level.
+    public var soundMix: SoundCategoryMix?
     /// Next source id; taken only by WorldAudioEngineSources.swift.
     public var nextSourceID = 1
     /// Idle player nodes for one-shot buffers (WorldAudioEngineNodePool.swift).

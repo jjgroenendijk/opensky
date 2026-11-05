@@ -66,7 +66,9 @@ A shout rumbles every controller with haptics, when the Gameplay page's Vibratio
 Each word count has its own `fShoutRumble{Big,Small}Motor{Duration,Frequency}V1` to `V3`. The big
 motor plays on the left handle and the small one on the right; a pad with one actuator plays the
 stronger of the two. The frequency setting is used as the strength, which is OpenSky's reading.
-`openskycli game state player` shows the last rumble under `lastRumble`.
+`openskycli game state player` shows the last rumble under `lastRumble`, with its `cause`
+(`shout`, `weapon`, or `sound`). Weapons and sounds rumble too
+([sound mix](/engine/sound-mix.md#rumble)).
 
 ## Where OpenSky differs from the game
 

@@ -4,6 +4,7 @@
 
 import AppKit
 import MetalKit
+import OpenSkyAudio
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyLaunch
@@ -40,6 +41,7 @@ struct GameAppServices {
     var terrainLODConfigurationStore = TerrainLODConfigurationStore(
         snapshot: TerrainLODConfigurationSnapshot(configuration: .fallback, source: "safe defaults")
     )
+    var soundMixTimings = SoundMixTimings()
     var launch = GameLaunchChoice()
     var dataRoot: GameDataRoot?
 }

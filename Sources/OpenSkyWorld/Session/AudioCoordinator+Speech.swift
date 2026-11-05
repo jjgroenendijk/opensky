@@ -148,7 +148,10 @@ extension AudioCoordinator {
                 let playback = try engine.playVoice(
                     fuzData: data,
                     name: path,
-                    worldPosition: world?.speakerHeadPosition(of: speaker) ?? triggerPosition()
+                    worldPosition: world?.speakerHeadPosition(of: speaker) ?? triggerPosition(),
+                    soundCategory: engine.voiceCategory(
+                        conversation: world?.isConversationSpeaker(speaker) == true
+                    )
                 )
                 speech.channels[speaker]?.playing = playback
                 speech.lastError = nil

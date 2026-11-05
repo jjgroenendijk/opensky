@@ -54,13 +54,17 @@ nonisolated public struct OutputModelProfile: Equatable, Sendable {
     public let reverbSend: Float
     /// A speaker output model's matrix folded to stereo; nil plays at full gain, centred.
     public let speakers: SpeakerFold?
+    /// `NAM1` flag 0x02: the descriptor's rumble send reaches the controller.
+    public let allowsRumble: Bool
 
     public init(
         routing: AudioRouting,
         attenuation: AttenuationCurve?,
         reverbSend: Float,
-        speakers: SpeakerFold? = nil
+        speakers: SpeakerFold? = nil,
+        allowsRumble: Bool = false
     ) {
+        self.allowsRumble = allowsRumble
         self.routing = routing
         self.attenuation = attenuation
         self.reverbSend = min(max(reverbSend.isFinite ? reverbSend : 0, 0), 1)
@@ -75,7 +79,8 @@ nonisolated public struct OutputModelProfile: Equatable, Sendable {
             routing: type == 1 ? .nonPositional : .positional,
             attenuation: attenuates ? AttenuationCurve(model.attenuation) : nil,
             reverbSend: Float(model.reverbSendPercent ?? 0) / 100,
-            speakers: type == 1 ? SpeakerFold(matrix: model.channelMatrix) : nil
+            speakers: type == 1 ? SpeakerFold(matrix: model.channelMatrix) : nil,
+            allowsRumble: (model.flags ?? 0) & 0x02 != 0
         )
     }
 }

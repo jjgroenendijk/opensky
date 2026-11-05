@@ -41,6 +41,7 @@ protocol CombatWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
+    var controllerRumble: ControllerRumble { get }
     var crime: CrimeCoordinator { get }
     var dialogue: DialogueCoordinator { get }
     var effects: EffectsCoordinator { get }

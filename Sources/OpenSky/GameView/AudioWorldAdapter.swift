@@ -8,6 +8,8 @@ import OpenSkyConditions
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyLoading
+import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
@@ -24,6 +26,10 @@ protocol AudioWorldHost: AnyObject {
     var audioFileSystem: (any GameFileSource)? { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
+    var loadingScreens: LoadingScreenCoordinator { get }
+    var menuMode: MenuModeController { get }
+    var soundMixTimings: SoundMixTimings { get }
+    var controllerRumble: ControllerRumble { get }
     var effects: EffectsCoordinator { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
@@ -111,6 +117,21 @@ extension AudioWorldAdapter: AudioWorld {
         game.dialogueWorld.headPosition(of: speaker)
     }
 
+    /// Menu mode means a menu that pauses the world: the dialogue menu leaves voices playing.
+    func soundMixInputs() -> SoundMixInputs {
+        let menus = game.menuMode
+        return SoundMixInputs(
+            menuMode: menus.isWorldSimPaused,
+            loading: game.loadingScreens.isCovering,
+            dialogue: game.dialogueMenu.isOpen,
+            statsMenu: menus.stack.identifiers.contains(SkillsMenuCoordinator.identifier)
+        )
+    }
+
+    func isConversationSpeaker(_ speaker: ReferenceKey) -> Bool {
+        game.dialogueMenu.isOpen && game.dialogueMenu.speakerOrTarget == speaker
+    }
+
     func playerConditionsPass(_ conditions: [Condition]) -> Bool {
         var context = game.runtimeState.conditionContext()
         context.subject = .player
@@ -125,7 +146,16 @@ extension AudioWorldAdapter: AudioWorld {
         footsteps: WorldAudioFootstepDirector
     ) {
         game.gameSession?.worldAudio = engine
+        if let store = game.worldData?.soundStore {
+            engine.soundMix = SoundCategoryMix(
+                categories: store.categories, roles: store.categoryRoles,
+                timings: game.soundMixTimings
+            )
+        }
         game.gameSession?.soundDirector = sounds
+        sounds.rumble = { [weak self] in self?.game.controllerRumble.sound($0) }
+        game.gameSession?
+            .soundMixInputs = { [weak self] in self?.soundMixInputs() ?? SoundMixInputs() }
         game.gameSession?.musicDirector = music
         game.gameSession?.footstepDirector = footsteps
         let store = game.worldData?.footstepStore

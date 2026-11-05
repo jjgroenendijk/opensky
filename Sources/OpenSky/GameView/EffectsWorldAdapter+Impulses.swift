@@ -3,6 +3,7 @@
 // (docs/engine/impulses.md).
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyEffects
@@ -37,9 +38,24 @@ extension EffectsWorldAdapter: ImpulseWorld {
                 key: body.key, reference: body.reference, position: body.position,
                 velocity: body.linearVelocity, mass: body.definition.mass,
                 boundingRadius: body.definition.boundingRadius,
-                kind: ImpulseBodyKind(collisionLayer: body.definition.collisionLayer)
+                kind: ImpulseBodyKind(collisionLayer: body.definition.collisionLayer),
+                material: body.definition.colliderShapes.lazy.compactMap(\.material).first
             )
         }
+    }
+
+    /// The body's material names the impact data set; the surface it hit is not known, so
+    /// the set's most common entry plays.
+    func playCollision(_ collision: BodyCollision) {
+        guard
+            let store = game.worldData?.footstepStore,
+            let dataSet = store.materialParents.impactDataSet(of: collision.material),
+            let impact = MeleeImpactResolver(footsteps: store).resolve(
+                dataSet: dataSet,
+                material: nil
+            )
+        else { return }
+        game.combatWorld.playImpact(impact, at: collision.position, gain: collision.gain)
     }
 
     func applyBodyImpulse(_ impulse: BodyImpulse) {

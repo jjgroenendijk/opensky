@@ -64,6 +64,8 @@ nonisolated public struct Weapon: Sendable {
     public let skill: Int32?
     /// DNAM stagger magnitude.
     public let stagger: Float
+    /// DNAM 0x34-0x3C: the Rumble tab's left and right motor strength and seconds.
+    public let rumble: Rumble
     public let criticalData: CriticalData?
     /// EITM — ENCH applied by the weapon; nil on unenchanted weapons.
     public let enchantment: FormID?
@@ -105,6 +107,7 @@ nonisolated public struct Weapon: Sendable {
         flags = payload.flags
         skill = payload.skill
         stagger = payload.stagger
+        rumble = payload.rumble
         criticalData = payload.criticalData
         enchantment = payload.enchantment
         enchantmentCharge = payload.enchantmentCharge
@@ -127,6 +130,7 @@ nonisolated public struct Weapon: Sendable {
         var flags = Flags()
         var skill: Int32?
         var stagger: Float = 0
+        var rumble = Rumble(left: 0, right: 0, seconds: 0)
         var criticalData: CriticalData?
         var enchantment: FormID?
         var enchantmentCharge: UInt16?
@@ -180,7 +184,7 @@ nonisolated public struct Weapon: Sendable {
             damage = try reader.readUInt16()
         }
 
-        /// DNAM: 100 bytes; the engine reads offsets 0x00, 0x04, 0x08, 0x0C,
+        /// DNAM: 100 bytes; the engine reads offsets 0x00 to 0x0C, 0x34 to 0x3C,
         /// 0x4C and 0x60 and skips the rest.
         private mutating func decodeWeaponData(_ field: ESMField) throws {
             guard field.data.count >= 0x64 else {
@@ -194,6 +198,11 @@ nonisolated public struct Weapon: Sendable {
             speed = try reader.readFloat32()
             reach = try reader.readFloat32()
             flags = try Flags(rawValue: reader.readUInt16())
+            reader.seek(to: 0x34)
+            rumble = try Rumble(
+                left: reader.readFloat32(), right: reader.readFloat32(),
+                seconds: reader.readFloat32()
+            )
             reader.seek(to: 0x4C)
             let rawSkill = try Int32(bitPattern: reader.readUInt32())
             skill = rawSkill < 0 ? nil : rawSkill
@@ -264,5 +273,19 @@ nonisolated public struct WeaponDetails: Equatable, Sendable {
         unequipSound = fields.formID("NAM8")
         detectionSoundLevel = fields.uint32("VNAM")
         destructible = fields.destructible()
+    }
+}
+
+nonisolated extension Weapon {
+    public struct Rumble: Equatable, Sendable {
+        public let left: Float
+        public let right: Float
+        public let seconds: Float
+
+        public init(left: Float, right: Float, seconds: Float) {
+            self.left = left
+            self.right = right
+            self.seconds = seconds
+        }
     }
 }
