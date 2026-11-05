@@ -235,3 +235,4 @@ the detail and the sources it did find.
 | Weapon rumble timing | Every blow the player's weapon lands | [sound mix](/engine/sound-mix.md#rumble) |
 | Body collision sound | A speed loss of 150 units/s is a hit; level 0.25 to 1 up to a loss of 800; 15 quiet steps; the impact set's most common entry | [impulses](/engine/impulses.md#collision-sounds) |
 | Tree sway and leaf flutter | `treeSwayTilt` 0.1, leaf side share 0.5, leaf fade at 4096 units, defaults leaf amplitude 3 and frequency 1 | [trees](/rendering/trees.md) |
+| Skin decal bone | The body bone with the nearest origin to the hit; weapon, shield, quiver, camera, magic, arrow, and root nodes skipped | [decals](/rendering/decals.md#skin-decals) |

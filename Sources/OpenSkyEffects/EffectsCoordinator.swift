@@ -17,11 +17,19 @@ import simd
 public protocol EffectsWorld: AnyObject {
     /// An actor's feet, facing its heading; nil when it is not resident.
     func effectTransform(of actor: ReferenceKey) -> float4x4?
+    /// The actor's posed bones in world space by name; empty when it has no pose.
+    func effectBones(of actor: ReferenceKey) -> [String: float4x4]
     /// The view, for effects that ride the camera; nil before a renderer exists.
     var effectCamera: VisualEffectRuntime.CameraPose? { get }
     /// The meshes a membrane on `actor` covers; nil when none are drawn.
     func membraneTarget(of actor: ReferenceKey) -> MembraneTarget?
     func detonateEffectExplosion(_ explosion: ReferenceKey, at position: SIMD3<Float>)
+}
+
+extension EffectsWorld {
+    public func effectBones(of _: ReferenceKey) -> [String: float4x4] {
+        [:]
+    }
 }
 
 public final class EffectsCoordinator {

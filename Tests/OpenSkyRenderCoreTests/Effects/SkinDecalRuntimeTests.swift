@@ -26,7 +26,7 @@ struct SkinDecalRuntimeTests {
         try #require(runtime.place(
             look, on: Self.actor, at: SIMD3(10, 0, 60), ownerTransform: Self.at(0, 0)
         ) != nil)
-        let moved = runtime.worldDecals { _ in Self.at(100, 0) }
+        let moved = runtime.worldDecals { _ in SkinDecalFrames(feet: Self.at(100, 0), bones: [:]) }
         let decal = try #require(moved.first)
         #expect(abs(decal.center.x - 110.5) < 1e-3)
         #expect(abs(decal.center.z - 60) < 1e-3)
@@ -46,6 +46,7 @@ struct SkinDecalRuntimeTests {
         var runtime = SkinDecalRuntime()
         runtime.place(look, on: Self.actor, at: SIMD3(0, 10, 60), ownerTransform: Self.at(0, 0))
         #expect(runtime.worldDecals { _ in nil }.isEmpty)
+        #expect(runtime.worldDecals { _ in SkinDecalFrames(feet: nil, bones: [:]) }.isEmpty)
     }
 
     @Test func theFrameLimitDropsExtraDecals() throws {
@@ -58,5 +59,38 @@ struct SkinDecalRuntimeTests {
         )
         #expect(second == nil)
         #expect(runtime.decals.decals.count == 1)
+    }
+
+    @Test func aDecalRidesTheNearestBodyBone() throws {
+        let look = try #require(Self.look)
+        var runtime = SkinDecalRuntime()
+        let bones = [
+            "NPC R Forearm [RLar]": Self.at(20, 0),
+            "NPC Head [Head]": Self.at(0, 0),
+            "WEAPON": Self.at(21, 0)
+        ]
+        try #require(runtime.place(
+            look, on: Self.actor, at: SIMD3(25, 0, 0), ownerTransform: Self.at(0, 0), bones: bones
+        ) != nil)
+        let id = try #require(runtime.decals.decals.first?.id)
+        #expect(runtime.bones[id] == "NPC R Forearm [RLar]")
+        let raised = SkinDecalFrames(
+            feet: Self.at(0, 0), bones: ["NPC R Forearm [RLar]": Self.at(20, 50)]
+        )
+        let decal = try #require(runtime.worldDecals { _ in raised }.first)
+        #expect(abs(decal.center.y - 50) < 1e-3)
+        #expect(decal.center.x > 20)
+    }
+
+    @Test func aDecalWhoseBoneIsGoneIsLeftOut() throws {
+        let look = try #require(Self.look)
+        var runtime = SkinDecalRuntime()
+        runtime.place(
+            look, on: Self.actor, at: SIMD3(25, 0, 0), ownerTransform: Self.at(0, 0),
+            bones: ["NPC Spine [Spn0]": Self.at(20, 0)]
+        )
+        #expect(runtime.worldDecals { _ in
+            SkinDecalFrames(feet: Self.at(0, 0), bones: [:])
+        }.isEmpty)
     }
 }

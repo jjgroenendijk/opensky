@@ -333,6 +333,7 @@ extension AgentWorldAdapter {
                 (game.gameSession?.soundDirector?.actorLoopNames(of: actor.key) ?? [])
                     .map(AgentJSON.string)
             ),
+            "skinDecals": .array(skinDecalBones(of: actor.key).map(AgentJSON.string)),
             "constraints": physicsConstraints(of: actor.key),
             "graph": graph
         ])

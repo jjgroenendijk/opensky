@@ -4,6 +4,7 @@
 // The rules live in the coordinators (docs/rendering/visual-effects.md).
 
 import Foundation
+import OpenSkyActorPresentation
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyEffects
@@ -44,6 +45,7 @@ protocol EffectsWorldHost: AnyObject {
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
 }
 
 final class EffectsWorldAdapter {
@@ -288,6 +290,21 @@ extension EffectsWorldAdapter: EffectsWorld {
             }
         }
         return Self.transform(feet: observed.feet, yaw: observed.facing)
+    }
+
+    /// The pose in model space, placed where the actor's reference stands, as a script's
+    /// node lookup places it.
+    func effectBones(of actor: ReferenceKey) -> [String: float4x4] {
+        guard
+            let renderer = game.renderer, let playback = game.actorPlayback(for: actor),
+            let pose = playback.skeletonPose(at: renderer.animationTime),
+            let state = game.scripts.bridge?.referenceState(for: actor)
+        else { return [:] }
+        let toWorld = MatrixMath.placement(
+            position: state.transform.position, rotation: state.transform.rotation,
+            scale: state.transform.scale
+        )
+        return pose.named.mapValues { toWorld * $0 }
     }
 
     func membraneTarget(of actor: ReferenceKey) -> MembraneTarget? {

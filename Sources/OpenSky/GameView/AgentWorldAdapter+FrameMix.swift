@@ -1,5 +1,5 @@
 // The `soundMix` and `treeWind` parts of `state frame` (docs/engine/sound-mix.md,
-// docs/rendering/trees.md).
+// docs/rendering/trees.md), and the skin decals of `state actors`.
 
 import OpenSkyAgentControl
 import OpenSkyAudio
@@ -34,6 +34,13 @@ extension AgentWorldAdapter {
             "musicLevel": .init(mix.musicLevel),
             "roles": .object(roles)
         ]
+    }
+
+    /// The bone each skin decal on `actor` rides, or `feet` for one without a bone.
+    func skinDecalBones(of actor: ReferenceKey) -> [String] {
+        let skin = game.effects.skinDecals
+        return skin.owners.filter { $0.value == actor }.keys.sorted()
+            .map { skin.bones[$0] ?? "feet" }
     }
 
     func treeWindState() -> AgentJSON {
