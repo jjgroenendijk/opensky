@@ -556,6 +556,7 @@ extension Renderer {
         // The depth split replaces the encoder, so later layers use `state.encoder`.
         guard copySceneDepth(descriptor: descriptor, frameOffset: frameOffset, state: &state)
         else { return false }
+        encodeProjectedDecals(state: &state)
         encodeWater(items: scene.water, state: &state)
         encodeBlendedGroups(state: &state)
         encodeWeaponBlood(state: &state)

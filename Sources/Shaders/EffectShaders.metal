@@ -161,6 +161,22 @@ vertex DecalVertexOut decalVertex(
     return out;
 }
 
+static float4 litDecal(
+    float4 diffuse,
+    float3 normal,
+    float3 world,
+    constant FrameUniforms &frame,
+    depth2d_array<float> shadowMap,
+    depth2d_array<float> auxiliary,
+    sampler shadowSampler)
+{
+    float lambert = saturate(dot(normal, -frame.sunDirection));
+    float shadow = sunShadowFactor(world, frame, shadowMap, auxiliary, shadowSampler);
+    float3 illumination =
+        frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame);
+    return float4(applyFog(diffuse.rgb * illumination, world, frame), diffuse.a);
+}
+
 fragment float4 decalFragment(
     DecalVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
@@ -174,12 +190,96 @@ fragment float4 decalFragment(
     if (diffuse.a <= 0.002) {
         discard_fragment();
     }
-    float3 normal = normalize(in.normal);
-    float lambert = saturate(dot(normal, -frame.sunDirection));
-    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler);
-    float3 illumination =
-        frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame);
-    return float4(applyFog(diffuse.rgb * illumination, in.worldPosition, frame), diffuse.a);
+    return litDecal(
+        diffuse, normalize(in.normal), in.worldPosition, frame, shadowMap, auxiliary,
+        shadowSampler);
+}
+
+// Projected decal: a box around the decal. Each pixel the box covers reads the scene
+// depth, rebuilds the surface point there, and draws when that point is inside the
+// box, so the mark wraps around a curved body.
+
+typedef struct
+{
+    float4 position [[position]];
+    float3 worldPosition;
+    /// Outward normal of the box face, to keep only the far faces.
+    float3 faceNormal [[flat]];
+    uint decal [[flat]];
+} ProjectedDecalVertexOut;
+
+static float3 projectedDecalDepthAxis(const device DecalInstance &decal)
+{
+    return normalize(cross(decal.axisU.xyz, decal.axisV.xyz)) * decal.center.w;
+}
+
+vertex ProjectedDecalVertexOut projectedDecalVertex(
+    uint vertexID [[vertex_id]],
+    uint instanceID [[instance_id]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    const device DecalInstance *decals [[buffer(BufferIndexParticleInstances)]])
+{
+    constexpr float2 corners[6] = {float2(-1, -1), float2(1, -1), float2(-1, 1),
+                                   float2(-1, 1),  float2(1, -1), float2(1, 1)};
+    uint face = vertexID / 6;
+    uint axis = face / 2;
+    float side = (face & 1) != 0 ? 1.0 : -1.0;
+    float2 corner = corners[vertexID % 6];
+    float3 local = axis == 0   ? float3(side, corner.x, corner.y)
+                   : axis == 1 ? float3(corner.x, side, corner.y)
+                               : float3(corner.x, corner.y, side);
+    const device DecalInstance &decal = decals[instanceID];
+    float3 depthAxis = projectedDecalDepthAxis(decal);
+    float3 world = decal.center.xyz + decal.axisU.xyz * local.x + decal.axisV.xyz * local.y +
+                   depthAxis * local.z;
+    float3 axes[3] = {decal.axisU.xyz, decal.axisV.xyz, depthAxis};
+    ProjectedDecalVertexOut out;
+    out.position = frame.viewProjectionMatrix * float4(world, 1.0);
+    out.worldPosition = world;
+    out.faceNormal = axes[axis] * side;
+    out.decal = instanceID;
+    return out;
+}
+
+fragment float4 projectedDecalFragment(
+    ProjectedDecalVertexOut in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    const device DecalInstance *decals [[buffer(BufferIndexParticleInstances)]],
+    texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
+    depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
+    depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]],
+    sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
+{
+    float3 toBox = in.worldPosition - frame.cameraPosition;
+    float own = dot(toBox, frame.cameraForward);
+    float4 unproject = frame.sceneDepthUnproject;
+    // Only the far faces draw, so each pixel blends once, also with the camera inside.
+    if (dot(in.faceNormal, toBox) < 0.0 || unproject.z < 0.5 || own <= 0.0) {
+        discard_fragment();
+    }
+    float stored = sceneDepth.read(uint2(in.position.xy));
+    float behind = unproject.y / (stored + unproject.x);
+    float3 surface = frame.cameraPosition + toBox * (behind / own);
+    const device DecalInstance &decal = decals[in.decal];
+    float3 depthAxis = projectedDecalDepthAxis(decal);
+    float3 offset = surface - decal.center.xyz;
+    float3 local = float3(
+        dot(offset, decal.axisU.xyz) / length_squared(decal.axisU.xyz),
+        dot(offset, decal.axisV.xyz) / length_squared(decal.axisV.xyz),
+        dot(offset, depthAxis) / length_squared(depthAxis));
+    if (any(abs(local) > 1.0)) {
+        discard_fragment();
+    }
+    float2 texcoord =
+        decal.uvRect.xy + float2(local.x * 0.5 + 0.5, 0.5 - local.y * 0.5) * decal.uvRect.zw;
+    float4 diffuse = diffuseMap.sample(trilinear, texcoord) * decal.color;
+    if (diffuse.a <= 0.002) {
+        discard_fragment();
+    }
+    return litDecal(
+        diffuse, normalize(depthAxis), surface, frame, shadowMap, auxiliary, shadowSampler);
 }
 
 // Effect-shader membrane: an additive glow over the target's meshes, brighter at

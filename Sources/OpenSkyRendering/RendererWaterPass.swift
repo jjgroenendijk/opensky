@@ -46,7 +46,8 @@ extension Renderer {
         let perspective = waterDepth.unproject != nil && !isRenderDebugActive
         waterDepth.waterReads = perspective && waterDepth.enabled && !scene.water.isEmpty
             && effectiveRenderLayers.contains(.water)
-        waterDepth.copies = waterDepth.waterReads || perspective && softEffectsInView()
+        waterDepth.copies = waterDepth.waterReads
+            || perspective && (softEffectsInView() || projectedDecalsDraw)
         waterDepth.reflects = waterDepth.waterReads && waterDepth.screenSpaceReflections
         waterDepth.copiesColour = waterDepth.waterReads
     }

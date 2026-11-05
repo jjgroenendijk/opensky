@@ -50,20 +50,53 @@ extension Renderer {
         residencySet.commit()
     }
 
-    /// One instanced six-vertex draw per decal texture. Skipped in a debug view,
+    var decalsDraw: Bool {
+        effects.decalBuffer != nil && !effects.decalBatches.isEmpty && !isRenderDebugActive
+            && effectiveRenderLayers.contains(.particles)
+    }
+
+    /// Projected decals need the scene depth copy, so they ask the frame to make one.
+    var projectedDecalsDraw: Bool {
+        decalsDraw && effects.decalBatches.contains(where: \.projected)
+    }
+
+    /// The flat decals, one instanced six-vertex draw per texture. A projected batch
+    /// draws flat here too when the frame has no depth copy. Skipped in a debug view,
     /// which shows the surface under it.
     func encodeDecals(state: inout ScenePassState) {
         effects.lastDecalDraws = 0
-        guard
-            let buffer = effects.decalBuffer, !effects.decalBatches.isEmpty,
-            !isRenderDebugActive, effectiveRenderLayers.contains(.particles)
-        else { return }
+        guard decalsDraw else { return }
         state.encoder.setRenderPipelineState(effects.decalPipeline)
         state.encoder.setDepthStencilState(effects.depthState)
         state.encoder.setDepthBias(-1, slopeScale: -1, clamp: 0)
         state.encoder.setCullMode(.back)
+        encodeDecalBatches(vertexCount: 6, state: &state) {
+            !$0.projected || !waterDepth.copies
+        }
+        state.encoder.setDepthBias(0, slopeScale: 0, clamp: 0)
+        state.encoder.setDepthStencilState(depthState)
+    }
+
+    /// The projected decals, one 36-vertex box per decal, after the depth split.
+    func encodeProjectedDecals(state: inout ScenePassState) {
+        guard projectedDecalsDraw, waterDepth.copies else { return }
+        state.encoder.setRenderPipelineState(effects.projectedDecalPipeline)
+        state.encoder.setDepthStencilState(effects.projectedDecalDepthState)
+        state.encoder.setCullMode(.none)
+        encodeDecalBatches(vertexCount: 36, state: &state, \.projected)
+        state.encoder.setDepthStencilState(depthState)
+    }
+
+    private func encodeDecalBatches(
+        vertexCount: Int,
+        state: inout ScenePassState,
+        _ include: (DecalBatch) -> Bool
+    ) {
+        guard let buffer = effects.decalBuffer else { return }
         var first = 0
         for batch in effects.decalBatches {
+            defer { first += batch.instances.count }
+            guard include(batch) else { continue }
             argumentTable.setAddress(
                 buffer.gpuAddress + UInt64(first * MemoryLayout<DecalInstance>.stride),
                 index: BufferIndex.particleInstances.rawValue
@@ -75,16 +108,13 @@ extension Renderer {
             state.encoder.drawPrimitives(
                 primitiveType: .triangle,
                 vertexStart: 0,
-                vertexCount: 6,
+                vertexCount: vertexCount,
                 instanceCount: batch.instances.count
             )
-            first += batch.instances.count
             state.stats.drawCalls += 1
             state.stats.drawnInstances += batch.instances.count
             effects.lastDecalDraws += batch.instances.count
         }
-        state.encoder.setDepthBias(0, slopeScale: 0, clamp: 0)
-        state.encoder.setDepthStencilState(depthState)
     }
 }
 

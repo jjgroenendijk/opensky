@@ -46,10 +46,13 @@ nonisolated public struct MembraneDraw: Equatable, Sendable {
 nonisolated public struct DecalBatch {
     public let texture: MTLTexture
     public let instances: [DecalInstance]
+    /// Drawn as a box onto the scene depth, so the mark wraps around a body.
+    public let projected: Bool
 
-    public init(texture: MTLTexture, instances: [DecalInstance]) {
+    public init(texture: MTLTexture, instances: [DecalInstance], projected: Bool = false) {
         self.texture = texture
         self.instances = instances
+        self.projected = projected
     }
 }
 
@@ -84,7 +87,10 @@ public final class EffectLayer {
     let skinnedPipeline: MTLRenderPipelineState
     let morphedPipeline: MTLRenderPipelineState
     let decalPipeline: MTLRenderPipelineState
+    let projectedDecalPipeline: MTLRenderPipelineState
     let depthState: MTLDepthStencilState
+    /// No depth test: a projected decal's far faces lie behind the surface it marks.
+    let projectedDecalDepthState: MTLDepthStencilState
     let uniformBuffer: MTLBuffer
     /// Screen blood quads (`ScreenBlood.swift`).
     public let screenBlood: ScreenBloodLayer
@@ -108,7 +114,10 @@ public final class EffectLayer {
             "morphedSkinnedMeshVertex", MorphVertexLayout.vertexDescriptor()
         )
         decalPipeline = try Self.makeDecalPipeline(
-            library: library, compiler: compiler, view: view
+            "decal", library: library, compiler: compiler, view: view
+        )
+        projectedDecalPipeline = try Self.makeDecalPipeline(
+            "projectedDecal", library: library, compiler: compiler, view: view
         )
         screenBlood = try ScreenBloodLayer(
             device: device, library: library, view: view, compiler: compiler
@@ -125,6 +134,14 @@ public final class EffectLayer {
             throw RendererError.depthStateAllocationFailed
         }
         depthState = state
+        let always = MTLDepthStencilDescriptor()
+        always.label = "ProjectedDecalDepth"
+        always.depthCompareFunction = .always
+        always.isDepthWriteEnabled = false
+        guard let projected = device.makeDepthStencilState(descriptor: always) else {
+            throw RendererError.depthStateAllocationFailed
+        }
+        projectedDecalDepthState = projected
         guard
             let buffer = device.makeBuffer(
                 length: Self.uniformStride * Self.membraneLimit * GPUFactory.maxFramesInFlight,
@@ -142,18 +159,19 @@ public final class EffectLayer {
 
     /// Blends over the surface by the decal's alpha.
     private static func makeDecalPipeline(
+        _ name: String,
         library: MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
     ) throws -> MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
-        vertexFunction.name = "decalVertex"
+        vertexFunction.name = name + "Vertex"
         let fragment = MTL4LibraryFunctionDescriptor()
         fragment.library = library
-        fragment.name = "decalFragment"
+        fragment.name = name + "Fragment"
         let descriptor = MTL4RenderPipelineDescriptor()
-        descriptor.label = "Decal"
+        descriptor.label = name
         descriptor.rasterSampleCount = view.sampleCount
         descriptor.vertexFunctionDescriptor = vertexFunction
         descriptor.fragmentFunctionDescriptor = fragment
