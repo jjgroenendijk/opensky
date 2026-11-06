@@ -17,7 +17,6 @@ nonisolated extension BehaviorGraphInstance {
     func blendChildren(
         _ blender: HKBBlenderFields,
         bound: [String: BehaviorVariableValue],
-        threshold: Float,
         depth: Int,
         deltaTime: Float
     ) -> [BehaviorBlendChild] {
@@ -25,7 +24,12 @@ nonisolated extension BehaviorGraphInstance {
         let entries = blender.children.map { $0.flatMap(blenderEntry(at:)) }
         let parametric = blender.flags & BehaviorBlenderFlag.parametricBlend != 0
         let weights = childWeights(blender, entries: entries, bound: bound)
-        let active = entries.indices.filter { entries[$0] != nil && weights[$0] > threshold }
+        let keepsAll = blender.flags & BehaviorBlenderFlag
+            .dontDeactivateChildrenWithZeroWeights != 0
+        let active = entries.indices.filter { index in
+            entries[index] != nil
+                && (weights[index] != 0 || keepsAll || index == blender.indexOfSyncMasterChild)
+        }
         let synced = blender.flags & BehaviorBlenderFlag.sync != 0
             || active.contains(blender.indexOfSyncMasterChild)
         var cycle = BehaviorSharedCycle()
@@ -76,17 +80,22 @@ nonisolated extension BehaviorGraphInstance {
         let authored = entries.map { entry in
             entry.map { $0.bound.float("m_weight", or: $0.child.weight) } ?? .nan
         }
+        let smooths = blender.flags & BehaviorBlenderFlag.smoothGeneratorWeights != 0
         guard blender.flags & BehaviorBlenderFlag.parametricBlend != 0 else {
-            return authored.map { $0.isNaN ? 0 : $0 }
+            return authored.map { weight in
+                let clamped = weight.isNaN ? 0 : min(max(weight, 0), 1)
+                return smooths ? BehaviorParametricBlend.smoothed(clamped) : clamped
+            }
         }
         let low = bound.float("m_minCyclicBlendParameter", or: blender.minCyclicBlendParameter)
         let high = bound.float("m_maxCyclicBlendParameter", or: blender.maxCyclicBlendParameter)
         let isCyclic = blender.flags & BehaviorBlenderFlag.isParametricBlendCyclic != 0
-        return BehaviorParametricBlend.weights(
+        let weights = BehaviorParametricBlend.weights(
             positions: authored,
             parameter: bound.float("m_blendParameter", or: blender.blendParameter),
             cyclic: isCyclic && low < high ? low ... high : nil
         )
+        return smooths ? weights.map(BehaviorParametricBlend.smoothed) : weights
     }
 
     /// The leader and the cycle length the active children share: the sync master's
@@ -137,9 +146,6 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     private func noteBlendGaps(_ blender: HKBBlenderFields) {
-        if blender.flags & BehaviorBlenderFlag.smoothGeneratorWeights != 0 {
-            tally.note(.blenderSmoothWeightsIgnored)
-        }
         if blender.subtractLastChild {
             tally.note(.blenderSubtractLastChild)
         }

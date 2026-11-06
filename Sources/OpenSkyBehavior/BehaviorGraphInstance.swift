@@ -80,6 +80,8 @@ nonisolated public struct BehaviorNodeState: Equatable, Sendable {
     public var eventThreshold = 0
     /// The pose a cyclic blend crossfades away from, while it does.
     public var crossBlendSource: BehaviorPose?
+    /// The blend parameter a cyclic blend transition holds while frozen.
+    public var frozenBlendParameter: Float?
 }
 
 /// What one update produced: the pose, the root travel kept beside it, and the

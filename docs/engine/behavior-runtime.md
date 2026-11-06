@@ -126,7 +126,7 @@ variable index out of range, a bit index past 32, or an empty path that binds th
 | `hkbStateMachine` | See [state machines](/engine/behavior-state-machines.md) |
 | `BSiStateTaggingGenerator` | Runs its default generator, and reports `m_iStateToSetAs` as the graph's `iState` tag. The highest `m_iPriority` wins ([actor state graph](/engine/actor-state-graph.md#drunk-actors)) |
 | `BSBoneSwitchGenerator` | Default generator, with each child's pose replacing it on the bones its bone weights cover |
-| `BSCyclicBlendTransitionGenerator` | Its blender, with `m_fBlendParameter` as the blender's parameter. `m_EventToCrossBlend` starts a crossfade from the pose of that moment, over `m_fTransitionDuration` with `m_eBlendCurve` |
+| `BSCyclicBlendTransitionGenerator` | Its blender, with `m_fBlendParameter` as the blender's parameter. `m_EventToFreezeBlendValue` holds the parameter. `m_EventToCrossBlend`, only while held or blending, frees it and crossfades from the pose of that moment over `m_fTransitionDuration` with `m_eBlendCurve`. A repeat during the crossfade mirrors its progress: elapsed `e` becomes `d - e` |
 | `BSOffsetAnimationGenerator` | Default generator plus the offset clip's difference from the reference pose. The clip is held at the fraction `m_fOffsetVariable` makes of the offset range |
 | `hkbReferencePoseGenerator` | The reference pose |
 | `BSSynchronizedClipGenerator` | The wrapped clip, phase-synchronized. Marker alignment is counted |
@@ -209,8 +209,7 @@ These are guesses, marked as guesses:
 
 - The parametric weights and the shared cycle of a synced blender follow the flag names and the
   runtime members in the class reflection data, not a description of Havok's maths
-  ([parametric blend](/engine/behavior-clips.md#parametric-blend)). The smooth-weights flag
-  (0x4) is not used; each such blender counts one `blenderSmoothWeightsIgnored`. That only the
+  ([parametric blend](/engine/behavior-clips.md#parametric-blend)). That only the
   leader of a synced blender raises annotations is also a choice; authored triggers still fire
   from every child.
 - Root motion is the difference of two samples of the root bone, in its own local frame. Vanilla
@@ -226,8 +225,8 @@ These are guesses, marked as guesses:
   `BSSpeedSamplerModifier` (passes `goalSpeed` to `speedOut`), `hkbDampingModifier` (one PID
   step per update), `BSTweenerModifier`, `BSLimbIKModifier`, and the aim axis conventions of the
   look-at and direct-at modifiers.
-- `BSCyclicBlendTransitionGenerator.m_EventToFreezeBlendValue` changes nothing: the parameter
-  of its parametric blender is not held.
+- A `BSCyclicBlendTransitionGenerator` crossfade starts from a still pose of the held blend.
+  The game keeps a copy of the blender running at the held parameter.
 - A state machine writes its current state ID to `m_syncVariableIndex` when the index names a
   variable, so two machines that share it stay in step
   ([state machines](/engine/behavior-state-machines.md)). No source confirms that Havok writes
@@ -235,11 +234,6 @@ These are guesses, marked as guesses:
 - Transition effect flag bits other than sync are not used. Local decode notes read bit 0 as
   ignore-from-generator, bit 2 as ignore-world-from-model, and bit 3 as ignore-to-generator. No
   independent source confirms that, and each one changes how root motion crosses a blend.
-
-- An additive clip is added as `base * change` for both `m_blendHint` values, and its blender
-  weight is not normalised against the full children
-  ([additive clips](/engine/behavior-clips.md#additive-clips)). No source gives the order or the
-  weighting.
 
 The transition order and the crossfade interrupt rule are also choices, explained on the
 [state machines](/engine/behavior-state-machines.md) page.

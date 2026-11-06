@@ -13,9 +13,10 @@ nonisolated public struct HKAAnimationBinding: Sendable {
 
     public static let className = "hkaAnimationBinding"
 
-    /// True for `m_blendHint` 1 and 2: the tracks hold a change to add to a pose, not a pose.
+    /// True for `m_blendHint` 1: the tracks hold a change to add to a pose. The game's Havok
+    /// has no other additive hint, so any other value plays as a normal clip.
     public var isAdditive: Bool {
-        blendHint == 1 || blendHint == 2
+        blendHint == 1
     }
 
     public static func bindings(in file: HKXFile) throws -> [HKAAnimationBinding] {

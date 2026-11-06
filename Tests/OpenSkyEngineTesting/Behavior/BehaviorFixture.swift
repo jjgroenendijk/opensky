@@ -278,6 +278,7 @@ public enum BehaviorFixture {
         _ name: String,
         children: [HKXPointerTarget?],
         threshold: Float = 0,
+        flags: Int = 0,
         bindingSet: HKXPointerTarget? = nil
     ) -> HKBBlenderGenerator {
         HKBBlenderGenerator(
@@ -288,7 +289,7 @@ public enum BehaviorFixture {
                 minCyclicBlendParameter: 0,
                 maxCyclicBlendParameter: 0,
                 indexOfSyncMasterChild: -1,
-                flags: 0,
+                flags: flags,
                 subtractLastChild: false,
                 children: children
             ),

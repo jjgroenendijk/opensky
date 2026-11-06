@@ -45,8 +45,9 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// `BSCyclicBlendTransitionGenerator`: runs its blender with `m_fBlendParameter` as
-    /// the blender's parameter. `m_EventToCrossBlend` starts a crossfade from the pose of
-    /// that moment to the live blend, over `m_fTransitionDuration` with `m_eBlendCurve`.
+    /// the blender's parameter. `m_EventToFreezeBlendValue` holds the parameter until
+    /// `m_EventToCrossBlend` crossfades from the held pose to the live blend, over
+    /// `m_fTransitionDuration` with `m_eBlendCurve` (docs/engine/behavior-runtime.md#generators).
     func evaluateCyclicBlend(
         _ cyclic: BSCyclicBlendTransitionGenerator,
         at target: HKXPointerTarget,
@@ -54,22 +55,32 @@ nonisolated extension BehaviorGraphInstance {
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose {
+        var state = nodeStates[target] ?? markReached(target)
+        let isHolding = state.frozenBlendParameter != nil || state.crossBlendSource != nil
+        let crossBlends = isHolding && events.isActive(id: cyclic.eventToCrossBlend.id)
         if let blender = cyclic.blenderGenerator {
-            blendParameterOverrides[blender] = bound.float(
-                "fBlendParameter", or: cyclic.blendParameter
-            )
+            let parameter = bound.float("fBlendParameter", or: cyclic.blendParameter)
+            if crossBlends {
+                state.frozenBlendParameter = nil
+            } else if !isHolding, events.isActive(id: cyclic.eventToFreezeBlendValue.id) {
+                state.frozenBlendParameter = blendParameterOverrides[blender] ?? parameter
+            }
+            blendParameterOverrides[blender] = state.frozenBlendParameter ?? parameter
         }
         let live = evaluateGenerator(
             at: cyclic.blenderGenerator,
             depth: depth,
             deltaTime: deltaTime
         )
-        var state = nodeStates[target] ?? markReached(target)
-        if events.isActive(id: cyclic.eventToCrossBlend.id) {
-            state.crossBlendSource = state.crossBlendSource.map {
-                blendedCrossFade($0, live, state, cyclic, bound)
-            } ?? cyclicLastPoses[target] ?? live
-            state.elapsed = 0
+        if crossBlends {
+            // A repeat while blending mirrors the progress: e becomes d - e.
+            let duration = bound.float("fTransitionDuration", or: cyclic.transitionDuration)
+            if state.crossBlendSource != nil {
+                state.elapsed = max(duration - state.elapsed, 0)
+            } else {
+                state.crossBlendSource = cyclicLastPoses[target] ?? live
+                state.elapsed = 0
+            }
         }
         var result = live
         if let source = state.crossBlendSource {

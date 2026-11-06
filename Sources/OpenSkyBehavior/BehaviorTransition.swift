@@ -43,27 +43,29 @@ nonisolated public enum BehaviorTransitionEffectFlag: Sendable {
     public static let sync = 0x2
 }
 
-/// `hkbBlendCurveUtils::BlendCurve` as the transition effects decode it. Only
-/// curves 0 and 1 appear in the vanilla player graph — 389 smooth against 8
-/// linear — so those two are the only ones with a formula here.
+/// `hkbBlendCurveUtils::BlendCurve`, from a clean-room read of the game
+/// (docs/engine/behavior-clips.md#blending).
 nonisolated public enum BehaviorBlendCurve: Sendable {
     public static let smooth = 0
     public static let linear = 1
+    public static let linearToSmooth = 2
+    public static let smoothToLinear = 3
 
-    /// The destination's share of the blend at `fraction` of the way through.
-    /// Smooth is the cubic `3t^2 - 2t^3`, which is flat at both ends; linear is
-    /// `t`. Anything else falls back to smooth and is tallied, because writing a
-    /// formula for a curve no authored file uses would be inventing it.
+    /// The destination's share of the blend at `fraction` of the way through. An
+    /// unknown curve falls back to smooth and is tallied.
     public static func weight(_ fraction: Float, curve: Int) -> Float {
         let time = fraction.isFinite ? min(max(fraction, 0), 1) : 1
+        let square = time * time
         switch curve {
         case linear: return time
-        default: return time * time * (3 - 2 * time)
+        case linearToSmooth: return time + square - square * time
+        case smoothToLinear: return 2 * square - square * time
+        default: return square * (3 - 2 * time)
         }
     }
 
     public static func isKnown(_ curve: Int) -> Bool {
-        curve == smooth || curve == linear
+        (smooth ... smoothToLinear).contains(curve)
     }
 }
 

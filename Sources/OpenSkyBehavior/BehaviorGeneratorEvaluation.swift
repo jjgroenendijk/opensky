@@ -139,7 +139,8 @@ nonisolated extension BehaviorGraphInstance {
     // MARK: - Blending
 
     /// `hkbBlenderGenerator`: mixes child poses by `m_weight` and root travel by
-    /// `m_worldFromModelWeight`. A child under `m_referencePoseWeightThreshold` is dropped.
+    /// `m_worldFromModelWeight`. A bone whose weights sum to at most
+    /// `m_referencePoseWeightThreshold` takes the reference pose for the rest.
     public func evaluateBlend(
         _ blender: HKBBlenderFields,
         bound: [String: BehaviorVariableValue],
@@ -151,9 +152,7 @@ nonisolated extension BehaviorGraphInstance {
             or: blender
                 .referencePoseWeightThreshold
         )
-        let children = blendChildren(
-            blender, bound: bound, threshold: threshold, depth: depth, deltaTime: deltaTime
-        )
+        let children = blendChildren(blender, bound: bound, depth: depth, deltaTime: deltaTime)
         let masked = children.map {
             BehaviorPoseMath.MaskedChild(
                 pose: $0.pose, weight: $0.weight, boneWeights: $0.boneWeights
@@ -162,8 +161,10 @@ nonisolated extension BehaviorGraphInstance {
         let full = masked.filter { !$0.pose.isAdditive }
         var blended = full.isEmpty
             ? BehaviorPoseMath.unchanged(boneCount: skeleton.referencePose.count)
-            : BehaviorPoseMath.blend(masked: full, fallback: skeleton.restPose)
-        // Each additive child adds on top at its own weight; it is not normalised.
+            : BehaviorPoseMath.blend(
+                masked: full, fallback: skeleton.restPose, referenceThreshold: threshold
+            )
+        // Each additive child adds on top at its own weight, after the normal children.
         for layer in masked where layer.pose.isAdditive {
             blended = BehaviorPoseMath.adding(
                 layer.pose,

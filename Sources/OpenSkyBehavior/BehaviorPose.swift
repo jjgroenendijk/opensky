@@ -199,9 +199,9 @@ nonisolated public enum BehaviorPoseMath: Sendable {
     /// Weight blend of any number of children, each masked per bone by its
     /// `hkbBoneWeightArray`. The vanilla upper-body blend needs this. Same fold as
     /// `blend(children:fallback:)`, run per bone.
-    public static func blend(masked children: [MaskedChild], fallback: BehaviorPose)
-        -> BehaviorPose
-    {
+    public static func blend(
+        masked children: [MaskedChild], fallback: BehaviorPose, referenceThreshold: Float = 0
+    ) -> BehaviorPose {
         let contributing = children.filter { $0.weight > 0 && $0.weight.isFinite }
         guard !contributing.isEmpty else { return fallback }
         let boneCount = contributing.map(\.pose.bones.count).max() ?? 0
@@ -211,15 +211,22 @@ nonisolated public enum BehaviorPoseMath: Sendable {
             bones += Array(repeating: bones.last ?? identityPose, count: boneCount - bones.count)
         }
         for index in 0 ..< boneCount {
-            if let blended = blend(bone: index, of: contributing) {
-                bones[index] = blended
+            guard let (blended, total) = blend(bone: index, of: contributing) else { continue }
+            bones[index] = blended
+            // A bone the children barely reach is filled up to the threshold with the
+            // reference pose.
+            if total < referenceThreshold, fallback.bones.indices.contains(index) {
+                let share = (referenceThreshold - total) / referenceThreshold
+                bones[index] = blend(blended, fallback.bones[index], weight: share)
             }
         }
         return BehaviorPose(bones: bones, rootMotion: fallback.rootMotion)
     }
 
     /// One bone folded across the children that reach it, or nil when none do.
-    private static func blend(bone index: Int, of children: [MaskedChild]) -> HKABonePose? {
+    private static func blend(bone index: Int, of children: [MaskedChild])
+        -> (HKABonePose, Float)?
+    {
         var result: HKABonePose?
         var total: Float = 0
         for child in children {
@@ -236,7 +243,7 @@ nonisolated public enum BehaviorPoseMath: Sendable {
             result = blend(current, child.pose.bones[index], weight: weight / next)
             total = next
         }
-        return result
+        return result.map { ($0, total) }
     }
 
     /// A bone at rest, used only to pad a fallback pose shorter than the

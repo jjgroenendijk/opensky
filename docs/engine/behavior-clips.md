@@ -132,8 +132,15 @@ weighted average.
   180.
 - A degenerate quaternion becomes the identity. Broken input must not produce a NaN pose.
 
-A child with weight zero or less, or under `m_referencePoseWeightThreshold`, is dropped, not
-normalized. So a blender whose weights all fall away gives the reference pose, not a divide by zero.
+Which children run, and how the reference pose fills in, follows a clean-room read of the game
+that returned behaviour only:
+
+- A non-parametric weight is clamped to 0 to 1.
+- With the smooth-generator-weights flag (0x4) each weight becomes `3w^2 - 2w^3` on every update.
+  There is no smoothing over time.
+- A child runs when its weight is not 0, when it is the sync master, or always with flag 0x8.
+- A bone whose weights sum to s, below `m_referencePoseWeightThreshold` T, takes the reference pose
+  at weight `T - s`, normalised over T. A bone no child reaches is the reference pose.
 
 The pose blend uses `m_weight`. Root travel uses `m_worldFromModelWeight`, which exists so a child
 can drive motion without driving the pose.
@@ -166,7 +173,7 @@ would drop every bone the author did not reach.
 
 ### Additive clips
 
-An additive clip stores a change per bone, not a pose. Its binding's `m_blendHint` is 1 or 2
+An additive clip stores a change per bone, not a pose. Its binding's `m_blendHint` is 1
 ([hkaAnimationBinding](/formats/hka-animation.md#binding-layout-72-bytes)). The vanilla
 character graph uses them for body weight: `BodyWeightBlend` mixes `mt_idle.hkx` with the additive
 `mt_idle_skinny.hkx` and `mt_idlemuscularoffset.hkx`. Their tracks hold small turns and identity
@@ -177,16 +184,15 @@ rotations, so played as a pose they lift the arms into a T-pose.
 - A blender first blends its full children as above. Then it adds each additive child on top, at
   that child's own weight, scaled by its bone mask. Additive weights are not normalised.
 - A blender with only additive children gives an additive pose.
-- To add a change, the rotation turns the bone in its own frame (`base * change`), the
-  translation adds, and the scale multiplies. Both hint values are added the same way.
+- To add change D to base B at weight w, the full result R applies D in the parent's frame:
+  `R.t = D.t + D.q * B.t`, `R.q = D.q * B.q`, `R.s = D.s * B.s`. Then the bone mixes B and R by w:
+  linear for translation and scale, and a normalised lerp of the sign-aligned rotations.
+- The game's Havok has only two hint values. A hint other than 1 plays as a normal clip.
 - Every other place that mixes or edits poses (a transition, a crossfade, a bone switch, a
   modifier, the graph's output) first adds an additive pose to the reference pose.
 
-Two parts of this rule are not confirmed. No open source describes them, and the install's data
-cannot tell the options apart (see the next section):
-
-- the order for hint 1, the older Havok form: `base * change` or `change * base`;
-- whether a blender normalises an additive child's weight against its other children.
+The order, the weighting, and the hint values come from a clean-room read of the game. A
+blender's subtract-last-child mode is not decoded.
 
 ### Body-weight layer
 

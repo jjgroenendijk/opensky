@@ -50,8 +50,9 @@ struct BehaviorAdditiveClipTests {
         let graph = BehaviorFixture.instance(root: root, table: table, clips: Self.clips)
         let bones = graph.update(deltaTime: 1 / 30).bones
 
-        // Half the layer: 4 + 2 * 0.5 along x, and half the quarter turn.
-        #expect(abs(bones[1].translation.x - 5) < 1e-4)
+        // The full layer turns the base (4, 0, 0) to (0, 4, 0) and adds (2, 0, 0); half of
+        // that change lands halfway, with half the quarter turn.
+        #expect(simd_distance(bones[1].translation, SIMD3(3, 2, 0)) < 1e-4)
         #expect(abs(bones[1].rotation.angle - .pi / 4) < 1e-4)
         // The layer has no track for bone 2, so the bone keeps the reference pose.
         #expect(bones[2].translation == SIMD3(0, 20, 0))
@@ -65,7 +66,8 @@ struct BehaviorAdditiveClipTests {
         let graph = BehaviorFixture.instance(root: root, table: table, clips: Self.clips)
         let bones = graph.update(deltaTime: 1 / 30).bones
 
-        #expect(abs(simd_distance(bones[1].translation, SIMD3(2, 10, 0))) < 1e-4)
+        // The change turns the reference (0, 10, 0) in the parent's frame, then adds (2, 0, 0).
+        #expect(simd_distance(bones[1].translation, SIMD3(-8, 0, 0)) < 1e-4)
         #expect(abs(bones[1].rotation.angle - .pi / 2) < 1e-4)
     }
 
