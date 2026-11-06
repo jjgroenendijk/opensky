@@ -489,6 +489,7 @@ fragment float4 staticMeshFragment(
         lit += (shine + snowSparkle(in.worldPosition, shadow, frame)) * snowMask;
     }
     float4 output = blendOutput(lit, alpha, in.worldPosition, frame, draw);
+    output.rgb = clampLitOutput(output.rgb);
     if (!alphaBlendEnabled && draw.additiveBlend == 0) {
         output.a = snowCoverageAlpha(snowMask);
     }

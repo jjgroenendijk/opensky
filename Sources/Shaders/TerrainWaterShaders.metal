@@ -140,7 +140,8 @@ fragment float4 terrainFragment(
         float shine = snowRim(toEye, normalize(in.normal), normal);
         lit += (shine + snowSparkle(in.worldPosition, shadow, frame)) * snowMask * snow;
     }
-    return float4(applyFog(lit, in.worldPosition, frame), snowCoverageAlpha(snowMask * snow));
+    return float4(
+        clampLitOutput(applyFog(lit, in.worldPosition, frame)), snowCoverageAlpha(snowMask * snow));
 }
 
 // Water: WATR colors and shading over three scrolling noise layers: the record's noise
