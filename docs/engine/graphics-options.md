@@ -94,6 +94,35 @@ Where OpenSky differs:
   complex cells, and interiors. A second clean-room read (2026-11-06) found that all nine
   default to 1, so OpenSky's missing multipliers match the defaults.
 
+## Picture features OpenSky does not have yet
+
+Behaviour described from a clean-room read of the game's shaders and of `SkyrimSE.exe`
+1.7.104.0 on 2026-11-06 (behaviour only). Each is a gap until OpenSky builds it.
+
+- Character light. A white light added to the diffuse light of a surface:
+  `(0.75 × facing + 0.3 × fill) × clamp(2 × L, 0, 0.75)`. `facing` is the cosine between the
+  normal and the view direction, `fill` lights faces that point along one fixed direction, and
+  `L` is a scene luminance value. It has no distance falloff and is on by default. When it is
+  turned on for a frame, and which surfaces take it, is not known.
+- Screen-space indirect light. Off by default. 15 taps on a spiral, radius 100 units, each
+  weighted by how much the two surfaces face each other and by distance, then blended over
+  time and faded out by 10,000 units.
+- Dynamic resolution. Off by default. Under 30 ms a frame, after 5 frames in a row, each axis
+  grows by 0.03; over 32 ms it shrinks by 0.07 at once. By default only the width shrinks, to at
+  least 0.7 of the full size, in steps of 4 pixels. It needs the scene and every effect pass to
+  draw into part of a fixed target, which builds on one resolution setup for the frame.
+- Full-screen motion blur. The game has no blur by per-pixel motion: its only motion vectors
+  feed temporal anti-aliasing. The motion and radial blurs it has come from image space
+  modifiers, which OpenSky draws ([image space](/rendering/image-space.md)). So OpenSky leaves
+  a per-pixel motion blur out.
+- Actor fade near the camera. The camera's collision probe picks the first actor it hits, and
+  that actor fades when it is nearer than 30 units plus its own size. The fade speed and how
+  the see-through actor is drawn are not known.
+- Focus on the crosshair target. The game's depth of field focuses on what the player looks
+  at, on by default, with a 0.5 second delay and a 1 second change, and near and far values of
+  100 and 1,000 units. What those values mean, and how the image space "Use Target" flag picks
+  the distance, is not known.
+
 ## OpenSky's own groups
 
 - Upscaling: render scale, the MetalFX upscaler, and frame interpolation.
