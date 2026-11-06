@@ -1,8 +1,9 @@
 // A paired idle starts two graphs: the lead's on the idle's event and the partner's on the
-// event with `pa_` toggled, the partner standing on the lead. Each half's prefixed events
+// event with `pa_` toggled, the partner moving to the lead. Each half's prefixed events
 // lose their prefix, and the pair ends on the clip's end event or a timeout.
 
 @testable import OpenSkyActorPresentation
+import OpenSkyBehavior
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyNavigation
@@ -14,7 +15,8 @@ import Testing
 private final class PairedIdleWorld: IdleWorld {
     var takesEvent: Set<ReferenceKey> = []
     var raised: [(event: String, actor: ReferenceKey)] = []
-    var aligned: [(partner: ReferenceKey, lead: ReferenceKey)] = []
+    var poses: [ReferenceKey: PairedActorPose] = [:]
+    var marks: [ReferenceKey: BehaviorSynchronizedMark] = [:]
 
     func idleReferencePlacements() -> [IdleReferencePlacement]? {
         nil
@@ -52,8 +54,16 @@ private final class PairedIdleWorld: IdleWorld {
         return takesEvent.contains(actor)
     }
 
-    func alignPairedActor(_ partner: ReferenceKey, with lead: ReferenceKey) {
-        aligned.append((partner, lead))
+    func pairedActorPose(of actor: ReferenceKey) -> PairedActorPose? {
+        poses[actor]
+    }
+
+    func placePairedActor(_ actor: ReferenceKey, at pose: PairedActorPose) {
+        poses[actor] = pose
+    }
+
+    func synchronizedMark(of actor: ReferenceKey) -> BehaviorSynchronizedMark? {
+        marks[actor]
     }
 }
 
@@ -77,8 +87,46 @@ struct PairedAnimationTests {
         #expect(report.failure == nil)
         #expect(world.raised.map(\.actor) == [Self.killer, Self.victim])
         #expect(world.raised.map(\.event) == ["pa_KillMoveC", "KillMoveC"])
-        #expect(world.aligned.map(\.partner) == [Self.victim])
         #expect(idles.pairedAnimation(of: Self.victim)?.isKillMove == true)
+    }
+
+    @Test func thePartnerReachesTheMarkOverTheGetToMarkTime() {
+        let world = PairedIdleWorld()
+        world.takesEvent = [Self.killer, Self.victim]
+        world.poses = [
+            Self.killer: PairedActorPose(feet: SIMD3(100, 0, 0), heading: 1),
+            Self.victim: PairedActorPose(feet: .zero, heading: 0)
+        ]
+        let idles = IdleCoordinator(world: world, data: nil)
+        idles.firePaired(Self.play(), trace: [])
+        // The partner's graph shows no synchronized clip yet: the partner waits one update.
+        idles.approachMarks(now: 0)
+        #expect(world.poses[Self.victim]?.feet == .zero)
+        world.marks[Self.victim] = BehaviorSynchronizedMark(
+            getToMarkTime: 0.5, reorientsSupportCharacter: true
+        )
+        idles.approachMarks(now: 0.25)
+        #expect(world.poses[Self.victim] == PairedActorPose(feet: SIMD3(50, 0, 0), heading: 0.5))
+        #expect(idles.pairs.first?.isAtMark == false)
+        idles.approachMarks(now: 0.5)
+        #expect(world.poses[Self.victim] == PairedActorPose(feet: SIMD3(100, 0, 0), heading: 1))
+        #expect(idles.pairs.first?.isAtMark == true)
+    }
+
+    @Test func withoutReorientThePartnerStandsOnTheMarkWithItsOwnHeading() {
+        let start = PairedActorPose(feet: .zero, heading: 0.3)
+        let mark = PairedActorPose(feet: SIMD3(10, 0, 0), heading: 2)
+        let rule = BehaviorSynchronizedMark(getToMarkTime: 1, reorientsSupportCharacter: false)
+        let pose = PairedAnimationCore.approach(from: start, to: mark, after: 0.1, rule)
+        #expect(pose == PairedActorPose(feet: SIMD3(10, 0, 0), heading: 0.3))
+        let turn = PairedAnimationCore.approach(
+            from: PairedActorPose(feet: .zero, heading: 3),
+            to: PairedActorPose(feet: .zero, heading: -3),
+            after: 0.5,
+            BehaviorSynchronizedMark(getToMarkTime: 1, reorientsSupportCharacter: true)
+        )
+        // The shorter way from 3 to -3 radians crosses pi, not zero.
+        #expect(turn.heading > 3)
     }
 
     @Test func aLeadThatRefusesTheEventStartsNoPair() {

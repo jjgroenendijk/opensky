@@ -4,6 +4,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
+import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyConditions
@@ -149,22 +150,35 @@ extension IdleWorldAdapter: IdleWorld {
 
     /// A paired clip poses both actors from one root, so the partner takes the lead's
     /// feet and heading. The player's heading is the camera's yaw turned a quarter.
-    func alignPairedActor(_ partner: ReferenceKey, with lead: ReferenceKey) {
-        guard let gameSession = game.gameSession else { return }
-        let leadPose: (feet: SIMD3<Float>, heading: Float)? = if lead == .player {
-            (gameSession.walkController.feetPosition, Float.pi / 2 - gameSession.freeFlyCamera.yaw)
-        } else {
-            game.actorWorld.combatActor(key: lead).map { ($0.feet, $0.facing) }
+    func pairedActorPose(of actor: ReferenceKey) -> PairedActorPose? {
+        guard let gameSession = game.gameSession else { return nil }
+        guard actor != .player else {
+            return PairedActorPose(
+                feet: gameSession.walkController.feetPosition,
+                heading: Float.pi / 2 - gameSession.freeFlyCamera.yaw
+            )
         }
-        guard let leadPose else { return }
-        if partner == .player {
-            gameSession.placePlayerFeet(at: leadPose.feet)
-            gameSession.freeFlyCamera.yaw = Float.pi / 2 - leadPose.heading
+        return game.actorWorld.combatActor(key: actor)
+            .map { PairedActorPose(feet: $0.feet, heading: $0.facing) }
+    }
+
+    func placePairedActor(_ actor: ReferenceKey, at pose: PairedActorPose) {
+        guard let gameSession = game.gameSession else { return }
+        if actor == .player {
+            gameSession.placePlayerFeet(at: pose.feet)
+            gameSession.freeFlyCamera.yaw = Float.pi / 2 - pose.heading
         } else {
-            game.streamer?.restActor(partner, at: ReferenceTransformOverride(
-                position: leadPose.feet, rotation: SIMD3(0, 0, leadPose.heading)
+            game.streamer?.restActor(actor, at: ReferenceTransformOverride(
+                position: pose.feet, rotation: SIMD3(0, 0, pose.heading)
             ))
         }
+    }
+
+    func synchronizedMark(of actor: ReferenceKey) -> BehaviorSynchronizedMark? {
+        guard actor != .player else {
+            return game.gameSession?.locomotion.graph?.synchronizedMark
+        }
+        return game.actorGraphWorld.graphs.instance(of: actor)?.synchronizedMark
     }
 
     func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool {

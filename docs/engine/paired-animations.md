@@ -44,10 +44,8 @@ The mount goes the other way round: the rider takes `HorseEnter` and the horse
 ## Starting a pair
 
 1. The idle tree runs with the target as the condition Target and picks the idle.
-2. The partner stands on the lead's feet and turns to the lead's heading. Every track is
-   relative to `PairedRoot`, so two actors on the same root line up.
-3. The lead's graph takes the event. If it does not, no pair starts.
-4. The partner's graph takes the partner event. If it does not, the lead plays alone. An actor
+2. The lead's graph takes the event. If it does not, no pair starts.
+3. The partner's graph takes the partner event. If it does not, the lead plays alone. An actor
    past the graph distance setting runs no graph, so it plays no half.
 
 These start a pair:
@@ -62,6 +60,19 @@ These start a pair:
 pick the bed, bedroll, or standing feed. Only the standing feeds are paired; the bed feeds
 play on the vampire alone. `StartCannibal` plays the tree under `IdleCannibalFeed`, which
 picks the standing or the crouching feed. Neither is paired.
+
+## Reaching the mark
+
+Every track is relative to `PairedRoot`, so two actors on the same root line up. The mark is the
+lead's feet and heading. Once the partner's graph runs its `BSSynchronizedClipGenerator`, the
+partner moves from where it stood to the mark over the generator's `m_fGetToMarkTime`. With
+`m_bReorientSupportChar` set it also turns from its own heading to the lead's, along the shorter
+way. Without it, it keeps its heading and stands on the mark at once. A get-to-mark time of 0, or
+a partner whose graph shows no synchronized clip after one update, stands on the mark at once.
+
+The rules come from a clean-room read of the game that returned behaviour only: the move is
+linear in time, with no easing. Which of the two actors the game moves, and how it places the
+mark, were not found. OpenSky keeps the lead still.
 
 ## Whose event is it
 
@@ -115,4 +126,3 @@ as its identity, so the clips play ([animation](/formats/hka-animation.md#vector
 ## Where OpenSky differs
 
 - Combat does not start a kill move yet. Only the sources above start a pair.
-- The game moves the partner to the lead over `m_fGetToMarkTime`. OpenSky moves it at once.

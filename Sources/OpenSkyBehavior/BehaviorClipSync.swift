@@ -73,7 +73,10 @@ nonisolated extension BehaviorGraphInstance {
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose {
-        tally.note(.synchronizedClipMarkerIgnored)
+        synchronizedMarkThisUpdate = synchronizedMarkThisUpdate ?? BehaviorSynchronizedMark(
+            getToMarkTime: generator.getToMarkTime,
+            reorientsSupportCharacter: generator.reorientSupportChar
+        )
         let outer = syncTrackPrefix
         syncTrackPrefix = generator.syncAnimPrefix ?? ""
         defer { syncTrackPrefix = outer }
@@ -99,5 +102,17 @@ nonisolated extension BehaviorGraphInstance {
         ))
         pairedClips[key] = paired
         return paired
+    }
+}
+
+/// How a `BSSynchronizedClipGenerator` brings its actor to the shared mark: over
+/// `m_fGetToMarkTime` seconds, turning too when `m_bReorientSupportChar` is set.
+nonisolated public struct BehaviorSynchronizedMark: Equatable, Sendable {
+    public let getToMarkTime: Float
+    public let reorientsSupportCharacter: Bool
+
+    public init(getToMarkTime: Float, reorientsSupportCharacter: Bool) {
+        self.getToMarkTime = getToMarkTime
+        self.reorientsSupportCharacter = reorientsSupportCharacter
     }
 }

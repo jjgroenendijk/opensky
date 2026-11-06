@@ -210,6 +210,9 @@ nonisolated public final class BehaviorGraphInstance {
     /// walk order: the graph's own mesh plays them, not the skeleton.
     public private(set) var gamebryoSequences: [String] = []
     var gamebryoSequencesThisUpdate: [String] = []
+    /// How the last update's synchronized clip brings its actor to the mark, or nil.
+    public private(set) var synchronizedMark: BehaviorSynchronizedMark?
+    var synchronizedMarkThisUpdate: BehaviorSynchronizedMark?
 
     /// What the update in progress raised that this graph declares no event for.
     public var unboundEvents: [String] = []
@@ -309,6 +312,7 @@ nonisolated public final class BehaviorGraphInstance {
         activeStatesThisUpdate = []
         stateTagThisUpdate = nil
         gamebryoSequencesThisUpdate = []
+        synchronizedMarkThisUpdate = nil
         referencedResults = [:]
         pendingClipPhase = nil
         unboundEvents = []
@@ -322,6 +326,7 @@ nonisolated public final class BehaviorGraphInstance {
         activeStates = activeStatesThisUpdate
         stateTag = stateTagThisUpdate
         gamebryoSequences = gamebryoSequencesThisUpdate
+        synchronizedMark = synchronizedMarkThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
         // The memo names the references this update ran; stale, it would keep a
         // later deactivation from stopping a child.

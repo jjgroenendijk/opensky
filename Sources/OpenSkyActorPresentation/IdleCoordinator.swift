@@ -33,8 +33,11 @@ public protocol IdleWorld: AnyObject {
     func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool
     /// Each clip annotation an idle passes, in the order the clip passes them.
     func idleAnimationEvent(_ name: String, on actor: ReferenceKey)
-    /// Stands `partner` on `lead`'s root, facing its way, so the halves of the clip meet.
-    func alignPairedActor(_ partner: ReferenceKey, with lead: ReferenceKey)
+    /// Where an actor of a pair stands now, or nil.
+    func pairedActorPose(of actor: ReferenceKey) -> PairedActorPose?
+    func placePairedActor(_ actor: ReferenceKey, at pose: PairedActorPose)
+    /// How the synchronized clip the actor's graph runs brings it to the mark, or nil.
+    func synchronizedMark(of actor: ReferenceKey) -> BehaviorSynchronizedMark?
 }
 
 /// What the idle coordinator is built from.
@@ -186,6 +189,7 @@ public final class IdleCoordinator {
         releaseDeparted(actors: actors, now: now)
         advanceSitStates(now: now)
         expirePairs(now: now)
+        approachMarks(now: now)
         claimMarkers(actors: actors)
         for key in sessions.keys.sorted() {
             guard let actor = actors[key] else { continue }

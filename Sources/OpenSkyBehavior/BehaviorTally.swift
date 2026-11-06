@@ -92,9 +92,6 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         case transitionTimeIntervalIgnored
         /// `m_toGeneratorStartTimeFraction` was non-zero and ignored.
         case transitionStartFractionIgnored
-        /// A `BSSynchronizedClipGenerator` ran its clip without marker alignment, which
-        /// needs a partner character.
-        case synchronizedClipMarkerIgnored
         /// `hkbClipGenerator` ping-pong playback was run as a plain loop.
         case clipPingPongAsLoop
         /// `hkbClipGenerator` user-controlled playback was run from

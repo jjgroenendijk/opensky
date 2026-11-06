@@ -84,7 +84,6 @@ struct BehaviorStateMachineRealDataTests {
             "stateMachineNoStartState",
             "stateMachineRandomTransitionFixed",
             "stateMachineTransitionInterrupted",
-            "synchronizedClipMarkerIgnored",
             "transitionBlendCurveApproximated",
             "transitionConditionUnparsed",
             "transitionConditionUnresolved",
