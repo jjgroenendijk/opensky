@@ -46,11 +46,11 @@ the sky reaches.
 - A tap darkens the pixel by how far it rises above the surface plane (the cosine to the
   normal, less a bias of 0.05), times `1 - d² / r²` for its distance `d` in the radius `r`.
 - The result is `ao = 1 - 1.2 * mean`, clamped to 0 to 1. The sky is not changed.
-- It darkens only the ambient part of the light. That share is the brightness of the
-  ambient light (the base ambient plus the directional ambient for the normal), divided by
-  the ambient light plus the sun light: the sun colour times `cos` of the sun angle, times
-  one tap of the sun cascades. The colour is multiplied by `1 - share * (1 - ao)`. So a
-  crease in full sun stays almost as bright, and a crease in shade darkens fully.
+- It multiplies the whole lit colour by `ao`: the sun, point lights such as torches, the
+  ambient light, and glow alike. The game does the same: its scene colour holds all the
+  light in one target, and the occlusion step multiplies that colour (clean-room read of the
+  game's shaders in `Skyrim - Shaders.bsa`, 2026-11-06, behaviour only). On snow the game
+  raises `ao` by a bias, so snow stays bright; OpenSky does not.
 - The effect fades out between 2,048 and 4,096 units from the camera. Far away, depth
   precision makes the normals noisy, and the noise would darken the whole distant view.
 
@@ -138,10 +138,10 @@ screen centre.
 
 ## Where OpenSky differs
 
-- Ambient occlusion splits the light into ambient and sun from the frame's light values, not
-  from the surface's own lighting. Point lights count as neither, so a crease lit only by a
-  torch keeps OpenSky's ambient share. The radius, the strength, and the tap count are
-  OpenSky's own.
+- Ambient occlusion: the radius, the strength, and the tap count are OpenSky's own. The
+  game uses 5 taps, each weighted by `1 / (d² + 0.01)` and `(r² - d²)³`, then a contrast
+  curve and a blend over time. It also leaves snow brighter, and in its fog variant it
+  darkens before the fog, where OpenSky darkens the fogged colour.
 - The volumetric light's scales from `VOLI` fields to world units and strength are OpenSky's
   reading of the field names. The noise drifts along X, because no wind direction is known.
 - A modifier's "Use Target" flag, which focuses on the crosshair target, is not used.

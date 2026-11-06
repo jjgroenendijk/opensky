@@ -143,23 +143,6 @@ static inline float postSunLit(
     return shadowMap.sample_compare(compare, uv, cascade, ndc.z - shadowReceiverBias);
 }
 
-// The ambient part of the light on a surface: occlusion darkens only that part, so a
-// sunlit wall in a corner stays bright. Point lights are not counted.
-static inline float postAmbientShare(
-    PostPixel pixel,
-    float3 normal,
-    constant FrameUniforms &frame,
-    depth2d_array<float> shadowMap,
-    sampler compare)
-{
-    float ambient = postLuma(baseAmbient(frame) + directionalAmbient(normal, frame));
-    float sun = postLuma(frame.sunColor) * saturate(dot(normal, -frame.sunDirection));
-    if (sun > 0.0 && frame.shadowsEnabled != 0) {
-        sun *= postSunLit(pixel.world, frame, shadowMap, compare);
-    }
-    return ambient / max(ambient + sun, 1.0e-4);
-}
-
 // Value noise from 0 to 1 over a lattice of unit cells, smooth between the corners.
 static inline float postHash(float3 cell)
 {
@@ -358,9 +341,8 @@ static inline float3 postApply(
     }
     if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky) {
         float3 normal = postSurfaceNormal(pixel, frame.cameraPosition, depth, post);
-        float occlusion = postAmbientOcclusion(pixel, normal, frame.cameraPosition, depth, post);
-        float share = postAmbientShare(pixel, normal, frame, shadowMap, compare);
-        color *= 1.0 - share * (1.0 - occlusion);
+        // The game darkens the whole lit colour: sun, point lights, and ambient alike.
+        color *= postAmbientOcclusion(pixel, normal, frame.cameraPosition, depth, post);
     }
     if ((post.effects & PostEffectFlagVolumetricLight) != 0) {
         color += postVolumetricLight(pixel, sky, frame, post, shadowMap, compare);
