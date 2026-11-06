@@ -158,7 +158,7 @@ extension Renderer {
         depthBound: Bool,
         state: inout ScenePassState
     ) {
-        let noise = waterNoiseTextures?.layers(item.look.shading.noiseTextures)
+        let noise = recordTextures?.layers(item.look.shading.noiseTextures)
         if let noise {
             let slots: [TextureIndex] = [.surfaceNormal, .surfaceGlow, .surfaceDetail]
             for (map, index) in zip(noise, slots) {
@@ -195,8 +195,8 @@ extension Renderer {
     private func bindFlowMaps(_ item: WaterDrawItem) -> Bool {
         guard
             let path = item.flowMap,
-            let flowMap = waterNoiseTextures?.texture(path),
-            let flowNoise = waterNoiseTextures?.texture(item.look.shading.flowNoiseTexture)
+            let flowMap = recordTextures?.texture(path),
+            let flowNoise = recordTextures?.texture(item.look.shading.flowNoiseTexture)
         else { return false }
         argumentTable.setTexture(flowMap.gpuResourceID, index: TextureIndex.waterFlowMap.rawValue)
         argumentTable.setTexture(

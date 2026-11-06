@@ -27,17 +27,17 @@ struct WaterDepthStateTests {
     }
 }
 
-struct WaterNoiseTexturePathTests {
+struct RecordTexturePathTests {
     @Test func theRecordPathLosesItsDataFolder() {
         #expect(
-            WaterNoiseTextures.filePath("Data\\Textures\\Water\\DefaultWater.dds")
+            RecordTextures.filePath("Data\\Textures\\Water\\DefaultWater.dds")
                 == "textures\\water\\defaultwater.dds"
         )
         #expect(
-            WaterNoiseTextures.filePath("data/Textures/Water/RiverFlow.dds")
+            RecordTextures.filePath("data/Textures/Water/RiverFlow.dds")
                 == "textures\\water\\riverflow.dds"
         )
-        #expect(WaterNoiseTextures.filePath("") == nil)
+        #expect(RecordTextures.filePath("") == nil)
     }
 
     @Test func theShaderRingArrayPadsWithZeros() {

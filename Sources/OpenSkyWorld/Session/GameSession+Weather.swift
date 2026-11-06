@@ -23,7 +23,7 @@ extension GameSession {
         if let files = provider?.scriptFileSystem {
             renderer.skyClouds = try SkyClouds(fileSystem: files, device: renderer.device)
             renderer.skyCelestial = try SkyCelestial(fileSystem: files, device: renderer.device)
-            renderer.waterNoiseTextures = try WaterNoiseTextures(
+            renderer.recordTextures = try RecordTextures(
                 fileSystem: files, device: renderer.device
             )
         }
@@ -42,7 +42,7 @@ extension GameSession {
         renderer.skyCelestial = try SkyCelestial(
             fileSystem: fileSystem, device: device, immediate: true
         )
-        renderer.waterNoiseTextures = try WaterNoiseTextures(
+        renderer.recordTextures = try RecordTextures(
             fileSystem: fileSystem, device: device, immediate: true
         )
     }

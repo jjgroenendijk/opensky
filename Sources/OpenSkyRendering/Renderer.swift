@@ -196,7 +196,7 @@ public final class Renderer: NSObject {
     /// The weather's cloud layers; nil keeps the plain sky gradient.
     public var skyClouds: SkyClouds?
     /// The water's noise normal maps; nil keeps the sine-wave normal.
-    public var waterNoiseTextures: WaterNoiseTextures?
+    public var recordTextures: RecordTextures?
     /// The rings splashes and waders leave on the water (`RendererWaterRipples.swift`).
     public var waterRipples = WaterRippleField()
     public var cloudsEnabled = true

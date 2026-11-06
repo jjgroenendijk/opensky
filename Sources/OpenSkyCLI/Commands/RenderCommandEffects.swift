@@ -262,7 +262,7 @@ extension RenderCommand {
         print(
             "[INFO] water: \(renderer.scene.water.count) planes, "
                 + "flow maps [\(flowMaps.joined(separator: ", "))], "
-                + "failed \(renderer.waterNoiseTextures?.failedPaths ?? [])"
+                + "failed \(renderer.recordTextures?.failedPaths ?? [])"
         )
     }
 }
