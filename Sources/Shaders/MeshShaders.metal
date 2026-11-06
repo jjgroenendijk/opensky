@@ -290,6 +290,9 @@ static float3 litSurface(
         sums.diffuse = min(sums.diffuse, 1.0);
     }
     float3 ambient = directionalAmbient(normal.world, frame) + baseAmbient(frame);
+    if (draw.layerCategory == RenderLayerBitActors) {
+        ambient += characterLight(normal.world, frame);
+    }
     float3 emitted = emittedLight(in, input, draw, maps, trilinear);
     float3 lightMask = maps.glow.sample(trilinear, input.uv).rgb;
     float3 back = 0.0;
@@ -331,6 +334,15 @@ static inline float4 blendOutput(
         return float4(draw.additiveBlend == 1 ? added * alpha : added, alpha);
     }
     return float4(applyFog(colour, worldPosition, frame), alphaBlendEnabled ? alpha : 1.0);
+}
+
+// Drops a screen-door pixel once its quad has finished every texture read.
+static inline float4 shownPixel(float4 colour, bool hidden)
+{
+    if (hidden) {
+        discard_fragment();
+    }
+    return colour;
 }
 
 fragment float4 staticMeshFragment(
@@ -395,25 +407,27 @@ fragment float4 staticMeshFragment(
     if (alphaTestEnabled && alpha < draw.alphaThreshold) {
         discard_fragment();
     }
+    // Screen-door pixels drop at the return: a discard here would break the derivatives
+    // of the kept pixels in the same quad, and their textures would read the smallest mip.
+    bool screenDoorHidden = false;
     if (hasTerm(terms, ShadingTermScreenDoor)) {
-        if (alpha < screenDoorThreshold(in.position.xy)) {
-            discard_fragment();
-        }
+        screenDoorHidden = alpha < screenDoorThreshold(in.position.xy);
         alpha = 1.0;
     }
     // A reference fading out, such as a dismissed summon, drops whole pixels.
-    if (in.fadeOut > 0.0 && 1.0 - in.fadeOut < screenDoorThreshold(in.position.xy)) {
-        discard_fragment();
-    }
+    screenDoorHidden = screenDoorHidden ||
+                       (in.fadeOut > 0.0 && 1.0 - in.fadeOut < screenDoorThreshold(in.position.xy));
     if (debugViewActive) {
         DebugSurface surface = {
             in.worldPosition, in.normal, in.texcoord,
             diffuseMap.calculate_unclamped_lod(trilinear, in.texcoord), draw.layerCategory};
-        return debugViewColor(frame, surface);
+        return shownPixel(debugViewColor(frame, surface), screenDoorHidden);
     }
     if (hasTerm(terms, ShadingTermRefraction)) {
         RefractionInput refraction = {in.position.xy, uv, alpha, terms};
-        return float4(refracted(refraction, frame, draw, normalMap, sceneColour, trilinear), 1.0);
+        float3 refractedColour =
+            refracted(refraction, frame, draw, normalMap, sceneColour, trilinear);
+        return shownPixel(float4(refractedColour, 1.0), screenDoorHidden);
     }
     if (isEffect) {
         EffectLightInput light = {draw.effectFlags,
@@ -423,7 +437,8 @@ fragment float4 staticMeshFragment(
                                   toEye,
                                   in.instanceColor};
         float3 lit = effect.rgb * effectLight(light, frame, pointLights, draw.pointLightCount);
-        return blendOutput(lit, alpha, in.worldPosition, frame, draw);
+        float4 effectColour = blendOutput(lit, alpha, in.worldPosition, frame, draw);
+        return shownPixel(effectColour, screenDoorHidden);
     }
     SurfaceNormal normal = surfaceNormal(in, tangentFrame, uv, terms, maps, trilinear);
     float shadow =
@@ -436,7 +451,7 @@ fragment float4 staticMeshFragment(
                 ? rayTracedSunShadow(in.worldPosition, normalize(in.normal), frame, rayScene)
                 : 1.0;
         if (rayShadowView) {
-            return float4(float3(traced), 1.0);
+            return shownPixel(float4(float3(traced), 1.0), screenDoorHidden);
         }
         shadow = min(shadow, traced);
     }
@@ -493,7 +508,7 @@ fragment float4 staticMeshFragment(
     if (!alphaBlendEnabled && draw.additiveBlend == 0) {
         output.a = snowCoverageAlpha(snowMask);
     }
-    return output;
+    return shownPixel(output, screenDoorHidden);
 }
 
 // Sun-shadow depth pre-pass: each caster renders into one cascade slice,

@@ -16,12 +16,14 @@ nonisolated public struct PostEffectSettings: Equatable, Sendable {
     public var lensFlare = false
     /// `[Display] bFXAAEnabled`.
     public var fxaa = false
+    /// The game's screen-space indirect light, off by default as in the game.
+    public var indirectLight = false
 
     public init() {}
 
     /// Whether the composite must read neighbour pixels and the scene depth.
     public var isActive: Bool {
-        ambientOcclusion || volumetricLight || depthOfField || lensFlare || fxaa
+        ambientOcclusion || volumetricLight || depthOfField || lensFlare || fxaa || indirectLight
     }
 
     /// Cascade taps along each pixel's ray, by quality; unverified.
@@ -41,6 +43,12 @@ nonisolated public struct PostEffectSettings: Equatable, Sendable {
     public static let ambientOcclusionHistoryDifference: Float = 0.3
     /// The history weight falls by 200 for each 7000 units the depth changed.
     public static let ambientOcclusionHistoryDepth: Float = 200
+    /// The game's indirect light reach in world units.
+    public static let indirectLightRadius: Float = 100
+    /// The game's strength is not known. 400 bounces about 0.3 of a lit wall into a corner.
+    public static let indirectLightStrength: Float = 400
+    /// The bias at the screen centre, as the occlusion's; the game's value is not known.
+    public static let indirectLightBias: Float = 2.5
     /// Past this distance depth precision makes the normals noisy, so occlusion fades
     /// out by here; unverified.
     public static let ambientOcclusionFadeDistance: Float = 4096

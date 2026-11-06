@@ -2,7 +2,7 @@
 type: Subsystem
 title: Screen-space post effects
 description: The effects the image-space composite draws from the scene colour and depth -
-  FXAA, ambient occlusion, volumetric light, depth of field, and lens flare - which game option turns each one on, and its values.
+  FXAA, ambient occlusion, indirect light, volumetric light, depth of field, and lens flare - which game option turns each one on, and its values.
 tags: [rendering, image-space, metal]
 ---
 
@@ -76,6 +76,31 @@ the sky reaches.
 - The effect fades out between 2,048 and 4,096 units from the camera. Far away, depth
   precision makes the normals noisy, and the noise would darken the whole distant view.
 
+## Indirect light
+
+"Screen-space indirect light" on the launcher, off by default as in the game. Lit surfaces
+bounce some of their colour onto the surfaces that face them. It runs as one compute pass
+beside the occlusion trace, and the composite adds its colour before the occlusion. The
+steps follow a clean-room read of the game's shaders (2026-11-06, behaviour only):
+
+- 15 taps on a spiral, at angles `(i + 0.5) × 3.3493` radians plus the per-pixel turn, out to
+  a radius `R` of 100 units.
+- Each tap adds its scene colour times
+  `max(((v . N)(-v . N_t) - b) / (|v|⁴ + 0.01), 0) × max(R² - |v|², 0)³ × (1 - |v| / R)`,
+  where `v` runs from the pixel to the tap and `N_t` is the tap's normal. The bias is
+  `b = 2.5 + 5 × (x² + y²) + 10 × max(d / 7000 - 0.3, 0)`.
+- The light is `max(sum / R⁶ × s / 3, 0)`, faded by a smoothstep of `(10000 - d) / 10000`.
+- Blend over time: `out = light + h × (history - light)`, with
+  `h = 0.3 × max(1 - 200 × |Δd| / 7000, 0) × Σ max(1 - 0.7 × |Δc|, 0)` over the three colour
+  channels. `h` is 0 when last frame's point lies within 1 percent of the screen edge.
+
+The game's strength `s`, its bias at the centre, and how the result joins the lighting are
+not known. OpenSky uses `s = 400`, the occlusion's bias 2.5, and adds the light to the lit
+colour. The game reads its normals partly from a normal buffer; OpenSky has none and uses the
+depth normals. The game blends `(v . N)(v . N_t)`; OpenSky turns the tap normal around, so a
+surface facing back at the pixel counts. `state frame` shows it under
+`postEffects.indirectLight`.
+
 ## Volumetric light
 
 `[Display] bVolumetricLightingEnable` and `iVolumetricLightingQuality`. Sun light that falls
@@ -143,6 +168,26 @@ strength.
   shape does not bleed into the blur around it.
 - A strength of 0 draws nothing.
 
+### Focus on the view centre
+
+A modifier with "Use Target" (`DNAM` byte 224) focuses on what the view centre shows, as the
+game does in dialogue. The modifier still turns the blur on; the focus values come from the
+game's rules (clean-room read of `SkyrimSE.exe` 1.7.104.0 and its shaders, 2026-11-06,
+behaviour only):
+
+- The focus `f` is the camera distance at the screen centre, mixed with 8 points on a ring
+  around it. Sky and far points count as 50,000 units.
+- `t = clamp((f - 100) / 900, 0, 1)`. The range grows from 100 to 10,000 units and the
+  strength falls from 0.8 to 0.56 as `t` goes from 0 to 1. The blur grows over the range on
+  both sides of `f`, unless the modifier's flags pick a side.
+- The centre counts 0.6 as much as each ring point while the view moves. Once the view has
+  turned less than 2 degrees and moved less than 5 units for 0.5 seconds, its weight eases to
+  1.6 outdoors, or 1.0 indoors, over 1 second on a quarter sine. A turn or move resets it.
+
+The game finds the focus on the GPU with a centre weight; the ring of 8 points at 5 percent of
+the screen from the centre is OpenSky's. `state frame` shows `usesTarget` and the
+`centreWeight` under `postEffects.depthOfField`.
+
 ## Lens flare
 
 `[ImageSpace] bLensFlare`. Bright ghost discs appear on the line from the sun through the
@@ -193,7 +238,6 @@ still not known.
   surfaces; see [the game's reflections](#the-games-reflections).
 - The volumetric light's scales from `VOLI` fields to world units and strength are OpenSky's
   reading of the field names. The noise drifts along X, because no wind direction is known.
-- A modifier's "Use Target" flag, which focuses on the crosshair target, is not used.
 - The lens flare is OpenSky's own pattern. The game names a `LENS` lens flare record, but the
   vanilla install has none (Skyrim.esm, Update.esm, and the three DLC files have no `LENS`
   group), so there is no data to draw from.

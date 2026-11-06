@@ -78,6 +78,8 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
     /// The Creation Kit's "No Sky": the depth of field leaves the sky sharp.
     public var depthOfFieldKeepsSkySharp = false
     public var depthOfFieldSides = DepthOfFieldSides.byOrder
+    /// A modifier's "Use Target": the focus follows the depth at the view centre.
+    public var depthOfFieldUsesTarget = false
     public var hdr = ImageSpaceHDR()
 
     /// No change to the frame.
@@ -141,6 +143,7 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
         result.depthOfFieldBlurRadius = sum(\.depthOfFieldBlurRadius)
         result.depthOfFieldKeepsSkySharp = heaviest?.depthOfFieldKeepsSkySharp ?? false
         result.depthOfFieldSides = heaviest?.depthOfFieldSides ?? .byOrder
+        result.depthOfFieldUsesTarget = heaviest?.depthOfFieldUsesTarget ?? false
         result.hdr = ImageSpaceHDR
             .blend(normalized.map { (value: $0.value.hdr, weight: $0.weight) })
         return result

@@ -66,7 +66,11 @@ extension Renderer {
             : []
         var models: [MotionKey: float4x4] = [:]
         defer { upscale.previousModels = models }
-        let count = groups.reduce(0) { $0 + $1.instances.count }
+        // A fading reference drops pixels in the scene pass; motion drawn over them would
+        // move the ground behind it, so it keeps the camera motion instead.
+        let shown = groups
+            .map { group in group.instances.enumerated().filter { fadeOut(of: $0.element) == 0 } }
+        let count = shown.reduce(0) { $0 + $1.count }
         guard count > 0, let instances = motionInstanceRing(count: count, slot: state.slot)
         else { return true }
         guard
@@ -83,9 +87,9 @@ extension Renderer {
         encoder.setFrontFacing(.counterClockwise)
         argumentTable.setAddress(uniforms, index: BufferIndex.motionUniforms.rawValue)
         var cursor = 0
-        for group in groups {
+        for (group, placedInstances) in zip(groups, shown) where !placedInstances.isEmpty {
             let first = cursor
-            for (index, placed) in group.instances.enumerated() {
+            for (index, placed) in placedInstances {
                 let current = drawn(placed).modelMatrix
                 let key = MotionKey(
                     mesh: ObjectIdentifier(group.mesh),
@@ -98,6 +102,7 @@ extension Renderer {
             }
             drawMotion(
                 group,
+                count: placedInstances.count,
                 instances: instances.address(at: first),
                 encoder: encoder,
                 slot: state.slot
@@ -109,6 +114,7 @@ extension Renderer {
 
     private func drawMotion(
         _ group: DrawGroup,
+        count: Int,
         instances: UInt64,
         encoder: MTL4RenderCommandEncoder,
         slot: Int
@@ -126,7 +132,7 @@ extension Renderer {
         }
         encoder.setCullMode(group.material.doubleSided ? .none : .back)
         encoder.drawInstances(
-            of: group.mesh, .packed(count: group.instances.count, address: instances)
+            of: group.mesh, .packed(count: count, address: instances)
         )
     }
 

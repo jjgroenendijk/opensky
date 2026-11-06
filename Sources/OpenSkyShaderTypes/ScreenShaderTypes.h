@@ -133,6 +133,7 @@ typedef NS_ENUM(EnumBackingType, PostEffectFlag)
     PostEffectFlagDepthOfField = 1 << 2,
     PostEffectFlagLensFlare = 1 << 3,
     PostEffectFlagAntiAliasing = 1 << 4,
+    PostEffectFlagIndirectLight = 1 << 5,
 };
 
 /// The textures of the post-effect compute passes, in their own argument table.
@@ -166,7 +167,8 @@ typedef struct
     /// x strength, y clear distance, z distance where the blur is full, w full blur
     /// radius in pixels.
     vector_float4 depthOfField;
-    /// x 1 blurs the sky, y the blurred sides (`DepthOfFieldSides`); zw unused.
+    /// x 1 blurs the sky, y the blurred sides (`DepthOfFieldSides`), z 1 when the focus
+    /// follows the view centre, w the centre's weight in that focus.
     vector_float4 depthOfFieldMode;
     /// xy the sun's texture coordinate, z strength, w the target's width over its height.
     vector_float4 lensFlare;
@@ -179,6 +181,8 @@ typedef struct
     /// Occlusion: x intensity over radius^6, y contrast exponent, z history value ramp,
     /// w history depth ramp.
     vector_float4 ambientOcclusionCurve;
+    /// Indirect light: x radius, y strength, z bias, w 1 when its history holds last frame.
+    vector_float4 indirectLight;
     /// PostEffectFlag bits.
     unsigned int effects;
 } PostEffectUniforms;

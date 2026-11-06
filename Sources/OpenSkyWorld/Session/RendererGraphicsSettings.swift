@@ -27,6 +27,7 @@ extension PostEffectSettings {
         depthOfField = store.bool(.depthOfField)
         lensFlare = store.bool(.lensFlare)
         fxaa = store.bool(.fxaa)
+        indirectLight = store.bool(.indirectLight)
         let quality = store.value(.volumetricQuality)
         volumetricQuality = quality.isFinite ? Int(min(max(quality, 0), 2)) : 1
     }
@@ -60,6 +61,7 @@ extension Renderer {
         terrainNormalMapsEnabled = store.bool(.terrainNormalMaps)
         shadingTerms = SurfaceShadingSetting.terms(store: store)
         lightAnimationEnabled = store.bool(.lightAnimation)
+        characterLightEnabled = store.bool(.characterLight)
         pointLightShadowsEnabled = store.bool(.shadowLights)
         particleSortingEnabled = store.bool(.particleSorting)
         referenceFades = ReferenceFadeDistances(

@@ -20,7 +20,15 @@ extension AgentWorldAdapter {
         let look = session.renderer.volumetricLight
         return [
             "ambientOcclusion": .bool(settings.ambientOcclusion),
+            "characterLight": [
+                "enabled": .bool(session.renderer.characterLightEnabled),
+                "strength": .init(session.renderer.characterLightUniform.z)
+            ],
+            "actorCameraFade": .object(session.renderer.actorCameraFadeOuts.reduce(into: [:]) {
+                $0[String(format: "%08X", $1.key)] = .init($1.value)
+            }),
             "fxaa": .bool(settings.fxaa),
+            "indirectLight": .bool(settings.indirectLight),
             "lensFlare": .bool(settings.lensFlare),
             "depthOfField": [
                 "enabled": .bool(settings.depthOfField),
@@ -29,7 +37,9 @@ extension AgentWorldAdapter {
                 "range": .init(field.depthOfField.z),
                 "blurRadius": .init(field.depthOfFieldBlurRadius),
                 "skySharp": .bool(field.depthOfFieldKeepsSkySharp),
-                "sides": .string("\(field.depthOfFieldSides)")
+                "sides": .string("\(field.depthOfFieldSides)"),
+                "usesTarget": .bool(field.depthOfFieldUsesTarget),
+                "centreWeight": .init(session.renderer.depthOfFieldFocus.centreWeight)
             ],
             "volumetricLight": [
                 "enabled": .bool(settings.volumetricLight),

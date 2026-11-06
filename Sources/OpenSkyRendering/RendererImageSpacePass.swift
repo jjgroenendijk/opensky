@@ -32,7 +32,8 @@ public final class ImageSpacePassResources {
     var previousViewProjection: float4x4?
     /// Last frame's camera, for the occlusion history.
     var previousCamera: SIMD3<Float>?
-    let occlusion: OcclusionPassResources
+    let occlusion: PostHistoryPass
+    let indirectLight: PostHistoryPass
 
     static let uniformStride = (MemoryLayout<ImageSpaceUniforms>.size + 0xFF) & -0x100
     static let postUniformStride = (MemoryLayout<PostEffectUniforms>.size + 0xFF) & -0x100
@@ -51,7 +52,8 @@ public final class ImageSpacePassResources {
             compiler: compiler, library: library, pixelFormat: pixelFormat,
             fragment: "imageSpaceTileFragment"
         )
-        occlusion = try OcclusionPassResources(library: library, compiler: compiler)
+        occlusion = try PostHistoryPass(.occlusion, library: library, compiler: compiler)
+        indirectLight = try PostHistoryPass(.indirectLight, library: library, compiler: compiler)
         guard
             let buffer = device.makeBuffer(
                 length: Self.uniformStride * GPUFactory.maxFramesInFlight,
@@ -341,7 +343,7 @@ extension Renderer {
             argumentTable.setTexture(
                 destination.gpuResourceID, index: TextureIndex.sceneDepth.rawValue
             )
-            encodeOcclusion(
+            encodeHistoryPasses(
                 blit, post: &post, inputs: (depth: destination, scene: copy), slot: state.slot
             )
         }

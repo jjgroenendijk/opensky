@@ -129,6 +129,8 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     TextureIndexPointShadowMap = 29,
     /// The blurred ambient occlusion the post-effect compute passes wrote (r16Float).
     TextureIndexPostOcclusion = 30,
+    /// The screen-space indirect light, rgb, the post-effect compute pass wrote.
+    TextureIndexPostIndirectLight = 31,
     /// A lit mesh binds NIF texture-set slot N at index N, over the terrain layer
     /// slots, which only terrain draws read. Every draw binds all of them.
     TextureIndexSurfaceNormal = 1,
@@ -406,6 +408,9 @@ typedef struct
     float focusShadowBias;
     /// 1: the water reflects the scene colour copy bound at TextureIndexSceneColor.
     unsigned int screenSpaceReflections;
+    /// Character light on actors: x facing weight, y fill weight, z strength from the
+    /// scene luminance; all 0 when off.
+    vector_float4 characterLight;
 } FrameUniforms;
 
 /// Per-group material scalars for one instanced static-mesh draw, shared by every

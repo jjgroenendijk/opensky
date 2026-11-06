@@ -172,6 +172,7 @@ fragment float4 imageSpaceFragment(
     texture2d<float> scene [[texture(TextureIndexSceneColor)]],
     depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
     texture2d<float> occlusionMap [[texture(TextureIndexPostOcclusion)]],
+    texture2d<float> indirectMap [[texture(TextureIndexPostIndirectLight)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     sampler shadowCompare [[sampler(SamplerIndexShadowCompare)]])
 {
@@ -197,7 +198,8 @@ fragment float4 imageSpaceFragment(
         float depth = sceneDepth.sample(postNearest, uv);
         PostPixel pixel = {uv, texel, in.position.xy, depth, postWorldPosition(uv, depth, post)};
         color = postApply(
-            color, pixel, frame, post, scene, sceneDepth, occlusionMap, shadowMap, shadowCompare);
+            color, pixel, frame, post, scene, sceneDepth, {occlusionMap, indirectMap}, shadowMap,
+            shadowCompare);
     }
     color = imageSpaceBloom(scene, linearClamp, uv, texel, color, uniforms);
     return imageSpaceGrade(color, uniforms);

@@ -74,6 +74,29 @@ reference's `XEMI` light, or its `XEMI` region's weather colour at this hour
 keeps the NIF colour. The sun terms
 use the sun shadow.
 
+### Character light
+
+Every lit shape of an actor, its body, worn armour, and held items, takes the game's character
+light, a white light added with the ambient light. `N` is the normal in view space: x to the
+right, y up, z away from the camera.
+
+- `rim = clamp(N . (1, 1, 1) / sqrt(3), 0, 1)` lights faces that turn away from the camera,
+  so the outline of the actor glows.
+- `fill = clamp(0.1644 N.y - 0.9864 N.z, 0, 1)` lights faces that look at the camera.
+- `light = (0.75 rim + 0.3 fill) × min(2 L, 0.75)`, with `L` the scene luminance the eye has
+  adapted to.
+
+It has no falloff and no shadow, and it is on in every scene, as in the game. The game puts it
+on every actor with loaded 3D, the player too (clean-room read of the game's shaders and of
+`SkyrimSE.exe` 1.7.104.0, 2026-11-06, behaviour only). The "Character light" switch on the
+Graphics page turns it off; the game has a setting that does the same. `state frame` shows it
+under `postEffects.characterLight`. The game reads `N` in "the lighting space of the shape". OpenSky
+reads it in view space, because then the two terms make the rim and fill light the effect is
+for. A world-space reading lit an actor's back, seen from behind, with almost nothing (capture
+pair `.logs/reference/20261106T182635/` and `20261106T182638/`, 2026-11-06). OpenSky reads
+`L` as its own eye adaptation luminance. Both the space and the luminance scale are likely,
+not confirmed.
+
 A specular surface reflects no ambient light along the view. The game's `[Display] bIBLFEnable`
 reads as "image-based lighting", but it turns on an image-based lens flare, a screen effect, not
 a surface term (clean-room read of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). Shiny surfaces show

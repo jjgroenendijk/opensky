@@ -140,19 +140,7 @@ public final class Renderer: NSObject {
     /// Internal, not `private(set)`: `RendererSceneSwap.swift` owns the swap
     /// cross-file (same rule as the offscreen/setup satellites above).
     public var scene: RenderScene {
-        didSet {
-            shadowCasters = ShadowCasterBounds(scene: scene)
-            actorGroupsByOwner = DrawGroup.actorGroupsByOwner(in: scene)
-            sceneAllocations = scene.residencyAllocations
-            emittanceRegions = scene.emittanceRegions
-            gpuCull.isCurrent = false
-            rayTracedShadows.isCurrent = false
-            // A new cell shows other surfaces; old frames would ghost over them.
-            upscale.resetPending = true
-            mergeInstanceDeltas()
-            pruneGrassMeshlets(keeping: scene.grass)
-            pointLightPicks.removeAll(keepingCapacity: true)
-        }
+        didSet { sceneChanged() }
     }
 
     /// Set while a frame's culling and shadow work is committed ahead of its scene pass.
@@ -247,6 +235,8 @@ public final class Renderer: NSObject {
     public var animationTime: Float = 0
     /// Placed lights flicker and pulse as their LIGH flags ask.
     public var lightAnimationEnabled = true
+    /// The game's rim and fill light on actors.
+    public var characterLightEnabled = true
     /// Actor animation switch. Off restores bind palettes;
     /// global time still advances so grass/particle effects stay independent.
     public var actorAnimationsEnabled = true
@@ -443,6 +433,20 @@ public final class Renderer: NSObject {
 }
 
 extension Renderer {
+    private func sceneChanged() {
+        shadowCasters = ShadowCasterBounds(scene: scene)
+        actorGroupsByOwner = DrawGroup.actorGroupsByOwner(in: scene)
+        sceneAllocations = scene.residencyAllocations
+        emittanceRegions = scene.emittanceRegions
+        gpuCull.isCurrent = false
+        rayTracedShadows.isCurrent = false
+        // A new cell shows other surfaces; old frames would ghost over them.
+        upscale.resetPending = true
+        mergeInstanceDeltas()
+        pruneGrassMeshlets(keeping: scene.grass)
+        pointLightPicks.removeAll(keepingCapacity: true)
+    }
+
     /// The scene's own depth state: test and write.
     public var depthState: MTLDepthStencilState {
         materialDepthStates.state(test: true, write: true)

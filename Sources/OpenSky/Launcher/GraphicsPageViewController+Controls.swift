@@ -103,6 +103,14 @@ extension GraphicsPageViewController {
             "The screen pulses while the player's health is low"
         )
         checkbox(
+            characterLightControl, "CharacterLight",
+            "Actors take a soft white light from the front and below, as in the game"
+        )
+        checkbox(
+            indirectLightControl, "IndirectLight",
+            "Nearby lit surfaces bounce some of their colour onto each other"
+        )
+        checkbox(
             generatedTerrainLODControl, "GeneratedTerrainLOD",
             "Distant land is built from the plugins' land, so changed land shows far away too"
         )
@@ -214,6 +222,7 @@ extension GraphicsPageViewController {
             (impactEffectsControl, .impactEffects), (screenBloodControl, .screenBlood),
             (lowHealthPulseControl, .lowHealthPulse),
             (generatedTerrainLODControl, .generatedTerrainLOD),
+            (characterLightControl, .characterLight), (indirectLightControl, .indirectLight),
             (toneMappingControl, .toneMapping),
             (lightAnimationControl, .lightAnimation), (shadowLightsControl, .shadowLights),
             (particleSortingControl, .particleSorting),

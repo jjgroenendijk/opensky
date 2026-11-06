@@ -1,34 +1,56 @@
-// Ambient occlusion in three compute passes between the scene copy and the composite:
-// the trace with the game's contrast curve and blend over time, then the two blur
-// passes. docs/rendering/post-effects.md#ambient-occlusion has the steps.
+// A screen effect traced in compute between the scene copy and the composite, blended
+// with last frame, and optionally blurred: ambient occlusion and indirect light
+// (docs/rendering/post-effects.md).
 
 import Metal
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
-/// The occlusion kernels, their binding table, and the targets they keep between frames.
-public final class OcclusionPassResources {
+/// The kernel names of one pass and the formats of its targets.
+struct PostHistoryKernels {
+    let label: String
+    let trace: String
+    /// The horizontal and vertical blur, or nil to read the trace as it is.
+    let blurs: (horizontal: String, vertical: String)?
+    let historyFormat: MTLPixelFormat
+    let resultFormat: MTLPixelFormat
+
+    static let occlusion = Self(
+        label: "Occlusion", trace: "occlusionTrace",
+        blurs: ("occlusionBlurHorizontal", "occlusionBlurVertical"),
+        historyFormat: .rg16Float, resultFormat: .r16Float
+    )
+    static let indirectLight = Self(
+        label: "IndirectLight", trace: "indirectLightTrace", blurs: nil,
+        historyFormat: .rgba16Float, resultFormat: .rgba16Float
+    )
+}
+
+/// One pass's kernels, their binding table, and the targets they keep between frames.
+public final class PostHistoryPass {
+    let kernels: PostHistoryKernels
     let trace: MTLComputePipelineState
-    let blurHorizontal: MTLComputePipelineState
-    let blurVertical: MTLComputePipelineState
+    let blurs: (horizontal: MTLComputePipelineState, vertical: MTLComputePipelineState)?
     let argumentTable: MTL4ArgumentTable
-    /// Occlusion and camera distance per pixel (rg16Float); the two swap each frame.
+    /// The traced value and its depth per pixel; the two swap each frame.
     private var history: [MTLTexture] = []
     private var scratch: MTLTexture?
-    /// The blurred occlusion the composite reads.
+    private var blurred: MTLTexture?
+    /// What the composite reads: the blurred trace, or the trace itself.
     private(set) var result: MTLTexture?
     private var current = 0
     /// The frame that last traced, so a skipped frame does not blend stale history.
     private var lastTracedFrame: Int?
 
-    init(library: MTLLibrary, compiler: PipelineCache) throws {
-        trace = try Self.kernel("occlusionTrace", library: library, compiler: compiler)
-        blurHorizontal = try Self.kernel(
-            "occlusionBlurHorizontal", library: library, compiler: compiler
-        )
-        blurVertical = try Self.kernel(
-            "occlusionBlurVertical", library: library, compiler: compiler
-        )
+    init(_ kernels: PostHistoryKernels, library: MTLLibrary, compiler: PipelineCache) throws {
+        self.kernels = kernels
+        trace = try Self.kernel(kernels.trace, library: library, compiler: compiler)
+        blurs = try kernels.blurs.map {
+            try (
+                Self.kernel($0.horizontal, library: library, compiler: compiler),
+                Self.kernel($0.vertical, library: library, compiler: compiler)
+            )
+        }
         let table = MTL4ArgumentTableDescriptor()
         table.maxBufferBindCount = BufferIndex.postEffectUniforms.rawValue + 1
         table.maxTextureBindCount = PostComputeTextureIndex.output.rawValue + 1
@@ -57,22 +79,31 @@ public final class OcclusionPassResources {
     /// Makes the targets match `target`. False when a texture cannot be made.
     func prepare(matching target: MTLTexture, residency: MTLResidencySet) -> Bool {
         if
-            let result, result.width == target.width, result.height == target.height,
-            history.count == 2
+            let first = history.first, first.width == target.width,
+            first.height == target.height, history.count == 2
         {
             return true
         }
-        let old = history + [scratch, result].compactMap(\.self)
+        let old = history + [scratch, blurred].compactMap(\.self)
+        let label = kernels.label
         guard
-            let first = Self.target(target, .rg16Float, "OcclusionHistoryA"),
-            let second = Self.target(target, .rg16Float, "OcclusionHistoryB"),
-            let blurred = Self.target(target, .r16Float, "OcclusionBlurScratch"),
-            let final = Self.target(target, .r16Float, "OcclusionResult")
+            let first = Self.target(target, kernels.historyFormat, label + "HistoryA"),
+            let second = Self.target(target, kernels.historyFormat, label + "HistoryB")
         else { return false }
+        var made = [first, second]
+        if kernels.blurs != nil {
+            guard
+                let pass = Self.target(target, kernels.resultFormat, label + "BlurScratch"),
+                let final = Self.target(target, kernels.resultFormat, label + "Result")
+            else { return false }
+            (scratch, blurred) = (pass, final)
+            made += [pass, final]
+        } else {
+            (scratch, blurred) = (nil, nil)
+        }
         old.forEach { residency.removeAllocation($0) }
         history = [first, second]
-        (scratch, result) = (blurred, final)
-        [first, second, blurred, final].forEach { residency.addAllocation($0) }
+        made.forEach { residency.addAllocation($0) }
         residency.commit()
         lastTracedFrame = nil
         return true
@@ -93,13 +124,13 @@ public final class OcclusionPassResources {
         return texture
     }
 
-    /// Encodes the trace and the two blurs after the scene copies, for `frame`.
+    /// Encodes the trace, and the two blurs when the pass has them, for `frame`.
     func encode(
         _ encoder: MTL4ComputeCommandEncoder,
-        inputs: OcclusionInputs,
+        inputs: PostHistoryInputs,
         frame: Int
     ) {
-        guard history.count == 2, let scratch, let result else { return }
+        guard history.count == 2 else { return }
         let traced = history[current]
         let previous = history[1 - current]
         let table = argumentTable
@@ -110,13 +141,17 @@ public final class OcclusionPassResources {
         table.setTexture(previous.gpuResourceID, index: PostComputeTextureIndex.history.rawValue)
         table.setTexture(traced.gpuResourceID, index: PostComputeTextureIndex.output.rawValue)
         dispatch(encoder, trace, size: traced)
-        table.setTexture(traced.gpuResourceID, index: PostComputeTextureIndex.history.rawValue)
-        table.setTexture(traced.gpuResourceID, index: PostComputeTextureIndex.source.rawValue)
-        table.setTexture(scratch.gpuResourceID, index: PostComputeTextureIndex.output.rawValue)
-        dispatch(encoder, blurHorizontal, size: traced)
-        table.setTexture(scratch.gpuResourceID, index: PostComputeTextureIndex.source.rawValue)
-        table.setTexture(result.gpuResourceID, index: PostComputeTextureIndex.output.rawValue)
-        dispatch(encoder, blurVertical, size: traced)
+        result = traced
+        if let blurs, let scratch, let blurred {
+            table.setTexture(traced.gpuResourceID, index: PostComputeTextureIndex.history.rawValue)
+            table.setTexture(traced.gpuResourceID, index: PostComputeTextureIndex.source.rawValue)
+            table.setTexture(scratch.gpuResourceID, index: PostComputeTextureIndex.output.rawValue)
+            dispatch(encoder, blurs.horizontal, size: traced)
+            table.setTexture(scratch.gpuResourceID, index: PostComputeTextureIndex.source.rawValue)
+            table.setTexture(blurred.gpuResourceID, index: PostComputeTextureIndex.output.rawValue)
+            dispatch(encoder, blurs.vertical, size: traced)
+            result = blurred
+        }
         current = 1 - current
         lastTracedFrame = frame
     }
@@ -140,7 +175,7 @@ public final class OcclusionPassResources {
 }
 
 /// What the trace reads: this frame's uniforms and the scene copies.
-struct OcclusionInputs {
+struct PostHistoryInputs {
     let uniforms: UInt64
     let depth: MTLTexture
     let scene: MTLTexture

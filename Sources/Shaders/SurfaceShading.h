@@ -173,10 +173,24 @@ static float sparkle(float2 uv, LightGeometry geometry, float3 toSun, float4 par
     return pow(saturate(dot(tilted, halfway)), max(params.y, 1.0)) * params.z * facing;
 }
 
-// Screen-door fade: a 4x4 ordered dither turns alpha into a share of whole pixels.
+// The game's character light, white and fixed to the camera: a rim on faces that turn
+// away from it and a fill on faces that look at it. View space is x right, y up, z ahead.
+static inline float3 characterLight(float3 normal, constant FrameUniforms &frame)
+{
+    float3 view = float3(
+        dot(normal, frame.cameraRight), dot(normal, frame.cameraUp),
+        dot(normal, frame.cameraForward));
+    float rim = saturate(dot(view, float3(0.57735027)));
+    float fill = saturate(view.y * 0.1644 - view.z * 0.9864);
+    float4 light = frame.characterLight;
+    return float3((light.x * rim + light.y * fill) * light.z);
+}
+
+// Screen-door fade: the game's 4x4 ordered dither, indexed by x then y, turns alpha into a
+// share of whole pixels. A pixel shows while alpha is at least its threshold.
 static inline float screenDoorThreshold(float2 pixel)
 {
     const float pattern[16] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
     uint2 cell = uint2(pixel) % 4;
-    return (pattern[cell.y * 4 + cell.x] + 0.5) / 16.0;
+    return clamp(pattern[cell.x * 4 + cell.y] / 15.0, 1.0 / 255.0, 254.0 / 255.0);
 }
