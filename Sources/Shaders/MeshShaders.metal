@@ -470,9 +470,8 @@ fragment float4 staticMeshFragment(
     float3 albedo = diffuse.rgb * vertexColour;
     if (draw.projectedParameters.w > 0.5) {
         ProjectedLayer layer = projectedLayer(
-            in.worldPosition, normal.world, draw, projectedDiffuse, projectedNormal, trilinear);
+            in.worldPosition, normal.world, in.color.a, draw, projectedDiffuse, trilinear);
         albedo = mix(albedo, layer.albedo, layer.blend);
-        normal.world = normalize(mix(normal.world, layer.normal, layer.blend));
     }
     if (hasTerm(terms, ShadingTermLandscapeNoise)) {
         float noise = detailMap.sample(trilinear, in.worldPosition.xy * landscapeNoiseTile).r;

@@ -86,19 +86,23 @@ the `MATO` projection vector, such as snow on the tops of rocks
 ([environment shading records](/formats/environment-shading.md#mato)). The surface override of
 every placed reference of the static carries it, and every lit shape of the model takes it.
 
-- A face whose normal is more than the `DNAM` max angle from the projection vector gets none.
-- Between that angle and the vector, `edge` runs from 0 to 1. The blend is
-  `edge * falloff scale + falloff bias`, clamped to 0 to 1.
-- With the game's `[Display] bEnableProjecteUVDiffuseNormals` on, the blend mixes in the
-  diffuse and normal maps of the `MATO` model's first textured shape. They are laid on the world
-  XY plane and repeat every 512 units at a material UV scale of 1. The normal map's XY tilts the
-  normal around world up.
-- With it off, the blend mixes in the `MATO` single-pass colour, or white when the record has
-  none.
+The edge follows the game's shader (clean-room read of the game's shaders, 2026-11-06):
+`edge = (N . projection vector) * vertex alpha - cos(max angle)`, so a face more than the
+`DNAM` max angle from the vector gets none, and vertex alpha can paint it away.
 
-How the game reads the falloff values, the noise UV scale, and the normal dampener is not
-documented. The blend above, the 512-unit tile, and the texture source are OpenSky's own. The
-noise that breaks up the game's edge is not drawn.
+- With the game's `[Display] bEnableProjecteUVDiffuseNormals` on, the face mixes in the diffuse
+  map of the `MATO` model's first textured shape, by `smoothstep(-0.1, 0.1, edge)`. The map is
+  laid on the world XY plane and repeats every 512 units at a material UV scale of 1.
+- With it off, the face takes the `MATO` single-pass colour, or white when the record has none,
+  with a hard edge at 0.
+- The game's normal maps of the layer change only the normal it keeps for reflections and
+  ambient occlusion, not the lighting normal, so OpenSky does not use them.
+
+The game also subtracts a noise texture's red channel, at the projected UV times the noise
+scale and times a factor, from `edge`, which breaks up the line. Which texture that is, and how
+the falloff scale, falloff bias, and normal dampener feed the offset and that factor, is not
+known, so OpenSky draws a clean edge. The 512-unit tile and the XY plane are OpenSky's own; the
+game projects from model space by a per-draw plane.
 
 ## Albedo
 

@@ -182,8 +182,8 @@ the detail and the sources it did find.
 | Rain occlusion depth range | 6,000 units above the camera to 4,000 below, straight down | [precipitation](/rendering/precipitation.md#roof-occlusion) |
 | Water screen-space reflection march | 24 steps from 24 units, each 1.25 times longer | [water](/rendering/water.md#screen-space-reflections) |
 | Water screen-space reflection length fade | Zero at one screen of distance | [water](/rendering/water.md#screen-space-reflections) |
-| Snow ground sheen and glints | Sheen 0.25 at power 24; glints in 1.5% of 4-unit cells, 2 at power 6 | [terrain](/engine/terrain.md#snow-ground) |
-| Directional material blend | `edge * falloff scale + bias`; 512-unit tile; first textured shape of the `MATO` model | [surface shading](/rendering/surface-shading.md#directional-materials) |
+| Snow ground glints | 1.5% of 4-unit cells, 2 at power 6, in place of the game's sparkles | [terrain](/engine/terrain.md#snow-ground) |
+| Directional material layer | 512-unit tile on world XY; no edge noise; first textured shape of the `MATO` model | [surface shading](/rendering/surface-shading.md#directional-materials) |
 | Skin decal size and limit | At most 16 units; 35 kept when unset | [decals](/rendering/decals.md#skin-decals) |
 | Terrain split distance | `fSplitDistanceMult` scales the level 4, 8, and 16 reach; level 32 keeps `fBlockMaximumDistance` | [graphics options](/engine/graphics-options.md) |
 | Large reference LOD hidden per block | The game's per-cell rule is not known | [distant LOD](/engine/distant-lod.md#large-references) |

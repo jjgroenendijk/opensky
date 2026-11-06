@@ -70,13 +70,24 @@ Ray-traced shadows still test the vertex normal.
 
 A land texture with the Skyrim SE snow flag (`LTEX` `INAM`) is snow ground. With the game's
 `[Display] bEnableImprovedSnow` on, the snow share of a pixel blends from the base and the
-layers by the same weights as the colour. That share adds, times the sun shadow:
+layers by the same weights as the colour, and so does the texture's alpha, the snow mask.
 
-- a broad sun sheen, `sun * 0.25 * (N.H)^24`;
-- fine glints: one cell in about 67 of a fixed 4-unit world grid adds `sun * 2 * (N.H)^6`.
+The game adds a white rim sheen to snow, times the mask and the snow share, whatever the light
+(clean-room read of the game's shaders and of `SkyrimSE.exe` 1.7.104.0, 2026-11-06):
 
-The game's snow shader is not documented. This sheen and glint pattern, and their values,
-are OpenSky's own.
+```text
+rim = (1 - saturate(Ng . V))^fSnowGeometrySpecPower * (1 - saturate(N . V))^fSnowNormalSpecPower
+      * fSnowRimLightIntensity                         (3, 2, and 0.3 by default)
+```
+
+`Ng` is the vertex normal, `N` the normal-mapped one, and `V` the direction to the eye. So snow
+brightens toward the horizon and on slopes seen edge-on. The game drops the sun's specular on
+snow and adds the point lights' specular to the rim; land has no specular in OpenSky, so neither
+applies.
+
+OpenSky adds its own glints on top, times the sun shadow: one cell in about 67 of a fixed
+4-unit world grid adds `sun * 2 * (N.H)^6`. The game's sparkles use 3D noise in world space,
+the `fSparkles*` settings, and a threshold that is not known; the glints stand in for them.
 
 ## Placement
 

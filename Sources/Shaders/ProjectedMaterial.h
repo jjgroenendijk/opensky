@@ -7,35 +7,31 @@
 constant float projectedTile = 512.0;
 
 // A static's directional material (STAT DNAM with a MATO): faces that point along the
-// direction take its texture or single-pass colour. The falloff scale and bias shape the
-// edge; the texture is laid on the world XY plane.
+// direction take its texture or single-pass colour, as the game draws it: the facing times
+// the vertex alpha, past the max angle, gives a soft edge for a texture and a hard one for
+// a colour. The texture is laid on the world XY plane (docs/rendering/surface-shading.md).
 struct ProjectedLayer
 {
     float3 albedo;
-    float3 normal;
     float blend;
 };
 
 static ProjectedLayer projectedLayer(
     float3 world,
     float3 normal,
+    float vertexAlpha,
     constant DrawUniforms &draw,
     texture2d<float> diffuseMap,
-    texture2d<float> normalMap,
     sampler trilinear)
 {
-    ProjectedLayer layer = {draw.projectedColor.rgb, normal, 0.0};
-    float limit = draw.projectedDirection.w;
-    float facing = dot(normal, draw.projectedDirection.xyz);
-    float edge = (facing - limit) / max(1.0 - limit, 0.001);
-    layer.blend = facing < limit
-                      ? 0.0
-                      : saturate(edge * draw.projectedParameters.x + draw.projectedParameters.y);
+    ProjectedLayer layer = {draw.projectedColor.rgb, 0.0};
+    float edge = dot(normal, draw.projectedDirection.xyz) * vertexAlpha - draw.projectedDirection.w;
     if (draw.projectedParameters.w > 1.5) {
         float2 uv = world.xy * (draw.projectedParameters.z / projectedTile);
         layer.albedo = diffuseMap.sample(trilinear, uv).rgb;
-        float2 xy = normalMap.sample(trilinear, uv).xy * 2.0 - 1.0;
-        layer.normal = normalize(float3(xy, sqrt(saturate(1.0 - dot(xy, xy)))));
+        layer.blend = smoothstep(-0.1, 0.1, edge);
+    } else {
+        layer.blend = edge > 0.0 ? 1.0 : 0.0;
     }
     return layer;
 }

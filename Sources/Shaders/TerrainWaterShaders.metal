@@ -66,18 +66,24 @@ static float3 terrainShadingNormal(TerrainVertexOut in, float2 blendedXY)
     return normalize(tangent * blendedXY.x + bitangent * blendedXY.y + vertexNormal * z);
 }
 
-// Snow ground (LTEX INAM) under the improved snow option: a broad sun sheen and fine
-// glints in a fixed world-space pattern, so the snow looks crisp in the sun.
-static float3 terrainSnowSheen(float3 world, float3 normal, constant FrameUniforms &frame)
+// Snow ground (LTEX INAM) under the improved snow option, as the game draws it: a white
+// rim sheen at grazing angles, from the vertex and the mapped normal
+// (docs/engine/terrain.md#snow-ground).
+static float terrainSnowRim(float3 toEye, float3 vertexNormal, float3 normal)
 {
-    float3 toEye = normalize(frame.cameraPosition - world);
-    float3 halfway = normalize(toEye - frame.sunDirection);
-    float facing = saturate(dot(normal, halfway));
-    float sheen = pow(facing, 24.0) * 0.25;
+    float geometry = pow(1.0 - saturate(dot(vertexNormal, toEye)), 3.0);
+    float mapped = pow(1.0 - saturate(dot(normal, toEye)), 2.0);
+    return geometry * mapped * 0.3;
+}
+
+// OpenSky's own sun glints on snow ground: one 4-unit world cell in about 67 flashes.
+static float3
+terrainSnowGlints(float3 world, float3 toEye, float3 normal, constant FrameUniforms &frame)
+{
+    float facing = saturate(dot(normal, normalize(toEye - frame.sunDirection)));
     float2 cell = floor(world.xy * 0.25);
     float seed = fract(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453);
-    float glint = seed > 0.985 ? pow(facing, 6.0) * 2.0 : 0.0;
-    return frame.sunColor * (sheen + glint);
+    return frame.sunColor * (seed > 0.985 ? pow(facing, 6.0) * 2.0 : 0.0);
 }
 
 fragment float4 terrainFragment(
@@ -108,7 +114,9 @@ fragment float4 terrainFragment(
     // Start opaque base, then lerp each layer in over the running color in
     // ATXT layer order. Straight lerp by VTXT opacity is the plain reading of
     // the spec; the exact vanilla blend curve is UNCONFIRMED.
-    float3 albedo = baseMap.sample(trilinear, in.texcoord).rgb;
+    float4 baseTexel = baseMap.sample(trilinear, in.texcoord);
+    float3 albedo = baseTexel.rgb;
+    float snowMask = baseTexel.a;
     float weights[TerrainConstantMaxLayers] = {in.weights0.x, in.weights0.y, in.weights0.z,
                                                in.weights0.w, in.weights1.x, in.weights1.y,
                                                in.weights1.z, in.weights1.w};
@@ -119,8 +127,9 @@ fragment float4 terrainFragment(
     float snow = (draw.snowLayers >> uint(TerrainConstantMaxLayers)) & 1u;
     for (uint layer = 0; layer < count; ++layer) {
         float weight = saturate(weights[layer]);
-        float3 layerColor = layerMaps[layer].sample(trilinear, in.texcoord).rgb;
-        albedo = mix(albedo, layerColor, weight);
+        float4 layerTexel = layerMaps[layer].sample(trilinear, in.texcoord);
+        albedo = mix(albedo, layerTexel.rgb, weight);
+        snowMask = mix(snowMask, layerTexel.a, weight);
         snow = mix(snow, float((draw.snowLayers >> layer) & 1u), weight);
         if (normalMaps) {
             float4 texel = layerNormalMaps[layer].sample(trilinear, in.texcoord);
@@ -146,7 +155,11 @@ fragment float4 terrainFragment(
                                   draw.pointLightCount, pointShadowMap, shadowSampler));
     float3 lit = albedo * linearVertexColour(in.color.rgb, frame) * illumination;
     if (snow > 0.0) {
-        lit += terrainSnowSheen(in.worldPosition, normal, frame) * (shadow * snow);
+        float3 toEye = normalize(frame.cameraPosition - in.worldPosition);
+        float rim = terrainSnowRim(toEye, normalize(in.normal), normal);
+        lit +=
+            (rim * snowMask + terrainSnowGlints(in.worldPosition, toEye, normal, frame) * shadow) *
+            snow;
     }
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
