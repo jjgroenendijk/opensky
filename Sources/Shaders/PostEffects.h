@@ -94,9 +94,9 @@ static inline float3 postSurfaceNormal(
     return dot(normal, camera - pixel.world) < 0.0 ? -normal : normal;
 }
 
-// Ambient occlusion: five depth taps on a spiral around the pixel, as the game takes. A tap
-// above the surface plane darkens the pixel; near taps weigh more (post-effects.md).
-static inline float postAmbientOcclusion(
+// The faded sum of the game's 5 tap terms: (R^2 - |v|^2)^3 x (v.N - bias) / (|v|^2 + 0.01).
+// The bias grows toward the screen edge and with depth, as in the game.
+static inline float postAmbientOcclusionSum(
     PostPixel pixel,
     float3 normal,
     float3 camera,
@@ -106,29 +106,28 @@ static inline float postAmbientOcclusion(
     float range = distance(pixel.world, camera);
     float fade = 1.0 - smoothstep(0.5, 1.0, range / max(post.ambientOcclusion.w, 1.0));
     if (fade <= 0.0) {
-        return 1.0;
+        return 0.0;
     }
     float radius = post.ambientOcclusion.x;
+    float radiusSquared = radius * radius;
+    float2 ndc = pixel.uv * 2.0 - 1.0;
+    float bias =
+        post.ambientOcclusion.z + 2.0 * dot(ndc, ndc) + 10.0 * max(range / 7000.0 - 0.3, 0.0);
     float2 reach = radius * post.projection.xy * 0.5 / max(range, 1.0);
     reach = min(reach, float2(0.1));
-    float turn = postNoise(pixel.pixel) * 6.2831853;
+    float turn = (postNoise(pixel.pixel) + post.camera.w * 0.618034) * 6.2831853;
     float sum = 0.0;
-    float weights = 0.0;
     for (int tap = 0; tap < 5; ++tap) {
         float share = (float(tap) + 0.5) / 5.0;
-        float angle = turn + float(tap) * 2.3999632;
+        float angle = turn + (float(tap) + 0.5) * 2.512;
         float2 tapUV = pixel.uv + float2(cos(angle), sin(angle)) * reach * share;
         float3 toTap = postWorldAt(tapUV, depth, post) - pixel.world;
         float distanceSquared = dot(toTap, toTap);
-        float near = distanceSquared / (radius * radius);
-        float inside = max(1.0 - near, 0.0);
-        float weight = inside * inside * inside / (near + 0.01);
-        float rise = dot(toTap * rsqrt(max(distanceSquared, 1.0e-4)), normal);
-        sum += max(rise - post.ambientOcclusion.z, 0.0) * weight;
-        weights += weight;
+        float inside = max(radiusSquared - distanceSquared, 0.0);
+        float rise = max((dot(toTap, normal) - bias) / (distanceSquared + 0.01), 0.0);
+        sum += inside * inside * inside * rise;
     }
-    float mean = weights > 0.0 ? sum / weights : 0.0;
-    return saturate(1.0 - fade * post.ambientOcclusion.y * mean);
+    return fade * sum;
 }
 
 // Occlusion darkens the lit colour before the fog is added, as the game's fog variant
@@ -347,6 +346,7 @@ static inline float3 postApply(
     constant PostEffectUniforms &post,
     texture2d<float> scene,
     depth2d<float> depth,
+    texture2d<float> occlusionMap,
     depth2d_array<float> shadowMap,
     sampler compare)
 {
@@ -354,11 +354,9 @@ static inline float3 postApply(
     if ((post.effects & PostEffectFlagDepthOfField) != 0) {
         color = postDepthOfField(color, pixel, sky, frame.cameraPosition, scene, depth, post);
     }
-    bool snow = scene.sample(postNearest, pixel.uv).a < 0.5;
-    if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky && !snow) {
-        float3 normal = postSurfaceNormal(pixel, frame.cameraPosition, depth, post);
+    if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky) {
         // The game darkens the whole lit colour: sun, point lights, and ambient alike.
-        float occlusion = postAmbientOcclusion(pixel, normal, frame.cameraPosition, depth, post);
+        float occlusion = occlusionMap.sample(postNearest, pixel.uv).r;
         color = postOccludeUnderFog(color, occlusion, pixel.world, frame);
     }
     if ((post.effects & PostEffectFlagVolumetricLight) != 0) {

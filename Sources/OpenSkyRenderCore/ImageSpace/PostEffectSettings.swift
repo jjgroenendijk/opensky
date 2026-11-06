@@ -29,12 +29,18 @@ nonisolated public struct PostEffectSettings: Equatable, Sendable {
         [8, 16, 32][min(max(volumetricQuality, 0), 2)]
     }
 
-    /// The reach of an occluder in world units; unverified.
-    public static let ambientOcclusionRadius: Float = 48
-    /// How dark full occlusion gets; unverified.
-    public static let ambientOcclusionStrength: Float = 1.2
-    /// Ignores occluders closer to the surface plane than this share of their distance.
-    public static let ambientOcclusionBias: Float = 0.05
+    /// The game's occluder reach in world units.
+    public static let ambientOcclusionRadius: Float = 250
+    /// The bias at the screen centre; it grows toward the edge and with depth.
+    public static let ambientOcclusionBias: Float = 2.5
+    /// The game divides its intensity 15 by the radius to the sixth power.
+    public static let ambientOcclusionIntensity: Float = 15
+    /// The game's contrast value 0.11 below 0.5 raises the occlusion to `2 × 0.11`.
+    public static let ambientOcclusionContrastExponent: Float = 0.22
+    /// The history weight falls by 0.3 for each unit the occlusion changed.
+    public static let ambientOcclusionHistoryDifference: Float = 0.3
+    /// The history weight falls by 200 for each 7000 units the depth changed.
+    public static let ambientOcclusionHistoryDepth: Float = 200
     /// Past this distance depth precision makes the normals noisy, so occlusion fades
     /// out by here; unverified.
     public static let ambientOcclusionFadeDistance: Float = 4096

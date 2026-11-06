@@ -41,15 +41,29 @@ the sky reaches.
 
 - The surface normal comes from the depth of the four neighbours. Each axis takes the shorter
   of its two steps, so an edge does not bend the normal.
-- 5 taps sit on a spiral around the pixel, out to 48 world units, turned by a per-pixel noise
-  angle. The game also takes 5 taps.
-- A tap darkens the pixel by how far it rises above the surface plane (the cosine to the
-  normal, less a bias of 0.05). Each tap has the game's weight `(1 - q)³ / (q + 0.01)`, where
-  `q = d² / r²` for its distance `d` in the radius `r`. So a near tap counts much more than a
-  far one. The game's weight is `(r² - d²)³ / (d² + 0.01)`; OpenSky divides `d` by `r` first,
-  because the game's distance units are not known.
-- The result is `ao = 1 - 1.2 * mean`, where `mean` is the weighted mean, clamped to 0 to 1.
-  The sky is not changed.
+- It runs in three compute passes after the scene copy: a trace, then a blur along each screen
+  axis. The composite reads the blurred result.
+- 5 taps sit on a spiral around the pixel, out to the game's radius of 250 world units, at
+  the game's angles `(i + 0.5) × 2.512` radians. A per-pixel noise angle turns them, and the
+  turn moves by the golden ratio each frame, so the blend over time averages several turns.
+  The game also takes 5 taps and turns them each frame.
+- Each tap adds the game's term `max(R² - |v|², 0)³ × max((v . N - b) / (|v|² + 0.01), 0)`,
+  where `v` is the vector to the tap in world units and `N` the normal. The bias `b` is
+  `2.5 + 2 × (x² + y²) + 10 × max(d / 7000 - 0.3, 0)`, with `x` and `y` the pixel's place in
+  clip space and `d` its camera distance. So the bias grows toward the screen edge and far
+  away.
+- The game's contrast curve: `A = max(1 - sum × 15 / R⁶, 0)`, then `ao = A^0.22`, from the
+  game's contrast value 0.11 (`A^(2 × 0.11)`). The sky is not changed.
+- Blend over time: the trace keeps each pixel's occlusion and camera distance. Next frame it
+  finds the same world point in that history through last frame's view, and
+  `ao = ao + w × (history - ao)`. The weight is the game's two ramps multiplied:
+  `max(1 - 200 × |Δd| / 7000, 0)` for the distance change, and
+  `clamp(1 - 0.3 × |Δao|, 0, 1)` for the occlusion change. So a steady pixel keeps its
+  history, and a change fades it out. After a resize or a frame without occlusion, the new
+  value stands alone.
+- Blur: the game's 7 taps at 0, ±2, ±4, and ±6 texels, with weights 0.153, 0.445, 0.423, and
+  0.393, first along x, then along y. A tap whose camera distance differs from the pixel's by
+  5 percent or more counts for nothing, so the blur does not cross an edge.
 - It multiplies the whole lit colour by `ao`: the sun, point lights such as torches, the
   ambient light, and glow alike. The game does the same: its scene colour holds all the
   light in one target, and the occlusion step multiplies that colour (clean-room read of the
@@ -170,11 +184,11 @@ still not known.
 
 ## Where OpenSky differs
 
-- Ambient occlusion: the radius and the strength are OpenSky's own, and the tap distance is
-  divided by the radius before the game's weight. The game then applies a contrast curve, a
-  blend over time, and a blur, which OpenSky does not have. A second clean-room read of the
-  game's shaders and of `SkyrimSE.exe` 1.7.104.0 (2026-11-06, behaviour only) describes them;
-  see [the game's occlusion steps](#the-games-occlusion-steps).
+- Ambient occlusion: the tap reach on screen comes from the projection, because the game's
+  screen units are not known. The game's history weight also drops where an object moves
+  against the camera motion; OpenSky reprojects with the camera only, so it has no such term.
+  The 5 percent edge of the blur is OpenSky's own. The camera distance stands in for the
+  game's linear depth.
 - Screen-space reflections: OpenSky reflects on water only. The game also reflects on other
   surfaces; see [the game's reflections](#the-games-reflections).
 - The volumetric light's scales from `VOLI` fields to world units and strength are OpenSky's
@@ -200,9 +214,11 @@ Behaviour described from a clean-room read of the game's shaders and of `SkyrimS
   each frame for near pixels. Tap `i` reaches `0.2 × (i + 0.5) × R / depth` on screen.
 - Contrast: `A = max(1 - sum × intensity, 0)`, then `A' = A^(2k)` for a contrast value
   `k` below 0.5, else `A' = A^(1 / (2 - 2k))`. With the default 0.11, `A' = A^0.22`.
-- Blend over time: `out = A' + w × (history - A')`. The weight `w` drops to 0 when the depth
-  or the motion differs from last frame, or when the occlusion changed by much. Sky pixels
-  output 1.
+- Blend over time: `out = A' + w × (history - A')`, with `w = m × a × z`. The motion term
+  `m = max(1 - 200 × |motion change|, 0.2)` compares the motion with the motion a little
+  ahead along it. The value term is `a = clamp(1 - 0.3 × |A' - history|, 0, 1)`, and the
+  depth term is `z = max(1 - 200 × |depth / 7000 - history depth|, 0)`. There is no hard
+  cut. Sky pixels output 1.
 - Blur: a 7-tap two-pass blur at 0, ±2, ±4, and ±6 texels, with weights 0.153, 0.445, 0.423,
   and 0.393, each cut by the depth difference.
 

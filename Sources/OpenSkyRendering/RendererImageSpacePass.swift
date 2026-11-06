@@ -28,8 +28,11 @@ public final class ImageSpacePassResources {
     /// The depth the split pass stores between its two encoders. The scene depth is
     /// memoryless, so it cannot outlive one encoder.
     public private(set) var storedDepth: MTLTexture?
-    /// Last frame's view-projection, for the motion blur.
+    /// Last frame's view-projection, for the motion blur and the occlusion history.
     var previousViewProjection: float4x4?
+    /// Last frame's camera, for the occlusion history.
+    var previousCamera: SIMD3<Float>?
+    let occlusion: OcclusionPassResources
 
     static let uniformStride = (MemoryLayout<ImageSpaceUniforms>.size + 0xFF) & -0x100
     static let postUniformStride = (MemoryLayout<PostEffectUniforms>.size + 0xFF) & -0x100
@@ -48,6 +51,7 @@ public final class ImageSpacePassResources {
             compiler: compiler, library: library, pixelFormat: pixelFormat,
             fragment: "imageSpaceTileFragment"
         )
+        occlusion = try OcclusionPassResources(library: library, compiler: compiler)
         guard
             let buffer = device.makeBuffer(
                 length: Self.uniformStride * GPUFactory.maxFramesInFlight,
@@ -215,6 +219,7 @@ extension Renderer {
         let viewProjection = sceneProjection * frameInput.view.viewMatrix()
         let previous = imageSpacePass.previousViewProjection ?? viewProjection
         imageSpacePass.previousViewProjection = viewProjection
+        imageSpacePass.previousCamera = frameInput.view.position
         let blooms = target.pixelFormat == .rgba16Float && parameters.hdr.bloomScale > 0
         let grades = frameInput.imageSpace.passEnabled
             && (toneMaps || blooms || !parameters.isNeutral)
@@ -329,13 +334,20 @@ extension Renderer {
         blit.label = "ImageSpaceCopy"
         blit.barrier(afterQueueStages: .fragment, beforeStages: .blit, visibilityOptions: .device)
         blit.copy(sourceTexture: target, destinationTexture: copy)
+        var post = grade.post
         if let depth = descriptor.depthAttachment.texture, let destination = depthCopy.copy {
             blit.copy(sourceTexture: depth, destinationTexture: destination)
             argumentTable.setTexture(
                 destination.gpuResourceID, index: TextureIndex.sceneDepth.rawValue
             )
+            encodeOcclusion(
+                blit, post: &post, inputs: (depth: destination, scene: copy), slot: state.slot
+            )
         }
-        blit.barrier(afterStages: .blit, beforeQueueStages: .fragment, visibilityOptions: .device)
+        blit.barrier(
+            afterStages: [.blit, .dispatch], beforeQueueStages: .fragment,
+            visibilityOptions: .device
+        )
         blit.endEncoding()
         guard
             let encoder = commandBuffer.makeRenderCommandEncoder(
@@ -344,7 +356,7 @@ extension Renderer {
         else { return nil }
         bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
         encoder.label = "Image Space Composite"
-        bindImageSpaceUniforms(grade, slot: state.slot)
+        bindImageSpaceUniforms(grade, post: post, slot: state.slot)
         argumentTable.setTexture(copy.gpuResourceID, index: TextureIndex.sceneColor.rawValue)
         encoder.setRenderPipelineState(imageSpacePass.pipeline)
         encoder.setCullMode(.none)
@@ -356,7 +368,11 @@ extension Renderer {
         return next
     }
 
-    private func bindImageSpaceUniforms(_ grade: ImageSpaceGrade, slot: Int) {
+    private func bindImageSpaceUniforms(
+        _ grade: ImageSpaceGrade,
+        post override: PostEffectUniforms? = nil,
+        slot: Int
+    ) {
         var uniforms = grade.uniforms
         let offset = ImageSpacePassResources.uniformStride * slot
         imageSpacePass.uniformBuffer.contents().advanced(by: offset)
@@ -370,7 +386,7 @@ extension Renderer {
                 + UInt64(ImageSpacePassResources.luminanceStride * slot),
             index: BufferIndex.imageSpaceLuminance.rawValue
         )
-        var post = grade.post ?? PostEffectUniforms()
+        var post = override ?? grade.post ?? PostEffectUniforms()
         let postOffset = ImageSpacePassResources.postUniformStride * slot
         imageSpacePass.postUniformBuffer.contents().advanced(by: postOffset)
             .copyMemory(from: &post, byteCount: MemoryLayout<PostEffectUniforms>.size)

@@ -30,10 +30,11 @@ extension Renderer {
             uniforms.effects |= UInt32(PostEffectFlag.ambientOcclusion.rawValue)
             uniforms.ambientOcclusion = SIMD4(
                 PostEffectSettings.ambientOcclusionRadius,
-                PostEffectSettings.ambientOcclusionStrength,
+                0,
                 PostEffectSettings.ambientOcclusionBias,
                 PostEffectSettings.ambientOcclusionFadeDistance
             )
+            setOcclusionHistory(&uniforms)
         }
         if postEffects.volumetricLight {
             uniforms.effects |= UInt32(PostEffectFlag.volumetricLight.rawValue)
@@ -65,6 +66,57 @@ extension Renderer {
             }
         }
         return uniforms.effects == 0 ? nil : uniforms
+    }
+
+    /// The camera and last frame's view, so the trace finds the pixel in its history.
+    private func setOcclusionHistory(_ uniforms: inout PostEffectUniforms) {
+        let camera = frameInput.view.position
+        uniforms.camera = SIMD4(camera, Float(frameIndex % 1024))
+        uniforms.previousViewProjection = imageSpacePass.previousViewProjection ?? .init(1)
+        uniforms.previousCamera = SIMD4(imageSpacePass.previousCamera ?? camera, 0)
+        let reach = PostEffectSettings.ambientOcclusionRadius
+        let reachSquared = reach * reach
+        uniforms.ambientOcclusionCurve = SIMD4(
+            PostEffectSettings
+                .ambientOcclusionIntensity / (reachSquared * reachSquared * reachSquared),
+            PostEffectSettings.ambientOcclusionContrastExponent,
+            PostEffectSettings.ambientOcclusionHistoryDifference,
+            PostEffectSettings.ambientOcclusionHistoryDepth
+        )
+    }
+
+    /// Traces and blurs the occlusion the composite reads, after the scene copies. Marks
+    /// the history usable only when last frame traced into it.
+    func encodeOcclusion(
+        _ encoder: MTL4ComputeCommandEncoder,
+        post: inout PostEffectUniforms?,
+        inputs: (depth: MTLTexture, scene: MTLTexture),
+        slot: Int
+    ) {
+        guard
+            var uniforms = post,
+            uniforms.effects & UInt32(PostEffectFlag.ambientOcclusion.rawValue) != 0
+        else { return }
+        let occlusion = imageSpacePass.occlusion
+        guard occlusion.prepare(matching: inputs.scene, residency: residencySet) else {
+            uniforms.effects &= ~UInt32(PostEffectFlag.ambientOcclusion.rawValue)
+            post = uniforms
+            return
+        }
+        uniforms.previousCamera.w = occlusion.historyHolds(frame: frameIndex) ? 1 : 0
+        post = uniforms
+        guard let result = occlusion.result else { return }
+        encoder.barrier(
+            afterEncoderStages: .blit, beforeEncoderStages: .dispatch, visibilityOptions: .device
+        )
+        let address = imageSpacePass.postUniformBuffer.gpuAddress
+            + UInt64(ImageSpacePassResources.postUniformStride * slot)
+        occlusion.encode(
+            encoder,
+            inputs: OcclusionInputs(uniforms: address, depth: inputs.depth, scene: inputs.scene),
+            frame: frameIndex
+        )
+        argumentTable.setTexture(result.gpuResourceID, index: TextureIndex.postOcclusion.rawValue)
     }
 
     /// The weather's `VOLI` values (docs/rendering/post-effects.md#volumetric-light).

@@ -127,6 +127,8 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Cube faces of the shadow-casting point lights (depth2d_array, 6 slices a light).
     /// The cascade array stands in until a shadow light builds it.
     TextureIndexPointShadowMap = 29,
+    /// The blurred ambient occlusion the post-effect compute passes wrote (r16Float).
+    TextureIndexPostOcclusion = 30,
     /// A lit mesh binds NIF texture-set slot N at index N, over the terrain layer
     /// slots, which only terrain draws read. Every draw binds all of them.
     TextureIndexSurfaceNormal = 1,
