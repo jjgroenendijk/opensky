@@ -65,6 +65,19 @@ extension AgentWorldAdapter {
         ]
     }
 
+    /// The snow look the weather's `SPGD` asks for, and the one drawn now.
+    func precipitationState() -> AgentJSON {
+        guard let session = game.gameSession else { return .null }
+        let volume = session.renderer.precipitation
+        let path = { (look: PrecipitationLook?) in look.map { AgentJSON.string($0.texturePath) } }
+        return [
+            "source": volume.tuning.source.map(AgentJSON.string) ?? .null,
+            "snowTexture": path(volume.tuning.snowLook) ?? .null,
+            "drawnSnowTexture": path(volume.snowLook) ?? .null,
+            "snowCells": .init(volume.snowLook.map { $0.columns * $0.rows } ?? 1)
+        ]
+    }
+
     func healthCueState() -> AgentJSON {
         let cues = game.effects.healthCues
         return [

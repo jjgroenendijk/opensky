@@ -55,5 +55,6 @@ extension Renderer {
         prepareClouds()
         prepareCelestial()
         prepareWaterTextures()
+        preparePrecipitationLook()
     }
 }

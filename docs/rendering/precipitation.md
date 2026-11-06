@@ -11,8 +11,10 @@ tags: [rendering, precipitation, weather, particles, collision, metal]
 
 Rain and snow are two particle playbacks owned by the renderer that follow the camera. They use the
 shared [particle simulation and billboard pass](/rendering/particles.md), with alpha blending, depth
-testing, and the weather wind. The streak and flake masks are generated into textures when the
-renderer starts. No game texture is used.
+testing, and the weather wind. The rain streak mask is generated into a texture when the renderer
+starts. Snow draws the texture its `SPGD` record names, one cell of its grid per flake
+([SPGD](/formats/environment-shading.md#precipitation-mapping)); a weather without one, or a
+texture that fails to load, keeps a generated flake.
 
 ## Intensity
 
@@ -78,7 +80,8 @@ game.
 Rain draws each drop as a band along its velocity, not as a square
 ([ribbons](/rendering/particles.md#ribbons)). The band's length over its width is the rain
 `SPGD` record's particle size Y over X, kept to 1 to 16, so a broken record still draws a
-streak. The band keeps the square's area. Snow stays a square flake.
+streak. The band keeps the square's area. Snow stays a square flake. Changing the snow look
+starts the falling flakes over.
 
 ## Ground contact
 

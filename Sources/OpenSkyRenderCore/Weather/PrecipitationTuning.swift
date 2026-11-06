@@ -60,6 +60,8 @@ nonisolated public struct PrecipitationTuning: Equatable, Sendable {
     public var source: String?
     /// Length over width of a rain streak: the rain record's particle size Y over X.
     public var rainStreakAspect = Self.aspect(PrecipitationAnchor.rain.size)
+    /// The snow record's texture and its grid of flake cells; nil keeps the generated flake.
+    public var snowLook: PrecipitationLook?
 
     public init(rain: PrecipitationScale, snow: PrecipitationScale, source: String?) {
         self.rain = rain
@@ -78,6 +80,10 @@ nonisolated public struct PrecipitationTuning: Equatable, Sendable {
             rainStreakAspect = Self.aspect(data.particleSize)
         case 1:
             snow = Self.scale(data, against: .snow)
+            snowLook = PrecipitationLook(
+                texturePath: record.texturePath,
+                grid: data.subtextureCount
+            )
         default:
             return
         }
@@ -112,7 +118,9 @@ nonisolated extension PrecipitationTuning {
         [
             "Source: \(source ?? "fallback")",
             Self.line("Rain", base: PrecipitationBase.rain, scale: rain),
-            Self.line("Snow", base: PrecipitationBase.snow, scale: snow)
+            Self.line("Snow", base: PrecipitationBase.snow, scale: snow),
+            "Snow look: " + (snowLook.map { "\($0.texturePath), \($0.columns) x \($0.rows)" }
+                ?? "generated")
         ]
     }
 
@@ -127,5 +135,45 @@ nonisolated extension PrecipitationTuning {
         return "\(name): speed \(pair(base.speed, scale.speed))"
             + " · size \(pair(base.radius, scale.size))"
             + " · density × \(String(format: "%.2f", scale.density))"
+    }
+}
+
+/// The texture an `SPGD` record names (`ICON`) and its grid of particle cells (`DATA`
+/// subtexture count). Each particle draws one cell, picked at random.
+nonisolated public struct PrecipitationLook: Equatable, Sendable {
+    /// A grid larger than this per side is treated as one cell.
+    public static let maximumCells: UInt32 = 16
+
+    public let texturePath: String
+    public let columns: Int
+    public let rows: Int
+
+    /// Nil without a texture.
+    public init?(texturePath: String?, grid: SIMD2<UInt32>) {
+        guard let texturePath, !texturePath.isEmpty else { return nil }
+        self.texturePath = texturePath
+        func cells(_ count: UInt32) -> Int {
+            count > 0 && count <= Self.maximumCells ? Int(count) : 1
+        }
+        columns = cells(grid.x)
+        rows = cells(grid.y)
+    }
+
+    /// `ICON` names a file below `Data\Textures\`; this is the path below `Data\`.
+    public var dataPath: String {
+        let lowered = texturePath.lowercased()
+        return lowered.hasPrefix("textures\\") || lowered.hasPrefix("textures/")
+            ? texturePath : "Textures\\" + texturePath
+    }
+
+    /// Each cell as `(u, v, width, height)`, row by row.
+    public var cellRects: [SIMD4<Float>] {
+        let width = 1 / Float(columns)
+        let height = 1 / Float(rows)
+        return (0 ..< rows).flatMap { row in
+            (0 ..< columns).map { column in
+                SIMD4(Float(column) * width, Float(row) * height, width, height)
+            }
+        }
     }
 }

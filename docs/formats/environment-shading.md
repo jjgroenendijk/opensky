@@ -73,3 +73,10 @@ blend names in `WTHR MNAM` is read as a ratio to its anchor:
 Each ratio is clamped to 0.25 to 4. Type 0 tunes rain and type 1 tunes snow. A weather with
 no `SPGD`, a record without `DATA`, or another type keeps the hand-tuned values. A faster fall
 also shortens each particle's life, so the volume keeps its height.
+
+A snow record (type 1) also gives the snow its look: the `ICON` texture, such as
+`Effects\FXSnowSoftSub.dds`, cut into the `DATA` subtexture count of cells, 4 by 4 for the
+vanilla snow. Each flake draws one cell, picked at random when it is born. A grid side of 0 or
+over 16 is read as 1. Rain keeps its generated streak, and its record's 4 by 2 grid of drops is
+not used yet. The rotation velocity, the initial rotation range, the centre offsets, and the box
+size are read but not used.
