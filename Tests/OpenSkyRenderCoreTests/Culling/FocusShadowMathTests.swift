@@ -15,11 +15,30 @@ struct FocusShadowMathTests {
 
     @Test
     func theNearestActorsInRangeComeFirst() {
-        let targets = [Self.target(1, at: 900), Self.target(2, at: 100), Self.target(3, at: 5000)]
+        let targets = [Self.target(1, at: 300), Self.target(2, at: 100), Self.target(3, at: 900)]
         let picked = FocusShadowMath.pick(targets, viewer: .zero, count: 4)
-        #expect(picked.map(\.owner) == [2, 1])
-        #expect(FocusShadowMath.pick(targets, viewer: .zero, count: 1).map(\.owner) == [2])
+        #expect(picked.map(\.target.owner) == [2, 1])
+        #expect(FocusShadowMath.pick(targets, viewer: .zero, count: 1).map(\.target.owner) == [2])
         #expect(FocusShadowMath.pick(targets, viewer: .zero, count: 0).isEmpty)
+    }
+
+    @Test
+    func strengthFadesWithTheSquaredDistance() {
+        #expect(FocusShadowMath.strength(distance: 200) == 1)
+        #expect(FocusShadowMath.strength(distance: 225) == 1)
+        let reach: Float = 450 * 450
+        let expected = (reach - 300 * 300) / (reach - 0.25 * reach)
+        #expect(abs(FocusShadowMath.strength(distance: 300) - expected) < 1e-5)
+        #expect(FocusShadowMath.strength(distance: 450) == 0)
+    }
+
+    @Test
+    func mapSizeHalvesEveryStep() {
+        #expect(FocusShadowMath.size(distance: 0, resolution: 4096) == 800)
+        #expect(FocusShadowMath.size(distance: 450, resolution: 4096) == 400)
+        #expect(FocusShadowMath.size(distance: 1800, resolution: 4096) == 50)
+        #expect(FocusShadowMath.size(distance: 3000, resolution: 4096) == 50)
+        #expect(FocusShadowMath.size(distance: 0, resolution: 512) == 512)
     }
 
     @Test

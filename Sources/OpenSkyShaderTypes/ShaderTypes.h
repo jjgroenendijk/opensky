@@ -173,6 +173,10 @@ typedef NS_ENUM(EnumBackingType, ShadowConstant)
     ShadowConstantFocusCount = 4,
     ShadowConstantPrecipitationSlice = 4,
     ShadowConstantAuxiliarySliceCount = 5,
+    /// Each auxiliary slice's side; a view draws into its top-left corner.
+    ShadowConstantAuxiliarySize = 1024,
+    /// The precipitation view's side in texels: the game's 8 units a texel.
+    ShadowConstantPrecipitationResolution = 512,
     /// Shadow-casting point lights drawn at once, each with 6 cube faces.
     ShadowConstantPointLightCount = 4,
     ShadowConstantPointFaceCount = 6,
@@ -388,6 +392,10 @@ typedef struct
     unsigned int precipitationOcclusionEnabled;
     /// World to each focus shadow's clip space; the first `focusShadowCount` are drawn.
     matrix_float4x4 focusShadowViewProjections[ShadowConstantFocusCount];
+    /// How dark each focus shadow may make a point, by its actor's distance.
+    vector_float4 focusShadowStrengths;
+    /// The share of the slice's side each focus view drew into.
+    vector_float4 focusShadowExtents;
     unsigned int focusShadowCount;
     /// Receiver depth bias of the focus views, in their depth units.
     float focusShadowBias;

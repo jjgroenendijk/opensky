@@ -237,7 +237,7 @@ static inline float focusShadowFactor(
         if (any(abs(ndc.xy) > 1.0) || ndc.z < 0.0 || ndc.z > 1.0) {
             continue;
         }
-        float2 uv = ndc.xy * float2(0.5, -0.5) + 0.5;
+        float2 uv = (ndc.xy * float2(0.5, -0.5) + 0.5) * frame.focusShadowExtents[view];
         float compareDepth = ndc.z - frame.focusShadowBias;
         float sum = 0.0;
         for (int dy = -1; dy <= 1; ++dy) {
@@ -246,7 +246,7 @@ static inline float focusShadowFactor(
                 sum += auxiliary.sample_compare(shadowSampler, uv + offset, view, compareDepth);
             }
         }
-        lit = min(lit, sum / 9.0);
+        lit = min(lit, mix(1.0, sum / 9.0, frame.focusShadowStrengths[view]));
     }
     return lit;
 }

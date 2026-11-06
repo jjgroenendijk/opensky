@@ -8,7 +8,7 @@ static bool cullPlaneKeeps(float4 plane, float3 lower, float3 upper)
     return !(dot(plane.xyz, farthest) + plane.w < 0.0);
 }
 
-// Mirrors `ReferenceFadeDistances.fade`: 0 whole, up to 1 dissolved, 2 past its reach.
+// Mirrors `ReferenceFadeDistances.fade`: 0 whole, up to 1 dissolved, 2 past its band.
 static float cullFade(device const CullInstance &instance, constant CullParameters &parameters)
 {
     uint category = uint(instance.boundsMin.w);
@@ -16,19 +16,29 @@ static float cullFade(device const CullInstance &instance, constant CullParamete
         parameters.fadeViewer.w <= 0.0) {
         return 0.0;
     }
-    float scale = parameters.fadeScales[category - 1];
-    if (scale <= 0.0) {
+    float multiplier = parameters.fadeScales[category - 1];
+    if (multiplier <= 0.0) {
         return 0.0;
     }
     float3 lower = instance.boundsMin.xyz;
     float3 upper = instance.boundsMax.xyz;
-    float reach = scale * max(length(upper - lower) * 0.5, parameters.fadeScales.w);
+    float radius = length(upper - lower) * 0.5;
+    float end = parameters.fadeScales.w - radius;
+    if (radius > 0.0001) {
+        end = min(end, 10.0 * radius);
+    }
+    float start = 0.6 * end;
+    if (start < 500.0) {
+        start = 500.0;
+        end = max(1000.0, end);
+    }
+    float fadeFrom = multiplier * (start + 0.3 * (end - start));
+    float goneAt = multiplier * (start + 0.7 * (end - start));
     float distance = length((lower + upper) * 0.5 - parameters.fadeViewer.xyz);
-    if (distance >= reach) {
+    if (distance >= goneAt) {
         return 2.0;
     }
-    float start = reach * (1.0 - parameters.fadeViewer.w);
-    return distance <= start ? 0.0 : (distance - start) / (reach - start);
+    return distance <= fadeFrom ? 0.0 : (distance - fadeFrom) / (goneAt - fadeFrom);
 }
 
 kernel void cullInstances(

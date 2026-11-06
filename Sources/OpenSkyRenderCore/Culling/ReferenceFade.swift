@@ -14,12 +14,19 @@ nonisolated public enum ReferenceFadeCategory: UInt32, Sendable {
 }
 
 nonisolated public struct ReferenceFadeDistances: Equatable, Sendable {
-    /// World units of reach for each unit of bound radius and of multiplier.
-    public static let unitsPerRadius: Float = 16
-    /// A tiny item fades as if it were this large, so it does not vanish at once.
-    public static let minimumRadius: Float = 32
-    /// The dissolve covers this last share of the reach.
-    public static let fadeBand: Float = 0.15
+    /// `2048 * (uGridsToLoad - 1)` at the default 5 grids: the farthest a reference's
+    /// own end distance reaches before the multiplier.
+    public static let gridReach: Float = 2048 * 4
+    /// `fLODBoundRadiusMult`: the end distance is at most this many bound radii.
+    public static let boundRadiusMultiplier: Float = 10
+    /// `fLODFadeOutPercent`: the start distance as a share of the end distance.
+    public static let startShare: Float = 0.6
+    /// `iFadeNodeMinNearDistance`; the end then stays at least twice as far.
+    public static let minimumStart: Float = 500
+    /// The game fades a reference out once it passes this share of its start-to-end range,
+    /// and back in below `fadeInShare`.
+    public static let fadeOutShare: Float = 0.7
+    public static let fadeInShare: Float = 0.3
     public static let off = Self(actors: 0, items: 0, objects: 0)
 
     /// The game's multipliers; 0 never fades that category.
@@ -49,14 +56,26 @@ nonisolated public struct ReferenceFadeDistances: Equatable, Sendable {
         }
     }
 
-    /// The distance where the reference is gone; nil when it never fades.
-    public func reach(_ category: ReferenceFadeCategory, radius: Float) -> Float? {
+    /// Where the dissolve starts and where the reference is gone; nil when it never fades.
+    /// docs/engine/graphics-options.md#reference-fade has the rule.
+    public func band(_ category: ReferenceFadeCategory, radius: Float) -> ClosedRange<Float>? {
         let multiplier = multiplier(category)
         guard multiplier > 0 else { return nil }
-        return multiplier * Self.unitsPerRadius * max(radius, Self.minimumRadius)
+        var end = Self.gridReach - radius
+        if radius > 0.0001 {
+            end = min(end, Self.boundRadiusMultiplier * radius)
+        }
+        var start = Self.startShare * end
+        if start < Self.minimumStart {
+            start = Self.minimumStart
+            end = max(2 * Self.minimumStart, end)
+        }
+        let span = end - start
+        return multiplier * (start + Self.fadeInShare * span)
+            ... multiplier * (start + Self.fadeOutShare * span)
     }
 
-    /// 0 whole, up to 1 faded; nil when it is past its reach and not drawn.
+    /// 0 whole, up to 1 faded; nil when it is past its band and not drawn.
     public func fade(
         _ category: ReferenceFadeCategory,
         lower: SIMD3<Float>,
@@ -64,16 +83,15 @@ nonisolated public struct ReferenceFadeDistances: Equatable, Sendable {
         viewer: SIMD3<Float>
     ) -> Float? {
         let radius = simd_length(upper - lower) * 0.5
-        guard let reach = reach(category, radius: radius) else { return 0 }
+        guard let band = band(category, radius: radius) else { return 0 }
         let distance = simd_distance((lower + upper) * 0.5, viewer)
-        guard distance < reach else { return nil }
-        let start = reach * (1 - Self.fadeBand)
-        return distance <= start ? 0 : (distance - start) / (reach - start)
+        guard distance < band.upperBound else { return nil }
+        guard distance > band.lowerBound else { return 0 }
+        return (distance - band.lowerBound) / (band.upperBound - band.lowerBound)
     }
 
-    /// x actors, y items, z objects in units per radius; w the minimum radius.
+    /// x actors, y items, z objects: the multipliers; w the grid reach.
     public var shaderScales: SIMD4<Float> {
-        SIMD4(actors, items, objects, 0) * Self.unitsPerRadius
-            + SIMD4(0, 0, 0, Self.minimumRadius)
+        SIMD4(actors, items, objects, Self.gridReach)
     }
 }

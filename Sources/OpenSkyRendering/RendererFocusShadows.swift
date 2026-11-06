@@ -10,6 +10,8 @@ import simd
 /// The focus views one frame drew.
 struct FocusShadowFrame {
     var views: [float4x4] = []
+    var strengths = SIMD4<Float>(repeating: 0)
+    var extents = SIMD4<Float>(repeating: 1)
     /// The largest bias any view needs, in depth units.
     var bias: Float = 0
 
@@ -24,15 +26,20 @@ extension Renderer {
     func focusViews() -> [AuxiliaryShadowView] {
         let count = min(max(focusShadowCount, 0), ShadowConstant.focusCount.rawValue)
         guard count > 0 else { return [] }
-        let targets = FocusShadowMath.pick(
-            focusShadowTargets(), viewer: frameInput.view.position, count: count
+        let picks = FocusShadowMath.pick(
+            focusShadowTargets(), viewer: frameInput.view.position, count: count,
+            resolution: shadowSettings.resolution
         )
         var frame = FocusShadowFrame()
-        let views = targets.enumerated().map { slice, target in
+        let views = picks.enumerated().map { slice, pick in
+            let target = pick.target
             let matrix = FocusShadowMath.viewProjection(
                 bounds: target.bounds, sunDirection: sunTravelDirection
             )
+            let extent = min(Float(pick.size) / Float(AuxiliaryShadowResources.size), 1)
             frame.views.append(matrix)
+            frame.strengths[slice] = pick.strength
+            frame.extents[slice] = extent
             frame.bias = max(
                 frame.bias,
                 FocusShadowMath.receiverBiasUnits / FocusShadowMath
@@ -40,7 +47,8 @@ extension Renderer {
             )
             return AuxiliaryShadowView(
                 slice: slice, viewProjection: matrix,
-                excluding: RenderLayer.all.subtracting(.actors), drawsTerrain: false
+                excluding: RenderLayer.all.subtracting(.actors), drawsTerrain: false,
+                extent: extent
             )
         }
         focusShadows = frame

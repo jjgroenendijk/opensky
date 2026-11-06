@@ -38,8 +38,9 @@ right-handed and maps z to Metal's 0 to 1, like the perspective projection.
 ## The pre-pass
 
 The shadow map is a `depth32Float` array with 3 slices, 2048 by 2048 unless the game's
-`iShadowMapResolution` asks for another power of two from 512 to 4096
-([graphics options](/engine/graphics-options.md)). A new size builds a new array while the game
+`iShadowMapResolution` asks for another power of two from 512 to 16384
+([graphics options](/engine/graphics-options.md)). The game sets no top size; 16384 is the
+largest Metal texture, and its 3 slices take 3 GB. A new size builds a new array while the game
 runs; the old one goes once the frames that use it finish. Each cascade gets one
 depth-only encoder, cleared to 1. The pre-pass runs on the same command buffer before the scene
 pass, in the window and offscreen alike.
@@ -86,14 +87,28 @@ back on keeps the chosen quality.
 
 ## Focus shadows
 
-The game's `[Display] iNumFocusShadow` gives up to 4 actors their own sharp shadow map. Each frame,
-the actors nearest the camera, within 2,048 units, each get one 1,024 by 1,024 slice of a second
-depth array (the same array that holds the [rain occlusion view](/rendering/precipitation.md#roof-occlusion)).
-The view looks along the sun, fitted to the actor's box, and starts 256 units before it toward the
-sun. Only actors draw into it, culled on the CPU, into rings of their own.
+The game's `[Display] iNumFocusShadow` gives up to 4 actors their own sharp shadow map. Behaviour
+described from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06 (only the behaviour was
+reported, no code):
 
-The shader takes the darker of the cascade result and every focus map that covers the point, with a
-3 by 3 PCF and a receiver bias of 2 world units. So an actor's own shadow, and its shadow on the
+- The actors within 450 units of the camera, nearest first, get one map each.
+- The shadow is at full strength while the actor is within 225 units, so while the squared
+  distance is under a quarter of 450 squared. Past that it falls in a straight line with the
+  squared distance, to 0 at 450 units.
+- The map is `min(iShadowMapResolution, 50 * 2^max((1800 - d) / 450, 0))` texels a side at
+  distance `d`: 800 at the camera, halving every 450 units, 50 at 1,800 units or more.
+- The view is orthographic along the sun, `r` to each side of the centre of the actor's bounds,
+  where `r` is the bounds' radius. Its eye is `1.1 r` from the centre toward the sun, its near
+  plane `0.1 r` and its far plane `2.2 r`.
+
+OpenSky draws each map into the top-left corner of one 1,024 by 1,024 slice of a second depth
+array (the same array that holds the
+[rain occlusion view](/rendering/precipitation.md#roof-occlusion)). Only actors draw into it,
+culled on the CPU, into rings of their own.
+
+The shader takes the darker of the cascade result and every focus map that covers the point, each
+blended toward lit by its strength, with a 3 by 3 PCF and a receiver bias of 2 world units.
+So an actor's own shadow, and its shadow on the
 ground near it, stay sharp where the cascade is coarse. The focus views draw only while the sun
 cascades draw.
 

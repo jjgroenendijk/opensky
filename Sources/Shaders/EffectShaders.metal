@@ -84,7 +84,9 @@ precipitationOccluded(float3 world, constant FrameUniforms &frame, depth2d_array
         return false;
     }
     constexpr sampler nearest(filter::nearest, address::clamp_to_edge);
-    float roof = auxiliary.sample(nearest, uv, ShadowConstantPrecipitationSlice);
+    float roof = auxiliary.sample(
+        nearest, uv * (float(ShadowConstantPrecipitationResolution) / ShadowConstantAuxiliarySize),
+        ShadowConstantPrecipitationSlice);
     return view.z > roof + 0.002;
 }
 

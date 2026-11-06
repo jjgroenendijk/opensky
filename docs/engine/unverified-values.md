@@ -177,11 +177,9 @@ the detail and the sources it did find.
 | Water noise falloff | Normals fade in a straight line to flat at the falloff distance | [water](/rendering/water.md#where-opensky-differs) |
 | Under-water fog colour | The deep colour | [water](/rendering/water.md#under-the-water) |
 | Surface shading strength, tiling, refraction rate | OpenSky's values | [surface shading](/rendering/surface-shading.md) |
-| Shadow map size cap | 4096; the game allows more | [graphics options](/engine/graphics-options.md) |
-| Reference fade reach | Multiplier x 16 x bound radius, 15% dissolve | [graphics options](/engine/graphics-options.md) |
+| Reference fade timing | A distance dissolve from value 0.7 to 0.3 for the timed 2 s and 1.2 s fades | [graphics options](/engine/graphics-options.md#reference-fade) |
 | `BSLODTriShape` level counts | Prefixes when falling, else runs | [NIF](/formats/nif.md#nitrishape) |
-| Rain occlusion view size | 4,096 units square, 1,024 texels | [precipitation](/rendering/precipitation.md#roof-occlusion) |
-| Focus shadow reach and size | 2,048 units, 1,024 texels, 256-unit backup | [shadows](/rendering/shadows.md#focus-shadows) |
+| Rain occlusion depth range | 6,000 units above the camera to 4,000 below, straight down | [precipitation](/rendering/precipitation.md#roof-occlusion) |
 | Water screen-space reflection march | 24 steps from 24 units, each 1.25 times longer | [water](/rendering/water.md#screen-space-reflections) |
 | Water screen-space reflection length fade | Zero at one screen of distance | [water](/rendering/water.md#screen-space-reflections) |
 | Snow ground sheen and glints | Sheen 0.25 at power 24; glints in 1.5% of 4-unit cells, 2 at power 6 | [terrain](/engine/terrain.md#snow-ground) |

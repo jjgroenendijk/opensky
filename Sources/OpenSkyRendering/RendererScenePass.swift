@@ -89,6 +89,8 @@ extension Renderer {
                 focusShadows.view(0), focusShadows.view(1),
                 focusShadows.view(2), focusShadows.view(3)
             ),
+            focusShadowStrengths: focusShadows.strengths,
+            focusShadowExtents: focusShadows.extents,
             focusShadowCount: UInt32(focusShadows.views.count),
             focusShadowBias: focusShadows.bias,
             screenSpaceReflections: waterDepth.reflects ? 1 : 0

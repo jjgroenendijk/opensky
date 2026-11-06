@@ -4,8 +4,9 @@
 /// The shadow range and map size the player settings ask for.
 nonisolated public struct ShadowSettings: Equatable, Sendable {
     public static let defaultResolution = 2048
-    /// 8192 would need 768 MB for three depth slices, so 4096 is the top.
-    public static let resolutionRange = 512 ... 4096
+    /// The game sets no top; 16384 is the largest Metal texture. The map costs
+    /// 12 bytes a texel, so 16384 takes 3 GB.
+    public static let resolutionRange = 512 ... 16384
 
     /// Nil keeps the renderer's own range.
     public let distance: Float?

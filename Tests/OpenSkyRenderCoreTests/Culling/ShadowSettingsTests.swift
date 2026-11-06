@@ -5,8 +5,8 @@ import Testing
 
 struct ShadowSettingsTests {
     @Test(arguments: [
-        (0.0, 2048), (4096.0, 4096), (3000.0, 2048), (100.0, 512), (16384.0, 4096),
-        (Double.nan, 2048)
+        (0.0, 2048), (4096.0, 4096), (3000.0, 2048), (100.0, 512), (16384.0, 16384),
+        (10000.0, 8192), (1e6, 16384), (Double.nan, 2048)
     ])
     func resolutionIsAPowerOfTwoInRange(value: Double, expected: Int) {
         #expect(ShadowSettings(distance: 0, resolution: value).resolution == expected)
