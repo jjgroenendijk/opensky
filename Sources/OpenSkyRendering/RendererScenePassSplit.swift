@@ -80,7 +80,7 @@ extension Renderer {
         return texture
     }
 
-    /// The same targets, loading the color and depth drawn so far and keeping both.
+    /// The same targets, loading the color, depth, and stencil drawn so far and keeping them.
     static func continuingDescriptor(
         after descriptor: MTL4RenderPassDescriptor
     ) -> MTL4RenderPassDescriptor {
@@ -92,9 +92,8 @@ extension Renderer {
         next.depthAttachment.loadAction = .load
         next.depthAttachment.storeAction = .store
         next.stencilAttachment.texture = descriptor.stencilAttachment.texture
-        next.stencilAttachment.loadAction = .clear
-        next.stencilAttachment.storeAction = .dontCare
-        next.stencilAttachment.clearStencil = 0
+        next.stencilAttachment.loadAction = .load
+        next.stencilAttachment.storeAction = .store
         return next
     }
 }

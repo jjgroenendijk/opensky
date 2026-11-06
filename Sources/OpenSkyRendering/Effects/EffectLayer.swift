@@ -138,6 +138,13 @@ public final class EffectLayer {
         always.label = "ProjectedDecalDepth"
         always.depthCompareFunction = .always
         always.isDepthWriteEnabled = false
+        // The game marks only the skinned mesh, so the box draws where a skin set the bit.
+        let skin = MTLStencilDescriptor()
+        skin.stencilCompareFunction = .equal
+        skin.readMask = MaterialDepthStates.skinStencilBit
+        skin.writeMask = 0
+        always.frontFaceStencil = skin
+        always.backFaceStencil = skin
         guard let projected = device.makeDepthStencilState(descriptor: always) else {
             throw RendererError.depthStateAllocationFailed
         }

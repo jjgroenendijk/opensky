@@ -278,7 +278,8 @@ extension Renderer {
         split.depthAttachment.clearDepth = descriptor.depthAttachment.clearDepth
         split.stencilAttachment.texture = depth
         split.stencilAttachment.loadAction = .clear
-        split.stencilAttachment.storeAction = .dontCare
+        // The skin decals after the split test the skin bit.
+        split.stencilAttachment.storeAction = .store
         split.stencilAttachment.clearStencil = 0
         return split
     }

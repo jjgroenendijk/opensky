@@ -303,7 +303,9 @@ extension Renderer {
         )
         bindMaterialTextures(group.material)
         if let mode = state.materialDepth {
-            applyDrawState(of: group.material, mode: mode, state: state)
+            applyDrawState(
+                of: group.material, mode: mode, skinned: group.mesh.isSkinned, state: state
+            )
         }
         state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
         drawVisible(group.mesh, visible, state: state)
