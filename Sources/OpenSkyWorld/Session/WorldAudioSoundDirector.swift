@@ -74,8 +74,8 @@ public final class WorldAudioSoundDirector {
     /// SFX on use-key activation. Off by default until the user enables audio;
     /// the control writes back here.
     public var sfxEnabled = true
-    /// Shakes the controller for a sound whose output model allows rumble.
-    public var rumble: ((SoundRumble) -> Void)?
+    /// The rumble send of each playing source whose output model allows rumble.
+    private var rumbleSends: [Int: SoundDescriptor.RumbleSend] = [:]
     /// Continuous ambience bed. Same default policy as `sfxEnabled`. Toggling
     /// it takes effect immediately: switching off retires the playing bed,
     /// switching back on restarts the bed the last context resolved.
@@ -306,7 +306,7 @@ extension WorldAudioSoundDirector {
                 return
             }
             if profile?.allowsRumble == true, let send = resolved.rumbleSend {
-                rumbleFor(source: sourceID, send: send, seconds: asset.duration)
+                rumbleSends[sourceID] = send
             }
             lastSFXDescription = resolved.path
             lastSFXError = nil
@@ -321,16 +321,21 @@ extension WorldAudioSoundDirector {
         }
     }
 
-    /// The rumble follows the level the listener hears when the sound starts.
-    private func rumbleFor(source id: Int, send: SoundDescriptor.RumbleSend, seconds: Float?) {
-        guard let rumble, let source = engine.sources.first(where: { $0.id == id }) else { return }
-        let level = engine.effectiveGain(of: source) * source.distanceGain
-        let event = SoundRumble(
-            small: send.small * level, big: send.big * level,
-            seconds: min(seconds ?? SoundRumble.maximumSeconds, SoundRumble.maximumSeconds)
-        )
-        guard event.small > 0 || event.big > 0 else { return }
-        rumble(event)
+    /// This frame's rumble bus levels: each rumbling sound's send times the level the
+    /// listener hears of it now. Ended sources drop out.
+    public func rumbleLevels() -> SoundRumble {
+        guard !rumbleSends.isEmpty else { return .silent }
+        var small: Float = 0
+        var big: Float = 0
+        for source in engine.sources {
+            guard let send = rumbleSends[source.id] else { continue }
+            let level = engine.effectiveGain(of: source) * source.distanceGain
+            small += send.small * level
+            big += send.big * level
+        }
+        let playing = Set(engine.sources.map(\.id))
+        rumbleSends = rumbleSends.filter { playing.contains($0.key) }
+        return SoundRumble(small: small, big: big)
     }
 
     /// A descriptor with several files plays one of them at random, as the game does.

@@ -57,9 +57,23 @@ to: music takes `MDSC`, the conversation's speaker `DDSC`, and any other voice `
 ## Rumble
 
 A sound shakes the controller when its output model (`SOPM`) sets Allows Rumble and its
-descriptor's `LNAM` sends some of its level to the motors ([sound](/formats/sound.md)). The
-strength is the send times the level the listener hears when the sound starts. The rumble
-lasts as long as the sound file, and at most `SoundRumble.maximumSeconds` (1).
+descriptor's `LNAM` sends some of its level to the motors ([sound](/formats/sound.md)).
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06 (only the
+behaviour was reported, no code). The game meters two rumble buses, one per motor, and sets both
+motors every frame:
+
+```text
+adj   = fAudioRumblePowerAttackAdj (0.15) during a player power attack, else 0
+small = L_small ^ max(fAudioRumbleSmallExponent (0.4) - adj, 0.01)
+big   = L_big   ^ max(fAudioRumbleBigExponent (0.5) - adj, 0.01)
+```
+
+Each motor then passes a dead zone and a lerp range; their defaults (0, and 0 to 1) leave the
+value as it is. So the rumble follows the sound's level as it plays and lasts as long as the
+sound. OpenSky takes each bus level as the sum of every rumbling sound's send times the level
+the listener hears of it now; how the game feeds a send into its bus was not traced. While the
+world is paused the motors stop. The big motor plays on the left handle and the small one on
+the right.
 
 A blow from the player's weapon plays the weapon's Rumble tab: the left motor strength on the
 big motor, the right on the small one, for the tab's seconds ([items](/formats/item-records.md)).
@@ -67,9 +81,9 @@ big motor, the right on the small one, for the tab's seconds ([items](/formats/i
 Every rumble follows the Gameplay page's Vibration switch, like a shout's
 ([shouts](/engine/shouts.md#rumble)).
 
-[WARNING] The game follows the sound's level as it plays. OpenSky takes the level once, at the
-start. When the weapon rumble plays, on every blow or only on some, is OpenSky's reading. Both
-are in the [unverified values](/engine/unverified-values.md).
+[WARNING] How a sound's send feeds the bus, and when the weapon rumble plays, on every blow or
+only on some, are OpenSky's reading. Both are in the
+[unverified values](/engine/unverified-values.md).
 
 ## Reading it
 

@@ -74,6 +74,8 @@ extension GameSession {
         var inputs = soundMixInputs?() ?? SoundMixInputs()
         inputs.submerged = breath.isSubmerged
         worldAudio.advanceSoundMix(inputs, seconds: seconds)
+        let levels = worldSimPaused ? .silent : soundDirector?.rumbleLevels() ?? .silent
+        soundRumble?(levels)
     }
 
     /// Drains the bridge's graph events into the footstep director. Always drains, so no

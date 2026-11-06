@@ -4,6 +4,7 @@
 import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyCells
+import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyEffects
 import OpenSkyFormatsESM
@@ -24,6 +25,7 @@ import simd
 protocol AudioWorldHost: AnyObject {
     var audio: AudioCoordinator { get }
     var audioFileSystem: (any GameFileSource)? { get }
+    var combat: CombatCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
     var loadingScreens: LoadingScreenCoordinator { get }
@@ -153,7 +155,14 @@ extension AudioWorldAdapter: AudioWorld {
             )
         }
         game.gameSession?.soundDirector = sounds
-        sounds.rumble = { [weak self] in self?.game.controllerRumble.sound($0) }
+        game.gameSession?.soundRumble = { [weak self] levels in
+            guard let self else { return }
+            let melee = game.combat.melee
+            let power = melee.map {
+                $0.state.attackPhase.isAttacking && $0.strikeKind.isPowerAttack
+            } ?? false
+            game.controllerRumble.follow(levels.motors(powerAttack: power))
+        }
         game.gameSession?
             .soundMixInputs = { [weak self] in self?.soundMixInputs() ?? SoundMixInputs() }
         game.gameSession?.musicDirector = music

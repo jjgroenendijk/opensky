@@ -6,6 +6,7 @@ import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
+import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
@@ -235,6 +236,10 @@ extension AgentWorldAdapter {
                     "cause": game.controllerRumble.lastRumbleCause.map(AgentJSON.string) ?? .null
                 ]
             } ?? .null,
+            "soundRumble": [
+                "small": .init(game.controllerRumble.soundMotors.small),
+                "big": .init(game.controllerRumble.soundMotors.big)
+            ],
             "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
             "controls": [
                 "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),
