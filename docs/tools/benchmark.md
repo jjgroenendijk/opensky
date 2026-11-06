@@ -74,14 +74,18 @@ size of a hidden or windowed run, and "Play sound" turns the sound on.
 | Window | The tour draws in the game window. `--size` sets its size for the run |
 | Full screen | The window fills the screen for the tour and comes back after it. A window that was already full screen stays so |
 
-A hidden run keeps the frame loop of the game view running at the same rate as on the
-screen. `MTKView` keeps drawing in a window that is not on the screen, and its drawables
-come back without a wait. A test program on this machine drew 59.9 frames per second
-hidden and 59.7 on the screen. A screen display link would not do: it rounds 60 Hz to 50
-on a 100 Hz display. The app holds a `ProcessInfo` activity for the whole tour, so App Nap
-does not slow a run in the background. With frame interpolation on, the renderer paces to
-half the display's refresh rate. A hidden window has no display, so it takes 60 Hz there,
-and such a run compares only with another hidden run.
+The tour draws with no frame cap. For the whole run the app stops the view's own timer, which
+paces to the display, and draws the next frame as soon as the last one is encoded. It also turns
+off display sync on the layer, so a present does not wait for the screen, and it ignores the
+frame rate cap setting. A frame then waits only for a free frame slot on the GPU. Frames per
+second show what the engine can do, not the display's refresh rate. The world still steps by a
+fixed 1/60 s each frame, so a faster run plays the same shots in less wall time.
+
+This is the same hidden or on the screen: `MTKView` keeps drawing in a window that is not on the
+screen, and its drawables come back without a wait. The app holds a `ProcessInfo` activity for
+the whole tour, so App Nap does not slow a run in the background. Runs before this change were
+capped at 60 frames per second, so their frame rates do not compare with newer runs; their CPU
+and GPU times do.
 
 A run from the CLI also keeps the Mac and its display awake until the tour ends, because a
 sleeping display stops the frame loop. A watchdog ends the app when the tour has not started
