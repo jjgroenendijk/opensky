@@ -29,9 +29,17 @@ nonisolated extension CellSceneBuilder {
         let fullLOD = fullLODPlacements(
             worldspaceEditorID: worldspaceEditorID, loadedCells: hiddenCells, state: state
         )
+        let temporaryFullLOD = temporaryFullLODPlacements(
+            worldspaceEditorID: worldspaceEditorID, loadedCells: hiddenCells, state: state
+        )
         return withWater.adding(largeReferences: largeReferences.placements, assets: CellAssets())
-            .adding(fullLODReferences: fullLOD.placements, assets: drainTouchedAssets())
-            .watching(largeReferences.watchedObjectIDs.union(fullLOD.watchedObjectIDs))
+            .adding(
+                fullLODReferences: fullLOD.placements + temporaryFullLOD.placements,
+                assets: drainTouchedAssets()
+            )
+            .watching(largeReferences.watchedObjectIDs
+                .union(fullLOD.watchedObjectIDs)
+                .union(temporaryFullLOD.watchedObjectIDs))
     }
 
     /// A child worldspace with the `PNAM` LOD flag draws its parent's LOD files,
