@@ -33,7 +33,8 @@ nonisolated public struct NIFBoneLODLevels: Equatable, Sendable {
         atDistance distance: Float,
         in animation: NIFNodeAnimation
     ) -> Set<Int> {
-        let roots = Set(bones.filter { distance > $0.distance }.compactMap(\.node))
+        let passed = bones.filter { $0.distance > 0 && distance > $0.distance }
+        let roots = Set(passed.compactMap(\.node))
         guard !roots.isEmpty else { return [] }
         var frozen = Set<Int>()
         for node in animation.nodes.indices {

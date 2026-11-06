@@ -1,34 +1,34 @@
 // The turn rules of the node controllers: an axis that faces a direction, a path's
-// follow and bank, and a lag bone's trail. nif.xml names the fields but not the math,
-// so each rule here is OpenSky's reading (docs/formats/nif-controllers.md).
+// follow and bank, and a lag bone's trail (docs/formats/nif-controllers.md).
 
 import Foundation
 import simd
 
 nonisolated enum NIFPathOrientation {
-    /// The fraction of the path a follow or bank looks ahead and behind, when the
-    /// interpolator's smoothing is smaller.
-    static let minimumLookAhead: Float = 0.01
-
     /// The follow rotation at `fraction`, banked into turns; nil when the path does not follow.
     static func rotation(of path: NIFPath, atFraction fraction: Float) -> simd_quatf? {
         let source = path.interpolator
-        guard source.follows else { return nil }
-        let reach = max(source.smoothing, minimumLookAhead)
-        guard
-            let behind = path.position(atFraction: fraction - reach),
-            let here = path.position(atFraction: fraction),
-            let ahead = path.position(atFraction: fraction + reach)
-        else { return nil }
+        guard source.follows, let direction = path.tangent(atFraction: fraction) else {
+            return nil
+        }
         var axis = SIMD3<Float>.zero
         axis[min(max(Int(source.followAxis), 0), 2)] = source.flips ? -1 : 1
-        var bank: Float = 0
-        if source.banks {
-            let turn = headingChange(from: here - behind, to: ahead - here)
-            let share = simd_clamp(turn / (.pi / 2), -1, 1)
-            bank = Float(source.bankDirection.signum()) * share * source.maximumBankAngle
+        return facing(direction, axis: axis, roll: bank(of: path, atFraction: fraction))
+    }
+
+    /// The roll into a turn: the full bank angle at the path's largest bend, less on a
+    /// gentler one by `atan(c / cMax) * 4 / pi`.
+    static func bank(of path: NIFPath, atFraction fraction: Float) -> Float {
+        let source = path.interpolator
+        let largest = path.maximumCurvature
+        guard source.banks, largest > 0 else { return 0 }
+        let bend = path.curvature(atFraction: fraction)
+        var share: Float = 1
+        if abs(bend) < largest {
+            share = atan(abs(bend) / largest) * 4 / .pi
         }
-        return facing(ahead - behind, axis: axis, roll: bank)
+        let turn: Float = bend < 0 ? -1 : 1
+        return Float(source.bankDirection.signum()) * source.maximumBankAngle * share * turn
     }
 
     /// A rotation that points the object's `axis` along `direction`, keeping the object's
@@ -56,28 +56,41 @@ nonisolated enum NIFPathOrientation {
     }
 }
 
-nonisolated enum NIFLagBoneMotion {
-    /// One step of a lag bone toward `goal`: it closes `linearVelocity` of the gap per
-    /// second, never trails more than `maximumDistance`, and turns `linearRotation` of
-    /// the way per second.
-    static func step(
+nonisolated public enum NIFLagBoneMotion {
+    /// One step of a lag bone from last frame's transform toward `goal`, its rest under the
+    /// moving parent. Rates are fractions per second (docs/formats/nif-controllers.md).
+    public static func step(
         _ current: NIFNodeTransform, toward goal: NIFNodeTransform, _ lag: NIFLagBone,
         deltaTime: Float
     ) -> NIFNodeTransform {
         let dt = max(deltaTime, 0)
-        var position = simd_mix(
-            current.translation, goal.translation, SIMD3(repeating: min(lag.linearVelocity * dt, 1))
-        )
-        let gap = goal.translation - position
-        let distance = simd_length(gap)
-        if distance > lag.maximumDistance, distance > 0 {
-            position = goal.translation - gap / distance * lag.maximumDistance
+        let rate = lag.linearVelocity * dt
+        var position = goal.translation
+        if lag.linearVelocity > 0 {
+            var start = current.translation
+            var gap = goal.translation - start
+            let distance = simd_length(gap)
+            if distance >= rate {
+                if distance > lag.maximumDistance, distance > 0 {
+                    let direction = gap / distance
+                    start += direction * (distance - lag.maximumDistance)
+                    gap = direction * lag.maximumDistance
+                }
+                position = start + gap * rate
+            }
         }
-        let rotation = simd_slerp(current.rotation, goal.rotation, min(lag.linearRotation * dt, 1))
+        let turn = simd_clamp(lag.linearRotation * dt, 0, 1)
         return NIFNodeTransform(
             translation: position,
-            rotation: rotation.normalized,
+            rotation: nlerp(current.rotation, goal.rotation, turn),
             scale: goal.scale
         )
+    }
+
+    private static func nlerp(_ from: simd_quatf, _ to: simd_quatf, _ share: Float) -> simd_quatf {
+        let target = simd_dot(from.vector, to.vector) < 0 ? simd_quatf(vector: -to.vector) : to
+        let mixed = simd_mix(from.vector, target.vector, SIMD4(repeating: share))
+        guard simd_length_squared(mixed) > 1e-12 else { return to }
+        return simd_quatf(vector: simd_normalize(mixed))
     }
 }

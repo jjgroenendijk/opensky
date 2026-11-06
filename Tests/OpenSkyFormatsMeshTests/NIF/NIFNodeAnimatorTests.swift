@@ -155,4 +155,24 @@ struct NIFNodeAnimatorTests {
         animator.step(deltaTime: 0.5)
         #expect(simd_distance(animator.locals[0].rotation.act([1, 0, 0]), [0, 1, 0]) < 1e-3)
     }
+
+    @Test func smoothingLeansASegmentsEndTowardTheNextSegment() throws {
+        var animator = try Self.animator([
+            Block("NiNode", Self.node(name: 0, controller: 1)),
+            Block("NiTransformController", NIFBlockFixture.transformController(
+                stop: 2, interpolator: 2
+            )),
+            Block("NiPathInterpolator", NIFBlockFixture.pathInterpolator(
+                flags: 0x20 | 0x4, smoothing: 0.5, pathData: 3, percentData: 4
+            )),
+            Block("NiPosData", NIFBlockFixture.keyGroup([
+                (0, [0, 0, 0]), (1, [10, 0, 0]), (2, [10, 10, 0])
+            ])),
+            Block("NiFloatData", NIFBlockFixture.keyGroup([(0, [0]), (2, [1])]))
+        ], strings: ["Bird"])
+        animator.step(deltaTime: 0.75)
+        // Three quarters into the first segment, the weight is (0.5 - 0.25) * 0.5 / 0.5.
+        let forward = animator.locals[0].rotation.act([1, 0, 0])
+        #expect(simd_distance(forward, simd_normalize(SIMD3(0.75, 0.25, 0))) < 1e-3)
+    }
 }

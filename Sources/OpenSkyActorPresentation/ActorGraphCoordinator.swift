@@ -21,11 +21,14 @@ nonisolated public struct ActorGraphCandidate: Equatable, Sendable {
     public let rotationZ: Float
     /// The NPC weight, 0 (thin) to 100 (heavy).
     public let weight: Float
+    /// The reference's scale: a larger actor keeps its fine bones further away.
+    public let scale: Float
 
     public init(
         key: ReferenceKey, projectPath: String, feet: SIMD3<Float>, rotationZ: Float,
-        weight: Float = 50
+        weight: Float = 50, scale: Float = 1
     ) {
+        self.scale = scale
         self.key = key
         self.projectPath = projectPath
         self.feet = feet
@@ -212,7 +215,10 @@ public final class ActorGraphCoordinator {
             entry.rate = interval == 0 ? .full : .reduced
             entry.sinceStep += deltaTime
             guard entry.sinceStep >= interval else { continue }
-            step(entry, candidate, actor: candidate.key, distance: distance)
+            let lodDistance = viewer.map {
+                ActorBoneLOD.distance(from: $0, to: candidate.feet, scale: candidate.scale)
+            } ?? 0
+            step(entry, candidate, actor: candidate.key, lodDistance: lodDistance)
             entry.sinceStep = 0
             if interval == 0 {
                 fullRateCount += 1
@@ -296,7 +302,8 @@ public final class ActorGraphCoordinator {
     // MARK: - Stepping
 
     private func step(
-        _ entry: Running, _ candidate: ActorGraphCandidate, actor: ReferenceKey, distance: Float
+        _ entry: Running, _ candidate: ActorGraphCandidate, actor: ReferenceKey,
+        lodDistance: Float
     ) {
         let seconds = entry.sinceStep
         let input = entry.stepInput(for: candidate, seconds: seconds)
@@ -317,7 +324,7 @@ public final class ActorGraphCoordinator {
         entry.steps += 1
         entry.noteDrunkTag()
         if !result.bones.isEmpty {
-            entry.heldFromBone = entry.project.boneLOD?.firstHeldBone(atDistance: distance)
+            entry.heldFromBone = entry.project.boneLOD?.firstHeldBone(atDistance: lodDistance)
             entry.lastBones = ActorBoneLOD.holding(
                 result.bones, previous: entry.lastBones, from: entry.heldFromBone
             )

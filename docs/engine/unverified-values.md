@@ -207,6 +207,7 @@ the detail and the sources it did find.
 | Light flicker curves, period unit, slow factor | OpenSky's values | [lighting](/formats/lighting.md) |
 | Texture scroll rate with no period | OpenSky's rate | [NIF materials](/formats/nif-materials.md) |
 | Controller threshold | 0.5 | [NIF controllers](/formats/nif-controllers.md) |
+| Path bank sign and bend measure | Rolls with the turn's sign; bend is heading change per unit length | [NIF controllers](/formats/nif-controllers.md#node-controller-rules) |
 | Particle modifier readings | Items marked "inferred" | [NIF particles](/formats/nif-particles.md) |
 | Rotation extra data | Read as thousandths of a radian | [NIF extra data](/formats/nif-extra-data.md) |
 | Volume texture depth | 0.5 | [DDS](/formats/dds.md) |

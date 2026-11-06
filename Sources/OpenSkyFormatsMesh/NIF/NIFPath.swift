@@ -14,6 +14,8 @@ nonisolated public struct NIFPath: Equatable, Sendable {
     public let hasConstantVelocity: Bool
     /// The flags, bank, smoothing, and follow axis.
     public let interpolator: NIFPathInterpolator
+    /// The largest bend along the path, the scale a bank is measured against.
+    public private(set) var maximumCurvature: Float = 0
 
     /// The path of the `NiPathInterpolator` at `ref`; nil for another block type.
     init?(interpolatorRef ref: Int32, file: NIFFile) throws {
@@ -26,6 +28,9 @@ nonisolated public struct NIFPath: Equatable, Sendable {
         percent = try Self.keys(path.percentDataRef, "NiFloatData", file) { try $0.readFloat32() }
         hasConstantVelocity = path.hasConstantVelocity
         interpolator = path
+        if path.banks {
+            maximumCurvature = largestCurvature()
+        }
     }
 
     /// The fraction of the path, 0 to 1, at `time` seconds.

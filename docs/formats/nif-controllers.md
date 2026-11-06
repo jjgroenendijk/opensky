@@ -133,46 +133,58 @@ alpha and the emissive colour change the effect base colour. The weather aurora
 
 ### Node controller rules
 
-nif.xml gives the fields but not how the engine applies them. These rules are OpenSky's reading
-of the field names and descriptions, checked only against the shape of the vanilla data:
+nif.xml gives the fields but not how the engine applies them. The path, lag bone, and bone LOD
+rules below come from a clean-room behaviour read of the game (using-outside-sources skill); the
+active and look-at rules are OpenSky's reading of the field names.
 
 - Active. A controller without flag bit 3 leaves its node at rest. A manager-fed controller
   plays only through its sequence.
-- Path follow. With bit 5, the node points its follow axis along the path, from a point just
-  behind it to a point just ahead. The look-ahead is the smoothing value as a path fraction,
-  at least 0.01. Up stays as close to +Z as the direction allows. Flip (bit 6) points the
-  negative axis forward.
-- Path bank. With bit 3, the node rolls about its follow axis by the bank direction, times the
-  maximum bank angle, times the heading change over the look-ahead divided by 90 degrees,
-  clamped to -1 and 1.
+- Path follow. With bit 5, the node points its follow axis along the path's direction of travel.
+  Up stays as close to +Z as the direction allows. Flip (bit 6) points the negative axis forward.
+- Path smoothing. With bit 2, the smoothing value s is a share of each segment, the span between
+  two path points. Where the segment's own 0 to 1 position t is at most s, or at least 1 - s, the
+  direction leans toward the neighbour segment's direction with weight `(s - t) * 0.5 / s`, with
+  t measured from the nearer end. At a point the weight is 50%.
+- Path bank. With bit 3, the node rolls about its direction by the bank direction (-1 or 1) times
+  the maximum bank angle. Where the bend c is below the path's largest bend cMax, the roll is
+  scaled by `atan(c / cMax) * 4 / pi`, so the full angle applies at the sharpest turn. OpenSky
+  measures c as the change of heading per unit of length, and rolls the other way in a right turn;
+  the sign is not confirmed.
 - Look-at. The node turns its look axis toward the target's position in the node's parent space,
   after the keyed nodes move, then rolls by the roll keys. Up stays as close to +Z as it can.
   On the install, the only look-at nodes are the `PreviewCam` cameras of the five forge and
   smelter meshes, aimed at `PreviewCamTarget` along +Z. A game camera never draws them.
-- Lag bone. nif.xml calls the block "a controller that trails a bone behind an actor". It
-  describes linear velocity (default 3, range 0 to 500) as "how long it takes to rotate about an
-  actor back to rest position", linear rotation (default 1, range 0 to 15) as "how the bone lags
-  rotation", and maximum distance (default 400) as "how far bone will tail an actor". The first
-  description reads like a time, not a speed; no other public source explains the fields.
-  OpenSky treats both as rates: each frame the bone's world position closes linear velocity
-  times the frame time of its gap to its rest under the parent, and its rotation turns linear
-  rotation times the frame time of the way. The gap never grows past the maximum distance.
+- Lag bone. At the start the bone keeps its rest transform under its parent. Each frame:
+  - the goal is the rest under the parent's new world transform, and d is the goal minus last
+    frame's world position;
+  - k is linear velocity times the frame time, a share per second;
+  - if `|d| < k` the bone snaps to the goal; if `|d|` is within the maximum distance it moves
+    `d * k`; past the maximum, the part of d beyond it is dropped at once and the rest moves by k;
+  - with linear velocity 0 the bone stays at its rest;
+  - the rotation is a normalised lerp from last frame's world rotation toward the rest, by linear
+    rotation times the frame time, clamped to 0 and 1.
+
+  nif.xml's description of linear velocity reads like a time; the game uses it as a rate.
   Vanilla values: `weapons\torch\torch.nif` 9, 0.1, 64; the chaurus `LagBone` 1, 1, 15.
   Lag bones play on placed meshes and effect art. On the 14 creature skeletons that carry one,
   such as the chaurus, the `LagBone` node is outside the Havok rig (37 bones on the chaurus),
   so the actor animation does not move it, and OpenSky does not trail it yet.
 - Bone LOD. `BSBoneLODExtraData` pairs a bone name with a camera distance; nif.xml calls the
   block "Unknown". On the install, 52 actor `skeleton.nif` files carry it, and no placed mesh
-  does. Each entry names one bone, often only the left-side one, so it reads as a cut in the
-  rig's bone order: past the distance, the named Havok rig bone and every bone after it keep
-  their last pose. The rig orders bones by importance, which makes each cut a clean tail. The
-  human rig `skeleton.hkx` (`openskycli skeleton --all`): `Camera3rd [Cam3]` (bone 97) at 128
-  stops the two camera bones, `NPC L Finger00 [LF00]` (67) at 768 stops all 30 fingers, and
-  `NPC Head MagicNode [Hmag]` (49) at 2048 also stops the toes, twist bones, and weapon nodes.
-  The canine rig: `Canine_JawBone` (31) at 800, `Canine_LFrontLegToe` (27) at 2200, and
-  `Canine_LFrontLegPalm` (20) at 3500, which also stops the tail. The rule is OpenSky's
-  reading of that pattern. The Creation Kit lists `iBoneLODDistMult`, default 1000
-  ([Settings](https://ck.uesp.net/wiki/Category:Settings)); OpenSky does not apply it, because
-  no source says how, and the distances already read as world units. A placed mesh has no rig
-  order, so there the named node and its subtree stop. The `NiBSBoneLODController` node groups,
-  on the centaur, werewolf, and wolf skeletons only, are read but not used.
+  does. An entry counts when its distance is above 0 and its name is a bone. Past an entry's
+  distance, the rig keeps updating only the bones before the named one, in the rig's order;
+  the named bone and every bone after it keep their last pose. The rig orders bones by
+  importance, which makes each cut a clean tail. The human rig `skeleton.hkx`
+  (`openskycli skeleton --all`): `Camera3rd [Cam3]` (bone 97) at 128 stops the two camera bones,
+  `NPC L Finger00 [LF00]` (67) at 768 stops all 30 fingers, and `NPC Head MagicNode [Hmag]` (49) at
+  2048 also stops the toes, twist bones, and weapon nodes. The canine rig: `Canine_JawBone` (31)
+  at 800, `Canine_LFrontLegToe` (27) at 2200, and `Canine_LFrontLegPalm` (20) at 3500, which also
+  stops the tail. The distance is measured across the ground only (X and Y, not height), and
+  divided by the actor's scale, so a large actor keeps its fine bones further away. A placed mesh
+  has no rig order, so there the named node and its subtree stop.
+- The Creation Kit lists `iBoneLODDistMult`, default 1000
+  ([Settings](https://ck.uesp.net/wiki/Category:Settings)). The game reads no value of it, so
+  OpenSky applies none.
+- The `NiBSBoneLODController` node groups, on the centaur, werewolf, and wolf skeletons only,
+  have no effect: the game's update for this controller does nothing. OpenSky parses them and
+  uses none.

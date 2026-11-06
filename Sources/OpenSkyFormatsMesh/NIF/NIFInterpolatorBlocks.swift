@@ -111,6 +111,11 @@ nonisolated public struct NIFPathInterpolator: Equatable, Sendable {
         flags & 0x20 != 0
     }
 
+    /// Flag bit 2: a segment's ends lean toward the neighbour segments by the smoothing.
+    public var allowsFlip: Bool {
+        flags & 0x4 != 0
+    }
+
     /// Flag bit 3: a following object tilts into a turn.
     public var banks: Bool {
         flags & 0x8 != 0

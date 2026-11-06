@@ -162,13 +162,13 @@ extension ActorGraphWorldAdapter: ActorGraphWorld {
         return game.actorWorld.combatActors().compactMap { actor in
             guard
                 !actor.isDead, links[actor.key] == nil,
-                let base = streamer.residentActorEntry(key: actor.key)?.placedActor?.base,
-                let graphBase = graphBase(of: actor.key, base: base),
+                let placed = streamer.residentActorEntry(key: actor.key)?.placedActor,
+                let graphBase = graphBase(of: actor.key, base: placed.base),
                 let path = graphBase.path
             else { return nil }
             return ActorGraphCandidate(
                 key: actor.key, projectPath: path, feet: actor.feet, rotationZ: actor.facing,
-                weight: graphBase.weight
+                weight: graphBase.weight, scale: placed.scale
             )
         }
     }
