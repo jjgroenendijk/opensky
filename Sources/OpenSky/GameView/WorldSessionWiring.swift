@@ -7,6 +7,7 @@ import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyEffects
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
@@ -198,6 +199,9 @@ final class WorldSessionWiring {
         // are the ones this frame simulated.
         streamer.onDynamicPosesChanged = { [weak gameSession] deltas in
             gameSession?.instancePoses.dynamicDeltas = deltas
+        }
+        streamer.onLoadDoorUsed = { [unowned game] door in
+            game.objectAnimationWorld.doors.swingOpen(door.rawValue)
         }
         let input = game.cameraInput
         let frameSteps = gameSession.frameSteps

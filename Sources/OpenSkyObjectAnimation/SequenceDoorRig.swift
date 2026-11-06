@@ -71,8 +71,9 @@ nonisolated public struct SequenceDoorRig: Sendable {
             parentIndices: leaves.map { _ in -1 },
             referencePose: rests.map { HKABonePose(transform: $0) }
         )
-        leafOfBlock = Self.leafOfBlock(
-            leaves: leaves.map(\.block), blocks: hierarchy.names.keys, parentOf: parentOf
+        leafOfBlock = MovingPartRig.partOfBlock(
+            parts: leaves.map { Optional($0.block) }, blocks: hierarchy.names.keys,
+            parentOf: parentOf
         )
     }
 
@@ -121,24 +122,5 @@ nonisolated public struct SequenceDoorRig: Sendable {
             else { return nil }
             return channel
         }.first
-    }
-
-    private static func leafOfBlock(
-        leaves: [Int], blocks: some Sequence<Int>, parentOf: [Int: Int]
-    ) -> [Int: Int] {
-        var result: [Int: Int] = [:]
-        for block in blocks {
-            var current: Int? = block
-            var steps = 0
-            while let node = current, steps < 64 {
-                if let leaf = leaves.firstIndex(of: node) {
-                    result[block] = leaf
-                    break
-                }
-                current = parentOf[node]
-                steps += 1
-            }
-        }
-        return result
     }
 }

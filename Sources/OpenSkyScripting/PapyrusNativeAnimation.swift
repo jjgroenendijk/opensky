@@ -27,7 +27,7 @@ public protocol PapyrusObjectAnimationBridge: AnyObject {
     func setSubGraphFloatVariable(_ name: String, to value: Float, on actor: ReferenceKey)
         -> Bool
     /// The `GetOpenState` code of a door whose mesh sequences move it, opening and
-    /// closing included. Nil for any other reference.
+    /// closing included, or 0 for a reference that cannot open. Nil for any other.
     func openStateCode(of reference: ReferenceKey) -> Int32?
 }
 

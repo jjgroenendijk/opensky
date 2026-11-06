@@ -23,7 +23,7 @@ private final class FakeDoorWorld: SequenceDoorWorld {
         doors
     }
 
-    func sequenceDoorWantsOpen(_: UInt32) -> Bool {
+    func sequenceDoorWantsOpen(_: CellSequenceDoor) -> Bool {
         wantsOpen
     }
 }

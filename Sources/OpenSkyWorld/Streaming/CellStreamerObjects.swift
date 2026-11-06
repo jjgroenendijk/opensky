@@ -2,9 +2,22 @@
 
 import OpenSkyActorPresentation
 import OpenSkyCells
+import OpenSkyFormatsESM
 import OpenSkyObjectAnimation
+import simd
 
 extension CellStreamer {
+    /// Moves each graph object's collision with the model-frame bones its graph last posed.
+    public func poseMovingCollision(bones: (UInt32) -> [simd_float4x4]?) {
+        let collisions = interiorScene.map(\.doorCollision)
+            ?? composition.cells.values.flatMap(\.doorCollision)
+        for collision in collisions {
+            guard let parts = collision.movingParts else { continue }
+            let reference = collision.reference.rawValue
+            sequenceDoorLeaves[reference] = bones(reference).flatMap(parts.deltas(posed:))
+        }
+    }
+
     /// The interior's animated objects, or those of every resident exterior cell.
     public func residentAnimatedObjects() -> [CellAnimatedObject] {
         let scenes = interiorScene.map { [$0] } ?? Array(composition.cells.values)

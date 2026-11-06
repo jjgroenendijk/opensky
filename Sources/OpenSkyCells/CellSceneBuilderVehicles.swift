@@ -49,6 +49,7 @@ nonisolated extension CellSceneBuilder {
             transform: instance.transform, emittance: instance.emittance
         )
         posed.isSequenceDoor = instance.isSequenceDoor
+        posed.sequenceDoorKind = instance.sequenceDoorKind
         let pose = PlayerPoseBuffer()
         let playback = PlayerAnimationPlayback(skeleton: skeleton, pose: pose, models: [model])
         return PosedCopy(instance: posed, pose: pose, playback: playback)

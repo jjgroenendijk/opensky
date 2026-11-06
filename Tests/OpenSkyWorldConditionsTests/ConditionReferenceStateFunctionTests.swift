@@ -43,6 +43,8 @@ struct ConditionReferenceStateFunctionTests {
         #expect(try Self
             .outcome(157, equals: 1, facts: ReferenceConditionFacts(isOpen: true)) == .true)
         #expect(try Self.outcome(157, equals: 3, facts: ReferenceConditionFacts()) == .true)
+        let fixed = ReferenceConditionFacts(isOpen: true, canOpen: false)
+        #expect(try Self.outcome(157, equals: 0, facts: fixed) == .true)
     }
 
     @Test func aDeletedReferenceDoesNotExist() throws {

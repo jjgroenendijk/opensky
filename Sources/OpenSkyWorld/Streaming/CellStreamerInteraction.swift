@@ -383,6 +383,7 @@ extension CellStreamer {
         else { return }
         doorTransitionHold = max(0, doors.teleportDelay)
         doorMotionInteraction = target.interaction
+        onLoadDoorUsed?(target.interaction.reference)
         onInteractionAnimation?(InteractionAnimationEvent(
             interaction: target.interaction,
             phase: .motionStarted

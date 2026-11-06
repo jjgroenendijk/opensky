@@ -17,15 +17,23 @@ nonisolated public struct NodeControllerRig: Sendable {
     public let skeleton: HKASkeleton
     /// The node each bone poses, in bone order.
     public let boneNodes: [Int]
+    /// The mesh's controller sequences, which a behaviour graph's sequence generators play.
+    public let sequences: [NIFSequence]
 
     /// Nil for a mesh without an active controller or a billboard on a named node.
     /// `lagOnly` keeps only the lag bones and billboards, for a mesh whose behaviour
     /// graph replaces its keyed controllers.
+    /// A `lagOnly` rig also poses the nodes the mesh's sequences move.
     public init?(file: NIFFile, lagOnly: Bool = false) throws {
-        try self.init(animation: NIFNodeAnimation(file: file), lagOnly: lagOnly)
+        try self.init(
+            animation: NIFNodeAnimation(file: file), lagOnly: lagOnly,
+            sequences: lagOnly ? file.sequences() : []
+        )
     }
 
-    public init?(animation full: NIFNodeAnimation, lagOnly: Bool = false) {
+    public init?(
+        animation full: NIFNodeAnimation, lagOnly: Bool = false, sequences: [NIFSequence] = []
+    ) {
         let animation = lagOnly ? NIFNodeAnimation(
             nodes: full.nodes, controllers: full.controllers.filter(\.isLagBone),
             boneLOD: full.boneLOD
@@ -33,6 +41,7 @@ nonisolated public struct NodeControllerRig: Sendable {
         var names = Set<String>()
         var boneNodes: [Int] = []
         let moved = animation.playingControllers.map(\.node) + animation.billboardNodes
+            + Self.sequenceNodes(sequences, in: animation)
         for node in moved {
             guard
                 let name = animation.nodes[node].name?.lowercased(),
@@ -43,6 +52,7 @@ nonisolated public struct NodeControllerRig: Sendable {
         guard !boneNodes.isEmpty else { return nil }
         self.animation = animation
         self.boneNodes = boneNodes
+        self.sequences = sequences
         let rest = NIFNodeAnimator(animation: animation)
         skeleton = HKASkeleton(
             name: nil,
@@ -53,6 +63,22 @@ nonisolated public struct NodeControllerRig: Sendable {
             referencePose: boneNodes
                 .map { HKABonePose(transform: rest.modelTransform(of: $0).matrix) }
         )
+    }
+
+    public func sequence(named name: String) -> NIFSequence? {
+        sequences.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
+    }
+
+    private static func sequenceNodes(
+        _ sequences: [NIFSequence], in animation: NIFNodeAnimation
+    ) -> [Int] {
+        sequences.flatMap(\.tracks).compactMap { track in
+            guard case let .node(name) = track.target, case .transform = track.channel
+            else { return nil }
+            return animation.nodes.firstIndex {
+                $0.name?.caseInsensitiveCompare(name) == .orderedSame
+            }
+        }
     }
 
     /// Each bone's model-frame pose from the animator's current node transforms.

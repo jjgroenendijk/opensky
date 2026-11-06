@@ -264,16 +264,8 @@ final class ScriptWorldAdapter {
             return game?.ragdoll.runtime?.world.ragdolls.first { $0.key == key }?
                 .instance.bodies.reduce(0) { $0 + $1.definition.mass }
         }
-        bridge.sessionNatives.publishTranslationPoses = { [weak game] poses in
-            guard let game else { return }
-            game.gameSession?.instancePoses.scriptedPoses = poses
-                .reduce(into: [:]) { matrices, entry in
-                    guard let formID = game.streamer?.referenceEntry(key: entry.key)?.formID
-                    else { return }
-                    matrices[formID.rawValue] = MatrixMath.placement(
-                        position: entry.value.position, rotation: entry.value.rotation, scale: 1
-                    )
-                }
+        bridge.sessionNatives.publishTranslationPoses = { [weak self, weak bridge] poses in
+            self?.publishTranslations(poses, moves: bridge?.translations ?? [:])
         }
         bridge.perceptionNatives.livePosition = { [weak game] key in
             guard let game else { return nil }

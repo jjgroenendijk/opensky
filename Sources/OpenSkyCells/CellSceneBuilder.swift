@@ -150,6 +150,8 @@ nonisolated public final class CellSceneBuilder {
     var objectBehaviorAssets: [String: BehaviorProjectAsset?] = [:]
     /// Sequence door rigs by mesh key; nil inside records a mesh without one.
     var sequenceDoorRigs: [String: SequenceDoorRig?] = [:]
+    /// Graph object meshes' moving nodes by mesh key; nil inside records none.
+    var movingPartRigs: [String: MovingPartRig?] = [:]
     /// Node controller rigs by mesh key; nil inside records a mesh without one.
     var nodeControllerRigs: [String: NodeControllerRig?] = [:]
     public let pluginName: String
@@ -533,6 +535,7 @@ nonisolated extension CellSceneBuilder {
                 )
             {
                 instance.isSequenceDoor = doors[ref.formID] != nil
+                instance.sequenceDoorKind = doors[ref.formID]?.kind ?? .door
                 instance.treeMotion = resolved.treeData.map(TreeMotion.init)
                 instances.append(instance)
             }

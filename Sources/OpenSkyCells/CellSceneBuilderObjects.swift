@@ -14,7 +14,7 @@ import OpenSkyRenderResources
 
 nonisolated extension CellSceneBuilder {
     /// Base types whose meshes vanilla animates with a behaviour graph.
-    static let animatedObjectTypes: Set<FourCC> = ["ACTI", "DOOR"]
+    static let animatedObjectTypes: Set<FourCC> = ["ACTI", "DOOR", "FURN", "CONT", "MSTT"]
 
     /// The behaviour set of a base that can animate and whose mesh names one.
     func objectBehavior(recordType: FourCC, modelPath: String) -> BehaviorProjectAsset? {

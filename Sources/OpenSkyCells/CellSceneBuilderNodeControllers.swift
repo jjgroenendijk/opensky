@@ -18,6 +18,8 @@ nonisolated extension CellSceneBuilder {
     static let nodeControllerMarkers = [
         "NiTransformController", "BSLagBoneController", NIFBillboard.typeName
     ].map { Data($0.utf8) }
+    /// A graph mesh's sequences are played by the graph's sequence generators.
+    static let sequenceMarker = Data("NiControllerSequence".utf8)
 
     /// The rig of a mesh, read once per mesh. Nil for a mesh without a playing controller.
     /// A mesh that names a behaviour graph plays only its lag bones: its keyed controllers
@@ -28,11 +30,12 @@ nonisolated extension CellSceneBuilder {
             return known
         }
         var rig: NodeControllerRig?
+        let lagOnly = meshes.behaviorProjectPath(forPath: modelPath) != nil
         if
             let data = try? fileSystem.contents(forPath: key),
             Self.nodeControllerMarkers.contains(where: { data.range(of: $0) != nil })
+            || lagOnly && data.range(of: Self.sequenceMarker) != nil
         {
-            let lagOnly = meshes.behaviorProjectPath(forPath: modelPath) != nil
             rig = (try? NIFFile(data: data)).flatMap {
                 try? NodeControllerRig(file: $0, lagOnly: lagOnly)
             }
