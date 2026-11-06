@@ -117,6 +117,12 @@ extension DialogueCoordinator {
         // crowd that searched all at once stalled the frame.
         let speaker = candidates[Int(speechRandom.percent()) % candidates.count]
         guard let info = npcLine(.idleChatter, speaker: speaker.key, now: frame.now) else {
+            // A speaker with no line waits as if it spoke, so the search is not run each frame.
+            let unit = Float(speechRandom.percent()) / 99
+            speechClock.note(
+                .idleChatter, speaker: speaker.key, now: frame.now,
+                wait: speechTimers.wait(after: .idleChatter, unit: unit)
+            )
             return []
         }
         return [AmbientLine(info: info, speaker: speaker.key, kind: .idleChatter)]

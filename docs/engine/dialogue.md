@@ -275,8 +275,9 @@ Who speaks:
   flag 0x01). It looks at the player.
 - An idle line comes from a free NPC within 1000 units of the player. Each pass, one such
   NPC, picked by the seeded random source, looks for a line, so a crowd costs no more frame
-  time than one NPC. The distance is OpenSky's; no setting names it. No hello and no idle line
-  plays while the player is in a conversation.
+  time than one NPC. The distance is OpenSky's; no setting names it. An NPC that finds no line
+  waits the same seeded idle-line time before it looks again; that wait is OpenSky's choice.
+  No hello and no idle line plays while the player is in a conversation.
 - A taunt comes from any fighting NPC that is free, with no head turn.
 - A comment on the player comes from the nearest free NPC within
   `fAIInDialogueModeWithPlayerDistance` (500 units) that detects the player. The CK wiki calls it

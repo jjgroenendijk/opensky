@@ -79,6 +79,7 @@ the detail and the sources it did find.
 | `GetCurrentAIProcedure` of procedures not measured | -1 | [world condition functions](/engine/condition-functions-world.md#packages) |
 | Package fallback on a blocked path | A guess at the game's rule | [package schedules](/engine/package-schedules.md) |
 | Scene package wait | A scene does not wait forever on its package | [scenes](/engine/scenes.md) |
+| Idle line search miss | The NPC waits the idle-line window before it searches again | [dialogue](/engine/dialogue.md) |
 | Follower commands | 0.5 s wait; acts at 128 units | [follower commands](/engine/follower-commands.md) |
 | Assault alarm member | The resident member nearest the player | [guard response](/engine/guard-response.md) |
 | Default `NAM7` weight | 50 | [actor resolution](/engine/actor-resolution.md) |
