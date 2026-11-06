@@ -345,6 +345,9 @@ public final class Renderer: NSObject {
     public var gpuFrameLog: GPUFrameLog?
     /// Set by a benchmark to time each render pass on the GPU; nil in normal play.
     public var passTimer: GPUPassTimer?
+    /// Set by a benchmark: a frame waits for its slot instead of being skipped, because
+    /// an uncapped loop would otherwise skip most frames while the GPU is busy.
+    public var waitsForFrameSlot = false
     /// The colour behind all geometry this frame (`Renderer.background(fog:drawsSky:)`).
     var sceneBackground = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
     /// A Metal GPU trace of the next live frame (RendererFrameCapture.swift).
