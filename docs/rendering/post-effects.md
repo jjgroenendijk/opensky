@@ -158,8 +158,15 @@ read of the shaders in `Skyrim - Shaders.bsa` and of `SkyrimSE.exe` 1.7.104.0 on
 - The game names ghosts, a halo, and a horizontal streak for this effect, but no shipped shader
   draws them.
 
-The tap count, the step, the threshold, the scale, and how the result joins the frame are not
-known.
+A second read on 2026-11-06 found the tap counts: the horizontal blur has a radius of 7 taps
+on each side, 15 in all, and the vertical blur a radius of 2, 5 in all. Each tap adds
+`max(colour × exposure - threshold, 0) × scale`; one variant weights the colour by its
+luminance first. The game's defaults for the effect: 3 lenses, a dispersal of 0.3, a channel
+offset of +2 for red and -2 for blue, a halo of 0.5 with a width power of 3, an anamorphic
+strength of 0.1, and an overall strength of 0.7.
+
+The step between taps, the threshold and scale values, and how the result joins the frame are
+still not known.
 
 ## Where OpenSky differs
 
