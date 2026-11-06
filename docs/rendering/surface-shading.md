@@ -82,27 +82,46 @@ their surroundings only through their environment map.
 ## Directional materials
 
 A static whose `STAT` `DNAM` names a `MATO` gets that material on the faces that point along
-the `MATO` projection vector, such as snow on the tops of rocks
+a direction, such as snow on the tops of rocks
 ([environment shading records](/formats/environment-shading.md#mato)). The surface override of
-every placed reference of the static carries it, and every lit shape of the model takes it.
+every placed reference of the static carries it, and every lit shape of the model takes it:
+the game sets the `Projected_UV` flag on all of them, whatever the NIF says.
 
-The edge follows the game's shader (clean-room read of the game's shaders, 2026-11-06):
-`edge = (N . projection vector) * vertex alpha - cos(max angle)`, so a face more than the
-`DNAM` max angle from the vector gets none, and vertex alpha can paint it away.
+The game draws two kinds (clean-room read of the game's shaders and of `SkyrimSE.exe`
+1.7.104.0, 2026-11-06):
 
-- With the game's `[Display] bEnableProjecteUVDiffuseNormals` on, the face mixes in the diffuse
-  map of the `MATO` model's first textured shape, by `smoothstep(-0.1, 0.1, edge)`. The map is
-  laid on the world XY plane and repeats every 512 units at a material UV scale of 1.
-- With it off, the face takes the `MATO` single-pass colour, or white when the record has none,
-  with a hard edge at 0.
+- **Single pass** (`MATO` `DATA` flag set, as on every snow material). The layer is part of the
+  shape's own shading. The direction is world up, not the `MATO` projection vector, and the
+  textures are the game's shared `textures\effects\projecteddiffuse.dds` and
+  `projectednoise.dds`; the `MATO` model is a placeholder box. The layer UV is the world
+  position turned 90 degrees, `(y, -x)`. The noise repeats every noise-UV-scale units and the
+  diffuse map every two of them.
+- **Overlay** (flag clear, such as dirt, moss, and ice). The game draws the `MATO` model's
+  texture as a second pass along the projection vector, repeating every material-UV-scale
+  units, with a hard cut at the edge. OpenSky draws it inside the shape, with the same cut.
+
+The edge, with `c = cos(DNAM max angle)` and `n` the noise texture's red channel:
+
+```text
+edge = (N . direction) * vertex alpha - ((1 - c) * falloff bias + c) - (1 - c) * falloff scale * n
+```
+
+So a face takes the layer where `N . direction > c + (1 - c) * (bias + scale * n)`.
+
+- With the game's `[Display] bEnableProjecteUVDiffuseNormals` on, a single-pass face mixes in
+  the diffuse map times the single-pass colour, by `smoothstep(-0.1, 0.1, edge)`.
+- With it off, the face takes the single-pass colour, or white when the record has none, with a
+  hard edge at 0.
 - The game's normal maps of the layer change only the normal it keeps for reflections and
   ambient occlusion, not the lighting normal, so OpenSky does not use them.
 
-The game also subtracts a noise texture's red channel, at the projected UV times the noise
-scale and times a factor, from `edge`, which breaks up the line. Which texture that is, and how
-the falloff scale, falloff bias, and normal dampener feed the offset and that factor, is not
-known, so OpenSky draws a clean edge. The 512-unit tile and the XY plane are OpenSky's own; the
-game projects from model space by a per-draw plane.
+A material whose last `DATA` field is set also gives the shapes the snow shading: the rim
+sheen and the sparkles of [snow ground](/engine/terrain.md#snow-ground). The snow mask is the
+layer's blend for a single-pass material and the shape's own diffuse alpha under an overlay.
+In the install the field is set on 34 of 42 winning records, dirt, moss, and ice included, and
+the game applies it to all of them.
+The game drops the shape's own specular there; OpenSky keeps it. The normal dampener of an
+overlay scales its normal map, which OpenSky does not draw.
 
 ## Albedo
 

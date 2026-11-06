@@ -121,9 +121,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Focus shadows and the precipitation occlusion map (depth2d_array). The cascade
     /// array stands in until an option builds it.
     TextureIndexAuxiliaryShadowMap = 26,
-    /// A static's directional material: the MATO diffuse and normal maps.
+    /// A static's directional material: its diffuse map and the edge noise.
     TextureIndexProjectedDiffuse = 27,
-    TextureIndexProjectedNormal = 28,
+    TextureIndexProjectedNoise = 28,
     /// Cube faces of the shadow-casting point lights (depth2d_array, 6 slices a light).
     /// The cascade array stands in until a shadow light builds it.
     TextureIndexPointShadowMap = 29,
@@ -449,9 +449,10 @@ typedef struct
     vector_float4 multiLayer;
     /// Directional material: xyz the world direction, w the cosine of its max angle.
     vector_float4 projectedDirection;
-    /// x falloff scale, y falloff bias, z material UV scale, w 0 none, 1 colour, 2 textures.
+    /// x falloff scale, y falloff bias, z texture tile in units, w 0 none, 1 colour,
+    /// 2 single-pass texture, 3 overlay texture, plus 4 for snow.
     vector_float4 projectedParameters;
-    /// rgb single-pass colour, a noise UV scale.
+    /// rgb single-pass colour, a noise tile in units.
     vector_float4 projectedColor;
     /// Tree wind: x sway, y sway frequency, z leaf amplitude, w leaf frequency. A w above
     /// 0 marks the vertex alpha as the leaf's wind weight (docs/rendering/trees.md).

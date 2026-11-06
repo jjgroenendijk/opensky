@@ -2,6 +2,7 @@
 #include "SurfaceShading.h"
 #include "EffectShading.h"
 #include "ProjectedMaterial.h"
+#include "SnowShading.h"
 
 // Static-mesh path: diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
@@ -375,7 +376,7 @@ fragment float4 staticMeshFragment(
     texture2d<float> layerMap [[texture(TextureIndexSurfaceLayer)]],
     texture2d<float> backLightMap [[texture(TextureIndexSurfaceBackLight)]],
     texture2d<float> projectedDiffuse [[texture(TextureIndexProjectedDiffuse)]],
-    texture2d<float> projectedNormal [[texture(TextureIndexProjectedNormal)]],
+    texture2d<float> projectedNoise [[texture(TextureIndexProjectedNoise)]],
     texture2d<float> sceneColour [[texture(TextureIndexSceneColor)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
@@ -468,10 +469,16 @@ fragment float4 staticMeshFragment(
     }
     float3 vertexColour = linearVertexColour(in.color.rgb, frame);
     float3 albedo = diffuse.rgb * vertexColour;
+    float snowMask = 0.0;
     if (draw.projectedParameters.w > 0.5) {
         ProjectedLayer layer = projectedLayer(
-            in.worldPosition, normal.world, in.color.a, draw, projectedDiffuse, trilinear);
+            in.worldPosition, normal.world, in.color.a, draw, projectedDiffuse, projectedNoise,
+            trilinear);
         albedo = mix(albedo, layer.albedo, layer.blend);
+        // The snow mask is the layer's blend, or the shape's own alpha under an overlay.
+        uint projected = uint(draw.projectedParameters.w);
+        float layerMask = (projected & 3u) == 3u ? diffuse.a : saturate(layer.blend);
+        snowMask = (projected & 4u) != 0 ? layerMask : 0.0;
     }
     if (hasTerm(terms, ShadingTermLandscapeNoise)) {
         float noise = detailMap.sample(trilinear, in.worldPosition.xy * landscapeNoiseTile).r;
@@ -504,6 +511,10 @@ fragment float4 staticMeshFragment(
     LitInput input = {albedo, toEye, tangentFrame[1], uv, shadow, terms, pointShadows};
     float3 lit = litSurface(in, input, normal, frame, draw, pointLights, maps, trilinear);
     lit += reflectionLit ? 0.0 : reflected;
+    if (snowMask > 0.0) {
+        float shine = snowRim(toEye, normalize(in.normal), normal.world);
+        lit += (shine + snowSparkle(in.worldPosition, shadow, frame)) * snowMask;
+    }
     return blendOutput(lit, alpha, in.worldPosition, frame, draw);
 }
 

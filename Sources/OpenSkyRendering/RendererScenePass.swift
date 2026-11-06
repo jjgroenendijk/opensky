@@ -327,7 +327,7 @@ extension Renderer {
             (material.faceTint ?? surface.innerLayer, .surfaceLayer),
             (surface.backLight, .surfaceBackLight),
             (surface.projected?.diffuse, .projectedDiffuse),
-            (surface.projected?.normal, .projectedNormal)
+            (surface.projected?.noise, .projectedNoise)
         ]
         for (texture, index) in slots {
             argumentTable.setTexture(texture.map(streamedBinding) ?? diffuse, index: index.rawValue)

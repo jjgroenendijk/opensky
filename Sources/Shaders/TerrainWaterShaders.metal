@@ -1,4 +1,5 @@
 #include "ShaderCommon.h"
+#include "SnowShading.h"
 
 // Terrain splat path (docs/rendering/scene-drawing.md): per-quadrant draw blends the BTXT
 // base diffuse with up to TerrainConstantMaxLayers ATXT layer diffuses by
@@ -64,26 +65,6 @@ static float3 terrainShadingNormal(TerrainVertexOut in, float2 blendedXY)
     float3 bitangent = cross(vertexNormal, tangent);
     float z = sqrt(saturate(1.0 - dot(blendedXY, blendedXY)));
     return normalize(tangent * blendedXY.x + bitangent * blendedXY.y + vertexNormal * z);
-}
-
-// Snow ground (LTEX INAM) under the improved snow option, as the game draws it: a white
-// rim sheen at grazing angles, from the vertex and the mapped normal
-// (docs/engine/terrain.md#snow-ground).
-static float terrainSnowRim(float3 toEye, float3 vertexNormal, float3 normal)
-{
-    float geometry = pow(1.0 - saturate(dot(vertexNormal, toEye)), 3.0);
-    float mapped = pow(1.0 - saturate(dot(normal, toEye)), 2.0);
-    return geometry * mapped * 0.3;
-}
-
-// OpenSky's own sun glints on snow ground: one 4-unit world cell in about 67 flashes.
-static float3
-terrainSnowGlints(float3 world, float3 toEye, float3 normal, constant FrameUniforms &frame)
-{
-    float facing = saturate(dot(normal, normalize(toEye - frame.sunDirection)));
-    float2 cell = floor(world.xy * 0.25);
-    float seed = fract(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453);
-    return frame.sunColor * (seed > 0.985 ? pow(facing, 6.0) * 2.0 : 0.0);
 }
 
 fragment float4 terrainFragment(
@@ -156,10 +137,8 @@ fragment float4 terrainFragment(
     float3 lit = albedo * linearVertexColour(in.color.rgb, frame) * illumination;
     if (snow > 0.0) {
         float3 toEye = normalize(frame.cameraPosition - in.worldPosition);
-        float rim = terrainSnowRim(toEye, normalize(in.normal), normal);
-        lit +=
-            (rim * snowMask + terrainSnowGlints(in.worldPosition, toEye, normal, frame) * shadow) *
-            snow;
+        float shine = snowRim(toEye, normalize(in.normal), normal);
+        lit += (shine + snowSparkle(in.worldPosition, shadow, frame)) * snowMask * snow;
     }
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }

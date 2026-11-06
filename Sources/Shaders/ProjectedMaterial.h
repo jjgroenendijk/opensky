@@ -3,13 +3,9 @@
 
 #include "ShaderCommon.h"
 
-// A directional material texture repeats every 512 units at UV scale 1; an OpenSky choice.
-constant float projectedTile = 512.0;
-
-// A static's directional material (STAT DNAM with a MATO): faces that point along the
-// direction take its texture or single-pass colour, as the game draws it: the facing times
-// the vertex alpha, past the max angle, gives a soft edge for a texture and a hard one for
-// a colour. The texture is laid on the world XY plane (docs/rendering/surface-shading.md).
+// A static's directional material (STAT DNAM with a MATO), as the game draws it: faces
+// that point along the direction, past the max angle widened by the falloff and the edge
+// noise, take the layer (docs/rendering/surface-shading.md#directional-materials).
 struct ProjectedLayer
 {
     float3 albedo;
@@ -22,16 +18,24 @@ static ProjectedLayer projectedLayer(
     float vertexAlpha,
     constant DrawUniforms &draw,
     texture2d<float> diffuseMap,
+    texture2d<float> noiseMap,
     sampler trilinear)
 {
-    ProjectedLayer layer = {draw.projectedColor.rgb, 0.0};
-    float edge = dot(normal, draw.projectedDirection.xyz) * vertexAlpha - draw.projectedDirection.w;
-    if (draw.projectedParameters.w > 1.5) {
-        float2 uv = world.xy * (draw.projectedParameters.z / projectedTile);
-        layer.albedo = diffuseMap.sample(trilinear, uv).rgb;
-        layer.blend = smoothstep(-0.1, 0.1, edge);
-    } else {
-        layer.blend = edge > 0.0 ? 1.0 : 0.0;
+    uint kind = uint(draw.projectedParameters.w) & 3u;
+    float cosine = draw.projectedDirection.w;
+    float open = 1.0 - cosine;
+    float2 uv = float2(world.y, -world.x);
+    float noise = noiseMap.sample(trilinear, uv / max(draw.projectedColor.a, 1.0e-3)).r;
+    float edge = dot(normal, draw.projectedDirection.xyz) * vertexAlpha -
+                 (open * draw.projectedParameters.y + cosine) -
+                 open * draw.projectedParameters.x * noise;
+    ProjectedLayer layer = {draw.projectedColor.rgb, edge > 0.0 ? 1.0 : 0.0};
+    if (kind >= 2u) {
+        float3 texel =
+            diffuseMap.sample(trilinear, uv / max(draw.projectedParameters.z, 1.0e-3)).rgb;
+        // The single-pass map is tinted by the material colour; an overlay is not.
+        layer.albedo = kind == 2u ? texel * draw.projectedColor.rgb : texel;
+        layer.blend = kind == 2u ? smoothstep(-0.1, 0.1, edge) : (edge >= 0.0 ? 1.0 : 0.0);
     }
     return layer;
 }
