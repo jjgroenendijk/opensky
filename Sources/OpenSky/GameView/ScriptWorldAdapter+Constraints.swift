@@ -26,7 +26,13 @@ extension ScriptWorldAdapter {
         guard let runtime = game.ragdoll.runtime else { return .returned(.boolean(false)) }
         switch (body(of: first, runtime), body(of: second, runtime)) {
         case (.ragdoll, .ragdoll):
-            return .returned(.boolean(runtime.addLink(RagdollLink(first: first, second: second))))
+            return .returned(.boolean(runtime.addLink(PhysicsLink(first: first, second: second))))
+        case (.loose, .loose):
+            let linked = game.streamer?.dynamicBodies
+                .addLink(PhysicsLink(first: first, second: second)) ?? false
+            return .returned(.boolean(linked))
+        case (.loose, .ragdoll), (.ragdoll, .loose):
+            return linkLoose(first, second, runtime)
         case (.ragdoll, .still), (.loose, .still):
             return pin(first, to: second)
         case (.still, .ragdoll), (.still, .loose):
@@ -40,6 +46,18 @@ extension ScriptWorldAdapter {
         let ragdolls = game.ragdoll.runtime?.removeConstraints(first, second) ?? false
         let loose = game.streamer?.dynamicBodies.removePins(first, second) ?? false
         return ragdolls || loose
+    }
+
+    /// A loose body held to a ragdoll bone. The bone must have a body.
+    private func linkLoose(
+        _ first: PhysicsLinkEnd, _ second: PhysicsLinkEnd, _ runtime: RagdollRuntime
+    ) -> PapyrusNativeResult {
+        let looseFirst = game.streamer?.dynamicBodies.body(for: first.reference) != nil
+        let link = looseFirst
+            ? PhysicsLink(first: first, second: second) : PhysicsLink(first: second, second: first)
+        guard runtime.hasBody(link.second) else { return .returned(.boolean(false)) }
+        let linked = game.streamer?.dynamicBodies.addRagdollLink(link) ?? false
+        return .returned(.boolean(linked))
     }
 
     private func body(of end: PhysicsLinkEnd, _ runtime: RagdollRuntime) -> ConstraintBody {

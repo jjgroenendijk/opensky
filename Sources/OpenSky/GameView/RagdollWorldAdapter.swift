@@ -93,6 +93,9 @@ final class RagdollWorldAdapter {
                 delta: delta
             ))
             self?.advancePlayerDeath(delta: delta)
+            if let streamer = self?.game.streamer {
+                ragdoll.runtime?.solveLinks(to: &streamer.dynamicBodies, frameTime: delta)
+            }
         }
         gameSession.frameSteps.register(.ragdoll) { [weak self, weak ragdoll] _ in
             self?.run(ragdoll?.publishPoses() ?? [])

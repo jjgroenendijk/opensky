@@ -20,7 +20,7 @@ struct RagdollLinkTests {
         return world
     }
 
-    private static let link = RagdollLink(
+    private static let link = PhysicsLink(
         first: PhysicsLinkEnd(reference: left, node: "bone1"),
         second: PhysicsLinkEnd(reference: right, node: "Bone0")
     )
@@ -46,7 +46,7 @@ struct RagdollLinkTests {
 
     @Test func aLinkNeedsTwoLiveBonesAndEndsWithItsRagdoll() {
         var world = Self.world()
-        let missing = RagdollLink(
+        let missing = PhysicsLink(
             first: PhysicsLinkEnd(reference: Self.left, node: "Hand"), second: Self.link.second
         )
         let linkedMissing = world.addLink(missing)

@@ -220,8 +220,18 @@ public final class RagdollRuntime: DeathReporting {
     }
 
     /// A script's ball-and-socket link between two ragdolls' bones.
-    public func addLink(_ link: RagdollLink) -> Bool {
+    public func addLink(_ link: PhysicsLink) -> Bool {
         world.addLink(link)
+    }
+
+    /// Solves the links from loose bodies to this runtime's ragdoll bones.
+    public func solveLinks(to loose: inout DynamicBodyWorld, frameTime: Float) {
+        world.solveLinks(to: &loose, frameTime: frameTime)
+    }
+
+    /// Whether `end` names a bone body of a live ragdoll.
+    public func hasBody(_ end: PhysicsLinkEnd) -> Bool {
+        world.hasBody(end)
     }
 
     public func addPin(_ pin: PhysicsPin) -> Bool {

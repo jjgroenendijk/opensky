@@ -75,6 +75,10 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     public internal(set) var bodies: [DynamicBody] = []
     /// Bodies held at a fixed point, as scripts add them.
     public internal(set) var pins: [PhysicsPin] = []
+    /// Two loose bodies held together.
+    public internal(set) var links: [PhysicsLink] = []
+    /// A loose body (`first`) held to a ragdoll bone (`second`).
+    public internal(set) var ragdollLinks: [PhysicsLink] = []
     /// Pose each body was placed at, for the readout's reset action.
     private var placedPoses: [ReferenceKey: (position: SIMD3<Float>, orientation: simd_quatf)] = [:]
     /// Resting poses observed since the last drain, for persistence.
