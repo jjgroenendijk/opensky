@@ -65,6 +65,8 @@ final class MagicWorldAdapter {
     var grabbedActors: Set<ReferenceKey> = []
     /// The `MGEF` casting light each readying caster shows, by caster.
     var castingLights: [ReferenceKey: ReferenceKey] = [:]
+    /// Race and base keywords never change in a session, and a lookup decodes the record.
+    var actorKeywordAnswers: [ActorKeywordQuery: Bool] = [:]
 
     init(game: any MagicWorldHost) {
         self.game = game
@@ -280,4 +282,10 @@ extension MagicWorldAdapter: MagicWorld {
             seams: seams
         )
     }
+}
+
+/// One keyword asked of an actor's race and base form.
+struct ActorKeywordQuery: Hashable {
+    let keyword: ResolvedFormID
+    let forms: [FormID]
 }

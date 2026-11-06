@@ -132,11 +132,17 @@ extension MagicWorldAdapter {
         if case let .actor(base) = holder.subject {
             forms.append(base)
         }
-        return forms.compactMap(\.self).contains { form in
+        let query = ActorKeywordQuery(keyword: keyword, forms: forms.compactMap(\.self))
+        if let known = actorKeywordAnswers[query] {
+            return known
+        }
+        let answer = query.forms.contains { form in
             guard let id = keywords.resolvedID(form, fromPlugin: FormIDResolver.loadOrderSpaceName)
             else { return false }
             return keywords.hasKeyword(keyword, on: id) == true
         }
+        actorKeywordAnswers[query] = answer
+        return answer
     }
 
     func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
