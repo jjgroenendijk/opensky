@@ -15,6 +15,9 @@ typedef NS_ENUM(EnumBackingType, CullBufferIndex)
     CullBufferIndexArguments = 3,
     /// Room-culled counter, then the visible-room bitset (docs/rendering/room-portal-culling.md).
     CullBufferIndexRooms = 4,
+    /// One `vector_float2` per instance: the fade amount (below 0 before the first
+    /// frame) and 1 while it fades out. Mirrors `ReferenceFadeState`.
+    CullBufferIndexFadeStates = 5,
 };
 
 typedef NS_ENUM(EnumBackingType, CullConstant)
@@ -52,8 +55,10 @@ typedef struct
     unsigned int instanceCount;
     /// Words in the room bitset; 0 turns room culling off for this view.
     unsigned int roomWordCount;
-    unsigned int padding0;
-    unsigned int padding1;
+    /// Seconds the fades advance; only the camera view writes them.
+    float fadeSeconds;
+    /// 1 for the camera view, which steps the fades; 0 for a view that reads them.
+    unsigned int advancesFades;
 } CullParameters;
 
 /// Temporal upscaling (docs/rendering/upscaling.md). Motion is last frame's screen

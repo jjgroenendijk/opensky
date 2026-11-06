@@ -80,11 +80,17 @@ value = 1 - (distance - M * start) / (M * end - M * start)
 ```
 
 The game starts a timed fade out once the value drops below 0.3, which takes 2 seconds, and a
-fade in once it rises above 0.7, which takes 1.2 seconds. OpenSky has no per-reference timer:
-it dissolves the reference by distance over the same band, from value 0.7 to 0.3, and draws
-nothing past it. So a reference fades with the camera's movement, not over time. OpenSky reads
-`uGridsToLoad` as 5 here, and leaves out the game's camera factor (1 at the default field of
-view).
+fade in once it rises above 0.7, which takes 1.2 seconds. Between the two a fade keeps its
+direction, so a reference on the edge does not flicker. OpenSky does the same on both culling
+paths, and draws nothing once a fade out ends.
+
+Where OpenSky differs:
+
+- A reference seen for the first time, after a load or when a cell's scene is built again,
+  takes its side of the band at once, without a fade. The game skips fades for a short time
+  after a load; how long is not known.
+- OpenSky reads `uGridsToLoad` as 5 here, and leaves out the game's camera factor (1 at the
+  default field of view) and its multipliers for cities, complex cells, and interiors.
 
 ## OpenSky's own groups
 

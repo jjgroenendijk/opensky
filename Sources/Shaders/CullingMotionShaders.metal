@@ -8,8 +8,9 @@ static bool cullPlaneKeeps(float4 plane, float3 lower, float3 upper)
     return !(dot(plane.xyz, farthest) + plane.w < 0.0);
 }
 
-// Mirrors `ReferenceFadeDistances.fade`: 0 whole, up to 1 dissolved, 2 past its band.
-static float cullFade(device const CullInstance &instance, constant CullParameters &parameters)
+// Mirrors `ReferenceFadeDistances.step`: 0 whole, up to 1 dissolved, 2 faded out.
+static float cullFade(
+    device const CullInstance &instance, constant CullParameters &parameters, device float2 &state)
 {
     uint category = uint(instance.boundsMin.w);
     if (category == 0 || category > 3 || instance.boundsMax.w <= 0.0 ||
@@ -32,13 +33,30 @@ static float cullFade(device const CullInstance &instance, constant CullParamete
         start = 500.0;
         end = max(1000.0, end);
     }
-    float fadeFrom = multiplier * (start + 0.3 * (end - start));
-    float goneAt = multiplier * (start + 0.7 * (end - start));
+    float fadeIn = multiplier * (start + 0.3 * (end - start));
+    float fadeOut = multiplier * (start + 0.7 * (end - start));
     float distance = length((lower + upper) * 0.5 - parameters.fadeViewer.xyz);
-    if (distance >= goneAt) {
-        return 2.0;
+    float2 current = state;
+    if (parameters.advancesFades == 0) {
+        if (current.x < 0.0) {
+            return distance >= fadeOut ? 2.0 : 0.0;
+        }
+    } else {
+        if (current.x < 0.0) {
+            float side = distance >= 0.5 * (fadeIn + fadeOut) ? 1.0 : 0.0;
+            current = float2(side, side);
+        }
+        if (distance >= fadeOut) {
+            current.y = 1.0;
+        } else if (distance <= fadeIn) {
+            current.y = 0.0;
+        }
+        float step = max(parameters.fadeSeconds, 0.0);
+        current.x =
+            current.y > 0.5 ? min(1.0, current.x + step / 2.0) : max(0.0, current.x - step / 1.2);
+        state = current;
     }
-    return distance <= fadeFrom ? 0.0 : (distance - fadeFrom) / (goneAt - fadeFrom);
+    return current.y > 0.5 && current.x >= 1.0 ? 2.0 : current.x;
 }
 
 kernel void cullInstances(
@@ -47,12 +65,15 @@ kernel void cullInstances(
     device InstanceTransform *output [[buffer(CullBufferIndexOutput)]],
     device atomic_uint *arguments [[buffer(CullBufferIndexArguments)]],
     device atomic_uint *rooms [[buffer(CullBufferIndexRooms)]],
+    device float2 *fadeStates [[buffer(CullBufferIndexFadeStates)]],
     uint index [[thread_position_in_grid]])
 {
     if (index >= parameters.instanceCount) {
         return;
     }
     device const CullInstance &instance = instances[index];
+    // Before any test, so the camera view steps the fade of an instance it does not see.
+    float fade = cullFade(instance, parameters, fadeStates[index]);
     if (parameters.roomWordCount > 0 && instance.room != 0xFFFFFFFFu) {
         uint word = instance.room / 32;
         uint bits = word < parameters.roomWordCount
@@ -71,7 +92,6 @@ kernel void cullInstances(
             }
         }
     }
-    float fade = cullFade(instance, parameters);
     if (fade > 1.0) {
         return;
     }

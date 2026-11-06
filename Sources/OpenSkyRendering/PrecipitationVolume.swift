@@ -46,6 +46,8 @@ nonisolated public final class PrecipitationVolume {
         state: .none, roofOccluded: false, rainLiveCount: 0, snowLiveCount: 0
     )
     public private(set) var drawItems: [ParticlePlayback] = []
+    /// Unit direction the stronger of rain and snow falls, for the roof occlusion view.
+    public private(set) var fallDirection = SIMD3<Float>(0, 0, -1)
     /// The active weather's `SPGD` scales; the hand-tuned look when it names none.
     public var tuning = PrecipitationTuning.fallback {
         didSet {
@@ -116,6 +118,9 @@ nonisolated public final class PrecipitationVolume {
                 * tuning.snow.density
         )
         drawItems = [rain, snow]
+        fallDirection = update.state.rainIntensity >= update.state.snowIntensity
+            ? Self.fallDirection(of: Self.rainDefinition, wind: update.wind)
+            : Self.fallDirection(of: Self.snowDefinition, wind: update.wind)
         snapshot = PrecipitationRuntimeSnapshot(
             state: update.state,
             roofOccluded: false,
@@ -197,6 +202,19 @@ nonisolated extension PrecipitationVolume {
         volume: SIMD3(2400, 2400, 900),
         windStrength: 620
     ))
+
+    /// The mean path of a drop: its fall speed down and the wind's push over half its life.
+    static func fallDirection(
+        of definition: ParticleSystemDefinition, wind: WindState
+    ) -> SIMD3<Float> {
+        guard
+            let emitter = definition.emitters.first,
+            case let .wind(strength)? = definition.modifiers.first?.kind
+        else { return SIMD3(0, 0, -1) }
+        let push = wind.direction * wind.speed * strength * emitter.lifeSpan * 0.5
+        let path = SIMD3(push.x, push.y, -max(emitter.speed, 1))
+        return simd_normalize(path)
+    }
 
     fileprivate static func definition(_ config: DefinitionConfig) -> ParticleSystemDefinition {
         ParticleSystemDefinition(

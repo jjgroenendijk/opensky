@@ -206,6 +206,7 @@ extension Renderer {
         if advanceAnimation {
             updateAnimations(deltaTime: simDelta)
             updateParticles(deltaTime: simDelta)
+            advanceReferenceFades(deltaTime: simDelta)
             updatePrecipitation(deltaTime: simDelta)
             // Same per-frame audio work draw(in:) does, so the benchmark's audio
             // budget measures the shipping tick.

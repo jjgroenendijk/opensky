@@ -142,7 +142,9 @@ extension Renderer {
     private func auxiliaryViews(sunShadows: Bool) -> [AuxiliaryShadowView] {
         var views: [AuxiliaryShadowView] = []
         if precipitationOcclusionEnabled, !precipitation.drawItems.isEmpty {
-            let matrix = PrecipitationOcclusionView.matrix(camera: frameInput.view.position)
+            let matrix = PrecipitationOcclusionView.matrix(
+                camera: frameInput.view.position, fall: precipitation.fallDirection
+            )
             precipitationOcclusionView = matrix
             views.append(AuxiliaryShadowView(
                 slice: ShadowConstant.precipitationSlice.rawValue, viewProjection: matrix,

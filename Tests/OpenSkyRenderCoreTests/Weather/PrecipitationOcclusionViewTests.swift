@@ -33,4 +33,23 @@ struct PrecipitationOcclusionViewTests {
         let edge = project(camera + SIMD3(PrecipitationOcclusionView.halfSize, 0, 0))
         #expect(abs(edge.x - 1) < 0.01)
     }
+
+    @Test
+    func aSlantedFallMapsAPathToOneTexel() {
+        let fall = simd_normalize(SIMD3<Float>(300, -100, -1900))
+        let matrix = PrecipitationOcclusionView.matrix(camera: camera, fall: fall)
+        let ground = camera + SIMD3(200, 50, -100)
+        let above = ground - fall * 3000
+        let low = matrix * SIMD4(ground, 1)
+        let high = matrix * SIMD4(above, 1)
+        #expect(simd_distance(SIMD2(low.x, low.y), SIMD2(high.x, high.y)) < 1e-4)
+        #expect(high.z < low.z)
+    }
+
+    @Test
+    func aNearlyFlatFallKeepsTheSteepestSlant() {
+        let slant = PrecipitationOcclusionView.slant(of: SIMD3(10, 0, -1))
+        #expect(abs(simd_length(slant) - PrecipitationOcclusionView.maximumSlant) < 1e-5)
+        #expect(PrecipitationOcclusionView.slant(of: SIMD3(1, 0, 0)) == .zero)
+    }
 }

@@ -43,7 +43,10 @@ extension Renderer {
             return
         }
         gpuCull.lastCounts = cullScene.counts(slot: slot)
-        cullScene.fade = CullFade(distances: referenceFades, viewer: frameInput.view.position)
+        cullScene.fade = CullFade(
+            distances: referenceFades, viewer: frameInput.view.position,
+            seconds: referenceFadeTimers.takeGPUSeconds()
+        )
         guard
             cullScene.encode(
                 frustums: viewProjections.map(Frustum.init(viewProjection:)),
