@@ -120,9 +120,10 @@ reads it each time the health changes.
   `iPlayerHealthHeartbeatFadeMS` (1,000 ms). A heartbeat that ended starts again on the next
   health change in its band.
 
-Loading a save stops the heartbeat at once, and the cues read the health afresh.
+Loading a save stops the heartbeat at once, and starting a new game fades it out; both make
+the cues read the health afresh. The maximum leaves out temporary modifiers, so a
+fortify-health effect does not change when the cues start.
 The launcher's "Low-health pulse" switch stands for the game's `bLowHealthIModEnabled`.
-OpenSky reads the maximum with temporary modifiers included; the game leaves them out.
 
 ## Where OpenSky differs
 
