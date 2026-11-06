@@ -41,6 +41,8 @@ struct PlayerHealthCuesTests {
         #expect(cues.advance(0.016) != nil)
         #expect(cues.advance(1.9) == nil)
         #expect(cues.advance(0.2) != nil)
+        #expect(cues.pulseCount == 2)
+        #expect(cues.lastPulseStrength == PlayerHealthCues.pulseStrength(share: 0.15))
         _ = cues.healthChanged(share: 0.5, heartbeatPlaying: true)
         #expect(cues.advance(5) == nil)
     }

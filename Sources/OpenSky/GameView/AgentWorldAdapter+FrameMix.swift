@@ -1,10 +1,12 @@
 // The `soundMix`, `treeWind`, and `waterFlow` parts of `state frame` (docs/engine/sound-mix.md,
-// docs/rendering/trees.md, docs/rendering/water.md), and the skin decals of `state actors`.
+// docs/rendering/trees.md, docs/rendering/water.md), the skin decals of `state actors`, and the
+// low-health cues of `state player` (docs/rendering/image-space.md#low-health).
 
 import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyEffects
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorld
@@ -60,6 +62,18 @@ extension AgentWorldAdapter {
             "planes": .init(session.renderer.scene.water.count),
             "flowMaps": .array(maps.map { .string($0.path) }),
             "loaded": .init(maps.filter(\.loaded).count)
+        ]
+    }
+
+    func healthCueState() -> AgentJSON {
+        let cues = game.effects.healthCues
+        return [
+            "heartbeat": cues.heartbeat.map { .string("\($0)") } ?? .null,
+            "pulseEnabled": .bool(cues.pulseEnabled),
+            "pulsing": .bool(cues.pulsing),
+            "pulseCount": .init(cues.pulseCount),
+            "lastPulseStrength": cues.lastPulseStrength.map { .init($0) } ?? .null,
+            "modifierFound": .bool(game.effects.records.lowHealthModifier != nil)
         ]
     }
 }

@@ -240,6 +240,7 @@ extension AgentWorldAdapter {
                 "small": .init(game.controllerRumble.soundMotors.small),
                 "big": .init(game.controllerRumble.soundMotors.big)
             ],
+            "healthCues": healthCueState(),
             "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
             "controls": [
                 "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),

@@ -31,6 +31,9 @@ nonisolated public struct PlayerHealthCues: Equatable, Sendable {
     public private(set) var heartbeat: Heartbeat?
     private var lastShare: Float?
     public private(set) var pulsing = false
+    /// Pulses started since the last reset, and the strength of the newest.
+    public private(set) var pulseCount = 0
+    public private(set) var lastPulseStrength: Float?
     private var countdown: Float = 0
 
     public init() {}
@@ -73,7 +76,10 @@ nonisolated public struct PlayerHealthCues: Equatable, Sendable {
         countdown -= seconds
         guard countdown <= 0 else { return nil }
         countdown = Self.pulseInterval
-        return Self.pulseStrength(share: share)
+        let strength = Self.pulseStrength(share: share)
+        pulseCount += 1
+        lastPulseStrength = strength
+        return strength
     }
 
     /// A new or loaded game: no heartbeat, no pulse. The switch stays.
