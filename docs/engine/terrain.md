@@ -97,10 +97,13 @@ position, not on the view or the light:
    distance of 1000 units.
 4. The sparkle adds `s` times the sparkle colour.
 
-The game picks the sparkle colour by a mode, 2 by default, with a white colour for another
-mode; what mode 2 picks is still not known, so OpenSky uses the sun colour. The game also has a
-snow subsurface colour, (0, 0, 0.08) at a strength of 50, which OpenSky does not draw; its
-formula is not known (second clean-room read, 2026-11-06).
+The game picks the sparkle colour by a mode. Modes 0 and 1 take two colours from the frame's
+lighting, mode 2, the default, takes the colour of the sun light, and mode 3 takes a fixed
+colour, white by default. So OpenSky uses the sun colour. That mode 2 means the sun is likely,
+not confirmed. The game also has a snow subsurface colour with the same four modes, also mode 2
+by default, at a strength of 50; the fixed colour (0, 0, 0.08) is used only in mode 3. A
+separate full-screen pass draws it, and its formula is not known, so OpenSky does not draw it
+(clean-room read of `SkyrimSE.exe` 1.7.104.0, 2026-11-06).
 
 OpenSky's noise is its own simplex noise, so the sparkles fall in other places than the game's,
 at the same density. The same rim and sparkles light a mesh under a snow directional material
