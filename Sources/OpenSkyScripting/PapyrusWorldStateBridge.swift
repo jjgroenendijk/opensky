@@ -25,6 +25,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// this bridge already lives inside.
     public weak var world: PapyrusWorldRuntime? {
         didSet {
+            combatEventKeys = nil
             world?.attachOnUse = { [weak self] in self?.attachOnUse($0) ?? false }
             world?.scriptsOfTarget = { [weak self] in self?.scriptsOfTarget($0) ?? [] }
             world?.isQuestRunning = { [weak self] key in
@@ -112,6 +113,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     var statsJournalCursor: UInt64?
     /// Each scripted actor's combat activity at the last `queueCombatStateEvents`.
     var lastCombatActivity: [ReferenceKey: ActorCombatActivity] = [:]
+    /// The instances with an `OnCombatStateChanged`, sorted, at one instance revision.
+    var combatEventKeys: (revision: UInt64, keys: [PapyrusInstanceKey])?
     /// `Game.SetSunGazeImageSpaceModifier`'s modifier, or nil for none.
     public internal(set) var sunGazeModifier: ReferenceKey?
     var wasSunGazing = false

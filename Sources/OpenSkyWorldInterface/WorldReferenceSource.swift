@@ -20,11 +20,17 @@ nonisolated public protocol PapyrusWorldReferenceSource: AnyObject {
     func pluginPlacement(of key: ReferenceKey) -> PluginPlacement?
     /// Every resident reference, in key order, for the radius searches.
     func residentEntries() -> [RuntimeReferenceEntry]
+    /// Every resident actor, in no fixed order. Cheaper than filtering `residentEntries()`.
+    func residentActorEntries() -> [RuntimeReferenceEntry]
 }
 
 nonisolated extension PapyrusWorldReferenceSource {
     public func residentEntries() -> [RuntimeReferenceEntry] {
         []
+    }
+
+    public func residentActorEntries() -> [RuntimeReferenceEntry] {
+        residentEntries().filter { $0.placedActor != nil }
     }
 
     public func pluginPlacement(of _: ReferenceKey) -> PluginPlacement? {

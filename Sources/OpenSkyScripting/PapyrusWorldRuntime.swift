@@ -42,8 +42,14 @@ public final class PapyrusWorldRuntime {
     /// Written only through `storeInstance(_:for:)` and `retire(_:)`, which keep
     /// `instanceKeysByReference` in step.
     public internal(set) var instancesByKey: [PapyrusInstanceKey: PapyrusObjectHandle] = [:] {
-        didSet { runtime.variableGeneration.advance() }
+        didSet {
+            runtime.variableGeneration.advance()
+            instanceRevision &+= 1
+        }
     }
+
+    /// Rises on every change of `instancesByKey`, so a per-frame scan can keep its list.
+    public private(set) var instanceRevision: UInt64 = 0
 
     /// Each reference's live instance keys in key order, so an event on one reference
     /// does not filter every instance in the world.

@@ -15,10 +15,16 @@ extension PapyrusWorldStateBridge {
     public func queueCombatStateEvents() -> Int {
         guard let world, actorNatives.combatRuntime?() != nil else { return 0 }
         let name = PapyrusEngineEvents.onCombatStateChanged
-        let keys = world.instancesByKey.keys.filter { world.handlesEvent(name, key: $0) }
+        let keys: [PapyrusInstanceKey]
+        if let cached = combatEventKeys, cached.revision == world.instanceRevision {
+            keys = cached.keys
+        } else {
+            keys = world.instancesByKey.keys.filter { world.handlesEvent(name, key: $0) }.sorted()
+            combatEventKeys = (world.instanceRevision, keys)
+        }
         var activities: [ReferenceKey: ActorCombatActivity] = [:]
         var queued = 0
-        for key in keys.sorted() {
+        for key in keys {
             guard let activity = activities[key.reference] ?? combatActivity(of: key.reference)
             else { continue }
             activities[key.reference] = activity
