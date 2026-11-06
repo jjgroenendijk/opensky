@@ -33,6 +33,12 @@ nonisolated public struct WaterShading: Equatable, Sendable {
     public var displacementFalloff: Float = 0
     /// Distance from the camera where the noise normals fade to flat. Nil: no fade.
     public var noiseFalloff: Float?
+    /// `FNAM` bit 3: the cell's flow map steers the `NAM5` flow noise
+    /// (docs/rendering/water.md#flow-maps).
+    public var flowMapped = false
+    /// `NAM5`, as the record spells it; empty without one.
+    public var flowNoiseTexture = ""
+    public var flowMapScale: Float = 0
     /// Under-water fog: near plane, far plane, amount.
     public var underwaterFog = SIMD3<Float>(0, 1000, 0)
 

@@ -257,5 +257,12 @@ extension RenderCommand {
                     + "failed \(renderer.skyCelestial?.failedPaths ?? [])"
             )
         }
+        let flowMaps = renderer.waterFlowMaps()
+            .map { "\($0.path) \($0.loaded ? "loaded" : "missing")" }
+        print(
+            "[INFO] water: \(renderer.scene.water.count) planes, "
+                + "flow maps [\(flowMaps.joined(separator: ", "))], "
+                + "failed \(renderer.waterNoiseTextures?.failedPaths ?? [])"
+        )
     }
 }

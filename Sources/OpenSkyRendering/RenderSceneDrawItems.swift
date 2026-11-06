@@ -79,6 +79,8 @@ nonisolated public struct WaterDrawItem: Sendable {
     public let modelMatrix: float4x4
     public let look: WaterLook
     public let bounds: ModelBounds?
+    /// The cell's flow map, when the water type is flow-mapped and the file exists.
+    public var flowMap: String?
 
     public init(mesh: RenderMesh, modelMatrix: float4x4, look: WaterLook, bounds: ModelBounds?) {
         self.mesh = mesh

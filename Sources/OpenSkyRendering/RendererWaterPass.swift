@@ -74,7 +74,7 @@ extension Renderer {
         draw: Int,
         item: WaterDrawItem,
         depthBound: Bool,
-        noiseMapped: Bool
+        bound: (noise: Bool, flow: Bool)
     ) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         let look = item.look
@@ -101,13 +101,14 @@ extension Renderer {
             depthUnproject: waterDepth.unproject ?? .zero,
             detail: SIMD4(
                 shading.refractionMagnitude, shading.sunSparkleMagnitude,
-                shading.sunSparklePower, noiseMapped ? 1 : 0
+                shading.sunSparklePower, bound.noise ? 1 : 0
             ),
             displacement: shading.displacement,
             rings: SIMD4(
                 shading.displacementFalloff, frameRainOnWater, Float(rings.count),
                 depthBound && waterDepth.copiesColour ? 1 : 0
             ),
+            flow: SIMD4(bound.flow ? 1 : 0, shading.flowMapScale, 0, 0),
             ripples: (.zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero)
         )
         WaterRippleField.write(rings, into: &uniforms.ripples)
@@ -164,9 +165,10 @@ extension Renderer {
                 argumentTable.setTexture(map.gpuResourceID, index: index.rawValue)
             }
         }
+        let flowMapped = bindFlowMaps(item)
         let uniformOffset = updateWaterDrawUniforms(
             slot: state.slot, draw: state.drawCursor, item: item, depthBound: depthBound,
-            noiseMapped: noise != nil
+            bound: (noise != nil, flowMapped)
         )
         state.drawCursor += 1
         state.stats.drawCalls += 1
@@ -187,6 +189,20 @@ extension Renderer {
             indexBuffer: item.mesh.indexBuffer.gpuAddress,
             indexBufferLength: item.mesh.indexBuffer.length
         )
+    }
+
+    /// Binds the cell's flow map and the flow noise; false while either is missing.
+    private func bindFlowMaps(_ item: WaterDrawItem) -> Bool {
+        guard
+            let path = item.flowMap,
+            let flowMap = waterNoiseTextures?.texture(path),
+            let flowNoise = waterNoiseTextures?.texture(item.look.shading.flowNoiseTexture)
+        else { return false }
+        argumentTable.setTexture(flowMap.gpuResourceID, index: TextureIndex.waterFlowMap.rawValue)
+        argumentTable.setTexture(
+            flowNoise.gpuResourceID, index: TextureIndex.waterFlowNoise.rawValue
+        )
+        return true
     }
 
     /// Ends the scene encoder, copies its depth, and opens a second encoder on the same

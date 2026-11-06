@@ -137,6 +137,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// The FaceGen tint or the multi-layer inner layer.
     TextureIndexSurfaceLayer = 6,
     TextureIndexSurfaceBackLight = 7,
+    /// Water binds a river cell's flow map and the flow noise in two free surface slots.
+    TextureIndexWaterFlowMap = 4,
+    TextureIndexWaterFlowNoise = 5,
     /// Screen blood: the splatter colour and its alpha mask, or the flare alone.
     TextureIndexScreenBloodColor = 0,
     TextureIndexScreenBloodAlpha = 1,
@@ -572,6 +575,9 @@ typedef struct
     /// x displacement falloff, y rain 0 to 1, z live ring count, w 1 when the scene colour
     /// copy is bound for refraction.
     vector_float4 rings;
+    /// x 1 when the cell's flow map and the flow noise are bound at
+    /// TextureIndexWaterFlowMap and TextureIndexWaterFlowNoise, y the flow map scale.
+    vector_float4 flow;
     /// Each ring: x, y, age in seconds, strength.
     vector_float4 ripples[WaterConstantMaxRipples];
 } WaterDrawUniforms;

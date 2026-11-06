@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
@@ -74,15 +75,29 @@ nonisolated extension CellSceneBuilder {
             min: .zero,
             max: SIMD3(TerrainMeshBuilder.cellSize, TerrainMeshBuilder.cellSize, 0)
         )
-        return WaterBuild(
-            item: WaterDrawItem(
-                mesh: mesh,
-                modelMatrix: transform,
-                look: look,
-                bounds: localBounds.transformed(by: transform)
-            ),
-            height: height
+        var item = WaterDrawItem(
+            mesh: mesh,
+            modelMatrix: transform,
+            look: look,
+            bounds: localBounds.transformed(by: transform)
         )
+        if look.shading.flowMapped {
+            item.flowMap = flowMapPath(x: grid.x, y: grid.y)
+        }
+        return WaterBuild(item: item, height: height)
+    }
+
+    /// The per-cell flow map sits under the folder of the plugin that made it; the
+    /// latest plugin with a file wins.
+    nonisolated func flowMapPath(x: Int32, y: Int32) -> String? {
+        guard let fileSystem else { return nil }
+        for name in loadOrderPlugins.reversed().map(\.name) {
+            let path = "textures\\water\\\(name.lowercased())\\flow.\(x).\(y).dds"
+            if fileSystem.exists(path) {
+                return path
+            }
+        }
+        return nil
     }
 
     /// An interior has no grid, so its plane spans the XY bounds of the placed
@@ -238,6 +253,10 @@ nonisolated extension CellSceneBuilder {
             flowVelocity: SIMD2(velocity.x, velocity.y)
         )
         shading.noiseTextures = details.noiseTextures.prefix(3).map { $0 ?? "" }
+        shading.flowMapped = details.flags & 0x08 != 0
+        shading.flowNoiseTexture = details.noiseTextures.count > 3 ? details
+            .noiseTextures[3] ?? "" : ""
+        shading.flowMapScale = surface.flowMapScale
         shading.sunSparkleMagnitude = surface.sunSparkleMagnitude
         shading.sunSparklePower = surface.sunSparklePower
         shading.refractionMagnitude = surface.refractionMagnitude

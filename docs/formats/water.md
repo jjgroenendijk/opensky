@@ -88,7 +88,7 @@ any other. Both sizes share these offsets. Each color byte maps to 0...1.
 | 200 | float32 | Sun sparkle magnitude |
 | 204 | float32 | Sun specular magnitude |
 | 224 | float32 | Sun sparkle power |
-| 228 | float32 | Flowmap scale (232-byte size only, not read) |
+| 228 | float32 | Flowmap scale (232-byte size only; [flow maps](/rendering/water.md#flow-maps)) |
 
 These offsets follow the field order of the UESP WATR page and xEdit dev-4.1.6
 `wbDefinitionsTES5.pas`. xEdit names the rest of `DNAM`, and OpenSky does not read it:

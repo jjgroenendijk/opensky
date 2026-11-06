@@ -1,5 +1,5 @@
-// The `soundMix` and `treeWind` parts of `state frame` (docs/engine/sound-mix.md,
-// docs/rendering/trees.md), and the skin decals of `state actors`.
+// The `soundMix`, `treeWind`, and `waterFlow` parts of `state frame` (docs/engine/sound-mix.md,
+// docs/rendering/trees.md, docs/rendering/water.md), and the skin decals of `state actors`.
 
 import OpenSkyAgentControl
 import OpenSkyAudio
@@ -50,6 +50,16 @@ extension AgentWorldAdapter {
             "direction": .array([.init(wind.direction.x), .init(wind.direction.y)]),
             "speed": .init(min(max(wind.speed, 0), 1)),
             "leafFadeDistance": .init(TreeWindPolicy.leafFadeDistance)
+        ]
+    }
+
+    func waterFlowState() -> AgentJSON {
+        guard let session = game.gameSession else { return .null }
+        let maps = session.renderer.waterFlowMaps()
+        return [
+            "planes": .init(session.renderer.scene.water.count),
+            "flowMaps": .array(maps.map { .string($0.path) }),
+            "loaded": .init(maps.filter(\.loaded).count)
         ]
     }
 }

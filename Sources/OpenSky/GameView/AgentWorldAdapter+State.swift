@@ -500,6 +500,7 @@ extension AgentWorldAdapter {
             "projectileVisuals": projectileVisualState(),
             "soundMix": soundMixState(),
             "treeWind": treeWindState(),
+            "waterFlow": waterFlowState(),
             "gpuMemory": gpuMemoryState()
         ]
     }

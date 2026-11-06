@@ -232,6 +232,52 @@ static float2 waterNoiseSlope(
     return slope;
 }
 
+// One exterior cell, in game units.
+constant float waterCellSize = 4096.0;
+
+// A river's flow normal (docs/rendering/water.md#flow-maps). Four flow-map texels, half a
+// texel apart, each turn and scroll the flow noise; tent weights blend them, so no seam
+// shows. `blend` is how much the result replaces the wind noise.
+static float3 waterFlowNormal(
+    float2 xy,
+    float time,
+    constant WaterDrawUniforms &draw,
+    texture2d<float> flowMap,
+    texture2d<float> flowNoise,
+    sampler trilinear,
+    thread float &blend)
+{
+    constexpr sampler texel(filter::nearest, address::clamp_to_edge);
+    float2 local = (xy - draw.modelMatrix[3].xy) / waterCellSize;
+    float2 uv = float2(local.x, 1.0 - local.y);
+    float2 tent = 1.0 - abs(2.0 * fract(64.0 * uv) - 1.0);
+    float halfStep = 1.0 / 128.0;
+    float2 noiseBase = xy / (2.0 * waterCellSize) * 64.0 * sqrt(max(1.01 - draw.flow.y, 0.0));
+    const float4 rates = float4(8.0, 8.48, 10.64, 9.92);
+    const float4 offsets = float4(0.0, 0.62, 0.27, 0.0);
+    const float2 steps[4] = {
+        float2(0.0), float2(halfStep, 0.0), float2(0.0, halfStep), float2(halfStep)};
+    float4 weights = float4(
+        tent.x * tent.y, (1.0 - tent.x) * tent.y, tent.x * (1.0 - tent.y),
+        (1.0 - tent.x) * (1.0 - tent.y));
+    float2 slope = 0.0;
+    blend = 0.0;
+    for (int tap = 0; tap < 4; ++tap) {
+        float4 flow = flowMap.sample(texel, uv + steps[tap], level(0.0));
+        float2 direction = flow.xy * 2.0 - 1.0;
+        float2 noiseUV = float2(
+            direction.x * noiseBase.x - direction.y * noiseBase.y,
+            direction.x * noiseBase.y + direction.y * noiseBase.x);
+        noiseUV.x -= time * 0.001 * flow.a * rates[tap];
+        noiseUV += offsets[tap];
+        slope += (flowNoise.sample(trilinear, noiseUV).xy - 0.5) * weights[tap];
+        blend += flow.z * weights[tap];
+    }
+    float2 spread = tent * tent + (1.0 - tent) * (1.0 - tent);
+    slope /= max(sqrt(spread.x * spread.y), 1.0e-3);
+    return float3(slope, sqrt(saturate(1.0 - dot(slope, slope))));
+}
+
 // One ring around a point: a wave crest that runs out at the displacement velocity, as
 // wide as the starting size, fading with the dampener over its life and with distance.
 static float2 waterRingSlope(float2 xy, float4 ring, constant WaterDrawUniforms &draw)
@@ -338,6 +384,8 @@ fragment float4 waterFragment(
     texture2d<float> noise0 [[texture(TextureIndexSurfaceNormal)]],
     texture2d<float> noise1 [[texture(TextureIndexSurfaceGlow)]],
     texture2d<float> noise2 [[texture(TextureIndexSurfaceDetail)]],
+    texture2d<float> flowMap [[texture(TextureIndexWaterFlowMap)]],
+    texture2d<float> flowNoise [[texture(TextureIndexWaterFlowNoise)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]])
 {
     if (debugViewActive) {
@@ -356,9 +404,19 @@ fragment float4 waterFragment(
             waterNoiseSlope(in.worldPosition.xy, time, draw, noise0, noise1, noise2, trilinear);
         normal = normalize(float3(slope, 1.0));
     }
+    float fade = 1.0;
     if (draw.amplitudes.w >= 0.0) {
-        float fade = saturate(1.0 - length(toCamera) / max(draw.amplitudes.w, 0.001));
+        fade = saturate(1.0 - length(toCamera) / max(draw.amplitudes.w, 0.001));
         normal = normalize(float3(normal.xy / max(normal.z, 0.05) * fade, 1.0));
+    }
+    if (draw.flow.x > 0.5) {
+        // The flow normal never fades below 0.4, so a far river still moves.
+        float blend;
+        float3 flowNormal =
+            waterFlowNormal(in.worldPosition.xy, time, draw, flowMap, flowNoise, trilinear, blend);
+        flowNormal.xy *= max(fade, 0.4);
+        flowNormal.z = sqrt(saturate(1.0 - dot(flowNormal.xy, flowNormal.xy)));
+        normal = normalize(normal + saturate(blend) * (flowNormal - normal));
     }
     float2 ringSlope = waterRainSlope(in.worldPosition.xy, time, draw.rings.y);
     uint ringCount = min(uint(draw.rings.z), uint(WaterConstantMaxRipples));
