@@ -4,6 +4,7 @@
 // needs it, so a player with both options off pays nothing.
 
 import Metal
+import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
@@ -79,6 +80,20 @@ struct AuxiliaryShadowView {
     var target = AuxiliaryShadowTarget.auxiliary
     /// The share of the slice's side the view draws into, from its top-left corner.
     var extent: Float = 1
+    /// The sphere a point light reaches. Its six faces share one caster list.
+    var reach: ShadowReach?
+}
+
+/// A point light's centre and radius.
+nonisolated struct ShadowReach: Equatable {
+    let centre: SIMD3<Float>
+    let radius: Float
+}
+
+/// The shadow groups an auxiliary view draws from.
+struct AuxiliaryCasters {
+    var opaque: [DrawGroup]
+    var alphaTested: [DrawGroup]
 }
 
 extension Renderer {
@@ -93,7 +108,15 @@ extension Renderer {
             slot: slot, base: slot * AuxiliaryShadowResources.instanceLimit,
             rings: resources.rings
         )
+        var casters = AuxiliaryCasters(
+            opaque: frameDrawGroups.shadowOpaque, alphaTested: frameDrawGroups.shadowAlphaTested
+        )
+        var castersReach: ShadowReach?
         for (number, view) in views.enumerated() {
+            if view.reach != castersReach {
+                castersReach = view.reach
+                casters = auxiliaryCasters(reaching: view.reach)
+            }
             let target = view.target == .pointLights ? pointShadowMap?.map : resources.map
             guard let target, let encoder = makeShadowEncoder(cascade: view.slice, target: target)
             else { return false }
@@ -116,11 +139,11 @@ extension Renderer {
                 cullView: -1
             )
             encodeCasterGroups(
-                frameDrawGroups.shadowOpaque, list: .opaque, in: context,
+                casters.opaque, list: .opaque, in: context,
                 excluding: view.excluding, state: &state
             )
             encodeCasterGroups(
-                frameDrawGroups.shadowAlphaTested, list: .alphaTested, in: context,
+                casters.alphaTested, list: .alphaTested, in: context,
                 excluding: view.excluding, state: &state
             )
             if view.drawsTerrain {
@@ -136,6 +159,33 @@ extension Renderer {
             encoder.endEncoding()
         }
         return true
+    }
+
+    /// The shadow groups cut down to the instances inside `reach`; all of them without one.
+    private func auxiliaryCasters(reaching reach: ShadowReach?) -> AuxiliaryCasters {
+        let groups = AuxiliaryCasters(
+            opaque: frameDrawGroups.shadowOpaque, alphaTested: frameDrawGroups.shadowAlphaTested
+        )
+        guard let reach else { return groups }
+        return AuxiliaryCasters(
+            opaque: casters(of: groups.opaque, reaching: reach),
+            alphaTested: casters(of: groups.alphaTested, reaching: reach)
+        )
+    }
+
+    private func casters(of groups: [DrawGroup], reaching reach: ShadowReach) -> [DrawGroup] {
+        groups.indices.compactMap { index -> DrawGroup? in
+            guard groups[index].castsShadows else { return nil }
+            let inside = groups[index].instances.filter { placed in
+                drawn(placed).bounds.map { reach.touches($0) } ?? true
+            }
+            guard !inside.isEmpty else { return nil }
+            let group = groups[index]
+            return DrawGroup(
+                mesh: group.mesh, material: group.material, faceMorph: group.faceMorph,
+                instances: inside
+            )
+        }
     }
 
     /// The views the options ask for this frame; records each one for the scene pass.
@@ -179,5 +229,13 @@ extension Renderer {
         residencySet.commit()
         auxiliaryShadow = resources
         return resources
+    }
+}
+
+nonisolated extension ShadowReach {
+    /// The sphere overlaps the box: the box point nearest the centre is within the radius.
+    func touches(_ bounds: ModelBounds) -> Bool {
+        let nearest = simd_clamp(centre, bounds.min, bounds.max)
+        return simd_distance_squared(nearest, centre) <= radius * radius
     }
 }
