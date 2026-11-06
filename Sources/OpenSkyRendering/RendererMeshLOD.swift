@@ -76,7 +76,9 @@ extension Renderer {
         let key = FadeTimers<MeshLODFade>.Key(
             formID: formID, place: SIMD3<Int32>(position.rounded(.down))
         )
-        let fade = fadeTimers.meshLOD.state(for: key) { state, seconds in
+        let fade = fadeTimers.meshLOD.state(
+            for: key, forgetAfter: MeshLODFade.unseenFramesToSnap
+        ) { state, seconds in
             state?.stepped(toward: target, seconds: seconds) ?? MeshLODFade(level: target)
         }
         return fade ?? MeshLODFade(level: target)

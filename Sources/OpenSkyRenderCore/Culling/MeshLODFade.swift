@@ -6,6 +6,8 @@
 /// triangles fade.
 nonisolated public struct MeshLODFade: Equatable, Sendable {
     public static let seconds: Float = 1
+    /// A shape not drawn for more frames than this takes its new level at once.
+    public static let unseenFramesToSnap = 20
 
     /// The level the reference changes to, or has.
     public private(set) var level: Int

@@ -59,13 +59,18 @@ struct FadeTimers<State> {
         return gpuTick == tick ? 0 : seconds
     }
 
+    /// An entry unseen for more than `forgetAfter` frames steps as a new one.
     mutating func state(
         for key: Key,
+        forgetAfter: Int? = nil,
         step: (State?, Float) -> State?
     ) -> State? {
-        let entry = states[key]
-        if let entry, entry.tick == tick {
-            return entry.state
+        var entry = states[key]
+        if let seen = entry, seen.tick == tick {
+            return seen.state
+        }
+        if let seen = entry, let forgetAfter, tick - seen.tick > forgetAfter {
+            entry = nil
         }
         guard let next = step(entry?.state, seconds) else { return nil }
         states[key] = (next, tick)

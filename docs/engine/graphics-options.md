@@ -51,7 +51,7 @@ player's own `SkyrimPrefs.ini` shows through as the default.
 | `bToggleSparkles` | The glint of sparkle-snow shapes (shader type 14) ([surface shading](/rendering/surface-shading.md)). Both it and the "Snow and ice sparkle" switch must be on |
 | `fLODFadeOutMultActors`, `fLODFadeOutMultItems`, `fLODFadeOutMultObjects` | Scale how far a placed reference is drawn ([reference fade](#reference-fade)). Actors use the actor value, references a rigid body moves the item value, other statics the object value. A faded reference casts no shadow. 0 never fades |
 | `fGrassStartFadeDistance` | Grass starts to thin out at this distance, and is gone at the distance / 0.7, inside 512 to 16384 units. 0 keeps OpenSky's 8192-unit grass reach |
-| `fMeshLODLevel1FadeDist`, `fMeshLODLevel2FadeDist` | Past each distance from the camera, a `BSLODTriShape` instance draws its next coarser level ([NIF](/formats/nif.md#nitrishape)). Such meshes stay on the CPU cull path, which writes the instances grouped by level. A level change cross-fades over 1 second, as in the game (clean-room read of `SkyrimSE.exe` 1.7.104.0, recorded on the issue for reference fades and mesh detail levels): a coarser level draws the first part of the finer level's index list, so the instance draws the coarser level whole and the finer level's extra triangles dissolve out, or in, by the screen-door fade. A change that turns back runs the rest of the way in reverse. Shadows keep full detail. A distance under the sun-shadow distance is raised to it, as in the game. 0 never switches |
+| `fMeshLODLevel1FadeDist`, `fMeshLODLevel2FadeDist` | Past each distance from the camera, a `BSLODTriShape` instance draws its next coarser level ([NIF](/formats/nif.md#nitrishape)). Such meshes stay on the CPU cull path, which writes the instances grouped by level. A level change cross-fades over 1 second, as in the game (clean-room read of `SkyrimSE.exe` 1.7.104.0, recorded on the issue for reference fades and mesh detail levels): a coarser level draws the first part of the finer level's index list, so the instance draws the coarser level whole and the finer level's extra triangles dissolve out, or in, by the screen-door fade. A change that turns back runs the rest of the way in reverse. A shape not drawn for more than 20 frames takes its new level at once, as in the game. The game also has its own detail distances for trees, and scales the distances by the bound radius for some shapes; OpenSky has neither yet. Shadows keep full detail. A distance under the sun-shadow distance is raised to it, as in the game. 0 never switches |
 | `bIBLFEnable` | The image-based lens flare: bright pixels blurred along each screen axis and added to the frame ([post effects](/rendering/post-effects.md#image-based-lens-flare)). Shown and saved, but not drawn yet |
 | `bScreenSpaceReflectionEnabled` | Water reflects the scene drawn before it, by a ray march through the depth copy ([water](/rendering/water.md#screen-space-reflections)) |
 | `bSAOEnable` | Screen-space ambient occlusion in the image-space composite ([post effects](/rendering/post-effects.md#ambient-occlusion)) |
@@ -90,7 +90,9 @@ Where OpenSky differs:
   takes its side of the band at once, without a fade. The game skips fades for a short time
   after a load; how long is not known.
 - OpenSky reads `uGridsToLoad` as 5 here, and leaves out the game's camera factor (1 at the
-  default field of view) and its multipliers for cities, complex cells, and interiors.
+  default field of view). The game also has object, item, and actor multipliers for cities,
+  complex cells, and interiors. A second clean-room read (2026-11-06) found that all nine
+  default to 1, so OpenSky's missing multipliers match the defaults.
 
 ## OpenSky's own groups
 
