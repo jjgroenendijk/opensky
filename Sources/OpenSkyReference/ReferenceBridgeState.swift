@@ -36,6 +36,8 @@ nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
     /// The playing scenes, while the player stands in the world.
     public var scenes: [ReferenceScene]?
     public var condition: ReferenceConditionAnswer?
+    /// Each setting an `ini` line named, by `name:section`; nil when the game has none.
+    public var settings: [String: ReferenceSettingValue?]?
     /// The sun, moons, clouds, and wind, while the player stands in the world.
     public var sky: ReferenceSky?
     /// The playing music type and the queue under it.
@@ -72,5 +74,28 @@ nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
         }
         guard let worldspace, let grid, grid.count == 2 else { return nil }
         return .exterior(worldspace: worldspace, grid: SIMD2(grid[0], grid[1]))
+    }
+}
+
+/// A game setting's value: a switch or a number.
+nonisolated public enum ReferenceSettingValue: Codable, Equatable, Sendable {
+    case bool(Bool)
+    case number(Double)
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let flag = try? container.decode(Bool.self) {
+            self = .bool(flag)
+        } else {
+            self = try .number(container.decode(Double.self))
+        }
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case let .bool(flag): try container.encode(flag)
+        case let .number(value): try container.encode(value)
+        }
     }
 }

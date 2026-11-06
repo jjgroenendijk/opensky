@@ -106,6 +106,17 @@ struct ReferenceBridgeTests {
         #expect(try decode(exterior).selected == nil)
     }
 
+    @Test func askedSettingsDecodeAsSwitchesNumbersOrMissing() throws {
+        let state = try decode("""
+        {"version":1,"batch":"","mainMenu":false,"loading":false,\
+        "settings":{"bSAOEnable:Display":true,"fGamma:Display":1.5,"bNone:Display":null}}
+        """)
+        #expect(state.settings?["bSAOEnable:Display"] == .some(.bool(true)))
+        #expect(state.settings?["fGamma:Display"] == .some(.number(1.5)))
+        #expect(state.settings?["bNone:Display"] == .some(nil))
+        #expect(try decode(exterior).settings == nil)
+    }
+
     @Test func mainMenuHasNoView() throws {
         let state = try decode(#"{"version":1,"batch":"","mainMenu":true,"loading":false}"#)
         #expect(state.view == nil)

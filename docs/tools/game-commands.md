@@ -190,6 +190,7 @@ Every teleport ends with the player standing on the ground below the placed spot
 | --- | --- |
 | `debug overlay <layer> on\|off` | Turns a debug overlay (`navmesh`, `path`, `detection`, `hud`, `ui`) or a render layer (`statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles`) on or off |
 | `debug channel <mode>` | Shows one debug channel of the scene pass: `off`, `wireframe`, `worldnormals`, `texturecoordinates`, `miplevel`, `shadowcascade`, `layercategory` |
+| `debug setting [<id=value,...>]` | Applies player settings, such as `rendering.indirectLight=on`, over the saved ones without saving them, so a capture can show a feature on and off at one view. Each call replaces the last list; no list restores the saved settings. Answers `settings`, the applied values |
 | `debug shadows <off\|low\|high>` | Sets the sun shadow tier until the renderer is rebuilt; `shadowLights` reads how many point lights drew a cube shadow last frame |
 
 ### Where a debug command shows

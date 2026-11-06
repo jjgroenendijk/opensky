@@ -37,6 +37,7 @@ protocol AgentWorldHost: AnyObject {
     var beastForms: BeastFormWorldAdapter { get }
     var playerBeastForm: PlayerBeastForm { get }
     var playerControlLocks: PlayerControlLocks { get }
+    var playerSettings: PlayerSettingsCoordinator { get }
     func showControlRefusal(_ refusal: PlayerControlRefusal)
     var combatWorld: CombatWorldAdapter { get }
     var effects: EffectsCoordinator { get }

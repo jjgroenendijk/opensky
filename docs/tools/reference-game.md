@@ -265,11 +265,22 @@ openskycli reference send 'prid 1A67F' 'condition GetCurrentAIProcedure'
 
 Each scene actor in `scenes` also carries its `processLevel`.
 
+`ini <name:section> [<value>]` reads one of the game's INI or game settings, and sets it
+first when a value follows. The setting is found among the preference INI settings, then the
+main INI settings, then the game settings. `state.json` lists every setting an `ini` line
+named under `settings`, with its current value, or `null` when no setting has that name. The
+value changes in memory only: the INI files keep their text. Many renderer settings are read
+once at startup, so check the picture, not only the value, before you rely on a live change.
+
+```sh
+openskycli reference send 'ini fGamma:Display'
+```
+
 Some console commands are toggles that the state does not report. `tgm` turns god mode off
 when the save has it on, and the next long fall kills the player and reloads the save.
 `tcl` flips collision, so read the player's height in `state.json` after a move. `cow` and
-`coc` can leave the game in third person; `cgf "Game.ForceFirstPerson"` turns it back, and
-`firstPerson` in the state shows the result.
+`coc` can leave the game in third person. The bridge line `camera first` or `camera third`
+switches the player camera, and `firstPerson` in the state shows the result.
 
 ### Recording graph variables
 
@@ -304,7 +315,8 @@ move the player to. [Reference sky and music](/tools/reference-sky-music.md) des
 
 ## Same view, two games
 
-Put both games in first person first. The console has no command for the camera mode.
+Put both games in first person first. The console has no command for the camera mode; the
+bridge line `camera first` sets it.
 
 Without the bridge, from OpenSky to the reference game:
 

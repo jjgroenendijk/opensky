@@ -217,6 +217,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case subGraphVariable(reference: String, name: String, value: Float)
     /// Mutes or unmutes the game's whole sound output.
     case sound(on: Bool)
+    /// `id=value` player settings applied over the saved ones until the next call.
+    case settings([String])
 
     public static func parse(_ name: String, _ args: AgentArguments) throws(AgentFailure) -> Self {
         switch name {

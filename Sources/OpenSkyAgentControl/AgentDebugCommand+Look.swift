@@ -33,6 +33,10 @@ nonisolated extension AgentDebugCommand {
         case "skipbink": .skipBink
         case "titles": try .titles(args.string("step"))
         case "sound": try .sound(on: args.bool("on", default: true))
+        case "setting":
+            try .settings(
+                args.optionalString("values")?.split(separator: ",").map(String.init) ?? []
+            )
         default: throw AgentFailure(.unknownCommand, "unknown debug command: \(name)")
         }
     }
