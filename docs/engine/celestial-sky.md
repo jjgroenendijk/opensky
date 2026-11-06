@@ -140,6 +140,12 @@ from east; that reading of the flag is a guess. `DLC1Eclipse` is the vanilla wea
 
 ## Drawing
 
+The sky gradient goes by the height of the view ray above the horizon, not by the place on
+the screen. The weather's horizon colour is at the horizon and below it, the sky-lower colour
+at 17.5 degrees, and the sky-upper colour from 35 degrees up. So the horizon colour meets the
+fogged far land at the true horizon, also when the camera looks down. The angles are OpenSky's:
+a level view used to show this span from the bottom to the top of the screen.
+
 The sky objects draw after the sky gradient and before the cloud layers, so clouds cover them.
 They follow the camera and use no depth test. The order is stars, aurora, sun glare, sun, moons.
 Stars, aurora, sun, and glare add light; a moon covers what is behind it. A star or aurora

@@ -188,6 +188,7 @@ the detail and the sources it did find.
 | Snow sparkle colour | The sun colour | [terrain](/engine/terrain.md#snow-ground) |
 | Directional material overlay | Drawn inside the shape, on world `(y, -x)` | [surface shading](/rendering/surface-shading.md#directional-materials) |
 | Skin decal size and limit | At most 16 units; 35 kept when unset | [decals](/rendering/decals.md#skin-decals) |
+| Sky gradient heights | Horizon colour at 0 degrees, sky-lower at 17.5, sky-upper from 35 | [celestial sky](/engine/celestial-sky.md#drawing) |
 | Camera far plane | 350,000 units: the LOD reach plus half a level-32 block; the game's own far plane is not known | [coordinates](/decisions/coordinates.md#nearfar-planes-at-skyrim-scale) |
 | Terrain split distance | `fSplitDistanceMult` scales the level 4, 8, and 16 reach; level 32 keeps `fBlockMaximumDistance` | [graphics options](/engine/graphics-options.md) |
 | Large reference LOD hidden per block | The game's per-cell rule is not known | [distant LOD](/engine/distant-lod.md#large-references) |
