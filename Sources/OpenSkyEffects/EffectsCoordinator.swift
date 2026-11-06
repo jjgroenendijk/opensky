@@ -70,6 +70,8 @@ public final class EffectsCoordinator {
     var drewScreenBlood = false
     /// Short lights: muzzle flashes and blasts (EffectsCoordinator+Flashes.swift).
     public internal(set) var flashLights: [FlashLight] = []
+    /// The heartbeat and pulse while the player's health is low.
+    public var healthCues = PlayerHealthCues()
 
     /// Without records there is no game, and every effect draws nothing.
     public init(

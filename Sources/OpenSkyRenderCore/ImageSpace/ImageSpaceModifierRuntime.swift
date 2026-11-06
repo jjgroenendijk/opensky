@@ -10,7 +10,8 @@ nonisolated public struct ImageSpaceModifierInstance: Equatable, Sendable {
     public let key: ReferenceKey
     public let name: String
     public let adapter: ImageSpaceAdapter
-    /// 0 to 1. Scales how far each envelope moves the baseline.
+    /// 0 to 1, or up to 1.5 for the low-health pulse. Scales how far each envelope moves
+    /// the baseline.
     public let strength: Float
     public let looping: Bool
     public internal(set) var elapsed: Float = 0
@@ -59,15 +60,18 @@ nonisolated public struct ImageSpaceModifierRuntime: Equatable, Sendable {
     public init() {}
 
     /// Starts `adapter`. A one-shot start of a record already running restarts it,
-    /// so a burst of hits does not stack the same flash.
+    /// so a burst of hits does not stack the same flash; the low-health pulse stacks.
+    /// Scripts may not pass 1; that pulse goes to 1.5.
     public mutating func start(
         _ adapter: ImageSpaceAdapter,
         key: ReferenceKey,
         strength: Float = 1,
         looping: Bool = false,
-        fadeIn: Float = 0
+        fadeIn: Float = 0,
+        strengthLimit: Float = 1,
+        stacks: Bool = false
     ) {
-        if !looping {
+        if !looping, !stacks {
             instances.removeAll { $0.key == key && !$0.looping }
         }
         if instances.count >= Self.maximumInstances {
@@ -77,7 +81,7 @@ nonisolated public struct ImageSpaceModifierRuntime: Equatable, Sendable {
             key: key,
             name: adapter.editorID ?? key.description,
             adapter: adapter,
-            strength: strength.isFinite ? simd_clamp(strength, 0, 1) : 0,
+            strength: strength.isFinite ? simd_clamp(strength, 0, strengthLimit) : 0,
             looping: looping,
             fadeIn: fadeIn.isFinite ? max(fadeIn, 0) : 0
         ))

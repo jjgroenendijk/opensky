@@ -121,9 +121,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Focus shadows and the precipitation occlusion map (depth2d_array). The cascade
     /// array stands in until an option builds it.
     TextureIndexAuxiliaryShadowMap = 26,
-    /// A static's directional material: the MATO diffuse and normal maps.
+    /// A static's directional material: its diffuse map and the edge noise.
     TextureIndexProjectedDiffuse = 27,
-    TextureIndexProjectedNormal = 28,
+    TextureIndexProjectedNoise = 28,
     /// Cube faces of the shadow-casting point lights (depth2d_array, 6 slices a light).
     /// The cascade array stands in until a shadow light builds it.
     TextureIndexPointShadowMap = 29,
@@ -137,6 +137,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// The FaceGen tint or the multi-layer inner layer.
     TextureIndexSurfaceLayer = 6,
     TextureIndexSurfaceBackLight = 7,
+    /// Water binds a river cell's flow map and the flow noise in two free surface slots.
+    TextureIndexWaterFlowMap = 4,
+    TextureIndexWaterFlowNoise = 5,
     /// Screen blood: the splatter colour and its alpha mask, or the flare alone.
     TextureIndexScreenBloodColor = 0,
     TextureIndexScreenBloodAlpha = 1,
@@ -173,6 +176,10 @@ typedef NS_ENUM(EnumBackingType, ShadowConstant)
     ShadowConstantFocusCount = 4,
     ShadowConstantPrecipitationSlice = 4,
     ShadowConstantAuxiliarySliceCount = 5,
+    /// Each auxiliary slice's side; a view draws into its top-left corner.
+    ShadowConstantAuxiliarySize = 1024,
+    /// The precipitation view's side in texels: the game's 8 units a texel.
+    ShadowConstantPrecipitationResolution = 512,
     /// Shadow-casting point lights drawn at once, each with 6 cube faces.
     ShadowConstantPointLightCount = 4,
     ShadowConstantPointFaceCount = 6,
@@ -388,11 +395,13 @@ typedef struct
     unsigned int precipitationOcclusionEnabled;
     /// World to each focus shadow's clip space; the first `focusShadowCount` are drawn.
     matrix_float4x4 focusShadowViewProjections[ShadowConstantFocusCount];
+    /// How dark each focus shadow may make a point, by its actor's distance.
+    vector_float4 focusShadowStrengths;
+    /// The share of the slice's side each focus view drew into.
+    vector_float4 focusShadowExtents;
     unsigned int focusShadowCount;
     /// Receiver depth bias of the focus views, in their depth units.
     float focusShadowBias;
-    /// 1: specular surfaces reflect the directional ambient light.
-    unsigned int imageBasedLighting;
     /// 1: the water reflects the scene colour copy bound at TextureIndexSceneColor.
     unsigned int screenSpaceReflections;
 } FrameUniforms;
@@ -440,9 +449,10 @@ typedef struct
     vector_float4 multiLayer;
     /// Directional material: xyz the world direction, w the cosine of its max angle.
     vector_float4 projectedDirection;
-    /// x falloff scale, y falloff bias, z material UV scale, w 0 none, 1 colour, 2 textures.
+    /// x falloff scale, y falloff bias, z texture tile in units, w 0 none, 1 colour,
+    /// 2 single-pass texture, 3 overlay texture, plus 4 for snow.
     vector_float4 projectedParameters;
-    /// rgb single-pass colour, a noise UV scale.
+    /// rgb single-pass colour, a noise tile in units.
     vector_float4 projectedColor;
     /// Tree wind: x sway, y sway frequency, z leaf amplitude, w leaf frequency. A w above
     /// 0 marks the vertex alpha as the leaf's wind weight (docs/rendering/trees.md).
@@ -538,37 +548,6 @@ typedef struct
     unsigned int snowLayers;
 } TerrainDrawUniforms;
 
-/// One water surface. Colors and shading decode from WATR DNAM (docs/formats/water.md).
-typedef struct
-{
-    matrix_float4x4 modelMatrix;
-    vector_float3 shallowColor;
-    vector_float3 deepColor;
-    vector_float3 reflectionColor;
-    /// x=opacity, y=fresnel amount, z=reflectivity, w=sun specular power.
-    vector_float4 surface;
-    /// x=sun specular magnitude, y=fog near, z=fog far, w=1 when scene depth is bound.
-    vector_float4 depthAndSun;
-    /// Per noise layer: direction in radians, speed in tiles per second, tile size, slope.
-    vector_float4 windDirections;
-    vector_float4 windSpeeds;
-    vector_float4 uvScales;
-    vector_float4 amplitudes;
-    vector_float2 flowVelocity;
-    /// Projection terms (m22, m32): view depth = y / (ndcDepth + x).
-    vector_float2 depthUnproject;
-    /// x refraction magnitude, y sun sparkle magnitude, z sun sparkle power, w 1 when the
-    /// three noise maps are bound at TextureIndexSurfaceNormal, Glow, and Detail.
-    vector_float4 detail;
-    /// Displacement rings: starting size, force, velocity, dampener.
-    vector_float4 displacement;
-    /// x displacement falloff, y rain 0 to 1, z live ring count, w 1 when the scene colour
-    /// copy is bound for refraction.
-    vector_float4 rings;
-    /// Each ring: x, y, age in seconds, strength.
-    vector_float4 ripples[WaterConstantMaxRipples];
-} WaterDrawUniforms;
-
 /// Per-draw slot for the sun-shadow depth pre-pass; fits one 256-byte uniform
 /// ring slot. modelMatrix is for the terrain caster; static and skinned
 /// casters use the instance/bone path. uv and alphaThreshold drive the
@@ -583,6 +562,7 @@ typedef struct
 } ShadowDrawUniforms;
 
 #include "CullingShaderTypes.h"
+#include "WaterShaderTypes.h"
 #include "EffectShaderTypes.h"
 #include "ScreenShaderTypes.h"
 #include "MenuSceneShaderTypes.h"

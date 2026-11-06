@@ -56,7 +56,7 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
             RenderProjectedMaterial(
                 $0,
                 diffuse: load($0.diffuseTexture, .color),
-                normal: load($0.normalTexture, .data)
+                noise: load($0.noiseTexture, .data)
             )
         }
     }
@@ -64,7 +64,7 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
     public var textures: [MTLTexture] {
         [
             glow, detail, environment, environmentMask, innerLayer, backLight,
-            projected?.diffuse, projected?.normal
+            projected?.diffuse, projected?.noise
         ].compactMap(\.self)
     }
 

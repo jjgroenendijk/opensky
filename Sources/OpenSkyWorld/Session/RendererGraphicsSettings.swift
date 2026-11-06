@@ -68,19 +68,19 @@ extension Renderer {
         )
         precipitationOcclusionEnabled = store.bool(.precipitationOcclusion)
         postEffects = PostEffectSettings(store: store)
-        surfaceFeatures.imageBasedLighting = store.bool(.imageBasedLighting)
         surfaceFeatures.improvedSnow = store.bool(.improvedSnow)
         surfaceFeatures.projectedTextures = store.bool(.projectedTextures)
         let focus = store.value(.focusShadows)
         focusShadowCount = focus.isFinite ? Int(min(max(focus, 0), 4)) : 0
-        meshLODDistances = MeshLODDistances(
-            level1: store.value(.meshLODLevel1), level2: store.value(.meshLODLevel2)
-        )
         if let grass = GrassRenderPolicy.drawDistance(fadeStart: store.value(.grassFadeStart)) {
             grassDrawDistance = grass
         }
         shadowSettings = ShadowSettings(
             distance: store.value(.shadowDistance), resolution: store.value(.shadowMapResolution)
+        )
+        meshLODDistances = MeshLODDistances(
+            level1: store.value(.meshLODLevel1), level2: store.value(.meshLODLevel2),
+            shadowDistance: shadowSettings.distance ?? Self.shadowDistance
         )
         let caps = PlayerSettingsCatalog.frameRateCapOptions
         frameRateCap = caps[min(max(Int(store.value(.frameRateCap)), 0), caps.count - 1)]

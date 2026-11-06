@@ -6,16 +6,16 @@ import simd
 nonisolated public enum PrecipitationOcclusionView {
     /// Half the side of the square the view covers; rain spawns well inside it.
     public static let halfSize: Float = 2048
-    public static let resolution = 1024
+    /// The centre moves in steps of this many units, so roofs do not shimmer.
+    public static let snap: Float = 32
     /// The view's top above the camera and its bottom below it.
     public static let reachAbove: Float = 6000
     public static let reachBelow: Float = 4000
 
     /// World to the view: x and y to clip space, z to depth 0 at the top, 1 at the
-    /// bottom. The centre snaps to whole texels, so roofs do not shimmer as the camera moves.
+    /// bottom.
     public static func matrix(camera: SIMD3<Float>) -> float4x4 {
-        let texel = 2 * halfSize / Float(resolution)
-        let centre = (SIMD2(camera.x, camera.y) / texel).rounded(.toNearestOrEven) * texel
+        let centre = (SIMD2(camera.x, camera.y) / snap).rounded(.toNearestOrEven) * snap
         let top = camera.z + reachAbove
         let range = reachAbove + reachBelow
         return float4x4(columns: (

@@ -36,7 +36,9 @@ FetchContent_Populate(directxtk)
 
 add_library(OpenSkyBridge SHARED
     src/Channel.cpp
+    src/Places.cpp
     src/Plugin.cpp
+    src/Sky.cpp
     src/State.cpp
     src/Watch.cpp
     src/WineShim.cpp)

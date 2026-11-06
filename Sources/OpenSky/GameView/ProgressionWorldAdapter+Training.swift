@@ -58,7 +58,6 @@ extension ProgressionWorldAdapter {
             switch command {
             case let .showNotification(text): game.hud.showNotification(text)
             case let .incrementStat(name): game.worldState.incrementMiscStat(name)
-            case .playLevelUpMusic: game.audio.musicDirector?.playSpecialMusic(.levelUp)
             }
         }
     }

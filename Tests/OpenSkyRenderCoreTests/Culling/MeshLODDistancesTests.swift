@@ -13,6 +13,14 @@ struct MeshLODDistancesTests {
     }
 
     @Test
+    func noSwitchInsideTheShadowDistance() {
+        let distances = MeshLODDistances(level1: 2000, level2: 9000, shadowDistance: 8000)
+        #expect(distances.level1 == 8000)
+        #expect(distances.level2 == 9000)
+        #expect(MeshLODDistances(level1: 0, level2: 0, shadowDistance: 8000).isOn == false)
+    }
+
+    @Test
     func zeroNeverSwitches() {
         #expect(MeshLODDistances.off.isOn == false)
         #expect(MeshLODDistances(level1: 0, level2: 4000).level(distance: 3000) == 0)

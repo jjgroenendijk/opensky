@@ -70,13 +70,41 @@ Ray-traced shadows still test the vertex normal.
 
 A land texture with the Skyrim SE snow flag (`LTEX` `INAM`) is snow ground. With the game's
 `[Display] bEnableImprovedSnow` on, the snow share of a pixel blends from the base and the
-layers by the same weights as the colour. That share adds, times the sun shadow:
+layers by the same weights as the colour, and so does the texture's alpha, the snow mask.
 
-- a broad sun sheen, `sun * 0.25 * (N.H)^24`;
-- fine glints: one cell in about 67 of a fixed 4-unit world grid adds `sun * 2 * (N.H)^6`.
+The game adds a white rim sheen to snow, times the mask and the snow share, whatever the light
+(clean-room read of the game's shaders and of `SkyrimSE.exe` 1.7.104.0, 2026-11-06):
 
-The game's snow shader is not documented. This sheen and glint pattern, and their values,
-are OpenSky's own.
+```text
+rim = (1 - saturate(Ng . V))^fSnowGeometrySpecPower * (1 - saturate(N . V))^fSnowNormalSpecPower
+      * fSnowRimLightIntensity                         (3, 2, and 0.3 by default)
+```
+
+`Ng` is the vertex normal, `N` the normal-mapped one, and `V` the direction to the eye. So snow
+brightens toward the horizon and on slopes seen edge-on. The game drops the sun's specular on
+snow and adds the point lights' specular to the rim; land has no specular in OpenSky, so neither
+applies.
+
+The game then adds sparkles, also times the snow mask. They depend only on the world
+position, not on the view or the light:
+
+1. `v = (noise(world * fSparklesSize * 0.07) + 1) / 2`, where the noise is 3D simplex noise in
+   -1 to 1 and the size is 6, so about 0.42 noise cells per unit.
+2. `s = v^fSparklesSpecularPower` (2). Below `fSparklesDensity` (0.85), `s` is 0, so "density"
+   is a cut-off: with the defaults only `v` above 0.922 sparkles.
+3. `s` is scaled by `fSparklesIntensity` (1), by `sh + (1 - sh) * fShadowSparkleIntensity`
+   (0.25) with `sh` the sun shadow, and by `1 - smoothstep(0, fSparklesMaxDistance, d)` with a
+   distance of 1000 units.
+4. The sparkle adds `s` times the sparkle colour.
+
+The game picks the sparkle colour from its lighting state by a setting whose meaning the read
+did not settle; OpenSky uses the sun colour. OpenSky's noise is its own simplex noise, so the
+sparkles fall in other places than the game's, at the same density. The same rim and
+sparkles light a mesh under a snow directional material
+([surface shading](/rendering/surface-shading.md#directional-materials)).
+
+The game also turns ambient occlusion off where the snow mask is above zero. OpenSky's
+occlusion pass has no snow mask, so snow still darkens in corners.
 
 ## Placement
 

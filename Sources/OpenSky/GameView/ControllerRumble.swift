@@ -14,9 +14,13 @@ final class ControllerRumble {
     var isEnabled: () -> Bool = { true }
     /// The last rumble asked for, for the `state player` read.
     private(set) var lastRumble: ShoutRumble?
-    /// What asked for the last rumble: `shout`, `weapon`, or `sound`.
+    /// What asked for the last rumble: `shout` or `weapon`.
     private(set) var lastRumbleCause: String?
     private var engines: [String: CHHapticEngine] = [:]
+    /// The looping players the sound rumble steers, by engine key.
+    private var soundPlayers: [String: CHHapticAdvancedPatternPlayer] = [:]
+    /// The motor strengths the sounds ask for this frame, for the `state player` read.
+    private(set) var soundMotors = SoundRumble.silent
 
     func shout(words: Int) {
         guard let rumble = settings.rumble(words: words) else { return }
@@ -32,11 +36,64 @@ final class ControllerRumble {
         ), cause: "weapon")
     }
 
-    func sound(_ rumble: SoundRumble) {
-        play(ShoutRumble(
-            bigSeconds: rumble.seconds, bigStrength: rumble.big,
-            smallSeconds: rumble.seconds, smallStrength: rumble.small
-        ), cause: "sound")
+    /// Sets both motors to the sounds' strengths this frame; silent stops them.
+    func follow(_ motors: SoundRumble) {
+        let motors = isEnabled() ? motors : .silent
+        guard motors != soundMotors else { return }
+        soundMotors = motors
+        for controller in GCController.controllers() {
+            guard let haptics = controller.haptics else { continue }
+            if haptics.supportedLocalities.contains(.leftHandle) {
+                steer(motors.big, on: controller, at: .leftHandle)
+                steer(motors.small, on: controller, at: .rightHandle)
+            } else {
+                steer(max(motors.big, motors.small), on: controller, at: .default)
+            }
+        }
+    }
+
+    private func steer(
+        _ strength: Float,
+        on controller: GCController,
+        at locality: GCHapticsLocality
+    ) {
+        let key = Self.key(controller, locality)
+        guard strength > 0 else {
+            try? soundPlayers.removeValue(forKey: key)?.stop(atTime: CHHapticTimeImmediate)
+            return
+        }
+        let control = CHHapticDynamicParameter(
+            parameterID: .hapticIntensityControl, value: min(strength, 1), relativeTime: 0
+        )
+        if let player = soundPlayers[key] {
+            try? player.sendParameters([control], atTime: CHHapticTimeImmediate)
+            return
+        }
+        guard
+            let engine = engine(for: controller, at: locality),
+            let player = Self.loopingPlayer(on: engine)
+        else { return }
+        try? player.sendParameters([control], atTime: CHHapticTimeImmediate)
+        soundPlayers[key] = player
+    }
+
+    /// A full-strength buzz that loops until stopped; the intensity control scales it.
+    private static func loopingPlayer(on engine: CHHapticEngine) -> CHHapticAdvancedPatternPlayer? {
+        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 1)
+        let event = CHHapticEvent(
+            eventType: .hapticContinuous, parameters: [intensity], relativeTime: 0, duration: 1
+        )
+        guard
+            let pattern = try? CHHapticPattern(events: [event], parameters: []),
+            let player = try? engine.makeAdvancedPlayer(with: pattern)
+        else { return nil }
+        player.loopEnabled = true
+        try? player.start(atTime: CHHapticTimeImmediate)
+        return player
+    }
+
+    private static func key(_ controller: GCController, _ locality: GCHapticsLocality) -> String {
+        "\(ObjectIdentifier(controller).hashValue)/\(locality.rawValue)"
     }
 
     private func play(_ rumble: ShoutRumble, cause: String) {
@@ -80,7 +137,7 @@ final class ControllerRumble {
     private func engine(for controller: GCController, at locality: GCHapticsLocality)
         -> CHHapticEngine?
     {
-        let key = "\(ObjectIdentifier(controller).hashValue)/\(locality.rawValue)"
+        let key = Self.key(controller, locality)
         if let engine = engines[key] {
             return engine
         }

@@ -314,6 +314,12 @@ extension ReferenceArguments.Capture: CLIRunnable {
     }
 }
 
+extension ReferenceArguments.Shot: CLIRunnable {
+    func execute() throws {
+        try ReferenceCapture.shot(arguments: self)
+    }
+}
+
 extension ReferenceArguments.State: CLIRunnable {
     func execute() throws {
         try ReferenceBridgeCommand.state(arguments: self)

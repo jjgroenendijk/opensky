@@ -29,9 +29,16 @@ extension CellStreamer {
     }
 
     /// The start area can show without holes: an interior is in, or the near grid
-    /// resolved and the distant ring of its center was integrated or failed.
+    /// resolved and the distant ring of its center was integrated or failed. A quick
+    /// first ring also waits for its large references, so they never swap in view.
     public var startAreaReady: Bool {
-        interiorScene != nil || (nearGridResolved && settledLODCenter == grid.center)
+        interiorScene != nil
+            || (nearGridResolved && settledLODCenter == grid.center && !awaitsLargeReferences)
+    }
+
+    private var awaitsLargeReferences: Bool {
+        composition.distantLOD?.largeReferencesPending == true
+            && largeReferenceSettledCenter != grid.center
     }
 
     /// Requests the distant ring for the current center once the near grid has
@@ -54,7 +61,9 @@ extension CellStreamer {
             && largeReferenceRequestCenter != grid.center
         guard nearGridResolved, requestedLODCenter != grid.center || addsLargeReferences
         else { return }
-        if runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident) {
+        if runner.enqueueDistantLOD(
+            center: grid.center, hiddenCells: core.resident, state: stateSource()
+        ) {
             requestedLODCenter = grid.center
             largeReferenceRequestCenter = addsLargeReferences ? grid.center : nil
         }
@@ -65,6 +74,9 @@ extension CellStreamer {
         for entry in entries {
             if entry.center == grid.center {
                 settledLODCenter = entry.center
+            }
+            if entry.center == largeReferenceRequestCenter {
+                largeReferenceSettledCenter = entry.center
             }
             switch entry.result {
             case let .success(scene) where entry.center == grid.center:

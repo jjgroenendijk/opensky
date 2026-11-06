@@ -46,7 +46,8 @@ extension Renderer {
         let perspective = waterDepth.unproject != nil && !isRenderDebugActive
         waterDepth.waterReads = perspective && waterDepth.enabled && !scene.water.isEmpty
             && effectiveRenderLayers.contains(.water)
-        waterDepth.copies = waterDepth.waterReads || perspective && softEffectsInView()
+        waterDepth.copies = waterDepth.waterReads
+            || perspective && (softEffectsInView() || projectedDecalsDraw)
         waterDepth.reflects = waterDepth.waterReads && waterDepth.screenSpaceReflections
         waterDepth.copiesColour = waterDepth.waterReads
     }
@@ -73,7 +74,7 @@ extension Renderer {
         draw: Int,
         item: WaterDrawItem,
         depthBound: Bool,
-        noiseMapped: Bool
+        bound: (noise: Bool, flow: Bool)
     ) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         let look = item.look
@@ -95,18 +96,19 @@ extension Renderer {
             windDirections: SIMD4(shading.windDirections * (.pi / 180), 0),
             windSpeeds: SIMD4(shading.windSpeeds, 0),
             uvScales: SIMD4(shading.uvScales, 0),
-            amplitudes: SIMD4(shading.amplitudes, 0),
+            amplitudes: SIMD4(shading.amplitudes, shading.noiseFalloff ?? -1),
             flowVelocity: shading.flowVelocity,
             depthUnproject: waterDepth.unproject ?? .zero,
             detail: SIMD4(
                 shading.refractionMagnitude, shading.sunSparkleMagnitude,
-                shading.sunSparklePower, noiseMapped ? 1 : 0
+                shading.sunSparklePower, bound.noise ? 1 : 0
             ),
             displacement: shading.displacement,
             rings: SIMD4(
                 shading.displacementFalloff, frameRainOnWater, Float(rings.count),
                 depthBound && waterDepth.copiesColour ? 1 : 0
             ),
+            flow: SIMD4(bound.flow ? 1 : 0, shading.flowMapScale, 0, 0),
             ripples: (.zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero)
         )
         WaterRippleField.write(rings, into: &uniforms.ripples)
@@ -163,9 +165,10 @@ extension Renderer {
                 argumentTable.setTexture(map.gpuResourceID, index: index.rawValue)
             }
         }
+        let flowMapped = bindFlowMaps(item)
         let uniformOffset = updateWaterDrawUniforms(
             slot: state.slot, draw: state.drawCursor, item: item, depthBound: depthBound,
-            noiseMapped: noise != nil
+            bound: (noise != nil, flowMapped)
         )
         state.drawCursor += 1
         state.stats.drawCalls += 1
@@ -186,6 +189,20 @@ extension Renderer {
             indexBuffer: item.mesh.indexBuffer.gpuAddress,
             indexBufferLength: item.mesh.indexBuffer.length
         )
+    }
+
+    /// Binds the cell's flow map and the flow noise; false while either is missing.
+    private func bindFlowMaps(_ item: WaterDrawItem) -> Bool {
+        guard
+            let path = item.flowMap,
+            let flowMap = waterNoiseTextures?.texture(path),
+            let flowNoise = waterNoiseTextures?.texture(item.look.shading.flowNoiseTexture)
+        else { return false }
+        argumentTable.setTexture(flowMap.gpuResourceID, index: TextureIndex.waterFlowMap.rawValue)
+        argumentTable.setTexture(
+            flowNoise.gpuResourceID, index: TextureIndex.waterFlowNoise.rawValue
+        )
+        return true
     }
 
     /// Ends the scene encoder, copies its depth, and opens a second encoder on the same

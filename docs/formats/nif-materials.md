@@ -372,4 +372,16 @@ The active weathers' own night `Effect Lighting` colours are blue, for example
 `SkyrimClear` (0.08, 0.37, 0.58), so the glow does not take the active weather. The changes
 fall at the `SkyrimClimate` sunrise (05:30 to 10:00) and sunset (16:00 to 20:30) times.
 Brightness is not settled: the red the glow adds halves from 19:00 to 21:00, although both
-keys have red 0.95, so a later step, perhaps the image space, scales it.
+keys have red 0.95, so a later step scales it.
+
+A clean-room read of the game's lighting shader (2026-11-06) narrows that step down:
+
+- The emittance colour times its multiplier joins the light sum, with the sun, point, and
+  ambient light, before the sum multiplies the diffuse texture. So the glow is
+  `albedo * emittance * multiplier`, then times the vertex colour. OpenSky does the same.
+- Fog then blends the whole lit colour, emittance included, toward the fog colour. Storm fog
+  reaches full strength much nearer than clear fog, so it likely explains the glow lost under
+  `SkyrimStormRain`. OpenSky fogs the glow the same way.
+- The lighting shader has no hour or weather factor of its own, and no eye adaptation or tone
+  mapping. So the drop from 19:00 to 21:00 must come from a frame-wide step after it, most
+  likely eye adaptation in the image space. That step is not decoded yet.

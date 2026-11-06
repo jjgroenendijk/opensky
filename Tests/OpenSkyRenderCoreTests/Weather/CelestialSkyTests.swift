@@ -13,37 +13,44 @@ struct CelestialSkyTests {
 
     // MARK: - Sun
 
-    @Test func theSunRisesEastPeaksAtMiddayAndSetsWest() throws {
+    /// The fixture's horizon hours are 7 and 19 with a half-hour fade, so the disc's day
+    /// runs from 6.75 to 19.25 and peaks at 13.
+    @Test func theSunRunsATriangleFromEastToWest() throws {
         let climate = try Self.climate()
-        let rise = sky(hour: 7, climate: climate).sunDirection
+        let rise = sky(hour: 6.75, climate: climate).sunDirection
         let noon = sky(hour: 13, climate: climate).sunDirection
-        let set = sky(hour: 19, climate: climate).sunDirection
-        let midnight = sky(hour: 1, climate: climate).sunDirection
+        let set = sky(hour: 19.25, climate: climate).sunDirection
         #expect(rise.x > 0.99 && abs(rise.z) < 1e-4)
-        #expect(noon.z > 0.99)
+        #expect(noon.z > 0.99 && noon.y > 0)
         #expect(set.x < -0.99 && abs(set.z) < 1e-4)
-        #expect(midnight.z < -0.9)
-        // A little south of overhead, by fSunYExtreme.
-        #expect(noon.y < 0)
+        // Halfway up the morning the height equals the east reach: a straight edge.
+        let morning = sky(hour: 9.875, climate: climate).sunDirection
+        #expect(abs(morning.x - morning.z) < 1e-4)
+        // By night it runs back east, overhead in the middle of the night, unseen.
+        let midnight = sky(hour: 1, climate: climate)
+        #expect(midnight.sunDirection.z > 0.99 && midnight.sunAlpha == 0)
     }
 
-    @Test func theSunDiscFadesAtTheHorizon() throws {
+    @Test func theSunDiscFadesAcrossTheHorizonHours() throws {
         let climate = try Self.climate()
         #expect(sky(hour: 1, climate: climate).sunAlpha == 0)
         #expect(sky(hour: 13, climate: climate).sunAlpha == 1)
-        // fSunAlphaTransTime is half an hour.
-        #expect(abs(sky(hour: 7.25, climate: climate).sunAlpha - 0.5) < 1e-4)
+        #expect(abs(sky(hour: 7, climate: climate).sunAlpha - 0.5) < 1e-4)
+        #expect(abs(sky(hour: 19, climate: climate).sunAlpha - 0.5) < 1e-4)
     }
 
-    @Test func theLightStaysAboveTheMinimumAndHasNoJumpAtSunset() throws {
+    @Test func theLightComesFromAFixedHeightAndHasNoJumpAtSunset() throws {
         let climate = try Self.climate()
-        let lowest = sin(CelestialSky.minimumLightElevation)
+        // fSunDirXExtreme 200 over fSunXExtreme 400 halves the east part; the height is
+        // -fSunZExtreme, 150, so the light is never lower than about 37 degrees.
+        let noon = sky(hour: 13, climate: climate).lightDirection
+        #expect(simd_distance(noon, simd_normalize(SIMD3(0, -20, -150))) < 1e-4)
         for hour in stride(from: Float(0), to: 24, by: 0.25) {
             let light = sky(hour: hour, climate: climate).lightDirection
-            #expect(-light.z >= lowest - 1e-4, "light from below the horizon at \(hour)")
+            #expect(-light.z > sin(36 * Float.pi / 180), "light too low at \(hour)")
         }
-        let before = sky(hour: 18.99, climate: climate).lightDirection
-        let after = sky(hour: 19.01, climate: climate).lightDirection
+        let before = sky(hour: 19.24, climate: climate).lightDirection
+        let after = sky(hour: 19.26, climate: climate).lightDirection
         #expect(simd_distance(before, after) < 0.01)
     }
 
@@ -66,8 +73,20 @@ struct CelestialSkyTests {
         #expect(MoonPhase.at(daysPassed: 40, phaseLengthDays: 0) == .full)
     }
 
+    @Test func aMoonInViewKeepsItsPhaseUntilItIsHidden() throws {
+        let climate = try Self.climate(moons: 0xC3)
+        // Day 6 starts the half waning phase, but Masser stands at the top of its path:
+        // it rose past its fade end at day 5.81, still three waning.
+        let masser = try #require(sky(hour: 0, climate: climate, days: 6).moons.first)
+        #expect(masser.alpha == 1)
+        #expect(masser.phase == .threeWaning)
+        let hidden = try #require(sky(hour: 0, climate: climate, days: 6.5).moons.first)
+        #expect(hidden.alpha == 0)
+        #expect(hidden.phase == .halfWaning)
+    }
+
     @Test func theClimateNamesWhichMoonsShowAndTheirTextures() throws {
-        let both = try sky(hour: 1, climate: Self.climate(moons: 0xC3), days: 6)
+        let both = try sky(hour: 1, climate: Self.climate(moons: 0xC3), days: 6.5)
         #expect(both.moons.map(\.moon) == [.masser, .secunda])
         #expect(both.moons.map(\.texture) == [
             "sky\\masser_half_wan.dds",
@@ -79,16 +98,39 @@ struct CelestialSkyTests {
         #expect(secundaOnly.moons.map(\.moon) == [.secunda])
     }
 
-    @Test func aMoonFadesNearTheSun() throws {
-        let climate = try Self.climate()
-        var settings = SkySettings.vanilla
-        settings.masser.speed = 0
-        settings.masser.zOffset = 0
-        let opposite = sky(hour: 1, climate: climate, settings: settings).moons[0]
-        #expect(opposite.alpha == 1)
-        settings.masser.speed = 1
-        let onTheSun = sky(hour: 13, climate: climate, settings: settings).moons[0]
-        #expect(onTheSun.alpha == 0)
+    @Test func aMoonFadesByItsHeightAlongItsTiltedPath() {
+        let tuning = SkySettings.vanilla.masser
+        func fade(pathHeight degrees: Float) -> Float {
+            CelestialSky.moonFade(pathAngle: degrees * .pi / 180, tuning: tuning)
+        }
+        #expect(fade(pathHeight: 10) == 0)
+        #expect(fade(pathHeight: 20) == 0)
+        #expect(abs(fade(pathHeight: 27.5) - 0.5) < 1e-4)
+        #expect(fade(pathHeight: 35) == 1)
+        #expect(fade(pathHeight: 145) == 1)
+        #expect(fade(pathHeight: -30) == 0)
+        // The game showed Masser at alpha 0.674 at 24.3 degrees of elevation.
+        let direction = CelestialSky.moonDirection(pathAngle: 30.2 * .pi / 180, tuning: tuning)
+        #expect(abs(asin(direction.z) * 180 / .pi - 24.3) < 0.1)
+        #expect(abs(fade(pathHeight: 30.2) - 0.68) < 0.01)
+    }
+
+    @Test func theMoonsFollowThePathsMeasuredInTheGame() {
+        let settings = SkySettings.vanilla
+        func degrees(_ moon: MoonSettings, days: Float) -> (elevation: Float, azimuth: Float) {
+            let angle = CelestialSky.moonPathAngle(daysPassed: days, tuning: moon)
+            let direction = CelestialSky.moonDirection(pathAngle: angle, tuning: moon)
+            let azimuth = atan2(direction.x, direction.y) * 180 / .pi
+            return (asin(direction.z) * 180 / .pi, azimuth < 0 ? azimuth + 360 : azimuth)
+        }
+        // Reference game, day 25: Masser highest in the east at midnight, rising at 18:00.
+        let midnight = degrees(settings.masser, days: 25)
+        #expect(abs(midnight.elevation - 55) < 0.2 && abs(midnight.azimuth - 90) < 0.2)
+        let rising = degrees(settings.masser, days: 25 + 18 / 24)
+        #expect(abs(rising.elevation) < 0.2 && abs(rising.azimuth - 35) < 0.2)
+        // Day 26 at midnight: Secunda at 11.4 degrees, azimuth 128.6.
+        let secunda = degrees(settings.secunda, days: 26)
+        #expect(abs(secunda.elevation - 11.4) < 0.2 && abs(secunda.azimuth - 128.6) < 0.2)
     }
 
     // MARK: - Stars and aurora
@@ -128,11 +170,11 @@ struct CelestialSkyTests {
         let climate = try Self.climate()
         let follows = try Self.weather(flags: 0x30, aurora: "Sky\\Aurora.nif")
         let still = try Self.weather(flags: 0x10, aurora: "Sky\\Aurora.nif")
-        // At sunrise the sun is due east and a little south.
+        // At sunrise the sun is due east and a little north.
         let morning = sky(hour: 7, climate: climate, weathers: [(follows, 1)])
         let east = try #require(morning.auroras.first)
         #expect(abs(east.yaw - atan2(morning.sunDirection.y, morning.sunDirection.x)) < 1e-5)
-        #expect(east.yaw < 0 && east.yaw > -0.2)
+        #expect(east.yaw > 0 && east.yaw < 0.2)
         #expect(sky(hour: 7, climate: climate, weathers: [(still, 1)]).auroras.first?.yaw == 0)
     }
 

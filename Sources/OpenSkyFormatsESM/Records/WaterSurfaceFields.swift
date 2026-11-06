@@ -30,6 +30,8 @@ nonisolated public struct WaterSurfaceFields: Equatable, Sendable {
     public internal(set) var underwaterFogNear: Float = 0
     public internal(set) var underwaterFogFar: Float = 0
     public internal(set) var aboveWaterFogAmount: Float = 0
+    /// How finely a river's flow noise repeats; 0 in the 228-byte size.
+    public internal(set) var flowMapScale: Float = 0
 
     public init(
         sunSpecularPower: Float, reflectivity: Float, fresnelAmount: Float,
@@ -80,6 +82,9 @@ nonisolated public struct WaterSurfaceFields: Equatable, Sendable {
         underwaterFogAmount = try float(at: 140)
         underwaterFogNear = try float(at: 144)
         underwaterFogFar = try float(at: 148)
+        if dnam.count >= 232 {
+            flowMapScale = try float(at: 228)
+        }
     }
 }
 

@@ -1,4 +1,5 @@
 #include "ShaderCommon.h"
+#include "SnowShading.h"
 
 // Terrain splat path (docs/rendering/scene-drawing.md): per-quadrant draw blends the BTXT
 // base diffuse with up to TerrainConstantMaxLayers ATXT layer diffuses by
@@ -66,20 +67,6 @@ static float3 terrainShadingNormal(TerrainVertexOut in, float2 blendedXY)
     return normalize(tangent * blendedXY.x + bitangent * blendedXY.y + vertexNormal * z);
 }
 
-// Snow ground (LTEX INAM) under the improved snow option: a broad sun sheen and fine
-// glints in a fixed world-space pattern, so the snow looks crisp in the sun.
-static float3 terrainSnowSheen(float3 world, float3 normal, constant FrameUniforms &frame)
-{
-    float3 toEye = normalize(frame.cameraPosition - world);
-    float3 halfway = normalize(toEye - frame.sunDirection);
-    float facing = saturate(dot(normal, halfway));
-    float sheen = pow(facing, 24.0) * 0.25;
-    float2 cell = floor(world.xy * 0.25);
-    float seed = fract(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453);
-    float glint = seed > 0.985 ? pow(facing, 6.0) * 2.0 : 0.0;
-    return frame.sunColor * (sheen + glint);
-}
-
 fragment float4 terrainFragment(
     TerrainVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
@@ -108,7 +95,9 @@ fragment float4 terrainFragment(
     // Start opaque base, then lerp each layer in over the running color in
     // ATXT layer order. Straight lerp by VTXT opacity is the plain reading of
     // the spec; the exact vanilla blend curve is UNCONFIRMED.
-    float3 albedo = baseMap.sample(trilinear, in.texcoord).rgb;
+    float4 baseTexel = baseMap.sample(trilinear, in.texcoord);
+    float3 albedo = baseTexel.rgb;
+    float snowMask = baseTexel.a;
     float weights[TerrainConstantMaxLayers] = {in.weights0.x, in.weights0.y, in.weights0.z,
                                                in.weights0.w, in.weights1.x, in.weights1.y,
                                                in.weights1.z, in.weights1.w};
@@ -119,8 +108,9 @@ fragment float4 terrainFragment(
     float snow = (draw.snowLayers >> uint(TerrainConstantMaxLayers)) & 1u;
     for (uint layer = 0; layer < count; ++layer) {
         float weight = saturate(weights[layer]);
-        float3 layerColor = layerMaps[layer].sample(trilinear, in.texcoord).rgb;
-        albedo = mix(albedo, layerColor, weight);
+        float4 layerTexel = layerMaps[layer].sample(trilinear, in.texcoord);
+        albedo = mix(albedo, layerTexel.rgb, weight);
+        snowMask = mix(snowMask, layerTexel.a, weight);
         snow = mix(snow, float((draw.snowLayers >> layer) & 1u), weight);
         if (normalMaps) {
             float4 texel = layerNormalMaps[layer].sample(trilinear, in.texcoord);
@@ -146,7 +136,9 @@ fragment float4 terrainFragment(
                                   draw.pointLightCount, pointShadowMap, shadowSampler));
     float3 lit = albedo * linearVertexColour(in.color.rgb, frame) * illumination;
     if (snow > 0.0) {
-        lit += terrainSnowSheen(in.worldPosition, normal, frame) * (shadow * snow);
+        float3 toEye = normalize(frame.cameraPosition - in.worldPosition);
+        float shine = snowRim(toEye, normalize(in.normal), normal);
+        lit += (shine + snowSparkle(in.worldPosition, shadow, frame)) * snowMask * snow;
     }
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
@@ -219,6 +211,52 @@ static float2 waterNoiseSlope(
     return slope;
 }
 
+// One exterior cell, in game units.
+constant float waterCellSize = 4096.0;
+
+// A river's flow normal (docs/rendering/water.md#flow-maps). Four flow-map texels, half a
+// texel apart, each turn and scroll the flow noise; tent weights blend them, so no seam
+// shows. `blend` is how much the result replaces the wind noise.
+static float3 waterFlowNormal(
+    float2 xy,
+    float time,
+    constant WaterDrawUniforms &draw,
+    texture2d<float> flowMap,
+    texture2d<float> flowNoise,
+    sampler trilinear,
+    thread float &blend)
+{
+    constexpr sampler texel(filter::nearest, address::clamp_to_edge);
+    float2 local = (xy - draw.modelMatrix[3].xy) / waterCellSize;
+    float2 uv = float2(local.x, 1.0 - local.y);
+    float2 tent = 1.0 - abs(2.0 * fract(64.0 * uv) - 1.0);
+    float halfStep = 1.0 / 128.0;
+    float2 noiseBase = xy / (2.0 * waterCellSize) * 64.0 * sqrt(max(1.01 - draw.flow.y, 0.0));
+    const float4 rates = float4(8.0, 8.48, 10.64, 9.92);
+    const float4 offsets = float4(0.0, 0.62, 0.27, 0.0);
+    const float2 steps[4] = {
+        float2(0.0), float2(halfStep, 0.0), float2(0.0, halfStep), float2(halfStep)};
+    float4 weights = float4(
+        tent.x * tent.y, (1.0 - tent.x) * tent.y, tent.x * (1.0 - tent.y),
+        (1.0 - tent.x) * (1.0 - tent.y));
+    float2 slope = 0.0;
+    blend = 0.0;
+    for (int tap = 0; tap < 4; ++tap) {
+        float4 flow = flowMap.sample(texel, uv + steps[tap], level(0.0));
+        float2 direction = flow.xy * 2.0 - 1.0;
+        float2 noiseUV = float2(
+            direction.x * noiseBase.x - direction.y * noiseBase.y,
+            direction.x * noiseBase.y + direction.y * noiseBase.x);
+        noiseUV.x -= time * 0.001 * flow.a * rates[tap];
+        noiseUV += offsets[tap];
+        slope += (flowNoise.sample(trilinear, noiseUV).xy - 0.5) * weights[tap];
+        blend += flow.z * weights[tap];
+    }
+    float2 spread = tent * tent + (1.0 - tent) * (1.0 - tent);
+    slope /= max(sqrt(spread.x * spread.y), 1.0e-3);
+    return float3(slope, sqrt(saturate(1.0 - dot(slope, slope))));
+}
+
 // One ring around a point: a wave crest that runs out at the displacement velocity, as
 // wide as the starting size, fading with the dampener over its life and with distance.
 static float2 waterRingSlope(float2 xy, float4 ring, constant WaterDrawUniforms &draw)
@@ -272,8 +310,8 @@ static float2 waterRainSlope(float2 xy, float time, float rain)
 
 // Screen-space reflection: the reflected ray steps through the scene drawn before the
 // water, with steps that grow by a quarter each time. The first step behind a stored
-// surface, and close to it, is the hit. rgb the colour, a its weight: lower near the
-// screen edge and for far hits.
+// surface, and close to it, is the hit. rgb the colour, a its weight, which fades as in
+// the game: by the hit's distance from the screen centre and by its length on screen.
 static float4 waterScreenReflection(
     float3 origin,
     float3 direction,
@@ -286,6 +324,8 @@ static float4 waterScreenReflection(
     constexpr sampler linear(filter::linear, address::clamp_to_edge);
     float stepLength = 24.0;
     float3 point = origin;
+    float4 start = frame.viewProjectionMatrix * float4(origin, 1.0);
+    float2 startUV = start.xy / max(start.w, 1.0e-4) * float2(0.5, -0.5) + 0.5;
     for (int step = 0; step < 24; ++step) {
         point += direction * stepLength;
         stepLength *= 1.25;
@@ -307,10 +347,9 @@ static float4 waterScreenReflection(
         if (pointDepth - surfaceDepth > stepLength * 2.0) {
             break;
         }
-        float2 border = min(uv, 1.0 - uv);
-        float edge = saturate(min(border.x, border.y) * 10.0);
-        float distanceFade = 1.0 - float(step) / 24.0;
-        return float4(sceneColor.sample(linear, uv).rgb, edge * distanceFade);
+        float centre = min(2.0 * length(uv - 0.5), 1.0);
+        float lengthFade = saturate(1.0 - length(uv - startUV));
+        return float4(sceneColor.sample(linear, uv).rgb, (1.0 - centre * centre) * lengthFade);
     }
     return 0.0;
 }
@@ -324,6 +363,8 @@ fragment float4 waterFragment(
     texture2d<float> noise0 [[texture(TextureIndexSurfaceNormal)]],
     texture2d<float> noise1 [[texture(TextureIndexSurfaceGlow)]],
     texture2d<float> noise2 [[texture(TextureIndexSurfaceDetail)]],
+    texture2d<float> flowMap [[texture(TextureIndexWaterFlowMap)]],
+    texture2d<float> flowNoise [[texture(TextureIndexWaterFlowNoise)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]])
 {
     if (debugViewActive) {
@@ -341,6 +382,20 @@ fragment float4 waterFragment(
         float2 slope =
             waterNoiseSlope(in.worldPosition.xy, time, draw, noise0, noise1, noise2, trilinear);
         normal = normalize(float3(slope, 1.0));
+    }
+    float fade = 1.0;
+    if (draw.amplitudes.w >= 0.0) {
+        fade = saturate(1.0 - length(toCamera) / max(draw.amplitudes.w, 0.001));
+        normal = normalize(float3(normal.xy / max(normal.z, 0.05) * fade, 1.0));
+    }
+    if (draw.flow.x > 0.5) {
+        // The flow normal never fades below 0.4, so a far river still moves.
+        float blend;
+        float3 flowNormal =
+            waterFlowNormal(in.worldPosition.xy, time, draw, flowMap, flowNoise, trilinear, blend);
+        flowNormal.xy *= max(fade, 0.4);
+        flowNormal.z = sqrt(saturate(1.0 - dot(flowNormal.xy, flowNormal.xy)));
+        normal = normalize(normal + saturate(blend) * (flowNormal - normal));
     }
     float2 ringSlope = waterRainSlope(in.worldPosition.xy, time, draw.rings.y);
     uint ringCount = min(uint(draw.rings.z), uint(WaterConstantMaxRipples));

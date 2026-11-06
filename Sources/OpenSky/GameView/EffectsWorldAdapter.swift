@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyActorPresentation
+import OpenSkyActors
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyEffects
@@ -28,6 +29,7 @@ import simd
 @MainActor
 protocol EffectsWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
+    var actorValues: ActorValueCoordinator { get }
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
     var combatWorld: CombatWorldAdapter { get }
@@ -56,6 +58,8 @@ final class EffectsWorldAdapter {
 
     unowned let game: any EffectsWorldHost
     private(set) var cameraPosition: SIMD3<Float>?
+    /// The heartbeat's script-sound instance; 0 when none plays.
+    var heartbeatSound: Int32 = 0
     /// Actors whose race abilities were looked at, so each is resolved once.
     private var raceChecked: Set<ReferenceKey> = []
     private var spawnedHazards: UInt64 = 0
@@ -167,6 +171,7 @@ final class EffectsWorldAdapter {
         lastFrame = paused ? nil : now
         attachRaceEffects()
         explosions.advance(seconds)
+        stepHealthCues(seconds, gameSession: gameSession)
         do {
             try effects.step(seconds, extraModels: extraModels(), renderer: renderer)
         } catch {

@@ -362,6 +362,27 @@ extension WorldMusicDirector {
             lastMusicRefusal = .noSpecialMusic(kind.rawValue)
             return lastMusicRefusal
         }
+        return playMoment(id, musicStore: musicStore)
+    }
+
+    /// Plays the discovery music for a map marker of `TNAM` type `markerType` once, as
+    /// `playSpecialMusic` does. The game finds the type by editor ID.
+    @discardableResult
+    public func playDiscoveryMusic(markerType: UInt8) -> MusicRefusal? {
+        guard let musicStore else {
+            lastMusicRefusal = .noMusicData
+            return lastMusicRefusal
+        }
+        let name = DiscoveryMusic.editorID(markerType: markerType)
+        guard let id = musicStore.musicTypes.values.first(where: { $0.editorID == name })?.formID
+        else {
+            lastMusicRefusal = .unknownMusicType(name)
+            return lastMusicRefusal
+        }
+        return playMoment(id, musicStore: musicStore)
+    }
+
+    private func playMoment(_ id: FormID, musicStore: MusicRecordStore) -> MusicRefusal? {
         let selection = MusicSelection.resolve(musicType: id, musicStore: musicStore)
             .labelled(.special)
         guard !selection.isSilent else {

@@ -1,6 +1,7 @@
 // How a water surface moves and catches light. The cell builder fills it from
 // WATR DNAM (docs/formats/water.md); the water fragment reads it.
 
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct WaterShading: Equatable, Sendable {
@@ -30,6 +31,14 @@ nonisolated public struct WaterShading: Equatable, Sendable {
     /// Displacement rings: starting size, force, velocity, dampener; then falloff.
     public var displacement = SIMD4<Float>.zero
     public var displacementFalloff: Float = 0
+    /// Distance from the camera where the noise normals fade to flat. Nil: no fade.
+    public var noiseFalloff: Float?
+    /// `FNAM` bit 3: the cell's flow map steers the `NAM5` flow noise
+    /// (docs/rendering/water.md#flow-maps).
+    public var flowMapped = false
+    /// `NAM5`, as the record spells it; empty without one.
+    public var flowNoiseTexture = ""
+    public var flowMapScale: Float = 0
     /// Under-water fog: near plane, far plane, amount.
     public var underwaterFog = SIMD3<Float>(0, 1000, 0)
 
@@ -72,6 +81,8 @@ nonisolated public struct WaterLook: Equatable, Sendable {
     public var deepColor: SIMD3<Float>
     public var reflectionColor: SIMD3<Float>
     public var shading: WaterShading
+    /// `INAM`: the image space while the camera is under this water, in load-order space.
+    public var underwaterImageSpace: FormID?
 
     public init(
         shallowColor: SIMD3<Float>, deepColor: SIMD3<Float>, reflectionColor: SIMD3<Float>,

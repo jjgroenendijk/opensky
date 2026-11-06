@@ -13,6 +13,16 @@ extension PapyrusWorldStateBridge {
         updateScriptedState(of: victim) { $0.setForm(ScriptedStateName.killer, killer) }
     }
 
+    /// A location the game cleared itself, after its last boss died: the flag
+    /// `IsCleared` reads, the HUD notice, and the music when `playsMusic`.
+    public func markLocationCleared(_ location: ReferenceKey, playsMusic: Bool) {
+        guard scriptedState(of: location).flag(ScriptedStateName.cleared) != true else { return }
+        updateScriptedState(of: location) { $0.setFlag(ScriptedStateName.cleared, true) }
+        if let name = formName(of: location) {
+            presenter?.postWorldNotice(.locationCleared(name: name, playsMusic: playsMusic))
+        }
+    }
+
     /// A blow by the player on an actor that was not hostile counts for `GetFriendHit`.
     /// A blow on the player names its aggressor for `IsLastHostileActor`.
     public func recordHit(_ hit: ScriptHitEvent, targetWasHostile: Bool) {

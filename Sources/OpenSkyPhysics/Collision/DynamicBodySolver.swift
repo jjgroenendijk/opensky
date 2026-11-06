@@ -115,6 +115,11 @@ nonisolated public enum DynamicBodySolver: Sendable {
                 dt: dt,
                 selfCollision: isRagdoll ? selfCollision : nil
             )
+            for contact in contacts {
+                bodies[contact.body].lastSurface = DynamicSurfaceTouch(
+                    material: contact.surfaceMaterial, point: contact.point
+                )
+            }
             stats.contactCount = max(stats.contactCount, contacts.count)
             stats.pairContactCount = max(
                 stats.pairContactCount, contacts.count(where: { $0.other != nil })

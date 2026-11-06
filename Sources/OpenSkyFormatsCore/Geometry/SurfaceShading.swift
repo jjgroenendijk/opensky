@@ -110,7 +110,7 @@ nonisolated public struct SurfaceShading: Hashable, Sendable {
         [
             glowTexture, detailTexture, environmentTexture, environmentMaskTexture,
             innerLayerTexture, backLightTexture, projected?.diffuseTexture,
-            projected?.normalTexture
+            projected?.noiseTexture
         ].compactMap(\.self)
     }
 }

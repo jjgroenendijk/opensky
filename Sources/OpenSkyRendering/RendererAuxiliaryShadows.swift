@@ -22,6 +22,7 @@ final class AuxiliaryShadowResources {
     /// Room for the point light faces too: up to 24 views in an interior.
     static let instanceLimit = 32768
     static let drawLimit = 8192
+    static let size = ShadowConstant.auxiliarySize.rawValue
 
     let map: MTLTexture
     let rings: AuxiliaryShadowRings
@@ -30,8 +31,8 @@ final class AuxiliaryShadowResources {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2DArray
         descriptor.pixelFormat = .depth32Float
-        descriptor.width = PrecipitationOcclusionView.resolution
-        descriptor.height = PrecipitationOcclusionView.resolution
+        descriptor.width = Self.size
+        descriptor.height = Self.size
         descriptor.arrayLength = ShadowConstant.auxiliarySliceCount.rawValue
         descriptor.usage = [.renderTarget, .shaderRead]
         descriptor.storageMode = .private
@@ -76,6 +77,8 @@ struct AuxiliaryShadowView {
     let excluding: RenderLayer
     let drawsTerrain: Bool
     var target = AuxiliaryShadowTarget.auxiliary
+    /// The share of the slice's side the view draws into, from its top-left corner.
+    var extent: Float = 1
 }
 
 extension Renderer {
@@ -96,6 +99,12 @@ extension Renderer {
             else { return false }
             encoder.label = "Auxiliary Shadow View \(view.slice)"
             configureShadowEncoder(encoder)
+            if view.extent < 1 {
+                let side = Double(view.extent) * Double(target.width)
+                encoder.setViewport(MTLViewport(
+                    originX: 0, originY: 0, width: side, height: side, znear: 0, zfar: 1
+                ))
+            }
             let context = ShadowCascadeContext(
                 cascade: ShadowCascade(
                     viewProjection: view.viewProjection,
@@ -137,13 +146,19 @@ extension Renderer {
             precipitationOcclusionView = matrix
             views.append(AuxiliaryShadowView(
                 slice: ShadowConstant.precipitationSlice.rawValue, viewProjection: matrix,
-                excluding: .actors, drawsTerrain: true
+                excluding: .actors, drawsTerrain: true,
+                extent: Self.precipitationOcclusionExtent
             ))
         }
         if sunShadows {
             views += focusViews()
         }
         return views + pointShadowViews()
+    }
+
+    static var precipitationOcclusionExtent: Float {
+        Float(ShadowConstant.precipitationResolution.rawValue)
+            / Float(AuxiliaryShadowResources.size)
     }
 
     /// The array, built and made resident on first use; nil when the device refuses it.

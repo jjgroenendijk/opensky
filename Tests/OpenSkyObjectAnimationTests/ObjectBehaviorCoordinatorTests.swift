@@ -25,6 +25,7 @@ struct ObjectBehaviorCoordinatorTests {
         #expect(objects.awaitEvent("Done", on: 0x10) == nil)
         #expect(!objects.setVariable(.bool(true), named: "bOpen", on: 0x10))
         #expect(objects.variable(named: "bOpen", on: 0x10) == nil)
+        #expect(objects.worldBone(of: 0x10, named: "Blade") == nil)
         #expect(objects.rows.isEmpty)
     }
 

@@ -44,6 +44,19 @@ struct ImageSpaceRuntimeTests {
         #expect(baseline.dominantName == "Cave")
     }
 
+    @Test func underWaterTakesTheWaterImageSpace() throws {
+        let space = try Self.imageSpace("UnderWater", brightness: 0.75)
+        var asked: [FormID] = []
+        let baseline = BaselineImageSpaceResolver
+            .resolve(.underwater(imageSpace: FormID(0x20))) { id in
+                asked.append(id)
+                return ResolvedImageSpace(key: Self.bright, record: space)
+            }
+        #expect(asked == [FormID(0x20)])
+        #expect(baseline.parameters.brightness == 0.75)
+        #expect(baseline.dominantName == "UnderWater")
+    }
+
     @Test func anExteriorBlendsWeathersByWeight() throws {
         let bright = try Self.imageSpace("Bright", brightness: 2)
         let dark = try Self.imageSpace("Dark", brightness: 1)

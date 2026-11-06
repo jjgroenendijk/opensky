@@ -166,6 +166,10 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
         game.playerBeastForm.isBeast
     }
 
+    func playLevelUpMusic() {
+        game.audio.musicDirector?.playSpecialMusic(.levelUp)
+    }
+
     var skillsMenuTexts: GameSettingTexts<SkillsMenuText> {
         game.mapWorld.settingTexts()
     }

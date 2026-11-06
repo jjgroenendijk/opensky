@@ -91,7 +91,7 @@ nonisolated extension CellSceneBuilder {
         return pool
     }
 
-    nonisolated private func persistentReferences(
+    nonisolated func persistentReferences(
         in world: FoundWorld,
         localized: Bool
     ) -> [PlacedReference] {

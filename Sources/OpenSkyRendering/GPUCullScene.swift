@@ -273,7 +273,7 @@ public final class GPUCullScene {
                 frustum.top, frustum.near, frustum.far
             ),
             fadeViewer: SIMD4(
-                fade.viewer, fade.distances.isOn ? ReferenceFadeDistances.fadeBand : 0
+                fade.viewer, fade.distances.isOn ? 1 : 0
             ),
             fadeScales: fade.distances.shaderScales,
             instanceCount: UInt32(instanceCount),

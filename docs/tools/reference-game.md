@@ -224,6 +224,7 @@ Once `skse64_loader.exe` is in the game copy, every start goes through it.
 | `openskycli reference follow` | Puts the running OpenSky at the Windows game's view, through `game debug view` |
 | `openskycli reference load [<save>]` | Waits for the main menu, then loads the save, by default the newest |
 | `openskycli reference answer <button>` | Presses a button of the open message box, by index from 0 or by text |
+| `openskycli reference shot [--out <file>]` | Captures only the Windows game window, without OpenSky |
 
 The launcher's Send View and Follow Windows Game buttons do the same as `sync` and
 `follow`. Sync runs the `cow` or `coc` line alone, waits until the state names the new
@@ -297,6 +298,9 @@ openskycli reference send 'spawn 39D33' 'setav health 100000' "startcombat $MELE
 [WARNING] Nothing drives the player's attacks or casts yet. Button events the plugin sent
 through the game's input device manager did not move the player under Wine (observed
 2026-11-04), so a recording of the player shows it at rest.
+
+The bridge also reports the sky, the music, the player's location, and a map marker it can
+move the player to. [Reference sky and music](/tools/reference-sky-music.md) describes them.
 
 ## Same view, two games
 

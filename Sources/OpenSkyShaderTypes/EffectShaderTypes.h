@@ -42,6 +42,7 @@ typedef struct
 /// product is the surface normal.
 typedef struct
 {
+    /// w: half the depth of a projected decal's box; 0 draws a flat quad.
     vector_float4 center;
     vector_float4 axisU;
     vector_float4 axisV;

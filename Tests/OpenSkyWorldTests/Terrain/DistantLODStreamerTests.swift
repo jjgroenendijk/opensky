@@ -1,5 +1,6 @@
 @testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 @testable import OpenSkyRendering
 @testable import OpenSkyTerrain
 @testable import OpenSkyWorld
@@ -30,7 +31,9 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
     func enqueueEviction(droppingMeshKeys _: Set<String>, droppingTextureKeys _: Set<String>) {}
 
     @discardableResult
-    func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool {
+    func enqueueDistantLOD(
+        center: CellCoordinate, hiddenCells: Set<CellCoordinate>, state _: WorldStateSnapshot
+    ) -> Bool {
         lodRequests.append(center)
         lodHiddenCells.append(hiddenCells)
         return true
@@ -204,6 +207,60 @@ struct DistantLODStreamerTests {
         ))
         streamer.update(cameraPosition: position)
         #expect(streamer.startAreaReady)
+    }
+
+    @Test func aQuickFirstRingWaitsForItsLargeReferences() {
+        let runner = LODManualRunner()
+        runner.prebuilds = true
+        let streamer = CellStreamer(center: Self.center, radius: 1, runner: runner) { _, _ in }
+        let position = CellGridManager.cellCenter(of: Self.center)
+        streamer.update(cameraPosition: position)
+        runner.completeLOD(Self.center, scene: DistantLODScene(
+            renderScene: RenderScene(instances: []),
+            assets: CellAssets(),
+            blockCount: 5,
+            missingBlockCount: 0,
+            largeReferencesPending: true
+        ))
+        loadNearGrid(streamer, runner: runner, position: position)
+        streamer.update(cameraPosition: position)
+        #expect(runner.lodRequests == [Self.center])
+        #expect(!streamer.startAreaReady, "the LOD of the large references would swap in view")
+
+        runner.completeLOD(Self.center, scene: DistantLODScene(
+            renderScene: RenderScene(instances: []),
+            assets: CellAssets(),
+            blockCount: 5,
+            missingBlockCount: 0
+        ))
+        streamer.update(cameraPosition: position)
+        #expect(streamer.startAreaReady)
+    }
+
+    @Test func anEnableChangeOfARingReferenceBuildsTheRingAgain() {
+        let runner = LODManualRunner()
+        let streamer = CellStreamer(center: Self.center, radius: 1, runner: runner) { _, _ in }
+        let position = CellGridManager.cellCenter(of: Self.center)
+        streamer.update(cameraPosition: position)
+        loadNearGrid(streamer, runner: runner, position: position)
+        runner.completeLOD(Self.center, scene: DistantLODScene(
+            renderScene: RenderScene(instances: []),
+            assets: CellAssets(),
+            blockCount: 1,
+            missingBlockCount: 0
+        ).watching([0x0012_3456]))
+        streamer.update(cameraPosition: position)
+        #expect(runner.lodRequests == [Self.center])
+
+        streamer.noteEnableParentMutation(.plugin(name: "Other.esp", objectID: 0x99), sequence: 1)
+        streamer.update(cameraPosition: position)
+        #expect(runner.lodRequests == [Self.center])
+
+        streamer.noteEnableParentMutation(
+            .plugin(name: "Skyrim.esm", objectID: 0x0012_3456), sequence: 2
+        )
+        streamer.update(cameraPosition: position)
+        #expect(runner.lodRequests == [Self.center, Self.center])
     }
 
     @Test func aFailedDistantRingStillReadiesTheStartArea() {

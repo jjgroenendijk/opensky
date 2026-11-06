@@ -3,6 +3,7 @@
 // tested against the other surface. `recoveryDepth` bounds how far behind a
 // surface a contact is still believed. See docs/engine/dynamic-narrowphase.md.
 
+import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import simd
 
@@ -93,6 +94,8 @@ nonisolated public struct DynamicContact: Sendable {
     public let depth: Float
     public let friction: Float
     public let restitution: Float
+    /// The `MATT` of what `body` touches: the static shape's, or the other body's.
+    public var surfaceMaterial: FormID?
 }
 
 nonisolated public enum DynamicBodyContacts: Sendable {
@@ -142,7 +145,8 @@ nonisolated public enum DynamicBodyContacts: Sendable {
                     normal: hit.normal,
                     depth: hit.depth,
                     friction: body.definition.friction,
-                    restitution: body.definition.restitution
+                    restitution: body.definition.restitution,
+                    surfaceMaterial: shape.material
                 ))
             }
         }
@@ -314,7 +318,8 @@ nonisolated public enum DynamicBodyContacts: Sendable {
                 normal: hit.normal,
                 depth: hit.depth,
                 friction: material.friction,
-                restitution: material.restitution
+                restitution: material.restitution,
+                surfaceMaterial: obstacle.body.definition.material
             )
         }
     }

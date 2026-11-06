@@ -23,6 +23,12 @@ nonisolated public struct LocationStore: Sendable {
     public let uniqueActorReferences: [ReferenceKey: ReferenceKey]
     /// The location ref types each reference is listed under, over every location.
     private let referenceTypes: [ReferenceKey: Set<ReferenceKey>]
+    /// The `DOBJ` `LRTB` ref type, which marks a location's bosses.
+    public let bossType: ReferenceKey?
+    /// The locations that list each reference under `bossType`.
+    let bossLocations: [ReferenceKey: [ResolvedFormID]]
+    /// `DOBJ` `KWDO`: a location with this keyword plays the cleared music.
+    public let clearableKeyword: ResolvedFormID?
 
     public var locations: [ResolvedFormID: ResolvedLocation] {
         table.values
@@ -46,6 +52,12 @@ nonisolated public struct LocationStore: Sendable {
             Self.uniqueActors(in: table.values.values, index: index)
         ) { _, listed in listed }
         referenceTypes = Self.referenceTypes(in: table.values.values, index: index)
+        let defaults = DefaultObjectStore(index: index)
+        bossType = defaults.object(tag: "LRTB").map(ReferenceKey.init(resolved:))
+        clearableKeyword = defaults.object(tag: "KWDO")
+        bossLocations = Self.locations(
+            listing: bossType, in: table.values.values, index: index
+        )
     }
 
     /// The ref types `reference` is listed under in any location's `LCSR` or `ACSR`.

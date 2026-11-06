@@ -18,9 +18,12 @@ nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
     public var cell: String?
     public var interior: Bool?
     public var grid: [Int32]?
+    public var location: ReferenceLocation?
     public var worldspace: String?
     public var worldspaceFormID: UInt32?
     public var hour: Float?
+    /// Days since the game's start, with the hour as the fraction; the moon phase follows it.
+    public var daysPassed: Float?
     public var weatherFormID: UInt32?
     /// The `fov` console value, the horizontal angle at a 4:3 view.
     public var worldFOV: Float?
@@ -33,6 +36,11 @@ nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
     /// The playing scenes, while the player stands in the world.
     public var scenes: [ReferenceScene]?
     public var condition: ReferenceConditionAnswer?
+    /// The sun, moons, clouds, and wind, while the player stands in the world.
+    public var sky: ReferenceSky?
+    /// The playing music type and the queue under it.
+    public var music: ReferenceMusic?
+    public var marker: ReferenceMarker?
 
     /// True once the player stands in a loaded cell, outside the main menu and loading.
     public var inWorld: Bool {

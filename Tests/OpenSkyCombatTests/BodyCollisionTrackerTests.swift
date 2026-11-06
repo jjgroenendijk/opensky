@@ -8,11 +8,13 @@ import Testing
 
 struct BodyCollisionTrackerTests {
     private func body(speed: Float) -> ImpulseBody {
-        ImpulseBody(
+        var body = ImpulseBody(
             key: .generated(3), reference: FormID(0x33), position: SIMD3(0, 0, 10),
             velocity: SIMD3(0, 0, -speed), mass: 10, boundingRadius: 5, kind: .clutter,
             material: FormID(0x44)
         )
+        body.surfaceMaterial = FormID(0x55)
+        return body
     }
 
     @Test func aSuddenStopIsOneHit() {
@@ -22,6 +24,7 @@ struct BodyCollisionTrackerTests {
         #expect(hits.count == 1)
         #expect(hits.first?.speedLoss == 600)
         #expect(hits.first?.material == FormID(0x44))
+        #expect(hits.first?.surface == FormID(0x55))
         #expect(tracker.update([body(speed: 500)]).isEmpty)
         #expect(tracker.update([body(speed: 0)]).isEmpty)
     }

@@ -11,8 +11,6 @@ extension Renderer {
     /// OpenSky's card sizes, as tangents of the half angle: no setting gives them.
     static let sunHalfSize: Float = 0.06
     static let glareHalfSize: Float = 0.5
-    /// A moon's glare card across, in moon widths.
-    static let moonGlareScale: Float = 4
 
     /// This frame's sky objects: exterior weather only, and only under a sky.
     var frameCelestial: CelestialSky? {
@@ -67,13 +65,6 @@ extension Renderer {
             drawer.card(sun, encoder)
         }
         for moon in sky.moons where moon.alpha > 0.001 {
-            if let glare = weather?.moonGlare, simd_reduce_max(glare) > 0.001 {
-                drawer.card(SkyCard(
-                    texture: sky.glareTexture, direction: moon.direction,
-                    halfSize: moon.halfSize * Self.moonGlareScale,
-                    tint: SIMD4(glare, moon.alpha), mode: .additive
-                ), encoder)
-            }
             // The shadow paints the sky colour back over the stars behind the moon.
             let behind = simd_mix(
                 weather?.skyLower ?? .zero, weather?.skyUpper ?? .zero,
@@ -83,9 +74,11 @@ extension Renderer {
                 texture: CelestialSky.moonShadowTexture, direction: moon.direction,
                 halfSize: moon.halfSize, tint: SIMD4(behind, moon.alpha), mode: .alphaOnly
             ), encoder)
+            // The moon adds its weather colour, dark by day, so a day moon is faint.
             drawer.card(SkyCard(
                 texture: moon.texture, direction: moon.direction, halfSize: moon.halfSize,
-                tint: SIMD4(1, 1, 1, moon.alpha), mode: .cover
+                tint: SIMD4(weather?.moonGlare ?? SIMD3(repeating: 1), moon.alpha),
+                mode: .additive
             ), encoder)
         }
     }

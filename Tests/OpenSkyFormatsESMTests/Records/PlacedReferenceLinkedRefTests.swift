@@ -34,6 +34,11 @@ struct PlacedReferenceLinkedRefTests {
         #expect(refr.linkedReference() == nil)
     }
 
+    @Test func readsTheIsFullLODHeaderFlag() throws {
+        #expect(try PlacedReferenceFixture.reference(Data(), headerFlags: 0x0001_0000).isFullLOD)
+        #expect(try !PlacedReferenceFixture.reference(Data(), headerFlags: 0x0000_0800).isFullLOD)
+    }
+
     @Test func decodesShortFormLinkedReference() throws {
         let refr = try PlacedReferenceFixture.reference(xlkr(
             keyword: nil,

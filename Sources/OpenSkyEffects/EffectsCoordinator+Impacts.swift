@@ -201,14 +201,18 @@ extension EffectsCoordinator {
         }
         guard decalsChanged || !onActors.isEmpty, let meshes else { return }
         decalsChanged = !onActors.isEmpty
-        var order: [String] = []
-        var byTexture: [String: [DecalInstance]] = [:]
-        for decal in decals.decals + onActors {
-            if byTexture[decal.look.texture] == nil {
-                order.append(decal.look.texture)
+        var order: [DecalBatchKey] = []
+        var byKey: [DecalBatchKey: [DecalInstance]] = [:]
+        let placed = decals.decals.map { ($0, false) } + onActors.map { ($0, true) }
+        for (decal, projected) in placed {
+            let key = DecalBatchKey(texture: decal.look.texture, projected: projected)
+            if byKey[key] == nil {
+                order.append(key)
             }
-            byTexture[decal.look.texture, default: []].append(DecalInstance(
-                center: SIMD4(decal.center, 1),
+            // A skin decal's box reaches as deep as its widest side, to wrap a limb.
+            let depth = projected ? max(simd_length(decal.axisU), simd_length(decal.axisV)) : 0
+            byKey[key, default: []].append(DecalInstance(
+                center: SIMD4(decal.center, depth),
                 axisU: SIMD4(decal.axisU, 0),
                 axisV: SIMD4(decal.axisV, 0),
                 color: SIMD4(decal.look.color, 1),
@@ -217,9 +221,15 @@ extension EffectsCoordinator {
         }
         try renderer.setDecals(order.map { key in
             DecalBatch(
-                texture: meshes.textures.texture(key: key, usage: .color),
-                instances: byTexture[key] ?? []
+                texture: meshes.textures.texture(key: key.texture, usage: .color),
+                instances: byKey[key] ?? [],
+                projected: key.projected
             )
         })
     }
+}
+
+private struct DecalBatchKey: Hashable {
+    let texture: String
+    let projected: Bool
 }

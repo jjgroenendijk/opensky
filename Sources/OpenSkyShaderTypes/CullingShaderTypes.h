@@ -45,7 +45,7 @@ typedef struct
 typedef struct
 {
     vector_float4 planes[6];
-    /// xyz the camera; w the share of the reach the dissolve covers, 0 for no fades.
+    /// xyz the camera; w 1 with fades on, 0 for no fades.
     vector_float4 fadeViewer;
     /// `ReferenceFadeDistances.shaderScales`.
     vector_float4 fadeScales;

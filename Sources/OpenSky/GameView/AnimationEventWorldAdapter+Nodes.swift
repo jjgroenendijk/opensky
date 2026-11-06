@@ -7,6 +7,7 @@ import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyObjectAnimation
 import OpenSkyPlayer
 import OpenSkyWorld
 import OpenSkyWorldState
@@ -14,7 +15,9 @@ import simd
 
 extension AnimationEventWorldAdapter {
     func animationEventPosition(of source: ReferenceKey, node: String) -> SIMD3<Float>? {
-        let world = source == .player ? playerBone(node) : actorBone(node, of: source)
+        let world = source == .player
+            ? playerBone(node)
+            : actorBone(node, of: source) ?? objectNode(node, of: source)
         return world.map { SIMD3($0.columns.3.x, $0.columns.3.y, $0.columns.3.z) }
     }
 
@@ -29,6 +32,12 @@ extension AnimationEventWorldAdapter {
             bones.indices.contains(index)
         else { return nil }
         return body.transform * bones[index]
+    }
+
+    /// A node of an object's running behaviour graph, such as a trap's swinging blade.
+    private func objectNode(_ name: String, of object: ReferenceKey) -> float4x4? {
+        guard let formID = game.streamer?.referenceEntry(key: object)?.formID else { return nil }
+        return game.objectBehaviors.worldBone(of: formID.rawValue, named: name)
     }
 
     private func actorBone(_ name: String, of actor: ReferenceKey) -> float4x4? {

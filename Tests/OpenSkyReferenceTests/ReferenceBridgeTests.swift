@@ -44,6 +44,31 @@ struct ReferenceBridgeTests {
         #expect(!state.isAt(.exterior(worldspace: "Tamriel", grid: SIMD2(4, -7))))
     }
 
+    @Test func skyAndMusicDecode() throws {
+        let state = try decode(String(exterior.dropLast()) + """
+        ,"sky":{"mode":3,"weatherPercent":1,"windSpeed":0.2,"windAngle":1.5,\
+        "sun":{"direction":[0,-0.5,0.866],"lightDirection":[0,0.5,-0.866],"hidden":false,\
+        "glareScale":1,"look":{"colour":[1,1,1,1],"texture":"sun.dds","blend":0}},\
+        "masser":{"direction":null,"hidden":true,"meshHidden":false,"shadowHidden":false,\
+        "look":null},"secunda":null,\
+        "clouds":[{"layer":0,"hidden":false,"alpha":0.5,"layerWords":[0,0.25],\
+        "materialOffset":[null,1],"materialScale":[1,1],"look":null}]},\
+        "music":{"current":{"editorID":"MUSExploreGeneral","formID":4096,"status":1,\
+        "track":2,"priority":50},"queue":[]},\
+        "location":{"editorID":"","formID":100935,"keywords":["LocTypeTown"],"parent":""},\
+        "marker":{"found":true,"formID":96204,"type":2,"flags":3}}
+        """)
+        let sky = try #require(state.sky)
+        #expect(sky.sun?.direction == [0, -0.5, 0.866])
+        #expect(sky.masser?.hidden == true)
+        #expect(sky.secunda == nil)
+        #expect(sky.clouds.first?.materialOffset == [nil, 1])
+        #expect(state.music?.current?.editorID == "MUSExploreGeneral")
+        #expect(state.music?.queue.isEmpty == true)
+        #expect(state.location?.keywords == ["LocTypeTown"])
+        #expect(state.marker?.type == 2)
+    }
+
     @Test func headingAndYawRoundTrip() {
         for yaw: Float in [-170, -90, 0, 45, 90, 180] {
             let view = ReferenceView(

@@ -11,7 +11,7 @@ nonisolated public struct EffectRecordStore: Sendable {
     public static let recordTypes: Set<FourCC> = [
         "IMGS", "IMAD", "EFSH", "RFCT", "ADDN", "EXPL", "DEBR", "SPGD", "VOLI", "MATO",
         "SOPM", "REVB", "ARTO", "HAZD", "SNDR", "LIGH", "IPDS", "PROJ", "SPEL", "ENCH",
-        "ACTI", "STAT", "MSTT", "TREE", "FURN", "MISC", "LVLI"
+        "ACTI", "STAT", "MSTT", "TREE", "FURN", "MISC", "LVLI", "DOBJ"
     ]
 
     public let imageSpaces: TypedRecordStore<ImageSpace>
@@ -29,6 +29,10 @@ nonisolated public struct EffectRecordStore: Sendable {
     public let artObjects: TypedRecordStore<ArtObject>
     /// The lights a magic effect places.
     public let lights: TypedRecordStore<LightRecord>
+    /// The default objects `IMLH`, `HSSD`, and `HFSD`: the low-health modifier and heartbeats.
+    public let lowHealthModifier: ReferenceKey?
+    public let slowHeartbeat: ReferenceKey?
+    public let fastHeartbeat: ReferenceKey?
 
     public init(index: RecordIndex) {
         imageSpaces = Self.store(index, "IMGS") { try ImageSpace(record: $0.record) }
@@ -53,6 +57,10 @@ nonisolated public struct EffectRecordStore: Sendable {
         reverbs = Self.store(index, "REVB") { try ReverbParameters(record: $0.record) }
         artObjects = Self.store(index, "ARTO") { try ArtObject(record: $0.record) }
         lights = Self.store(index, "LIGH") { try LightRecord(record: $0.record) }
+        let defaults = DefaultObjectStore(index: index)
+        lowHealthModifier = defaults.object(tag: "IMLH").map(ReferenceKey.init(resolved:))
+        slowHeartbeat = defaults.object(tag: "HSSD").map(ReferenceKey.init(resolved:))
+        fastHeartbeat = defaults.object(tag: "HFSD").map(ReferenceKey.init(resolved:))
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {

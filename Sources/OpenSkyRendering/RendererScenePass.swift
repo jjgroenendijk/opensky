@@ -89,9 +89,10 @@ extension Renderer {
                 focusShadows.view(0), focusShadows.view(1),
                 focusShadows.view(2), focusShadows.view(3)
             ),
+            focusShadowStrengths: focusShadows.strengths,
+            focusShadowExtents: focusShadows.extents,
             focusShadowCount: UInt32(focusShadows.views.count),
             focusShadowBias: focusShadows.bias,
-            imageBasedLighting: surfaceFeatures.imageBasedLighting ? 1 : 0,
             screenSpaceReflections: waterDepth.reflects ? 1 : 0
         )
         frameUniformBuffer.contents().advanced(by: offset)
@@ -326,7 +327,7 @@ extension Renderer {
             (material.faceTint ?? surface.innerLayer, .surfaceLayer),
             (surface.backLight, .surfaceBackLight),
             (surface.projected?.diffuse, .projectedDiffuse),
-            (surface.projected?.normal, .projectedNormal)
+            (surface.projected?.noise, .projectedNoise)
         ]
         for (texture, index) in slots {
             argumentTable.setTexture(texture.map(streamedBinding) ?? diffuse, index: index.rawValue)
@@ -556,6 +557,7 @@ extension Renderer {
         // The depth split replaces the encoder, so later layers use `state.encoder`.
         guard copySceneDepth(descriptor: descriptor, frameOffset: frameOffset, state: &state)
         else { return false }
+        encodeProjectedDecals(state: &state)
         encodeWater(items: scene.water, state: &state)
         encodeBlendedGroups(state: &state)
         encodeWeaponBlood(state: &state)

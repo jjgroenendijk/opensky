@@ -35,6 +35,7 @@ extension CellStreamer {
     /// spawned reference, every resident cell rebuilds, as for an unattributed write.
     public func noteStateMutation(of key: ReferenceKey, sequence: UInt64) {
         guard !isRecordingSettledBody, !noteNPCRestMutation(sequence: sequence) else { return }
+        noteDistantLODMutation(of: key)
         let holders = composition.cellCoordinates(holding: key)
         let interiorHolds = interiorScene?.references[key] != nil
         guard !holders.isEmpty || interiorHolds else {
@@ -80,6 +81,7 @@ extension CellStreamer {
     /// rebuild a cell too many, never one too few.
     public func noteEnableParentMutation(_ key: ReferenceKey, sequence: UInt64) {
         guard case let .plugin(_, objectID) = key else { return }
+        noteDistantLODMutation(of: key)
         func dependsOnKey(_ scene: CellScene) -> Bool {
             scene.references.sortedEntries()
                 .contains { $0.enableParent?.parent.objectID == objectID }
@@ -92,6 +94,16 @@ extension CellStreamer {
         if let interiorScene, dependsOnKey(interiorScene) {
             interiorMutationSequence = max(interiorMutationSequence, sequence)
         }
+    }
+
+    /// A ring that draws `key`, or a child of it, with its full model is built again.
+    private func noteDistantLODMutation(of key: ReferenceKey) {
+        guard
+            case let .plugin(_, objectID) = key,
+            composition.distantLOD?.watchedObjectIDs.contains(objectID) == true,
+            requestedLODCenter == grid.center
+        else { return }
+        requestedLODCenter = nil
     }
 
     private func recordMutationSequence(_ coordinate: CellCoordinate, sequence: UInt64) {

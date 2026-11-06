@@ -22,11 +22,12 @@ struct GraphicsSettingsTests {
         let ids = GraphicsOptions.all.map(\.id)
         #expect(Set(ids).count == ids.count)
         let options = GraphicsOptions.all
-        let allAvailable = options.allSatisfy { $0.unavailableReason == nil }
-        let allApplied = GraphicsOptions.definitions.allSatisfy(\.isApplied)
+        // The image-based lens flare has no system yet; any other gap fails here.
+        let unavailable = options.filter { $0.unavailableReason != nil }.map(\.key)
+        let unapplied = GraphicsOptions.definitions.filter { !$0.isApplied }.map(\.id.rawValue)
         let idsFollowKeys = options.allSatisfy { $0.id.rawValue == "graphics.\($0.key)" }
-        #expect(allAvailable)
-        #expect(allApplied)
+        #expect(unavailable == ["bIBLFEnable"])
+        #expect(unapplied == ["graphics.bIBLFEnable"])
         #expect(idsFollowKeys)
     }
 

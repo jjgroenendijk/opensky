@@ -38,6 +38,37 @@ water mesh in a cell without a water plane gets the same fallback.
 - **Body.** The body color blends from the shallow color to the deep color over the fog near
   and far depths. Ambient light and some sunlight light it.
 
+## Flow maps
+
+A river or creek moves its surface along a flow map. In the install, `Update.esm` gives 627
+exterior cells one of four water types with `FNAM` bit 3 set, such as `RiverWaterFlow`. Each
+of these types names `textures\water\riverflow.dds` in `NAM5`, the flow noise, and sets the
+flow-map scale at the end of `DNAM` to 1 ([water records](/formats/water.md)).
+
+- **Files.** Each cell has its own flow map, `textures\water\<plugin>\flow.<x>.<y>.dds`, a
+  64 by 64 BGRA texture. The install has 641 of them under `skyrim.esm`. Red and green give the
+  flow direction (`2c - 1`), alpha gives the speed, and blue gives how much the flow normal
+  replaces the wind noise normal. OpenSky takes the newest plugin folder that has the file.
+- **Taps.** The water reads four flow-map texels: at the pixel, and half a texel to the
+  east, to the north, and to both. Tent weights blend them, `t = 1 - |2 frac(64 u) - 1|` on each
+  axis, so no texel edge shows.
+- **Noise.** Each tap turns the world position by its flow direction (a complex product).
+  The position is scaled by `64 * sqrt(1.01 - k)` per two cells, where `k` is the flow-map
+  scale, so the noise repeats every 1280 units at `k = 1`. Each tap then scrolls along its
+  own direction at its own rate, 8, 8.48, 10.64, and 9.92, times its speed, with a fixed offset
+  of 0, 0.62, 0.27, and 0. It samples the red and green of the flow noise.
+- **Blend.** The weighted sum, minus 0.5, is divided by
+  `sqrt((tx² + (1 - tx)²)(ty² + (1 - ty)²))`, which keeps the contrast steady between taps.
+  The result, scaled by the noise distance fade but never below 0.4, is the normal's x and
+  y. The final normal is
+  `normalize(N + B * (N_flow - N))`, with `B` the blended blue channel.
+
+Behaviour described from a clean-room read of the game's water shader, 2026-11-06. The read
+did not settle the time unit: OpenSky scrolls at `0.001` noise tiles per second per rate step,
+which moves a full-speed river about 11 units per second, near the `NAM0` velocity of the
+rivers. `FNAM` bit 4 ("blend normals") is read but changes nothing, because the blue channel
+already blends.
+
 ## Depth
 
 To know how deep the water is under a pixel, the water reads the scene depth. A Metal render
@@ -88,7 +119,9 @@ random place and time, if a random draw is below the rain intensity. A drop's ri
 
 When the camera is inside a water item's bounds and below its top, the frame fog becomes the
 water's under-water fog: the `DNAM` near and far planes, the fog amount as the maximum, and
-the deep colour.
+the deep colour. The water's `INAM` image space becomes the frame's baseline image space
+([image spaces](/formats/image-spaces.md#resolution)). In vanilla, `Update.esm` gives almost
+every water one shared image space, and the Dawnguard and Dragonborn waters their own.
 
 ## Screen-space reflections
 
@@ -99,21 +132,32 @@ colour drawn so far, and the water reflects it:
   24 units long, and each step is a quarter longer than the one before.
 - Each step is projected to the screen. The first point behind a stored surface is a hit, if it
   lies less than two step lengths behind it. Sky pixels never hit.
-- The hit colour replaces the reflection colour by a weight that falls toward the screen edge
-  and with the step count. A ray that leaves the screen or finds no hit keeps the colour.
+- The hit colour replaces the reflection colour by a weight, as in the game:
+  `(1 - c²) * (1 - L)`, where `c` is twice the hit's distance from the screen centre (at most
+  1) and `L` is the screen distance from the water pixel to the hit. So the weight is 0 half a
+  screen from the centre. A ray that leaves the screen or finds no hit keeps the colour.
+- The game marches 16 even steps over a fixed screen length and then refines between the
+  last two, and the scale of its length fade is not known; the march above and the scale of
+  1 per screen are OpenSky's. Clean-room read of the game's shaders, 2026-11-06.
 
 The water and the blended layers after it are not in the copy, so they do not reflect. With the
 water depth switch off, nothing is copied and the reflection stays a colour.
 
 ## Where OpenSky differs
 
-- The `NAM5` flow map and the `FNAM` flow-map flags are read but not used, so a river's
-  surface follows only `NAM0`. The noise falloff is read but not used.
+- The noise normals fade in a straight line from full strength at the camera to flat at the
+  noise falloff distance. The
+  [Creation Kit](https://ck.uesp.net/wiki/WaterType#noise-falloff) calls the falloff a
+  curve but does not give its shape.
 - There is no reflection of what lies off screen. Without the game's screen-space reflection
   option, the reflection is a colour.
+- In the game, other surfaces reflect too: a lit surface's specular mask (its normal map's
+  alpha) weights a screen-space reflection that is added over it. OpenSky reflects only on
+  water.
 - The game simulates displacement on a height grid. OpenSky draws closed-form rings with the
-  `DNAM` displacement fields, so rings do not bounce off the shore or add up. The five `DNAM`
-  floats at offsets 52 to 68, which may be the rain simulator, are not read; the rain rings
-  use OpenSky's own sizes.
+  `DNAM` displacement fields, so rings do not bounce off the shore or add up. The rain rings
+  use OpenSky's own sizes, because the `DNAM` rain simulator is unused
+  ([water format](/formats/water.md#watr-colors-and-surface)).
 - The refraction unit, the ring shape, and the under-water fog colour are OpenSky's readings.
-  The `WATR` `INAM` under-water image space is not applied.
+- The under-water image space replaces the cell's or the weather's at once when the camera
+  crosses the surface. Whether the game blends between the two is not known.

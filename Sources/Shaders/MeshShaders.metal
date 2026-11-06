@@ -2,6 +2,8 @@
 #include "SurfaceShading.h"
 #include "EffectShading.h"
 #include "ProjectedMaterial.h"
+#include "SnowShading.h"
+#include "MeshRefraction.h"
 
 // Static-mesh path: diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
@@ -21,13 +23,6 @@ static inline float3 undoTerrainLODBrightening(float3 albedo, float2 curve)
 {
     return toLinear(pow(toGamma(albedo) / curve.x, 1.0 / curve.y));
 }
-// Refraction strength 1 moves the scene by a tenth of the screen; fire refraction
-// scrolls its normal map half a texture per second. Both are OpenSky choices.
-constant float refractionReach = 0.1;
-constant float fireRefractionScroll = 0.5;
-// How much ambient light a specular surface reflects; an OpenSky choice.
-constant float imageBasedLightingStrength = 0.5;
-
 // Tree sway grows with height like a tilt; leaves flutter by their wind weight and fade
 // with distance. The scales are OpenSky's (docs/rendering/trees.md).
 constant float treeSwayTilt = 0.1;
@@ -268,16 +263,6 @@ static float3 emittedLight(
     return emitted;
 }
 
-// Image-based lighting: the six-axis ambient seen along the reflected view, stronger at
-// grazing angles (Schlick's Fresnel from a base reflectance of 0.04).
-static float3 ambientReflection(LightGeometry geometry, constant FrameUniforms &frame)
-{
-    float3 reflected = reflect(-geometry.toEye, geometry.normal);
-    float facing = saturate(dot(geometry.normal, geometry.toEye));
-    float fresnel = 0.04 + 0.96 * pow(1.0 - facing, 5.0);
-    return directionalAmbient(reflected, frame) * (fresnel * imageBasedLightingStrength);
-}
-
 static float3 litSurface(
     StaticVertexOut in,
     LitInput input,
@@ -317,44 +302,12 @@ static float3 litSurface(
             mask = maps.backLight.sample(trilinear, input.uv).r;
         }
         specular = draw.specular.rgb * mask * sums.specular;
-        if (frame.imageBasedLighting != 0) {
-            specular += draw.specular.rgb * mask * ambientReflection(geometry, frame);
-        }
     }
     if (hasTerm(terms, ShadingTermSparkle)) {
         float glint = sparkle(input.uv, geometry, -frame.sunDirection, draw.multiLayer);
         specular += frame.sunColor * input.shadow * glint;
     }
     return input.albedo * illumination + specular;
-}
-
-struct RefractionInput
-{
-    float2 pixel;
-    float2 uv;
-    float fade;
-    uint terms;
-};
-
-// The scene copy, bent by the normal map. Fire refraction scrolls the map upward, and
-// the vertex and material alpha fade the bend out toward the shape's edges.
-static float3 refracted(
-    RefractionInput input,
-    constant FrameUniforms &frame,
-    constant DrawUniforms &draw,
-    texture2d<float> normalMap,
-    texture2d<float> scene,
-    sampler trilinear)
-{
-    float2 uv = input.uv;
-    if (hasTerm(input.terms, ShadingTermFireRefraction)) {
-        uv.y += frame.animationTime * fireRefractionScroll;
-    }
-    float2 bend = normalMap.sample(trilinear, uv).xy * 2.0 - 1.0;
-    float2 size = float2(scene.get_width(), scene.get_height());
-    float reach = draw.lightingEffects.w * refractionReach * saturate(input.fade);
-    constexpr sampler clamped(filter::linear, address::clamp_to_edge);
-    return scene.sample(clamped, input.pixel / size + bend * reach).rgb;
 }
 
 // The additive pipelines add the colour as it is, so the shader applies the source
@@ -390,7 +343,7 @@ fragment float4 staticMeshFragment(
     texture2d<float> layerMap [[texture(TextureIndexSurfaceLayer)]],
     texture2d<float> backLightMap [[texture(TextureIndexSurfaceBackLight)]],
     texture2d<float> projectedDiffuse [[texture(TextureIndexProjectedDiffuse)]],
-    texture2d<float> projectedNormal [[texture(TextureIndexProjectedNormal)]],
+    texture2d<float> projectedNoise [[texture(TextureIndexProjectedNoise)]],
     texture2d<float> sceneColour [[texture(TextureIndexSceneColor)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     depth2d_array<float> auxiliary [[texture(TextureIndexAuxiliaryShadowMap)]],
@@ -483,11 +436,16 @@ fragment float4 staticMeshFragment(
     }
     float3 vertexColour = linearVertexColour(in.color.rgb, frame);
     float3 albedo = diffuse.rgb * vertexColour;
+    float snowMask = 0.0;
     if (draw.projectedParameters.w > 0.5) {
         ProjectedLayer layer = projectedLayer(
-            in.worldPosition, normal.world, draw, projectedDiffuse, projectedNormal, trilinear);
+            in.worldPosition, normal.world, in.color.a, draw, projectedDiffuse, projectedNoise,
+            trilinear);
         albedo = mix(albedo, layer.albedo, layer.blend);
-        normal.world = normalize(mix(normal.world, layer.normal, layer.blend));
+        // The snow mask is the layer's blend, or the shape's own alpha under an overlay.
+        uint projected = uint(draw.projectedParameters.w);
+        float layerMask = (projected & 3u) == 3u ? diffuse.a : saturate(layer.blend);
+        snowMask = (projected & 4u) != 0 ? layerMask : 0.0;
     }
     if (hasTerm(terms, ShadingTermLandscapeNoise)) {
         float noise = detailMap.sample(trilinear, in.worldPosition.xy * landscapeNoiseTile).r;
@@ -520,6 +478,10 @@ fragment float4 staticMeshFragment(
     LitInput input = {albedo, toEye, tangentFrame[1], uv, shadow, terms, pointShadows};
     float3 lit = litSurface(in, input, normal, frame, draw, pointLights, maps, trilinear);
     lit += reflectionLit ? 0.0 : reflected;
+    if (snowMask > 0.0) {
+        float shine = snowRim(toEye, normalize(in.normal), normal.world);
+        lit += (shine + snowSparkle(in.worldPosition, shadow, frame)) * snowMask;
+    }
     return blendOutput(lit, alpha, in.worldPosition, frame, draw);
 }
 

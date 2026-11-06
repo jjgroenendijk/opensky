@@ -244,6 +244,10 @@ struct CommandLineTests {
         )
         #expect(!export.batch.hideMenus && export.batch.freeze)
         _ = try command(["reference", "capture"], as: ReferenceArguments.Capture.self)
+        let shot = try command(
+            ["reference", "shot", "--out", "/tmp/a.png"], as: ReferenceArguments.Shot.self
+        )
+        #expect(shot.out == "/tmp/a.png")
         _ = try command(["reference", "check"], as: ReferenceArguments.Check.self)
         _ = try command(["reference", "status"], as: ReferenceArguments.Status.self)
         #expect(exitCode(["reference", "launch", "--width", "10"])

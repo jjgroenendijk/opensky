@@ -141,8 +141,6 @@ the detail and the sources it did find.
 | Weather global chance | A global that resolves replaces the entry's chance | [weather](/engine/weather.md) |
 | Wind speed unit and one setting's meaning | Guesses from xEdit and the name | [weather](/engine/weather.md) |
 | Weather global meaning | OpenSky's reading | [weather format](/formats/weather.md) |
-| Sun and moon paths | OpenSky's reading of the settings | [celestial sky](/engine/celestial-sky.md) |
-| Moon glare card | 4 moon widths across, the climate's sun glare texture | [celestial sky](/engine/celestial-sky.md#drawing) |
 | Location tie rule | Inferred | [locations](/formats/locations.md) |
 | Terrain with no height | No guessed height | [terrain](/engine/terrain.md) |
 | World sound roll interval | OpenSky's interval | [world sounds](/engine/world-sfx.md) |
@@ -176,17 +174,18 @@ the detail and the sources it did find.
 | Water refraction | Normal x, y times the refraction magnitude in screen units, scaled by depth to the fog far plane | [water](/rendering/water.md#refraction) |
 | Water rings | Closed-form crests; 8 rings of 3 s; wading ring every 48 units at strength 0.4, under 150 units deep; floors 8, 4, 0.2 | [water](/rendering/water.md#displacement-and-rain) |
 | Rain rings | 48-unit grid, 0.8 s drops, 24-unit rings | [water](/rendering/water.md#displacement-and-rain) |
+| Water flow speed | Flow noise scrolls 0.001 tiles a second per rate step | [water](/rendering/water.md#flow-maps) |
+| Flow map plugin folder | The newest plugin folder with the cell's file | [water](/rendering/water.md#flow-maps) |
+| Water noise falloff | Normals fade in a straight line to flat at the falloff distance | [water](/rendering/water.md#where-opensky-differs) |
 | Under-water fog colour | The deep colour | [water](/rendering/water.md#under-the-water) |
 | Surface shading strength, tiling, refraction rate | OpenSky's values | [surface shading](/rendering/surface-shading.md) |
-| Shadow map size cap | 4096; the game allows more | [graphics options](/engine/graphics-options.md) |
-| Reference fade reach | Multiplier x 16 x bound radius, 15% dissolve | [graphics options](/engine/graphics-options.md) |
+| Reference fade timing | A distance dissolve from value 0.7 to 0.3 for the timed 2 s and 1.2 s fades | [graphics options](/engine/graphics-options.md#reference-fade) |
 | `BSLODTriShape` level counts | Prefixes when falling, else runs | [NIF](/formats/nif.md#nitrishape) |
-| Rain occlusion view size | 4,096 units square, 1,024 texels | [precipitation](/rendering/precipitation.md#roof-occlusion) |
-| Focus shadow reach and size | 2,048 units, 1,024 texels, 256-unit backup | [shadows](/rendering/shadows.md#focus-shadows) |
-| Image-based lighting | Six-axis ambient along the reflection, Fresnel 0.04, strength 0.5 | [surface shading](/rendering/surface-shading.md#lights) |
+| Rain occlusion depth range | 6,000 units above the camera to 4,000 below, straight down | [precipitation](/rendering/precipitation.md#roof-occlusion) |
 | Water screen-space reflection march | 24 steps from 24 units, each 1.25 times longer | [water](/rendering/water.md#screen-space-reflections) |
-| Snow ground sheen and glints | Sheen 0.25 at power 24; glints in 1.5% of 4-unit cells, 2 at power 6 | [terrain](/engine/terrain.md#snow-ground) |
-| Directional material blend | `edge * falloff scale + bias`; 512-unit tile; first textured shape of the `MATO` model | [surface shading](/rendering/surface-shading.md#directional-materials) |
+| Water screen-space reflection length fade | Zero at one screen of distance | [water](/rendering/water.md#screen-space-reflections) |
+| Snow sparkle colour | The sun colour | [terrain](/engine/terrain.md#snow-ground) |
+| Directional material overlay | Drawn inside the shape, on world `(y, -x)` | [surface shading](/rendering/surface-shading.md#directional-materials) |
 | Skin decal size and limit | At most 16 units; 35 kept when unset | [decals](/rendering/decals.md#skin-decals) |
 | Terrain split distance | `fSplitDistanceMult` scales the level 4, 8, and 16 reach; level 32 keeps `fBlockMaximumDistance` | [graphics options](/engine/graphics-options.md) |
 | Large reference LOD hidden per block | The game's per-cell rule is not known | [distant LOD](/engine/distant-lod.md#large-references) |
@@ -232,8 +231,9 @@ the detail and the sources it did find.
 | Creature loop reach and count | Loops play for the nearest 8 actors within 3000 units | [creature sounds](/engine/actor-sounds.md#loops-come-from-the-sound-types) |
 | Creature loop states | Conscious loop while alive and not unconscious; movement loop while the mover moves; a `CSDC` chance of 0 never plays | [creature sounds](/engine/actor-sounds.md#loops-come-from-the-sound-types) |
 | Music and dialogue duck levels | Music falls to 0.4 and `SFDC`/`NDSC` sounds to 0.5 in a conversation; `SFDC`/`NDSC` fade over the music seconds | [sound mix](/engine/sound-mix.md#what-a-category-does) |
-| Sound rumble | Strength is the `LNAM` send times the level at the start; at most 1 s | [sound mix](/engine/sound-mix.md#rumble) |
+| Sound rumble bus level | The sum of each sound's `LNAM` send times its heard level, master volume included | [sound mix](/engine/sound-mix.md#rumble) |
 | Weapon rumble timing | Every blow the player's weapon lands | [sound mix](/engine/sound-mix.md#rumble) |
-| Body collision sound | A speed loss of 150 units/s is a hit; level 0.25 to 1 up to a loss of 800; 15 quiet steps; the impact set's most common entry | [impulses](/engine/impulses.md#collision-sounds) |
+| Body collision sound | A speed loss of 150 units/s is a hit; level 0.25 to 1 up to a loss of 800; 15 quiet steps | [impulses](/engine/impulses.md#collision-sounds) |
 | Tree sway and leaf flutter | `treeSwayTilt` 0.1, leaf side share 0.5, leaf fade at 4096 units, defaults leaf amplitude 3 and frequency 1 | [trees](/rendering/trees.md) |
+| Skin decal projection depth | The box reaches as far in front of and behind the decal as its widest half side | [decals](/rendering/decals.md#skin-decals) |
 | Skin decal bone | The body bone with the nearest origin to the hit; weapon, shield, quiver, camera, magic, arrow, and root nodes skipped | [decals](/rendering/decals.md#skin-decals) |

@@ -31,6 +31,7 @@ import simd
 /// What `MapWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MapWorldHost: MenuInputConsumer {
+    var audio: AudioCoordinator { get }
     var actorValues: ActorValueCoordinator { get }
     var combat: CombatCoordinator { get }
     var crime: CrimeCoordinator { get }
@@ -203,6 +204,10 @@ extension MapWorldAdapter: MapMenuWorld {
 
     func showWorldNotice(_ notice: WorldNotice) {
         game.messages.postWorldNotice(notice)
+    }
+
+    func playDiscoveryMusic(markerType: UInt8) {
+        game.audio.musicDirector?.playDiscoveryMusic(markerType: markerType)
     }
 
     func incrementStat(_ name: String) {

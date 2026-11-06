@@ -40,6 +40,11 @@ extension Renderer {
         return frameInput.weather?.precipitation.rainIntensity ?? 0
     }
 
+    /// The `INAM` image space of the water over the camera; nil above water.
+    public var cameraWaterImageSpace: FormID? {
+        waterAboveCamera?.underwaterImageSpace
+    }
+
     /// The look of the water whose surface is over the camera, or nil above water.
     var waterAboveCamera: WaterLook? {
         let camera = frameInput.view.position

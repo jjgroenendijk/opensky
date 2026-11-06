@@ -44,7 +44,8 @@ nonisolated public struct PapyrusHelpMessageRequest: Equatable, Sendable {
 /// A world change the HUD announces in its big centred notice or as a line.
 nonisolated public enum WorldNotice: Equatable, Sendable {
     case locationDiscovered(name: String)
-    case locationCleared(name: String)
+    /// `playsMusic` is false for a location without the clearable keyword.
+    case locationCleared(name: String, playsMusic: Bool)
     case spellLearned(name: String)
     case wordLearned(word: String)
     /// `souls` is the player's count after the absorb.

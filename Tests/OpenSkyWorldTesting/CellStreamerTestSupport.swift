@@ -94,7 +94,8 @@ nonisolated public final class ManualCellBuildRunner: CellBuildRunning {
     @discardableResult
     public func enqueueDistantLOD(
         center: CellCoordinate,
-        hiddenCells _: Set<CellCoordinate>
+        hiddenCells _: Set<CellCoordinate>,
+        state _: WorldStateSnapshot
     ) -> Bool {
         enqueuedLODCenters.append(center)
         return true

@@ -82,6 +82,21 @@ struct WaterTypeDecoderTests {
         #expect(surface.underwaterFogFar == 600)
     }
 
+    @Test func readsTheFlowMapScaleOnlyFromTheLongSize() throws {
+        for (size, expected) in [(228, Float(0)), (232, Float(1))] {
+            var dnam = Data(count: size)
+            if size == 232 {
+                withUnsafeBytes(of: Float(1).bitPattern.littleEndian) {
+                    dnam.replaceSubrange(228 ..< 232, with: $0)
+                }
+            }
+            let water = try WaterType(record: ESMFixture.parseRecord(ESMFixture.record(
+                "WATR", data: ESMFixture.field("DNAM", dnam)
+            )))
+            #expect(try #require(water.surface).flowMapScale == expected)
+        }
+    }
+
     @Test func skipsUnknownDNAMVariant() throws {
         let fields = ESMFixture.field("DNAM", Data(count: 52))
         let water = try WaterType(record: ESMFixture.parseRecord(ESMFixture.record(

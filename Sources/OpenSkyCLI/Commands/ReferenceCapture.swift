@@ -1,5 +1,6 @@
 // `reference capture`: one run folder under `.logs/reference/` with both captures, their
 // difference, the batch file of the view, and a report (`ReferenceComparisonCapture`).
+// `reference shot`: the Windows game window alone.
 
 import Foundation
 import OpenSkyAgentControl
@@ -30,6 +31,21 @@ enum ReferenceCapture {
         }
         print("[INFO] \(report.summary)")
         print("[INFO] Run folder: \(run.directory.path(percentEncoded: false))")
+    }
+
+    /// `reference shot`: the Windows game window alone, for a check over time or a sweep.
+    static func shot(arguments: ReferenceArguments.Shot) throws {
+        let url = try arguments.out.map { URL(filePath: $0) }
+            ?? RunDirectory.create("reference-shot").appending(path: "reference.png")
+        let frame = ReferenceWindowFrame(
+            x: 0, y: 0, width: arguments.window.width, height: arguments.window.height
+        )
+        do {
+            try ReferenceWindowCapture.capture(to: url, expected: frame)
+        } catch let error as ReferenceCaptureError {
+            throw CLIError.failure(error.localizedDescription)
+        }
+        print("[INFO] Wrote \(url.path(percentEncoded: false))")
     }
 
     private static func captureOpenSky(

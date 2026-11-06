@@ -1,5 +1,6 @@
 // The game's `[Display] fMeshLODLevel1FadeDist` and `fMeshLODLevel2FadeDist`: past
-// each distance a `BSLODTriShape` draws its next coarser level.
+// each distance a `BSLODTriShape` draws its next coarser level. The game never switches
+// inside the sun-shadow distance (docs/engine/graphics-options.md).
 
 import simd
 
@@ -10,9 +11,9 @@ nonisolated public struct MeshLODDistances: Equatable, Sendable {
     public let level1: Float
     public let level2: Float
 
-    public init(level1: Double, level2: Double) {
+    public init(level1: Double, level2: Double, shadowDistance: Float = 0) {
         func distance(_ value: Double) -> Float {
-            value.isFinite && value > 0 ? Float(min(value, 1e7)) : 0
+            value.isFinite && value > 0 ? max(Float(min(value, 1e7)), shadowDistance) : 0
         }
         self.level1 = distance(level1)
         self.level2 = distance(level2)

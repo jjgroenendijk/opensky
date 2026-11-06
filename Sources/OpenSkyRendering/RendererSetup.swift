@@ -204,7 +204,7 @@ extension Renderer {
         let descriptor = MTL4ArgumentTableDescriptor()
         // Highest buffer index is the post-effect uniforms.
         descriptor.maxBufferBindCount = BufferIndex.postEffectUniforms.rawValue + 1
-        // The projected normal map is the highest slot.
+        // The point-light shadow cubes are the highest slot.
         descriptor.maxTextureBindCount = TextureIndex.pointShadowMap.rawValue + 1
         // Trilinear + shadow-compare + UI clamp + SWF repeat.
         descriptor.maxSamplerStateBindCount = 4

@@ -52,8 +52,12 @@ drawing. Going back to clear weather sets the birth rate to zero, and existing p
 The game's `[Display] bUsePrecipitationOcclusion` turns roof occlusion on
 ([graphics options](/engine/graphics-options.md)). While rain or snow falls, the shadow pass draws
 one more depth view: it looks straight down on a 4,096-unit square around the camera, from 6,000
-units above the camera to 4,000 below, at 1,024 texels a side. It keeps the highest caster over
-each texel. Actors are left out. The view lives in a second depth array beside the sun cascades,
+units above the camera to 4,000 below, at 512 texels a side, so 8 units a texel. Its centre moves
+in steps of 32 units. It keeps the highest caster over each texel. The square, the texel count,
+and the step are the game's (clean-room read of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). The game
+draws the view every frame along the direction the rain falls, not straight down, from
+`2 * 4096` units back along it; OpenSky keeps the straight view and its own depth range.
+Actors are left out. The view lives in a second depth array beside the sun cascades,
 built the first time an option needs it.
 
 The particle shader compares each drop with that depth. A drop more than a little below the

@@ -152,6 +152,8 @@ public final class GameSession: RenderFrameDriver {
     public var actorSoundSources: (() -> [ActorSoundSource])?
     /// The menu, loading, and dialogue state the sound mix follows; the app supplies it.
     public var soundMixInputs: (() -> SoundMixInputs)?
+    /// Takes this frame's rumble bus levels each frame, silent while the world is paused.
+    public var soundRumble: ((SoundRumble) -> Void)?
     /// The wall-clock time of the last sound mix step, which also runs in menus.
     var soundMixWallTime: Double?
     /// Music director, ticked from the pause-aware audio hook. Nil until audio is on.

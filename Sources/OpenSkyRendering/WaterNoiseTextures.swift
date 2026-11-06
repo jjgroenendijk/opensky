@@ -12,6 +12,7 @@ public final class WaterNoiseTextures {
     private let loader: AssetLoader<String, Data>
     private let textureLoader: TextureLoader
     private var textures: [String: MTLTexture] = [:]
+    private var missing: Set<String> = []
     public private(set) var failedPaths: [String] = []
 
     /// `immediate` loads inside the request, for offscreen frames and tests.
@@ -40,10 +41,17 @@ public final class WaterNoiseTextures {
         return maps.count == 3 ? maps : nil
     }
 
+    /// One loaded map, such as a cell's flow map, or nil while it loads.
+    func texture(_ path: String) -> MTLTexture? {
+        Self.filePath(path).flatMap { textures[$0] }
+    }
+
     /// Moves finished loads in and asks for what `paths` needs. Returns new GPU
     /// allocations, which the caller makes resident.
     func prepare(_ paths: Set<String>) -> [MTLAllocation] {
-        for path in paths.compactMap(Self.filePath) where textures[path] == nil {
+        for path in paths.compactMap(Self.filePath)
+            where textures[path] == nil && !missing.contains(path)
+        {
             loader.prefetch(path)
         }
         var added: [MTLAllocation] = []
@@ -54,6 +62,7 @@ public final class WaterNoiseTextures {
                 textures[path] = texture
                 added.append(texture)
             case let .failed(failure):
+                missing.insert(path)
                 failedPaths.append("\(path): \(failure)")
             case .loading:
                 break
@@ -68,10 +77,24 @@ extension Renderer {
     /// Drains finished noise map loads and requests the maps of the water in the scene.
     public func prepareWaterTextures() {
         guard let waterNoiseTextures, !scene.water.isEmpty else { return }
-        let paths = Set(scene.water.flatMap(\.look.shading.noiseTextures).filter { !$0.isEmpty })
+        let paths = Set(scene.water.flatMap { item in
+            item.look.shading.noiseTextures + [item.look.shading.flowNoiseTexture]
+                + (item.flowMap.map { [$0] } ?? [])
+        }.filter { !$0.isEmpty })
         let added = waterNoiseTextures.prepare(paths)
         guard !added.isEmpty else { return }
         residencySet.addAllocations(added)
         residencySet.commit()
+    }
+
+    /// Each water plane's flow map in the scene, and whether it and its flow noise loaded.
+    public func waterFlowMaps() -> [(path: String, loaded: Bool)] {
+        scene.water.compactMap { item in
+            item.flowMap.map { path in
+                let loaded = waterNoiseTextures?.texture(path) != nil
+                    && waterNoiseTextures?.texture(item.look.shading.flowNoiseTexture) != nil
+                return (path, loaded)
+            }
+        }
     }
 }

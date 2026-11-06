@@ -42,22 +42,31 @@ nonisolated extension CellSceneBuilder {
         directionalMaterials.index = index
         var projected: ProjectedMaterial?
         if let object = index[id.rawValue], let properties = object.properties {
-            let textures = modelTextures(path: object.model?.path)
+            let singlePass = properties.isSinglePass ?? false
             projected = ProjectedMaterial(
-                diffuseTexture: textures?.diffuseTexture,
-                normalTexture: textures?.normalTexture,
-                direction: properties.projectionVector,
+                diffuseTexture: singlePass
+                    ? Self.projectedDiffusePath
+                    : modelTextures(path: object.model?.path)?.diffuseTexture,
+                noiseTexture: Self.projectedNoisePath,
+                direction: singlePass ? SIMD3(0, 0, 1) : properties.projectionVector,
                 maxAngle: directional.maxAngle,
                 falloffScale: properties.falloffScale,
                 falloffBias: properties.falloffBias,
                 noiseUVScale: properties.noiseUVScale,
                 materialUVScale: properties.materialUVScale,
-                singlePassColor: properties.singlePassColor ?? SIMD3(1, 1, 1)
+                singlePassColor: properties.singlePassColor ?? SIMD3(1, 1, 1),
+                singlePass: singlePass,
+                isSnow: properties.isSnow ?? false
             )
         }
         directionalMaterials.resolved[key] = .some(projected)
         return projected
     }
+
+    /// A single-pass material draws these shared maps, projected straight down; its
+    /// model is a placeholder (docs/rendering/surface-shading.md).
+    nonisolated static let projectedDiffusePath = "textures\\effects\\projecteddiffuse.dds"
+    nonisolated static let projectedNoisePath = "textures\\effects\\projectednoise.dds"
 
     /// The first textured material of a model, read straight from its NIF.
     private func modelTextures(path: String?) -> Material? {

@@ -195,6 +195,11 @@ So the real game never shows the noise volume, and the reference game cannot sho
 volume in a 2D effect slot looks. Direct3D 11 does not define the result of sampling a 3D
 resource through a 2D shader slot.
 
+The game's effect shaders declare every texture slot, the source slot included, as a 2D
+texture, in all of their variants. No effect shader reads a 3D texture, so there is no third
+coordinate: what the game shows for a volume source depends on the graphics driver
+(clean-room read of the game's shaders, 2026-11-06).
+
 ### How OpenSky draws it
 
 - The loader uploads a volume as a Metal 3D texture with its full mip chain, one slice
@@ -205,8 +210,8 @@ resource through a 2D shader slot.
 - An effect shape on a static mesh asks for its source as an effect source. For a volume
   file it gets the 3D texture, which binds to its own shader slot, and the shader samples it
   at the shape's UV and depth 0.5, the middle slice.
-  [UNCONFIRMED] The depth 0.5 is OpenSky's choice. The game may sample another depth, show
-  nothing, or show something else. Particles and every other 2D consumer keep the
+  [UNCONFIRMED] The depth 0.5 is OpenSky's choice. The game reads the slot as 2D, so the
+  driver decides what it returns. Particles and every other 2D consumer keep the
   placeholder.
 
 The noise does not change OpenSky's frame of the barrier mesh. The shape's flags turn on

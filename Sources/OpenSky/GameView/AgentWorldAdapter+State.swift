@@ -6,6 +6,7 @@ import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
+import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
@@ -235,6 +236,11 @@ extension AgentWorldAdapter {
                     "cause": game.controllerRumble.lastRumbleCause.map(AgentJSON.string) ?? .null
                 ]
             } ?? .null,
+            "soundRumble": [
+                "small": .init(game.controllerRumble.soundMotors.small),
+                "big": .init(game.controllerRumble.soundMotors.big)
+            ],
+            "healthCues": healthCueState(),
             "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
             "controls": [
                 "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),
@@ -486,6 +492,7 @@ extension AgentWorldAdapter {
             "interpolation": interpolationState(),
             "terrainLOD": terrainLODState(),
             "largeReferences": game.streamer.map { .init($0.largeReferenceCount) } ?? .null,
+            "fullLODReferences": game.streamer.map { .init($0.fullLODReferenceCount) } ?? .null,
             "hiddenLargeReferenceLOD": game.streamer.map {
                 .init($0.hiddenLargeReferenceSegments)
             } ?? .null,
@@ -494,6 +501,7 @@ extension AgentWorldAdapter {
             "projectileVisuals": projectileVisualState(),
             "soundMix": soundMixState(),
             "treeWind": treeWindState(),
+            "waterFlow": waterFlowState(),
             "gpuMemory": gpuMemoryState()
         ]
     }

@@ -14,8 +14,9 @@ import Testing
 struct CloudLayersTests {
     @Test func speedByteCentresOnStill() {
         #expect(ResolvedCloudLayer.speed(127) == 0)
-        #expect(abs(ResolvedCloudLayer.speed(254) - 0.1) < 1e-6)
-        #expect(abs(ResolvedCloudLayer.speed(0) + 0.1) < 1e-6)
+        // fWeatherCloudSpeedMax 0.1 times a tenth: at most 0.01 texture units per second.
+        #expect(abs(ResolvedCloudLayer.speed(254) - 0.01) < 1e-7)
+        #expect(abs(ResolvedCloudLayer.speed(0) + 0.01) < 1e-7)
         #expect(ResolvedCloudLayer.speed(nil) == 0)
     }
 
@@ -30,7 +31,7 @@ struct CloudLayersTests {
         #expect(first.color == SIMD3(1, 0, 0))
         #expect(first.alpha == 0.5)
         #expect(first.velocity.x == 0)
-        #expect(abs(first.velocity.y - 0.1) < 1e-6)
+        #expect(abs(first.velocity.y - 0.01) < 1e-7)
     }
 
     @Test func nightPicksTheNightKeyframe() throws {

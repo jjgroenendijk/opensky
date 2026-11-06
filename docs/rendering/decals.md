@@ -62,15 +62,23 @@ the ground:
   (its feet, turned to its facing), facing out from its middle, level with the ground.
 - Each frame with skin decals rebuilds the decal batches. A decal whose bone is gone, such as
   on a body part the actor no longer has, is not drawn.
+- It draws as a box around the decal, not as a flat quad. Each pixel the box covers reads
+  the scene depth and finds the surface point there. The texture draws where that point lies
+  inside the box, so the mark wraps around an arm or a head. The box reaches as far in front
+  of and behind the decal as its widest half side.
+- A frame with skin decals copies the scene depth, as the water does
+  ([water](/rendering/water.md)). The boxes draw right after the copy. A frame with no copy,
+  such as one with a non-perspective camera, draws them as flat quads.
 - Its width and height are at most 16 units.
 - `[Display] uMaxSkinDecals` limits the live skin decals, 35 when the settings give none.
   `iMaxSkinDecalsPerFrame` limits those placed in one frame. `bDecals` off also turns them off.
 
 ## Approximations
 
-- A skin decal is a flat quad on one bone. The game projects it onto the skinned mesh, so it
-  wraps around the body; OpenSky's does not. Picking the bone by the nearest origin, the
-  16-unit size cap, and the default limit of 35 are OpenSky's own.
+- A skin decal projects onto every surface inside its box, not only onto the actor's mesh. A
+  hit near the feet can also mark the ground, and a held weapon in the box is marked too.
+  The game projects onto the skinned mesh only. Picking the bone by the nearest origin, the
+  box depth, the 16-unit size cap, and the default limit of 35 are OpenSky's own.
 - A decal is one flat quad. It does not wrap around a corner or follow uneven ground.
 - The 2 x 2 subtexture grid is a reading of the vanilla blood textures, not a confirmed rule.
 - Vanilla footstep `IPCT` records have a dust model and no decal, so steps leave no marks.

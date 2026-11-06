@@ -5,13 +5,15 @@ import OpenSkyFormatsESM
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyTerrain
+import OpenSkyWorldState
 import simd
 
 nonisolated extension CellSceneBuilder {
     nonisolated public func buildDistantLOD(
         worldspaceEditorID: String,
         center: CellCoordinate,
-        hiddenCells: Set<CellCoordinate>
+        hiddenCells: Set<CellCoordinate>,
+        state: WorldStateSnapshot = .empty
     ) throws -> DistantLODScene? {
         let lodWorld = lodWorldspace(of: worldspaceEditorID)
         guard let builder = distantLODBuilder else { return nil }
@@ -22,9 +24,14 @@ nonisolated extension CellSceneBuilder {
         } ?? []
         let withWater = water.isEmpty ? lod : lod.adding(water: water)
         let largeReferences = largeReferencePlacements(
-            worldspaceEditorID: worldspaceEditorID, cells: lod.largeReferenceCells
+            worldspaceEditorID: worldspaceEditorID, cells: lod.largeReferenceCells, state: state
         )
-        return withWater.adding(largeReferences: largeReferences, assets: drainTouchedAssets())
+        let fullLOD = fullLODPlacements(
+            worldspaceEditorID: worldspaceEditorID, loadedCells: hiddenCells, state: state
+        )
+        return withWater.adding(largeReferences: largeReferences.placements, assets: CellAssets())
+            .adding(fullLODReferences: fullLOD.placements, assets: drainTouchedAssets())
+            .watching(largeReferences.watchedObjectIDs.union(fullLOD.watchedObjectIDs))
     }
 
     /// A child worldspace with the `PNAM` LOD flag draws its parent's LOD files,

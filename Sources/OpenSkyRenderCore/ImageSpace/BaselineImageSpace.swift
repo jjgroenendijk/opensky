@@ -1,6 +1,7 @@
 // Which `IMGS` applies right now. An exterior blends the four `WTHR` `IMSP`
 // slots with the time-of-day weights of the sky colors, across a weather
-// transition too. An interior uses its `CELL` `XCIM`. Pure.
+// transition too. An interior uses its `CELL` `XCIM`, and a camera under water the
+// water's `WATR` `INAM`. Pure.
 // See docs/formats/image-spaces.md, section "Resolution".
 
 import Foundation
@@ -23,6 +24,8 @@ nonisolated public enum ImageSpaceContext: Equatable, Sendable {
     case exterior(weathers: [WeightedWeatherImageSpaces], timeOfDay: TimeOfDayWeights)
     /// The `XCIM` link, or nil when the cell names none.
     case interior(cellImageSpace: FormID?)
+    /// The `INAM` link of the water over the camera; it replaces the weather and the cell.
+    case underwater(imageSpace: FormID)
 }
 
 /// One `IMGS` in the blend. A nil key is a slot that names no record, which counts as neutral.
@@ -66,6 +69,8 @@ nonisolated public enum BaselineImageSpaceResolver {
             return .none
         case let .interior(cellImageSpace):
             slots = [(cellImageSpace, 1)]
+        case let .underwater(imageSpace):
+            slots = [(imageSpace, 1)]
         case let .exterior(weathers, timeOfDay):
             slots = weathers.flatMap { weather in
                 let links = weather.imageSpaces

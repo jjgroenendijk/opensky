@@ -247,8 +247,9 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
     public var precipitation: PrecipitationState
     /// Both weathers' layers during a transition, each faded by its weight.
     public var clouds: [ResolvedCloudLayer] = []
-    /// `NAM0` index 16, the colour each moon's glare adds.
-    public var moonGlare: SIMD3<Float> = .zero
+    /// `NAM0` index 16, "Moon Glare": the colour each moon's texture is added in. White
+    /// when the weather has no such colour, so its moons still show.
+    public var moonGlare: SIMD3<Float> = SIMD3(repeating: 1)
 
     /// Resolves one weather at `hour` under `timing`. Missing NAM0/FNAM/DALC
     /// fields resolve to zero/disabled rather than throwing (mod-quirk rule).
@@ -285,7 +286,9 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
             precipitation: PrecipitationState(weather.data?.precipitation ?? .none),
             clouds: ResolvedCloudLayer.layers(of: weather.sky, weights: weights)
         )
-        resolved.moonGlare = color(.moonGlare)
+        if weather.colors(for: .moonGlare) != nil {
+            resolved.moonGlare = color(.moonGlare)
+        }
         return resolved
     }
 

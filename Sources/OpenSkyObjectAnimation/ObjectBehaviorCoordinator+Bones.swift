@@ -35,6 +35,14 @@ extension ObjectBehaviorCoordinator {
         return PosedBone(index: index, matrices: matrices, parents: skeleton.parentIndices)
     }
 
+    /// One named bone in the world, from the pose last published and the object's placement.
+    public func worldBone(of reference: UInt32, named name: String) -> float4x4? {
+        guard let entry = running[reference], let bone = bone(of: reference, named: name) else {
+            return nil
+        }
+        return entry.object.placement * bone.model
+    }
+
     /// The references that run a graph now.
     public var runningReferences: [UInt32] {
         running.keys.sorted()

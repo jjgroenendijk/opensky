@@ -74,32 +74,54 @@ reference's `XEMI` light, or its `XEMI` region's weather colour at this hour
 keeps the NIF colour. The sun terms
 use the sun shadow.
 
-With the game's `[Display] bIBLFEnable` on, a specular surface also reflects the ambient
-light (image-based lighting). The six-axis ambient is read along the reflected view
-direction, times Schlick's Fresnel `0.04 + 0.96 * (1 - N.V)^5`, times 0.5. The specular
-colour and mask scale it like the specular row. The game samples a captured environment
-instead; this six-axis form and the 0.5 strength are OpenSky's own.
+A specular surface reflects no ambient light along the view. The game's `[Display] bIBLFEnable`
+reads as "image-based lighting", but it turns on an image-based lens flare, a screen effect, not
+a surface term (clean-room read of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). Shiny surfaces show
+their surroundings only through their environment map.
 
 ## Directional materials
 
 A static whose `STAT` `DNAM` names a `MATO` gets that material on the faces that point along
-the `MATO` projection vector, such as snow on the tops of rocks
+a direction, such as snow on the tops of rocks
 ([environment shading records](/formats/environment-shading.md#mato)). The surface override of
-every placed reference of the static carries it, and every lit shape of the model takes it.
+every placed reference of the static carries it, and every lit shape of the model takes it:
+the game sets the `Projected_UV` flag on all of them, whatever the NIF says.
 
-- A face whose normal is more than the `DNAM` max angle from the projection vector gets none.
-- Between that angle and the vector, `edge` runs from 0 to 1. The blend is
-  `edge * falloff scale + falloff bias`, clamped to 0 to 1.
-- With the game's `[Display] bEnableProjecteUVDiffuseNormals` on, the blend mixes in the
-  diffuse and normal maps of the `MATO` model's first textured shape. They are laid on the world
-  XY plane and repeat every 512 units at a material UV scale of 1. The normal map's XY tilts the
-  normal around world up.
-- With it off, the blend mixes in the `MATO` single-pass colour, or white when the record has
-  none.
+The game draws two kinds (clean-room read of the game's shaders and of `SkyrimSE.exe`
+1.7.104.0, 2026-11-06):
 
-How the game reads the falloff values, the noise UV scale, and the normal dampener is not
-documented. The blend above, the 512-unit tile, and the texture source are OpenSky's own. The
-noise that breaks up the game's edge is not drawn.
+- **Single pass** (`MATO` `DATA` flag set, as on every snow material). The layer is part of the
+  shape's own shading. The direction is world up, not the `MATO` projection vector, and the
+  textures are the game's shared `textures\effects\projecteddiffuse.dds` and
+  `projectednoise.dds`; the `MATO` model is a placeholder box. The layer UV is the world
+  position turned 90 degrees, `(y, -x)`. The noise repeats every noise-UV-scale units and the
+  diffuse map every two of them.
+- **Overlay** (flag clear, such as dirt, moss, and ice). The game draws the `MATO` model's
+  texture as a second pass along the projection vector, repeating every material-UV-scale
+  units, with a hard cut at the edge. OpenSky draws it inside the shape, with the same cut.
+
+The edge, with `c = cos(DNAM max angle)` and `n` the noise texture's red channel:
+
+```text
+edge = (N . direction) * vertex alpha - ((1 - c) * falloff bias + c) - (1 - c) * falloff scale * n
+```
+
+So a face takes the layer where `N . direction > c + (1 - c) * (bias + scale * n)`.
+
+- With the game's `[Display] bEnableProjecteUVDiffuseNormals` on, a single-pass face mixes in
+  the diffuse map times the single-pass colour, by `smoothstep(-0.1, 0.1, edge)`.
+- With it off, the face takes the single-pass colour, or white when the record has none, with a
+  hard edge at 0.
+- The game's normal maps of the layer change only the normal it keeps for reflections and
+  ambient occlusion, not the lighting normal, so OpenSky does not use them.
+
+A material whose last `DATA` field is set also gives the shapes the snow shading: the rim
+sheen and the sparkles of [snow ground](/engine/terrain.md#snow-ground). The snow mask is the
+layer's blend for a single-pass material and the shape's own diffuse alpha under an overlay.
+In the install the field is set on 34 of 42 winning records, dirt, moss, and ice included, and
+the game applies it to all of them.
+The game drops the shape's own specular there; OpenSky keeps it. The normal dampener of an
+overlay scales its normal map, which OpenSky does not draw.
 
 ## Albedo
 
