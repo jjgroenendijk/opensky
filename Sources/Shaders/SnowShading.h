@@ -62,4 +62,11 @@ static float3 snowSparkle(float3 world, float shadow, constant FrameUniforms &fr
     return frame.sunColor * sparkle;
 }
 
+// An opaque pixel stores 0 in the scene alpha where snow covers it. The game turns ambient
+// occlusion off wherever the snow mask is above zero; the occlusion pass reads this.
+static inline float snowCoverageAlpha(float snowMask)
+{
+    return snowMask > 0.0 ? 0.0 : 1.0;
+}
+
 #endif /* SnowShading_h */

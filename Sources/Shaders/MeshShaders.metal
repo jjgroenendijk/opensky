@@ -241,6 +241,8 @@ struct LitInput
     float shadow;
     uint terms;
     PointShadows pointShadows;
+    /// Snow cover from a snow directional material, 0 to 1.
+    float snowMask;
 };
 
 // The emissive colour, or the reference's emittance on an external-emittance shape.
@@ -279,6 +281,7 @@ static float3 litSurface(
                               draw.lightingEffects.x, draw.lightingEffects.y};
     LightSums sums = {0.0, 0.0, 0.0, 0.0, 0.0};
     addLight(sums, geometry, -frame.sunDirection, frame.sunColor * input.shadow, terms);
+    float3 sunSpecular = sums.specular;
     addPointLights(
         sums, geometry, in.worldPosition, pointLights, draw.pointLightCount, terms,
         input.pointShadows);
@@ -302,6 +305,9 @@ static float3 litSurface(
             mask = maps.backLight.sample(trilinear, input.uv).r;
         }
         specular = draw.specular.rgb * mask * sums.specular;
+        // Snow drops the shape's own specular and keeps the point lights' as rim light.
+        float3 pointSpecular = sums.specular - sunSpecular;
+        specular = mix(specular, pointSpecular, input.snowMask);
     }
     if (hasTerm(terms, ShadingTermSparkle)) {
         float glint = sparkle(input.uv, geometry, -frame.sunDirection, draw.multiLayer);
@@ -475,14 +481,18 @@ fragment float4 staticMeshFragment(
                                           in.worldPosition, normalize(in.normal), pointLights,
                                           draw.pointLightCount, pointShadowMap, shadowSampler)
                                     : pointShadowsLit;
-    LitInput input = {albedo, toEye, tangentFrame[1], uv, shadow, terms, pointShadows};
+    LitInput input = {albedo, toEye, tangentFrame[1], uv, shadow, terms, pointShadows, snowMask};
     float3 lit = litSurface(in, input, normal, frame, draw, pointLights, maps, trilinear);
     lit += reflectionLit ? 0.0 : reflected;
     if (snowMask > 0.0) {
         float shine = snowRim(toEye, normalize(in.normal), normal.world);
         lit += (shine + snowSparkle(in.worldPosition, shadow, frame)) * snowMask;
     }
-    return blendOutput(lit, alpha, in.worldPosition, frame, draw);
+    float4 output = blendOutput(lit, alpha, in.worldPosition, frame, draw);
+    if (!alphaBlendEnabled && draw.additiveBlend == 0) {
+        output.a = snowCoverageAlpha(snowMask);
+    }
+    return output;
 }
 
 // Sun-shadow depth pre-pass: each caster renders into one cascade slice,

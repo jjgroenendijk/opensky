@@ -354,7 +354,8 @@ static inline float3 postApply(
     if ((post.effects & PostEffectFlagDepthOfField) != 0) {
         color = postDepthOfField(color, pixel, sky, frame.cameraPosition, scene, depth, post);
     }
-    if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky) {
+    bool snow = scene.sample(postNearest, pixel.uv).a < 0.5;
+    if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky && !snow) {
         float3 normal = postSurfaceNormal(pixel, frame.cameraPosition, depth, post);
         // The game darkens the whole lit colour: sun, point lights, and ambient alike.
         float occlusion = postAmbientOcclusion(pixel, normal, frame.cameraPosition, depth, post);

@@ -120,7 +120,9 @@ sheen and the sparkles of [snow ground](/engine/terrain.md#snow-ground). The sno
 layer's blend for a single-pass material and the shape's own diffuse alpha under an overlay.
 In the install the field is set on 34 of 42 winning records, dirt, moss, and ice included, and
 the game applies it to all of them.
-The game drops the shape's own specular there; OpenSky keeps it. The normal dampener of an
+The game drops the shape's own specular there and adds the point lights' specular to the rim.
+OpenSky does the same, by the snow mask: the sun's specular goes, and the point lights'
+specular stays, without the shape's specular colour and mask. The normal dampener of an
 overlay scales its normal map, which OpenSky does not draw.
 
 ## Albedo

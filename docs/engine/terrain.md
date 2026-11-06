@@ -103,8 +103,9 @@ sparkles fall in other places than the game's, at the same density. The same rim
 sparkles light a mesh under a snow directional material
 ([surface shading](/rendering/surface-shading.md#directional-materials)).
 
-The game also turns ambient occlusion off where the snow mask is above zero. OpenSky's
-occlusion pass has no snow mask, so snow still darkens in corners.
+The game also turns ambient occlusion off where the snow mask is above zero. OpenSky does the
+same: an opaque pixel with snow stores 0 in the scene colour's alpha, and the
+[occlusion pass](/rendering/post-effects.md#ambient-occlusion) leaves such a pixel as it is.
 
 ## Placement
 

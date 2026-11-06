@@ -54,7 +54,9 @@ the sky reaches.
   ambient light, and glow alike. The game does the same: its scene colour holds all the
   light in one target, and the occlusion step multiplies that colour (clean-room read of the
   game's shaders in `Skyrim - Shaders.bsa`, 2026-11-06, behaviour only). On snow the game
-  raises `ao` by a bias, so snow stays bright; OpenSky does not.
+  raises `ao` by a bias, so snow stays bright. OpenSky leaves a pixel with snow unchanged, as
+  the game turns occlusion off wherever the snow mask is above zero
+  ([snow ground](/engine/terrain.md#snow-ground)).
 - It darkens the colour under the fog, as the game's fog variant does. The fog part of the
   pixel, `fog colour × fog amount`, stays as it is, and only the rest is multiplied by `ao`.
 - The effect fades out between 2,048 and 4,096 units from the camera. Far away, depth
@@ -163,7 +165,7 @@ known.
 
 - Ambient occlusion: the radius and the strength are OpenSky's own, and the tap distance is
   divided by the radius before the game's weight. The game then applies a contrast curve and
-  a blend over time, which OpenSky does not have. The game also leaves snow brighter.
+  a blend over time, which OpenSky does not have.
 - The volumetric light's scales from `VOLI` fields to world units and strength are OpenSky's
   reading of the field names. The noise drifts along X, because no wind direction is known.
 - A modifier's "Use Target" flag, which focuses on the crosshair target, is not used.
