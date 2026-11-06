@@ -16,6 +16,8 @@ public protocol SkillsMenuWorld: SWFLayerWorld {
     var skillsMenuTexts: GameSettingTexts<SkillsMenuText> { get }
     /// A beast form opens only its own tree, and nothing without one.
     var isPlayerInBeastForm: Bool { get }
+    /// The level-up music (`DOBJ` `LUMS`), which the game starts as the level-up page opens.
+    func playLevelUpMusic()
 }
 
 extension SkillsMenuWorld {
@@ -128,6 +130,9 @@ public final class SkillsMenuCoordinator {
         loadTrees(source)
         menuMode.inputConsumer = world.menuInputConsumer
         menuMode.present(Self.identifier)
+        if model?.page == .levelUp {
+            world.playLevelUpMusic()
+        }
         syncMovie()
         return true
     }

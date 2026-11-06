@@ -98,14 +98,24 @@ The default objects (`DOBJ`) name the music of single moments
 | --- | --- | --- | --- |
 | `BTMS` | Battle | `MUSCombat` | When combat music starts |
 | `DTMS` | Death | `MUSSpecialDeath` | When the player dies |
-| `LUMS` | Level up | `MUSSpecialSuccess` | With the "level up" notice |
+| `LUMS` | Level up | `MUSSpecialSuccess` | When the skills menu opens on its level-up page |
 | `DCMS` | Dungeon cleared | `MUSDungeonCleared` | With the "cleared" notice |
-| `SCMS` | Success | `MUSSpecialSuccess` | Never: no source says what starts it |
+| `SCMS` | Success | `MUSSpecialSuccess` | Never: the game itself never starts it |
 
 Each plugin's `DOBJ` is merged by tag; the last plugin wins. A special moment plays one track
 and does not loop. When the track ends, the music it interrupted comes back. A cell change during
 the moment changes only what comes back. Combat cuts the moment short and later returns to what
 the moment interrupted. During combat, a special moment does not start.
+
+A clean-room read of `SkyrimSE.exe` 1.7.104.0 (2026-11-06, behaviour only) gave these rules:
+
+- The game starts `LUMS` when the level-up menu opens, not when the level is reached.
+- No code in the game reads `SCMS`. The success music that plays in quests must come from
+  scripts, through `MusicType.Add()`, which OpenSky already runs.
+- `DCMS` plays when a location turns cleared and has the `LocTypeClearable` keyword
+  (`DOBJ` `KWDO`). A location is cleared when it has at least one boss reference (`LRTB`)
+  and every boss reference is done.
+- `DTMS` plays only if its `MUSC` has the "Plays One Selection" flag.
 
 ### Discovery music
 

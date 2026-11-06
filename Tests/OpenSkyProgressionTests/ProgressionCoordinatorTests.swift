@@ -211,6 +211,5 @@ struct ProgressionCoordinatorTests {
         }
         #expect(first.hasPrefix("\(name) rose to "))
         #expect(commands.contains(.showNotification(ProgressionTexts.vanilla.levelUpAvailable)))
-        #expect(commands.contains(.playLevelUpMusic))
     }
 }
