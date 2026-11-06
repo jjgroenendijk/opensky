@@ -87,6 +87,8 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
     private let appliedRevision = Mutex<Int?>(nil)
     private let updatedBoneCount = Mutex(0)
     private let drawn = Mutex(false)
+    /// Simulated bones by name, in rig space, laid over the graph's pose.
+    private let ragdollBones = Mutex<[String: float4x4]>([:])
     /// Hand node to sheath node, from `ResolvedActorVisual.sheathNodes`.
     public let sheathNodes: [String: String]
 
@@ -125,16 +127,39 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
     }
 
     private func boneCount(applying bones: [HKABonePose]) -> Int {
-        guard
-            !bones.isEmpty,
-            let world = try? SkeletonPoseMath.worldMatrices(skeleton: skeleton, localPoses: bones)
-        else { return 0 }
-        let pose = WeaponSheathing.apply(
-            sheathNodes,
-            drawn: weaponsDrawn,
-            to: SkeletonPose(bones: boneIndex, matrices: world)
-        )
+        guard let world = rigMatrices(of: bones) else { return 0 }
+        let ragdoll = ragdollBones.withLock { $0 }
+        let animated = SkeletonPose(bones: boneIndex, matrices: world)
+        let posed = ragdoll.isEmpty
+            ? animated : animated.overriding(ragdoll, parents: skeleton.parentIndices)
+        let pose = WeaponSheathing.apply(sheathNodes, drawn: weaponsDrawn, to: posed)
         return meshes.reduce(0) { $0 + $1.updateSkinningPose(pose) }
+    }
+
+    private func rigMatrices(of bones: [HKABonePose]) -> [float4x4]? {
+        guard !bones.isEmpty else { return nil }
+        return try? SkeletonPoseMath.worldMatrices(skeleton: skeleton, localPoses: bones)
+    }
+
+    /// The graph's latest pose in rig space, one matrix per skeleton bone.
+    public var animatedBoneMatrices: [float4x4]? {
+        rigMatrices(of: pose.bones)
+    }
+
+    /// The graph's latest pose in rig space, by bone name.
+    public var animatedBonesByName: [String: float4x4]? {
+        animatedBoneMatrices.map { SkeletonPose(bones: boneIndex, matrices: $0).named }
+    }
+
+    /// Lays a ragdoll's simulated bones over the graph's pose; empty gives the pose back.
+    public func setRagdollBones(_ bones: [String: float4x4]) {
+        let changed = ragdollBones.withLock { old in
+            defer { old = bones }
+            return !(old.isEmpty && bones.isEmpty)
+        }
+        if changed {
+            appliedRevision.withLock { $0 = nil }
+        }
     }
 
     /// False keeps each weapon and the shield on its sheath node. A change

@@ -391,7 +391,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         game.combatWorld.run(game.combat.prepareForPersistence())
         game.messages.reloadHelpRecords()
         game.questNotices.reset()
-        game.ragdoll.playerDeath.reset()
+        game.ragdoll.resetPlayerDeath()
         // `AVOV` keeps no temporary modifiers, so the restored effects rebuild
         // them: the player now, every other actor when its cell streams back in.
         game.magic.noteEffectsRestored()

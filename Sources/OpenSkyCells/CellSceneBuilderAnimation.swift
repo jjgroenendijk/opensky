@@ -15,14 +15,9 @@ nonisolated extension CellSceneBuilder {
         guard let skeletonPath = assembly.visual.skeletonPath else {
             return .failure(.unsupportedSkeleton("<missing>"))
         }
-        let normalizedPath: String
-        do {
-            normalizedPath = try VirtualFileSystem.normalize(skeletonPath)
-        } catch {
+        guard let meshPath = try? VirtualFileSystem.meshPath(skeletonPath) else {
             return .failure(.unsupportedSkeleton(skeletonPath))
         }
-        let meshPath = normalizedPath.hasPrefix("meshes\\")
-            ? normalizedPath : "meshes\\" + normalizedPath
         let key = ActorAnimationCacheKey(
             skeletonPath: meshPath,
             female: assembly.visual.appearance.isFemale.value

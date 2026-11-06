@@ -162,6 +162,14 @@ public final class RagdollRuntime: DeathReporting {
         }
         seam.writeDeathState(.justDied, for: key, in: actor.cell)
         deathEventsQueued += seam.queueActorDeathEvents(for: key, killer: killer)
+        startFall(of: key)
+        return true
+    }
+
+    /// Plays the death events and hands the skeleton to physics on the graph's cue,
+    /// or at once without a graph. Writes no death, so the player's own death uses it.
+    public func startFall(of key: ReferenceKey) {
+        guard let seam, !world.isRagdolling(key), !pendingHandOffs.contains(key) else { return }
         var accepted = false
         for name in RagdollGraphNames.deathEvents {
             accepted = seam.raiseRagdollEvent(name, on: key) || accepted
@@ -173,7 +181,6 @@ public final class RagdollRuntime: DeathReporting {
             fallbackDeathCount += 1
             activate(key, instant: false)
         }
-        return true
     }
 
     /// Whether `key` reads as dead right now.

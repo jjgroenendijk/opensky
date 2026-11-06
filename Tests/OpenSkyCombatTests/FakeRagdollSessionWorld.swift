@@ -23,6 +23,8 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     static let cell = CellSceneLocation.interior(FormID(0x20))
 
     var ragdollResidents: [RagdollResident] = []
+    /// Whether the player body has a pose, as it does in walk and third person.
+    var playerHasBody = false
     var residentRagdollCells: Set<CellSceneLocation> = [FakeRagdollSessionWorld.cell]
     var zeroHealth: Set<ReferenceKey> = []
     var skeletonMeshPath = "meshes\\actors\\character\\character assets\\skeleton.nif"
@@ -60,7 +62,7 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
 
     /// Every resident has a pose; its reference is its object ID.
     func ragdollPose(of key: ReferenceKey) -> RagdollActorPose? {
-        guard ragdollResidents.contains(where: { $0.key == key }) else { return nil }
+        guard hasPose(key) else { return nil }
         return RagdollActorPose(
             reference: Self.reference(of: key),
             cell: Self.cell,
@@ -75,7 +77,11 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     }
 
     func animatedPose(of key: ReferenceKey) -> [String: float4x4]? {
-        ragdollResidents.contains { $0.key == key } ? animatedBones : nil
+        hasPose(key) ? animatedBones : nil
+    }
+
+    private func hasPose(_ key: ReferenceKey) -> Bool {
+        (key == .player && playerHasBody) || ragdollResidents.contains { $0.key == key }
     }
 
     func raisePlayerGraphEvent(_ name: String) -> Bool {
@@ -112,7 +118,7 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
     }
 
     static func reference(of key: ReferenceKey) -> FormID {
-        guard case let .plugin(_, objectID) = key else { return FormID(0) }
+        guard case let .plugin(_, objectID) = key else { return FormID(0x14) }
         return FormID(objectID)
     }
 }

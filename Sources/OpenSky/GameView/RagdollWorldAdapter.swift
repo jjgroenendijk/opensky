@@ -107,6 +107,8 @@ final class RagdollWorldAdapter {
                 game.cinematicWorld.actorDied(key)
             case let .publishPoses(poses):
                 game.renderer?.scene.ragdollPoses = poses
+            case let .publishPlayerRagdoll(bones):
+                game.gameSession?.playerBody?.animation.setRagdollBones(bones)
             case let .publishSeveredHeads(poses):
                 game.renderer?.scene.severedHeadPoses = poses
             case let .enterBleedout(key):
@@ -153,6 +155,9 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
     }
 
     func ragdollPose(of key: ReferenceKey) -> RagdollActorPose? {
+        if key == .player {
+            return playerRagdollPose
+        }
         guard
             let renderer = game.renderer,
             let streamer = game.streamer,
@@ -176,7 +181,31 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
     }
 
     func animatedPose(of key: ReferenceKey) -> [String: float4x4]? {
-        game.animatedPose(for: key)
+        if key == .player {
+            return game.gameSession?.playerBody?.animation.animatedBonesByName
+        }
+        return game.animatedPose(for: key)
+    }
+
+    /// The player body is drawn apart from the cell's actors, so its pose comes from
+    /// the graph's buffer and its placement from the body.
+    private var playerRagdollPose: RagdollActorPose? {
+        guard
+            let body = game.gameSession?.playerBody,
+            let skeletonPath = body.assembly.visual.skeletonPath
+                .flatMap({ try? VirtualFileSystem.meshPath($0) }),
+            let animated = body.animation.animatedBoneMatrices,
+            let cell = game.streamer?.currentCellLocation
+        else { return nil }
+        return RagdollActorPose(
+            reference: FormID(0x14),
+            cell: cell,
+            scale: 1,
+            actorToWorld: body.transform,
+            skeletonMeshPath: skeletonPath,
+            skeleton: body.animation.skeleton,
+            animatedBoneMatrices: animated
+        )
     }
 
     /// Membership in `raisedEvents` after the raise is the graph's own answer.

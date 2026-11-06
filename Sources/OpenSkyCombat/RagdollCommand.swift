@@ -9,6 +9,8 @@ nonisolated public enum RagdollCommand: Equatable, Sendable {
     case reportMurder(ReferenceKey)
     /// The bone matrices the scene draws, by bone name, keyed by the ACHR form ID.
     case publishPoses([UInt32: [String: float4x4]])
+    /// The player body's simulated bones by name; empty returns the body to its graph.
+    case publishPlayerRagdoll([String: float4x4])
     /// The bone matrices of each cut head, keyed by the ACHR form ID it came from.
     case publishSeveredHeads([UInt32: [String: float4x4]])
     /// An actor at zero health kneels instead of dying: it stops fighting and scripts hear it.

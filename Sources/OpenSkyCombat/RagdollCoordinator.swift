@@ -24,6 +24,8 @@ public final class RagdollCoordinator {
     let world: any RagdollSessionWorld
     /// Whether the scene holds poses from this coordinator, so an empty frame clears them once.
     var hasPublishedPoses = false
+    /// Whether the player body holds a ragdoll pose, so its end clears it once.
+    var hasPublishedPlayerRagdoll = false
     let store: WorldStateStore
     private let loadDefinition: DefinitionLoader?
     /// Keyed by path and scale: a definition bakes the scale into every pivot,
@@ -103,21 +105,56 @@ public final class RagdollCoordinator {
             commands.append(.publishSeveredHeads(heads))
             hasPublishedHeads = !heads.isEmpty
         }
-        guard !runtime.world.ragdolls.isEmpty || hasPublishedPoses else { return commands }
+        let hasPlayer = runtime.world.isRagdolling(.player)
+        if hasPlayer || hasPublishedPlayerRagdoll {
+            let bones = hasPlayer ? simulatedBones(of: .player, in: runtime) ?? [:] : [:]
+            commands.append(.publishPlayerRagdoll(bones))
+            hasPublishedPlayerRagdoll = !bones.isEmpty
+        }
+        let actors = runtime.world.ragdolls.filter { $0.key != .player }
+        guard !actors.isEmpty || hasPublishedPoses else { return commands }
         var poses: [UInt32: [String: float4x4]] = [:]
-        for entry in runtime.world.ragdolls {
+        for entry in actors {
             guard
-                let actor = ragdollActor(for: entry.key),
-                let animated = world.animatedPose(of: entry.key)
+                let reference = ragdollActor(for: entry.key)?.reference,
+                let bones = simulatedBones(of: entry.key, in: runtime)
             else { continue }
-            let bones = entry.instance.blendedBoneMatrices(
-                animated: animated, worldToActor: actor.actorToWorld.inverse
-            )
-            poses[actor.reference.rawValue] = bones
-            drawnRagdollBones[entry.key] = bones
+            poses[reference.rawValue] = bones
         }
         hasPublishedPoses = !poses.isEmpty
         return commands + [.publishPoses(poses)]
+    }
+
+    private func simulatedBones(
+        of key: ReferenceKey, in runtime: RagdollRuntime
+    ) -> [String: float4x4]? {
+        guard
+            let instance = runtime.world.ragdolls.first(where: { $0.key == key })?.instance,
+            let actor = ragdollActor(for: key),
+            let animated = world.animatedPose(of: key)
+        else { return nil }
+        let bones = instance.blendedBoneMatrices(
+            animated: animated, worldToActor: actor.actorToWorld.inverse
+        )
+        drawnRagdollBones[key] = bones
+        return bones
+    }
+
+    /// The dead player's body falls as an NPC's does, pushed by the killing hit.
+    public func dropPlayerBody() {
+        guard let runtime else { return }
+        if let hit = recentHit(on: .player), let feet = world.playerFeetPosition {
+            let resident = RagdollResident(key: .player, position: feet)
+            deathImpulses[.player] = impulse(of: hit, on: resident)
+        }
+        runtime.startFall(of: .player)
+    }
+
+    /// A load or the main menu brings the player back: alive, and off the floor.
+    public func resetPlayerDeath() {
+        playerDeath.reset()
+        runtime?.removeRagdoll(.player)
+        deathImpulses[.player] = nil
     }
 
     /// A sweep, not a hook, because health reaches zero from several places.

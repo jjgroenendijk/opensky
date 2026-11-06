@@ -228,7 +228,17 @@ At zero health an essential player kneels in bleedout with the rules above, and 
 `sMiscPlayerDeadMessage`, and `fPlayerDeathReloadTime` seconds later the newest save loads. With
 no save, a message box offers `sMiscPlayerDeadLoadOption` and `sMiscPlayerDeadMenuOption`. The
 order of the message and the load is OpenSky's reading. `openskycli game state player` shows the
-phase under `death`. The player's body does not fall as a ragdoll yet.
+phase under `death`.
+
+The dead player's body falls as a ragdoll, through the same path as an NPC's. The death events go
+to the player's graph, and its hand-off starts the bodies; a graph that takes neither starts them at
+once. The last hit pushes the body as it pushes an NPC's. Unlike an NPC, the player gets no death
+component: the reload brings the player back, so nothing about the fall is saved. The player body is
+drawn apart from the cell's actors, so its simulated bones go to that body, not to the scene.
+
+A first-person view sits inside the head, so the view steps out to third person when the player
+dies. `state player` shows `ragdoll` true while the body is simulated. The load or the main menu
+removes the ragdoll and returns the body to its graph.
 
 ## Not done yet
 
