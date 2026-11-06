@@ -101,8 +101,13 @@ colour drawn so far, and the water reflects it:
   24 units long, and each step is a quarter longer than the one before.
 - Each step is projected to the screen. The first point behind a stored surface is a hit, if it
   lies less than two step lengths behind it. Sky pixels never hit.
-- The hit colour replaces the reflection colour by a weight that falls toward the screen edge
-  and with the step count. A ray that leaves the screen or finds no hit keeps the colour.
+- The hit colour replaces the reflection colour by a weight, as in the game:
+  `(1 - c²) * (1 - L)`, where `c` is twice the hit's distance from the screen centre (at most
+  1) and `L` is the screen distance from the water pixel to the hit. So the weight is 0 half a
+  screen from the centre. A ray that leaves the screen or finds no hit keeps the colour.
+- The game marches 16 even steps over a fixed screen length and then refines between the
+  last two, and the scale of its length fade is not known; the march above and the scale of
+  1 per screen are OpenSky's. Clean-room read of the game's shaders, 2026-11-06.
 
 The water and the blended layers after it are not in the copy, so they do not reflect. With the
 water depth switch off, nothing is copied and the reflection stays a colour.
@@ -117,6 +122,9 @@ water depth switch off, nothing is copied and the reflection stays a colour.
   curve but does not give its shape.
 - There is no reflection of what lies off screen. Without the game's screen-space reflection
   option, the reflection is a colour.
+- In the game, other surfaces reflect too: a lit surface's specular mask (its normal map's
+  alpha) weights a screen-space reflection that is added over it. OpenSky reflects only on
+  water.
 - The game simulates displacement on a height grid. OpenSky draws closed-form rings with the
   `DNAM` displacement fields, so rings do not bounce off the shore or add up. The rain rings
   use OpenSky's own sizes, because the `DNAM` rain simulator is unused

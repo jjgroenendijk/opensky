@@ -25,8 +25,6 @@ static inline float3 undoTerrainLODBrightening(float3 albedo, float2 curve)
 // scrolls its normal map half a texture per second. Both are OpenSky choices.
 constant float refractionReach = 0.1;
 constant float fireRefractionScroll = 0.5;
-// How much ambient light a specular surface reflects; an OpenSky choice.
-constant float imageBasedLightingStrength = 0.5;
 
 // Tree sway grows with height like a tilt; leaves flutter by their wind weight and fade
 // with distance. The scales are OpenSky's (docs/rendering/trees.md).
@@ -268,16 +266,6 @@ static float3 emittedLight(
     return emitted;
 }
 
-// Image-based lighting: the six-axis ambient seen along the reflected view, stronger at
-// grazing angles (Schlick's Fresnel from a base reflectance of 0.04).
-static float3 ambientReflection(LightGeometry geometry, constant FrameUniforms &frame)
-{
-    float3 reflected = reflect(-geometry.toEye, geometry.normal);
-    float facing = saturate(dot(geometry.normal, geometry.toEye));
-    float fresnel = 0.04 + 0.96 * pow(1.0 - facing, 5.0);
-    return directionalAmbient(reflected, frame) * (fresnel * imageBasedLightingStrength);
-}
-
 static float3 litSurface(
     StaticVertexOut in,
     LitInput input,
@@ -317,9 +305,6 @@ static float3 litSurface(
             mask = maps.backLight.sample(trilinear, input.uv).r;
         }
         specular = draw.specular.rgb * mask * sums.specular;
-        if (frame.imageBasedLighting != 0) {
-            specular += draw.specular.rgb * mask * ambientReflection(geometry, frame);
-        }
     }
     if (hasTerm(terms, ShadingTermSparkle)) {
         float glint = sparkle(input.uv, geometry, -frame.sunDirection, draw.multiLayer);

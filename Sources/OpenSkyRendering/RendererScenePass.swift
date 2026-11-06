@@ -91,7 +91,6 @@ extension Renderer {
             ),
             focusShadowCount: UInt32(focusShadows.views.count),
             focusShadowBias: focusShadows.bias,
-            imageBasedLighting: surfaceFeatures.imageBasedLighting ? 1 : 0,
             screenSpaceReflections: waterDepth.reflects ? 1 : 0
         )
         frameUniformBuffer.contents().advanced(by: offset)

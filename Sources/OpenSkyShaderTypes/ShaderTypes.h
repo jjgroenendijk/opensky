@@ -391,8 +391,6 @@ typedef struct
     unsigned int focusShadowCount;
     /// Receiver depth bias of the focus views, in their depth units.
     float focusShadowBias;
-    /// 1: specular surfaces reflect the directional ambient light.
-    unsigned int imageBasedLighting;
     /// 1: the water reflects the scene colour copy bound at TextureIndexSceneColor.
     unsigned int screenSpaceReflections;
 } FrameUniforms;

@@ -26,7 +26,6 @@ nonisolated extension PlayerSettingID {
     public static let screenSpaceReflections = Self("graphics.bScreenSpaceReflectionEnabled")
     public static let projectedTextures = Self("graphics.bEnableProjecteUVDiffuseNormals")
     public static let improvedSnow = Self("graphics.bEnableImprovedSnow")
-    public static let imageBasedLighting = Self("graphics.bIBLFEnable")
     public static let highDynamicRangeTarget = Self("graphics.bUse64bitsHDRRenderTarget")
     public static let volumetricQuality = Self("graphics.iVolumetricLightingQuality")
 }

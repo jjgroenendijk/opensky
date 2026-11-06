@@ -136,6 +136,23 @@ screen centre.
   `DATA` byte read as 0 to 1 ([UESP WTHR](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WTHR)).
   A storm with no glare hides the sun, so it draws no flare.
 
+## Image-based lens flare
+
+`[Display] bIBLFEnable`. OpenSky does not draw it yet. Behaviour described from a clean-room
+read of the shaders in `Skyrim - Shaders.bsa` and of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06
+(only the behaviour was reported, no code):
+
+- A 4-tap downsample keeps the brightest tap by luminance (0.3, 0.59, 0.11), optionally
+  averaged half and half with last frame's value.
+- A 1-D blur then runs along each screen axis. It takes `2n + 1` taps a fixed step apart. A tap
+  counts only if one of its channels is above a threshold, and then adds its whole colour,
+  clamped to 0 to 1. The sum is scaled by one factor.
+- The game names ghosts, a halo, and a horizontal streak for this effect, but no shipped shader
+  draws them.
+
+The tap count, the step, the threshold, the scale, and how the result joins the frame are not
+known.
+
 ## Where OpenSky differs
 
 - Ambient occlusion: the radius, the strength, and the tap count are OpenSky's own. The

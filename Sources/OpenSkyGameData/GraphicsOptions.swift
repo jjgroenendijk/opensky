@@ -79,7 +79,10 @@ nonisolated public enum GraphicsOptions {
         option(.shadows, "Shadow resolution", "Display", "iShadowMapResolution"),
         option(.shadows, "Focus shadows", "Display", "iNumFocusShadow"),
         option(.lighting, "Ambient occlusion", "Display", "bSAOEnable"),
-        option(.lighting, "Image-based lighting", "Display", "bIBLFEnable"),
+        option(
+            .effects, "Image-based lens flare", "Display", "bIBLFEnable",
+            "OpenSky does not draw the image-based lens flare yet"
+        ),
         option(.lighting, "Volumetric lighting", "Display", "bVolumetricLightingEnable"),
         option(
             .lighting, "Volumetric lighting quality", "Display", "iVolumetricLightingQuality"

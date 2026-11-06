@@ -272,8 +272,8 @@ static float2 waterRainSlope(float2 xy, float time, float rain)
 
 // Screen-space reflection: the reflected ray steps through the scene drawn before the
 // water, with steps that grow by a quarter each time. The first step behind a stored
-// surface, and close to it, is the hit. rgb the colour, a its weight: lower near the
-// screen edge and for far hits.
+// surface, and close to it, is the hit. rgb the colour, a its weight, which fades as in
+// the game: by the hit's distance from the screen centre and by its length on screen.
 static float4 waterScreenReflection(
     float3 origin,
     float3 direction,
@@ -286,6 +286,8 @@ static float4 waterScreenReflection(
     constexpr sampler linear(filter::linear, address::clamp_to_edge);
     float stepLength = 24.0;
     float3 point = origin;
+    float4 start = frame.viewProjectionMatrix * float4(origin, 1.0);
+    float2 startUV = start.xy / max(start.w, 1.0e-4) * float2(0.5, -0.5) + 0.5;
     for (int step = 0; step < 24; ++step) {
         point += direction * stepLength;
         stepLength *= 1.25;
@@ -307,10 +309,9 @@ static float4 waterScreenReflection(
         if (pointDepth - surfaceDepth > stepLength * 2.0) {
             break;
         }
-        float2 border = min(uv, 1.0 - uv);
-        float edge = saturate(min(border.x, border.y) * 10.0);
-        float distanceFade = 1.0 - float(step) / 24.0;
-        return float4(sceneColor.sample(linear, uv).rgb, edge * distanceFade);
+        float centre = min(2.0 * length(uv - 0.5), 1.0);
+        float lengthFade = saturate(1.0 - length(uv - startUV));
+        return float4(sceneColor.sample(linear, uv).rgb, (1.0 - centre * centre) * lengthFade);
     }
     return 0.0;
 }

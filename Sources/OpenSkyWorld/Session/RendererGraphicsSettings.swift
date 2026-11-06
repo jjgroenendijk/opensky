@@ -68,7 +68,6 @@ extension Renderer {
         )
         precipitationOcclusionEnabled = store.bool(.precipitationOcclusion)
         postEffects = PostEffectSettings(store: store)
-        surfaceFeatures.imageBasedLighting = store.bool(.imageBasedLighting)
         surfaceFeatures.improvedSnow = store.bool(.improvedSnow)
         surfaceFeatures.projectedTextures = store.bool(.projectedTextures)
         let focus = store.value(.focusShadows)
