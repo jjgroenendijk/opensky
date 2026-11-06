@@ -130,6 +130,8 @@ nonisolated public final class CellSceneBuilder {
     var exteriorPersistentPools: [UInt32: EnableParentPool] = [:]
     /// Each worldspace's `RNAM` references by cell, over every plugin.
     var largeReferenceIndex: [UInt32: [CellCoordinate: Set<UInt32>]] = [:]
+    /// The cells that hold a temporary Is Full LOD reference, by WRLD FormID.
+    var temporaryFullLODCellIndex: [UInt32: Set<CellCoordinate>] = [:]
     /// Keyed by WRLD FormID, with the same ownership rule as the persistent refs.
     public var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
     public var actorTemplateResolver: ActorTemplateResolver?

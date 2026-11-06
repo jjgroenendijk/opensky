@@ -32,17 +32,32 @@ nonisolated extension CellSceneBuilder {
         state: WorldStateSnapshot = .empty
     ) -> DistantReferences {
         let listed = largeReferences(worldspaceEditorID: worldspaceEditorID, cells: cells)
+        return cellReferencePlacements(
+            worldspaceEditorID: worldspaceEditorID, cells: Set(listed.keys), state: state
+        ) { cell, _ in listed[cell] ?? [] }
+    }
+
+    /// The references `pick` names in each of `cells`, read from their cell and put in the
+    /// enable state their own cell would give them.
+    nonisolated private func cellReferencePlacements(
+        worldspaceEditorID: String,
+        cells: Set<CellCoordinate>,
+        state: WorldStateSnapshot,
+        pick: (CellCoordinate, [CollectedReference]) -> Set<UInt32>
+    ) -> DistantReferences {
         var counts = BuildCounts()
         var references: [PlacedReference] = []
         var result = DistantReferences()
         let deltas = state.deltasByKey()
-        for (cell, wanted) in listed.sorted(by: { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }) {
+        for cell in cells.sorted(by: { ($0.x, $0.y) < ($1.x, $1.y) }) {
             guard
                 let source = try? exteriorBuildSource(
                     worldspaceEditorID: worldspaceEditorID, gridX: cell.x, gridY: cell.y
                 )
             else { continue }
             let collected = collectTaggedReferences(in: source.cell, counts: &counts)
+            let wanted = pick(cell, collected)
+            guard !wanted.isEmpty else { continue }
             let placed = exteriorReferences(
                 local: collected.map(\.reference), world: source.world,
                 coordinate: cell, localized: pluginLocalized
@@ -58,6 +73,54 @@ nonisolated extension CellSceneBuilder {
         }
         result.placements = placements(of: references, counts: &counts)
         return result
+    }
+
+    /// The temporary Is Full LOD references in the worldspace's cells outside `loadedCells`.
+    /// The first walk finds the cells that hold one; later builds read only those cells.
+    nonisolated func temporaryFullLODPlacements(
+        worldspaceEditorID: String,
+        loadedCells: Set<CellCoordinate>,
+        state: WorldStateSnapshot = .empty
+    ) -> DistantReferences {
+        guard
+            let world = try? worldChildrenGroup(
+                editorID: worldspaceEditorID, localized: pluginLocalized
+            )
+        else { return DistantReferences() }
+        let cells = temporaryFullLODCells(in: world).subtracting(loadedCells)
+        return cellReferencePlacements(
+            worldspaceEditorID: worldspaceEditorID, cells: cells, state: state
+        ) { _, collected in
+            Set(collected.lazy.filter { !$0.isPersistent && $0.reference.isFullLOD }
+                .map(\.reference.formID.rawValue))
+        }
+    }
+
+    /// The cells whose temporary children hold a live REFR with the Is Full LOD flag. Only
+    /// the record header is read, so the walk decodes no reference.
+    nonisolated func temporaryFullLODCells(in world: FoundWorld) -> Set<CellCoordinate> {
+        let key = world.formID.rawValue
+        if let cached = temporaryFullLODCellIndex[key] {
+            return cached
+        }
+        var found: Set<CellCoordinate> = []
+        for (grid, cell) in exteriorCells(in: world, localized: pluginLocalized) {
+            guard let cellChildren = cell.children, let groups = childrenOrSkip(cellChildren)
+            else { continue }
+            for case let .group(group) in groups where group.kind == .cellTemporaryChildren {
+                let records = childrenOrSkip(group) ?? []
+                let holds = records.contains { child in
+                    guard case let .record(record) = child else { return false }
+                    return record.type == "REFR" && !record.isDeleted
+                        && record.flags.rawValue & PlacedReference.fullLODFlag != 0
+                }
+                if holds {
+                    found.insert(CellCoordinate(x: grid.x, y: grid.y))
+                }
+            }
+        }
+        temporaryFullLODCellIndex[key] = found
+        return found
     }
 
     /// The worldspace's persistent Is Full LOD references outside `loadedCells`, in their

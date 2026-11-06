@@ -101,4 +101,7 @@ case was seen in the Windows reference game on 2026-11-06, through the bridge's 
 - Gallows Rock, where one boss starts disabled: the other killed: cleared.
 - Halldirs Cairn, two bosses, both enabled: one killed: not cleared.
 
-A clear by script always plays the music, since the read did not cover that path.
+A clear by script always plays the music in OpenSky. A second clean-room read of
+`SkyrimSE.exe` (2026-11-06) found that the script call only sets the cleared flag and an "ever
+cleared" flag that stays set; it checks no keyword and plays no music itself. Where the game
+starts the cleared music, and whether that place checks the clearable keyword, is not known.

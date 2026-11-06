@@ -138,13 +138,20 @@ too often, never too seldom.
 A reference with the record flag `0x10000` (xEdit "Is Full LOD", "Never Fades" on a light)
 draws its full model at every distance in the worldspace. On the install 1,022 references carry
 it, 951 of them persistent. Each ring build adds the worldspace's persistent ones whose cell is
-not loaded, in their enable state, and watches them as it watches the large references.
+not loaded, in their enable state, and watches them as it watches the large references. The
+temporary ones are added the same way.
 `state frame` reports them as `fullLODReferences`.
 
-[WARNING] The 71 temporary Is Full LOD references are drawn only when their cell is loaded,
-because finding them needs a walk of every exterior cell. The objects merged into the object
-LOD blocks do not follow enable changes: the vanilla blocks were built with them, and only
-generated LOD could leave them out.
+The 71 temporary Is Full LOD references are found by one walk of the worldspace's exterior
+cells, the first time a ring is built. The walk reads only the record headers of each cell's
+temporary children, and keeps the cells that hold a live `REFR` with the flag. Each ring build
+then reads those cells, except the loaded ones, and draws their flagged temporary references in
+their enable state.
+
+[WARNING] The walk reads the temporary children of the first plugin that has each cell. A
+temporary Is Full LOD reference that only a later plugin adds is drawn only when its cell is
+loaded. The objects merged into the object LOD blocks do not follow enable changes: the
+vanilla blocks were built with them, and only generated LOD could leave them out.
 
 ## Tree LOD
 

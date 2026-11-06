@@ -288,6 +288,13 @@ static inline float3 applyFog(float3 color, float3 worldPosition, constant Frame
     return mix(color, fogColor, fog.y);
 }
 
+// The game's lighting shader clamps each channel of the fogged colour to 1, before any
+// frame-wide step such as eye adaptation (docs/rendering/surface-shading.md).
+static inline float3 clampLitOutput(float3 color)
+{
+    return min(color, float3(1.0));
+}
+
 // An additive colour adds to what is behind it, which the fog already covers, so the
 // fog only takes the added light away.
 static inline float3

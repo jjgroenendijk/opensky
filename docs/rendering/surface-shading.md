@@ -120,7 +120,9 @@ sheen and the sparkles of [snow ground](/engine/terrain.md#snow-ground). The sno
 layer's blend for a single-pass material and the shape's own diffuse alpha under an overlay.
 In the install the field is set on 34 of 42 winning records, dirt, moss, and ice included, and
 the game applies it to all of them.
-The game drops the shape's own specular there; OpenSky keeps it. The normal dampener of an
+The game drops the shape's own specular there and adds the point lights' specular to the rim.
+OpenSky does the same, by the snow mask: the sun's specular goes, and the point lights'
+specular stays, without the shape's specular colour and mask. The normal dampener of an
 overlay scales its normal map, which OpenSky does not draw.
 
 ## Albedo
@@ -195,6 +197,16 @@ vertex colours and the grass tint follow the same switch, and so does the base a
 switch for terrain, grass, and decals. Without that, a vertex
 colour of 0.5 darkens a surface to 0.5 of its linear value instead of about 0.22, and baked
 shading looks washed out and grey.
+
+## Output clamp
+
+After fog, the game's lighting shader multiplies the colour by a scale that it sets each frame,
+and then clamps each channel to at most 1 (behaviour described from a clean-room read of the
+game's shaders in `Skyrim - Shaders.bsa` and of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). The
+clamp comes before any frame-wide step such as eye adaptation, so a surface that is brighter
+than 1 after lighting cannot get brighter on screen. OpenSky clamps lit meshes and terrain the
+same way. It applies no scale, because the read did not find its value. Effect shapes, grass,
+water, and the sky are not clamped.
 
 ## Refraction
 

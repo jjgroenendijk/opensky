@@ -45,7 +45,7 @@ extension Renderer {
         gpuCull.lastCounts = cullScene.counts(slot: slot)
         cullScene.fade = CullFade(
             distances: referenceFades, viewer: frameInput.view.position,
-            seconds: referenceFadeTimers.takeGPUSeconds()
+            seconds: fadeTimers.references.takeGPUSeconds()
         )
         guard
             cullScene.encode(
@@ -108,12 +108,13 @@ enum VisibleInstances {
     case packed(count: Int, address: UInt64)
     /// The cull pass wrote them; the count sits in the indirect arguments.
     case indirect(arguments: UInt64, address: UInt64)
-    /// The CPU wrote a LOD mesh's transforms grouped by detail level, full detail first.
-    case levels(counts: [Int], address: UInt64)
+    /// The CPU wrote a LOD mesh's transforms grouped by detail level, full detail first,
+    /// then the copies whose finer triangles fade, by `MeshLODLevelPair`.
+    case levels(counts: [Int], fading: [Int], address: UInt64)
 
     var address: UInt64 {
         switch self {
-        case let .packed(_, address), let .indirect(_, address), let .levels(_, address):
+        case let .packed(_, address), let .indirect(_, address), let .levels(_, _, address):
             address
         }
     }
@@ -165,7 +166,7 @@ extension MTL4RenderCommandEncoder {
                 indexBufferLength: mesh.indexBuffer.length,
                 instanceCount: count
             )
-        case let .levels(counts, _):
+        case let .levels(counts, _, _):
             drawIndexedPrimitives(
                 primitiveType: .triangle,
                 indexCount: mesh.indexCount,

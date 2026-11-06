@@ -41,16 +41,24 @@ the sky reaches.
 
 - The surface normal comes from the depth of the four neighbours. Each axis takes the shorter
   of its two steps, so an edge does not bend the normal.
-- 12 taps sit on a spiral around the pixel, out to 48 world units, turned by a per-pixel noise
-  angle.
+- 5 taps sit on a spiral around the pixel, out to 48 world units, turned by a per-pixel noise
+  angle. The game also takes 5 taps.
 - A tap darkens the pixel by how far it rises above the surface plane (the cosine to the
-  normal, less a bias of 0.05), times `1 - d² / r²` for its distance `d` in the radius `r`.
-- The result is `ao = 1 - 1.2 * mean`, clamped to 0 to 1. The sky is not changed.
+  normal, less a bias of 0.05). Each tap has the game's weight `(1 - q)³ / (q + 0.01)`, where
+  `q = d² / r²` for its distance `d` in the radius `r`. So a near tap counts much more than a
+  far one. The game's weight is `(r² - d²)³ / (d² + 0.01)`; OpenSky divides `d` by `r` first,
+  because the game's distance units are not known.
+- The result is `ao = 1 - 1.2 * mean`, where `mean` is the weighted mean, clamped to 0 to 1.
+  The sky is not changed.
 - It multiplies the whole lit colour by `ao`: the sun, point lights such as torches, the
   ambient light, and glow alike. The game does the same: its scene colour holds all the
   light in one target, and the occlusion step multiplies that colour (clean-room read of the
   game's shaders in `Skyrim - Shaders.bsa`, 2026-11-06, behaviour only). On snow the game
-  raises `ao` by a bias, so snow stays bright; OpenSky does not.
+  raises `ao` by a bias, so snow stays bright. OpenSky leaves a pixel with snow unchanged, as
+  the game turns occlusion off wherever the snow mask is above zero
+  ([snow ground](/engine/terrain.md#snow-ground)).
+- It darkens the colour under the fog, as the game's fog variant does. The fog part of the
+  pixel, `fog colour × fog amount`, stays as it is, and only the rest is multiplied by `ao`.
 - The effect fades out between 2,048 and 4,096 units from the camera. Far away, depth
   precision makes the normals noisy, and the noise would darken the whole distant view.
 
@@ -150,18 +158,62 @@ read of the shaders in `Skyrim - Shaders.bsa` and of `SkyrimSE.exe` 1.7.104.0 on
 - The game names ghosts, a halo, and a horizontal streak for this effect, but no shipped shader
   draws them.
 
-The tap count, the step, the threshold, the scale, and how the result joins the frame are not
-known.
+A second read on 2026-11-06 found the tap counts: the horizontal blur has a radius of 7 taps
+on each side, 15 in all, and the vertical blur a radius of 2, 5 in all. Each tap adds
+`max(colour × exposure - threshold, 0) × scale`; one variant weights the colour by its
+luminance first. The game's defaults for the effect: 3 lenses, a dispersal of 0.3, a channel
+offset of +2 for red and -2 for blue, a halo of 0.5 with a width power of 3, an anamorphic
+strength of 0.1, and an overall strength of 0.7.
+
+The step between taps, the threshold and scale values, and how the result joins the frame are
+still not known.
 
 ## Where OpenSky differs
 
-- Ambient occlusion: the radius, the strength, and the tap count are OpenSky's own. The
-  game uses 5 taps, each weighted by `1 / (d² + 0.01)` and `(r² - d²)³`, then a contrast
-  curve and a blend over time. It also leaves snow brighter, and in its fog variant it
-  darkens before the fog, where OpenSky darkens the fogged colour.
+- Ambient occlusion: the radius and the strength are OpenSky's own, and the tap distance is
+  divided by the radius before the game's weight. The game then applies a contrast curve, a
+  blend over time, and a blur, which OpenSky does not have. A second clean-room read of the
+  game's shaders and of `SkyrimSE.exe` 1.7.104.0 (2026-11-06, behaviour only) describes them;
+  see [the game's occlusion steps](#the-games-occlusion-steps).
+- Screen-space reflections: OpenSky reflects on water only. The game also reflects on other
+  surfaces; see [the game's reflections](#the-games-reflections).
 - The volumetric light's scales from `VOLI` fields to world units and strength are OpenSky's
   reading of the field names. The noise drifts along X, because no wind direction is known.
 - A modifier's "Use Target" flag, which focuses on the crosshair target, is not used.
 - The lens flare is OpenSky's own pattern. The game names a `LENS` lens flare record, but the
   vanilla install has none (Skyrim.esm, Update.esm, and the three DLC files have no `LENS`
   group), so there is no data to draw from.
+
+## The game's occlusion steps
+
+Behaviour described from a clean-room read of the game's shaders and of `SkyrimSE.exe`
+1.7.104.0 on 2026-11-06. Which user value feeds which shader value is likely, not confirmed.
+
+- Defaults: on, intensity 15, radius 250 game units, bias 2.5, a contrast exponent of 0.11,
+  and a history difference factor of 0.3.
+- Each tap adds `max((v . N - b) / (|v|² + 0.01), 0) × max(R² - |v|², 0)³`, where `v` is the
+  view-space vector to the tap in game units. A tap counts only if its stored depth is not in
+  front of a threshold.
+- The bias `b` grows with depth and toward the screen edge:
+  `b = bias + 10 × max(depth / 7000 - 0.3, 0) + 2 × (x² + y²)`, with `x` and `y` in clip space.
+- The 5 taps sit at angle `(i + 0.5) × 2.512` radians plus a per-pixel angle, which changes
+  each frame for near pixels. Tap `i` reaches `0.2 × (i + 0.5) × R / depth` on screen.
+- Contrast: `A = max(1 - sum × intensity, 0)`, then `A' = A^(2k)` for a contrast value
+  `k` below 0.5, else `A' = A^(1 / (2 - 2k))`. With the default 0.11, `A' = A^0.22`.
+- Blend over time: `out = A' + w × (history - A')`. The weight `w` drops to 0 when the depth
+  or the motion differs from last frame, or when the occlusion changed by much. Sky pixels
+  output 1.
+- Blur: a 7-tap two-pass blur at 0, ±2, ±4, and ±6 texels, with weights 0.153, 0.445, 0.423,
+  and 0.393, each cut by the depth difference.
+
+## The game's reflections
+
+Behaviour described from the same read. The game reflects every pixel whose reflectance mask
+is above zero, not only water; water uses a flat up normal.
+
+- The reflected ray is marched in 16 equal steps over 0.4 of the screen, then refined in up
+  to 16 smaller steps. A hit must lie within a thin depth band, 0.001 thick, behind the ray.
+- No hit, a ray toward the camera, or an end point off screen gives no reflection.
+- The colour is the hit colour times a strength of 0.8. The alpha is the mask, times a fade
+  over the ray length, times a fade toward the screen edge, `1 - min(2 × |hit - 0.5|, 1)²`.
+- The reflection buffer is half the frame size.

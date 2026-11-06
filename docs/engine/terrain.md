@@ -97,14 +97,18 @@ position, not on the view or the light:
    distance of 1000 units.
 4. The sparkle adds `s` times the sparkle colour.
 
-The game picks the sparkle colour from its lighting state by a setting whose meaning the read
-did not settle; OpenSky uses the sun colour. OpenSky's noise is its own simplex noise, so the
-sparkles fall in other places than the game's, at the same density. The same rim and
-sparkles light a mesh under a snow directional material
+The game picks the sparkle colour by a mode, 2 by default, with a white colour for another
+mode; what mode 2 picks is still not known, so OpenSky uses the sun colour. The game also has a
+snow subsurface colour, (0, 0, 0.08) at a strength of 50, which OpenSky does not draw; its
+formula is not known (second clean-room read, 2026-11-06).
+
+OpenSky's noise is its own simplex noise, so the sparkles fall in other places than the game's,
+at the same density. The same rim and sparkles light a mesh under a snow directional material
 ([surface shading](/rendering/surface-shading.md#directional-materials)).
 
-The game also turns ambient occlusion off where the snow mask is above zero. OpenSky's
-occlusion pass has no snow mask, so snow still darkens in corners.
+The game also turns ambient occlusion off where the snow mask is above zero. OpenSky does the
+same: an opaque pixel with snow stores 0 in the scene colour's alpha, and the
+[occlusion pass](/rendering/post-effects.md#ambient-occlusion) leaves such a pixel as it is.
 
 ## Placement
 

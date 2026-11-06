@@ -91,7 +91,7 @@ public final class Renderer: NSObject {
     public internal(set) var shadow: ShadowResources
     /// How far actors, items, and objects stay drawn (`RendererReferenceFade.swift`).
     public var referenceFades = ReferenceFadeDistances.off
-    var referenceFadeTimers = ReferenceFadeTimers()
+    var fadeTimers = RendererFadeTimers()
     /// The depth array of the focus shadows and the rain occlusion view, built on first use.
     var auxiliaryShadow: AuxiliaryShadowResources?
     /// Set when the device could not make the auxiliary array.

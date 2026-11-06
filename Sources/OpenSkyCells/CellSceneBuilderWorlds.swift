@@ -17,9 +17,17 @@ nonisolated extension CellSceneBuilder {
         gridY: Int32,
         localized: Bool
     ) -> FoundCell? {
+        exteriorCells(in: world, localized: localized)[SIMD2(gridX, gridY)]
+    }
+
+    /// Every exterior cell of `world` by grid, over the whole load order.
+    nonisolated func exteriorCells(
+        in world: FoundWorld,
+        localized: Bool
+    ) -> [SIMD2<Int32>: FoundCell] {
         let key = world.formID.rawValue
         if let cached = loadOrderExteriorCells[key] {
-            return cached[SIMD2(gridX, gridY)]
+            return cached
         }
         let later = loadOrderIndexBuildingIfNeeded().laterCells(ofWorld: world.formID)
             .filter { !$0.isPersistent }
@@ -28,7 +36,7 @@ nonisolated extension CellSceneBuilder {
             return mergingLaterCells(base ?? [:], later: later)
         }
         loadOrderExteriorCells[key] = index
-        return index[SIMD2(gridX, gridY)]
+        return index
     }
 
     /// The worldspace persistent CELL: the first plugin's, or else the last
