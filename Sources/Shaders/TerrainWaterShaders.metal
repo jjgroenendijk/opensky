@@ -134,7 +134,7 @@ fragment float4 terrainFragment(
                               pointShadowsAt(
                                   in.worldPosition, normalize(in.normal), pointLights,
                                   draw.pointLightCount, pointShadowMap, shadowSampler));
-    float3 lit = albedo * linearVertexColour(in.color.rgb, frame) * illumination;
+    float3 lit = albedo * linearVertexColour(in.color.rgb, frame) * toLinear(illumination);
     if (snow > 0.0) {
         float3 toEye = normalize(frame.cameraPosition - in.worldPosition);
         float shine = snowRim(toEye, normalize(in.normal), normal);
@@ -432,7 +432,7 @@ fragment float4 waterFragment(
     if (frame.screenSpaceReflections != 0 && draw.depthAndSun.w > 0.5) {
         float4 hit =
             waterScreenReflection(in.worldPosition, mirrored, frame, draw, sceneDepth, sceneColor);
-        sky = mix(sky, hit.rgb, hit.a);
+        sky = mix(sky, toGamma(hit.rgb), hit.a);
     }
     float3 color = mix(body * (frame.ambientColor + frame.sunColor * 0.6), sky, reflection);
 
@@ -441,7 +441,7 @@ fragment float4 waterFragment(
     // Sparkle: the sharp glints of the same normal, by the sparkle power and magnitude.
     float sparkle =
         draw.detail.y > 0.0 ? pow(sunAlign, max(draw.detail.z, 1.0)) * draw.detail.y : 0.0;
-    color += frame.sunColor * (specular + sparkle);
+    color = toLinear(color + frame.sunColor * (specular + sparkle));
 
     // Shallow water shows the ground through it; deep or edge-on water hides it.
     float seeThrough = 1.0 - smoothstep(0.0, max(draw.depthAndSun.z, 1.0) * 2.0, rayDepth);

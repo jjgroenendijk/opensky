@@ -501,6 +501,7 @@ extension AgentWorldAdapter {
             } ?? .null,
             "screenFade": screenFadeState(),
             "postEffects": postEffectState(),
+            "lighting": lightingState(),
             "projectileVisuals": projectileVisualState(),
             "soundMix": soundMixState(),
             "treeWind": treeWindState(),

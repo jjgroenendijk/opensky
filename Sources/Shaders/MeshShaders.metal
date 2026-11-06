@@ -316,7 +316,7 @@ static float3 litSurface(
         float glint = sparkle(input.uv, geometry, -frame.sunDirection, draw.multiLayer);
         specular += frame.sunColor * input.shadow * glint;
     }
-    return input.albedo * illumination + specular;
+    return toLinear(toGamma(input.albedo) * illumination + specular);
 }
 
 // The additive pipelines add the colour as it is, so the shader applies the source

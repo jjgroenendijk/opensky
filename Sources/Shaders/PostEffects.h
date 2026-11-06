@@ -137,7 +137,7 @@ postOccludeUnderFog(float3 color, float occlusion, float3 world, constant FrameU
 {
     float2 fog = fogAt(world, frame);
     float3 fogPart = mix(frame.fogNearColor, frame.fogFarColor, fog.x) * fog.y;
-    return fogPart + max(color - fogPart, 0.0) * occlusion;
+    return toLinear(fogPart + max(toGamma(color) - fogPart, 0.0) * occlusion);
 }
 
 // One cascade tap per march step; the march takes many steps, so each takes one tap.
@@ -227,7 +227,7 @@ static inline float3 postVolumetricLight(
                     pow(1.0 + asymmetry * asymmetry - 2.0 * asymmetry * cosine, 1.5);
     float phase = mix(1.0, forward, post.volumetricPhase.x);
     float scatter = 1.0 - exp(-reach / maximum);
-    float3 light = frame.sunColor * post.volumetricColour.w + post.volumetricColour.rgb;
+    float3 light = toLinear(frame.sunColor * post.volumetricColour.w + post.volumetricColour.rgb);
     return light * (lit * phase * scatter * post.volumetricLight.x);
 }
 
@@ -383,7 +383,7 @@ static inline float3 postLensFlare(
         sum += tint[ghost] * (1.0 - smoothstep(0.6, 1.0, edge)) * 0.2;
     }
     float centred = 1.0 - saturate(length(axis) * 1.2);
-    return frame.sunColor * sum * (visible * centred * post.lensFlare.z);
+    return toLinear(frame.sunColor) * sum * (visible * centred * post.lensFlare.z);
 }
 
 // Every effect the frame turned on, in order, over the colour of one pixel.

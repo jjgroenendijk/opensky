@@ -206,7 +206,7 @@ fragment float4 grassFragment(
             : 1.0;
     float3 illumination =
         frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame);
-    float3 lit = diffuse.rgb * linearVertexColour(in.color.rgb, frame) * illumination;
+    float3 lit = diffuse.rgb * linearVertexColour(in.color.rgb, frame) * toLinear(illumination);
     // Opaque: alpha only gates the test above. The frame is premultiplied, so
     // a lower alpha would show as white or black.
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);

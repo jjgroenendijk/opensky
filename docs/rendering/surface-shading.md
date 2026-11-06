@@ -221,6 +221,17 @@ switch for terrain, grass, and decals. Without that, a vertex
 colour of 0.5 darkens a surface to 0.5 of its linear value instead of about 0.22, and baked
 shading looks washed out and grey.
 
+The light colours are gamma values too: the weather's sunlight, ambient, and `DALC`, the
+cell lighting, and each light's colour. The game adds the lights in gamma space and
+multiplies the gamma albedo by the sum. OpenSky does the same sum, then raises it to the
+power 2.2 before it multiplies the linear albedo. For a product, that gives exactly the
+game's colour. A mesh with specular light does the whole sum in gamma space and makes the
+result linear at the end. Fog mixes in gamma space, with the gamma fog colour. The sky,
+cloud, sun, and moon colours are made linear before they are drawn.
+
+A capture pair on 2026-11-06 showed why: OpenSky's sky at noon was (121, 170, 193) where the
+game's was (53, 99, 116), which is the game's colour encoded as sRGB a second time.
+
 ## Output clamp
 
 After fog, the game's lighting shader multiplies the colour by a scale that it sets each frame,

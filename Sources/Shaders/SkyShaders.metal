@@ -57,7 +57,7 @@ static float4 weatherSky(float3 ray, constant FrameUniforms &frame)
         mix(frame.weatherSkyLowerColor, frame.weatherSkyUpperColor, smoothstep(0.5, 1.0, height));
     float3 color = height < 0.5 ? lower : upper;
     if (frame.weatherSkyEnabled == 2) {
-        return float4(color, 1.0);
+        return float4(toLinear(color), 1.0);
     }
 
     float2 sun = skySunDiscAndGlow(ray, frame);
@@ -66,7 +66,7 @@ static float4 weatherSky(float3 ray, constant FrameUniforms &frame)
         max(max3(frame.weatherSunColor.r, frame.weatherSunColor.g, frame.weatherSunColor.b), 1e-3);
     color += frame.weatherGlareColor * sun.y * 0.5;
     color = mix(color, mix(tint, float3(1.0), 0.6), sun.x);
-    return float4(color, 1.0);
+    return float4(toLinear(color), 1.0);
 }
 
 fragment float4 skyFragment(
@@ -137,5 +137,5 @@ fragment float4 cloudFragment(
     float4 texel = cloudMap.sample(trilinear, in.texcoord);
     // The dome's vertex colours are (1, 0, 0, a): only the alpha, an edge fade, is used.
     float alpha = texel.a * layer.colorAlpha.a * in.color.a;
-    return float4(texel.rgb * layer.colorAlpha.rgb, alpha);
+    return float4(texel.rgb * toLinear(layer.colorAlpha.rgb), alpha);
 }

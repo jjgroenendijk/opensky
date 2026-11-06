@@ -46,16 +46,6 @@ static float3 overlayGamma(float3 base, float3 blend)
     return select(high, low, base < 0.5);
 }
 
-static inline float3 toGamma(float3 linearColour)
-{
-    return pow(max(linearColour, 0.0), 1.0 / 2.2);
-}
-
-static inline float3 toLinear(float3 gamma)
-{
-    return pow(max(gamma, 0.0), 2.2);
-}
-
 // What one light adds. Each sum is later scaled by its own texture or colour.
 struct LightSums
 {

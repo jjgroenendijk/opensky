@@ -79,7 +79,7 @@ fragment float4 skyObjectFragment(
     if ((object.flags & SkyObjectFlagAlphaOnly) != 0) {
         shaded.rgb = float3(1.0);
     }
-    float3 rgb = shaded.rgb * object.color.rgb;
+    float3 rgb = shaded.rgb * toLinear(object.color.rgb);
     float alpha = saturate(shaded.a * object.color.a);
     bool additive = (object.flags & SkyObjectFlagAdditive) != 0;
     return float4(rgb * alpha, additive ? 0.0 : alpha);
