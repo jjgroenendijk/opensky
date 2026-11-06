@@ -502,6 +502,7 @@ nonisolated public struct RenderScene: Sendable {
                 updated += animation.update(at: time)
                 continue
             }
+            actor.advanceClock(to: time)
             let key = actor.sharedClipKey
             if failedClips.contains(key) {
                 continue

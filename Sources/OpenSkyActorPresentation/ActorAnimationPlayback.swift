@@ -127,6 +127,13 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         /// The actor's running behaviour graph. It replaces the gait and idle clip,
         /// but a combat override still wins while it plays.
         var graph: GraphSource?
+        var lag = ActorLagBoneState()
+        var lagIndices: [ObjectIdentifier: SkeletonBoneIndex] = [:]
+        /// The lag bones' matrices of the last drawn pose, for the props that ride them.
+        var lagMatrices: [float4x4] = []
+        var placement: float4x4
+        var clock: Float?
+        var frameTime: Float = 0
     }
 
     nonisolated private struct GraphSource {
@@ -164,6 +171,8 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
     public let armorAddons: [WornArmorAddon]
     /// True for the cut head of `actor`, which the scene poses from its own table.
     public let posesSeveredHead: Bool
+    /// The skeleton's lag bones, which trail the actor as it moves.
+    public let lagBones: ActorLagBoneRig?
 
     /// The clip currently playing: the idle one, or a bounded combat override.
     public var clip: ActorAnimationClip {
@@ -178,16 +187,18 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         transform: float4x4 = matrix_identity_float4x4,
         sheathNodes: [String: String] = [:],
         armorAddons: [WornArmorAddon] = [],
-        posesSeveredHead: Bool = false
+        posesSeveredHead: Bool = false,
+        lagBones: ActorLagBoneRig? = nil
     ) {
         self.actor = actor
+        self.lagBones = lagBones
         self.posesSeveredHead = posesSeveredHead
         self.sheathNodes = sheathNodes
         self.armorAddons = armorAddons
         self.female = female
         self.transform = transform
         idleClip = clip
-        state = Mutex(State(clip: clip, locomotionClip: clip))
+        state = Mutex(State(clip: clip, locomotionClip: clip, placement: transform))
         var seen = Set<ObjectIdentifier>()
         meshes = models.flatMap(\.meshes).filter {
             $0.isSkinned && seen.insert(ObjectIdentifier($0)).inserted
@@ -285,6 +296,13 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         actor.rawValue
     }
 
+    public func advanceClock(to time: Float) {
+        state.withLock { state in
+            state.frameTime += max(time - (state.clock ?? time), 0)
+            state.clock = time
+        }
+    }
+
     /// A graph-driven actor shares its pose with no other actor.
     public var sharedClipKey: ObjectIdentifier {
         state.withLock { state in
@@ -322,7 +340,54 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         }
         let sheathed = WeaponSheathing.apply(sheathNodes, drawn: drawn, to: pose)
         let posed = HeadTrackingCore.apply(look, to: sheathed, parents: skeleton.parentIndices)
-        return meshes.applySkinningPose(posed, updating: &updatedMeshes)
+        return meshes.applySkinningPose(trailingLagBones(posed), updating: &updatedMeshes)
+    }
+
+    /// Where the actor stands now, which its lag bones trail.
+    public var placement: float4x4 {
+        get { state.withLock { $0.placement } }
+        set { state.withLock { $0.placement = newValue } }
+    }
+
+    /// How far each lag bone trails its rest, in world units.
+    public var lagBoneOffsets: [String: Float] {
+        state.withLock { $0.lag.offsets }
+    }
+
+    /// `pose` with the lag bones of the last drawn pose, unchanged.
+    public func addingLagBones(to pose: SkeletonPose) -> SkeletonPose {
+        guard let lagBones else { return pose }
+        return state.withLock { state in
+            guard state.lagMatrices.count == lagBones.bones.count else { return pose }
+            let index = Self.lagIndex(for: pose.bones, lagBones, &state.lagIndices)
+            return SkeletonPose(bones: index, matrices: pose.matrices + state.lagMatrices)
+        }
+    }
+
+    private func trailingLagBones(_ pose: SkeletonPose) -> SkeletonPose {
+        guard let lagBones else { return pose }
+        return state.withLock { state in
+            let index = Self.lagIndex(for: pose.bones, lagBones, &state.lagIndices)
+            let trailed = state.lag.pose(
+                pose, rig: lagBones, index: index, placement: state.placement,
+                deltaTime: state.frameTime
+            )
+            state.frameTime = 0
+            state.lagMatrices = Array(trailed.matrices.dropFirst(pose.matrices.count))
+            return trailed
+        }
+    }
+
+    private static func lagIndex(
+        for bones: SkeletonBoneIndex, _ rig: ActorLagBoneRig,
+        _ cache: inout [ObjectIdentifier: SkeletonBoneIndex]
+    ) -> SkeletonBoneIndex {
+        if let known = cache[ObjectIdentifier(bones)] {
+            return known
+        }
+        let index = SkeletonBoneIndex(names: bones.names + rig.bones.map(\.name))
+        cache[ObjectIdentifier(bones)] = index
+        return index
     }
 
     /// False keeps each weapon and the shield on its sheath node.

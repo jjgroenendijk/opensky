@@ -37,6 +37,18 @@ nonisolated public struct ActorGraphCandidate: Equatable, Sendable {
     }
 }
 
+nonisolated extension ActorGraphCandidate {
+    /// Where the actor stands, as its graph sees it.
+    var placement: float4x4 {
+        var matrix = float4x4(ActorGraphCore.worldRotation(placementRotationZ: rotationZ))
+        matrix.columns.0 *= scale
+        matrix.columns.1 *= scale
+        matrix.columns.2 *= scale
+        matrix.columns.3 = SIMD4(feet, 1)
+        return matrix
+    }
+}
+
 /// What the actor graph coordinator reads from the session.
 @MainActor
 public protocol ActorGraphWorld: AnyObject {
@@ -246,6 +258,9 @@ public final class ActorGraphCoordinator {
         for candidate in candidates {
             seen.insert(candidate.key)
             let playback = world.actorPlayback(for: candidate.key)
+            if playback?.lagBones != nil {
+                playback?.placement = candidate.placement
+            }
             if let entry = running[candidate.key] {
                 if entry.playback !== playback {
                     // A rebuilt cell brings a new playback; the graph keeps running.

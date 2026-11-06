@@ -344,6 +344,10 @@ extension AgentWorldAdapter {
             ),
             "skinDecals": .array(skinDecalBones(of: actor.key).map(AgentJSON.string)),
             "constraints": physicsConstraints(of: actor.key),
+            "lagBones": .object(
+                (game.actorPlayback(for: actor.key)?.lagBoneOffsets ?? [:])
+                    .mapValues(AgentJSON.init)
+            ),
             "graph": graph
         ])
     }

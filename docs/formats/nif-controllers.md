@@ -167,8 +167,11 @@ active and look-at rules are OpenSky's reading of the field names.
   nif.xml's description of linear velocity reads like a time; the game uses it as a rate.
   Vanilla values: `weapons\torch\torch.nif` 9, 0.1, 64; the chaurus `LagBone` 1, 1, 15.
   Lag bones play on placed meshes and effect art. On the 14 creature skeletons that carry one,
-  such as the chaurus, the `LagBone` node is outside the Havok rig (37 bones on the chaurus),
-  so the actor animation does not move it, and OpenSky does not trail it yet.
+  such as the chaurus, the `LagBone` node is outside the Havok rig (37 bones on the chaurus).
+  The actor build reads it from the skeleton mesh and adds it after the rig's bones, hung from
+  the nearest rig bone above it. Each frame it trails that bone's motion in the world, where
+  the actor's graph places the actor. Skins and props that name `LagBone` follow it, and
+  `openskycli game state actors` shows each lag bone's trail under `lagBones`.
 - Bone LOD. `BSBoneLODExtraData` pairs a bone name with a camera distance; nif.xml calls the
   block "Unknown". On the install, 52 actor `skeleton.nif` files carry it, and no placed mesh
   does. An entry counts when its distance is above 0 and its name is a bone. Past an entry's

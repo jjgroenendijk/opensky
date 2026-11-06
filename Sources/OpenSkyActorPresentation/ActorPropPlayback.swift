@@ -50,7 +50,7 @@ nonisolated public final class ActorPropPlayback: SharedPoseAnimation {
         _ pose: SkeletonPose,
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int {
-        meshes.applySkinningPose(pose, updating: &updatedMeshes)
+        meshes.applySkinningPose(actor.addingLagBones(to: pose), updating: &updatedMeshes)
     }
 
     @discardableResult

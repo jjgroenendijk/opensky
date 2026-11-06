@@ -141,6 +141,8 @@ nonisolated public final class CellSceneBuilder {
     var encounterZones: EncounterZoneStore?
     /// Immutable decoded rig/idle assets; playback objects remain cell-owned.
     public var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
+    /// Lag bones by skeleton mesh path; nil inside records a skeleton without one.
+    var actorLagBoneRigs: [String: ActorLagBoneRig?] = [:]
     /// Decoded expression TRI files by resource path. A file does not change while the
     /// game runs, so a rebuild reuses it; a failure is kept too.
     var faceMorphFiles: [String: Result<TRIFile, AssetLoadFailure>] = [:]
