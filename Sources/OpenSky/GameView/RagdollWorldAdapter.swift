@@ -5,6 +5,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCrime
@@ -49,6 +50,7 @@ protocol RagdollWorldHost: AnyObject {
     var storyWorld: StoryWorldAdapter { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
+    var worldState: WorldStateStore { get }
     var hud: HUDCoordinator { get }
     var messages: MessageCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
@@ -208,8 +210,23 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
         }
         game.scripts.bridge?.recordKill(victim: key, killer: killer)
         game.magic.noteDeath(of: key, killer: killer)
+        clearLocations(afterDeathOf: key)
         grantDeathItem(to: key)
         return game.scripts.runtime?.queueActorDeath(actor: key, killer: killer) ?? 0
+    }
+
+    /// A location whose last boss died clears itself (docs/formats/locations.md).
+    private func clearLocations(afterDeathOf victim: ReferenceKey) {
+        guard let store = game.worldData?.locationStore, let bridge = game.scripts.bridge
+        else { return }
+        let cleared = store.locationsCleared(byDeathOf: victim) { [game] boss in
+            game.worldState.component(ActorDeathState.self, for: boss)?.isDead == true
+        }
+        for location in cleared {
+            bridge.markLocationCleared(
+                ReferenceKey(resolved: location), playsMusic: store.playsClearedMusic(location)
+            )
+        }
     }
 
     /// The death item rolls at the actor's own level (docs/engine/leveled-lists.md).

@@ -115,7 +115,10 @@ extension PapyrusNativeFunctions {
                     flag.name == ScriptedStateName.cleared, isSet, !wasSet,
                     let name = bridge.formName(of: key)
                 {
-                    bridge.presenter?.postWorldNotice(.locationCleared(name: name))
+                    bridge.presenter?.postWorldNotice(.locationCleared(
+                        name: name,
+                        playsMusic: true
+                    ))
                 }
                 return .returned(.none)
             }

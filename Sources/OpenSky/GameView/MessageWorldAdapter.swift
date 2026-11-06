@@ -131,7 +131,7 @@ extension MessageWorldAdapter: MessageWorld {
     }
 
     func worldNoticeShown(_ notice: WorldNotice) {
-        if case .locationCleared = notice {
+        if case let .locationCleared(_, playsMusic) = notice, playsMusic {
             game.audio.musicDirector?.playSpecialMusic(.dungeonCleared)
         }
     }

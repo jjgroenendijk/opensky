@@ -9,7 +9,10 @@ struct WorldNoticeTextTests {
     private let texts = GameSettingTexts<WorldNoticeText>.vanilla
 
     @Test func aLocationShowsItsNameOverTheStatus() {
-        #expect(WorldNoticeShape(.locationCleared(name: "Bleak Falls Barrow"), texts: texts)
+        #expect(WorldNoticeShape(
+            .locationCleared(name: "Bleak Falls Barrow", playsMusic: true),
+            texts: texts
+        )
             == .big(HUDBigNotice(title: "Bleak Falls Barrow", status: "Cleared")))
     }
 

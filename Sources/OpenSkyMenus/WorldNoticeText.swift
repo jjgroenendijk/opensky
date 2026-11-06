@@ -40,7 +40,7 @@ nonisolated public enum WorldNoticeShape: Equatable, Sendable {
         switch notice {
         case let .locationDiscovered(name):
             self = .big(HUDBigNotice(title: name, status: texts[.discovered]))
-        case let .locationCleared(name):
+        case let .locationCleared(name, _):
             self = .big(HUDBigNotice(title: name, status: texts[.cleared]))
         case let .spellLearned(name):
             self = .big(HUDBigNotice(title: name, status: texts[.spellLearned]))

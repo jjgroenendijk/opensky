@@ -82,3 +82,16 @@ A quest alias (`ALLS`) with an `ALFL` field names one `LCTN` directly. OpenSky f
 alias with that location. The save file stores these fills in the `QLOC` chunk, separate
 from the `QALS` chunk for reference aliases. Older readers can then skip `QLOC`. See
 [OpenSky save](/formats/opensky-save-world-chunks.md).
+
+## Cleared locations
+
+A location clears itself when every reference its `LCSR` and `ACSR` lists name under the boss
+ref type (`DOBJ` `LRTB`, vanilla `Boss`) is dead. A location that lists no boss never clears
+this way; a script can still clear it with `Location.SetCleared()`. Clearing sets the flag
+`IsCleared` reads and shows the "cleared" notice. Only a location with the clearable keyword
+(`DOBJ` `KWDO`, vanilla `LocTypeClearable`), on itself or a parent, also plays the
+dungeon-cleared music ([music](/engine/music.md#special-music)).
+
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06. The read
+did not say what else counts as a boss being done besides its death, so OpenSky counts only
+death. A clear by script always plays the music, since the read did not cover that path.
