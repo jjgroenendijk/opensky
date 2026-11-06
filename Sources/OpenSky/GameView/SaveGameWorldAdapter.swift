@@ -19,6 +19,7 @@ import OpenSkyWorld
 @MainActor
 protocol SaveGameWorldHost: SkyrimSaveExportHost, SkyrimSaveImportHost {
     var scripts: ScriptCoordinator { get }
+    var effectsWorld: EffectsWorldAdapter { get }
     var mapWorld: MapWorldAdapter { get }
     var menuWorld: MenuWorldAdapter { get }
     var playerSettings: PlayerSettingsCoordinator { get }
@@ -119,6 +120,7 @@ final class SaveGameWorldAdapter: SaveGameService {
     }
 
     private func load(slot: String, checksLoadOrder: Bool) async throws {
+        game.effectsWorld.resetHealthCues()
         if SkyrimSaveImportAdapter.isImport(slot) {
             try await SkyrimSaveImportAdapter.load(slot: slot, game: game)
             await refreshSaveRows()

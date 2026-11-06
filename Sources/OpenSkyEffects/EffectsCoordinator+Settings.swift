@@ -8,6 +8,7 @@ extension EffectsCoordinator {
     public func applyGraphicsSettings(_ store: PlayerSettingsStore) {
         impactModelsEnabled = store.bool(.impactEffects)
         screenBloodEnabled = store.bool(.screenBlood)
+        healthCues.pulseEnabled = store.bool(.lowHealthPulse)
         decalsEnabled = store.bool(.decals)
         let limit = store.value(.decalLimit)
         decalLimit = limit.isFinite && limit > 0 ? Int(min(limit, 10000)) : DecalRuntime

@@ -98,6 +98,10 @@ extension GraphicsPageViewController {
         checkbox(
             screenBloodControl, "ScreenBlood", "A hit on the player splashes blood on the screen"
         )
+        checkbox(
+            lowHealthPulseControl, "LowHealthPulse",
+            "The screen pulses while the player's health is low"
+        )
     }
 
     private func configureShadingCheckboxes() {
@@ -204,6 +208,7 @@ extension GraphicsPageViewController {
             (gpuCullingControl, .gpuCulling), (roomCullingControl, .roomCulling),
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
             (impactEffectsControl, .impactEffects), (screenBloodControl, .screenBlood),
+            (lowHealthPulseControl, .lowHealthPulse),
             (toneMappingControl, .toneMapping),
             (lightAnimationControl, .lightAnimation), (shadowLightsControl, .shadowLights),
             (particleSortingControl, .particleSorting),

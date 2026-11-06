@@ -39,6 +39,17 @@ extension WorldAudioSoundDirector {
         }
     }
 
+    /// Fades `id` to silence over `seconds`, then ends it.
+    public func fadeOutScriptSound(_ id: Int32, seconds: Float) {
+        if let source = scriptSounds.stop(id) {
+            engine.fadeOutAndStopSource(id: source, overSeconds: seconds)
+        }
+    }
+
+    public func isScriptSoundPlaying(_ id: Int32) -> Bool {
+        scriptSounds.isPlaying(id)
+    }
+
     public func setScriptSoundVolume(_ id: Int32, _ volume: Float) {
         guard let source = scriptSounds.setVolume(id, volume) else { return }
         engine.fadeSource(id: source, to: scriptSounds.volume(of: id) ?? 1, overSeconds: 0)

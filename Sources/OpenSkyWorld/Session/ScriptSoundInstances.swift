@@ -83,6 +83,11 @@ nonisolated public struct ScriptSoundInstances: Equatable, Sendable {
         return answers
     }
 
+    /// True until `id` is stopped or retired.
+    public func isPlaying(_ id: Int32) -> Bool {
+        instances[id].map { !$0.stopped } ?? false
+    }
+
     public var isEmpty: Bool {
         instances.isEmpty
     }

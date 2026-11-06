@@ -102,6 +102,28 @@ At most 16 modifiers run at once. The oldest goes first. This is OpenSky's own l
 A spell hit on another actor starts no modifier, because the modifier describes what the
 player sees.
 
+## Low health
+
+Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06 (only the
+behaviour was reported, no code). The share is the player's health over its maximum. The game
+reads it each time the health changes.
+
+- At or below `fPlayerHealthHeartbeatSlow` (0.2) the default object `IMLH` (`LowHealthImod`)
+  pulses: the first pulse starts at once, then one every `fLowHealthIModInterval` (2 s). Each
+  pulse is a new one-shot start. Its strength runs in a straight line from
+  `fLowHealthIModStrengthMin` (0.8) at a share of 0.2 to `fLowHealthIModStrengthMax` (1.5) at
+  `fPlayerHealthHeartbeatFast` (0.1), and stays 1.5 below that, even at 0.
+- Above 0.2 no new pulse starts; a running one plays to its end.
+- The heartbeat sound `HSSD` plays from above 0.1 up to 0.2, and `HFSD` above 0 up to 0.1. A
+  change between the two stops the old one at once and starts the new one at full volume.
+  Leaving both bands, by healing or by death, fades the sound out over
+  `iPlayerHealthHeartbeatFadeMS` (1,000 ms). A heartbeat that ended starts again on the next
+  health change in its band.
+
+Loading a save stops the heartbeat at once, and the cues read the health afresh.
+The launcher's "Low-health pulse" switch stands for the game's `bLowHealthIModEnabled`.
+OpenSky reads the maximum with temporary modifiers included; the game leaves them out.
+
 ## Where OpenSky differs
 
 - The scene renders into an 8-bit target, so tone mapping works on display-range color. With

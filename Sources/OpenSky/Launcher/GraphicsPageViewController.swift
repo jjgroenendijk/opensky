@@ -50,6 +50,7 @@ final class GraphicsPageViewController: NSViewController {
         checkboxWithTitle: "Impact effects", target: nil, action: nil
     )
     let screenBloodControl = NSButton(checkboxWithTitle: "Screen blood", target: nil, action: nil)
+    let lowHealthPulseControl = makeCheckbox("Low-health pulse")
     let lightAnimationControl = NSButton(
         checkboxWithTitle: "Flickering lights", target: nil, action: nil
     )
@@ -182,7 +183,7 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(roomCullingControl),
                 layout.toggle(waterDepthControl), layout.toggle(terrainNormalMapsControl),
                 layout.toggle(impactEffectsControl), layout.toggle(screenBloodControl),
-                layout.toggle(toneMappingControl),
+                layout.toggle(toneMappingControl), layout.toggle(lowHealthPulseControl),
                 layout.toggle(lightAnimationControl), layout.toggle(shadowLightsControl),
                 layout.toggle(particleSortingControl),
                 layout.toggle(pipelineCacheControl),
@@ -276,4 +277,8 @@ final class GraphicsPageViewController: NSViewController {
         presets.apply(preset, to: store)
         refresh()
     }
+}
+
+private func makeCheckbox(_ title: String) -> NSButton {
+    NSButton(checkboxWithTitle: title, target: nil, action: nil)
 }
