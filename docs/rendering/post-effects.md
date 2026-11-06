@@ -41,16 +41,22 @@ the sky reaches.
 
 - The surface normal comes from the depth of the four neighbours. Each axis takes the shorter
   of its two steps, so an edge does not bend the normal.
-- 12 taps sit on a spiral around the pixel, out to 48 world units, turned by a per-pixel noise
-  angle.
+- 5 taps sit on a spiral around the pixel, out to 48 world units, turned by a per-pixel noise
+  angle. The game also takes 5 taps.
 - A tap darkens the pixel by how far it rises above the surface plane (the cosine to the
-  normal, less a bias of 0.05), times `1 - d² / r²` for its distance `d` in the radius `r`.
-- The result is `ao = 1 - 1.2 * mean`, clamped to 0 to 1. The sky is not changed.
+  normal, less a bias of 0.05). Each tap has the game's weight `(1 - q)³ / (q + 0.01)`, where
+  `q = d² / r²` for its distance `d` in the radius `r`. So a near tap counts much more than a
+  far one. The game's weight is `(r² - d²)³ / (d² + 0.01)`; OpenSky divides `d` by `r` first,
+  because the game's distance units are not known.
+- The result is `ao = 1 - 1.2 * mean`, where `mean` is the weighted mean, clamped to 0 to 1.
+  The sky is not changed.
 - It multiplies the whole lit colour by `ao`: the sun, point lights such as torches, the
   ambient light, and glow alike. The game does the same: its scene colour holds all the
   light in one target, and the occlusion step multiplies that colour (clean-room read of the
   game's shaders in `Skyrim - Shaders.bsa`, 2026-11-06, behaviour only). On snow the game
   raises `ao` by a bias, so snow stays bright; OpenSky does not.
+- It darkens the colour under the fog, as the game's fog variant does. The fog part of the
+  pixel, `fog colour × fog amount`, stays as it is, and only the rest is multiplied by `ao`.
 - The effect fades out between 2,048 and 4,096 units from the camera. Far away, depth
   precision makes the normals noisy, and the noise would darken the whole distant view.
 
@@ -155,10 +161,9 @@ known.
 
 ## Where OpenSky differs
 
-- Ambient occlusion: the radius, the strength, and the tap count are OpenSky's own. The
-  game uses 5 taps, each weighted by `1 / (d² + 0.01)` and `(r² - d²)³`, then a contrast
-  curve and a blend over time. It also leaves snow brighter, and in its fog variant it
-  darkens before the fog, where OpenSky darkens the fogged colour.
+- Ambient occlusion: the radius and the strength are OpenSky's own, and the tap distance is
+  divided by the radius before the game's weight. The game then applies a contrast curve and
+  a blend over time, which OpenSky does not have. The game also leaves snow brighter.
 - The volumetric light's scales from `VOLI` fields to world units and strength are OpenSky's
   reading of the field names. The noise drifts along X, because no wind direction is known.
 - A modifier's "Use Target" flag, which focuses on the crosshair target, is not used.
