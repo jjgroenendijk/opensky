@@ -39,13 +39,19 @@ nonisolated public struct PrecipitationUpdate {
 }
 
 nonisolated public final class PrecipitationVolume {
+    private let device: MTLDevice
     private let rain: ParticlePlayback
-    private let snow: ParticlePlayback
+    private var snow: ParticlePlayback
+    private let generatedSnowTexture: MTLTexture
+    /// The `SPGD` look the snow draws with; nil for the generated flake.
+    public private(set) var snowLook: PrecipitationLook?
     public private(set) var anchor: SIMD3<Float>?
     public private(set) var snapshot = PrecipitationRuntimeSnapshot(
         state: .none, roofOccluded: false, rainLiveCount: 0, snowLiveCount: 0
     )
     public private(set) var drawItems: [ParticlePlayback] = []
+    /// Unit direction the stronger of rain and snow falls, for the roof occlusion view.
+    public private(set) var fallDirection = SIMD3<Float>(0, 0, -1)
     /// The active weather's `SPGD` scales; the hand-tuned look when it names none.
     public var tuning = PrecipitationTuning.fallback {
         didSet {
@@ -60,6 +66,8 @@ nonisolated public final class PrecipitationVolume {
     }
 
     public init(device: MTLDevice) throws {
+        self.device = device
+        generatedSnowTexture = try Self.makeSnowTexture(device: device)
         rain = try ParticlePlayback(
             device: device,
             definition: Self.rainDefinition,
@@ -69,16 +77,45 @@ nonisolated public final class PrecipitationVolume {
             seed: 0x5241_494E,
             sourcePath: "(generated rain)"
         )
-        snow = try ParticlePlayback(
-            device: device,
-            definition: Self.snowDefinition,
-            placementTransform: matrix_identity_float4x4,
-            texture: Self.makeSnowTexture(device: device),
-            effect: .precipitation,
-            seed: 0x534E_4F57,
-            sourcePath: "(generated snow)"
+        snow = try Self.makeSnow(
+            device: device, texture: generatedSnowTexture, look: nil
         )
         rain.setStreakAspect(tuning.rainStreakAspect)
+    }
+
+    private static func makeSnow(
+        device: MTLDevice, texture: MTLTexture, look: PrecipitationLook?
+    ) throws -> ParticlePlayback {
+        try ParticlePlayback(
+            device: device,
+            definition: definition(snowConfig, cells: look?.cellRects ?? []),
+            placementTransform: matrix_identity_float4x4,
+            texture: texture,
+            effect: .precipitation,
+            seed: 0x534E_4F57,
+            sourcePath: look?.texturePath ?? "(generated snow)"
+        )
+    }
+
+    /// Draws snow with `look`'s texture and cells, or the generated flake for nil. The
+    /// falling flakes start over. Returns the allocations the swap retired and added.
+    public func setSnowLook(
+        _ look: PrecipitationLook?, texture: MTLTexture?
+    ) throws -> (retired: [MTLAllocation], added: [MTLAllocation]) {
+        let look = texture == nil ? nil : look
+        guard look != snowLook else { return ([], []) }
+        let retired = snow.residencyAllocations
+        snow = try Self.makeSnow(
+            device: device, texture: texture ?? generatedSnowTexture, look: look
+        )
+        snow.setSpawnScale(tuning.snow)
+        // A new playback's emitter starts at the origin; the volume sits at the anchor.
+        snow.translate(by: anchor ?? .zero)
+        snowLook = look
+        if drawItems.count == 2 {
+            drawItems = [rain, snow]
+        }
+        return (retired, snow.residencyAllocations)
     }
 
     public func update(_ update: PrecipitationUpdate) {
@@ -116,6 +153,9 @@ nonisolated public final class PrecipitationVolume {
                 * tuning.snow.density
         )
         drawItems = [rain, snow]
+        fallDirection = update.state.rainIntensity >= update.state.snowIntensity
+            ? Self.fallDirection(of: Self.rainDefinition, wind: update.wind)
+            : Self.fallDirection(of: Self.snowDefinition, wind: update.wind)
         snapshot = PrecipitationRuntimeSnapshot(
             state: update.state,
             roofOccluded: false,
@@ -182,7 +222,9 @@ nonisolated extension PrecipitationVolume {
         windStrength: 950
     ))
 
-    fileprivate static let snowDefinition = definition(DefinitionConfig(
+    fileprivate static let snowDefinition = definition(snowConfig)
+
+    fileprivate static let snowConfig = DefinitionConfig(
         name: "Snow volume",
         capacity: 768,
         speed: PrecipitationBase.snow.speed,
@@ -196,9 +238,24 @@ nonisolated extension PrecipitationVolume {
         lifeVariation: 0.5,
         volume: SIMD3(2400, 2400, 900),
         windStrength: 620
-    ))
+    )
 
-    fileprivate static func definition(_ config: DefinitionConfig) -> ParticleSystemDefinition {
+    /// The mean path of a drop: its fall speed down and the wind's push over half its life.
+    static func fallDirection(
+        of definition: ParticleSystemDefinition, wind: WindState
+    ) -> SIMD3<Float> {
+        guard
+            let emitter = definition.emitters.first,
+            case let .wind(strength)? = definition.modifiers.first?.kind
+        else { return SIMD3(0, 0, -1) }
+        let push = wind.direction * wind.speed * strength * emitter.lifeSpan * 0.5
+        let path = SIMD3(push.x, push.y, -max(emitter.speed, 1))
+        return simd_normalize(path)
+    }
+
+    fileprivate static func definition(
+        _ config: DefinitionConfig, cells: [SIMD4<Float>] = []
+    ) -> ParticleSystemDefinition {
         ParticleSystemDefinition(
             name: config.name,
             worldTransform: matrix_identity_float4x4,
@@ -231,7 +288,7 @@ nonisolated extension PrecipitationVolume {
                 active: true,
                 kind: .wind(strength: config.windStrength)
             )],
-            subtextureOffsets: [],
+            subtextureOffsets: cells,
             shaderPropertyRef: -1,
             alphaPropertyRef: -1,
             effectShader: nil,

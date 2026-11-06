@@ -157,6 +157,8 @@ public final class RagdollCoordinator {
     private func kneelBelowThreshold(_ key: ReferenceKey) -> [RagdollCommand] {
         guard
             !bleedout.contains(key), let fraction = world.healthFraction(of: key),
+            // A healthy actor skips the threshold lookup, which reads its records.
+            fraction < 1,
             fraction <= world.bleedoutThreshold(of: key) ?? deathSettings.bleedoutThreshold,
             world.zeroHealthOutcome(of: key, killer: recentHit(on: key)?.attacker) == .bleedsOut,
             bleedout.enter(key)

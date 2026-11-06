@@ -33,27 +33,58 @@ struct ReferenceFadeTests {
         #expect(abs(band.upperBound - 15 * (start + 0.7 * (end - start))) < 0.1)
     }
 
+    private func step(
+        _ state: ReferenceFadeState?, at distance: Float, seconds: Float
+    ) -> ReferenceFadeState? {
+        fades.step(
+            .actor,
+            bounds: ReferenceFadeBounds(lower: lower, upper: upper, viewer: SIMD3(distance, 0, 0)),
+            state: state, seconds: seconds
+        )
+    }
+
+    private var actorBand: ClosedRange<Float> {
+        get throws {
+            try #require(fades.band(.actor, radius: Float(3).squareRoot() * 64))
+        }
+    }
+
     @Test
-    func nearReferenceIsWholeAndFarOneIsGone() throws {
-        let radius = Float(3).squareRoot() * 64
-        let band = try #require(fades.band(.actor, radius: radius))
-        #expect(fades.fade(.actor, lower: lower, upper: upper, viewer: .zero) == 0)
-        let far = SIMD3<Float>(band.upperBound + 1, 0, 0)
-        #expect(fades.fade(.actor, lower: lower, upper: upper, viewer: far) == nil)
-        let middle = SIMD3<Float>((band.lowerBound + band.upperBound) / 2, 0, 0)
-        let fade = try #require(fades.fade(.actor, lower: lower, upper: upper, viewer: middle))
-        #expect(abs(fade - 0.5) < 0.01)
+    func aFirstSightTakesItsSideAtOnce() throws {
+        let band = try actorBand
+        #expect(step(nil, at: 0, seconds: 0)?.dissolve == 0)
+        #expect(step(nil, at: band.upperBound + 1, seconds: 0)?.isGone == true)
+    }
+
+    @Test
+    func passingTheBandFadesOutOverTwoSeconds() throws {
+        let band = try actorBand
+        var state = step(nil, at: 0, seconds: 0)
+        state = step(state, at: band.upperBound + 1, seconds: 1)
+        #expect(state?.dissolve == 0.5)
+        state = step(state, at: band.upperBound + 1, seconds: 1)
+        #expect(state?.isGone == true)
+    }
+
+    @Test
+    func insideTheBandTheDirectionHolds() throws {
+        let band = try actorBand
+        let middle = (band.lowerBound + band.upperBound) / 2
+        var state = step(nil, at: band.upperBound + 1, seconds: 0)
+        state = step(state, at: middle, seconds: 1)
+        #expect(state?.isGone == true)
+        state = step(state, at: band.lowerBound - 1, seconds: 0.6)
+        #expect(abs((state?.dissolve ?? 0) - 0.5) < 0.001)
+        state = step(state, at: middle, seconds: 0.6)
+        #expect(state?.dissolve == 0)
     }
 
     @Test
     func zeroMultiplierNeverFades() {
-        let viewer = SIMD3<Float>(1e6, 0, 0)
         #expect(ReferenceFadeDistances.off.isOn == false)
-        #expect(ReferenceFadeDistances.off.fade(
-            .object,
-            lower: lower,
-            upper: upper,
-            viewer: viewer
-        ) == 0)
+        let bounds = ReferenceFadeBounds(lower: lower, upper: upper, viewer: SIMD3(1e6, 0, 0))
+        #expect(ReferenceFadeDistances.off.step(
+            .object, bounds: bounds, state: nil, seconds: 1
+        ) == nil)
     }
 }

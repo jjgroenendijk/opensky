@@ -34,6 +34,7 @@ protocol MenuWorldHost: MenuInputConsumer {
     var audio: AudioCoordinator { get }
     var cameraInput: CameraInputState { get }
     var combat: CombatCoordinator { get }
+    var effectsWorld: EffectsWorldAdapter { get }
     var containerMenu: ContainerMenuController { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
@@ -274,6 +275,7 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
         game.inventory.registerCreatedPotions()
         game.gameSession?.gameClock = GameClock()
         game.gameSession?.clearScriptScreenEffects()
+        game.effectsWorld.fadeOutHealthCues()
         game.scripts.restore(instances: [], timers: [])
         game.messages.reloadHelpRecords()
         game.storyWorld.rerunSessionStart()

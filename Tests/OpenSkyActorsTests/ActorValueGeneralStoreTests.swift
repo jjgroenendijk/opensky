@@ -120,6 +120,18 @@ struct ActorValueGeneralStoreTests {
     /// A value moved back to its baseline is dropped rather than kept at its
     /// default, so an actor nothing happened to stops being dirty in the sense
     /// the save cares about.
+    /// Fortify Health raises the maximum, but the low-health cues read it without the
+    /// temporary slot.
+    @Test func thePermanentMaximumLeavesOutTemporaryModifiers() {
+        let (runtime, _) = runtime()
+        let holder = holder()
+        let health = ActorValueIdentity.index(of: .health)
+        runtime.addModifier(50, to: .temporary, at: health, on: holder)
+        runtime.addModifier(10, to: .permanent, at: health, on: holder)
+        let full = runtime.maximums(of: holder).health
+        #expect(runtime.permanentMaximum(of: .health, for: holder) == full - 50)
+    }
+
     @Test func aValueBackAtItsBaselineIsDropped() {
         let (runtime, _) = self.runtime()
         let holder = holder()

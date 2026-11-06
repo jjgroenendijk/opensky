@@ -50,6 +50,12 @@ nonisolated public struct ActorValueOverride: Equatable, Sendable {
         baseOffset + permanent + temporary
     }
 
+    /// The maximum offset without the temporary modifier, which the game's low-health
+    /// cues measure against so a fortify effect does not move them.
+    public var permanentMaximumOffset: Float {
+        baseOffset + permanent
+    }
+
     /// This override as the resolved entry a caller reads, given the value's
     /// re-derived baseline.
     public func resolved(baseline: Float) -> ActorValueEntry {

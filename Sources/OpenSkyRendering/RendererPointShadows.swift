@@ -75,7 +75,8 @@ extension Renderer {
                     viewProjection: PointShadowMath.viewProjection(
                         light: position, face: face, radius: light.radius
                     ),
-                    excluding: [], drawsTerrain: true, target: .pointLights
+                    excluding: [], drawsTerrain: true, target: .pointLights,
+                    reach: ShadowReach(centre: position, radius: light.radius)
                 ))
             }
         }

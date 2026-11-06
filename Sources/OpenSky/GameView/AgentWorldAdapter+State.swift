@@ -502,6 +502,7 @@ extension AgentWorldAdapter {
             "soundMix": soundMixState(),
             "treeWind": treeWindState(),
             "waterFlow": waterFlowState(),
+            "precipitation": precipitationState(),
             "gpuMemory": gpuMemoryState()
         ]
     }

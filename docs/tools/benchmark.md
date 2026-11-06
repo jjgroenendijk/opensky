@@ -74,14 +74,18 @@ size of a hidden or windowed run, and "Play sound" turns the sound on.
 | Window | The tour draws in the game window. `--size` sets its size for the run |
 | Full screen | The window fills the screen for the tour and comes back after it. A window that was already full screen stays so |
 
-A hidden run keeps the frame loop of the game view running at the same rate as on the
-screen. `MTKView` keeps drawing in a window that is not on the screen, and its drawables
-come back without a wait. A test program on this machine drew 59.9 frames per second
-hidden and 59.7 on the screen. A screen display link would not do: it rounds 60 Hz to 50
-on a 100 Hz display. The app holds a `ProcessInfo` activity for the whole tour, so App Nap
-does not slow a run in the background. With frame interpolation on, the renderer paces to
-half the display's refresh rate. A hidden window has no display, so it takes 60 Hz there,
-and such a run compares only with another hidden run.
+The tour draws with no frame cap. For the whole run the app stops the view's own timer, which
+paces to the display, and draws the next frame as soon as the last one is encoded. It also turns
+off display sync on the layer, so a present does not wait for the screen, and it ignores the
+frame rate cap setting. A frame then waits only for a free frame slot on the GPU. Frames per
+second show what the engine can do, not the display's refresh rate. The world still steps by a
+fixed 1/60 s each frame, so a faster run plays the same shots in less wall time.
+
+This is the same hidden or on the screen: `MTKView` keeps drawing in a window that is not on the
+screen, and its drawables come back without a wait. The app holds a `ProcessInfo` activity for
+the whole tour, so App Nap does not slow a run in the background. Runs before this change were
+capped at 60 frames per second, so their frame rates do not compare with newer runs; their CPU
+and GPU times do.
 
 A run from the CLI also keeps the Mac and its display awake until the tour ends, because a
 sleeping display stops the frame loop. A watchdog ends the app when the tour has not started
@@ -166,13 +170,25 @@ Per scene the result holds:
 - `frameTime` and `gpuTime`: average, 95th and 99th percentile, the worst frame, and the 1%
   low frame rate. GPU time is the time between Metal's start and end of each frame's command
   buffer, so it leaves out the CPU encode and the wait.
-- `passes`: GPU time per pass, read from Metal counter heaps: `setup` (texture streaming and
-  the ray-traced shadow build), `shadows`, and `scene`, the main render pass. Apple GPUs run
-  the draws of one render encoder together, tile by tile, so a timestamp inside an encoder
-  does not split its time. On an M1, marks inside the scene encoder put almost the whole pass on
-  the first mark. The timer therefore marks only the boundaries between encoders. For the cost of one
-  layer inside the scene pass, compare two runs with that layer off, or read a `--capture`
-  trace in Xcode.
+- `passes`: GPU time per pass, read from Metal counter heaps. Apple GPUs run the draws of one
+  render encoder together, tile by tile, so a timestamp inside an encoder does not split its
+  time. On an M1, marks inside the scene encoder put almost the whole pass on the first mark.
+  The timer therefore marks only the boundaries between encoders, and the main pass is split
+  where it already changes encoder:
+
+  | Pass | GPU work |
+  | --- | --- |
+  | `setup` | Texture streaming and the ray-traced shadow build |
+  | `shadows` | The sun cascades, focus shadows, point-light faces, and the rain view |
+  | `opaque` | The main pass up to the scene depth copy: sky, opaque geometry, decals, grass |
+  | `world` | Water, blended geometry, refraction, and particles |
+  | `imageSpace` | The image space composite, when it needs its own encoder |
+  | `upscale` | Motion vectors, the scaler, and the interpolated frame |
+  | `overlays` | Screen blood, the HUD, and the UI after upscaling |
+
+  A pass whose split does not happen in a frame adds its time to the pass before it. Without
+  water depth or refraction, `opaque` holds the whole world. For the cost of one layer inside
+  a pass, compare two runs with that layer off, or read a `--capture` trace in Xcode.
 - `cpu`: CPU time per subsystem: `simulation`, `animation`, `shadows`, `encode`, `scripts`,
   and `audio`. Each is read from the frame before.
 - the average draw calls and drawn instances. Two runs with different counts drew different

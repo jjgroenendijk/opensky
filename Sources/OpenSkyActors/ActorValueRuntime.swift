@@ -70,6 +70,13 @@ public struct ActorValueRuntime: ActorValueAccess {
         Self.maximums(derived: baseline(of: holder).maximums, state: state(of: holder))
     }
 
+    /// `holder`'s maximum of `kind` without temporary modifiers, floored at zero.
+    public func permanentMaximum(of kind: ActorValueKind, for holder: ActorValueHolder) -> Float {
+        let offset = state(of: holder).override(at: ActorValueIdentity.index(of: kind))
+            .permanentMaximumOffset
+        return max(0, baseline(of: holder).maximums[kind] + offset)
+    }
+
     /// The same maximums for a caller that already holds both halves, so the
     /// regeneration loop does not re-read the store once per primary.
     ///

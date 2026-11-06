@@ -91,6 +91,7 @@ public final class Renderer: NSObject {
     public internal(set) var shadow: ShadowResources
     /// How far actors, items, and objects stay drawn (`RendererReferenceFade.swift`).
     public var referenceFades = ReferenceFadeDistances.off
+    var referenceFadeTimers = ReferenceFadeTimers()
     /// The depth array of the focus shadows and the rain occlusion view, built on first use.
     var auxiliaryShadow: AuxiliaryShadowResources?
     /// Set when the device could not make the auxiliary array.
@@ -195,7 +196,7 @@ public final class Renderer: NSObject {
     /// The weather's cloud layers; nil keeps the plain sky gradient.
     public var skyClouds: SkyClouds?
     /// The water's noise normal maps; nil keeps the sine-wave normal.
-    public var waterNoiseTextures: WaterNoiseTextures?
+    public var recordTextures: RecordTextures?
     /// The rings splashes and waders leave on the water (`RendererWaterRipples.swift`).
     public var waterRipples = WaterRippleField()
     public var cloudsEnabled = true
@@ -344,6 +345,9 @@ public final class Renderer: NSObject {
     public var gpuFrameLog: GPUFrameLog?
     /// Set by a benchmark to time each render pass on the GPU; nil in normal play.
     public var passTimer: GPUPassTimer?
+    /// Set by a benchmark: a frame waits for its slot instead of being skipped, because
+    /// an uncapped loop would otherwise skip most frames while the GPU is busy.
+    public var waitsForFrameSlot = false
     /// The colour behind all geometry this frame (`Renderer.background(fog:drawsSky:)`).
     var sceneBackground = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
     /// A Metal GPU trace of the next live frame (RendererFrameCapture.swift).

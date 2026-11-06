@@ -73,6 +73,8 @@ final class BenchmarkWorldAdapter {
     var onRunningChange: ((Bool) -> Void)?
     var onFinish: ((BenchmarkRun) -> Void)?
 
+    /// The tour measures the engine, not the display, so it draws with no frame cap.
+    private let frameLoop = UnlimitedFrameLoop()
     private var arrival: AgentTeleportJob?
     private var arrivalStep: AgentWaitStep?
     private var saved: SavedState?
@@ -262,6 +264,10 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         renderer.gpuFrameLog = GPUFrameLog()
         renderer.setPassTimingEnabled(passTiming)
         game.simulationClock.freeze()
+        if let view = game.hostView as? MTKView {
+            renderer.waitsForFrameSlot = true
+            frameLoop.start(view)
+        }
     }
 
     func tourFinished(_ result: BenchmarkTourResult) {
@@ -271,6 +277,8 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     func endTour() {
         guard let session = game.gameSession, let saved else { return }
         let renderer = session.renderer
+        frameLoop.stop()
+        renderer.waitsForFrameSlot = false
         renderer.setPassTimingEnabled(false)
         renderer.gpuFrameLog = nil
         renderer.swfEnabled = saved.hudEnabled

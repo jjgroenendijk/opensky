@@ -10,8 +10,16 @@ nonisolated public enum GPUPass: String, CaseIterable, Codable, Sendable {
     /// Texture streaming and the ray-traced shadow build.
     case setup
     case shadows
-    /// The main render pass: the world, effects, image space, upscaling, and the overlays.
-    case scene
+    /// The main pass up to the scene depth copy: sky, opaque geometry, decals, and grass.
+    case opaque
+    /// The rest of the world: water, blended geometry, refraction, and particles.
+    case world
+    /// The image space composite, when it needs its own encoder.
+    case imageSpace
+    /// Motion vectors, the scaler, and the interpolated frame.
+    case upscale
+    /// What draws after the last split: screen blood, the HUD, and the UI.
+    case overlays
 }
 
 public final class GPUPassTimer {
@@ -25,6 +33,8 @@ public final class GPUPassTimer {
     private var slotFrames: [Int?]
     private var slot = 0
     private var completed: [[GPUPass: Double]] = []
+    /// The pass the open main-pass encoder is timed as.
+    private var openSegment = GPUPass.opaque
 
     public init?(device: any MTLDevice, slots: Int) {
         let descriptor = MTL4CounterHeapDescriptor()
@@ -65,6 +75,22 @@ public final class GPUPassTimer {
         commandBuffer.writeTimestamp(counterHeap: heaps[slot], index: index)
     }
 
+    /// The main pass starts as `opaque`; each split names the encoder after it.
+    func beginMainPass() {
+        openSegment = .opaque
+    }
+
+    /// Ends the open main-pass segment at an encoder boundary and names the next one.
+    func markSegment(next: GPUPass, commandBuffer: any MTL4CommandBuffer) {
+        mark(openSegment, commandBuffer: commandBuffer)
+        openSegment = next
+    }
+
+    /// Ends the last main-pass segment after its encoder.
+    func endMainPass(commandBuffer: any MTL4CommandBuffer) {
+        mark(openSegment, commandBuffer: commandBuffer)
+    }
+
     /// Per-pass milliseconds of each frame the GPU finished since the last call.
     public func take() -> [[GPUPass: Double]] {
         defer { completed = [] }
@@ -100,6 +126,11 @@ public final class GPUPassTimer {
 }
 
 extension Renderer {
+    /// Ends the open main-pass segment at an encoder boundary and names the next one.
+    func markScenePassSegment(next: GPUPass) {
+        passTimer?.markSegment(next: next, commandBuffer: commandBuffer)
+    }
+
     /// Starts or stops pass timing; the first frames after a start have no samples yet.
     public func setPassTimingEnabled(_ enabled: Bool) {
         passTimer = enabled ? passTimer ?? GPUPassTimer(

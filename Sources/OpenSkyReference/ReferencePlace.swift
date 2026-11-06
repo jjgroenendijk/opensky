@@ -8,6 +8,8 @@ nonisolated public struct ReferenceLocation: Codable, Equatable, Sendable {
     public var formID: UInt32
     public var keywords: [String]
     public var parent: String
+    /// Nil from a bridge built before it reported clearing.
+    public var cleared: Bool?
 }
 
 /// The map marker the last `marker <name>` line moved the player to.

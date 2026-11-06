@@ -319,6 +319,7 @@ extension Renderer {
         frameOffset: Int
     ) -> ScenePassState? {
         state.encoder.endEncoding()
+        markScenePassSegment(next: .imageSpace)
         guard
             let target = descriptor.colorAttachments[0].texture,
             let copy = imageSpacePass.copyTarget(matching: target, residency: residencySet),

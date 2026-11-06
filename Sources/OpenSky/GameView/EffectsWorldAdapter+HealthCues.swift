@@ -14,12 +14,21 @@ extension EffectsWorldAdapter {
         game.effects.healthCues.reset()
     }
 
+    /// A new game fades the heartbeat out, as the game does on a start.
+    func fadeOutHealthCues() {
+        game.audio.soundDirector?.fadeOutScriptSound(
+            heartbeatSound, seconds: PlayerHealthCues.heartbeatFadeSeconds
+        )
+        heartbeatSound = 0
+        game.effects.healthCues.reset()
+    }
+
     func stepHealthCues(_ seconds: Float, gameSession: GameSession) {
         guard let values = game.actorValues.runtime else { return }
         let director = game.audio.soundDirector
         let share = PlayerHealthCues.share(
             current: values.current(of: .player).health,
-            maximum: values.maximums(of: .player).health
+            maximum: values.permanentMaximum(of: .health, for: .player)
         )
         let playing = heartbeatSound != 0 && director?.isScriptSoundPlaying(heartbeatSound) == true
         let change = game.effects.stepHealthCues(

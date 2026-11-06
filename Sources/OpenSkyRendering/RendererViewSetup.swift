@@ -88,8 +88,10 @@ nonisolated final class GPUFrameParts: Sendable {
 
     /// The frame's busy seconds once every part has reported, else nil.
     func add(start: CFTimeInterval, end: CFTimeInterval) -> CFTimeInterval? {
-        state.withLock { value in
-            value.busy += max(end - start, 0)
+        // A command buffer the GPU did not run reports a zero start; its span is not time.
+        let busy = start > 0 && end.isFinite ? max(end - start, 0) : 0
+        return state.withLock { value in
+            value.busy += busy
             value.remaining -= 1
             return value.remaining == 0 ? value.busy : nil
         }

@@ -49,7 +49,7 @@ public struct GPUCullingResources {
         descriptor.label = "Cull Instances"
         pipeline = try compiler.makeComputePipelineState(descriptor: descriptor)
         let table = MTL4ArgumentTableDescriptor()
-        table.maxBufferBindCount = CullBufferIndex.rooms.rawValue + 1
+        table.maxBufferBindCount = CullBufferIndex.fadeStates.rawValue + 1
         argumentTable = try compiler.device.makeArgumentTable(descriptor: table)
     }
 }
@@ -82,8 +82,10 @@ public final class GPUCullScene {
     /// Per frame slot: the room-culled counter, then `roomWordCount` bitset words.
     let rooms: MTLBuffer
     let roomWordCount: Int
+    /// One fade state per instance, shared by every frame slot: the GPU runs frames in order.
+    let fadeStates: MTLBuffer
     /// The reference fade the next `encode` writes into each view's parameters.
-    var fade = CullFade(distances: .off, viewer: .zero)
+    var fade = CullFade(distances: .off, viewer: .zero, seconds: 0)
     let instanceCount: Int
     let groups: [GPUCullGroup]
     /// The GPU group of each `scene.opaque` group, nil for a CPU group.
@@ -95,7 +97,7 @@ public final class GPUCullScene {
     private var countedGroups: [[[Int]]]
 
     var allocations: [MTLAllocation] {
-        [instances, parameters, output, arguments, rooms]
+        [instances, parameters, output, arguments, rooms, fadeStates]
     }
 
     /// Nil when the scene has no group the GPU can cull.
@@ -134,6 +136,15 @@ public final class GPUCullScene {
             device: device, length: Self.argumentStride * groups.count * views,
             label: "CullDrawArguments"
         )
+        fadeStates = try GPUFactory.makeUniformBuffer(
+            device: device, length: MemoryLayout<SIMD2<Float>>.stride * instanceCount,
+            label: "CullFadeStates"
+        )
+        let unseen = [SIMD2<Float>](repeating: SIMD2(-1, 0), count: instanceCount)
+        unseen.withUnsafeBytes { bytes in
+            guard let base = bytes.baseAddress else { return }
+            fadeStates.contents().copyMemory(from: base, byteCount: bytes.count)
+        }
         let contents = instances.contents()
         builder.instances.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
@@ -212,6 +223,7 @@ public final class GPUCullScene {
         encoder.setArgumentTable(resources.argumentTable)
         let table = resources.argumentTable
         table.setAddress(instances.gpuAddress, index: CullBufferIndex.instances.rawValue)
+        table.setAddress(fadeStates.gpuAddress, index: CullBufferIndex.fadeStates.rawValue)
         let roomWords = writeRooms(roomVisibility, slot: slot)
         table.setAddress(
             rooms.gpuAddress + UInt64(roomOffset(slot: slot)), index: CullBufferIndex.rooms.rawValue
@@ -235,6 +247,13 @@ public final class GPUCullScene {
                 threadsPerGrid: MTLSize(width: instanceCount, height: 1, depth: 1),
                 threadsPerThreadgroup: MTLSize(width: width, height: 1, depth: 1)
             )
+            if view == 0 {
+                // The shadow views read the fades the camera view just stepped.
+                encoder.barrier(
+                    afterEncoderStages: .dispatch, beforeEncoderStages: .dispatch,
+                    visibilityOptions: .device
+                )
+            }
         }
         // The draws read the counts and transforms in their vertex stage.
         encoder.barrier(
@@ -278,7 +297,8 @@ public final class GPUCullScene {
             fadeScales: fade.distances.shaderScales,
             instanceCount: UInt32(instanceCount),
             roomWordCount: UInt32(roomWords),
-            padding0: 0, padding1: 0
+            fadeSeconds: view == 0 ? fade.seconds : 0,
+            advancesFades: view == 0 ? 1 : 0
         )
         let offset = viewSlot(view: view, slot: slot) * MemoryLayout<CullParameters>.stride
         self.parameters.contents().advanced(by: offset)

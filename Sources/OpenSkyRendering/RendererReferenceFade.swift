@@ -1,14 +1,60 @@
-// Distance fades of placed references on the CPU path. The GPU cull kernel applies
-// the same rule (`cullFade` in CullingMotionShaders.metal).
+// Timed fades of placed references on the CPU path. The GPU cull kernel applies the
+// same rule (`cullFade` in CullingMotionShaders.metal).
 
 import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import simd
 
-/// What one cull dispatch needs for the distance fades.
+/// What one cull dispatch needs for the fades.
 struct CullFade {
     let distances: ReferenceFadeDistances
     let viewer: SIMD3<Float>
+    /// Seconds the camera view advances each fade by.
+    let seconds: Float
+}
+
+/// The CPU path's fade of each reference, keyed by its form and place, stepped once a
+/// frame by the first pass that draws it.
+struct ReferenceFadeTimers {
+    struct Key: Hashable {
+        let formID: UInt32
+        let place: SIMD3<Int32>
+    }
+
+    /// Frames an unseen entry is kept before it is dropped.
+    static let keepFrames = 600
+    private(set) var tick = 0
+    private(set) var seconds: Float = 0
+    private var states: [Key: (state: ReferenceFadeState, tick: Int)] = [:]
+    private var gpuTick = 0
+
+    mutating func advance(seconds: Float) {
+        tick += 1
+        self.seconds = seconds
+        if tick % Self.keepFrames == 0 {
+            states = states.filter { tick - $0.value.tick < Self.keepFrames }
+        }
+    }
+
+    /// This frame's seconds for the GPU path, once: a frame encoded again without a
+    /// new step must not advance the fades a second time.
+    mutating func takeGPUSeconds() -> Float {
+        defer { gpuTick = tick }
+        return gpuTick == tick ? 0 : seconds
+    }
+
+    mutating func state(
+        for key: Key,
+        step: (ReferenceFadeState?, Float) -> ReferenceFadeState?
+    ) -> ReferenceFadeState? {
+        let entry = states[key]
+        if let entry, entry.tick == tick {
+            return entry.state
+        }
+        guard let next = step(entry?.state, seconds) else { return nil }
+        states[key] = (next, tick)
+        return next
+    }
 }
 
 extension DrawInstance {
@@ -24,12 +70,28 @@ extension DrawInstance {
 }
 
 extension Renderer {
-    /// 0 whole, up to 1 dissolved; nil when `instance` is past its reach.
+    /// Steps every reference fade by this frame's simulated seconds.
+    public func advanceReferenceFades(deltaTime: Float) {
+        referenceFadeTimers.advance(seconds: deltaTime)
+    }
+
+    /// 0 whole, up to 1 dissolved; nil when `instance` has faded out.
     func distanceFade(of instance: DrawInstance) -> Float? {
         guard referenceFades.isOn, let bounds = instance.bounds else { return 0 }
-        return referenceFades.fade(
-            instance.fadeCategory, lower: bounds.min, upper: bounds.max,
-            viewer: frameInput.view.position
+        let fades = referenceFades
+        let viewer = frameInput.view.position
+        let center = (bounds.min + bounds.max) * 0.5
+        let key = ReferenceFadeTimers.Key(
+            formID: instance.referenceFormID, place: SIMD3<Int32>(center.rounded(.down))
         )
+        let state = referenceFadeTimers.state(for: key) { state, seconds in
+            fades.step(
+                instance.fadeCategory,
+                bounds: ReferenceFadeBounds(lower: bounds.min, upper: bounds.max, viewer: viewer),
+                state: state, seconds: seconds
+            )
+        }
+        guard let state else { return 0 }
+        return state.dissolve
     }
 }

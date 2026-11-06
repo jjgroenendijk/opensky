@@ -22,7 +22,7 @@ extension PapyrusWorldStateBridge {
                 states[key] = store.component(ScriptedReferenceState.self, for: key)
             }
             var equipped: [ReferenceKey: ReferenceKey] = [:]
-            for entry in references?.residentEntries() ?? [] where entry.placedActor != nil {
+            for entry in references?.residentActorEntries() ?? [] {
                 equipped[entry.key] = equippedShout(of: entry.key)
             }
             return ScriptedStateConditionResolution(states: states, equippedShouts: equipped)

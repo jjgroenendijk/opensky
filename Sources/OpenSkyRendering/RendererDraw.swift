@@ -20,6 +20,7 @@ extension Renderer: MTKViewDelegate {
         adoptFrameInput(frameDriver?.prepareLiveFrame() ?? frameInput)
         let particleDelta = updateAnimationsFromWallClock()
         updateParticles(deltaTime: particleDelta)
+        advanceReferenceFades(deltaTime: particleDelta)
         advanceLoadingCoverParticlesFromWallClock()
         updatePrecipitation(deltaTime: particleDelta)
         frameDriver?.finishLiveFrame()
@@ -74,7 +75,7 @@ extension Renderer: MTKViewDelegate {
             interpolatedTarget: interpolated?.descriptor
         )
         lastEncodeMS = Double(DispatchTime.now().uptimeNanoseconds - encodeStart) / 1e6
-        passTimer?.mark(.scene, commandBuffer: commandBuffer)
+        passTimer?.endMainPass(commandBuffer: commandBuffer)
         guard encoded else {
             commandBuffer.endCommandBuffer()
             finishFailedFrame(afterEarlyCommit: shadowEncoded)
@@ -94,10 +95,13 @@ extension Renderer: MTKViewDelegate {
     /// The slot's allocator and ring slices are free only once its last frame finished.
     /// Encoding into them earlier makes the GPU read memory the CPU rewrites, so a frame
     /// whose slot is still busy is skipped.
+    /// Long enough for any real frame; a GPU that takes longer has stalled.
+    static let frameSlotPatienceMS: UInt64 = 1000
+
     private func frameSlotIsFree() -> Bool {
         let free = endFrameEvent.wait(
             untilSignaledValue: UInt64(frameIndex - GPUFactory.maxFramesInFlight),
-            timeoutMS: 10
+            timeoutMS: waitsForFrameSlot ? Self.frameSlotPatienceMS : 10
         )
         if !free {
             skippedFrames += 1

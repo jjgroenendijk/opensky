@@ -1,5 +1,6 @@
-// The WATR noise normal maps (`NAM2`-`NAM4`). They load off the main actor; the frame
-// drains them and keeps the GPU copies (docs/rendering/water.md#surface).
+// Textures a record names by path, such as the WATR noise maps (`NAM2`-`NAM4`) and the
+// SPGD particle textures. They load off the main actor; the frame drains them and keeps
+// the GPU copies (docs/rendering/water.md#surface).
 
 import Foundation
 import Metal
@@ -8,10 +9,12 @@ import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 
-public final class WaterNoiseTextures {
+public final class RecordTextures {
     private let loader: AssetLoader<String, Data>
     private let textureLoader: TextureLoader
     private var textures: [String: MTLTexture] = [:]
+    /// How each requested path decodes; a path not listed is data.
+    private var usages: [String: TextureUsage] = [:]
     private var missing: Set<String> = []
     public private(set) var failedPaths: [String] = []
 
@@ -48,17 +51,20 @@ public final class WaterNoiseTextures {
 
     /// Moves finished loads in and asks for what `paths` needs. Returns new GPU
     /// allocations, which the caller makes resident.
-    func prepare(_ paths: Set<String>) -> [MTLAllocation] {
+    func prepare(_ paths: Set<String>, usage: TextureUsage = .data) -> [MTLAllocation] {
         for path in paths.compactMap(Self.filePath)
             where textures[path] == nil && !missing.contains(path)
         {
+            usages[path] = usage
             loader.prefetch(path)
         }
         var added: [MTLAllocation] = []
         for path in loader.drain() {
             switch loader.state(of: path) {
             case let .ready(data):
-                let texture = textureLoader.texture(dds: data, usage: .data, label: path)
+                let texture = textureLoader.texture(
+                    dds: data, usage: usages[path] ?? .data, label: path
+                )
                 textures[path] = texture
                 added.append(texture)
             case let .failed(failure):
@@ -76,12 +82,12 @@ public final class WaterNoiseTextures {
 extension Renderer {
     /// Drains finished noise map loads and requests the maps of the water in the scene.
     public func prepareWaterTextures() {
-        guard let waterNoiseTextures, !scene.water.isEmpty else { return }
+        guard let recordTextures, !scene.water.isEmpty else { return }
         let paths = Set(scene.water.flatMap { item in
             item.look.shading.noiseTextures + [item.look.shading.flowNoiseTexture]
                 + (item.flowMap.map { [$0] } ?? [])
         }.filter { !$0.isEmpty })
-        let added = waterNoiseTextures.prepare(paths)
+        let added = recordTextures.prepare(paths)
         guard !added.isEmpty else { return }
         residencySet.addAllocations(added)
         residencySet.commit()
@@ -91,8 +97,8 @@ extension Renderer {
     public func waterFlowMaps() -> [(path: String, loaded: Bool)] {
         scene.water.compactMap { item in
             item.flowMap.map { path in
-                let loaded = waterNoiseTextures?.texture(path) != nil
-                    && waterNoiseTextures?.texture(item.look.shading.flowNoiseTexture) != nil
+                let loaded = recordTextures?.texture(path) != nil
+                    && recordTextures?.texture(item.look.shading.flowNoiseTexture) != nil
                 return (path, loaded)
             }
         }

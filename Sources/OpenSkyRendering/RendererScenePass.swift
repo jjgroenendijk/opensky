@@ -477,6 +477,7 @@ extension Renderer {
             view: view
         )
         let frustum = Frustum(viewProjection: projection * view)
+        passTimer?.beginMainPass()
         planSceneDepthCopy(projection: projection)
         let frameOffset = updateFrameUniforms(
             slot: slot,

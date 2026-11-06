@@ -20,6 +20,7 @@ extension Renderer {
         copies: [ScenePassCopy]
     ) -> ScenePassState? {
         state.encoder.endEncoding()
+        markScenePassSegment(next: .world)
         let targets = copies.compactMap {
             keptCopy(matching: $0.source, at: $0.target, label: $0.label)
         }

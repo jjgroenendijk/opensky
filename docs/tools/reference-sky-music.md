@@ -35,5 +35,5 @@ marker. After it, `state.json` holds `marker`: whether one was `found`, its `for
 (2026-11-06), so restart it between long series.
 
 In the world, `state.json` also holds `location`: the player's location `formID`, its
-`keywords`, such as `LocTypeTown`, and its parent. The game keeps no editor IDs for
-locations, so `editorID` and `parent` are often empty.
+`keywords`, such as `LocTypeTown`, its parent, and `cleared`, the flag `IsCleared` reads. The
+game keeps no editor IDs for locations, so `editorID` and `parent` are often empty.

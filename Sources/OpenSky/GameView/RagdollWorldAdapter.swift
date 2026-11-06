@@ -215,12 +215,25 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
         return game.scripts.runtime?.queueActorDeath(actor: key, killer: killer) ?? 0
     }
 
-    /// A location whose last boss died clears itself (docs/formats/locations.md).
+    /// A location whose last living, enabled boss died clears itself
+    /// (docs/formats/locations.md).
     private func clearLocations(afterDeathOf victim: ReferenceKey) {
         guard let store = game.worldData?.locationStore, let bridge = game.scripts.bridge
         else { return }
-        let cleared = store.locationsCleared(byDeathOf: victim) { [game] boss in
-            game.worldState.component(ActorDeathState.self, for: boss)?.isDead == true
+        let world = game.worldState
+        let streamer = game.streamer
+        let enable = EnableParentResolver(
+            delta: { world.delta(for: $0) },
+            parent: { streamer?.referenceEntry(formID: $0) }
+        )
+        let cleared = store.locationsCleared(byDeathOf: victim) { boss in
+            if world.component(ActorDeathState.self, for: boss)?.isDead == true {
+                return true
+            }
+            if let entry = streamer?.referenceEntry(key: boss) {
+                return !enable.isEnabled(entry)
+            }
+            return world.component(ReferenceEnableState.self, for: boss)?.isEnabled == false
         }
         for location in cleared {
             bridge.markLocationCleared(

@@ -47,6 +47,24 @@ struct PrecipitationTuningTests {
         #expect(tuning.snow.density == 1)
     }
 
+    @Test func aSnowRecordGivesItsTextureCutIntoItsGrid() throws {
+        let data = Fixture.f32(100, 0, 1, 1, 0, 0, 0) + Fixture.u32(4, 2, 1)
+        let record = try ShaderParticleGeometry(record: Fixture.record("SPGD", fields: [
+            ("DATA", data), ("ICON", Fixture.zstring("Effects\\Flakes.dds"))
+        ]))
+        let look = try #require(PrecipitationTuning(record: record).snowLook)
+        #expect(look.texturePath == "Effects\\Flakes.dds")
+        #expect(look.dataPath == "Textures\\Effects\\Flakes.dds")
+        #expect(look.cellRects.count == 8)
+        #expect(look.cellRects[5] == SIMD4(0.25, 0.5, 0.25, 0.5))
+    }
+
+    @Test func aBrokenGridIsOneCellAndNoTextureIsNoLook() {
+        let look = PrecipitationLook(texturePath: "a.dds", grid: SIMD2(0, 99))
+        #expect(look?.cellRects == [SIMD4(0, 0, 1, 1)])
+        #expect(PrecipitationLook(texturePath: nil, grid: SIMD2(4, 4)) == nil)
+    }
+
     @Test func noRecordOrAnUnknownTypeIsTheFallback() throws {
         #expect(PrecipitationTuning(record: nil) == .fallback)
         let odd = try Self.geometry(type: 7, gravity: 1, size: SIMD2(1, 1), density: 1)
