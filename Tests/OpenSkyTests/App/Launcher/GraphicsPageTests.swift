@@ -129,7 +129,7 @@ struct GraphicsPageTests {
         #expect(page.presetLabel.stringValue.hasPrefix("Unavailable: "))
     }
 
-    @Test func everyOptionCanBeChanged() throws {
+    @Test func everyAppliedOptionCanBeChanged() throws {
         let page = makePage()
         #expect(page.optionRows.count == GraphicsOptions.all.count)
         for row in page.optionRows {
@@ -137,7 +137,7 @@ struct GraphicsPageTests {
                 "GraphicsOption\(row.option.key)Control",
                 in: row.view
             ) as? NSControl)
-            #expect(control.isEnabled, "\(row.option.key)")
+            #expect(control.isEnabled == (row.option.unavailableReason == nil), "\(row.option.key)")
         }
     }
 
