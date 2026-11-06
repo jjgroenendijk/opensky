@@ -78,7 +78,7 @@ because Skyrim bakes ambient occlusion there. Material alpha is multiplied throu
 the terms, and their sources are in [surface shading](/rendering/surface-shading.md).
 
 Depth is `depth32Float`, less-compare, with writes on. Metal 4 sets the depth format at pass time,
-not in the pipeline. Near is 10 and far 65,536 ([coordinates](/decisions/coordinates.md)). The
+not in the pipeline. Near is 10 and far 350,000 ([coordinates](/decisions/coordinates.md)). The
 front face is counter-clockwise seen from outside, back faces are culled, and a double-sided
 material turns culling off per draw. The demo ground plane caught a wrong winding that closed boxes
 had hidden.

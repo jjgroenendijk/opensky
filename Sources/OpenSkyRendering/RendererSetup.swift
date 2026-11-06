@@ -91,8 +91,10 @@ extension Renderer {
         10
     }
 
+    /// Past the 250,000-unit distant LOD reach plus half a level-32 block's diagonal, so
+    /// the farthest block is not clipped. Depth precision depends on the near plane.
     nonisolated public static var farPlane: Float {
-        65536
+        350_000
     }
 
     /// Sun-shadow far bound (high quality): 3 exterior cells (4096 units each),
