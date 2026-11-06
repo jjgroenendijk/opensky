@@ -19,14 +19,14 @@ extension WorldRenderControls {
         (gameSession?.weather?.store.selectableWeathers() ?? []).compactMap(\.editorID)
     }
 
-    public func forceWeather(named name: String?) {
+    public func forceWeather(named name: String?, transition: WeatherSystem.Transition = .timed) {
         guard let weather = gameSession?.weather else { return }
         guard let name else {
-            weather.forceWeather(nil, transition: .timed)
+            weather.forceWeather(nil, transition: transition)
             return
         }
         let match = weather.store.selectableWeathers().first { $0.editorID == name }
-        weather.forceWeather(match?.formID, transition: .timed)
+        weather.forceWeather(match?.formID, transition: transition)
     }
 
     public var currentWeatherName: String? {

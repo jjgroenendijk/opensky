@@ -20,6 +20,7 @@ import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -219,14 +220,15 @@ extension AgentWorldAdapter {
             throw AgentFailure(.notReady, "no weather data is loaded")
         }
         guard let editorID else {
-            game.renderControls.forceWeather(named: nil)
+            game.renderControls.forceWeather(named: nil, transition: .instant)
             return ["forced": .null]
         }
         let names = game.renderControls.selectableWeatherNames
         guard let match = names.first(where: { $0.lowercased() == editorID.lowercased() }) else {
             throw AgentFailure(.notFound, "no selectable weather '\(editorID)'")
         }
-        game.renderControls.forceWeather(named: match)
+        // A paused game counts no game hours, so a timed fade would never finish.
+        game.renderControls.forceWeather(named: match, transition: .instant)
         return ["forced": .string(match)]
     }
 
