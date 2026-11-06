@@ -12,7 +12,7 @@ struct ReferenceBridgeTests {
     "position":[1000.5,-2000.25,300],"pitchDegrees":10,"headingDegrees":0,\
     "cellFormID":3456,"cell":"","interior":false,"grid":[4,-8],\
     "worldspace":"Tamriel","worldspaceFormID":60,"hour":13.5,"weatherFormID":1106412,\
-    "worldFOV":80.69,"firstPersonFOV":90,"firstPerson":true}
+    "worldFOV":97.11,"firstPersonFOV":90,"firstPerson":true}
     """
 
     private func decode(_ text: String) throws -> ReferenceBridgeState {

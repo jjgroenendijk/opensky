@@ -350,9 +350,12 @@ at that folder lists every reference save in the load list.
 
 OpenSky's view is 65 degrees vertical. The UESP console page says the console's default is
 "about 65" in one place and 75 in another, and it does not say which axis it measures. The
-batch file assumes a horizontal angle measured at a 4:3 view, the usual reading for Skyrim,
-so 65 degrees vertical becomes `fov 80.69`. This is unverified: the first matched capture
-pair confirms or corrects it.
+console's `fov` is the horizontal angle across the whole window. In a 1280 x 720 capture pair
+on 2026-11-06 (`.logs/reference/20261106T180846/` and `20261106T180916/`), `fov 80.69`, the
+4:3 reading, drew distant buildings 1.33 times larger than OpenSky, which is 16:9 over 4:3.
+`fov 97.11` put them at the same place within a few pixels. So the batch file converts at the
+window's 16:9 shape: 65 degrees vertical becomes `fov 97.11`. A window of another shape needs
+the conversion at its own shape.
 
 ## Capture and compare
 
