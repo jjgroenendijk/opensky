@@ -180,6 +180,7 @@ extension Renderer {
         switch frame.targets.scaler {
         case let .temporal(scaler):
             state.encoder.endEncoding()
+            markScenePassSegment(next: .upscale)
             let uniforms = writeMotionUniforms(frame, slot: state.slot)
             guard
                 encodeCameraMotion(frame, sceneDepth: sceneDepth, uniforms: uniforms),
@@ -197,12 +198,14 @@ extension Renderer {
                 visibilityOptions: .device
             )
             state.encoder.endEncoding()
+            markScenePassSegment(next: .upscale)
             scaler.colorTexture = frame.targets.color
             scaler.outputTexture = frame.targets.output
             scaler.inputContentWidth = frame.targets.inputSize.x
             scaler.inputContentHeight = frame.targets.inputSize.y
             scaler.encode(commandBuffer: commandBuffer)
         }
+        markScenePassSegment(next: .overlays)
         guard
             let encoder = commandBuffer.makeRenderCommandEncoder(
                 descriptor: Self.upscaleCompositeDescriptor(target)

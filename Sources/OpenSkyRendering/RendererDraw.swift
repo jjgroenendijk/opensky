@@ -75,7 +75,7 @@ extension Renderer: MTKViewDelegate {
             interpolatedTarget: interpolated?.descriptor
         )
         lastEncodeMS = Double(DispatchTime.now().uptimeNanoseconds - encodeStart) / 1e6
-        passTimer?.mark(.scene, commandBuffer: commandBuffer)
+        passTimer?.endMainPass(commandBuffer: commandBuffer)
         guard encoded else {
             commandBuffer.endCommandBuffer()
             finishFailedFrame(afterEarlyCommit: shadowEncoded)

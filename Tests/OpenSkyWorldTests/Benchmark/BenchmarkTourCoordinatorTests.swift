@@ -92,7 +92,7 @@ private final class FakeTourWorld: BenchmarkTourWorld {
     }
 
     func takePassTimes() -> [[GPUPass: Double]] {
-        [[.scene: 3, .shadows: 2]]
+        [[.opaque: 3, .shadows: 2]]
     }
 
     func gpuMemory() -> GPUMemoryUsage {
@@ -155,7 +155,7 @@ struct BenchmarkTourCoordinatorTests {
         let frames = try #require(whiterun.frameTime).frames
         #expect(abs(frames - Int(shot.seconds * 60)) <= 2)
         #expect(whiterun.cpu["encode"]?.averageMS == 2)
-        #expect(whiterun.passes["scene"]?.averageMS == 3)
+        #expect(whiterun.passes["opaque"]?.averageMS == 3)
         #expect(whiterun.averageDrawCalls == 300)
         #expect(whiterun.gpuMemory != nil)
         // Once before and once after the one measured shot, never inside it.

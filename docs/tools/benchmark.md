@@ -170,13 +170,25 @@ Per scene the result holds:
 - `frameTime` and `gpuTime`: average, 95th and 99th percentile, the worst frame, and the 1%
   low frame rate. GPU time is the time between Metal's start and end of each frame's command
   buffer, so it leaves out the CPU encode and the wait.
-- `passes`: GPU time per pass, read from Metal counter heaps: `setup` (texture streaming and
-  the ray-traced shadow build), `shadows`, and `scene`, the main render pass. Apple GPUs run
-  the draws of one render encoder together, tile by tile, so a timestamp inside an encoder
-  does not split its time. On an M1, marks inside the scene encoder put almost the whole pass on
-  the first mark. The timer therefore marks only the boundaries between encoders. For the cost of one
-  layer inside the scene pass, compare two runs with that layer off, or read a `--capture`
-  trace in Xcode.
+- `passes`: GPU time per pass, read from Metal counter heaps. Apple GPUs run the draws of one
+  render encoder together, tile by tile, so a timestamp inside an encoder does not split its
+  time. On an M1, marks inside the scene encoder put almost the whole pass on the first mark.
+  The timer therefore marks only the boundaries between encoders, and the main pass is split
+  where it already changes encoder:
+
+  | Pass | GPU work |
+  | --- | --- |
+  | `setup` | Texture streaming and the ray-traced shadow build |
+  | `shadows` | The sun cascades, focus shadows, point-light faces, and the rain view |
+  | `opaque` | The main pass up to the scene depth copy: sky, opaque geometry, decals, grass |
+  | `world` | Water, blended geometry, refraction, and particles |
+  | `imageSpace` | The image space composite, when it needs its own encoder |
+  | `upscale` | Motion vectors, the scaler, and the interpolated frame |
+  | `overlays` | Screen blood, the HUD, and the UI after upscaling |
+
+  A pass whose split does not happen in a frame adds its time to the pass before it. Without
+  water depth or refraction, `opaque` holds the whole world. For the cost of one layer inside
+  a pass, compare two runs with that layer off, or read a `--capture` trace in Xcode.
 - `cpu`: CPU time per subsystem: `simulation`, `animation`, `shadows`, `encode`, `scripts`,
   and `audio`. Each is read from the frame before.
 - the average draw calls and drawn instances. Two runs with different counts drew different
