@@ -136,9 +136,12 @@ extension DragonFlightWorldAdapter: DragonFlightWorld {
     func dragonPerches() -> [DragonPerch] {
         guard let streamer = game.streamer else { return [] }
         return streamer.residentInteractions.flatMap { interaction -> [DragonPerch] in
-            guard let key = streamer.referenceEntry(formID: interaction.reference)?.key
+            let seats = interaction.seats.filter { $0.isEnabled && $0.rules.isPerch }
+            guard
+                !seats.isEmpty,
+                let key = streamer.referenceEntry(formID: interaction.reference)?.key
             else { return [] }
-            return interaction.seats.filter { $0.isEnabled && $0.rules.isPerch }.map { seat in
+            return seats.map { seat in
                 DragonPerch(reference: key, feet: seat.root, yaw: .pi / 2 - seat.heading)
             }
         }

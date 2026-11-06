@@ -137,8 +137,9 @@ public final class DragonFlightCoordinator {
         for key in flights.keys.sorted() where !present.contains(key) {
             drop(key, world: world)
         }
-        let perches = world.dragonPerches()
-        for candidate in candidates where !candidate.isRidden {
+        let fliers = candidates.filter { !$0.isRidden }
+        let perches = fliers.isEmpty ? [] : world.dragonPerches()
+        for candidate in fliers {
             fly(candidate, perches: perches, deltaTime: deltaTime, world: world)
         }
         orders = orders.filter { present.contains($0.key) }
