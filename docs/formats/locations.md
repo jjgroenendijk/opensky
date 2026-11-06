@@ -85,13 +85,20 @@ from the `QALS` chunk for reference aliases. Older readers can then skip `QLOC`.
 
 ## Cleared locations
 
-A location clears itself when every reference its `LCSR` and `ACSR` lists name under the boss
-ref type (`DOBJ` `LRTB`, vanilla `Boss`) is dead. A location that lists no boss never clears
-this way; a script can still clear it with `Location.SetCleared()`. Clearing sets the flag
-`IsCleared` reads and shows the "cleared" notice. Only a location with the clearable keyword
-(`DOBJ` `KWDO`, vanilla `LocTypeClearable`), on itself or a parent, also plays the
-dungeon-cleared music ([music](/engine/music.md#special-music)).
+A boss's death clears a location when every reference its `LCSR` and `ACSR` lists name under
+the boss ref type (`DOBJ` `LRTB`, vanilla `Boss`) is dead or disabled. Disabling a boss does not
+start the check by itself: the location clears only when the next boss dies. A location that
+lists no boss never clears this way; a script can still clear it with `Location.SetCleared()`.
+Clearing sets the flag `IsCleared` reads and shows the "cleared" notice. Only a location with the
+clearable keyword (`DOBJ` `KWDO`, vanilla `LocTypeClearable`), on itself or a parent, also plays
+the dungeon-cleared music ([music](/engine/music.md#special-music)).
 
-Behaviour described from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06. The read
-did not say what else counts as a boss being done besides its death, so OpenSky counts only
-death. A clear by script always plays the music, since the read did not cover that path.
+The death rule is from a clean-room read of `SkyrimSE.exe` 1.7.104.0 on 2026-11-06. The disabled
+case was seen in the Windows reference game on 2026-11-06, through the bridge's `cleared` flag:
+
+- Bleakcoast Cave, one boss: disabling it left the location not cleared.
+- Graywinter Watch, two bosses: one disabled, then the other killed: cleared.
+- Gallows Rock, where one boss starts disabled: the other killed: cleared.
+- Halldirs Cairn, two bosses, both enabled: one killed: not cleared.
+
+A clear by script always plays the music, since the read did not cover that path.

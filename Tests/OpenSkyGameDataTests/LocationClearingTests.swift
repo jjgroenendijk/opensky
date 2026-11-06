@@ -1,4 +1,4 @@
-// A location clears itself when every boss it lists is dead
+// A location clears itself when every boss it lists is dead or disabled
 // (docs/formats/locations.md#cleared-locations), over synthetic LCTN and DOBJ records.
 
 import Foundation
@@ -49,6 +49,14 @@ struct LocationClearingTests {
         #expect(cleared == [barrow])
         #expect(store.playsClearedMusic(barrow))
         #expect(store.locationsCleared(byDeathOf: Self.key(0x702)) { _ in true }.isEmpty)
+    }
+
+    /// The game counts a disabled boss as done once another boss dies.
+    @Test func aDisabledBossCountsAsDoneWhenTheOtherDies() throws {
+        let store = try Self.store(keywords: [Self.clearable])
+        let disabled = Self.key(0x700)
+        let cleared = store.locationsCleared(byDeathOf: Self.key(0x701)) { $0 == disabled }
+        #expect(cleared == [ResolvedFormID(plugin: "Test.esm", objectID: 0x500)])
     }
 
     @Test func aLocationWithoutTheClearableKeywordClearsQuietly() throws {

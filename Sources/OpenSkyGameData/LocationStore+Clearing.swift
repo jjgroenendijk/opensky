@@ -1,19 +1,19 @@
-// A location clears itself when every reference it lists as a boss is dead. See
-// docs/formats/locations.md#cleared-locations.
+// A boss's death clears a location when every reference it lists as a boss is dead or
+// disabled. See docs/formats/locations.md#cleared-locations.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated extension LocationStore {
-    /// The locations `victim` was a boss of whose bosses are now all dead. A location
-    /// without bosses never clears this way.
+    /// The locations `victim` was a boss of whose other bosses are all done: dead or
+    /// disabled. A location without bosses never clears this way.
     public func locationsCleared(
-        byDeathOf victim: ReferenceKey, isDead: (ReferenceKey) -> Bool
+        byDeathOf victim: ReferenceKey, isDone: (ReferenceKey) -> Bool
     ) -> [ResolvedFormID] {
         guard let bossType else { return [] }
         return (bossLocations[victim.namingPlayer] ?? []).filter { location in
             let bosses = specialReferences(ofType: bossType, in: location)
-            return !bosses.isEmpty && bosses.allSatisfy { $0 == victim || isDead($0) }
+            return !bosses.isEmpty && bosses.allSatisfy { $0 == victim || isDone($0) }
         }
     }
 
