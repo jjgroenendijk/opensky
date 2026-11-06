@@ -36,7 +36,8 @@ std::string EditorID(const RE::TESForm *form)
     return Quoted(name ? name : "");
 }
 
-// The player's location, its keywords, and its parent, for rules that read location types.
+// The player's location, its keywords, its parent, and whether it is cleared, for rules that
+// read location types and clearing.
 std::string Location(RE::PlayerCharacter *player)
 {
     auto *location = player->GetCurrentLocation();
@@ -49,8 +50,10 @@ std::string Location(RE::PlayerCharacter *player)
         keywords += (keywords.empty() ? "" : ",") + EditorID(keyword);
     }
     return std::format(
-        ",\"location\":{{\"editorID\":{},\"formID\":{},\"keywords\":[{}],\"parent\":{}}}",
-        EditorID(location), location->GetFormID(), keywords, EditorID(location->parentLoc));
+        ",\"location\":{{\"editorID\":{},\"formID\":{},\"keywords\":[{}],\"parent\":{},"
+        "\"cleared\":{}}}",
+        EditorID(location), location->GetFormID(), keywords, EditorID(location->parentLoc),
+        location->IsCleared() ? "true" : "false");
 }
 
 std::string Place(RE::PlayerCharacter *player)
