@@ -269,6 +269,8 @@ nonisolated public struct DistantLODScene: Sendable {
     public let hiddenLargeReferenceSegments: Int
     /// Is Full LOD references drawn past the loaded grid.
     public private(set) var fullLODReferenceCount = 0
+    /// Terrain blocks drawn from the generated LOD instead of the vanilla files.
+    public internal(set) var generatedTerrainBlockCount = 0
     /// Object IDs whose enable change must rebuild the ring.
     public private(set) var watchedObjectIDs: Set<UInt32> = []
 
@@ -366,6 +368,7 @@ nonisolated public struct DistantLODScene: Sendable {
             hiddenLargeReferenceSegments: hiddenLargeReferenceSegments
         )
         scene.fullLODReferenceCount = fullLODReferenceCount
+        scene.generatedTerrainBlockCount = generatedTerrainBlockCount
         scene.watchedObjectIDs = watchedObjectIDs
         return scene
     }
@@ -381,8 +384,8 @@ nonisolated public struct DistantLODScene: Sendable {
 nonisolated public final class DistantLODBuilder {
     public let fileSystem: any GameFileSource
     public let meshes: MeshLibrary
-    private let textures: TextureLibrary
-    private let configurationStore: TerrainLODConfigurationStore
+    let textures: TextureLibrary
+    public let configurationStore: TerrainLODConfigurationStore
     private var settingsByWorldspace: [String: LODSettings] = [:]
     public var treeListByWorldspace: [String: TreeLODList] = [:]
 
@@ -410,11 +413,14 @@ nonisolated public final class DistantLODBuilder {
     }
 
     /// Without `largeReferences`, the object LOD keeps its large-reference shapes.
+    /// `terrain` generates a terrain block from the load order; nil, or a block it cannot
+    /// make, draws the vanilla file.
     public func build(
         worldspace: String,
         center: CellCoordinate,
         hiddenCells: Set<CellCoordinate>,
-        largeReferences: Bool = true
+        largeReferences: Bool = true,
+        terrain: TerrainLODGenerating? = nil
     ) throws -> DistantLODScene {
         _ = meshes.drainTouchedKeys()
         _ = textures.drainTouchedKeys()
@@ -429,27 +435,18 @@ nonisolated public final class DistantLODBuilder {
         )
         // The NIF decode fans out; the clip to the visible cells stays in the serial load.
         meshes.predecode(paths: selected.lazy.filter {
-            self.meshes.bounds(forPath: $0.path, terrainLODClipMask: $0.clipMask) == nil
+            (terrain == nil || $0.kind != .terrain)
+                && self.meshes.bounds(forPath: $0.path, terrainLODClipMask: $0.clipMask) == nil
         }.map(\.path))
         defer { meshes.dropPredecoded() }
-        var placements: [RenderPlacement] = []
-        var missing = 0
         let largeRadius = configuration.largeReferenceRadius
         let ringWanted = largeRadius > configuration.loadedGridRadius
         let ringActive = ringWanted && largeReferences
-        var ring = LargeReferenceHiding(center: center, radius: largeRadius)
-        for block in selected {
-            let hides = ringActive && LargeReferenceRing.hidesLargeReferences(
-                of: block, center: center, radius: largeRadius
-            )
-            do {
-                try placements.append(placement(
-                    for: block, hiding: hides ? { ring.hiding($0, of: block) } : nil
-                ))
-            } catch {
-                missing += 1
-            }
-        }
+        let unhidden = LargeReferenceHiding(center: center, radius: largeRadius)
+        let blocks = blockPlacements(selected, terrain: terrain, ring: ringActive ? unhidden : nil)
+        let ring = blocks.ring ?? unhidden
+        var placements = blocks.placements
+        let missing = blocks.missing
         let trees = (try? buildTrees(
             worldspace: worldspace,
             settings: settings,
@@ -458,7 +455,7 @@ nonisolated public final class DistantLODBuilder {
             hiddenCells: hiddenCells
         )) ?? TreeBuild(placements: [], blockCount: 0, missingBlockCount: 1)
         placements.append(contentsOf: trees.placements)
-        return DistantLODScene(
+        var scene = DistantLODScene(
             renderScene: RenderScene(instances: placements),
             assets: CellAssets(
                 meshKeys: meshes.drainTouchedKeys(),
@@ -477,10 +474,50 @@ nonisolated public final class DistantLODBuilder {
             largeReferencesPending: ringWanted && !largeReferences,
             hiddenLargeReferenceSegments: ring.hiddenSegments
         )
+        scene.generatedTerrainBlockCount = blocks.generated
+        return scene
+    }
+
+    /// One placement per block: a generated terrain block where `terrain` makes one, else
+    /// the block's file. `ring` hides the large references the block's cells hold.
+    private func blockPlacements(
+        _ selected: [DistantLODBlock],
+        terrain: TerrainLODGenerating?,
+        ring start: LargeReferenceHiding?
+    ) -> BlockPlacements {
+        var placements: [RenderPlacement] = []
+        var missing = 0
+        var generated = 0
+        var ring = start
+        for block in selected {
+            let hides = ring.map {
+                LargeReferenceRing.hidesLargeReferences(
+                    of: block, center: $0.center, radius: $0.radius
+                )
+            } ?? false
+            do {
+                if
+                    block.kind == .terrain, let terrain,
+                    let made = try generatedPlacement(for: block, terrain: terrain)
+                {
+                    placements.append(made)
+                    generated += 1
+                    continue
+                }
+                try placements.append(placement(
+                    for: block, hiding: hides ? { ring?.hiding($0, of: block) ?? $0 } : nil
+                ))
+            } catch {
+                missing += 1
+            }
+        }
+        return BlockPlacements(
+            placements: placements, missing: missing, generated: generated, ring: ring
+        )
     }
 
     /// `hiding` takes the full model and returns the one to draw.
-    private func placement(
+    func placement(
         for block: DistantLODBlock,
         hiding: ((RenderModel) -> RenderModel)?
     ) throws -> RenderPlacement {
@@ -529,4 +566,11 @@ nonisolated public final class DistantLODBuilder {
         settingsByWorldspace[key] = parsed
         return parsed
     }
+}
+
+nonisolated private struct BlockPlacements {
+    let placements: [RenderPlacement]
+    let missing: Int
+    let generated: Int
+    let ring: LargeReferenceHiding?
 }

@@ -17,8 +17,13 @@ nonisolated extension CellSceneBuilder {
     ) throws -> DistantLODScene? {
         let lodWorld = lodWorldspace(of: worldspaceEditorID)
         guard let builder = distantLODBuilder else { return nil }
-        let lod = try builder.build(worldspace: lodWorld, center: center, hiddenCells: hiddenCells)
-            .with(terrainLODBrightness: terrainLODBrightness(lodWorldspace: lodWorld))
+        let built = try builder.build(
+            worldspace: lodWorld, center: center, hiddenCells: hiddenCells,
+            terrain: loadOrderTerrainLOD(lodWorldspace: lodWorld)
+        )
+        // Generated blocks keep the land textures' own brightness, so they need no curve.
+        let lod = built.with(terrainLODBrightness: built.generatedTerrainBlockCount > 0
+            ? .identity : terrainLODBrightness(lodWorldspace: lodWorld))
         let water = builder.area(worldspace: lodWorld).map {
             distantWater(worldspace: worldspaceEditorID, area: $0, hiddenCells: hiddenCells)
         } ?? []

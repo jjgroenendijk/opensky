@@ -60,6 +60,11 @@ extension CellStreamer {
         composition.distantLOD?.fullLODReferenceCount ?? 0
     }
 
+    /// Terrain blocks the ring draws from the generated LOD.
+    public var generatedTerrainBlockCount: Int {
+        composition.distantLOD?.generatedTerrainBlockCount ?? 0
+    }
+
     /// Cell segments of object LOD large-reference shapes hidden for the ring.
     public var hiddenLargeReferenceSegments: Int {
         composition.distantLOD?.hiddenLargeReferenceSegments ?? 0

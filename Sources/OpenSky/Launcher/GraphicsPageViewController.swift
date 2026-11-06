@@ -51,9 +51,8 @@ final class GraphicsPageViewController: NSViewController {
     )
     let screenBloodControl = NSButton(checkboxWithTitle: "Screen blood", target: nil, action: nil)
     let lowHealthPulseControl = makeCheckbox("Low-health pulse")
-    let lightAnimationControl = NSButton(
-        checkboxWithTitle: "Flickering lights", target: nil, action: nil
-    )
+    let generatedTerrainLODControl = makeCheckbox("Distant land from the load order")
+    let lightAnimationControl = makeCheckbox("Flickering lights")
     let shadowLightsControl = NSButton(
         checkboxWithTitle: "Shadows from lights", target: nil, action: nil
     )
@@ -185,7 +184,7 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(impactEffectsControl), layout.toggle(screenBloodControl),
                 layout.toggle(toneMappingControl), layout.toggle(lowHealthPulseControl),
                 layout.toggle(lightAnimationControl), layout.toggle(shadowLightsControl),
-                layout.toggle(particleSortingControl),
+                layout.toggle(particleSortingControl), layout.toggle(generatedTerrainLODControl),
                 layout.toggle(pipelineCacheControl),
                 layout.buttons([clearPipelineCacheControl]),
                 layout.toggle(parallelDecodeControl)

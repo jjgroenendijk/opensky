@@ -168,6 +168,8 @@ nonisolated public final class CellSceneBuilder {
     var terrainTextureKeyCache: [UInt32: TerrainTextureKeys?] = [:]
     /// Diffuse path to its mean gamma colour; nil marks a texture the CPU cannot decode.
     var terrainTextureMeans: [String: SIMD3<Float>?] = [:]
+    /// Diffuse path and mip edge to the land texture the terrain LOD bake samples.
+    var terrainLODTextures: [String: TerrainLODTexture?] = [:]
     /// LOD worldspace editor ID, lowercased, to its fitted terrain LOD curve.
     var terrainLODBrightnessByWorld: [String: TerrainLODBrightness] = [:]
     public var waterTypeIndex: [UInt32: WaterType]?

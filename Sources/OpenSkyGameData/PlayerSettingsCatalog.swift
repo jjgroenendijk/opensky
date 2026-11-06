@@ -204,6 +204,10 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         row("rendering.impactEffects", .opensky, .toggle, "Impact effects", 1, applied: true),
         row("rendering.screenBlood", .opensky, .toggle, "Screen blood", 1, applied: true),
         row("rendering.lowHealthPulse", .opensky, .toggle, "Low-health pulse", 1, applied: true),
+        row(
+            "rendering.generatedTerrainLOD", .opensky, .toggle, "Distant land from the load order",
+            1, applied: true
+        ),
         row("rendering.lightAnimation", .opensky, .toggle, "Flickering lights", 1, applied: true),
         row("rendering.shadowLights", .opensky, .toggle, "Shadows from lights", 1, applied: true),
         row(
@@ -350,6 +354,8 @@ nonisolated extension PlayerSettingID {
     public static let screenBlood = Self("rendering.screenBlood")
     /// The screen pulses while the player's health is low, as the game's `bLowHealthIModEnabled`.
     public static let lowHealthPulse = Self("rendering.lowHealthPulse")
+    /// Distant land is built from the load order's `LAND` records, not the vanilla LOD files.
+    public static let generatedTerrainLOD = Self("rendering.generatedTerrainLOD")
     /// Placed lights flicker and pulse as their light records ask.
     public static let lightAnimation = Self("rendering.lightAnimation")
     /// Shadow-casting placed lights, such as torches in a dungeon, cast cube shadows.

@@ -102,6 +102,10 @@ extension GraphicsPageViewController {
             lowHealthPulseControl, "LowHealthPulse",
             "The screen pulses while the player's health is low"
         )
+        checkbox(
+            generatedTerrainLODControl, "GeneratedTerrainLOD",
+            "Distant land is built from the plugins' land, so changed land shows far away too"
+        )
     }
 
     private func configureShadingCheckboxes() {
@@ -209,6 +213,7 @@ extension GraphicsPageViewController {
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
             (impactEffectsControl, .impactEffects), (screenBloodControl, .screenBlood),
             (lowHealthPulseControl, .lowHealthPulse),
+            (generatedTerrainLODControl, .generatedTerrainLOD),
             (toneMappingControl, .toneMapping),
             (lightAnimationControl, .lightAnimation), (shadowLightsControl, .shadowLights),
             (particleSortingControl, .particleSorting),

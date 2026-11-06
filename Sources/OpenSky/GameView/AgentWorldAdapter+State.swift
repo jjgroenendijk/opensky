@@ -493,6 +493,9 @@ extension AgentWorldAdapter {
             "terrainLOD": terrainLODState(),
             "largeReferences": game.streamer.map { .init($0.largeReferenceCount) } ?? .null,
             "fullLODReferences": game.streamer.map { .init($0.fullLODReferenceCount) } ?? .null,
+            "generatedTerrainBlocks": game.streamer.map {
+                .init($0.generatedTerrainBlockCount)
+            } ?? .null,
             "hiddenLargeReferenceLOD": game.streamer.map {
                 .init($0.hiddenLargeReferenceSegments)
             } ?? .null,
