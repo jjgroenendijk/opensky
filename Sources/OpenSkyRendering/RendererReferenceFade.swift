@@ -13,19 +13,35 @@ struct CullFade {
     let seconds: Float
 }
 
-/// The CPU path's fade of each reference, keyed by its form and place, stepped once a
-/// frame by the first pass that draws it.
-struct ReferenceFadeTimers {
+typealias ReferenceFadeTimers = FadeTimers<ReferenceFadeState>
+
+/// The renderer's timed fades: the reference fades and the mesh detail level changes.
+struct RendererFadeTimers {
+    var references = ReferenceFadeTimers()
+    var meshLOD = FadeTimers<MeshLODFade>()
+
+    mutating func advance(seconds: Float) {
+        references.advance(seconds: seconds)
+        meshLOD.advance(seconds: seconds)
+    }
+}
+
+/// The CPU path's timed state of each reference, keyed by its form and place, stepped once
+/// a frame by the first pass that draws it.
+struct FadeTimers<State> {
     struct Key: Hashable {
         let formID: UInt32
         let place: SIMD3<Int32>
     }
 
     /// Frames an unseen entry is kept before it is dropped.
-    static let keepFrames = 600
+    static var keepFrames: Int {
+        600
+    }
+
     private(set) var tick = 0
     private(set) var seconds: Float = 0
-    private var states: [Key: (state: ReferenceFadeState, tick: Int)] = [:]
+    private var states: [Key: (state: State, tick: Int)] = [:]
     private var gpuTick = 0
 
     mutating func advance(seconds: Float) {
@@ -45,8 +61,8 @@ struct ReferenceFadeTimers {
 
     mutating func state(
         for key: Key,
-        step: (ReferenceFadeState?, Float) -> ReferenceFadeState?
-    ) -> ReferenceFadeState? {
+        step: (State?, Float) -> State?
+    ) -> State? {
         let entry = states[key]
         if let entry, entry.tick == tick {
             return entry.state
@@ -72,7 +88,7 @@ extension DrawInstance {
 extension Renderer {
     /// Steps every reference fade by this frame's simulated seconds.
     public func advanceReferenceFades(deltaTime: Float) {
-        referenceFadeTimers.advance(seconds: deltaTime)
+        fadeTimers.advance(seconds: deltaTime)
     }
 
     /// 0 whole, up to 1 dissolved; nil when `instance` has faded out.
@@ -84,7 +100,7 @@ extension Renderer {
         let key = ReferenceFadeTimers.Key(
             formID: instance.referenceFormID, place: SIMD3<Int32>(center.rounded(.down))
         )
-        let state = referenceFadeTimers.state(for: key) { state, seconds in
+        let state = fadeTimers.references.state(for: key) { state, seconds in
             fades.step(
                 instance.fadeCategory,
                 bounds: ReferenceFadeBounds(lower: bounds.min, upper: bounds.max, viewer: viewer),
