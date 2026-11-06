@@ -101,10 +101,14 @@ extension ScriptWorldAdapter {
             self?.removeConstraints(Self.linkEnd(first), Self.linkEnd(second)) ?? false
         }
         hooks.setEyeTexture = { [weak game] actor, textureSet in
-            guard
-                let game, let cell = game.streamer?.cellLocation(of: actor),
-                let set = game.scripts.bridge?.localFormID(of: textureSet)
-            else { return false }
+            guard let game, let set = game.scripts.bridge?.localFormID(of: textureSet) else {
+                return false
+            }
+            if actor == .player || actor == .playerReference {
+                game.player.eyeTextureSet = set
+                return true
+            }
+            guard let cell = game.streamer?.cellLocation(of: actor) else { return false }
             game.worldState.setEyeTexture(set, for: actor, in: cell)
             return true
         }

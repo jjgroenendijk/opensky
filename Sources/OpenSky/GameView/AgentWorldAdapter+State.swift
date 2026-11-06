@@ -244,6 +244,7 @@ extension AgentWorldAdapter {
             "healthCues": healthCueState(),
             "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
             "ragdoll": .bool(game.ragdoll.runtime?.world.isRagdolling(.player) == true),
+            "eyeTexture": eyeTexture(of: .player),
             "controls": [
                 "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),
                 "savingDisabled": .bool(locks.savingDisabled),

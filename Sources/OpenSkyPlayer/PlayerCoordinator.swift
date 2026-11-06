@@ -41,6 +41,10 @@ public final class PlayerCoordinator {
     /// The set the newest rigs were requested for, to detect a change.
     private var equipped: [FormID]?
     private var appearance: PlayerAppearanceOverride?
+    /// The eye texture the drawn body was built with.
+    private var builtEyeTextureSet: FormID?
+    /// `Actor.SetEyeTexture` on the player. It lasts until the body's 3D reloads.
+    public var eyeTextureSet: FormID?
     /// The shown rigs' playbacks, which take the draw state each frame.
     private var rigAnimations: [Bool: PlayerAnimationPlayback] = [:]
     /// Why there is no body, when there is none.
@@ -217,6 +221,7 @@ public final class PlayerCoordinator {
         guard
             world?.playerEquippedSet != equipped
             || world?.playerAppearanceOverride != appearance
+            || eyeTextureSet != builtEyeTextureSet
         else { return }
         rebuildBody()
     }
@@ -228,11 +233,12 @@ public final class PlayerCoordinator {
         let appearance = world.playerAppearanceOverride
         self.equipped = equipped
         self.appearance = appearance
+        builtEyeTextureSet = eyeTextureSet
         generation += 1
         for firstPerson in firstPersonGraph == nil ? [false] : [false, true] {
             source.requestPlayerRig(PlayerRigRequest(
                 generation: generation, firstPerson: firstPerson,
-                equipped: equipped, appearance: appearance
+                equipped: equipped, appearance: appearance, eyeTextureSet: eyeTextureSet
             ))
         }
     }

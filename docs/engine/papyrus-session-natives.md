@@ -129,7 +129,13 @@ head part's editor ID, so OpenSky retextures the shape of that name. For example
 `dawnguard.esm\00002b6c.nif` has the shape `FemaleEyesHumanVampire01Nord`. The CK wiki says the
 texture lasts until the actor's 3D reloads, and the vampire scripts set it again in `OnLoad`. So
 OpenSky clears it when the actor's cell unloads, and keeps it in no save. An actor without 3D
-ignores the call. The player's head ignores it too; no vanilla script calls it on the player.
+ignores the call.
+
+No vanilla script calls it on the player, but a mod can. The player's body is built apart from the
+cell's actors, so the player keeps the set beside the body, and a change rebuilds the body with it.
+The first-person arms come from the same build. A load reloads the player's 3D, so it clears the
+set. `openskycli game debug eyes player <txst>` sets it, and `state player` reads it under
+`eyeTexture`.
 
 ## Havok constraints
 

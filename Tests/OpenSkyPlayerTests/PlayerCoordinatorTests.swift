@@ -97,6 +97,22 @@ struct PlayerCoordinatorTests {
         #expect(player.firstPersonFailureReason != nil)
     }
 
+    /// `Actor.SetEyeTexture` on the player rebuilds both rigs with the set, once.
+    @Test
+    func aScriptEyeTextureRebuildsThePlayerRigsWithIt() {
+        let provider = FakePlayerRigSource()
+        let (player, world) = Self.session(source: provider)
+        withExtendedLifetime(world) {
+            player.attach(graph: .fixture(), firstPerson: .success(.fixture()))
+            player.refreshBody()
+            player.eyeTextureSet = FormID(0x0F1D3A)
+            player.refreshBody()
+            player.refreshBody()
+        }
+        let sets = provider.requests.map(\.eyeTextureSet)
+        #expect(sets == [nil, nil, FormID(0x0F1D3A), FormID(0x0F1D3A)])
+    }
+
     /// A race with its own project holds the body back until that graph loads. One that
     /// cannot load is reported once, and the body rebuilds on the character graphs.
     @Test

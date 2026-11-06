@@ -15,15 +15,18 @@ nonisolated public struct PlayerRigRequest: Equatable, Sendable {
     public let firstPerson: Bool
     public let equipped: [FormID]?
     public let appearance: PlayerAppearanceOverride?
+    /// The texture set `Actor.SetEyeTexture` gave the player's eyes.
+    public let eyeTextureSet: FormID?
 
     public init(
         generation: Int, firstPerson: Bool, equipped: [FormID]?,
-        appearance: PlayerAppearanceOverride?
+        appearance: PlayerAppearanceOverride?, eyeTextureSet: FormID? = nil
     ) {
         self.generation = generation
         self.firstPerson = firstPerson
         self.equipped = equipped
         self.appearance = appearance
+        self.eyeTextureSet = eyeTextureSet
     }
 }
 
