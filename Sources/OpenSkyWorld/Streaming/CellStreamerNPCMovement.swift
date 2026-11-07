@@ -25,6 +25,8 @@ public struct CellStreamerNPCMovementState {
     /// The player and the standing actors walkers steer around.
     public var standingActors: (() -> [NPCNeighbour])?
     public var waterPushRace: ((ReferenceKey) -> WaterPushRace)?
+    /// The half size of an actor's skeleton bound (`BBX`), once it has loaded.
+    public var bodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)?
     /// Rest writes no resident build has drawn yet, oldest first, per actor.
     public var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
     /// The rest write in progress, so its store mutation rebuilds no cell.
@@ -95,6 +97,11 @@ extension CellStreamer {
         set { npcMovementState.standingActors = newValue }
     }
 
+    public var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? {
+        get { npcMovementState.bodyHalfExtents }
+        set { npcMovementState.bodyHalfExtents = newValue }
+    }
+
     /// The race facts that decide how a current pushes a walking NPC.
     public var npcWaterPushRace: ((ReferenceKey) -> WaterPushRace)? {
         get { npcMovementState.waterPushRace }
@@ -141,6 +148,9 @@ extension CellStreamer {
         )
         start.runSlowdown = runSlowdown
         start.walkRunBlend = walkRunBlend
+        start.longBody = npcMovementState.bodyHalfExtents?(actor).flatMap {
+            LongBodyShape(halfExtents: $0, scale: standing.scale)
+        }
         let started = npcMovement.start(start)
         return started ? .started : .moverCapReached
     }
