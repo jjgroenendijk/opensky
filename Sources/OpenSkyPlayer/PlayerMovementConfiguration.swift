@@ -53,6 +53,16 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
             ?? MovementSetting(value: walkSpeed.value, source: "derived from walk speed")
     }
 
+    /// An NPC walks at `NPC_Default_MT`'s forward walk, the player's travel walk, and keeps
+    /// the other gaits (docs/engine/navigation.md).
+    public var forActors: PlayerMovementConfiguration {
+        PlayerMovementConfiguration(
+            walkSpeed: travelSpeed, runSpeed: runSpeed, stepHeight: stepHeight,
+            sprintSpeed: sprintSpeed, sneakSpeed: sneakSpeed, swimSpeed: swimSpeed,
+            jumpTakeoffSpeed: jumpTakeoffSpeed, travelSpeed: travelSpeed
+        )
+    }
+
     /// Historic explicit values for synthetic scenes, tests, and benchmarks.
     public static let synthetic = PlayerMovementConfiguration(
         walkSpeed: MovementSetting(value: 180, source: "OpenSky synthetic"),
