@@ -53,9 +53,10 @@ struct GrassPlacementTests {
         #expect(first.allSatisfy { $0.scale.x == $0.scale.z && $0.scale.y == $0.scale.z })
         #expect(first.allSatisfy { (0.5 ... 1.5).contains($0.scale.z) })
         #expect(first.contains { $0.scale.z != 1 })
-        #expect(first.allSatisfy { (0 ... 128.0 / 255).contains($0.color.x) })
-        #expect(first.allSatisfy { (0 ... 96.0 / 255).contains($0.color.y) })
-        #expect(first.contains { $0.color.x < 128.0 / 255 })
+        // Brightness 95.68 / 255 times (0.5 + 0.5 u), u in [-0.25, 0.25), as one grey value.
+        #expect(first.allSatisfy { $0.color.x == $0.color.y && $0.color.y == $0.color.z })
+        #expect(first.allSatisfy { (0.140 ..< 0.235).contains($0.color.x) })
+        #expect(Set(first.map(\.color.x)).count > 1)
         #expect(first.contains { placement in
             let localX = placement.position.x - Float(field.coordinate.x) * 4096
             return abs(localX.truncatingRemainder(dividingBy: 512) - 256) > 1

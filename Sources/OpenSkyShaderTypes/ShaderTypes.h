@@ -411,6 +411,9 @@ typedef struct
     /// Character light on actors: x facing weight, y fill weight, z strength from the
     /// scene luminance; all 0 when off.
     vector_float4 characterLight;
+    /// Grass light: rgb the sun colour without the image space sunlight scale, w the
+    /// grass output scale (1/1.2, or 1 with no fog distance).
+    vector_float4 grassLight;
 } FrameUniforms;
 
 /// Per-group material scalars for one instanced static-mesh draw, shared by every

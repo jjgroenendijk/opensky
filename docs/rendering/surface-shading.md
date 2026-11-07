@@ -243,6 +243,22 @@ before any frame-wide step, so a surface brighter than 1 after lighting cannot g
 screen. OpenSky does both for lit meshes and terrain. The scale applies to the gamma value, so
 in linear terms it is `(1/1.2)^2.2`. Effect shapes, grass, water, and the sky are not clamped.
 
+## Grass
+
+Grass has its own light, simpler than the lit meshes (clean-room read of the game's shaders and
+of `SkyrimSE.exe` 1.7.104.0, 2026-11-06, behaviour only):
+
+- Every blade faces up: the light uses the instance's up axis, not the mesh normal.
+- Light = sun colour x `NdotL` x shadow + the single ambient colour. The sun colour does not
+  take the image space sunlight scale. A shadowed blade keeps 30 % of the sun.
+- The result times the texture, the vertex colour, and the instance brightness is scaled by
+  1/1.2, or by 1 when both fog distances are 0. There is no fog, no clamp, and no point light.
+- The instance brightness is one grey value: `0.31 R + 0.37 G + 0.32 B` of the land vertex
+  colour under the blade, times `(1 - range) + range x u`, with `u` random in [-0.25, 0.25)
+  and `range` the `GRAS` colour range. It is clamped to [0, 0.99].
+
+Trees take the lit mesh path.
+
 ## Refraction
 
 A refraction shape, such as the heat haze over a fire, shows the scene behind it. After the

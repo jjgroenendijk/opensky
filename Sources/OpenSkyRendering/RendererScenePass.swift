@@ -92,7 +92,8 @@ extension Renderer {
             focusShadowCount: UInt32(focusShadows.views.count),
             focusShadowBias: focusShadows.bias,
             screenSpaceReflections: waterDepth.reflects ? 1 : 0,
-            characterLight: characterLightUniform
+            characterLight: characterLightUniform,
+            grassLight: SIMD4(light.grassSunColor, grassOutputScale(fog: light.fog))
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -587,5 +588,10 @@ extension Renderer {
     /// 0 without a weather sky, 2 when the sky objects draw too, else 1.
     func weatherSkyMode(_ light: FrameLight) -> UInt32 {
         light.weatherSky == nil ? 0 : skyCelestial != nil && frameCelestial != nil ? 2 : 1
+    }
+
+    /// The game drops the scene scale from grass when the fog has no distance at all.
+    func grassOutputScale(fog: FrameFog) -> Float {
+        fog.distances.x == 0 && fog.distances.y == 0 ? 1 : EyeAdaptation.sceneScale
     }
 }

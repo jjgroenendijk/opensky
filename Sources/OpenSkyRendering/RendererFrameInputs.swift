@@ -7,6 +7,8 @@ import simd
 struct FrameLight {
     let sunDirection: SIMD3<Float>
     let sunColor: SIMD3<Float>
+    /// The sun colour before the image space sunlight scale, which grass does not take.
+    let grassSunColor: SIMD3<Float>
     let ambientColor: SIMD3<Float>
     let ambient: DirectionalAmbientColors
     /// The weather's sky palette; nil when the scene draws no sky.
@@ -27,6 +29,7 @@ extension Renderer {
         return FrameLight(
             sunDirection: interior?.directionalDirection ?? exteriorSunTravelDirection,
             sunColor: sun * scales.sunlight,
+            grassSunColor: sun,
             ambientColor: weather?.ambientColor ?? interior?.ambientColor
                 ?? camera.ambientColor,
             ambient: weather?.directionalAmbient ?? interior?.directionalAmbient ?? .black,

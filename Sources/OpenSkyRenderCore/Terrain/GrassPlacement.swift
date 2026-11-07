@@ -229,8 +229,10 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
             ) else { return nil }
 
         let scale = instanceScale(data: context.data, random: &random)
-        let color = vertexColor(land: context.land, at: local)
-            * colorMultiplier(range: context.data.colorRange, random: &random)
+        let color = SIMD3(repeating: brightness(
+            land: vertexColor(land: context.land, at: local),
+            range: context.data.colorRange, random: &random
+        ))
         return GrassPlacement(
             grass: context.source.grass.formID,
             modelPath: context.modelPath,
@@ -356,11 +358,15 @@ nonisolated extension GrassPlacementBuilder {
         return SIMD3(1, 1, heightScale)
     }
 
-    private static func colorMultiplier(
-        range: Float,
-        random: inout SplitMix64
+    /// The game shades each grass instance by one grey value: the land colour's brightness,
+    /// varied by the `GRAS` colour range (docs/rendering/surface-shading.md#grass).
+    static func brightness(
+        land: SIMD3<Float>, range: Float, random: inout SplitMix64
     ) -> Float {
-        1 - random.unitFloat() * min(max(range, 0), 1)
+        let luminance = simd_dot(land, SIMD3(0.31, 0.37, 0.32))
+        let spread = min(max(range, 0), 1)
+        let variation = (1 - spread) + spread * (random.unitFloat() * 0.5 - 0.25)
+        return min(max(luminance * variation, 0), 0.99)
     }
 
     private static func slopeDegrees(normal: SIMD3<Float>) -> Float {
