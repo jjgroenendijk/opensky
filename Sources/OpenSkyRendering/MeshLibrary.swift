@@ -52,6 +52,7 @@ nonisolated public final class MeshLibrary {
     /// The furniture markers of each furniture mesh read so far.
     var furnitureMarkerSets: [String: [NIFFurnitureMarker]] = [:]
     var addOnNodeSets: [String: [NIFAddOnNode]] = [:]
+    var rigidParentBones: [String: String?] = [:]
     // Internal rather than private: the actor-facing loaders live in
     // MeshLibraryActors.swift (split for the type-body length cap) and a Swift
     // extension in another file cannot reach `private` members. Still
