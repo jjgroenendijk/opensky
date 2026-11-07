@@ -1,4 +1,4 @@
-import simd
+public import simd
 
 /// Axis-aligned bounds in model space, captured from CPU-side vertex data at
 /// load time (vertices live only on the GPU afterwards). Scene build (todo

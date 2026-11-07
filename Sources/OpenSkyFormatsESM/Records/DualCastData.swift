@@ -2,7 +2,7 @@
 // Layout and sources: docs/formats/shouts-equip-slots.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct DualCastData: Equatable, Sendable {
     /// DATA's uint32 inherit-scale flags, in the xEdit bit order.

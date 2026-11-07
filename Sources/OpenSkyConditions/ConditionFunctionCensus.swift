@@ -2,7 +2,7 @@
 // functions no registry entry answers. Counts only; no record is kept.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ConditionFunctionCensus: Equatable, Sendable {
     /// Stored function index -> conditions that use it.

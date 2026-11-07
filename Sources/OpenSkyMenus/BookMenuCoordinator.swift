@@ -2,7 +2,7 @@
 // Reading a skill book or a spell tome takes effect when it opens. See docs/engine/books.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 
 /// One book's text, ready for the movie.

@@ -2,7 +2,7 @@
 // value at its end, and the frames that left no GPU time. See docs/tools/benchmark.md.
 
 import Foundation
-import OpenSkyRendering
+public import OpenSkyRendering
 
 /// GPU memory at one moment, in MiB. The fields after `textureMB` are nil in older results.
 nonisolated public struct BenchmarkGPUMemorySample: Codable, Equatable, Sendable {

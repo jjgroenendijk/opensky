@@ -57,7 +57,7 @@ nonisolated public struct ProjectedMaterial: Hashable, Sendable {
         let numbers = [
             direction.x, direction.y, direction.z, maxAngle, falloffScale, falloffBias,
             noiseUVScale, materialUVScale, singlePassColor.x, singlePassColor.y, singlePassColor.z
-        ].map { String(format: "%.4f", $0) }
+        ].map { unsafe String(format: "%.4f", $0) }
         return "projected:\(diffuseTexture ?? "-"),\(noiseTexture ?? "-"),"
             + "\(singlePass ? 1 : 0)\(isSnow ? 1 : 0)," + numbers.joined(separator: ",")
     }

@@ -2,8 +2,8 @@
 // shape lives with the parsers in OpenSkyFormatsESM; `GameClock` is runtime state.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 nonisolated extension Package.Schedule {
     public func matches(_ clock: GameClock) -> Bool {

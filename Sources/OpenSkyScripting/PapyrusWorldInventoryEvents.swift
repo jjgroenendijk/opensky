@@ -3,9 +3,9 @@
 // other, so each side names the other as its container. See docs/engine/papyrus-world.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
+public import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {

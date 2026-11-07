@@ -1,10 +1,10 @@
-@testable import OpenSkyActorsInterface
-@testable import OpenSkyCombat
+@testable public import OpenSkyActorsInterface
+@testable public import OpenSkyCombat
 @testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyGameData
-@testable import OpenSkyPhysics
-@testable import OpenSkyWorldState
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyGameData
+@testable public import OpenSkyPhysics
+@testable public import OpenSkyWorldState
 import simd
 
 @MainActor

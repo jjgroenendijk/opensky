@@ -1,7 +1,7 @@
 // The player settings the effects follow: the game's decal and skin decal options
 // and OpenSky's impact-model switch.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyRenderCore
 
 extension EffectsCoordinator {

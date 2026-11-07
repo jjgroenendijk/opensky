@@ -2,8 +2,8 @@
 // each cell's time, and the asset phases. Also the build that ran it.
 
 import Foundation
-import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyGameData
+public import OpenSkyRendering
 
 nonisolated public struct BenchmarkCellLoad: Codable, Equatable, Sendable {
     /// `Tamriel (6,-2)` or `interior 00016204`.

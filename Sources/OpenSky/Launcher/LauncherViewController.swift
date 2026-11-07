@@ -168,8 +168,8 @@ extension LauncherSidebarViewController: NSTableViewDataSource, NSTableViewDeleg
         let label = NSTextField(labelWithString: page.title)
         label.font = LauncherStyle.font(17)
         label.lineBreakMode = .byTruncatingTail
-        cell.imageView = image
-        cell.textField = label
+        unsafe cell.imageView = image
+        unsafe cell.textField = label
         let stack = NSStackView(views: [image, label])
         stack.spacing = 10
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -203,8 +203,8 @@ extension LauncherSidebarViewController: NSTableViewDataSource, NSTableViewDeleg
 
     private func colour(_ cell: NSTableCellView, selected: Bool) {
         let colour = selected ? LauncherStyle.text : LauncherStyle.textDim
-        cell.textField?.textColor = colour
-        cell.imageView?.contentTintColor = colour
+        unsafe cell.textField?.textColor = colour
+        unsafe cell.imageView?.contentTintColor = colour
     }
 }
 

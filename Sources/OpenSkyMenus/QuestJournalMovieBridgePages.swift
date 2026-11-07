@@ -4,9 +4,9 @@
 // quest_journal.swf`; see docs/engine/journal.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyFormatsSWF
-import OpenSkyQuestsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsSWF
+public import OpenSkyQuestsInterface
 
 /// One Stats page row.
 nonisolated public struct JournalStatRow: Equatable, Sendable {

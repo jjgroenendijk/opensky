@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum EquipSlotHands: Sendable {
     /// Editor ID of the leaf slot meaning the right hand.

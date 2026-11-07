@@ -3,7 +3,7 @@
 // (docs/formats/hka-animation.md).
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import simd
 
 nonisolated extension HKADefaultAnimatedReferenceFrame {

@@ -2,8 +2,8 @@
 // move in `InventoryRuntime` carries the copies it moves. See docs/engine/item-copies.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 extension InventoryRuntime {

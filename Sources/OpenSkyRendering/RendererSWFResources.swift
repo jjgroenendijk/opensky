@@ -2,10 +2,10 @@
 // stencil states for clip layers, a repeat sampler, and 1x1 fallback textures. Per-movie
 // resources live in RendererSWFMovie.swift.
 
-import Metal
-import MetalKit
-import OpenSkyFormatsSWF
-import OpenSkyRenderResources
+public import Metal
+public import MetalKit
+public import OpenSkyFormatsSWF
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 /// Draw accounting for the most recently encoded SWF layer, mirrored to
@@ -39,22 +39,22 @@ nonisolated public struct SWFDrawStats: Equatable, Sendable {
 /// movie package. A class so renderer extensions can mutate movie/enable
 /// state without adding stored properties to Renderer itself.
 nonisolated public final class SWFPassResources {
-    public let contentPipeline: MTLRenderPipelineState
-    public let maskPipeline: MTLRenderPipelineState
+    public let contentPipeline: any MTLRenderPipelineState
+    public let maskPipeline: any MTLRenderPipelineState
     /// Content draws: depth always/no write, stencil pass where the value
     /// equals the active-clip count (reference set per draw).
-    public let contentDepthState: MTLDepthStencilState
+    public let contentDepthState: any MTLDepthStencilState
     /// Mask draws: stencil increment/decrement-clamp, color left untouched by
     /// the mask fragment's zero premultiplied output.
-    public let maskIncrementState: MTLDepthStencilState
-    public let maskDecrementState: MTLDepthStencilState
-    public let repeatSampler: MTLSamplerState
+    public let maskIncrementState: any MTLDepthStencilState
+    public let maskDecrementState: any MTLDepthStencilState
+    public let repeatSampler: any MTLSamplerState
     /// 1x1 opaque white rgba8 — bound at TextureIndexSWFBitmap when a draw
     /// has no bitmap fill so the argument stays valid.
-    public let whiteTexture: MTLTexture
+    public let whiteTexture: any MTLTexture
     /// 1x1 fallback ramp — bound at TextureIndexSWFGradient when the movie
     /// has no gradient fills.
-    public let fallbackRamp: MTLTexture
+    public let fallbackRamp: any MTLTexture
 
     /// A/B toggle mirrored by `Renderer.swfEnabled`.
     public var enabled = true
@@ -78,14 +78,14 @@ nonisolated public final class SWFPassResources {
     public var generation = 0
 
     public init(
-        contentPipeline: MTLRenderPipelineState,
-        maskPipeline: MTLRenderPipelineState,
-        contentDepthState: MTLDepthStencilState,
-        maskIncrementState: MTLDepthStencilState,
-        maskDecrementState: MTLDepthStencilState,
-        repeatSampler: MTLSamplerState,
-        whiteTexture: MTLTexture,
-        fallbackRamp: MTLTexture
+        contentPipeline: any MTLRenderPipelineState,
+        maskPipeline: any MTLRenderPipelineState,
+        contentDepthState: any MTLDepthStencilState,
+        maskIncrementState: any MTLDepthStencilState,
+        maskDecrementState: any MTLDepthStencilState,
+        repeatSampler: any MTLSamplerState,
+        whiteTexture: any MTLTexture,
+        fallbackRamp: any MTLTexture
     ) {
         self.contentPipeline = contentPipeline
         self.maskPipeline = maskPipeline
@@ -105,9 +105,9 @@ extension Renderer {
         -0x100
 
     public static func makeSWFPassResources(
-        device: MTLDevice,
+        device: any MTLDevice,
         view: MTKView,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache
     ) throws -> SWFPassResources {
         try SWFPassResources(
@@ -134,11 +134,11 @@ extension Renderer {
 
     private static func makeSWFPipeline(
         view: MTKView,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         fragment: String,
         label: String
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = "swfVertex"
@@ -170,8 +170,8 @@ extension Renderer {
     /// Content: draw over everything (depth always, no write); pass only
     /// where the stencil equals the active-clip count (reference per draw).
     private static func makeSWFContentDepthState(
-        device: MTLDevice
-    ) throws -> MTLDepthStencilState {
+        device: any MTLDevice
+    ) throws -> any MTLDepthStencilState {
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.label = "SWFContentStencilEqual"
         descriptor.depthCompareFunction = .always
@@ -194,9 +194,9 @@ extension Renderer {
     /// Masks: unconditional stencil increment (begin clip) or decrement (end
     /// clip) clamped at the range bounds, counting overlapping clip layers.
     private static func makeSWFMaskDepthState(
-        device: MTLDevice,
+        device: any MTLDevice,
         increment: Bool
-    ) throws -> MTLDepthStencilState {
+    ) throws -> any MTLDepthStencilState {
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.label = increment ? "SWFMaskIncrement" : "SWFMaskDecrement"
         descriptor.depthCompareFunction = .always
@@ -217,7 +217,7 @@ extension Renderer {
     }
 
     /// Linear repeat sampler for tiled bitmap fills (0x40/0x42).
-    private static func makeSWFRepeatSampler(device: MTLDevice) throws -> MTLSamplerState {
+    private static func makeSWFRepeatSampler(device: any MTLDevice) throws -> any MTLSamplerState {
         let descriptor = MTLSamplerDescriptor()
         descriptor.label = "SWFBitmapRepeat"
         descriptor.minFilter = .linear
@@ -232,10 +232,10 @@ extension Renderer {
     }
 
     private static func makeSWFSolidTexture(
-        device: MTLDevice,
+        device: any MTLDevice,
         pixel: [UInt8],
         label: String
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm, width: 1, height: 1, mipmapped: false
         )
@@ -247,7 +247,7 @@ extension Renderer {
         texture.label = label
         pixel.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.replace(
+            unsafe texture.replace(
                 region: MTLRegionMake2D(0, 0, 1, 1),
                 mipmapLevel: 0,
                 withBytes: base,

@@ -4,7 +4,7 @@
 // DNAM reads as 0. Layout and sources: docs/formats/armor.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct ArmorAddon: Sendable {
     public let formID: FormID

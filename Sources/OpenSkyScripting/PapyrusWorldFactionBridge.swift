@@ -4,7 +4,7 @@
 // See docs/engine/papyrus-actor-natives.md and docs/engine/hostility.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Faction and relationship operations a Papyrus native may perform.
 ///

@@ -1,9 +1,9 @@
 // MUSC and MUST records, and MUSC -> MUST expansion. Track filenames become
 // VFS keys, so callers skip the path rules (docs/formats/music.md).
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public enum MusicResolveError: Error, Equatable {

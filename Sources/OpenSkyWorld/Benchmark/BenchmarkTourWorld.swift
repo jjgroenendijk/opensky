@@ -1,9 +1,9 @@
 // The port the tour drives. The app adapts its running game to it; a test
 // passes a fake. Every call runs on the main actor, inside the frame.
 
-import Foundation
-import OpenSkyGameData
-import OpenSkyRendering
+public import Foundation
+public import OpenSkyGameData
+public import OpenSkyRendering
 import simd
 
 /// A per-frame CPU cost the tour reports, each read from the frame before.

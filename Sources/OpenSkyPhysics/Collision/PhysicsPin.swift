@@ -3,7 +3,7 @@
 // a body too heavy to move, so the ragdoll joint solver can hold it
 // (docs/engine/ragdoll-solver.md, "Script links").
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One end of a script constraint: a reference, a node of its 3D, and a pivot in

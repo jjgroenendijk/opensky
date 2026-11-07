@@ -1,8 +1,8 @@
 // INFO's record-level state machine. Response field handling is split into
 // TopicInfoResponseDecoder.swift to keep the strict function and file caps.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated extension TopicInfo {
     /// SCHR and QNAM, closed by NEXT: script leftovers from older Creation Kit

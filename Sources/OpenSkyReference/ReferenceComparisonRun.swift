@@ -1,7 +1,7 @@
 // One comparison run: the files `openskycli reference capture` writes into its run
 // folder and the launcher page reads back.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct ReferenceComparisonRun: Equatable, Sendable {
     public let directory: URL
@@ -59,7 +59,7 @@ nonisolated public struct ReferenceComparisonReport: Codable, Equatable, Sendabl
     }
 
     public var summary: String {
-        String(
+        unsafe String(
             format: "%d x %d, PSNR %.1f dB, largest channel error %d",
             width, height, rgbPSNR, maxChannelError
         )

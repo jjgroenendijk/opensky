@@ -1,8 +1,8 @@
 // Skyrim lodsettings/<worldspace>.lod, 16-byte little-endian layout.
 // Reference: xEdit dev-4.1.6 Core/wbLOD.pas, TwbLodSettings.LoadFromData.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public enum LODSettingsError: Error, Equatable, Sendable {
     case invalidSize(Int)

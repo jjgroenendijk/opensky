@@ -1,15 +1,15 @@
 // Fixed-clock NPC capsule movement, path following, bounded recovery, sparse
 // persistence, and actor trigger occupancy.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyNavigation
-import OpenSkyPhysics
-import OpenSkyPlayer
-import OpenSkyWorldConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyNavigation
+public import OpenSkyPhysics
+public import OpenSkyPlayer
+public import OpenSkyWorldConditions
 import OpenSkyWorldInterface
-import OpenSkyWorldState
-import simd
+public import OpenSkyWorldState
+public import simd
 
 public struct NPCMovementWorld {
     public let sampleGround: WalkController.GroundSampler

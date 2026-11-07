@@ -3,8 +3,8 @@
 // such as `ObjectReference`. A handler is the same name in a script without natives.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsPEX
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsPEX
 
 nonisolated public struct PapyrusEventCensus: Equatable, Sendable {
     /// Event name, as the engine class spells it -> scripts that handle it.

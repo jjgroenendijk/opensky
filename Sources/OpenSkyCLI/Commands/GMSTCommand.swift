@@ -71,7 +71,7 @@ enum GMSTCommand {
         switch value {
         case let .string(string): String(describing: string)
         case let .integer(integer): String(integer)
-        case let .float(float): String(format: "%.6g", float)
+        case let .float(float): unsafe String(format: "%.6g", float)
         case let .boolean(boolean): boolean ? "true" : "false"
         }
     }
@@ -118,7 +118,7 @@ enum GMSTCommand {
     }
 
     private static func line(name: String, setting: MovementSetting, units: String) -> String {
-        String(
+        unsafe String(
             format: "%@ = %.3f %@ [%@]",
             name,
             setting.value,

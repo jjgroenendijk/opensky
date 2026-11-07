@@ -2,7 +2,7 @@
 // adapter conforms. See docs/engine/music.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 @MainActor
 public protocol PapyrusMusicControlling: AnyObject {

@@ -3,7 +3,7 @@
 // (docs/rendering/swf-layer.md#overlay-movie).
 
 import Metal
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// The overlay movie's GPU package and the runtime that drives it.
 nonisolated public struct SWFOverlayLayer {

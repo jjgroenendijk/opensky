@@ -1,8 +1,8 @@
 // Synthetic KYWD records and the small keyword and form-list plugins that the
 // store suites and the record-dump suites share.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum KeywordFixture: Sendable {
     /// A KYWD with an EDID, plus a CNAM colour when `hasColor` is set.

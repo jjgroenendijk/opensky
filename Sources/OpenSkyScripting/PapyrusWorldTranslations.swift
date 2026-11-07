@@ -5,10 +5,10 @@
 // transform write rebuilds the cell. See docs/engine/papyrus-translation.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {
     /// Starts a move from where `key` is now. A move already running fails first. False

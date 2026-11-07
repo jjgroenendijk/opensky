@@ -5,10 +5,10 @@
 // See docs/engine/hostility.md and docs/formats/relationships.md.
 
 import Foundation
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Reads and writes relationship ranks on top of a `WorldStateStore`, with the
 /// authored `RELA` records behind them.

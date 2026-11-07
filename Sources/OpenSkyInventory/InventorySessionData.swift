@@ -1,13 +1,13 @@
 // What the inventory coordinator works over in one loaded game. The app builds
 // it from the load order; a test builds it from a fixture.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyProgressionInterface
-import OpenSkyWorldState
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldState
 
 /// The item runtime and the load order's data, rules, and texts for items.
 @MainActor

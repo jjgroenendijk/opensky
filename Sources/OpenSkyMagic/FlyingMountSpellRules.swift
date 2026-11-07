@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum FlyingMountSpellRules {
     /// Effects that need the ground, a body nearby, or the caster's hands free.

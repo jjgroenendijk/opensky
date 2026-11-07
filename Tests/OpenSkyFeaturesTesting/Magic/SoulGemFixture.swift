@@ -2,11 +2,11 @@
 // and the two filled records the grand and black gems link to. The recharge plugin adds
 // an enchanted blade. Every byte is built here.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 public enum SoulGemFixture {
     public static let petty = FormID(0x0000_8000)

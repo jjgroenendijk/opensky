@@ -1,7 +1,7 @@
 // What the inventory and lock coordinators ask the app to do. The coordinator
 // decides and returns the commands; the app runs them. See docs/engine/coordinators.md.
 
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 /// One change to the world outside the inventory domain.
 nonisolated public enum InventoryCommand: Equatable, Sendable {

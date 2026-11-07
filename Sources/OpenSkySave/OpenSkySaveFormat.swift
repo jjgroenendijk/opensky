@@ -4,7 +4,7 @@
 // component kind inside `RDLT` is versioned by `formatVersion`. Every count is checked
 // against the remaining bytes before an allocation. See docs/formats/opensky-save.md.
 
-import Foundation
+public import Foundation
 
 /// Names and version constants of the OpenSky native save container.
 nonisolated public enum OpenSkySaveFormat: Sendable {

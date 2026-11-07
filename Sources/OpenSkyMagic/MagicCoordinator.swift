@@ -3,13 +3,13 @@
 // resolves through. The rules live in `MagicCore`. See docs/engine/coordinators.md.
 
 import OpenSkyActorsInterface
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
-import OpenSkyPhysics
-import OpenSkyProgressionInterface
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
+public import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// Owns the magic runtimes and reads the world through `MagicWorld`.

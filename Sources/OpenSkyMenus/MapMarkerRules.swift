@@ -3,9 +3,9 @@
 // Skyrim.esm (docs/engine/world-map.md).
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldInterface
 import simd
 
 /// One marker the map knows: where it is and its effective state.

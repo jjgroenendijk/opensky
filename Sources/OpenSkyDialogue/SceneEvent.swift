@@ -2,7 +2,7 @@
 // trace. Agent control reads it; tests assert on it. See docs/engine/scenes.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum SceneEndReason: Equatable, Sendable {
     /// The last phase ended.

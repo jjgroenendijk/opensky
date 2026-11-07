@@ -4,7 +4,7 @@
 // See docs/engine/messages.md#message-boxes.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum MessageBoxMovieBridge: Sendable {
     public static let moviePath = "interface\\messagebox.swf"

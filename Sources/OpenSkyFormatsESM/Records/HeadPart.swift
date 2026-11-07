@@ -3,7 +3,7 @@
 // chargen morph (2). Layout and sources: docs/formats/head-parts.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct HeadPart: Equatable, Sendable {
     nonisolated public enum MorphKind: UInt32, Equatable, Sendable {

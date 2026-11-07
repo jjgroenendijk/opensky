@@ -1,7 +1,7 @@
 // Immutable reference enable-state seam for condition evaluation. A package selector
 // passes snapshot answers without reaching into the main-actor store.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ReferenceEnableResolution: Sendable {
     public static let empty = ReferenceEnableResolution(states: [:])

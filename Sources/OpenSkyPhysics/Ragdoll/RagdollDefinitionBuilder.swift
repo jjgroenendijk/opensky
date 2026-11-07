@@ -2,8 +2,8 @@
 // animation skeleton's bind matrices. Reads no file. See docs/engine/ragdoll-solver.md.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import simd
+public import OpenSkyFormatsMesh
+public import simd
 
 nonisolated extension RagdollDefinition {
     /// Resolves a decoded skeleton NIF onto an animation skeleton. `bindMatrices` come

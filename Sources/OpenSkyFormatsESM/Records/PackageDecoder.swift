@@ -3,7 +3,7 @@
 // of the format and one flat switch would silently misclassify them.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum PackageDecoder: Sendable {
     private enum Section {

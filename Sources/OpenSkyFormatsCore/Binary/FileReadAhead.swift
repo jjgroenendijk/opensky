@@ -3,23 +3,23 @@
 // one at a time, which costs seconds on an external disk.
 
 import Darwin
-import Foundation
+public import Foundation
 
 nonisolated public enum FileReadAhead {
     /// Asks the kernel to read the file in the background and returns at once.
     /// A failure only loses the hint, so it is not reported.
     public static func start(_ url: URL) {
         guard LoadOptimisations.isOn(.pluginReadAhead) else { return }
-        let descriptor = open(url.path, O_RDONLY)
+        let descriptor = unsafe open(url.path, O_RDONLY)
         guard descriptor >= 0 else { return }
         defer { close(descriptor) }
         var status = stat()
-        guard fstat(descriptor, &status) == 0 else { return }
+        guard unsafe fstat(descriptor, &status) == 0 else { return }
         var offset: off_t = 0
         while offset < status.st_size {
             let count = Int32(min(status.st_size - offset, off_t(Int32.max)))
             var advice = radvisory(ra_offset: offset, ra_count: count)
-            guard fcntl(descriptor, F_RDADVISE, &advice) != -1 else { return }
+            guard unsafe fcntl(descriptor, F_RDADVISE, &advice) != -1 else { return }
             offset += off_t(count)
         }
     }
@@ -28,12 +28,16 @@ nonisolated public enum FileReadAhead {
     /// waits for one large read instead of faulting each page in on its own.
     public static func advise(_ data: Data, range: Range<Int>) {
         guard LoadOptimisations.isOn(.archiveReadAhead), !range.isEmpty else { return }
-        data.withUnsafeBytes { buffer in
+        unsafe data.withUnsafeBytes { buffer in
             guard let base = buffer.baseAddress, range.upperBound <= buffer.count else { return }
             let page = Int(getpagesize())
-            let start = UInt(bitPattern: base + range.lowerBound) & ~UInt(page - 1)
-            let end = UInt(bitPattern: base + range.upperBound)
-            _ = madvise(UnsafeMutableRawPointer(bitPattern: start), Int(end - start), MADV_WILLNEED)
+            let start = unsafe UInt(bitPattern: base + range.lowerBound) & ~UInt(page - 1)
+            let end = unsafe UInt(bitPattern: base + range.upperBound)
+            _ = unsafe madvise(
+                UnsafeMutableRawPointer(bitPattern: start),
+                Int(end - start),
+                MADV_WILLNEED
+            )
         }
     }
 }

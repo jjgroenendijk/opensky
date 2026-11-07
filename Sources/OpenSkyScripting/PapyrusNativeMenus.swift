@@ -3,7 +3,7 @@
 // the Creation Kit wiki pages for `Game`, `ObjectReference`, `Actor`, `ActorBase`, and `Form`.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 

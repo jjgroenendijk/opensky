@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/dialogue.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct DialogueBranch: Equatable, Sendable {
     /// DNAM flag bits.

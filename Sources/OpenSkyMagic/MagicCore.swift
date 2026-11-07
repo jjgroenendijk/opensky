@@ -150,13 +150,13 @@ nonisolated public enum MagicCore {
     static func castText(_ outcome: SpellCastOutcome) -> String {
         switch outcome {
         case let .cast(result):
-            String(
+            unsafe String(
                 format: "%@: %.0f magicka spent, %d effect entries, %d now running.",
                 result.isDualCast ? "Dual cast" : "Cast",
                 result.magickaSpent, result.entryCount, result.storedCount
             )
         case let .released(_, held, spent):
-            String(format: "Maintained for %.1fs, %.0f magicka spent.", held, spent)
+            unsafe String(format: "Maintained for %.1fs, %.0f magicka spent.", held, spent)
         case let .failed(reason):
             "Cast refused: \(reason.describedReason)"
         case .charging, .ready, .concentrating:

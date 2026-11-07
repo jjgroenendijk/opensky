@@ -4,11 +4,11 @@
 // See docs/engine/ess-import.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyFormatsESS
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsESS
 import OpenSkyGameData
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 nonisolated public struct ESSImportResult: Sendable {
     public let contents: OpenSkySaveContents

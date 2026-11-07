@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension MagicCoordinator {

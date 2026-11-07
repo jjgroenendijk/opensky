@@ -3,10 +3,10 @@
 // NPC's blow on the player both build their uses here. See
 // docs/engine/skill-advancement.md.
 
-import OpenSkyActorsInterface
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
-import OpenSkyProgressionInterface
+public import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
+public import OpenSkyProgressionInterface
 
 /// One resolved blow, as its skill uses read it.
 nonisolated public struct MeleeSkillUseBlow: Equatable, Sendable {

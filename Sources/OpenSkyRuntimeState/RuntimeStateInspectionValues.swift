@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// Number spelling shared by runtime-state readouts, so every value reads the same way.
 nonisolated public enum RuntimeStateNumberText: Sendable {
@@ -12,7 +12,7 @@ nonisolated public enum RuntimeStateNumberText: Sendable {
     /// outside `Int`, through `%g`.
     public static func text(_ value: Float) -> String {
         guard value.isFinite, abs(value) < 1e9, value == value.rounded() else {
-            return String(format: "%g", value)
+            return unsafe String(format: "%g", value)
         }
         return String(Int(value))
     }
@@ -50,7 +50,7 @@ nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
         let clamped = hourOfDay.isFinite ? min(max(0, hourOfDay), 24) : 0
         let hour = Int(clamped.rounded(.down))
         let minute = Int(((clamped - Float(hour)) * 60).rounded(.down))
-        return String(format: "%02d:%02d", hour, min(minute, 59))
+        return unsafe String(format: "%02d:%02d", hour, min(minute, 59))
     }
 
     /// Calendar spelling, in the in-game order: day, month name, era and year.

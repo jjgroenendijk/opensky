@@ -5,8 +5,8 @@
 // See docs/engine/condition-functions-world.md#motion.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import simd
 
 /// Where one reference is and how it moves. Angles are radians, as placements store them.

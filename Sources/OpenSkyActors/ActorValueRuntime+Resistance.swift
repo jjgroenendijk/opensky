@@ -1,4 +1,4 @@
-import OpenSkyGameData
+public import OpenSkyGameData
 
 extension ActorValueRuntime {
     /// The fraction of incoming damage `holder`'s resistance at `index` removes,

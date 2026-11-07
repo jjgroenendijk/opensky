@@ -86,6 +86,6 @@ nonisolated public struct InventoryItemCard: Equatable, Sendable {
     }
 
     private static func number(_ value: Float) -> String {
-        value.rounded() == value ? "\(Int(value))" : String(format: "%.1f", value)
+        value.rounded() == value ? "\(Int(value))" : unsafe String(format: "%.1f", value)
     }
 }

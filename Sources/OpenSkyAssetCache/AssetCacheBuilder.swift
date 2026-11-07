@@ -3,8 +3,8 @@
 // priority, skips entries that are already current (so a later run resumes),
 // reports progress after every file, and records a failed file without stopping.
 
-import Foundation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyGameData
 import Synchronization
 
 nonisolated public struct AssetCacheBuildItem: Sendable {

@@ -4,7 +4,7 @@
 // once per swing id. Every target reached is returned, so a sweep hits a crowd.
 // See docs/engine/melee-combat.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// Where a swing touched one target.

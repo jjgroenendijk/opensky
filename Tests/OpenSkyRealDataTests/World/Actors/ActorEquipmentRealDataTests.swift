@@ -172,7 +172,7 @@ struct ActorEquipmentRealDataTests {
     @MainActor
     private func render(
         _ assembly: ActorAssembly<ActorRenderAsset>,
-        device: MTLDevice,
+        device: any MTLDevice,
         to name: String
     ) throws {
         let bounds = try #require(assembly.worldBounds)

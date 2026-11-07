@@ -2,9 +2,9 @@
 // docs/engine/condition-functions.md and docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One actor's magic as a condition sees it.
 nonisolated public struct MagicConditionState: Equatable, Sendable {

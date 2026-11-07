@@ -2,7 +2,7 @@
 // so the same clock gives the same answer.
 
 import Foundation
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated extension ConditionFunctions {
     public static func installTime(_ registry: inout ConditionFunctionRegistry) {

@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface

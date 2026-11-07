@@ -2,8 +2,8 @@
 // that changes, such as a mod update, has another size or time, so it gets a new
 // file, and the old one stays unused (docs/engine/asset-cache.md#saved-formid-indexes).
 
-import Foundation
-import OpenSkyFormatsESM
+public import Foundation
+public import OpenSkyFormatsESM
 
 nonisolated public struct RecordIndexCacheFolder: FormIDIndexStore {
     static let folderName = "records"
@@ -25,7 +25,7 @@ nonisolated public struct RecordIndexCacheFolder: FormIDIndexStore {
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try index.write(to: temporary)
-            guard rename(temporary.path, target.path) == 0 else {
+            guard unsafe rename(temporary.path, target.path) == 0 else {
                 throw CocoaError(.fileWriteUnknown)
             }
         } catch {
@@ -35,7 +35,7 @@ nonisolated public struct RecordIndexCacheFolder: FormIDIndexStore {
 
     func file(for stamp: ESMFileStamp) -> URL {
         let key = "\(stamp.name.lowercased())|\(stamp.size)|\(stamp.modified)"
-        let hash = String(format: "%016llx", AssetContentHash.of(key))
+        let hash = unsafe String(format: "%016llx", AssetContentHash.of(key))
         return folder.appending(path: "\(hash).osri")
     }
 }

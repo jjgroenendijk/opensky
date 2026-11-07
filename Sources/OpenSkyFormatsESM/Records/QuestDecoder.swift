@@ -5,7 +5,7 @@
 // satellite files can read them.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated extension Quest {
     public struct Contents: Sendable {

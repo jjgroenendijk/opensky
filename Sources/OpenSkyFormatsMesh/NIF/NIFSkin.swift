@@ -2,9 +2,9 @@
 // and NiSkinPartition geometry. Every count is checked against the block size
 // before reading. Layout: docs/formats/nif-skinning.md.
 
-import Foundation
-import OpenSkyFormatsCore
-import simd
+public import Foundation
+public import OpenSkyFormatsCore
+public import simd
 
 nonisolated public struct NIFTransform: Equatable, Sendable {
     public let rotation: simd_float3x3

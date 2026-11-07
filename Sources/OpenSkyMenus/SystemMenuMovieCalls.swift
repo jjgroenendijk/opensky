@@ -3,7 +3,7 @@
 // `GameDelegate`; this names those calls and fills the lists it hands over.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated extension SystemMenuMovieBridge {
     public static let saveLoadListPath = "\(systemPagePath)/SaveLoadPanel/List_mc"

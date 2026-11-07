@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One effect of a perk, joined against the spell store.
 nonisolated public struct ResolvedPerkEffect: Sendable {

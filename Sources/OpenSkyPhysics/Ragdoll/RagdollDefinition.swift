@@ -4,7 +4,7 @@
 // `animatedBoneMatrix * bindInverse` carries a body from bind pose to the animation.
 // See docs/engine/ragdoll-solver.md.
 
-import simd
+public import simd
 
 /// One simulated bone: the body that stands for it and the bind-pose frame that
 /// ties the body to the animation skeleton.

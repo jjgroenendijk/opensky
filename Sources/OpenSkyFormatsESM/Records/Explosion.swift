@@ -1,8 +1,8 @@
 // EXPL explosion and DEBR debris. EXPL DATA grows over form versions, so the
 // trailing members are optional. Layout and sources: docs/formats/explosions.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct Explosion: Equatable, Sendable {
     /// DATA: 40, 44, 48, or 52 bytes.

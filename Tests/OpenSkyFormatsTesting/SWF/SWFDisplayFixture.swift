@@ -3,8 +3,8 @@
 // bit-by-bit following the Adobe SWF File Format Specification v19 chapters 3
 // and 6 — never extracted game files (AGENTS.md "Legal & IP boundary").
 
-import Foundation
-@testable import OpenSkyFormatsSWF
+public import Foundation
+@testable public import OpenSkyFormatsSWF
 
 public enum SWFDisplayFixture: Sendable {
     /// MATRIX fields for a place tag; scale/rotate write as 16.16 fixed point.

@@ -2,8 +2,8 @@
 // `OpenSkySaveError.truncated(context:)` naming the structure. A value type, so a chunk
 // is decoded by a fresh reader over its payload slice.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct SaveReader: Sendable {
     private var reader: BinaryReader

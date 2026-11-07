@@ -4,7 +4,7 @@
 // They read the shot being chosen, not a reference. See docs/formats/camera-records.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The facts of one cinematic shot request: the attack, and the free space
 /// around the attacker. The kill-cam coordinator fills it per selection.

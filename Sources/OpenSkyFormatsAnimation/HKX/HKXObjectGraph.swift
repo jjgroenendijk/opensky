@@ -3,7 +3,7 @@
 // Resolution never traps or throws; an unresolved field yields nil and an
 // `HKXUnresolvedReference`. Layout: docs/formats/hkx-container.md.
 
-import Foundation
+public import Foundation
 
 /// One member of a Havok class: the section-local byte offset from the object
 /// base plus the Havok member name, quoted verbatim by every unresolved

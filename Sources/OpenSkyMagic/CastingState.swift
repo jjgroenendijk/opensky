@@ -5,8 +5,8 @@
 // See docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyMagicInterface
 
 /// Where one hand's cast is.
 nonisolated public enum SpellCastPhase: String, Equatable, Sendable, CaseIterable {
@@ -67,11 +67,19 @@ nonisolated public enum SpellCastFailure: Equatable, Sendable {
         case let .noSpellReadied(hand): "no spell readied in the \(hand.describedName)"
         case let .unknownSpell(spell): "no loaded plugin carries \(spell)"
         case let .notCharged(remaining):
-            String(format: "released %.2fs before the charge finished", remaining)
+            unsafe String(format: "released %.2fs before the charge finished", remaining)
         case let .insufficientMagicka(cost, available):
-            String(format: "not enough magicka: %.0f needed, %.0f available", cost, available)
+            unsafe String(
+                format: "not enough magicka: %.0f needed, %.0f available",
+                cost,
+                available
+            )
         case let .staffOutOfCharge(cost, available):
-            String(format: "not enough staff charge: %.0f needed, %.0f left", cost, available)
+            unsafe String(
+                format: "not enough staff charge: %.0f needed, %.0f left",
+                cost,
+                available
+            )
         case let .deliveryUnsupported(delivery):
             "\(delivery) delivery is not implemented yet"
         case .abilityNotCastable: "an ability is carried, not cast"

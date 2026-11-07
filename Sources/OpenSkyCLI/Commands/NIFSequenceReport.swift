@@ -94,7 +94,7 @@ enum NIFSequenceReport {
     }
 
     static func format(_ value: Float) -> String {
-        String(format: "%.3f", value)
+        unsafe String(format: "%.3f", value)
     }
 
     static func format<Vector: SIMD>(_ value: Vector) -> String

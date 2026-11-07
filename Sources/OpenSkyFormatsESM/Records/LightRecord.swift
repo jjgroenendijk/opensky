@@ -6,7 +6,7 @@
 // - xEdit dev-4.1.6 wbDefinitionsTES5.pas, LIGH DATA flag list
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct LightRecord: Sendable {

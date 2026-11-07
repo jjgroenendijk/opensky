@@ -3,7 +3,7 @@
 // trailer is not checked; the output length is.
 
 import Compression
-import Foundation
+public import Foundation
 
 nonisolated public enum ZlibError: Error, Equatable, Sendable {
     /// First two bytes fail the RFC 1950 CMF/FLG check (method 8, mod-31).
@@ -38,13 +38,13 @@ nonisolated public enum Zlib: Sendable {
 
         let deflate = stream.dropFirst(2)
         var output = Data(count: decompressedSize)
-        let written = output.withUnsafeMutableBytes { destination in
-            deflate.withUnsafeBytes { source -> Int in
+        let written = unsafe output.withUnsafeMutableBytes { destination in
+            unsafe deflate.withUnsafeBytes { source -> Int in
                 guard
                     let destinationBase = destination.baseAddress,
                     let sourceBase = source.baseAddress
                 else { return 0 }
-                return compression_decode_buffer(
+                return unsafe compression_decode_buffer(
                     destinationBase.assumingMemoryBound(to: UInt8.self),
                     decompressedSize,
                     sourceBase.assumingMemoryBound(to: UInt8.self),

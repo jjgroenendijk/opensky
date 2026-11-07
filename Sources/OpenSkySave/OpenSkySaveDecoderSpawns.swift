@@ -1,10 +1,10 @@
 // SPWN chunk: objects the game placed, merged into the `RDLT` deltas by
 // `ReferenceKey`. A spawn usually has no `RDLT` entry of its own.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 import simd
 
 /// One saved spawned object, before it is merged back into its delta.

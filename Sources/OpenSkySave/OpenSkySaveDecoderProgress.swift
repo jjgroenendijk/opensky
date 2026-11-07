@@ -2,11 +2,11 @@
 // `ReferenceKey`. `PlayerProgressState.init` clamps every field, and a pick that
 // is not one of the three primaries is dropped.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldState
 
 /// One actor's saved character-level progress, before it is merged back into
 /// the delta.

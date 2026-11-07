@@ -1,7 +1,7 @@
 // Pure rules of the gameplay HUD: the prompt text, the compass values, and
 // which parts of the movie a frame must refresh.
 
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public struct HUDSettings: Equatable, Sendable {

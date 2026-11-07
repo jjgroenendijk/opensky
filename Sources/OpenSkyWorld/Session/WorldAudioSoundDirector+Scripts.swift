@@ -2,7 +2,7 @@
 // engine's sources (<https://ck.uesp.net/wiki/Sound_Script>).
 
 import OpenSkyAudio
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 extension WorldAudioSoundDirector {

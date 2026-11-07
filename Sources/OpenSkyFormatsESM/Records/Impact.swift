@@ -3,7 +3,7 @@
 // decoded. Layout and sources: docs/formats/footstep.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// One IPCT: what a hit leaves behind and how it sounds. xEdit dev-4.1.6 `IPCT`.
 nonisolated public struct Impact: Equatable, Sendable {

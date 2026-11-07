@@ -1,7 +1,7 @@
 // When the player last left each cell, so a cell can reset on the next visit. The rule
 // is the CK wiki "Cell Reset" page; see docs/engine/cell-reset.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// Kept on the player: the game hour of the last departure from each cell.
 nonisolated public struct CellResetLedger: WorldStateComponent, Hashable, Sendable {

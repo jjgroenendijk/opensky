@@ -1,7 +1,7 @@
 // The package lists of an actor's AI Packages tab, and the situations that pick
 // an override list (<https://ck.uesp.net/wiki/AI_Packages_Tab>).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// A code-driven behaviour that suspends the actor's usual package choice. A

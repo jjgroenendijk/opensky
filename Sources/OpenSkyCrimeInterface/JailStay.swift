@@ -2,8 +2,8 @@
 // "Skyrim:Crime", Going to Jail: the bounty stays owed by an escapee, and a sentence
 // is served by sleeping in the cell. See docs/engine/jail.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// The player in a faction's jail.
 nonisolated public struct JailStay: Equatable, Sendable {

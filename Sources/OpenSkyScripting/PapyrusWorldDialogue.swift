@@ -5,9 +5,9 @@
 // See docs/engine/dialogue.md and docs/engine/papyrus-quests.md.
 
 import Foundation
-import OpenSkyDialogueInterface
+public import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {

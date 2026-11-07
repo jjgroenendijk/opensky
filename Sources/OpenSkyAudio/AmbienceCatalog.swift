@@ -4,8 +4,8 @@
 // Sources: xEdit wbDefinitionsCommon.pas (REGN.RDSA), wbDefinitionsTES5.pas (ASPC).
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 /// Identity of the cell whose ambience should be playing. The streamer emits a

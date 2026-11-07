@@ -7,12 +7,12 @@
 import DequeModule
 import Foundation
 import OpenSkyConditions
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyFormatsPEX
-import OpenSkyGameData
-import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsPEX
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
+public import OpenSkyScriptingInterface
 
 @MainActor
 public final class PapyrusWorldRuntime {

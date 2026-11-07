@@ -2,7 +2,7 @@
 // definitions, every script instance with its variables, references, arrays, and the
 // active stacks. See docs/formats/ess-papyrus.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct ESSPapyrusScript: Equatable, Sendable {
     public let name: String

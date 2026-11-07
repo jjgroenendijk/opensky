@@ -1,5 +1,5 @@
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Where a chosen response's result scripts go. A seam, so dialogue works in
 /// tests and sessions without a VM. In a real session the Papyrus world bridge

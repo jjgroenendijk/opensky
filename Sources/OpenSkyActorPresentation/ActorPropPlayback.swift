@@ -2,9 +2,9 @@
 // or ending an idle then changes only this actor's draw list, not its cell.
 // See docs/engine/idle-runtime.md.
 
-import OpenSkyFormatsCore
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyFormatsCore
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import OpenSkyRenderResources
 import simd
 

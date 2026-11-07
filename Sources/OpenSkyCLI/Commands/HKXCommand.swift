@@ -131,8 +131,9 @@ enum HKXCommand {
         if !census.unresolved.isEmpty {
             print("unresolved fields: \(census.unresolved.count)")
             for reference in census.unresolved.prefix(nameListLimit) {
+                let offsetText = unsafe String(format: "%x", reference.objectOffset)
                 print("  \(reference.field) at 0x"
-                    + String(format: "%x", reference.objectOffset)
+                    + offsetText
                     + " — \(reference.miss.rawValue)")
             }
         }
@@ -186,7 +187,7 @@ enum HKXCommand {
     private static func printClassNames(_ file: HKXFile) {
         print("class names: \(file.classNames.count)")
         for entry in file.classNames {
-            print("  0x\(String(format: "%08x", entry.signature)) \(entry.name)")
+            print(unsafe "  0x\(String(format: "%08x", entry.signature)) \(entry.name)")
         }
     }
 
@@ -203,7 +204,7 @@ enum HKXCommand {
         }
         for object in objects.prefix(objectListLimit) {
             let name = object.className ?? "<unresolved>"
-            print("  offset 0x\(String(format: "%x", object.dataOffset)) \(name)")
+            print(unsafe "  offset 0x\(String(format: "%x", object.dataOffset)) \(name)")
         }
         let hidden = objects.count - min(objects.count, objectListLimit)
         if hidden > 0 {

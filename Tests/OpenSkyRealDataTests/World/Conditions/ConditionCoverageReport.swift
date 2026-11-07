@@ -25,7 +25,7 @@ extension ConditionCoverage {
 
     private func headline(registry: ConditionFunctionRegistry) -> String {
         let implemented = implementedCount(in: registry)
-        let percent = String(format: "%.2f", coverageFraction(in: registry) * 100)
+        let percent = unsafe String(format: "%.2f", coverageFraction(in: registry) * 100)
         let bounds = indexBounds
         return """
         [INFO] condition-function coverage: \(implemented)/\(total) conditions \

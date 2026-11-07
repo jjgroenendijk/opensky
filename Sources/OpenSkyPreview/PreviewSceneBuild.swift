@@ -3,11 +3,11 @@
 // Pipeline: docs/tools/preview-render.md.
 
 import Foundation
-import OpenSkyCells
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyCells
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import simd
 
 /// What the target resolved to, for the report.

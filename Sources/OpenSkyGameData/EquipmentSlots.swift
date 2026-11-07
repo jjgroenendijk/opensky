@@ -6,7 +6,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The hands an equipped item takes. Not a biped slot: nothing in BOD2/BODT
 /// describes holding something.

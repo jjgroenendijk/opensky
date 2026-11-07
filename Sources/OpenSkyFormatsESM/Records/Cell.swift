@@ -3,7 +3,7 @@
 // group after the record. Layout: docs/formats/world-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Cell: Sendable {
     /// XCLW override. A missing field or FLT_MAX means use WRLD DNAM; three known

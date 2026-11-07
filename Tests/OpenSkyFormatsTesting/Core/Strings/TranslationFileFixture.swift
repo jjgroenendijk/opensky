@@ -3,7 +3,7 @@
 // IP boundary"). Layout follows the Creation Kit / SkyUI translation-file spec;
 // see docs/formats/translation-strings.md.
 
-import Foundation
+public import Foundation
 
 public enum TranslationFileFixture: Sendable {
     /// Encodes `$key<TAB>value` pairs as a translation file, one pair per line.

@@ -3,8 +3,8 @@
 // made enchantment by its id. See docs/engine/enchanting.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One enchantment the player made: each base record scaled by its power.
 nonisolated public struct MadeEnchantment: Equatable, Sendable {

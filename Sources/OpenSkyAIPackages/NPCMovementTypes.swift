@@ -3,12 +3,12 @@
 // the same intent without becoming movement authorities.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyPlayer
-import OpenSkyWorldState
-import simd
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import OpenSkyPlayer
+public import OpenSkyWorldState
+public import simd
 
 nonisolated public enum NPCMovementState: String, Equatable, Sendable {
     case moving

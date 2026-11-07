@@ -2,7 +2,7 @@
 // (file, loop, and finale data). Layout and sources: docs/formats/music.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct MusicType: Sendable {
     /// FNAM bitfield. Bit 0x10 is unnamed in xEdit ("Unknown 4") and is kept

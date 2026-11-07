@@ -2,9 +2,9 @@
 // by its own controllers or by its effect graph, draws as its own posed copy.
 // See docs/rendering/visual-effects.md#posed-effect-models.
 
-import OpenSkyRenderCore
-import OpenSkyRendering
-import simd
+public import OpenSkyRenderCore
+public import OpenSkyRendering
+public import simd
 
 /// One effect drawn as its own copy, posed by `animation` each frame.
 nonisolated public struct PosedEffectModel: Sendable {

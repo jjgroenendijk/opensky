@@ -2,7 +2,7 @@
 // See docs/engine/paired-animations.md#kill-moves.
 
 import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One attack that may play a kill move: the idle tree under `action` tests `kills`.
 nonisolated public struct KillMoveAttempt: Equatable, Sendable {

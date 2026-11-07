@@ -3,10 +3,10 @@
 // testable without AppKit.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 @MainActor
 extension PapyrusWorldRuntime {

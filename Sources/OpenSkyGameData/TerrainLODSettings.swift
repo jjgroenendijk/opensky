@@ -1,7 +1,7 @@
 // Typed [TerrainManager] settings consumed by distant terrain/object/tree LOD.
 // Skyrim files stay read-only.
 
-import Foundation
+public import Foundation
 import Synchronization
 
 nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {

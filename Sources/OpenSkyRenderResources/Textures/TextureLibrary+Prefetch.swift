@@ -2,10 +2,10 @@
 // (docs/decisions/concurrency.md). Workers read, look up, parse, and fill textures;
 // streaming, the fast loader, the cache, and every counter stay on the build thread.
 
-import Foundation
-@preconcurrency import Metal
-import OpenSkyAssetCache
-import OpenSkyFormatsCore
+public import Foundation
+@preconcurrency @unsafe public import Metal
+public import OpenSkyAssetCache
+public import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 
@@ -34,7 +34,7 @@ nonisolated enum TextureSource: Sendable {
 nonisolated struct PreparedTexture: Sendable {
     let source: TextureSource
     /// Filled on the CPU; the load only counts it.
-    var uploaded: MTLTexture?
+    var uploaded: any MTLTexture?
     /// The levels for a texture that may stream, so the load does not convert them again.
     var streamReady: ReadyTexture?
 }
@@ -146,7 +146,7 @@ nonisolated private struct UploadPlan: Sendable {
     /// A failure leaves the upload to the load, which logs it and uses the placeholder.
     private static func upload(
         dds data: Data, usage: TextureUsage, label: String, device: any MTLDevice
-    ) throws -> MTLTexture? {
+    ) throws -> any MTLTexture? {
         let dds = try DDSFile(data: data)
         guard dds.faceCount == 1 else { return nil }
         return try TextureLoader.upload(dds: dds, usage: usage, label: label, device: device)

@@ -4,10 +4,10 @@
 // several hooks share one reporter and its witness source. See docs/engine/crime.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Turns things that happened into ledger entries.
 @MainActor

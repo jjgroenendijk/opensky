@@ -3,7 +3,7 @@
 // See docs/engine/melee-damage.md, "Power attacks and bashes".
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct PowerAttackSettings: Equatable, Sendable {
     /// `fPowerAttackDefaultBonus`: a power attack deals `1 + bonus` times the damage.

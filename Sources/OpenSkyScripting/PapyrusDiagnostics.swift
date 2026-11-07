@@ -1,8 +1,8 @@
 // Bounded execution policy, typed faults, outcomes, and coverage tally.
 
 import Foundation
-import OpenSkyFormatsPEX
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsPEX
+public import OpenSkyScriptingInterface
 
 nonisolated public struct PapyrusLimits: Equatable, Sendable {
     /// Instructions one call runs before it yields to the next tick.

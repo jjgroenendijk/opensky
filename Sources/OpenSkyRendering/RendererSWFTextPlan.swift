@@ -3,7 +3,7 @@
 // rasterized twice.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 import simd
 
 nonisolated public final class SWFTextPlanner {

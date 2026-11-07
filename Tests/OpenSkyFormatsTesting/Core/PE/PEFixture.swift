@@ -1,7 +1,7 @@
 // A minimal Windows executable with one `.rsrc` section that holds a version
 // resource, built in code. Layout: docs/formats/pe-version.md.
 
-import Foundation
+public import Foundation
 
 public struct PEFixture: Sendable {
     /// Major, minor, build, and revision.

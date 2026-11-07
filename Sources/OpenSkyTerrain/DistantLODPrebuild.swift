@@ -3,10 +3,10 @@
 // build queue owns (docs/engine/distant-lod.md, "Start").
 
 import Foundation
-import Metal
-import OpenSkyAssetCache
-import OpenSkyFormatsCore
-import OpenSkyGameData
+public import Metal
+public import OpenSkyAssetCache
+public import OpenSkyFormatsCore
+public import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyRenderResources
 

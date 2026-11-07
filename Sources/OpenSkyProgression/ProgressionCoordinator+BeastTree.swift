@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyProgressionInterface
 
 extension ProgressionCoordinator {
     /// The tree of the player's form, when the load order carries it (Dawnguard).

@@ -2,8 +2,8 @@
 // script is indexed, so the interpreter reads a local without folding its name.
 
 import Foundation
-import OpenSkyFormatsPEX
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsPEX
+public import OpenSkyScriptingInterface
 
 /// What one identifier spelling names inside a function.
 nonisolated public struct PapyrusNameBinding: Equatable, Sendable {

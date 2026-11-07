@@ -2,7 +2,7 @@
 // fade in or out. The weather's own precipitation stays; the script's adds to it. Pure.
 // See docs/engine/papyrus-session-natives.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct ScriptParticleGeometry: Equatable, Sendable {

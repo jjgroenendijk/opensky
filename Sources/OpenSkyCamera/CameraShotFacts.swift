@@ -3,8 +3,8 @@
 // docs/formats/camera-records.md#condition-functions.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum CameraShotFacts {

@@ -3,8 +3,8 @@
 // The rule: docs/formats/nif-controllers.md#node-controller-rules.
 
 import Foundation
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsMesh
 import simd
 
 nonisolated public struct ActorBoneLOD: Equatable, Sendable {

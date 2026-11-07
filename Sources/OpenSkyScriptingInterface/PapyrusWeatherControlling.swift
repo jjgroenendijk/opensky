@@ -2,7 +2,7 @@
 // conforms over the weather system. See docs/engine/weather.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 @MainActor
 public protocol PapyrusWeatherControlling: AnyObject {

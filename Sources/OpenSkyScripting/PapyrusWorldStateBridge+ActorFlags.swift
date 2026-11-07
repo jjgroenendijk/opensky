@@ -2,8 +2,8 @@
 // and running quest aliases changed (ActorFlagOverrides). Death, the HUD, conditions,
 // and natives all read this one answer. See docs/engine/papyrus-script-state.md.
 
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 

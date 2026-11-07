@@ -1,7 +1,7 @@
 // Wall-clock frame delta with a pause gate. Menu mode freezes the simulation advance
 // without a time jump on resume. See docs/engine/menu-mode.md.
 
-import QuartzCore
+public import QuartzCore
 
 /// Per-frame delta-time source. `advance` returns the seconds elapsed since the
 /// previous tick, clamped to `maxDelta` so a long stall never dumps a huge step

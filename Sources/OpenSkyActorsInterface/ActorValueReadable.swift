@@ -6,7 +6,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// An observation of one actor's values that can answer for any actor value.
 nonisolated public protocol ActorValueReadable {

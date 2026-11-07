@@ -2,7 +2,7 @@
 // so a player can attach them to a problem report. The engine logs only to the
 // unified log, which a player cannot easily read.
 
-import Foundation
+public import Foundation
 import OSLog
 
 nonisolated public enum SessionLogExport {

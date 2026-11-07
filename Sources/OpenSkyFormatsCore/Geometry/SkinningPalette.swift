@@ -4,7 +4,7 @@
 // With the bind transform as current bone the factors cancel. Details:
 // docs/formats/nif-skinning.md.
 
-import simd
+public import simd
 
 /// The metadata one skinned mesh needs to be re-posed at runtime, plus the
 /// composition itself. Built once per mesh from `MeshSkinning`.

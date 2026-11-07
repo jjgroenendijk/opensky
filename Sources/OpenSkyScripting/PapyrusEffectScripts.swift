@@ -3,8 +3,8 @@
 // See docs/engine/papyrus-magic-effects.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 
 /// One running magic effect: the actor it acts on and its per-actor application number.
 nonisolated public struct PapyrusActiveEffectID: Hashable, Comparable, Sendable {

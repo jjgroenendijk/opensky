@@ -1,8 +1,8 @@
 // What a procedure asks the world to do besides walking, and what the world
 // answers. See docs/engine/package-schedules.md, "Procedure machines".
 
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import simd
 
 /// One act of a procedure. The world answers each with a `PackageActionResult`.

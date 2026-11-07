@@ -3,7 +3,7 @@
 // run it beside a polled server.
 
 import Darwin
-import Foundation
+public import Foundation
 
 nonisolated public final class AgentSocketClient {
     public let path: String
@@ -23,7 +23,9 @@ nonisolated public final class AgentSocketClient {
     public func connect(timeout: Double) throws(AgentFailure) -> AgentHello {
         disconnect()
         let socket = try AgentSocketCalls.makeSocket()
-        let result = try AgentSocketCalls.withAddress(path) { Darwin.connect(socket, $0, $1) }
+        let result = try unsafe AgentSocketCalls.withAddress(path) {
+            unsafe Darwin.connect(socket, $0, $1)
+        }
         guard result == 0 else {
             close(socket)
             throw AgentFailure(
@@ -47,7 +49,9 @@ nonisolated public final class AgentSocketClient {
     public func send(_ request: AgentRequest) throws(AgentFailure) {
         var data = AgentLineCodec.encode(request)
         while !data.isEmpty {
-            let count = data.withUnsafeBytes { write(descriptor, $0.baseAddress, $0.count) }
+            let count = unsafe data.withUnsafeBytes {
+                unsafe write(descriptor, $0.baseAddress, $0.count)
+            }
             guard count > 0 else { throw AgentSocketCalls.failure("write") }
             data.removeFirst(count)
         }
@@ -62,7 +66,7 @@ nonisolated public final class AgentSocketClient {
                 throw AgentFailure(.timeout, "no reply from the app within \(Int(timeout)) s")
             }
             var poller = pollfd(fd: descriptor, events: Int16(POLLIN), revents: 0)
-            let ready = Darwin.poll(&poller, 1, Int32(min(remaining, 1) * 1000))
+            let ready = unsafe Darwin.poll(&poller, 1, Int32(min(remaining, 1) * 1000))
             if ready < 0, errno != EINTR {
                 throw AgentSocketCalls.failure("poll")
             }
@@ -82,7 +86,8 @@ nonisolated public final class AgentSocketClient {
 
     private func receive() throws(AgentFailure) {
         var chunk = [UInt8](repeating: 0, count: 4096)
-        let count = chunk.withUnsafeMutableBytes { read(descriptor, $0.baseAddress, $0.count) }
+        let count = chunk
+            .withUnsafeMutableBytes { unsafe read(descriptor, $0.baseAddress, $0.count) }
         guard count > 0 else {
             throw AgentFailure(.notRunning, "the app closed the connection")
         }

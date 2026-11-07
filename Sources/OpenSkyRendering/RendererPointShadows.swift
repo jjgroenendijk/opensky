@@ -10,9 +10,9 @@ import simd
 
 /// The cube face array, built the first time a shadow light is in reach.
 final class PointShadowResources {
-    let map: MTLTexture
+    let map: any MTLTexture
 
-    init?(device: MTLDevice) {
+    init?(device: any MTLDevice) {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2DArray
         descriptor.pixelFormat = .depth32Float

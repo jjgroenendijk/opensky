@@ -4,7 +4,7 @@
 // deterministic (docs/rendering/swf-layer.md).
 
 import Metal
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 extension Renderer {
     /// The AS2 runtime driving the assigned movie, or nil while the layer is on

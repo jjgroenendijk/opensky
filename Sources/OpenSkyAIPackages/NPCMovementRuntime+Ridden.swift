@@ -1,10 +1,10 @@
 // Steering and releasing an actor something else moves: a mount the player rides or
 // a dragon in flight (docs/engine/riding.md).
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyPhysics
-import OpenSkyPlayer
+public import OpenSkyPlayer
 import OpenSkyWorldState
 
 extension NPCMovementRuntime {

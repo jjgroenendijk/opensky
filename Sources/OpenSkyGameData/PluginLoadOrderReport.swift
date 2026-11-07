@@ -33,11 +33,11 @@ nonisolated public struct PluginLoadOrderReport: Equatable, Sendable {
             let index: String
             let note: String
             if entry.isLight {
-                index = String(format: "FE %03X", light)
+                index = unsafe String(format: "FE %03X", light)
                 note = light > Self.lastLightSlot ? "Past the 4,096 light plugin slots" : ""
                 light += 1
             } else {
-                index = String(format: "%02X", full)
+                index = unsafe String(format: "%02X", full)
                 note = full >= Self.lightTopByte ? "Past the 254 full plugin slots" : ""
                 full += 1
             }

@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// Loads clips on demand, so only the clips a graph reaches are read. Capped,
 /// because a graph that reaches thousands of clips would otherwise pull the

@@ -3,12 +3,12 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 import Synchronization
 
 /// What `ScriptCoordinator` reads from the live session.

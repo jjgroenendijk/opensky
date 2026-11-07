@@ -4,12 +4,12 @@
 // See docs/engine/object-animation.md#node-controllers.
 
 import Foundation
-import OpenSkyActorPresentation
+public import OpenSkyActorPresentation
 import OpenSkyBehavior
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsMesh
-import OpenSkyRendering
-import simd
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsMesh
+public import OpenSkyRendering
+public import simd
 
 nonisolated public struct NodeControllerRig: Sendable {
     public let animation: NIFNodeAnimation

@@ -4,10 +4,10 @@
 // writes them into the actor's FaceMorphPlayback and skeleton.
 
 import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
-import OpenSkyRenderCore
+public import OpenSkyAudio
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
+public import OpenSkyRenderCore
 import Synchronization
 
 /// A skeleton whose head a lip track turns, on top of its clip and head tracking.

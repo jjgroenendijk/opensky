@@ -2,8 +2,8 @@
 // indexes, and the load order the `.seq` pass walks. See docs/engine/scenes.md
 // and docs/engine/story-manager.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One active plugin and its masters, which give its `.seq` FormIDs their meaning.
 nonisolated public struct StoryPlugin: Equatable, Sendable {

@@ -1,17 +1,17 @@
 // The session stores the main actor reads. The build queue never touches them.
 
-import OpenSkyActorPresentation
-import OpenSkyAIPackages
-import OpenSkyAudio
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyPerceptionInterface
-import OpenSkyPhysics
-import OpenSkyPlayer
-import OpenSkyWeather
-import OpenSkyWorldState
+public import OpenSkyActorPresentation
+public import OpenSkyAIPackages
+public import OpenSkyAudio
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyPerceptionInterface
+public import OpenSkyPhysics
+public import OpenSkyPlayer
+public import OpenSkyWeather
+public import OpenSkyWorldState
 
 /// The data half of a streaming session, split from `BuilderCellSceneProvider`
 /// so the runner can own the builder alone (docs/engine/cell-streaming.md).

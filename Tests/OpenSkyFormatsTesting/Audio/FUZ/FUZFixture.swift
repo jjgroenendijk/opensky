@@ -1,7 +1,7 @@
 // Synthetic `.fuz` builder for the voice-container tests. Lip bytes are
 // counters; the audio comes from `XWMFixture`. Layout: docs/formats/fuz.md.
 
-import Foundation
+public import Foundation
 
 public enum FUZFixture: Sendable {
     public static let magic = "FUZE"

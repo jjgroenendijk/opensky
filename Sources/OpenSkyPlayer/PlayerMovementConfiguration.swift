@@ -3,9 +3,9 @@
 // fallback. Walk and run come from GMSTs; sneak, sprint and swim from MOVT records
 // (docs/formats/records.md).
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
 
 nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
     public let walkSpeed: MovementSetting

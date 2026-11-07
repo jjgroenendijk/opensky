@@ -2,7 +2,7 @@
 // beside the rigid body path. Layouts follow nif.xml; see
 // docs/formats/nif-particles.md and docs/formats/nif-collision.md.
 
-import Foundation
+public import Foundation
 import simd
 
 extension NIFBlockFixture {

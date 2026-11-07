@@ -1,10 +1,10 @@
 // HELP chunk: help-message counts per input event, on the player's delta.
 // Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Events in name order, so the same state writes the same bytes.

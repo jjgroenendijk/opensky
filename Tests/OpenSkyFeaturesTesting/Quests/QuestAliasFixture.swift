@@ -1,9 +1,9 @@
 // Alias tables for suites that read quest aliases but do not test how a quest
 // fills them, so they need no quest runtime.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 
 public enum QuestAliasFixture {
     /// A resolution where each quest in `fills` holds the given references, as

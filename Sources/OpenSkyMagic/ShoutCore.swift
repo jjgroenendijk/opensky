@@ -5,8 +5,8 @@
 // character will release it automatically." See docs/engine/shouts.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// How long a hold must last to reach each word.
 nonisolated public struct ShoutSettings: Equatable, Sendable {

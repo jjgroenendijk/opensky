@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The GLOB records in one plugin. Editor-ID lookup ignores case, because
 /// scripts and the console name globals that way.

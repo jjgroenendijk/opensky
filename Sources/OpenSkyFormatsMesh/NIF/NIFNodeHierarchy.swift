@@ -6,7 +6,7 @@
 //   https://github.com/niftools/nifxml/blob/develop/nif.xml
 
 import Foundation
-import simd
+public import simd
 
 nonisolated public struct NIFNodeHierarchy: Sendable {
     public let worldTransforms: [Int: float4x4]

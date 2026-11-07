@@ -4,10 +4,10 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyTerrain
-import OpenSkyWorldState
+public import OpenSkyWorldState
 import simd
 
 nonisolated public struct PlacedRecordLookup: Sendable {

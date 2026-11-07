@@ -3,7 +3,7 @@
 // answer is a clip built in code, so the evaluator runs without a packfile.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// One loadable animation, as the evaluator needs it: how long it runs and what
 /// the bones look like at a time inside it.

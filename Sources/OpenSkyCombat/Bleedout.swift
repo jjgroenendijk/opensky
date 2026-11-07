@@ -4,7 +4,7 @@
 // Sources: UESP "Skyrim:Essential NPCs" and "Skyrim:Protected NPCs", and the Creation
 // Kit wiki "Class". See docs/engine/ragdoll.md#bleedout.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// What zero health does to one actor.
 nonisolated public enum ZeroHealthOutcome: Equatable, Sendable {

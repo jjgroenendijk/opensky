@@ -3,7 +3,7 @@
 // walked once here. See docs/engine/hostility.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Directional reaction lookup between two factions.
 nonisolated public struct FactionRelationIndex: Sendable {

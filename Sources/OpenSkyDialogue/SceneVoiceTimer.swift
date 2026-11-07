@@ -2,10 +2,10 @@
 // the main actor. A response with no voice file keeps the text estimate. The game
 // waits for the voice file to end (<https://ck.uesp.net/wiki/Category:Scenes>).
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsAudio
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 @MainActor
 public final class SceneVoiceTimer {

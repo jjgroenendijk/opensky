@@ -1,7 +1,7 @@
-import Foundation
+public import Foundation
 @testable import OpenSkyFormatsESM
-import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
+public import OpenSkyFormatsTesting
+@testable public import OpenSkyGameData
 
 extension QuestFixture {
     public static func store(

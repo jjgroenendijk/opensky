@@ -19,7 +19,7 @@ nonisolated public enum InventoryEquipmentReadout: Sendable {
         guard snapshot.isAvailable else {
             return InventoryEquipmentSnapshot.unavailable.lastActionText
         }
-        let weight = String(format: "%.1f", snapshot.playerWeight)
+        let weight = unsafe String(format: "%.1f", snapshot.playerWeight)
         return [
             "Player: \(snapshot.playerStacks.count) stacks · weight \(weight) "
                 + "· gold \(snapshot.playerGold)",

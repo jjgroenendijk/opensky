@@ -5,9 +5,9 @@
 // See docs/engine/condition-functions-world.md#packages.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyWorldInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 
 /// The package one actor runs now, as the package functions see it.
 nonisolated public struct ActorPackageFacts: Equatable, Sendable {

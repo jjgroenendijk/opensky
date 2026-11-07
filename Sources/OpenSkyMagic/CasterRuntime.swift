@@ -6,12 +6,12 @@
 // See docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyPhysics
-import OpenSkyProgressionInterface
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
+public import OpenSkyProgressionInterface
 import simd
 
 /// What a cast needs from the world it happens in. A protocol, so the shared

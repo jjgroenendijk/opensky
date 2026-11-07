@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
-import OpenSkyRendering
+public import OpenSkyRendering
 
 @MainActor
 extension DialogueMenuMovieBridge {

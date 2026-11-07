@@ -4,8 +4,8 @@
 // the model and decal the hit leaves. See docs/engine/melee-combat.md.
 
 import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsESM
+public import OpenSkyAudio
+public import OpenSkyFormatsESM
 import simd
 
 /// What a resolved hit impact turns into. The melee counterpart of

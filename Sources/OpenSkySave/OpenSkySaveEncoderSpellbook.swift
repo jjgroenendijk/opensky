@@ -3,10 +3,10 @@
 // sorts every list, so an unchanged spellbook re-encodes identically.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyMagicInterface
-import OpenSkyWorldState
+public import OpenSkyMagicInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's spellbook paired with the snapshot entry it came from.

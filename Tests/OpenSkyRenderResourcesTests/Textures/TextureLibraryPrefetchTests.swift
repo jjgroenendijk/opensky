@@ -51,7 +51,7 @@ struct TextureLibraryPrefetchTests {
         )
     }
 
-    private func load(_ library: TextureLibrary) -> [MTLTexture] {
+    private func load(_ library: TextureLibrary) -> [any MTLTexture] {
         library.prefetch(materials: Self.materials)
         return Self.materials.flatMap { material in
             [

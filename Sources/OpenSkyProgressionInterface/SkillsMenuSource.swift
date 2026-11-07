@@ -3,7 +3,7 @@
 // legendary). Values only, so the menu model stays pure. See docs/engine/skills-menu.md.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// The player card at the top and bottom of the menu.
 nonisolated public struct SkillsMenuPlayer: Equatable, Sendable {

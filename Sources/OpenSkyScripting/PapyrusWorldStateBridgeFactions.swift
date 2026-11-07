@@ -6,8 +6,8 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {

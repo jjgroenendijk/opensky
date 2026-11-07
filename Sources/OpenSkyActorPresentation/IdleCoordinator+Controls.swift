@@ -1,6 +1,6 @@
 // The Idles section's controls over the idle coordinator.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension IdleCoordinator {

@@ -1,5 +1,5 @@
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 /// Stable identity of one built cell. Exterior cells drive grid streaming;
 /// interior cells are addressed by CELL FormID because they have no XCLC.

@@ -1,4 +1,4 @@
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import simd
 
 /// The authoritative player capsule pose for one frame.

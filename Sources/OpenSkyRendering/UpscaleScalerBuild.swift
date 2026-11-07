@@ -4,7 +4,7 @@
 // it lands. See docs/rendering/upscaling.md.
 
 import Metal
-import MetalFX
+public import MetalFX
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 
@@ -15,14 +15,14 @@ nonisolated struct UpscaleScalers {
 
     @concurrent
     static func buildOffMainActor(
-        _ request: UpscaleScalerRequest, device: MTLDevice, compiler: MTL4Compiler
+        _ request: UpscaleScalerRequest, device: any MTLDevice, compiler: any MTL4Compiler
     ) async -> sending Self {
         build(request, device: device, compiler: compiler)
     }
 
     /// Blocks until MetalFX has compiled its model, so the frame loop never calls it.
     static func build(
-        _ request: UpscaleScalerRequest, device: MTLDevice, compiler: MTL4Compiler
+        _ request: UpscaleScalerRequest, device: any MTLDevice, compiler: any MTL4Compiler
     ) -> sending Self {
         switch request.kind {
         case .temporal:
@@ -39,7 +39,7 @@ nonisolated struct UpscaleScalers {
     }
 
     private static func temporalScaler(
-        _ request: UpscaleScalerRequest, device: MTLDevice, compiler: MTL4Compiler
+        _ request: UpscaleScalerRequest, device: any MTLDevice, compiler: any MTL4Compiler
     ) -> (any MTL4FXTemporalScaler)? {
         let descriptor = MTLFXTemporalScalerDescriptor()
         descriptor.colorTextureFormat = request.colorFormat
@@ -54,7 +54,7 @@ nonisolated struct UpscaleScalers {
     }
 
     private static func spatialScaler(
-        _ request: UpscaleScalerRequest, device: MTLDevice, compiler: MTL4Compiler
+        _ request: UpscaleScalerRequest, device: any MTLDevice, compiler: any MTL4Compiler
     ) -> (any MTL4FXSpatialScaler)? {
         let descriptor = MTLFXSpatialScalerDescriptor()
         // The spatial scaler rejects an sRGB input with a non-sRGB output.
@@ -69,7 +69,7 @@ nonisolated struct UpscaleScalers {
     }
 
     private static func frameInterpolator(
-        _ request: UpscaleScalerRequest, device: MTLDevice, compiler: MTL4Compiler
+        _ request: UpscaleScalerRequest, device: any MTLDevice, compiler: any MTL4Compiler
     ) -> (any MTL4FXFrameInterpolator)? {
         let descriptor = MTLFXFrameInterpolatorDescriptor()
         descriptor.colorTextureFormat = UpscaleResources.outputFormat

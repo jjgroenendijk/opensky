@@ -3,7 +3,7 @@
 // `CameraInput` each frame. See docs/engine/free-fly-camera.md.
 
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 /// One frame of camera input, already resolved to axis magnitudes. Movement
 /// axes are in [-1, 1]; look deltas are raw pointer deltas in points (the

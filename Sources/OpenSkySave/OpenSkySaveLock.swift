@@ -1,12 +1,12 @@
 // LOCK chunk: runtime lock state of doors and containers. Merged into the `RDLT`
 // deltas by key. Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 /// One saved lock, before it is merged back into the delta.
 nonisolated public struct SaveLockEntry: Equatable, Sendable {

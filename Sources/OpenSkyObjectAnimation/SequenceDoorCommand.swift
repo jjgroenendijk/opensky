@@ -1,6 +1,6 @@
 // What the door coordinator asks the app to do. See docs/engine/coordinators.md.
 
-import simd
+public import simd
 
 /// One change to the session outside the door motion.
 nonisolated public enum SequenceDoorCommand: Equatable, Sendable {

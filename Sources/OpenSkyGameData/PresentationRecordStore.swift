@@ -4,8 +4,8 @@
 // combat-style.md, messages.md, and body-parts.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public struct PresentationRecordStore: Sendable {
     public static let recordTypes: Set<FourCC> = CameraPathStore.types

@@ -3,8 +3,8 @@
 // the readout. The rules are in `ImpulseRules` and `WaterImpacts` (docs/engine/impulses.md).
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import simd
 
 /// The loose bodies a push can reach, and the solver that moves them.

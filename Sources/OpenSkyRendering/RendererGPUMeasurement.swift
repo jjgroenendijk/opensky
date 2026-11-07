@@ -2,7 +2,7 @@
 // same commit feedback `FrameStats` reads; memory comes from the device and the
 // renderer's residency set.
 
-import Metal
+public import Metal
 import Synchronization
 
 /// What the GPU reported since the last take: the busy time of each finished frame,
@@ -115,15 +115,15 @@ extension Renderer {
         usage.streamedTextures = streaming.streamedTextures
         for allocation in resident {
             // Streamed textures keep their levels in placement heaps.
-            if let heap = allocation as? MTLHeap, heap.type == .placement {
+            if let heap = allocation as? (any MTLHeap), heap.type == .placement {
                 usage.textureBytes += heap.size
                 continue
             }
-            if let buffer = allocation as? MTLBuffer {
+            if let buffer = allocation as? (any MTLBuffer) {
                 usage.bufferBytes += buffer.allocatedSize
                 continue
             }
-            guard let texture = allocation as? MTLTexture else { continue }
+            guard let texture = allocation as? (any MTLTexture) else { continue }
             if texture.usage.contains(.renderTarget) {
                 usage.renderTargetBytes += texture.allocatedSize
             } else {

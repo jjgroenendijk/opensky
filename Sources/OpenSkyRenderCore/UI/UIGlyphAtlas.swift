@@ -3,8 +3,8 @@
 // their bytes so `releaseSWFGlyphs(where:)` can drop a movie and repack; that half lives
 // in UIGlyphAtlasPacking.swift.
 
-import CoreGraphics
-import CoreText
+public import CoreGraphics
+public import CoreText
 import simd
 
 /// Cache key: glyph source namespace + font discriminator + glyph id + integer
@@ -133,11 +133,11 @@ nonisolated public final class UIGlyphAtlas {
             return cached.entry
         }
         var glyph = glyphID
-        let bounds = CTFontGetBoundingRectsForGlyphs(ctFont, .default, &glyph, nil, 1)
+        let bounds = unsafe CTFontGetBoundingRectsForGlyphs(ctFont, .default, &glyph, nil, 1)
         let packed = rasterize(bounds: bounds) { context, box in
             var mutableGlyph = glyph
             var position = CGPoint(x: Double(box.drawX), y: Double(box.drawY))
-            CTFontDrawGlyphs(ctFont, &mutableGlyph, &position, 1, context)
+            unsafe CTFontDrawGlyphs(ctFont, &mutableGlyph, &position, 1, context)
         }
         cache[key] = packed
         return packed.entry

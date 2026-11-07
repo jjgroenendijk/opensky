@@ -2,8 +2,8 @@
 // such as BSFadeNode only append fields, so one decoder reads the shared
 // prefix. Layout: docs/formats/nif.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct NIFNode: Sendable {
     /// Block types traversed as plain grouping nodes: NiNode layout prefix,

@@ -27,7 +27,7 @@ private struct EnvironmentRender {
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct RendererOffscreenTests {
-    private static let device: MTLDevice? = {
+    private static let device: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4) else { return nil }
@@ -61,7 +61,7 @@ struct RendererOffscreenTests {
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
         pixels.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return } // non-empty
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base,
                 bytesPerRow: width * 4,
                 from: MTLRegionMake2D(0, 0, width, height),
@@ -197,7 +197,7 @@ struct RendererOffscreenTests {
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
         pixels.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base,
                 bytesPerRow: width * 4,
                 from: MTLRegionMake2D(0, 0, width, height),

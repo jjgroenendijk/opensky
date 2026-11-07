@@ -2,8 +2,8 @@
 // view, and a report. The app's Reference Game page and `openskycli reference capture` share
 // it. Captures show game assets, so they never enter the repo (root AGENTS.md).
 
-import Foundation
-import OpenSkyReference
+public import Foundation
+public import OpenSkyReference
 import OpenSkyRenderResources
 
 nonisolated public enum ReferenceComparisonCapture {

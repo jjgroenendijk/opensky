@@ -6,7 +6,7 @@
 
 import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
 

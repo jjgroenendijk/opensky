@@ -5,10 +5,10 @@
 // 2999 (<https://ck.uesp.net/wiki/Category:Settings>). See docs/engine/guard-response.md.
 
 import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyCrimeInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldInterface
 
 /// What a guard does on seeing the player with a bounty.

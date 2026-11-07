@@ -1,7 +1,7 @@
 // `BSBehaviorGraphExtraData`: names the Havok behaviour project that animates an
 // object mesh, such as a trap or a door. Layout: docs/formats/nif.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct NIFBehaviorGraphExtraData: Equatable, Sendable {

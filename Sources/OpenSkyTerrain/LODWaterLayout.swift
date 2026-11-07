@@ -1,7 +1,7 @@
 // Where distant water goes: the LOD area of the worldspace, less a hole over the
 // loaded cells, which draw their own water. At most four rectangles.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum LODWaterLayout {
     /// A block of cells: the south-west cell and the size in cells.

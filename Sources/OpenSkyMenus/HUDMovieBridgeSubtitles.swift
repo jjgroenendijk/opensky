@@ -5,7 +5,7 @@
 // Nothing here times a line out; the caller clears it.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated extension HUDMovieBridge {
     /// The field the line is written into, and the holder whose visibility

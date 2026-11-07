@@ -3,7 +3,7 @@
 // single observation while a fight runs.
 
 import Foundation
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 
 /// One observation of the combat loop.
 nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {

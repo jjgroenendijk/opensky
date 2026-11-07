@@ -50,7 +50,7 @@ struct SWFBitmapTests {
         // makeImage() copies the bitmap, so the context (and its pointer into
         // `pixels`) must not escape the closure.
         let madeImage: CGImage? = pixels.withUnsafeMutableBytes { buffer in
-            let context = CGContext(
+            let context = unsafe CGContext(
                 data: buffer.baseAddress,
                 width: width,
                 height: height,

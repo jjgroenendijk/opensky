@@ -1,15 +1,15 @@
 // Builds the interpolated frame after the temporal scaler and shows it before the real
 // frame, half a real frame earlier. See docs/rendering/frame-interpolation.md.
 
-import Metal
+public import Metal
 import MetalFX
 import MetalKit
 import OpenSkyRenderCore
-import QuartzCore
+public import QuartzCore
 
 /// The second drawable of a live frame and the pass that draws into it.
 struct InterpolatedDrawable {
-    let drawable: CAMetalDrawable
+    let drawable: any CAMetalDrawable
     let descriptor: MTL4RenderPassDescriptor
 }
 
@@ -71,7 +71,7 @@ extension Renderer {
     /// Runs the interpolator on this frame's scaler output and draws the result, with the
     /// SWF and UI layers on top, into the interpolated target. False when no encoder.
     func encodeInterpolatedFrame(
-        _ frame: UpscaleFrame, sceneDepth: MTLTexture, state: ScenePassState, frameOffset: Int
+        _ frame: UpscaleFrame, sceneDepth: any MTLTexture, state: ScenePassState, frameOffset: Int
     ) -> Bool {
         guard
             let target = frame.interpolatedTarget,
@@ -163,7 +163,7 @@ extension Renderer {
     }
 
     private static func passDescriptor(
-        color: MTLTexture, matching target: MTL4RenderPassDescriptor
+        color: any MTLTexture, matching target: MTL4RenderPassDescriptor
     ) -> MTL4RenderPassDescriptor {
         let descriptor = MTL4RenderPassDescriptor()
         descriptor.colorAttachments[0].texture = color
@@ -175,7 +175,7 @@ extension Renderer {
     /// Halves the real frame rate while interpolation runs, so the shown rate matches the
     /// display, and records the time since the last real frame.
     func paceLiveFrame(view: MTKView, now: CFTimeInterval) {
-        let refresh = view.window?.screen?.maximumFramesPerSecond ?? Self.liveFramesPerSecond
+        let refresh = unsafe view.window?.screen?.maximumFramesPerSecond ?? Self.liveFramesPerSecond
         var wanted = isFrameInterpolationRunning ? max(refresh / 2, 1) : Self.liveFramesPerSecond
         if frameRateCap > 0 {
             wanted = min(wanted, frameRateCap)
@@ -191,7 +191,7 @@ extension Renderer {
 
     /// Shows the interpolated frame first, then the real one a display interval later.
     func present(
-        _ drawable: CAMetalDrawable, interpolated: InterpolatedDrawable?, view: MTKView,
+        _ drawable: any CAMetalDrawable, interpolated: InterpolatedDrawable?, view: MTKView,
         frameStart: CFTimeInterval
     ) {
         let latency = upscale.interpolation.latency
@@ -199,7 +199,7 @@ extension Renderer {
             latency.record(frameStart: frameStart, presented: shown.presentedTime)
             latency.recordShown(shown.presentedTime)
         }
-        let refresh = view.window?.screen?.maximumFramesPerSecond ?? Self.liveFramesPerSecond
+        let refresh = unsafe view.window?.screen?.maximumFramesPerSecond ?? Self.liveFramesPerSecond
         let interval = 1 / CFTimeInterval(max(refresh, 1))
         updatePacingPause(frameStart: frameStart, displayInterval: interval)
         guard let interpolated, upscale.interpolation.lastFrameInterpolated else {

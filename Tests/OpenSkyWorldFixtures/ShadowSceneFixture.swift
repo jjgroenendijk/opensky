@@ -2,12 +2,12 @@
 // and the acceptance chains that render it. Everything is built in code.
 
 import Foundation
-import Metal
+public import Metal
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
-@testable import OpenSkyRendering
+@testable public import OpenSkyRendering
 @testable import OpenSkyRenderResources
-@testable import OpenSkyWorld
+@testable public import OpenSkyWorld
 import simd
 
 public enum ShadowSceneFixtureError: Error {
@@ -37,7 +37,7 @@ public enum ShadowSceneFixture {
 
     @MainActor
     public static func makeRenderer(
-        device: MTLDevice,
+        device: any MTLDevice,
         scene: RenderScene? = nil
     ) throws -> Renderer {
         try OffscreenRendererFixture.makeRenderer(
@@ -53,7 +53,7 @@ public enum ShadowSceneFixture {
     /// The tower scene driven by a `GameSession`, for weather and clock tests.
     @MainActor
     public static func makeSession(
-        device: MTLDevice,
+        device: any MTLDevice,
         scene: RenderScene? = nil
     ) throws -> GameSession {
         try OffscreenRendererFixture.makeSession(
@@ -69,7 +69,7 @@ public enum ShadowSceneFixture {
     /// A second tower stands far past `shadowDistance` on +X. Both towers share
     /// one `RenderModel`, so one `DrawGroup` has two instances, and cascade
     /// culling must keep the near one and drop the far one.
-    public static func cullingScene(device: MTLDevice) throws -> RenderScene {
+    public static func cullingScene(device: any MTLDevice) throws -> RenderScene {
         try towerScene(device: device, towerOffsets: [.zero, SIMD3(200_000, 0, 0)])
     }
 
@@ -90,7 +90,7 @@ public enum ShadowSceneFixture {
 
     /// Flat ground under a sky, with one tall thin tower at each offset.
     private static func towerScene(
-        device: MTLDevice,
+        device: any MTLDevice,
         towerOffsets: [SIMD3<Float>]
     ) throws -> RenderScene {
         let texture = try OffscreenRendererFixture.solidTexture(device: device)
@@ -122,7 +122,7 @@ public enum ShadowSceneFixture {
         return RenderScene(instances: [groundPlacement] + towers, sky: SkyParameters())
     }
 
-    public static func readPixels(texture: MTLTexture) -> [UInt8] {
+    public static func readPixels(texture: any MTLTexture) -> [UInt8] {
         OffscreenRendererFixture.pixels(of: texture)
     }
 

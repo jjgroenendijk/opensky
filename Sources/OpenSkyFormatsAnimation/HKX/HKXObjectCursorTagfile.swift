@@ -40,14 +40,18 @@ nonisolated extension HKXObjectCursor {
         var bytes = Data()
         switch tagged(field) {
         case let .real(value):
-            withUnsafeBytes(of: value.bitPattern.littleEndian) { bytes.append(contentsOf: $0) }
+            withUnsafeBytes(of: value.bitPattern.littleEndian) {
+                unsafe bytes.append(contentsOf: $0)
+            }
         case let .vector(floats):
             for value in floats {
-                withUnsafeBytes(of: value.bitPattern.littleEndian) { bytes.append(contentsOf: $0) }
+                withUnsafeBytes(of: value.bitPattern.littleEndian) {
+                    unsafe bytes.append(contentsOf: $0)
+                }
             }
         case let value?:
             if let number = Self.integer(value) {
-                withUnsafeBytes(of: number.littleEndian) { bytes.append(contentsOf: $0) }
+                withUnsafeBytes(of: number.littleEndian) { unsafe bytes.append(contentsOf: $0) }
             }
         case nil:
             break

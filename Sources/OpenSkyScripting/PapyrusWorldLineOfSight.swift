@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// Registers, or with a nil `mode` unregisters, the instance behind `handle`. False

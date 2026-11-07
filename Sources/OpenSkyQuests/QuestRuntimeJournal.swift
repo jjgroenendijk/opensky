@@ -2,9 +2,9 @@
 // misc stats a completion counts. See docs/engine/journal.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 extension QuestRuntime {

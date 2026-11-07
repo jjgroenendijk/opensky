@@ -2,7 +2,7 @@
 // bounds, LOD water, large references, and raw height and offset tables.
 // Layout and sources: docs/formats/world-records.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct WorldspaceMapData: Equatable, Sendable {

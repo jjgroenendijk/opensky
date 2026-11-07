@@ -18,7 +18,7 @@ final class ControllerRumble {
     private(set) var lastRumbleCause: String?
     private var engines: [String: CHHapticEngine] = [:]
     /// The looping players the sound rumble steers, by engine key.
-    private var soundPlayers: [String: CHHapticAdvancedPatternPlayer] = [:]
+    private var soundPlayers: [String: any CHHapticAdvancedPatternPlayer] = [:]
     /// The motor strengths the sounds ask for this frame, for the `state player` read.
     private(set) var soundMotors = SoundRumble.silent
 
@@ -78,7 +78,9 @@ final class ControllerRumble {
     }
 
     /// A full-strength buzz that loops until stopped; the intensity control scales it.
-    private static func loopingPlayer(on engine: CHHapticEngine) -> CHHapticAdvancedPatternPlayer? {
+    private static func loopingPlayer(on engine: CHHapticEngine)
+        -> (any CHHapticAdvancedPatternPlayer)?
+    {
         let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 1)
         let event = CHHapticEvent(
             eventType: .hapticContinuous, parameters: [intensity], relativeTime: 0, duration: 1

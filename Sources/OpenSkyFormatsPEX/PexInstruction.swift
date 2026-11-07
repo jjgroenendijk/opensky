@@ -190,7 +190,7 @@ nonisolated public enum PexOpcode: Equatable, Hashable, Sendable {
         case .arraySetElement: "array_setelement"
         case .arrayFindElement: "array_findelement"
         case .arrayReverseFindElement: "array_rfindelement"
-        case let .unknown(raw): String(format: "unknown(0x%02X)", raw)
+        case let .unknown(raw): unsafe String(format: "unknown(0x%02X)", raw)
         }
     }
 

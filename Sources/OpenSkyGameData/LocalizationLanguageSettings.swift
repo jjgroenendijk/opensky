@@ -2,7 +2,7 @@
 // Skyrim INI files remain read-only; an explicit OpenSky Settings choice lives
 // in the shared defaults domain and takes precedence.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct LocalizationLanguageSnapshot: Equatable, Sendable {
     public let language: String

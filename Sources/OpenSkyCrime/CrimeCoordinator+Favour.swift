@@ -4,9 +4,9 @@
 // only evaluated once", so a friend who later becomes an ally keeps the friend value.
 // See docs/engine/crime.md.
 
-import OpenSkyCrimeInterface
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
+public import OpenSkyCrimeInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 
 /// The favour rule: values in, gold out.

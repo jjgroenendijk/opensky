@@ -2,8 +2,8 @@
 // skeleton. Each part is a run that starts at BPTN (or at BPNN when the name
 // is missing). Layout and sources: docs/formats/body-parts.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 /// BPND, 84 bytes.
 nonisolated public struct BodyPartNodeData: Equatable, Sendable {

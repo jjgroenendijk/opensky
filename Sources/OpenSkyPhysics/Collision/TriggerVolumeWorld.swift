@@ -2,11 +2,11 @@
 // They share the `BoundsSpatialIndex` broadphase of the static set. An overlap
 // test only answers "is the capsule inside", so there is no normal or depth.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import OpenSkyGameData
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
+public import simd
 
 nonisolated public struct TriggerVolume: Sendable {
     /// The REFR that authored this volume.

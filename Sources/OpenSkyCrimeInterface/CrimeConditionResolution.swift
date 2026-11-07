@@ -2,9 +2,9 @@
 // docs/engine/crime.md and docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Every actor's crime ledger plus the FACT store a faction parameter resolves
 /// against.

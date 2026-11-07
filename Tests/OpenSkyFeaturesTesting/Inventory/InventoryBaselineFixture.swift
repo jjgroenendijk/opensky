@@ -2,11 +2,11 @@
 // `InventoryBaselineResolver.build(from:)`, the engine's own indexing path.
 // The FormID constants below are what suites assert against.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 public enum InventoryBaselineFixture {
     public static let gold = FormID(0x0000_000F)

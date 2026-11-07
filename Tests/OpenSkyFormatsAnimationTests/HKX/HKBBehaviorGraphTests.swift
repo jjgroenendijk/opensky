@@ -199,14 +199,14 @@ extension Data {
     fileprivate mutating func writeUInt32(_ value: UInt32, at offset: Int) {
         replaceSubrange(
             offset ..< offset + 4,
-            with: Swift.withUnsafeBytes(of: value.littleEndian) { Data($0) }
+            with: Swift.withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }
         )
     }
 
     fileprivate mutating func writeUInt64(_ value: UInt64, at offset: Int) {
         replaceSubrange(
             offset ..< offset + 8,
-            with: Swift.withUnsafeBytes(of: value.littleEndian) { Data($0) }
+            with: Swift.withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }
         )
     }
 

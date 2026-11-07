@@ -1,9 +1,9 @@
 // The one SWF layer that the HUD and the menus take turns to own.
 
-import OpenSkyFormatsSWF
-import OpenSkyGameData
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyFormatsSWF
+public import OpenSkyGameData
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import Synchronization
 
 /// What a menu coordinator reads from the app. nil while Metal 4 is unavailable.

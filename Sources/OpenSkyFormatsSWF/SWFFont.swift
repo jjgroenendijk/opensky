@@ -2,7 +2,7 @@
 // (73, 74, 88). The on-disk packing lives in SWFFontParser.
 // Layout and sources: docs/formats/swf-text.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum SWFFontError: Error, Equatable, Sendable {
     /// Tag code is not DefineFont2 (48) or DefineFont3 (75).

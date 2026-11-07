@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/locations.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct LocationRefType: Equatable, Sendable {
     public let formID: FormID

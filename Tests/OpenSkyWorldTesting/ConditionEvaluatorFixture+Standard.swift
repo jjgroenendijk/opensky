@@ -1,9 +1,9 @@
 // The evaluator over the whole-game registry, which `OpenSkyWorld` owns.
 
-@testable import OpenSkyConditions
-import OpenSkyFeaturesTesting
+@testable public import OpenSkyConditions
+public import OpenSkyFeaturesTesting
 import OpenSkyWorldConditions
-@testable import OpenSkyWorldState
+@testable public import OpenSkyWorldState
 
 extension ConditionEvaluatorFixture {
     /// Evaluator over `populatedContext(clock:)`.

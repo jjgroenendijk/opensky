@@ -6,7 +6,7 @@
 // docs/engine/journal.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// The three tallies a Quests-page bring-up is gated on. Zero of each is the
 /// gate passing; the readout and the CLI probe print all three even at zero, so a

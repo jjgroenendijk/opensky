@@ -1,8 +1,8 @@
 // Engine values for the repeatable real-install walk route. Coordinates and FormIDs only
 // identify observed records; no game payload is stored.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum WalkPathRoute: Sendable {

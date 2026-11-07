@@ -164,7 +164,7 @@ struct PrecipitationTests {
 }
 
 extension PrecipitationTests {
-    fileprivate static let device: MTLDevice? = {
+    fileprivate static let device: (any MTLDevice)? = {
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
         else { return nil }
         return device

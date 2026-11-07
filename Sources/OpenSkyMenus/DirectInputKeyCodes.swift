@@ -51,7 +51,7 @@ nonisolated public enum DirectInputKeyCodes {
         case 0x01: "Esc"
         case 0x3A: "CapsLock"
         case 0x1C: "Enter"
-        default: letterName(scanCode) ?? String(format: "0x%02X", scanCode)
+        default: unsafe letterName(scanCode) ?? String(format: "0x%02X", scanCode)
         }
     }
 

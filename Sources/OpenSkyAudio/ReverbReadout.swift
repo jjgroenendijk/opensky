@@ -2,7 +2,7 @@
 // unit test can pin it.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum ReverbReadout {
     public static func text(record: ReverbParameters?, ramp: ReverbRamp) -> String {
@@ -26,6 +26,6 @@ nonisolated public enum ReverbReadout {
     }
 
     static func decibels(_ value: Float) -> String {
-        String(format: "%.1f dB", value)
+        unsafe String(format: "%.1f dB", value)
     }
 }

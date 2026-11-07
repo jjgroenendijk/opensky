@@ -1,4 +1,4 @@
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// Everything a projectile needs to know about the record that launched it.

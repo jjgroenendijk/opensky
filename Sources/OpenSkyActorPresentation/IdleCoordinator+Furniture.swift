@@ -3,9 +3,9 @@
 // takes its owner's idle events, as the chopping block's executioner and guard take
 // the prisoner's. See docs/engine/idle-runtime.md.
 
-import OpenSkyConditions
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension IdleCoordinator {

@@ -160,7 +160,7 @@ extension Renderer {
             instanceColor: SIMD4(instance.color, 1),
             grassParameters: SIMD4(instance.wavePeriod, instance.phase, 0, 0)
         )
-        instanceTransformBuffer.contents()
+        unsafe instanceTransformBuffer.contents()
             .advanced(by: index * stride)
             .copyMemory(from: &transform, byteCount: MemoryLayout<InstanceTransform>.size)
     }
@@ -181,7 +181,7 @@ extension Renderer {
             inverseModelHeight: height > .ulpOfOne ? 1 / height : 0,
             receivesShadows: 1
         )
-        drawUniformBuffer.contents().advanced(by: offset)
+        unsafe drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<GrassDrawUniforms>.size)
         return offset
     }

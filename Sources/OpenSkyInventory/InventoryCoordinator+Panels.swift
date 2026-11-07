@@ -2,8 +2,8 @@
 // coordinator through these two providers. Ownership is reported, never
 // enforced.
 
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface

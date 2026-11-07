@@ -4,9 +4,9 @@
 // rules; Driver hands in its runner + configuration.
 
 import Foundation
-import OpenSkyCells
+public import OpenSkyCells
 import OpenSkyFormatsCore
-import OpenSkyRendering
+public import OpenSkyRendering
 
 nonisolated public struct ActorBuildBenchmarkSummary: Sendable {
     public let p95: Double

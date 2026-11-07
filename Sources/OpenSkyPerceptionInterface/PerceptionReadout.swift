@@ -3,7 +3,7 @@
 // identifier. See docs/engine/detection.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One observer's regard for one target, as a readout or a transcript shows it.
@@ -26,9 +26,9 @@ nonisolated public struct DetectionPairReadout: Equatable, Sendable {
     /// The `DetectionStatsLabel` line: state, level, and last-seen position.
     public var summaryLine: String {
         let seen = lastKnownPosition.map {
-            String(format: "last seen (%.0f, %.0f, %.0f)", $0.x, $0.y, $0.z)
+            unsafe String(format: "last seen (%.0f, %.0f, %.0f)", $0.x, $0.y, $0.z)
         } ?? "nothing remembered"
-        return String(
+        return unsafe String(
             format: "%@ -> %@: %@, level %.0f, value %.1f, %.0f units, %@, %@",
             observerName,
             targetName,

@@ -2,11 +2,11 @@
 // the player enters it again (CK wiki "Cell Reset"). See docs/engine/cell-reset.md.
 
 import OpenSkyActorsInterface
-import OpenSkyCells
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyCells
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// One reset, for the runtime state readout.
 nonisolated public struct CellResetRecord: Equatable, Sendable {

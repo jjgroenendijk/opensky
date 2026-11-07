@@ -2,9 +2,9 @@
 // structure per mesh, and one instance structure that places them in the world.
 // See docs/rendering/ray-traced-shadows.md.
 
-import Metal
-import OpenSkyRenderResources
-import simd
+public import Metal
+public import OpenSkyRenderResources
+public import simd
 
 /// One mesh placed in the world.
 struct RayTracedInstance {
@@ -22,12 +22,12 @@ nonisolated public struct RayTracedShadowStats: Equatable, Sendable {
 }
 
 final class RayTracedShadowScene {
-    let instanceStructure: MTLAccelerationStructure
-    let allocations: [MTLAllocation]
+    let instanceStructure: any MTLAccelerationStructure
+    let allocations: [any MTLAllocation]
     let stats: RayTracedShadowStats
 
     private init(
-        instanceStructure: MTLAccelerationStructure, allocations: [MTLAllocation],
+        instanceStructure: any MTLAccelerationStructure, allocations: [any MTLAllocation],
         stats: RayTracedShadowStats
     ) {
         self.instanceStructure = instanceStructure
@@ -38,11 +38,11 @@ final class RayTracedShadowScene {
     /// Encodes the builds into `encoder`, which must end with a barrier before the
     /// passes that trace. Nil when there is nothing to trace or memory runs out.
     static func build(
-        _ instances: [RayTracedInstance], device: MTLDevice,
-        encoder: MTL4ComputeCommandEncoder
+        _ instances: [RayTracedInstance], device: any MTLDevice,
+        encoder: any MTL4ComputeCommandEncoder
     ) -> RayTracedShadowScene? {
         var builder = Builder(device: device)
-        var meshStructures: [ObjectIdentifier: MTLAccelerationStructure] = [:]
+        var meshStructures: [ObjectIdentifier: any MTLAccelerationStructure] = [:]
         for instance in instances where meshStructures[ObjectIdentifier(instance.mesh)] == nil {
             guard let structure = builder.add(primitive: Self.descriptor(for: instance.mesh)) else {
                 return nil
@@ -103,8 +103,8 @@ final class RayTracedShadowScene {
 
     private static func instanceBuffer(
         _ instances: [RayTracedInstance],
-        structures: [ObjectIdentifier: MTLAccelerationStructure], device: MTLDevice
-    ) -> MTLBuffer? {
+        structures: [ObjectIdentifier: any MTLAccelerationStructure], device: any MTLDevice
+    ) -> any MTLBuffer? {
         let records = instances.compactMap { instance in
             structures[ObjectIdentifier(instance.mesh)].map { structure in
                 var record = MTLIndirectAccelerationStructureInstanceDescriptor()
@@ -116,8 +116,12 @@ final class RayTracedShadowScene {
             }
         }
         let buffer = records.withUnsafeBytes { bytes in
-            bytes.baseAddress.flatMap {
-                device.makeBuffer(bytes: $0, length: bytes.count, options: .storageModeShared)
+            unsafe bytes.baseAddress.flatMap {
+                unsafe device.makeBuffer(
+                    bytes: $0,
+                    length: bytes.count,
+                    options: .storageModeShared
+                )
             }
         }
         buffer?.label = "Ray-traced shadow instances"
@@ -137,17 +141,18 @@ final class RayTracedShadowScene {
 
 /// Collects builds, then encodes the mesh builds, a barrier, and the instance build.
 private struct Builder {
-    let device: MTLDevice
-    private var primitives: [(MTLAccelerationStructure, MTL4AccelerationStructureDescriptor)] = []
-    private var top: (MTLAccelerationStructure, MTL4AccelerationStructureDescriptor)?
-    private(set) var scratchBuffers: [MTLBuffer] = []
+    let device: any MTLDevice
+    private var primitives: [(any MTLAccelerationStructure, MTL4AccelerationStructureDescriptor)] =
+        []
+    private var top: (any MTLAccelerationStructure, MTL4AccelerationStructureDescriptor)?
+    private(set) var scratchBuffers: [any MTLBuffer] = []
 
-    init(device: MTLDevice) {
+    init(device: any MTLDevice) {
         self.device = device
     }
 
     mutating func add(primitive descriptor: MTL4AccelerationStructureDescriptor)
-        -> MTLAccelerationStructure?
+        -> any MTLAccelerationStructure?
     {
         guard let structure = make(descriptor) else { return nil }
         primitives.append((structure, descriptor))
@@ -155,7 +160,7 @@ private struct Builder {
     }
 
     mutating func add(instance descriptor: MTL4AccelerationStructureDescriptor)
-        -> MTLAccelerationStructure?
+        -> any MTLAccelerationStructure?
     {
         guard let structure = make(descriptor) else { return nil }
         top = (structure, descriptor)
@@ -163,7 +168,7 @@ private struct Builder {
     }
 
     private func make(_ descriptor: MTL4AccelerationStructureDescriptor)
-        -> MTLAccelerationStructure?
+        -> any MTLAccelerationStructure?
     {
         device.makeAccelerationStructure(
             size: device.accelerationStructureSizes(descriptor: descriptor)
@@ -172,7 +177,7 @@ private struct Builder {
     }
 
     /// Each build gets its own scratch range, so the mesh builds may overlap.
-    mutating func encode(into encoder: MTL4ComputeCommandEncoder) -> Bool {
+    mutating func encode(into encoder: any MTL4ComputeCommandEncoder) -> Bool {
         guard let top else { return false }
         let builds = primitives + [top]
         let sizes = builds

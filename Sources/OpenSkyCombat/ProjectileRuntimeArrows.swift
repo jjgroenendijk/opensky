@@ -4,8 +4,8 @@
 
 import Foundation
 import OpenSkyCombatInterface
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import simd
 
 /// The arrows standing in actors, the clock they age on, and the recovery roll.

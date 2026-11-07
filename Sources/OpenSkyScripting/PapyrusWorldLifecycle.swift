@@ -4,10 +4,10 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 /// One script slated for instantiation during an attach, in deterministic
 /// `sortedEntries()` × VMAD-script order.

@@ -3,9 +3,9 @@
 // straight down the aim ray. See docs/engine/projectiles.md and docs/engine/spell-delivery.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 /// What a projectile carries, and therefore what it does when it lands.
 nonisolated public enum ProjectilePayload: Equatable, Sendable {

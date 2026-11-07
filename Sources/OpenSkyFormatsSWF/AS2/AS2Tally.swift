@@ -96,7 +96,7 @@ nonisolated public struct AS2Tally: Equatable, Sendable {
     }
 
     public static func opcodeName(_ code: UInt8) -> String {
-        SWFActionName.name(forCode: code) ?? String(format: "0x%02X", code)
+        unsafe SWFActionName.name(forCode: code) ?? String(format: "0x%02X", code)
     }
 }
 

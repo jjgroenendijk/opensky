@@ -1,7 +1,7 @@
 // The one marker the player places on the world map. See docs/engine/world-map.md.
 
 import Foundation
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// Keyed by the player. The marker belongs to one map worldspace, so it shows only there.
 nonisolated public struct PlayerSetMapMarker: WorldStateComponent, Sendable {

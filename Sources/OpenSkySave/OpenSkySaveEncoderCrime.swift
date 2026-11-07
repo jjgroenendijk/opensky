@@ -3,11 +3,11 @@
 // the player sells to a fence.
 
 import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFormatsCore
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's ledger paired with the snapshot entry it came from.

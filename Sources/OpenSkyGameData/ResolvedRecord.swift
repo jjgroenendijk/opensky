@@ -2,8 +2,8 @@
 // smaller record stores share. A link resolves relative to `sourcePlugin`.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedRecord<Record: Sendable>: Sendable {
     public let id: ResolvedFormID

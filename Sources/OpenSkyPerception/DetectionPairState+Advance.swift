@@ -1,4 +1,4 @@
-import OpenSkyPerceptionInterface
+public import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import simd
 

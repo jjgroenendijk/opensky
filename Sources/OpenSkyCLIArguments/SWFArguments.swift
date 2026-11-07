@@ -1,6 +1,6 @@
 // `swf`: the Scaleform movie parse, render, and ActionScript sweeps.
 
-import ArgumentParser
+public import ArgumentParser
 
 /// `--movie`: only the movies whose path contains this text.
 public struct MovieFilterOption: ParsableArguments, Sendable {

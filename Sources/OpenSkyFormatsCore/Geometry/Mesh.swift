@@ -3,7 +3,7 @@
 // (NIFFile.model()); consumer: the static-mesh render path.
 
 import Foundation
-import simd
+public import simd
 
 /// One drawable chunk: vertex arrays + triangle indices in mesh-local space,
 /// the transform into model space, and a material slot resolved against the

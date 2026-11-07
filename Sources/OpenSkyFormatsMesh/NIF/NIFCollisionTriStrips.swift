@@ -2,7 +2,7 @@
 // helpers with NIFCollisionTriangleCollections.swift, so those are internal.
 // Source: NifTools nif.xml.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 import simd
 

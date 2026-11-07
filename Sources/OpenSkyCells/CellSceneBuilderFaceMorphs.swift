@@ -3,12 +3,12 @@
 // Vertex count is the final guard before an actor-local buffer is attached.
 
 import Foundation
-import OpenSkyActorPresentation
+public import OpenSkyActorPresentation
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyRendering
-import OpenSkyRenderResources
+public import OpenSkyRendering
+public import OpenSkyRenderResources
 import OpenSkyRuntimeState
 
 nonisolated private struct FaceMorphAssociationState {

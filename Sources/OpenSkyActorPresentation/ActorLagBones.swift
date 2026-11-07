@@ -2,9 +2,9 @@
 // Each trails its rest under the rig bone above it, as the game's lag rule moves it
 // (docs/formats/nif-controllers.md#node-controller-rules).
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsMesh
+public import simd
 
 nonisolated public struct ActorLagBoneRig: Sendable {
     public struct Bone: Equatable, Sendable {

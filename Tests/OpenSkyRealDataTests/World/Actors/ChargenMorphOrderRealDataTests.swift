@@ -53,7 +53,7 @@ struct ChargenMorphOrderRealDataTests {
                 .joined(separator: ", "))
         for (index, item) in evidence.sorted(by: { $0.key < $1.key }) {
             let pair = ChargenMorphs.sliders[index]
-            lines.append(String(
+            unsafe lines.append(String(
                 format: "NAM9[%d] %@/%@ (%d NPCs): flipped +%.4f, dropped +%.4f %@",
                 index, pair.negative, pair.positive, item.samples, item.flipped, item.dropped,
                 item.agrees ? "ok" : "MISMATCH"
@@ -183,12 +183,12 @@ private struct FaceFit {
     }
 
     func report(name: String) -> String {
-        var line = String(
+        var line = unsafe String(
             format: "%@: base rms %.4f, built rms %.4f, NAMA %@", name, baseError, builtError,
             actor.details.faceParts.map(String.init).joined(separator: " ")
         )
         if let vampireError {
-            line += String(
+            unsafe line += String(
                 format: ", NAM9[18] %g, VampireMorph toggled %.4f",
                 vampireValue ?? 0,
                 vampireError

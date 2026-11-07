@@ -3,8 +3,8 @@
 // Reference: UESP "Skyrim Mod:Mod File Format" — TES4 record.
 // Layout documented in docs/formats/formid.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct PluginHeader: Sendable {
     /// HEDR field (12 bytes): file stats written by the CK.

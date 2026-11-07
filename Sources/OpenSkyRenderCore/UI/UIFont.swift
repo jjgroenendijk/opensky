@@ -1,7 +1,7 @@
 // System-font description for the UI layer, resolved to a CTFont on demand. Bold adds
 // the symbolic trait and falls back to the base face.
 
-import CoreText
+public import CoreText
 
 nonisolated public struct UIFont: Equatable, Sendable {
     public enum Weight: Int, Equatable, Sendable {

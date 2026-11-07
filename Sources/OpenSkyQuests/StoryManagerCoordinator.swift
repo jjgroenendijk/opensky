@@ -2,9 +2,9 @@
 // session-start pass, and keeps the last walk for state reads. The rules live
 // in `StoryManagerRuntime`. See docs/engine/story-manager.md.
 
-import OpenSkyConditions
-import OpenSkyFormatsCore
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsCore
+public import OpenSkyGameData
 import OpenSkyWorldState
 
 /// What `StoryManagerCoordinator` reads from the running session.

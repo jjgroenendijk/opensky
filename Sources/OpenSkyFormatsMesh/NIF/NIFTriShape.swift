@@ -3,8 +3,8 @@
 // halfs, and normals and tangents are normalized bytes, remapped as
 // (byte / 255) * 2 - 1 like NifSkope. Layout from nif.xml: docs/formats/nif.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct NIFTriShape: Sendable {

@@ -2,7 +2,7 @@
 // pose, water currents, activate parents, patrol data, and editor links.
 // Layout and sources: docs/formats/placed-references.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct PlacedReferenceDetails: Equatable, Sendable {
     /// XOCP: a plane of the given size, placed and turned by a quaternion.

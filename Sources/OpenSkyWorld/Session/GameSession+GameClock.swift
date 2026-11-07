@@ -3,9 +3,9 @@
 
 import Foundation
 import OpenSkyGameData
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// The renderer's game-time state, grouped so `Renderer` carries one stored
 /// property instead of four.

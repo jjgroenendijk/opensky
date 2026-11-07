@@ -1,6 +1,6 @@
 // Reference parameters, shared by every feature's condition functions.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 

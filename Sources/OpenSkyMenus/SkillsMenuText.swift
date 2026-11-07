@@ -1,6 +1,6 @@
 // The skills menu's questions, from string settings. See docs/engine/skills-menu.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum SkillsMenuText: String, GameSettingTextKey {
     case perkConfirm = "sStatsPerkConfirm"

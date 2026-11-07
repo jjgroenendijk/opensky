@@ -2,7 +2,7 @@
 // `dragonbehavior.hkx` and the dragon clips on the install (docs/engine/dragon-flight.md).
 
 import Foundation
-import OpenSkyBehavior
+public import OpenSkyBehavior
 import simd
 
 nonisolated public enum DragonFlightGraphNames {

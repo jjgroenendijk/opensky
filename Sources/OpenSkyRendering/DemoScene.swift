@@ -4,11 +4,11 @@
 // counter-clockwise from outside (docs/decisions/coordinates.md).
 
 import Foundation
-import Metal
-import OpenSkyFormatsCore
+public import Metal
+public import OpenSkyFormatsCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
-import simd
+public import simd
 
 nonisolated public enum DemoScene: Sendable {
     // MARK: - Camera + light (consumed by the renderer's FrameUniforms)
@@ -26,9 +26,9 @@ nonisolated public enum DemoScene: Sendable {
 
     /// Builds the full demo scene: checkerboard ground, three crates (one
     /// yawed 45°, one scaled), one double-sided alpha-test cutout panel.
-    public static func build(device: MTLDevice) throws -> RenderScene {
+    public static func build(device: any MTLDevice) throws -> RenderScene {
         let checker = try checkerTexture(device: device)
-        let textures: [String: MTLTexture] = try [
+        let textures: [String: any MTLTexture] = try [
             "demo/checker": checker,
             "demo/crate": crateTexture(device: device),
             "demo/cutout": cutoutTexture(device: device)
@@ -223,11 +223,11 @@ nonisolated public enum DemoScene: Sendable {
     // MARK: - Procedural textures
 
     private static func texture(
-        device: MTLDevice,
+        device: any MTLDevice,
         size: Int,
         label: String,
         pixel: (_ x: Int, _ y: Int) -> SIMD4<UInt8>
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2D
         descriptor.pixelFormat = .rgba8Unorm_srgb
@@ -250,7 +250,7 @@ nonisolated public enum DemoScene: Sendable {
                 bytes[offset + 3] = value.w
             }
         }
-        texture.replace(
+        unsafe texture.replace(
             region: MTLRegionMake2D(0, 0, size, size),
             mipmapLevel: 0,
             withBytes: bytes,
@@ -260,7 +260,7 @@ nonisolated public enum DemoScene: Sendable {
     }
 
     /// Gray/white 2x2 checker per texture — tiles into a ground grid.
-    private static func checkerTexture(device: MTLDevice) throws -> MTLTexture {
+    private static func checkerTexture(device: any MTLDevice) throws -> any MTLTexture {
         try texture(device: device, size: 64, label: "demo/checker") { x, y in
             let check = (x / 32 + y / 32) % 2 == 0
             return check
@@ -271,7 +271,7 @@ nonisolated public enum DemoScene: Sendable {
 
     /// Warm-toned crate: bordered panel with a diagonal brace — asymmetric
     /// on purpose so flipped winding/UVs are visible immediately.
-    private static func crateTexture(device: MTLDevice) throws -> MTLTexture {
+    private static func crateTexture(device: any MTLDevice) throws -> any MTLTexture {
         try texture(device: device, size: 64, label: "demo/crate") { x, y in
             let border = x < 6 || x > 57 || y < 6 || y > 57
             let brace = abs(x - y) < 4
@@ -287,7 +287,7 @@ nonisolated public enum DemoScene: Sendable {
 
     /// Green panel with transparent circular holes — exercises the
     /// alpha-test discard path like foliage cutouts.
-    private static func cutoutTexture(device: MTLDevice) throws -> MTLTexture {
+    private static func cutoutTexture(device: any MTLDevice) throws -> any MTLTexture {
         try texture(device: device, size: 64, label: "demo/cutout") { x, y in
             let cx = Float(x % 16) - 8
             let cy = Float(y % 16) - 8

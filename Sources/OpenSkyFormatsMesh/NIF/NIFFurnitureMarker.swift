@@ -1,7 +1,7 @@
 // `BSFurnitureMarkerNode`: the places where an actor sits, lies, or leans on a
 // furniture mesh. Layout: docs/formats/nif.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct NIFFurnitureMarker: Equatable, Sendable {

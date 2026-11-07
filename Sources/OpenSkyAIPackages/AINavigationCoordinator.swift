@@ -2,11 +2,11 @@
 // every section, the crosshair pick, and the move, stop and reevaluate actions.
 // The rules live in `AINavigationCore`. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
-import OpenSkyNavigation
+public import OpenSkyFormatsESM
+public import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 /// What the AI & Navigation coordinator reads from the session.

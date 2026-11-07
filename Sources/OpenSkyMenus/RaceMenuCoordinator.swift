@@ -3,10 +3,10 @@
 // `racesex_menu.swf` movie when it loads; see docs/engine/race-menu.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyRendering
 
 /// What the race menu reads from and writes to the running game.
 public protocol RaceMenuWorld: AnyObject {
@@ -263,16 +263,17 @@ extension RaceMenuCoordinator {
         let complexion = face.faceTexture.map { "Complexion: \($0)" } ?? "Complexion: race default"
         let sliders = face.morphs.enumerated().filter { $0.element != 0 }.map { index, value in
             let label = labels.indices.contains(index) ? labels[index] : "Slider \(index)"
-            return String(format: "%@ %.2f", label, value)
+            return unsafe String(format: "%@ %.2f", label, value)
         }
         let tints = face.tints.map { tint in
-            String(
+            unsafe String(
                 format: "mask %d rgb %d %d %d at %.2f", tint.maskIndex, tint.color.x, tint.color.y,
                 tint.color.z, tint.strength
             )
         }
+        let weight = unsafe String(format: "Weight: %.0f", face.weight)
         return [
-            String(format: "Weight: %.0f", face.weight),
+            weight,
             "Sliders: " + (sliders.isEmpty ? "all 0" : sliders.joined(separator: ", ")),
             "Parts: " + face.parts.map(String.init).joined(separator: " "),
             "Tints: " + (tints.isEmpty ? "none" : tints.joined(separator: "; ")),

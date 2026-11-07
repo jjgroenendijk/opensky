@@ -1,7 +1,7 @@
 // Scene swap and GPU ring management. The rings cover the streamed scene plus the
 // player body, so both sizing callers live here.
 
-import Metal
+public import Metal
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
@@ -56,7 +56,7 @@ extension Renderer {
         let newDraw = try regrownDrawRing(for: drawCount)
         let newInstance = try regrownInstanceRing(for: instanceCount)
         guard newDraw != nil || newInstance != nil else { return }
-        var retiring: [MTLAllocation] = []
+        var retiring: [any MTLAllocation] = []
         if let newDraw {
             adoptDrawRing(newDraw, retiring: &retiring)
         }
@@ -70,17 +70,17 @@ extension Renderer {
     /// Replacement draw-side rings (draw + point-light + shadow-draw), sized to
     /// the new draw count. nil when the current rings already fit.
     public struct DrawRingRegrow {
-        public let draw: MTLBuffer
-        public let pointLight: MTLBuffer
-        public let shadowDraw: MTLBuffer
+        public let draw: any MTLBuffer
+        public let pointLight: any MTLBuffer
+        public let shadowDraw: any MTLBuffer
         public let capacity: Int
     }
 
     /// Replacement instance-side rings (scene + shadow), sized to the new
     /// instance count. nil when the current rings already fit.
     public struct InstanceRingRegrow {
-        public let instance: MTLBuffer
-        public let shadowInstance: MTLBuffer
+        public let instance: any MTLBuffer
+        public let shadowInstance: any MTLBuffer
         public let capacity: Int
     }
 
@@ -132,7 +132,7 @@ extension Renderer {
 
     /// Swaps in the new draw-side rings, retiring the old ones (they may back
     /// in-flight frames) and adding the new ones to the residency set.
-    public func adoptDrawRing(_ ring: DrawRingRegrow, retiring: inout [MTLAllocation]) {
+    public func adoptDrawRing(_ ring: DrawRingRegrow, retiring: inout [any MTLAllocation]) {
         retiring.append(drawUniformBuffer)
         retiring.append(pointLightBuffer)
         retiring.append(shadowDrawUniformBuffer)
@@ -143,7 +143,7 @@ extension Renderer {
         residencySet.addAllocations([ring.draw, ring.pointLight, ring.shadowDraw])
     }
 
-    public func adoptInstanceRing(_ ring: InstanceRingRegrow, retiring: inout [MTLAllocation]) {
+    public func adoptInstanceRing(_ ring: InstanceRingRegrow, retiring: inout [any MTLAllocation]) {
         retiring.append(instanceTransformBuffer)
         retiring.append(shadowInstanceBuffer)
         instanceTransformBuffer = ring.instance
@@ -155,7 +155,7 @@ extension Renderer {
     /// Queues allocations for deferred residency-set removal once the frames
     /// that may still reference them provably drain (used by setSWFMovie;
     /// setScene manages its own retire entry alongside the ring swap).
-    public func retireAllocations(_ allocations: [MTLAllocation]) {
+    public func retireAllocations(_ allocations: [any MTLAllocation]) {
         guard !allocations.isEmpty else { return }
         retired.append(RetiredAllocations(
             lastFrameIndex: UInt64(frameIndex - 1),
@@ -169,7 +169,7 @@ extension Renderer {
     public func purgeRetiredResources() {
         guard !retired.isEmpty else { return }
         let drained = endFrameEvent.signaledValue
-        var ready: [MTLAllocation] = []
+        var ready: [any MTLAllocation] = []
         retired.removeAll { entry in
             guard entry.lastFrameIndex <= drained else { return false }
             ready.append(contentsOf: entry.allocations)

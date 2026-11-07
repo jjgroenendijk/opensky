@@ -4,7 +4,7 @@
 // can integrate horizontal motion twice. Only the jump impulse writes vertical velocity.
 // See docs/engine/walk-mode.md.
 
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import simd
 
 /// What the controller shows the planner before a fixed step runs.

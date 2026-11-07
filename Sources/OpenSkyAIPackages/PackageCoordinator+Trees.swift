@@ -2,7 +2,7 @@
 // quest alias holds, or one the actor's own schedule picked.
 // See docs/engine/package-schedules.md, "Procedure tree" and "In a session".
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// A walk that found every mover slot taken, and its place in the queue.

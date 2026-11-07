@@ -3,7 +3,7 @@
 // player still seen there (UESP "Skyrim:Crime": one warning, then a bounty after
 // 30 seconds). An Off Limits cell skips the warning. See docs/engine/crime.md.
 
-import OpenSkyCrimeInterface
+public import OpenSkyCrimeInterface
 import OpenSkyGameData
 
 /// What one trespass tick asks for.

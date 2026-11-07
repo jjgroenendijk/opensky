@@ -3,7 +3,7 @@
 // inspector use it. Layout notes: docs/formats/records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum RecordDecoders {
     /// Decodes one record. The flag is the TES4 localized flag of its plugin.

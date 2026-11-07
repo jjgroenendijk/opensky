@@ -3,8 +3,8 @@
 // MatrixMath. Layout: docs/formats/nif.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 nonisolated extension BinaryReader {
     /// Three little-endian floats (nif.xml Vector3).

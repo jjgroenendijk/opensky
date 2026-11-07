@@ -53,10 +53,10 @@ struct AudioSourceStreamerTests {
             format: format
         ))
         #expect(buffer.frameLength == 3)
-        let channel = try #require(buffer.floatChannelData?[0])
-        #expect(channel[0] == 0.5)
-        #expect(channel[1] == 0.5)
-        #expect(channel[2] == -0.5)
+        let channel = unsafe try #require(buffer.floatChannelData?[0])
+        unsafe #expect(channel[0] == 0.5)
+        unsafe #expect(channel[1] == 0.5)
+        unsafe #expect(channel[2] == -0.5)
     }
 
     @Test
@@ -71,11 +71,11 @@ struct AudioSourceStreamerTests {
             format: format
         ))
         #expect(buffer.frameLength == 2)
-        let channels = try #require(buffer.floatChannelData)
-        #expect(channels[0][0] == 1)
-        #expect(channels[0][1] == 0.5)
-        #expect(channels[1][0] == -1)
-        #expect(channels[1][1] == -0.5)
+        let channels = unsafe try #require(buffer.floatChannelData)
+        unsafe #expect(channels[0][0] == 1)
+        unsafe #expect(channels[0][1] == 0.5)
+        unsafe #expect(channels[1][0] == -1)
+        unsafe #expect(channels[1][1] == -0.5)
     }
 
     @Test

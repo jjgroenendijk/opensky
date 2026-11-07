@@ -1,7 +1,7 @@
 // Sneak trains while a crouched target stays hidden near an observer. UESP
 // "Skyrim:Leveling". See docs/engine/detection.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 

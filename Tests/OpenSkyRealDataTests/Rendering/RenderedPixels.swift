@@ -15,7 +15,11 @@ enum RenderedPixels {
     /// that has no scene of its own — the shape every menu acceptance suite
     /// needs to drive an SWF runtime offscreen.
     @MainActor
-    static func offscreenRenderer(device: MTLDevice, width: Int, height: Int) throws -> Renderer {
+    static func offscreenRenderer(
+        device: any MTLDevice,
+        width: Int,
+        height: Int
+    ) throws -> Renderer {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: width, height: height),
             device: device
@@ -27,7 +31,11 @@ enum RenderedPixels {
 
     /// The same view driven by a `GameSession`, for suites that change game state.
     @MainActor
-    static func offscreenSession(device: MTLDevice, width: Int, height: Int) throws -> GameSession {
+    static func offscreenSession(
+        device: any MTLDevice,
+        width: Int,
+        height: Int
+    ) throws -> GameSession {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: width, height: height),
             device: device
@@ -45,17 +53,17 @@ enum RenderedPixels {
         _ renderer: Renderer,
         width: Int,
         height: Int
-    ) throws -> (texture: MTLTexture, pixels: [UInt8]) {
+    ) throws -> (texture: any MTLTexture, pixels: [UInt8]) {
         let texture = try renderer.renderOffscreen(width: width, height: height, animationTime: 1)
         return (texture, read(texture))
     }
 
     /// The texture's BGRA8 bytes, row after row.
-    static func read(_ texture: MTLTexture) -> [UInt8] {
+    static func read(_ texture: any MTLTexture) -> [UInt8] {
         var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
         pixels.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base,
                 bytesPerRow: texture.width * 4,
                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),
@@ -89,7 +97,7 @@ enum RenderedPixels {
     static func writePNG(_ pixels: [UInt8], width: Int, height: Int, to url: URL) throws {
         var pixels = pixels
         let colorSpace = try #require(CGColorSpace(name: CGColorSpace.sRGB))
-        let context = try #require(CGContext(
+        let context = unsafe try #require(CGContext(
             data: &pixels,
             width: width,
             height: height,

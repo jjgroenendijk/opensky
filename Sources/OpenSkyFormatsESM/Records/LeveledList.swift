@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/actors.md (LVSP: shouts-equip-slots.md).
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct LeveledList: Sendable {
     /// LVLF flags (UESP LVLN/LVLI flag table).

@@ -1,4 +1,4 @@
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One observer-target pair's identity.
 nonisolated public struct DetectionPairKey: Hashable, Comparable, Sendable {

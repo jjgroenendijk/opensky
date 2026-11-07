@@ -2,7 +2,7 @@
 // the xWMA payload. It only frames: `audioData` goes to `XWMFile`, and
 // `lipData` is passed on unread. Layout and sources: docs/formats/fuz.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum FUZError: Error, Equatable, Sendable {
@@ -96,7 +96,7 @@ nonisolated extension FUZFile {
     public static func pack(lip: Data?, audio: Data) -> Data {
         var data = Data()
         for field in [Layout.magic.rawValue, Layout.supportedVersion, UInt32(lip?.count ?? 0)] {
-            withUnsafeBytes(of: field.littleEndian) { data.append(contentsOf: $0) }
+            withUnsafeBytes(of: field.littleEndian) { unsafe data.append(contentsOf: $0) }
         }
         data.append(lip ?? Data())
         data.append(audio)

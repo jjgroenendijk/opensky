@@ -4,11 +4,11 @@
 // held copy instead (`CraftingSession+Tempering`). See docs/engine/crafting.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyProgressionInterface
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldInterface
 
 /// Answers a recipe's conditions for the player.
 @MainActor

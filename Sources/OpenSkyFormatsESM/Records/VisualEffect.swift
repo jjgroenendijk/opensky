@@ -3,7 +3,7 @@
 // docs/formats/visual-effects.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct AddonNode: Equatable, Sendable {
     public let formID: FormID

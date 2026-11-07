@@ -3,7 +3,7 @@
 // the behavior clip tests need a real decoded clip.
 // Byte map: docs/formats/hka-animation.md.
 
-import Foundation
+public import Foundation
 
 public struct HKASplineAnimationFixture: Sendable {
     public var duration: Float = 1

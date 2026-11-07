@@ -3,7 +3,7 @@
 // mark is the spellbook's, so a book counts once per save.
 
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface

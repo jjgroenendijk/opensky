@@ -3,7 +3,7 @@
 // The kill-move idles test it. See docs/engine/paired-animations.md#kill-moves.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Whether the attack the caller is weighing kills its target: the attacker, the target,
 /// and the answer the combat damage rules gave.

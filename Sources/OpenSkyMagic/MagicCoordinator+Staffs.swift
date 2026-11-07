@@ -5,9 +5,9 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 
 /// A held staff: the item's enchantment and the spell it casts.
 public struct HeldStaff {

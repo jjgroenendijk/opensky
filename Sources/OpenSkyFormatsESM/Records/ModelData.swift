@@ -2,7 +2,7 @@
 // Other model slots use the same layout under other tags (MOD2/MO2T/MO2S, ...).
 // Layout and sources: docs/formats/records.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct ModelData: Equatable, Sendable {

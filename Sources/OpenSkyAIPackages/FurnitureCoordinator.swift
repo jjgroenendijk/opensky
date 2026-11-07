@@ -3,8 +3,8 @@
 // idles, and tells the scripts. See docs/engine/furniture.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 import simd
 
 /// What the furniture coordinator reads from the world and asks of it. The app answers it.

@@ -5,8 +5,8 @@
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyPhysics
-import simd
+@testable public import OpenSkyPhysics
+public import simd
 
 public enum RagdollFixture {
     /// Half the length of one bone, along its own local x.

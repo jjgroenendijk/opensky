@@ -9,7 +9,7 @@ import simd
 
 /// The depth copy the composite reads; `copy` is nil when the frame has no effect on.
 struct PostEffectDepthCopy {
-    let copy: MTLTexture?
+    let copy: any MTLTexture?
 }
 
 extension Renderer {
@@ -97,9 +97,9 @@ extension Renderer {
     /// Traces the occlusion and the indirect light the composite reads, after the scene
     /// copies. Each pass uses its history only when last frame traced into it.
     func encodeHistoryPasses(
-        _ encoder: MTL4ComputeCommandEncoder,
+        _ encoder: any MTL4ComputeCommandEncoder,
         post: inout PostEffectUniforms?,
-        inputs: (depth: MTLTexture, scene: MTLTexture),
+        inputs: (depth: any MTLTexture, scene: any MTLTexture),
         slot: Int
     ) {
         guard var uniforms = post else { return }

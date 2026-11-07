@@ -2,7 +2,7 @@
 // anything in the air, changing gear mid-attack, and marking an item that cannot be a
 // favourite. See docs/engine/inventory-menu.md#refused-actions.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum ItemRefusalText: String, GameSettingTextKey {
     case equipWeaponWhileAttacking = "sAnimationCanNotEquipWeapon"

@@ -4,7 +4,7 @@
 // passes the event on to the referenced file. See docs/engine/idle-runtime.md.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// The clip one event reaches, and the behavior files the lookup walked.
 nonisolated public struct BehaviorEventClip: Equatable, Sendable {

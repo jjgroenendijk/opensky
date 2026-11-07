@@ -4,9 +4,9 @@
 // See docs/engine/vehicles.md.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyWorldState
-import simd
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
+public import simd
 
 /// How a follower sits on its carrier.
 nonisolated public enum VehicleSeat: Equatable, Sendable {

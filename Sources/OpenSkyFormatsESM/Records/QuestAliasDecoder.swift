@@ -3,19 +3,19 @@
 // through the tables below instead of thirty switch cases.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// An immutable subrecord-to-slot table, shared as a `static let` constant.
 nonisolated private struct AliasSlotTable<Value>: Sendable {
     typealias Slot = Sendable & WritableKeyPath<Quest.Alias, Value>
 
-    private let slots: [FourCC: Slot]
+    private let slots: [FourCC: any Slot]
 
-    init(_ slots: [FourCC: Slot]) {
+    init(_ slots: [FourCC: any Slot]) {
         self.slots = slots
     }
 
-    subscript(code: FourCC) -> Slot? {
+    subscript(code: FourCC) -> any Slot? {
         slots[code]
     }
 }

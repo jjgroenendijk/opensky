@@ -1,8 +1,8 @@
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyMagicInterface
 import simd
 
 /// Applying one enchanted hit to the actors it reached.

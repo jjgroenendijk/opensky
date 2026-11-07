@@ -5,8 +5,8 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyGameData
+public import OpenSkyPhysics
 
 nonisolated public struct ArcherySettings: Equatable, Sendable {
     /// `f1PArrowTiltUpAngle` — degrees the aim ray is tilted up by in first

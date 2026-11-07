@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public final class AcousticSpaceStore {
     public let spaces: [UInt32: AcousticSpace]

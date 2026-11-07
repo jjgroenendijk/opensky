@@ -3,7 +3,7 @@
 // section's local fixups. Byte map and citations: docs/formats/hka-skeleton.md.
 
 import Foundation
-import simd
+public import simd
 
 nonisolated public enum HKASkeletonError: Error, Equatable, Sendable {
     /// hkArray/hkStringPtr target runs past the section payload.

@@ -3,7 +3,7 @@
 // camera's saved player pose, so simulation never sees them.
 // See docs/engine/kill-cam.md.
 
-import OpenSkyCamera
+public import OpenSkyCamera
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering

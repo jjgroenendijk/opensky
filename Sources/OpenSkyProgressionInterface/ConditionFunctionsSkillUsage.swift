@@ -5,8 +5,8 @@
 // See docs/engine/skill-advancement.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// The use being credited. Empty outside a skill-use evaluation.

@@ -3,10 +3,10 @@
 // from the Creation Kit wiki's Magic Effect page (<https://ck.uesp.net/wiki/Magic_Effect>).
 // See docs/engine/magic-archetypes.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 import simd
 
 /// A light the Light archetype placed: on an actor while its effect runs, or at the

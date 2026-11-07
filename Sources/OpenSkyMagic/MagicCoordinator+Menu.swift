@@ -4,7 +4,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 
 /// One known spell as the magic menu lists it.
 nonisolated public struct MagicMenuSpell: Equatable, Sendable {

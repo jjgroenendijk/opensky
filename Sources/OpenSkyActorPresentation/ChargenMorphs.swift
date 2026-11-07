@@ -2,7 +2,7 @@
 // they give. Slider order and the sign of each pair: docs/engine/race-menu.md.
 
 import Foundation
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsMesh
 import simd
 
 nonisolated public enum ChargenMorphs {

@@ -2,16 +2,16 @@
 // REFR entries, event-handler scripts, and a note-recording native dispatch.
 // Every byte is built in code; no game data is embedded.
 
-import Foundation
-import OpenSkyFeaturesTesting
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyFormatsPEX
-@testable import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
-@testable import OpenSkyScripting
-import OpenSkyScriptingInterface
+public import Foundation
+public import OpenSkyFeaturesTesting
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsPEX
+@testable public import OpenSkyFormatsTesting
+@testable public import OpenSkyGameData
+@testable public import OpenSkyScripting
+public import OpenSkyScriptingInterface
 @testable import OpenSkyWorldInterface
-@testable import OpenSkyWorldState
+@testable public import OpenSkyWorldState
 import Testing
 
 /// Records "Probe.Note" calls in dispatch order while forwarding everything
@@ -174,7 +174,7 @@ public enum PapyrusWorldFixture {
     @MainActor
     public static func worldRuntime(
         objects: [PexObject],
-        nativeDispatch: PapyrusNativeDispatch,
+        nativeDispatch: any PapyrusNativeDispatch,
         fixedStepSeconds: Double = 1.0 / 30.0
     ) -> PapyrusWorldRuntime {
         PapyrusWorldRuntime(

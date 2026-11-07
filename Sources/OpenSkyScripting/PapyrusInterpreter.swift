@@ -5,8 +5,8 @@
 // through `SuspendedCall`. Each resume starts a new instruction slice.
 
 import Foundation
-import OpenSkyFormatsPEX
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsPEX
+public import OpenSkyScriptingInterface
 
 nonisolated public enum PapyrusFlow {
     case next

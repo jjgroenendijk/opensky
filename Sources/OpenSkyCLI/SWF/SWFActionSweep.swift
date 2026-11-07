@@ -73,7 +73,7 @@ enum SWFActionSweep {
     }
 
     private static func hex(_ code: UInt8) -> String {
-        String(format: "0x%02x", code)
+        unsafe String(format: "0x%02x", code)
     }
 }
 

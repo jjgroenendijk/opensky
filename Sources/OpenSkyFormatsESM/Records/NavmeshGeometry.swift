@@ -3,8 +3,8 @@
 // triangle index is range-checked, so bad data throws here and not later in
 // the pathing graph.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 /// Reader helpers shared by NVNM geometry and the NVMI index entries, which

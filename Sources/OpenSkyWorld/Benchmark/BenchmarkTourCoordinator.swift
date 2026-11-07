@@ -325,7 +325,7 @@ extension BenchmarkTourCoordinator {
     private func saveScreenshot(
         _ label: String, scene: BenchmarkScene, world: any BenchmarkTourWorld
     ) {
-        let number = String(format: "%02d", index + 1)
+        let number = unsafe String(format: "%02d", index + 1)
         let url = runFolder.appending(path: "\(number)-\(scene.id)-\(label).png")
         world.saveScreenshot(to: url)
         let saved = current?.screenshots ?? []

@@ -115,7 +115,7 @@ struct ParticlePlaybackRealDataTests {
     }
 
     @MainActor
-    private func readPixels(_ texture: MTLTexture) throws -> [UInt8] {
+    private func readPixels(_ texture: any MTLTexture) throws -> [UInt8] {
         RenderedPixels.read(texture)
     }
 

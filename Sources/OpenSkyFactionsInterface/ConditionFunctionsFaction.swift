@@ -4,9 +4,9 @@
 // left out are in docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
     public static func installFaction(_ registry: inout ConditionFunctionRegistry) {

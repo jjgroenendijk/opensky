@@ -4,9 +4,9 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyRendering
 
 public final class MenuMovieOverlay {
     public private(set) var isLoaded = false

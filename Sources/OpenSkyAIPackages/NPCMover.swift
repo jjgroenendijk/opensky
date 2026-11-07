@@ -1,11 +1,11 @@
 // One actor's path-following state machine. Split from NPCMovementRuntime so
 // the crowd registry and one mover remain independently readable.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyNavigation
-import OpenSkyPhysics
-import OpenSkyPlayer
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyNavigation
+public import OpenSkyPhysics
+public import OpenSkyPlayer
 import simd
 
 public struct NPCMover {

@@ -182,10 +182,11 @@ struct NIFDynamicsCensusRealDataTests {
 
     private func massReport(_ mass: NIFMassDistribution) -> [String] {
         guard let mean = mass.mean else { return ["mass: no body carries one"] }
-        var lines = [String(
+        let summary = unsafe String(
             format: "mass (kg): %d bodies, min %.3f, max %.3f, mean %.3f",
             mass.bodyCount, mass.minimum, mass.maximum, mean
-        )]
+        )
+        var lines = [summary]
         lines += mass.decades.sorted { $0.key < $1.key }.map { decade, count in
             "  1e\(decade) to 1e\(decade + 1): \(count)"
         }

@@ -2,7 +2,7 @@
 // child targets, its binding set, and the bindings' normalized member paths. Built on
 // the node's first reach and kept, because a graph's shape is fixed after load.
 
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 nonisolated public struct BehaviorCompiledNode {
     public let object: any HKBClass

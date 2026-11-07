@@ -1,7 +1,7 @@
 // Animation the renderer steps once per frame. The world owns the playback
 // objects; the scene holds them so a cell's animations leave with its scene.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 /// RenderScene stores these references. Removing a resident CellScene removes

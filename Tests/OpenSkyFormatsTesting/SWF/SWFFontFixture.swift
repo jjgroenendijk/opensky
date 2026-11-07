@@ -2,8 +2,8 @@
 // File Format Specification v19, chapter 10. Glyph shapes use
 // `SWFShapeBodyBuilder`.
 
-import Foundation
-@testable import OpenSkyFormatsSWF
+public import Foundation
+@testable public import OpenSkyFormatsSWF
 
 /// Assembles a DefineFont2 (48) / DefineFont3 (75) tag body. `flags` drives the
 /// offset/code integer widths; the offset table is computed from the glyph

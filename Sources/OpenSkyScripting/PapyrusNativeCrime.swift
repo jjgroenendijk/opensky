@@ -6,7 +6,7 @@
 // docs/engine/bounty-ledger.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {

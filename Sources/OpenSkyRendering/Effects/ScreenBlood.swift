@@ -2,7 +2,7 @@
 // menus and the UI. The runtime that decides what shows sits in the effects module
 // (docs/rendering/visual-effects.md#blood).
 
-import Metal
+public import Metal
 import MetalKit
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
@@ -36,17 +36,17 @@ nonisolated public struct ScreenBloodSplat: Equatable, Sendable {
 
 /// The three textures the game settings name.
 nonisolated public struct ScreenBloodTextures {
-    public let color: MTLTexture
-    public let alpha: MTLTexture
-    public let flare: MTLTexture
+    public let color: any MTLTexture
+    public let alpha: any MTLTexture
+    public let flare: any MTLTexture
 
-    public init(color: MTLTexture, alpha: MTLTexture, flare: MTLTexture) {
+    public init(color: any MTLTexture, alpha: any MTLTexture, flare: any MTLTexture) {
         self.color = color
         self.alpha = alpha
         self.flare = flare
     }
 
-    var allocations: [MTLAllocation] {
+    var allocations: [any MTLAllocation] {
         [color, alpha, flare]
     }
 }
@@ -57,14 +57,19 @@ public final class ScreenBloodLayer {
     nonisolated public static let quadLimit = 128
     nonisolated static let verticesPerQuad = 6
 
-    let splatterPipeline: MTLRenderPipelineState
-    let flarePipeline: MTLRenderPipelineState
-    let vertexBuffer: MTLBuffer
+    let splatterPipeline: any MTLRenderPipelineState
+    let flarePipeline: any MTLRenderPipelineState
+    let vertexBuffer: any MTLBuffer
     public internal(set) var splats: [ScreenBloodSplat] = []
     public internal(set) var textures: ScreenBloodTextures?
     public internal(set) var lastQuads = 0
 
-    init(device: MTLDevice, library: MTLLibrary, view: MTKView, compiler: PipelineCache) throws {
+    init(
+        device: any MTLDevice,
+        library: any MTLLibrary,
+        view: MTKView,
+        compiler: PipelineCache
+    ) throws {
         splatterPipeline = try Self.makePipeline(
             fragment: "screenBloodFragment", library: library, compiler: compiler, view: view
         )
@@ -106,8 +111,8 @@ public final class ScreenBloodLayer {
 
     /// Premultiplied over, the UI's blend.
     private static func makePipeline(
-        fragment: String, library: MTLLibrary, compiler: PipelineCache, view: MTKView
-    ) throws -> MTLRenderPipelineState {
+        fragment: String, library: any MTLLibrary, compiler: PipelineCache, view: MTKView
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = "screenBloodVertex"
@@ -163,7 +168,7 @@ extension Renderer {
             * stride
         vertices.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            layer.vertexBuffer.contents().advanced(by: offset)
+            unsafe layer.vertexBuffer.contents().advanced(by: offset)
                 .copyMemory(from: base, byteCount: bytes.count)
         }
         let encoder = state.encoder

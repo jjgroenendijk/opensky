@@ -3,9 +3,9 @@
 // (docs/engine/object-animation.md#node-controllers).
 
 import OpenSkyActorPresentation
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsMesh
 import OpenSkyRendering
-import simd
+public import simd
 
 /// What the node controller coordinator reads from the session.
 @MainActor

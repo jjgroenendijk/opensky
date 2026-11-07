@@ -1,7 +1,7 @@
 // Immediate-mode UI draw-list builder: a flat triangle list of `UIVertex`. Solid quads
 // sample the atlas white texel, so one pipeline draws fills and text. Testable without Metal.
 
-import OpenSkyShaderTypes
+public import OpenSkyShaderTypes
 import simd
 
 /// Result of applying the per-frame quad budget to a draw list.

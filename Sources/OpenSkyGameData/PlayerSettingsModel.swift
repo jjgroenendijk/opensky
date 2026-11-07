@@ -2,7 +2,7 @@
 // key binding overrides. The JSON codec carries a schema version and steps old
 // files forward. Bad stored values fall back to the default.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct PlayerSettingsModel: Equatable, Sendable {
     public static let schemaVersion = 3

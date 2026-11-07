@@ -2,7 +2,7 @@
 // unit test can pin it.
 
 import Foundation
-import OpenSkyPhysics
+public import OpenSkyPhysics
 
 nonisolated public enum ExplosionReadout {
     /// Rows shown per list; the rest are counted.
@@ -40,6 +40,6 @@ nonisolated public enum ExplosionReadout {
     }
 
     private static func number(_ value: Float) -> String {
-        String(format: "%.1f", value)
+        unsafe String(format: "%.1f", value)
     }
 }

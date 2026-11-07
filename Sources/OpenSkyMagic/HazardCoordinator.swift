@@ -3,10 +3,10 @@
 // path spells and enchantments use. See docs/engine/traps.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
 
 /// What the hazard coordinator reads from the rest of the game.
 @MainActor

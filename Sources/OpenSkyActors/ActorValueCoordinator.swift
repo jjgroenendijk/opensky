@@ -2,10 +2,10 @@
 // and runs the Combat readout's actor-value controls. The rules live in
 // `ActorValueRuntime`. See docs/engine/coordinators.md.
 
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Owns the actor-value runtime and reads the world through `ActorValueWorld`.
 /// Without game data the runtime stays nil, and the readout reports itself

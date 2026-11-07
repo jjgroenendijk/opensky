@@ -2,7 +2,7 @@
 // FormIDs at byte 8. Layout and sources: docs/formats/records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct EncounterZone: Equatable, Sendable {
     public struct Flags: OptionSet, Equatable, Sendable {

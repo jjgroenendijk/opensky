@@ -4,8 +4,8 @@
 // side has a facing and a perception skill, the other a gait and a crouch.
 // See docs/engine/detection.md.
 
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import simd
 
 /// One actor that is looking and listening, as the perception pass sees it.

@@ -1,7 +1,7 @@
 // The share of the display size the 3D scene renders at before MetalFX upscales it,
 // and the sub-pixel jitter each frame adds. See docs/rendering/upscaling.md.
 
-import simd
+public import simd
 
 /// Which MetalFX scaler rebuilds the full frame. Raw values are setting indexes.
 nonisolated public enum UpscalerKind: Int, CaseIterable, Sendable {

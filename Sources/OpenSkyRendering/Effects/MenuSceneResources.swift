@@ -1,7 +1,7 @@
 // The menu scene's pipelines, uniform ring, and the scene a menu set this frame.
 // See docs/rendering/menu-scene.md.
 
-@preconcurrency import Metal
+@preconcurrency @unsafe import Metal
 import MetalKit
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
@@ -16,15 +16,20 @@ public final class MenuSceneResources {
     /// Shapes the last frame drew, for the readout.
     public internal(set) var lastDraws = 0
     /// Buffers and textures added to the residency set, by object.
-    var resident: [ObjectIdentifier: MTLAllocation] = [:]
+    var resident: [ObjectIdentifier: any MTLAllocation] = [:]
 
     let pipelines: ParticlePipelines
-    let depthState: MTLDepthStencilState
+    let depthState: any MTLDepthStencilState
     /// Tests and writes depth, for a scene drawn in front of the world.
-    let frontDepthState: MTLDepthStencilState
-    let uniformBuffer: MTLBuffer
+    let frontDepthState: any MTLDepthStencilState
+    let uniformBuffer: any MTLBuffer
 
-    init(device: MTLDevice, library: MTLLibrary, view: MTKView, compiler: PipelineCache) throws {
+    init(
+        device: any MTLDevice,
+        library: any MTLLibrary,
+        view: MTKView,
+        compiler: PipelineCache
+    ) throws {
         pipelines = try Renderer.makeBlendPipelines(
             Renderer.BlendPipelineNames(
                 vertex: "menuSceneVertex", fragment: "menuSceneFragment", label: "MenuScene"

@@ -4,19 +4,19 @@
 // (docs/engine/cell-streaming.md).
 
 import Foundation
-import OpenSkyAudio
-import OpenSkyCells
+public import OpenSkyAudio
+public import OpenSkyCells
 import OpenSkyDiagnostics
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyPlayer
-import OpenSkyRendering
-import OpenSkyTerrain
-import OpenSkyWorldInterface
-import OpenSkyWorldState
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import OpenSkyPlayer
+public import OpenSkyRendering
+public import OpenSkyTerrain
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
+public import simd
 
 public typealias SettledBodyHandler = (
     ReferenceKey, ReferenceTransformOverride, CellSceneLocation

@@ -1,8 +1,8 @@
 // Where a towed cart's wheels touch the ground, and how the cart rests on them.
 // See docs/engine/vehicles.md.
 
-import OpenSkyFormatsMesh
-import simd
+public import OpenSkyFormatsMesh
+public import simd
 
 nonisolated public enum VehicleWheels {
     /// The model-frame x and y of each wheel node. A wheel touches the ground below

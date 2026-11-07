@@ -2,7 +2,7 @@
 // menu, or start a new game at the chosen start.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum LaunchPlan: Equatable, Sendable {
     /// Loads the save in this slot, past the main menu.

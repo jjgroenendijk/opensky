@@ -1,7 +1,7 @@
 // A list with some copies left out, such as the default apparel a follower's trade
 // hides (UESP "Skyrim:Followers"). See docs/engine/barter.md#a-followers-trade.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension InventoryMenuModel {
     /// The same list less `hidden` copies of each item. A row with no copy left goes.

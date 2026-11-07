@@ -3,7 +3,7 @@
 // <https://ck.uesp.net/wiki/Ingredient_Script>. See docs/engine/alchemy.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 /// What the alchemy natives ask of the inventory feature.

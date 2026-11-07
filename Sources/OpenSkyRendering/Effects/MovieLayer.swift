@@ -2,21 +2,21 @@
 // before the dev UI. The planes upload into one texture set per frame slot, so an upload
 // never touches a picture the GPU still reads. See docs/engine/movies.md.
 
-import Metal
+public import Metal
 import MetalKit
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 /// The three plane textures of one picture size.
 struct MoviePlaneTextures {
-    let luma: MTLTexture
-    let chromaBlue: MTLTexture
-    let chromaRed: MTLTexture
+    let luma: any MTLTexture
+    let chromaBlue: any MTLTexture
+    let chromaRed: any MTLTexture
     /// The serial of the picture these textures hold.
     var serial = 0
 
-    var allocations: [MTLAllocation] {
+    var allocations: [any MTLAllocation] {
         [luma, chromaBlue, chromaRed]
     }
 
@@ -28,8 +28,8 @@ struct MoviePlaneTextures {
 public final class MovieLayer {
     nonisolated static let verticesPerQuad = 6
 
-    let pipeline: MTLRenderPipelineState
-    let vertexBuffer: MTLBuffer
+    let pipeline: any MTLRenderPipelineState
+    let vertexBuffer: any MTLBuffer
     /// The picture to show; nil draws nothing.
     public internal(set) var picture: MoviePicture?
     /// False stretches the picture over the whole frame.
@@ -37,7 +37,12 @@ public final class MovieLayer {
     var pictureSerial = 0
     var slots: [MoviePlaneTextures?] = Array(repeating: nil, count: GPUFactory.maxFramesInFlight)
 
-    init(device: MTLDevice, library: MTLLibrary, view: MTKView, compiler: PipelineCache) throws {
+    init(
+        device: any MTLDevice,
+        library: any MTLLibrary,
+        view: MTKView,
+        compiler: PipelineCache
+    ) throws {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = "movieVertex"
@@ -83,8 +88,11 @@ public final class MovieLayer {
         return [topLeft, bottomLeft, bottomRight, topLeft, bottomRight, topRight]
     }
 
-    static func makePlanes(device: MTLDevice, picture: MoviePicture) throws -> MoviePlaneTextures {
-        func plane(_ width: Int, _ height: Int, _ label: String) throws -> MTLTexture {
+    static func makePlanes(
+        device: any MTLDevice,
+        picture: MoviePicture
+    ) throws -> MoviePlaneTextures {
+        func plane(_ width: Int, _ height: Int, _ label: String) throws -> any MTLTexture {
             let descriptor = MTLTextureDescriptor.texture2DDescriptor(
                 pixelFormat: .r8Unorm, width: width, height: height, mipmapped: false
             )
@@ -134,7 +142,7 @@ extension Renderer {
         let offset = state.slot * MovieLayer.verticesPerQuad * MemoryLayout<UIVertex>.stride
         vertices.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            layer.vertexBuffer.contents().advanced(by: offset)
+            unsafe layer.vertexBuffer.contents().advanced(by: offset)
                 .copyMemory(from: base, byteCount: bytes.count)
         }
         let encoder = state.encoder
@@ -182,10 +190,10 @@ extension Renderer {
         return current
     }
 
-    private func upload(_ bytes: Data, to texture: MTLTexture) {
-        bytes.withUnsafeBytes { raw in
+    private func upload(_ bytes: Data, to texture: any MTLTexture) {
+        unsafe bytes.withUnsafeBytes { raw in
             guard let base = raw.baseAddress else { return }
-            texture.replace(
+            unsafe texture.replace(
                 region: MTLRegionMake2D(0, 0, texture.width, texture.height),
                 mipmapLevel: 0, withBytes: base, bytesPerRow: texture.width
             )

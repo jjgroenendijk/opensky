@@ -114,7 +114,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     }
 
     private static func colorKey(_ color: SIMD3<Float>) -> String {
-        String(format: "%.4f,%.4f,%.4f", color.x, color.y, color.z)
+        unsafe String(format: "%.4f,%.4f,%.4f", color.x, color.y, color.z)
     }
 
     /// A shape with its own textures gets a material of its own, because other

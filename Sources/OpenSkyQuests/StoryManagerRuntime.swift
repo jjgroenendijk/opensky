@@ -3,11 +3,11 @@
 // start quests. Rules and sources: docs/engine/story-manager.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
-import OpenSkyWorldState
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
+public import OpenSkyWorldState
 
 /// Starts a quest the story manager or the session start picked. The app conforms,
 /// so scripts attach and fragments run; without one the quest runtime starts it alone.

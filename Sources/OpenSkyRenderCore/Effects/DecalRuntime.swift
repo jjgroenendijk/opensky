@@ -4,7 +4,7 @@
 // docs/rendering/decals.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// What one decal looks like: a `TXST` diffuse and the `DODT` that sizes and tints it.

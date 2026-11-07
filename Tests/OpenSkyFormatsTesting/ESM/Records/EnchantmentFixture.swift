@@ -1,8 +1,8 @@
 // Record builder shared by the enchantment record tests, the store tests, and the runtime
 // tests that build stores from the same records. Every byte is built in code.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum EnchantmentFixture: Sendable {
     /// The ENIT struct: cost, flags, cast type, amount, delivery, enchantment

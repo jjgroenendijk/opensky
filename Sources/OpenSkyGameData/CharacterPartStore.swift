@@ -3,8 +3,8 @@
 // docs/formats/body-parts.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 /// A head part with its extra parts, depth first. `cycles` counts links back to a part already
 /// seen.

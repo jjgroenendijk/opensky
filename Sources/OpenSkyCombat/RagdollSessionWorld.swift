@@ -2,11 +2,11 @@
 // does to the running session. The app answers it; a test passes a fake.
 // See docs/engine/ragdoll.md and docs/engine/coordinators.md.
 
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
-import simd
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import simd
 
 /// One resident actor, as the death sweep and the corpse search see it.
 nonisolated public struct RagdollResident: Equatable, Sendable {

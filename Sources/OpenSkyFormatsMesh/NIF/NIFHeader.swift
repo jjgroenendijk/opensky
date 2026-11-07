@@ -3,7 +3,7 @@
 // walk blocks it cannot decode. Layout: docs/formats/nif.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum NIFError: Error, Equatable, Sendable {
     /// Input violates the documented layout.

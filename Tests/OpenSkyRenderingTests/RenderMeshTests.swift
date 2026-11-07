@@ -118,17 +118,19 @@ struct RenderMeshTests {
         #expect(render.materialSlot == 0)
 
         let expectedVertices = StaticVertexLayout.interleave(mesh)
-        let vertexBytes = Data(
+        let vertexBytes = unsafe Data(
             bytes: render.vertexBuffer.contents(),
             count: render.vertexBuffer.length
         )
-        #expect(vertexBytes == expectedVertices.withUnsafeBytes { Data($0) })
+        let expectedVertexBytes = expectedVertices.withUnsafeBytes { unsafe Data($0) }
+        #expect(vertexBytes == expectedVertexBytes)
 
-        let indexBytes = Data(
+        let indexBytes = unsafe Data(
             bytes: render.indexBuffer.contents(),
             count: render.indexBuffer.length
         )
-        #expect(indexBytes == mesh.indices.withUnsafeBytes { Data($0) })
+        let expectedIndexBytes = mesh.indices.withUnsafeBytes { unsafe Data($0) }
+        #expect(indexBytes == expectedIndexBytes)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func rejectsOutOfRangeIndex() throws {

@@ -74,7 +74,7 @@ struct GrassRealDataTests {
         let counts = Dictionary(grouping: first.grassPlacements, by: \.grass)
             .map { ($0.key.rawValue, $0.value.count) }
             .sorted { $0.0 < $1.0 }
-            .map { String(format: "%08X:%d", $0.0, $0.1) }
+            .map { unsafe String(format: "%08X:%d", $0.0, $0.1) }
             .joined(separator: " ")
         let summary = """
         [INFO] grass placement probe: \(FirstRenderCell.worldspaceEditorID) \

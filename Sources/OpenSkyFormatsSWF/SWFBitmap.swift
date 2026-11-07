@@ -2,7 +2,7 @@
 // formats. The JPEG tags live in SWFBitmapJPEG.swift.
 // Source: Adobe SWF File Format Specification v19, chapter 8 "Bitmaps", pp. 139-143.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum SWFBitmapError: Error, Equatable, Sendable {

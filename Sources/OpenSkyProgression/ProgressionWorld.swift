@@ -2,10 +2,10 @@
 // and `ProgressionCoordinator` read from the running session. The app answers
 // both; a test passes a fake. See docs/engine/coordinators.md.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
 
 /// What `PerkCoordinator` reads from, and tells, the running world.
 @MainActor

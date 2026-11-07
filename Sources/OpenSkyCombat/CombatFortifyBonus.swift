@@ -4,7 +4,7 @@
 // Documented in docs/engine/item-enchantments.md.
 
 import Foundation
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 
 /// The fortify multipliers the damage formulas take.

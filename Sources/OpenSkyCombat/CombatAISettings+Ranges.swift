@@ -3,7 +3,7 @@
 // reading (docs/engine/combat-behavior.md#game-settings).
 
 import Foundation
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 
 nonisolated extension CombatAISettings {
     /// `settings` with these values. The style's offense picks the walk radius (more

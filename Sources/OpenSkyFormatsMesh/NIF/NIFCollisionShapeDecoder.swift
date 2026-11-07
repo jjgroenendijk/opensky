@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 nonisolated extension NIFCollisionDecoder {
     public mutating func decodeLeafShape(

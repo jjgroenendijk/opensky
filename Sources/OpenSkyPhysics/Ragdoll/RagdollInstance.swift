@@ -6,10 +6,10 @@
 
 import OpenSkyBehavior
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
-import OpenSkyGameData
-import simd
+public import OpenSkyGameData
+public import simd
 
 /// How a ragdoll is currently driven.
 nonisolated public enum RagdollPhase: Equatable, Sendable {

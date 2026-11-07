@@ -1,7 +1,7 @@
 // One-dimensional Papyrus array opcodes.
 
 import Foundation
-import OpenSkyFormatsPEX
+public import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {

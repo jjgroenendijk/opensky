@@ -2,8 +2,8 @@
 // word learned, a dragon soul, and a new map marker, from their string settings.
 // See docs/engine/journal.md#hud-notices.
 
-import OpenSkyGameData
-import OpenSkyScriptingInterface
+public import OpenSkyGameData
+public import OpenSkyScriptingInterface
 
 nonisolated public enum WorldNoticeText: String, GameSettingTextKey {
     case discovered = "sDiscoveredText"

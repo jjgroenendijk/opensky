@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// A scene actor and the quest alias it names. `alias` is nil when the quest has no such alias.
 nonisolated public struct SceneActorAlias: Equatable, Sendable {

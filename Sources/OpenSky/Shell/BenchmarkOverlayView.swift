@@ -39,7 +39,7 @@ final class BenchmarkOverlayView: NSView {
     }
 
     func attach(to host: NSView) {
-        guard superview !== host else { return }
+        guard unsafe superview !== host else { return }
         removeFromSuperview()
         translatesAutoresizingMaskIntoConstraints = false
         host.addSubview(self)
@@ -61,7 +61,7 @@ final class BenchmarkOverlayView: NSView {
     }
 
     static func text(for snapshot: BenchmarkTourSnapshot) -> String {
-        let fps = snapshot.fps.map { String(format: "%.0f fps", $0) } ?? "- fps"
+        let fps = snapshot.fps.map { unsafe String(format: "%.0f fps", $0) } ?? "- fps"
         let step = switch snapshot.step {
         case .loading: "Timing cold and warm loads"
         case .arriving: "Travelling"

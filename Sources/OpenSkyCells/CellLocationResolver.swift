@@ -2,8 +2,8 @@
 // list holds the exterior cell. See docs/formats/locations.md#cell-link.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldState
 
 nonisolated public struct CellLocationResolver: Sendable {

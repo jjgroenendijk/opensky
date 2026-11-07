@@ -4,7 +4,7 @@
 // groups instead. See docs/engine/dynamic-body-drawing.md.
 
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 nonisolated extension DrawInstance {
     /// This instance carried through a rigid transform: matrices recomposed and

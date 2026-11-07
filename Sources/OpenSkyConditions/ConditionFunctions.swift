@@ -4,8 +4,8 @@
 // function list, and xEdit wbDefinitionsTES5.pas.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 nonisolated public enum ConditionFunctions: Sendable {
     /// The functions the core answers from state it owns: time, reference

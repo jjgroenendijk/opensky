@@ -2,11 +2,11 @@
 // linear. A failed load logs and falls back to a 1x1 placeholder, so one bad
 // texture never stops the engine.
 
-import Foundation
-import Metal
-import OpenSkyAssetCache
+public import Foundation
+public import Metal
+public import OpenSkyAssetCache
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsMesh
 
 /// How a texture is consumed — decides color space and the placeholder pixel.
 nonisolated public enum TextureUsage: Sendable {
@@ -44,15 +44,15 @@ nonisolated public final class TextureLoader {
         category: "TextureLoader"
     )
 
-    let device: MTLDevice
-    private let colorPlaceholder: MTLTexture
-    private let dataPlaceholder: MTLTexture
-    private let cubePlaceholder: MTLTexture
-    private let volumePlaceholder: MTLTexture
+    let device: any MTLDevice
+    private let colorPlaceholder: any MTLTexture
+    private let dataPlaceholder: any MTLTexture
+    private let cubePlaceholder: any MTLTexture
+    private let volumePlaceholder: any MTLTexture
 
     /// Throws when the 1x1 placeholders cannot be allocated, because then no
     /// failed load has a fallback.
-    public init(device: MTLDevice) throws {
+    public init(device: any MTLDevice) throws {
         self.device = device
         colorPlaceholder = try Self.makePlaceholder(device: device, usage: .color)
         dataPlaceholder = try Self.makePlaceholder(device: device, usage: .data)
@@ -61,7 +61,7 @@ nonisolated public final class TextureLoader {
     }
 
     /// Never fails: a parse or upload error logs and yields the usage's placeholder.
-    public func texture(dds data: Data, usage: TextureUsage, label: String) -> MTLTexture {
+    public func texture(dds data: Data, usage: TextureUsage, label: String) -> any MTLTexture {
         do {
             let dds = try DDSFile(
                 data: data, allowsCubemap: usage == .cube, allowsVolume: usage == .volume
@@ -82,20 +82,20 @@ nonisolated public final class TextureLoader {
     }
 
     /// Missing file (VFS lookup failed upstream): log + placeholder.
-    public func missingTexture(usage: TextureUsage, label: String) -> MTLTexture {
+    public func missingTexture(usage: TextureUsage, label: String) -> any MTLTexture {
         Self.logger.error("texture \(label, privacy: .public) missing, using placeholder")
         return placeholder(usage: usage)
     }
 
     /// Throwing core — exercised directly by unit tests.
-    public func upload(dds: DDSFile, usage: TextureUsage, label: String) throws -> MTLTexture {
+    public func upload(dds: DDSFile, usage: TextureUsage, label: String) throws -> any MTLTexture {
         try Self.upload(dds: dds, usage: usage, label: label, device: device)
     }
 
     /// The upload alone, so a decode worker can run it off the build thread.
     static func upload(
         dds: DDSFile, usage: TextureUsage, label: String, device: any MTLDevice
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         guard !dds.format.isBlockCompressed || device.supportsBCTextureCompression else {
             throw TextureLoaderError.bcTextureCompressionUnsupported
         }
@@ -129,7 +129,7 @@ nonisolated public final class TextureLoader {
         return usage == .volume ? .type3D : .type2D
     }
 
-    private static func upload(dds: DDSFile, level: Int, face: Int, into texture: MTLTexture) {
+    private static func upload(dds: DDSFile, level: Int, face: Int, into texture: any MTLTexture) {
         let depth = texture.textureType == .type3D ? dds.depth(level: level) : 1
         let region = MTLRegionMake3D(
             0, 0, 0, dds.width(level: level), dds.height(level: level), depth
@@ -137,9 +137,9 @@ nonisolated public final class TextureLoader {
         let source = dds.mipData(level: level, face: face)
         let uploadData = dds.format == .xrgb8888 ? withOpaqueAlpha(source) : source
         let bytesPerRow = dds.bytesPerRow(level: level)
-        uploadData.withUnsafeBytes { bytes in
+        unsafe uploadData.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return } // levels never empty
-            texture.replace(
+            unsafe texture.replace(
                 region: region,
                 mipmapLevel: level,
                 slice: face,
@@ -151,7 +151,7 @@ nonisolated public final class TextureLoader {
     }
 
     /// A cached texture: the same levels the DDS path uploads, without the parse.
-    public func texture(ready: ReadyTexture, usage: TextureUsage, label: String) -> MTLTexture {
+    public func texture(ready: ReadyTexture, usage: TextureUsage, label: String) -> any MTLTexture {
         do {
             return try upload(ready: ready, usage: usage, label: label)
         } catch {
@@ -167,13 +167,13 @@ nonisolated public final class TextureLoader {
         ready: ReadyTexture,
         usage: TextureUsage,
         label: String
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         try Self.upload(ready: ready, usage: usage, label: label, device: device)
     }
 
     static func upload(
         ready: ReadyTexture, usage: TextureUsage, label: String, device: any MTLDevice
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let texture = try makeTexture(device: device, ready: ready, usage: usage, label: label)
         replaceLevels(of: texture, with: ready)
         return texture
@@ -181,8 +181,8 @@ nonisolated public final class TextureLoader {
 
     /// An empty shared texture with the format, size, and levels of `ready`.
     static func makeTexture(
-        device: MTLDevice, ready: ReadyTexture, usage: TextureUsage, label: String
-    ) throws -> MTLTexture {
+        device: any MTLDevice, ready: ReadyTexture, usage: TextureUsage, label: String
+    ) throws -> any MTLTexture {
         let isBC = !ready.format.isASTC && ready.format.blockDimension == 4
         guard !isBC || device.supportsBCTextureCompression else {
             throw TextureLoaderError.bcTextureCompressionUnsupported
@@ -202,11 +202,11 @@ nonisolated public final class TextureLoader {
         return texture
     }
 
-    static func replaceLevels(of texture: MTLTexture, with ready: ReadyTexture) {
-        ready.bytes.withUnsafeBytes { bytes in
+    static func replaceLevels(of texture: any MTLTexture, with ready: ReadyTexture) {
+        unsafe ready.bytes.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
             for level in 0 ..< ready.mipCount {
-                texture.replace(
+                unsafe texture.replace(
                     region: MTLRegionMake2D(
                         0,
                         0,
@@ -273,7 +273,7 @@ nonisolated public final class TextureLoader {
 
     // MARK: - Placeholders
 
-    func placeholder(usage: TextureUsage) -> MTLTexture {
+    func placeholder(usage: TextureUsage) -> any MTLTexture {
         switch usage {
         case .color, .effectSource: colorPlaceholder
         case .data: dataPlaceholder
@@ -285,9 +285,9 @@ nonisolated public final class TextureLoader {
     /// 1x1 RGBA8: mid-gray for color and volume (lighting still shades it), flat normal
     /// for data, and black for a cube, so a missing cubemap reflects nothing.
     public static func makePlaceholder(
-        device: MTLDevice,
+        device: any MTLDevice,
         usage: TextureUsage
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = switch usage {
         case .cube: .typeCube
@@ -309,7 +309,7 @@ nonisolated public final class TextureLoader {
         case .cube: [0, 0, 0, 255]
         }
         for face in 0 ..< texture.arrayLength * (usage == .cube ? 6 : 1) {
-            texture.replace(
+            unsafe texture.replace(
                 region: MTLRegionMake2D(0, 0, 1, 1),
                 mipmapLevel: 0,
                 slice: face,

@@ -1,11 +1,11 @@
 // RLOC chunk: references `MoveTo` sent to another cell. Merged into the `RDLT`
 // deltas by key. Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One saved move, before it is merged back into the delta.
 nonisolated public struct SaveRelocationEntry: Equatable, Sendable {

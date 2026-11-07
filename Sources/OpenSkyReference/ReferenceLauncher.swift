@@ -2,8 +2,8 @@
 // prefix's `SkyrimPrefs.ini`, repairs Steam's browser, then starts Steam and the
 // game. The CLI and the launcher page share it.
 
-import Foundation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyGameData
 
 nonisolated public enum ReferenceLauncherError: Error, Equatable, Sendable, LocalizedError {
     case notReady(String)

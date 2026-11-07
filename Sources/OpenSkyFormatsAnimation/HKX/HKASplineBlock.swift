@@ -2,7 +2,7 @@
 // HKASplineCompressedAnimation.swift + docs/formats/hka-animation.md for
 // clean-room sources, probe evidence, scope, and unsupported variants.
 
-import Foundation
+public import Foundation
 import simd
 
 nonisolated public struct HKASplineBlockLayout: Sendable {

@@ -1,6 +1,6 @@
-import OpenSkyActorPresentation
-import OpenSkyBehavior
-import simd
+public import OpenSkyActorPresentation
+public import OpenSkyBehavior
+public import simd
 
 /// One animated object a cell drew, handed to `ObjectBehaviorCoordinator`.
 nonisolated public struct CellAnimatedObject: Sendable {

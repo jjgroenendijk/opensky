@@ -2,8 +2,8 @@
 // MATO's own model, as a surface override (docs/rendering/surface-shading.md).
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering

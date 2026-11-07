@@ -5,10 +5,10 @@
 // See docs/engine/inventory-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 /// Reads and mutates inventories on top of a `WorldStateStore`.
 @MainActor

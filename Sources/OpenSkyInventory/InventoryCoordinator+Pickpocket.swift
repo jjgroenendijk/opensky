@@ -4,9 +4,9 @@
 
 import OpenSkyConditions
 import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 
 nonisolated public enum PickpocketText: String, GameSettingTextKey {

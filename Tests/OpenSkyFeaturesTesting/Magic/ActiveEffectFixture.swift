@@ -3,8 +3,8 @@
 // at 0x00, associated item 0x08, second actor-value weight 0x3C, archetype
 // 0x40, primary actor value 0x44, and second actor value 0x58.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 

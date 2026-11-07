@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyCombatInterface
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import simd
 
 nonisolated public enum CombatAllyRule {

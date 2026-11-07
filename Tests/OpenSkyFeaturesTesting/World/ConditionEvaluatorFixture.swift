@@ -3,12 +3,12 @@
 // `Condition(ctda:)`, so tests also cover the on-disk path.
 
 import Foundation
-@testable import OpenSkyConditions
+@testable public import OpenSkyConditions
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyWorldState
+@testable public import OpenSkyWorldState
 
 public enum ConditionEvaluatorFixture {
     /// A well-formed 32-byte CTDA field. `operatorBits` are the top 3 bits of

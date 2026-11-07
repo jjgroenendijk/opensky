@@ -3,7 +3,7 @@
 // "Category:Settings" page. See docs/engine/sleep-wait.md.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum RestRefusal: String, Equatable, Sendable, CaseIterable {
     case hostileActorsNear = "HostileActorsNear"

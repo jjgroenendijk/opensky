@@ -64,7 +64,7 @@ extension ReferencePageViewController {
     }
 
     @objc func choosePrefix() {
-        guard let window = view.window else { return }
+        guard let window = unsafe view.window else { return }
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true

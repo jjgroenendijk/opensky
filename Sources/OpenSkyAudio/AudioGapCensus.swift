@@ -2,9 +2,9 @@
 // cannot open or decode. A voice `.fuz` counts by the audio inside it; its lip data is
 // handed back for the caller to check. Names and counts only.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsAudio
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct AudioGapCensus: Sendable {
     /// Variant, such as "xwm format 0x0161", or "fails: ..." -> files.

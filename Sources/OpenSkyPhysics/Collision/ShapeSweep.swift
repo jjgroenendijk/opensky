@@ -3,8 +3,8 @@
 // hulls, which is safe for hit volumes and tunneling. Ties break as in
 // `InteractionRaycaster`. See docs/engine/dynamic-narrowphase.md.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import simd
 
 /// A shape cast along a straight path.

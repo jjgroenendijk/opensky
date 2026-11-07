@@ -1,7 +1,7 @@
 // Where an actor's current package wants it, for Papyrus `MoveToPackageLocation`
 // (<https://ck.uesp.net/wiki/MoveToPackageLocation_-_Actor>).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 extension PackageCoordinator {

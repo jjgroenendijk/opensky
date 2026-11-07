@@ -3,8 +3,8 @@
 // leaves it at the defaults, where the character stands at the origin on flat ground.
 
 import Foundation
-import OpenSkyFormatsAnimation
-import simd
+public import OpenSkyFormatsAnimation
+public import simd
 
 /// Answers where the ground is under a point, in model space.
 nonisolated public protocol BehaviorGroundProbe {

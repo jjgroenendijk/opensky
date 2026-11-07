@@ -2,7 +2,7 @@
 // what the caller has loaded. Pure math, so mapping, diffing and hysteresis are
 // unit-testable. See docs/engine/cell-streaming.md.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import simd
 

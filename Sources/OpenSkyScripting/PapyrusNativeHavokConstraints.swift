@@ -4,7 +4,7 @@
 // wiki pages of both functions; docs/engine/papyrus-session-natives.md).
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 /// One end of a script constraint: a reference, the node of its rigid body, and an

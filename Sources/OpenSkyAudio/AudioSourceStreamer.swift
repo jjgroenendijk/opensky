@@ -3,9 +3,9 @@
 // Threading model: docs/engine/audio.md. No code in this file runs on the audio
 // render thread, so the locks here never block it.
 
-@preconcurrency import AVFAudio
+@preconcurrency @unsafe public import AVFAudio
 import Foundation
-import OpenSkyFormatsAudio
+public import OpenSkyFormatsAudio
 import Synchronization
 
 nonisolated public final class AudioSourceStreamer: Sendable {
@@ -239,11 +239,11 @@ nonisolated public final class AudioSourceStreamer: Sendable {
                 pcmFormat: format,
                 frameCapacity: AVAudioFrameCount(frameCount)
             ),
-            let channels = buffer.floatChannelData
+            let channels = unsafe buffer.floatChannelData
         else { return nil }
         for channel in 0 ..< channelCount {
             for frame in 0 ..< frameCount {
-                channels[channel][frame] = payload[frame * channelCount + channel]
+                unsafe channels[channel][frame] = payload[frame * channelCount + channel]
             }
         }
         buffer.frameLength = AVAudioFrameCount(frameCount)

@@ -3,7 +3,7 @@
 // World space is Skyrim's Z-up right-handed basis at native units; see
 // docs/decisions/coordinates.md for the binding conventions.
 
-import simd
+public import simd
 
 nonisolated public enum MatrixMath: Sendable {
     /// Basis change from Skyrim Z-up world axes to Metal-style y-up:

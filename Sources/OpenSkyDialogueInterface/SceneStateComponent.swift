@@ -3,7 +3,7 @@
 // baseline. See docs/engine/scenes.md.
 
 import Foundation
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated public struct SceneRuntimeState: WorldStateComponent, Sendable {
     /// The phase the scene is in, 0-based.

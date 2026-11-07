@@ -2,7 +2,7 @@
 // decode throws is noted in `SkippedRecords` instead of vanishing.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated extension ESMFile {
     /// Live `type` records in file order. Deleted records are left out; a nil decode is dropped.

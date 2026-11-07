@@ -2,8 +2,8 @@
 // docs/formats/image-spaces.md, section "Resolution".
 
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyRenderCore
+public import OpenSkyGameData
+public import OpenSkyRenderCore
 
 nonisolated extension WeatherSystem {
     /// The `IMSP` links of every weather in the blend, weighted, at `hour`.

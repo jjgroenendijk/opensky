@@ -4,7 +4,7 @@
 // Layout: docs/formats/nif-controllers.md.
 
 import Foundation
-import simd
+public import simd
 
 nonisolated public struct NIFNodeAnimation: Sendable {
     public struct Node: Equatable, Sendable {

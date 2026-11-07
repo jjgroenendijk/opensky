@@ -2,8 +2,8 @@
 // archives, last opened wins. Keys ignore case and separator. Archives open lazily; a
 // malformed one is logged and skipped. See docs/formats/vfs.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import Synchronization
 
 nonisolated public enum VFSError: Error, Equatable, Sendable {

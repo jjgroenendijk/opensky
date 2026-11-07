@@ -4,9 +4,9 @@
 
 import Foundation
 import OpenSkyBehavior
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsMesh
-import simd
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsMesh
+public import simd
 
 nonisolated public struct EffectPoseRig: Sendable {
     public let nodes: NodeControllerRig?

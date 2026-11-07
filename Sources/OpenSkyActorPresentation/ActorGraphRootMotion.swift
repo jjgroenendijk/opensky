@@ -2,7 +2,7 @@
 // `bAnimationDriven`, as for an attack, an idle, or a turn in place. Walk and run states
 // leave it false, so the mover's speed moves the actor. See docs/engine/actor-graphs.md.
 
-import OpenSkyBehavior
+public import OpenSkyBehavior
 import simd
 
 /// One graph step's root travel in the world: a move on the ground and a heading turn.

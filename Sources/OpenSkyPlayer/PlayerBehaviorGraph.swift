@@ -3,10 +3,10 @@
 // over one decode, so a first-person graph can run beside it.
 // See docs/engine/behavior-runtime.md.
 
-import Foundation
-import OpenSkyBehavior
-import OpenSkyFormatsAnimation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyBehavior
+public import OpenSkyFormatsAnimation
+public import OpenSkyGameData
 
 nonisolated public enum PlayerBehaviorGraphError: LocalizedError, Equatable, Sendable {
     case missing(String)

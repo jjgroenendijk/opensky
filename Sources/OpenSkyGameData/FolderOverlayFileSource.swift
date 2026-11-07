@@ -2,7 +2,7 @@
 // the way loose files under `Data/` win over the archives. A benchmark uses it
 // to time loose files apart from archive reads without writing to the install.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct FolderOverlayFileSource: GameFileSource {
     public let base: any GameFileSource

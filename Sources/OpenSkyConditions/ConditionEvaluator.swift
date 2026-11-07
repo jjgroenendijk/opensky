@@ -6,8 +6,8 @@
 // (`wbCTDA`).
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyWorldState
 
 nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {

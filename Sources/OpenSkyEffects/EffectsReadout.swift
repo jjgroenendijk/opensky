@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRendering
 
 nonisolated public enum EffectsReadout {
@@ -74,6 +74,6 @@ nonisolated public enum EffectsReadout {
     }
 
     private static func number(_ value: Float) -> String {
-        String(format: "%.2f", value)
+        unsafe String(format: "%.2f", value)
     }
 }

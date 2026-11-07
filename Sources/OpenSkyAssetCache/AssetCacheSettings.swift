@@ -1,8 +1,8 @@
 // The asset optimisation settings, read from the one player settings store, so
 // the app and openskycli convert and read with the same texture output and folder.
 
-import Foundation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyGameData
 
 /// Reading optimised files straight into GPU memory with Metal fast resource loading.
 nonisolated public struct DirectGPULoading: Equatable, Sendable {

@@ -34,17 +34,17 @@ struct SWFGlyphPathTests {
 
     private func steps(of path: CGPath) -> [PathStep] {
         var result: [PathStep] = []
-        path.applyWithBlock { pointer in
-            let element = pointer.pointee
-            let count = switch element.type {
+        unsafe path.applyWithBlock { pointer in
+            let element = unsafe pointer.pointee
+            let count = switch unsafe element.type {
             case .moveToPoint, .addLineToPoint: 1
             case .addQuadCurveToPoint: 2
             case .addCurveToPoint: 3
             case .closeSubpath: 0
             @unknown default: 0
             }
-            let points = (0 ..< count).map { element.points[$0] }
-            result.append(PathStep(type: element.type.rawValue, points: points))
+            let points = (0 ..< count).map { unsafe element.points[$0] }
+            unsafe result.append(PathStep(type: element.type.rawValue, points: points))
         }
         return result
     }

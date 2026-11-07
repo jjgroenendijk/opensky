@@ -5,8 +5,8 @@
 // `EnchantmentRuntimeRealDataTests`). See docs/engine/item-enchantments.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One enchanted item's enchantment, resolved.
 nonisolated public struct ItemEnchantmentProfile: Equatable, Sendable {

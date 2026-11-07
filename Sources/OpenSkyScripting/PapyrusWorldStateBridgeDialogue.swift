@@ -4,8 +4,8 @@
 // `QuestRuntime` through the `SetStage` native, so stage rules apply unchanged.
 
 import Foundation
-import OpenSkyDialogueInterface
-import OpenSkyFormatsESM
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsESM
 
 @MainActor
 extension PapyrusWorldStateBridge: DialogueFragmentDispatching {

@@ -171,3 +171,5 @@ Every rule on this page and in [Coordinators](/engine/coordinators.md) has a che
 | No new `@unchecked Sendable`, `Task.detached`, `DispatchQueue.main`, or semaphore in `Sources/` | SwiftLint `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore` |
 | A new `DispatchQueue` has a row in [Concurrency](/decisions/concurrency.md) | SwiftLint `new_dispatch_queue` |
 | A module stays below 30,000 source lines | `make module-size` ([Module size](/tools/modules.md#module-size)) |
+| A protocol type is written `any X`, an import is `internal` unless it says `public import`, and unsafe code is marked `unsafe` | The compiler, set up and self-checked by `make language-rules` ([Swift language rules](/decisions/language-rules.md)) |
+| An interface module publicly imports only lower modules and interfaces, and no file uses `@_exported import` | `make module-graph` rule 11 |

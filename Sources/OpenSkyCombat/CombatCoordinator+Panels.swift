@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyPhysics
 import simd
 

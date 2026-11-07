@@ -100,7 +100,7 @@ enum AssetCacheCommand {
             reference: TexturePixels(contentsOf: URL(filePath: reference)),
             candidate: TexturePixels(contentsOf: URL(filePath: candidate)), normals: false
         )
-        print(String(
+        unsafe print(String(
             format: "rgb PSNR %.2f dB, max channel error %d",
             difference.rgbPSNR,
             difference.maxChannelError
@@ -139,7 +139,7 @@ enum AssetCacheCommand {
                     }
                 }
                 let timing = try bench.run(method)
-                print(String(
+                unsafe print(String(
                     format: "%@\t%@\t%d\t%d\t%.1f\t%.1f", timing.method.rawValue, pass,
                     timing.textures,
                     timing.bytes >> 20, timing.wallMS, timing.cpuMS

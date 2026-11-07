@@ -51,7 +51,7 @@ struct TextureVolumeTests {
         )
     }
 
-    private func library(_ device: MTLDevice, files: [String: Data]) throws -> TextureLibrary {
+    private func library(_ device: any MTLDevice, files: [String: Data]) throws -> TextureLibrary {
         for (path, data) in files {
             let url = dataURL.appending(path: path)
             try FileManager.default.createDirectory(

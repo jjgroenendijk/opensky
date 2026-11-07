@@ -2,9 +2,9 @@
 // graphs of the art objects and armour addons on an actor as the actor's sub-graphs
 // (docs/engine/effect-graphs.md).
 
-import OpenSkyActorPresentation
-import OpenSkyBehavior
-import OpenSkyFormatsESM
+public import OpenSkyActorPresentation
+public import OpenSkyBehavior
+public import OpenSkyFormatsESM
 import simd
 
 /// Which model a running sub-graph belongs to. Graphs step in this order.

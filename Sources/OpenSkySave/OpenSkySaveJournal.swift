@@ -1,11 +1,11 @@
 // MSTS and QTRK chunks: the player's misc stats, and which quests the player
 // tracks. Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
+public import Foundation
 import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
-import OpenSkyQuestsInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsCore
+public import OpenSkyQuestsInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     static func writeJournal(

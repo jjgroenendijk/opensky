@@ -1,7 +1,7 @@
 // The rules behind the launcher's Reference Game buttons, kept out of AppKit so a test
 // reaches them: what Export View writes and which save Import Newest Save loads.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct ReferenceNotice: Equatable, Sendable {
     public var message: String

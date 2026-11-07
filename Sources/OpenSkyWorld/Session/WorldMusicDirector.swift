@@ -4,11 +4,11 @@
 // lifetime rules. Failures degrade to silence with a reason.
 // See docs/engine/music.md.
 
-import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyAudio
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 @MainActor
 public final class WorldMusicDirector {

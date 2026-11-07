@@ -2,7 +2,7 @@
 // a reset reference starts with fresh script data, runs `OnInit` again, then `OnReset`.
 // See docs/engine/cell-reset.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {

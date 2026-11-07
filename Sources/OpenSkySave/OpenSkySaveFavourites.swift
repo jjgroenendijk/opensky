@@ -1,11 +1,11 @@
 // FAVS chunk: the player's favourite items in the order they were marked, then the
 // hotkeys by ascending slot. Layout: docs/formats/opensky-save-actor-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// The item count and FormIDs, then the hotkey count and each slot byte and item.

@@ -2,7 +2,7 @@
 // with. Four iterations from zero could not hold a stack of five boxes; carried over,
 // the impulses add up across substeps. See docs/engine/dynamic-narrowphase.md#warm-starting.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One contact's impulses, kept on its body between substeps.

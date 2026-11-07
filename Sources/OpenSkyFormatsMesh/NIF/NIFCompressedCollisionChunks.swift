@@ -2,7 +2,7 @@
 // Reference + conversion: docs/formats/nif-collision.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated extension NIFCompressedCollisionMesh {

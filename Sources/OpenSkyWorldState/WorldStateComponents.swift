@@ -4,8 +4,8 @@
 // See docs/engine/runtime-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 /// One component slot on a reference, and the key for reset and journal entries.

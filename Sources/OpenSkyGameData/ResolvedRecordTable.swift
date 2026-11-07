@@ -3,8 +3,8 @@
 // the skips, and index the result by identity and by editor ID.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedRecordTable<Value: Sendable>: Sendable {
     public private(set) var values: [ResolvedFormID: Value] = [:]

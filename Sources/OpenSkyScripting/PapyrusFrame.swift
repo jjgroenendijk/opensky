@@ -1,8 +1,8 @@
 // One explicitly stacked Papyrus function invocation.
 
 import Foundation
-import OpenSkyFormatsPEX
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsPEX
+public import OpenSkyScriptingInterface
 
 nonisolated public enum PapyrusFrameCompletion: Sendable {
     case root

@@ -4,12 +4,12 @@
 // character controller. It builds no cell, and its result outlives scene swaps.
 
 import Foundation
-import OpenSkyActorPresentation
-import OpenSkyFormatsAnimation
+public import OpenSkyActorPresentation
+public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPlayer
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import simd

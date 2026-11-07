@@ -2,7 +2,7 @@
 // quality, and description. Layout and sources: docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// QUAL, an int32. An unknown value keeps its number.
 nonisolated public enum ApparatusQuality: Equatable, Sendable {

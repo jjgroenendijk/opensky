@@ -3,8 +3,8 @@
 // presence flags, and atlas offsets are kept.
 // Layout: docs/formats/nif-particles.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct NIFParticleData: Sendable {

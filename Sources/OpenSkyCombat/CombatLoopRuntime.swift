@@ -5,10 +5,10 @@
 // through `CombatLoopWorld`. See docs/engine/combat.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyCombatInterface
+public import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyWorldInterface
 import simd
 

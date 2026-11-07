@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 extension PapyrusWorldStateBridge {
     public func crimeGold(of faction: ReferenceKey) -> Int? {

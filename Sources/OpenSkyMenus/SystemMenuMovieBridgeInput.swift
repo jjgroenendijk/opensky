@@ -3,7 +3,7 @@
 // command stream before the next draw.
 
 import Foundation
-import OpenSkyRendering
+public import OpenSkyRendering
 
 @MainActor
 extension SystemMenuMovieBridge {

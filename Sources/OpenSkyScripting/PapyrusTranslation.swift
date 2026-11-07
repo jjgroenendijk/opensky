@@ -5,7 +5,7 @@
 // docs/engine/papyrus-translation.md.
 
 import Foundation
-import OpenSkyWorldState
+public import OpenSkyWorldState
 import simd
 
 nonisolated public struct PapyrusTranslation: Equatable, Sendable {

@@ -2,9 +2,9 @@
 // `sHUDCompleted`, or `sHUDFailed`, and each new objective as a line. Which change
 // shows which text is OpenSky's reading (docs/engine/journal.md#hud-notices).
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 
 /// The status line under a quest title.
 nonisolated public enum QuestNoticeText: String, GameSettingTextKey {

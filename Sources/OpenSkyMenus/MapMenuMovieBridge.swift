@@ -6,7 +6,7 @@
 // them. See docs/engine/world-map.md#map-movie.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// A call the map movie makes.
 nonisolated public enum MapMovieEvent: Equatable, Sendable {

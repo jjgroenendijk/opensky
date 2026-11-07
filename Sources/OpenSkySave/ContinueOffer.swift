@@ -1,7 +1,7 @@
 // What the launcher's Continue button offers: the newest OpenSky save and its
 // summary, or why there is nothing to continue. Skyrim saves join when M29 lands.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct ContinueOffer: Equatable, Sendable {
     /// The slot Continue loads; nil when the button is disabled.

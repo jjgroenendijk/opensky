@@ -7,10 +7,10 @@
 
 import Foundation
 import OpenSkyConditions
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
 
 extension PerkRuntime {
     public static let logger = EngineLogger(

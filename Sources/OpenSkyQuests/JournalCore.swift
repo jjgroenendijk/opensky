@@ -1,8 +1,8 @@
 // The pure rules of the journal readouts: which quests the readout lists and how
 // it words an objective. Values in, values out. See docs/engine/journal.md.
 
-import OpenSkyFormatsESM
-import OpenSkyQuestsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyQuestsInterface
 
 /// One journal quest with its effective state.
 nonisolated public struct JournalQuestStatus: Sendable {

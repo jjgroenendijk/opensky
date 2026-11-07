@@ -2,7 +2,7 @@
 // the install. Writes go temp file, fsync, rename, so a crash keeps the old save; without
 // the fsync, a power loss could leave a file of zeroes.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum OpenSkySaveIO: Sendable {
     /// `~/Library/Application Support/OpenSky/Saves/`, created if absent.
@@ -61,7 +61,7 @@ nonisolated public enum OpenSkySaveIO: Sendable {
     private static func replace(_ destination: URL, with temporary: URL) throws {
         let moved = temporary.path(percentEncoded: false).withCString { source in
             destination.path(percentEncoded: false).withCString { target in
-                rename(source, target) == 0
+                unsafe rename(source, target) == 0
             }
         }
         guard moved else {

@@ -1,9 +1,9 @@
 // The low-health cues: the pulse modifier starts here, and the heartbeat change goes back
 // to the caller, which owns the sound (docs/rendering/image-space.md#low-health).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 
 extension EffectsCoordinator {
     /// Reads the player's health share this frame and starts a pulse when one is due.

@@ -1,7 +1,7 @@
 // A finite ray for walking a bounds tree. The box test is the slab test: the ray
 // is inside the box where it is inside all three pairs of planes.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct RaySegment: Sendable {

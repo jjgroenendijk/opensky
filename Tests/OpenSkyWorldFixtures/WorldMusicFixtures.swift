@@ -5,11 +5,11 @@
 
 import AVFAudio
 import Foundation
-@testable import OpenSkyAudio
+@testable public import OpenSkyAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
-@testable import OpenSkyWorld
+@testable public import OpenSkyGameData
+@testable public import OpenSkyWorld
 import Testing
 
 public enum MusicFixture {

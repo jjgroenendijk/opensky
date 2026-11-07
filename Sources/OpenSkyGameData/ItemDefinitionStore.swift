@@ -4,8 +4,8 @@
 // exists (docs/engine/runtime-state.md). Single-plugin, raw-FormID keyed.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 /// The ENCH link a weapon or armor carries, resolved against the load order when
 /// a resolver was supplied.

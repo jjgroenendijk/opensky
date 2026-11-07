@@ -3,8 +3,8 @@
 // See docs/engine/guard-response.md.
 
 import OpenSkyConditions
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyWorldInterface

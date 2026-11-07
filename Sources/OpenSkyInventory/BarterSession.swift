@@ -5,9 +5,9 @@
 // See docs/engine/barter.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// Why a transaction did not happen.
 nonisolated public enum BarterError: Error, Equatable {

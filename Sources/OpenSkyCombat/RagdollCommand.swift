@@ -1,7 +1,7 @@
 // What the ragdoll coordinator asks the app to do. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
-import simd
+public import OpenSkyFormatsESM
+public import simd
 
 /// One change to the world outside the ragdoll domain.
 nonisolated public enum RagdollCommand: Equatable, Sendable {

@@ -3,10 +3,10 @@
 // replaces only the command stream and text plans when AS2 changes the display list.
 // Rings grow, never shrink. Swapped by `Renderer.setSWFMovie`; encode in RendererSWFPass.swift.
 
-import Metal
-import OpenSkyFormatsSWF
+public import Metal
+public import OpenSkyFormatsSWF
 import OpenSkyRenderResources
-import OpenSkyShaderTypes
+public import OpenSkyShaderTypes
 import simd
 
 nonisolated public final class SWFMovieResources {
@@ -34,7 +34,7 @@ nonisolated public final class SWFMovieResources {
     }
 
     public struct BitmapEntry {
-        public let texture: MTLTexture
+        public let texture: any MTLTexture
         public let premultiplied: Bool
     }
 
@@ -58,13 +58,13 @@ nonisolated public final class SWFMovieResources {
     public let shapes: [UInt16: ShapeEntry]
     public let bitmaps: [UInt16: BitmapEntry]
     /// nil when the movie has no gradient fills (fallback ramp binds instead).
-    public let gradientTexture: MTLTexture?
+    public let gradientTexture: any MTLTexture?
     public let gradientRowCount: Int
     /// Command index -> planned text runs for text draws.
     public private(set) var textPlans: [Int: [PlannedTextRun]]
-    public let vertexBuffer: MTLBuffer
-    public private(set) var glyphVertexBuffer: MTLBuffer
-    public private(set) var uniformBuffer: MTLBuffer
+    public let vertexBuffer: any MTLBuffer
+    public private(set) var glyphVertexBuffer: any MTLBuffer
+    public private(set) var uniformBuffer: any MTLBuffer
     /// Per-frame draw slots in the uniform ring. Headroomed over the current
     /// stream so an ordinary display-list change needs no reallocation; encode
     /// counts anything beyond it as skipped.
@@ -79,8 +79,8 @@ nonisolated public final class SWFMovieResources {
     private let shapeSkipped: Int
     private let planner: SWFTextPlanner
 
-    public var residencyAllocations: [MTLAllocation] {
-        var allocations: [MTLAllocation] = [vertexBuffer, glyphVertexBuffer, uniformBuffer]
+    public var residencyAllocations: [any MTLAllocation] {
+        var allocations: [any MTLAllocation] = [vertexBuffer, glyphVertexBuffer, uniformBuffer]
         allocations.append(contentsOf: bitmaps.values.map(\.texture))
         if let gradientTexture {
             allocations.append(gradientTexture)
@@ -88,7 +88,7 @@ nonisolated public final class SWFMovieResources {
         return allocations
     }
 
-    public init(device: MTLDevice, scene: SWFMovieScene, generation: Int) throws {
+    public init(device: any MTLDevice, scene: SWFMovieScene, generation: Int) throws {
         self.scene = scene
         self.generation = generation
         let flattened = SWFScene.build(movie: scene.movie)
@@ -121,12 +121,15 @@ nonisolated public final class SWFMovieResources {
     /// the new stream needs more slots than the old one. Returns the buffers
     /// the caller must retire (empty when nothing grew), so the renderer can
     /// keep them alive until in-flight frames drain.
-    public func update(scene newScene: SWFScene, device: MTLDevice) throws -> [MTLAllocation] {
+    public func update(
+        scene newScene: SWFScene,
+        device: any MTLDevice
+    ) throws -> [any MTLAllocation] {
         let plans = planner.plan(commands: newScene.commands)
         let needed = Self.capacities(
             commands: newScene.commands, shapes: shapes, plans: plans
         )
-        var retiring: [MTLAllocation] = []
+        var retiring: [any MTLAllocation] = []
         if needed.draws > drawCapacity {
             let capacity = Self.headroom(needed.draws)
             let buffer = try Self.makeUniformRing(device: device, capacity: capacity)
@@ -179,7 +182,10 @@ nonisolated public final class SWFMovieResources {
         return (draws, glyphs)
     }
 
-    private static func makeUniformRing(device: MTLDevice, capacity: Int) throws -> MTLBuffer {
+    private static func makeUniformRing(
+        device: any MTLDevice,
+        capacity: Int
+    ) throws -> any MTLBuffer {
         try GPUFactory.makeUniformBuffer(
             device: device,
             length: max(1, capacity) * Renderer.alignedSWFUniformsSize
@@ -188,7 +194,10 @@ nonisolated public final class SWFMovieResources {
         )
     }
 
-    private static func makeGlyphBuffer(device: MTLDevice, capacity: Int) throws -> MTLBuffer {
+    private static func makeGlyphBuffer(
+        device: any MTLDevice,
+        capacity: Int
+    ) throws -> any MTLBuffer {
         try GPUFactory.makeUniformBuffer(
             device: device,
             length: max(1, capacity) * 6 * MemoryLayout<SWFVertex>.stride
@@ -198,15 +207,15 @@ nonisolated public final class SWFMovieResources {
     }
 
     private static func makeVertexBuffer(
-        device: MTLDevice,
+        device: any MTLDevice,
         vertices: [SWFVertex],
         label: String
-    ) throws -> MTLBuffer {
+    ) throws -> any MTLBuffer {
         let length = max(1, vertices.count) * MemoryLayout<SWFVertex>.stride
         let buffer = try GPUFactory.makeUniformBuffer(device: device, length: length, label: label)
         vertices.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            buffer.contents().copyMemory(from: base, byteCount: bytes.count)
+            unsafe buffer.contents().copyMemory(from: base, byteCount: bytes.count)
         }
         return buffer
     }

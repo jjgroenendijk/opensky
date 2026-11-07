@@ -63,7 +63,7 @@ enum CollisionCommand {
                 continue
             }
             let stats = collision.stats
-            print(String(
+            unsafe print(String(
                 format: "\(label): %d shapes, %d triangles, %.2f ms, %.1f KiB",
                 stats.shapeCount,
                 stats.triangleCount,
@@ -133,6 +133,6 @@ enum CollisionCommand {
     }
 
     private static func format(_ value: Float) -> String {
-        String(format: "%.3f", value)
+        unsafe String(format: "%.3f", value)
     }
 }

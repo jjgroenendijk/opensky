@@ -3,7 +3,7 @@
 // tables, change form histograms, Papyrus counts, and a dry-run import report.
 
 import Foundation
-import OpenSkyFormatsESS
+public import OpenSkyFormatsESS
 
 nonisolated public struct ESSInspectionSection: Equatable, Sendable {
     public let title: String
@@ -68,7 +68,7 @@ nonisolated public struct ESSInspection: Sendable {
             "\(header.playerLocation), \(header.gameDate)",
             "save \(header.saveNumber), "
                 + "screenshot \(header.screenshotWidth)x\(header.screenshotHeight)",
-            String(
+            unsafe String(
                 format: "experience %.1f of %.1f", header.experience, header.experienceForNextLevel
             )
         ]

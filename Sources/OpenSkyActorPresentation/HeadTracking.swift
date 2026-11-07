@@ -3,8 +3,8 @@
 // each bone's own axes point. Limits and speed come from `HeadTrackingSettings`; the
 // shares are OpenSky's own. See docs/engine/head-tracking.md.
 
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsCore
 import simd
 
 /// How far the head turns from the body's forward axis, in radians. Positive yaw

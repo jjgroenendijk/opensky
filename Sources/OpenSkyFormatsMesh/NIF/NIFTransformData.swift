@@ -1,9 +1,9 @@
 // `NiTransformData` keyframes: the rotation, translation, and scale keys of one
 // animated transform. Layout: docs/formats/nif.md#camera-animation.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 /// One interpolation key. Quadratic tangents and TBC values are read past and
 /// not kept: OpenSky samples every key type linearly.

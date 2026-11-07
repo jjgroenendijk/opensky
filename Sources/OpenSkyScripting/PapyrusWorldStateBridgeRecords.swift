@@ -3,8 +3,8 @@
 // the player. See docs/engine/condition-functions-world.md#recorded-events.
 
 import Foundation
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldStateBridge {

@@ -5,8 +5,8 @@
 // See docs/engine/hostility.md and docs/formats/relationships.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One override: the other actor, and the rank the pair holds. The rank is the
 /// signed Creation Kit number, "4: Lover ... -4: Archnemesis"

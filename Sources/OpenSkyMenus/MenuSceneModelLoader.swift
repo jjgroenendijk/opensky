@@ -2,10 +2,10 @@
 // given GPU buffers and textures on the first frame after. Kept once built.
 
 import Foundation
-@preconcurrency import Metal
+@preconcurrency @unsafe public import Metal
 import OpenSkyFormatsMesh
-import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyGameData
+public import OpenSkyRendering
 import OpenSkyRenderResources
 
 public final class MenuSceneModelLoader {
@@ -30,7 +30,7 @@ public final class MenuSceneModelLoader {
 
     /// The models in `paths` order once every file is in; nil while they load or after
     /// a failure.
-    public func models(device: MTLDevice) -> [MenuSceneModel]? {
+    public func models(device: any MTLDevice) -> [MenuSceneModel]? {
         if models != nil || failure != nil {
             return models
         }

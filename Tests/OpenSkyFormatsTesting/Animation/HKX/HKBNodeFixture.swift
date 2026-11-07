@@ -2,8 +2,8 @@
 // payload, registers classes by virtual fixup, and patches pointers through
 // the fixup tables, as a real packfile does. Class signatures are invented.
 
-import Foundation
-@testable import OpenSkyFormatsAnimation
+public import Foundation
+@testable public import OpenSkyFormatsAnimation
 
 /// Builds one packfile holding arbitrary hkb objects. Offsets are the caller's
 /// choice so an assertion can name the byte it reads.
@@ -59,19 +59,19 @@ public struct HKBNodeFixture: Sendable {
     }
 
     public mutating func setInt16(_ value: Int16, at offset: Int) {
-        write(Data(withUnsafeBytes(of: value.littleEndian) { Data($0) }), at: offset)
+        write(Data(withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }), at: offset)
     }
 
     public mutating func setInt32(_ value: Int32, at offset: Int) {
-        write(Data(withUnsafeBytes(of: value.littleEndian) { Data($0) }), at: offset)
+        write(Data(withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }), at: offset)
     }
 
     public mutating func setUInt32(_ value: UInt32, at offset: Int) {
-        write(Data(withUnsafeBytes(of: value.littleEndian) { Data($0) }), at: offset)
+        write(Data(withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }), at: offset)
     }
 
     public mutating func setUInt64(_ value: UInt64, at offset: Int) {
-        write(Data(withUnsafeBytes(of: value.littleEndian) { Data($0) }), at: offset)
+        write(Data(withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }), at: offset)
     }
 
     public mutating func setFloat(_ value: Float, at offset: Int) {

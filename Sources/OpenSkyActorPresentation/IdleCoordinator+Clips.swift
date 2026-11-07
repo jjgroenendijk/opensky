@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRuntimeState
 import OpenSkyWorldConditions

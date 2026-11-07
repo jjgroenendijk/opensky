@@ -2,7 +2,7 @@
 // the `fmt `, `dpds`, and `data` chunks. XWMFile.swift owns the codec policy.
 // Layout and sources: docs/formats/xwm.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// The three chunks OpenSky reads, located inside one `.xwm` buffer.

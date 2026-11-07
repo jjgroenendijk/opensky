@@ -1,10 +1,10 @@
 // What the magic coordinator works over in one loaded game. The app builds it
 // from the load order; a test builds it from a fixture.
 
-import OpenSkyActorsInterface
-import OpenSkyConditions
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyActorsInterface
+public import OpenSkyConditions
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 /// The magic runtimes' inputs and the load order's magic rules and texts.
 @MainActor

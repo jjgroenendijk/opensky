@@ -5,9 +5,9 @@
 // acting on the actor can apply, active or not. See docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
     public static func installMagic(_ registry: inout ConditionFunctionRegistry) {

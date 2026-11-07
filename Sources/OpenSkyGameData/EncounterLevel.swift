@@ -4,7 +4,7 @@
 // <https://ck.uesp.net/wiki/LeveledCharacter>). See docs/engine/leveled-lists.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The Leveled Actor tab's difficulty: ACHR `XLCM`, 0 easy to 3 very hard. A
 /// reference without `XLCM` is `none`.

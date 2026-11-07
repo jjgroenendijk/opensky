@@ -4,7 +4,7 @@
 // docs/engine/loading-screens.md.
 
 import Metal
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 
 extension Renderer {
     /// Shows `placements` and `particles` in place of the world, or the world again

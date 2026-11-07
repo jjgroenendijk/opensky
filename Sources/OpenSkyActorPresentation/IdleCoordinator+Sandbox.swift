@@ -1,7 +1,7 @@
 // A sandbox moves its actor on when an activity's time runs out. The actor leaves its
 // idle marker, and takes a marker away from it next. See docs/engine/idle-runtime.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 extension IdleCoordinator {
     /// Ends the actor's idle and frees its marker. Its next marker is another one.

@@ -1,6 +1,6 @@
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyNavigation
+public import OpenSkyGameData
+public import OpenSkyNavigation
 import OpenSkyWorldInterface
 
 extension RuntimeNavigationGraph {

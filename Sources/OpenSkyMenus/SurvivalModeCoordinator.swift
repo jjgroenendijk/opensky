@@ -3,7 +3,7 @@
 // session made back into the setting. See docs/engine/survival-mode.md.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// The plugin's globals in the running session. The app answers it.
 public protocol SurvivalModeWorld: AnyObject {
@@ -14,13 +14,13 @@ public protocol SurvivalModeWorld: AnyObject {
 
 public final class SurvivalModeCoordinator {
     public let store: PlayerSettingsStore
-    private weak let world: SurvivalModeWorld?
+    private weak let world: any SurvivalModeWorld?
     /// From `OPENSKY_SURVIVAL_MODE`; wins over the settings for this run.
     public var forcedAnswer: SurvivalModeAnswer?
     public private(set) var lastStep = SurvivalModeCore.Step.none
 
     public init(
-        store: PlayerSettingsStore, world: SurvivalModeWorld?,
+        store: PlayerSettingsStore, world: any SurvivalModeWorld?,
         forcedAnswer: SurvivalModeAnswer? = SurvivalModeAnswer.forced()
     ) {
         self.store = store

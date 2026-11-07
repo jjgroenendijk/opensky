@@ -2,9 +2,9 @@
 // nodes for destruction stages, and master particle systems. Each draws its
 // children like a plain node. Layout: docs/formats/nif.md#node-subclasses.
 
-import Foundation
-import OpenSkyFormatsCore
-import simd
+public import Foundation
+public import OpenSkyFormatsCore
+public import simd
 
 /// `BSValueNode`: a place where the game copies in an `ADDN` model by its index.
 nonisolated public struct NIFValueNode: Sendable {

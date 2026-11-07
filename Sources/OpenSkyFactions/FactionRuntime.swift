@@ -7,10 +7,10 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Reads and mutates faction memberships on top of a `WorldStateStore`, and
 /// answers what one actor makes of another.

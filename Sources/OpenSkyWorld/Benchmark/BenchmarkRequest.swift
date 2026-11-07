@@ -3,7 +3,7 @@
 // and muted unless it asks otherwise, so it does not take over the machine.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum BenchmarkRequestError: Error, Equatable, CustomStringConvertible {
     case unknownScene(String)

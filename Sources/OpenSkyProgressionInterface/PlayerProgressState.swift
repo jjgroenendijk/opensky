@@ -5,8 +5,8 @@
 // once empty. See docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// The player's level, banked character experience and perk-point pool.
 nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {

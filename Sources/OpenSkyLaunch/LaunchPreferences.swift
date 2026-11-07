@@ -1,7 +1,7 @@
 // A start forced by the environment skips the launcher and opens the game, and the
 // environment can override the agent control setting for one launch.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum LaunchPreferences {
     /// UI tests and `openskycli game launch` set this to `1` to start without the launcher.

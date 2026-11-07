@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyDialogueInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyWorldState
 

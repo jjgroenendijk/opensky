@@ -1,7 +1,7 @@
 // The soul sizes a soul gem names, from the `sSoulLevelName*` string settings, and
 // its "Filled with %s Soul" line from `sSoulLevel`. See docs/formats/item-records.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct SoulTexts: Equatable, Sendable {
     public var names = suffixes

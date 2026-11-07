@@ -2,9 +2,9 @@
 // read without decompressing a body. The folder is a setting, never a constant.
 // See docs/engine/ess-import.md#the-saves-folder.
 
-import Foundation
-import OpenSkyFormatsESS
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyFormatsESS
+public import OpenSkyGameData
 
 /// One `.ess` file in the folder. `summary` is nil when the header cannot be read.
 nonisolated public struct ESSSaveListing: Equatable, Sendable {

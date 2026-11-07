@@ -3,16 +3,16 @@
 // chunks. A nested `internal` type so the parent keeps saying `Body`.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyCrimeInterface
-import OpenSkyDialogueInterface
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
-import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyActorsInterface
+public import OpenSkyCrimeInterface
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
+public import OpenSkyMagicInterface
+public import OpenSkyQuestsInterface
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveDecoder {
     /// Parsed chunk payloads, with the defaults an absent chunk implies.

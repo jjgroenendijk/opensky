@@ -2,10 +2,10 @@
 // a shot takes, which spells an actor may cast. `CombatCoordinator` is the
 // shell that reads the world. See docs/engine/coordinators.md.
 
-import OpenSkyActorsInterface
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyProgressionInterface
 
 /// One item the player wears, as the hand rules see it.

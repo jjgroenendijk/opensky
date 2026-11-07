@@ -1,7 +1,7 @@
 // The Idles section's seam: the idle markers of the loaded cell, their idle
 // lists and trees, and the last selection for one actor with its trace.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One placed idle marker, as the readout lists it.
 nonisolated public struct IdleMarkerReadout: Equatable, Sendable {

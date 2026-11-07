@@ -2,8 +2,8 @@
 // A link to a record outside the index counts as dangling. See docs/formats/hazards.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public struct HazardLinks: Equatable, Sendable {
     public let spell: RecordLink?

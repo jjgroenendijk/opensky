@@ -44,9 +44,9 @@ nonisolated public struct BenchmarkMachine: Codable, Equatable, Sendable {
 
     private static func sysctlString(_ name: String) -> String? {
         var size = 0
-        guard sysctlbyname(name, nil, &size, nil, 0) == 0, size > 0 else { return nil }
+        guard unsafe sysctlbyname(name, nil, &size, nil, 0) == 0, size > 0 else { return nil }
         var bytes = [CChar](repeating: 0, count: size)
-        guard sysctlbyname(name, &bytes, &size, nil, 0) == 0 else { return nil }
+        guard unsafe sysctlbyname(name, &bytes, &size, nil, 0) == 0 else { return nil }
         let utf8 = bytes.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
         return String(bytes: utf8, encoding: .utf8)
     }

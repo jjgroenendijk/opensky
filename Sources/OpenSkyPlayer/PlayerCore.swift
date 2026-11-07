@@ -2,7 +2,7 @@
 
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyBehavior
+public import OpenSkyBehavior
 
 /// Readout rows built from plain values.
 nonisolated public enum PlayerCore {
@@ -36,9 +36,9 @@ nonisolated public enum PlayerCore {
         switch value {
         case let .bool(flag): flag ? "true" : "false"
         case let .int(number): String(number)
-        case let .real(number): String(format: "%.3f", number)
+        case let .real(number): unsafe String(format: "%.3f", number)
         case let .quad(vector):
-            String(format: "%.3f, %.3f, %.3f, %.3f", vector.x, vector.y, vector.z, vector.w)
+            unsafe String(format: "%.3f, %.3f, %.3f, %.3f", vector.x, vector.y, vector.z, vector.w)
         }
     }
 

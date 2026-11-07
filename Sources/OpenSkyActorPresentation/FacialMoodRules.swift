@@ -3,7 +3,7 @@
 // (docs/engine/face-morphs.md#mood-and-combat).
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The actor state the face reads each frame.
 nonisolated public struct FaceMoodInput: Equatable, Sendable {

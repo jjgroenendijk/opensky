@@ -2,7 +2,7 @@
 // into. This layer frames and names bytecode and runs nothing (SWF spec v19,
 // ch. 5, pp. 63-118; docs/formats/swf-actions.md).
 
-import Foundation
+public import Foundation
 
 nonisolated public enum SWFActionError: Error, Equatable, Sendable {
     /// Tag code handed to a parser expecting DoAction (12) or DoInitAction (59).

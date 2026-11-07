@@ -3,10 +3,10 @@
 // changed, and the scripts its Papyrus table names. See docs/engine/ess-import.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 nonisolated public struct ESSPluginIndex: Sendable {
     struct Key: Hashable, Sendable {

@@ -5,11 +5,11 @@
 // is left of the cap. See docs/engine/combat-behavior.md.
 
 import Foundation
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface

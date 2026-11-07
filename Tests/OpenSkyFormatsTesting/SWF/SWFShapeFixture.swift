@@ -3,8 +3,8 @@
 // Specification v19 chapter 6 layouts — never extracted game files
 // (AGENTS.md "Legal & IP boundary").
 
-import Foundation
-@testable import OpenSkyFormatsSWF
+public import Foundation
+@testable public import OpenSkyFormatsSWF
 
 /// Assembles a DefineShape/2/3/4 tag body through `SWFBitWriter`, mirroring
 /// the bit packing `SWFShapeParser` reads back.

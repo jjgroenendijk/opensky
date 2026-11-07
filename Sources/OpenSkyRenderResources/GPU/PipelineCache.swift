@@ -3,8 +3,8 @@
 // load a pipeline from the archive and compile only what it lacks. See
 // docs/rendering/pipeline-cache.md.
 
-import Foundation
-import Metal
+public import Foundation
+public import Metal
 
 /// What the cache did since the renderer was built.
 nonisolated public struct PipelineCacheStats: Equatable, Sendable {
@@ -31,15 +31,15 @@ nonisolated public struct PipelineCacheStats: Equatable, Sendable {
 
 /// Pipeline creation for the renderer: an archive lookup first, then a compile.
 public final class PipelineCache {
-    public let device: MTLDevice
+    public let device: any MTLDevice
     public let fileURL: URL?
     public private(set) var stats = PipelineCacheStats()
-    public let compiler: MTL4Compiler
+    public let compiler: any MTL4Compiler
     private let archive: (any MTL4Archive)?
     private let serializer: (any MTL4PipelineDataSetSerializer)?
 
     /// `fileURL` nil compiles every pipeline and saves nothing.
-    public init(device: MTLDevice, fileURL: URL?) throws {
+    public init(device: any MTLDevice, fileURL: URL?) throws {
         self.device = device
         self.fileURL = fileURL
         let descriptor = MTL4CompilerDescriptor()
@@ -57,7 +57,7 @@ public final class PipelineCache {
     }
 
     private static func openArchive(
-        device: MTLDevice,
+        device: any MTLDevice,
         fileURL: URL?
     ) -> ((any MTL4Archive)?, PipelineCacheStats.Archive) {
         guard let fileURL else { return (nil, .none) }
@@ -79,7 +79,7 @@ public final class PipelineCache {
     /// A classic or a mesh render pipeline.
     public func makeRenderPipelineState(
         descriptor: MTL4PipelineDescriptor
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         if let archive, let state = try? archive.makeRenderPipelineState(descriptor: descriptor) {
             stats.hits += 1
             return state
@@ -90,7 +90,7 @@ public final class PipelineCache {
 
     public func makeComputePipelineState(
         descriptor: MTL4ComputePipelineDescriptor
-    ) throws -> MTLComputePipelineState {
+    ) throws -> any MTLComputePipelineState {
         if let archive, let state = try? archive.makeComputePipelineState(descriptor: descriptor) {
             stats.hits += 1
             return state

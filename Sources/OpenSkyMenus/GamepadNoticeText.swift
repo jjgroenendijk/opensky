@@ -1,7 +1,7 @@
 // The box the game shows when the gamepad in use disconnects, from the Update.esm
 // settings `sGamepadDisconnectedTitle` and `sGamepadDisconnectedMessage`.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum GamepadNoticeText: String, GameSettingTextKey {
     case title = "sGamepadDisconnectedTitle"

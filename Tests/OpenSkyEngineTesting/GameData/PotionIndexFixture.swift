@@ -2,9 +2,9 @@
 
 import Foundation
 @testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
+@testable public import OpenSkyGameData
 
 public enum PotionIndexFixture {
     /// `Base.esm` defines MGEF 1 "Restore Health". `Patch.esp` adds ALCH

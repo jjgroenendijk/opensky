@@ -2,7 +2,7 @@
 // with last frame, and optionally blurred: ambient occlusion and indirect light
 // (docs/rendering/post-effects.md).
 
-import Metal
+public import Metal
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
@@ -29,20 +29,20 @@ struct PostHistoryKernels {
 /// One pass's kernels, their binding table, and the targets they keep between frames.
 public final class PostHistoryPass {
     let kernels: PostHistoryKernels
-    let trace: MTLComputePipelineState
-    let blurs: (horizontal: MTLComputePipelineState, vertical: MTLComputePipelineState)?
-    let argumentTable: MTL4ArgumentTable
+    let trace: any MTLComputePipelineState
+    let blurs: (horizontal: any MTLComputePipelineState, vertical: any MTLComputePipelineState)?
+    let argumentTable: any MTL4ArgumentTable
     /// The traced value and its depth per pixel; the two swap each frame.
-    private var history: [MTLTexture] = []
-    private var scratch: MTLTexture?
-    private var blurred: MTLTexture?
+    private var history: [any MTLTexture] = []
+    private var scratch: any MTLTexture?
+    private var blurred: any MTLTexture?
     /// What the composite reads: the blurred trace, or the trace itself.
-    private(set) var result: MTLTexture?
+    private(set) var result: any MTLTexture?
     private var current = 0
     /// The frame that last traced, so a skipped frame does not blend stale history.
     private var lastTracedFrame: Int?
 
-    init(_ kernels: PostHistoryKernels, library: MTLLibrary, compiler: PipelineCache) throws {
+    init(_ kernels: PostHistoryKernels, library: any MTLLibrary, compiler: PipelineCache) throws {
         self.kernels = kernels
         trace = try Self.kernel(kernels.trace, library: library, compiler: compiler)
         blurs = try kernels.blurs.map {
@@ -59,9 +59,9 @@ public final class PostHistoryPass {
 
     private static func kernel(
         _ name: String,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache
-    ) throws -> MTLComputePipelineState {
+    ) throws -> any MTLComputePipelineState {
         let function = MTL4LibraryFunctionDescriptor()
         function.name = name
         function.library = library
@@ -77,7 +77,7 @@ public final class PostHistoryPass {
     }
 
     /// Makes the targets match `target`. False when a texture cannot be made.
-    func prepare(matching target: MTLTexture, residency: MTLResidencySet) -> Bool {
+    func prepare(matching target: any MTLTexture, residency: any MTLResidencySet) -> Bool {
         if
             let first = history.first, first.width == target.width,
             first.height == target.height, history.count == 2
@@ -110,10 +110,10 @@ public final class PostHistoryPass {
     }
 
     private static func target(
-        _ match: MTLTexture,
+        _ match: any MTLTexture,
         _ format: MTLPixelFormat,
         _ label: String
-    ) -> MTLTexture? {
+    ) -> any MTLTexture? {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: format, width: match.width, height: match.height, mipmapped: false
         )
@@ -126,7 +126,7 @@ public final class PostHistoryPass {
 
     /// Encodes the trace, and the two blurs when the pass has them, for `frame`.
     func encode(
-        _ encoder: MTL4ComputeCommandEncoder,
+        _ encoder: any MTL4ComputeCommandEncoder,
         inputs: PostHistoryInputs,
         frame: Int
     ) {
@@ -158,9 +158,9 @@ public final class PostHistoryPass {
 
     /// One pass over every pixel; a barrier keeps the next pass behind it.
     private func dispatch(
-        _ encoder: MTL4ComputeCommandEncoder,
-        _ pipeline: MTLComputePipelineState,
-        size: MTLTexture
+        _ encoder: any MTL4ComputeCommandEncoder,
+        _ pipeline: any MTLComputePipelineState,
+        size: any MTLTexture
     ) {
         encoder.setComputePipelineState(pipeline)
         encoder.dispatchThreads(
@@ -177,6 +177,6 @@ public final class PostHistoryPass {
 /// What the trace reads: this frame's uniforms and the scene copies.
 struct PostHistoryInputs {
     let uniforms: UInt64
-    let depth: MTLTexture
-    let scene: MTLTexture
+    let depth: any MTLTexture
+    let scene: any MTLTexture
 }

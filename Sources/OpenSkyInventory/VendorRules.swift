@@ -5,10 +5,10 @@
 // list. No list means no keyword gate. See docs/engine/vendor-factions.md.
 
 import Foundation
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// Finds an actor's vendor faction and reads its vendor block.
 nonisolated public struct VendorResolver: Sendable {

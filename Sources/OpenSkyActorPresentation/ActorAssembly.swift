@@ -5,13 +5,13 @@
 // rejected. Cell discovery/lifecycle stays in milestone 5.5.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRendering
-import OpenSkyRenderResources
+public import OpenSkyRendering
+public import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import simd
+public import simd
 
 nonisolated public protocol ActorAssetProvider {
     associatedtype Skeleton

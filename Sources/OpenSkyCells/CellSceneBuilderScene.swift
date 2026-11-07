@@ -4,16 +4,16 @@
 import Foundation
 import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyObjectAnimation
-import OpenSkyPhysics
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyPhysics
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import OpenSkyRenderResources
-import OpenSkyTerrain
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyTerrain
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 import simd
 
 nonisolated public struct CellGeometryBuild {

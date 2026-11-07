@@ -2,7 +2,7 @@
 // `Actor.AddShout`, and `Actor.EquipShout` keep it in the script state; the app reads
 // it from there, so a script and the readout change one record. See docs/engine/shouts.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ShoutKnowledge: Equatable, Sendable {
     /// Shouts `AddShout` gave.

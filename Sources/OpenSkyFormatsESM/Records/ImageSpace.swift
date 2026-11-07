@@ -2,7 +2,7 @@
 // weather or cell applies to the frame. Layout and sources: docs/formats/image-spaces.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct ImageSpace: Equatable, Sendable {
     /// HNAM, nine floats.

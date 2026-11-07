@@ -3,7 +3,7 @@
 // Sources: UESP "Skyrim Mod:Mod File Format" DIAL, INFO, VTYP; xEdit wbDefinitionsTES5.pas.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum DialogueSkipKind: SkipTallyKind {
     case unknownField(FourCC)

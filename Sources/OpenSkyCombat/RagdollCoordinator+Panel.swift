@@ -2,8 +2,8 @@
 // through the same `RagdollRuntime.trigger(_:)` a death reaches, so a forced
 // verifies that route rather than adding a second one.
 
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import simd
 
 extension RagdollCoordinator {

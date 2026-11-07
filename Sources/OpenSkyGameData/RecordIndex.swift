@@ -4,8 +4,8 @@
 // the last valid definition.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public struct IndexedRecord: Sendable {
     public let record: ESMRecord

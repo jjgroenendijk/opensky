@@ -4,7 +4,7 @@
 // impact set and BIDS the shield-bash set. Layout: docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Weapon: Sendable {
     /// DNAM animation type. Decides the attack animation set and, with the

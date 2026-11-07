@@ -4,10 +4,10 @@
 // looks at the speaker's head over the player's shoulder, at the framing distance or
 // just behind the player, whichever is further. See docs/engine/dialogue-camera.md.
 
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 /// What one frame of the dialogue camera is computed from. Everything here is

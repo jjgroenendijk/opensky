@@ -2,7 +2,7 @@
 // dies, and `fPlayerDeathReloadTime` later the newest save loads. The order of the
 // message and the load is OpenSky's reading (docs/engine/ragdoll.md#player-death).
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// The texts of the player's death and of bleedout.
 nonisolated public enum PlayerDeathText: String, GameSettingTextKey {

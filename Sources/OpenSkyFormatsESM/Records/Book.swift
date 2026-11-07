@@ -4,7 +4,7 @@
 // Layout and sources: docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Book: Sendable {
     public struct Flags: OptionSet, Equatable, Sendable {

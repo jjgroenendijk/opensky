@@ -2,7 +2,7 @@
 // see docs/engine/water-physics.md#floating-bodies.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import simd
 

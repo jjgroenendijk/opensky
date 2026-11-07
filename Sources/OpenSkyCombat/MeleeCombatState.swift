@@ -5,7 +5,7 @@
 // stream. See docs/engine/melee-combat.md.
 
 import Foundation
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 
 /// Where a swing is. `windup` opens at `attackStart`, `swinging` at
 /// `preHitFrame`, `contact` at `HitFrame`, and `recovery` runs until the attack

@@ -1,7 +1,7 @@
 // Picks a birth point on a mesh emitter's geometry by its nif.xml `EmitFrom`
 // mode. A mesh with no triangles uses its vertices; one with no vertices, the origin.
 
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsMesh
 import simd
 
 nonisolated public struct MeshEmitterSampler: Sendable {

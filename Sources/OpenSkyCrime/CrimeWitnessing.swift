@@ -5,8 +5,8 @@
 // See docs/engine/crime.md and docs/engine/detection.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyPerceptionInterface
+public import OpenSkyFormatsESM
+public import OpenSkyPerceptionInterface
 
 /// Where the crime runtime asks whether anybody is watching.
 @MainActor

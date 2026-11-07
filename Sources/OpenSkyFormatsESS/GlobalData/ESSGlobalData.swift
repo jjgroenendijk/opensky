@@ -1,7 +1,7 @@
 // One global data table: a type, a length, and bytes. Five types have decoders; every
 // other one stays counted bytes. See docs/formats/ess.md#global-data.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum ESSGlobalDataType: UInt32, CaseIterable, Sendable {
     case miscStats = 0

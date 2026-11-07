@@ -11,10 +11,10 @@ extension Renderer {
     /// previous one retires once in-flight frames drain.
     public func setDecals(_ batches: [DecalBatch]) throws {
         let instances = batches.flatMap(\.instances)
-        var buffer: MTLBuffer?
+        var buffer: any MTLBuffer?
         if !instances.isEmpty {
             guard
-                let made = device.makeBuffer(
+                let made = unsafe device.makeBuffer(
                     bytes: instances,
                     length: instances.count * MemoryLayout<DecalInstance>.stride,
                     options: .storageModeShared
@@ -44,7 +44,7 @@ extension Renderer {
         retireAllocations(retiring)
     }
 
-    private func addResident(_ allocations: [MTLAllocation]) {
+    private func addResident(_ allocations: [any MTLAllocation]) {
         guard !allocations.isEmpty else { return }
         residencySet.addAllocations(allocations)
         residencySet.commit()
@@ -120,11 +120,11 @@ extension Renderer {
 }
 
 extension EffectLayer {
-    var decalAllocations: [MTLAllocation] {
+    var decalAllocations: [any MTLAllocation] {
         (decalBuffer.map { [$0] } ?? []) + decalBatches.map(\.texture)
     }
 
-    var particleAllocations: [MTLAllocation] {
+    var particleAllocations: [any MTLAllocation] {
         particles.flatMap(\.residencyAllocations)
     }
 }

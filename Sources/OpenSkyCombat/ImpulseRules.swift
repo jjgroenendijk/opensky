@@ -3,7 +3,7 @@
 // (docs/engine/impulses.md).
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyPhysics
 import simd

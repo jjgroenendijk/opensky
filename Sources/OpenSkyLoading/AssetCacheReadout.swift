@@ -1,8 +1,8 @@
 // The text the Asset Optimisation page shows, built from values so tests can pin it.
 
 import Foundation
-import OpenSkyAssetCache
-import OpenSkyRenderResources
+public import OpenSkyAssetCache
+public import OpenSkyRenderResources
 
 nonisolated public enum AssetCacheReadout {
     /// `High: no visible loss`, for the texture quality menu.
@@ -13,7 +13,7 @@ nonisolated public enum AssetCacheReadout {
     /// `Size: 3.2 GiB, 1200 files`.
     public static func sizeLine(_ usage: AssetCacheUsage?) -> String {
         guard let usage else { return "Size: empty" }
-        return "Size: " + String(format: "%.1f", Double(usage.bytes) / Double(1 << 30))
+        return unsafe "Size: " + String(format: "%.1f", Double(usage.bytes) / Double(1 << 30))
             + " GiB, \(usage.entryCount) files"
     }
 
@@ -51,8 +51,9 @@ nonisolated public enum AssetCacheReadout {
     /// `Textures: 32918 entries, 4.1 GiB` for a kind's control on the cache page.
     public static func kindTitle(_ kind: AssetCacheKind, usage: AssetCacheUsage?) -> String {
         let kindUsage = usage?.kinds[kind] ?? AssetCacheKindUsage()
+        let size = unsafe String(format: "%.1f GiB", Double(kindUsage.bytes) / Double(1 << 30))
         return "\(kind.title): \(kindUsage.entryCount) entries, "
-            + String(format: "%.1f GiB", Double(kindUsage.bytes) / Double(1 << 30))
+            + size
     }
 
     /// The measured gain of caching `kind`, archive and cache on one disk
@@ -81,11 +82,12 @@ nonisolated public enum AssetCacheReadout {
         guard stats.batches > 0 || stats.externalSkips > 0 else {
             return ["Direct GPU loading: no cell loaded yet"]
         }
+        let lastBatch = unsafe String(format: "%.0f ms", stats.lastBatchMS)
         var lines = [
             "Direct GPU loading: \(stats.textures) textures, \(stats.bytes >> 20) MiB",
             "Meshes: \(stats.meshes), \(stats.meshBytes >> 20) MiB",
             "Last cell: \(stats.lastBatchTextures) textures, \(stats.lastBatchMeshes) meshes, "
-                + String(format: "%.0f ms", stats.lastBatchMS)
+                + lastBatch
         ]
         if stats.fallbacks > 0 {
             lines.append("Fallbacks: \(stats.fallbacks) loaded on the CPU")

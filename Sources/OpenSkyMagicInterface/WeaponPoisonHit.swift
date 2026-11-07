@@ -2,7 +2,7 @@
 // world state on the attacker; the magic feature spends a dose and applies the effects.
 // See docs/engine/alchemy.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct WeaponPoisonHit: Equatable, Sendable {
     public let attacker: ReferenceKey

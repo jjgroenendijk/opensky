@@ -1,8 +1,8 @@
 // The Save and Load pages: the save list newest first. Saving over a file and
 // deleting a file ask first. See docs/engine/system-menu.md.
 
-import Foundation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyGameData
 
 /// Who a save belongs to, as its summary records it.
 nonisolated public struct SaveSlotCharacter: Equatable, Sendable {

@@ -5,7 +5,7 @@
 // and an ancestor cycle is refused by name. See docs/engine/behavior-clips.md.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// Where a named behavior file comes from. The engine answers by loading it out
 /// of the install; a test answers from a table it built in code.

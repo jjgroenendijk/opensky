@@ -6,9 +6,9 @@
 // inventory bridge, so the menus agree on what an `EntriesA` row is.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyRendering
 
 nonisolated extension ContainerMenuMovieBridge {
     // MARK: - Totals
@@ -22,7 +22,7 @@ nonisolated extension ContainerMenuMovieBridge {
             publishBarterInfo(model, runtime: runtime)
         }
         setText("\(model.playerGold)", atPath: goldFieldPath, runtime: runtime)
-        setText(
+        unsafe setText(
             String(format: "%.0f", model.player.carriedWeight),
             atPath: carryWeightFieldPath,
             runtime: runtime

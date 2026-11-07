@@ -16,7 +16,7 @@ nonisolated public struct RenderTargetEntry: Equatable, Sendable {
         self.isMemoryless = isMemoryless
     }
 
-    init(texture: MTLTexture, name: String) {
+    init(texture: any MTLTexture, name: String) {
         let memoryless = texture.storageMode == .memoryless
         self.init(
             name: name,
@@ -45,7 +45,7 @@ extension Renderer {
     /// drawables belong
     /// to the view and are not counted.
     public func renderTargetMemory() -> RenderTargetMemory {
-        let owned: [(String, MTLTexture?)] = [
+        let owned: [(String, any MTLTexture?)] = [
             ("Shadow maps", shadow.map),
             ("Grade copy", imageSpacePass.sceneCopy),
             ("Grade depth", imageSpacePass.storedDepth),

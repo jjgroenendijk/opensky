@@ -233,7 +233,7 @@ extension SystemMenuCoordinator {
     /// Shows `running` until the file work ends. A finished load closes the menu.
     func perform(
         _ running: String, done: String, closes: Bool = false, slot: String? = nil,
-        _ body: @escaping @MainActor (SaveGameService) async throws -> Void
+        _ body: @escaping @MainActor (any SaveGameService) async throws -> Void
     ) {
         guard let saves else {
             lastMessage = "Saving unavailable"
@@ -347,7 +347,7 @@ extension SystemMenuCoordinator {
         case .toggle: value >= 0.5 ? "On" : "Off"
         case let .choice(options):
             options.indices.contains(Int(value)) ? options[Int(value)] : "\(Int(value))"
-        default: String(format: "%.2f", value)
+        default: unsafe String(format: "%.2f", value)
         }
     }
 

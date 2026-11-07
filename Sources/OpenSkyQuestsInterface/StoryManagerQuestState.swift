@@ -3,7 +3,7 @@
 // reset and "do all before repeating" read it. See docs/engine/story-manager.md.
 
 import Foundation
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated public struct StoryManagerQuestState: WorldStateComponent, Sendable {
     /// `GameClock.totalGameSeconds` at the last start.

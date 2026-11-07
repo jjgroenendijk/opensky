@@ -3,7 +3,7 @@
 // Pipeline: docs/tools/preview-render.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public enum PreviewTarget: Equatable, Sendable {

@@ -1,6 +1,6 @@
 // `openskycli gaps`: what the install asks for that the engine does not do yet.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct GapsArguments: CLICommandArguments {
     public static let sectionKeys = [

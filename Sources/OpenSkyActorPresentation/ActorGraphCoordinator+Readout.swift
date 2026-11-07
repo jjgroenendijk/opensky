@@ -2,7 +2,7 @@
 
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One actor's graph, or why it runs none.
 nonisolated public struct ActorGraphReadout: Equatable, Sendable {

@@ -6,7 +6,7 @@
 // docs/engine/condition-functions-world.md#combat-actions.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState

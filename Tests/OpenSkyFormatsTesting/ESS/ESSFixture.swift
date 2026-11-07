@@ -1,7 +1,7 @@
 // Synthetic Skyrim saves built in code. A real save holds the user's game data, so no
 // test ever reads one from the repo (docs/formats/ess.md).
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 public struct ESSFixtureChangeForm {

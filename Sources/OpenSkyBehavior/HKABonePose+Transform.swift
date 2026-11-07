@@ -1,8 +1,8 @@
 // A node's model-frame matrix as the bone pose a node rig publishes, for the cart
 // wheels and the sequence doors.
 
-import OpenSkyFormatsAnimation
-import simd
+public import OpenSkyFormatsAnimation
+public import simd
 
 nonisolated extension HKABonePose {
     /// Rotation, uniform scale, and translation of `transform`. A shear is dropped.

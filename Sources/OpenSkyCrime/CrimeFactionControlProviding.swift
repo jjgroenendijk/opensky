@@ -3,12 +3,12 @@
 // value, because a bounty, the guard reaction and the membership move together.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyCrimeInterface
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyActorsInterface
+public import OpenSkyCrimeInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// One faction a popup offers, named the way the readout names it.
 nonisolated public struct FactionOption: Equatable, Sendable {

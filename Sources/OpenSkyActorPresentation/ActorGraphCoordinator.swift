@@ -3,12 +3,12 @@
 // it. The rules live in `ActorGraphCore`. See docs/engine/actor-graphs.md.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyConditions
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
+public import OpenSkyBehavior
+public import OpenSkyConditions
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyGameData
 import simd
 
 /// One loaded actor that can run a graph.

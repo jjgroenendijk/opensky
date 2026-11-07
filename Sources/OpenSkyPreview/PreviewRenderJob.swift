@@ -3,12 +3,12 @@
 // Pipeline: docs/tools/preview-render.md.
 
 import Foundation
-import Metal
+public import Metal
 import MetalKit
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyWeather
 import OpenSkyWorld
@@ -140,7 +140,7 @@ public enum PreviewRenderJob {
         var pixels = [UInt32](repeating: 0, count: texture.width * texture.height)
         pixels.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base, bytesPerRow: texture.width * 4,
                 from: MTLRegionMake2D(0, 0, texture.width, texture.height), mipmapLevel: 0
             )

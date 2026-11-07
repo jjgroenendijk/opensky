@@ -5,7 +5,7 @@
 //   https://en.uesp.net/wiki/Skyrim_Mod:Archive_File_Format
 // Layout documented in docs/formats/bsa.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum BSAError: Error, Equatable, Sendable {
     case notABSA

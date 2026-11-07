@@ -3,7 +3,7 @@
 // batches calls through `Renderer.updateSWFRuntime`.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public struct HUDMeterValues: Equatable, Sendable {
     public var health: Float

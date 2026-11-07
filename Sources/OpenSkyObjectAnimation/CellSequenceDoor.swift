@@ -1,5 +1,5 @@
-import OpenSkyActorPresentation
-import simd
+public import OpenSkyActorPresentation
+public import simd
 
 /// One sequence door a cell drew, posed through its buffer.
 nonisolated public struct CellSequenceDoor: Sendable {

@@ -5,7 +5,7 @@
 // CK wiki "Stealth Points" (<https://ck.uesp.net/wiki/Stealth_Points>). See
 // docs/engine/detection.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// The `fCombatStealthPoint*` and `iCombatStealthPoint*` settings. Defaults are the
 /// CK wiki's Category:Settings values; `Skyrim.esm` sets the same where it sets one.

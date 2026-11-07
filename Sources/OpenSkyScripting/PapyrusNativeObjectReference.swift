@@ -6,7 +6,7 @@
 // Documented in docs/engine/papyrus-activation.md, with the gaps against the game.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 

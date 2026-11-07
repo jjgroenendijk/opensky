@@ -2,10 +2,10 @@
 // that reads it for `VendorCore`.
 // See docs/engine/vendor-factions.md and docs/engine/coordinators.md.
 
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// What `VendorCoordinator` reads from the running world.
 public protocol VendorWorld: AnyObject {

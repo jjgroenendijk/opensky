@@ -2,7 +2,7 @@
 // Layout source: xEdit dev-4.1.6 Core/wbLOD.pas,
 // TwbLodTES5TreeType/TwbLodTES5TreeRef + LoadFromData implementations.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 import simd
 

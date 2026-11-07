@@ -1,11 +1,11 @@
 // FCTN chunk: faction memberships, merged into the `RDLT` deltas by `ReferenceKey`.
 // A faction the load order lost is kept, so removing a plugin keeps progress.
 
-import Foundation
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One actor's saved memberships, before they are merged back into the delta.
 nonisolated public struct SaveFactionEntry: Equatable, Sendable {

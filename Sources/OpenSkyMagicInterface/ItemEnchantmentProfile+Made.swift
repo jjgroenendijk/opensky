@@ -2,9 +2,9 @@
 // it, built from its base records. See docs/engine/enchanting.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension ItemEnchantmentProfile {
     /// `made` on `item`, or nil when a base left the load order. A base's magnitude

@@ -1,12 +1,12 @@
 // A static's directional material, ready to bind (docs/rendering/surface-shading.md).
 
-@preconcurrency import Metal
-import OpenSkyFormatsCore
+@preconcurrency @unsafe public import Metal
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct RenderProjectedMaterial: Sendable {
-    public let diffuse: MTLTexture?
-    public let noise: MTLTexture?
+    public let diffuse: any MTLTexture?
+    public let noise: any MTLTexture?
     /// `DrawUniforms.projectedDirection`.
     public let direction: SIMD4<Float>
     /// `DrawUniforms.projectedParameters` without the mode in `w`.
@@ -16,7 +16,7 @@ nonisolated public struct RenderProjectedMaterial: Sendable {
     public let singlePass: Bool
     public let isSnow: Bool
 
-    public init(_ material: ProjectedMaterial, diffuse: MTLTexture?, noise: MTLTexture?) {
+    public init(_ material: ProjectedMaterial, diffuse: any MTLTexture?, noise: any MTLTexture?) {
         self.diffuse = diffuse
         self.noise = noise
         singlePass = material.singlePass

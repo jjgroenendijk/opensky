@@ -1,9 +1,9 @@
 // A fixed `ActorValueAccess` for suites that read actor values but must not
 // depend on the rules that change them.
 
-import OpenSkyActorsInterface
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyActorsInterface
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Every actor has `values`, every indexed read answers `indexedValue`, and no
 /// write changes anything.

@@ -2,7 +2,7 @@
 // such as the console batch file and the ini edit, lands in here and never in the
 // install OpenSky reads.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct ReferencePrefix: Equatable, Sendable {
     public static let appID = "489830"

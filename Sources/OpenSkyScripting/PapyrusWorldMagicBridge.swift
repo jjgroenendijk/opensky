@@ -4,8 +4,8 @@
 // `Spell.Cast` through `CasterRuntime`. See docs/engine/papyrus-spell-natives.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyMagicInterface
 
 /// One actor's magic as a Papyrus native sees it.
 nonisolated public struct PapyrusSpellState: Equatable, Sendable {

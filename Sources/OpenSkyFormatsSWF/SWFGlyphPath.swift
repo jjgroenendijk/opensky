@@ -2,7 +2,7 @@
 // straight and quadratic edges and fill even-odd. Spec: SWF v19 chapters 6 and
 // 10. See docs/formats/swf-text.md and docs/rendering/ui.md.
 
-import CoreGraphics
+public import CoreGraphics
 
 nonisolated public enum SWFGlyphPath: Sendable {
     /// A CGPath for a glyph, scaled so one EM spans `emPixelSize` pixels and

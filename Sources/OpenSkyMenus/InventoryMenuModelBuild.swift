@@ -3,9 +3,9 @@
 // `WorldStateStore`. The `@MainActor` convenience is at the bottom.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 nonisolated extension InventoryMenuModel {
     /// Builds one owner's list. Rows sort by name, then FormID, so the order is

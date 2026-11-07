@@ -5,9 +5,9 @@
 // initializer takes sixteen arguments, so a test that wants one non-zero field
 // would otherwise have to spell out the other fifteen.
 
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyGameData
-@testable import OpenSkyProgression
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyGameData
+@testable public import OpenSkyProgression
 
 nonisolated public func makeProgressionSnapshot(
     isAvailable: Bool = true,

@@ -1,9 +1,9 @@
 // Follower command mode: whether a follower agrees to use the target the player picked,
 // and what it then does. See docs/engine/follower-commands.md.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
 import simd
 
 /// What the player pointed at, as the rules see it.

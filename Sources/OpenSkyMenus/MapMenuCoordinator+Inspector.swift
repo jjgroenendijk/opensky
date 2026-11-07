@@ -2,8 +2,8 @@
 // then reveal, discover, or hide that marker alone.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 
 /// A worldspace that has map markers, for the inspector's picker.
 nonisolated public struct MapWorldspaceChoice: Equatable, Sendable {

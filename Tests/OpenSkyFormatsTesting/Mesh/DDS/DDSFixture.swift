@@ -3,8 +3,8 @@
 // Layout follows the Microsoft DDS programming guide (DDS_HEADER,
 // DDS_PIXELFORMAT, DDS_HEADER_DXT10); see docs/formats/dds.md.
 
-import Foundation
-@testable import OpenSkyFormatsMesh
+public import Foundation
+@testable public import OpenSkyFormatsMesh
 
 public enum DDSFixture: Sendable {
     /// Optional DDS_HEADER_DXT10 fields (FourCC "DX10").

@@ -5,8 +5,8 @@
 // See docs/engine/runtime-state.md and docs/engine/dialogue.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// Failures the dialogue layer reports.
 ///

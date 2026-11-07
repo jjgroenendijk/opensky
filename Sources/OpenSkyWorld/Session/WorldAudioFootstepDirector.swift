@@ -2,12 +2,12 @@
 // `FootLeft` and `FootRight` events at the frame a foot lands, and a speed cadence would
 // drift from the animation. Driven by the per-frame audio tick, skipped while paused.
 
-import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import Foundation
+public import OpenSkyAudio
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import simd
 
 @MainActor

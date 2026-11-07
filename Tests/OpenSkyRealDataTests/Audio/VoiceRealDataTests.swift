@@ -67,7 +67,7 @@ struct VoiceRealDataTests {
         #expect(monoCount > framed - 1000, "\(framed - monoCount) voice files are not mono")
         #expect(monoCount < framed, "the stereo voice lines vanished; downmix now untested")
 
-        let report = """
+        let report = unsafe """
         [INFO] voice framing: \(paths.count) entries, \(framed) framed, \(failures.count) failed
         [INFO] voice lip: \(withLip) with a lip blob, \(framed - withLip) without
         [INFO] voice audio: \(monoCount) mono, rates \
@@ -141,9 +141,10 @@ struct VoiceRealDataTests {
             totalSpelledDifferently < 200,
             "\(totalSpelledDifferently) names the rule spells differently"
         )
+        let explainedPercent = unsafe String(format: "(%.3f%%)", explained * 100)
         let report = (lines + [
             "[INFO] TOTAL: \(totalMatched) of \(totalActual) explained "
-                + String(format: "(%.3f%%)", explained * 100)
+                + explainedPercent
                 + ", \(totalSpelledDifferently) spelled differently"
         ]).joined(separator: "\n")
         print(report)
@@ -244,10 +245,10 @@ struct VoiceRealDataTests {
             let status = try engine.engine.renderOffline(request, to: chunk)
             guard status == .success, chunk.frameLength > 0 else { break }
             rendered += Int(chunk.frameLength)
-            guard let channels = chunk.floatChannelData else { continue }
+            guard let channels = unsafe chunk.floatChannelData else { continue }
             for channel in 0 ..< Int(format.channelCount) {
                 for frame in 0 ..< Int(chunk.frameLength) {
-                    peak = max(peak, abs(channels[channel][frame]))
+                    peak = unsafe max(peak, abs(channels[channel][frame]))
                 }
             }
         }

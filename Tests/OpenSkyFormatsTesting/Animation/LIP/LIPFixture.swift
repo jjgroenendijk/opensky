@@ -1,8 +1,8 @@
 // Synthetic Skyrim `.lip` builder. Cells are values on the documented frame grid,
 // packed with the zero-run code; no game-derived bytes are fixtures.
 
-import Foundation
-@testable import OpenSkyFormatsAnimation
+public import Foundation
+@testable public import OpenSkyFormatsAnimation
 
 public enum LIPFixture: Sendable {
     public struct Cell: Sendable {

@@ -4,8 +4,8 @@
 // Layout: docs/formats/nif-particles.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 /// `NiPSysBombModifier`, before its bomb object is placed.
 nonisolated public struct NIFBombModifier: Equatable, Sendable {

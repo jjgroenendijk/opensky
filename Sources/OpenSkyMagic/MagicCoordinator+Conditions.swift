@@ -6,7 +6,7 @@ import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 import OpenSkyWorldState
 
 extension MagicCoordinator {

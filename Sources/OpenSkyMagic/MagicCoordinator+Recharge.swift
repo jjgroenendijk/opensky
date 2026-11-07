@@ -5,10 +5,10 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldState
 

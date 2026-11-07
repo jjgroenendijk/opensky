@@ -3,7 +3,7 @@
 // uses indices. Word storage keeps the raw i32, so a round trip is byte-exact.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import simd
 
 /// One variable's value, in the shape the declared type asks for. Reading a

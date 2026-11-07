@@ -6,8 +6,8 @@
 // See docs/engine/item-enchantments.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One owner's enchanted-item bookkeeping: charge left per weapon, and the
 /// constant effects each worn item established.

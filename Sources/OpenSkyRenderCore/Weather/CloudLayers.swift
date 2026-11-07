@@ -1,7 +1,7 @@
 // The weather's cloud layers at one hour: texture, tint, opacity and drift per layer.
 // Field layout: docs/formats/weather.md. How the layers draw: docs/engine/weather.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct ResolvedCloudLayer: Equatable, Sendable {

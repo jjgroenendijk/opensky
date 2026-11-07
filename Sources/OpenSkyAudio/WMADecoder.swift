@@ -3,7 +3,7 @@
 // docs/decisions/ffmpeg-audio.md.
 
 import CFFmpeg
-import Foundation
+public import Foundation
 
 nonisolated public final class WMADecoder {
     /// `WAVEFORMATEX.wFormatTag` for Windows Media Audio 2, the codec xWMA carries.
@@ -28,8 +28,8 @@ nonisolated public final class WMADecoder {
 
     public init(parameters: AudioCodecParameters) throws {
         try WMADecoder.validate(parameters)
-        session = try FFmpegCodecSession(codec: AV_CODEC_ID_WMAV2) { context in
-            try WMADecoder.configure(context, parameters: parameters)
+        session = try unsafe FFmpegCodecSession(codec: AV_CODEC_ID_WMAV2) { context in
+            try unsafe WMADecoder.configure(context, parameters: parameters)
         }
         self.parameters = parameters
     }

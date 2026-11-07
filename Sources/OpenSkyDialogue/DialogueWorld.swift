@@ -2,10 +2,10 @@
 // the running session. The app answers it; a test passes a fake.
 // See docs/engine/coordinators.md.
 
-import OpenSkyConditions
-import OpenSkyDialogueInterface
-import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyConditions
+public import OpenSkyDialogueInterface
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 
 /// What `DialogueCoordinator` reads from the running world.
 @MainActor

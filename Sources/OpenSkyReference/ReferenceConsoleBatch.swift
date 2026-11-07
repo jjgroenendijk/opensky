@@ -2,7 +2,7 @@
 // in the game console runs it one line at a time. Command reference:
 // https://en.uesp.net/wiki/Skyrim:Console
 
-import Foundation
+public import Foundation
 
 nonisolated public enum ReferenceConsoleBatchError: Error, Equatable, Sendable {
     case noPlace
@@ -33,7 +33,7 @@ nonisolated public enum ReferenceConsoleBatch {
             "set gamehour to \(number(view.gameHour))"
         ]
         if let weather = view.weatherFormID {
-            lines.append("fw " + String(format: "%08X", weather))
+            unsafe lines.append("fw " + String(format: "%08X", weather))
         }
         lines.append("fov \(number(view.skyrimFOVDegrees))")
         if toggles.hideMenus {
@@ -57,7 +57,7 @@ nonisolated public enum ReferenceConsoleBatch {
 
     static func number(_ value: Float) -> String {
         // Adding zero turns -0 into 0, so a level view does not print "-0.00".
-        String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), Double(value) + 0)
+        unsafe String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), Double(value) + 0)
     }
 }
 

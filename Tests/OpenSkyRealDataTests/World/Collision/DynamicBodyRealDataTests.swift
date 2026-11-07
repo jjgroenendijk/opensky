@@ -290,14 +290,14 @@ extension DynamicBodyRealDataTests {
         lines.append("simulated bodies: \(start.count)")
         lines.append("")
         lines.append("## Settle (\(settleSteps) fixed steps)")
-        lines.append(String(
+        unsafe lines.append(String(
             format: "step time: avg %.4f ms, max %.4f ms (budget %.2f ms)",
             settle.averageStepMS, settle.maximumStepMS, budgetMS
         ))
         lines.append("asleep at end: \(settle.sleepingCount) of \(world.bodyCount)")
         lines.append("awake at end: \(settle.awakeKeys.joined(separator: ", "))")
         lines.append("resting transforms recorded: \(settle.settledTransformCount)")
-        lines.append(String(format: "largest drop: %.2f units", settle.maximumDrop))
+        unsafe lines.append(String(format: "largest drop: %.2f units", settle.maximumDrop))
         lines.append("non-finite poses: \(settle.nonFiniteCount), "
             + "recovered bodies: \(settle.recoveredBodyCount)")
         lines.append("")
@@ -323,7 +323,7 @@ extension DynamicBodyRealDataTests {
             let floor = ShapeSweeper.firstHit(
                 query: down, shapes: solidShapes(of: scene, overlapping: down.bounds)
             )
-            lines.append(String(
+            unsafe lines.append(String(
                 format: "  %@ start (%.0f, %.0f, %.0f) r %.1f drop %.2f, floor %@, asleep %@",
                 entry.key.description,
                 entry.position.x, entry.position.y, entry.position.z,
@@ -345,10 +345,11 @@ extension DynamicBodyRealDataTests {
             min: SIMD3(point.x - 2, point.y - 2, point.z - 256), max: point + SIMD3(2, 2, 0)
         )
         return solidShapes(of: scene, overlapping: bounds).flatMap { shape in
-            [String(
+            let under = unsafe String(
                 format: "    under: %@ z %.1f to %.1f",
                 shape.reference.description, shape.bounds.min.z, shape.bounds.max.z
-            )] + flatFaces(of: shape, under: point)
+            )
+            return [under] + flatFaces(of: shape, under: point)
         }
     }
 
@@ -378,7 +379,7 @@ extension DynamicBodyRealDataTests {
                 corners[1] - corners[0],
                 corners[2] - corners[0]
             ))
-            return String(
+            return unsafe String(
                 format: "      face (%.1f %.1f %.1f) (%.1f %.1f %.1f) (%.1f %.1f %.1f)"
                     + " n %.2f %.2f %.2f",
                 corners[0].x, corners[0].y, corners[0].z, corners[1].x, corners[1].y, corners[1].z,
@@ -399,8 +400,8 @@ extension DynamicBodyRealDataTests {
     /// A downward sweep's answer, for the report.
     private static func describe(_ hit: ShapeSweepHit?) -> String {
         guard let hit else { return "none" }
-        guard hit.startsOverlapping else { return String(format: "%.1f", hit.distance) }
-        return String(
+        guard hit.startsOverlapping else { return unsafe String(format: "%.1f", hit.distance) }
+        return unsafe String(
             format: "overlapping %@ normal (%.2f, %.2f, %.2f) at z %.1f",
             hit.reference.description, hit.normal.x, hit.normal.y, hit.normal.z, hit.position.z
         )

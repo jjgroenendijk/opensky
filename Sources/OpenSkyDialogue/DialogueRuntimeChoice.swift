@@ -5,8 +5,8 @@
 // `PapyrusWorldStateBridgeQuests.swift`.
 
 import Foundation
-import OpenSkyDialogueInterface
-import OpenSkyFormatsESM
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 

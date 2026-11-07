@@ -3,7 +3,7 @@
 // wrongly typed record keeps the vanilla value. See docs/formats/gmst.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension GameSettingStore {
     /// A float or integer setting as a finite `Float`.

@@ -2,11 +2,11 @@
 // deltas by key. Made rows ascend by id, so equal state gives equal bytes.
 // Layout: docs/formats/opensky-save-actor-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyMagicInterface
-import OpenSkyWorldState
+public import OpenSkyMagicInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// The known keys; then per made enchantment its id, name, capacity, cost per use,

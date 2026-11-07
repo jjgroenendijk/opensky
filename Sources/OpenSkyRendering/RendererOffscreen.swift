@@ -2,7 +2,7 @@
 // screenshots; the sustained loop is the fps gate, timed by `FrameStats` with
 // commit-feedback GPU spans, so the fps claim is measured.
 
-import Metal
+public import Metal
 import MetalKit
 import OpenSkyFormatsCore
 import OpenSkyRenderCore
@@ -105,7 +105,7 @@ extension Renderer {
     private func makeOffscreenTargets(
         width: Int,
         height: Int
-    ) throws -> (color: MTLTexture, depth: MTLTexture) {
+    ) throws -> (color: any MTLTexture, depth: any MTLTexture) {
         let colorDescriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: colorPixelFormat,
             width: width,
@@ -135,8 +135,8 @@ extension Renderer {
     }
 
     private static func offscreenPassDescriptor(
-        color: MTLTexture,
-        depth: MTLTexture,
+        color: any MTLTexture,
+        depth: any MTLTexture,
         background: SIMD3<Double>
     ) -> MTL4RenderPassDescriptor {
         let descriptor = MTL4RenderPassDescriptor()
@@ -255,7 +255,7 @@ extension Renderer {
 
     /// Renders one frame offscreen and waits for the GPU, for deterministic tests and
     /// screenshots without a drawable.
-    public func renderOffscreen(width: Int, height: Int) throws -> MTLTexture {
+    public func renderOffscreen(width: Int, height: Int) throws -> any MTLTexture {
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
         residencySet.addAllocation(color)
         residencySet.commit()
@@ -276,7 +276,7 @@ extension Renderer {
         width: Int,
         height: Int,
         animationTime: Float
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         self.animationTime = animationTime
         adoptFrameInput(
             frameDriver?.prepareOffscreenFrame(deltaTime: 0, advancesWorld: false) ?? frameInput

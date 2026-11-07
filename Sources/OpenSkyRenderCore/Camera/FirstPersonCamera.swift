@@ -5,7 +5,7 @@
 // See docs/engine/first-person.md.
 
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 nonisolated public struct FirstPersonCamera: Equatable, Sendable {
     /// The default vertical field of view, in radians: the same 65 degrees the

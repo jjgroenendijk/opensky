@@ -5,7 +5,7 @@
 // See docs/engine/combat.md.
 
 import Foundation
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// How one actor regards the player.
 ///

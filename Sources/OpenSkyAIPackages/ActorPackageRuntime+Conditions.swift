@@ -1,8 +1,8 @@
 // The package facts conditions read, built from the packages actors run now.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldConditions
+public import OpenSkyFormatsESM
+public import OpenSkyWorldConditions
 
 nonisolated extension ActorPackageRuntime {
     /// `isWithin` answers whether the actor stands inside one location input.

@@ -1,6 +1,6 @@
 // What the social pass asks the app to do. See docs/engine/coordinators.md.
 
-import OpenSkyConditions
+public import OpenSkyConditions
 
 /// One change to the world outside the social pass.
 nonisolated public enum SocialEventCommand: Equatable, Sendable {

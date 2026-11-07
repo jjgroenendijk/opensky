@@ -3,7 +3,7 @@
 // date line and the question through `/SleepWaitMenu_mc`. See docs/engine/sleep-wait.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// A call the sleep and wait movie makes.
 nonisolated public enum SleepWaitMovieEvent: Equatable, Sendable {

@@ -3,8 +3,8 @@
 // the look-at interpolator. Layout: docs/formats/nif-controllers.md#interpolators.
 
 import Foundation
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 /// `NiBlendFloatInterpolator`, `NiBlendBoolInterpolator`, or `NiBlendPoint3Interpolator`.
 /// A controller a manager drives points at one; the playing sequence fills it.

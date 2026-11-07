@@ -2,7 +2,7 @@
 // race, face, and sex. The player's base is `00000007`.
 // See docs/formats/ess-change-forms.md#actor-bases.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct ESSFactionRank: Equatable, Sendable {
     public let faction: ESSRefID

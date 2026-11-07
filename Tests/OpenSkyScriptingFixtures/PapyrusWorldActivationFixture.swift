@@ -3,10 +3,10 @@
 // scripted-world chains reuse `interaction(reference:action:)`.
 
 import Foundation
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyFormatsPEX
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsPEX
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyWorldInterface
+@testable public import OpenSkyWorldInterface
 import simd
 
 @MainActor

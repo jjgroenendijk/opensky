@@ -5,7 +5,7 @@
 // (docs/tools/gaps.md).
 
 import Foundation
-import OpenSkyFormatsPEX
+public import OpenSkyFormatsPEX
 
 nonisolated public struct PapyrusAnimationCensus: Equatable, Sendable {
     /// Event names, in lower case, passed as a string literal to

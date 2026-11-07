@@ -3,15 +3,15 @@
 // thread and buffers results for the streamer to poll once per frame.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyPhysics
-import OpenSkyPlayer
-import OpenSkyRendering
-import OpenSkyRenderResources
+public import OpenSkyPlayer
+public import OpenSkyRendering
+public import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkyTerrain
-import OpenSkyWorldState
+public import OpenSkyTerrain
+public import OpenSkyWorldState
 import Synchronization
 
 /// Builds one cell scene by grid coordinate. The single seam scene build

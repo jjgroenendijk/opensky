@@ -4,10 +4,10 @@
 // See docs/engine/quest-state.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 nonisolated public struct QuestAliasResolution: Sendable {
     private let defaults: QuestStore

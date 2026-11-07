@@ -6,7 +6,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 public final class HUDCoordinator {
@@ -27,9 +27,9 @@ public final class HUDCoordinator {
     private let movies: SWFMovieSource
     /// Bumped by each start and suspend, so only the newest start shows the HUD.
     private var startRequest = 0
-    private weak let world: SWFLayerWorld?
+    private weak let world: any SWFLayerWorld?
 
-    public init(movies: SWFMovieSource, world: SWFLayerWorld? = nil) {
+    public init(movies: SWFMovieSource, world: any SWFLayerWorld? = nil) {
         self.movies = movies
         self.world = world
     }
@@ -307,7 +307,7 @@ public final class HUDCoordinator {
         sync.lastHeadingDegrees = heading
     }
 
-    private func fail(_ error: Error, renderer: Renderer) {
+    private func fail(_ error: any Error, renderer: Renderer) {
         try? renderer.setSWFMovie(nil)
         isLoaded = false
         loadError = String(describing: error)

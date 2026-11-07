@@ -117,7 +117,7 @@ struct PreviewRealDataTests {
     private func previewTexture(
         catalog: PreviewCatalog,
         vfs: VirtualFileSystem,
-        device: MTLDevice
+        device: any MTLDevice
     ) throws {
         let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let candidates = PreviewCatalog.filter(
@@ -162,7 +162,7 @@ struct PreviewRealDataTests {
     private func previewMesh(
         catalog: PreviewCatalog,
         vfs: VirtualFileSystem,
-        device: MTLDevice
+        device: any MTLDevice
     ) throws {
         let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
@@ -201,7 +201,7 @@ struct PreviewRealDataTests {
         camera: SceneCamera,
         width: Int,
         height: Int,
-        device: MTLDevice
+        device: any MTLDevice
     ) throws -> CGImage {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: width, height: height),

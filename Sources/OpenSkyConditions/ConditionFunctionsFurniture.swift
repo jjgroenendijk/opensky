@@ -6,7 +6,7 @@
 // See docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 

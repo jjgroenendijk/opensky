@@ -3,7 +3,7 @@
 // undocumented, so this approximates (docs/engine/grass.md).
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One cell-owned grass instance before mesh loading/GPU batching.

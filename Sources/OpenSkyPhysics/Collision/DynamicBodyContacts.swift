@@ -3,9 +3,9 @@
 // bounds how far behind a surface a contact is still believed. See
 // docs/engine/dynamic-narrowphase.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
-import simd
+public import simd
 
 /// Placed triangle geometry a penetration query runs against, bundled so the
 /// query stays inside the strict parameter cap.

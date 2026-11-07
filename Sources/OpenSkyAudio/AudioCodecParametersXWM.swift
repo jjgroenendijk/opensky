@@ -4,8 +4,8 @@
 // With it every vanilla file decodes to its `dpds` frame count.
 // See docs/formats/xwm.md and docs/engine/audio-decoding.md.
 
-import Foundation
-import OpenSkyFormatsAudio
+public import Foundation
+public import OpenSkyFormatsAudio
 
 nonisolated extension AudioCodecParameters {
     /// The six-byte WMAv2 extradata block ffmpeg's xWMA demuxer synthesizes when

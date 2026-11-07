@@ -3,7 +3,7 @@
 // `$key<TAB>value` pair per CRLF line. Keys match case-sensitively.
 // Layout and sources: docs/formats/translation-strings.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum TranslationFileError: Error, Equatable, Sendable {
     /// Bytes are not decodable UTF-16 (odd byte count or an unpaired surrogate).

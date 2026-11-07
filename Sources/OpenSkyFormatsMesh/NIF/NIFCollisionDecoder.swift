@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 nonisolated extension NIFFile {
     public func collisionModel() -> NIFCollisionModel {

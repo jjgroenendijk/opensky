@@ -1,8 +1,8 @@
 // Record builder shared by the parser tests and the runtime tests that feed
 // the same records to a store. Every byte is built in code.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum PackageFixture: Sendable {
     public static func record(formID: UInt32 = 1, fields: Data) throws -> ESMRecord {

@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/shouts-equip-slots.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct WordOfPower: Equatable, Sendable {
     public let formID: FormID

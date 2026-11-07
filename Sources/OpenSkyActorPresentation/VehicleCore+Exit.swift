@@ -1,6 +1,6 @@
 // Where a cart rider stands once its exit idle ends. See docs/engine/vehicles.md.
 
-import OpenSkyWorldState
+public import OpenSkyWorldState
 import simd
 
 nonisolated extension VehicleCore {

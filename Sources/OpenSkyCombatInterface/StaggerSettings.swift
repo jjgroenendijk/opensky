@@ -4,7 +4,7 @@
 // (docs/engine/melee-combat.md#stagger).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct StaggerSettings: Equatable, Sendable {
     /// `fStaggerMin`: a magnitude at or below it does not stagger.

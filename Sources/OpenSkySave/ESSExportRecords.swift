@@ -1,10 +1,10 @@
 // The port an `.ess` export reads the installed plugins through. The app answers it
 // from its game data; tests pass a fake. See docs/engine/ess-export.md.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyScriptingInterface
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
+public import OpenSkyScriptingInterface
 
 nonisolated public protocol ESSExportRecords {
     /// The plugins loaded now, in the load order OpenSky's form ids count in.

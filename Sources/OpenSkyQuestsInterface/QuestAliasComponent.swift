@@ -5,9 +5,9 @@
 // entry per ID. See docs/engine/quest-state.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One filled reference alias: the ALST alias ID and the world reference it
 /// resolved to, as a session-stable `ReferenceKey`.

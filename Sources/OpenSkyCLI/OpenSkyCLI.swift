@@ -60,7 +60,7 @@ enum OpenSkyCLI {
             printError("[ERROR] \(message)")
             exit(1)
         } catch {
-            let message = (error as? LocalizedError)?.errorDescription
+            let message = (error as? any LocalizedError)?.errorDescription
                 ?? String(describing: error)
             printError("[ERROR] \(message)")
             exit(1)

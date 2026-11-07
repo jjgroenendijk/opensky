@@ -2,11 +2,11 @@
 // main actor; the frame drains them and builds the GPU copies
 // (docs/engine/celestial-sky.md "Drawing").
 
-import Foundation
-import Metal
-import OpenSkyFormatsCore
+public import Foundation
+public import Metal
+public import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 import simd
@@ -80,25 +80,29 @@ public final class SkyCelestial {
     static let uniformStride = 256
 
     struct Mesh {
-        let vertices: MTLBuffer
-        let indices: MTLBuffer
+        let vertices: any MTLBuffer
+        let indices: any MTLBuffer
         let shapes: [SkyMeshGeometry.Shape]
     }
 
     private let loader: AssetLoader<String, SkyObjectAsset>
-    private let device: MTLDevice
+    private let device: any MTLDevice
     private let textureLoader: TextureLoader
     private var meshes: [String: Mesh] = [:]
-    private var textures: [String: MTLTexture] = [:]
+    private var textures: [String: any MTLTexture] = [:]
     private var requested: Set<String> = []
     private var uniformsResident = false
-    let uniforms: MTLBuffer
+    let uniforms: any MTLBuffer
     /// Objects drawn in the last frame.
     public internal(set) var drawnObjectCount = 0
     public private(set) var failedPaths: [String] = []
 
     /// `immediate` loads inside the request, for offscreen frames and tests.
-    public init(fileSystem: any GameFileSource, device: MTLDevice, immediate: Bool = false) throws {
+    public init(
+        fileSystem: any GameFileSource,
+        device: any MTLDevice,
+        immediate: Bool = false
+    ) throws {
         let load: @Sendable (String) throws -> SkyObjectAsset = { path in
             let data = try fileSystem.contents(forPath: path)
             guard path.hasSuffix(".nif") else { return .texture(data) }
@@ -130,7 +134,7 @@ public final class SkyCelestial {
         key("meshes\\" + relative)
     }
 
-    func texture(key: String?) -> MTLTexture? {
+    func texture(key: String?) -> any MTLTexture? {
         key.flatMap { textures[$0] }
     }
 
@@ -140,8 +144,8 @@ public final class SkyCelestial {
 
     /// Moves finished loads in and asks for what `sky` needs. Returns new GPU
     /// allocations, which the caller makes resident.
-    func prepare(_ sky: CelestialSky) -> [MTLAllocation] {
-        var added: [MTLAllocation] = uniformsResident ? [] : [uniforms]
+    func prepare(_ sky: CelestialSky) -> [any MTLAllocation] {
+        var added: [any MTLAllocation] = uniformsResident ? [] : [uniforms]
         uniformsResident = true
         var textureNames = [sky.sunTexture, sky.glareTexture] + sky.moons.map(\.texture)
         if !sky.moons.isEmpty {
@@ -166,7 +170,7 @@ public final class SkyCelestial {
         return added
     }
 
-    private func adopt(_ path: String) -> [MTLAllocation] {
+    private func adopt(_ path: String) -> [any MTLAllocation] {
         switch loader.state(of: path) {
         case let .ready(.mesh(geometry)):
             guard let built = makeMesh(geometry, path: path) else { return [] }

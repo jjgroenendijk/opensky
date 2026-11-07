@@ -2,7 +2,7 @@
 // race the change script sets says which form it is (UESP "Skyrim:Lycanthropy" and
 // "Skyrim:Vampire Lord"). See docs/engine/beast-forms.md.
 
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 
 nonisolated public enum PlayerBeastForm: String, CaseIterable, Equatable, Sendable {
     case none

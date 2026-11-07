@@ -2,8 +2,8 @@
 // rolls and the front axle swivels. See docs/engine/vehicles.md.
 
 import OpenSkyBehavior
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsMesh
 import simd
 
 nonisolated public struct VehicleWheelRig: Sendable {

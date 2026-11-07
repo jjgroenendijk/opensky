@@ -2,9 +2,9 @@
 // to a payload layout or to what a converter produces bumps its version, which
 // makes every entry it built stale.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsMesh
 
 nonisolated public enum AssetConverterVersion {
     public static let texture: UInt32 = 3

@@ -2,8 +2,8 @@
 // types. Written case by case, because declaration order may change but bytes may not.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// On-disk tag of a component slot inside `RDLT`, written case by case. Nil for slots
 /// carried by their own chunk (inventory, spawn, quests, actor values, death, combat,

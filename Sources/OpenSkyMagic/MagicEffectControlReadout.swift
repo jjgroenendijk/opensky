@@ -2,7 +2,7 @@
 // them without a window. See docs/engine/magic.md.
 
 import Foundation
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 
 nonisolated public enum MagicEffectControlReadout: Sendable {
     /// What the player's and the nearest actor's effects force on them.

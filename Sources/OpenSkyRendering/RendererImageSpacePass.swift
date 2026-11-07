@@ -5,29 +5,29 @@
 // target. The overlay, SWF, and UI layers then draw ungraded on top. See
 // docs/rendering/image-space.md.
 
-import Metal
+public import Metal
 import MetalKit
 import OpenSkyRenderCore
 import OpenSkyRenderResources
-import OpenSkyShaderTypes
+public import OpenSkyShaderTypes
 import QuartzCore
-import simd
+public import simd
 
 /// The composite pipelines, their uniform ring, and the scratch targets of the split pass.
 public final class ImageSpacePassResources {
-    public let pipeline: MTLRenderPipelineState
+    public let pipeline: any MTLRenderPipelineState
     /// Grades the pixel in tile memory, so the scene pass needs no copy and no stored depth.
-    public let tilePipeline: MTLRenderPipelineState
-    public let uniformBuffer: MTLBuffer
+    public let tilePipeline: any MTLRenderPipelineState
+    public let uniformBuffer: any MTLBuffer
     /// The `PostEffectUniforms` per frame slot.
-    public let postUniformBuffer: MTLBuffer
+    public let postUniformBuffer: any MTLBuffer
     /// The tone-mapping luminance sum and sample count per frame slot.
-    public let luminanceBuffer: MTLBuffer
+    public let luminanceBuffer: any MTLBuffer
     /// Sized to the last target; replaced when the target size or format changes.
-    public private(set) var sceneCopy: MTLTexture?
+    public private(set) var sceneCopy: any MTLTexture?
     /// The depth the split pass stores between its two encoders. The scene depth is
     /// memoryless, so it cannot outlive one encoder.
-    public private(set) var storedDepth: MTLTexture?
+    public private(set) var storedDepth: any MTLTexture?
     /// Last frame's view-projection, for the motion blur and the occlusion history.
     var previousViewProjection: float4x4?
     /// Last frame's camera, for the occlusion history.
@@ -39,8 +39,8 @@ public final class ImageSpacePassResources {
     static let postUniformStride = (MemoryLayout<PostEffectUniforms>.size + 0xFF) & -0x100
 
     init(
-        device: MTLDevice,
-        library: MTLLibrary,
+        device: any MTLDevice,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         pixelFormat: MTLPixelFormat
     ) throws {
@@ -77,7 +77,7 @@ public final class ImageSpacePassResources {
             )
         else { throw RendererError.bufferAllocationFailed }
         luminance.label = "ImageSpaceLuminance"
-        luminance.contents().initializeMemory(
+        unsafe luminance.contents().initializeMemory(
             as: UInt8.self, repeating: 0, count: luminance.length
         )
         luminanceBuffer = luminance
@@ -87,21 +87,21 @@ public final class ImageSpacePassResources {
 
     /// The slot's luminance from the frame that last used it, cleared for this frame.
     func takeMeanLuminance(slot: Int) -> Float? {
-        let values = luminanceBuffer.contents().advanced(by: Self.luminanceStride * slot)
+        let values = unsafe luminanceBuffer.contents().advanced(by: Self.luminanceStride * slot)
             .bindMemory(to: UInt32.self, capacity: 2)
         defer {
-            values[0] = 0
-            values[1] = 0
+            unsafe values[0] = 0
+            unsafe values[1] = 0
         }
-        return ToneMappingState.meanLuminance(sum: values[0], count: values[1])
+        return unsafe ToneMappingState.meanLuminance(sum: values[0], count: values[1])
     }
 
     private static func makePipeline(
         compiler: PipelineCache,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         pixelFormat: MTLPixelFormat,
         fragment: String
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertex = MTL4LibraryFunctionDescriptor()
         vertex.library = library
         vertex.name = "skyVertex"
@@ -117,7 +117,10 @@ public final class ImageSpacePassResources {
     }
 
     /// A copy target matching `target`, made resident in `residency` when it is new.
-    func copyTarget(matching target: MTLTexture, residency: MTLResidencySet) -> MTLTexture? {
+    func copyTarget(
+        matching target: any MTLTexture,
+        residency: any MTLResidencySet
+    ) -> any MTLTexture? {
         if let sceneCopy, Self.matches(sceneCopy, target, format: target.pixelFormat) {
             return sceneCopy
         }
@@ -130,7 +133,10 @@ public final class ImageSpacePassResources {
     }
 
     /// A stored depth-stencil target the size of `target`, made resident when it is new.
-    func depthTarget(matching target: MTLTexture, residency: MTLResidencySet) -> MTLTexture? {
+    func depthTarget(
+        matching target: any MTLTexture,
+        residency: any MTLResidencySet
+    ) -> any MTLTexture? {
         let format = MTLPixelFormat.depth32Float_stencil8
         if let storedDepth, Self.matches(storedDepth, target, format: format) {
             return storedDepth
@@ -143,7 +149,11 @@ public final class ImageSpacePassResources {
         return texture
     }
 
-    private static func matches(_ texture: MTLTexture, _ target: MTLTexture, format: MTLPixelFormat)
+    private static func matches(
+        _ texture: any MTLTexture,
+        _ target: any MTLTexture,
+        format: MTLPixelFormat
+    )
         -> Bool
     {
         texture.width == target.width && texture.height == target.height
@@ -151,11 +161,11 @@ public final class ImageSpacePassResources {
     }
 
     private static func makeTarget(
-        matching target: MTLTexture,
+        matching target: any MTLTexture,
         format: MTLPixelFormat,
         usage: MTLTextureUsage,
         label: String
-    ) -> MTLTexture? {
+    ) -> any MTLTexture? {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: format, width: target.width, height: target.height, mipmapped: false
         )
@@ -167,10 +177,10 @@ public final class ImageSpacePassResources {
     }
 
     private static func replace(
-        _ old: MTLTexture?,
-        with new: MTLTexture?,
-        residency: MTLResidencySet
-    ) -> MTLTexture? {
+        _ old: any MTLTexture?,
+        with new: any MTLTexture?,
+        residency: any MTLResidencySet
+    ) -> any MTLTexture? {
         guard let new else { return old }
         if let old {
             residency.removeAllocation(old)
@@ -379,7 +389,7 @@ extension Renderer {
     ) {
         var uniforms = grade.uniforms
         let offset = ImageSpacePassResources.uniformStride * slot
-        imageSpacePass.uniformBuffer.contents().advanced(by: offset)
+        unsafe imageSpacePass.uniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<ImageSpaceUniforms>.size)
         argumentTable.setAddress(
             imageSpacePass.uniformBuffer.gpuAddress + UInt64(offset),
@@ -392,7 +402,7 @@ extension Renderer {
         )
         var post = override ?? grade.post ?? PostEffectUniforms()
         let postOffset = ImageSpacePassResources.postUniformStride * slot
-        imageSpacePass.postUniformBuffer.contents().advanced(by: postOffset)
+        unsafe imageSpacePass.postUniformBuffer.contents().advanced(by: postOffset)
             .copyMemory(from: &post, byteCount: MemoryLayout<PostEffectUniforms>.size)
         argumentTable.setAddress(
             imageSpacePass.postUniformBuffer.gpuAddress + UInt64(postOffset),

@@ -2,8 +2,8 @@
 // CPU: the chargen face color map (BC1) and the tint masks (24-bit RGB).
 // Layout and sources: docs/formats/dds.md, "CPU decode".
 
-import Foundation
-import OpenSkyImageKernels
+public import Foundation
+public import OpenSkyImageKernels
 
 nonisolated public enum DDSDecoder {
     /// BC1, BC3, 32-bit RGB, and 24-bit RGB. Other formats throw `unsupported`.

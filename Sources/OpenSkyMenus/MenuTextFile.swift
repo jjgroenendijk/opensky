@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum MenuTextFile {
     /// The file's text, or nil when the install lacks it.

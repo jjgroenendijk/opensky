@@ -422,7 +422,10 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         if game.streamer?.referenceEntry(key: target) == nil {
             coverNextTeleport = true
         }
-        teleportPlayer(.reference(String(format: "0x%06X", objectID)), openingRaceMenu: false)
+        unsafe teleportPlayer(
+            .reference(String(format: "0x%06X", objectID)),
+            openingRaceMenu: false
+        )
     }
 
     func openInventory(of actor: ReferenceKey) {

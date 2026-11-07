@@ -3,9 +3,9 @@
 // kill before the arrow lands. See docs/engine/kill-cam.md#when-it-plays.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 nonisolated public struct KillCamCandidate: Equatable, Sendable {

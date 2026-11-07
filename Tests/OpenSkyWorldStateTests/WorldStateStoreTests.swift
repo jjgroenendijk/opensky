@@ -5,8 +5,8 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
-@testable import OpenSkyWorldState
+@testable public import OpenSkyGameData
+@testable public import OpenSkyWorldState
 import simd
 import Testing
 

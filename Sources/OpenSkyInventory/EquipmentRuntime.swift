@@ -5,9 +5,9 @@
 // slots, is a typed failure. See docs/engine/inventory-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// Equips and unequips items on top of an `InventoryRuntime`.
 @MainActor

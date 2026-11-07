@@ -2,7 +2,7 @@
 // `ShoutStore` suites and the record-dump suites.
 
 import Foundation
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsESM
 
 public enum ShoutPluginFixture {
     public enum Form {

@@ -5,7 +5,7 @@
 // check delivery. See docs/engine/combat.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One blow, as `OnHit(ObjectReference akAggressor, Form akSource, Projectile
 /// akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack,

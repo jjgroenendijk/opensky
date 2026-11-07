@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct BehaviorGapSweep {
     public static let actorsPrefix = "meshes\\actors\\"

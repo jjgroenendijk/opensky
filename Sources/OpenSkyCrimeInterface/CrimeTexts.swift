@@ -1,7 +1,7 @@
 // The names of crime kinds, from the `sCrimeType*` string settings, and the bounty
 // notices from `sAddCrimeGold` and `sRemoveCrimeGold`. See docs/engine/crime.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct CrimeTexts: Equatable, Sendable {
     public var names: [CrimeKind: String] = [:]

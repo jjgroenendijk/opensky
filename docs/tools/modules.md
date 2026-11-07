@@ -330,6 +330,11 @@ rules:
   missing import sometimes shows as a pattern error, for example "pattern variable binding cannot
   appear in an expression".
 - Tests write `@testable import` to reach `internal` members.
+- `InternalImportsByDefault` is on. An import is `internal`, so a module's dependencies do not leak
+  to its clients. A file whose public declarations use a type of `X` writes `public import X`. An
+  interface module publicly imports only lower modules and interfaces (`make module-graph` rule 11).
+- `ExistentialAny` and strict memory safety are on too: a protocol type is written `any X`, and an
+  unsafe expression is marked `unsafe` ([Swift language rules](/decisions/language-rules.md)).
 
 After a module is renamed or removed, delete its old products from `Build/Products` in the build cache
 (including `PackageFrameworks/`) and from `.build/`. Otherwise a stale `.swiftmodule` still

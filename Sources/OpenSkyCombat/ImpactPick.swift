@@ -3,7 +3,7 @@
 // Pure: the caller passes the static hit and the terrain heights.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// Where a pick meets a surface, and that surface's `MATT`.

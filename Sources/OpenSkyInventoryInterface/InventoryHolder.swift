@@ -1,6 +1,6 @@
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One inventory owner: its identity, the plugin record its baseline comes from,
 /// and the cell its writes are attributed to. They travel together so a write

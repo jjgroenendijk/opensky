@@ -2,7 +2,7 @@
 // See docs/engine/projectiles.md, "After the impact".
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct ArrowSettings: Equatable, Sendable {
     /// `fCombatMissileStickDepth`: how far past the contact point a stuck arrow sits.

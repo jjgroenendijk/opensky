@@ -3,11 +3,11 @@
 // See docs/engine/locks.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyProgressionInterface
-import OpenSkyWorldInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What the lock coordinator reads from the rest of the game.

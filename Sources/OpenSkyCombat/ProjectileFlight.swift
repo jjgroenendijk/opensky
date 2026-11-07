@@ -4,7 +4,7 @@
 // multiplies `PhysicsStep.gravity`; the census that settles it is in
 // docs/engine/projectiles.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyPhysics
 import simd
 

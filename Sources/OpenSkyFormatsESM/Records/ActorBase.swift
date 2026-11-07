@@ -4,7 +4,7 @@
 // Layout: docs/formats/actors.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct ActorBase: Sendable {
     /// ACBS uint32 flags — only the bits this engine consumes are named.

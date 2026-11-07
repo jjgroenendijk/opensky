@@ -120,7 +120,7 @@ struct PresentationRecordsRealDataTests {
         func range(_ values: [Float]) -> String {
             guard let low = values.min(), let high = values.max() else { return "-" }
             let mean = values.reduce(0, +) / Float(values.count)
-            return String(format: "%.2f...%.2f mean %.2f", low, high, mean)
+            return unsafe String(format: "%.2f...%.2f mean %.2f", low, high, mean)
         }
         let base = CombatBehaviorSettings.standard
         let derived = tunings.map { base.tuned(by: $0) }

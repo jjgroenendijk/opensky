@@ -2,9 +2,9 @@
 // whose file has not arrived starts after the drain that brings it, with the
 // request it was made with. See docs/decisions/concurrency.md.
 
-import Foundation
-import OpenSkyFormatsAudio
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyFormatsAudio
+public import OpenSkyGameData
 
 /// A sound file read and parsed, ready for the engine.
 nonisolated public enum AudioFileAsset: Sendable {

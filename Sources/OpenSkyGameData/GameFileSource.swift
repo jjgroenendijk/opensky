@@ -1,7 +1,7 @@
 // The read side of the game data root. `VirtualFileSystem` is the real source;
 // a test passes an in-memory one instead of writing files to disk.
 
-import Foundation
+public import Foundation
 
 /// Resolves resource paths to bytes. Paths are case- and separator-insensitive,
 /// as in `VirtualFileSystem.normalize(_:)` (docs/formats/vfs.md).

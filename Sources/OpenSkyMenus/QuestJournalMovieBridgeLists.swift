@@ -4,8 +4,8 @@
 // entry and an empty readout, never a crash.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsSWF
 
 nonisolated extension QuestJournalMovieBridge {
     // MARK: - Writing

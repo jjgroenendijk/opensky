@@ -3,7 +3,7 @@
 // because its shape depends on the function byte in DATA, which may come later.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// Not `private`: `Perk` drives it and reads its result.
 nonisolated public struct PerkContents: Sendable {

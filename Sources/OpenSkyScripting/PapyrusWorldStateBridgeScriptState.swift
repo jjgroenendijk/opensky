@@ -2,9 +2,9 @@
 // form that no other runtime holds. See docs/engine/papyrus-script-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

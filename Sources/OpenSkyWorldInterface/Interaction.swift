@@ -3,9 +3,9 @@
 // UI and future Papyrus consumers subscribe without owning targeting rules.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import simd
 
 nonisolated public enum InteractionAction: Equatable, Sendable {
     case activate

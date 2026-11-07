@@ -4,7 +4,7 @@
 // (docs/engine/ragdoll.md#decapitation).
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// The two pieces a cut makes of one actor.

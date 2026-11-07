@@ -6,8 +6,8 @@
 // See docs/engine/condition-functions-world.md#mounts-and-flight.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 /// Who rides what: a rider on a horse's saddle bone, not a passenger on a cart.
 nonisolated public struct MountConditionResolution: ConditionResolution, Sendable {

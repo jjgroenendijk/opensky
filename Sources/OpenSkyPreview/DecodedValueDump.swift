@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum DecodedValueDump {
     public typealias Resolve = (FormID) -> String

@@ -3,7 +3,7 @@
 // events. It lives on the streamer, so it survives the readout being rebuilt.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One recorded transition, resolved as far as the streamer can resolve it.
 ///

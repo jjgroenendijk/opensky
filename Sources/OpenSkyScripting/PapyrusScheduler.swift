@@ -1,8 +1,8 @@
 // Deterministic fixed-step scheduling for latent native continuations.
 
 import Foundation
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 public final class PapyrusScheduler {
     /// Kept in the order the calls suspended.

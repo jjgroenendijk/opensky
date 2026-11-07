@@ -16,7 +16,7 @@ nonisolated public enum ProgressionControlReadout: Sendable {
     /// what is waiting to be spent.
     public static func characterText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Character: unavailable" }
-        return String(
+        return unsafe String(
             format: "Character: level %d — %.0f/%.0f XP  %d perk point(s)"
                 + "  %d attribute pick(s) owed",
             snapshot.level,
@@ -55,7 +55,7 @@ nonisolated public enum ProgressionControlReadout: Sendable {
                     toLength: Self.skillNameWidth, withPad: " ", startingAt: 0
                 )
             let legendary = skill.legendaryCount > 0 ? "  legendary \(skill.legendaryCount)" : ""
-            return String(
+            return unsafe String(
                 format: "%@ %@ %5.1f (base %5.1f)  %6.1f/%6.1f XP  perks %d/%d",
                 marker,
                 name,
@@ -67,7 +67,7 @@ nonisolated public enum ProgressionControlReadout: Sendable {
                 skill.treePerks
             ) + legendary
         }
-        let rate = String(format: "XP rate: x%.2f", snapshot.experienceRate)
+        let rate = unsafe String(format: "XP rate: x%.2f", snapshot.experienceRate)
         return (["Skills (\(snapshot.skills.count)):"] + lines
             + [rate, snapshot.perkTreeCache.describedLine]).joined(separator: "\n")
     }
@@ -128,14 +128,14 @@ nonisolated public enum ProgressionControlReadout: Sendable {
     /// its last-action line: the experience it was worth, the level it moved,
     /// and the character level it bought.
     public static func advanceText(_ report: SkillAdvanceReport, skillName: String) -> String {
-        var text = String(
+        var text = unsafe String(
             format: "%@: +%.1f XP, %.0f banked",
             skillName,
             report.experience,
             report.carriedExperience
         )
         if report.didAdvance {
-            text += String(
+            unsafe text += String(
                 format: ", level %.0f to %.0f, +%.0f character XP",
                 report.previousLevel,
                 report.level,

@@ -2,10 +2,10 @@
 // actors, lets `SocialEventCore` pick the `ADIA`, `AHEL`, and `DEAD` events, and
 // hands them to the story manager. See docs/engine/random-conversations.md.
 
-import OpenSkyConditions
-import OpenSkyFormatsCore
+public import OpenSkyConditions
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// What `SocialEventCoordinator` reads from the running session.
 @MainActor

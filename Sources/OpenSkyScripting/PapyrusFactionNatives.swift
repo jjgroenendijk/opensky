@@ -2,9 +2,9 @@
 // reactions, and social profiles. The default answers nothing, which is a load
 // without faction data, and the natives then refuse.
 
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 public struct PapyrusFactionNatives {
     /// The faction runtime, seeded for the given actor first.

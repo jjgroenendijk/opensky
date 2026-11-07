@@ -32,7 +32,7 @@ struct ReadyModelLayoutTests {
     }
 
     private func bytes(_ values: [some BitwiseCopyable]) -> Data {
-        values.withUnsafeBytes { Data($0) }
+        values.withUnsafeBytes { unsafe Data($0) }
     }
 
     @Test func theLayoutPointsAtTheInterleavedVerticesAndTheIndices() throws {

@@ -5,9 +5,9 @@
 import Foundation
 import OpenSkyActorPresentation
 import OpenSkyBehavior
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// What the effect graph coordinator reads from the session.
 @MainActor

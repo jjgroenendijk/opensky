@@ -3,11 +3,11 @@
 // Only the one serial cell-build queue touches it, so it needs no lock
 // (docs/engine/cell-streaming.md).
 
-import Foundation
-import Metal
-import OpenSkyAssetCache
+public import Foundation
+public import Metal
+public import OpenSkyAssetCache
 import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public final class TextureLibrary {
     /// Cache identity: same path + usage -> same MTLTexture. A path may be
@@ -34,7 +34,7 @@ nonisolated public final class TextureLibrary {
 
     let fileSystem: any GameFileSource
     let loader: TextureLoader
-    private(set) var cache: [CacheKey: MTLTexture] = [:]
+    private(set) var cache: [CacheKey: any MTLTexture] = [:]
 
     /// Keys resolved since the last drain, so a cell build can record exactly
     /// which textures it uses (for eviction keep-sets). Confined to the build
@@ -75,7 +75,7 @@ nonisolated public final class TextureLibrary {
         self.loader = loader
     }
 
-    public convenience init(fileSystem: any GameFileSource, device: MTLDevice) throws {
+    public convenience init(fileSystem: any GameFileSource, device: any MTLDevice) throws {
         try self.init(fileSystem: fileSystem, loader: TextureLoader(device: device))
     }
 
@@ -85,7 +85,7 @@ nonisolated public final class TextureLibrary {
     /// and uploads, or falls back to the loader's placeholder when the file
     /// is absent. First resolution of any key populates the cache, so both
     /// the counters and the once-only logging count distinct keys.
-    public func texture(key: String?, usage: TextureUsage) -> MTLTexture {
+    public func texture(key: String?, usage: TextureUsage) -> any MTLTexture {
         guard let key else {
             return cachedPlaceholder(path: Self.untexturedPath, usage: usage, label: "(untextured)")
         }
@@ -138,7 +138,7 @@ nonisolated public final class TextureLibrary {
         return try body()
     }
 
-    private func load(path: String, usage: TextureUsage) -> MTLTexture {
+    private func load(path: String, usage: TextureUsage) -> any MTLTexture {
         if usage == .cube || usage == .volume {
             return loadDirect(path: path, usage: usage)
         }
@@ -178,7 +178,7 @@ nonisolated public final class TextureLibrary {
         _ prepared: PreparedTexture,
         path: String,
         usage: TextureUsage
-    ) -> MTLTexture {
+    ) -> any MTLTexture {
         if usage == .color, prepared.source.declaresVolume {
             volumePaths.insert(path)
         }
@@ -221,7 +221,7 @@ nonisolated public final class TextureLibrary {
 
     /// The archive bytes, with no cache or streaming. Cubemaps and volumes always load
     /// this way, and so does a volume asked for as a colour map, because no cache holds it.
-    private func loadDirect(path: String, usage: TextureUsage) -> MTLTexture {
+    private func loadDirect(path: String, usage: TextureUsage) -> any MTLTexture {
         guard let data = try? fileSystem.contents(forPath: path) else {
             missingCount += 1
             missingPaths.insert(path)
@@ -246,7 +246,7 @@ nonisolated public final class TextureLibrary {
         path: String,
         usage: TextureUsage,
         label: String
-    ) -> MTLTexture {
+    ) -> any MTLTexture {
         let cacheKey = CacheKey(path: path, usage: usage)
         recordTouch(Self.keyString(cacheKey))
         if let hit = cache[cacheKey] {

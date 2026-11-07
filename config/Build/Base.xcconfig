@@ -14,6 +14,12 @@ SWIFT_TREAT_WARNINGS_AS_ERRORS = YES
 SWIFT_APPROACHABLE_CONCURRENCY = YES
 SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES
 
+// The language rules of docs/decisions/language-rules.md, the same as Package.swift.
+// tools/lint/language-rules.sh checks that both turn on the same features.
+SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY = YES
+SWIFT_UPCOMING_FEATURE_INTERNAL_IMPORTS_BY_DEFAULT = YES
+SWIFT_STRICT_MEMORY_SAFETY = YES
+
 // Compilation caching. Every compile task is keyed on its full command line and
 // inputs and its result replayed from a content-addressed store, which takes a
 // Debug rebuild of a state this checkout has compiled before, with the

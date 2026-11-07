@@ -2,7 +2,7 @@
 // Byte map: docs/formats/hkx-physics.md.
 
 import Foundation
-import simd
+public import simd
 
 /// `hkTransform`, 64 bytes: three rotation columns, then the translation.
 nonisolated public struct HKTransform: Equatable, Sendable {

@@ -3,8 +3,8 @@
 // See docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// A load-order store that a condition's FormID parameter resolves against.
 nonisolated public protocol ConditionParameterStore: Sendable {

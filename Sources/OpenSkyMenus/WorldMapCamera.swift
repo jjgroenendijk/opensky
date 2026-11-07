@@ -3,7 +3,7 @@
 // See docs/engine/world-map.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct WorldMapLimits: Equatable, Sendable {

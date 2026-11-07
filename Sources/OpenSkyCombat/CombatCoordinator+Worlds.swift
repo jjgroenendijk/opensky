@@ -1,16 +1,16 @@
 // `CombatCoordinator` as the world of its three runtimes. Each answer reads
 // another runtime it owns, a `CombatCore` rule, or one `CombatWorld` member.
 
-import OpenSkyActorsInterface
-import OpenSkyBehavior
-import OpenSkyCombatInterface
+public import OpenSkyActorsInterface
+public import OpenSkyBehavior
+public import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
-import OpenSkyPhysics
-import OpenSkyProgressionInterface
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
+public import OpenSkyProgressionInterface
 import OpenSkyWorldState
 import simd
 

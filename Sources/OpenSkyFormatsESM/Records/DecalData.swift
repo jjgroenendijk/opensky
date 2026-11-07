@@ -2,7 +2,7 @@
 // `wbDODT`. Layout and sources: docs/formats/records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct DecalData: Equatable, Sendable {
     public struct Flags: OptionSet, Equatable, Sendable {

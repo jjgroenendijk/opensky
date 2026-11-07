@@ -2,7 +2,7 @@
 // Layout and sources: docs/formats/actors.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct PlacedActor: Sendable {

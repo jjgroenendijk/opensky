@@ -1,4 +1,4 @@
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One trigger-occupancy edge. Identity is the authoring REFR's
 /// `ReferenceKey`, because that is what a script instance is addressed by.

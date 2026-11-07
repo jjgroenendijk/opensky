@@ -108,7 +108,7 @@ extension FirstPersonRenderRealDataTests {
 
     @MainActor
     static func makeSession(
-        device: MTLDevice,
+        device: any MTLDevice,
         scene: CellScene,
         bounds: (min: SIMD3<Float>, max: SIMD3<Float>)
     ) throws -> GameSession {

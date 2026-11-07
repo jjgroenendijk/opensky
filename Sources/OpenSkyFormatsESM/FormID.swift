@@ -37,7 +37,7 @@ nonisolated public struct FormID: Hashable, Sendable {
 
 nonisolated extension FormID: CustomStringConvertible {
     public var description: String {
-        String(format: "%08X", rawValue)
+        unsafe String(format: "%08X", rawValue)
     }
 }
 
@@ -56,7 +56,7 @@ nonisolated public struct ResolvedFormID: Hashable, Sendable {
 
 nonisolated extension ResolvedFormID: CustomStringConvertible {
     public var description: String {
-        String(format: "%@:%06X", plugin, objectID)
+        unsafe String(format: "%@:%06X", plugin, objectID)
     }
 }
 

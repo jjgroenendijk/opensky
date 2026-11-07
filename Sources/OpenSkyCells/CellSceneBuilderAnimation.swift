@@ -1,11 +1,11 @@
 // Builds a resident actor's idle playback from its assembly, caching one clip per
 // skeleton and sex on the builder.
 
-import OpenSkyActorPresentation
+public import OpenSkyActorPresentation
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyRendering
 
 nonisolated extension CellSceneBuilder {
     /// `severedHead` marks the cut head of a decapitated actor, posed apart from its body.

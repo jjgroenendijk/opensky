@@ -3,7 +3,7 @@
 // lightning controller grows a bent bolt. See docs/rendering/particles.md#ribbons.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsMesh
 import simd
 
 /// One band of a ribbon, in world space. `along` is the texture coordinate at each end.

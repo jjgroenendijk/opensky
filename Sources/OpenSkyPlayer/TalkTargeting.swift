@@ -4,10 +4,10 @@
 // keeps the talk hit only when it is nearer than the solid hit.
 // See docs/engine/dialogue-menu.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import OpenSkyWorldInterface
 import simd
 
 /// The handler slots of a Talk activation. The enum order is the delivery order.

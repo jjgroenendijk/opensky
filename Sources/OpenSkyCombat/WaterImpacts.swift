@@ -3,9 +3,9 @@
 // Values in, values out (docs/engine/impulses.md#water).
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyGameData
 import simd
 
 nonisolated public struct WaterImpactSettings: Equatable, Sendable {

@@ -10,7 +10,7 @@ import Testing
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct SparseASTCTextureTests {
-    nonisolated private static let device: MTLDevice? = {
+    nonisolated private static let device: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.apple6) else { return nil }

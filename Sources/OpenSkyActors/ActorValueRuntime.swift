@@ -4,10 +4,10 @@
 // clamped. See docs/engine/actor-value-store.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Reads and mutates actor values on top of a `WorldStateStore`.
 @MainActor

@@ -3,9 +3,9 @@
 // See docs/engine/ess-export.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState

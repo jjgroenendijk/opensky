@@ -2,8 +2,8 @@
 // hash of the Creation Kit name; a LAND quadrant names an LTEX whose MNAM is the
 // MATT. Both lookups return the same MATT FormID.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public struct MaterialTypeIndex: Sendable {
     public static let logger = EngineLogger(

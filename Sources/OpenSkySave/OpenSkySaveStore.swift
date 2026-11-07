@@ -2,11 +2,11 @@
 // names that escape the saves directory are refused, and failures are typed. Not
 // main-actor bound, so the CLI can use it. See docs/formats/opensky-save.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyGameData
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 /// Failure modes introduced by the slot layer, distinct from
 /// `OpenSkySaveError`, which describes the container's own contents.

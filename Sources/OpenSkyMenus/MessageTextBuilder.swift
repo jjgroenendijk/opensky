@@ -3,10 +3,10 @@
 // docs/engine/messages.md#building-the-text.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One button a message box shows, with its index in the MESG, which is what
 /// `Message.Show` returns.
@@ -174,7 +174,7 @@ nonisolated public enum MessageFormat {
         /// "1.1": six digits with trailing zeros dropped, one kept.
         func render(_ value: Float) -> String {
             let digits = precision ?? 6
-            var body = String(format: "%.\(digits)f", Double(value))
+            var body = unsafe String(format: "%.\(digits)f", Double(value))
             if precision == nil, body.contains(".") {
                 while body.hasSuffix("0"), !body.hasSuffix(".0") {
                     body.removeLast()

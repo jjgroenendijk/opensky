@@ -2,11 +2,11 @@
 // Bad floats and empty effects are normalized by the state types. An unknown
 // source kind or mode throws: this build wrote both closed enums itself.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyWorldState
 
 /// One actor's saved active effects, before they are merged back into the
 /// delta.

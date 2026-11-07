@@ -2,7 +2,7 @@
 // Steam build id from each `appmanifest_489830.acf`, and a SHA-256 of every master file.
 
 import CryptoKit
-import Foundation
+public import Foundation
 
 nonisolated public struct ReferenceInstallFingerprint: Equatable, Sendable {
     public var buildID: String?
@@ -49,7 +49,7 @@ nonisolated public struct ReferenceInstallFingerprint: Equatable, Sendable {
         while let chunk = try handle.read(upToCount: 8 << 20), !chunk.isEmpty {
             hash.update(data: chunk)
         }
-        return hash.finalize().map { String(format: "%02x", $0) }.joined()
+        return hash.finalize().map { unsafe String(format: "%02x", $0) }.joined()
     }
 }
 

@@ -3,7 +3,7 @@
 // in the particle system's own space. Semantics: docs/formats/nif-particles.md.
 
 import Foundation
-import simd
+public import simd
 
 /// `NiPSysBombModifier`: a push away from (or, with a negative `deltaV`, towards)
 /// the bomb object.

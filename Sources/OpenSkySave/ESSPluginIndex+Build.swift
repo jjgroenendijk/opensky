@@ -4,10 +4,10 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyFormatsESS
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsESS
 import OpenSkyFormatsPEX
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated extension ESSPluginIndex {
     /// The record types the import checks a form against.

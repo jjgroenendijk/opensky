@@ -191,7 +191,7 @@ struct PapyrusAcceptanceRealDataTests {
         let faults = runtime.tally.rankedFaultKinds
             .map { "\($0.count)\t\($0.name)" }
             .joined(separator: "\n")
-        return """
+        return unsafe """
         Papyrus M11.1 acceptance, native coverage last re-measured 2026-08-08
         scripts decoded\t\(paths.count)
         native declarations\t\(census.declarationTotal)

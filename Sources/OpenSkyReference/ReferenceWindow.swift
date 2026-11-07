@@ -2,7 +2,7 @@
 // or after the Windows program, so both count. A window of the size the game was given
 // wins; otherwise the biggest such window wins over Steam's.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct ReferenceWindowInfo: Equatable, Sendable {
     public var id: UInt32

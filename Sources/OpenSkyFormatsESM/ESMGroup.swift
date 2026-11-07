@@ -2,8 +2,8 @@
 // label's meaning depends on the group type and is unreliable in some groups,
 // so traversal uses only sizes. Layout: docs/formats/esm.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct ESMGroup: Sendable {
     /// Group types 0-9 (SSE). Raw value = on-disk int32.

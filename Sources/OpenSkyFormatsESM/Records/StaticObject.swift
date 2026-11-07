@@ -2,7 +2,7 @@
 // Data/ and looked up through the VFS. Layout: docs/formats/world-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct StaticObject: Sendable {
     /// DNAM: the MATO laid over the static on faces within `maxAngle` of up.

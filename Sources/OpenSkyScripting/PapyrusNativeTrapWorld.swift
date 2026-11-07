@@ -3,9 +3,9 @@
 // through `PapyrusTrapWorldBridge`. See docs/engine/traps.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 import simd
 
 /// What the trap natives reach in the running game. The app answers it.

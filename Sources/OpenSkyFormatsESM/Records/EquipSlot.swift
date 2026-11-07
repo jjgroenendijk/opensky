@@ -4,7 +4,7 @@
 // Layout and vanilla slots: docs/formats/shouts-equip-slots.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct EquipSlot: Equatable, Sendable {
     public let formID: FormID

@@ -1,8 +1,8 @@
 // A resolved spell as the payload a delivery carries. Scripts and the caster
 // runtime both build one.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// `nonisolated` because `ResolvedSpell` is, and isolation is per declaration
 /// rather than per type: without this the closures below inherit the project's

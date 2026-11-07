@@ -2,9 +2,9 @@
 // actor returned to neutral keeps its component, or a reload would find it angry.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsCore
-import OpenSkyWorldState
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsCore
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's hostility paired with the snapshot entry it came from.

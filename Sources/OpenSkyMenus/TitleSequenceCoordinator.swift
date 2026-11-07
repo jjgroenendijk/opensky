@@ -3,8 +3,8 @@
 // `Game.StartTitleSequence` plays one of its clips. See docs/engine/main-menu.md#new-game.
 
 import Foundation
-import OpenSkyFormatsSWF
-import OpenSkyRendering
+public import OpenSkyFormatsSWF
+public import OpenSkyRendering
 
 /// The measured contract of `titles.swf`: its first frame stops the clips `sequence1` to
 /// `sequence4` on their own first frame, and `play()` runs one through.

@@ -2,7 +2,7 @@
 // through. The app's effects adapter conforms. See docs/rendering/visual-effects.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 @MainActor
 public protocol PapyrusEffectPresenting: AnyObject {

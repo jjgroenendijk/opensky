@@ -5,7 +5,7 @@
 // in `BehaviorStateMachineEvaluation.swift`.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import simd
 
 /// One evaluated `hkbBlenderGeneratorChild`: its pose and the weights the

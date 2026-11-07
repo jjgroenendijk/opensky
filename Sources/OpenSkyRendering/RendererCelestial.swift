@@ -115,7 +115,7 @@ struct SkyObjectDrawer {
 
     mutating func mesh(
         _ model: String?, rotation: float4x4, tint: SIMD4<Float>,
-        _ encoder: MTL4RenderCommandEncoder
+        _ encoder: any MTL4RenderCommandEncoder
     ) {
         guard let mesh = sky.mesh(key: model.flatMap(SkyCelestial.meshKey)) else { return }
         encoder.setRenderPipelineState(renderer.skyLayerPipelines.objects.mesh)
@@ -151,7 +151,7 @@ struct SkyObjectDrawer {
         }
     }
 
-    mutating func card(_ card: SkyCard, _ encoder: MTL4RenderCommandEncoder) {
+    mutating func card(_ card: SkyCard, _ encoder: any MTL4RenderCommandEncoder) {
         guard let texture = sky.texture(key: card.texture.flatMap(SkyCelestial.textureKey))
         else { return }
         let direction = simd_normalize(card.direction)
@@ -171,11 +171,11 @@ struct SkyObjectDrawer {
 
     /// False once this frame's uniform slots are spent.
     private mutating func bind(
-        _ uniforms: inout SkyObjectUniforms, texture: MTLTexture, palette: MTLTexture?
+        _ uniforms: inout SkyObjectUniforms, texture: any MTLTexture, palette: any MTLTexture?
     ) -> Bool {
         guard drawn < SkyCelestial.maximumDraws else { return false }
         let offset = SkyCelestial.uniformStride * (slot * SkyCelestial.maximumDraws + drawn)
-        sky.uniforms.contents().advanced(by: offset)
+        unsafe sky.uniforms.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<SkyObjectUniforms>.size)
         let table = renderer.argumentTable
         table.setAddress(

@@ -3,8 +3,8 @@
 // them read them back. Saved in the `SCRS` chunk. See docs/engine/papyrus-script-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 nonisolated public struct ScriptedReferenceState: WorldStateComponent, Sendable {
     /// Keyed by a lowercased name, such as `ghost`.

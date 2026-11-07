@@ -3,11 +3,11 @@
 // `ReferenceKey`s.
 
 import Foundation
-@testable import OpenSkyActorsInterface
-@testable import OpenSkyFactionsInterface
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyActorsInterface
+@testable public import OpenSkyFactionsInterface
+@testable public import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
+@testable public import OpenSkyGameData
 
 public enum HostilityFixture {
     public static let pluginName = "Base.esm"

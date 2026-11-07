@@ -3,8 +3,8 @@
 // session-stable `ReferenceKey`, which said-state is keyed by.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public final class DialogueStore: Sendable {
     private let topicsByFormID: [UInt32: DialogueTopic]

@@ -2,8 +2,8 @@
 // answers it; a refused press raises a refusal event and nothing else.
 // See docs/engine/locks.md.
 
-import OpenSkyGameData
-import OpenSkyWorldInterface
+public import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 @MainActor
 public struct ActivationGateSeam {

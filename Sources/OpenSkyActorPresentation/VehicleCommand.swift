@@ -1,8 +1,8 @@
 // What the vehicle coordinator asks the app to do. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
-import OpenSkyWorldState
-import simd
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
+public import simd
 
 /// One change to the session outside the vehicle rules.
 nonisolated public enum VehicleCommand: Equatable, Sendable {

@@ -2,7 +2,7 @@
 // Apple9 family (M3); M1 and M2 trace rays in software, which is too slow per pixel.
 // See docs/rendering/ray-traced-shadows.md.
 
-import Metal
+public import Metal
 
 nonisolated public enum RayTracingAvailability: Equatable, Sendable {
     case available
@@ -17,7 +17,7 @@ nonisolated public enum RayTracingAvailability: Equatable, Sendable {
         return .available
     }
 
-    public static func of(_ device: MTLDevice?) -> Self {
+    public static func of(_ device: any MTLDevice?) -> Self {
         guard let device else { return .unavailable(reason: missingReason) }
         return check(
             supportsRayTracing: device.supportsRaytracing,

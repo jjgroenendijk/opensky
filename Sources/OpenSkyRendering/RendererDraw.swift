@@ -1,7 +1,7 @@
 // MTKView delegate loop. Scene-pass encoding lives in RendererScenePass;
 // setup + resource lifetime live in Renderer and RendererSetup.
 
-import MetalKit
+public import MetalKit
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 import QuartzCore
@@ -110,7 +110,10 @@ extension Renderer: MTKViewDelegate {
         return free
     }
 
-    private func commitLiveFrame(_ drawable: CAMetalDrawable, interpolated: InterpolatedDrawable?) {
+    private func commitLiveFrame(
+        _ drawable: any CAMetalDrawable,
+        interpolated: InterpolatedDrawable?
+    ) {
         commandQueue.waitForDrawable(drawable)
         if let interpolated {
             commandQueue.waitForDrawable(interpolated.drawable)

@@ -1,8 +1,8 @@
 // What the mesh library hands actor assembly: a validated skeleton, or a
 // renderable model with its bounds.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsMesh
 
 nonisolated public enum ActorAssetFailure: Error, Equatable {
     case missing

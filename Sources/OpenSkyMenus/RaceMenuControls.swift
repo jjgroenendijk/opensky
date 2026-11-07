@@ -3,7 +3,7 @@
 // docs/engine/race-menu.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum RaceMenuRow: Equatable, Hashable, Sendable {
     case race, sex, weight, name

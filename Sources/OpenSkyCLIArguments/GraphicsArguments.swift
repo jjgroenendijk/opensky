@@ -1,6 +1,6 @@
 // `graphics status|preset`: the Graphics page's preset from the command line.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct GraphicsArguments: ParsableCommand, Sendable {
     public static let configuration = CommandConfiguration(

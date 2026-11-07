@@ -1,7 +1,7 @@
 // `reference`: the Windows game under Wine, run beside OpenSky to compare
 // the two (docs/tools/reference-game.md). Writes go to the reference prefix and `.logs/`.
 
-import ArgumentParser
+public import ArgumentParser
 
 /// The reference window size; the OpenSky capture renders at the same size.
 public struct ReferenceWindowOptions: ParsableArguments, Sendable {

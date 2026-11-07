@@ -1,9 +1,9 @@
 // Value types shared by the navmesh graph, the path query API and the path follower.
 // Coordinates are world units; path endpoints are feet positions.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
 import simd
 
 nonisolated public struct NavigationTriangleID: Hashable, Comparable, Sendable {

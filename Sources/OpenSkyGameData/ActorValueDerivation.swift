@@ -6,7 +6,7 @@
 // <https://ck.uesp.net/wiki/Class>). See docs/engine/actor-values.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The game settings the actor value derivation reads, resolved once.
 ///

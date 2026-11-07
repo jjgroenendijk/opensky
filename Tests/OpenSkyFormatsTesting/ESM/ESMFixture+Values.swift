@@ -1,8 +1,8 @@
 // Little-endian value builders for record fixtures, so a test spells a field
 // payload as a list of values instead of hand-built byte arrays.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 extension ESMFixture {
     public static func u8(_ values: UInt8...) -> Data {

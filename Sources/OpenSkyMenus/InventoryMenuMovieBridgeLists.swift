@@ -2,7 +2,7 @@
 // A missing list, row, or index answers nil or does nothing, never throws.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated extension InventoryMenuMovieBridge {
     // MARK: - Writing
@@ -40,7 +40,7 @@ nonisolated extension InventoryMenuMovieBridge {
     /// the movie has not built is skipped rather than synthesized.
     public static func publishTotals(_ model: InventoryMenuModel, runtime: SWFMovieRuntime) {
         setText("\(model.gold)", atPath: goldFieldPath, runtime: runtime)
-        setText(
+        unsafe setText(
             String(format: "%.0f", model.carriedWeight),
             atPath: carryWeightFieldPath,
             runtime: runtime

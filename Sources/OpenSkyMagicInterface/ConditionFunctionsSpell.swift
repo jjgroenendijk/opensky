@@ -5,9 +5,9 @@
 // EffectWasDualCast. See docs/engine/condition-functions-world.md#spells.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// The spell a perk entry point is evaluated for, such as `Mod Spell Cost`.
 nonisolated public struct SpellEvaluationResolution: ConditionResolution, Sendable {

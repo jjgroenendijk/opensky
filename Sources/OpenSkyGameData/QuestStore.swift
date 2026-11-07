@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public final class QuestStore: Sendable {
     /// Raw FormID -> decoded record.

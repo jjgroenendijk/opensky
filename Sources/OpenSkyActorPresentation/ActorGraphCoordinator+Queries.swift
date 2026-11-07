@@ -1,8 +1,8 @@
 // What the drive, Papyrus, and the conditions ask of a running actor graph.
 
-import OpenSkyBehavior
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyBehavior
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 extension ActorGraphCoordinator {
     /// The drive's locomotion state. A change raises its events on the next step.

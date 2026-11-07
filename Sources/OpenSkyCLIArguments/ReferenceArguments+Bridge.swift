@@ -1,7 +1,7 @@
 // `reference state|send|sync|follow|load|answer`: the Windows game through the OpenSkyBridge
 // plugin, with no typed console keys (docs/tools/reference-game.md#the-bridge-plugin).
 
-import ArgumentParser
+public import ArgumentParser
 
 extension ReferenceArguments {
     public struct State: CLICommandArguments {

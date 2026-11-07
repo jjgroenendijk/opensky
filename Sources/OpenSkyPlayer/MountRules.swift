@@ -2,7 +2,7 @@
 // rider may not do. `MountCoordinator` is the shell. See docs/engine/riding.md.
 
 import Foundation
-import OpenSkyRendering
+public import OpenSkyRendering
 import simd
 
 /// What kind of actor a mount is. It picks the graph events of the mount and dismount.

@@ -4,9 +4,9 @@
 // when it fails, so item totals are conserved. See docs/engine/interaction.md.
 
 import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 /// A live transfer session between one container and the player.

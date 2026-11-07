@@ -4,11 +4,11 @@
 // is live sit above; they hand this layer placements and membranes each frame.
 // See docs/rendering/visual-effects.md.
 
-import Metal
+public import Metal
 import MetalKit
 import OpenSkyRenderCore
 import OpenSkyRenderResources
-import OpenSkyShaderTypes
+public import OpenSkyShaderTypes
 import simd
 
 /// What a membrane covers: the player's body or one placed actor, or only the
@@ -44,12 +44,12 @@ nonisolated public struct MembraneDraw: Equatable, Sendable {
 
 /// One texture's decals in the shared decal buffer.
 nonisolated public struct DecalBatch {
-    public let texture: MTLTexture
+    public let texture: any MTLTexture
     public let instances: [DecalInstance]
     /// Drawn as a box onto the scene depth, so the mark wraps around a body.
     public let projected: Bool
 
-    public init(texture: MTLTexture, instances: [DecalInstance], projected: Bool = false) {
+    public init(texture: any MTLTexture, instances: [DecalInstance], projected: Bool = false) {
         self.texture = texture
         self.instances = instances
         self.projected = projected
@@ -77,33 +77,33 @@ public final class EffectLayer {
     public internal(set) var particles: [ParticlePlayback] = []
     /// The decals, one batch per texture, in `decalBuffer` order.
     public internal(set) var decalBatches: [DecalBatch] = []
-    var decalBuffer: MTLBuffer?
+    var decalBuffer: any MTLBuffer?
     /// Decals the last frame drew, for the readout.
     public internal(set) var lastDecalDraws = 0
 
     /// The unlit scene a menu draws in place of the world, such as the perk sky.
     public let menuScene: MenuSceneResources
-    let staticPipeline: MTLRenderPipelineState
-    let skinnedPipeline: MTLRenderPipelineState
-    let morphedPipeline: MTLRenderPipelineState
-    let decalPipeline: MTLRenderPipelineState
-    let projectedDecalPipeline: MTLRenderPipelineState
-    let depthState: MTLDepthStencilState
+    let staticPipeline: any MTLRenderPipelineState
+    let skinnedPipeline: any MTLRenderPipelineState
+    let morphedPipeline: any MTLRenderPipelineState
+    let decalPipeline: any MTLRenderPipelineState
+    let projectedDecalPipeline: any MTLRenderPipelineState
+    let depthState: any MTLDepthStencilState
     /// No depth test: a projected decal's far faces lie behind the surface it marks.
-    let projectedDecalDepthState: MTLDepthStencilState
-    let uniformBuffer: MTLBuffer
+    let projectedDecalDepthState: any MTLDepthStencilState
+    let uniformBuffer: any MTLBuffer
     /// Screen blood quads (`ScreenBlood.swift`).
     public let screenBlood: ScreenBloodLayer
     /// A playing movie over the frame (`MovieLayer.swift`).
     public let movie: MovieLayer
 
     init(
-        device: MTLDevice, library: MTLLibrary, view: MTKView, compiler: PipelineCache
+        device: any MTLDevice, library: any MTLLibrary, view: MTKView, compiler: PipelineCache
     ) throws {
         func make(
             _ vertex: String,
             _ layout: MTLVertexDescriptor
-        ) throws -> MTLRenderPipelineState {
+        ) throws -> any MTLRenderPipelineState {
             try Self.makePipeline(
                 vertex: vertex, layout: layout, library: library, compiler: compiler, view: view
             )
@@ -160,17 +160,17 @@ public final class EffectLayer {
     }
 
     /// The buffers that stay resident for the renderer's life.
-    var residentBuffers: [MTLAllocation] {
+    var residentBuffers: [any MTLAllocation] {
         [uniformBuffer, screenBlood.vertexBuffer, movie.vertexBuffer]
     }
 
     /// Blends over the surface by the decal's alpha.
     private static func makeDecalPipeline(
         _ name: String,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = name + "Vertex"
@@ -198,10 +198,10 @@ public final class EffectLayer {
     private static func makePipeline(
         vertex: String,
         layout: MTLVertexDescriptor,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = vertex

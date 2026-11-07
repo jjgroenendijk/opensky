@@ -2,8 +2,8 @@
 // "Skyrim:Controls" (<https://en.uesp.net/wiki/Skyrim:Controls>): a favourite can take
 // one of the hotkeys 1 to 8. See docs/engine/inventory-menu.md.
 
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 nonisolated public struct FavouritesState: WorldStateComponent, Sendable {
     public static let hotkeySlots = 1 ... 8

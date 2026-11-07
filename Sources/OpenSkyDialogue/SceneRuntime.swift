@@ -4,9 +4,9 @@
 // Rules and what is not done: docs/engine/scenes.md.
 
 import Foundation
-import OpenSkyDialogueInterface
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// What the scene runtime asks of the running session.
 @MainActor

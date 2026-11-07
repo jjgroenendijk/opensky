@@ -4,7 +4,7 @@
 // retire machinery that consumes these lives in Renderer.swift's scene-swap
 // extension (it needs the renderer's private state).
 
-import Metal
+public import Metal
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
@@ -25,22 +25,25 @@ extension Renderer {
     /// Every per-frame ring a scene needs: the scene-pass draw + point-light +
     /// instance rings, plus the parallel shadow-pass draw + instance rings.
     public struct SceneRings {
-        public let drawBuffer: MTLBuffer
-        public let pointLightBuffer: MTLBuffer
+        public let drawBuffer: any MTLBuffer
+        public let pointLightBuffer: any MTLBuffer
         public let drawCapacity: Int
-        public let instanceBuffer: MTLBuffer
+        public let instanceBuffer: any MTLBuffer
         public let instanceCapacity: Int
-        public let shadowDrawBuffer: MTLBuffer
-        public let shadowInstanceBuffer: MTLBuffer
+        public let shadowDrawBuffer: any MTLBuffer
+        public let shadowInstanceBuffer: any MTLBuffer
 
-        public var residencyAllocations: [MTLAllocation] {
+        public var residencyAllocations: [any MTLAllocation] {
             [drawBuffer, pointLightBuffer, instanceBuffer, shadowDrawBuffer, shadowInstanceBuffer]
         }
     }
 
     /// Allocates every per-frame ring for a scene — shared by init and the
     /// regrow path in setScene (identical sizing policy in one place).
-    public static func makeSceneRings(device: MTLDevice, scene: RenderScene) throws -> SceneRings {
+    public static func makeSceneRings(
+        device: any MTLDevice,
+        scene: RenderScene
+    ) throws -> SceneRings {
         let drawCapacity = slotCapacity(for: scene.drawCount)
         let instanceCapacity = slotCapacity(for: scene.instanceCount)
         let instanceLength = MemoryLayout<InstanceTransform>.stride

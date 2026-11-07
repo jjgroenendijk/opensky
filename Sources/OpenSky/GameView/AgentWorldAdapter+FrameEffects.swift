@@ -25,7 +25,7 @@ extension AgentWorldAdapter {
                 "strength": .init(session.renderer.characterLightUniform.z)
             ],
             "actorCameraFade": .object(session.renderer.actorCameraFadeOuts.reduce(into: [:]) {
-                $0[String(format: "%08X", $1.key)] = .init($1.value)
+                unsafe $0[String(format: "%08X", $1.key)] = .init($1.value)
             }),
             "fxaa": .bool(settings.fxaa),
             "indirectLight": .bool(settings.indirectLight),

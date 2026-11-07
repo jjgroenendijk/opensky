@@ -2,9 +2,9 @@
 // worker posts; the frame drains at one point and never waits.
 // See docs/rendering/texture-streaming.md.
 
-import Foundation
-@preconcurrency import Metal
-import OpenSkyAssetCache
+public import Foundation
+@preconcurrency @unsafe public import Metal
+public import OpenSkyAssetCache
 import Synchronization
 
 /// Where a streamed texture's bytes come from, so its levels can be read again.
@@ -62,7 +62,7 @@ nonisolated public struct TextureLevelBytes: Sendable {
 
 /// A new streamed texture: no tiles mapped yet, and the levels it starts with.
 nonisolated public struct StreamedTextureSeed: Sendable {
-    public let texture: MTLTexture
+    public let texture: any MTLTexture
     public let source: TextureStreamSource
     public let layout: SparseTextureLayout
     public let levels: TextureLevelBytes
@@ -70,11 +70,11 @@ nonisolated public struct StreamedTextureSeed: Sendable {
 
 /// A request to read a streamed texture's levels from `firstLevel` on again.
 nonisolated public struct TextureLevelRequest: Sendable {
-    public let texture: MTLTexture
+    public let texture: any MTLTexture
     public let source: TextureStreamSource
     public let firstLevel: Int
 
-    public init(texture: MTLTexture, source: TextureStreamSource, firstLevel: Int) {
+    public init(texture: any MTLTexture, source: TextureStreamSource, firstLevel: Int) {
         self.texture = texture
         self.source = source
         self.firstLevel = firstLevel
@@ -103,7 +103,7 @@ nonisolated public final class TextureStreamMailbox: Sendable {
     private struct State {
         var settings = TextureStreamingLoadSettings()
         var seeds: [StreamedTextureSeed] = []
-        var deliveries: [(texture: MTLTexture, levels: TextureLevelBytes)] = []
+        var deliveries: [(texture: any MTLTexture, levels: TextureLevelBytes)] = []
     }
 
     private let state = Mutex(State())
@@ -119,7 +119,7 @@ nonisolated public final class TextureStreamMailbox: Sendable {
         state.withLock { $0.seeds.append(seed) }
     }
 
-    public func post(levels: TextureLevelBytes, for texture: MTLTexture) {
+    public func post(levels: TextureLevelBytes, for texture: any MTLTexture) {
         state.withLock { $0.deliveries.append((texture, levels)) }
     }
 
@@ -130,7 +130,7 @@ nonisolated public final class TextureStreamMailbox: Sendable {
         }
     }
 
-    public func drainDeliveries() -> [(texture: MTLTexture, levels: TextureLevelBytes)] {
+    public func drainDeliveries() -> [(texture: any MTLTexture, levels: TextureLevelBytes)] {
         state.withLock { state in
             defer { state.deliveries.removeAll(keepingCapacity: true) }
             return state.deliveries

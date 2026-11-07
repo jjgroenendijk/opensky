@@ -3,9 +3,9 @@
 // game does. See docs/engine/movies.md.
 
 import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsCore
-import OpenSkyGameData
+public import OpenSkyAudio
+public import OpenSkyFormatsCore
+public import OpenSkyGameData
 
 /// What the movie player reaches outside itself. The app conforms.
 public protocol MoviePlayerWorld: AnyObject {

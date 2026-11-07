@@ -1,7 +1,7 @@
 // Two games on one screen: OpenSky's window on the left half and the borderless reference
 // window on the right, each showing a 16:9 picture of the same size, tops in line.
 
-import CoreGraphics
+public import CoreGraphics
 
 nonisolated public struct ReferenceSideBySide: Equatable, Sendable {
     /// OpenSky's window content, in AppKit screen points (origin at the bottom left).

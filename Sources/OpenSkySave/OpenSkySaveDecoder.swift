@@ -2,7 +2,7 @@
 // An unknown chunk is skipped, so a newer save still loads. An unknown component
 // kind inside a known chunk throws, because losing a component corrupts the world.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
@@ -174,7 +174,8 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
     /// an unreadable tag is exactly the corruption whose error message needs to
     /// say what it saw, and an unknown tag is skipped by its length anyway.
     static func tagName(_ bytes: Data) -> String {
-        String(bytes: bytes, encoding: .utf8) ?? bytes.map { String(format: "%02X", $0) }.joined()
+        String(bytes: bytes, encoding: .utf8) ?? bytes.map { unsafe String(format: "%02X", $0) }
+            .joined()
     }
 
     private static func apply(tag: String, payload: Data, to body: inout Body) throws {

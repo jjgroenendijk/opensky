@@ -3,7 +3,7 @@
 // See docs/engine/actor-sounds.md.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// The CSDT types an actor can carry; the UESP NPC_ page gives the numbers.

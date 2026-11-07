@@ -3,13 +3,13 @@
 // `ReferenceSpawnState` spawn, so the seam returns a key and takes it back to
 // remove the arrow. See docs/engine/projectiles.md.
 
-import OpenSkyBehavior
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyPhysics
-import OpenSkyProgressionInterface
+public import OpenSkyBehavior
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
+public import OpenSkyProgressionInterface
 import simd
 
 /// Who is shooting, and from where.

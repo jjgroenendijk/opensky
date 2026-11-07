@@ -3,9 +3,9 @@
 
 import Foundation
 import OpenSkyAudio
-import OpenSkyCells
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyCells
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyTerrain
 

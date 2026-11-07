@@ -1,8 +1,8 @@
 // The effects a spell affecting an actor can apply, which `HasMagicEffect` tests
 // (<https://ck.uesp.net/wiki/HasMagicEffect>).
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public enum MagicEffectReach {
     /// MGEFs of the spells acting on an actor: the sources of its active effects, and

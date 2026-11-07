@@ -1,11 +1,11 @@
-@testable import OpenSkyActorsInterface
-@testable import OpenSkyBehavior
-@testable import OpenSkyCombat
+@testable public import OpenSkyActorsInterface
+@testable public import OpenSkyBehavior
+@testable public import OpenSkyCombat
 @testable import OpenSkyCombatInterface
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyMagicInterface
-@testable import OpenSkyPhysics
-@testable import OpenSkyProgressionInterface
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyMagicInterface
+@testable public import OpenSkyPhysics
+@testable public import OpenSkyProgressionInterface
 import simd
 
 /// A `MeleeCombatWorld` that records rather than acts, so the runtime can be

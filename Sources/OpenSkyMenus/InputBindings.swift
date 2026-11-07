@@ -3,7 +3,7 @@
 // Mac keyboard, then the player's remaps from the settings store.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// The input context an action belongs to. A key can mean one thing per context.
 nonisolated public enum InputContext: String, CaseIterable, Sendable {

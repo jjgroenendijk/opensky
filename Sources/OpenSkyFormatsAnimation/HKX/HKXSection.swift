@@ -2,8 +2,8 @@
 // by probe against SSE files; see HKXHeader.swift for sources and
 // docs/formats/hkx-container.md for the byte map.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 /// Section header, 48 bytes: 19-byte null-padded ASCII name + 1 separator
 /// (0xFF) + 7 u32 offsets. All offsets except `dataStart` are relative to

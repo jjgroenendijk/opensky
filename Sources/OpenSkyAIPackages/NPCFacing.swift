@@ -4,11 +4,11 @@
 // turns; there is no head tracking or look-at IK.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyWorldState
-import simd
+public import OpenSkyWorldState
+public import simd
 
 /// What starting a turn needs. The placement and scale come from the caller
 /// because an actor that has never moved has no entry in the movement runtime

@@ -2,7 +2,7 @@
 // the FOV policy. The renderer's half is `RendererFirstPersonArms.swift`.
 
 import Metal
-import OpenSkyPlayer
+public import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 

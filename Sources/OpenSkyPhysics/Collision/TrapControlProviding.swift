@@ -2,7 +2,7 @@
 // their script states, the enable-parent chain of the selected one, and the live
 // hazards. Plain values, so the app assembles them. See docs/engine/traps.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One trap trigger or trap reference with a trap-family script.
 nonisolated public struct TrapTriggerRow: Equatable, Sendable {

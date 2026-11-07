@@ -3,7 +3,7 @@
 // frames. See docs/engine/journal.md#hud-notices.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One quest change the HUD shows.
 nonisolated public enum QuestNotice: Equatable, Sendable {

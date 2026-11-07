@@ -2,7 +2,7 @@
 // sound comes from both materials (docs/engine/impulses.md#collision-sounds).
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct BodyCollision: Equatable, Sendable {

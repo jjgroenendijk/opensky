@@ -2,7 +2,7 @@
 // Vanilla paths vary in case, slashes, and prefixes, so `vfsKey(for:)`
 // normalizes them. Layout: docs/formats/nif-materials.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct NIFShaderTextureSet: Sendable {

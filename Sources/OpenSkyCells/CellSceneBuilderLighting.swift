@@ -2,8 +2,8 @@
 // point lights. Exterior scenes keep sun and sky lighting.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyRenderCore
+public import OpenSkyFormatsESM
+public import OpenSkyRenderCore
 import simd
 
 nonisolated public struct InteriorLightingBuild: Sendable {

@@ -5,8 +5,8 @@
 // overwritten by each later write. See docs/engine/reference-identity.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One object the running game placed in the world.
 ///

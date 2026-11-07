@@ -4,9 +4,9 @@
 // See docs/engine/story-manager.md and docs/engine/scenes.md.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 /// What the story and scene natives reach. The app answers it.

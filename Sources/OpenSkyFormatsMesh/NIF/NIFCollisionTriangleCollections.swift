@@ -1,8 +1,8 @@
 // The bhkPackedNiTriStripsShape triangle store, plus the `Soup` and bounds
 // helpers it shares with NIFCollisionTriStrips.swift. Source: NifTools nif.xml.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public enum NIFCollisionTriangleCollections: Sendable {

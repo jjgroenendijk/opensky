@@ -1,7 +1,7 @@
 // The cells whose large references draw their full model, from `uLargeRefLODGridSize`
 // (docs/engine/distant-lod.md, "Large references").
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum LargeReferenceRing {
     /// The fewest rings between `center` and any cell of the block.

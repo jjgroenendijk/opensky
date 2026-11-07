@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Why an actor's values could not be derived.
 ///

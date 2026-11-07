@@ -160,7 +160,7 @@ final class BenchmarkWorldAdapter {
         do {
             try tour.start(request, machine: machine, appStart: takeAppStart())
             onRunningChange?(true)
-            windowMode.apply(request, window: game.hostView.window, view: game.hostView)
+            unsafe windowMode.apply(request, window: game.hostView.window, view: game.hostView)
         } catch {
             overlay.detach()
         }

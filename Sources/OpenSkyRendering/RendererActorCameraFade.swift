@@ -2,7 +2,7 @@
 // shows the inside of a body (docs/engine/graphics-options.md#actor-fade-near-the-camera).
 
 import OpenSkyFormatsCore
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import simd
 
 extension Renderer {

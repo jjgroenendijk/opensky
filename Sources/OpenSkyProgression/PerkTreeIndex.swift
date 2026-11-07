@@ -4,8 +4,8 @@
 // box needs no owned parent. See docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One perk's place in the tree that grants it.
 nonisolated public struct PerkTreePlacement: Equatable, Sendable {

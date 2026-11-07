@@ -3,10 +3,10 @@
 // failure becomes `error`, never a thrown error out of a control action.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsSWF
 import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyRendering
 
 /// What one menu does to its movie during bring-up.
 public struct MenuMovie {

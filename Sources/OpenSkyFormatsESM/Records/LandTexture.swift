@@ -2,7 +2,7 @@
 // Layout and sources: docs/formats/land.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct LandTexture: Sendable {
     public let formID: FormID

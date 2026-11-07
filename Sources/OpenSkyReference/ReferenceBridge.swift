@@ -2,7 +2,7 @@
 // command batches into `OpenSkyBridge/commands/`; the plugin runs them and rewrites
 // `OpenSkyBridge/state.json` four times a second (docs/tools/reference-game.md).
 
-import Foundation
+public import Foundation
 
 nonisolated public enum ReferenceBridgeError: Error, Equatable, Sendable, LocalizedError {
     case notRunning

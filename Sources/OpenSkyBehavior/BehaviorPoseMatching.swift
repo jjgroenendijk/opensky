@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
-import simd
+public import simd
 
 /// What one pose matcher keeps between updates.
 nonisolated public struct BehaviorPoseMatchState: Equatable, Sendable {

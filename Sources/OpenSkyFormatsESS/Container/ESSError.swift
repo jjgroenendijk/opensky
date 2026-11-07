@@ -37,7 +37,7 @@ nonisolated extension ESSError: CustomStringConvertible {
         case let .invalidValue(context): "invalid value: \(context)"
         case let .decompressionFailed(context): "decompression failed: \(context)"
         case let .sectionOutOfRange(section, offset):
-            String(format: "%@ offset 0x%X is out of range", section, offset)
+            unsafe String(format: "%@ offset 0x%X is out of range", section, offset)
         }
     }
 }

@@ -7,8 +7,8 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 

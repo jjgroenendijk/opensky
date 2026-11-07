@@ -3,8 +3,8 @@
 // code never changes the movie while the movie is running.
 
 import Foundation
-import OpenSkyFormatsSWF
-import OpenSkyRendering
+public import OpenSkyFormatsSWF
+public import OpenSkyRendering
 
 public final class MenuMovieDriver<Event> {
     public let session: MenuMovieSession

@@ -3,7 +3,7 @@
 // files (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-@testable import OpenSkyFormatsSWF
+@testable public import OpenSkyFormatsSWF
 
 public enum SWFButtonFixture: Sendable {
     /// One BUTTONRECORD with an identity MATRIX and CXFORMWITHALPHA.

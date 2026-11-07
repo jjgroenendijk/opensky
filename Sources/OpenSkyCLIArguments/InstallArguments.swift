@@ -1,6 +1,6 @@
 // `install`: the game folder check the launcher shows.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct InstallArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(

@@ -287,7 +287,7 @@ extension AgentWorldAdapter: AgentControlWorld {
         defer {
             (gameSession.worldSimPaused, renderer.uiEnabled, renderer.swfEnabled) = saved
         }
-        let texture: MTLTexture
+        let texture: any MTLTexture
         do {
             texture = try renderer.renderOffscreen(width: width, height: height)
         } catch {
@@ -297,7 +297,7 @@ extension AgentWorldAdapter: AgentControlWorld {
         return Self.reply(request, texture: texture, source: "offscreen")
     }
 
-    private static func write(_ texture: MTLTexture, to path: String) throws(AgentFailure) {
+    private static func write(_ texture: any MTLTexture, to path: String) throws(AgentFailure) {
         let url = URL(filePath: path)
         do {
             try FileManager.default.createDirectory(
@@ -310,7 +310,7 @@ extension AgentWorldAdapter: AgentControlWorld {
     }
 
     private static func reply(
-        _ request: AgentScreenshotRequest, texture: MTLTexture, source: String
+        _ request: AgentScreenshotRequest, texture: any MTLTexture, source: String
     ) -> AgentJSON {
         [
             "path": .string(request.path), "width": .init(texture.width),

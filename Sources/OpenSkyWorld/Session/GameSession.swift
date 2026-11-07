@@ -3,21 +3,21 @@
 // frame it fills one `RenderFrameInput`, which is all the game state the renderer reads.
 // The work lives in the `GameSession+*.swift` extensions.
 
-import MetalKit
-import OpenSkyActorPresentation
-import OpenSkyAudio
+public import MetalKit
+public import OpenSkyActorPresentation
+public import OpenSkyAudio
 import OpenSkyCamera
 import OpenSkyFormatsCore
-import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyPlayer
-import OpenSkyRenderCore
-import OpenSkyRendering
-import OpenSkyRenderResources
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import OpenSkyPlayer
+public import OpenSkyRenderCore
+public import OpenSkyRendering
+public import OpenSkyRenderResources
 import OpenSkyTerrain
-import OpenSkyWeather
+public import OpenSkyWeather
 import OpenSkyWorldState
-import simd
+public import simd
 
 public final class GameSession: RenderFrameDriver {
     public let renderer: Renderer
@@ -228,7 +228,7 @@ public final class GameSession: RenderFrameDriver {
         input: CameraInputState? = nil,
         timeOfDay: Float = RenderFrameInput.defaultTimeOfDay,
         movementConfiguration: PlayerMovementConfiguration = .synthetic,
-        shaderLibrary: MTLLibrary? = nil,
+        shaderLibrary: any MTLLibrary? = nil,
         pipelineCache: PipelineCache? = nil,
         wallClock: any WallClock = MediaWallClock()
     ) throws {

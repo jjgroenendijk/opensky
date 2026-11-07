@@ -1,8 +1,8 @@
 // Terrain LOD blocks built from the load order instead of read from the vanilla files
 // (docs/engine/distant-lod.md#generated-terrain).
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
@@ -52,7 +52,7 @@ nonisolated extension DistantLODBuilder {
     /// Nil when the generator has no land for the block; the vanilla file then draws.
     func generatedPlacement(
         for block: DistantLODBlock,
-        terrain: TerrainLODGenerating
+        terrain: any TerrainLODGenerating
     ) throws -> RenderPlacement? {
         let textures = textures
         guard

@@ -5,9 +5,9 @@
 
 import Foundation
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyQuestsInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

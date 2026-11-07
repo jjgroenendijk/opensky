@@ -4,8 +4,8 @@
 // See docs/engine/dragon-flight.md#riding.
 
 import Foundation
-import OpenSkyActorPresentation
-import OpenSkyFormatsESM
+public import OpenSkyActorPresentation
+public import OpenSkyFormatsESM
 import simd
 
 /// What the ridden dragon's breath asks of its graph this step.

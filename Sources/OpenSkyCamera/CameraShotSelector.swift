@@ -3,9 +3,9 @@
 // docs/formats/camera-records.md#shot-selection.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldConditions
 
 /// One path the selector looked at, and what happened to it.

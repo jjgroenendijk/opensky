@@ -1,7 +1,7 @@
 // What the magic coordinator asks the app to do. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyMagicInterface
 
 /// One change to the world outside the magic domain, raised by a magic effect.
 nonisolated public enum MagicCommand: Equatable, Sendable {

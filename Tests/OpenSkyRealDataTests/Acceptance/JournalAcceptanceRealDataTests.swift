@@ -158,12 +158,12 @@ struct JournalAcceptanceRealDataTests {
     }
 
     @MainActor
-    private func makeRenderer(device: MTLDevice) throws -> Renderer {
+    private func makeRenderer(device: any MTLDevice) throws -> Renderer {
         try RenderedPixels.offscreenRenderer(device: device, width: Self.width, height: Self.height)
     }
 
     @MainActor
-    private func render(_ renderer: Renderer) throws -> (texture: MTLTexture, pixels: [UInt8]) {
+    private func render(_ renderer: Renderer) throws -> (texture: any MTLTexture, pixels: [UInt8]) {
         try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
     }
 }
@@ -226,10 +226,10 @@ private enum JournalEvidence {
 
     @MainActor
     static func writeFrames(
-        empty: (texture: MTLTexture, pixels: [UInt8]),
-        broughtUp: (texture: MTLTexture, pixels: [UInt8]),
-        published: (texture: MTLTexture, pixels: [UInt8]),
-        tabbed: (texture: MTLTexture, pixels: [UInt8])
+        empty: (texture: any MTLTexture, pixels: [UInt8]),
+        broughtUp: (texture: any MTLTexture, pixels: [UInt8]),
+        published: (texture: any MTLTexture, pixels: [UInt8]),
+        tabbed: (texture: any MTLTexture, pixels: [UInt8])
     ) throws {
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         for (frame, name) in [

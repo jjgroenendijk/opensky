@@ -3,8 +3,8 @@
 // because `status` is settable only in the class's own file.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyPhysics
+public import OpenSkyBehavior
+public import OpenSkyPhysics
 import simd
 
 nonisolated extension LocomotionBridge {

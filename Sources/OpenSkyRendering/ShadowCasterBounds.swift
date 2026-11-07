@@ -1,7 +1,7 @@
 // The world AABB of a scene's sun-shadow casters, split by whether a caster can move.
 // The fixed part is built once per scene; only movable casters merge in per frame.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct ShadowCasterBounds: Sendable {
     /// Union of every caster no body or NPC can move, terrain included.

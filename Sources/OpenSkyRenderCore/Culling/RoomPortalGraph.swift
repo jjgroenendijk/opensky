@@ -2,8 +2,8 @@
 // the rooms the camera can see. An OpenSky policy; see
 // docs/rendering/room-portal-culling.md.
 
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 /// A local `[-halfExtents, halfExtents]` box placed by `transform`.
 nonisolated public struct OrientedBox: Equatable, Sendable {

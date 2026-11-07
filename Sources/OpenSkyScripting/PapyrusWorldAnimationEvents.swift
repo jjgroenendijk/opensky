@@ -3,8 +3,8 @@
 // (<https://ck.uesp.net/wiki/RegisterForAnimationEvent_-_Form>).
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// False when `handle` names no script instance.

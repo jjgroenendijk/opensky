@@ -17,7 +17,7 @@ import Testing
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct WorldOverlayTests {
-    private static let device: MTLDevice? = {
+    private static let device: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4)
@@ -183,11 +183,11 @@ struct WorldOverlayTests {
         )
     }
 
-    private static func pixels(_ texture: MTLTexture) -> [UInt8] {
+    private static func pixels(_ texture: any MTLTexture) -> [UInt8] {
         var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
         pixels.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base,
                 bytesPerRow: texture.width * 4,
                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),

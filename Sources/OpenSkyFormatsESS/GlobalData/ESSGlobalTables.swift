@@ -1,7 +1,7 @@
 // Decoders for the global data tables import needs: misc stats, player location,
 // global variables, created objects, and weather. Layouts: docs/formats/ess.md#global-data.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct ESSMiscStat: Equatable, Sendable {
     public let name: String

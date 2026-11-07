@@ -1,5 +1,5 @@
 import Foundation
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import simd
 
 /// Everything the detection value is computed from, for one observer and one

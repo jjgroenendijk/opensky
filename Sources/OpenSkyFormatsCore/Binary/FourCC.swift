@@ -48,12 +48,12 @@ nonisolated extension FourCC {
 
 nonisolated extension FourCC: CustomStringConvertible {
     public var description: String {
-        let bytes = withUnsafeBytes(of: rawValue.littleEndian) { Array($0) }
+        let bytes = withUnsafeBytes(of: rawValue.littleEndian) { unsafe Array($0) }
         guard
             bytes.allSatisfy({ (0x20 ... 0x7E).contains($0) }),
             let text = String(bytes: bytes, encoding: .ascii)
         else {
-            return String(format: "0x%08X", rawValue)
+            return unsafe String(format: "0x%08X", rawValue)
         }
         return text
     }

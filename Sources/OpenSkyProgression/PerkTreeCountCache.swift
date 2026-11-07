@@ -5,7 +5,7 @@
 // array compare. See docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One session's per-skill perk-tree counts.
 nonisolated public struct PerkTreeCountCache: Sendable {

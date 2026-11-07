@@ -9,7 +9,7 @@ import OpenSkyShaderTypes
 /// The colour copy refraction shapes read, and whether this frame splits for it.
 struct RefractionState {
     var splits = false
-    var copy: MTLTexture?
+    var copy: any MTLTexture?
 }
 
 extension Renderer {

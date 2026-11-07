@@ -4,8 +4,8 @@
 // docs/rendering/scene-drawing.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyShaderTypes
 import simd
 

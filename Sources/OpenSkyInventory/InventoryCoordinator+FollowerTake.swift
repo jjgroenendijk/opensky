@@ -3,7 +3,7 @@
 // See docs/engine/follower-commands.md.
 
 import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState

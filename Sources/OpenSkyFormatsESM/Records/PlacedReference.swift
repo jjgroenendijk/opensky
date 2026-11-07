@@ -3,7 +3,7 @@
 // is a plain FormID. Layout and sources: docs/formats/placed-references.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct PlacedReference: Sendable {

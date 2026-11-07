@@ -2,7 +2,7 @@
 // and write the same values. A key names its type and the value a missing entry
 // reads as.
 
-import Foundation
+public import Foundation
 
 /// A value a setting can hold.
 nonisolated public protocol SettingValue: Sendable {

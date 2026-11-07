@@ -3,8 +3,8 @@
 // See docs/engine/world-sfx.md#region-sounds.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 /// One region sound with what its SNDR says about it.
 nonisolated public struct RegionSound: Equatable, Sendable {

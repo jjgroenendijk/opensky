@@ -4,8 +4,8 @@ import Foundation
 import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 extension ObjectBehaviorCoordinator {
     /// Points on the object's moving parts in its own space, from the pose last

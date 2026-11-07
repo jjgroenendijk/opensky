@@ -1,7 +1,7 @@
 // Synthetic MGEF records for the archetype suites, one effect per rule.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 

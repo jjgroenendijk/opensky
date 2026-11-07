@@ -23,11 +23,11 @@ enum MusicAudioFixture {
         let buffer = try #require(
             AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)
         )
-        let channels = try #require(buffer.floatChannelData)
+        let channels = unsafe try #require(buffer.floatChannelData)
         for frame in 0 ..< Int(frameCount) {
             let sample = sinf(2 * .pi * 440 * Float(frame) / Float(sampleRate)) * 0.5
-            channels[0][frame] = sample
-            channels[1][frame] = sample
+            unsafe channels[0][frame] = sample
+            unsafe channels[1][frame] = sample
         }
         buffer.frameLength = frameCount
         return buffer
@@ -47,13 +47,13 @@ enum MusicAudioFixture {
             attempts += 1
             let status = try engine.engine.renderOffline(4096, to: chunk)
             guard status == .success else { continue }
-            let channels = try #require(chunk.floatChannelData)
+            let channels = unsafe try #require(chunk.floatChannelData)
             var firstFrame = 0
             if !started {
                 firstFrame = Int(chunk.frameLength)
                 findSignal: for frame in 0 ..< Int(chunk.frameLength) {
                     for channel in 0 ..< Int(format.channelCount)
-                        where channels[channel][frame] != 0
+                        where unsafe channels[channel][frame] != 0
                     {
                         firstFrame = frame
                         started = true
@@ -68,7 +68,7 @@ enum MusicAudioFixture {
             )
             for channel in 0 ..< Int(format.channelCount) {
                 for frame in firstFrame ..< firstFrame + frameCount {
-                    let sample = channels[channel][frame]
+                    let sample = unsafe channels[channel][frame]
                     sum += sample * sample
                 }
             }

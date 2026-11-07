@@ -3,7 +3,7 @@
 // Format/WEAP" and ".../ARMO". See docs/engine/barter.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// `fEnchantmentPointsMult` and `fEnchantmentEffectPointsMult`, the two weapon terms.
 nonisolated public struct EnchantedValueSettings: Equatable, Sendable {

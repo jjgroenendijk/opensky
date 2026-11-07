@@ -5,8 +5,8 @@
 // sorting and gold handling the same in all three menus (docs/engine/barter.md).
 
 import Foundation
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// The transfer list one container or merchant session presents.
 nonisolated public struct ContainerMenuModel: Equatable, Sendable {

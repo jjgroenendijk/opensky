@@ -2,7 +2,7 @@
 // else as windows-1252, with its five undefined bytes as ISO 8859-1. It never
 // throws. Policy: docs/decisions/string-decoding.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum GameText: Sendable {
     /// Total: every byte sequence decodes to some string, so a mis-encoded name

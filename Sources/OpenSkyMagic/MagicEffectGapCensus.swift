@@ -2,7 +2,7 @@
 // can rank the archetypes still to build. Counts only.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct MagicEffectGapCensus: Equatable, Sendable {
     /// Archetype name -> effects of it, over every effect.

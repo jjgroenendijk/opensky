@@ -1,18 +1,18 @@
 // Builds the index set off the main actor, in reported stages. Stores that do
 // not depend on each other build in parallel child tasks.
 
-import Metal
+public import Metal
 import OpenSkyAIPackages
-import OpenSkyAssetCache
+public import OpenSkyAssetCache
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyRendering
-import OpenSkyRenderResources
+public import OpenSkyRenderResources
 import OpenSkyTerrain
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated extension CellProviderIndexes {
     /// The values every stage reads. All `Sendable`, so a child task can take them.

@@ -3,7 +3,7 @@
 // `wbRecord(VTYP, 'Voice Type', ...)` at line 6295.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct VoiceType: Sendable {
     public struct Flags: OptionSet, Equatable, Sendable {

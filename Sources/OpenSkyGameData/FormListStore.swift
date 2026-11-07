@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedFormList: Equatable, Sendable {
     public let id: ResolvedFormID

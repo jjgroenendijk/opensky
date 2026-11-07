@@ -1,18 +1,18 @@
 // Shared values for the trigger-volume tests: box volumes, cell scenes with
 // them, and capsule poses.
 
-@testable import OpenSkyCells
-@testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyCells
+@testable public import OpenSkyFormatsCore
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
-@testable import OpenSkyFormatsPEX
-@testable import OpenSkyGameData
-@testable import OpenSkyPhysics
-@testable import OpenSkyPlayer
+@testable public import OpenSkyFormatsPEX
+@testable public import OpenSkyGameData
+@testable public import OpenSkyPhysics
+@testable public import OpenSkyPlayer
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
-@testable import OpenSkyWorld
-import OpenSkyWorldTesting
+@testable public import OpenSkyWorld
+public import OpenSkyWorldTesting
 import simd
 
 public enum TriggerStreamFixture {

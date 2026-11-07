@@ -3,7 +3,7 @@
 // `PapyrusActorAIBridge`; without it each one is a tallied failure.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 

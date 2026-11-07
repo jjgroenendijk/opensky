@@ -2,7 +2,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// Every live instance's persisted state, sorted by `PapyrusInstanceKey`

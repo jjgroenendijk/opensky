@@ -1,10 +1,10 @@
 // A fixed reference index that stands in for the cell streamer in tests.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 
 /// Synthetic `PapyrusWorldReferenceSource`: a fixed reference index that
 /// answers as if every entry were resident in one cell. This is what lets a

@@ -3,7 +3,7 @@
 // (<https://ck.uesp.net/wiki/Perk_Fragments>). Layout: docs/formats/vmad.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {

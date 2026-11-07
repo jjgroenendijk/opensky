@@ -2,9 +2,9 @@
 // and keeps the last steps and lines for state reads. The rules live in
 // `SceneRuntime`. See docs/engine/coordinators.md and docs/engine/scenes.md.
 
-import OpenSkyDialogueInterface
+public import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyWorldState
 
 /// What `SceneCoordinator` reads from the running session.

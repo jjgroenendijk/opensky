@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension PapyrusWorldRuntime {

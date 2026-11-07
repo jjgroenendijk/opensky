@@ -5,7 +5,7 @@
 // Layout: docs/formats/quest-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Quest: Sendable {
     /// DNAM's leading uint16. Names follow xEdit; only the bits OpenSky reads

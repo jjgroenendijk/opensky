@@ -2,8 +2,8 @@
 // OpenSkyProgression.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 /// What each condition-tab subject is, for one evaluation: a placed reference such as
 /// the target, or a base form such as the weapon or the spell.

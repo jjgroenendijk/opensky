@@ -4,9 +4,9 @@
 // fill the smallest empty Soul Gem that can accommodate it". See docs/engine/soul-trap.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// The creature levels where each soul size starts.
 nonisolated public struct SoulTrapSettings: Equatable, Sendable {

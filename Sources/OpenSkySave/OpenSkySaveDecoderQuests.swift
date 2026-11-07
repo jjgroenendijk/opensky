@@ -1,11 +1,11 @@
 // QSTS, QALS and location-alias chunks: quest state and alias fills, merged into
 // the `RDLT` deltas by `ReferenceKey`.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
+public import OpenSkyWorldState
 
 /// One quest's saved state, before it is merged back into its delta.
 nonisolated public struct SaveQuestEntry: Equatable, Sendable {

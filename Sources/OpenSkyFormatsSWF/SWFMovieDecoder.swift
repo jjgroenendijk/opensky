@@ -3,7 +3,7 @@
 // collected by sprite id.
 // Reference: Adobe SWF File Format Specification v19, chapters 3, 5 and 13.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct SWFMovieDecoder: Sendable {

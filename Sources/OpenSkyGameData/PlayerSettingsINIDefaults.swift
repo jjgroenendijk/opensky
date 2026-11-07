@@ -2,7 +2,7 @@
 // sits over what the player set in the game. OpenSky never writes the INI files.
 // The keys were read from the install's Skyrim/SkyrimPrefs.ini.
 
-import Foundation
+public import Foundation
 
 nonisolated extension PlayerSettingsCatalog {
     /// `SkyrimPrefs.ini` in the install's `Skyrim` folder; the game's

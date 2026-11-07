@@ -2,7 +2,7 @@
 // plain read off `ActorValueRuntime`.
 
 import Foundation
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 import OpenSkyGameData
 import OpenSkyWorldState
 

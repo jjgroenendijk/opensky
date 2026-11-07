@@ -3,7 +3,7 @@
 // row. The values live in the settings store; this holds only the page state.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum SettingsPageAction: Equatable, Sendable {
     case adjust(PlayerSettingID, direction: Int)

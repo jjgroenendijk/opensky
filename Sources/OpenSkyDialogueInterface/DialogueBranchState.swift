@@ -4,8 +4,8 @@
 // different (non-Exclusive) branch" (<https://ck.uesp.net/wiki/Dialogue_Branch>).
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 nonisolated public struct DialogueBranchState: WorldStateComponent, Sendable {
     /// The DLBR with the exclusive flag the speaker last said a line from.

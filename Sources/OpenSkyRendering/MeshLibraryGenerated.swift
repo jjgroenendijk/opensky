@@ -1,8 +1,8 @@
 // Models OpenSky makes at runtime, such as generated terrain LOD, cached under a key
 // like a file's, so eviction and bounds treat them the same way.
 
-import OpenSkyFormatsCore
-import OpenSkyRenderCore
+public import OpenSkyFormatsCore
+public import OpenSkyRenderCore
 import OpenSkyRenderResources
 
 nonisolated extension MeshLibrary {

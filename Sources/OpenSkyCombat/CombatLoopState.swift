@@ -3,8 +3,8 @@
 // the nearest hostile living actor. Pure values, so the acceptance chain is arithmetic.
 // See docs/engine/combat.md.
 
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
 import simd
 
 /// The player's combat situation as of one step.

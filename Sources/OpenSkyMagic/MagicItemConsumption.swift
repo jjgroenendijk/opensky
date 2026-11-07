@@ -4,10 +4,10 @@
 // See docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyMagicInterface
 
 /// What consuming one item applies.
 nonisolated public struct MagicItemUse: Equatable, Sendable {

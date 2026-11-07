@@ -93,7 +93,7 @@ struct SystemMenuAcceptanceRealDataTests {
     }
 
     private struct SettingsMeasurement {
-        let frame: (texture: MTLTexture, pixels: [UInt8])
+        let frame: (texture: any MTLTexture, pixels: [UInt8])
         let rows: [String]
         let changed: Int
         let transition: Int
@@ -185,12 +185,12 @@ struct SystemMenuAcceptanceRealDataTests {
     }
 
     @MainActor
-    private func makeRenderer(device: MTLDevice) throws -> Renderer {
+    private func makeRenderer(device: any MTLDevice) throws -> Renderer {
         try RenderedPixels.offscreenRenderer(device: device, width: Self.width, height: Self.height)
     }
 
     @MainActor
-    private func render(_ renderer: Renderer) throws -> (texture: MTLTexture, pixels: [UInt8]) {
+    private func render(_ renderer: Renderer) throws -> (texture: any MTLTexture, pixels: [UInt8]) {
         try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
     }
 }
@@ -211,10 +211,10 @@ private enum SystemMenuAcceptanceEvidence {
 
     @MainActor
     static func writeFrames(
-        empty: (texture: MTLTexture, pixels: [UInt8]),
-        broughtUp: (texture: MTLTexture, pixels: [UInt8]),
-        activated: (texture: MTLTexture, pixels: [UInt8]),
-        settings: (texture: MTLTexture, pixels: [UInt8])
+        empty: (texture: any MTLTexture, pixels: [UInt8]),
+        broughtUp: (texture: any MTLTexture, pixels: [UInt8]),
+        activated: (texture: any MTLTexture, pixels: [UInt8]),
+        settings: (texture: any MTLTexture, pixels: [UInt8])
     ) throws {
         try FileManager.default.createDirectory(
             at: logs,

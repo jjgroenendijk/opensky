@@ -2,10 +2,10 @@
 // Diagnostics page read this one shape. See docs/tools/benchmark.md.
 
 import Darwin
-import Foundation
+public import Foundation
 import OpenSkyCells
-import OpenSkyGameData
-import OpenSkyLoading
+public import OpenSkyGameData
+public import OpenSkyLoading
 
 nonisolated public enum BenchmarkSceneStatus: String, Codable, Sendable {
     case measured
@@ -90,11 +90,11 @@ nonisolated public struct BenchmarkAppStart: Codable, Equatable, Sendable {
 
     /// When the kernel started this process.
     public static func processStart() -> Date? {
-        var info = kinfo_proc()
-        var size = MemoryLayout<kinfo_proc>.stride
+        var info = unsafe kinfo_proc()
+        var size = unsafe MemoryLayout<kinfo_proc>.stride
         var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
-        guard sysctl(&mib, UInt32(mib.count), &info, &size, nil, 0) == 0 else { return nil }
-        let started = info.kp_proc.p_starttime
+        guard unsafe sysctl(&mib, UInt32(mib.count), &info, &size, nil, 0) == 0 else { return nil }
+        let started = unsafe info.kp_proc.p_starttime
         return Date(timeIntervalSince1970: Double(started.tv_sec) + Double(started.tv_usec) / 1e6)
     }
 }

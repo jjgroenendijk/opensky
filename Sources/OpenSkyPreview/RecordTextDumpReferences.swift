@@ -3,8 +3,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
     public struct KeywordContext: Sendable {

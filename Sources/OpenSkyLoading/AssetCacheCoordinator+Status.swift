@@ -1,7 +1,7 @@
 // What the Asset Optimisation page and the Launch page show about the folder:
 // the status, the space check, and why Convert is off.
 
-import OpenSkyAssetCache
+public import OpenSkyAssetCache
 
 extension AssetCacheCoordinator {
     public var status: AssetOptimisationStatus {

@@ -4,12 +4,12 @@
 // and LOD do not cast. Dedicated shadow rings keep it apart from the scene pass.
 
 import Foundation
-import Metal
+public import Metal
 import OpenSkyFormatsCore
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
-import simd
+public import simd
 
 /// Sun-shadow quality tier. Drives cascade count, shadow range, and
 /// PCF tap count; `debug shadows` selects it. `.off` renders no shadow pass
@@ -60,7 +60,7 @@ extension Renderer {
     struct ShadowCascadeContext {
         let cascade: ShadowCascade
         let frustum: Frustum
-        let encoder: MTL4RenderCommandEncoder
+        let encoder: any MTL4RenderCommandEncoder
         /// The cull view: 0 is the camera, so cascade `i` is `1 + i`. Negative culls on
         /// the CPU, for the auxiliary views the GPU cull does not know.
         let cullView: Int
@@ -256,7 +256,7 @@ extension Renderer {
     }
 
     /// The depth state, winding, bias, and sampler every shadow view draws with.
-    func configureShadowEncoder(_ encoder: MTL4RenderCommandEncoder) {
+    func configureShadowEncoder(_ encoder: any MTL4RenderCommandEncoder) {
         encoder.setArgumentTable(argumentTable, stages: [.vertex, .fragment])
         encoder.setDepthStencilState(depthState)
         encoder.setFrontFacing(.counterClockwise)
@@ -381,7 +381,7 @@ extension Renderer {
                 instanceColor: SIMD4(1, 1, 1, 1),
                 grassParameters: .zero
             )
-            buffer.contents()
+            unsafe buffer.contents()
                 .advanced(by: (base + written) * stride)
                 .copyMemory(from: &transform, byteCount: MemoryLayout<InstanceTransform>.size)
             written += 1
@@ -488,8 +488,8 @@ extension Renderer {
     /// Depth-only render pass targeting one cascade slice of the shadow array.
     func makeShadowEncoder(
         cascade: Int,
-        target: MTLTexture? = nil
-    ) -> MTL4RenderCommandEncoder? {
+        target: any MTLTexture? = nil
+    ) -> any MTL4RenderCommandEncoder? {
         let descriptor = MTL4RenderPassDescriptor()
         descriptor.depthAttachment.texture = target ?? shadow.map
         descriptor.depthAttachment.slice = cascade
@@ -519,7 +519,7 @@ extension Renderer {
     private func shadowPipeline(
         group: DrawGroup,
         alphaTested: Bool
-    ) -> MTLRenderPipelineState {
+    ) -> any MTLRenderPipelineState {
         let pipelines = shadow.pipelines
         if group.faceMorph != nil {
             return alphaTested ? pipelines.morphedSkinnedAlphaTest : pipelines.morphedSkinned
@@ -552,7 +552,7 @@ extension Renderer {
             uvScale: material.uvScale,
             alphaThreshold: material.alphaTestThreshold ?? 0
         )
-        buffer.contents().advanced(by: offset)
+        unsafe buffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<ShadowDrawUniforms>.size)
         return offset
     }

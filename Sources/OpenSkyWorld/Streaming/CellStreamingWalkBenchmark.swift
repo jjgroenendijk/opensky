@@ -1,10 +1,10 @@
 // Walk benchmark: fixed-step walk, live streaming and door transitions over one recorded
 // route. The CLI prints; this driver owns behavior and gates.
 
-import Foundation
-import OpenSkyCells
-import OpenSkyFormatsESM
-import OpenSkyRendering
+public import Foundation
+public import OpenSkyCells
+public import OpenSkyFormatsESM
+public import OpenSkyRendering
 import simd
 
 nonisolated public enum CellStreamingWalkBenchmarkError: LocalizedError {
@@ -41,9 +41,12 @@ nonisolated public enum CellStreamingWalkBenchmarkError: LocalizedError {
         case let .wrongDestination(reason):
             "walk path reached wrong destination: \(reason)"
         case let .stepNotClimbed(gain):
-            String(format: "exterior stair gain %.2f did not reach acceptance threshold", gain)
+            unsafe String(
+                format: "exterior stair gain %.2f did not reach acceptance threshold",
+                gain
+            )
         case let .interiorNotCrossed(distance):
-            String(format: "interior floor crossing %.2f units was too short", distance)
+            unsafe String(format: "interior floor crossing %.2f units was too short", distance)
         }
     }
 }

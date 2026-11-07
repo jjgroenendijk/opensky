@@ -6,9 +6,9 @@
 // See docs/engine/spell-delivery.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 import OpenSkyPhysics
 
 /// Which deliveries this build carries out.

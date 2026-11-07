@@ -1,7 +1,7 @@
 // The last crime and the last guard step, as values. Only the `text` formatters
 // build the readout lines.
 
-import OpenSkyCrimeInterface
+public import OpenSkyCrimeInterface
 
 nonisolated public enum CrimeNote: Equatable, Sendable {
     case idle

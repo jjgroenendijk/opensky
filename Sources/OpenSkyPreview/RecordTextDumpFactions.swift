@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension RecordTextDump {
     /// FACT: the identity and flag line, then the crime values, the rank table,
@@ -48,9 +48,9 @@ nonisolated extension RecordTextDump {
         let known = named.reduce(into: Faction.Flags()) { $0.insert($1.0) }
         let unnamed = flags.rawValue & ~known.rawValue
         if unnamed != 0 {
-            set.append(String(format: "unknown 0x%08X", unnamed))
+            unsafe set.append(String(format: "unknown 0x%08X", unnamed))
         }
-        return "0x\(String(format: "%08X", flags.rawValue)) [\(set.joined(separator: ", "))]"
+        return unsafe "0x\(String(format: "%08X", flags.rawValue)) [\(set.joined(separator: ", "))]"
     }
 
     private static func crimeLines(_ values: Faction.CrimeValues?) -> [String] {
@@ -59,7 +59,7 @@ nonisolated extension RecordTextDump {
             + "murder \(values.murder), assault \(values.assault), "
             + "trespass \(values.trespass), pickpocket \(values.pickpocket)"
         if let multiplier = values.stealMultiplier {
-            line += String(format: ", steal multiplier %.4f", multiplier)
+            unsafe line += String(format: ", steal multiplier %.4f", multiplier)
         }
         if let escape = values.escape, let werewolf = values.werewolf {
             line += ", escape \(escape), werewolf \(werewolf)"
@@ -116,9 +116,10 @@ nonisolated extension RecordTextDump {
             lines.append("  vendor links: \(links.joined(separator: ", "))")
         }
         if let location = faction.vendorLocation {
+            let locationValue = unsafe "value 0x\(String(format: "%08X", location.value)), "
             lines.append(
                 "  vendor location: type \(location.type), "
-                    + "value 0x\(String(format: "%08X", location.value)), "
+                    + locationValue
                     + "radius \(location.radius)"
             )
         }

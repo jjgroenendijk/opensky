@@ -3,7 +3,7 @@
 // water is, the scene encoder ends, its depth is copied, and a second encoder draws the
 // water over the same targets (docs/rendering/water.md). Soft effects read the same copy.
 
-import Metal
+public import Metal
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
@@ -13,7 +13,7 @@ import simd
 public struct WaterDepthState {
     /// Off draws the water in the scene encoder with a fixed middle depth.
     public var enabled = true
-    var copy: MTLTexture?
+    var copy: any MTLTexture?
     /// Projection terms of this frame; nil when the projection is not a perspective one.
     var unproject: SIMD2<Float>?
     /// This frame's water reads the copy.
@@ -22,7 +22,7 @@ public struct WaterDepthState {
     var copies = false
     /// `bScreenSpaceReflectionEnabled`: the water reflects the scene drawn before it.
     public var screenSpaceReflections = false
-    var colorCopy: MTLTexture?
+    var colorCopy: any MTLTexture?
     /// This frame's water reflects the colour copy.
     var reflects = false
     /// This frame copies the colour, for the refraction and the reflection.
@@ -112,7 +112,7 @@ extension Renderer {
             ripples: (.zero, .zero, .zero, .zero, .zero, .zero, .zero, .zero)
         )
         WaterRippleField.write(rings, into: &uniforms.ripples)
-        drawUniformBuffer.contents().advanced(by: offset)
+        unsafe drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<WaterDrawUniforms>.size)
         return offset
     }

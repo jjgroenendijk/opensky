@@ -2,7 +2,7 @@
 // it, and measure it against the original. See docs/engine/asset-cache-audio.md.
 
 import Foundation
-import OpenSkyAssetCache
+public import OpenSkyAssetCache
 
 nonisolated public enum AACTransparency {
     public static func measure(_ audio: DecodedAudio) throws -> SpectralDistortion {

@@ -2,7 +2,7 @@
 // a free seat in its area, walks to it, sits or lies there for the activity's time,
 // and gets up. Creation Kit wiki "Sandbox (Procedure)"; docs/engine/sandbox.md.
 
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 /// Where a sandbox may look for furniture, and which kinds it may use.

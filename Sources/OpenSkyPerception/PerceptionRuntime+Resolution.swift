@@ -1,6 +1,6 @@
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyPerceptionInterface
+public import OpenSkyPerceptionInterface
 import simd
 
 extension PerceptionRuntime {

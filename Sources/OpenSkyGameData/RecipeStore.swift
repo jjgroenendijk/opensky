@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedRecipe: Equatable, Sendable {
     /// One CNTO with its item resolved. `item` is nil when the load order lacks it.

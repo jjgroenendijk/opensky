@@ -2,9 +2,9 @@
 // decodes without an install and the app can show a save before saying why it cannot load.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
     /// Layout version the file declared.

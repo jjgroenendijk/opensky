@@ -1,7 +1,7 @@
 // Case-insensitive native lookup and its bounded headless log.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsCore
 
 nonisolated public struct PapyrusNativeKey: Equatable, Hashable, Sendable {

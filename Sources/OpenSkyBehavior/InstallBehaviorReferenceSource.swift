@@ -3,8 +3,8 @@
 // sets stay apart. Read-only external input (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-import OpenSkyFormatsAnimation
-import OpenSkyGameData
+public import OpenSkyFormatsAnimation
+public import OpenSkyGameData
 
 nonisolated public final class InstallBehaviorReferenceSource: BehaviorReferenceSource {
     private let fileSystem: any GameFileSource

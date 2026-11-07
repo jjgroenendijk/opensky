@@ -2,8 +2,8 @@
 // deltas. UVs and chargen modifiers are checked and skipped.
 // Layout and sources: docs/formats/tri.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public enum TRIError: Error, Equatable, Sendable {

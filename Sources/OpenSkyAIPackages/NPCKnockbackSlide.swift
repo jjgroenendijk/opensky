@@ -2,12 +2,12 @@
 // capsule, with the player's knockback rule, until the push fades
 // (docs/engine/traps.md#impulses-and-pushback).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
-import OpenSkyPlayer
-import OpenSkyWorldState
-import simd
+public import OpenSkyPlayer
+public import OpenSkyWorldState
+public import simd
 
 public struct NPCKnockbackSlide {
     /// Below this horizontal speed, units per second, a grounded slide is over.

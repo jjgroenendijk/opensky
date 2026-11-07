@@ -1,12 +1,12 @@
 // The perk runtime, its tree index, and the actor values the perk suites
 // spend. Needs Progression, Actors, and the whole-game condition registry.
 
-@testable import OpenSkyActors
-import OpenSkyFeaturesTesting
-@testable import OpenSkyGameData
-@testable import OpenSkyProgression
+@testable public import OpenSkyActors
+public import OpenSkyFeaturesTesting
+@testable public import OpenSkyGameData
+@testable public import OpenSkyProgression
 import OpenSkyWorldConditions
-@testable import OpenSkyWorldState
+@testable public import OpenSkyWorldState
 
 extension PerkRuntimeFixture {
     /// Where each fixture perk sits in the fixture tree.

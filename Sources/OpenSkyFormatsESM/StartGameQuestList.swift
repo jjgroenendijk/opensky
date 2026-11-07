@@ -2,7 +2,7 @@
 // begins, as bare little-endian FormIDs relative to that plugin's masters.
 // Layout and sources: docs/formats/seq.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum StartGameQuestListError: Error, Equatable, Sendable {

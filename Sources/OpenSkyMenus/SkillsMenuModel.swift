@@ -3,8 +3,8 @@
 // spends and hands fresh values back. See docs/engine/skills-menu.md.
 
 import Foundation
-import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
 
 nonisolated public struct SkillsMenuModel: Equatable, Sendable {
     public enum Page: Equatable, Sendable {

@@ -3,7 +3,7 @@
 // only the branch. See docs/engine/actor-resolution.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated extension NIFFile {
     /// The shapes below the node named `node`, any case, at their places in the

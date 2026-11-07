@@ -4,7 +4,7 @@
 // positions (a velocity bias never lets a body sleep). Quiet bodies sleep. Fixed order
 // and iteration counts make it bit-deterministic. See docs/engine/dynamic-bodies.md.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 /// What one step needs from the world outside the body set.

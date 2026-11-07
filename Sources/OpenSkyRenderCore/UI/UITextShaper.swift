@@ -3,7 +3,7 @@
 // drives measurement (font at point size) and rasterized emission (font at
 // pixel size); advances scale linearly with size, so the two stay consistent.
 
-import CoreText
+public import CoreText
 import Foundation
 
 /// One positioned glyph from a shaped line. `x` is the baseline position in
@@ -45,7 +45,7 @@ nonisolated public enum UITextShaper: Sendable {
         var ascent: CGFloat = 0
         var descent: CGFloat = 0
         var leading: CGFloat = 0
-        let width = CTLineGetTypographicBounds(line, &ascent, &descent, &leading)
+        let width = unsafe CTLineGetTypographicBounds(line, &ascent, &descent, &leading)
         var glyphs: [UIShapedGlyph] = []
         let runs = (CTLineGetGlyphRuns(line) as NSArray) as? [CTRun] ?? []
         for run in runs {
@@ -53,8 +53,8 @@ nonisolated public enum UITextShaper: Sendable {
             guard count > 0 else { continue }
             var ids = [CGGlyph](repeating: 0, count: count)
             var positions = [CGPoint](repeating: .zero, count: count)
-            CTRunGetGlyphs(run, CFRangeMake(0, count), &ids)
-            CTRunGetPositions(run, CFRangeMake(0, count), &positions)
+            unsafe CTRunGetGlyphs(run, CFRangeMake(0, count), &ids)
+            unsafe CTRunGetPositions(run, CFRangeMake(0, count), &positions)
             for index in 0 ..< count {
                 glyphs.append(UIShapedGlyph(glyphID: ids[index], x: Float(positions[index].x)))
             }

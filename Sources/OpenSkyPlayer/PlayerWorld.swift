@@ -1,8 +1,8 @@
 // The world side of the player: what `PlayerCoordinator` reads from and does to
 // the running renderer. The app answers it; a test passes a fake.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// What `PlayerCoordinator` reads from the running world.
 public protocol PlayerWorld: AnyObject {

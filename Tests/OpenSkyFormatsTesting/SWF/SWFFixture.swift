@@ -4,7 +4,7 @@
 //
 // Reference: Adobe SWF File Format Specification, version 19.
 
-import Foundation
+public import Foundation
 
 /// Builds a minimal spec-conformant SWF (FWS or CWS) byte blob.
 public struct SWFFixture: Sendable {

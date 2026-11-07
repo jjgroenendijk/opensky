@@ -5,7 +5,7 @@
 // See docs/formats/image-spaces.md, section "Resolution".
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One weather and how much of the current look it makes.
 nonisolated public struct WeightedWeatherImageSpaces: Equatable, Sendable {

@@ -121,7 +121,7 @@ extension Renderer {
             normalMapsEnabled: terrainNormalMapsEnabled ? 1 : 0,
             snowLayers: surfaceFeatures.improvedSnow ? item.snowLayers : 0
         )
-        drawUniformBuffer.contents().advanced(by: offset)
+        unsafe drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<TerrainDrawUniforms>.size)
         return offset
     }

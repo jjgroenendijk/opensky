@@ -2,8 +2,8 @@
 // value reads as 13:00, the renderer's own default, so a bad stored value never
 // skews renderer setup.
 
-import Foundation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyGameData
 
 nonisolated public enum TimeOfDaySettings: Sendable {
     /// UserDefaults key holding the time-of-day hour (0-24).

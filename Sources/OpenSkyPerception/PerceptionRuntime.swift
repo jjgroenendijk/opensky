@@ -4,8 +4,8 @@
 // by `ReferenceKey`, so runs are deterministic. See docs/engine/detection.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyPerceptionInterface
+public import OpenSkyFormatsESM
+public import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import simd
 

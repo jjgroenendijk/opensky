@@ -1,8 +1,8 @@
 // Synthetic FACT and NPC_ records for the faction suites. Layout:
 // docs/formats/factions.md.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum FactionFixture: Sendable {
     /// One XNAM: FACT or RACE link, signed modifier, combat reaction.

@@ -4,8 +4,8 @@
 // a projectile on its first impact. Pure functions over values.
 // See docs/engine/projectiles.md.
 
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import simd
 
 /// Where a projectile touched something, and what.

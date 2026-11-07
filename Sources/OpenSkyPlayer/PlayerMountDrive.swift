@@ -2,12 +2,12 @@
 // locomotion bridge and capsule, so the horse plays its own gaits, and the rider's
 // graph only follows (LocomotionBridgeRiding.swift). See docs/engine/riding.md.
 
-import OpenSkyActorPresentation
-import OpenSkyBehavior
-import OpenSkyFormatsESM
+public import OpenSkyActorPresentation
+public import OpenSkyBehavior
+public import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyRendering
 import simd
 
 /// The ground and collision one mount step runs against.

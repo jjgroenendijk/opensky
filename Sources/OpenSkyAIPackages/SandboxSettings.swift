@@ -2,7 +2,7 @@
 // and the shape of the search area. Formulas and defaults from the Creation Kit wiki
 // "Sandbox (Procedure)". See docs/engine/sandbox.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// What a sandboxing actor does between two choices.
 nonisolated public enum SandboxActivity: String, CaseIterable, Equatable, Sendable {

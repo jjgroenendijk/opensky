@@ -3,20 +3,20 @@
 // `CellProviderIndexes+Load.swift` builds it off the main actor, in stages.
 
 import Metal
-import OpenSkyActorPresentation
-import OpenSkyAIPackages
-import OpenSkyAudio
-import OpenSkyCombatInterface
+public import OpenSkyActorPresentation
+public import OpenSkyAIPackages
+public import OpenSkyAudio
+public import OpenSkyCombatInterface
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyPerceptionInterface
-import OpenSkyPhysics
-import OpenSkyPlayer
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyPerceptionInterface
+public import OpenSkyPhysics
+public import OpenSkyPlayer
 import OpenSkyRendering
-import OpenSkyWeather
-import OpenSkyWorldState
+public import OpenSkyWeather
+public import OpenSkyWorldState
 
 nonisolated public struct CellProviderIndexes {
     /// The load-order magic stores (MGEF, SPEL, SCRL, EQUP, ENCH), decoded off one

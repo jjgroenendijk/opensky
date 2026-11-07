@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 nonisolated public struct NIFCameraTrack: Equatable, Sendable {
     public static let cameraTypeName = "NiCamera"

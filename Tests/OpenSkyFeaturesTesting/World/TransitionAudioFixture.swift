@@ -1,7 +1,7 @@
 // Synthetic SNDR, SNCT and ASPC plugins, built in code with ESMFixture.
 
 import Foundation
-@testable import OpenSkyAudio
+@testable public import OpenSkyAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 

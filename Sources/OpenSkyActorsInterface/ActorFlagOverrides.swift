@@ -3,7 +3,7 @@
 // the Essential or Protected flag adds it while its quest runs (UESP "Skyrim Mod:Mod File
 // Format/QUST"). See docs/engine/papyrus-script-state.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ActorFlagOverrides: Equatable, Sendable {
     /// Flags a script turned on.

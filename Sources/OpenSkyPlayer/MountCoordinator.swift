@@ -3,9 +3,9 @@
 // app applies them to the vehicles, the streamer, and crime. See docs/engine/riding.md.
 
 import Foundation
-import OpenSkyActorPresentation
-import OpenSkyFormatsESM
-import OpenSkyRendering
+public import OpenSkyActorPresentation
+public import OpenSkyFormatsESM
+public import OpenSkyRendering
 import simd
 
 /// What the mount coordinator reads from the session.

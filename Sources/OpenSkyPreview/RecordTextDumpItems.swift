@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
@@ -36,7 +36,7 @@ nonisolated extension RecordTextDump {
     private static func projectileSummary(record: ESMRecord) throws -> String? {
         let projectile = try Projectile(record: record)
         let kind = projectile.kind.map { "\($0)" } ?? "unknown"
-        return String(
+        return unsafe String(
             format: """
             decoded PROJ: editorID %@, %@, speed %.1f, gravity %.3f, range %.1f, \
             lifetime %.2f, radius %.1f, flags 0x%04X
@@ -60,9 +60,10 @@ nonisolated extension RecordTextDump {
     ) throws -> String? {
         let armor = try Armor(record: record, localized: localized)
         let slots = armor.bodyTemplate.map { "0x\(String($0.slots.rawValue, radix: 16))" } ?? "-"
+        let weightText = unsafe "weight \(String(format: "%.2f", armor.itemValue.weight)), "
         return "decoded ARMO: editorID \(armor.editorID ?? "-"), "
             + "value \(armor.itemValue.value), "
-            + "weight \(String(format: "%.2f", armor.itemValue.weight)), "
+            + weightText
             + keywordText(armor.keywords, context: context) + ", "
             + "slots \(slots), rating \(armor.armorRating), "
             + "\(armor.armatures.count) armatures"
@@ -90,11 +91,12 @@ nonisolated extension RecordTextDump {
     private static func armorAddonSummary(record: ESMRecord) throws -> String? {
         let addon = try ArmorAddon(record: record)
         let slots = addon.bodyTemplate.map { "0x\(String($0.slots.rawValue, radix: 16))" } ?? "-"
+        let weaponAdjust = unsafe String(format: "%.2f", addon.weaponAdjust)
         return "decoded ARMA: editorID \(addon.editorID ?? "-"), "
             + "slots \(slots), race \(addon.primaryRace?.description ?? "-"), "
             + "+\(addon.additionalRaces.count) races, "
             + "priority male \(addon.malePriority) female \(addon.femalePriority), "
-            + "weapon adjust \(String(format: "%.2f", addon.weaponAdjust)), "
+            + "weapon adjust \(weaponAdjust), "
             + "male model \(addon.maleModelPath ?? "-")"
     }
 
@@ -171,7 +173,7 @@ nonisolated extension RecordTextDump {
         let criticalEffect = weapon.criticalData?.effect.map {
             ", critical effect " + spellText($0, context: magicContext)
         } ?? ""
-        return "decoded WEAP: " + sharedItemText(weapon.fields, weapon.itemValue, context)
+        return unsafe "decoded WEAP: " + sharedItemText(weapon.fields, weapon.itemValue, context)
             + String(
                 format: ", damage %d, %@, speed %.2f, reach %.2f, critical %@",
                 Int(weapon.damage), animation, weapon.speed, weapon.reach, critical
@@ -198,7 +200,7 @@ nonisolated extension RecordTextDump {
     ) throws -> String? {
         let ammo = try Ammunition(record: record, localized: localized)
         let projectile = ammo.projectile.map(\.description) ?? "-"
-        return "decoded AMMO: " + sharedItemText(ammo.fields, ammo.itemValue, context)
+        return unsafe "decoded AMMO: " + sharedItemText(ammo.fields, ammo.itemValue, context)
             + String(format: ", damage %.1f, projectile %@", ammo.damage, projectile)
     }
 
@@ -214,7 +216,7 @@ nonisolated extension RecordTextDump {
         case let .tableID(id), let .pluginTableID(id, _): "string #\(id)"
         case nil: "-"
         }
-        return String(
+        return unsafe String(
             format: "editorID %@, name %@, value %d, weight %.2f, %@",
             fields.editorID ?? "-",
             name,

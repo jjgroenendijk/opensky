@@ -1,11 +1,11 @@
 // Synthetic PACK, NPC_ and ACHR records for the package tests. Built in code,
 // never extracted from game data.
 
-import Foundation
+public import Foundation
 @testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyWorldState
+@testable public import OpenSkyWorldState
 
 public enum PackageRuntimeFixture {
     public static func package(

@@ -2,9 +2,9 @@
 // functions. See docs/engine/hostility.md and docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Every actor's social profile plus the FACT store a faction parameter resolves
 /// against and the derivation that answers about a pair.

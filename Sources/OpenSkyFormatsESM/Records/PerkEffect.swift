@@ -3,7 +3,7 @@
 // decide what the payloads mean, so each enum keeps an `unknown(raw:)` case and
 // a mismatched payload stays as raw bytes. Layout: docs/formats/perks.md.
 
-import Foundation
+public import Foundation
 
 /// PRKE byte 0 — which of the three shapes the effect's DATA carries.
 nonisolated public enum PerkEffectType: Hashable, CustomStringConvertible, Sendable {
@@ -160,10 +160,10 @@ nonisolated public enum PerkFunctionData: Equatable, Sendable, CustomStringConve
 
     public var description: String {
         switch self {
-        case let .float(value): String(format: "%.4f", value)
-        case let .floatPair(first, second): String(format: "%.4f, %.4f", first, second)
+        case let .float(value): unsafe String(format: "%.4f", value)
+        case let .floatPair(first, second): unsafe String(format: "%.4f, %.4f", first, second)
         case let .actorValueMultiplier(actorValue, factor):
-            String(
+            unsafe String(
                 format: "%@ x %.4f",
                 ActorValueIdentity.description(of: actorValue),
                 factor

@@ -1,9 +1,9 @@
 // Equip and unequip on the player or the nearest NPC. An equip on the NPC
 // queues a cell rebuild, so the actor redraws from its new equipped set.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 extension InventoryCoordinator {

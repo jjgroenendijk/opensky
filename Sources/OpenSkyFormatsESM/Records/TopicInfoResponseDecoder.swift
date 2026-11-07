@@ -2,7 +2,7 @@
 // xEdit `wbStruct(TRDT, 'Response Data', ...)` at dev-4.1.6 line 7871.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated extension TopicInfo.Contents {
     public func isResponseField(_ type: FourCC) -> Bool {

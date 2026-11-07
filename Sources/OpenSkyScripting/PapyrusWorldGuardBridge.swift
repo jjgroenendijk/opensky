@@ -4,9 +4,9 @@
 // See docs/engine/papyrus-activation.md and docs/engine/guard-response.md.
 
 import Foundation
-import OpenSkyCrimeInterface
+public import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Guard and arrest operations a Papyrus native may perform.

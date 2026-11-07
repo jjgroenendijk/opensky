@@ -5,9 +5,9 @@
 // reads as rank 0. See docs/engine/crime.md.
 
 import Foundation
-import OpenSkyCrimeInterface
+public import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// Resolves `XOWN` links against the load order and answers the ownership
 /// question. A value snapshot over the FACT store; answers are pure functions.

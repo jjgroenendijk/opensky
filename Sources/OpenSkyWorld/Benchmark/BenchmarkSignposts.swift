@@ -1,6 +1,6 @@
 // Instruments intervals for the tour and each scene, so a trace lines up with the result.
 
-import OSLog
+public import OSLog
 
 struct BenchmarkSignposts {
     private static let signposter = OSSignposter(

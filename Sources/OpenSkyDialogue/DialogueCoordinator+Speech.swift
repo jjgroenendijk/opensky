@@ -4,7 +4,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 extension DialogueCoordinator {
     /// True when `speaker` may force greet now, which starts its `fAIForceGreetingTimer`.

@@ -5,7 +5,7 @@
 // Layout documented in docs/formats/actors.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct CharacterClass: Equatable, Sendable {
     /// DATA 0x20 / 0x21 / 0x22: "Each byte provides the weight assigned to

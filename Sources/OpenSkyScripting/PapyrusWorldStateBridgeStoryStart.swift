@@ -3,9 +3,9 @@
 // "OnStoryKillActor - Quest"; docs/engine/story-manager.md maps the event data.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface

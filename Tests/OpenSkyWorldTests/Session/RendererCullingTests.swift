@@ -43,7 +43,7 @@ struct RendererCullingTests {
     /// Two instances of one crate model, both with real world AABBs: one at
     /// the origin (in view of `facingCamera`), one 1e6 units east — far
     /// outside the 65 536-unit far plane.
-    private static func twoCrateScene(device: MTLDevice) throws -> RenderScene {
+    private static func twoCrateScene(device: any MTLDevice) throws -> RenderScene {
         let model = Model(
             meshes: [DemoScene.boxMesh(halfWidth: 32, halfDepth: 32, height: 64)],
             materials: [Material.fallback],
@@ -106,7 +106,7 @@ struct RendererCullingTests {
 
     @MainActor
     private static func makeRenderer(
-        device: MTLDevice,
+        device: any MTLDevice,
         camera: SceneCamera
     ) throws -> Renderer {
         try OffscreenRendererFixture.makeRenderer(

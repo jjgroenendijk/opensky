@@ -2,7 +2,7 @@
 // name table lives with the record parsers in OpenSkyFormatsESM; `ActorValueKind`
 // is runtime state, so this mapping stays in the engine.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension ActorValueIdentity {
     /// Index of each value the runtime stores, per `vanillaNames`.

@@ -2,8 +2,8 @@
 // models, movement, phonemes, and the per-sex head data with chargen morphs,
 // presets and tint masks. Layout and sources: docs/formats/actors.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct RaceBodyPart: Equatable, Sendable {
     /// INDX: 0 upper body, 1 lower body, 2 hand, 3 foot, 4 tail.

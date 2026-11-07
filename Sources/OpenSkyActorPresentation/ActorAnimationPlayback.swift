@@ -2,16 +2,16 @@
 // graph, are composed through the hkaSkeleton parent graph, name-mapped onto each NIF
 // skin palette, then uploaded once per render frame. See docs/engine/actor-graphs.md.
 
-import Foundation
+public import Foundation
 import OpenSkyBehavior
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import OpenSkyRenderResources
-import simd
+public import simd
 import Synchronization
 
 nonisolated public final class ActorAnimationClip: Sendable {

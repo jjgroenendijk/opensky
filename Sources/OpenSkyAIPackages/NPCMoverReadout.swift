@@ -3,9 +3,9 @@
 import OpenSkyFormatsESM
 import OpenSkyNavigation
 import OpenSkyPlayer
-import OpenSkyWorldConditions
-import OpenSkyWorldState
-import simd
+public import OpenSkyWorldConditions
+public import OpenSkyWorldState
+public import simd
 
 extension NPCMover {
     public var transform: ReferenceTransformOverride {

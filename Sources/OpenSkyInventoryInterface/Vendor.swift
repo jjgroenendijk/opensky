@@ -4,7 +4,7 @@
 // docs/engine/vendor-factions.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// When a vendor trades, from the `VENV` start and end hours.

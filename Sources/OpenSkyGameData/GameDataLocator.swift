@@ -3,7 +3,7 @@
 // UserDefaults "OpenSkyDataRoot", then the default Steam path, then every Steam library.
 // A test host reads only the environment variable (`persistedRootDefaults`).
 
-import Foundation
+public import Foundation
 
 nonisolated public enum GameDataError: Error, Equatable, Sendable {
     /// An explicit override (env var or defaults) points at something that is

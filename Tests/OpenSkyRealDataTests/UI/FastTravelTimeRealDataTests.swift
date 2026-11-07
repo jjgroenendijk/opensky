@@ -72,7 +72,7 @@ struct FastTravelTimeRealDataTests {
                 ratios.append(opensky / measured)
                 distanceSquares += Double(distance * distance)
                 distanceHours += Double(distance) * measured
-                lines.append(String(
+                unsafe lines.append(String(
                     format: "%@-%@\t%.0f\t%.1f\t%.2f\t%.3f", from, to, distance, measured, opensky,
                     opensky / measured
                 ))
@@ -80,7 +80,10 @@ struct FastTravelTimeRealDataTests {
         }
         // Least squares for hours = distance * k, so the speed is timeScale / (3600 k).
         let perUnit = distanceHours > 0 ? distanceSquares / distanceHours : 0
-        lines.append(String(format: "fitted speed %.2f units per second", perUnit * 20 / 3600))
+        unsafe lines.append(String(
+            format: "fitted speed %.2f units per second",
+            perUnit * 20 / 3600
+        ))
         let dir = try RepositoryLogs.createdDirectory("fast-travel-time")
         try lines.joined(separator: "\n").write(
             to: dir.appending(path: "routes.tsv"), atomically: true, encoding: .utf8

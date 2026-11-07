@@ -1,8 +1,8 @@
 // The seam the dialogue menu reads topics through. `DialogueRuntime` conforms,
 // and the composition root hands it over as this protocol.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// The topics and greeting a speaker offers the player.
 @MainActor

@@ -1,9 +1,9 @@
 // SPWN chunk writing, in its own file because the encoder body is at its length limit.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One spawned object paired with the snapshot entry it came from.

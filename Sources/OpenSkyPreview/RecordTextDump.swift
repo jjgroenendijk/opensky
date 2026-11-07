@@ -5,8 +5,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public enum RecordTextDump: Sendable {
     /// Big records (Tamriel WRLD carries thousands of RNAMs) get capped in the preview
@@ -84,7 +84,7 @@ nonisolated public enum RecordTextDump: Sendable {
     }
 
     private static func headerLine(record: ESMRecord) -> String {
-        let flags = String(format: "0x%08X", record.flags.rawValue)
+        let flags = unsafe String(format: "0x%08X", record.flags.rawValue)
         return "[INFO] \(record.type) \(FormID(record.formID)) — "
             + "\(record.header.dataSize) bytes, flags \(flags), "
             + "form version \(record.header.version)"
@@ -182,11 +182,11 @@ nonisolated public enum RecordTextDump: Sendable {
         let weather = try Weather(record: record)
         let layers = weather.colors.map { "\($0.count)" } ?? "-"
         let wind = weather.data.map {
-            String(format: "%.2f @ %.0f deg", $0.windSpeed, $0.windDirection)
+            unsafe String(format: "%.2f @ %.0f deg", $0.windSpeed, $0.windDirection)
         } ?? "-"
         let precipitation = weather.data.map { "\($0.precipitation)" } ?? "-"
         let fog = weather.fog.map {
-            String(format: "day %.0f-%.0f", $0.dayNear, $0.dayFar)
+            unsafe String(format: "day %.0f-%.0f", $0.dayNear, $0.dayFar)
         } ?? "-"
         return "decoded WTHR: editorID \(weather.editorID ?? "-"), "
             + "color layers \(layers), fog \(fog), wind \(wind), "

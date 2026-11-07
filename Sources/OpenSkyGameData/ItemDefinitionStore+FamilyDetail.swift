@@ -2,7 +2,7 @@
 // apart, for the inventory readouts. See docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension ItemDefinitionStore {
     /// For example `Filled with Petty Soul, capacity Grand`. Nil for every other family.

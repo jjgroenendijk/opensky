@@ -2,7 +2,7 @@
 // formatters build lines; the sentence helpers live in `MagicCore`.
 
 import Foundation
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 
 nonisolated public enum MagicEffectActionOutcome: Equatable, Sendable {
     case idle

@@ -2,7 +2,7 @@
 // world passes the game time. See docs/engine/sleep-wait.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 
 /// What the sleep and wait menu needs from the app.

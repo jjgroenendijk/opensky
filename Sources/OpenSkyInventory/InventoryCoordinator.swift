@@ -2,12 +2,12 @@
 // runtimes, the open container session, and the readout lines. The
 // rules live in `InventoryCore`. See docs/engine/coordinators.md.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 
 /// Owns the inventory runtimes and reads the world through `InventoryWorld`.
 /// Without game data every runtime is nil, and each action then says so.

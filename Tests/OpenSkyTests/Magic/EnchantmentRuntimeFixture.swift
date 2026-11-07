@@ -103,7 +103,7 @@ enum EnchantmentRuntimeFixture {
             primaryValue: spec.primaryValue
         )
         data.replaceSubrange(4 ..< 8, with: withUnsafeBytes(of: baseCost.bitPattern.littleEndian) {
-            Data($0)
+            unsafe Data($0)
         })
         return ESMFixture.record(
             "MGEF",

@@ -2,8 +2,8 @@
 // decoder reads. GFx extension names follow JPEXS Free Flash Decompiler's GFx tag
 // classes. Names and counts only.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct SWFTagCensus: Sendable {
     /// "code name" -> tags.

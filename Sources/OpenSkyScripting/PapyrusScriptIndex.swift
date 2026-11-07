@@ -3,7 +3,7 @@
 // the script library changes.
 
 import Foundation
-import OpenSkyFormatsPEX
+public import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 public final class PapyrusScriptIndex {

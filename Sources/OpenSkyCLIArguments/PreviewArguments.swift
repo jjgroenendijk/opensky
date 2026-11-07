@@ -1,6 +1,6 @@
 // The offscreen preview of one record, reference, cell, or mesh.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct PreviewArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(

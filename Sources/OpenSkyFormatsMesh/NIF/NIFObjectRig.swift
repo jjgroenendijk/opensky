@@ -3,7 +3,7 @@
 // See docs/engine/object-animation.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated extension NIFFile {

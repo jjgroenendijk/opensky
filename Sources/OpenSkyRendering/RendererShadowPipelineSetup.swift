@@ -3,16 +3,16 @@
 // RendererScenePipelineSetup.swift). Depth-only: these pipelines carry no color
 // attachment, so their depth format binds at pass time.
 
-import Metal
+public import Metal
 import OpenSkyRenderCore
-import OpenSkyRenderResources
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 extension Renderer {
     /// Builds the shadow pipelines + compare sampler + cascade array together.
     public static func makeShadowResources(
-        device: MTLDevice,
-        library: MTLLibrary,
+        device: any MTLDevice,
+        library: any MTLLibrary,
         compiler: PipelineCache
     ) throws -> ShadowResources {
         try ShadowResources(
@@ -26,7 +26,7 @@ extension Renderer {
     /// binds at pass time (the pass has nothing else to infer the target from,
     /// unlike the scene pipelines which carry a color attachment).
     private static func makeShadowPipelines(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache
     ) throws -> ShadowPipelines {
         func make(
@@ -35,7 +35,7 @@ extension Renderer {
             fragment: String?,
             skinned: Bool,
             morphed: Bool = false
-        ) throws -> MTLRenderPipelineState {
+        ) throws -> any MTLRenderPipelineState {
             let vertexFunction = MTL4LibraryFunctionDescriptor()
             vertexFunction.library = library
             vertexFunction.name = vertex
@@ -94,7 +94,7 @@ extension Renderer {
 
     /// Depth-compare sampler for shadow PCF: linear filtering runs the 2x2
     /// hardware comparison, clamp-to-edge keeps out-of-map taps lit.
-    private static func makeShadowSampler(device: MTLDevice) throws -> MTLSamplerState {
+    private static func makeShadowSampler(device: any MTLDevice) throws -> any MTLSamplerState {
         let descriptor = MTLSamplerDescriptor()
         descriptor.label = "ShadowCompare"
         descriptor.minFilter = .linear
@@ -112,9 +112,9 @@ extension Renderer {
     /// One shared cascade array: depth32Float, 2D array of
     /// ShadowConstantCascadeCount slices, private (GPU-only) storage.
     static func makeShadowMap(
-        device: MTLDevice,
+        device: any MTLDevice,
         resolution: Int = ShadowSettings.defaultResolution
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2DArray
         descriptor.pixelFormat = .depth32Float

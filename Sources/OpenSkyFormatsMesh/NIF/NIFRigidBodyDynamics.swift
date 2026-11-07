@@ -2,7 +2,7 @@
 // an unknown value survives. Layout: docs/formats/nif-rigid-body.md.
 
 import Foundation
-import simd
+public import simd
 
 /// nif.xml `hkMotionType`. Decides whether physics integrates a body at all.
 nonisolated public enum NIFMotionSystem: UInt8, CaseIterable, Sendable {

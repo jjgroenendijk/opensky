@@ -4,7 +4,7 @@
 // See docs/engine/skill-advancement.md.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct MeleeSkillUseSettings: Equatable, Sendable {
     /// `fWeaponBlockSkillUseBase` and `...Mult`: a weapon block teaches

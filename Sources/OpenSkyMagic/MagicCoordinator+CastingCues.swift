@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 
 extension MagicCoordinator {
     /// The hold each of the player's hands gets: a released hand waits for its event.

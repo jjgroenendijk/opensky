@@ -3,8 +3,8 @@
 // actor; the main actor only instances it. See docs/engine/object-animation.md.
 
 import Foundation
-import OpenSkyFormatsAnimation
-import OpenSkyGameData
+public import OpenSkyFormatsAnimation
+public import OpenSkyGameData
 
 nonisolated public enum BehaviorProjectAssetError: Error, Equatable {
     case missing(String)

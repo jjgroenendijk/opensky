@@ -5,10 +5,10 @@
 // See docs/engine/projectiles.md.
 
 import Foundation
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
 

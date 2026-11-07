@@ -3,11 +3,11 @@
 // the player. The rules live in `FactionRuntime` and `HostilityDerivation`.
 // See docs/engine/coordinators.md.
 
-import OpenSkyActorsInterface
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyActorsInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// The load order's faction and relationship records.
 public struct FactionSessionData {

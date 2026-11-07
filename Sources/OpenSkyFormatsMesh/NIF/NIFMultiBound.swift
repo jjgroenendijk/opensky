@@ -2,9 +2,9 @@
 // data is a box around the node's subtree. Terrain and object LOD and many
 // interiors use them. Layout: docs/formats/nif.md#multi-bounds.
 
-import Foundation
-import OpenSkyFormatsCore
-import simd
+public import Foundation
+public import OpenSkyFormatsCore
+public import simd
 
 nonisolated public struct NIFMultiBoundNode: Sendable {
     public let object: NIFObjectPrefix

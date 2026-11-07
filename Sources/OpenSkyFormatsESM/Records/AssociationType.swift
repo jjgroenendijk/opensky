@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/relationships.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct AssociationType: Equatable, Sendable {
     /// DATA, uint32. Only bit 0 is named by either source.

@@ -6,7 +6,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import Synchronization
 
 /// Where a leveled actor base was placed: the zone of its cell and its `XLCM`.

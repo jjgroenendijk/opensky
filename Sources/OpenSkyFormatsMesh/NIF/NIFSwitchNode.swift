@@ -1,7 +1,7 @@
 // NiSwitchNode: a NiNode that draws one child, the active one. Flora keeps its
 // unharvested and harvested variants under one. Layout: docs/formats/nif.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct NIFSwitchNode: Sendable {

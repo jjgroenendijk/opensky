@@ -2,7 +2,7 @@
 // The reference shape lives with the parsers in OpenSkyFormatsESM; spawn state is
 // runtime state.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension PlacedReference {
     public init(spawn: ReferenceSpawnState, formID: FormID) {

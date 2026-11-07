@@ -1,6 +1,6 @@
 // The button words of a yes or no question the engine asks itself.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum MessageBoxText: String, GameSettingTextKey {
     case yes = "sYesText"

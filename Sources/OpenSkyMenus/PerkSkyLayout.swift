@@ -3,7 +3,7 @@
 // `Point17` lies flat around the origin, and +Z is up. See docs/engine/perk-sky.md.
 
 import Foundation
-import OpenSkyProgressionInterface
+public import OpenSkyProgressionInterface
 import simd
 
 nonisolated public struct PerkSkyStar: Equatable, Sendable {
@@ -33,7 +33,7 @@ nonisolated public enum PerkSkyLayout {
     static let ringRadius: Float = 99.34
 
     public static func anchorName(slot: Int) -> String {
-        String(format: "Point%02d", slot)
+        unsafe String(format: "Point%02d", slot)
     }
 
     /// Turns a vector from the frame of the skill ahead into dome space. Slots go

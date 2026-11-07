@@ -1,9 +1,9 @@
 // The load order's combat data, grouped so the combat coordinator takes it
 // whole in its initializer.
 
-import OpenSkyCombatInterface
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyCombatInterface
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 /// What the combat runtimes are built from. The game settings default to the
 /// vanilla values, so a test sets only the ones it checks.

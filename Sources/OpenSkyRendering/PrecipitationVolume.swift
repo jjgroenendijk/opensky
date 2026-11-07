@@ -1,10 +1,10 @@
 // Camera-following rain and snow, fed through the shared particle simulator and
 // billboard pipeline. No game texture: streak and flake masks are generated at runtime.
 
-import Metal
+public import Metal
 import OpenSkyFormatsMesh
-import OpenSkyPhysics
-import OpenSkyRenderCore
+public import OpenSkyPhysics
+public import OpenSkyRenderCore
 import OpenSkyRenderResources
 import simd
 
@@ -39,10 +39,10 @@ nonisolated public struct PrecipitationUpdate {
 }
 
 nonisolated public final class PrecipitationVolume {
-    private let device: MTLDevice
+    private let device: any MTLDevice
     private let rain: ParticlePlayback
     private var snow: ParticlePlayback
-    private let generatedSnowTexture: MTLTexture
+    private let generatedSnowTexture: any MTLTexture
     /// The `SPGD` look the snow draws with; nil for the generated flake.
     public private(set) var snowLook: PrecipitationLook?
     public private(set) var anchor: SIMD3<Float>?
@@ -61,11 +61,11 @@ nonisolated public final class PrecipitationVolume {
         }
     }
 
-    public var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [any MTLAllocation] {
         rain.residencyAllocations + snow.residencyAllocations
     }
 
-    public init(device: MTLDevice) throws {
+    public init(device: any MTLDevice) throws {
         self.device = device
         generatedSnowTexture = try Self.makeSnowTexture(device: device)
         rain = try ParticlePlayback(
@@ -84,7 +84,7 @@ nonisolated public final class PrecipitationVolume {
     }
 
     private static func makeSnow(
-        device: MTLDevice, texture: MTLTexture, look: PrecipitationLook?
+        device: any MTLDevice, texture: any MTLTexture, look: PrecipitationLook?
     ) throws -> ParticlePlayback {
         try ParticlePlayback(
             device: device,
@@ -100,8 +100,8 @@ nonisolated public final class PrecipitationVolume {
     /// Draws snow with `look`'s texture and cells, or the generated flake for nil. The
     /// falling flakes start over. Returns the allocations the swap retired and added.
     public func setSnowLook(
-        _ look: PrecipitationLook?, texture: MTLTexture?
-    ) throws -> (retired: [MTLAllocation], added: [MTLAllocation]) {
+        _ look: PrecipitationLook?, texture: any MTLTexture?
+    ) throws -> (retired: [any MTLAllocation], added: [any MTLAllocation]) {
         let look = texture == nil ? nil : look
         guard look != snowLook else { return ([], []) }
         let retired = snow.residencyAllocations
@@ -296,7 +296,7 @@ nonisolated extension PrecipitationVolume {
         )
     }
 
-    fileprivate static func makeRainTexture(device: MTLDevice) throws -> MTLTexture {
+    fileprivate static func makeRainTexture(device: any MTLDevice) throws -> any MTLTexture {
         let width = 8
         let height = 32
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
@@ -317,7 +317,7 @@ nonisolated extension PrecipitationVolume {
         )
     }
 
-    fileprivate static func makeSnowTexture(device: MTLDevice) throws -> MTLTexture {
+    fileprivate static func makeSnowTexture(device: any MTLDevice) throws -> any MTLTexture {
         let size = 16
         var pixels = [UInt8](repeating: 0, count: size * size * 4)
         let center = Float(size - 1) * 0.5
@@ -338,12 +338,12 @@ nonisolated extension PrecipitationVolume {
     }
 
     fileprivate static func makeTexture(
-        device: MTLDevice,
+        device: any MTLDevice,
         width: Int,
         height: Int,
         pixels: [UInt8],
         label: String
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm,
             width: width,
@@ -357,7 +357,7 @@ nonisolated extension PrecipitationVolume {
         texture.label = label
         pixels.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.replace(
+            unsafe texture.replace(
                 region: MTLRegionMake2D(0, 0, width, height),
                 mipmapLevel: 0,
                 withBytes: base,

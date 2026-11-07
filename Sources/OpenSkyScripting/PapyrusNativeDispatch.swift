@@ -1,8 +1,8 @@
 // Native-call seam for the headless Papyrus interpreter.
 
-import DequeModule
+public import DequeModule
 import Foundation
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 nonisolated public enum PapyrusNativeCallKind: Equatable, Sendable {
     case method

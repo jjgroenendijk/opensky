@@ -37,7 +37,7 @@ struct RendererInstancingTests {
     /// Three visible crates of one model (+ optionally one far outside the
     /// frustum) — all sharing one RenderMesh, so RenderScene groups them.
     private static func crateScene(
-        device: MTLDevice,
+        device: any MTLDevice,
         farInstance: Bool
     ) throws -> RenderScene {
         let model = Model(
@@ -115,7 +115,7 @@ struct RendererInstancingTests {
 
     @MainActor
     private static func makeRenderer(
-        device: MTLDevice,
+        device: any MTLDevice,
         scene: RenderScene
     ) throws -> Renderer {
         try OffscreenRendererFixture.makeRenderer(

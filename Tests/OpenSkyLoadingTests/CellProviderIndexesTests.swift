@@ -72,7 +72,7 @@ struct CellProviderIndexesTests {
             source: .environment
         )
         let task = Task {
-            withUnsafeCurrentTask { $0?.cancel() }
+            unsafe withUnsafeCurrentTask { unsafe $0?.cancel() }
             _ = try await CellProviderIndexes.loadSession(
                 root: root,
                 fileSystem: VirtualFileSystem(dataURL: root.dataURL, archiveURLs: []),

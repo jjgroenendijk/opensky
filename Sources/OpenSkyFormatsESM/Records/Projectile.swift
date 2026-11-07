@@ -3,8 +3,8 @@
 // 16 bytes or more. `gravityFactor` scales world gravity; it is not an acceleration.
 // Layout documented in docs/formats/projectiles.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct Projectile: Equatable, Sendable {
     /// DATA flags. Only the ones an arrow can meaningfully set are named; the

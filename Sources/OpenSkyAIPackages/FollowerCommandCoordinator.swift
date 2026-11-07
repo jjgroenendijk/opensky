@@ -3,8 +3,8 @@
 // `FollowerCommandRules` decides; the app answers `FollowerCommandWorld`.
 // See docs/engine/follower-commands.md.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import simd
 
 /// What the command coordinator needs from the app.

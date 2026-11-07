@@ -3,7 +3,7 @@
 // The movie lays out the pages itself. See docs/engine/books.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum BookMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\book.swf"

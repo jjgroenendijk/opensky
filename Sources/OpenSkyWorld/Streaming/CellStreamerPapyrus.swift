@@ -3,8 +3,8 @@
 // `CellSceneLocation` is not announced, because the location is the subscriber's key.
 
 import Foundation
-import OpenSkyCells
-import OpenSkyGameData
+public import OpenSkyCells
+public import OpenSkyGameData
 
 extension CellStreamer {
     /// Announces a cell that is now part of the live world.

@@ -3,7 +3,7 @@
 // its own hostility and walks after its commander between fights. See `CombatAllyRule`.
 
 import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd

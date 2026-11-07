@@ -2,7 +2,7 @@
 // weight, with active `IMAD` modifiers on top. See docs/rendering/image-space.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// The `IMGS` `HNAM` values. Bloom and the light scales draw only with the HDR target on.

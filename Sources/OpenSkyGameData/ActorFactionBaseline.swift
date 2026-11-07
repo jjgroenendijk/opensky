@@ -4,7 +4,7 @@
 // See docs/engine/hostility.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// What plugin data authors about one actor's social standing.
 nonisolated public struct ActorFactionBaseline: Equatable, Sendable {

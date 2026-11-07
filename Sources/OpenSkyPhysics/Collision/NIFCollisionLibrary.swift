@@ -3,10 +3,10 @@
 // collision caches without a second residency graph.
 
 import Foundation
-import OpenSkyAssetCache
+public import OpenSkyAssetCache
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
 
 nonisolated public enum NIFCollisionLibraryError: Error, Equatable {
     case fileNotFound(path: String)

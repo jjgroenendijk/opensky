@@ -2,7 +2,7 @@
 // Shapes are engine-facing values from StaticCollisionWorld; no NIF disk
 // layout leaks into movement.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import simd
 

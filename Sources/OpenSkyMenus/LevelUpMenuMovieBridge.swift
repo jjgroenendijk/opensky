@@ -3,8 +3,8 @@
 // the selection; see docs/engine/skills-menu.md.
 
 import Foundation
-import OpenSkyFormatsSWF
-import OpenSkyGameData
+public import OpenSkyFormatsSWF
+public import OpenSkyGameData
 
 nonisolated public enum LevelUpMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\levelupmenu.swf"

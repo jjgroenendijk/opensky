@@ -2,8 +2,8 @@
 // build with the same set, so their caches match.
 
 import Foundation
-import Metal
-import OpenSkyAssetCache
+public import Metal
+public import OpenSkyAssetCache
 import OpenSkyRenderResources
 
 nonisolated public enum AssetCacheConvertersError: Error, Equatable {

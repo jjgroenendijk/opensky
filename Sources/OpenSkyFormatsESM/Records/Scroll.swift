@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/magic-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Scroll: Sendable {
     public let formID: FormID

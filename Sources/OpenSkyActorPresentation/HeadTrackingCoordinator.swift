@@ -3,9 +3,9 @@
 // when near. See docs/engine/head-tracking.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import simd
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import simd
 
 /// One loaded actor that can turn its head.
 public struct HeadTrackingSubject {

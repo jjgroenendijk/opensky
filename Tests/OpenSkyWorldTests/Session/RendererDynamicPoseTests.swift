@@ -125,7 +125,7 @@ struct RendererDynamicPoseTests {
 
     /// One crate, tagged as a reference the dynamic world owns.
     @MainActor
-    private static func makeSession(device: MTLDevice) throws -> GameSession {
+    private static func makeSession(device: any MTLDevice) throws -> GameSession {
         let model = Model(
             meshes: [DemoScene.boxMesh(halfWidth: 32, halfDepth: 32, height: 64)],
             materials: [Material.fallback],

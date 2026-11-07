@@ -1,10 +1,10 @@
 // A towed cart's collision, kept out of the static set so it can move with the
 // cart. See docs/engine/vehicles.md.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyPhysics
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
+public import simd
 
 nonisolated public struct CellVehicleCollision: Sendable {
     public let reference: FormID

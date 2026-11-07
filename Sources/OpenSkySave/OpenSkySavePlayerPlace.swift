@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated extension OpenSkySaveFormat.ChunkTag {
     /// The player's cell, feet position, and facing.

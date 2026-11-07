@@ -2,8 +2,8 @@
 // SOUN sound markers provide the legacy record identity used by game references
 // and point at an SNDR through SDSC.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 /// SNCT sound-category node. Categories form a parent hierarchy; the records
 /// flagged `shouldAppearOnMenu` are the user-facing mixer categories.

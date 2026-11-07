@@ -2,7 +2,7 @@
 // distortion against the original, judged by the Paliwal-Atal transparency
 // rule. See docs/engine/asset-cache-audio.md.
 
-import Accelerate
+public import Accelerate
 import Foundation
 
 nonisolated public struct SpectralDistortion: Equatable, Sendable {
@@ -144,7 +144,7 @@ nonisolated public enum SpectralDistortionMeter {
 }
 
 /// Hann-windowed power spectrum of one frame, with the FFT set up once.
-nonisolated private struct SpectrumAnalyzer {
+@safe nonisolated private struct SpectrumAnalyzer {
     let length: Int
     let window: [Float]
     let fft: vDSP.FFT<DSPSplitComplex>?
@@ -155,7 +155,7 @@ nonisolated private struct SpectrumAnalyzer {
             ofType: Float.self, usingSequence: .hanningDenormalized, count: length,
             isHalfWindow: false
         )
-        fft = vDSP.FFT(
+        unsafe fft = unsafe vDSP.FFT(
             log2n: vDSP_Length(length.trailingZeroBitCount), radix: .radix2,
             ofType: DSPSplitComplex.self
         )
@@ -168,21 +168,21 @@ nonisolated private struct SpectrumAnalyzer {
         var real = [Float](repeating: 0, count: half)
         var imaginary = [Float](repeating: 0, count: half)
         var power = [Float](repeating: 0, count: half)
-        guard let fft else { return power }
+        guard let fft = unsafe fft else { return power }
         real.withUnsafeMutableBufferPointer { realBuffer in
             imaginary.withUnsafeMutableBufferPointer { imaginaryBuffer in
                 guard
                     let realBase = realBuffer.baseAddress,
                     let imaginaryBase = imaginaryBuffer.baseAddress else { return }
-                var split = DSPSplitComplex(realp: realBase, imagp: imaginaryBase)
+                var split = unsafe DSPSplitComplex(realp: realBase, imagp: imaginaryBase)
                 windowed.withUnsafeBytes { raw in
-                    vDSP.convert(
+                    unsafe vDSP.convert(
                         interleavedComplexVector: Array(raw.bindMemory(to: DSPComplex.self)),
                         toSplitComplexVector: &split
                     )
                 }
-                fft.forward(input: split, output: &split)
-                vDSP.squareMagnitudes(split, result: &power)
+                unsafe fft.forward(input: split, output: &split)
+                unsafe vDSP.squareMagnitudes(split, result: &power)
             }
         }
         return power

@@ -4,7 +4,7 @@
 // renderer skip exactly (same code paths).
 
 import Foundation
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsMesh
 
 nonisolated public enum AssetInfoText: Sendable {
     /// DDS header + mip chain.

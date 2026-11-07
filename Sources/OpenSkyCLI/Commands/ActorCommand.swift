@@ -139,8 +139,9 @@ extension ActorCommand {
     private static func printVisual(_ visual: ResolvedActorVisual) {
         print("  skeleton \(visual.skeletonPath ?? "-")")
         for part in visual.parts {
+            let slots = unsafe String(format: "%08X", part.slots.rawValue)
             print("  part \(describe(part.origin)) arma \(part.armature) "
-                + "slots 0x\(String(format: "%08X", part.slots.rawValue)) \(part.modelPath)")
+                + "slots 0x\(slots) \(part.modelPath)")
         }
         for attachment in visual.attachments {
             print("  attachment \(attachment.bone) sheathed \(attachment.sheathBone ?? "-") "

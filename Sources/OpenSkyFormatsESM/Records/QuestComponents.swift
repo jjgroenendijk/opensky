@@ -3,7 +3,7 @@
 // Quest.swift for the record's ordering rules and its reference block; the
 // grouping state machine that fills these lives in QuestDecoder.swift.
 
-import Foundation
+public import Foundation
 
 nonisolated extension Quest {
     /// One INDX group. A quest advances by stage index, and the same index may

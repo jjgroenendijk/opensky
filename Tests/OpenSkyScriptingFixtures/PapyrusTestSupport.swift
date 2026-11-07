@@ -1,8 +1,8 @@
 import Foundation
-@testable import OpenSkyFormatsPEX
+@testable public import OpenSkyFormatsPEX
 import OpenSkyFormatsTesting
-@testable import OpenSkyScripting
-import OpenSkyScriptingInterface
+@testable public import OpenSkyScripting
+public import OpenSkyScriptingInterface
 import Testing
 
 public enum PapyrusTestSupport {
@@ -26,7 +26,7 @@ public enum PapyrusTestSupport {
     @MainActor
     public static func runtime(
         objects: [PexObject],
-        nativeDispatch: PapyrusNativeDispatch = PapyrusRecordingNativeDispatch(),
+        nativeDispatch: any PapyrusNativeDispatch = PapyrusRecordingNativeDispatch(),
         limits: PapyrusLimits = .standard
     ) -> (PapyrusRuntime, PapyrusObjectHandle) {
         let runtime = PapyrusRuntime(

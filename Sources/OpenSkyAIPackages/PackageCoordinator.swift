@@ -2,13 +2,13 @@
 // with the resident ACHRs and advances it on the game clock. The selection
 // rules live in `ActorPackageRuntime`. See docs/engine/coordinators.md.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyNavigation
-import OpenSkyPhysics
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyNavigation
+public import OpenSkyPhysics
 import OpenSkyWorldConditions
-import OpenSkyWorldState
+public import OpenSkyWorldState
 import simd
 
 /// What the package coordinator reads from the session.

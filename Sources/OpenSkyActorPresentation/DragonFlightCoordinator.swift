@@ -4,8 +4,8 @@
 // mount drive. See docs/engine/dragon-flight.md.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyFormatsESM
+public import OpenSkyBehavior
+public import OpenSkyFormatsESM
 import simd
 
 /// The stage of a flying actor's fight, as the combat loop picked it.

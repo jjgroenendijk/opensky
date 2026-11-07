@@ -2,11 +2,11 @@
 // component chunk, so a levelling follower needs no format change.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// The `PLVL` chunk: every snapshot entry carrying character-level

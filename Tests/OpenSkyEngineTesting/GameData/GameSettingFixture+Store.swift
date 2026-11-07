@@ -1,8 +1,8 @@
 // A settings store over one synthetic plugin, for the settings structs' tests.
 
 import Foundation
-import OpenSkyFormatsTesting
-import OpenSkyGameData
+public import OpenSkyFormatsTesting
+public import OpenSkyGameData
 
 extension GameSettingFixture {
     /// A store whose one plugin, `Tuning.esp`, defines `settings`.

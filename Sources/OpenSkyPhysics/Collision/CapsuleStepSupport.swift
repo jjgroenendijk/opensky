@@ -2,7 +2,7 @@
 // excluded by slope; triangle winding is treated two-sided for collision.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import simd
 

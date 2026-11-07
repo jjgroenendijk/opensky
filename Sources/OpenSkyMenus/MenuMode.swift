@@ -85,7 +85,7 @@ public final class MenuModeController {
     /// The menu layer receiving routed events; nil until a menu layer exists, so
     /// menu-mode input is simply swallowed. World input stays suppressed in menu
     /// mode regardless of whether a consumer is attached.
-    public weak var inputConsumer: MenuInputConsumer?
+    public weak var inputConsumer: any MenuInputConsumer?
 
     /// World policy of each menu that declared one, keyed by name. A menu absent from the
     /// table pauses, which is the default for a caller that names no policy.

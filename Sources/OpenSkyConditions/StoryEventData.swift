@@ -3,8 +3,8 @@
 // `wbEventMemberEnum`; docs/engine/story-manager.md has the event table.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyWorldState
 
 nonisolated public struct StoryEventData: Equatable, Sendable {

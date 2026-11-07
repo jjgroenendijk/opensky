@@ -2,9 +2,9 @@
 // textures on the first frame after. Kept for the session.
 
 import Foundation
-@preconcurrency import Metal
-import OpenSkyGameData
-import OpenSkyRendering
+@preconcurrency @unsafe public import Metal
+public import OpenSkyGameData
+public import OpenSkyRendering
 
 public final class PerkSkySource {
     public static let domePath = "meshes\\interface\\intperkskydome.nif"
@@ -32,7 +32,7 @@ public final class PerkSkySource {
     }
 
     /// The models once all three files are in; nil while they load or after a failure.
-    public func models(device: MTLDevice) -> Models? {
+    public func models(device: any MTLDevice) -> Models? {
         loader.models(device: device).map { Models(dome: $0[0], star: $0[1], line: $0[2]) }
     }
 }

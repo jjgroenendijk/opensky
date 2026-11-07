@@ -4,8 +4,8 @@
 // upload, sampler and sRGB policy). AppKit- and GPU-free — model and camera
 // are pure values, unit-tested; rendering reuses Renderer.renderOffscreen.
 
-import OpenSkyFormatsCore
-import OpenSkyRendering
+public import OpenSkyFormatsCore
+public import OpenSkyRendering
 import simd
 
 nonisolated public enum TexturePreviewScene: Sendable {

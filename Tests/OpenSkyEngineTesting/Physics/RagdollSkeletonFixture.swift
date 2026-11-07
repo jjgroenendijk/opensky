@@ -3,8 +3,8 @@
 // in their `HavokFilter`s, so filters are a parameter.
 
 @testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsMesh
-import simd
+@testable public import OpenSkyFormatsMesh
+public import simd
 
 public enum RagdollSkeletonFixture {
     /// Bones a spacing apart along x, each with a capsule body centred on its

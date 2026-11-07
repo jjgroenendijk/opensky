@@ -2,7 +2,7 @@
 // can pin them. Measurements: docs/engine/asset-cache.md.
 
 import Foundation
-import OpenSkyAssetCache
+public import OpenSkyAssetCache
 
 nonisolated public enum AssetOptimisationReadout {
     /// What direct GPU loading does now, and if it does nothing, why.
@@ -67,6 +67,6 @@ nonisolated public enum AssetOptimisationReadout {
     }
 
     private static func format(_ value: Double) -> String {
-        value.rounded() == value ? String(Int(value)) : String(format: "%.1f", value)
+        unsafe value.rounded() == value ? String(Int(value)) : String(format: "%.1f", value)
     }
 }

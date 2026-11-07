@@ -2,7 +2,7 @@
 // and verified 40-bit quaternion unpacking. Format/source detail:
 // docs/formats/hka-animation.md.
 
-import Foundation
+public import Foundation
 import simd
 
 nonisolated public struct HKASplineTransformMask: Sendable {
@@ -112,9 +112,9 @@ nonisolated public struct HKASplineHeader: Sendable {
         // Stack scratch, not an Array: this runs per sub-track per sample.
         return withUnsafeTemporaryAllocation(of: Point.self, capacity: degree + 1) { points in
             for index in 0 ... degree {
-                points.initializeElement(at: index, to: controlPoints[span - degree + index])
+                unsafe points.initializeElement(at: index, to: controlPoints[span - degree + index])
             }
-            defer { _ = points.deinitialize() }
+            defer { _ = unsafe points.deinitialize() }
             for level in 1 ... degree {
                 for index in stride(from: degree, through: level, by: -1) {
                     let knotIndex = span - degree + index
@@ -124,10 +124,10 @@ nonisolated public struct HKASplineHeader: Sendable {
                     let alpha = denominator == 0
                         ? 0
                         : (frame - Float(knots[knotIndex])) / denominator
-                    points[index] = blend(points[index - 1], points[index], alpha)
+                    unsafe points[index] = unsafe blend(points[index - 1], points[index], alpha)
                 }
             }
-            return points[degree]
+            return unsafe points[degree]
         }
     }
 

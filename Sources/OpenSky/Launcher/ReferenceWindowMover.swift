@@ -25,11 +25,11 @@ enum ReferenceWindowMover {
         var value: CFTypeRef?
         // The values of `kAXWindowsAttribute` and `kAXPositionAttribute`.
         guard
-            AXUIElementCopyAttributeValue(app, "AXWindows" as CFString, &value) == .success,
+            unsafe AXUIElementCopyAttributeValue(app, "AXWindows" as CFString, &value) == .success,
             let windows = value as? [AXUIElement]
         else { return false }
         var origin = CGPoint(x: frame.x, y: frame.y)
-        guard let position = AXValueCreate(.cgPoint, &origin) else { return false }
+        guard let position = unsafe AXValueCreate(.cgPoint, &origin) else { return false }
         var moved = false
         for window in windows {
             let result = AXUIElementSetAttributeValue(window, "AXPosition" as CFString, position)

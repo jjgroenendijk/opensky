@@ -4,7 +4,7 @@
 // GetArrestedState, 657 GetArrestingActor. See docs/engine/condition-functions-world.md#crime.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 

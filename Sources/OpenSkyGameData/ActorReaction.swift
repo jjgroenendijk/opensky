@@ -4,7 +4,7 @@
 // written once. See docs/engine/hostility.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One actor's regard for another, friendliest first.
 ///

@@ -4,9 +4,9 @@
 // See docs/engine/papyrus-spell-natives.md and docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 import OpenSkyWorldState
 import simd
 

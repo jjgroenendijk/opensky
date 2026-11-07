@@ -314,7 +314,7 @@ extension DialogueAcceptanceRealDataTests {
                 + "\(tally.failureTotal) unresolved",
             "[INFO] voice corpus: \(world.voicePaths.count) .fuz entries",
             "[INFO] chosen line: \(voice.path)",
-            "[INFO] chosen line: "
+            unsafe "[INFO] chosen line: "
                 + String(format: "%.2f s declared", voice.declaredSeconds)
                 + ", \(voice.lipValueCount) nonzero lip values, "
                 + "\(voice.unmappedSlotCount) unmapped viseme slots",

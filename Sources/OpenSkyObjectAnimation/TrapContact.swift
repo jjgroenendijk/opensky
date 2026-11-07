@@ -2,7 +2,7 @@
 // (<https://ck.uesp.net/wiki/OnTrapHit_-_ObjectReference>). A trap's graph moves bones,
 // not collision bodies, so a moving bone near an actor's capsule counts as contact.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One bone of a trap, in world space, this frame.

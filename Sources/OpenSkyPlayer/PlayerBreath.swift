@@ -1,7 +1,7 @@
 // How long the player can stay under water, and the health a dive costs after that.
 // The settings are on the CK wiki "Category:Settings" page. See docs/engine/walk-mode.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// The breath game settings. `Skyrim.esm` holds no `fActorSwimBreathBase`, so its CK
 /// wiki default applies.

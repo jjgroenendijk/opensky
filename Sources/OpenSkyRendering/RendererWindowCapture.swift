@@ -1,13 +1,13 @@
 // Copies the frame the window presents into a CPU-readable texture, so a
 // screenshot shows exactly what the window shows, debug view included.
 
-import Metal
+public import Metal
 
 enum WindowCaptureState {
     case idle
     case requested
     /// The copy is readable once the GPU has finished `frame`.
-    case copied(MTLTexture, frame: Int)
+    case copied(any MTLTexture, frame: Int)
 }
 
 extension Renderer {
@@ -31,7 +31,7 @@ extension Renderer {
 
     /// The copied frame once the GPU has finished it, else nil. Taking it ends
     /// the capture.
-    public func takeWindowCapture() -> MTLTexture? {
+    public func takeWindowCapture() -> any MTLTexture? {
         guard
             case let .copied(texture, frame) = windowCapture,
             endFrameEvent.signaledValue >= UInt64(frame)
@@ -43,7 +43,7 @@ extension Renderer {
     }
 
     /// Encodes the copy after the last pass that writes `target`.
-    func encodeWindowCapture(of target: MTLTexture) {
+    func encodeWindowCapture(of target: any MTLTexture) {
         guard case .requested = windowCapture else { return }
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: target.pixelFormat,

@@ -96,11 +96,12 @@ struct RelationshipStoreRealDataTests {
             .filter { $0.isSecret != $0.relationship.headerSecret }
             .map { $0.editorID ?? $0.id.description }
         print("[INFO] RELA records where the two secret flags disagree \(disagreeing)")
+        let unnamedBits = unsafe String(format: "unnamed flag bits 0x%02X", unnamedFlagBits)
         print(
             "[INFO] RELA ranks \(histogram.sorted { $0.key < $1.key }), "
                 + "DATA secret \(dataSecret), header secret \(headerSecret), "
                 + "nonzero unknown byte \(nonzeroUnknownByte), "
-                + String(format: "unnamed flag bits 0x%02X", unnamedFlagBits)
+                + unnamedBits
         )
         #expect(histogram.keys.allSatisfy { !$0.hasPrefix("unknown") })
     }

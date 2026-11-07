@@ -1,12 +1,12 @@
 // Particle playback construction split from MeshLibrary to keep cache code
 // compact. Definitions + textures are shared; every REFR gets fresh sim state.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRenderResources
-import simd
+public import simd
 
 nonisolated extension MeshLibrary {
     nonisolated public func particlePlaybacks(

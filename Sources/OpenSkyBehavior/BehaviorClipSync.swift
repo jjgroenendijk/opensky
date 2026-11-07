@@ -4,7 +4,7 @@
 // `BehaviorGraphInstance.pendingClipPhase` (docs/engine/behavior-clips.md).
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 nonisolated extension BehaviorGraphInstance {
     /// The paired clips this graph played, as the track prefix, `|`, and the clip.

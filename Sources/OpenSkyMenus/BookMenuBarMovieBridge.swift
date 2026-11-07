@@ -3,7 +3,7 @@
 // `ShowTakeButton(show, steal)` with GameDelegate. See docs/engine/books.md#the-button-bar.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum BookMenuBarMovieBridge: Sendable {
     public static let moviePath = "interface\\bookmenu.swf"

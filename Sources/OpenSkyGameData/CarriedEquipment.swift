@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// How much a combat style favours each kind of weapon: CSTY `CSGD` Equipment Score
 /// Mults, which multiply a weapon's damage (Creation Kit wiki "Combat Style").

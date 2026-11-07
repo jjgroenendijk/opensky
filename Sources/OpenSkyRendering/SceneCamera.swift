@@ -2,7 +2,7 @@
 // framing camera for a built cell; `demo` matches the synthetic DemoScene.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyShaderTypes
 import simd
 

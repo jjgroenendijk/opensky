@@ -2,7 +2,7 @@
 // `iState` a step writes back when the drunk tag changes.
 
 import OpenSkyBehavior
-import OpenSkyGameData
+public import OpenSkyGameData
 
 extension ActorGraphCoordinator {
     /// Reads the switch and the cutoff from `store`.

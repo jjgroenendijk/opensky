@@ -5,10 +5,10 @@
 import OpenSkyActorPresentation
 import OpenSkyCells
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyRendering
-import OpenSkyRuntimeState
-import OpenSkyTerrain
+public import OpenSkyFormatsESM
+public import OpenSkyRendering
+public import OpenSkyRuntimeState
+public import OpenSkyTerrain
 
 /// The prop one actor shows. `model` is nil while the build queue loads it.
 nonisolated public struct ActorPropDraw {

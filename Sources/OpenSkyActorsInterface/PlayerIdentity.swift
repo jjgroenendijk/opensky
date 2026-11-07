@@ -3,8 +3,8 @@
 // so the save carries it. See docs/engine/race-menu.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One painted tint layer: a race tint mask, its color, and how strong it is.
 nonisolated public struct PlayerTintLayer: Equatable, Sendable {

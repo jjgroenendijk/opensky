@@ -4,18 +4,18 @@
 // Resolution documented in docs/engine/actor-resolution.md.
 
 import Foundation
-import OpenSkyActorPresentation
+public import OpenSkyActorPresentation
 import OpenSkyActorsInterface
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyPhysics
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyPhysics
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyTerrain
-import OpenSkyWorldState
+public import OpenSkyWorldState
 import simd
 
 /// Per-build actor accounting; folded into CellLoadSummary. The exact

@@ -6,7 +6,7 @@
 // Pure: the caller supplies the strings, so table tests can pin the rule.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum VoiceFilePath: Sendable {
     /// Archive directory every voice file lives under, as a canonical VFS key.
@@ -48,7 +48,7 @@ nonisolated public enum VoiceFilePath: Sendable {
 
     /// One voice file's name, without a directory.
     public static func fileName(_ name: Name) -> String {
-        let identifier = String(format: "%08x", name.objectID)
+        let identifier = unsafe String(format: "%08x", name.objectID)
         let stem = stem(quest: name.quest, topic: name.topic)
         return "\(stem)_\(identifier)_\(name.responseNumber).fuz"
     }

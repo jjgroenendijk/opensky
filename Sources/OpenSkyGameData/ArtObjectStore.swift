@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedArtObject: Equatable, Sendable {
     public let id: ResolvedFormID

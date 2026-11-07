@@ -2,7 +2,7 @@
 // compass and on the map. See docs/engine/world-map.md, quest targets.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyWorldInterface
 import simd
 

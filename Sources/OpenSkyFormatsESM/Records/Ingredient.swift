@@ -3,7 +3,7 @@
 // state. Layout and sources: docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Ingredient: Sendable {
     public struct Flags: OptionSet, Equatable, Sendable {

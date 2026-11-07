@@ -4,7 +4,7 @@
 // data policy. Callers keep their own range, depth, and cycle checks.
 
 import Foundation
-import simd
+public import simd
 
 /// Depth-first traversal state for a NIF block graph, ordered so that
 /// `next()` yields the same sequence a recursive pre-order walk would.

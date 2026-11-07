@@ -1,7 +1,7 @@
 // The FURN record flags that decide who uses a piece of furniture and what happens
 // while they do. Meanings: docs/engine/furniture.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct FurnitureRules: Equatable, Sendable {
     /// Record header flag 0x20000000.

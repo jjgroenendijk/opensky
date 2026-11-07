@@ -2,15 +2,15 @@
 // CellStreamer so streaming scheduling remains below strict type/file limits.
 
 import OpenSkyActorPresentation
-import OpenSkyCells
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyCells
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyRenderCore
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyRenderCore
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 import simd
 
 extension CellStreamer {

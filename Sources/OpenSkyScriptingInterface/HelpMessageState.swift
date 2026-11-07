@@ -2,7 +2,7 @@
 // delta so the save carries it in the `HELP` chunk. See docs/engine/messages.md.
 
 import Foundation
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// What OpenSky keeps per help event.
 nonisolated public struct HelpMessageRecord: Equatable, Sendable {

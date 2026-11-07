@@ -1,7 +1,7 @@
 // A plugin's FormID index as bytes, so a session can read it back instead of
 // walking every record header again. Layout: docs/formats/esm.md#saved-formid-index.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// Where saved FormID indexes live. The asset cache folder is the app's store.

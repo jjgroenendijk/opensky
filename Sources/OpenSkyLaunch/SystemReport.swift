@@ -60,6 +60,6 @@ nonisolated public struct SystemReportBenchmark: Equatable, Sendable {
 
     /// `average 8.4 ms, worst 16.9 ms`.
     public var line: String {
-        String(format: "average %.1f ms, worst %.1f ms", averageMS, worstMS)
+        unsafe String(format: "average %.1f ms, worst %.1f ms", averageMS, worstMS)
     }
 }

@@ -6,9 +6,9 @@
 // and docs/engine/combat.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One actor's state as a condition sees it.
 nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Sendable {

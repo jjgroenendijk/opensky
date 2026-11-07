@@ -4,10 +4,10 @@
 
 import OpenSkyDiagnostics
 import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyRenderCore
-import OpenSkyRendering
-import OpenSkyRuntimeState
+public import OpenSkyPhysics
+public import OpenSkyRenderCore
+public import OpenSkyRendering
+public import OpenSkyRuntimeState
 
 /// What `WorldRenderControls` reads from the app.
 @MainActor

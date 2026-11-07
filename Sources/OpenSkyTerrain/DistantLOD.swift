@@ -3,12 +3,12 @@
 // cells. Ring bands begin outside loaded 5x5 and get coarser with distance.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import OpenSkyGameData
-import OpenSkyRenderCore
-import OpenSkyRendering
-import OpenSkyRenderResources
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
+public import OpenSkyRenderCore
+public import OpenSkyRendering
+public import OpenSkyRenderResources
 import simd
 
 nonisolated public struct DistantLODBlock: Equatable, Hashable, Sendable {
@@ -420,7 +420,7 @@ nonisolated public final class DistantLODBuilder {
         center: CellCoordinate,
         hiddenCells: Set<CellCoordinate>,
         largeReferences: Bool = true,
-        terrain: TerrainLODGenerating? = nil
+        terrain: any TerrainLODGenerating? = nil
     ) throws -> DistantLODScene {
         _ = meshes.drainTouchedKeys()
         _ = textures.drainTouchedKeys()
@@ -482,7 +482,7 @@ nonisolated public final class DistantLODBuilder {
     /// the block's file. `ring` hides the large references the block's cells hold.
     private func blockPlacements(
         _ selected: [DistantLODBlock],
-        terrain: TerrainLODGenerating?,
+        terrain: any TerrainLODGenerating?,
         ring start: LargeReferenceHiding?
     ) -> BlockPlacements {
         var placements: [RenderPlacement] = []

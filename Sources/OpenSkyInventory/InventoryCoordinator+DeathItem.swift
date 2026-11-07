@@ -1,9 +1,9 @@
 // The death item: an actor's `INAM` list goes into its inventory when it dies,
 // rolled at the actor's own level. See docs/engine/leveled-lists.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 extension InventoryCoordinator {
     /// Gives the actor at `key` its death item. The roll is seeded by the reference,

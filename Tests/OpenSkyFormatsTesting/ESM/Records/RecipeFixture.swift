@@ -1,7 +1,7 @@
 // Synthetic COBJ records, shared by the decoder tests and the recipe store
 // tests. Layout: docs/formats/recipes.md.
 
-import Foundation
+public import Foundation
 
 public enum RecipeFixture: Sendable {
     public static func recordBytes(

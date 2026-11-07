@@ -1,11 +1,11 @@
 // The update-timer script and session the timer, clock, persistence and save
 // suites share.
 
-@testable import OpenSkyFormatsPEX
+@testable public import OpenSkyFormatsPEX
 import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
-import OpenSkyScriptingInterface
-@testable import OpenSkyWorldState
+public import OpenSkyScriptingInterface
+@testable public import OpenSkyWorldState
 import Testing
 
 /// Shared fixture for the update-timer test suites: one scripted reference

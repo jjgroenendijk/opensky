@@ -2,7 +2,7 @@
 // bytes and the texture output in, bytes out, with a version. A converter returns nil for a
 // source it does not store, which then always loads from the original file.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 

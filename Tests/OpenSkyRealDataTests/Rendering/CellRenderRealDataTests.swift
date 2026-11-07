@@ -166,7 +166,10 @@ struct CellRenderRealDataTests {
 
 extension CellRenderRealDataTests {
     @MainActor
-    private func makeStreamHarness(device: MTLDevice, root: GameDataRoot) throws -> StreamHarness {
+    private func makeStreamHarness(
+        device: any MTLDevice,
+        root: GameDataRoot
+    ) throws -> StreamHarness {
         let vfs = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let textures = try TextureLibrary(fileSystem: vfs, device: device)
@@ -244,13 +247,14 @@ extension CellRenderRealDataTests {
         stats: StreamStats
     ) throws {
         let streamer = harness.streamer
+        let percentShown = unsafe "\(String(format: "%.1f", stats.fraction * 100))%"
         let output = ([
             "[INFO] streamed 5x5 around (\(FirstRenderCell.gridX),\(FirstRenderCell.gridY)): "
                 + "\(streamer.residentCellCount) loaded, \(streamer.voidCellCount) void",
             "[INFO] composed draw count: \(stats.composedDrawCount) "
                 + "(single cell: \(stats.singleDrawCount))",
             "[INFO] streamed non-background pixels: "
-                + "\(String(format: "%.1f", stats.fraction * 100))%",
+                + percentShown,
             "[INFO] footprint filled: \(Int(stats.filledFootprint)) MB, "
                 + "after far recenter: \(Int(stats.afterRecenterFootprint)) MB"
         ] + stats.series).joined(separator: "\n")
@@ -283,7 +287,7 @@ extension CellRenderRealDataTests {
     }
 
     /// BGRA readback of the whole offscreen target.
-    private func readPixels(texture: MTLTexture) -> [UInt8] {
+    private func readPixels(texture: any MTLTexture) -> [UInt8] {
         RenderedPixels.read(texture)
     }
 
@@ -313,7 +317,7 @@ extension CellRenderRealDataTests {
         fraction: Double,
         pngURL: URL
     ) throws {
-        let percent = String(format: "%.1f", fraction * 100)
+        let percent = unsafe String(format: "%.1f", fraction * 100)
         let stats = """
         \(summary.summaryLine)
         [INFO] non-background pixels: \(percent)%

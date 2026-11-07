@@ -4,7 +4,7 @@
 // does. Documented in docs/engine/skill-advancement.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The two game settings skill advancement reads, resolved once.
 ///

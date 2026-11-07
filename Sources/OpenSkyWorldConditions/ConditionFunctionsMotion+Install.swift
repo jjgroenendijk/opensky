@@ -1,7 +1,7 @@
 // The registrations for the motion facts in ConditionFunctionsMotion.swift.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
 import simd
 

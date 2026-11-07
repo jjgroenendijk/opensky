@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 nonisolated extension NIFFile {
     /// Same depth cap as NIFModel: vanilla nests a handful of levels; deeper

@@ -1,11 +1,11 @@
 // PRKS chunk: perk lists, merged into the `RDLT` deltas by `ReferenceKey`.
 // A perk the load order lost is kept, so removing a plugin keeps progress.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldState
 
 /// One actor's saved perks, before they are merged back into the delta.
 nonisolated public struct SavePerkEntry: Equatable, Sendable {

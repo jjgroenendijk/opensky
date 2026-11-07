@@ -3,7 +3,7 @@
 // See docs/engine/messages.md and docs/engine/kill-cam.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// What `Message.Show` did with one MESG.
 nonisolated public enum PapyrusMessageShowResult: Equatable, Sendable {

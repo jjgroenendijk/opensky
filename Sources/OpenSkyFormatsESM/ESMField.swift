@@ -5,8 +5,8 @@
 //
 // Reference: UESP "Skyrim Mod:Mod File Format" — Fields.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct ESMField: Sendable {
     public let type: FourCC

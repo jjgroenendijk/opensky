@@ -2,7 +2,7 @@
 // builds sentences (docs/engine/coordinators.md).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum ProgressionActionOutcome: Equatable, Sendable {
     case idle
@@ -43,7 +43,7 @@ nonisolated extension ProgressionActionOutcome {
         case let .levelsApplied(report):
             report.didLevel ? Self.awardText(0, report, nextLevelAt: 0) : "No earned level waits."
         case let .attributeChosen(kind, picksOwed):
-            String(format: "Chose %@: %d pick(s) still owed.", kind.rawValue, picksOwed)
+            unsafe String(format: "Chose %@: %d pick(s) still owed.", kind.rawValue, picksOwed)
         case let .progressRefused(error): Self.text(for: error)
         case let .perkChanged(perk, granted, changed): Self.perkText(perk, granted, changed)
         case let .treeRefused(refusal): Self.text(for: refusal)
@@ -76,13 +76,13 @@ nonisolated extension ProgressionActionOutcome {
         _ amount: Float, _ report: PlayerLevelUpReport, nextLevelAt: Float
     ) -> String {
         guard report.didLevel else {
-            return String(
+            return unsafe String(
                 format: "Awarded %.0f character XP: still level %d, %.0f/%.0f banked, "
                     + "%d level(s) wait for the skills menu.",
                 amount, report.level, report.carriedExperience, nextLevelAt, report.levelsReady
             )
         }
-        return String(
+        return unsafe String(
             format: "Applied levels: level %d to %d, %d perk point(s), %d pick(s) owed.",
             report.previousLevel, report.level, report.perkPoints, report.pendingAttributePicks
         )
@@ -102,7 +102,7 @@ nonisolated extension ProgressionActionOutcome {
         case .notASkill: "Refused: not a skill."
         case .noProgression: unavailableText
         case let .belowLegendaryLevel(base):
-            String(format: "Refused: the skill is %.0f, not 100.", base)
+            unsafe String(format: "Refused: the skill is %.0f, not 100.", base)
         case .noDragonSoul: "Refused: no dragon soul to spend."
         case .noPerksInTree: "Refused: no perks in this tree."
         }

@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Takes the events that gameplay coordinators raise. The app forwards them to the
 /// story manager.

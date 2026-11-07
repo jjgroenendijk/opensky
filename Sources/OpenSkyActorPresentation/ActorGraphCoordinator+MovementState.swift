@@ -2,7 +2,7 @@
 // (docs/engine/actor-state-graph.md#how-the-game-picks-istate).
 
 import OpenSkyBehavior
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension ActorGraphCoordinator {

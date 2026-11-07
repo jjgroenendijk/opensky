@@ -2,8 +2,8 @@
 // saves with their pictures, then a confirmed load. The calls were measured with the
 // action disassembler; docs/engine/main-menu.md lists them.
 
-import Foundation
-import OpenSkyFormatsSWF
+public import Foundation
+public import OpenSkyFormatsSWF
 
 nonisolated public enum TitleMenuLoadBridge: Sendable {
     /// The `img://` name the save list loads its picture from.

@@ -2,7 +2,7 @@
 // built in code — never extracted game files (AGENTS.md "Legal & IP boundary").
 // Layouts follow UESP "Skyrim Mod:Mod File Format"; see docs/formats/esm.md.
 
-import Foundation
+public import Foundation
 
 public enum ESMFixture: Sendable {
     public static func field(_ type: String, _ data: Data) -> Data {

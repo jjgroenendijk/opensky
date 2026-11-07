@@ -53,7 +53,7 @@ struct RendererTextureStreamingTests {
 
     @MainActor
     private static func render(
-        texture: MTLTexture, transform: float4x4 = matrix_identity_float4x4,
+        texture: any MTLTexture, transform: float4x4 = matrix_identity_float4x4,
         prepare: (Renderer) -> Void
     ) throws -> [UInt8] {
         let device = try #require(Self.device)

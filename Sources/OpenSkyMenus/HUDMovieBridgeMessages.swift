@@ -3,7 +3,7 @@
 // installed movie: docs/engine/messages.md#the-hud-movie.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated extension HUDMovieBridge {
     public static let messageEntryPoints = ["ShowMessage", "ShowTutorialHintText"]

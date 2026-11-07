@@ -4,8 +4,8 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 @MainActor
 public final class RuntimeStateCoordinator {

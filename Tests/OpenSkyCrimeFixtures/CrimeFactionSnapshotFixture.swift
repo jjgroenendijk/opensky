@@ -1,7 +1,7 @@
 // A crime and faction reading with a bounty, a stolen stack, a guard
 // subject and a vendor, shared by the readout suites.
 
-@testable import OpenSkyCrime
+@testable public import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventoryInterface

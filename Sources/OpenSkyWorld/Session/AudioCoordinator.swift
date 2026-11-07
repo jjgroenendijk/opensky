@@ -3,13 +3,13 @@
 // (docs/engine/coordinators.md).
 
 import Foundation
-import OpenSkyActorPresentation
-import OpenSkyAudio
-import OpenSkyCells
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyPlayer
+public import OpenSkyActorPresentation
+public import OpenSkyAudio
+public import OpenSkyCells
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import OpenSkyPlayer
 import OpenSkyWeather
 import simd
 

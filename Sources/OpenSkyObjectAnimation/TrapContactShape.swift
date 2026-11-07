@@ -1,8 +1,8 @@
 // Points on an animated object's moving parts, so trap contact follows a blade's edge
 // and not the pivot it turns about. See docs/engine/traps.md.
 
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 /// One mesh a rig bone moves: its skin and its rest bounds in skin space.
 nonisolated public struct TrapContactPart: Sendable {

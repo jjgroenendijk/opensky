@@ -2,7 +2,7 @@
 // actor gives items to the player. See docs/engine/inventory-menu.md#gift-menu.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The arguments of `Actor.ShowGiftMenu` (CK wiki "ShowGiftMenu - Actor").
 nonisolated public struct GiftMenuRequest: Equatable, Sendable {

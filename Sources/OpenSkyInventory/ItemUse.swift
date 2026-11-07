@@ -2,7 +2,7 @@
 // a potion, food, or ingredient is consumed, and a poison goes on the weapon
 // (UESP "Skyrim:Potions", <https://en.uesp.net/wiki/Skyrim:Potions>).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 

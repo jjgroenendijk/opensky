@@ -14,7 +14,7 @@ import Testing
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct ActorEquipmentSwapTests {
-    private static let device: MTLDevice? = {
+    private static let device: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4)
@@ -54,7 +54,7 @@ struct ActorEquipmentSwapTests {
     private func renderMesh(
         _ name: String,
         bone: String,
-        device: MTLDevice
+        device: any MTLDevice
     ) throws -> RenderMesh {
         let bound = RigidAttachment.skinned(
             rigidModel(name: name), to: bone, restTransform: matrix_identity_float4x4

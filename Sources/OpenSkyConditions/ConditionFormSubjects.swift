@@ -3,7 +3,7 @@
 // read them. See docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// One base form standing in as a run-on subject.

@@ -3,7 +3,7 @@
 // See docs/formats/sound-output-reverb.md, section "Output models".
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The `ANAM` curve: five gain points spread evenly from the minimum to the
 /// maximum distance, in world units.

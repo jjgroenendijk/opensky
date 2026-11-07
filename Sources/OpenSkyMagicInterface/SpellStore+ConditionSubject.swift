@@ -1,9 +1,9 @@
 // A spell as the subject of a perk's spell condition tab. A SPEL has no `KWDA`, so
 // `HasKeyword` reads the keywords of its effects, as `EPMagic_SpellHasKeyword` does.
 
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated extension SpellStore {
     public func conditionSubject(of spell: ResolvedSpell) -> ConditionFormSubject {

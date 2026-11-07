@@ -1,7 +1,7 @@
 // How moving bodies meet a character's capsule, as the game's character controller
 // handles a touching body by its layer and mass. See docs/engine/dynamic-bodies.md.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import simd
 

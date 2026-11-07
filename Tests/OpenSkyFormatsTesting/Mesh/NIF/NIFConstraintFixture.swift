@@ -2,7 +2,7 @@
 // and later branch of each nif.xml CInfo struct, which is the branch Skyrim SE
 // streams take. No game bytes are fixtures (AGENTS.md legal boundary).
 
-import Foundation
+public import Foundation
 import simd
 
 public enum NIFConstraintFixture: Sendable {

@@ -4,7 +4,7 @@
 // docs/formats/effect-shaders.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// One DATA member, in file order. The names follow xEdit `wbRecord(EFSH, ...)`.
 nonisolated public enum EffectShaderMember: String, CaseIterable, Sendable {

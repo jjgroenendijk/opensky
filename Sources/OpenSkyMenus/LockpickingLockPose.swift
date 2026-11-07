@@ -2,8 +2,8 @@
 // meshes plays at which time, the turn of the pick by its angle, and the camera.
 // Pure, so tests drive it. See docs/engine/locks.md.
 
-import OpenSkyFormatsMesh
-import simd
+public import OpenSkyFormatsMesh
+public import simd
 
 /// One frame of the 3D lock, from the menu's presentation and its clock.
 nonisolated public struct LockpickingLockPose: Equatable, Sendable {

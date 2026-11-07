@@ -98,7 +98,7 @@ nonisolated extension AgentJSON {
 
     /// A FormID as the console writes it: eight upper-case hex digits.
     public static func formID(_ raw: UInt32) -> AgentJSON {
-        .string(String(format: "%08X", raw))
+        unsafe .string(String(format: "%08X", raw))
     }
 }
 

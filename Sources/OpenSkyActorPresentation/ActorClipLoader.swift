@@ -2,7 +2,7 @@
 // and combat reactions. See docs/decisions/concurrency.md.
 
 import OpenSkyFormatsAnimation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// One clip retargeted to one skeleton. The clip is the first of `animationPaths` that
 /// exists, because creatures name the same clip differently.

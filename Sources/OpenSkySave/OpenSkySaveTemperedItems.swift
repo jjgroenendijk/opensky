@@ -3,12 +3,12 @@
 // `ICPY` carries the rest of each copy and replaces this chunk's state when present.
 // `ItemCopyState.init` drops bad levels, so no content error fails a load.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 /// One owner's saved tempered copies, before they are merged back into the delta.
 nonisolated public struct SaveTemperedItemEntry: Equatable, Sendable {

@@ -3,8 +3,8 @@
 // unchanged world gives the same answer.
 
 import OpenSkyAudio
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import OpenSkyWorldConditions
 
 extension RuntimeStateCoordinator {

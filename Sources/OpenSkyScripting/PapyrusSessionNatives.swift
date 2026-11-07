@@ -1,10 +1,10 @@
 // The player, perception, and session families of the Papyrus world bridge. As in
 // `PapyrusActorNatives.swift`, a nil member is a session without that runtime.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyPerceptionInterface
-import OpenSkyWorldState
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyPerceptionInterface
+public import OpenSkyWorldState
 
 /// The player controls a few natives drive.
 public struct PapyrusPlayerNatives {

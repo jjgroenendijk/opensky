@@ -3,12 +3,12 @@
 // counted and skipped.
 
 import Foundation
-import Metal
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import Metal
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
@@ -35,8 +35,8 @@ nonisolated struct TerrainTextureKeys: Equatable {
 
 /// One patch's layer textures and aligned opacities, capped at the shader maximum.
 nonisolated private struct ResolvedTerrainLayers {
-    var textures: [MTLTexture] = []
-    var normals: [MTLTexture] = []
+    var textures: [any MTLTexture] = []
+    var normals: [any MTLTexture] = []
     var resolvedNormals = 0
     var opacities: [[Float]] = []
     var skipped = 0

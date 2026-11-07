@@ -4,11 +4,11 @@
 // `rank(inChainFrom:on:)` walks the chain. See docs/engine/perks.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
-import OpenSkyWorldState
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldState
 
 /// What one seeding pass did.
 nonisolated public struct PerkSeedReport: Equatable, Sendable {

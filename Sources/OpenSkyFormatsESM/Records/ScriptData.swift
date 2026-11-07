@@ -4,7 +4,7 @@
 // xEdit `wbVMAD` and UESP "VMAD Field".
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum ScriptDataError: Error, Equatable, Sendable {
     case binary(BinaryReaderError)

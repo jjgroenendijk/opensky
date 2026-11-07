@@ -2,9 +2,9 @@
 // cap.
 
 @testable import OpenSkyActorsInterface
-@testable import OpenSkyCombat
+@testable public import OpenSkyCombat
 @testable import OpenSkyCombatInterface
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsESM
 import simd
 
 @MainActor

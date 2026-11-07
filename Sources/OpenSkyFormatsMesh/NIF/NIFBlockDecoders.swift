@@ -3,7 +3,7 @@
 // mesh preview can show any block's decoded value.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum NIFBlockDecoders: Sendable {
     public typealias Decode = @Sendable (inout BinaryReader, NIFHeader) throws -> any Sendable

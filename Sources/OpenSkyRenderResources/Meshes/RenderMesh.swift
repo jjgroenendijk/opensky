@@ -3,11 +3,11 @@
 // attributes get neutral defaults, because vanilla NIFs omit them legitimately.
 
 import Foundation
-@preconcurrency import Metal
+@preconcurrency @unsafe public import Metal
 import OpenSkyAssetCache
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyShaderTypes
-import simd
+public import simd
 import Synchronization
 
 nonisolated public enum RenderMeshError: Error, Equatable {
@@ -145,15 +145,15 @@ nonisolated public enum TerrainVertexLayout: Sendable {
 nonisolated public final class RenderMesh: Sendable {
     public let name: String?
     public let vertexCount: Int
-    public let vertexBuffer: MTLBuffer
-    public let indexBuffer: MTLBuffer
+    public let vertexBuffer: any MTLBuffer
+    public let indexBuffer: any MTLBuffer
     public let indexCount: Int
     /// See `Mesh.lodIndexCounts`.
     public let lodIndexCounts: [Int]
     /// See `Mesh.objectLODSegment`.
     public let objectLODSegment: Int?
-    public let skinningBuffer: MTLBuffer?
-    public let boneMatrixBuffer: MTLBuffer?
+    public let skinningBuffer: any MTLBuffer?
+    public let boneMatrixBuffer: any MTLBuffer?
     private let skinningPalette: SkinningPalette?
     /// Written on the main actor after the build queue hands the mesh over.
     private let boneMatrices: Mutex<[float4x4]>
@@ -183,7 +183,7 @@ nonisolated public final class RenderMesh: Sendable {
     /// UV units per mesh-local unit, for texture streaming.
     public let uvPerUnit: Float
 
-    public init(device: MTLDevice, mesh: Mesh) throws {
+    public init(device: any MTLDevice, mesh: Mesh) throws {
         guard
             !mesh.positions.isEmpty, !mesh.indices.isEmpty,
             let localBounds = ModelBounds.containing(mesh.positions)
@@ -200,12 +200,12 @@ nonisolated public final class RenderMesh: Sendable {
         let vertices = StaticVertexLayout.interleave(mesh)
         let skinBuffers = try Self.makeSkinBuffers(device: device, mesh: mesh)
         guard
-            let vertexBuffer = device.makeBuffer(
+            let vertexBuffer = unsafe device.makeBuffer(
                 bytes: vertices,
                 length: vertices.count * MemoryLayout<Float>.size,
                 options: .storageModeShared
             ),
-            let indexBuffer = device.makeBuffer(
+            let indexBuffer = unsafe device.makeBuffer(
                 bytes: mesh.indices,
                 length: mesh.indices.count * MemoryLayout<UInt16>.size,
                 options: .storageModeShared
@@ -234,8 +234,8 @@ nonisolated public final class RenderMesh: Sendable {
 
     /// A static mesh whose buffers a loader fills from a cached model's ready bytes.
     init(
-        layout: ReadyMeshLayout, bounds: ModelBounds, vertexBuffer: MTLBuffer,
-        indexBuffer: MTLBuffer
+        layout: ReadyMeshLayout, bounds: ModelBounds, vertexBuffer: any MTLBuffer,
+        indexBuffer: any MTLBuffer
     ) {
         name = layout.name
         vertexCount = layout.vertexCount
@@ -256,7 +256,7 @@ nonisolated public final class RenderMesh: Sendable {
 
     /// The same geometry with its own palette, so one actor's pose does not move
     /// another actor drawn with the same cached model. A static mesh is returned as is.
-    public func posableCopy(device: MTLDevice) -> RenderMesh {
+    public func posableCopy(device: any MTLDevice) -> RenderMesh {
         guard
             let skinningPalette,
             let source = boneMatrixBuffer,
@@ -266,14 +266,14 @@ nonisolated public final class RenderMesh: Sendable {
         let bind = skinningPalette.bindPoseMatrices
         let slotBytes = bind.count * MemoryLayout<float4x4>.stride
         for slot in 0 ..< source.length / max(slotBytes, 1) {
-            matrices.contents().advanced(by: slot * slotBytes)
+            unsafe matrices.contents().advanced(by: slot * slotBytes)
                 .copyMemory(from: bind, byteCount: slotBytes)
         }
         return RenderMesh(copying: self, boneMatrixBuffer: matrices, palette: skinningPalette)
     }
 
     private init(
-        copying source: RenderMesh, boneMatrixBuffer: MTLBuffer, palette: SkinningPalette
+        copying source: RenderMesh, boneMatrixBuffer: any MTLBuffer, palette: SkinningPalette
     ) {
         name = source.name
         vertexCount = source.vertexCount
@@ -293,13 +293,13 @@ nonisolated public final class RenderMesh: Sendable {
     }
 
     private struct SkinBuffers {
-        let attributes: MTLBuffer?
-        let matrices: MTLBuffer?
+        let attributes: any MTLBuffer?
+        let matrices: any MTLBuffer?
         let palette: SkinningPalette?
     }
 
     private static func makeSkinBuffers(
-        device: MTLDevice,
+        device: any MTLDevice,
         mesh: Mesh
     ) throws -> SkinBuffers {
         guard let skinning = mesh.skinning else {
@@ -320,7 +320,7 @@ nonisolated public final class RenderMesh: Sendable {
         }
         let vertices = zip(skinning.weights, skinning.boneIndices).map(SkinVertex.init)
         guard
-            let attributes = device.makeBuffer(
+            let attributes = unsafe device.makeBuffer(
                 bytes: vertices,
                 length: vertices.count * MemoryLayout<SkinVertex>.stride,
                 options: .storageModeShared
@@ -334,7 +334,7 @@ nonisolated public final class RenderMesh: Sendable {
         attributes.label = "\(mesh.name ?? "mesh").skin-vertices"
         matrices.label = "\(mesh.name ?? "mesh").bone-palettes"
         for slot in 0 ..< GPUFactory.maxFramesInFlight {
-            matrices.contents().advanced(
+            unsafe matrices.contents().advanced(
                 by: slot * skinning.bindPoseMatrices.count * MemoryLayout<float4x4>.stride
             ).copyMemory(
                 from: skinning.bindPoseMatrices,
@@ -390,7 +390,7 @@ nonisolated public final class RenderMesh: Sendable {
         boneMatrices.withLock { matrices in
             guard !matrices.isEmpty else { return }
             let offset = slot * matrices.count * MemoryLayout<float4x4>.stride
-            buffer.contents().advanced(by: offset).copyMemory(
+            unsafe buffer.contents().advanced(by: offset).copyMemory(
                 from: matrices,
                 byteCount: matrices.count * MemoryLayout<float4x4>.stride
             )

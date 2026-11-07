@@ -3,11 +3,11 @@
 // See docs/engine/idle-runtime.md.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldInterface
+public import OpenSkyBehavior
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldInterface
 import simd
 
 /// One resident REFR whose base is an IDLM.

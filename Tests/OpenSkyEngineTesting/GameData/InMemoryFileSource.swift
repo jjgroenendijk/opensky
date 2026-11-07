@@ -1,8 +1,8 @@
 // A `GameFileSource` over bytes held in memory. Tests fill it with synthetic
 // data built in code, never with extracted game files.
 
-import Foundation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyGameData
 
 nonisolated public struct InMemoryFileSource: GameFileSource {
     /// Canonical key to bytes. Every file counts as one archive entry.

@@ -3,9 +3,9 @@
 // unreadable entry is never used: it is logged, deleted, and marked for rebuild.
 // Safe to call from any loader thread.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
-import OpenSkyGameData
+public import OpenSkyGameData
 import Synchronization
 
 nonisolated public struct AssetCacheReadCounts: Equatable, Sendable {

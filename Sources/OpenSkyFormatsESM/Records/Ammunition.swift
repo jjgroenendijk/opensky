@@ -4,7 +4,7 @@
 // Layout from UESP and xEdit: docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Ammunition: Sendable {
     public struct Flags: OptionSet, Equatable, Sendable {

@@ -8,7 +8,7 @@ import Foundation
 import OpenSkyFactionsFixtures
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFeaturesTesting
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing

@@ -2,9 +2,9 @@
 // at, when its cell joins the live world. The level stays until the cell resets.
 // See docs/engine/leveled-lists.md.
 
-import OpenSkyCells
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyCells
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 @MainActor
 public enum LeveledRollFreeze {

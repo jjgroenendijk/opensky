@@ -3,10 +3,10 @@
 // values out; the coordinator fires them. Rules: docs/engine/random-conversations.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 /// One loaded actor as the social pass sees it.

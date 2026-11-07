@@ -3,7 +3,7 @@
 // docs/engine/spell-delivery.md.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct MagicWorldSettings: Equatable, Sendable {
     /// `fMagicAbsorbVisualTimer`: seconds an instant Absorb hit keeps its visual.

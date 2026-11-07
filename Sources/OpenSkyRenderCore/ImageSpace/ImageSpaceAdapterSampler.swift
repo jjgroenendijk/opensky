@@ -2,7 +2,7 @@
 // See docs/formats/image-spaces.md, section "Sampling".
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum ImageSpaceEnvelope {

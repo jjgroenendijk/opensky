@@ -4,8 +4,8 @@
 // skinning.
 
 import Foundation
-@preconcurrency import Metal
-import OpenSkyFormatsMesh
+@preconcurrency @unsafe public import Metal
+public import OpenSkyFormatsMesh
 import simd
 import Synchronization
 
@@ -71,7 +71,7 @@ nonisolated public enum FaceMorphComposer: Sendable {
 }
 
 nonisolated public final class FaceMorphBuffer: Sendable {
-    public let buffer: MTLBuffer
+    public let buffer: any MTLBuffer
     public let vertexCount: Int
     public let targets: [FaceMorphTarget]
     /// Weights that never change, such as the chargen sliders, added under every update.
@@ -79,14 +79,15 @@ nonisolated public final class FaceMorphBuffer: Sendable {
     /// Written on the main actor after the build queue hands the buffer over.
     private let deltas: Mutex<[MorphVertexDelta]>
 
-    public convenience init(device: MTLDevice, tri: TRIFile, mesh: RenderMesh) throws {
+    public convenience init(device: any MTLDevice, tri: TRIFile, mesh: RenderMesh) throws {
         try self.init(device: device, tris: [tri], mesh: mesh)
     }
 
     /// One buffer for several TRI files of the same mesh, such as a head part's race,
     /// chargen, and expression morphs.
     public init(
-        device: MTLDevice, tris: [TRIFile], mesh: RenderMesh, fixedWeights: [String: Float] = [:]
+        device: any MTLDevice, tris: [TRIFile], mesh: RenderMesh,
+        fixedWeights: [String: Float] = [:]
     ) throws {
         if let wrong = tris.first(where: { $0.baseVertices.count != mesh.vertexCount }) {
             throw FaceMorphError.vertexCountMismatch(
@@ -120,9 +121,12 @@ nonisolated public final class FaceMorphBuffer: Sendable {
     }
 
     public func prepare(slot: Int) {
-        let destination = buffer.contents().advanced(by: byteOffset(slot: slot))
+        let destination = unsafe buffer.contents().advanced(by: byteOffset(slot: slot))
         deltas.withLock {
-            destination.copyMemory(from: $0, byteCount: vertexCount * MorphVertexLayout.stride)
+            unsafe destination.copyMemory(
+                from: $0,
+                byteCount: vertexCount * MorphVertexLayout.stride
+            )
         }
     }
 

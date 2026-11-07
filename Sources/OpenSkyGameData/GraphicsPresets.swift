@@ -2,7 +2,7 @@
 // and `Ultra.ini` in the install folder at runtime. A preset sets the store values
 // its file has; a store that matches no preset reads as Custom.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum GraphicsPreset: Int, CaseIterable, Sendable {
     case low, medium, high, ultra

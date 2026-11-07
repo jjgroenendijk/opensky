@@ -4,7 +4,7 @@
 // Layout: docs/formats/weather.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct Weather: Sendable {

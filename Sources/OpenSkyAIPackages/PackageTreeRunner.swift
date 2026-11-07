@@ -3,8 +3,8 @@
 // a sequence runs its children in order, a stacked branch its first valid child, a
 // random branch one valid child, and a simultaneous branch all of them until one ends.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 /// What the runner asks of the session: branch conditions and leaf setups.
 @MainActor

@@ -4,8 +4,8 @@
 // so one `resolveSpells` walk serves both. See docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Re-derives actor perk lists from plugin data.
 nonisolated public struct ActorPerkBaselineResolver: Sendable {

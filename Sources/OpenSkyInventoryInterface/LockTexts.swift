@@ -1,7 +1,7 @@
 // The words a lock shows: its level names, the prompt verb, and the two refusals.
 // See docs/engine/locks.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct LockTexts: Equatable, Sendable {
     /// `sLockLevelName<suffix>`, by band.

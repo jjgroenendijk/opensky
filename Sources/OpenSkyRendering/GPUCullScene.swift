@@ -3,11 +3,11 @@
 // the CPU encodes one draw per group and never touches an instance. A group that holds
 // a reference physics moves stays on the CPU path. See docs/rendering/gpu-culling.md.
 
-import Metal
-import OpenSkyFormatsCore
+public import Metal
+public import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import OpenSkyRenderResources
-import OpenSkyShaderTypes
+public import OpenSkyShaderTypes
 import simd
 
 /// Instances one culling path kept and dropped in a frame.
@@ -37,10 +37,10 @@ nonisolated public struct CullCounts: Equatable, Sendable {
 
 /// The cull kernel and its binding table, built once with the renderer.
 public struct GPUCullingResources {
-    public let pipeline: MTLComputePipelineState
-    public let argumentTable: MTL4ArgumentTable
+    public let pipeline: any MTLComputePipelineState
+    public let argumentTable: any MTL4ArgumentTable
 
-    init(library: MTLLibrary, compiler: PipelineCache) throws {
+    init(library: any MTLLibrary, compiler: PipelineCache) throws {
         let function = MTL4LibraryFunctionDescriptor()
         function.name = "cullInstances"
         function.library = library
@@ -75,15 +75,15 @@ public final class GPUCullScene {
     static let argumentStride = MemoryLayout<MTLDrawIndexedPrimitivesIndirectArguments>.stride
     static let transformStride = MemoryLayout<InstanceTransform>.stride
 
-    let instances: MTLBuffer
-    let parameters: MTLBuffer
-    let output: MTLBuffer
-    let arguments: MTLBuffer
+    let instances: any MTLBuffer
+    let parameters: any MTLBuffer
+    let output: any MTLBuffer
+    let arguments: any MTLBuffer
     /// Per frame slot: the room-culled counter, then `roomWordCount` bitset words.
-    let rooms: MTLBuffer
+    let rooms: any MTLBuffer
     let roomWordCount: Int
     /// One fade state per instance, shared by every frame slot: the GPU runs frames in order.
-    let fadeStates: MTLBuffer
+    let fadeStates: any MTLBuffer
     /// The reference fade the next `encode` writes into each view's parameters.
     var fade = CullFade(distances: .off, viewer: .zero, seconds: 0)
     let instanceCount: Int
@@ -96,12 +96,12 @@ public final class GPUCullScene {
     /// Groups each view counted, per frame slot, for the stats readback.
     private var countedGroups: [[[Int]]]
 
-    var allocations: [MTLAllocation] {
+    var allocations: [any MTLAllocation] {
         [instances, parameters, output, arguments, rooms, fadeStates]
     }
 
     /// Nil when the scene has no group the GPU can cull.
-    init?(scene: RenderScene, device: MTLDevice, framesInFlight: Int) throws {
+    init?(scene: RenderScene, device: any MTLDevice, framesInFlight: Int) throws {
         var builder = GPUCullSceneBuilder()
         opaqueGroups = scene.opaque.map { builder.add($0) }
         alphaTestedGroups = scene.alphaTested.map { builder.add($0) }
@@ -143,12 +143,12 @@ public final class GPUCullScene {
         let unseen = [SIMD2<Float>](repeating: SIMD2(-1, 0), count: instanceCount)
         unseen.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            fadeStates.contents().copyMemory(from: base, byteCount: bytes.count)
+            unsafe fadeStates.contents().copyMemory(from: base, byteCount: bytes.count)
         }
-        let contents = instances.contents()
+        let contents = unsafe instances.contents()
         builder.instances.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            contents.copyMemory(from: base, byteCount: bytes.count)
+            unsafe contents.copyMemory(from: base, byteCount: bytes.count)
         }
     }
 
@@ -185,12 +185,12 @@ public final class GPUCullScene {
     /// work completed.
     func counts(slot: Int) -> CullCounts {
         var counts = CullCounts()
-        counts.cameraRoomCulled = Int(
+        counts.cameraRoomCulled = unsafe Int(
             rooms.contents().advanced(by: roomOffset(slot: slot)).load(as: UInt32.self)
         )
         for view in 0 ..< Self.viewCount {
             for group in countedGroups[slot][view] {
-                let visible = Int(arguments.contents()
+                let visible = unsafe Int(arguments.contents()
                     .advanced(by: Int(argumentAddress(group: group, view: view, slot: slot)
                             - arguments.gpuAddress))
                     .load(as: MTLDrawIndexedPrimitivesIndirectArguments.self).instanceCount)
@@ -214,7 +214,7 @@ public final class GPUCullScene {
         roomVisibility: RoomVisibility?,
         slot: Int,
         resources: GPUCullingResources,
-        commandBuffer: MTL4CommandBuffer
+        commandBuffer: any MTL4CommandBuffer
     ) -> Bool {
         guard let encoder = commandBuffer.makeComputeCommandEncoder() else { return false }
         countedGroups[slot] = Array(repeating: [], count: Self.viewCount)
@@ -267,13 +267,13 @@ public final class GPUCullScene {
 
     /// Zeroes the slot's counter and writes the bitset; returns the words the kernel reads.
     private func writeRooms(_ visibility: RoomVisibility?, slot: Int) -> Int {
-        let base = rooms.contents().advanced(by: roomOffset(slot: slot))
-        base.storeBytes(of: UInt32(0), as: UInt32.self)
+        let base = unsafe rooms.contents().advanced(by: roomOffset(slot: slot))
+        unsafe base.storeBytes(of: UInt32(0), as: UInt32.self)
         guard let visibility, roomWordCount > 0, visibility.words.count == roomWordCount
         else { return 0 }
         visibility.words.withUnsafeBytes { bytes in
             guard let words = bytes.baseAddress else { return }
-            base.advanced(by: MemoryLayout<UInt32>.stride).copyMemory(
+            unsafe base.advanced(by: MemoryLayout<UInt32>.stride).copyMemory(
                 from: words, byteCount: bytes.count
             )
         }
@@ -301,7 +301,7 @@ public final class GPUCullScene {
             advancesFades: view == 0 ? 1 : 0
         )
         let offset = viewSlot(view: view, slot: slot) * MemoryLayout<CullParameters>.stride
-        self.parameters.contents().advanced(by: offset)
+        unsafe self.parameters.contents().advanced(by: offset)
             .copyMemory(from: &parameters, byteCount: MemoryLayout<CullParameters>.size)
         return self.parameters.gpuAddress + UInt64(offset)
     }
@@ -310,7 +310,10 @@ public final class GPUCullScene {
         let offset = Int(argumentAddress(group: 0, view: view, slot: slot) - arguments.gpuAddress)
         argumentTemplate.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            arguments.contents().advanced(by: offset).copyMemory(from: base, byteCount: bytes.count)
+            unsafe arguments.contents().advanced(by: offset).copyMemory(
+                from: base,
+                byteCount: bytes.count
+            )
         }
     }
 }

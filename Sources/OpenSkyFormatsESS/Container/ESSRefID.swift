@@ -66,6 +66,6 @@ nonisolated public struct ESSRefID: Hashable, Sendable {
 
 nonisolated extension ESSRefID: CustomStringConvertible {
     public var description: String {
-        String(format: "%06X", raw)
+        unsafe String(format: "%06X", raw)
     }
 }

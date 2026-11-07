@@ -2,9 +2,9 @@
 // models, and GPU batch inputs that live as long as the cell.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyFormatsESM
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 
 nonisolated public struct GrassBuild {
     public let placements: [GrassPlacement]

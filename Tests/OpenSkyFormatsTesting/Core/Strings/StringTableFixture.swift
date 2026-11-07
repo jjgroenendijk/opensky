@@ -3,8 +3,8 @@
 // Layout follows UESP "Skyrim Mod:String Table File Format";
 // see docs/formats/strings.md.
 
-import Foundation
-@testable import OpenSkyFormatsCore
+public import Foundation
+@testable public import OpenSkyFormatsCore
 
 public enum StringTableFixture: Sendable {
     /// Builds a whole table file: header, directory (in entry order), data

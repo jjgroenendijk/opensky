@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 extension PapyrusNativeFunctions {
     public static func installTranslation(into registry: inout PapyrusNativeRegistry) {

@@ -27,7 +27,7 @@ extension RenderCommand {
                 + "\(render.stats.culledInstances) culled)"
         )
         let pixels = readPixels(texture: render.texture)
-        let percent = String(format: "%.1f", nonBackgroundFraction(pixels: pixels) * 100)
+        let percent = unsafe String(format: "%.1f", nonBackgroundFraction(pixels: pixels) * 100)
         print("[INFO] non-background pixels: \(percent)%")
         let url = URL(filePath: output)
         try FrameScreenshot.write(texture: render.texture, to: url)
@@ -35,11 +35,11 @@ extension RenderCommand {
     }
 
     /// BGRA readback of the whole offscreen target.
-    private static func readPixels(texture: MTLTexture) -> [UInt8] {
+    private static func readPixels(texture: any MTLTexture) -> [UInt8] {
         var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
         pixels.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base,
                 bytesPerRow: texture.width * 4,
                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),

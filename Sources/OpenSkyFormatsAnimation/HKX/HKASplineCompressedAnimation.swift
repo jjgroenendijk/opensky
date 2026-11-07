@@ -2,7 +2,7 @@
 // transform sampling. Layout from hkxparse and HKX2Library (MIT); the spline
 // grammar is reimplemented from HavokLib. Byte map: docs/formats/hka-animation.md.
 
-import Foundation
+public import Foundation
 import simd
 
 nonisolated public enum HKASplineAnimationError: Error, Equatable, Sendable {

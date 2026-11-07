@@ -1,7 +1,7 @@
 // Placing the capsule on the ground under a camera that a teleport or a mode switch
 // left at any height.
 
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import OpenSkyRenderCore
 import simd
 

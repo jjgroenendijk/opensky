@@ -1,7 +1,7 @@
 // The race, sex, voice type, and name of an actor base after template inheritance, as the
 // Papyrus identity natives answer them. Pure: built over the record indexes.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ActorIdentityRecords: Sendable {
     public private(set) var templates: ActorTemplateResolver

@@ -2,11 +2,11 @@
 // `EnchantedItemState.init` normalizes bad charges and stale sequences, so no
 // content error fails a load.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyWorldState
 
 /// One owner's saved enchanted-item state, before it is merged back into the
 /// delta.

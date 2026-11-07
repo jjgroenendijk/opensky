@@ -90,7 +90,7 @@ extension ScriptingAcceptanceRealDataTests {
         let runtimeDisabled: Int
     }
 
-    private func makeSetup(device: MTLDevice, root: GameDataRoot) throws -> Setup {
+    private func makeSetup(device: any MTLDevice, root: GameDataRoot) throws -> Setup {
         let fileSystem = VirtualFileSystem(root: root)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
@@ -120,7 +120,7 @@ extension ScriptingAcceptanceRealDataTests {
         )
     }
 
-    private func makeRenderer(device: MTLDevice, scene: CellScene) throws -> Renderer {
+    private func makeRenderer(device: any MTLDevice, scene: CellScene) throws -> Renderer {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: 640, height: 360),
             device: device

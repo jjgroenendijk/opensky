@@ -4,7 +4,7 @@
 // skill. See docs/engine/character-leveling.md.
 
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
 

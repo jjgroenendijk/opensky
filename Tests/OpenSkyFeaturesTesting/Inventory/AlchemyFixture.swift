@@ -1,11 +1,11 @@
 // The inventory fixture plugin plus three MGEF, three INGR, and one poison ALCH, so
 // the alchemy suites can brew by hand-computable numbers. Every byte is built here.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
-import OpenSkyInventoryInterface
+@testable public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 public enum AlchemyFixture {
     public static let pluginName = "Skyrim.esm"

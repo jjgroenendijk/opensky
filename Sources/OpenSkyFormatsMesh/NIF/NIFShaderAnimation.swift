@@ -3,7 +3,7 @@
 // Variable names: nif.xml; layout: docs/formats/nif-controllers.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// One shader property controller of a mesh, for listing and for the material track.
 nonisolated public struct NIFShaderControllerEntry: Equatable, Sendable {

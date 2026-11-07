@@ -3,7 +3,7 @@
 // decoder gets the codec parameters and the raw payload.
 // Layout and sources: docs/formats/xwm.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum XWMError: Error, Equatable, Sendable {
     /// Input violates the documented layout.
@@ -91,7 +91,7 @@ nonisolated public struct XWMFile: Sendable {
     }
 
     private static func hex(_ value: UInt16) -> String {
-        "0x" + String(format: "%04X", value)
+        unsafe "0x" + String(format: "%04X", value)
     }
 
     /// Validates the raw `fmt ` fields. WAVEFORMATEX member order and widths:

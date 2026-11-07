@@ -1,9 +1,9 @@
 // The data locks and traps read at runtime: lockpicking tuning, the lockpick item,
 // and the load-order hazard store. See docs/engine/locks.md and docs/engine/traps.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 nonisolated public struct LockTrapData: Sendable {
     /// GMST-derived, the documented numbers on a synthetic scene.

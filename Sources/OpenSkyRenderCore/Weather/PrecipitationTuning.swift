@@ -4,7 +4,7 @@
 // "Precipitation mapping".
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The hand-tuned values a precipitation scale of 1 keeps.
 nonisolated public struct PrecipitationBase: Equatable, Sendable {
@@ -132,9 +132,10 @@ nonisolated extension PrecipitationTuning {
         func pair(_ fallback: Float, _ factor: Float) -> String {
             "\(Int(fallback.rounded())) → \(Int((fallback * factor).rounded()))"
         }
+        let densityText = unsafe " · density × \(String(format: "%.2f", scale.density))"
         return "\(name): speed \(pair(base.speed, scale.speed))"
             + " · size \(pair(base.radius, scale.size))"
-            + " · density × \(String(format: "%.2f", scale.density))"
+            + densityText
     }
 }
 

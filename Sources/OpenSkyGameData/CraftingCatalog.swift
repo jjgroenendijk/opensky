@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One component the player holds too few of.
 nonisolated public struct ComponentShortfall: Equatable, Sendable {

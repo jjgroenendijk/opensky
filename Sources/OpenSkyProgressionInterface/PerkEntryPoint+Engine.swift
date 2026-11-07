@@ -3,7 +3,7 @@
 // uses and no code reads. A SwiftLint rule rejects a raw-value literal elsewhere.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension PerkEntryPoint {
     public static let calculateWeaponDamage = PerkEntryPoint(rawValue: 0)

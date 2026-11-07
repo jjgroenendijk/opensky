@@ -4,8 +4,8 @@
 // pose. See docs/engine/ragdoll.md and docs/engine/runtime-state.md.
 
 import OpenSkyFormatsCore
-import OpenSkyWorldState
-import simd
+public import OpenSkyWorldState
+public import simd
 
 /// One actor's death, and where its corpse ended up.
 nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Sendable {

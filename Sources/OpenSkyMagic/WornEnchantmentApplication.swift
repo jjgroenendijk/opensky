@@ -5,9 +5,9 @@
 // unscaled constants, without resistances. See docs/engine/item-enchantments.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 /// What one reconciliation did.
 nonisolated public struct WornEnchantmentReport: Equatable, Sendable {

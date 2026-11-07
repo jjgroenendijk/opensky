@@ -2,12 +2,12 @@
 // Each member stays optional: a nil member is a session without that runtime, and
 // its natives refuse, which differs from a wired member that answers nil.
 
-import OpenSkyActorsInterface
-import OpenSkyCombatInterface
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 /// The `Actor` native collaborators. See `PapyrusWorldStateBridgeActors.swift`.
 public struct PapyrusActorNatives {

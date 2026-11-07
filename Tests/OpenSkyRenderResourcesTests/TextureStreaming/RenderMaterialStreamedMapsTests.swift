@@ -23,7 +23,7 @@ struct RenderMaterialStreamedMapsTests {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm, width: 4, height: 4, mipmapped: false
         )
-        var textures: [String: MTLTexture] = [:]
+        var textures: [String: any MTLTexture] = [:]
         for key in keys + ["none"] {
             let texture = try #require(device.makeTexture(descriptor: descriptor))
             texture.label = key

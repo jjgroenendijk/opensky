@@ -214,7 +214,7 @@ struct RagdollRealDataTests {
         lines.append("settled: \(settled)")
         let ordinarySleep = ordinarySleepStep.map { "step \($0)" } ?? "never"
         lines.append("ordinary per-body sleep: \(ordinarySleep)")
-        lines.append(String(format: "worst joint separation: %.3f units", worstSeparation))
+        unsafe lines.append(String(format: "worst joint separation: %.3f units", worstSeparation))
         lines.append("joint violations at rest: \(instance.lastStats.jointViolationCount)")
         lines.append("pose recoveries: \(instance.lastStats.recoveredBodyCount)")
         lines.append("self-collision pairs admitted: \(definition.selfCollision.pairCount)")
@@ -226,7 +226,7 @@ struct RagdollRealDataTests {
             let worst = RagdollJointLimitPass.passes(
                 of: joint, frames: joint.worldFrames(in: instance.bodies)
             ).map(\.error).max() ?? 0
-            lines.append(String(
+            unsafe lines.append(String(
                 format: "  %@ -> %@: %.2f units, %.3f radians",
                 definition.bones[joint.bodyA].boneName,
                 definition.bones[joint.bodyB].boneName,
@@ -239,7 +239,7 @@ struct RagdollRealDataTests {
         for (index, bone) in definition.bones.enumerated() {
             let height = instance.bodies.indices.contains(index)
                 ? instance.bodies[index].position.z : .nan
-            lines.append(String(format: "  %@ — z %.2f", bone.boneName, height))
+            unsafe lines.append(String(format: "  %@ — z %.2f", bone.boneName, height))
         }
         return lines.joined(separator: "\n") + "\n"
     }

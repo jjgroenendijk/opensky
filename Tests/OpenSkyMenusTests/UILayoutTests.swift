@@ -207,6 +207,6 @@ struct UILayoutTests {
     }
 
     private func vertexBytes(_ vertices: [UIVertex]) -> [UInt8] {
-        vertices.withUnsafeBytes { Array($0) }
+        vertices.withUnsafeBytes { unsafe Array($0) }
     }
 }

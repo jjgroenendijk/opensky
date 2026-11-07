@@ -2,8 +2,8 @@
 // inside one placed collision shape, and which way that shape's surface faces.
 // See docs/engine/dynamic-narrowphase.md.
 
-import OpenSkyFormatsMesh
-import simd
+public import OpenSkyFormatsMesh
+public import simd
 
 /// How a triangle's plane normal becomes a surface normal. The surface decides,
 /// not the body: some vanilla clutter has its decoded center of mass below every

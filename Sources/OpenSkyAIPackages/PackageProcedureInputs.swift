@@ -2,7 +2,7 @@
 // into the setup its machine runs. Parameter order is the Creation Kit wiki's, and
 // matches the `BNAM` input names of the vanilla templates.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import simd

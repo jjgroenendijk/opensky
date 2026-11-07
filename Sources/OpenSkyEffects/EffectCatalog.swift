@@ -2,8 +2,8 @@
 // details for its inspector. See docs/rendering/visual-effects.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyRendering
 
 nonisolated public enum EffectRecordKind: String, Equatable, Sendable, CaseIterable {
@@ -120,7 +120,7 @@ nonisolated extension EffectRecordStore {
     }
 
     static func number(_ value: Float) -> String {
-        String(format: "%.2f", value)
+        unsafe String(format: "%.2f", value)
     }
 
     static func color(_ value: SIMD3<Float>) -> String {

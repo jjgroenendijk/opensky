@@ -2,11 +2,11 @@
 // poisons, each merged into the `RDLT` deltas by key. Rows ascend by FormID, so equal
 // state gives equal bytes. Layout: docs/formats/opensky-save-actor-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Per potion: FormID, name, poison byte, value, then each effect's MGEF,

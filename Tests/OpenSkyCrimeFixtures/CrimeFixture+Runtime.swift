@@ -1,8 +1,8 @@
 // The fixture builders that need the Crime implementation.
 
-@testable import OpenSkyCrime
-import OpenSkyFeaturesTesting
-@testable import OpenSkyWorldState
+@testable public import OpenSkyCrime
+public import OpenSkyFeaturesTesting
+@testable public import OpenSkyWorldState
 
 extension CrimeFixture {
     public static func crimeFactions() throws -> CrimeFactionResolver {

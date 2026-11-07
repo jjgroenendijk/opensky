@@ -2,8 +2,8 @@
 // the vanilla main menu movie when it loads; see docs/engine/main-menu.md.
 
 import Foundation
-import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyGameData
+public import OpenSkyRendering
 
 /// What the title menu does in the running game.
 public protocol TitleMenuWorld: AnyObject {
@@ -90,7 +90,7 @@ public final class TitleMenuCoordinator {
     public private(set) var selectedIndex = 0
     public private(set) var loadPage: SaveLoadPageModel?
     public internal(set) var lastResult: String?
-    public weak let saves: SaveGameService?
+    public weak let saves: any SaveGameService?
     /// The movie is the menu the player sees; the engine rows stay the fallback.
     public private(set) var movieEnabled = true
     /// The credits movie has the layer in place of the title movie.
@@ -115,7 +115,7 @@ public final class TitleMenuCoordinator {
 
     public init(
         menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil,
-        saves: SaveGameService?, world: (any TitleMenuWorld)? = nil
+        saves: any SaveGameService?, world: (any TitleMenuWorld)? = nil
     ) {
         self.menuMode = menuMode
         self.saves = saves

@@ -1,7 +1,7 @@
 // Baselines for suites that need actor values but not the record rules that
 // derive them.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 public enum ActorValueBaselineFixture {
     /// Every subject starts at `maximum` of every value and regenerates nothing,

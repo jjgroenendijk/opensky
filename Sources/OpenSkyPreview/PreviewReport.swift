@@ -1,8 +1,8 @@
 // The JSON a preview writes beside its images: one report per view, and a summary
 // that lists them. Pure values; the CLI writes the files.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct PreviewViewReport: Codable, Equatable, Sendable {
     public var view: String

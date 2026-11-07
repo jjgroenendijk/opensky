@@ -1,11 +1,11 @@
 // The GPU features the player settings ask for. The launcher's Graphics page and the
 // the rendering performance readout write the same settings.
 
-import Metal
-import OpenSkyCells
-import OpenSkyGameData
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import Metal
+public import OpenSkyCells
+public import OpenSkyGameData
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 
 extension RenderScale {
     public init(store: PlayerSettingsStore) {

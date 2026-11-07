@@ -1,8 +1,8 @@
 // The inventory menu's item card for one carried item. See docs/engine/inventory-menu.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 extension InventoryCoordinator {
     /// Nil without game data or for an item no plugin describes.

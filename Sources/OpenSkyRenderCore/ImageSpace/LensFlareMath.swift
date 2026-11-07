@@ -1,6 +1,6 @@
 // Where the sun sits on the screen, for the lens flare (docs/rendering/post-effects.md).
 
-import simd
+public import simd
 
 nonisolated public enum LensFlareMath {
     /// A weather with no sun glare, such as a storm, hides the sun and so its flare.

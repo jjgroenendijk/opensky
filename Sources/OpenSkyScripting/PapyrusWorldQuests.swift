@@ -7,9 +7,9 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {

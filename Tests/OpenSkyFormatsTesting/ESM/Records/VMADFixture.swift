@@ -1,8 +1,8 @@
 // Synthetic VMAD builder. Every byte is constructed in code from the xEdit /
 // UESP layout; no game data is embedded.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum VMADFixture: Sendable {
     public enum Value: Sendable {

@@ -1,6 +1,6 @@
 // One node of a posed skeleton or a model, in the model's space and in its parent's.
 
-import simd
+public import simd
 
 nonisolated public struct PosedBone: Equatable, Sendable {
     public let model: float4x4

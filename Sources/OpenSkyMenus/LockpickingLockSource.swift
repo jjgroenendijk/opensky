@@ -3,10 +3,10 @@
 // See docs/engine/locks.md.
 
 import Foundation
-@preconcurrency import Metal
+@preconcurrency @unsafe public import Metal
 import OpenSkyFormatsMesh
-import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyGameData
+public import OpenSkyRendering
 import simd
 
 public final class LockpickingLockSource {
@@ -36,7 +36,7 @@ public final class LockpickingLockSource {
     }
 
     /// The models once both files are in; nil while they load or after a failure.
-    public func models(device: MTLDevice) -> Models? {
+    public func models(device: any MTLDevice) -> Models? {
         if let models {
             return models
         }

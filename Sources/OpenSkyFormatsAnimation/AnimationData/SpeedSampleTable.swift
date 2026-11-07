@@ -2,7 +2,7 @@
 // graph's speed sampler gives for an actor's real ground speed, per state and
 // direction. Layout: docs/formats/speed-data.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum SpeedSampleError: Error, Equatable, Sendable {

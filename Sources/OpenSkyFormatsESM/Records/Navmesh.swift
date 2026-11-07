@@ -4,7 +4,7 @@
 // Layout documented in docs/formats/navmesh.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// Where a navmesh sits in the world. Interiors name their CELL directly;
 /// exteriors name a worldspace and the cell square inside it, because an

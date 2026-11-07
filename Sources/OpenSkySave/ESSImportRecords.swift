@@ -2,9 +2,9 @@
 // answer it from their game data; tests pass a fake. See docs/engine/ess-import.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 nonisolated public protocol ESSImportRecords {
     /// The plugins loaded now, in load order.

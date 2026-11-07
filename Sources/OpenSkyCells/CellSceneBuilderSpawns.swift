@@ -4,9 +4,9 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// The spawned half of one build's reference set.
 nonisolated public struct SpawnedReferenceBuild: Sendable {

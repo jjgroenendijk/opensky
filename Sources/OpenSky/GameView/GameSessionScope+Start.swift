@@ -230,6 +230,6 @@ extension GameSessionScope: RenderControlWorld {
     }
 
     func refocusGameView() {
-        hostView.window?.makeFirstResponder(hostView)
+        unsafe hostView.window?.makeFirstResponder(hostView)
     }
 }

@@ -3,8 +3,8 @@
 // unresolved name is reported, not dropped.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyPhysics
+public import OpenSkyBehavior
+public import OpenSkyPhysics
 import simd
 
 nonisolated public enum LocomotionGraphNames: Sendable {

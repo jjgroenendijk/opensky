@@ -3,7 +3,7 @@
 // fog (docs/rendering/water.md).
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyRenderCore
 import OpenSkyShaderTypes
 import simd
@@ -12,9 +12,9 @@ nonisolated extension WaterRippleField {
     /// Fills the shader's fixed ring array, which Swift sees as a tuple; unused rings are zero.
     static func write(_ rings: [SIMD4<Float>], into storage: inout some Any) {
         withUnsafeMutableBytes(of: &storage) { raw in
-            let slots = raw.bindMemory(to: SIMD4<Float>.self)
+            let slots = unsafe raw.bindMemory(to: SIMD4<Float>.self)
             for index in slots.indices {
-                slots[index] = index < rings.count ? rings[index] : .zero
+                unsafe slots[index] = index < rings.count ? rings[index] : .zero
             }
         }
     }

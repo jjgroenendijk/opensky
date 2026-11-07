@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// The journal's six stat groups, in the movie's `CategoryList` order.
 nonisolated public enum MiscStatCategory: Int, CaseIterable, Sendable {

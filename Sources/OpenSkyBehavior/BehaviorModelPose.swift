@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
-import simd
+public import simd
 
 nonisolated public struct BehaviorModelPose: Sendable {
     public private(set) var rotations: [simd_quatf]

@@ -4,7 +4,7 @@
 // and reset (docs/engine/behavior-state-machines.md, "Transition conditions").
 
 import OpenSkyActorPresentation
-import OpenSkyBehavior
+public import OpenSkyBehavior
 import simd
 
 nonisolated extension LocomotionBridge {

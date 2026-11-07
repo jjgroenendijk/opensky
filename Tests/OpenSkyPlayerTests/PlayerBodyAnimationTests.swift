@@ -15,7 +15,7 @@ import Testing
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct PlayerBodyAnimationTests {
-    private static let device: MTLDevice? = {
+    private static let device: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4)
@@ -248,7 +248,7 @@ struct PlayerBodyAnimationTests {
     /// world matrix and the assertions can be read by eye.
     @MainActor
     private static func skinnedMesh(
-        device: MTLDevice
+        device: any MTLDevice
     ) throws -> (model: RenderModel, renderMesh: RenderMesh) {
         let positions: [SIMD3<Float>] = [
             SIMD3(-1, -1, 0), SIMD3(1, -1, 0), SIMD3(0, 1, 0)

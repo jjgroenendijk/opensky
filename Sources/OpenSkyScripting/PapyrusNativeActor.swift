@@ -6,8 +6,8 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
     public static func installActor(into registry: inout PapyrusNativeRegistry) {

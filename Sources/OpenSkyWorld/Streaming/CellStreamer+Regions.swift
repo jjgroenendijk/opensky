@@ -1,7 +1,7 @@
 // The regions the player stands in, for conditions that ask about them.
 
 import OpenSkyCells
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyTerrain
 
 extension CellStreamer {

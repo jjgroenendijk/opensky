@@ -2,7 +2,7 @@
 // `AudioCoordinator` in OpenSkyWorld (docs/engine/coordinators.md).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 import simd
 
 /// Picker lists, trigger placement, and readout lines for the audio readout.
@@ -44,7 +44,9 @@ nonisolated public enum AudioLabCore {
 
     public static func voiceDescription(path: String, playback: VoicePlayback) -> String {
         let lip = playback.lipData.map { "\($0.count) lip bytes" } ?? "no lip data"
-        let length = playback.duration.map { String(format: "%.2f s", $0) } ?? "unknown length"
+        let length = playback.duration.map {
+            unsafe String(format: "%.2f s", $0)
+        } ?? "unknown length"
         return "\(shortVoiceName(path)) — \(length), \(lip)"
     }
 
@@ -54,13 +56,13 @@ nonisolated public enum AudioLabCore {
         finished: Bool,
         position: Double?
     ) -> String {
-        let total = playback.duration.map { String(format: "%.2f", $0) } ?? "?"
+        let total = playback.duration.map { unsafe String(format: "%.2f", $0) } ?? "?"
         guard !finished else {
             return "Position: finished at \(total) s"
         }
         guard let position else {
             return "Position: no reading (source retired or not yet rendering)"
         }
-        return String(format: "Position: %.2f / %@ s", position, total)
+        return unsafe String(format: "Position: %.2f / %@ s", position, total)
     }
 }

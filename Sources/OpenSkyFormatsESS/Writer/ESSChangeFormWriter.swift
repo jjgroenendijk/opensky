@@ -2,7 +2,7 @@
 // `ESSReferenceChange`. The change flags follow from the fields that are present.
 // See docs/formats/ess-change-forms.md.
 
-import Foundation
+public import Foundation
 
 nonisolated extension ESSChangeForm {
     /// The version every Special Edition change form carries.

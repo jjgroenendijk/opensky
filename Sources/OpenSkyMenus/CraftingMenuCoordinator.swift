@@ -4,7 +4,7 @@
 // See docs/engine/crafting.md#crafting-menu.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 
 /// One recipe of the open station.

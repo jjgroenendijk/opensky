@@ -1,10 +1,10 @@
 // DETH chunk: death state, merged into the `RDLT` deltas by `ReferenceKey`.
 
-import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One actor's saved death, before it is merged back into the delta.
 nonisolated public struct SaveDeathEntry: Equatable, Sendable {

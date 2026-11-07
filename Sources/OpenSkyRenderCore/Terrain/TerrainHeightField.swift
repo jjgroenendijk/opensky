@@ -2,8 +2,8 @@
 // 33x33 heights use the exact SW->NE quad split emitted by
 // TerrainMeshBuilder, so sampled height + face normal match rendered planes.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import simd
 
 /// One point on rendered terrain in world space.

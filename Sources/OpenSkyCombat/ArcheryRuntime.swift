@@ -7,9 +7,9 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyBehavior
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 @MainActor
 public final class ArcheryRuntime {

@@ -3,7 +3,7 @@
 // (docs/rendering/visual-effects.md#blood).
 
 import Metal
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRenderCore
@@ -102,7 +102,7 @@ extension EffectsCoordinator {
             return screenBloodTextures
         }
         guard let textures = meshes?.textures else { return nil }
-        func load(_ path: String) -> MTLTexture {
+        func load(_ path: String) -> any MTLTexture {
             textures.texture(key: NIFShaderTextureSet.vfsKey(for: path), usage: .color)
         }
         let loaded = ScreenBloodTextures(

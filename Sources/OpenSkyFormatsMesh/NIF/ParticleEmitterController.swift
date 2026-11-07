@@ -2,7 +2,7 @@
 // the controller's time. Layout and timing: docs/formats/nif-particles.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 /// nif.xml `CycleType`: what happens when time passes the controller's stop time.

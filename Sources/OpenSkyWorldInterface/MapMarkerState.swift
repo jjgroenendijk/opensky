@@ -3,9 +3,9 @@
 // it. See docs/engine/world-map.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One marker's state where it differs from its record.
 nonisolated public struct MapMarkerState: WorldStateComponent, Sendable {

@@ -4,7 +4,7 @@
 // See docs/engine/detection.md.
 
 import Foundation
-import OpenSkyPerceptionInterface
+public import OpenSkyPerceptionInterface
 import simd
 
 nonisolated public enum PerceptionSight: Sendable {

@@ -2,8 +2,8 @@
 // mutated by Papyrus, inventory and quests. See docs/engine/runtime-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Main-actor store of per-reference runtime state; only `snapshot()` values cross
 /// threads. Nothing throws: state may be recorded for a key that is not resident.

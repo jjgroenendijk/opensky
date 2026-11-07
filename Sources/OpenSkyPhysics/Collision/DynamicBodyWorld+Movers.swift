@@ -1,7 +1,7 @@
 // Loose bodies shoved by a reference a script moves, such as a `TranslateTo` platform.
 // See docs/engine/papyrus-translation.md.
 
-import simd
+public import simd
 
 /// A reference box that moves at a set velocity and has no physics body of its own.
 nonisolated public struct ScriptedMover: Equatable, Sendable {

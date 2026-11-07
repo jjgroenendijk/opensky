@@ -1,8 +1,8 @@
 // Surface shading: switch each lit-mesh term and count the
 // draws that use it.
 
-import OpenSkyGameData
-import OpenSkyRenderResources
+public import OpenSkyGameData
+public import OpenSkyRenderResources
 
 nonisolated extension SurfaceShadingSetting {
     public var term: SurfaceShadingTerm {

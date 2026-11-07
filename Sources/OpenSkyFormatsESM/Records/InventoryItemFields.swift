@@ -2,7 +2,7 @@
 // separate because ALCH stores weight in DATA and gold value in ENIT.
 // Layout and sources: docs/formats/item-records.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// The 8-byte DATA struct shared by MISC, INGR, KEYM and ARMO: gold value then

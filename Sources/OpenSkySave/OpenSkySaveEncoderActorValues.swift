@@ -2,10 +2,10 @@
 // and the store's dirty counts are per cell.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsCore
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsCore
 import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's values paired with the snapshot entry they came from.
