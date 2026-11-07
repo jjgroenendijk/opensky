@@ -4,6 +4,20 @@
 import OpenSkyFormatsCore
 import simd
 
+nonisolated extension PlayerCapsule {
+    /// The game's capsule for an upright body, from its skeleton's `BBX` half size; nil
+    /// for a long body. The eye keeps the standard capsule's share of the height.
+    public static func upright(halfExtents: SIMD3<Float>, scale: Float = 1) -> PlayerCapsule? {
+        let size = halfExtents * (scale > 0 && scale.isFinite ? scale : 1)
+        guard size.min() > 0, size.z >= max(size.x, size.y) else { return nil }
+        let height = size.z * 2
+        return PlayerCapsule(
+            radius: (size.x + size.y) / 2, height: height,
+            eyeHeight: height * standard.eyeHeight / standard.height
+        )
+    }
+}
+
 nonisolated public struct LongBodyShape: Equatable, Sendable {
     /// Along the model's long axis: true for +Y (forward), false for +X (right).
     public let isForwardLong: Bool

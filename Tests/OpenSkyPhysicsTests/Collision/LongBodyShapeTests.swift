@@ -47,4 +47,15 @@ struct LongBodyShapeTests {
         )
         #expect(simd_length(clear) < 0.01)
     }
+
+    /// A human skeleton's bound gives the game's radius 18 and height 128; scale grows both.
+    @Test
+    func anUprightBoundGivesTheGamesCapsule() throws {
+        let human = SIMD3<Float>(22, 14, 64)
+        let capsule = try #require(PlayerCapsule.upright(halfExtents: human))
+        #expect(capsule.radius == 18 && capsule.height == 128 && capsule.eyeHeight == 112)
+        let giant = try #require(PlayerCapsule.upright(halfExtents: human, scale: 2))
+        #expect(giant.radius == 36 && giant.height == 256)
+        #expect(PlayerCapsule.upright(halfExtents: Self.horse) == nil)
+    }
 }

@@ -26,10 +26,14 @@ default gets (23, 17.5, 64).
 
 When the height half size, hz, is at least both horizontal half sizes, the shape is an upright
 capsule. Its radius is r = (hx + hy) / 2, and its segment runs ±(hz − r) about the centre. A
-human gets r = 18 and a height of 128. The game also builds an eight-sided prism with a pointed
-bottom of the same size; which of the two is active is not known.
+human gets r = 18 and a height of 128. The player uses the human skeleton, so the same capsule.
+The game also builds an eight-sided prism with a pointed bottom of the same size, but it always
+selects the capsule. Only a debug console command switches to the prism.
 
-[WARNING] OpenSky's movers use one upright capsule of radius 24 and height 128 for every actor.
+An NPC walks with this capsule once its skeleton's bound has loaded. Before that, and for the
+player, OpenSky uses an upright capsule of radius 24 and height 128.
+
+[WARNING] The player's capsule is not yet the game's radius 18.
 
 ## Long bodies
 
