@@ -73,7 +73,11 @@ public struct SceneRuntime {
     /// Scene seconds: game seconds divided by the time scale.
     public var now: Double
     /// The pause after a looping line, between the action's minimum and maximum. Tests fix it.
-    public var loopPause: @MainActor (ClosedRange<Float>) -> Float = { Float.random(in: $0) }
+    public var loopPause: @MainActor (ClosedRange<Float>) -> Float = {
+        let stream = RandomStream(seed: 0x4C4F_4F50)
+        return { stream.float(in: $0) }
+    }()
+
     /// `fRandomSceneAgainMinTime` to `...MaxTime`: the wait before a scene flagged
     /// "Repeat while true" plays again. Drawn through `loopPause`.
     public var repeatPause: ClosedRange<Float> = 10 ... 30

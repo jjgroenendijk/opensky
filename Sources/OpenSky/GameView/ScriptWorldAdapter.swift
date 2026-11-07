@@ -115,6 +115,12 @@ final class ScriptWorldAdapter {
             seams: seams(provider: provider)
         )
         bridge.sessionNatives.clockSource = { [weak gameSession] in gameSession?.gameClock }
+        // The game counts real time from its launch, without frozen time (CK wiki
+        // "GetCurrentRealTime - Utility"): the time before this session, then its frames.
+        let beforeSession = BenchmarkAppStart.processStart().map { -$0.timeIntervalSinceNow } ?? 0
+        bridge.sessionNatives.realTimeSource = { [weak gameSession] in
+            beforeSession + (gameSession?.gameTime.realSecondsRun ?? 0)
+        }
         wireActorNatives(bridge: bridge)
         wireLineOfSight(bridge: bridge)
         wireSpellNatives(bridge: bridge, provider: provider)

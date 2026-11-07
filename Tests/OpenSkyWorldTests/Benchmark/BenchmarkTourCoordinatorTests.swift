@@ -11,6 +11,7 @@ import Testing
 @MainActor
 private final class FakeTourWorld: BenchmarkTourWorld {
     var now = 0.0
+    var date = Date(timeIntervalSince1970: 1_800_000_000)
     var frameSize = (width: 1280, height: 720)
     var loadedPlugins: Set = ["skyrim.esm"]
     var activeSettings: [String: Double] = ["rendering.renderScale": 2]

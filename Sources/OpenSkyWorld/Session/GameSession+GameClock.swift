@@ -2,6 +2,7 @@
 // projection. `gameTime` is written and read on the main thread only.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyGameData
 public import OpenSkyRenderCore
 import OpenSkyRendering
@@ -22,6 +23,15 @@ nonisolated public struct RendererGameTime: Sendable {
     /// receives real elapsed game hours instead of reconstructing them from
     /// hour deltas. nil until the first update.
     public var weatherGameSecondsMark: Double?
+    /// Real seconds the live frames ran, menus included. Each frame counts at most
+    /// `maxDelta`, so a stall such as a save or a load does not count, as in the game.
+    public private(set) var realSecondsRun: Double = 0
+    private var realTimeClock = FrameSimClock()
+
+    /// One live frame of real time, read from the wall clock the frame clock reads.
+    public mutating func advanceRealTime(to now: Double) {
+        realSecondsRun += Double(realTimeClock.advance(to: now, paused: false))
+    }
 }
 
 extension GameSession {
@@ -49,6 +59,7 @@ extension GameSession {
     /// carries no jump on resume. The offscreen path deliberately never calls
     /// this, so a fixed clock renders deterministically.
     public func advanceGameClockFromWallClock() {
+        gameTime.advanceRealTime(to: renderer.wallClock.now)
         let delta = gameTime.frameClock.advance(
             to: renderer.wallClock.now, paused: worldSimPaused
         )
@@ -78,10 +89,10 @@ extension GameSession {
             lastScriptUpdateMS = 0
             return
         }
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = Stopwatch()
         worldTick(deltaTime)
         lastScriptUpdateMS =
-            Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
+            started.milliseconds
     }
 
     /// Game hours elapsed since the previous call, from the clock's own

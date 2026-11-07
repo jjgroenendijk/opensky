@@ -223,6 +223,10 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         CACurrentMediaTime()
     }
 
+    var date: Date {
+        Date()
+    }
+
     var frameSize: (width: Int, height: Int) {
         let size = (game.hostView as? MTKView)?.drawableSize ?? .zero
         return (Int(size.width), Int(size.height))

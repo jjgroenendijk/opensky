@@ -181,7 +181,7 @@ public final class Renderer: NSObject {
     var instanceDeltas: [UInt32: float4x4] = [:]
     /// What the last adopted input held, so a change re-projects or re-merges once.
     var adoptedFOVYRadians = FirstPersonCamera.defaultFOVYRadians
-    var adoptedPoseRevision = 0
+    var adoptedPoseRevision = PoseRevision.unchanged
     /// The weather's cloud layers; nil keeps the plain sky gradient.
     public var skyClouds: SkyClouds?
     /// The water's noise normal maps; nil keeps the sine-wave normal.

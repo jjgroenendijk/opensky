@@ -218,6 +218,7 @@ jobs:
       - run: make swift-baseline
       - run: make language-rules
       - run: make error-handling
+      - run: make deterministic-rules
       # One run then lists the compile errors of every target, not only the first.
       - name: Keep building after errors
         run: defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES

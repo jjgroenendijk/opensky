@@ -200,7 +200,7 @@ seed-build-tree: #| Clone the newest build tree for a checkout that has none yet
 ##@ Format and lint
 
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
-        swift-baseline language-rules error-handling swift-format swift-lint metal-format md-format md-lint sh-lint \
+        swift-baseline language-rules error-handling deterministic-rules swift-format swift-lint metal-format md-format md-lint sh-lint \
         py-format py-format-check py-lint \
         cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
         docs-links docs-length agent-files workflow-lint comment-length panel-text load-order-only cli-conventions comment-blocks comment-apply \
@@ -208,7 +208,7 @@ seed-build-tree: #| Clone the newest build tree for a checkout that has none yet
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
-check: swift-baseline language-rules error-handling format-check lint docs-links ## The same gate without writing files [ALL=1 lints every Swift file]
+check: swift-baseline language-rules error-handling deterministic-rules format-check lint docs-links ## The same gate without writing files [ALL=1 lints every Swift file]
 
 format: swift-format metal-format cpp-format md-format py-format ## Autoformat Swift, Metal, C++, Markdown, and Python
 
@@ -233,6 +233,9 @@ language-rules: #| Check the package and Xcode turn on the same Swift language r
 
 error-handling: #| Check no package module swallows an error and no file-reading module traps
 	@./tools/lint/error-handling.sh
+
+deterministic-rules: #| Check game rules read no hidden random source or clock, and no global state
+	@./tools/lint/deterministic-rules.sh
 
 swift-format: #| Autoformat the changed Swift files [ALL=1 whole tree]
 	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to format"; exit 0; }; \

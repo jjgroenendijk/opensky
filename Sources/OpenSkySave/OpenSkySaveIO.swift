@@ -23,23 +23,21 @@ nonisolated public enum OpenSkySaveIO: Sendable {
     /// Writes `data` to `destination` so that the destination is either its
     /// old contents or the complete new ones, never a mixture.
     ///
-    /// The temp file is created beside the destination, because a rename only
-    /// replaces atomically within one filesystem. Any failure removes it, so a
-    /// failed save leaves neither a damaged destination nor litter behind.
+    /// The temp file goes in a fresh replacement folder on the destination's volume,
+    /// because a rename only replaces atomically within one filesystem. The folder is
+    /// removed afterwards, so a failed save leaves neither a damaged destination nor litter.
     public static func writeAtomically(_ data: Data, to destination: URL) throws {
         let fileManager = FileManager.default
-        let directory = destination.deletingLastPathComponent()
-        let temporary = directory.appending(
-            path: ".\(destination.lastPathComponent).tmp-\(UUID().uuidString)",
-            directoryHint: .notDirectory
+        let folder = try fileManager.url(
+            for: .itemReplacementDirectory, in: .userDomainMask,
+            appropriateFor: destination.deletingLastPathComponent(), create: true
         )
-        do {
-            try write(data, to: temporary, fileManager: fileManager)
-            try replace(destination, with: temporary)
-        } catch {
-            try? fileManager.removeItem(at: temporary)
-            throw error
-        }
+        defer { try? fileManager.removeItem(at: folder) }
+        let temporary = folder.appending(
+            path: destination.lastPathComponent, directoryHint: .notDirectory
+        )
+        try write(data, to: temporary, fileManager: fileManager)
+        try replace(destination, with: temporary)
     }
 
     private static func write(_ data: Data, to url: URL, fileManager: FileManager) throws {

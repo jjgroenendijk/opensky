@@ -6,6 +6,7 @@
 
 import Foundation
 public import OpenSkyActorsInterface
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyProgressionInterface
@@ -62,7 +63,10 @@ public struct SkillAdvancementRuntime {
     public var wornArmor: @MainActor (ReferenceKey) -> WornArmorProfile = { _ in .none }
     /// The 0 to 5 roll that picks the armour skill a blow credits.
     public var armorRoll: @MainActor ()
-        -> Int = { Int.random(in: 0 ..< WornArmorProfile.rollSides) }
+        -> Int = { [stream = RandomStream(seed: 0x4152_4D52)] in
+            stream.int(below: WornArmorProfile.rollSides)
+        }
+
     /// Character leveling, where banked experience is spent. Nil in a session
     /// without leveling: experience is then reported but not banked.
     public var leveling: PlayerLevelRuntime?

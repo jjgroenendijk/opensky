@@ -1,6 +1,7 @@
 // The Face Morphs readout, and the automatic face of every loaded actor: blinking, eye
 // drift, and the emotion of the line a speaker says. See docs/engine/face-morphs.md.
 
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 
@@ -43,7 +44,10 @@ public final class FaceMorphCoordinator {
     public var dialogueExpressionsEnabled = true
     public var eyeMovementEnabled = true
     /// A number in 0 ..< 1 for blink gaps. A test fixes it.
-    public var random: () -> Float = { Float.random(in: 0 ..< 1) }
+    public var random: () -> Float = { [stream = RandomStream(seed: 0x4641_4345)] in
+        stream.float(in: 0 ..< 1)
+    }
+
     private var emotions: [FormID: HeldEmotion] = [:]
     private var faces: [FormID: FaceState] = [:]
     private var lastTick: Float?

@@ -41,6 +41,8 @@ nonisolated public enum BenchmarkArrival: Equatable, Sendable {
 public protocol BenchmarkTourWorld: AnyObject {
     /// Seconds of a monotonic real clock, for frame intervals.
     var now: Double { get }
+    /// The calendar date, for the report's start time and its folder name.
+    var date: Date { get }
     var frameSize: (width: Int, height: Int) { get }
     /// Lowercased plugin names of the load order.
     var loadedPlugins: Set<String> { get }

@@ -8,9 +8,6 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension PapyrusNativeFunctions {
-    /// Seconds since the first `GetCurrentRealTime` call, the game's "real time".
-    private static let realTimeStart = Date()
-
     public static func installTrap(into registry: inout PapyrusNativeRegistry) {
         installTrapReads(into: &registry)
         installTrapHit(into: &registry)
@@ -54,8 +51,12 @@ extension PapyrusNativeFunctions {
         registry.register(PapyrusNativeFunction(
             scriptName: "Utility",
             functionName: "GetCurrentRealTime"
-        ) { _, _ in
-            .returned(.float(Float(Date().timeIntervalSince(realTimeStart))))
+        ) { call, context in
+            guard
+                let bridge = context.world as? PapyrusWorldStateBridge,
+                let seconds = bridge.sessionNatives.realTimeSource?()
+            else { return failure(call, "GetCurrentRealTime needs a real-time clock") }
+            return .returned(.float(Float(seconds)))
         })
     }
 

@@ -71,34 +71,53 @@ public struct RenderRigs {
 public struct RenderInstancePoses {
     /// How far simulated bodies moved since their cells were built.
     public var dynamicDeltas: [UInt32: float4x4] = [:] {
-        didSet { revision = Self.nextRevision() }
+        didSet { revision = revisions.next() }
     }
 
     public var npcDeltas: [UInt32: float4x4] = [:] {
-        didSet { revision = Self.nextRevision() }
+        didSet { revision = revisions.next() }
     }
 
     /// Where carts and their riders are now, as placements without scale.
     public var vehiclePoses: [UInt32: float4x4] = [:] {
-        didSet { revision = Self.nextRevision() }
+        didSet { revision = revisions.next() }
     }
 
     /// Where scripted moves (`TranslateTo`) have carried references, as placements without scale.
     public var scriptedPoses: [UInt32: float4x4] = [:] {
-        didSet { revision = Self.nextRevision() }
+        didSet { revision = revisions.next() }
     }
 
     /// How far each reference has faded out, 0 to 1. Read every frame, so it takes no revision.
     public var fades: [UInt32: Float] = [:]
 
-    public private(set) var revision = 0
+    public private(set) var revision = PoseRevision.unchanged
 
-    private static var lastRevision = 0
+    /// Shared by the copies of one value, so a change in any copy takes a new count.
+    private let revisions = PoseRevisionSource()
 
     public init() {}
+}
 
-    private static func nextRevision() -> Int {
-        lastRevision += 1
-        return lastRevision
+/// One state of a `RenderInstancePoses`. Its source belongs to the value and its copies,
+/// so two values never share a revision after a change, with no process-wide counter.
+public struct PoseRevision: Equatable {
+    fileprivate let source: PoseRevisionSource?
+    fileprivate let count: Int
+
+    /// A value nothing changed yet.
+    public static let unchanged = PoseRevision(source: nil, count: 0)
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.source === rhs.source && lhs.count == rhs.count
+    }
+}
+
+private final class PoseRevisionSource {
+    private var last = 0
+
+    func next() -> PoseRevision {
+        last += 1
+        return PoseRevision(source: self, count: last)
     }
 }

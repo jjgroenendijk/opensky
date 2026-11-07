@@ -250,14 +250,14 @@ public final class GameSession: RenderFrameDriver {
     // MARK: - RenderFrameDriver
 
     public func prepareLiveFrame() -> RenderFrameInput {
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = Stopwatch()
         advanceCamera()
         // Streaming may setScene synchronously before this frame encodes.
         frameSteps(freeFlyCamera.position)
         advanceGameClockFromWallClock()
         updateWorldSimFromWallClock()
         updateWeatherFromWallClock()
-        lastSimulationMS = Double(DispatchTime.now().uptimeNanoseconds - started) / 1e6
+        lastSimulationMS = started.milliseconds
         return frameInput
     }
 
