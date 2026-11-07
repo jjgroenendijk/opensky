@@ -45,6 +45,8 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
     /// Convex volumes in centre-of-mass-local space. More than one where the
     /// source `bhkRigidBody` carried several shapes.
     public let volumes: [DynamicCollisionVolume]
+    /// Faces and edges of each hull in `volumes`, index-aligned; nil for a radial volume.
+    public let hullTopologies: [DynamicHullTopology?]
     /// The same shapes undigested, for queries that want placed geometry rather
     /// than a convex volume: the player capsule, the interaction ray, and the
     /// shape sweeps.
@@ -127,6 +129,7 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
         let dominant = simulated.max { $0.dynamics.mass < $1.dynamics.mass }?.dynamics
             ?? simulated[0].dynamics
         volumes = placed
+        hullTopologies = placed.map(\.hullTopology)
         colliderShapes = collider.shapes
         centerOfMass = center
         mass = totalMass
@@ -207,6 +210,7 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
     ) {
         self.collisionLayer = collisionLayer
         self.volumes = volumes
+        hullTopologies = volumes.map(\.hullTopology)
         self.colliderShapes = colliderShapes
         self.mass = max(mass, .leastNormalMagnitude)
         inverseMass = 1 / self.mass

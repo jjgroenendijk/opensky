@@ -228,19 +228,8 @@ nonisolated public enum DynamicBodySolver: Sendable {
         dt: Float,
         selfCollision: RagdollSelfCollision? = nil
     ) -> [DynamicContact] {
-        // Sampling a body's collider allocates, so each body is sampled at most once
-        // per substep, and a sleeping body only when an awake one may touch it.
         let pairs = DynamicBodyBroadPhase.candidatePairs(bodies) { first, second in
             selfCollision?.admits(first, second) ?? true
-        }
-        var samples = [[(point: SIMD3<Float>, radius: Float)]?](repeating: nil, count: bodies.count)
-        func sampled(_ index: Int) -> [(point: SIMD3<Float>, radius: Float)] {
-            if let cached = samples[index] {
-                return cached
-            }
-            let taken = bodies[index].contactSamples()
-            samples[index] = taken
-            return taken
         }
         var contacts: [DynamicContact] = []
         for index in bodies.indices where !bodies[index].isSleeping {
@@ -248,22 +237,14 @@ nonisolated public enum DynamicBodySolver: Sendable {
             contacts += DynamicBodyContacts.staticContacts(
                 body: body,
                 index: index,
-                samples: sampled(index),
+                samples: body.contactSamples(),
                 shapes: staticShapes.candidates(for: body, index: index, world: world, dt: dt)
             )
         }
         for (first, second) in pairs {
             contacts += DynamicBodyContacts.pairContacts(
-                first: DynamicBodySamples(
-                    body: bodies[first],
-                    index: first,
-                    samples: sampled(first)
-                ),
-                second: DynamicBodySamples(
-                    body: bodies[second],
-                    index: second,
-                    samples: sampled(second)
-                )
+                first: DynamicPairBody(body: bodies[first], index: first),
+                second: DynamicPairBody(body: bodies[second], index: second)
             )
         }
         return contacts

@@ -1,7 +1,7 @@
-// Narrowphase for dynamic rigid bodies: contacts with the static world and
-// between two dynamic bodies. Each contact is a sample point plus a skin radius
-// tested against the other surface. `recoveryDepth` bounds how far behind a
-// surface a contact is still believed. See docs/engine/dynamic-narrowphase.md.
+// Narrowphase for dynamic rigid bodies against the static world: each contact is a
+// sample point plus a skin radius tested against the other surface. `recoveryDepth`
+// bounds how far behind a surface a contact is still believed. See
+// docs/engine/dynamic-narrowphase.md.
 
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
@@ -65,13 +65,15 @@ nonisolated public struct DynamicLocalSamples: Sendable {
     }
 }
 
-/// One body with its contact samples already taken, so the sampling is paid for
-/// once per substep rather than once per query.
-nonisolated public struct DynamicBodySamples: Sendable {
+/// One body of a touching pair, with its place in the solver's array.
+nonisolated public struct DynamicPairBody: Sendable {
     public let body: DynamicBody
-    /// The body's index in the solver's array.
     public let index: Int
-    public let samples: [(point: SIMD3<Float>, radius: Float)]
+
+    public init(body: DynamicBody, index: Int) {
+        self.body = body
+        self.index = index
+    }
 }
 
 /// The friction and restitution a pair of bodies contributes to its contacts.
@@ -114,47 +116,5 @@ nonisolated public enum DynamicBodyContacts: Sendable {
     /// reach. Scaling it down for small clutter was the largest saving in the step.
     public static func recoveryDepth(of body: DynamicBody) -> Float {
         min(recoveryDepth, max(contactMargin * 4, body.definition.boundingRadius))
-    }
-
-    /// Contacts between two dynamic bodies, taken in both directions so that
-    /// neither shape's vertices are the only ones consulted. Friction and
-    /// restitution are the geometric and the larger mean respectively, the
-    /// usual pairing rules.
-    public static func pairContacts(
-        first: DynamicBodySamples,
-        second: DynamicBodySamples
-    ) -> [DynamicContact] {
-        let material = DynamicContactMaterial(
-            friction: (first.body.definition.friction * second.body.definition.friction)
-                .squareRoot(),
-            restitution: max(
-                first.body.definition.restitution, second.body.definition.restitution
-            )
-        )
-        return directional(sampling: first, against: second, material: material)
-            + directional(sampling: second, against: first, material: material)
-    }
-
-    private static func directional(
-        sampling: DynamicBodySamples,
-        against obstacle: DynamicBodySamples,
-        material: DynamicContactMaterial
-    ) -> [DynamicContact] {
-        sampling.samples.compactMap { sample in
-            let radius = sample.radius + contactMargin
-            guard let hit = obstacle.body.penetration(of: sample.point, radius: radius) else {
-                return nil
-            }
-            return DynamicContact(
-                body: sampling.index,
-                other: obstacle.index,
-                point: sample.point - hit.normal * (radius - hit.depth),
-                normal: hit.normal,
-                depth: hit.depth,
-                friction: material.friction,
-                restitution: material.restitution,
-                surfaceMaterial: obstacle.body.definition.material
-            )
-        }
     }
 }
