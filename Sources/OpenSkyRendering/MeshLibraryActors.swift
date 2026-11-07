@@ -84,13 +84,18 @@ nonisolated extension MeshLibrary {
     }
 
     /// The `Prn` bone of a worn model with no skin, such as the vampire lord's cape: it
-    /// hangs from that bone as a weapon does (docs/engine/actor-resolution.md).
+    /// hangs from that bone as a weapon does (docs/engine/actor-resolution.md). The file
+    /// read here is kept for the decode, so a worn model is read from its archive once.
     func rigidParentBone(path: String) -> String? {
         guard let key = try? meshKey(for: path) else { return nil }
         if let known = rigidParentBones[key] {
             return known
         }
-        let file = (try? fileSystem.contents(forPath: key)).flatMap { try? NIFFile(data: $0) }
+        let file = preparsed[key]
+            ?? (try? fileSystem.contents(forPath: key)).flatMap { try? NIFFile(data: $0) }
+        if preparsed[key] == nil, !actorDecodedPaths.contains(key) {
+            preparsed[key] = file
+        }
         let bone = file.flatMap { file in
             file.blocks.contains { $0.typeName.hasSuffix("SkinInstance") }
                 ? nil : NIFStringExtraData.parentBone(in: file)
