@@ -188,6 +188,8 @@ nonisolated public final class BehaviorGraphInstance {
     public var footIkError = SIMD3<Float>()
     /// The pose each cyclic blend generator produced last, so a crossfade can start from it.
     public var cyclicLastPoses: [HKXPointerTarget: BehaviorPose] = [:]
+    /// The held blender each cyclic blend fades away from, which keeps running.
+    public var cyclicCopies: [HKXPointerTarget: BehaviorCyclicCopy] = [:]
     /// True while a synced blender runs a follower, whose annotations repeat the leader's.
     public var mutesClipAnnotations = false
     /// The blend parameter a cyclic blend generator hands its blender, by blender.

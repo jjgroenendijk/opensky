@@ -58,6 +58,11 @@ nonisolated extension BehaviorGraphInstance {
         var state = nodeStates[target] ?? markReached(target)
         let isHolding = state.frozenBlendParameter != nil || state.crossBlendSource != nil
         let crossBlends = isHolding && events.isActive(id: cyclic.eventToCrossBlend.id)
+        // The copy starts from the blender as it stood before this update.
+        let copy = crossBlends && state.crossBlendSource == nil
+            ? state.frozenBlendParameter
+            .map { BehaviorCyclicCopy(states: nodeStates, parameter: $0) }
+            : nil
         if let blender = cyclic.blenderGenerator {
             let parameter = bound.float("fBlendParameter", or: cyclic.blendParameter)
             if crossBlends {
@@ -80,15 +85,19 @@ nonisolated extension BehaviorGraphInstance {
             } else {
                 state.crossBlendSource = cyclicLastPoses[target] ?? live
                 state.elapsed = 0
+                cyclicCopies[target] = copy
             }
         }
         var result = live
-        if let source = state.crossBlendSource {
+        if let still = state.crossBlendSource {
+            let source = runCopy(of: cyclic, at: target, depth: depth, deltaTime: deltaTime)
+                ?? still
             state.elapsed += deltaTime
             result = blendedCrossFade(source, live, state, cyclic, bound)
             let duration = bound.float("fTransitionDuration", or: cyclic.transitionDuration)
             if state.elapsed >= duration {
                 state.crossBlendSource = nil
+                cyclicCopies[target] = nil
             }
         }
         if !BehaviorBlendCurve.isKnown(cyclic.blendCurve) {
@@ -97,6 +106,34 @@ nonisolated extension BehaviorGraphInstance {
         nodeStates[target] = state
         cyclicLastPoses[target] = result
         return result
+    }
+
+    /// Steps the held copy of the blender at its held parameter, with the copy's own node
+    /// states. Its annotations stay silent, because the live blender sends them.
+    private func runCopy(
+        of cyclic: BSCyclicBlendTransitionGenerator,
+        at target: HKXPointerTarget,
+        depth: Int,
+        deltaTime: Float
+    ) -> BehaviorPose? {
+        guard let blender = cyclic.blenderGenerator, var copy = cyclicCopies[target] else {
+            return nil
+        }
+        cyclicCopies[target] = nil
+        let live = nodeStates
+        let liveParameter = blendParameterOverrides[blender]
+        let wasMuted = mutesClipAnnotations
+        nodeStates = copy.states
+        copy.states = [:]
+        blendParameterOverrides[blender] = copy.parameter
+        mutesClipAnnotations = true
+        let pose = evaluateGenerator(at: blender, depth: depth, deltaTime: deltaTime)
+        copy.states = nodeStates
+        nodeStates = live
+        blendParameterOverrides[blender] = liveParameter
+        mutesClipAnnotations = wasMuted
+        cyclicCopies[target] = copy
+        return pose
     }
 
     private func blendedCrossFade(
@@ -166,4 +203,10 @@ nonisolated extension BehaviorGraphInstance {
             weight: weight
         )
     }
+}
+
+/// The node states and held parameter of a cyclic blend's running copy.
+nonisolated public struct BehaviorCyclicCopy: Equatable, Sendable {
+    public var states: [HKXPointerTarget: BehaviorNodeState]
+    public let parameter: Float
 }

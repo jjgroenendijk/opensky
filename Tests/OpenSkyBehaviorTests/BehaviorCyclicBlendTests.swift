@@ -9,7 +9,10 @@ import simd
 import Testing
 
 struct BehaviorCyclicBlendTests {
-    private static func graph() -> BehaviorGraphInstance {
+    private static func graph(
+        clips: BehaviorClipTable = BehaviorFixture.staticClipPair(left: 0, right: 10),
+        duration: Float = 0.2
+    ) -> BehaviorGraphInstance {
         var table = BehaviorObjectTable()
         let left = table.add(
             BehaviorFixture.clipGenerator("left", animationName: "left"),
@@ -42,7 +45,7 @@ struct BehaviorCyclicBlendTests {
                 eventToFreezeBlendValue: HKBEventProperty(id: 0, payload: nil),
                 eventToCrossBlend: HKBEventProperty(id: 1, payload: nil),
                 blendParameter: 0,
-                transitionDuration: 0.2,
+                transitionDuration: duration,
                 blendCurve: BehaviorBlendCurve.linear,
                 unresolved: []
             ),
@@ -55,7 +58,7 @@ struct BehaviorCyclicBlendTests {
                 variables: [BehaviorVariableSpec("Direction", .real, 0.2)],
                 events: ["Freeze", "Cross"]
             ),
-            clips: BehaviorFixture.staticClipPair(left: 0, right: 10)
+            clips: clips
         )
     }
 
@@ -76,6 +79,28 @@ struct BehaviorCyclicBlendTests {
         // Halfway through a linear 0.2 s crossfade from 2 to the live 8.
         #expect(abs(Self.x(graph) - 5) < 1e-4)
         #expect(abs(Self.x(graph) - 8) < 1e-4)
+    }
+
+    /// The fade source is the held blend still running: the left clip ramps 30 per
+    /// second, so each 0.1 s step moves it 3 while the fade runs.
+    @Test func theHeldBlendKeepsRunningThroughTheFade() throws {
+        let clips = try BehaviorClipTable(byName: [
+            "left": BehaviorFixture.splineClip(),
+            "right": BehaviorStaticClip(samples: [BehaviorFixture.sample(bone: 1, x: 100)])
+        ])
+        let graph = Self.graph(clips: clips, duration: 0.4)
+        graph.setVariable(.real(0), named: "Direction")
+        _ = Self.x(graph)
+        _ = graph.raiseEvent(named: "Freeze")
+        _ = Self.x(graph)
+        graph.setVariable(.real(1), named: "Direction")
+        _ = graph.raiseEvent(named: "Cross")
+        let sources = (1 ... 3).map { step in
+            let weight = Float(step) * 0.25
+            return (Self.x(graph) - weight * 100) / (1 - weight)
+        }
+        #expect(abs(sources[1] - sources[0] - 3) < 1e-3)
+        #expect(abs(sources[2] - sources[1] - 3) < 1e-3)
     }
 
     @Test func aRepeatedCrossBlendMirrorsTheProgress() {

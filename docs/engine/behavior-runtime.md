@@ -126,7 +126,7 @@ variable index out of range, a bit index past 32, or an empty path that binds th
 | `hkbStateMachine` | See [state machines](/engine/behavior-state-machines.md) |
 | `BSiStateTaggingGenerator` | Runs its default generator, and reports `m_iStateToSetAs` as the graph's `iState` tag. The highest `m_iPriority` wins ([actor state graph](/engine/actor-state-graph.md#drunk-actors)) |
 | `BSBoneSwitchGenerator` | Default generator, with each child's pose replacing it on the bones its bone weights cover |
-| `BSCyclicBlendTransitionGenerator` | Its blender, with `m_fBlendParameter` as the blender's parameter. `m_EventToFreezeBlendValue` holds the parameter. `m_EventToCrossBlend`, only while held or blending, frees it and crossfades from the pose of that moment over `m_fTransitionDuration` with `m_eBlendCurve`. A repeat during the crossfade mirrors its progress: elapsed `e` becomes `d - e` |
+| `BSCyclicBlendTransitionGenerator` | Its blender, with `m_fBlendParameter` as the blender's parameter. `m_EventToFreezeBlendValue` holds the parameter. `m_EventToCrossBlend`, only while held or blending, frees it and crossfades from a copy of the held blender, which keeps running at the held parameter, over `m_fTransitionDuration` with `m_eBlendCurve`. A repeat during the crossfade mirrors its progress: elapsed `e` becomes `d - e` |
 | `BSOffsetAnimationGenerator` | Default generator plus the offset clip's difference from the reference pose. The clip is held at the fraction `m_fOffsetVariable` makes of the offset range |
 | `hkbReferencePoseGenerator` | The reference pose |
 | `BSSynchronizedClipGenerator` | The wrapped clip, phase-synchronized. Marker alignment is counted |
@@ -225,8 +225,6 @@ These are guesses, marked as guesses:
   `BSSpeedSamplerModifier` (passes `goalSpeed` to `speedOut`), `hkbDampingModifier` (one PID
   step per update), `BSTweenerModifier`, `BSLimbIKModifier`, and the aim axis conventions of the
   look-at and direct-at modifiers.
-- A `BSCyclicBlendTransitionGenerator` crossfade starts from a still pose of the held blend.
-  The game keeps a copy of the blender running at the held parameter.
 - A state machine writes its current state ID to `m_syncVariableIndex` when the index names a
   variable, so two machines that share it stay in step
   ([state machines](/engine/behavior-state-machines.md)). No source confirms that Havok writes
