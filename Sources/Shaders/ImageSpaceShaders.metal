@@ -5,7 +5,7 @@
 // Order: blur, radial blur, motion blur, double vision, the screen-space effects, bloom,
 // tone mapping, saturation, brightness, contrast, tint, fade
 // (docs/rendering/image-space.md). The blur is a cheap two-ring disc.
-constant float3 imageSpaceLuminance = float3(0.2126, 0.7152, 0.0722);
+constant float3 imageSpaceLuminance = float3(0.2125, 0.7154, 0.0721);
 
 static float3 imageSpaceBlur(
     texture2d<float> scene,
@@ -119,9 +119,9 @@ static float3 imageSpaceBloom(
     return color + glow / total * bloom.z;
 }
 
-// HDR tone mapping: every 16th pixel each way adds its fixed-point log2 luminance to
-// the slot's counters for the eye (EyeAdaptation.swift), then the exposure scales the
-// color and an extended Reinhard curve maps the white point to display white.
+// Eye adaptation input: every 16th pixel each way adds its fixed-point luminance, in the
+// game's colour values, to the slot's counters (EyeAdaptation.swift). A plain mean, as the
+// game's down-sample chain gives.
 static void imageSpaceMeasure(
     float2 position,
     float3 color,
@@ -132,35 +132,30 @@ static void imageSpaceMeasure(
     if (uniforms.toneMapping.z < 0.5 || any((pixel & 15u) != 0u)) {
         return;
     }
-    float logLuminance = log2(max(dot(color, imageSpaceLuminance), 1.0e-5)) + 16.0;
-    uint fixedPoint = uint(clamp(logLuminance, 0.0, 32.0) * 256.0);
-    atomic_fetch_add_explicit(&luminance[0], fixedPoint, memory_order_relaxed);
+    float value = clamp(dot(toGamma(color), imageSpaceLuminance), 0.0, 64.0);
+    atomic_fetch_add_explicit(&luminance[0], uint(value * 1024.0), memory_order_relaxed);
     atomic_fetch_add_explicit(&luminance[1], 1u, memory_order_relaxed);
 }
 
-static float3 imageSpaceToneMap(float3 color, constant ImageSpaceUniforms &uniforms)
-{
-    color *= uniforms.toneMapping.x;
-    float white = uniforms.toneMapping.y;
-    if (white > 0.0) {
-        color = color * (1.0 + color / (white * white)) / (1.0 + color);
-    }
-    return color;
-}
-
+// The game tone maps and grades its stored colour values, which are gamma values here, so
+// the pass works on toGamma of the scene and returns it linear (docs/rendering/image-space.md).
 static float4 imageSpaceGrade(float3 color, constant ImageSpaceUniforms &uniforms)
 {
-    color = imageSpaceToneMap(color, uniforms);
-    float luminance = dot(color, imageSpaceLuminance);
-    color = mix(float3(luminance), color, uniforms.grading.x);
-    color *= uniforms.grading.y;
-    float3 encoded = pow(max(color, 0.0), 1.0 / 2.2);
-    encoded = (encoded - 0.5) * uniforms.grading.z + 0.5;
-    color = pow(max(encoded, 0.0), 2.2);
-    float tinted = dot(color, imageSpaceLuminance);
-    color = mix(color, tinted * uniforms.tint.rgb, uniforms.tint.a);
-    color = mix(color, uniforms.fade.rgb, uniforms.fade.a);
-    return float4(saturate(color), 1.0);
+    float3 scene = toGamma(color);
+    if (uniforms.toneMapping.z > 1.5 && uniforms.toneMapping.y > 0.0) {
+        float lum = max(dot(scene, imageSpaceLuminance), 1.0e-5);
+        float x = lum * uniforms.toneMapping.x;
+        float white = uniforms.toneMapping.y * 1.1;
+        float mapped = x * (1.0 + x / (white * white)) / (1.0 + x);
+        scene *= mapped / lum;
+    }
+    float grey = dot(scene, imageSpaceLuminance);
+    scene = mix(float3(grey), scene, uniforms.grading.x);
+    scene = mix(scene, grey * uniforms.tint.rgb, uniforms.tint.a);
+    float pivot = uniforms.toneMapping.w;
+    scene = uniforms.grading.z * (uniforms.grading.y * scene - pivot) + pivot;
+    scene = mix(saturate(scene), uniforms.fade.rgb, uniforms.fade.a);
+    return float4(toLinear(scene), 1.0);
 }
 
 fragment float4 imageSpaceFragment(
@@ -171,6 +166,8 @@ fragment float4 imageSpaceFragment(
     device atomic_uint *luminance [[buffer(BufferIndexImageSpaceLuminance)]],
     texture2d<float> scene [[texture(TextureIndexSceneColor)]],
     depth2d<float> sceneDepth [[texture(TextureIndexSceneDepth)]],
+    texture2d<float> occlusionMap [[texture(TextureIndexPostOcclusion)]],
+    texture2d<float> indirectMap [[texture(TextureIndexPostIndirectLight)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     sampler shadowCompare [[sampler(SamplerIndexShadowCompare)]])
 {
@@ -195,7 +192,9 @@ fragment float4 imageSpaceFragment(
     if (post.effects != 0) {
         float depth = sceneDepth.sample(postNearest, uv);
         PostPixel pixel = {uv, texel, in.position.xy, depth, postWorldPosition(uv, depth, post)};
-        color = postApply(color, pixel, frame, post, scene, sceneDepth, shadowMap, shadowCompare);
+        color = postApply(
+            color, pixel, frame, post, scene, sceneDepth, {occlusionMap, indirectMap}, shadowMap,
+            shadowCompare);
     }
     color = imageSpaceBloom(scene, linearClamp, uv, texel, color, uniforms);
     return imageSpaceGrade(color, uniforms);

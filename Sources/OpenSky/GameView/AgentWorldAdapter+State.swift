@@ -142,12 +142,12 @@ extension AgentWorldAdapter {
             "movementMode": .string(String(describing: gameSession.movementMode)),
             "cell": cellState(at: camera.position),
             "worldspace": game.streamer.map { .string($0.worldspaceEditorID) } ?? .null,
-            "weather": gameSession.weather?.currentWeatherEditorID.map(AgentJSON.string) ?? .null,
             "bodyFailure": .init(game.player.failureReason),
             "form": .string(game.playerBeastForm.rawValue),
             "behaviorProject": .init(game.player.graphProject),
             "behaviorProjectFailure": .init(game.player.raceGraphFailureReason)
         ]
+        result.merge(weatherReport(gameSession.weather)) { $1 }
         if let values = game.actorValues.runtime {
             let current = values.current(of: .player)
             let maximum = values.maximums(of: .player)
@@ -493,11 +493,15 @@ extension AgentWorldAdapter {
             "terrainLOD": terrainLODState(),
             "largeReferences": game.streamer.map { .init($0.largeReferenceCount) } ?? .null,
             "fullLODReferences": game.streamer.map { .init($0.fullLODReferenceCount) } ?? .null,
+            "generatedTerrainBlocks": game.streamer.map {
+                .init($0.generatedTerrainBlockCount)
+            } ?? .null,
             "hiddenLargeReferenceLOD": game.streamer.map {
                 .init($0.hiddenLargeReferenceSegments)
             } ?? .null,
             "screenFade": screenFadeState(),
             "postEffects": postEffectState(),
+            "lighting": lightingState(),
             "projectileVisuals": projectileVisualState(),
             "soundMix": soundMixState(),
             "treeWind": treeWindState(),
@@ -558,5 +562,21 @@ extension AgentWorldAdapter {
             "longestFrameGapMS": status.pacing.map { .number($0.longestGapMS) } ?? .null,
             "hitches": status.pacing.map { .init($0.hitches) } ?? .null
         ]
+    }
+}
+
+extension AgentWorldAdapter {
+    /// The weathers the frame draws, with their weights, so a fade that has not
+    /// finished shows next to the reported weather.
+    func weatherReport(_ weather: WeatherSystem?) -> [String: AgentJSON] {
+        guard let weather else { return ["weather": .null, "weatherBlend": .null] }
+        let blend = AgentJSON.array(weather.blendedWeathers.map { entry in
+            [
+                "weather": weather.store.weather(entry.weather)?.editorID.map(AgentJSON.string)
+                    ?? .formID(entry.weather.rawValue),
+                "weight": .init(entry.weight)
+            ]
+        })
+        return ["weather": .init(weather.currentWeatherEditorID), "weatherBlend": blend]
     }
 }

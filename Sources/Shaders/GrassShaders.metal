@@ -35,7 +35,8 @@ static GrassVertexOut grassVertexOut(
 
     GrassVertexOut out;
     out.position = frame.viewProjectionMatrix * world;
-    out.normal = (instance.normalMatrix * float4(normal, 0.0)).xyz;
+    // The game's grass shader ignores the mesh normal and lights the instance's up axis.
+    out.normal = (instance.normalMatrix * float4(0.0, 0.0, 1.0, 0.0)).xyz;
     out.worldPosition = world.xyz;
     out.texcoord = texcoord * draw.uvScale + draw.uvOffset;
     out.color = color * instance.instanceColor;
@@ -204,10 +205,14 @@ fragment float4 grassFragment(
         draw.receivesShadows != 0
             ? sunShadowFactor(in.worldPosition, frame, shadowMap, auxiliary, shadowSampler)
             : 1.0;
+    // The game's grass light: the sun without the image space scale, at least 30 % of it
+    // in shadow, plus the single ambient colour; then the output scale and no fog
+    // (docs/rendering/surface-shading.md#grass).
     float3 illumination =
-        frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame);
-    float3 lit = diffuse.rgb * linearVertexColour(in.color.rgb, frame) * illumination;
+        frame.grassLight.rgb * lambert * mix(0.3, 1.0, shadow) + frame.ambientColor;
+    float3 lit = diffuse.rgb * linearVertexColour(in.color.rgb, frame) *
+                 toLinear(illumination * frame.grassLight.w);
     // Opaque: alpha only gates the test above. The frame is premultiplied, so
     // a lower alpha would show as white or black.
-    return float4(applyFog(lit, in.worldPosition, frame), 1.0);
+    return float4(lit, 1.0);
 }

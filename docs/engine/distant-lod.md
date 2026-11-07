@@ -153,6 +153,38 @@ temporary Is Full LOD reference that only a later plugin adds is drawn only when
 loaded. The objects merged into the object LOD blocks do not follow enable changes: the
 vanilla blocks were built with them, and only generated LOD could leave them out.
 
+## Generated terrain
+
+The vanilla terrain LOD files were built from `Skyrim.esm` alone, so land that `Update.esm`,
+the DLCs, or a mod changes is wrong far away. With "Distant land from the load order" on the
+Graphics page (on by default), each terrain block is built from the winning `LAND` record of
+every cell in it instead. The vanilla file draws when no cell of the block has land, and when
+the switch is off.
+
+- The mesh is a 33 x 33 grid over the block at every level, as the vanilla level 4 blocks have
+  about. Its heights are the `VHGT` heights, read bilinearly between the land's own vertices. A
+  cell without land takes the worldspace's default land height (`WRLD` `DNAM`).
+- Each side hangs a skirt down by the vanilla depth: 1000 units at level 4, 2000 at 8, 3000 at
+  16, and 4000 at 32 ([skirts](#skirts)). The skirt draws from both sides.
+- The diffuse map is 256 x 256, as vanilla's. Each texel takes 4 samples. A sample blends the
+  quadrant's base texture and its layers by their `VTXT` opacity in linear light, with the
+  near terrain's tiling (one repeat per 2 quads), then multiplies `VCLR` as the near terrain
+  shader does. A land texture is read at a small mip whose texels match the LOD texel: an edge
+  of 8, 4, 2, and 1 at levels 4, 8, 16, and 32.
+- The normal map is 256 x 256 and holds the `VNML` normals in model space, x in red, z in
+  green, and y in blue, as vanilla's `_n` maps do.
+- The generated block keeps the land textures' own brightness, so a ring with generated
+  blocks draws with no [brightness curve](/rendering/surface-shading.md).
+
+The blocks are built on the cell build queue when a ring first needs them, and the mesh cache
+keeps them like a file's model. The quick first ring of a session still draws the vanilla files,
+because its builder cannot read the plugins; the second build of the same center swaps the
+generated blocks in behind the loading screen. `openskycli game state frame` reports
+`generatedTerrainBlocks`, and `openskycli render` prints the count with the LOD line.
+
+Objects and trees still come from the vanilla files. The game draws its own LOD files only;
+building them from the load order is OpenSky's own step.
+
 ## Tree LOD
 
 Each tree type gets one cached model of two crossed planes. The tree positions (`.btt`) are

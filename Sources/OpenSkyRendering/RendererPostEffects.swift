@@ -30,9 +30,18 @@ extension Renderer {
             uniforms.effects |= UInt32(PostEffectFlag.ambientOcclusion.rawValue)
             uniforms.ambientOcclusion = SIMD4(
                 PostEffectSettings.ambientOcclusionRadius,
-                PostEffectSettings.ambientOcclusionStrength,
+                0,
                 PostEffectSettings.ambientOcclusionBias,
                 PostEffectSettings.ambientOcclusionFadeDistance
+            )
+            setHistoryCamera(&uniforms)
+        }
+        if postEffects.indirectLight {
+            uniforms.effects |= UInt32(PostEffectFlag.indirectLight.rawValue)
+            setHistoryCamera(&uniforms)
+            uniforms.indirectLight = SIMD4(
+                PostEffectSettings.indirectLightRadius, PostEffectSettings.indirectLightStrength,
+                PostEffectSettings.indirectLightBias, 0
             )
         }
         if postEffects.volumetricLight {
@@ -48,7 +57,8 @@ extension Renderer {
             )
             uniforms.depthOfFieldMode = SIMD4(
                 parameters.depthOfFieldKeepsSkySharp ? 0 : 1,
-                Float(parameters.depthOfFieldSides.rawValue), 0, 0
+                Float(parameters.depthOfFieldSides.rawValue),
+                parameters.depthOfFieldUsesTarget ? 1 : 0, depthOfFieldFocus.centreWeight
             )
         }
         if postEffects.fxaa {
@@ -67,6 +77,70 @@ extension Renderer {
         return uniforms.effects == 0 ? nil : uniforms
     }
 
+    /// The camera and last frame's view, so the trace finds the pixel in its history.
+    private func setHistoryCamera(_ uniforms: inout PostEffectUniforms) {
+        let camera = frameInput.view.position
+        uniforms.camera = SIMD4(camera, Float(frameIndex % 1024))
+        uniforms.previousViewProjection = imageSpacePass.previousViewProjection ?? .init(1)
+        uniforms.previousCamera = SIMD4(imageSpacePass.previousCamera ?? camera, 0)
+        let reach = PostEffectSettings.ambientOcclusionRadius
+        let reachSquared = reach * reach
+        uniforms.ambientOcclusionCurve = SIMD4(
+            PostEffectSettings
+                .ambientOcclusionIntensity / (reachSquared * reachSquared * reachSquared),
+            PostEffectSettings.ambientOcclusionContrastExponent,
+            PostEffectSettings.ambientOcclusionHistoryDifference,
+            PostEffectSettings.ambientOcclusionHistoryDepth
+        )
+    }
+
+    /// Traces the occlusion and the indirect light the composite reads, after the scene
+    /// copies. Each pass uses its history only when last frame traced into it.
+    func encodeHistoryPasses(
+        _ encoder: MTL4ComputeCommandEncoder,
+        post: inout PostEffectUniforms?,
+        inputs: (depth: MTLTexture, scene: MTLTexture),
+        slot: Int
+    ) {
+        guard var uniforms = post else { return }
+        let passes = [
+            HistoryPassEntry(
+                pass: imageSpacePass.occlusion, flag: .ambientOcclusion, index: .postOcclusion
+            ),
+            HistoryPassEntry(
+                pass: imageSpacePass.indirectLight, flag: .indirectLight, index: .postIndirectLight
+            )
+        ]
+        let ready = passes.filter { entry in
+            guard uniforms.effects & UInt32(entry.flag.rawValue) != 0 else { return false }
+            guard entry.pass.prepare(matching: inputs.scene, residency: residencySet) else {
+                uniforms.effects &= ~UInt32(entry.flag.rawValue)
+                return false
+            }
+            let holds: Float = entry.pass.historyHolds(frame: frameIndex) ? 1 : 0
+            if entry.flag == .ambientOcclusion {
+                uniforms.previousCamera.w = holds
+            } else {
+                uniforms.indirectLight.w = holds
+            }
+            return true
+        }
+        post = uniforms
+        guard !ready.isEmpty else { return }
+        encoder.barrier(
+            afterEncoderStages: .blit, beforeEncoderStages: .dispatch, visibilityOptions: .device
+        )
+        let address = imageSpacePass.postUniformBuffer.gpuAddress
+            + UInt64(ImageSpacePassResources.postUniformStride * slot)
+        let traced = PostHistoryInputs(uniforms: address, depth: inputs.depth, scene: inputs.scene)
+        for entry in ready {
+            entry.pass.encode(encoder, inputs: traced, frame: frameIndex)
+            if let result = entry.pass.result {
+                argumentTable.setTexture(result.gpuResourceID, index: entry.index.rawValue)
+            }
+        }
+    }
+
     /// The weather's `VOLI` values (docs/rendering/post-effects.md#volumetric-light).
     private func setVolumetricLight(_ uniforms: inout PostEffectUniforms) {
         let look = volumetricLight.clamped
@@ -76,8 +150,12 @@ extension Renderer {
             PostEffectSettings.volumetricReachPerSamplingRange * look.samplingRangeFactor,
             look.phaseFunctionScattering
         )
+        // The frame's sun colour carries the image space sunlight scale, which only the
+        // lit shaders take; the weight undoes it.
+        let sunlight = max(lightScales.sunlight, 0.001)
         uniforms.volumetricColour = SIMD4(
-            look.color * look.customColorContribution, 1 - look.customColorContribution
+            look.color * look.customColorContribution,
+            (1 - look.customColorContribution) / sunlight
         )
         uniforms.volumetricDensity = SIMD4(
             look.densityContribution,
@@ -109,4 +187,11 @@ extension Renderer {
         else { return nil }
         return PostEffectDepthCopy(copy: copy)
     }
+}
+
+/// One traced pass the composite reads: its switch and the slot its result binds to.
+private struct HistoryPassEntry {
+    let pass: PostHistoryPass
+    let flag: PostEffectFlag
+    let index: TextureIndex
 }

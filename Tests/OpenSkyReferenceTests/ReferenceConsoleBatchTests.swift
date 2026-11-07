@@ -22,7 +22,7 @@ struct ReferenceConsoleBatchTests {
             "cow Tamriel 4 -8",
             "player.setpos x 1000.50", "player.setpos y -2000.25", "player.setpos z 300.00",
             "player.setangle x 0.00", "player.setangle z 90.00",
-            "set gamehour to 13.50", "fw 0010E1EC", "fov 80.69"
+            "set gamehour to 13.50", "fw 0010E1EC", "fov 97.11"
         ])
     }
 

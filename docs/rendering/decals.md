@@ -69,15 +69,19 @@ the ground:
 - A frame with skin decals copies the scene depth, as the water does
   ([water](/rendering/water.md)). The boxes draw right after the copy. A frame with no copy,
   such as one with a non-perspective camera, draws them as flat quads.
+- The box marks only skinned meshes, as the game does. Each skinned mesh that writes depth
+  sets one stencil bit (the top bit of the 8-bit stencil) where it draws, and the box draws
+  only where that bit is set. The depth split keeps the stencil, so the bit is still there
+  after the copy. The ground near the feet and a held weapon stay clean. The SWF clip
+  counts use the 7 bits below it.
 - Its width and height are at most 16 units.
 - `[Display] uMaxSkinDecals` limits the live skin decals, 35 when the settings give none.
   `iMaxSkinDecalsPerFrame` limits those placed in one frame. `bDecals` off also turns them off.
 
 ## Approximations
 
-- A skin decal projects onto every surface inside its box, not only onto the actor's mesh. A
-  hit near the feet can also mark the ground, and a held weapon in the box is marked too.
-  The game projects onto the skinned mesh only. Picking the bone by the nearest origin, the
+- A skin decal marks every skinned mesh inside its box, so a second actor standing in the box
+  is marked too. Picking the bone by the nearest origin, the
   box depth, the 16-unit size cap, and the default limit of 35 are OpenSky's own.
 - A decal is one flat quad. It does not wrap around a corner or follow uneven ground.
 - The 2 x 2 subtexture grid is a reading of the vanilla blood textures, not a confirmed rule.

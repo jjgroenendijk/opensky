@@ -348,16 +348,14 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
         return result
     }
 
-    /// The sky dome colours times the `IMGS` sky scale; clouds keep theirs.
-    public func scalingSky(by scale: Float) -> ResolvedWeather {
-        guard scale != 1 else { return self }
+    /// The dome colours as the game's sky shader draws them: times the scene scale, plus
+    /// the image space sky scale lift. The dome blends its three colours, so this holds for
+    /// every point of it.
+    public func liftingSky(scale: Float, lift: Float) -> ResolvedWeather {
         var result = self
-        result.skyUpper *= scale
-        result.skyLower *= scale
-        result.horizon *= scale
-        result.sun *= scale
-        result.sunGlare *= scale
-        result.moonGlare *= scale
+        result.skyUpper = skyUpper * scale + lift
+        result.skyLower = skyLower * scale + lift
+        result.horizon = horizon * scale + lift
         return result
     }
 

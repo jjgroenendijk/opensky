@@ -7,6 +7,8 @@ import simd
 struct FrameLight {
     let sunDirection: SIMD3<Float>
     let sunColor: SIMD3<Float>
+    /// The sun colour before the image space sunlight scale, which grass does not take.
+    let grassSunColor: SIMD3<Float>
     let ambientColor: SIMD3<Float>
     let ambient: DirectionalAmbientColors
     /// The weather's sky palette; nil when the scene draws no sky.
@@ -23,27 +25,29 @@ extension Renderer {
         let covered = effects.loadingCover != nil
         let scales = lightScales
         let aboveWater = resolveFrameFog(weatherLight: covered ? nil : weather)
+        let sun = weather?.sunlightColor ?? interior?.directionalColor ?? camera.sunColor
         return FrameLight(
             sunDirection: interior?.directionalDirection ?? exteriorSunTravelDirection,
-            sunColor: (weather?.sunlightColor ?? interior?.directionalColor ?? camera.sunColor)
-                * scales.sunlight,
+            sunColor: sun * scales.sunlight,
+            grassSunColor: sun,
             ambientColor: weather?.ambientColor ?? interior?.ambientColor
                 ?? camera.ambientColor,
             ambient: weather?.directionalAmbient ?? interior?.directionalAmbient ?? .black,
-            weatherSky: scene.sky != nil && !covered ? weather?.scalingSky(by: scales.sky) : nil,
+            weatherSky: scene.sky != nil && !covered
+                ? weather?.liftingSky(scale: EyeAdaptation.sceneScale, lift: scales.skyLift) : nil,
             fog: waterAboveCamera.map(underwaterFog) ?? aboveWater
         )
     }
 
-    /// The `IMGS` sunlight and sky scales. They push colour above 1, so they apply only
-    /// with the HDR target on, where tone mapping brings it back.
-    var lightScales: (sunlight: Float, sky: Float) {
-        guard colorPixelFormat == .rgba16Float else { return (1, 1) }
+    /// The `IMGS` sunlight scale multiplies the sun colour. The sky scale, times the scene
+    /// scale, is added to the dome and cloud colours (docs/rendering/image-space.md).
+    var lightScales: (sunlight: Float, skyLift: Float) {
         let hdr = frameInput.imageSpace.current(withScreenFade: false).hdr
         func finite(_ value: Float) -> Float {
             value.isFinite ? simd_clamp(value, 0, 8) : 1
         }
-        return (finite(hdr.sunlightScale), finite(hdr.skyScale))
+        let lift = hdr.skyScale.isFinite ? simd_clamp(hdr.skyScale, 0, 8) : 0
+        return (finite(hdr.sunlightScale), lift * EyeAdaptation.sceneScale)
     }
 
     var clampedGrassDrawDistance: Float {

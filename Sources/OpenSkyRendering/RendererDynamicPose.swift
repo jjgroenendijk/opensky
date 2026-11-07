@@ -40,8 +40,12 @@ extension Renderer {
     /// How far `instance`'s reference has faded out this frame.
     func fadeOut(of instance: DrawInstance) -> Float {
         let fades = frameInput.instancePoses.fades
-        guard !fades.isEmpty, instance.referenceFormID != 0 else { return 0 }
-        return min(max(fades[instance.referenceFormID] ?? 0, 0), 1)
+        guard instance.referenceFormID != 0, !fades.isEmpty || !actorCameraFadeOuts.isEmpty
+        else { return 0 }
+        let faded = max(
+            fades[instance.referenceFormID] ?? 0, actorCameraFadeOuts[instance.referenceFormID] ?? 0
+        )
+        return min(max(faded, 0), 1)
     }
 
     /// A vehicle follower wins over a walking pose, because a rider does not walk. A

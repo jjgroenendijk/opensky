@@ -133,6 +133,17 @@ typedef NS_ENUM(EnumBackingType, PostEffectFlag)
     PostEffectFlagDepthOfField = 1 << 2,
     PostEffectFlagLensFlare = 1 << 3,
     PostEffectFlagAntiAliasing = 1 << 4,
+    PostEffectFlagIndirectLight = 1 << 5,
+};
+
+/// The textures of the post-effect compute passes, in their own argument table.
+typedef NS_ENUM(EnumBackingType, PostComputeTextureIndex)
+{
+    PostComputeTextureIndexDepth = 0,
+    PostComputeTextureIndexScene = 1,
+    PostComputeTextureIndexHistory = 2,
+    PostComputeTextureIndexSource = 3,
+    PostComputeTextureIndexOutput = 4,
 };
 
 /// The screen-space effects of the image-space composite (docs/rendering/post-effects.md).
@@ -142,7 +153,7 @@ typedef struct
     matrix_float4x4 inverseViewProjection;
     /// x, y: projection m00 and m11, to turn a world radius into a screen radius.
     vector_float4 projection;
-    /// x radius in world units, y strength, z bias, w fade distance.
+    /// x radius in world units, y unused, z bias, w fade distance.
     vector_float4 ambientOcclusion;
     /// x strength, y march steps, z reach in world units, w phase asymmetry.
     vector_float4 volumetricLight;
@@ -156,10 +167,22 @@ typedef struct
     /// x strength, y clear distance, z distance where the blur is full, w full blur
     /// radius in pixels.
     vector_float4 depthOfField;
-    /// x 1 blurs the sky, y the blurred sides (`DepthOfFieldSides`); zw unused.
+    /// x 1 blurs the sky, y the blurred sides (`DepthOfFieldSides`), z 1 when the focus
+    /// follows the view centre, w the centre's weight in that focus.
     vector_float4 depthOfFieldMode;
     /// xy the sun's texture coordinate, z strength, w the target's width over its height.
     vector_float4 lensFlare;
+    /// Last frame's view-projection, to find a pixel in the occlusion history.
+    matrix_float4x4 previousViewProjection;
+    /// xyz the camera, w a frame counter that turns the occlusion taps.
+    vector_float4 camera;
+    /// xyz last frame's camera, w 1 when the occlusion history holds last frame.
+    vector_float4 previousCamera;
+    /// Occlusion: x intensity over radius^6, y contrast exponent, z history value ramp,
+    /// w history depth ramp.
+    vector_float4 ambientOcclusionCurve;
+    /// Indirect light: x radius, y strength, z bias, w 1 when its history holds last frame.
+    vector_float4 indirectLight;
     /// PostEffectFlag bits.
     unsigned int effects;
 } PostEffectUniforms;

@@ -29,24 +29,24 @@ nonisolated public final class MeshLibrary {
     public let fileSystem: any GameFileSource
     public let device: MTLDevice
     public let textures: TextureLibrary
-    private var cache: [String: RenderModel] = [:]
+    var cache: [String: RenderModel] = [:]
     /// The mesh pool of each mesh particle system, by model key and system index.
     var particleMeshModels: [String: RenderModel?] = [:]
     /// Per-path count of shapes the flattener dropped (unsupported or empty), so
     /// scene build can report skips without re-parsing.
-    private var skippedShapes: [String: Int] = [:]
+    var skippedShapes: [String: Int] = [:]
     /// Model-space AABB per loaded path — captured at parse time because the
     /// vertex data is gone from the CPU after upload (see ModelBounds).
     public var modelBounds: [String: ModelBounds] = [:]
     /// Texture keys captured when each cached model was first uploaded.
-    private var modelTextureKeys: [String: Set<String>] = [:]
+    var modelTextureKeys: [String: Set<String>] = [:]
     /// Immutable particle definitions decoded beside each normal model. A
     /// placed ref gets fresh playback state while sharing cached texture/GPU
     /// resources through TextureLibrary.
     public var particleDefinitions: [String: [ParticleSystemDefinition]] = [:]
     /// Mesh keys resolved since the last drain, so a cell build can record its
     /// mesh working set (for eviction keep-sets). Build-queue confined.
-    private var touchedKeys: Set<String> = []
+    var touchedKeys: Set<String> = []
     /// The behaviour project each object mesh names; nil inside means none.
     var behaviorProjects: [String: String?] = [:]
     /// The furniture markers of each furniture mesh read so far.

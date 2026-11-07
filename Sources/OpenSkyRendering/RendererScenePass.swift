@@ -40,23 +40,22 @@ extension Renderer {
     private func updateFrameUniforms(slot: Int, viewProjection: float4x4) -> Int {
         let offset = Self.alignedFrameUniformsSize * slot
         let light = frameLight()
-        let (ambient, fog, weatherSky) = (light.ambient, light.fog, light.weatherSky)
         var uniforms = FrameUniforms(
             viewProjectionMatrix: viewProjection,
             cameraPosition: frameInput.view.position,
             sunDirection: light.sunDirection,
             sunColor: light.sunColor,
             ambientColor: light.ambientColor,
-            directionalAmbientPositiveX: ambient.positiveX,
-            directionalAmbientNegativeX: ambient.negativeX,
-            directionalAmbientPositiveY: ambient.positiveY,
-            directionalAmbientNegativeY: ambient.negativeY,
-            directionalAmbientPositiveZ: ambient.positiveZ,
-            directionalAmbientNegativeZ: ambient.negativeZ,
-            fogNearColor: fog.nearColor,
-            fogFarColor: fog.farColor,
-            fogDistances: fog.distances,
-            fogEnabled: fog.enabled,
+            directionalAmbientPositiveX: light.ambient.positiveX,
+            directionalAmbientNegativeX: light.ambient.negativeX,
+            directionalAmbientPositiveY: light.ambient.positiveY,
+            directionalAmbientNegativeY: light.ambient.negativeY,
+            directionalAmbientPositiveZ: light.ambient.positiveZ,
+            directionalAmbientNegativeZ: light.ambient.negativeZ,
+            fogNearColor: light.fog.nearColor,
+            fogFarColor: light.fog.farColor,
+            fogDistances: light.fog.distances,
+            fogEnabled: light.fog.enabled,
             timeOfDayHours: frameInput.timeOfDay,
             animationTime: animationTime,
             shadowViewProjections: (
@@ -67,13 +66,12 @@ extension Renderer {
             shadowsEnabled: shadowsActiveThisFrame ? 1 : 0,
             shadowInverseResolution: 1 / Float(shadow.map.width),
             shadowSampleRadius: shadowSampleRadius,
-            weatherSkyEnabled: weatherSky == nil ? 0 : skyCelestial != nil
-                && frameCelestial != nil ? 2 : 1,
-            weatherSkyUpperColor: weatherSky?.skyUpper ?? .zero,
-            weatherSkyLowerColor: weatherSky?.skyLower ?? .zero,
-            weatherHorizonColor: weatherSky?.horizon ?? .zero,
-            weatherSunColor: weatherSky?.sun ?? .zero,
-            weatherGlareColor: weatherSky?.sunGlare ?? .zero,
+            weatherSkyEnabled: weatherSkyMode(light),
+            weatherSkyUpperColor: light.weatherSky?.skyUpper ?? .zero,
+            weatherSkyLowerColor: light.weatherSky?.skyLower ?? .zero,
+            weatherHorizonColor: light.weatherSky?.horizon ?? .zero,
+            weatherSunColor: light.weatherSky?.sun ?? .zero,
+            weatherGlareColor: light.weatherSky?.sunGlare ?? .zero,
             cameraRight: frameInput.view.right,
             cameraUp: simd_normalize(simd_cross(frameInput.view.right, frameInput.view.forward)),
             grassWind: frameGrassWind,
@@ -93,7 +91,9 @@ extension Renderer {
             focusShadowExtents: focusShadows.extents,
             focusShadowCount: UInt32(focusShadows.views.count),
             focusShadowBias: focusShadows.bias,
-            screenSpaceReflections: waterDepth.reflects ? 1 : 0
+            screenSpaceReflections: waterDepth.reflects ? 1 : 0,
+            characterLight: characterLightUniform,
+            grassLight: SIMD4(light.grassSunColor, grassOutputScale(fog: light.fog))
         )
         frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
@@ -303,7 +303,9 @@ extension Renderer {
         )
         bindMaterialTextures(group.material)
         if let mode = state.materialDepth {
-            applyDrawState(of: group.material, mode: mode, state: state)
+            applyDrawState(
+                of: group.material, mode: mode, skinned: group.mesh.isSkinned, state: state
+            )
         }
         state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
         drawVisible(group.mesh, visible, state: state)
@@ -581,5 +583,15 @@ extension Renderer {
         encodeFirstPersonArms(descriptor: descriptor, state: &state)
         state.encoder.setTriangleFillMode(.fill)
         return true
+    }
+
+    /// 0 without a weather sky, 2 when the sky objects draw too, else 1.
+    func weatherSkyMode(_ light: FrameLight) -> UInt32 {
+        light.weatherSky == nil ? 0 : skyCelestial != nil && frameCelestial != nil ? 2 : 1
+    }
+
+    /// The game drops the scene scale from grass when the fog has no distance at all.
+    func grassOutputScale(fog: FrameFog) -> Float {
+        fog.distances.x == 0 && fog.distances.y == 0 ? 1 : EyeAdaptation.sceneScale
     }
 }

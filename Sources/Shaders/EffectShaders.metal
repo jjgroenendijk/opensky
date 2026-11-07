@@ -176,7 +176,7 @@ static float4 litDecal(
     float shadow = sunShadowFactor(world, frame, shadowMap, auxiliary, shadowSampler);
     float3 illumination =
         frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame);
-    return float4(applyFog(diffuse.rgb * illumination, world, frame), diffuse.a);
+    return float4(applyFog(diffuse.rgb * toLinear(illumination), world, frame), diffuse.a);
 }
 
 fragment float4 decalFragment(

@@ -89,11 +89,11 @@ struct FrustumTests {
     }
 
     @Test func boxBeyondFarPlaneIsOutside() {
-        // Far = 65536 units; box entirely past it, no straddle.
         let frustum = Self.makeFrustum()
+        let far = Renderer.farPlane
         #expect(!frustum.intersects(
-            min: SIMD3<Float>(-10, 100_000, -10),
-            max: SIMD3<Float>(10, 100_010, 10)
+            min: SIMD3<Float>(-10, far * 1.5, -10),
+            max: SIMD3<Float>(10, far * 1.5 + 10, 10)
         ))
     }
 

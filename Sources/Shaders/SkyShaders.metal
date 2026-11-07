@@ -13,10 +13,8 @@ vertex SkyVertexOut skyVertex(uint vertexID [[vertex_id]])
     return out;
 }
 
-// The sun sits along the same direction that lights the scene. The pixel's
-// view ray is rebuilt from the camera basis, so the disc stays round at any
-// aspect ratio. Returns (disc, glow), both zero once the sun is below the horizon.
-static float2 skySunDiscAndGlow(SkyVertexOut in, constant FrameUniforms &frame)
+// The pixel's view ray, rebuilt from the camera basis, so it holds at any aspect ratio.
+static float3 skyViewRay(SkyVertexOut in, constant FrameUniforms &frame)
 {
     float4 rightClip =
         frame.viewProjectionMatrix * float4(frame.cameraForward + frame.cameraRight, 0.0);
@@ -24,8 +22,21 @@ static float2 skySunDiscAndGlow(SkyVertexOut in, constant FrameUniforms &frame)
     float2 ndc = in.uv * 2.0 - 1.0;
     float tanX = abs(rightClip.x) > 1e-5 ? rightClip.w / rightClip.x : 1.0;
     float tanY = abs(upClip.y) > 1e-5 ? upClip.w / upClip.y : 1.0;
-    float3 ray = normalize(
+    return normalize(
         frame.cameraForward + frame.cameraRight * (ndc.x * tanX) + frame.cameraUp * (ndc.y * tanY));
+}
+
+// 0 at and below the horizon, 1 from 35 degrees up: the span a level view used to show
+// from the bottom to the top of the screen. So the horizon colour meets the far fog.
+static float skyHeight(float3 ray)
+{
+    return saturate(asin(clamp(ray.z, -1.0, 1.0)) / 0.6108652);
+}
+
+// The sun sits along the same direction that lights the scene, so the disc stays round.
+// Returns (disc, glow), both zero once the sun is below the horizon.
+static float2 skySunDiscAndGlow(float3 ray, constant FrameUniforms &frame)
+{
     float3 towardSun = -normalize(frame.sunDirection);
     float aboveHorizon = smoothstep(-0.05, 0.05, towardSun.z);
     float angle = acos(clamp(dot(ray, towardSun), -1.0, 1.0));
@@ -37,24 +48,25 @@ static float2 skySunDiscAndGlow(SkyVertexOut in, constant FrameUniforms &frame)
 // Weather sky: horizon -> sky-lower -> sky-upper vertical gradient, with the
 // sun disc and glow tinted by the weather sun and sun-glare colours, unless the
 // textured sun draws them (weatherSkyEnabled 2).
-static float4 weatherSky(SkyVertexOut in, constant FrameUniforms &frame)
+static float4 weatherSky(float3 ray, constant FrameUniforms &frame)
 {
+    float height = skyHeight(ray);
     float3 lower =
-        mix(frame.weatherHorizonColor, frame.weatherSkyLowerColor, smoothstep(0.0, 0.5, in.uv.y));
+        mix(frame.weatherHorizonColor, frame.weatherSkyLowerColor, smoothstep(0.0, 0.5, height));
     float3 upper =
-        mix(frame.weatherSkyLowerColor, frame.weatherSkyUpperColor, smoothstep(0.5, 1.0, in.uv.y));
-    float3 color = in.uv.y < 0.5 ? lower : upper;
+        mix(frame.weatherSkyLowerColor, frame.weatherSkyUpperColor, smoothstep(0.5, 1.0, height));
+    float3 color = height < 0.5 ? lower : upper;
     if (frame.weatherSkyEnabled == 2) {
-        return float4(color, 1.0);
+        return float4(toLinear(color), 1.0);
     }
 
-    float2 sun = skySunDiscAndGlow(in, frame);
+    float2 sun = skySunDiscAndGlow(ray, frame);
     float3 tint =
         frame.weatherSunColor /
         max(max3(frame.weatherSunColor.r, frame.weatherSunColor.g, frame.weatherSunColor.b), 1e-3);
     color += frame.weatherGlareColor * sun.y * 0.5;
     color = mix(color, mix(tint, float3(1.0), 0.6), sun.x);
-    return float4(color, 1.0);
+    return float4(toLinear(color), 1.0);
 }
 
 fragment float4 skyFragment(
@@ -62,8 +74,9 @@ fragment float4 skyFragment(
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]])
 {
     float hour = fmod(frame.timeOfDayHours + 24.0, 24.0);
+    float3 ray = skyViewRay(in, frame);
     if (frame.weatherSkyEnabled != 0) {
-        return weatherSky(in, frame);
+        return weatherSky(ray, frame);
     }
     float sunrise = smoothstep(5.0, 8.0, hour);
     float sunset = 1.0 - smoothstep(18.0, 21.0, hour);
@@ -79,10 +92,9 @@ fragment float4 skyFragment(
     float3 upper = mix(nightUpper, dayUpper, daylight);
     float3 horizon = mix(nightHorizon, dayHorizon, daylight);
     horizon = mix(horizon, warmHorizon, saturate(twilight * 0.7));
-    float height = smoothstep(0.05, 0.92, in.uv.y);
-    float3 color = mix(horizon, upper, height);
+    float3 color = mix(horizon, upper, smoothstep(0.05, 0.92, skyHeight(ray)));
 
-    float2 sun = skySunDiscAndGlow(in, frame);
+    float2 sun = skySunDiscAndGlow(ray, frame);
     color += float3(1.0, 0.72, 0.36) * sun.y * 0.22;
     color = mix(color, float3(1.0, 0.95, 0.82), sun.x);
     return float4(color, 1.0);
@@ -125,5 +137,6 @@ fragment float4 cloudFragment(
     float4 texel = cloudMap.sample(trilinear, in.texcoord);
     // The dome's vertex colours are (1, 0, 0, a): only the alpha, an edge fade, is used.
     float alpha = texel.a * layer.colorAlpha.a * in.color.a;
-    return float4(texel.rgb * layer.colorAlpha.rgb, alpha);
+    // The game adds the sky scale lift to the cloud's gamma colour.
+    return float4(toLinear(toGamma(texel.rgb) * layer.colorAlpha.rgb + layer.lift), alpha);
 }

@@ -173,6 +173,7 @@ nonisolated extension ImageSpaceParameters {
         {
             result.depthOfFieldSides = DepthOfFieldSides(flags: flags)
             result.depthOfFieldKeepsSkySharp = flags & 0x04 != 0
+            result.depthOfFieldUsesTarget = sample.depthOfFieldUsesTarget
         }
         if let color = sample.tint {
             result.tint = Self.averageTint([

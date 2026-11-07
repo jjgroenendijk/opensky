@@ -14,7 +14,8 @@ nonisolated public struct ImageSpaceHDR: Equatable, Sendable {
     public var receiveBloomThreshold: Float = 0
     public var white: Float = 0
     public var sunlightScale: Float = 1
-    public var skyScale: Float = 1
+    /// Added to the sky, so no image space adds nothing.
+    public var skyScale: Float = 0
     public var eyeAdaptStrength: Float = 0
 
     public init() {}
@@ -78,6 +79,8 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
     /// The Creation Kit's "No Sky": the depth of field leaves the sky sharp.
     public var depthOfFieldKeepsSkySharp = false
     public var depthOfFieldSides = DepthOfFieldSides.byOrder
+    /// A modifier's "Use Target": the focus follows the depth at the view centre.
+    public var depthOfFieldUsesTarget = false
     public var hdr = ImageSpaceHDR()
 
     /// No change to the frame.
@@ -141,6 +144,7 @@ nonisolated public struct ImageSpaceParameters: Equatable, Sendable {
         result.depthOfFieldBlurRadius = sum(\.depthOfFieldBlurRadius)
         result.depthOfFieldKeepsSkySharp = heaviest?.depthOfFieldKeepsSkySharp ?? false
         result.depthOfFieldSides = heaviest?.depthOfFieldSides ?? .byOrder
+        result.depthOfFieldUsesTarget = heaviest?.depthOfFieldUsesTarget ?? false
         result.hdr = ImageSpaceHDR
             .blend(normalized.map { (value: $0.value.hdr, weight: $0.weight) })
         return result

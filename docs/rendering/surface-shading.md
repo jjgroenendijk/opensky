@@ -74,6 +74,29 @@ reference's `XEMI` light, or its `XEMI` region's weather colour at this hour
 keeps the NIF colour. The sun terms
 use the sun shadow.
 
+### Character light
+
+Every lit shape of an actor, its body, worn armour, and held items, takes the game's character
+light, a white light added with the ambient light. `N` is the normal in view space: x to the
+right, y up, z away from the camera.
+
+- `rim = clamp(N . (1, 1, 1) / sqrt(3), 0, 1)` lights faces that turn away from the camera,
+  so the outline of the actor glows.
+- `fill = clamp(0.1644 N.y - 0.9864 N.z, 0, 1)` lights faces that look at the camera.
+- `light = (0.75 rim + 0.3 fill) × min(2 L, 0.75)`, with `L` the scene luminance the eye has
+  adapted to.
+
+It has no falloff and no shadow, and it is on in every scene, as in the game. The game puts it
+on every actor with loaded 3D, the player too (clean-room read of the game's shaders and of
+`SkyrimSE.exe` 1.7.104.0, 2026-11-06, behaviour only). The "Character light" switch on the
+Graphics page turns it off; the game has a setting that does the same. `state frame` shows it
+under `postEffects.characterLight`. The game reads `N` in "the lighting space of the shape". OpenSky
+reads it in view space, because then the two terms make the rim and fill light the effect is
+for. A world-space reading lit an actor's back, seen from behind, with almost nothing (capture
+pair `.logs/reference/20261106T182635/` and `20261106T182638/`, 2026-11-06). OpenSky reads
+`L` as its own eye adaptation luminance. Both the space and the luminance scale are likely,
+not confirmed.
+
 A specular surface reflects no ambient light along the view. The game's `[Display] bIBLFEnable`
 reads as "image-based lighting", but it turns on an image-based lens flare, a screen effect, not
 a surface term (clean-room read of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). Shiny surfaces show
@@ -198,15 +221,43 @@ switch for terrain, grass, and decals. Without that, a vertex
 colour of 0.5 darkens a surface to 0.5 of its linear value instead of about 0.22, and baked
 shading looks washed out and grey.
 
+The light colours are gamma values too: the weather's sunlight, ambient, and `DALC`, the
+cell lighting, and each light's colour. The game adds the lights in gamma space and
+multiplies the gamma albedo by the sum. OpenSky does the same sum, then raises it to the
+power 2.2 before it multiplies the linear albedo. For a product, that gives exactly the
+game's colour. A mesh with specular light does the whole sum in gamma space and makes the
+result linear at the end. Fog mixes in gamma space, with the gamma fog colour. The sky,
+cloud, sun, and moon colours are made linear before they are drawn.
+
+A capture pair on 2026-11-06 showed why: OpenSky's sky at noon was (121, 170, 193) where the
+game's was (53, 99, 116), which is the game's colour encoded as sRGB a second time.
+
 ## Output clamp
 
-After fog, the game's lighting shader multiplies the colour by a scale that it sets each frame,
-and then clamps each channel to at most 1 (behaviour described from a clean-room read of the
-game's shaders in `Skyrim - Shaders.bsa` and of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). The
-clamp comes before any frame-wide step such as eye adaptation, so a surface that is brighter
-than 1 after lighting cannot get brighter on screen. OpenSky clamps lit meshes and terrain the
-same way. It applies no scale, because the read did not find its value. Effect shapes, grass,
-water, and the sky are not clamped.
+After fog, the game's lighting shader multiplies the colour by a fixed scene scale of 1/1.2 and
+clamps each channel to at most 1 (behaviour described from a clean-room read of the game's
+shaders in `Skyrim - Shaders.bsa` and of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). The scale does
+not depend on the hour, the weather, or the image space. The sky takes the same scale with its
+sky scale ([light scales](/rendering/image-space.md#bloom-and-light-scales)). The clamp comes
+before any frame-wide step, so a surface brighter than 1 after lighting cannot get brighter on
+screen. OpenSky does both for lit meshes and terrain. The scale applies to the gamma value, so
+in linear terms it is `(1/1.2)^2.2`. Effect shapes, grass, water, and the sky are not clamped.
+
+## Grass
+
+Grass has its own light, simpler than the lit meshes (clean-room read of the game's shaders and
+of `SkyrimSE.exe` 1.7.104.0, 2026-11-06, behaviour only):
+
+- Every blade faces up: the light uses the instance's up axis, not the mesh normal.
+- Light = sun colour x `NdotL` x shadow + the single ambient colour. The sun colour does not
+  take the image space sunlight scale. A shadowed blade keeps 30 % of the sun.
+- The result times the texture, the vertex colour, and the instance brightness is scaled by
+  1/1.2, or by 1 when both fog distances are 0. There is no fog, no clamp, and no point light.
+- The instance brightness is one grey value: `0.31 R + 0.37 G + 0.32 B` of the land vertex
+  colour under the blade, times `(1 - range) + range x u`, with `u` random in [-0.25, 0.25)
+  and `range` the `GRAS` colour range. It is clamped to [0, 0.99].
+
+Trees take the lit mesh path.
 
 ## Refraction
 

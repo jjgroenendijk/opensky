@@ -82,6 +82,7 @@ extension Renderer {
         guard projectedDecalsDraw, waterDepth.copies else { return }
         state.encoder.setRenderPipelineState(effects.projectedDecalPipeline)
         state.encoder.setDepthStencilState(effects.projectedDecalDepthState)
+        state.encoder.setStencilReferenceValue(MaterialDepthStates.skinStencilBit)
         state.encoder.setCullMode(.none)
         encodeDecalBatches(vertexCount: 36, state: &state, \.projected)
         state.encoder.setDepthStencilState(depthState)

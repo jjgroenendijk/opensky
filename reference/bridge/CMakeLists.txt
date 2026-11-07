@@ -38,6 +38,7 @@ add_library(OpenSkyBridge SHARED
     src/Channel.cpp
     src/Places.cpp
     src/Plugin.cpp
+    src/Settings.cpp
     src/Sky.cpp
     src/State.cpp
     src/Watch.cpp

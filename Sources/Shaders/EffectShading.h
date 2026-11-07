@@ -109,5 +109,5 @@ static inline float3 effectLight(
     float3 light = baseAmbient(frame) + directionalAmbient(normal, frame) +
                    frame.sunColor * saturate(dot(normal, -frame.sunDirection)) +
                    pointLighting(input.worldPosition, normal, pointLights, pointLightCount);
-    return mix(float3(1.0), light, saturate(input.influence));
+    return mix(float3(1.0), toLinear(light), saturate(input.influence));
 }

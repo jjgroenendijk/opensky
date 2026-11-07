@@ -207,6 +207,10 @@ nonisolated extension AgentCommandCatalog {
             positionals: [required("on", "Either on or off.")]
         ),
         command(
+            "debug.setting", "Apply player settings over the saved ones until the next call.",
+            positionals: [optional("values", "Comma-separated id=value pairs; none restores them.")]
+        ),
+        command(
             "debug.drunk", "Start or stop an actor's drunk state, as IdleDrunkStart does.",
             positionals: [required("ref", refHelp), required("on", "Either on or off.")]
         ),

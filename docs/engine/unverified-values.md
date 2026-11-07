@@ -188,10 +188,15 @@ the detail and the sources it did find.
 | Snow sparkle colour | The sun colour | [terrain](/engine/terrain.md#snow-ground) |
 | Directional material overlay | Drawn inside the shape, on world `(y, -x)` | [surface shading](/rendering/surface-shading.md#directional-materials) |
 | Skin decal size and limit | At most 16 units; 35 kept when unset | [decals](/rendering/decals.md#skin-decals) |
+| Sky gradient heights | Horizon colour at 0 degrees, sky-lower at 17.5, sky-upper from 35 | [celestial sky](/engine/celestial-sky.md#drawing) |
+| Depth of field target focus ring | 8 points 5 percent of the screen from the centre; the centre weight times 8 against them | [post effects](/rendering/post-effects.md#focus-on-the-view-centre) |
+| Indirect light strength and bias | Strength 400, centre bias 2.5, added to the lit colour | [post effects](/rendering/post-effects.md#indirect-light) |
+| Character light space and luminance | View-space normal, x right, y up, z ahead; eye adaptation luminance as the scene value | [surface shading](/rendering/surface-shading.md#character-light) |
+| Camera far plane | 350,000 units: the LOD reach plus half a level-32 block; the game's own far plane is not known | [coordinates](/decisions/coordinates.md#nearfar-planes-at-skyrim-scale) |
 | Terrain split distance | `fSplitDistanceMult` scales the level 4, 8, and 16 reach; level 32 keeps `fBlockMaximumDistance` | [graphics options](/engine/graphics-options.md) |
 | Large reference LOD hidden per block | The game's per-cell rule is not known | [distant LOD](/engine/distant-lod.md#large-references) |
-| Ambient occlusion radius and strength | 48 units, strength 1.2, bias 0.05, fade 2,048 to 4,096 units | [post effects](/rendering/post-effects.md#ambient-occlusion) |
-| Ambient occlusion tap weight units | Tap distance divided by the radius before the game's weight `(r² - d²)³ / (d² + 0.01)` | [post effects](/rendering/post-effects.md#ambient-occlusion) |
+| Ambient occlusion fade | Fades out between 2,048 and 4,096 units from the camera | [post effects](/rendering/post-effects.md#ambient-occlusion) |
+| Ambient occlusion blur edge | A tap 5 percent nearer or farther than the pixel counts for nothing | [post effects](/rendering/post-effects.md#ambient-occlusion) |
 | Volumetric light steps | 8, 16, 32 steps by quality | [post effects](/rendering/post-effects.md#volumetric-light) |
 | `VOLI` field scales | strength 0.025 × intensity; reach 102.4 × range; cell 64 × size; drift 4 × wind along X; fall 64 × falling; fallback values for interiors | [post effects](/rendering/post-effects.md#volumetric-light) |
 | Depth of field blur | Clear at distance, full at range; `2 + 2 × radius` pixels at 1080 lines, radius 3 without a code; modifier moves toward its value | [post effects](/rendering/post-effects.md#depth-of-field) |

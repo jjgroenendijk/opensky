@@ -181,7 +181,7 @@ extension Renderer {
         stencil.stencilFailureOperation = .keep
         stencil.depthFailureOperation = .keep
         stencil.depthStencilPassOperation = .keep
-        stencil.readMask = 0xFF
+        stencil.readMask = 0x7F
         stencil.writeMask = 0x00
         descriptor.frontFaceStencil = stencil
         descriptor.backFaceStencil = stencil
@@ -206,8 +206,8 @@ extension Renderer {
         stencil.stencilFailureOperation = .keep
         stencil.depthFailureOperation = .keep
         stencil.depthStencilPassOperation = increment ? .incrementClamp : .decrementClamp
-        stencil.readMask = 0xFF
-        stencil.writeMask = 0xFF
+        stencil.readMask = 0x7F
+        stencil.writeMask = 0x7F
         descriptor.frontFaceStencil = stencil
         descriptor.backFaceStencil = stencil
         guard let state = device.makeDepthStencilState(descriptor: descriptor) else {

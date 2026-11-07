@@ -265,11 +265,22 @@ openskycli reference send 'prid 1A67F' 'condition GetCurrentAIProcedure'
 
 Each scene actor in `scenes` also carries its `processLevel`.
 
+`ini <name:section> [<value>]` reads one of the game's INI or game settings, and sets it
+first when a value follows. The setting is found among the preference INI settings, then the
+main INI settings, then the game settings. `state.json` lists every setting an `ini` line
+named under `settings`, with its current value, or `null` when no setting has that name. The
+value changes in memory only: the INI files keep their text. Many renderer settings are read
+once at startup, so check the picture, not only the value, before you rely on a live change.
+
+```sh
+openskycli reference send 'ini fGamma:Display'
+```
+
 Some console commands are toggles that the state does not report. `tgm` turns god mode off
 when the save has it on, and the next long fall kills the player and reloads the save.
 `tcl` flips collision, so read the player's height in `state.json` after a move. `cow` and
-`coc` can leave the game in third person; `cgf "Game.ForceFirstPerson"` turns it back, and
-`firstPerson` in the state shows the result.
+`coc` can leave the game in third person. The bridge line `camera first` or `camera third`
+switches the player camera, and `firstPerson` in the state shows the result.
 
 ### Recording graph variables
 
@@ -304,7 +315,8 @@ move the player to. [Reference sky and music](/tools/reference-sky-music.md) des
 
 ## Same view, two games
 
-Put both games in first person first. The console has no command for the camera mode.
+Put both games in first person first. The console has no command for the camera mode; the
+bridge line `camera first` sets it.
 
 Without the bridge, from OpenSky to the reference game:
 
@@ -338,9 +350,12 @@ at that folder lists every reference save in the load list.
 
 OpenSky's view is 65 degrees vertical. The UESP console page says the console's default is
 "about 65" in one place and 75 in another, and it does not say which axis it measures. The
-batch file assumes a horizontal angle measured at a 4:3 view, the usual reading for Skyrim,
-so 65 degrees vertical becomes `fov 80.69`. This is unverified: the first matched capture
-pair confirms or corrects it.
+console's `fov` is the horizontal angle across the whole window. In a 1280 x 720 capture pair
+on 2026-11-06 (`.logs/reference/20261106T180846/` and `20261106T180916/`), `fov 80.69`, the
+4:3 reading, drew distant buildings 1.33 times larger than OpenSky, which is 16:9 over 4:3.
+`fov 97.11` put them at the same place within a few pixels. So the batch file converts at the
+window's 16:9 shape: 65 degrees vertical becomes `fov 97.11`. A window of another shape needs
+the conversion at its own shape.
 
 ## Capture and compare
 

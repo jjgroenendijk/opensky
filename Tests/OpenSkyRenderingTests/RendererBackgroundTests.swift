@@ -12,8 +12,10 @@ struct RendererBackgroundTests {
 
     @Test func aSkylessSceneShowsTheFarFogColourInItsGaps() {
         let colour = Renderer.background(fog: Self.fog, drawsSky: false)
-        #expect(abs(colour.red - 0.2) < 1e-6 && abs(colour.green - 0.5) < 1e-6)
-        #expect(abs(colour.blue - 0.5) < 1e-6 && colour.alpha == 1)
+        // The gamma fog colour, made linear for the sRGB target.
+        let red = pow(0.2, 2.2), green = pow(0.5, 2.2)
+        #expect(abs(colour.red - red) < 1e-5 && abs(colour.green - green) < 1e-5)
+        #expect(abs(colour.blue - green) < 1e-5 && colour.alpha == 1)
     }
 
     @Test func aSkyOrNoFogKeepsTheBlackClear() {

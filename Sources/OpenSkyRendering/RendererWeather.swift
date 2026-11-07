@@ -25,7 +25,8 @@ extension Renderer {
         guard !drawsSky, !covered, fog.enabled != 0 else {
             return MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
         }
-        let colour = SIMD3<Double>(fog.farColor)
+        // The fog colour is a gamma value; the target holds linear colour.
+        let colour = SIMD3<Double>(pow(simd_max(fog.farColor, .zero), SIMD3(repeating: 2.2)))
         return MTLClearColor(red: colour.x, green: colour.y, blue: colour.z, alpha: 1)
     }
 

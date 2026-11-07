@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
+import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -19,6 +20,7 @@ import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -44,7 +46,7 @@ extension AgentWorldAdapter {
              .link, .paired:
             return try done(actorDebug(command))
         case .overlay, .channel, .shadows, .fade, .cartMode, .playBink, .skipBink, .titles,
-             .loadScreen, .sound:
+             .loadScreen, .sound, .settings:
             return try done(renderDebug(command))
         case .raceMenu, .skillsMenu, .gamepad, .fastTravel:
             return try done(menuDebug(command))
@@ -114,6 +116,31 @@ extension AgentWorldAdapter {
         }
     }
 
+    /// Applies `pairs` over a copy of the saved settings, so nothing is written to disk.
+    private func applySettings(_ pairs: [String]) throws(AgentFailure) -> AgentJSON {
+        guard let session = game.gameSession else { throw notReady() }
+        let saved = game.playerSettings.store
+        var overrides: [PlayerSettingID: Double] = [:]
+        for pair in pairs {
+            let parsed: (id: String, value: Double)
+            do {
+                parsed = try BenchmarkRequest.parseSetting(pair, catalog: saved.catalog)
+            } catch {
+                throw AgentFailure(.invalidArgument, String(describing: error))
+            }
+            let id = PlayerSettingID(parsed.id)
+            guard let value = saved.catalog.definition(id)?.clamp(parsed.value) else {
+                throw AgentFailure(.invalidArgument, "value out of range: \(pair)")
+            }
+            overrides[id] = value
+        }
+        let store = PlayerSettingsStore(copying: saved, overrides: overrides)
+        session.applyGraphicsSettings(store)
+        game.effects.applyGraphicsSettings(store)
+        let applied = overrides.map { ($0.key.rawValue, AgentJSON.number($0.value)) }
+        return ["settings": .object(Dictionary(uniqueKeysWithValues: applied))]
+    }
+
     private func setSound(_ on: Bool) -> AgentJSON {
         game.audio.outputMuted = !on
         return ["muted": .bool(game.audio.outputMuted)]
@@ -132,6 +159,7 @@ extension AgentWorldAdapter {
         case let .titles(step): try driveTitles(step)
         case let .loadScreen(editorID): try forceLoadScreen(editorID)
         case let .sound(on): setSound(on)
+        case let .settings(pairs): try applySettings(pairs)
         default: throw AgentFailure(.invalidArgument, "not a render debug command")
         }
     }
@@ -192,14 +220,15 @@ extension AgentWorldAdapter {
             throw AgentFailure(.notReady, "no weather data is loaded")
         }
         guard let editorID else {
-            game.renderControls.forceWeather(named: nil)
+            game.renderControls.forceWeather(named: nil, transition: .instant)
             return ["forced": .null]
         }
         let names = game.renderControls.selectableWeatherNames
         guard let match = names.first(where: { $0.lowercased() == editorID.lowercased() }) else {
             throw AgentFailure(.notFound, "no selectable weather '\(editorID)'")
         }
-        game.renderControls.forceWeather(named: match)
+        // A paused game counts no game hours, so a timed fade would never finish.
+        game.renderControls.forceWeather(named: match, transition: .instant)
         return ["forced": .string(match)]
     }
 

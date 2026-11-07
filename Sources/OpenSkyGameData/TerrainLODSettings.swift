@@ -29,6 +29,8 @@ nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {
     public let splitDistanceMultiplier: Float
     /// Rings of cells whose large references draw their full model; never below the loaded grid.
     public let largeReferenceRadius: Int32
+    /// Terrain LOD built from the load order instead of the vanilla files.
+    public let generatedTerrain: Bool
 
     public var isValid: Bool {
         level0Distance.isFinite && level0Distance > 0
@@ -45,7 +47,8 @@ nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {
         treeLoadDistance: Float,
         loadedGridRadius: Int32 = 2,
         splitDistanceMultiplier: Float = 1,
-        largeReferenceRadius: Int32 = 5
+        largeReferenceRadius: Int32 = 5,
+        generatedTerrain: Bool = true
     ) {
         self.level0Distance = level0Distance
         self.level1Distance = level1Distance
@@ -54,6 +57,7 @@ nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {
         self.loadedGridRadius = loadedGridRadius
         self.splitDistanceMultiplier = splitDistanceMultiplier
         self.largeReferenceRadius = max(largeReferenceRadius, loadedGridRadius)
+        self.generatedTerrain = generatedTerrain
     }
 
     /// `uGridsToLoad` is the grid's full side, always odd in the game: 5 gives 2 rings.
@@ -138,7 +142,8 @@ nonisolated public enum TerrainLODSettings: Sendable {
             splitDistanceMultiplier: splitMultiplier(distance("fSplitDistanceMult")),
             largeReferenceRadius: TerrainLODConfiguration.loadedGridRadius(
                 gridsToLoad: distance("uLargeRefLODGridSize")
-            )
+            ),
+            generatedTerrain: model.value(.generatedTerrainLOD, in: catalog) != 0
         )
         guard
             configuration != snapshot.configuration,

@@ -11,6 +11,19 @@
 
 using namespace metal;
 
+// The game shades in gamma space: weather, cell, and light colours are gamma values.
+// A lit pixel is gamma albedo times gamma light, so the linear result is
+// linear albedo times the light made linear (docs/rendering/surface-shading.md#gamma).
+static inline float3 toGamma(float3 linearColour)
+{
+    return pow(max(linearColour, 0.0), 1.0 / 2.2);
+}
+
+static inline float3 toLinear(float3 gamma)
+{
+    return pow(max(gamma, 0.0), 2.2);
+}
+
 static inline float3 directionalAmbient(float3 normal, constant FrameUniforms &frame)
 {
     float3 weights = abs(normal);
@@ -285,14 +298,17 @@ static inline float3 applyFog(float3 color, float3 worldPosition, constant Frame
 {
     float2 fog = fogAt(worldPosition, frame);
     float3 fogColor = mix(frame.fogNearColor, frame.fogFarColor, fog.x);
-    return mix(color, fogColor, fog.y);
+    // The game mixes in gamma space; the fog colour is a gamma value.
+    return toLinear(mix(toGamma(color), fogColor, fog.y));
 }
 
-// The game's lighting shader clamps each channel of the fogged colour to 1, before any
-// frame-wide step such as eye adaptation (docs/rendering/surface-shading.md).
+// The game's lighting shader ends by scaling the fogged colour by 1/1.2 in its gamma values
+// and clamping each channel to 1, before any frame-wide step (docs/rendering/surface-shading.md).
+constant float litOutputScale = 0.8333333;
+
 static inline float3 clampLitOutput(float3 color)
 {
-    return min(color, float3(1.0));
+    return min(color * pow(litOutputScale, 2.2), float3(1.0));
 }
 
 // An additive colour adds to what is behind it, which the fog already covers, so the

@@ -19,6 +19,10 @@ typealias ReferenceFadeTimers = FadeTimers<ReferenceFadeState>
 struct RendererFadeTimers {
     var references = ReferenceFadeTimers()
     var meshLOD = FadeTimers<MeshLODFade>()
+    /// The actor the camera is inside fades out (RendererActorCameraFade.swift).
+    var actorCamera = ActorCameraFade()
+    /// How much the view centre counts in a "Use Target" depth of field focus.
+    var depthOfFieldFocus = DepthOfFieldFocus()
 
     mutating func advance(seconds: Float) {
         references.advance(seconds: seconds)
@@ -94,6 +98,7 @@ extension Renderer {
     /// Steps every reference fade by this frame's simulated seconds.
     public func advanceReferenceFades(deltaTime: Float) {
         fadeTimers.advance(seconds: deltaTime)
+        advanceViewTimers(seconds: deltaTime)
     }
 
     /// 0 whole, up to 1 dissolved; nil when `instance` has faded out.

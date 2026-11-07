@@ -94,9 +94,9 @@ static inline float3 postSurfaceNormal(
     return dot(normal, camera - pixel.world) < 0.0 ? -normal : normal;
 }
 
-// Ambient occlusion: five depth taps on a spiral around the pixel, as the game takes. A tap
-// above the surface plane darkens the pixel; near taps weigh more (post-effects.md).
-static inline float postAmbientOcclusion(
+// The faded sum of the game's 5 tap terms: (R^2 - |v|^2)^3 x (v.N - bias) / (|v|^2 + 0.01).
+// The bias grows toward the screen edge and with depth, as in the game.
+static inline float postAmbientOcclusionSum(
     PostPixel pixel,
     float3 normal,
     float3 camera,
@@ -106,29 +106,28 @@ static inline float postAmbientOcclusion(
     float range = distance(pixel.world, camera);
     float fade = 1.0 - smoothstep(0.5, 1.0, range / max(post.ambientOcclusion.w, 1.0));
     if (fade <= 0.0) {
-        return 1.0;
+        return 0.0;
     }
     float radius = post.ambientOcclusion.x;
+    float radiusSquared = radius * radius;
+    float2 ndc = pixel.uv * 2.0 - 1.0;
+    float bias =
+        post.ambientOcclusion.z + 2.0 * dot(ndc, ndc) + 10.0 * max(range / 7000.0 - 0.3, 0.0);
     float2 reach = radius * post.projection.xy * 0.5 / max(range, 1.0);
     reach = min(reach, float2(0.1));
-    float turn = postNoise(pixel.pixel) * 6.2831853;
+    float turn = (postNoise(pixel.pixel) + post.camera.w * 0.618034) * 6.2831853;
     float sum = 0.0;
-    float weights = 0.0;
     for (int tap = 0; tap < 5; ++tap) {
         float share = (float(tap) + 0.5) / 5.0;
-        float angle = turn + float(tap) * 2.3999632;
+        float angle = turn + (float(tap) + 0.5) * 2.512;
         float2 tapUV = pixel.uv + float2(cos(angle), sin(angle)) * reach * share;
         float3 toTap = postWorldAt(tapUV, depth, post) - pixel.world;
         float distanceSquared = dot(toTap, toTap);
-        float near = distanceSquared / (radius * radius);
-        float inside = max(1.0 - near, 0.0);
-        float weight = inside * inside * inside / (near + 0.01);
-        float rise = dot(toTap * rsqrt(max(distanceSquared, 1.0e-4)), normal);
-        sum += max(rise - post.ambientOcclusion.z, 0.0) * weight;
-        weights += weight;
+        float inside = max(radiusSquared - distanceSquared, 0.0);
+        float rise = max((dot(toTap, normal) - bias) / (distanceSquared + 0.01), 0.0);
+        sum += inside * inside * inside * rise;
     }
-    float mean = weights > 0.0 ? sum / weights : 0.0;
-    return saturate(1.0 - fade * post.ambientOcclusion.y * mean);
+    return fade * sum;
 }
 
 // Occlusion darkens the lit colour before the fog is added, as the game's fog variant
@@ -138,7 +137,7 @@ postOccludeUnderFog(float3 color, float occlusion, float3 world, constant FrameU
 {
     float2 fog = fogAt(world, frame);
     float3 fogPart = mix(frame.fogNearColor, frame.fogFarColor, fog.x) * fog.y;
-    return fogPart + max(color - fogPart, 0.0) * occlusion;
+    return toLinear(fogPart + max(toGamma(color) - fogPart, 0.0) * occlusion);
 }
 
 // One cascade tap per march step; the march takes many steps, so each takes one tap.
@@ -228,20 +227,68 @@ static inline float3 postVolumetricLight(
                     pow(1.0 + asymmetry * asymmetry - 2.0 * asymmetry * cosine, 1.5);
     float phase = mix(1.0, forward, post.volumetricPhase.x);
     float scatter = 1.0 - exp(-reach / maximum);
-    float3 light = frame.sunColor * post.volumetricColour.w + post.volumetricColour.rgb;
+    float3 light = toLinear(frame.sunColor * post.volumetricColour.w + post.volumetricColour.rgb);
     return light * (lit * phase * scatter * post.volumetricLight.x);
+}
+
+// Where the depth of field is sharp, how far past it the blur grows, and how strong it is.
+struct PostFocus
+{
+    float clear;
+    float span;
+    float strength;
+    uint sides;
+    bool farFirst;
+};
+
+// The game's "Use Target" focus: the depth at the view centre, mixed with a ring around it
+// by the centre weight; the sky and far taps count as 50,000 units.
+static inline float
+postCentreFocus(float3 camera, depth2d<float> depth, constant PostEffectUniforms &post)
+{
+    float centreWeight = post.depthOfFieldMode.w * 8.0;
+    float sum = 0.0;
+    float weights = 0.0;
+    for (int tap = 0; tap < 9; ++tap) {
+        float angle = float(tap) * 0.7853982;
+        float2 uv = tap == 8 ? float2(0.5) : 0.5 + float2(cos(angle), sin(angle)) * 0.05;
+        float stored = depth.sample(postNearest, uv);
+        float range = stored >= 1.0
+                          ? 50000.0
+                          : min(distance(postWorldPosition(uv, stored, post), camera), 50000.0);
+        float weight = tap == 8 ? centreWeight : 1.0;
+        sum += range * weight;
+        weights += weight;
+    }
+    return sum / weights;
+}
+
+// A modifier's values, or with "Use Target" the game's ramps: past a 100-unit focus the
+// range grows from 100 to 10,000 and the strength falls from 0.8 to 0.56 by 1,000 units.
+static inline PostFocus
+postFocusPlane(float3 camera, depth2d<float> depth, constant PostEffectUniforms &post)
+{
+    uint sides = uint(post.depthOfFieldMode.y);
+    if (post.depthOfFieldMode.z < 0.5) {
+        float clear = post.depthOfField.y;
+        float full = post.depthOfField.z;
+        return {
+            clear, max(abs(full - clear), 1.0), saturate(post.depthOfField.x), sides,
+            full >= clear};
+    }
+    float focus = postCentreFocus(camera, depth, post);
+    float share = saturate((focus - 100.0) / 900.0);
+    return {
+        focus, mix(100.0, 10000.0, share), mix(0.8, 0.56, share), sides == 0 ? 3u : sides, true};
 }
 
 // How much one depth blurs, 0 to 1. CK wiki: clear at the distance and full at the
 // range; a distance past the range blurs the foreground. A modifier can pick the sides.
-static inline float postFocusBlur(float range, constant PostEffectUniforms &post)
+static inline float postFocusBlur(float range, PostFocus focus)
 {
-    float clear = post.depthOfField.y;
-    float full = post.depthOfField.z;
-    float span = max(abs(full - clear), 1.0);
-    float nearBlur = saturate((clear - range) / span);
-    float farBlur = saturate((range - clear) / span);
-    switch (uint(post.depthOfFieldMode.y)) {
+    float nearBlur = saturate((focus.clear - range) / focus.span);
+    float farBlur = saturate((range - focus.clear) / focus.span);
+    switch (focus.sides) {
     case 1:
         return nearBlur;
     case 2:
@@ -249,7 +296,7 @@ static inline float postFocusBlur(float range, constant PostEffectUniforms &post
     case 3:
         return max(nearBlur, farBlur);
     default:
-        return full >= clear ? farBlur : nearBlur;
+        return focus.farFirst ? farBlur : nearBlur;
     }
 }
 
@@ -264,26 +311,26 @@ static inline float3 postDepthOfField(
     depth2d<float> depth,
     constant PostEffectUniforms &post)
 {
-    float4 field = post.depthOfField;
-    float blur = sky ? postFocusBlur(1.0e9, post) * post.depthOfFieldMode.x
-                     : postFocusBlur(distance(pixel.world, camera), post);
-    float amount = saturate(field.x) * blur;
+    PostFocus focus = postFocusPlane(camera, depth, post);
+    float skyBlur = postFocusBlur(1.0e9, focus) * post.depthOfFieldMode.x;
+    float blur = sky ? skyBlur : postFocusBlur(distance(pixel.world, camera), focus);
+    float amount = focus.strength * blur;
     if (amount <= 0.0) {
         return color;
     }
     float3 sum = color;
     float weight = 1.0;
     for (int ring = 1; ring <= 2; ++ring) {
-        float reach = field.w * amount * float(ring) * 0.5;
+        float reach = post.depthOfField.w * amount * float(ring) * 0.5;
         for (int tap = 0; tap < 8; ++tap) {
             float angle = (float(tap) + 0.5 * float(ring)) * 0.7853982;
             float2 tapUV = pixel.uv + float2(cos(angle), sin(angle)) * reach * pixel.texel;
             float tapDepth = depth.sample(postNearest, tapUV);
             float tapBlur =
                 tapDepth >= 1.0
-                    ? postFocusBlur(1.0e9, post) * post.depthOfFieldMode.x
+                    ? skyBlur
                     : postFocusBlur(
-                          distance(postWorldPosition(tapUV, tapDepth, post), camera), post);
+                          distance(postWorldPosition(tapUV, tapDepth, post), camera), focus);
             if (tapBlur <= 0.0) {
                 continue;
             }
@@ -336,10 +383,17 @@ static inline float3 postLensFlare(
         sum += tint[ghost] * (1.0 - smoothstep(0.6, 1.0, edge)) * 0.2;
     }
     float centred = 1.0 - saturate(length(axis) * 1.2);
-    return frame.sunColor * sum * (visible * centred * post.lensFlare.z);
+    return toLinear(frame.sunColor) * sum * (visible * centred * post.lensFlare.z);
 }
 
 // Every effect the frame turned on, in order, over the colour of one pixel.
+// What the post-effect compute passes wrote for the composite.
+struct PostTracedMaps
+{
+    texture2d<float> occlusion;
+    texture2d<float> indirect;
+};
+
 static inline float3 postApply(
     float3 color,
     PostPixel pixel,
@@ -347,6 +401,7 @@ static inline float3 postApply(
     constant PostEffectUniforms &post,
     texture2d<float> scene,
     depth2d<float> depth,
+    PostTracedMaps traced,
     depth2d_array<float> shadowMap,
     sampler compare)
 {
@@ -354,11 +409,12 @@ static inline float3 postApply(
     if ((post.effects & PostEffectFlagDepthOfField) != 0) {
         color = postDepthOfField(color, pixel, sky, frame.cameraPosition, scene, depth, post);
     }
-    bool snow = scene.sample(postNearest, pixel.uv).a < 0.5;
-    if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky && !snow) {
-        float3 normal = postSurfaceNormal(pixel, frame.cameraPosition, depth, post);
+    if ((post.effects & PostEffectFlagIndirectLight) != 0 && !sky) {
+        color += traced.indirect.sample(postNearest, pixel.uv).rgb;
+    }
+    if ((post.effects & PostEffectFlagAmbientOcclusion) != 0 && !sky) {
         // The game darkens the whole lit colour: sun, point lights, and ambient alike.
-        float occlusion = postAmbientOcclusion(pixel, normal, frame.cameraPosition, depth, post);
+        float occlusion = traced.occlusion.sample(postNearest, pixel.uv).r;
         color = postOccludeUnderFog(color, occlusion, pixel.world, frame);
     }
     if ((post.effects & PostEffectFlagVolumetricLight) != 0) {

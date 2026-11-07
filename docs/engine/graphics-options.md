@@ -94,39 +94,43 @@ Where OpenSky differs:
   complex cells, and interiors. A second clean-room read (2026-11-06) found that all nine
   default to 1, so OpenSky's missing multipliers match the defaults.
 
-## Picture features OpenSky does not have yet
+## Actor fade near the camera
+
+An actor fades out while the camera is inside it, so the view never shows the inside of a
+body. Each frame the actor nearest the camera is picked when the camera is closer than
+`30 + r` units to the actor's upright axis, between its feet and its head, where `r` is its
+radius. That actor fades out over 0.5 seconds, the player at once. Every other faded actor
+fades back in at the same speed. The fade draws with the game's 4 x 4 screen-door pattern: a
+pixel with threshold `t` from the pattern hides while the fade's visible share is below `t`.
+
+The pick distance, the speeds, and the pattern come from a clean-room read of `SkyrimSE.exe`
+1.7.104.0 and the game's shaders (2026-11-06, behaviour only). The game finds the actor with
+its camera collision probe along the camera line, and takes the radius from the actor's
+collision shape. OpenSky takes the nearest drawn actor, with its axis and radius from the
+bounds of its shapes. `state frame` lists the faded actors under `actorCameraFade`.
+
+## Picture features OpenSky leaves out
 
 Behaviour described from a clean-room read of the game's shaders and of `SkyrimSE.exe`
-1.7.104.0 on 2026-11-06 (behaviour only). Each is a gap until OpenSky builds it.
+1.7.104.0 on 2026-11-06 (behaviour only), with the reason OpenSky leaves each out.
 
-- Character light. A white light added to the diffuse light of a surface:
-  `(0.75 × facing + 0.3 × fill) × clamp(2 × L, 0, 0.75)`. `facing` is the cosine between the
-  normal and the view direction, `fill` lights faces that point along one fixed direction, and
-  `L` is a scene luminance value. It has no distance falloff and is on by default. When it is
-  turned on for a frame, and which surfaces take it, is not known.
-- Screen-space indirect light. Off by default. 15 taps on a spiral, radius 100 units, each
-  weighted by how much the two surfaces face each other and by distance, then blended over
-  time and faded out by 10,000 units.
 - Dynamic resolution. Off by default. Under 30 ms a frame, after 5 frames in a row, each axis
   grows by 0.03; over 32 ms it shrinks by 0.07 at once. By default only the width shrinks, to at
-  least 0.7 of the full size, in steps of 4 pixels. It needs the scene and every effect pass to
-  draw into part of a fixed target, which builds on one resolution setup for the frame.
+  least 0.7 of the full size, in steps of 4 pixels. OpenSky leaves it out for now: it needs the
+  scene and every effect pass to draw into part of a fixed target, and that builds on one
+  resolution setup for the whole frame, which OpenSky does not have yet. The render scale and
+  the MetalFX upscaler lower the cost instead.
 - Full-screen motion blur. The game has no blur by per-pixel motion: its only motion vectors
   feed temporal anti-aliasing. The motion and radial blurs it has come from image space
   modifiers, which OpenSky draws ([image space](/rendering/image-space.md)). So OpenSky leaves
   a per-pixel motion blur out.
-- Actor fade near the camera. The camera's collision probe picks the first actor it hits, and
-  that actor fades when it is nearer than 30 units plus its own size. The fade speed and how
-  the see-through actor is drawn are not known.
-- Focus on the crosshair target. The game's depth of field focuses on what the player looks
-  at, on by default, with a 0.5 second delay and a 1 second change, and near and far values of
-  100 and 1,000 units. What those values mean, and how the image space "Use Target" flag picks
-  the distance, is not known.
 
 ## OpenSky's own groups
 
 - Upscaling: render scale, the MetalFX upscaler, and frame interpolation.
-- Rendering: ray-traced sun shadows, mesh shader grass, GPU culling, shallow water depth,
+- Rendering: ray-traced sun shadows, mesh shader grass, the
+  [character light](/rendering/surface-shading.md#character-light),
+  [indirect light](/rendering/post-effects.md#indirect-light), GPU culling, shallow water depth,
   [terrain normal maps](/engine/terrain.md), impact effects,
   [HDR tone mapping](/rendering/image-space.md), and the
   [pipeline cache](/rendering/pipeline-cache.md).

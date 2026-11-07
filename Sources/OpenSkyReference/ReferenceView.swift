@@ -71,17 +71,20 @@ nonisolated public struct ReferenceView: Codable, Equatable, Sendable {
         -pitchDegrees
     }
 
-    /// The console's `fov` is a horizontal angle at a 4:3 view (unverified,
-    /// docs/tools/reference-game.md#field-of-view).
+    /// The reference window's shape: the launch default of 1280 x 720.
+    public static let windowAspect: Float = 16 / 9
+
+    /// The console's `fov` is the horizontal angle across the whole window
+    /// (docs/tools/reference-game.md#field-of-view).
     public var skyrimFOVDegrees: Float {
         let halfY = fovYDegrees * .pi / 360
-        return 2 * atan(tan(halfY) * 4 / 3) * 180 / .pi
+        return 2 * atan(tan(halfY) * Self.windowAspect) * 180 / .pi
     }
 
     /// The inverse of `skyrimFOVDegrees`.
     public static func fovY(fromSkyrimFOV fov: Float) -> Float {
         let halfX = fov * .pi / 360
-        return 2 * atan(tan(halfX) * 3 / 4) * 180 / .pi
+        return 2 * atan(tan(halfX) / windowAspect) * 180 / .pi
     }
 }
 

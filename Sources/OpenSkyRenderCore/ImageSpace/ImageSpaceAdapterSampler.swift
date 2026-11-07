@@ -44,6 +44,8 @@ nonisolated public struct ImageSpaceAdapterSample: Equatable, Sendable {
     public var radialBlurCenter: SIMD2<Float>?
     /// `DNAM` depth of field flags: 0x01 front, 0x02 back, 0x04 no sky; nil without a header.
     public var depthOfFieldFlags: UInt8?
+    /// `DNAM` "Use Target": the depth of field focuses on what the view centre shows.
+    public var depthOfFieldUsesTarget = false
     /// A one-shot modifier past its duration.
     public let isFinished: Bool
 }
@@ -94,6 +96,7 @@ nonisolated extension ImageSpaceAdapter {
             fade: ImageSpaceEnvelope.sample(fade, at: time),
             radialBlurCenter: header?.radialBlurCenter,
             depthOfFieldFlags: header?.depthOfFieldFlags,
+            depthOfFieldUsesTarget: header?.depthOfFieldUsesTarget ?? false,
             isFinished: finished
         )
     }

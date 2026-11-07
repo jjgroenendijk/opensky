@@ -178,7 +178,8 @@ enum RenderCommand {
                 + "\(lod.missingBlockCount) unavailable, \(lod.treeBlockCount) tree blocks, "
                 + "\(lod.missingTreeBlockCount) unavailable tree blocks, "
                 + "\(lod.treeInstanceCount) trees, "
-                + "\(lod.largeReferenceCount) large references, terrain gain "
+                + "\(lod.largeReferenceCount) large references, "
+                + "\(lod.generatedTerrainBlockCount) generated terrain blocks, terrain gain "
                 + String(format: "%.3f", lod.renderScene.terrainLODBrightness?.gain ?? .nan))
         }
         var scenes = cellScenes.map(\.renderScene)

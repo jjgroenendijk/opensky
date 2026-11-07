@@ -32,23 +32,32 @@ also runs when only they are on.
 
 ## HDR tone mapping
 
-Tone mapping runs first in the grade, before saturation. It has two parts:
+The game tone maps and grades the colour values it stores, with no sRGB step. Its shaders
+work in gamma space, so OpenSky's pass first raises the linear scene colour to `1/2.2`, runs
+the game's steps, and makes the result linear again. The behaviour below comes from a
+clean-room read of the game's image space shaders and their per-frame values (2026-11-06),
+checked with capture pairs against the reference game.
 
-- **Eye adaptation.** Every 16th pixel in each direction adds its log2 luminance to two GPU
-  counters per frame slot. When the slot comes round again, the CPU reads the mean and moves
-  the eye towards it. The exposure is `(0.18 / eye) ^ (strength / (strength + 10))`, clamped
-  to 0.25 to 4. So a dark cave gets brighter and a bright snowfield gets darker.
-- **White point.** An extended Reinhard curve, `c * (1 + c / white²) / (1 + c)`, maps the
-  `white` value to display white. Vanilla values are about 0.9 to 1.05, so the curve stays
-  close to the identity.
+- **Measure.** Every 16th pixel in each direction adds its luminance, with the weights
+  (0.2125, 0.7154, 0.0721), to two GPU counters per frame slot. The mean is a plain mean, not
+  a log mean.
+- **Adapt.** Two values, X and Y, follow the mean M. Each frame each moves by `(M - old) *
+  rate`, at least 1/256 and never past M. With `S = speed * 2`, `K = strength * 0.4`, and
+  `n = 30 * seconds`, X uses the rate `1 - (1 - 0.01 S / K)^n` and Y `1 - (1 - 0.01 S)^n`.
+  The speed is a percent of the gap per 1/30 s, as the CK wiki says.
+- **Exposure** is `Y / X`. In a steady scene both equal M, so the exposure is 1. Adaptation
+  only shows for a short time after the light changes, such as at a cave mouth. It never
+  pushes a night scene towards a fixed brightness.
+- **Curve.** On the pixel's luminance `L`, `x = L * Y / X` and
+  `T = x * (1 + x / (1.1 white)²) / (1 + x)`. The colour is scaled by `T / L`.
 
-The `HNAM` units are not documented. Vanilla speeds are 30 to 45, and strengths are 1 (clear
-nights) to 25. OpenSky divides the speed by 20 to get a rate per second, and turns the
-strength into the weight above. Both constants are OpenSky's own choice, made so that a
-cave entrance adapts in about half a second. An image space with no strength and no white
-point turns the stage off.
+The grade follows, in this order: luminance `g` of the mapped colour; saturation, a mix from
+`g` towards the colour; tint, a mix towards `g` times the tint colour by the tint amount;
+brightness, a multiply; contrast, `contrast * (c - X) + X`, which pivots around the adapted
+luminance X, not 0.5; a clamp to 0 to 1; and the fade.
 
-The launcher's graphics page holds the tone mapping switch.
+The launcher's graphics page holds the tone mapping switch. It turns the curve off; the
+grade and the measurement still run. An image space with no white point skips the curve.
 
 ## Combining modifiers
 
@@ -77,16 +86,18 @@ with its whole shape: ramps, start points, and centre.
 
 ## Bloom and light scales
 
-These need colour above 1, so they run only with the HDR target on
-(`bUse64bitsHDRRenderTarget`).
-
-- **Bloom.** Three rings of 8 taps reach out to the `IMGS` bloom radius. One radius step is 4
-  pixels at a 1080-pixel-high frame; the CK wiki gives the range 1 to 7. Each tap adds what it
-  holds above the bloom threshold. The sum is scaled by the bloom scale and added before tone
-  mapping.
-- **Sunlight and sky scale.** The CK wiki calls both "non-imagespace". The sun colour is
-  multiplied by the sunlight scale and the sky dome colours by the sky scale. Clouds keep their
-  colour.
+- **Bloom.** It needs colour above 1, so it runs only with the HDR target on
+  (`bUse64bitsHDRRenderTarget`). Three rings of 8 taps reach out to the `IMGS` bloom radius.
+  One radius step is 4 pixels at a 1080-pixel-high frame; the CK wiki gives the range 1 to 7.
+  Each tap adds what it holds above the bloom threshold. The sum is scaled by the bloom scale
+  and added before tone mapping.
+- **Sunlight and sky scale.** The CK wiki calls both "non-imagespace". They apply with either
+  target. The sun colour is multiplied by the sunlight scale; vanilla values are 2 to 2.7.
+  The sky scale is added, not multiplied: the dome draws its weather colours times the scene
+  scale 1/1.2 ([output clamp](/rendering/surface-shading.md#output-clamp)), plus 1/1.2 times
+  the sky scale, and the clouds add the same lift to their colour. Vanilla sky scales are
+  small, such as 0.235 by day and 0.02 at night in clear weather, so the lift is a slight
+  even brightening.
 
 At most 16 modifiers run at once. The oldest goes first. This is OpenSky's own limit.
 
@@ -129,7 +140,10 @@ The launcher's "Low-health pulse" switch stands for the game's `bLowHealthIModEn
 
 - The scene renders into an 8-bit target, so tone mapping works on display-range color. With
   the game's `bUse64bitsHDRRenderTarget` on, the target is half-float in linear sRGB instead,
-  and colour above 1 reaches the tone mapping. Only then do bloom and the light scales draw.
+  and colour above 1 reaches the tone mapping. Only then does bloom draw. The game always
+  renders to a float target.
+- The game measures the scene down to a 2 x 2 grid by default, so each screen quarter adapts
+  on its own. OpenSky measures one mean for the whole frame.
 - The bloom tap pattern, the radius step, and the receive-bloom threshold are not documented.
   OpenSky reads the receive threshold but does not use it.
 - The radial blur reach, its radius unit, and the centre's screen space are OpenSky's reading
@@ -140,7 +154,5 @@ The launcher's "Low-health pulse" switch stands for the game's `bLowHealthIModEn
 - A cross-fade rises and falls linearly over its fade time. The curve is OpenSky's choice.
   Only one cross-faded modifier is held, as in the game, and a new one replaces it; the old
   one fades out over the new one's fade time.
-- The tint mixes the color toward its own brightness times the tint color, by the tint
-  amount. The fade mixes toward the fade color by its alpha, and several fades lay over each
-  other like alpha. How one tint or fade changes a pixel is not documented, so these mixes are
-  approximations; only the way tints combine has a source.
+- Several fades lay over each other like alpha. The game holds one fade colour and amount
+  from its modifiers; how it combines more than one is not known.

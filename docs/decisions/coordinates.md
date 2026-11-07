@@ -67,12 +67,16 @@ building LODs all render solid from outside — nothing inside-out. Decision fin
 
 ## Near/far planes at Skyrim scale
 
-Defaults: near = 10 units (~14 cm), far = 65 536 units (16 cells, ~936 m).
+Defaults: near = 10 units (~14 cm), far = 350,000 units (about 85 cells, ~5 km).
 
-- Depth attachment is `depth32Float`; near/far ratio 6.5e3 is comfortable. Do not
-  shrink near below ~1 unit — that, not far, destroys precision.
-- If distant LOD ever needs far in the hundreds of cells, reverse-Z is the known fix. Not
-  built.
+- The far plane lies past the distant LOD reach, `fBlockMaximumDistance` 250,000 units, plus
+  half the diagonal of a level-32 block (about 92,700 units). A nearer far plane clipped the
+  far mountains, so the horizon showed sky behind the nearer ridges.
+- Depth attachment is `depth32Float`. With the standard 0-to-1 depth, stored depth is about
+  `1 - near / z`, so precision depends on the near plane, not the far one. At 20,000 units
+  one depth step is about 2.4 units. Do not shrink near below ~1 unit.
+- Reverse-Z would give more precision far away. It is not built, because nothing shows
+  depth fighting at the distances LOD draws.
 
 ## REFR euler rotation — order + sign
 

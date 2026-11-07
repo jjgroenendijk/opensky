@@ -204,7 +204,16 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         row("rendering.impactEffects", .opensky, .toggle, "Impact effects", 1, applied: true),
         row("rendering.screenBlood", .opensky, .toggle, "Screen blood", 1, applied: true),
         row("rendering.lowHealthPulse", .opensky, .toggle, "Low-health pulse", 1, applied: true),
+        row(
+            "rendering.generatedTerrainLOD", .opensky, .toggle, "Distant land from the load order",
+            1, applied: true
+        ),
         row("rendering.lightAnimation", .opensky, .toggle, "Flickering lights", 1, applied: true),
+        row("rendering.characterLight", .opensky, .toggle, "Character light", 1, applied: true),
+        row(
+            "rendering.indirectLight", .opensky, .toggle, "Screen-space indirect light", 0,
+            applied: true
+        ),
         row("rendering.shadowLights", .opensky, .toggle, "Shadows from lights", 1, applied: true),
         row(
             "rendering.particleSorting", .opensky, .toggle, "Sort particles far to near", 1,
@@ -350,6 +359,12 @@ nonisolated extension PlayerSettingID {
     public static let screenBlood = Self("rendering.screenBlood")
     /// The screen pulses while the player's health is low, as the game's `bLowHealthIModEnabled`.
     public static let lowHealthPulse = Self("rendering.lowHealthPulse")
+    /// Distant land is built from the load order's `LAND` records, not the vanilla LOD files.
+    public static let generatedTerrainLOD = Self("rendering.generatedTerrainLOD")
+    /// A white rim and fill light on actors, as the game draws by default.
+    public static let characterLight = Self("rendering.characterLight")
+    /// One bounce of colour from nearby surfaces, off by default as in the game.
+    public static let indirectLight = Self("rendering.indirectLight")
     /// Placed lights flicker and pulse as their light records ask.
     public static let lightAnimation = Self("rendering.lightAnimation")
     /// Shadow-casting placed lights, such as torches in a dungeon, cast cube shadows.

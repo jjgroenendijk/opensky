@@ -1,6 +1,7 @@
 #include "State.h"
 
 #include "Places.h"
+#include "Settings.h"
 #include "Sky.h"
 #include "Watch.h"
 
@@ -237,6 +238,20 @@ void RunAgainstSelection(const std::string &line)
     delete script;
 }
 
+// `camera first|third` switches the player camera, which the console cannot do.
+void SetCamera(std::string_view mode)
+{
+    auto *camera = RE::PlayerCamera::GetSingleton();
+    if (!camera) {
+        return;
+    }
+    if (mode == "first") {
+        camera->ForceFirstPerson();
+    } else if (mode == "third") {
+        camera->ForceThirdPerson();
+    }
+}
+
 // `answer <index>` presses that button of the open message box.
 void Answer(std::string_view digits)
 {
@@ -266,6 +281,7 @@ std::string Snapshot(const std::string &lastBatch)
         json += Selection();
         json += Scenes();
         json += lastCondition;
+        json += SettingsState();
         json += SkyState();
         json += MusicState();
         json += MarkerState();
@@ -283,6 +299,16 @@ void RunLine(const std::string &line)
     constexpr auto watchVerb = "watch "sv;
     constexpr auto conditionVerb = "condition "sv;
     constexpr auto markerVerb = "marker "sv;
+    constexpr auto settingVerb = "ini "sv;
+    constexpr auto cameraVerb = "camera "sv;
+    if (line.starts_with(cameraVerb)) {
+        SetCamera(std::string_view(line).substr(cameraVerb.size()));
+        return;
+    }
+    if (line.starts_with(settingVerb)) {
+        ReadOrSetSetting(std::string_view(line).substr(settingVerb.size()));
+        return;
+    }
     if (line.starts_with(markerVerb)) {
         GoToMarker(std::string_view(line).substr(markerVerb.size()));
         return;

@@ -41,7 +41,7 @@ nonisolated public enum EffectsReadout {
         _ state: ToneMappingState, eye: EyeAdaptation, hdr: ImageSpaceHDR
     ) -> String {
         guard state.enabled else { return "Tone mapping: off" }
-        let exposure = number(eye.exposure(strength: hdr.eyeAdaptStrength))
+        let exposure = number(eye.exposure)
         let scene = eye.measuredLuminance.map(number) ?? "-"
         let adapted = eye.adaptedLuminance.map(number) ?? "-"
         return "Tone mapping: white \(number(hdr.white)) · exposure \(exposure)"
