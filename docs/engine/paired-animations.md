@@ -54,12 +54,39 @@ These start a pair:
 | --- | --- | --- |
 | `PlayIdleWithTarget` | The actor | The target, or else the actor's combat target ([CK wiki](https://ck.uesp.net/wiki/PlayIdleWithTarget_-_Actor)) |
 | `StartVampireFeed` | The vampire | The target, through the `IdleVampireFeed` tree |
+| A killing swing ([kill moves](#kill-moves)) | The attacker | The actor in front |
 | `openskycli game debug paired` | The first actor | The second actor |
 
 `StartVampireFeed` plays the tree under `IdleVampireFeed`. Its children test the target and
 pick the bed, bedroll, or standing feed. Only the standing feeds are paired; the bed feeds
 play on the vampire alone. `StartCannibal` plays the tree under `IdleCannibalFeed`, which
 picks the standing or the crouching feed. Neither is paired.
+
+## Kill moves
+
+A kill move is a paired idle that a killing swing plays instead of the swing. The rules come
+from the vanilla idle tree and a clean-room read of the game.
+
+1. A normal or power attack starts. A bash never plays a kill move.
+2. The actor nearest in front, inside the swing's reach, is the target. The swing's hit on it
+   is worked out with every perk and block term, and then with difficulty.
+3. The attack kills when that hit takes the target's health to 0 or below and zero health
+   kills the target. An essential actor never dies, and a protected one dies only to the
+   player. A dead target is never killed again. The CK wiki page
+   ([ShouldAttackKill](https://ck.uesp.net/wiki/ShouldAttackKill)) suggests the reverse for a
+   dead target; the clean-room read says false.
+4. The idle tree runs under `ActionRightPowerAttack` for a power attack, else under
+   `ActionRightAttack`, with that answer as `ShouldAttackKill`. The vanilla roots run it on the
+   subject with an empty target, so it reads the subject's own attack. The kill-move roots sit
+   before the attack idles, and their other conditions test the angle, the target's height,
+   the `KillMove` global, and the last-enemy rule for the player.
+5. When the chosen idle is paired, the pair starts and the swing does not. Otherwise the swing
+   plays as usual.
+6. The victim dies when its half sends `2_KillActor`.
+
+An NPC plays kill moves on other NPCs through the same steps. While either actor plays a kill
+move, it leaves the fight, and any other hit on it deals ten times its damage. A player kill
+move always shows the [kill cam](/engine/kill-cam.md).
 
 ## Reaching the mark
 
@@ -125,4 +152,7 @@ as its identity, so the clips play ([animation](/formats/hka-animation.md#vector
 
 ## Where OpenSky differs
 
-- Combat does not start a kill move yet. Only the sources above start a pair.
+- An NPC plays no kill move on the player. The game plays them, and then the player dies
+  in the kill move.
+- The dual-wield and left-hand kill moves, such as the DLC2 heart rip, are not tried. A
+  swing tests only the right-hand action trees.

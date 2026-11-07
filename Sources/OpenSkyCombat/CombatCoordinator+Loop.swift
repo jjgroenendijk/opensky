@@ -67,9 +67,10 @@ extension CombatCoordinator: CombatLoopWorld {
         world.magicInfluence(of: key)
     }
 
-    /// A package that ignores combat, or a knockdown, holds the actor out of the fight.
+    /// A package that ignores combat, a knockdown, or a kill move holds the actor out of
+    /// the fight.
     public func combatIgnoredByPackage(_ key: ReferenceKey) -> Bool {
-        world.packageIgnoresCombat(key) || world.isKnockedDown(key)
+        world.packageIgnoresCombat(key) || world.isKnockedDown(key) || world.isInKillMove(key)
     }
 
     /// `Confidence` is actor value 1 (UESP "Actor Value Indices").

@@ -40,6 +40,9 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
 
     public private(set) var damage: [ReferenceKey: Float] = [:]
     public private(set) var raised: [String] = []
+    public var playsKillMoves = false
+    /// The predicted hit of each swing weighed for a kill move, by target.
+    public private(set) var killMoveDamage: [ReferenceKey: Float] = [:]
     public private(set) var raisedOnTarget: [ReferenceKey: [String]] = [:]
     public private(set) var variables: [String: BehaviorVariableValue] = [:]
     public private(set) var impacts: [ResolvedMeleeImpact] = []
@@ -93,6 +96,11 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
 
     public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         impacts.append(impact)
+    }
+
+    public func startMeleeKillMove(on target: ReferenceKey, damage: Float, power _: Bool) -> Bool {
+        killMoveDamage[target] = damage
+        return playsKillMoves
     }
 
     @discardableResult

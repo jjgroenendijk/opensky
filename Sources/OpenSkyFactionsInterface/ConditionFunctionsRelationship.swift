@@ -2,7 +2,7 @@
 // wbDefinitionsTES5.pas: 66 GetShouldAttack, 132 GetPCInFaction, 258
 // HasAssociationType, 259 HasFamilyRelationship, 261 HasParentRelationship, 616
 // GetLowestRelationshipRank, 638 IsInFriendStateWithPlayer, 652
-// GetInSharedCrimeFaction, 678 ShouldAttackKill. See
+// GetInSharedCrimeFaction. See
 // docs/engine/condition-functions-world.md#relationships.
 
 import Foundation
@@ -22,16 +22,13 @@ nonisolated extension ConditionFunctions {
                 seam.isMember(.player, of: faction).map(Self.isTrue)
             }
         })
-        // OpenSky has no brawl, so every attack is to kill.
-        for (index, name) in [(UInt16(66), "GetShouldAttack"), (678, "ShouldAttackKill")] {
-            registry.register(ConditionFunction(
-                index: index, name: name, parameter1: .formID
-            ) { call in
-                actorPair(call, index: index) { seam, actor, other in
-                    seam.isHostile(actor, toward: other).map(Self.isTrue)
-                }
-            })
-        }
+        registry.register(ConditionFunction(
+            index: 66, name: "GetShouldAttack", parameter1: .formID
+        ) { call in
+            actorPair(call, index: 66) { seam, actor, other in
+                seam.isHostile(actor, toward: other).map(Self.isTrue)
+            }
+        })
         registry.register(ConditionFunction(
             index: 638, name: "IsInFriendStateWithPlayer"
         ) { call in

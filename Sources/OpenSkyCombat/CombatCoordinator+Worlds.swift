@@ -169,7 +169,7 @@ extension CombatCoordinator: MeleeCombatWorld {
         let scaled = DifficultyDamage.scaled(
             amount, attackerIsPlayer: attacker == .player, targetIsPlayer: target == .player,
             multipliers: difficultyMultipliers
-        )
+        ) * (world.isInKillMove(target) ? KillMoveAttempt.damageMultiplier : 1)
         let health = world.health(of: target)
         let landed = world.damageHealth(by: scaled, of: target)
         if landed, let health, let attacker {

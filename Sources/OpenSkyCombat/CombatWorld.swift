@@ -164,6 +164,13 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     /// Adds `count` of `item` to `key`'s inventory. False where it holds none.
     @discardableResult
     func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool
+    /// False for an actor zero health does not kill: essential, or protected from all
+    /// but the player.
+    func canBeKilled(_ target: ReferenceKey, by attacker: ReferenceKey) -> Bool
+    /// Plays the kill move the idle tree picks for `attempt`. False when none passes.
+    func startKillMove(_ attempt: KillMoveAttempt) -> Bool
+    /// True while `key` plays either half of a kill move.
+    func isInKillMove(_ key: ReferenceKey) -> Bool
 }
 
 extension CombatWorld {
@@ -223,6 +230,19 @@ extension CombatWorld {
     }
 
     public func isKnockedDown(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func canBeKilled(_: ReferenceKey, by _: ReferenceKey) -> Bool {
+        true
+    }
+
+    /// A session with no idle tree plays no kill move.
+    public func startKillMove(_: KillMoveAttempt) -> Bool {
+        false
+    }
+
+    public func isInKillMove(_: ReferenceKey) -> Bool {
         false
     }
 

@@ -127,8 +127,11 @@ These read what a native or the dialogue stored in the actor's
 
 ## Relationships
 
-- `GetShouldAttack` (66) and `ShouldAttackKill` (678) use the hostility rule of the combat
-  loop. OpenSky does not split "attack" from "attack to kill".
+- `GetShouldAttack` (66) uses the hostility rule of the combat loop.
+- `ShouldAttackKill` (678) is 1 when the attack now starting would kill its target
+  (<https://ck.uesp.net/wiki/ShouldAttackKill>). Combat answers it only while it weighs a kill
+  move ([paired animations](/engine/paired-animations.md#kill-moves)); anywhere else it fails as
+  unavailable.
 - `IsInFriendStateWithPlayer` (638) is 1 when the relationship rank toward the player is
   at least 1 (Friend).
 - `HasAssociationType` (258) takes an `ASTP` in parameter 2. `HasFamilyRelationship` (259)

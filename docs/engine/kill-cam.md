@@ -24,14 +24,18 @@ A kill cam plays when all of these are true:
 - A roll against `fKillCamBaseOdds` times the player's own chance passes. The install sets
   `fKillCamBaseOdds` to 1. This stands in for the game's kill cam frequency option.
 
+A player [kill move](/engine/paired-animations.md#kill-moves) starts its kill cam at once and
+skips the odds and the last-enemy rule. The kill-move idle already tested the last enemy. The
+death at the end of the kill move starts no second kill cam.
+
 Differences from the game:
 
 - The game also knows the weapon and plays bow, spell, and melee paths. OpenSky has no
   projectile anchor yet, so a shot placed on the projectile uses the target instead.
 - The game starts a bow kill cam before the arrow lands. OpenSky starts every kill cam after
   the death.
-- Combat starts no paired kill move, so a melee kill finds no kill-cam path and ends on an
-  `Exit` path: no kill cam plays ([paired animations](/engine/paired-animations.md)).
+- A melee kill without a kill move finds no kill-cam path and ends on an `Exit` path: no
+  kill cam plays.
 
 ## Playing a shot
 

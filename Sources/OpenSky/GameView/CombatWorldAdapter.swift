@@ -7,6 +7,7 @@ import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyBehavior
+import OpenSkyCamera
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
@@ -40,6 +41,7 @@ protocol CombatWorldHost: AnyObject {
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var audio: AudioCoordinator { get }
+    var cinematicCamera: CinematicCameraCoordinator { get }
     var combat: CombatCoordinator { get }
     var controllerRumble: ControllerRumble { get }
     var crime: CrimeCoordinator { get }
@@ -48,6 +50,7 @@ protocol CombatWorldHost: AnyObject {
     var effectsWorld: EffectsWorldAdapter { get }
     var factions: FactionCoordinator { get }
     var hud: HUDCoordinator { get }
+    var idleWorld: IdleWorldAdapter { get }
     var inventory: InventoryCoordinator { get }
     var magic: MagicCoordinator { get }
     var magicWorld: MagicWorldAdapter { get }
@@ -60,6 +63,7 @@ protocol CombatWorldHost: AnyObject {
     var playerSettingsStore: PlayerSettingsStore { get }
     var progression: ProgressionCoordinator { get }
     var ragdoll: RagdollCoordinator { get }
+    var ragdollWorld: RagdollWorldAdapter { get }
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
