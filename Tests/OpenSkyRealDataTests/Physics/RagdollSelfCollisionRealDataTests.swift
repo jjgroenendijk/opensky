@@ -109,17 +109,12 @@ struct RagdollSelfCollisionRealDataTests {
     /// handed off in, through the same narrowphase the solver uses.
     private static func overlappingPairs(of instance: RagdollInstance) -> [RagdollBonePair] {
         let bodies = instance.bodies
-        let samples = bodies.map { $0.contactSamples() }
         var pairs: [RagdollBonePair] = []
         for first in bodies.indices {
             for second in bodies.indices where second > first {
                 let contacts = DynamicBodyContacts.pairContacts(
-                    first: DynamicBodySamples(
-                        body: bodies[first], index: first, samples: samples[first]
-                    ),
-                    second: DynamicBodySamples(
-                        body: bodies[second], index: second, samples: samples[second]
-                    )
+                    first: DynamicPairBody(body: bodies[first], index: first),
+                    second: DynamicPairBody(body: bodies[second], index: second)
                 )
                 guard !contacts.isEmpty else { continue }
                 pairs.append(RagdollBonePair(first, second))
