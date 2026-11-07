@@ -161,6 +161,15 @@ struct VehicleCoreTests {
         #expect(abs(Self.yaw(cart.rotation.z) - atan2(toHorse.x, toHorse.y)) < 0.01)
     }
 
+    /// `TetherToHorse` puts the horse 200 units out along the cart's +Y, facing its way.
+    @Test func aHitchedHorseStandsAheadOfItsCart() {
+        let cart = ReferenceTransformOverride(position: [10, 20, 5], rotation: [0, 0, .pi / 2])
+        let horse = ReferenceTransformOverride(position: [-36, 300, 7], rotation: [0, 0, 1])
+        let hitched = VehicleCore.hitchedPose(of: horse, ahead: cart)
+        #expect(Self.near(hitched.position, [210, 20, 7]))
+        #expect(abs(hitched.rotation.z - .pi / 2) < 0.0001)
+    }
+
     /// A yaw in -pi...pi, so two headings compare.
     private static func yaw(_ angle: Float) -> Float {
         atan2(sin(angle), cos(angle))

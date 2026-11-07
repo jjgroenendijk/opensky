@@ -140,6 +140,23 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         return link(follower, to: carrier, seat: .towed(tow))
     }
 
+    /// How far ahead of the cart's origin `TetherToHorse` puts the horse, on the cart's
+    /// +Y axis (clean-room read of `SkyrimSE.exe`, 2026-11-07).
+    public static let hitchDistance: Float = 200
+
+    /// The horse's pose once hitched: ahead of the cart, with the cart's heading.
+    public static func hitchedPose(
+        of horse: ReferenceTransformOverride, ahead cart: ReferenceTransformOverride
+    ) -> ReferenceTransformOverride {
+        let heading = cart.rotation.z
+        let ahead = SIMD2(sin(heading), cos(heading)) * hitchDistance
+        return ReferenceTransformOverride(
+            position: SIMD3(cart.position.x + ahead.x, cart.position.y + ahead.y, horse.position.z),
+            rotation: SIMD3(horse.rotation.x, horse.rotation.y, heading),
+            scale: horse.scale
+        )
+    }
+
     private mutating func link(
         _ follower: ReferenceKey, to carrier: ReferenceKey, seat: VehicleSeat
     ) -> Bool {

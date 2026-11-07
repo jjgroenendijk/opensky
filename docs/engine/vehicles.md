@@ -26,22 +26,25 @@ no pose, because only a loop in plugin or script data can make one.
 
 ## Towing
 
-In the game, a towed cart is a physics body pulled by the horse. OpenSky does not simulate it. It
-moves the cart as a trailer instead:
+In the game, a towed cart is a set of physics bodies pulled by the horse
+([the game's tow rig](/engine/cart-tow-rig.md)). OpenSky does not simulate them. It moves the cart
+as a trailer instead:
 
+- `TetherToHorse` first moves a standing horse 200 units ahead of the cart's origin, on the cart's
+  +Y axis, facing the cart's way, as the game does. A horse that walks at that moment stays where
+  it is.
 - The link keeps the horizontal distance from the cart's origin to the horse's origin.
 - Each frame the cart moves along the line from where it was toward the horse, until it is that
   distance behind the horse. So the cart trails the horse's path and cuts corners, and a horse
   that turns on the spot does not swing the cart sideways.
 - The front axle, where the cart's origin is, turns to face the horse. The body trails it: the rear
   axle follows the front one along the line between them, as a towed trailer does. So in a curve
-  the front axle swivels against the body, by at most 60 degrees, an OpenSky limit.
+  the front axle swivels against the body, by at most 40 degrees, the limit of the game's
+  turntable hinge.
 - Before the wheels are known, or for a cart with one axle, the cart's +Y axis, the way its
-  shafts point, turns to face the horse. The game's harness pulls
-  the shafts into line, and plugins do not place every cart exactly on its horse's line.
+  shafts point, turns to face the horse. Plugins do not place every cart on its horse's line.
   `MQ101Cart1Ref` and `MQ101Cart1HorseREF` share the yaw 6.062, but the horse stands about
-  36 units left of the cart's axis. A cart that kept that 10 degree angle would ride skewed, with
-  its shafts beside the horse.
+  36 units left of the cart's axis. The hitch moves the horse onto that axis.
 - The cart rests on the ground under its wheels. A wheel is a mesh node whose name starts with
   `Wheel`. In `meshes\furniture\prisonercarriage\prisonercarriage01.nif` (read on the install)
   `WheelFrontLeft` and `WheelFrontRight` sit at y 0, under the `FrontBar` node, and
@@ -62,7 +65,8 @@ moves the cart as a trailer instead:
   The carts and horses in a link are not ground. Without ground the cart keeps its height
   relative to the horse.
 
-[WARNING] The trailer rule approximates the game's physics. It is not taken from an open spec.
+[WARNING] The trailer rule approximates the game's physics. In the game, the cart can lag, sway,
+and roll back, and its wheels can slip.
 
 ## Wheels
 

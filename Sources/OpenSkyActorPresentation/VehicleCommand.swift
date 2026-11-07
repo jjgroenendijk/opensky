@@ -17,6 +17,8 @@ nonisolated public enum VehicleCommand: Equatable, Sendable {
     case followerMoved(ReferenceKey, to: ReferenceTransformOverride)
     /// A follower left its carrier and now rests at the pose.
     case followerRests(ReferenceKey, at: ReferenceTransformOverride)
+    /// `TetherToHorse` puts the standing horse at the pose, ahead of its cart.
+    case carrierHitched(ReferenceKey, at: ReferenceTransformOverride)
     /// Turns the follower's wheels for the distance rolled since the link.
     case spinWheels(ReferenceKey, turns: VehicleWheelTurns)
 }
