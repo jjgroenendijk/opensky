@@ -36,6 +36,8 @@ struct DynamicBodyRealDataTests {
     /// a body that left the geometry it was authored in rather than one that
     /// fell onto the floor beneath it.
     private static let maximumSettledDropUnits: Float = 512
+    /// Clutter rests on the surface it was placed on, so it drops little more than its own height.
+    private static let maximumShelfDropUnits: Float = 64
 
     /// How long the probe simulates, in fixed steps. Five seconds of world
     /// time, which is past the point vanilla clutter stops moving.
@@ -80,17 +82,21 @@ struct DynamicBodyRealDataTests {
         // Every simulated reference comes to rest within five seconds of world
         // time, near where it was authored. Both checks are needed: clutter that
         // falls out of the world and clutter that never sleeps each pass one.
-        withKnownIssue("#1587: a jug falls through its shelf's top board and never rests") {
-            #expect(
-                settle.sleepingCount == world.bodyCount,
-                Comment(rawValue: "\(world.bodyCount - settle.sleepingCount) of \(world.bodyCount) "
-                    + "never came to rest: \(settle.awakeKeys)")
-            )
-        }
+        #expect(
+            settle.sleepingCount == world.bodyCount,
+            Comment(rawValue: "\(world.bodyCount - settle.sleepingCount) of \(world.bodyCount) "
+                + "never came to rest: \(settle.awakeKeys)")
+        )
         #expect(
             settle.maximumDrop < Self.maximumSettledDropUnits,
             "a body fell \(settle.maximumDrop) units out of the geometry it was authored in"
         )
+        withKnownIssue("#1587: a jug falls through its shelf's top board") {
+            #expect(
+                settle.maximumDrop < Self.maximumShelfDropUnits,
+                "a body fell \(settle.maximumDrop) units, through the surface it stood on"
+            )
+        }
         #expect(shove.movedBodyCount > 0, "a shove moved nothing")
         // And what the renderer would be handed after all that is non-empty:
         // clutter that settled away from where the plugin authored it is drawn
