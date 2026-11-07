@@ -53,8 +53,7 @@ public final class SessionStartRecorder {
     )
 
     public private(set) var timing = SessionStartTiming()
-    private let clock = ContinuousClock()
-    private var firstFrameWait: (start: ContinuousClock.Instant, state: OSSignpostIntervalState)?
+    private var firstFrameWait: (start: Stopwatch, state: OSSignpostIntervalState)?
 
     public init() {}
 
@@ -63,9 +62,9 @@ public final class SessionStartRecorder {
         _ body: () throws -> Result
     ) rethrows -> Result {
         let state = Self.signposter.beginInterval("phase", "\(phase.rawValue, privacy: .public)")
-        let start = clock.now
+        let start = Stopwatch()
         defer {
-            timing.record(phase, clock.now - start)
+            timing.record(phase, start.elapsed)
             Self.signposter.endInterval("phase", state)
         }
         return try body()
@@ -76,14 +75,14 @@ public final class SessionStartRecorder {
         let state = Self.signposter.beginInterval(
             "phase", "\(SessionStartPhase.firstFrame.rawValue, privacy: .public)"
         )
-        firstFrameWait = (clock.now, state)
+        firstFrameWait = (Stopwatch(), state)
     }
 
     /// Ends the first-frame phase once and logs the whole session start.
     public func frameDidDraw() {
         guard let wait = firstFrameWait else { return }
         firstFrameWait = nil
-        timing.record(.firstFrame, clock.now - wait.start)
+        timing.record(.firstFrame, wait.start.elapsed)
         Self.signposter.endInterval("phase", wait.state)
         let phases = timing.measured.map { "\($0.phase.title) \($0.duration.secondsText)" }
         let summary = "\(timing.total.secondsText): " + phases.joined(separator: ", ")

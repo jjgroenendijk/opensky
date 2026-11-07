@@ -103,7 +103,7 @@ public final class BenchmarkTourCoordinator {
         lastTick = nil
         tourStarted = world.now
         var result = BenchmarkTourResult(
-            startedAt: Date(),
+            startedAt: world.date,
             machine: machine,
             preset: request.preset
         )
@@ -315,7 +315,8 @@ extension BenchmarkTourCoordinator {
     /// The folder the result goes to, so traces and PNGs land beside `result.json`.
     private var runFolder: URL {
         request.outDirectory.map { URL(filePath: $0) }
-            ?? BenchmarkReport.defaultFolder(startedAt: result?.startedAt ?? Date())
+            ?? BenchmarkReport
+            .defaultFolder(startedAt: result?.startedAt ?? world?.date ?? .distantPast)
     }
 
     static func screenshotLabel(step: Int, shot: BenchmarkShot) -> String? {

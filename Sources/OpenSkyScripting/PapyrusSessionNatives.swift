@@ -39,6 +39,9 @@ public struct PapyrusPerceptionNatives {
 public struct PapyrusSessionNatives {
     /// The clock the five time globals project from, as every other `GlobalResolution` does.
     public var clockSource: (() -> GameClock?)?
+    /// Seconds of real time since the session started, for `Utility.GetCurrentRealTime`.
+    /// The shell passes it in, so a test can fix the time.
+    public var realTimeSource: (() -> Double)?
     /// Picks the log entry a stage runs, and answers the condition-twin natives.
     /// Nil runs every log entry.
     public var conditionEvaluator: (() -> ConditionEvaluator)?

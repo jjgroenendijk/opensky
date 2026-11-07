@@ -58,6 +58,10 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
 - No `try?` in a package module, except on `removeItem` and `close`. A failure the game
   survives goes through `attempt { try call() }`, which logs it; any other failure throws a typed
   error. The formats, game data, and save modules never trap (`docs/decisions/error-handling.md`).
+- Game-rule code reads no system random source or clock: own a seeded generator or capture a
+  `RandomStream`, take the time from the shell, and time work with `Stopwatch`. No package
+  module adds a mutable static, a singleton, or a notification-centre event
+  (`docs/decisions/deterministic-rules.md`).
 
 ## Bulk edits
 

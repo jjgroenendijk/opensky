@@ -66,7 +66,7 @@ Implemented for traps:
 | `ObjectReference.GetNthLinkedRef` | Follows the untagged `XLKR` link n times |
 | `ObjectReference.GetAngleX`, `GetAngleZ` | Rotation about X or Z, in degrees |
 | `ObjectReference.IsLockBroken` | Always false: OpenSky never breaks a lock |
-| `Utility.GetCurrentRealTime` | Seconds since the first call |
+| `Utility.GetCurrentRealTime` | Seconds since the app started; a frozen or background frame counts at most 0.1 s |
 | `FormList.GetSize`, `FormList.GetAt` | The list's plugin entries. A nested list is one entry, and a runtime `AddForm` is not seen |
 
 Without a running game (the CLI and the package tests) the world natives above are

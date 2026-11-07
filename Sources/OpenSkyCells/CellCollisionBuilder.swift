@@ -288,16 +288,14 @@ nonisolated extension CellSceneBuilder {
         keys: [FormID: ReferenceKey] = [:],
         motionTypes: [FormID: ReferenceMotionType] = [:]
     ) -> CellCollisionProducts {
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = Stopwatch()
         var products = buildCollisionProducts(
             placements: resolveCollisionPlacements(
                 refs: refs, keys: keys, motionTypes: motionTypes
             ),
             location: location
         )
-        products.collision.buildDurationMS = Double(
-            DispatchTime.now().uptimeNanoseconds - started
-        ) / 1_000_000
+        products.collision.buildDurationMS = started.milliseconds
         return products
     }
 
@@ -316,7 +314,7 @@ nonisolated extension CellSceneBuilder {
                 stats: StaticCollisionStats()
             ))
         }
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = Stopwatch()
         let materialTypes = materialTypeIndexBuildingIfNeeded()
         loadPhases.measure(.collision) {
             collisionModels.predecode(paths: placements.map(\.modelPath))
@@ -332,7 +330,7 @@ nonisolated extension CellSceneBuilder {
                 into: &accumulator
             )
         }
-        let duration = Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
+        let duration = started.milliseconds
         var stats = accumulator.stats
         stats.estimatedBytes += accumulator.shapes.count
             * MemoryLayout<StaticCollisionShape>.stride

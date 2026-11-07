@@ -6,6 +6,7 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyFormatsCore
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -37,11 +38,11 @@ extension GameSession {
             lastAudioUpdateMS = 0
             return
         }
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = Stopwatch()
         // Registered first, so it runs last and covers the music tick below.
         defer {
             lastAudioUpdateMS =
-                Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
+                started.milliseconds
         }
         // Music runs after the engine tick so the director sees this frame's
         // retirements: a track that reached its end is already gone from

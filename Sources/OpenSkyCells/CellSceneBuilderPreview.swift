@@ -51,7 +51,7 @@ nonisolated extension CellSceneBuilder {
             malformed: [],
             parents: ActorEnableParents(),
             deltas: [:],
-            started: DispatchTime.now().uptimeNanoseconds
+            started: Stopwatch()
         )
         var subject = PreviewSubject()
         subject.placements = build.placements

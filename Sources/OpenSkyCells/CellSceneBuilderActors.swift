@@ -86,7 +86,7 @@ nonisolated extension CellSceneBuilder {
         collision: StaticCollisionSet = .empty,
         parents: ActorEnableParents = ActorEnableParents()
     ) -> CellActorBuild {
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = Stopwatch()
         var malformed: [String] = []
         var byID: [UInt32: CollectedActor] = [:]
         for collected in decodeActors(in: cell, malformed: &malformed) {
@@ -123,7 +123,7 @@ nonisolated extension CellSceneBuilder {
         collision: StaticCollisionSet = .empty,
         parents: ActorEnableParents = ActorEnableParents()
     ) -> CellActorBuild {
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = Stopwatch()
         var malformed: [String] = []
         let collected = Self.standingOnFloors(relocating(
             decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
@@ -168,7 +168,7 @@ nonisolated extension CellSceneBuilder {
         malformed: [String],
         parents: ActorEnableParents,
         deltas: [ReferenceKey: ReferenceStateDelta],
-        started: UInt64
+        started: Stopwatch
     ) -> CellActorBuild {
         var build = CellActorBuild()
         let actors = collected.map(\.actor)
@@ -182,7 +182,7 @@ nonisolated extension CellSceneBuilder {
         )
         resolveActors(actors, into: &build, deltas: deltas, enable: enable)
         build.durationMS =
-            Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
+            started.milliseconds
         return build
     }
 

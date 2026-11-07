@@ -2,6 +2,7 @@
 // launcher lists them while it loads; Instruments shows them as signposts.
 
 import Foundation
+import OpenSkyFormatsCore
 import OSLog
 
 /// One step of the world data load, in the order the launcher lists them.
@@ -90,10 +91,10 @@ nonisolated public struct WorldLoadProgress: Sendable {
             id: Self.signposter.makeSignpostID(),
             "\(stage.rawValue, privacy: .public)"
         )
-        let start = ContinuousClock.now
+        let start = Stopwatch()
         let value = try body()
         Self.signposter.endInterval("stage", signpost)
-        report(WorldLoadEvent(stage: stage, kind: .finished(ContinuousClock.now - start)))
+        report(WorldLoadEvent(stage: stage, kind: .finished(start.elapsed)))
         return value
     }
 }

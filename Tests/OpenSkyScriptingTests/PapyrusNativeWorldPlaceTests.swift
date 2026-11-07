@@ -144,6 +144,15 @@ struct PapyrusNativeWorldPlaceTests {
         #expect(result == .returned(.float(clock.daysPassed)))
     }
 
+    @Test func realTimeReadsTheShellsClock() throws {
+        let fixture = try Fixture.make()
+        fixture.session.bridge.sessionNatives.realTimeSource = { 12.5 }
+        let result = fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+            "Utility", "GetCurrentRealTime", receiver: nil, returnType: .float
+        ))
+        #expect(result == .returned(.float(12.5)))
+    }
+
     @Test func formFromFileNamesALoadedPluginOnly() throws {
         let fixture = try Fixture.make()
         fixture.session.bridge.formIDResolver = PapyrusWorldFixture.resolver

@@ -40,7 +40,11 @@ public struct DialogueRuntime: DialogueAccess {
     /// counted as unrun rather than silently dropped.
     public var fragments: (any DialogueFragmentDispatching)?
     /// Picks one of `count` stacked Random responses. Tests fix it.
-    public var randomPick: @MainActor (Int) -> Int = { Int.random(in: 0 ..< $0) }
+    public var randomPick: @MainActor (Int) -> Int = {
+        let stream = RandomStream(seed: 0x5049_434B)
+        return { stream.int(below: $0) }
+    }()
+
     private let contextSource: LazyConditionContext
     private var contextOverride: ConditionContext?
 

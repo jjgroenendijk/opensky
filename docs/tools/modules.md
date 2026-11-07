@@ -338,6 +338,10 @@ rules:
 - A package module does not swallow an error: write `attempt { try call() }` from
   `OpenSkyFormatsCore`, which logs the failure, or throw. The formats, game data, and save
   modules do not trap ([Error handling](/decisions/error-handling.md)).
+- A feature, interface, or world-domain module reads no system random source or clock: the
+  shell passes a seeded generator and the time in, and `Stopwatch` times work for logs. No
+  package module keeps global mutable state or uses the notification centre
+  ([Deterministic game rules](/decisions/deterministic-rules.md)).
 
 After a module is renamed or removed, delete its old products from `Build/Products` in the build cache
 (including `PackageFrameworks/`) and from `.build/`. Otherwise a stale `.swiftmodule` still

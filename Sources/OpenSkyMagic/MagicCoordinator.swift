@@ -4,6 +4,7 @@
 
 import OpenSkyActorsInterface
 public import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -54,7 +55,10 @@ public final class MagicCoordinator {
     /// Seconds each broken ward stays in `IsWardState` 2.
     var brokenWardSeconds: [ReferenceKey: Float] = [:]
     /// The absorption roll, in 0 ..< 100. A test fixes it.
-    public var spellDefenceRoll: () -> Float = { Float.random(in: 0 ..< 100) }
+    public var spellDefenceRoll: () -> Float = { [stream = RandomStream(seed: 0x5350_4446)] in
+        stream.float(in: 0 ..< 100)
+    }
+
     public let soulTrapSettings: SoulTrapSettings
     public let enchantingSettings: EnchantingSettings
     public internal(set) var lastEnchanting = EnchantingOutcome.idle

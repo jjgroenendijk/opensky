@@ -45,7 +45,7 @@ nonisolated public enum BenchmarkLoadPasses {
         place: BenchmarkPlace, inputs: BenchmarkLoadInputs
     ) async throws -> (cold: BenchmarkLoadPass, warm: BenchmarkLoadPass) {
         let recorder = LoadPhaseRecorder()
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = Stopwatch()
         let loadOrder = try ActiveLoadOrder.open(root: inputs.root)
         let builder = try ColdCellBuilder.makeBuilder(
             loadOrder: loadOrder, files: VirtualFileSystem(root: inputs.root),
@@ -70,7 +70,7 @@ nonisolated public enum BenchmarkLoadPasses {
             phases: recorder.snapshot().completed(totalMS: coldMS), cells: coldCells
         )
         recorder.reset()
-        let warmStart = DispatchTime.now().uptimeNanoseconds
+        let warmStart = Stopwatch()
         let warmCells = pass(place: place, builder: builder, plugins: loadOrder.plugins)
         let warmMS = milliseconds(since: warmStart)
         let warm = BenchmarkLoadPass(
@@ -129,7 +129,7 @@ nonisolated public enum BenchmarkLoadPasses {
     }
 
     private static func timed(_ label: String, _ build: () throws -> Void) -> BenchmarkCellLoad {
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = Stopwatch()
         do {
             try build()
             return BenchmarkCellLoad(label: label, totalMS: milliseconds(since: started))
@@ -141,8 +141,8 @@ nonisolated public enum BenchmarkLoadPasses {
         }
     }
 
-    static func milliseconds(since started: UInt64) -> Double {
-        Double(DispatchTime.now().uptimeNanoseconds - started) / 1e6
+    static func milliseconds(since started: Stopwatch) -> Double {
+        started.milliseconds
     }
 }
 

@@ -5,6 +5,7 @@
 public import OpenSkyBehavior
 public import OpenSkyConditions
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyNavigation
@@ -159,11 +160,12 @@ public final class IdleCoordinator {
     weak let world: (any IdleWorld)?
 
     public init(
-        random: @escaping (Int) -> Int = { Int.random(in: 0 ..< max($0, 1)) },
+        random: ((Int) -> Int)? = nil,
         world: (any IdleWorld)?,
         data: IdleSessionData?
     ) {
-        self.random = random
+        let stream = RandomStream(seed: 0x4944_4C45)
+        self.random = random ?? { stream.int(below: max($0, 1)) }
         self.world = world
         store = data?.store
         clips = data?.clips
