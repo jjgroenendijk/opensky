@@ -3,7 +3,7 @@
 // does not open the game's launcher window. SKSE's loader starts it when installed, so
 // the bridge plugin loads.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct ReferenceProcess: Equatable, Sendable {
     public var executable: URL

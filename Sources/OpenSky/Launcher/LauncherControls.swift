@@ -162,7 +162,7 @@ final class LauncherRow: LauncherHoverView {
     override func mouseDown(with _: NSEvent) {
         guard let control = control as? NSControl, control.isEnabled else { return }
         if control is NSTextField {
-            window?.makeFirstResponder(control)
+            unsafe window?.makeFirstResponder(control)
         } else {
             control.performClick(nil)
         }

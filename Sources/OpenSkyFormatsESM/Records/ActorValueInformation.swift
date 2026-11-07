@@ -4,7 +4,7 @@
 // Layout: docs/formats/actor-value-information.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum ActorValueInformationSkipKind: SkipTallyKind {
     case unknownField(FourCC)

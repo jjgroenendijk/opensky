@@ -4,7 +4,7 @@
 // (`RecordDecodeScope`). Rules: docs/formats/formid.md#load-order-space.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// One active plugin and the translation of its FormIDs into the load-order space.
 nonisolated public struct LoadOrderPlugin: Sendable {

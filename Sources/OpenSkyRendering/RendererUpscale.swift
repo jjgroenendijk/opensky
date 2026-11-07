@@ -2,12 +2,12 @@
 // motion vectors, runs the scaler, and copies its output into the frame target before
 // the SWF and UI layers draw at full size. See docs/rendering/upscaling.md.
 
-import Metal
+public import Metal
 import MetalFX
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
-import simd
+public import simd
 
 /// The renderer's upscaling state.
 public struct UpscaleState {
@@ -27,7 +27,7 @@ public struct UpscaleState {
     var previousView: float4x4?
     var previousModels: [MotionKey: float4x4] = [:]
     var previousBonePrepared: Set<ObjectIdentifier> = []
-    var motionInstances: MTLBuffer?
+    var motionInstances: any MTLBuffer?
     var motionInstanceCapacity = 0
     /// Off leaves moving objects with camera motion only, so a test can see the pass work.
     var objectMotionEnabled = true
@@ -172,7 +172,7 @@ extension Renderer {
     /// `target` with the upscaled frame drawn. Nil when an encoder cannot be made.
     func encodeUpscale(
         _ frame: UpscaleFrame,
-        sceneDepth: MTLTexture,
+        sceneDepth: any MTLTexture,
         target: MTL4RenderPassDescriptor,
         state: ScenePassState,
         frameOffset: Int
@@ -225,7 +225,7 @@ extension Renderer {
     static let upscaleStages: MTLStages = [.vertex, .fragment, .dispatch, .blit, .machineLearning]
 
     private func encodeScaler(
-        _ scaler: any MTL4FXTemporalScaler, frame: UpscaleFrame, sceneDepth: MTLTexture
+        _ scaler: any MTL4FXTemporalScaler, frame: UpscaleFrame, sceneDepth: any MTLTexture
     ) {
         let input = frame.targets.inputSize
         scaler.colorTexture = frame.targets.color
@@ -246,7 +246,7 @@ extension Renderer {
 
     /// Draws `texture`, at the frame size, as the first draw of `encoder`.
     func encodeComposite(
-        _ texture: MTLTexture, encoder: MTL4RenderCommandEncoder, frameOffset: Int
+        _ texture: any MTLTexture, encoder: any MTL4RenderCommandEncoder, frameOffset: Int
     ) {
         encoder.barrier(
             afterQueueStages: Self.upscaleStages, beforeStages: .fragment,
@@ -297,7 +297,7 @@ extension Renderer {
         return moved > Self.upscaleCutDistance || turned < Self.upscaleCutCosine
     }
 
-    private func upscaleTargets(output: SIMD2<Int>, color: MTLTexture) -> UpscaleTargets? {
+    private func upscaleTargets(output: SIMD2<Int>, color: any MTLTexture) -> UpscaleTargets? {
         let request = upscaleScalerRequest(output: output, colorFormat: color.pixelFormat)
         if let targets = upscale.targets, targets.request == request {
             return targets

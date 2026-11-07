@@ -4,7 +4,7 @@
 // case-insensitively; an absent plugin goes to `Resolution.missing`.
 // See docs/formats/plugins-txt.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum PluginLoadOrder: Sendable {
     /// Why a plugin is in the order. Drives the Settings window.s second

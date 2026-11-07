@@ -4,8 +4,8 @@
 // See docs/formats/explosions.md, section "Runtime".
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyPhysics
 import simd
 

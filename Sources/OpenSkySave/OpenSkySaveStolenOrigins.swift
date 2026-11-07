@@ -2,11 +2,11 @@
 // clear the stolen flag after a load too. Rows ascend by owner, then item.
 // Layout: docs/formats/opensky-save-actor-chunks.md.
 
-import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Per row: the owning faction's key, the item FormID, and the count.

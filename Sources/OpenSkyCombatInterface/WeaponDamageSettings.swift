@@ -3,7 +3,7 @@
 // docs/engine/melee-damage.md, "Skill, sneak attacks and armour".
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
     /// `fDamagePCSkillMax`: the player's damage factor at skill 100.
@@ -53,7 +53,7 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
 
     /// The HUD notice, such as "Sneak attack for 3.0X damage!".
     public func sneakNotice(multiplier: Float) -> String {
-        sneakNoticeMain + String(format: "%.1f", multiplier) + sneakNoticeEnd
+        unsafe sneakNoticeMain + String(format: "%.1f", multiplier) + sneakNoticeEnd
     }
 
     /// `text` resolves a string setting through the plugin's string table.

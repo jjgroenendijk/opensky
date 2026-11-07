@@ -3,7 +3,7 @@
 // Layouts follow NifTools nif.xml (NiParticleSystem, NiPSysData, NiPSysEmitter
 // and concrete emitter/modifier blocks); see docs/formats/nif-particles.md.
 
-import Foundation
+public import Foundation
 import simd
 
 public enum NIFParticleFixture: Sendable {

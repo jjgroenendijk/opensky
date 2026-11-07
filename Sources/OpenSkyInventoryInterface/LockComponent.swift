@@ -1,8 +1,8 @@
 // Lock state of one door or container: the XLOC baseline with a runtime delta on
 // top. The difficulty bands and their names are on docs/engine/locks.md.
 
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// The five pickable bands plus "requires key". `iLockLevelMaxVeryEasy` (1) bounds
 /// Novice; the other bounds are the XLOC values UESP lists for REFR.

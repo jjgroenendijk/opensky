@@ -2,9 +2,9 @@
 // lines, and the lookup tables the coordinator caches.
 
 import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyAudio
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 nonisolated public enum RuntimeStateCore {
     /// Hexadecimal with an optional `0x` prefix. Anything else is nil, so a typo
@@ -40,7 +40,7 @@ nonisolated public enum RuntimeStateCore {
         if let integer = value.integerValue {
             return String(integer)
         }
-        return String(format: "%g", value.value)
+        return unsafe String(format: "%g", value.value)
     }
 
     /// Both rings share one sequence counter, so sorting by it restores the

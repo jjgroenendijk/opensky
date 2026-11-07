@@ -22,12 +22,12 @@ extension Renderer {
         )
         let buffer = upscale.resources.uniformBuffer
         let offset = UpscaleResources.uniformStride * slot
-        buffer.contents().advanced(by: offset)
+        unsafe buffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<UpscaleMotionUniforms>.size)
         return buffer.gpuAddress + UInt64(offset)
     }
 
-    func encodeCameraMotion(_ frame: UpscaleFrame, sceneDepth: MTLTexture, uniforms: UInt64)
+    func encodeCameraMotion(_ frame: UpscaleFrame, sceneDepth: any MTLTexture, uniforms: UInt64)
         -> Bool
     {
         let descriptor = MTL4RenderPassDescriptor()
@@ -55,7 +55,7 @@ extension Renderer {
     /// become next frame's previous ones.
     func encodeObjectMotion(
         _ frame: UpscaleFrame,
-        sceneDepth: MTLTexture,
+        sceneDepth: any MTLTexture,
         state: ScenePassState,
         uniforms: UInt64
     ) -> Bool {
@@ -116,7 +116,7 @@ extension Renderer {
         _ group: DrawGroup,
         count: Int,
         instances: UInt64,
-        encoder: MTL4RenderCommandEncoder,
+        encoder: any MTL4RenderCommandEncoder,
         slot: Int
     ) {
         let skinned = group.mesh.isSkinned
@@ -159,7 +159,7 @@ extension Renderer {
     }
 
     /// The last motion encoder hands its writes to the scaler's encoders.
-    private func endMotionEncoder(_ encoder: MTL4RenderCommandEncoder) {
+    private func endMotionEncoder(_ encoder: any MTL4RenderCommandEncoder) {
         encoder.barrier(
             afterStages: .fragment, beforeQueueStages: Self.upscaleStages,
             visibilityOptions: .device
@@ -169,7 +169,7 @@ extension Renderer {
 
     private static func objectMotionDescriptor(
         _ frame: UpscaleFrame,
-        sceneDepth: MTLTexture
+        sceneDepth: any MTLTexture
     ) -> MTL4RenderPassDescriptor {
         let descriptor = MTL4RenderPassDescriptor()
         descriptor.colorAttachments[0].texture = frame.targets.motion
@@ -211,12 +211,12 @@ extension Renderer {
 
 /// One frame slot's part of the motion instance ring.
 struct MotionInstanceRun {
-    let buffer: MTLBuffer
+    let buffer: any MTLBuffer
     let base: Int
 
     func write(_ instance: MotionInstance, at index: Int) {
         var value = instance
-        buffer.contents().advanced(by: (base + index) * MemoryLayout<MotionInstance>.stride)
+        unsafe buffer.contents().advanced(by: (base + index) * MemoryLayout<MotionInstance>.stride)
             .copyMemory(from: &value, byteCount: MemoryLayout<MotionInstance>.size)
     }
 

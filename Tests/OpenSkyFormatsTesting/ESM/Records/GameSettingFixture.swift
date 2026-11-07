@@ -1,7 +1,7 @@
 // Single-GMST plugins for the game-setting store and the settings it feeds.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum GameSettingFixture: Sendable {
     /// A plugin with one float GMST.

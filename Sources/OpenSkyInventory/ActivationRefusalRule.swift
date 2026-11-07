@@ -2,8 +2,8 @@
 // or used piece of furniture, a parent-activated object, and use during combat. The
 // texts are string settings. See docs/engine/interaction.md#refused-activations.
 
-import OpenSkyGameData
-import OpenSkyWorldInterface
+public import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 nonisolated public enum ActivationRefusalText: String, GameSettingTextKey {
     case creatureCalmed = "sActivateCreatureCalmed"

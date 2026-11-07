@@ -3,9 +3,9 @@
 // extraction and sorting stay AppKit-free and deterministic.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
     case keyword = "KYWD"

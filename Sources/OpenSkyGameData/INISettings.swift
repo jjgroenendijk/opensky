@@ -2,7 +2,7 @@
 // applied low -> high priority; a malformed high-priority typed value is
 // ignored so the next valid source (or caller fallback) remains usable.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct INIFile: Equatable, Sendable {

@@ -3,7 +3,7 @@
 // One snapshot, so sections agree. An explicit selection follows one named actor
 // through a crowd, unlike Combat & Physics' nearest actor.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One resident actor as the gate readout's selector offers it.

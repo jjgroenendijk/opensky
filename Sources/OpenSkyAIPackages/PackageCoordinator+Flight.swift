@@ -2,7 +2,7 @@
 // package sends the actor and reports back when it got there. See
 // docs/engine/dragon-flight.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

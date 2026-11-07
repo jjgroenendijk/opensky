@@ -4,8 +4,8 @@
 // the name. An unresolvable tag stays as written, so a missing fill stays visible.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Resolves one quest alias to the display name of whatever fills it, and
 /// substitutes those names into journal text.

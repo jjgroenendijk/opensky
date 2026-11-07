@@ -3,8 +3,8 @@
 // (docs/engine/behavior-runtime.md#mirrored-clips).
 
 import Foundation
-import OpenSkyFormatsAnimation
-import simd
+public import OpenSkyFormatsAnimation
+public import simd
 
 /// The per-bone rotations that reflect a pose of one skeleton onto its mirror side.
 nonisolated public struct BehaviorMirror: Sendable {

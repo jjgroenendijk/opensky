@@ -5,10 +5,10 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldInterface
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// Why a harvest wrote nothing.

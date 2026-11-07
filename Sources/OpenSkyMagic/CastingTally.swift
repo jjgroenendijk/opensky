@@ -2,7 +2,7 @@
 // readout and tests read. See docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Everything the cast loop declined to do, so unimplemented ground is measured
 /// rather than silent.

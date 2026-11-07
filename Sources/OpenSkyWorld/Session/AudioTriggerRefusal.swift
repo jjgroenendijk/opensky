@@ -1,7 +1,7 @@
 // Why an audio trigger did not start its sound. A trigger returns nil
 // when the sound started or waits for its file.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum AudioTriggerRefusal: Equatable, Sendable {
     case engineNotRunning

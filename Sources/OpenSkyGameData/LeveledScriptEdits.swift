@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import Synchronization
 
 nonisolated public final class LeveledScriptEdits: Sendable {

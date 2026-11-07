@@ -2,7 +2,7 @@
 // packed array of ARMO or LVLI FormIDs. Layout: docs/formats/actors.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Outfit: Sendable {
     public let formID: FormID

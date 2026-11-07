@@ -2,11 +2,11 @@
 // `WorldItemRuntime+Harvest` and `CraftingSession`. See docs/engine/crafting.md.
 
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension InventoryCoordinator {

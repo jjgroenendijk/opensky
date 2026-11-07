@@ -14,7 +14,7 @@ struct TextureLoaderTests {
     private static let device = MTLCreateSystemDefaultDevice()
 
     /// nil when this machine cannot run BCn upload tests.
-    private static let bcDevice: MTLDevice? = {
+    private static let bcDevice: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsBCTextureCompression else { return nil }
@@ -97,7 +97,7 @@ struct TextureLoaderTests {
         #expect(texture.pixelFormat == .bgra8Unorm_srgb)
 
         var level0 = [UInt8](repeating: 0, count: 8)
-        texture.getBytes(
+        unsafe texture.getBytes(
             &level0,
             bytesPerRow: 8,
             from: MTLRegionMake2D(0, 0, 2, 1),
@@ -106,7 +106,7 @@ struct TextureLoaderTests {
         #expect(level0 == [10, 20, 30, 255, 40, 50, 60, 255])
 
         var level1 = [UInt8](repeating: 0, count: 4)
-        texture.getBytes(
+        unsafe texture.getBytes(
             &level1,
             bytesPerRow: 4,
             from: MTLRegionMake2D(0, 0, 1, 1),
@@ -126,7 +126,7 @@ struct TextureLoaderTests {
         #expect(texture.pixelFormat == .rgba8Unorm_srgb)
 
         var pixel = [UInt8](repeating: 0, count: 4)
-        texture.getBytes(
+        unsafe texture.getBytes(
             &pixel,
             bytesPerRow: 4,
             from: MTLRegionMake2D(0, 0, 1, 1),
@@ -146,7 +146,7 @@ struct TextureLoaderTests {
         #expect(texture.pixelFormat == .bgra8Unorm_srgb)
 
         var pixel = [UInt8](repeating: 0, count: 4)
-        texture.getBytes(
+        unsafe texture.getBytes(
             &pixel,
             bytesPerRow: 4,
             from: MTLRegionMake2D(0, 0, 1, 1),

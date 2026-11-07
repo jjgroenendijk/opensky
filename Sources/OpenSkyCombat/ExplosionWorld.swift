@@ -2,8 +2,8 @@
 // runtime decides; the session applies damage, plays sounds, starts the
 // image-space modifier, and places hazards. See docs/formats/explosions.md.
 
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import simd
 
 /// What set an explosion off, for the readout.

@@ -1,7 +1,7 @@
 // The `HAZD` record as the hazard runtime reads it. See docs/formats/hazards.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension HazardStore {
     /// The runtime numbers for `key`, or nil when the record is missing or has no `DATA`.

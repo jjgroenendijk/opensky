@@ -2,10 +2,10 @@
 // feed the NPC mover; other acts go to the world as `PackageAction`s.
 // docs/engine/package-schedules.md, "Procedure machines".
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyPhysics
-import OpenSkyWorldInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public enum PackageLoopClip: String, Equatable, Sendable {

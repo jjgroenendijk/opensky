@@ -1,7 +1,7 @@
 // The audio mixer and director controls. Each reads its default
 // and does nothing until audio is enabled.
 
-import OpenSkyAudio
+public import OpenSkyAudio
 
 extension AudioCoordinator {
     public var audioMasterVolume: Float {

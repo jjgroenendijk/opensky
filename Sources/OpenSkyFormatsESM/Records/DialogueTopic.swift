@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/dialogue.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct DialogueTopic: Sendable {
     public enum Category: Equatable, Sendable {

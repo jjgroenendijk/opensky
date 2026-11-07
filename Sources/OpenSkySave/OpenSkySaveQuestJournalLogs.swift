@@ -1,11 +1,11 @@
 // QJLG chunk: the journal's newest log entry per quest, laid onto the QSTS states.
 // Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyQuestsInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyQuestsInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Every quest state with a log entry, in the snapshot's key order.

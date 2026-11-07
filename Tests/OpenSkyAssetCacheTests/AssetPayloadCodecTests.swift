@@ -11,7 +11,7 @@ import Testing
 
 struct AssetPayloadCodecTests {
     private func bytes(_ values: [some Any]) -> Data {
-        values.withUnsafeBytes { Data($0) }
+        values.withUnsafeBytes { unsafe Data($0) }
     }
 
     private var skinnedModel: Model {

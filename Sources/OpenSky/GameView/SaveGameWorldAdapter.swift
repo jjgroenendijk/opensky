@@ -218,7 +218,7 @@ final class SaveGameWorldAdapter: SaveGameService {
     }
 
     /// The game's kind of failure for a save or load error.
-    static func failure(_ error: Error) -> Error {
+    static func failure(_ error: any Error) -> any Error {
         switch error {
         case is SaveFailure: error
         case OpenSkySaveStoreError.slotNotFound: SaveFailure.noLongerAvailable
@@ -279,7 +279,7 @@ final class SaveGameWorldAdapter: SaveGameService {
 
     static func playTimeText(_ seconds: Double) -> String {
         let minutes = Int(seconds / 60)
-        return String(format: "%d:%02d", minutes / 60, minutes % 60)
+        return unsafe String(format: "%d:%02d", minutes / 60, minutes % 60)
     }
 
     private func summary() -> SaveSummary {

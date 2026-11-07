@@ -3,8 +3,8 @@
 // docs/engine/loading-screens.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 nonisolated public struct LoadingScreenSession: Equatable, Sendable {

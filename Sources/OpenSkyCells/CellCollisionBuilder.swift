@@ -3,14 +3,14 @@
 // plugin parsing and can be tested with synthetic NIF collision models.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
+public import OpenSkyPhysics
 import OpenSkyRendering
-import OpenSkyWorldState
-import simd
+public import OpenSkyWorldState
+public import simd
 
 nonisolated public struct CellCollisionPlacement: Sendable {
     public let reference: FormID

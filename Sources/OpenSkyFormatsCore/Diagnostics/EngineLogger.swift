@@ -1,5 +1,5 @@
 import Foundation
-import OSLog
+public import OSLog
 import Synchronization
 
 /// An `os.Logger` that also keeps error and fault lines in `EngineLogTap`, so the

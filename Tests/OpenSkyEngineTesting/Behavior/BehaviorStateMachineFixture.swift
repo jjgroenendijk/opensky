@@ -3,8 +3,8 @@
 // transitions, a wildcard array, and `hkbBlendingTransitionEffect` crossfades.
 
 import Foundation
-@testable import OpenSkyBehavior
-@testable import OpenSkyFormatsAnimation
+@testable public import OpenSkyBehavior
+@testable public import OpenSkyFormatsAnimation
 
 /// One transition of a synthetic machine.
 public struct BehaviorTransitionSpec: Sendable {

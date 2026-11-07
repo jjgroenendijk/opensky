@@ -5,11 +5,11 @@
 // https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbImplementation.pas
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyTerrain
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated public struct DoorTransition: Sendable {
     public let sourceDoor: FormID

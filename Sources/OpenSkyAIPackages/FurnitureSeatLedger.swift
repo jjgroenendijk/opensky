@@ -2,8 +2,8 @@
 // `FNMK` keyword is kept for actors that have it, and a seat the record's `MNAM`
 // turns off is no one's (docs/engine/furniture.md).
 
-import OpenSkyFormatsESM
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public struct FurnitureSeatLedger: Sendable {

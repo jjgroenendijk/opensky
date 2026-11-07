@@ -4,8 +4,8 @@
 // See docs/engine/runtime-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One dirty reference in a snapshot: its key and the deltas recorded for it.
 nonisolated public struct WorldStateSnapshotEntry: Equatable, Sendable {

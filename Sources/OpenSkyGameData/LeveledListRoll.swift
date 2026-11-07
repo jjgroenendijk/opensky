@@ -5,8 +5,8 @@
 // <https://ck.uesp.net/wiki/LeveledCharacter>. See docs/engine/leveled-lists.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 /// One entry a request returned, with the count it gives.
 nonisolated public struct LeveledPick: Equatable, Sendable {

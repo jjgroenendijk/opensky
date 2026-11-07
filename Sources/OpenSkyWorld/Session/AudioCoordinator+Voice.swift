@@ -2,8 +2,8 @@
 // positional trigger, the playback clock, and lip sync on the speaker.
 
 import Foundation
-import OpenSkyActorPresentation
-import OpenSkyAudio
+public import OpenSkyActorPresentation
+public import OpenSkyAudio
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyGameData

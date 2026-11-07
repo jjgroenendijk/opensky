@@ -4,7 +4,7 @@
 // without rejecting the entry or pretending it has known engine semantics.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated extension DefaultObjectTag {
     public static let knownMeanings: [FourCC: String] = {

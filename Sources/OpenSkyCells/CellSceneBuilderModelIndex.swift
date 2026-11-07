@@ -1,10 +1,10 @@
 // Cached STAT/ModelBase indexes and the exterior build-source lookup.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyPhysics
 
 nonisolated public struct ExteriorBuildSource: Sendable {
     public let world: FoundWorld

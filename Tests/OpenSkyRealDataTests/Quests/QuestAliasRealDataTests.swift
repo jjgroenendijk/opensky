@@ -123,9 +123,10 @@ struct QuestAliasRealDataTests {
         )
         for entry in census.skipped.ranked {
             let share = Double(entry.count) / Double(max(census.aliases, 1)) * 100
+            let aliasShare = unsafe "(\(String(format: "%.2f", share))% of aliases)"
             lines.append(
                 "  skip \(entry.name) \(entry.count) "
-                    + "(\(String(format: "%.2f", share))% of aliases)"
+                    + aliasShare
             )
         }
         lines.append("blocked quests: \(census.blockedQuests.count)")

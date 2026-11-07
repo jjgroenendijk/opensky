@@ -89,7 +89,7 @@ struct CloudLayersTests {
             ])
             for (slot, value) in [Float(1), 0.5, 1, 0.25].enumerated() {
                 withUnsafeBytes(of: value.bitPattern.littleEndian) {
-                    alphas.replaceSubrange(
+                    unsafe alphas.replaceSubrange(
                         layer * 16 + slot * 4 ..< layer * 16 + slot * 4 + 4,
                         with: $0
                     )
@@ -118,6 +118,6 @@ struct CloudLayersTests {
     }
 
     private static func uint32(_ value: UInt32) -> Data {
-        withUnsafeBytes(of: value.littleEndian) { Data($0) }
+        withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }
     }
 }

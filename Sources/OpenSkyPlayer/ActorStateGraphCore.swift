@@ -4,8 +4,8 @@
 
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyBehavior
-import OpenSkyPhysics
+public import OpenSkyBehavior
+public import OpenSkyPhysics
 import simd
 
 /// What the other game systems report about the player for one step.

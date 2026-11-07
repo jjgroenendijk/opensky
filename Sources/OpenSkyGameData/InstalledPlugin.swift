@@ -2,7 +2,7 @@
 // name and what its TES4 header says about it.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct InstalledPlugin: Equatable, Sendable {
     public let name: String

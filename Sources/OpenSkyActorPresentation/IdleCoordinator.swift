@@ -2,13 +2,13 @@
 // runs the selector on arrival, plays the clip, and shows the prop. The rules
 // live in `IdleCore` and `IdleSelector`. See docs/engine/idle-runtime.md.
 
-import OpenSkyBehavior
-import OpenSkyConditions
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyNavigation
-import OpenSkyRuntimeState
+public import OpenSkyBehavior
+public import OpenSkyConditions
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyNavigation
+public import OpenSkyRuntimeState
 import OpenSkyWorldConditions
 import simd
 

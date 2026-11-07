@@ -132,7 +132,7 @@ enum AssetCacheMeasure {
         }
         let sourceMiB = Double(rows.first?.archive.bytes ?? 0) / Double(1 << 20)
         for row in rows {
-            print(String(
+            unsafe print(String(
                 format: "%@\t%d\t%.1f\t%.1f\t%@\t%.1f\t%.1f\t%.1f\t%.1f",
                 probe.kind.description, paths.count, sourceMiB,
                 Double(cacheBytes) / Double(1 << 20),

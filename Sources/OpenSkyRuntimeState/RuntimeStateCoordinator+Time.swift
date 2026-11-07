@@ -5,7 +5,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 extension RuntimeStateCoordinator {
     /// The date line of `clock` in the install's own words, as the menus and the export show it.

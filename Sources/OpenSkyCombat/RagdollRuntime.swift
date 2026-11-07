@@ -4,14 +4,14 @@
 // steps ragdolls and stores rest poses. An actor with no graph hands off at
 // once, and the runtime counts those. See docs/engine/ragdoll.md.
 
-import OpenSkyActorsInterface
-import OpenSkyCombatInterface
+public import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
 import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
 import OpenSkyWorldState
-import simd
+public import simd
 
 /// One actor the runtime can kill and ragdoll.
 nonisolated public struct RagdollActor: Sendable {

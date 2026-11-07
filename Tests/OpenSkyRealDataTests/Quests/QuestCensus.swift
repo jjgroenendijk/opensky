@@ -187,7 +187,7 @@ struct QuestCensus {
         let misses = coverage.rankedUnimplemented(in: registry).prefix(10)
             .map { "\($0.index):\($0.conditions)" }
             .joined(separator: " ")
-        return """
+        return unsafe """
         [INFO] Skyrim.esm QUST census: \(records) quests decoded, \
         \(failures.count) failures, \(skipped.total) subrecords skipped
         [INFO] stages \(stages) (\(journalStages) with journal text), \

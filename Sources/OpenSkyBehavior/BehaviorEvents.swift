@@ -4,7 +4,7 @@
 // the same order. See docs/engine/behavior-runtime.md.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// One raised event: which index, what it is called, and the string payload
 /// the authored data attached to it, if any.

@@ -1,6 +1,6 @@
 // A seeded generator, so a lockpicking session can be replayed in a test.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct LockpickingRandom: RandomNumberGenerator, Equatable, Sendable {
     private var generator: SplitMix64

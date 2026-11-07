@@ -3,7 +3,7 @@
 // (<https://ck.uesp.net/wiki/Magic_Effect>). See docs/engine/magic-archetypes.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Which effects a dispelling archetype removes.
 nonisolated public enum MagicDispelFilter: Equatable, Sendable {

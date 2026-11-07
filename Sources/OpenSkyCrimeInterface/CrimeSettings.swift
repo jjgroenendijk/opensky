@@ -3,8 +3,8 @@
 // alarm reaches a guard, and the trespass grace period. Defaults are the CK wiki's
 // Category:Settings values. See docs/engine/crime.md and docs/engine/jail.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// The prices a crime faction with the `crimeGoldUseDefaults` flag charges.
 nonisolated public struct CrimePrices: Equatable, Sendable {

@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension CellSceneBuilder {
     /// The cell's NAVM records of every plugin in the load order.

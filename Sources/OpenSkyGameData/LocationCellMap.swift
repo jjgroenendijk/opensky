@@ -2,7 +2,7 @@
 // every LCTN, less its `RCEC` list. See docs/formats/locations.md#cell-link.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct LocationCellMap: Sendable {
     private struct Key: Hashable {

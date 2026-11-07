@@ -1,12 +1,12 @@
 // One placed model the cell builder resolved, before it becomes a render placement.
 
-import OpenSkyBehavior
-import OpenSkyFormatsCore
-import OpenSkyObjectAnimation
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyBehavior
+public import OpenSkyFormatsCore
+public import OpenSkyObjectAnimation
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import OpenSkyRenderResources
-import simd
+public import simd
 
 /// One resolved placement, sortable into instancing-ready order.
 nonisolated public struct ResolvedInstance {

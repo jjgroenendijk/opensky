@@ -4,8 +4,8 @@
 // install; the order of the steps is OpenSky's reading (docs/engine/bump-reactions.md).
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 nonisolated public struct BumpReactionSettings: Equatable, Sendable {

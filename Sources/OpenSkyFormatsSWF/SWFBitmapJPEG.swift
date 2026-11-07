@@ -3,7 +3,7 @@
 // are in docs/formats/swf-shapes.md.
 
 import CoreGraphics
-import Foundation
+public import Foundation
 import ImageIO
 import OpenSkyFormatsCore
 
@@ -109,7 +109,7 @@ nonisolated extension SWFBitmapDecoder {
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
         let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
             guard
-                let context = CGContext(
+                let context = unsafe CGContext(
                     data: buffer.baseAddress,
                     width: width,
                     height: height,

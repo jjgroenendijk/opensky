@@ -2,7 +2,7 @@
 // tree, the template's data inputs, and the begin, end, and change events.
 // Layout from xEdit dev-4.1.6 `PACK`; docs/formats/packages.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct PackageDetails: Equatable, Sendable {

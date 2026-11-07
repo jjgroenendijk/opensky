@@ -2,8 +2,8 @@
 // `RFCT` names an `ARTO` model and an `EFSH` membrane; an `EFSH`, `ARTO`, or
 // `ADDN` alone gives half of that. See docs/rendering/visual-effects.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension EffectRecordStore {
     /// The look of an `RFCT`, `EFSH`, `ADDN`, or `ARTO`, or nil for any other record or an

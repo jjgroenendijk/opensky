@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One weighted weather candidate, unifying CLMT WLST and REGN RDWT entries.

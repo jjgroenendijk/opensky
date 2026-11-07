@@ -2,7 +2,7 @@
 // one Vector4 per vertex. FaceGen bakes current positions there: xyz replaces
 // the inherited positions, w is runtime-only. Layout: docs/formats/nif.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 import simd
 

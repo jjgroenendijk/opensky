@@ -4,9 +4,9 @@
 // docs/engine/cell-streaming.md (coverage transition).
 
 import Foundation
-import OpenSkyCells
-import OpenSkyFormatsCore
-import OpenSkyTerrain
+public import OpenSkyCells
+public import OpenSkyFormatsCore
+public import OpenSkyTerrain
 
 extension CellStreamer {
     /// Drops unloaded cells and schedules eviction of assets no resident cell needs. Only

@@ -143,6 +143,6 @@ struct MaterialTypeTests {
     }
 
     private static func uint32(_ value: UInt32) -> Data {
-        withUnsafeBytes(of: value.littleEndian) { Data($0) }
+        withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }
     }
 }

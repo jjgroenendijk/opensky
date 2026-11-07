@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// A soul size, as SOUL and SLCP store it. An unknown byte keeps its value.
 nonisolated public enum SoulLevel: Equatable, Sendable {

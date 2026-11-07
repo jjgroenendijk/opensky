@@ -1,7 +1,7 @@
 // Bounds-checked decoder for the big-endian Skyrim PEX 3.x layout documented
 // by UESP. Malformed external bytes always become a typed `PexError`.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct PexDecoder: Sendable {
@@ -181,7 +181,9 @@ nonisolated public struct PexReader: Sendable {
         try requireBytes(size)
         let start = offset
         offset += size
-        let raw = data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: start, as: T.self) }
+        let raw = unsafe data.withUnsafeBytes {
+            unsafe $0.loadUnaligned(fromByteOffset: start, as: T.self)
+        }
         return T(bigEndian: raw)
     }
 

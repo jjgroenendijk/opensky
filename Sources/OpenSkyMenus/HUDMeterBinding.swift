@@ -3,8 +3,8 @@
 // headless. It publishes only on change, because each call dirties the movie.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyGameData
+public import OpenSkyActorsInterface
+public import OpenSkyGameData
 
 nonisolated public struct HUDMeterBinding: Sendable {
     /// What was last handed to the movie. Starts at the value

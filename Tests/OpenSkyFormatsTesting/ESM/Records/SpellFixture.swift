@@ -1,7 +1,7 @@
 // Record builder shared by the parser tests and the runtime tests that feed
 // the same records to a store. Every byte is built in code.
 
-import Foundation
+public import Foundation
 
 public enum SpellFixture: Sendable {
     /// The 36-byte SPIT struct: base cost, flags, type, charge time, casting

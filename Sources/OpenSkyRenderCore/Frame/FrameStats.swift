@@ -3,7 +3,7 @@
 // reports for each frame's commit. A shorter parallel window feeds `snapshot()` for live
 // readouts.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 import os
 import Synchronization
@@ -231,8 +231,8 @@ nonisolated public struct FrameStatsWindow: Equatable, Sendable {
     }
 
     public var text: String {
-        let gpuText = gpuMS.map { String(format: "%.2f", $0) } ?? "n/a"
-        return String(
+        let gpuText = gpuMS.map { unsafe String(format: "%.2f", $0) } ?? "n/a"
+        return unsafe String(
             format: "frame avg %.2f ms (%.0f fps, max %.2f ms) | "
                 + "cpu encode avg %.2f ms | gpu avg %@ ms",
             intervalMS, fps, maxMS, encodeMS, gpuText

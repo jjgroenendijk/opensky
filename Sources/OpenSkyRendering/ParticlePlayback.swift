@@ -2,13 +2,13 @@
 // system, held by its `RenderScene`. Emitter, modifier and alpha-function semantics:
 // NifTools nif.xml (https://github.com/niftools/nifxml/blob/develop/nif.xml).
 
-@preconcurrency import Metal
+@preconcurrency @unsafe public import Metal
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import OpenSkyRenderCore
-import OpenSkyRenderResources
+public import OpenSkyFormatsMesh
+public import OpenSkyRenderCore
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
-import simd
+public import simd
 import Synchronization
 
 nonisolated public enum ParticleBlendMode: Equatable, Hashable, Sendable {
@@ -410,18 +410,18 @@ nonisolated public final class ParticlePlayback: Sendable {
 
     public let name: String
     public let sourcePath: String
-    public let texture: MTLTexture
+    public let texture: any MTLTexture
     public let blendMode: ParticleBlendMode
     /// The system's effect shader. The particle colour always applies, as vertex
     /// colour and alpha, whatever the shader's vertex flags say.
     public let effect: RenderEffectMaterial
     /// The placed reference's `XEMI`, for an effect shader with external emittance.
     public let emittance: EmittanceSource?
-    public let instanceBuffer: MTLBuffer
+    public let instanceBuffer: any MTLBuffer
     /// The meshes each particle of a mesh particle system draws; nil draws billboards.
     public let meshModel: RenderModel?
     /// One `ParticleEffectUniforms` per frame in flight.
-    let effectBuffer: MTLBuffer
+    let effectBuffer: any MTLBuffer
     public let capacity: Int
     /// The bolt of a lightning controller; nil for a particle system.
     let lightning: LightningBolt?
@@ -438,10 +438,10 @@ nonisolated public final class ParticlePlayback: Sendable {
     }
 
     public init(
-        device: MTLDevice,
+        device: any MTLDevice,
         definition: ParticleSystemDefinition,
         placementTransform: float4x4,
-        texture: MTLTexture,
+        texture: any MTLTexture,
         effect: RenderEffectMaterial = .plainParticles,
         emittance: EmittanceSource? = nil,
         seed: UInt64,
@@ -484,7 +484,7 @@ nonisolated public final class ParticlePlayback: Sendable {
     static let effectStride = (MemoryLayout<ParticleEffectUniforms>.size + 0xFF) & -0x100
 
     /// The buffers and textures a draw of this system reads.
-    public var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [any MTLAllocation] {
         [instanceBuffer, effectBuffer, texture] + (effect.palette.map { [$0] } ?? [])
     }
 
@@ -503,7 +503,7 @@ nonisolated public final class ParticlePlayback: Sendable {
             emittance: EmittanceSource.colour(of: emittance, regions: regions)
         )
         let offset = slot * Self.effectStride
-        effectBuffer.contents().advanced(by: offset)
+        unsafe effectBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<ParticleEffectUniforms>.size)
         return effectBuffer.gpuAddress + UInt64(offset)
     }

@@ -2,8 +2,8 @@
 // `InventoryRuntime` and `EquipmentRuntime` conform, and the composition root
 // hands them over as these protocols.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Counts, gold, and stolen goods in one holder's inventory, over the
 /// world-state store.

@@ -2,8 +2,8 @@
 // each painted LTEX names a MATT. The splat weights are resolved on the 33x33 height
 // grid, and the heaviest texture at a vertex wins.
 
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import simd
 
 nonisolated public struct TerrainSurfaceMaterials: Equatable, Sendable {

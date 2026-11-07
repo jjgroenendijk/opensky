@@ -4,8 +4,8 @@
 // (<https://ck.uesp.net/wiki/Magic_Effect>). See docs/engine/magic-archetypes.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 /// The game settings the world archetypes read. Defaults are the vanilla values.

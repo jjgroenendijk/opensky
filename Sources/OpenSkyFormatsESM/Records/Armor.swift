@@ -4,7 +4,7 @@
 // Layout and sources: docs/formats/armor.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Armor: Sendable {
     public let formID: FormID

@@ -2,8 +2,8 @@
 // leveled lock of (player level, authored level, stored level). See docs/engine/locks.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyFormatsESS
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsESS
 
 nonisolated public struct ESSLockRow: Equatable, Sendable {
     public let reference: ESSFormResolution

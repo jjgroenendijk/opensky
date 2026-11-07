@@ -5,8 +5,8 @@
 // See docs/engine/condition-functions.md and docs/engine/detection.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import simd
 
 /// Resolved perception for a whole evaluation.

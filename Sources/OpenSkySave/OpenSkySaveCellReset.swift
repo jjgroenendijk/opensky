@@ -1,11 +1,11 @@
 // CRST chunk: the game hour the player last left each cell, for the cell reset.
 // Merged into the player's `RDLT` delta. Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// The saved departures, before they are merged back into the player's delta.
 nonisolated public struct SaveCellResetLedger: Equatable, Sendable {

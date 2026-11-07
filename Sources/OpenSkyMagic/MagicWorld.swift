@@ -3,13 +3,13 @@
 // See docs/engine/coordinators.md.
 
 import OpenSkyActorsInterface
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
-import OpenSkyPhysics
-import OpenSkyProgressionInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
+public import OpenSkyProgressionInterface
 import simd
 
 /// What `MagicCoordinator` reads from the running world. Skill uses pass

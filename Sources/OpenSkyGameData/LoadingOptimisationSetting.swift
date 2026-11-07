@@ -1,7 +1,7 @@
 // One player setting per load-time optimisation, so one build can measure each one
 // on and off (docs/tools/benchmark.md#load-optimisation-switches).
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum LoadingOptimisationSetting: String, CaseIterable, Sendable {
     case pluginReadAhead

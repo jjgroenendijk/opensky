@@ -3,8 +3,8 @@
 // See docs/formats/idle.md, camera-records.md, and story-manager.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public struct IdleStore: Sendable {
     public static let types: Set<FourCC> = ["IDLE", "IDLM", "ANIO", "AACT"]

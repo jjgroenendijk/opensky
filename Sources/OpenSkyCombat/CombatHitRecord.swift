@@ -2,7 +2,7 @@
 // attack it was, and who struck. The killing hit pushes the body, and a qualifying
 // blow can sever the head (docs/engine/ragdoll.md#death-effects).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum CombatHitKind: String, Equatable, Sendable {

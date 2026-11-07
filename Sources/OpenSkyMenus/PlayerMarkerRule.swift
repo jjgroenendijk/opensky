@@ -2,7 +2,7 @@
 // See docs/engine/world-map.md#custom-marker.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyWorldInterface
 import simd
 

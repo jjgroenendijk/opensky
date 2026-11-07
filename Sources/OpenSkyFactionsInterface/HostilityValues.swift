@@ -2,9 +2,9 @@
 // answers through. The derivation itself is in OpenSkyFactions.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Everything the derivation needs to know about one actor.
 ///

@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/placed-references.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct PlacedProjectile: Sendable {
     public static let recordTypes: Set<FourCC> = ["PHZD", "PGRE"]

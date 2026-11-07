@@ -6,8 +6,8 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One actor's current primary values, plus whatever it has stored for the
 /// rest of the actor-value table.

@@ -2,7 +2,7 @@
 // frame clock reads the renderer's `WallClock`, so freezing this one freezes
 // the whole simulation while the window keeps drawing (docs/tools/agent-control.md).
 
-import QuartzCore
+public import QuartzCore
 
 public final class SteppedWallClock: WallClock {
     private let source: any WallClock

@@ -4,7 +4,7 @@
 // See docs/engine/loading-screens.md#the-loading-movie.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// What the loading movie shows: the tip and the player's level.
 nonisolated public struct LoadingMenuContent: Equatable, Sendable {

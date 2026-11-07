@@ -2,8 +2,8 @@
 // order, so the order of the wiring statements cannot change behaviour, and
 // each slot takes one handler (`FrameSchedule`).
 
-import OpenSkyCells
-import OpenSkyGameData
+public import OpenSkyCells
+public import OpenSkyGameData
 
 /// A use-key activation that passed the gate.
 public enum InteractionStep: Int, FramePhase {

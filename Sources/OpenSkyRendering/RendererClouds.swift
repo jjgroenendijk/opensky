@@ -40,7 +40,7 @@ extension Renderer {
                 lift: lightScales.skyLift,
                 padding: 0
             )
-            skyClouds.uniforms.contents().advanced(by: offset)
+            unsafe skyClouds.uniforms.contents().advanced(by: offset)
                 .copyMemory(from: &uniforms, byteCount: MemoryLayout<CloudLayerUniforms>.size)
             argumentTable.setAddress(
                 skyClouds.uniforms.gpuAddress + UInt64(offset),

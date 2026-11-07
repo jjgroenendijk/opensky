@@ -4,7 +4,7 @@
 // reading (docs/engine/combat-behavior.md#game-settings).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct CombatAISettings: Equatable, Sendable {
     /// `fConfidenceCautious`, `fConfidenceAverage`, `fConfidenceBrave`: an actor of that

@@ -1,9 +1,9 @@
 // Lock rules with no state of their own: what a press on a locked target does, and
 // what its prompt says. See docs/engine/locks.md.
 
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldInterface
 
 /// What the activation gate does with one press.
 nonisolated public enum LockGateDecision: Equatable, Sendable {

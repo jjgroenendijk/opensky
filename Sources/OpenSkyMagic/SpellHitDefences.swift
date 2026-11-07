@@ -7,8 +7,8 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyMagicInterface
 
 /// The world answers a defence needs. Every default lets the spell through.

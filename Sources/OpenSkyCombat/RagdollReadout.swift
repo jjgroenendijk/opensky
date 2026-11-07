@@ -2,7 +2,7 @@
 // without a window. See docs/engine/ragdoll.md.
 
 import Foundation
-import OpenSkyPhysics
+public import OpenSkyPhysics
 
 nonisolated public enum RagdollReadout: Sendable {
     /// What the biped filter admitted and what touches now, so "nothing touching" differs

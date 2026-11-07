@@ -1,8 +1,8 @@
 // The Face Morphs readout, and the automatic face of every loaded actor: blinking, eye
 // drift, and the emotion of the line a speaker says. See docs/engine/face-morphs.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// What `FaceMorphCoordinator` reads from the running world.
 public protocol FaceMorphWorld: AnyObject {

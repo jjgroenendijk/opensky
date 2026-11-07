@@ -41,7 +41,7 @@ enum VFSCommand {
         }
         // FNM_NOESCAPE: canonical keys use backslash separators, so "\" must
         // stay a literal, not an escape.
-        return fnmatch(canonical, path, FNM_NOESCAPE) == 0
+        return unsafe fnmatch(canonical, path, FNM_NOESCAPE) == 0
     }
 
     static func cat(context: CLIContext, arguments: VFSArguments.Cat) throws {

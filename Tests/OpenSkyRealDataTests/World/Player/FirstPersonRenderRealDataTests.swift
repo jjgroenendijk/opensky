@@ -198,7 +198,7 @@ struct FirstPersonRenderRealDataTests {
     /// difference between the two frames is the equipped set.
     @MainActor
     private static func assertEquipmentReachesTheArms(
-        device: MTLDevice,
+        device: any MTLDevice,
         root: GameDataRoot,
         gameSession: GameSession,
         feet: SIMD3<Float>,

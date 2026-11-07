@@ -3,14 +3,14 @@
 // after their sound. See docs/rendering/decals.md.
 
 import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsESM
+public import OpenSkyAudio
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
-import simd
+public import simd
 
 /// Where an impact's decal goes.
 nonisolated public enum ImpactSurface: Equatable, Sendable {

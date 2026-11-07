@@ -3,7 +3,7 @@
 // beat all archives. Source: UESP "Skyrim Mod:Archive File Format"; vanilla lists from
 // Skyrim_Default.ini (SSE 1.6). See docs/formats/vfs.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum ArchiveLoadOrder: Sendable {

@@ -3,9 +3,9 @@
 // actor. Rules and their sources: docs/engine/kill-cam.md#playing-a-shot.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
 import simd
 
 /// Where one actor or projectile stands, for placing a cinematic eye.

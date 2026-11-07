@@ -1,10 +1,10 @@
 // The crime seam of the condition context. See docs/engine/condition-functions-world.md#crime.
 
 import OpenSkyConditions
-import OpenSkyCrimeInterface
+public import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyWorldState
 

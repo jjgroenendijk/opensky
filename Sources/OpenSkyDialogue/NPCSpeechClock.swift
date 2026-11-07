@@ -2,7 +2,7 @@
 // (docs/engine/dialogue.md#speech-timers).
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// When each speaker may next say each kind of line, in seconds of the caller's clock.
 /// A shared slot holds a line back for every speaker, such as the gap after a hello.

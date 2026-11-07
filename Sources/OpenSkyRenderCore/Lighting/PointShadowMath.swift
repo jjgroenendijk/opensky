@@ -2,7 +2,7 @@
 // face views. The scene shader repeats the face rule. See docs/rendering/shadows.md.
 
 import Foundation
-import simd
+public import simd
 
 nonisolated public enum PointShadowMath {
     /// The game draws only a few shadow lights at once; 4 is OpenSky's value.

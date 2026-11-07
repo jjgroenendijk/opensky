@@ -66,7 +66,7 @@ struct AgentSocketTests {
         defer { coordinator.setEnabled(false) }
 
         var info = stat()
-        #expect(stat(path, &info) == 0)
+        unsafe #expect(stat(path, &info) == 0)
         #expect(info.st_mode & 0o777 == 0o600)
 
         let path = path
@@ -145,10 +145,13 @@ nonisolated private final class RawSocket {
         descriptor = socket(AF_UNIX, SOCK_STREAM, 0)
         var address = sockaddr_un()
         address.sun_family = sa_family_t(AF_UNIX)
-        withUnsafeMutableBytes(of: &address.sun_path) { $0.copyBytes(from: Array(path.utf8)) }
+        withUnsafeMutableBytes(of: &address.sun_path) { unsafe $0.copyBytes(from: Array(path.utf8))
+        }
         let size = socklen_t(MemoryLayout<sockaddr_un>.size)
         let result = withUnsafePointer(to: &address) {
-            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(descriptor, $0, size) }
+            unsafe $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                unsafe connect(descriptor, $0, size)
+            }
         }
         guard result == 0 else { throw AgentFailure(.notRunning, "connect") }
     }
@@ -159,7 +162,7 @@ nonisolated private final class RawSocket {
 
     func write(_ text: String) throws {
         let data = Array(text.utf8)
-        guard Darwin.write(descriptor, data, data.count) == data.count else {
+        guard unsafe Darwin.write(descriptor, data, data.count) == data.count else {
             throw AgentFailure(.failed, "write")
         }
     }
@@ -167,7 +170,7 @@ nonisolated private final class RawSocket {
     func readLine() throws -> Data {
         while lines.isEmpty {
             var chunk = [UInt8](repeating: 0, count: 1024)
-            let count = read(descriptor, &chunk, chunk.count)
+            let count = unsafe read(descriptor, &chunk, chunk.count)
             guard count > 0 else { throw AgentFailure(.failed, "closed") }
             for case let .line(data) in buffer.append(Data(chunk[0 ..< count])) {
                 lines.append(data)

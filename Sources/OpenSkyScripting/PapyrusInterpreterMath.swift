@@ -1,8 +1,8 @@
 // Integer, floating-point, string, and comparison opcodes.
 
 import Foundation
-import OpenSkyFormatsPEX
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsPEX
+public import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
     public func mathOp(

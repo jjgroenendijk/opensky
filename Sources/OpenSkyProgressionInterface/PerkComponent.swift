@@ -4,8 +4,8 @@
 // is "no longer in use" (UESP). Dropped once empty. See docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One actor's owned perks, in ascending key order.
 ///

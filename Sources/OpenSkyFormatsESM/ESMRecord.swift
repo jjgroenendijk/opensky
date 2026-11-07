@@ -2,8 +2,8 @@
 // 0x00040000) stores a UInt32 decompressed size, then a zlib stream. Fields
 // are read on demand. Layout: docs/formats/esm.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public enum ESMError: Error, Equatable, Sendable {
     /// File does not start with a TES4 header record.

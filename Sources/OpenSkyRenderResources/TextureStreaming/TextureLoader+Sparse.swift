@@ -1,8 +1,8 @@
 // Creates the placement-sparse textures that stream their levels. The texture has no
 // memory until the frame maps tiles to it. See docs/rendering/texture-streaming.md.
 
-import Metal
-import OpenSkyAssetCache
+public import Metal
+public import OpenSkyAssetCache
 
 nonisolated extension TextureLoader {
     /// A sparse texture for `ready`, or nil when it is too small to gain from streaming,
@@ -10,7 +10,7 @@ nonisolated extension TextureLoader {
     public func sparseTexture(
         ready: ReadyTexture, usage: TextureUsage, label: String,
         settings: TextureStreamingLoadSettings
-    ) -> (texture: MTLTexture, layout: SparseTextureLayout)? {
+    ) -> (texture: any MTLTexture, layout: SparseTextureLayout)? {
         guard
             settings.enabled, ready.mipCount > 1,
             max(ready.width, ready.height) >= settings.minimumSize,

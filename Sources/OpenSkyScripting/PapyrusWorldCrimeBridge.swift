@@ -3,7 +3,7 @@
 // call. See docs/engine/papyrus-activation.md and docs/engine/crime.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Crime operations a Papyrus native may perform.
 @MainActor

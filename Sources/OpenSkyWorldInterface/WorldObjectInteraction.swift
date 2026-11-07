@@ -2,7 +2,7 @@
 // bench data and keywords, and the activation event a station raises.
 // See docs/engine/crafting.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// A FURN base with `WBDT`, as the use key sees it.
 nonisolated public struct CraftingStation: Equatable, Sendable {

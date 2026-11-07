@@ -23,7 +23,7 @@ struct RendererUpscaleTests {
     private static let movingReference: UInt32 = 0x0001_0F00
 
     /// The demo scene plus one crate a body moves.
-    private static func scene(device: MTLDevice) throws -> RenderScene {
+    private static func scene(device: any MTLDevice) throws -> RenderScene {
         let model = Model(
             meshes: [DemoScene.boxMesh(halfWidth: 24, halfDepth: 24, height: 96)],
             materials: [Material.fallback],

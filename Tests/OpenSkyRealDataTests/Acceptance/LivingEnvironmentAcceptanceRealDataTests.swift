@@ -24,7 +24,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
     private static let size = (width: 640, height: 360)
 
     private struct Frame {
-        let texture: MTLTexture
+        let texture: any MTLTexture
         let pixels: [UInt8]
     }
 
@@ -245,7 +245,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         get throws { try RepositoryLogs.directory() }
     }
 
-    private static func write(_ texture: MTLTexture, name: String) throws {
+    private static func write(_ texture: any MTLTexture, name: String) throws {
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         try FrameScreenshot.write(texture: texture, to: logs.appending(path: name))
     }

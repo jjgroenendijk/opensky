@@ -5,9 +5,9 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyNavigation
+public import OpenSkyNavigation
 import OpenSkyPhysics
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 
 /// The `AIActorStatsLabel` and `AIMovementStatsLabel` lines.
 nonisolated public enum AINavigationReadout: Sendable {
@@ -41,7 +41,7 @@ nonisolated public enum AIPackageReadout: Sendable {
     public static func procedureStateText(for machine: PackageProcedureMachine) -> String {
         var state = stateText(for: machine.state)
         if case .sandboxing = machine.state {
-            state += String(format: ", %.2f game hours left", machine.sandbox.hoursLeft)
+            unsafe state += String(format: ", %.2f game hours left", machine.sandbox.hoursLeft)
         }
         guard !machine.path.isEmpty else { return "Procedure: \(machine.kind.name), \(state)" }
         return "Procedure: \(machine.kind.name), \(state), point \(machine.pathIndex + 1) of "
@@ -79,7 +79,7 @@ nonisolated public enum AIPackageReadout: Sendable {
         let name = package.editorID ?? current.description
         let procedure = package.procedure.map(procedureText(for:)) ?? "no procedure"
         let evaluated = package.lastEvaluationGameSeconds.map {
-            String(format: ", evaluated at %.0f game seconds", $0)
+            unsafe String(format: ", evaluated at %.0f game seconds", $0)
         } ?? ""
         let held = package.override.map { ", held by scene \($0.source) action \($0.slot)" } ?? ""
         return "Package: \(name) (\(current)), \(procedure)\(evaluated)\(held)"

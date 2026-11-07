@@ -1,7 +1,7 @@
 // Draws the menu scene inside the scene pass, after the world layers, with its own
 // camera and without depth. See docs/rendering/menu-scene.md.
 
-@preconcurrency import Metal
+@preconcurrency @unsafe import Metal
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyRenderResources
@@ -19,9 +19,9 @@ extension Renderer {
             menu.resident = [:]
             return
         }
-        var added: [MTLAllocation] = []
-        let uniforms: [MTLAllocation?] = [menu.uniformBuffer]
-        let lists = [uniforms] + scene.draws.map { draw -> [MTLAllocation?] in
+        var added: [any MTLAllocation] = []
+        let uniforms: [any MTLAllocation?] = [menu.uniformBuffer]
+        let lists = [uniforms] + scene.draws.map { draw -> [any MTLAllocation?] in
             [draw.mesh.vertexBuffer, draw.mesh.indexBuffer, draw.texture, draw.palette]
         }
         for allocations in lists {
@@ -61,7 +61,7 @@ extension Renderer {
                 draw, viewProjection: viewProjection, eye: scene.eye
             )
             let offset = base + index * stride
-            menu.uniformBuffer.contents().advanced(by: offset)
+            unsafe menu.uniformBuffer.contents().advanced(by: offset)
                 .copyMemory(from: &uniforms, byteCount: MemoryLayout<MenuSceneUniforms>.size)
             let mode = draw.material.blend.map(ParticleBlendMode.init(blend:)) ?? .alpha
             encoder.setRenderPipelineState(menu.pipelines.pipeline(for: mode))

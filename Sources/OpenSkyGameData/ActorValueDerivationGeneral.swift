@@ -5,7 +5,7 @@
 // no source says how its two arrays combine. See docs/engine/actor-values.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension ActorValueDerivation {
     /// Base values for every non-primary value the records author, by table index.

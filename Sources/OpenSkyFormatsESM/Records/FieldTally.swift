@@ -2,7 +2,7 @@
 // never dropped silently, so a real-data sweep can report them.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum FieldSkipKind: SkipTallyKind {
     case unknownField(FourCC)

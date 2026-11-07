@@ -3,7 +3,7 @@
 // See docs/engine/locks.md.
 
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// Tuning for one lockpicking session, resolved once per session start.
 nonisolated public struct LockpickingSettings: Equatable, Sendable {

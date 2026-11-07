@@ -1,11 +1,11 @@
 // INVN chunk: reference inventories, merged into the `RDLT` deltas by
 // `ReferenceKey`, so a reference with only items needs no `RDLT` entry.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 /// One owner's saved inventory, before it is merged back into its delta.
 nonisolated public struct SaveInventoryEntry: Equatable, Sendable {

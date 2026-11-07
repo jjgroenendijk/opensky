@@ -2,8 +2,8 @@
 // file is memory-mapped and only group extents are indexed, because
 // Skyrim.esm is about 250 MB. Layout: docs/formats/esm.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 /// The plugin file a load read: a saved index stays valid while all three match.
 nonisolated public struct ESMFileStamp: Hashable, Sendable {

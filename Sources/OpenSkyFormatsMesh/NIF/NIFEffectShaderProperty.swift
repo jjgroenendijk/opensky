@@ -2,8 +2,8 @@
 // effect shapes. Skyrim streams only; unlike BSLightingShaderProperty, no
 // shader type comes before the name. Layout: docs/formats/nif-materials.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {

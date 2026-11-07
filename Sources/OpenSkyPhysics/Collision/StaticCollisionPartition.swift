@@ -2,10 +2,10 @@
 // logical stats entry, while spatial chunks keep capsule narrowphase from
 // retesting an entire building or landscape collision mesh per substep.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsMesh
+public import simd
 
 nonisolated public struct StaticCollisionPartition: Sendable {
     public let geometry: NIFCollisionGeometry

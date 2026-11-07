@@ -4,10 +4,10 @@
 // synthetic packfile fixture, so clip time runs through the engine's sampler.
 
 import Foundation
-@testable import OpenSkyBehavior
-@testable import OpenSkyFormatsAnimation
+@testable public import OpenSkyBehavior
+@testable public import OpenSkyFormatsAnimation
 import OpenSkyFormatsTesting
-import simd
+public import simd
 
 /// An in-memory `BehaviorObjectSource`: objects placed at offsets the test
 /// chooses, so an assertion can name the node it is talking about.

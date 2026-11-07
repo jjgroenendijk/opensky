@@ -2,7 +2,7 @@
 // clip, as translation and rotation keys. Layout: docs/formats/animation-data.md.
 
 import Foundation
-import simd
+public import simd
 
 /// How far a clip moves and turns its actor, relative to where the clip started.
 nonisolated public struct AnimationRootMotion: Equatable, Sendable {

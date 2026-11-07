@@ -1,4 +1,4 @@
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One actor a swing can connect with.

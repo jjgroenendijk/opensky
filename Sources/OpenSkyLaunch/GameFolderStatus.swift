@@ -2,7 +2,7 @@
 // disagree about which install is in use or why none is.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct GameFolderStatus: Equatable, Sendable {
     /// The install folder, or nil when no valid install was found.

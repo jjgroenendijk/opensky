@@ -6,7 +6,7 @@
 // (docs/engine/dialogue-menu.md).
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One topic as the readout lists it.
 nonisolated public struct DialogueTopicRow: Equatable, Sendable {

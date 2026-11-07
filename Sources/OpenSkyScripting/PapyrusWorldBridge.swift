@@ -3,10 +3,10 @@
 // `PapyrusWorldReferenceSource` supplies references.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 /// What one activation did, returned by both
 /// `PapyrusWorldBridge.activate(_:by:togglesOpen:)` and

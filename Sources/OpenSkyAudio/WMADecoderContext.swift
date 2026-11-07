@@ -33,10 +33,10 @@ nonisolated extension WMADecoder {
         _ context: UnsafeMutablePointer<AVCodecContext>,
         parameters: AudioCodecParameters
     ) throws {
-        context.pointee.sample_rate = Int32(parameters.sampleRate)
-        context.pointee.block_align = Int32(parameters.blockAlign)
-        context.pointee.bit_rate = Int64(parameters.averageBytesPerSecond) * 8
-        av_channel_layout_default(&context.pointee.ch_layout, Int32(parameters.channelCount))
-        try FFmpegCodecSession.attachExtradata(parameters.extradata, to: context)
+        unsafe context.pointee.sample_rate = Int32(parameters.sampleRate)
+        unsafe context.pointee.block_align = Int32(parameters.blockAlign)
+        unsafe context.pointee.bit_rate = Int64(parameters.averageBytesPerSecond) * 8
+        unsafe av_channel_layout_default(&context.pointee.ch_layout, Int32(parameters.channelCount))
+        try unsafe FFmpegCodecSession.attachExtradata(parameters.extradata, to: context)
     }
 }

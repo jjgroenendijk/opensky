@@ -2,7 +2,7 @@
 // reads a `.hkt` set unchanged. Objects sit in a reserved section at their index.
 // Field rules: docs/formats/hkt-tagfile.md, "Reading tagfile objects".
 
-import Foundation
+public import Foundation
 
 nonisolated extension HKXObjectGraph {
     /// The section a tagfile object's pointer target names. No packfile has it.
@@ -18,11 +18,10 @@ nonisolated extension HKXObjectGraph {
 
     public static func isTagfile(_ data: Data) -> Bool {
         guard data.count >= 8 else { return false }
-        let words = data.prefix(8).withUnsafeBytes { raw in
-            (
-                raw.loadUnaligned(fromByteOffset: 0, as: UInt32.self).littleEndian,
-                raw.loadUnaligned(fromByteOffset: 4, as: UInt32.self).littleEndian
-            )
+        let words = unsafe data.prefix(8).withUnsafeBytes { raw in
+            let first = unsafe raw.loadUnaligned(fromByteOffset: 0, as: UInt32.self).littleEndian
+            let second = unsafe raw.loadUnaligned(fromByteOffset: 4, as: UInt32.self).littleEndian
+            return (first, second)
         }
         return words.0 == HKTagfile.magic0 && words.1 == HKTagfile.magic1
     }

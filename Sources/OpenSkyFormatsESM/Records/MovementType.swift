@@ -4,8 +4,8 @@
 // order, or 10 without the last; forward sits at indices 4 and 5. Layout:
 // docs/formats/records.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct MovementType: Equatable, Sendable {
     /// The SPED struct: eight directional speeds in units per second followed

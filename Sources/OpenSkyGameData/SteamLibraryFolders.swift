@@ -1,7 +1,7 @@
 // Reads Steam's list of library folders, so an install on a second drive is found
 // without setup. The file is Valve's KeyValues text: `"path"  "/Volumes/data/steam"`.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum SteamLibraryFolders: Sendable {
     /// Steam's library list on macOS.

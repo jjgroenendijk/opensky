@@ -2,12 +2,12 @@
 // deltas by `ReferenceKey`. STOL must merge after INVN, because it re-flags the
 // stacks INVN restored; a STOL row with no inventory is dropped.
 
-import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 /// One actor's saved ledger, before it is merged back into the delta.
 nonisolated public struct SaveCrimeLedgerEntry: Equatable, Sendable {

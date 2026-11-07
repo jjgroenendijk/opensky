@@ -5,9 +5,9 @@
 // (<https://ck.uesp.net/wiki/ModActorValue_-_Actor>). See docs/engine/actor-value-store.md.
 
 import Foundation
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyWorldState
 
 extension ActorValueRuntime {

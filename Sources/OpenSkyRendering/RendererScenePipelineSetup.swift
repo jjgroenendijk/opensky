@@ -1,20 +1,20 @@
 // Scene-specific Metal pipeline construction split from shared renderer setup.
 
-import Metal
-import MetalKit
-import OpenSkyRenderResources
-import OpenSkyShaderTypes
+public import Metal
+public import MetalKit
+public import OpenSkyRenderResources
+public import OpenSkyShaderTypes
 
 /// The render-debug pipeline set: one per geometry path. The channel is a
 /// `FrameUniforms` field, so mode changes rebuild nothing. A zero alpha threshold
 /// discards nothing, so the alpha-test variant also serves opaque groups.
 nonisolated public struct DebugRenderPipelines: Sendable {
-    public let staticMesh: MTLRenderPipelineState
-    public let skinned: MTLRenderPipelineState
-    public let morphedSkinned: MTLRenderPipelineState
-    public let terrain: MTLRenderPipelineState
-    public let grass: MTLRenderPipelineState
-    public let water: MTLRenderPipelineState
+    public let staticMesh: any MTLRenderPipelineState
+    public let skinned: any MTLRenderPipelineState
+    public let morphedSkinned: any MTLRenderPipelineState
+    public let terrain: any MTLRenderPipelineState
+    public let grass: any MTLRenderPipelineState
+    public let water: any MTLRenderPipelineState
 }
 
 /// One debug pipeline's recipe: the two function names, the vertex layout, and
@@ -35,7 +35,7 @@ extension Renderer {
     /// `alphaTest` is nil for terrain, grass and water, which declare no such constant.
     public static func specializedFragment(
         _ name: String,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         debugView: Bool,
         alphaTest: Bool? = nil,
         enabling optional: [FunctionConstantIndex] = []
@@ -45,18 +45,18 @@ extension Renderer {
         function.name = name
         let constants = MTLFunctionConstantValues()
         var debugEnabled = debugView
-        constants.setConstantValue(
+        unsafe constants.setConstantValue(
             &debugEnabled, type: .bool, index: FunctionConstantIndex.debugView.rawValue
         )
         if var alphaTest {
-            constants.setConstantValue(
+            unsafe constants.setConstantValue(
                 &alphaTest, type: .bool, index: FunctionConstantIndex.alphaTest.rawValue
             )
         }
         // Optional constants: a pipeline that leaves one out compiles as before.
         var enabled = true
         for index in optional {
-            constants.setConstantValue(&enabled, type: .bool, index: index.rawValue)
+            unsafe constants.setConstantValue(&enabled, type: .bool, index: index.rawValue)
         }
         let specialized = MTL4SpecializedFunctionDescriptor()
         specialized.functionDescriptor = function
@@ -68,11 +68,11 @@ extension Renderer {
     /// with `FunctionConstantDebugView` defined as true; the shipping pipelines
     /// leave it undefined, which is what keeps their compiled code unchanged.
     public static func makeDebugPipelines(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
     ) throws -> DebugRenderPipelines {
-        func make(_ recipe: DebugPipelineRecipe) throws -> MTLRenderPipelineState {
+        func make(_ recipe: DebugPipelineRecipe) throws -> any MTLRenderPipelineState {
             try makeDebugPipeline(
                 recipe, library: library, compiler: compiler, view: view
             )
@@ -117,10 +117,10 @@ extension Renderer {
     /// in exactly the modes meant to find it.
     private static func makeDebugPipeline(
         _ recipe: DebugPipelineRecipe,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = recipe.vertex
@@ -137,10 +137,10 @@ extension Renderer {
     }
 
     public static func makeGrassPipeline(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertex = MTL4LibraryFunctionDescriptor()
         vertex.library = library
         vertex.name = "grassVertex"
@@ -159,11 +159,11 @@ extension Renderer {
     /// The object, mesh, and fragment stages of mesh-shader grass. The fragment stage is the
     /// classic grass fragment, so both paths shade alike.
     static func makeMeshGrassPipeline(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         colorFormat: MTLPixelFormat,
         sampleCount: Int
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         func function(_ name: String) -> MTL4LibraryFunctionDescriptor {
             let function = MTL4LibraryFunctionDescriptor()
             function.library = library
@@ -189,11 +189,11 @@ extension Renderer {
     }
 
     public static func makeTerrainPipeline(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView,
         enabling optional: [FunctionConstantIndex] = []
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertex = MTL4LibraryFunctionDescriptor()
         vertex.library = library
         vertex.name = "terrainVertex"
@@ -235,10 +235,10 @@ nonisolated public struct MeshPipelineVariant: Sendable {
 extension Renderer {
     public static func makeMeshPipeline(
         _ variant: MeshPipelineVariant,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = variant.morphed ? "morphedSkinnedMeshVertex"

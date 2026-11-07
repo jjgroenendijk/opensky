@@ -2,7 +2,7 @@
 // same rule (`cullFade` in CullingMotionShaders.metal).
 
 import OpenSkyFormatsCore
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import simd
 
 /// What one cull dispatch needs for the fades.

@@ -3,8 +3,8 @@
 // Rules and sources: docs/formats/head-parts.md, "Assembly".
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public enum HeadPartOrigin: Equatable, Sendable {
     case raceDefault

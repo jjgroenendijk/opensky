@@ -1,9 +1,9 @@
 // The HUD notices of a refused cast or shout, from the `sMagicCast*` string settings
 // and `sFailSpendSoul`. See docs/engine/spellcasting.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 nonisolated public enum CastNoticeText: String, GameSettingTextKey {
     case insufficientMagicka = "sMagicCastInsufficientMagicka"

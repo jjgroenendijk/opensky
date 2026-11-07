@@ -1,12 +1,12 @@
 // Renderer precipitation setup + per-frame feed, split for size limits.
 
-import Metal
+public import Metal
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 
 extension Renderer {
     public static func makeInitialScene(
-        device: MTLDevice,
+        device: any MTLDevice,
         requested: RenderScene?
     ) throws -> (RenderScene, PrecipitationVolume) {
         let scene = try requested ?? DemoScene.build(device: device)
@@ -29,7 +29,7 @@ extension Renderer {
     func preparePrecipitationLook() {
         let wanted = precipitation.tuning.snowLook
         guard wanted != precipitation.snowLook else { return }
-        var texture: MTLTexture?
+        var texture: any MTLTexture?
         if let wanted {
             guard let recordTextures else { return }
             let loaded = recordTextures.prepare([wanted.dataPath], usage: .color)
@@ -42,7 +42,7 @@ extension Renderer {
         }
         guard let swap = try? precipitation.setSnowLook(wanted, texture: texture) else { return }
         // The textures stay: the generated flake and the record textures are kept.
-        residencySet.removeAllocations(swap.retired.filter { !($0 is MTLTexture) })
+        residencySet.removeAllocations(swap.retired.filter { !($0 is (any MTLTexture)) })
         residencySet.addAllocations(swap.added)
         residencySet.commit()
     }

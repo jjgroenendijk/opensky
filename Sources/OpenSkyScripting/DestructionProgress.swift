@@ -3,7 +3,7 @@
 // `wbDefinitionsTES5.pas` (`DSTD`). See docs/engine/papyrus-destruction.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct DestructionProgress: Equatable, Sendable {
     /// Damage taken since the last `ClearDestruction`.

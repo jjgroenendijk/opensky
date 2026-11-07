@@ -2,9 +2,9 @@
 // gives it, or one its own schedule picked. A scene action is done when the tree is.
 // See docs/engine/package-schedules.md, "Scene packages".
 
-import OpenSkyFormatsESM
-import OpenSkyPhysics
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public enum PackageOverrideProgress: Equatable, Sendable {

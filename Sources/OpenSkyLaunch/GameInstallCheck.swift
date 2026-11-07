@@ -2,8 +2,8 @@
 // and what is wrong with it. It reads file names and headers only, so it takes
 // well under a second. The launcher and openskycli read this value.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated public struct GameInstallProblem: Equatable, Sendable {

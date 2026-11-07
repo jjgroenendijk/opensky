@@ -1,8 +1,8 @@
 // What the combat coordinator asks the app to do. Each one is fire-and-forget:
 // nothing later in the same step reads its result. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 /// One change to the world outside the combat domain.

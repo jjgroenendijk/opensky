@@ -2,7 +2,7 @@
 // rules follow NifSkope's open renderer: docs/formats/nif-materials.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated extension NIFLightingShaderProperty {
     private typealias ShaderType = NIFLightingShaderType

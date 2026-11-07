@@ -125,7 +125,7 @@ nonisolated extension RaceMenuModel {
         case .race: races.first { $0.formID == identity.race }?.name ?? "\(identity.race)"
         case .sex: labels.genders[identity.isFemale ? .female : .male]
         case .name: identity.name
-        case .slider: String(format: "%.1f", position(row))
+        case .slider: unsafe String(format: "%.1f", position(row))
         default: "\(Int(position(row)))"
         }
     }
@@ -138,7 +138,7 @@ nonisolated extension RaceMenuModel {
         let tone = PlayerAppearanceOverride.bodySkinTone(
             layer: layer.color, strength: layer.strength
         ) * 255
-        return String(format: "Body tone: rgb %.0f %.0f %.0f", tone.x, tone.y, tone.z)
+        return unsafe String(format: "Body tone: rgb %.0f %.0f %.0f", tone.x, tone.y, tone.z)
     }
 
     // MARK: - Face edits

@@ -5,7 +5,7 @@
 // typed conversion error so the interpreter can fault without trapping.
 
 import Foundation
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 nonisolated public enum PapyrusCoercionError: Error, Equatable {
     case unsupported(source: String, destination: String)

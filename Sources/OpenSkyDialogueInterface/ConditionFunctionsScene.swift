@@ -3,8 +3,8 @@
 // See docs/engine/condition-functions.md#scenes.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 /// The scenes that play now, with the actions each has completed in this run.
 nonisolated public struct SceneConditionResolution: ConditionResolution, Sendable {

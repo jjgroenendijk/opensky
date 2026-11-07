@@ -4,7 +4,7 @@
 // actor. The rules live in `SummonCore`. See docs/engine/magic-archetypes.md.
 
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface

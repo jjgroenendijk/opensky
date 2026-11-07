@@ -1,8 +1,8 @@
 // Where a Play session starts: the normal start, a cell by name, or a grid cell
 // in a worldspace. The launcher validates the choice and remembers it.
 
-import Foundation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyGameData
 
 nonisolated public enum LaunchStart: Equatable, Sendable {
     /// The title screen, as the original game starts.

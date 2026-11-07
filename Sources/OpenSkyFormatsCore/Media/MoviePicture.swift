@@ -1,7 +1,7 @@
 // One decoded movie picture as three 8-bit planes, YCbCr 4:2:0, the layout Bink
 // video decodes to. The renderer turns it into colour on the GPU.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct MoviePicture: Equatable, Sendable {
     public let width: Int

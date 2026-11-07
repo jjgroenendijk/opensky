@@ -4,9 +4,9 @@
 // from a single observation. See docs/engine/inventory-equipment.md.
 
 import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyCrimeInterface
+public import OpenSkyInventoryInterface
+public import OpenSkyMagicInterface
 
 /// Which inventory a grant lands in: the player or the open container. A merchant
 /// is a container, so an opened merchant receives the grant as stock.

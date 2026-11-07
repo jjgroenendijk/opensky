@@ -3,7 +3,7 @@
 // compressed depth range `[0, FirstPersonCamera.depthSlice]`. That keeps
 // self-occlusion without a second pass or depth clear (docs/engine/first-person.md).
 
-import Metal
+public import Metal
 import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import simd

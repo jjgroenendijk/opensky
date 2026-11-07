@@ -2,14 +2,14 @@
 // sweeps resident actors for zero health, and publishes the simulated poses.
 // The runtime resolves through this coordinator. See docs/engine/ragdoll.md.
 
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyConditions
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyWorldState
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import OpenSkyWorldState
 import simd
 
 /// Owns the ragdoll runtime and reads the world through `RagdollSessionWorld`.

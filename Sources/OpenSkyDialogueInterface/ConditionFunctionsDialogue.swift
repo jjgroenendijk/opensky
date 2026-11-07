@@ -5,7 +5,7 @@
 // come from the Creation Kit wiki pages cited at each registration.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

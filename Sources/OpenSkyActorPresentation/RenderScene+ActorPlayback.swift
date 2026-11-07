@@ -1,7 +1,7 @@
 // Finds the animation objects that draw one placed actor.
 
-import OpenSkyFormatsESM
-import OpenSkyRendering
+public import OpenSkyFormatsESM
+public import OpenSkyRendering
 
 nonisolated extension RenderScene {
     /// Nil for a static actor the animation layer found no rig for.

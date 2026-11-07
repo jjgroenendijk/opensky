@@ -2,7 +2,7 @@
 // heap at a time and frees a heap once all its tiles are free, so its size follows what
 // the textures use. See docs/rendering/texture-streaming.md.
 
-import Metal
+public import Metal
 
 /// One tile in one heap of the pool.
 public struct SparseTile: Hashable {
@@ -13,14 +13,14 @@ public struct SparseTile: Hashable {
 public final class SparseTilePool {
     public static let heapBytes = 16 << 20
 
-    public let device: MTLDevice
+    public let device: any MTLDevice
     public let pageSize: MTLSparsePageSize
     public let tileBytes: Int
-    private var heaps: [Int: MTLHeap] = [:]
+    private var heaps: [Int: any MTLHeap] = [:]
     private var freeTiles: [Int: [Int]] = [:]
     private var nextHeapID = 0
 
-    public init(device: MTLDevice, pageSize: MTLSparsePageSize) {
+    public init(device: any MTLDevice, pageSize: MTLSparsePageSize) {
         self.device = device
         self.pageSize = pageSize
         tileBytes = device.sparseTileSizeInBytes(sparsePageSize: pageSize)
@@ -38,13 +38,13 @@ public final class SparseTilePool {
         heaps.keys.reduce(0) { $0 + tilesPerHeap - (freeTiles[$1]?.count ?? 0) }
     }
 
-    public func heap(_ id: Int) -> MTLHeap? {
+    public func heap(_ id: Int) -> any MTLHeap? {
         heaps[id]
     }
 
     /// `count` tiles, new heaps included; nil when a heap cannot be made. `added` gets
     /// each new heap, so the caller can make it resident.
-    public func allocate(_ count: Int, added: (MTLHeap) -> Void) -> [SparseTile]? {
+    public func allocate(_ count: Int, added: (any MTLHeap) -> Void) -> [SparseTile]? {
         var tiles: [SparseTile] = []
         tiles.reserveCapacity(count)
         for id in heaps.keys.sorted() where tiles.count < count {
@@ -63,11 +63,11 @@ public final class SparseTilePool {
     /// Returns tiles to the pool. Returns the heaps that became empty; the caller retires
     /// them once no frame in flight can use them.
     @discardableResult
-    public func free(_ tiles: [SparseTile]) -> [MTLHeap] {
+    public func free(_ tiles: [SparseTile]) -> [any MTLHeap] {
         for tile in tiles {
             freeTiles[tile.heap, default: []].append(tile.index)
         }
-        var emptied: [MTLHeap] = []
+        var emptied: [any MTLHeap] = []
         for id in Set(tiles.map(\.heap)) where freeTiles[id]?.count == tilesPerHeap {
             if let heap = heaps.removeValue(forKey: id) {
                 emptied.append(heap)
@@ -87,7 +87,7 @@ public final class SparseTilePool {
         freeTiles[id] = free
     }
 
-    private func addHeap(added: (MTLHeap) -> Void) -> Int? {
+    private func addHeap(added: (any MTLHeap) -> Void) -> Int? {
         let descriptor = MTLHeapDescriptor()
         descriptor.type = .placement
         descriptor.storageMode = .private

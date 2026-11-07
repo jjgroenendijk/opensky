@@ -3,8 +3,8 @@
 // the object stands and how it is lit. See docs/engine/loading-screens.md.
 
 import OpenSkyFormatsESM
-import OpenSkyRenderCore
-import simd
+public import OpenSkyRenderCore
+public import simd
 
 nonisolated extension LoadingCoverFrame {
     /// Larger than any drawable, so the panel covers the whole view.

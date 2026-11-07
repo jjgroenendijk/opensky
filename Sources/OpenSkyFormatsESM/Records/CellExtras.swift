@@ -2,7 +2,7 @@
 // image space, lock list and sky region, water extras, and raw height and
 // occlusion data. Layout and sources: docs/formats/world-records.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct CellExtras: Equatable, Sendable {

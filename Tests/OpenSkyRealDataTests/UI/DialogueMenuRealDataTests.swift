@@ -13,7 +13,7 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
-import Testing
+public import Testing
 
 @Suite(.tags(.gpu))
 struct DialogueMenuRealDataTests {
@@ -197,12 +197,12 @@ struct DialogueMenuRealDataTests {
     }
 
     @MainActor
-    private func makeRenderer(device: MTLDevice) throws -> Renderer {
+    private func makeRenderer(device: any MTLDevice) throws -> Renderer {
         try RenderedPixels.offscreenRenderer(device: device, width: Self.width, height: Self.height)
     }
 
     @MainActor
-    private func render(_ renderer: Renderer) throws -> (texture: MTLTexture, pixels: [UInt8]) {
+    private func render(_ renderer: Renderer) throws -> (texture: any MTLTexture, pixels: [UInt8]) {
         try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
     }
 }

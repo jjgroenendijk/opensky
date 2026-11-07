@@ -1,7 +1,7 @@
 // The casting half of `CombatLoopWorld` for a world with no caster runtime.
 
-@testable import OpenSkyCombat
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyCombat
+@testable public import OpenSkyFormatsESM
 
 /// A `CombatLoopWorld` whose actors have nothing to cast, so every fight is a
 /// melee fight. A conformer gets the four casting members from here.

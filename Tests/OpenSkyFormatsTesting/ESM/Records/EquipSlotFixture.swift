@@ -1,7 +1,7 @@
 // EQUP builder for the equipment suites and `InventoryBaselineFixture`, whose
 // weapons resolve their hands through an EQUP graph.
 
-import Foundation
+public import Foundation
 
 public enum EquipSlotFixture: Sendable {
     /// One EQUP's fields: an editor ID, an optional packed PNAM parent array,

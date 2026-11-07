@@ -2,8 +2,8 @@
 // every shape in the ray's bounding box. The result is the one `nearestHit(ray:shapes:)`
 // gives for the same shapes in the same order.
 
-import OpenSkyPhysics
-import OpenSkyWorldInterface
+public import OpenSkyPhysics
+public import OpenSkyWorldInterface
 
 nonisolated extension InteractionRaycaster {
     /// The nearest hit over the trees in `sets`, then the loose `shapes`, which are

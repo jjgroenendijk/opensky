@@ -1,8 +1,8 @@
 // Shared location lookup and same-location condition functions.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldState
 
 nonisolated extension ConditionFunctions {

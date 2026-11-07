@@ -3,7 +3,7 @@
 // that. Layout and VHGT math: docs/formats/land.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct Land: Sendable {

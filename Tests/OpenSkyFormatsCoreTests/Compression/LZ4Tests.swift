@@ -26,7 +26,7 @@ struct LZ4Tests {
             if uncompressed {
                 size |= 0x8000_0000
             }
-            withUnsafeBytes(of: size.littleEndian) { out.append(contentsOf: $0) }
+            withUnsafeBytes(of: size.littleEndian) { unsafe out.append(contentsOf: $0) }
             out.append(block)
         }
         out.append(contentsOf: [0, 0, 0, 0]) // EndMark

@@ -3,9 +3,9 @@
 // vertices). A triangle-soup body falls back to its box. Both answer `contactSamples`
 // and `penetration`. See docs/engine/dynamic-bodies.md.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsMesh
+public import simd
 
 /// An outward-facing half-space bounding a hull: points inside satisfy
 /// `dot(normal, point) <= offset`.

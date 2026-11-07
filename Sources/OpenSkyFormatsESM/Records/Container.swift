@@ -4,7 +4,7 @@
 // Layout and sources: docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Container: Sendable {
     /// One CNTO entry with the COED extra data that followed it, if any.

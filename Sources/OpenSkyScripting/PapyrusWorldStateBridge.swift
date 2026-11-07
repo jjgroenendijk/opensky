@@ -8,14 +8,14 @@ import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyQuestsInterface
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 
 @MainActor
 public final class PapyrusWorldStateBridge: PapyrusWorldBridge {

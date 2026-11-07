@@ -61,6 +61,6 @@ struct CachedAudioConverterTests {
         )
         let mono = try WorldAudioEngine.makeBuffer(decoded: audio, downmixToMono: true)
         #expect(mono.frameLength == 2)
-        #expect(mono.floatChannelData?[0][1] == 0.5)
+        unsafe #expect(mono.floatChannelData?[0][1] == 0.5)
     }
 }

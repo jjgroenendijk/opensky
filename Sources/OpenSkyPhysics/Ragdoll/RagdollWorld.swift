@@ -5,8 +5,8 @@
 // See docs/engine/ragdoll.md.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 /// Counts one refresh of the ragdoll readout shows.

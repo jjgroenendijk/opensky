@@ -3,7 +3,7 @@
 // Layout, sources, and vanilla sweep: docs/formats/vmad.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// One fragment: the script that holds it and the generated function name.
 nonisolated public struct ScriptFragment: Equatable, Sendable {

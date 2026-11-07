@@ -1,7 +1,7 @@
 // The HUD texts of a control a script or a beast form has locked, from the
 // `sTweenDisabledMessage` and `sCharGenControlsDisabled` settings.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// The texts of a refused control.
 nonisolated public enum ControlRefusalText: String, GameSettingTextKey {

@@ -6,8 +6,8 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState

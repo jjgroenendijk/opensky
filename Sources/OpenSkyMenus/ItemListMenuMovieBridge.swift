@@ -3,7 +3,7 @@
 // `ItemSelect` acts on the row its list has selected. See docs/engine/inventory-menu.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// A call a list menu's movie makes.
 nonisolated public enum ItemListMovieEvent: Equatable, Sendable {

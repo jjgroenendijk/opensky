@@ -75,10 +75,9 @@ enum LoadPassCommand {
     }
 
     private static func row(run: Int, pass: String, _ result: BenchmarkLoadPass) -> String {
-        let phases = LoadPhase.allCases.map { String(format: "%.0f", result.phases[$0]) }
-        return "\(run)\t\(pass)\t" + String(format: "%.0f\t%.0f", result.setupMS, result.totalMS) +
-            "\t"
-            + phases.joined(separator: "\t") + "\t"
-            + String(format: "%.0f", result.phases.otherMS)
+        let phases = LoadPhase.allCases.map { unsafe String(format: "%.0f", result.phases[$0]) }
+        let totals = unsafe String(format: "%.0f\t%.0f", result.setupMS, result.totalMS)
+        let other = unsafe String(format: "%.0f", result.phases.otherMS)
+        return "\(run)\t\(pass)\t" + totals + "\t" + phases.joined(separator: "\t") + "\t" + other
     }
 }

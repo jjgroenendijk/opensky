@@ -6,7 +6,7 @@
 // `openskycli swf action-run` (docs/engine/barter.md).
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// What the movie asked the engine to do.
 nonisolated public enum ContainerMenuAction: Equatable, Sendable {

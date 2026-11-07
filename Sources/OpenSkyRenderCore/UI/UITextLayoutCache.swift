@@ -1,7 +1,7 @@
 // Fonts, shaped lines and wrapped text kept across frames, so a HUD string that
 // stays the same is shaped once. It lives on the glyph atlas and follows its threading.
 
-import CoreText
+public import CoreText
 
 nonisolated public final class UITextLayoutCache {
     /// Entries each table may hold. A full table is emptied, because the HUD shows

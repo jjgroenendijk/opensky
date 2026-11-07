@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyRendering
 
 /// What the system menu reads from the app. The world is also the one menu
@@ -76,7 +76,7 @@ public final class SystemMenuCoordinator {
     /// The running save, load, or delete; one at a time.
     public internal(set) var saveWork: Task<Void, Never>?
     public let settings: PlayerSettingsCoordinator
-    public weak let saves: SaveGameService?
+    public weak let saves: any SaveGameService?
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the one SWF layer.
     public private(set) var movieEnabled = true
@@ -96,15 +96,15 @@ public final class SystemMenuCoordinator {
     private let menuMode: MenuModeController
     private let movies: SWFMovieSource
     let hud: HUDCoordinator
-    weak let world: SystemMenuWorld?
+    weak let world: any SystemMenuWorld?
 
     public init(
         menuMode: MenuModeController,
         movies: SWFMovieSource,
         hud: HUDCoordinator,
         settings: PlayerSettingsCoordinator,
-        saves: SaveGameService?,
-        world: SystemMenuWorld? = nil
+        saves: any SaveGameService?,
+        world: any SystemMenuWorld? = nil
     ) {
         self.menuMode = menuMode
         self.movies = movies

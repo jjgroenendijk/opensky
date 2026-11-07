@@ -5,9 +5,9 @@
 // See docs/engine/alchemy.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// The alchemy game settings.
 nonisolated public struct AlchemySettings: Equatable, Sendable {

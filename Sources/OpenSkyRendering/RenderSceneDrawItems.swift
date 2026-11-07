@@ -1,12 +1,12 @@
 // Terrain, sky, and water draw items that a RenderScene carries beside its instances.
 
 import Foundation
-@preconcurrency import Metal
-import OpenSkyFormatsCore
-import OpenSkyRenderCore
-import OpenSkyRenderResources
+@preconcurrency @unsafe public import Metal
+public import OpenSkyFormatsCore
+public import OpenSkyRenderCore
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
-import simd
+public import simd
 
 /// One terrain quadrant draw for the splat pipeline: quadrant mesh, its
 /// per-vertex splat-weight stream (TerrainVertexLayout), the BTXT base
@@ -15,11 +15,11 @@ import simd
 nonisolated public struct TerrainDrawItem: Sendable {
     public let mesh: RenderMesh
     /// Two float4 weight lanes per vertex, vertex-count sized.
-    public let weightsBuffer: MTLBuffer
+    public let weightsBuffer: any MTLBuffer
     /// Base diffuse + UV params; alpha fields unused (terrain is opaque).
     public let material: RenderMaterial
     /// ATXT layer diffuses, <= TerrainConstant.maxLayers, blend order.
-    public let layerTextures: [MTLTexture]
+    public let layerTextures: [any MTLTexture]
     /// TX01 normal maps of the base and of each layer, aligned with `layerTextures`.
     /// A flat placeholder stands in for a texture set without one.
     public let normals: TerrainNormalMaps
@@ -34,9 +34,9 @@ nonisolated public struct TerrainDrawItem: Sendable {
 
     public init(
         mesh: RenderMesh,
-        weightsBuffer: MTLBuffer,
+        weightsBuffer: any MTLBuffer,
         material: RenderMaterial,
-        layerTextures: [MTLTexture],
+        layerTextures: [any MTLTexture],
         normals: TerrainNormalMaps,
         modelMatrix: float4x4,
         normalMatrix: float4x4,
@@ -57,10 +57,10 @@ nonisolated public struct TerrainDrawItem: Sendable {
 
 /// The normal maps of one terrain quadrant draw.
 nonisolated public struct TerrainNormalMaps: Sendable {
-    public let base: MTLTexture
-    public let layers: [MTLTexture]
+    public let base: any MTLTexture
+    public let layers: [any MTLTexture]
 
-    public init(base: MTLTexture, layers: [MTLTexture]) {
+    public init(base: any MTLTexture, layers: [any MTLTexture]) {
         self.base = base
         self.layers = layers
     }

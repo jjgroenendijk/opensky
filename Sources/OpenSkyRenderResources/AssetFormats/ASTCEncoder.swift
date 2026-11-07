@@ -2,8 +2,8 @@
 // block size Metal samples and at a chosen encoder effort.
 
 import CASTCEncoder
-import Foundation
-import Metal
+public import Foundation
+public import Metal
 
 /// A 2D ASTC block footprint. Larger blocks store fewer bits per texel.
 nonisolated public struct ASTCBlockSize: Codable, Hashable, Sendable {
@@ -69,8 +69,8 @@ nonisolated public enum ASTCEncoder {
         var blocks = Data(count: size)
         var message = [CChar](repeating: 0, count: 256)
         let status = pixels.rgba.withUnsafeBufferPointer { source in
-            blocks.withUnsafeMutableBytes { target in
-                opensky_astc_encode(
+            unsafe blocks.withUnsafeMutableBytes { target in
+                unsafe opensky_astc_encode(
                     source.baseAddress, UInt32(pixels.width), UInt32(pixels.height),
                     UInt32(block.width), UInt32(block.height), effort.quality,
                     target.baseAddress?.assumingMemoryBound(to: UInt8.self), size,
@@ -98,9 +98,9 @@ nonisolated extension ASTCEncoder {
         }
         var rgba = [UInt8](repeating: 0, count: width * height * 4)
         var message = [CChar](repeating: 0, count: 256)
-        let status = blocks.withUnsafeBytes { source in
+        let status = unsafe blocks.withUnsafeBytes { source in
             rgba.withUnsafeMutableBufferPointer { target in
-                opensky_astc_decode(
+                unsafe opensky_astc_decode(
                     source.baseAddress?.assumingMemoryBound(to: UInt8.self), source.count,
                     UInt32(width), UInt32(height), UInt32(block.width), UInt32(block.height),
                     target.baseAddress, &message, message.count

@@ -116,7 +116,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     private func offerFolderPickerOnce() {
         guard
             !didOfferFolderPicker, !GameDataLocator.isRunningInTestHost,
-            !GameFolderStatus().isFound, let window = view.window
+            !GameFolderStatus().isFound, let window = unsafe view.window
         else { return }
         didOfferFolderPicker = true
         GameFolderPicker.chooseUntilValid(for: window) { [weak self] in

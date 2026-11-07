@@ -2,7 +2,7 @@
 // controllers, interpolators, legacy geometry, and the sky shader. Layouts follow
 // nif.xml; see docs/formats/nif.md. No game bytes are fixtures.
 
-import Foundation
+public import Foundation
 import simd
 
 public enum NIFBlockFixture: Sendable {

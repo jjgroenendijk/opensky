@@ -2,7 +2,7 @@
 // before it. Apple GPUs run one render encoder's draws together per tile, so the
 // marks sit between encoders only (docs/tools/benchmark.md).
 
-import Metal
+public import Metal
 import OpenSkyRenderResources
 
 /// The passes in frame order. A pass that a frame skips takes no time.
@@ -113,7 +113,8 @@ public final class GPUPassTimer {
             let data = try? heaps[slot].resolveCounterRange(0 ..< count),
             data.count >= count * MemoryLayout<UInt64>.stride
         else { return }
-        let ticks = data.withUnsafeBytes { Array($0.bindMemory(to: UInt64.self).prefix(count)) }
+        let ticks = unsafe data
+            .withUnsafeBytes { unsafe Array($0.bindMemory(to: UInt64.self).prefix(count)) }
         var frame: [GPUPass: Double] = [:]
         // A counter the GPU never wrote reads zero, so a pair with one is skipped.
         for (index, pass) in marks[slot].enumerated()

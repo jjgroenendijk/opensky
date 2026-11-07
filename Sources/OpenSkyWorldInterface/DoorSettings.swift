@@ -2,7 +2,7 @@
 // long a teleport door waits before the load, from the `fAutoDoor*` and
 // `fTeleportDoorActivateDelayTimer` settings (docs/engine/interaction.md#automatic-doors).
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct DoorSettings: Equatable, Sendable {
     /// `fAutoDoorActivateDistance`: the feet must be this near the door reference too.

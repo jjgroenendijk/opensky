@@ -15,7 +15,7 @@ struct UIGlyphAtlasEvictionTests {
     }
 
     private static func squarePath(side: Int) -> CGPath {
-        CGPath(
+        unsafe CGPath(
             rect: CGRect(x: 0, y: 0, width: CGFloat(side), height: CGFloat(side)),
             transform: nil
         )

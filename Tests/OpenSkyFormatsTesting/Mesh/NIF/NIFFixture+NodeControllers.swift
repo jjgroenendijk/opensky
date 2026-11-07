@@ -1,7 +1,7 @@
 // Node controller blocks for `NIFNodeAnimator` tests: look-at interpolators, lag
 // bones, and bone LOD. Layouts follow nif.xml; see docs/formats/nif-controllers.md.
 
-import Foundation
+public import Foundation
 import simd
 
 extension NIFBlockFixture {

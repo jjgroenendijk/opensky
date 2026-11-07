@@ -4,7 +4,7 @@
 // (docs/rendering/visual-effects.md#blood).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct BloodEffectSettings: Equatable, Sendable {
     /// `fBloodSplatterCountBase`: splatters every hit places.

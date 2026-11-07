@@ -4,8 +4,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// Queues `name` on each script of the item `base`, creating the instances on first

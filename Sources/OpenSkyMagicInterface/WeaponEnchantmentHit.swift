@@ -5,8 +5,8 @@
 // See docs/engine/item-enchantments.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import simd
 
 /// One enchanted weapon's hit, as the world seam receives it.

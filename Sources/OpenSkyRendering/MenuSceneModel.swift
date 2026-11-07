@@ -2,20 +2,20 @@
 // and a GPU mesh and textures per shape. `draws` poses it for one frame.
 // See docs/rendering/menu-scene.md.
 
-@preconcurrency import Metal
+@preconcurrency @unsafe public import Metal
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import OpenSkyRenderResources
-import simd
+public import OpenSkyFormatsMesh
+public import OpenSkyRenderResources
+public import simd
 
 public final class MenuSceneModel {
     public let scene: NIFEffectScene
     public let sequences: [String: NIFSequence]
     let meshes: [MenuSceneMesh]
-    let textures: [MTLTexture?]
-    let palettes: [MTLTexture?]
+    let textures: [any MTLTexture?]
+    let palettes: [any MTLTexture?]
 
-    public init(file: NIFFile, device: MTLDevice, textures provider: TextureProvider) throws {
+    public init(file: NIFFile, device: any MTLDevice, textures provider: TextureProvider) throws {
         scene = try NIFEffectScene(file: file)
         sequences = try Dictionary(
             file.sequences().map { ($0.name.lowercased(), $0) },

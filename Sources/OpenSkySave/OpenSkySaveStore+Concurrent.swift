@@ -3,8 +3,8 @@
 
 import Foundation
 import OpenSkyGameData
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 /// Everything one save writes, taken on the main actor in one frame so it is consistent.
 nonisolated public struct OpenSkySaveContents: Sendable {

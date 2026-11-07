@@ -5,8 +5,8 @@
 // (`LvlBanditWizard`). See docs/engine/ai-spell-use.md and docs/engine/leveled-lists.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One actor's authored spell list, kept split so an inspector can say which
 /// half a spell came from.

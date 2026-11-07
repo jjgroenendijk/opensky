@@ -244,7 +244,7 @@ enum SWFSystemMenuCommand {
         }
         let box = runtime.localBounds(of: node).transformed(by: transform)
         let pixels = [box.minX, box.minY, box.maxX, box.maxY]
-            .map { String(format: "%.1f", $0 / SWFMovieRuntime.twipsPerPixel) }
+            .map { unsafe String(format: "%.1f", $0 / SWFMovieRuntime.twipsPerPixel) }
         print("[INFO]   stage bounds px \(pixels.joined(separator: " "))")
     }
 }

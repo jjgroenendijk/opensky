@@ -3,11 +3,11 @@
 // the caller supplies the opaque Papyrus handle for that live reference.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
-import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
+public import OpenSkyQuestsInterface
+public import OpenSkyScriptingInterface
 
 nonisolated public enum ScriptBindingError: Error, Equatable {
     case removedScript(String)

@@ -140,7 +140,7 @@ final class SettingsViewController: NSViewController, LauncherPageRefreshing {
     // MARK: - Actions
 
     @objc private func chooseDataRoot() {
-        guard let window = view.window else { return }
+        guard let window = unsafe view.window else { return }
         GameFolderPicker.choose(for: window) { [weak self] problem in
             guard let self else { return }
             refresh(problem: problem)

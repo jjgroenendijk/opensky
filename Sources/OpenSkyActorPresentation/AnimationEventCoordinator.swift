@@ -4,8 +4,8 @@
 // fired names here. See docs/engine/animation-events.md.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyFormatsESM
+public import OpenSkyBehavior
+public import OpenSkyFormatsESM
 import simd
 
 /// What the coordinator needs from the session.

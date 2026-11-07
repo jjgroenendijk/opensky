@@ -4,7 +4,7 @@
 // semantics passes the pose through with a `BehaviorTally.passthroughModifiers` entry.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 nonisolated extension BehaviorGraphInstance {
     /// Runs the modifier at `target` over `pose`. Modifiers that only touch

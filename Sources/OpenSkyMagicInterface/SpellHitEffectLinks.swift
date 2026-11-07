@@ -3,8 +3,8 @@
 // The magic coordinator reports them; the effects adapter acts on them.
 // See docs/rendering/visual-effects.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One MGEF's presentation links, still raw and written in `plugin`.
 nonisolated public struct SpellHitEffectLinks: Equatable, Sendable {

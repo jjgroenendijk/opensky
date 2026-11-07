@@ -2,8 +2,8 @@
 // data, XESP enable parent, and the XMRK map-marker group. Decode only; the
 // runtime resolves the links. Layout and sources: docs/formats/placed-references.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 /// XLOC lock level. An unknown byte keeps its value.
 nonisolated public enum LockLevel: Equatable, Sendable {

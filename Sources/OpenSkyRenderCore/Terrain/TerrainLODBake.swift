@@ -3,7 +3,7 @@
 // shader does, then multiplies the VCLR colour (docs/engine/distant-lod.md).
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// A land texture at a small mip, in linear light, sampled with wrap.

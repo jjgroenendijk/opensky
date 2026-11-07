@@ -3,13 +3,13 @@
 // Pipeline: docs/tools/preview-render.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyTerrain
 import OpenSkyWorldInterface

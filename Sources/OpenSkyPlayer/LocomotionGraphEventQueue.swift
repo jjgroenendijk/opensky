@@ -3,7 +3,7 @@
 // drains. Storage is bounded and drops the oldest undrained names, so a stalled consumer
 // costs fixed memory and does not replay stale footsteps.
 
-import OpenSkyBehavior
+public import OpenSkyBehavior
 
 nonisolated public final class LocomotionGraphEventQueue {
     /// How many undrained names the queue holds before it starts dropping the

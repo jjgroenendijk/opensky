@@ -5,8 +5,8 @@
 // (<https://en.uesp.net/wiki/Skyrim:Crime>). See docs/engine/crime.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One kind of crime the engine can witness happening.
 nonisolated public enum CrimeKind: String, CaseIterable, Equatable, Sendable, Comparable {

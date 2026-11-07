@@ -2,7 +2,7 @@
 // CLFM; a race lists its playable eyes. Layout and sources: docs/formats/head-parts.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct ColorForm: Equatable, Sendable {
     public let formID: FormID

@@ -3,7 +3,7 @@
 // See docs/formats/dialogue.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct TopicSubtypeTexts: Equatable, Sendable {
     /// Resolved names by SNAM code. A code with no name reads as itself.

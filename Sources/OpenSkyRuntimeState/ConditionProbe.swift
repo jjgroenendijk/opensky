@@ -3,9 +3,9 @@
 // Returns the value or why there is none. See docs/engine/conditions.md.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
-import OpenSkyWorldConditions
+public import OpenSkyWorldConditions
 
 nonisolated public enum ConditionProbe: Sendable {
     /// Runs one function against `context` and answers with its value.

@@ -4,8 +4,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// The `DOBJ` tags that name a sound category with a rule.
 nonisolated public enum SoundCategoryRole: String, CaseIterable, Sendable {

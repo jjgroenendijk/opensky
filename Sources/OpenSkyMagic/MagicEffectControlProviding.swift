@@ -2,7 +2,7 @@
 // `GameViewController`. One snapshot value, so the readout comes from a single observation.
 
 import Foundation
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 
 /// One active effect as a readout spells it.
 nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
@@ -28,7 +28,7 @@ nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
     /// acts on no actor value names itself instead.
     public var line: String {
         guard !valueNames.isEmpty else {
-            return String(
+            return unsafe String(
                 format: "%@ (%@) %@ at magnitude %.1f, %.1fs of %.1fs left%@",
                 name, sourceName, archetype, magnitude, remaining, duration, timeLeftSuffix
             )
@@ -36,7 +36,7 @@ nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
         let direction = isDetrimental ? "damages" : "restores"
         let behaviour = mode == .modifier ? "held" : "per second"
         let values = valueNames.joined(separator: ", ")
-        return String(
+        return unsafe String(
             format: "%@ (%@) %@ %@ by %.1f %@, %.1fs of %.1fs left%@",
             name, sourceName, direction, values, magnitude, behaviour, remaining, duration,
             timeLeftSuffix

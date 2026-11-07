@@ -1,8 +1,8 @@
 // Pure skeleton pose math: local bone transforms to skeleton-world matrices.
 
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 nonisolated public enum SkeletonPoseError: Error, Equatable {
     case boneIndexOutOfRange(Int)

@@ -1,7 +1,7 @@
 // The follower command mode settings: `fFavorRequestPickDistance`, `fFavorRequestRadius`,
 // and `fFavorRequestWaitTimer`. See docs/engine/follower-commands.md#settings.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// `fFavorRequest*` settings. The CK wiki lists them without a use, so each use is
 /// OpenSky's reading (docs/engine/follower-commands.md).

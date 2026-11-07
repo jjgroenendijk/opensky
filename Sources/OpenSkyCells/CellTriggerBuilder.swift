@@ -5,11 +5,11 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import OpenSkyWorldState
 import simd
 
 /// Both immutable collision products of one cell build. They are produced

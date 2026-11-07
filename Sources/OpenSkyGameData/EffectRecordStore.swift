@@ -4,8 +4,8 @@
 // reverbs, and art objects. Built once off one `RecordIndex`. See docs/formats/image-spaces.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public struct EffectRecordStore: Sendable {
     public static let recordTypes: Set<FourCC> = [

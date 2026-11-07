@@ -2,8 +2,8 @@
 // clip annotation events by clips, and behaviour graph variables by graphs. Which
 // classes a decoder reads is decided here; events and variables, by the engine.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct HKXGapCensus: Sendable {
     /// Havok class name -> objects.

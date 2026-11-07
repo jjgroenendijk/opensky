@@ -1,7 +1,7 @@
 // Finds the bytes of one voice line. Vanilla ships `.fuz` files; mods often ship the
 // loose `.xwm` or `.wav` and `.lip` the Creation Kit joins into one. See docs/formats/fuz.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsAudio
 
 nonisolated public enum VoiceLineFiles {

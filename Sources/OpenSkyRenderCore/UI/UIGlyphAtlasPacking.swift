@@ -2,7 +2,7 @@
 // fixed texture for all movies, so swapping movies would fill it; releasing a movie
 // repacks the survivors from their kept bytes.
 
-import CoreGraphics
+public import CoreGraphics
 import simd
 
 nonisolated extension UIGlyphAtlas {
@@ -150,7 +150,7 @@ nonisolated extension UIGlyphAtlas {
     /// coverage bytes (top-left origin). Font smoothing off for determinism.
     private func renderCoverage(box: GlyphBox, draw: (CGContext, GlyphBox) -> Void) -> [UInt8]? {
         guard
-            let context = CGContext(
+            let context = unsafe CGContext(
                 data: nil,
                 width: box.width,
                 height: box.height,
@@ -164,14 +164,15 @@ nonisolated extension UIGlyphAtlas {
         context.setAllowsFontSmoothing(false)
         context.setFillColor(CGColor(gray: 1, alpha: 1))
         draw(context, box)
-        guard let data = context.data else { return nil }
+        guard let data = unsafe context.data else { return nil }
         let bytesPerRow = context.bytesPerRow
         var coverage = [UInt8](repeating: 0, count: box.width * box.height)
         // CG bitmap memory row 0 is the image top -> copy directly, no flip.
         for row in 0 ..< box.height {
-            let source = data.advanced(by: row * bytesPerRow).assumingMemoryBound(to: UInt8.self)
+            let source = unsafe data.advanced(by: row * bytesPerRow)
+                .assumingMemoryBound(to: UInt8.self)
             for col in 0 ..< box.width {
-                coverage[row * box.width + col] = source[col]
+                coverage[row * box.width + col] = unsafe source[col]
             }
         }
         return coverage

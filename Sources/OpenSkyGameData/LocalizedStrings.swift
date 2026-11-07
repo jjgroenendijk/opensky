@@ -5,8 +5,8 @@
 // bad table is logged once and gives nil. See docs/formats/strings.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import Synchronization
 
 nonisolated public final class LocalizedStrings: Sendable {

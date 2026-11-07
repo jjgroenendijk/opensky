@@ -3,7 +3,7 @@
 // docs/engine/main-menu.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum TitleMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\startmenu.swf"

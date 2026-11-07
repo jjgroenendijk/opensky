@@ -3,7 +3,7 @@
 // table; the units are OpenSky's reading. See docs/engine/head-tracking.md.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// When an actor glances away from what it looks at, and how far. Seconds and degrees.
 nonisolated public struct HeadGlanceTiming: Equatable, Sendable {

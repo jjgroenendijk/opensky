@@ -4,8 +4,8 @@
 // See docs/engine/inventory-menu.md#item-card.
 
 import Foundation
-import OpenSkyFormatsSWF
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsSWF
+public import OpenSkyInventoryInterface
 
 nonisolated extension InventoryMenuMovieBridge {
     public static let itemCardCallback = "UpdateItemCardInfo"

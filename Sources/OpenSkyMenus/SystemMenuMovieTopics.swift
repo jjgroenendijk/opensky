@@ -2,7 +2,7 @@
 // list and checks it at once, so these calls are answered inside the call, not queued.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated extension SystemMenuMovieBridge {
     /// The calls each topic page makes, measured from `SystemPage.onCategoryButtonPress`.

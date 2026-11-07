@@ -5,7 +5,7 @@
 // docs/engine/condition-functions.md and docs/engine/guard-response.md.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {

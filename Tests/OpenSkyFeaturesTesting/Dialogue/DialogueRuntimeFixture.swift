@@ -5,12 +5,12 @@
 // follow-ups through TCLT links.
 
 import Foundation
-@testable import OpenSkyConditions
+@testable public import OpenSkyConditions
 @testable import OpenSkyDialogueInterface
 import OpenSkyEngineTesting
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
+@testable public import OpenSkyGameData
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldState
 

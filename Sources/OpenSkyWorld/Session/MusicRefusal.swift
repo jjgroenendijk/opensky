@@ -1,6 +1,6 @@
 // Why the music director did not start the music it was asked for.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum MusicRefusal: Equatable, Sendable {
     case noMusicData

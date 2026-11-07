@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 nonisolated public struct NIFEffectPose: Sendable {
     /// One sequence and the seconds since it started.

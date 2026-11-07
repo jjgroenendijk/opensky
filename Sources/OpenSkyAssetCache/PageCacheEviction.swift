@@ -3,7 +3,7 @@
 // discards the clean pages of the file; this is how `vmtouch -e` works on macOS.
 
 import Darwin
-import Foundation
+public import Foundation
 
 nonisolated public enum PageCacheEviction {
     /// Evicts every regular file under `folders`. Returns the bytes evicted.
@@ -24,20 +24,20 @@ nonisolated public enum PageCacheEviction {
     /// Evicts one file. A file that cannot be opened or mapped counts as 0 bytes.
     @discardableResult
     public static func evict(file: URL) -> UInt64 {
-        let descriptor = open(file.path(percentEncoded: false), O_RDONLY)
+        let descriptor = unsafe open(file.path(percentEncoded: false), O_RDONLY)
         guard descriptor >= 0 else { return 0 }
         defer { close(descriptor) }
         var info = stat()
         guard
-            fstat(descriptor, &info) == 0, info.st_mode & S_IFMT == S_IFREG,
+            unsafe fstat(descriptor, &info) == 0, info.st_mode & S_IFMT == S_IFREG,
             info.st_size > 0
         else {
             return 0
         }
         let length = Int(info.st_size)
-        let mapping = mmap(nil, length, PROT_READ, MAP_SHARED, descriptor, 0)
-        guard let mapping, mapping != MAP_FAILED else { return 0 }
-        defer { munmap(mapping, length) }
-        return msync(mapping, length, MS_INVALIDATE) == 0 ? UInt64(length) : 0
+        let mapping = unsafe mmap(nil, length, PROT_READ, MAP_SHARED, descriptor, 0)
+        guard let mapping = unsafe mapping, unsafe mapping != MAP_FAILED else { return 0 }
+        defer { unsafe munmap(mapping, length) }
+        return unsafe msync(mapping, length, MS_INVALIDATE) == 0 ? UInt64(length) : 0
     }
 }

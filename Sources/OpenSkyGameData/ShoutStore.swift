@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ResolvedWordOfPower: Equatable, Sendable {
     public let id: ResolvedFormID

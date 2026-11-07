@@ -2,9 +2,9 @@
 // Destruction experience rule. See docs/engine/combat.md, Difficulty.
 
 import Foundation
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyFormatsESM
-import OpenSkyProgressionInterface
+public import OpenSkyProgressionInterface
 
 extension CombatCoordinator {
     public var difficultyMultipliers: DifficultyMultipliers {

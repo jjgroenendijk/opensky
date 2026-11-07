@@ -2,9 +2,9 @@
 // `PerkState.init` sets, so an unchanged set re-encodes identically.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyProgressionInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsCore
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's owned perks paired with the snapshot entry they came from.

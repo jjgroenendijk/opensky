@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRuntimeState
 import OpenSkyWorldConditions
@@ -45,7 +45,7 @@ nonisolated extension RecordTextDump {
                 + "skipped \(value.skipped.total)"
         ]
         if let use = value.skillUse {
-            lines.append(String(
+            unsafe lines.append(String(
                 format: "  skill use: use mult %.4f, use offset %.4f, "
                     + "improve mult %.4f, improve offset %.4f",
                 use.useMultiplier,
@@ -75,7 +75,7 @@ nonisolated extension RecordTextDump {
     ) -> [String] {
         guard !nodes.isEmpty else { return [] }
         let rows = nodes.map { node in
-            String(
+            unsafe String(
                 format: "    #%d perk %@, grid (%d,%d) offset (%.3f,%.3f), "
                     + "parent required %@, lines to [%@]",
                 Int(node.index),
@@ -101,7 +101,7 @@ nonisolated extension RecordTextDump {
     ) throws -> String? {
         let perk = try Perk(record: record, localized: localized)
         let header = perk.data.map {
-            String(
+            unsafe String(
                 format: "level %d, declared ranks %d, %@%@%@",
                 Int($0.level),
                 Int($0.rankCount),
@@ -161,7 +161,7 @@ nonisolated extension RecordTextDump {
                 line += ", label \(nameText(label))"
             }
             if let flags = effect.scriptFlags {
-                line += String(
+                unsafe line += String(
                     format: ", flags 0x%04X, fragment %d",
                     Int(flags.options.rawValue),
                     Int(flags.fragmentIndex)

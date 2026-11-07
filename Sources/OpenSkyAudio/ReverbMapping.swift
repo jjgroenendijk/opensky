@@ -3,9 +3,9 @@
 // reverb has no decay or delay controls, so a preset stands in for them.
 // See docs/formats/sound-output-reverb.md, section "Reverb".
 
-import AVFAudio
+public import AVFAudio
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The factory rooms the mapping picks from, smallest first.
 nonisolated public enum ReverbRoom: String, Equatable, Sendable, CaseIterable {

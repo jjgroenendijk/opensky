@@ -2,14 +2,14 @@
 // display shows twice the real frame rate. It runs after the temporal upscaler and reuses
 // its depth and motion. See docs/rendering/frame-interpolation.md.
 
-import Metal
+public import Metal
 import MetalFX
 import QuartzCore
 import Synchronization
 
 nonisolated public enum FrameInterpolationSupport {
     /// Why `device` can never interpolate frames; nil when it can.
-    public static func unsupportedReason(_ device: MTLDevice?) -> String? {
+    public static func unsupportedReason(_ device: any MTLDevice?) -> String? {
         guard let device, MTLFXFrameInterpolatorDescriptor.supportsMetal4FX(device) else {
             return "This GPU has no MetalFX frame interpolator"
         }
@@ -21,17 +21,21 @@ nonisolated public enum FrameInterpolationSupport {
 final class InterpolationTargets {
     let interpolator: any MTL4FXFrameInterpolator
     /// Last frame's scaler output; it swaps with the scaler's target each frame.
-    var history: MTLTexture
+    var history: any MTLTexture
     /// The frame between the last real frame and this one.
-    let frame: MTLTexture
+    let frame: any MTLTexture
     /// False until one real frame has filled `history`.
     var historyValid = false
 
-    var allocations: [MTLAllocation] {
+    var allocations: [any MTLAllocation] {
         [history, frame]
     }
 
-    init(interpolator: any MTL4FXFrameInterpolator, history: MTLTexture, frame: MTLTexture) {
+    init(
+        interpolator: any MTL4FXFrameInterpolator,
+        history: any MTLTexture,
+        frame: any MTLTexture
+    ) {
         self.interpolator = interpolator
         self.history = history
         self.frame = frame
@@ -59,7 +63,7 @@ public struct FrameInterpolationState {
     /// Set when MetalFX refused the interpolator; cleared by switching it again.
     var creationFailure: String?
     /// The offscreen target of the interpolated frame, for tests and the benchmark.
-    public internal(set) var offscreenFrame: MTLTexture?
+    public internal(set) var offscreenFrame: any MTLTexture?
     let latency = PresentLatencyInbox()
 }
 
@@ -87,7 +91,7 @@ nonisolated enum FrameInterpolationPacing {
     static func pauseReason(realFrameWork: CFTimeInterval, displayInterval: CFTimeInterval)
         -> String
     {
-        String(
+        unsafe String(
             format: "Paused: real frames take %.0f ms, interpolation needs under %.0f ms",
             realFrameWork * 1000, 2 * displayInterval * 1000
         )

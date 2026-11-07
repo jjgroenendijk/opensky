@@ -2,8 +2,8 @@
 // speakers and how a room colors it. Layout and sources:
 // docs/formats/sound-output-reverb.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct SoundOutputModel: Equatable, Sendable {
     /// ANAM, 20 bytes.

@@ -1,7 +1,7 @@
 // Reads the slices of a shared-storage volume texture back to RGBA8, so a tool can
 // show each one as an image.
 
-import Metal
+public import Metal
 
 nonisolated public enum TextureReadbackError: Error, Equatable {
     case notAVolume
@@ -11,7 +11,10 @@ nonisolated public enum TextureReadbackError: Error, Equatable {
 
 nonisolated extension TextureReadback {
     /// Every slice of one level, front to back, as stored.
-    public static func volumeSlices(of texture: MTLTexture, level: Int) throws -> [TexturePixels] {
+    public static func volumeSlices(
+        of texture: any MTLTexture,
+        level: Int
+    ) throws -> [TexturePixels] {
         guard texture.textureType == .type3D else { throw TextureReadbackError.notAVolume }
         let swapsRedAndBlue: Bool
         switch texture.pixelFormat {
@@ -24,7 +27,7 @@ nonisolated extension TextureReadback {
         let depth = max(1, texture.depth >> level)
         return (0 ..< depth).map { slice in
             var rgba = [UInt8](repeating: 0, count: width * height * 4)
-            texture.getBytes(
+            unsafe texture.getBytes(
                 &rgba,
                 bytesPerRow: width * 4,
                 bytesPerImage: width * height * 4,

@@ -5,7 +5,7 @@
 // Reference: UESP "Skyrim Mod:Mod File Format/RACE"; slot bits: nif.xml.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Race: Sendable {
     private enum Gender: Equatable {

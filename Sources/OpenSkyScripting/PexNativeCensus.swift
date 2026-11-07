@@ -1,7 +1,7 @@
 // Native declarations and typed call sites resolved across a PEX corpus.
 
 import Foundation
-import OpenSkyFormatsPEX
+public import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 nonisolated public struct PexNativeTarget: Equatable, Hashable, Sendable {

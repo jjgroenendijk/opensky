@@ -2,7 +2,7 @@
 // and objects, read without any knowledge of Havok class layouts.
 // Byte map and the evidence for it: docs/formats/hkt-tagfile.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum HKTError: Error, Equatable, Sendable {
     /// The first two u32s are not the tagfile magic pair.

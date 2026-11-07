@@ -5,12 +5,12 @@
 // `WalkController` never turns the player to the dialogue pose.
 // `movementMode` never changes.
 
-import OpenSkyDiagnostics
+public import OpenSkyDiagnostics
 import OpenSkyPhysics
-import OpenSkyPlayer
+public import OpenSkyPlayer
 import OpenSkyRenderCore
-import OpenSkyRendering
-import OpenSkyWorldInterface
+public import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
 
 /// What the app publishes each frame while a conversation is open. Sampled by

@@ -2,7 +2,7 @@
 // arguments. The one place OpenSky's yaw (counterclockwise from +X) becomes Havok's
 // `Direction` (radians from facing, positive left).
 
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import simd
 
 nonisolated extension LocomotionBridge {

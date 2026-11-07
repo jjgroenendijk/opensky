@@ -2,8 +2,8 @@
 // menu's words from the `sRSM` game settings. See docs/engine/race-menu.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One colour choice: a `CLFM` colour with the strength it paints at.
 nonisolated public struct RaceMenuColor: Equatable, Sendable {

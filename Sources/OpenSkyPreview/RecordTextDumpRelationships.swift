@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension RecordTextDump {
     public static func relationshipSummary(_ record: ESMRecord) throws -> String? {
@@ -45,10 +45,11 @@ nonisolated extension RecordTextDump {
     /// record authored it.
     private static func associationTypeSummary(_ record: ESMRecord) throws -> String? {
         let type = try AssociationType(record: record)
+        let flagsText = unsafe "flags 0x\(String(format: "%08X", type.flags.rawValue)), "
         var lines = [
             "decoded ASTP: editorID \(type.editorID ?? "-"), "
                 + "family association \(type.isFamilyAssociation), "
-                + "flags 0x\(String(format: "%08X", type.flags.rawValue)), "
+                + flagsText
                 + "skipped \(type.skipped.total)"
         ]
         let titles: [(String, String?)] = [

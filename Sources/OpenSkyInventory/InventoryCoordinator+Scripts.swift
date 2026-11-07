@@ -5,9 +5,9 @@
 // Rules: docs/engine/inventory-state.md, "Script item natives".
 
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

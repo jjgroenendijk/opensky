@@ -1,7 +1,7 @@
 // Forced explosions: detonate an `EXPL` in front of the
 // camera, throw `DEBR` pieces, spawn a `HAZD`, and read the live hazards.
 
-import OpenSkyPhysics
+public import OpenSkyPhysics
 
 nonisolated public struct ExplosionControlSnapshot: Equatable, Sendable {
     public let reports: [ExplosionReport]

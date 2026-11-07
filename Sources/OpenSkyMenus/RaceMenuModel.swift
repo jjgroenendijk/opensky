@@ -3,9 +3,9 @@
 // See docs/engine/race-menu.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One playable race the menu offers.
 nonisolated public struct RaceChoice: Equatable, Sendable {

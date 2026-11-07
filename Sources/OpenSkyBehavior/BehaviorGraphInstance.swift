@@ -4,7 +4,7 @@
 // satellite files; this file owns the state and the update order.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import simd
 
 /// Where a decoded object comes from. The engine answers from a parsed

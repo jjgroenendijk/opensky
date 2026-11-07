@@ -1,6 +1,6 @@
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// What per-frame actor systems need about one resident ACHR: its NPC_ base and
 /// the cell that holds it. Small, so a lookup copies no decoded record.

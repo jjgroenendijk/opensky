@@ -2,10 +2,10 @@
 // record, so the cell is always absent.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyQuestsInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyQuestsInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One quest's runtime state paired with the snapshot entry it came from.

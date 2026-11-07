@@ -103,7 +103,7 @@ struct HUDAcceptanceRealDataTests {
 
     private func makeFarmScene(
         root: GameDataRoot,
-        device: MTLDevice,
+        device: any MTLDevice,
         fileSystem: VirtualFileSystem
     ) throws -> CellScene {
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
@@ -166,12 +166,12 @@ struct HUDAcceptanceRealDataTests {
     }
 
     @MainActor
-    private func makeRenderer(device: MTLDevice) throws -> Renderer {
+    private func makeRenderer(device: any MTLDevice) throws -> Renderer {
         try RenderedPixels.offscreenRenderer(device: device, width: Self.width, height: Self.height)
     }
 
     @MainActor
-    private func render(_ renderer: Renderer) throws -> (texture: MTLTexture, pixels: [UInt8]) {
+    private func render(_ renderer: Renderer) throws -> (texture: any MTLTexture, pixels: [UInt8]) {
         try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
     }
 }

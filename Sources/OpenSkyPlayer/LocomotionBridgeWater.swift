@@ -1,7 +1,7 @@
 // An actor in a current: the push the water adds to one step
 // (docs/engine/water-physics.md#actors-in-a-current).
 
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import simd
 
 nonisolated extension LocomotionStepPlan {

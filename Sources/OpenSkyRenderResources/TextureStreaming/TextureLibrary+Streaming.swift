@@ -9,7 +9,11 @@ import OpenSkyGameData
 
 nonisolated extension TextureLibrary {
     /// Nil when streaming is off or the texture does not stream.
-    func streamedTexture(ready: ReadyTexture, path: String, usage: TextureUsage) -> MTLTexture? {
+    func streamedTexture(
+        ready: ReadyTexture,
+        path: String,
+        usage: TextureUsage
+    ) -> any MTLTexture? {
         guard let streaming, streaming.loadSettings.enabled else { return nil }
         let settings = streaming.loadSettings
         guard

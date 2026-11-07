@@ -2,9 +2,9 @@
 // controls, and the forms a script adds to a list. See docs/engine/papyrus-script-state.md.
 
 import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
     /// The eight control groups of `DisablePlayerControls`, in argument order, with the

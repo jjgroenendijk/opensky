@@ -2,7 +2,7 @@
 // bytes; a malformed payload becomes a warning, not a thrown error.
 // Spec: SWF v19 chapter 5.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum SWFActionOperandDecoder: Sendable {

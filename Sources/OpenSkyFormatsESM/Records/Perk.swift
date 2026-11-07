@@ -4,7 +4,7 @@
 // themselves and are counted in `PerkTally`. Layout: docs/formats/perks.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum PerkSkipKind: SkipTallyKind {
     case unknownField(FourCC)

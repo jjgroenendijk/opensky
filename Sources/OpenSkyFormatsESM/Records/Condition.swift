@@ -4,7 +4,7 @@
 // the wrong size is skipped. Layout and sources: docs/formats/conditions.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Condition: Equatable, Sendable {
     /// Top 3 bits of the operator byte. 6 and 7 are undefined on disk and are

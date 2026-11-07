@@ -1,7 +1,7 @@
 // Navigation overlay source. Here, because residency and the latest path live in the
 // streamer; the renderer owns only the source registry and toggles.
 
-import OpenSkyDiagnostics
+public import OpenSkyDiagnostics
 import OpenSkyNavigation
 
 extension CellStreamer {

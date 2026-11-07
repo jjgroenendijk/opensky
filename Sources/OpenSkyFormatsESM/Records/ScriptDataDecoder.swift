@@ -1,7 +1,7 @@
 // Bounds-checked VMAD primary-script decoder. See ScriptData.swift for sources.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated extension ScriptData {
     /// Consumes `field` when it is VMAD. Returns false for anything else so

@@ -4,9 +4,9 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import simd
+public import simd
 
 nonisolated public enum ExplosionFalloff {
     /// Full damage at the center, falling as `1 - (d / R)^2` to zero at the edge. A zero

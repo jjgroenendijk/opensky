@@ -2,7 +2,7 @@
 // an actor can run. A held package runs its whole tree, so each procedure in it counts.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated public struct PackageProcedureCensus: Sendable {

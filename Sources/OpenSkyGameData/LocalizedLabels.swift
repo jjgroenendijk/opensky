@@ -4,7 +4,7 @@
 // unknown key stays as written. See docs/formats/translation-strings.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public final class LocalizedLabels: Sendable {
     private static let logger = EngineLogger(

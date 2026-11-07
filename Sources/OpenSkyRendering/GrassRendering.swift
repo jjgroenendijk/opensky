@@ -4,11 +4,11 @@
 // RenderScene merging preserves batches across resident cell boundaries.
 
 import Metal
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyRenderCore
-import OpenSkyRenderResources
-import simd
+public import OpenSkyRenderCore
+public import OpenSkyRenderResources
+public import simd
 
 nonisolated public enum GrassRenderPolicy: Sendable {
     /// Hard per-frame upload/draw cap. Scene data remains resident; overflow

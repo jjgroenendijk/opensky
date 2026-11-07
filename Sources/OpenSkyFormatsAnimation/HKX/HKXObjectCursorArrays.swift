@@ -4,7 +4,7 @@
 // float, 2 for i16, 1 for a byte. See HKXObjectGraph.swift for the layout
 // rules and the miss-logging contract.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated extension HKXObjectCursor {

@@ -2,7 +2,7 @@
 // content derived from the user's install, so it must never sit inside the game
 // install or inside a git checkout, where it could be committed.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum AssetCacheLocationError: Error, Equatable, Sendable {
     case insideGameInstall

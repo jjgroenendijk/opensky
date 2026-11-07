@@ -142,7 +142,7 @@ enum GameScriptRun {
                 .failure("line \(step.lineNumber): \(error.code.rawValue): \(error.message)")
         }
         print(GameCommand.output(reply, options: options))
-        fflush(stdout)
+        unsafe fflush(stdout)
         if let error = reply.error {
             throw CLIError
                 .failure("line \(step.lineNumber): \(error.code.rawValue): \(error.message)")

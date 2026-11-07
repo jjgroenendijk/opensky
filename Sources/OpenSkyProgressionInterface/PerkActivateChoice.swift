@@ -3,8 +3,8 @@
 // "Perk Entry Point". Layout: docs/formats/perks.md. Rules: docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public struct PerkActivateChoice: Sendable {
     /// `EPF2`. Nil for a run-immediately choice, which shows no button.

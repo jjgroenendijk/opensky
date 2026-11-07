@@ -2,7 +2,7 @@
 // disabled. See docs/formats/locations.md#cleared-locations.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension LocationStore {
     /// The locations `victim` was a boss of whose other bosses are all done: dead or

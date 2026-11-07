@@ -5,11 +5,11 @@
 // docs/engine/spellcasting.md and docs/engine/inventory-equipment.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyMagicInterface
+public import OpenSkyWorldState
 
 /// Reads and mutates spellbooks on top of a `WorldStateStore`.
 @MainActor

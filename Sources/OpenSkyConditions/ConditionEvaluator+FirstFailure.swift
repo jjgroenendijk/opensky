@@ -2,7 +2,7 @@
 // It follows the same OR grouping as `evaluate(_:)`.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension ConditionEvaluator {
     /// The first condition of the first false OR group, or nil when the list is true.

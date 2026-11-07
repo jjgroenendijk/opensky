@@ -3,8 +3,8 @@
 // the machinery: comparison, OR grouping and the tally.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// A feature's condition seam: the state its condition functions read,
 /// resolved for one evaluation. A context holds at most one value per type,

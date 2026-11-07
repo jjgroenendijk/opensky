@@ -6,8 +6,8 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
 
 extension ProgressionCoordinator: SkillsMenuSource {
     public func skillsMenuWillOpen() {

@@ -36,7 +36,7 @@ enum WhiterunGuardFixture {
 
     /// The guard's own cell, built through the production path so the collision
     /// a sight line is traced against is the real thing.
-    static func buildCell(root: GameDataRoot, device: MTLDevice) throws -> CellScene {
+    static func buildCell(root: GameDataRoot, device: any MTLDevice) throws -> CellScene {
         let fileSystem = VirtualFileSystem(root: root)
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let builder = try CellSceneBuilder(

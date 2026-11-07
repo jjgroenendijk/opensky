@@ -4,12 +4,12 @@
 // UESP's bounty table (<https://en.uesp.net/wiki/Skyrim:Crime>), so a wrong
 // sum reads as a wrong bounty.
 
-import Foundation
-@testable import OpenSkyCrimeInterface
-@testable import OpenSkyFactionsInterface
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyCrimeInterface
+@testable public import OpenSkyFactionsInterface
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
+@testable public import OpenSkyGameData
 
 public enum CrimeFixture {
     public static let pluginName = "Base.esm"

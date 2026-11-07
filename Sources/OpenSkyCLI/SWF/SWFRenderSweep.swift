@@ -68,7 +68,7 @@ enum SWFRenderSweep {
         var failures: [String] = []
 
         init(
-            device: MTLDevice,
+            device: any MTLDevice,
             size: (width: Int, height: Int),
             outputDirectory: String?
         ) throws {
@@ -132,7 +132,7 @@ enum SWFRenderSweep {
             )
         }
 
-        private func write(texture: MTLTexture, path: String) throws {
+        private func write(texture: any MTLTexture, path: String) throws {
             guard let outputDirectory else { return }
             let name = (path as NSString).lastPathComponent
                 .replacingOccurrences(of: "\\", with: "_")
@@ -153,13 +153,13 @@ enum SWFRenderSweep {
         }
 
         private static func pixels(
-            of texture: MTLTexture,
+            of texture: any MTLTexture,
             size: (width: Int, height: Int)
         ) throws -> [UInt8] {
             var pixels = [UInt8](repeating: 0, count: size.width * size.height * 4)
             pixels.withUnsafeMutableBytes { bytes in
                 guard let base = bytes.baseAddress else { return } // non-empty
-                texture.getBytes(
+                unsafe texture.getBytes(
                     base,
                     bytesPerRow: size.width * 4,
                     from: MTLRegionMake2D(0, 0, size.width, size.height),

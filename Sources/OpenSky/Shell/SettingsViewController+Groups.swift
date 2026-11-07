@@ -95,7 +95,7 @@ extension SettingsViewController {
     }
 
     @objc func choosePluginsText() {
-        guard let window = view.window else { return }
+        guard let window = unsafe view.window else { return }
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
@@ -148,7 +148,7 @@ extension SettingsViewController {
 
     /// A folder sheet; `store` runs on the choice, then the settings change is reported.
     func chooseFolder(_ message: String, store: @escaping (URL) -> Void) {
-        guard let window = view.window else { return }
+        guard let window = unsafe view.window else { return }
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true

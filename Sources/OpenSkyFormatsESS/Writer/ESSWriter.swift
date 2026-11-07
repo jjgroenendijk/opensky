@@ -2,8 +2,8 @@
 // A value the format cannot hold is a typed error, never a silent cut.
 // See docs/formats/ess.md#basic-types.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct ESSWriter: Sendable {
     private var writer = BinaryWriter()

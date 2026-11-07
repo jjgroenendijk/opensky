@@ -1,6 +1,6 @@
 // The commands that build cells, actors, and collision around a grid cell.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct CellArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(

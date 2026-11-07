@@ -3,13 +3,13 @@
 // unlit, with its diffuse texture. See docs/engine/inventory-menu.md.
 
 import Foundation
-@preconcurrency import Metal
+@preconcurrency @unsafe public import Metal
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
+public import OpenSkyRendering
 import OpenSkyRenderResources
-import simd
+public import simd
 
 /// Which model the preview shows and how far it has turned. Pure, so tests drive it.
 nonisolated public struct InventoryItemPreview: Equatable, Sendable {
@@ -97,7 +97,7 @@ public final class InventoryItemPreviewSource {
 
     /// The scene for `preview`, or nil while its model loads, after a failure, or with
     /// no model to show.
-    public func scene(for preview: InventoryItemPreview, device: MTLDevice) -> MenuScene? {
+    public func scene(for preview: InventoryItemPreview, device: any MTLDevice) -> MenuScene? {
         guard let path = preview.modelPath, let entry = model(path, device: device) else {
             return nil
         }
@@ -115,7 +115,7 @@ public final class InventoryItemPreviewSource {
         return scene
     }
 
-    private func model(_ path: String, device: MTLDevice) -> PreviewModel? {
+    private func model(_ path: String, device: any MTLDevice) -> PreviewModel? {
         if let entry = built[path] {
             return entry
         }

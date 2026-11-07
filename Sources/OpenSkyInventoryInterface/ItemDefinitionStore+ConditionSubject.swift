@@ -1,9 +1,9 @@
 // An item as the subject of a perk's weapon or item condition tab, such as
 // `HasKeyword WeapTypeMace` on the swung weapon.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension ItemDefinitionStore {
     /// Nil when the store has no load-order resolver, which leaves the tab unbound.

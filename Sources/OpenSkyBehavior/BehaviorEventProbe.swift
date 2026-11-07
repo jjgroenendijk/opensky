@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum BehaviorEventProbe {
     /// What the graph did after one raised event, or after the idle updates.

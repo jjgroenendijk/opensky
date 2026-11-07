@@ -3,7 +3,7 @@
 // with the WRLD CNAM climate as fallback (docs/engine/weather.md). `WeatherSystem` holds state.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyShaderTypes
 import simd
 

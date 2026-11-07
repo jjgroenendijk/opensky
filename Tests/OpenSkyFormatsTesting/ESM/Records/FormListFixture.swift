@@ -1,8 +1,8 @@
 // Synthetic FLST records, shared by the decoder tests and the form-list store
 // tests. No game-derived bytes.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum FormListFixture: Sendable {
     public static func record(
@@ -33,6 +33,6 @@ public enum FormListFixture: Sendable {
     }
 
     public static func uint32(_ value: UInt32) -> Data {
-        withUnsafeBytes(of: value.littleEndian) { Data($0) }
+        withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }
     }
 }

@@ -4,7 +4,7 @@
 // No test reads a real `.swf` (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-@testable import OpenSkyFormatsSWF
+@testable public import OpenSkyFormatsSWF
 import Testing
 
 public enum AS2Fixture: Sendable {

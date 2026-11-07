@@ -2,10 +2,10 @@
 // override list of a code-driven situation, and the default list
 // (<https://ck.uesp.net/wiki/AI_Packages_Tab>, <https://ck.uesp.net/wiki/AddScriptPackage>).
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import OpenSkyWorldConditions
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// Where an actor's current package came from, in the order selection tries them.
 nonisolated public enum PackageSource: Equatable, Sendable {

@@ -4,8 +4,8 @@
 // move takes it along: the plainest copies leave first. See docs/engine/item-copies.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One copy of an item, as far as it differs from its record.
 nonisolated public struct ItemCopy: Hashable, Sendable {

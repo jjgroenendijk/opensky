@@ -3,9 +3,9 @@
 // talks to. See docs/engine/speech-checks.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// What the speech checks need beside the two actors' values.
 nonisolated public struct SpeechCheckResolution: ConditionResolution, Equatable {

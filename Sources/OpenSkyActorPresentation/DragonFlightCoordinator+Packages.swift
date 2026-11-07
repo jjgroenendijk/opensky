@@ -1,7 +1,7 @@
 // A dragon out of a fight flies where its package sends it: round a point, or onto
 // the perch of a sit package. See docs/engine/dragon-flight.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// Where the dragon's package sends it.

@@ -3,7 +3,7 @@
 // world children group. Layout: docs/formats/world-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Worldspace: Sendable {
     /// PNAM flags attached to WNAM. A set bit means use that data category

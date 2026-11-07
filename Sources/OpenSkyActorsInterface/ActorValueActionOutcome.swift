@@ -24,12 +24,18 @@ nonisolated extension ActorValueActionOutcome {
         case let .notAnActorValue(index):
             "\(ActorValueIdentity.description(of: index)) is not an actor value."
         case let .changed(verb, actor, index, value):
-            String(
+            unsafe String(
                 format: "%@ %@ %@: now %.1f.",
                 verb, actor, ActorValueIdentity.description(of: index), value
             )
         case let .refilled(actor, health, magicka, stamina):
-            String(format: "Refilled %@: %.1f / %.1f / %.1f.", actor, health, magicka, stamina)
+            unsafe String(
+                format: "Refilled %@: %.1f / %.1f / %.1f.",
+                actor,
+                health,
+                magicka,
+                stamina
+            )
         case let .reset(actor, changed):
             changed ? "Reset \(actor) to derived values." : "\(actor) already reads from records."
         }

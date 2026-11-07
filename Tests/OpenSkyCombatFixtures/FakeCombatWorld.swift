@@ -2,13 +2,13 @@
 // stored values and actions are recorded, so a whole fight runs without a
 // renderer, window, or game data.
 
-@testable import OpenSkyActorsInterface
-@testable import OpenSkyBehavior
-@testable import OpenSkyCombat
-@testable import OpenSkyCombatInterface
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyMagicInterface
-@testable import OpenSkyProgressionInterface
+@testable public import OpenSkyActorsInterface
+@testable public import OpenSkyBehavior
+@testable public import OpenSkyCombat
+@testable public import OpenSkyCombatInterface
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyMagicInterface
+@testable public import OpenSkyProgressionInterface
 import simd
 
 @MainActor

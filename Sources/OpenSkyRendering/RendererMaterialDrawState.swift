@@ -2,7 +2,7 @@
 // The scene lists set them per group while the frame honours them
 // (docs/formats/nif-materials.md, "Draw state").
 
-@preconcurrency import Metal
+@preconcurrency @unsafe import Metal
 import OpenSkyFormatsCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
@@ -19,9 +19,9 @@ struct MaterialDepthStates: Sendable {
     /// The stencil bit a skinned mesh sets; the SWF clip counts use the bits below it.
     static let skinStencilBit: UInt32 = 0x80
 
-    private let states: [MTLDepthStencilState]
+    private let states: [any MTLDepthStencilState]
 
-    init(device: MTLDevice) throws {
+    init(device: any MTLDevice) throws {
         states = try [false, true].flatMap { skin in
             try [false, true].flatMap { test in
                 try [false, true].map { write in
@@ -32,11 +32,11 @@ struct MaterialDepthStates: Sendable {
     }
 
     private static func make(
-        device: MTLDevice,
+        device: any MTLDevice,
         test: Bool,
         write: Bool,
         skin: Bool
-    ) throws -> MTLDepthStencilState {
+    ) throws -> any MTLDepthStencilState {
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.label = "MaterialDepth test \(test) write \(write) skin \(skin)"
         descriptor.depthCompareFunction = test ? .less : .always
@@ -55,7 +55,7 @@ struct MaterialDepthStates: Sendable {
         return state
     }
 
-    func state(test: Bool, write: Bool, skin: Bool = false) -> MTLDepthStencilState {
+    func state(test: Bool, write: Bool, skin: Bool = false) -> any MTLDepthStencilState {
         states[(skin ? 4 : 0) + (test ? 2 : 0) + (write ? 1 : 0)]
     }
 }

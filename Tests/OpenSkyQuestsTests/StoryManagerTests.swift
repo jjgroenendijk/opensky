@@ -163,7 +163,7 @@ struct StoryManagerTests {
 
     static func list(_ ids: [UInt32]) throws -> PluginQuestList {
         let data = ids.reduce(Data()) { data, id in
-            data + withUnsafeBytes(of: id.littleEndian) { Data($0) }
+            data + withUnsafeBytes(of: id.littleEndian) { unsafe Data($0) }
         }
         let list = Result { () throws(StartGameQuestListError) in
             try StartGameQuestList(data: data)
@@ -202,7 +202,7 @@ struct StoryManagerTests {
             )
         ])
         let runtime = QuestRuntime(store: WorldStateStore(), quests: quests)
-        let data = withUnsafeBytes(of: UInt32(0x0100_0100).littleEndian) { Data($0) }
+        let data = withUnsafeBytes(of: UInt32(0x0100_0100).littleEndian) { unsafe Data($0) }
         let list = PluginQuestList(
             plugin: "Test.esm",
             masters: ["Base.esm", "Patch.esm"],

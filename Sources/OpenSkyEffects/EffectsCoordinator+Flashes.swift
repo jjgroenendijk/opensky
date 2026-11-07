@@ -2,7 +2,7 @@
 // See docs/engine/spell-delivery.md#what-a-projectile-shows.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
 import simd

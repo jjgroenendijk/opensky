@@ -113,7 +113,7 @@ struct AudioSweepTally {
         }
         print(
             "[INFO] audio sweep format: "
-                + histogram(formatTags.mapKeys { "0x" + String(format: "%04X", $0) })
+                + histogram(formatTags.mapKeys { unsafe "0x" + String(format: "%04X", $0) })
                 + "; channels " + histogram(channelCounts.mapKeys(String.init))
                 + "; rates " + histogram(sampleRates.mapKeys(String.init))
                 + "; block align " + histogram(blockAligns.mapKeys(String.init))
@@ -124,9 +124,10 @@ struct AudioSweepTally {
                 + "\(inconsistentPacketTable.count) dpds/packet mismatches, "
                 + "\(partialFinalPacket.count) with a partial final packet"
         )
+        let minutesText = unsafe String(format: "%.1f", totalDuration / 60)
         print(
             "[INFO] audio sweep payload: \(totalPayloadBytes) bytes, "
-                + String(format: "%.1f", totalDuration / 60) + " minutes declared"
+                + minutesText + " minutes declared"
         )
         for path in (inconsistentPacketTable + partialFinalPacket).prefix(10) {
             print("[INFO]   packet-table note: \(path)")

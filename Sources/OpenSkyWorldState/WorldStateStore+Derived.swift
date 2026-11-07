@@ -1,7 +1,7 @@
 // Values derived from the deltas, kept until the next delta write, and the bulk
 // writes built on the store's public API. See docs/engine/runtime-state.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 extension WorldStateStore {
     /// Rises on every delta write and every restore, so a reader can key its own cache.

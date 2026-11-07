@@ -2,7 +2,7 @@
 // must stay visible, so every store counts its skips here instead of `try?`.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct SkippedRecords: Equatable, Sendable {
     public struct Entry: Equatable, Sendable {

@@ -5,7 +5,7 @@
 // the player graph never sets are named but not acted on.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// `hkbStateMachineTransitionInfo::TransitionFlags`, as far as the vanilla
 /// player graph exercises them.

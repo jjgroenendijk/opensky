@@ -2,8 +2,8 @@
 // cell freezes it when it first loads, and a cell reset rolls again. See
 // docs/engine/leveled-lists.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public struct LeveledRollState: WorldStateComponent, Hashable, Sendable {
     public var playerLevel: Int

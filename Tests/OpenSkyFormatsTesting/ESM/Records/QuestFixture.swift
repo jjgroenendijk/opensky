@@ -1,8 +1,8 @@
 // Synthetic QUST builder: record fields and the VMAD quest fragment tail.
 // Layout: docs/formats/quest-records.md.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum QuestFixture: Sendable {
     // MARK: - Record assembly

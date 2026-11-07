@@ -1,6 +1,6 @@
 // The commands that read the load order's records, settings, and saves without Metal.
 
-import ArgumentParser
+public import ArgumentParser
 
 /// `--worldspace`, `--x`, and `--y`: the target exterior cell.
 public struct GridOptions: ParsableArguments, Sendable {

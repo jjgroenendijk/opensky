@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/material-type.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct MaterialType: Equatable, Sendable {
     public let formID: FormID

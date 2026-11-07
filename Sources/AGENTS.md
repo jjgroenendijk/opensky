@@ -51,6 +51,10 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   it across a module boundary.
 - Every file that uses a module writes its own `import`. New modules and their dependencies
   go in `Package.swift`, never in the project file.
+- Three compiler rules hold on every target (`docs/decisions/language-rules.md`). A protocol
+  type is written `any X`. An import is `internal`: write `public import X` only when a public
+  declaration of the file uses a type of `X`. An unsafe pointer or C call is marked `unsafe`.
+  A `@preconcurrency import`, needed for Metal, is written `@preconcurrency @unsafe import`.
 
 ## Bulk edits
 

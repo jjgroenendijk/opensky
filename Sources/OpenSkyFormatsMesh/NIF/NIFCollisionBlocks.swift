@@ -3,8 +3,8 @@
 // the ball-and-socket chain. Layout: docs/formats/nif-collision.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 /// nif.xml `bhkNiCollisionObject`: the target node, flags, and the body or phantom.
 nonisolated public struct NIFCollisionObjectBlock: Equatable, Sendable {

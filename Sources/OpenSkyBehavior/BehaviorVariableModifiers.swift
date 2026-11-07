@@ -3,7 +3,7 @@
 // writes its outputs back through `writeOutputs` (docs/engine/behavior-runtime.md).
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import simd
 
 /// What one modifier run gets beside the pose.

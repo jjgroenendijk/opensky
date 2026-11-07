@@ -38,7 +38,7 @@ extension AssetCommand {
                 device: device, library: Renderer.makeBundledShaderLibrary(device: device)
             ).pixels(of: texture, level: arguments.level)]
         for (index, pixels) in images.enumerated() {
-            let name = images.count > 1
+            let name = unsafe images.count > 1
                 ? String(format: "level-%d-slice-%03d.png", arguments.level, index)
                 : "level-\(arguments.level).png"
             guard let image = pixels.cgImage() else {

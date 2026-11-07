@@ -1,8 +1,8 @@
 // GRAS grass: model path plus placement controls, referenced by LTEX GNAM.
 // Layout, sources, and placement policy: docs/formats/grass.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct Grass: Equatable, Sendable {
     /// DATA units-from-water rule. Unknown mod values stay representable so a

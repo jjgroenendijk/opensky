@@ -4,7 +4,7 @@
 // where the stars land on screen. See docs/engine/skills-menu.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 import OpenSkyProgressionInterface
 
 nonisolated public enum StatsMenuMovieBridge: Sendable {

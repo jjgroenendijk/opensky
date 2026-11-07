@@ -3,8 +3,8 @@
 // (docs/formats/relationships.md) and contains no bytes from the game install
 // (AGENTS.md "Legal & IP boundary").
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum RelationshipFixture: Sendable {
     /// The 16-byte DATA struct, optionally truncated to stand in for a record

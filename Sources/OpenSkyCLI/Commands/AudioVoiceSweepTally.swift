@@ -96,9 +96,10 @@ struct VoiceNameReport {
             print(row.unknownResponse, label: "names no INFO response")
         }
         let percentage = totalActual == 0 ? 0 : Double(totalMatched) / Double(totalActual) * 100
+        let percent = unsafe String(format: "(%.3f%%)", percentage)
         Swift.print(
             "[INFO] voice names total: \(totalMatched) of \(totalActual) explained "
-                + String(format: "(%.3f%%)", percentage)
+                + percent
                 + ", \(totalUnmatchedRule) spelled differently"
         )
     }
@@ -180,11 +181,11 @@ struct VoiceFramingTally {
             "[INFO] voice lip: \(withLip) with a lip blob, \(framed - withLip) without, "
                 + "\(totalLipBytes) lip bytes"
         )
-        let minutes = String(format: "%.1f", totalDuration / 60)
+        let minutes = unsafe String(format: "%.1f", totalDuration / 60)
         Swift.print(
             "[INFO] voice audio: \(totalAudioBytes) payload bytes, \(minutes) minutes declared"
         )
-        let tags = formatTags.mapKeys { "0x" + String(format: "%04X", $0) }
+        let tags = formatTags.mapKeys { unsafe "0x" + String(format: "%04X", $0) }
         Swift.print(
             "[INFO] voice audio format: versions "
                 + histogram(versions.mapKeys(String.init))

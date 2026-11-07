@@ -4,9 +4,9 @@
 // `PapyrusInventoryBridge`. Without `abSilent`, a change to the player shows a notice.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyScriptingInterface
 
 /// What the item natives reach. Items are load-order FormIDs.

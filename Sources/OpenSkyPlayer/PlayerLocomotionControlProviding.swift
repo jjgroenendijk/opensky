@@ -4,8 +4,8 @@
 // trace, and the dev controls. See docs/engine/locomotion-graph.md.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyPhysics
+public import OpenSkyBehavior
+public import OpenSkyPhysics
 
 /// One key binding as the readout presents it. `label` is what the control shows;
 /// `isActive` is whether that input is asserted right now, so a user can press

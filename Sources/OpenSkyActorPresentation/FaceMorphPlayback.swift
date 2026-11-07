@@ -4,9 +4,9 @@
 // position/normal delta pair per face vertex before skinning.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyRenderCore
-import OpenSkyRenderResources
+public import OpenSkyFormatsESM
+public import OpenSkyRenderCore
+public import OpenSkyRenderResources
 import simd
 import Synchronization
 

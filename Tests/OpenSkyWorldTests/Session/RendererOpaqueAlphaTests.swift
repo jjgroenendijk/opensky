@@ -50,7 +50,7 @@ struct RendererOpaqueAlphaTests {
         #expect(pixels[(center.y * Self.width + center.x) * 4 + 3] == 255)
     }
 
-    private static func scene(device: MTLDevice, vertexAlpha: Float) throws -> RenderScene {
+    private static func scene(device: any MTLDevice, vertexAlpha: Float) throws -> RenderScene {
         let box = DemoScene.boxMesh(halfWidth: 64, halfDepth: 64, height: 64)
         let mesh = Mesh(
             name: box.name, transform: box.transform, positions: box.positions,

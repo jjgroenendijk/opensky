@@ -1,8 +1,8 @@
 // The seams other features reach factions through. The runtimes in OpenSkyFactions
 // conform, and the composition root hands them over as these protocols.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// What one seeding pass did.
 nonisolated public struct FactionSeedReport: Equatable, Sendable {

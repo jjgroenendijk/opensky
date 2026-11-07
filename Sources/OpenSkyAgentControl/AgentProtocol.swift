@@ -2,7 +2,7 @@
 // line over a Unix domain socket. The app speaks first with a hello that names
 // the protocol version (docs/tools/agent-control.md).
 
-import Foundation
+public import Foundation
 
 nonisolated public enum AgentProtocol {
     /// Raised on any change a client of the old version would misread.

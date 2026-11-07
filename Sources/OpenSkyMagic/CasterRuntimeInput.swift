@@ -4,8 +4,8 @@
 // (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>). See docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 /// One frame of cast intent, filled from the same drained camera input
 /// `MeleeIntent` and `ArcheryIntent` are.

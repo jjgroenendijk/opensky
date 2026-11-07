@@ -4,9 +4,9 @@
 // its node. Main actor only; decoding runs on `decodeQueue`.
 // See docs/engine/audio.md; sources live in WorldAudioEngineSources.swift.
 
-import AVFAudio
+public import AVFAudio
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 import Synchronization
 

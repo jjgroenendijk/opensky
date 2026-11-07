@@ -29,9 +29,9 @@ enum OfflineAudioFixture {
         let buffer = try #require(
             AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount)
         )
-        let channel = try #require(buffer.floatChannelData?[0])
+        let channel = unsafe try #require(buffer.floatChannelData?[0])
         for frame in 0 ..< Int(frameCount) {
-            channel[frame] = sinf(2 * .pi * 440 * Float(frame) / Float(sampleRate)) * 0.5
+            unsafe channel[frame] = sinf(2 * .pi * 440 * Float(frame) / Float(sampleRate)) * 0.5
         }
         buffer.frameLength = frameCount
         return buffer
@@ -46,10 +46,10 @@ enum OfflineAudioFixture {
         while frames < 8820 {
             let status = try engine.engine.renderOffline(4096, to: chunk)
             guard status == .success else { break }
-            let channels = try #require(chunk.floatChannelData)
+            let channels = unsafe try #require(chunk.floatChannelData)
             for channel in 0 ..< Int(format.channelCount) {
                 for frame in 0 ..< Int(chunk.frameLength) {
-                    let sample = channels[channel][frame]
+                    let sample = unsafe channels[channel][frame]
                     sums[channel] += sample * sample
                 }
             }

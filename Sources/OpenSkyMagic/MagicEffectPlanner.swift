@@ -5,9 +5,9 @@
 // the editor. See docs/engine/magic.md and docs/engine/magic-archetypes.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 /// One MGEF entry resolved into an application the runtime can carry out.
 nonisolated public struct MagicEffectApplication: Equatable, Sendable {

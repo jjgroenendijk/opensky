@@ -5,7 +5,7 @@
 // boundary").
 
 import Foundation
-@testable import OpenSkyFormatsSWF
+@testable public import OpenSkyFormatsSWF
 
 public enum SWFImportFixture: Sendable {
     /// Character ids every fixture movie uses, so a merge that forgets to

@@ -4,8 +4,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
 
 public protocol SkillsMenuWorld: SWFLayerWorld {
     var skillsMenuSource: (any SkillsMenuSource)? { get }

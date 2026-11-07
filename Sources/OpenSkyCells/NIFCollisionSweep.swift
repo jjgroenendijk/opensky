@@ -3,10 +3,10 @@
 // one malformed/modded NIF cannot hide coverage for sibling assets.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
 
 nonisolated public struct NIFCollisionAssetReport: Sendable {
     public let path: String

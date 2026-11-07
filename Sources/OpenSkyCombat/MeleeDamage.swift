@@ -4,7 +4,7 @@
 // on opposite sides of the hit. Documented in docs/engine/melee-damage.md.
 
 import Foundation
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyPhysics
 
 /// What the blocker was holding, which picks the formula branch.

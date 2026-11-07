@@ -6,7 +6,7 @@
 import CFFmpeg
 import Foundation
 
-nonisolated final class FFmpegResampler {
+@safe nonisolated final class FFmpegResampler {
     /// `SwrContext` is opaque in the public headers, so Swift imports it as `OpaquePointer`.
     private var context: OpaquePointer?
     let channelCount: Int
@@ -14,21 +14,21 @@ nonisolated final class FFmpegResampler {
     /// Builds a converter matched to the first decoded frame: same channel layout, same
     /// sample rate, sample format forced to `AV_SAMPLE_FMT_FLT`.
     init(matching frame: UnsafeMutablePointer<AVFrame>) throws {
-        let sourceFormat = frame.pointee.format
+        let sourceFormat = unsafe frame.pointee.format
         guard sourceFormat >= 0 else {
             throw FFmpegDecoderError.unsupportedSampleFormat(sourceFormat)
         }
-        channelCount = Int(frame.pointee.ch_layout.nb_channels)
+        channelCount = unsafe Int(frame.pointee.ch_layout.nb_channels)
 
         // The output layout is a copy, because a custom layout owns heap storage that must
         // be released whether swr_alloc_set_opts2 succeeds or not.
-        var outputLayout = AVChannelLayout()
-        let copyStatus = av_channel_layout_copy(&outputLayout, &frame.pointee.ch_layout)
+        var outputLayout = unsafe AVChannelLayout()
+        let copyStatus = unsafe av_channel_layout_copy(&outputLayout, &frame.pointee.ch_layout)
         guard copyStatus >= 0 else { throw FFmpegDecoderError.resampleFailed(code: copyStatus) }
-        defer { av_channel_layout_uninit(&outputLayout) }
+        defer { unsafe av_channel_layout_uninit(&outputLayout) }
 
         var created: OpaquePointer?
-        let status = swr_alloc_set_opts2(
+        let status = unsafe swr_alloc_set_opts2(
             &created,
             &outputLayout, AV_SAMPLE_FMT_FLT, frame.pointee.sample_rate,
             &frame.pointee.ch_layout, AVSampleFormat(rawValue: sourceFormat),
@@ -36,38 +36,39 @@ nonisolated final class FFmpegResampler {
             0, nil
         )
         guard status >= 0 else {
-            swr_free(&created)
+            unsafe swr_free(&created)
             throw FFmpegDecoderError.resampleFailed(code: status)
         }
-        guard created != nil else { throw FFmpegDecoderError.allocationFailed("SwrContext") }
+        guard unsafe created != nil else { throw FFmpegDecoderError.allocationFailed("SwrContext") }
 
-        let initStatus = swr_init(created)
+        let initStatus = unsafe swr_init(created)
         guard initStatus >= 0 else {
-            swr_free(&created)
+            unsafe swr_free(&created)
             throw FFmpegDecoderError.resampleFailed(code: initStatus)
         }
-        context = created
+        unsafe context = unsafe created
     }
 
-    deinit { swr_free(&context) }
+    deinit { unsafe swr_free(&context) }
 
     /// Converts one decoded frame. The returned array is interleaved and sized to the
     /// samples libswresample actually wrote, which can differ from the frame's own count.
     func interleavedFloats(from frame: UnsafeMutablePointer<AVFrame>) throws -> [Float] {
-        guard let context else { throw FFmpegDecoderError.allocationFailed("SwrContext") }
-        guard let extended = frame.pointee.extended_data else { return [] }
-        let inputCount = frame.pointee.nb_samples
-        let capacity = Int(swr_get_out_samples(context, inputCount))
+        guard let context = unsafe context
+        else { throw FFmpegDecoderError.allocationFailed("SwrContext") }
+        guard let extended = unsafe frame.pointee.extended_data else { return [] }
+        let inputCount = unsafe frame.pointee.nb_samples
+        let capacity = unsafe Int(swr_get_out_samples(context, inputCount))
         guard capacity > 0, channelCount > 0 else { return [] }
 
         var output = [Float](repeating: 0, count: capacity * channelCount)
         let written = output.withUnsafeMutableBufferPointer { buffer -> Int32 in
             guard let base = buffer.baseAddress else { return 0 }
-            var plane: UnsafeMutablePointer<UInt8>? = UnsafeMutableRawPointer(base)
+            var plane: UnsafeMutablePointer<UInt8>? = unsafe UnsafeMutableRawPointer(base)
                 .assumingMemoryBound(to: UInt8.self)
-            let input = UnsafeRawPointer(extended)
+            let input = unsafe UnsafeRawPointer(extended)
                 .assumingMemoryBound(to: UnsafePointer<UInt8>?.self)
-            return swr_convert(context, &plane, Int32(capacity), input, inputCount)
+            return unsafe swr_convert(context, &plane, Int32(capacity), input, inputCount)
         }
         guard written >= 0 else { throw FFmpegDecoderError.resampleFailed(code: written) }
         output.removeLast(output.count - Int(written) * channelCount)

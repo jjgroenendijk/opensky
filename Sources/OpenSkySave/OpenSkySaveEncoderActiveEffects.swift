@@ -4,10 +4,10 @@
 // reload reports the same total duration.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyMagicInterface
-import OpenSkyWorldState
+public import OpenSkyMagicInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's effects paired with the snapshot entry they came from.

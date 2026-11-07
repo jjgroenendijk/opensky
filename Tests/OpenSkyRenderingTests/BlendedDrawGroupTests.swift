@@ -30,7 +30,7 @@ struct BlendedDrawGroupTests {
 
     /// One model per placement, so no two placements share a group.
     private static func placement(
-        _ material: Material, at position: SIMD3<Float>, device: MTLDevice
+        _ material: Material, at position: SIMD3<Float>, device: any MTLDevice
     ) throws -> RenderPlacement {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm, width: 1, height: 1, mipmapped: false

@@ -2,8 +2,8 @@
 // (<https://ck.uesp.net/wiki/PathToReference_-_Actor>). Pure: the caller passes the
 // movement readouts each frame.
 
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 
 nonisolated public struct ScriptPathWaits: Equatable, Sendable {
     private var actors: [UInt64: ReferenceKey] = [:]

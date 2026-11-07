@@ -5,8 +5,8 @@
 // default is substituted. See docs/engine/crime.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Resolves the responsible crime faction for a place.
 ///

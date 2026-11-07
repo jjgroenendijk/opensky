@@ -129,7 +129,7 @@ extension AssetOptimisationPageViewController {
     }
 
     @objc private func chooseFolder() {
-        guard let window = view.window else { return }
+        guard let window = unsafe view.window else { return }
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
@@ -154,7 +154,7 @@ extension AssetOptimisationPageViewController {
     }
 
     @objc private func clear() {
-        guard let window = view.window else { return }
+        guard let window = unsafe view.window else { return }
         let alert = NSAlert()
         alert.messageText = "Delete the optimised files?"
         alert.informativeText = "The game loads from the archives until a new conversion."

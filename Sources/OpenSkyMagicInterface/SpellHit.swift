@@ -5,9 +5,9 @@
 // in `MagicAreaSettings` are uncertain. See docs/engine/spell-delivery.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import simd
 
 /// What a spell carries with it once it has left the caster.

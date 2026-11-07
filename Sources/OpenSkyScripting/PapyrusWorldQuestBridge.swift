@@ -3,8 +3,8 @@
 // the tally shows.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyQuestsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyQuestsInterface
 
 /// Failures the seam itself reports, as opposed to the `QuestError`s the quest
 /// layer throws once a quest has been named.

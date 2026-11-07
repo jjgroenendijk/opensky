@@ -2,8 +2,8 @@
 // and every shape's ready arrays. Models with joints are not cached, because
 // their constraint data has no fixed layout; they load from the NIF.
 
-import Foundation
-import OpenSkyFormatsMesh
+public import Foundation
+public import OpenSkyFormatsMesh
 import simd
 
 nonisolated public enum CollisionCacheCodec {

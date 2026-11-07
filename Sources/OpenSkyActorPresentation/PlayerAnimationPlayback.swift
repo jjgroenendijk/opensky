@@ -5,12 +5,12 @@
 // See docs/engine/actor-animation.md.
 
 import OpenSkyBehavior
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import OpenSkyRenderResources
-import simd
+public import simd
 import Synchronization
 
 /// The latest pose the behavior graph produced. An unchanged `revision` means no step ran

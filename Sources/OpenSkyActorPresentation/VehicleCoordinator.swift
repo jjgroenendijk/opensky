@@ -3,8 +3,8 @@
 // The player rider is placed, not drawn. See docs/engine/vehicles.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 import simd
 
 /// What the vehicle coordinator reads from the session.

@@ -1,27 +1,27 @@
 // Pipelines for the sky objects: the star and aurora meshes and the sun, glare,
 // and moon cards. One premultiplied blend serves both additive and covering objects.
 
-import Metal
+public import Metal
 import MetalKit
 import OpenSkyRenderResources
 
 nonisolated public struct SkyObjectPipelines: Sendable {
-    public let mesh: MTLRenderPipelineState
-    public let card: MTLRenderPipelineState
+    public let mesh: any MTLRenderPipelineState
+    public let card: any MTLRenderPipelineState
 }
 
 nonisolated public struct SkyLayerPipelines: Sendable {
-    public let clouds: MTLRenderPipelineState
+    public let clouds: any MTLRenderPipelineState
     public let objects: SkyObjectPipelines
 }
 
 extension Renderer {
     static func makeSkyObjectPipelines(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
     ) throws -> SkyObjectPipelines {
-        func make(vertex: String, label: String) throws -> MTLRenderPipelineState {
+        func make(vertex: String, label: String) throws -> any MTLRenderPipelineState {
             let vertexFunction = MTL4LibraryFunctionDescriptor()
             vertexFunction.library = library
             vertexFunction.name = vertex

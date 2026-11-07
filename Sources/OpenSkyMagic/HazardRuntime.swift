@@ -3,10 +3,10 @@
 // in, hits out. See docs/engine/traps.md and docs/formats/hazards.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
 
 /// The `HAZD` numbers a hazard runs on, with its spell already resolved.
 nonisolated public struct HazardSpec: Equatable, Sendable {

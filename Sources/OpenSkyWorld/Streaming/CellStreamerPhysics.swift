@@ -5,9 +5,9 @@
 import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyPhysics
-import OpenSkyPlayer
+public import OpenSkyPlayer
 import OpenSkyWorldState
 import simd
 

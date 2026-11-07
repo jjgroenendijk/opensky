@@ -2,8 +2,8 @@
 // actors, and actions are runs whose order matters, so the decoder walks the
 // fields in sequence. Layout and sources: docs/formats/scenes.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct ScenePhase: Equatable, Sendable {
     public var name: String?

@@ -3,8 +3,8 @@
 // (docs/decisions/coordinates.md). Metal clip z is [0, 1], so near is row2 alone and
 // far is row3 - row2, checked against `MatrixMath.perspective`.
 
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 /// Six inward-facing view-frustum planes, extracted from a view-projection
 /// matrix. Each plane satisfies `dot(normal, point) + d >= 0` for points on the

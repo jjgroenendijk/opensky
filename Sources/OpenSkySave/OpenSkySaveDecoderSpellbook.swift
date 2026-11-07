@@ -2,11 +2,11 @@
 // `SpellbookState.init` normalizes duplicate and stale keys, so no content error
 // fails a load.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyWorldState
 
 /// One actor's saved spellbook, before it is merged back into the delta.
 nonisolated public struct SaveSpellbookEntry: Equatable, Sendable {

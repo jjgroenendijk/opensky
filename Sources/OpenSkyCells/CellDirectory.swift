@@ -4,8 +4,8 @@
 // transition path is how an interior is built and entered. Pure: file in,
 // value out, so it runs off the main actor. FormIDs are load-order FormIDs.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public enum CellDirectoryEntry: Equatable, Sendable {
     /// `entryDoor` is a door REFR whose teleport ends inside the cell; nil

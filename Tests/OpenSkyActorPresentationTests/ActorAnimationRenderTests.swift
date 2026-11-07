@@ -32,7 +32,7 @@ private final class SyntheticBoneAnimation: RenderAnimation {
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct ActorAnimationRenderTests {
-    private static let device: MTLDevice? = {
+    private static let device: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4)
@@ -93,7 +93,7 @@ struct ActorAnimationRenderTests {
 
     @MainActor
     private func renderPair(
-        device: MTLDevice,
+        device: any MTLDevice,
         scene: RenderScene,
         camera: SceneCamera
     ) throws -> (first: [UInt8], second: [UInt8]) {
@@ -116,7 +116,7 @@ struct ActorAnimationRenderTests {
     }
 
     private func makeScene(
-        device: MTLDevice,
+        device: any MTLDevice,
         skinned: Bool
     ) throws -> (scene: RenderScene, camera: SceneCamera) {
         let mesh = makeMesh(skinned: skinned)
@@ -172,7 +172,7 @@ struct ActorAnimationRenderTests {
         )
     }
 
-    private func makeTexture(device: MTLDevice) throws -> MTLTexture {
+    private func makeTexture(device: any MTLDevice) throws -> any MTLTexture {
         let texture = try #require(device.makeTexture(descriptor: {
             let descriptor = MTLTextureDescriptor.texture2DDescriptor(
                 pixelFormat: .rgba8Unorm,
@@ -184,7 +184,7 @@ struct ActorAnimationRenderTests {
             return descriptor
         }()))
         var white = SIMD4<UInt8>(repeating: 255)
-        texture.replace(
+        unsafe texture.replace(
             region: MTLRegionMake2D(0, 0, 1, 1),
             mipmapLevel: 0,
             withBytes: &white,
@@ -209,11 +209,11 @@ struct ActorAnimationRenderTests {
         )
     }
 
-    private func pixels(_ texture: MTLTexture) -> [UInt8] {
+    private func pixels(_ texture: any MTLTexture) -> [UInt8] {
         var result = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
         result.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base,
                 bytesPerRow: texture.width * 4,
                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),

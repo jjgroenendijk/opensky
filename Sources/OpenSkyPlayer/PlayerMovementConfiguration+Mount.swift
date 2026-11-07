@@ -1,8 +1,8 @@
 // The gaits of a ridden horse, read from the horse's movement types (docs/engine/riding.md).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyPhysics
 
 nonisolated extension PlayerMovementConfiguration {
     /// The horse's own movement types: walk and run from `Horse_Default_MT`, sprint

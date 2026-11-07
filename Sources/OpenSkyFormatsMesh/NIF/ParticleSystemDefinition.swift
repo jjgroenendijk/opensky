@@ -3,7 +3,7 @@
 // alpha blocks. See docs/formats/nif-particles.md.
 
 import Foundation
-import simd
+public import simd
 
 /// One particle system collected from the scene graph, in model space.
 nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {

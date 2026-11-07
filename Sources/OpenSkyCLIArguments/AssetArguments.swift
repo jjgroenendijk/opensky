@@ -1,6 +1,6 @@
 // The commands that read the archive file system: one asset file, or every file of a kind.
 
-import ArgumentParser
+public import ArgumentParser
 
 /// `<path>`: one file in the engine file system. Loose files win over archives.
 public struct AssetPathArgument: ParsableArguments, Sendable {

@@ -3,7 +3,7 @@
 // See docs/engine/guard-response.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Which way an arrest ends.
 nonisolated public enum ArrestOutcome: Equatable, Sendable {

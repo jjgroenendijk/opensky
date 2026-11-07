@@ -12,9 +12,9 @@ import simd
 
 /// One frame slot's share of the auxiliary instance and draw rings.
 struct AuxiliaryShadowRings {
-    let instances: MTLBuffer
+    let instances: any MTLBuffer
     let instanceLimit: Int
-    let draws: MTLBuffer
+    let draws: any MTLBuffer
     let drawLimit: Int
 }
 
@@ -25,10 +25,10 @@ final class AuxiliaryShadowResources {
     static let drawLimit = 8192
     static let size = ShadowConstant.auxiliarySize.rawValue
 
-    let map: MTLTexture
+    let map: any MTLTexture
     let rings: AuxiliaryShadowRings
 
-    init?(device: MTLDevice) {
+    init?(device: any MTLDevice) {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2DArray
         descriptor.pixelFormat = .depth32Float
@@ -59,7 +59,7 @@ final class AuxiliaryShadowResources {
         )
     }
 
-    var allocations: [MTLAllocation] {
+    var allocations: [any MTLAllocation] {
         [map, rings.instances, rings.draws]
     }
 }

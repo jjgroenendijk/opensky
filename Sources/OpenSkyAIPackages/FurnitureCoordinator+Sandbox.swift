@@ -2,8 +2,8 @@
 // package allows, owned by no one else, and not the furniture it just left.
 // Creation Kit wiki "Sandbox (Procedure)"; docs/engine/sandbox.md.
 
-import OpenSkyFormatsESM
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 import simd
 
 extension FurnitureCoordinator {

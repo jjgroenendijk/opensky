@@ -3,8 +3,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public struct ReferenceRecordInspector: Sendable {
     private let index: RecordIndex

@@ -2,7 +2,7 @@
 // the Steam API check and restarts through Steam, which opens the game's launcher window
 // instead (docs/tools/reference-game.md).
 
-import Foundation
+public import Foundation
 
 /// Reads Steam's own logs: `console_log.txt` gets the start-up line once the client is up,
 /// and `connection_log.txt` gets the logon line once the account is logged on.

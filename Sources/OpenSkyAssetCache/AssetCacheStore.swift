@@ -4,7 +4,7 @@
 // file's modification date when it is over an hour old; that date orders the
 // least-recently-used removal.
 
-import Foundation
+public import Foundation
 import Synchronization
 
 /// What one lookup asks for: a kind of asset from one source, built by one
@@ -123,7 +123,7 @@ nonisolated public final class AssetCacheStore: Sendable {
     }
 
     public func entryURL(kind: AssetCacheKind, source: AssetSourceStamp) -> URL {
-        let name = String(
+        let name = unsafe String(
             format: "%016llx",
             AssetContentHash.of(source.origin + "\u{0}" + source.path)
         )
@@ -315,7 +315,12 @@ nonisolated public final class AssetCacheStore: Sendable {
         )
         let temporary = temporaryFolder.appending(path: UUID().uuidString)
         try data.write(to: temporary)
-        guard rename(temporary.path(percentEncoded: false), url.path(percentEncoded: false)) == 0
+        guard
+            unsafe rename(
+                temporary.path(percentEncoded: false),
+                url.path(percentEncoded: false)
+            ) ==
+            0
         else {
             let code = errno
             try? manager.removeItem(at: temporary)

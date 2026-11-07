@@ -4,7 +4,7 @@
 // See docs/engine/main-menu.md#credits.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum CreditsMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\creditsmenu.swf"

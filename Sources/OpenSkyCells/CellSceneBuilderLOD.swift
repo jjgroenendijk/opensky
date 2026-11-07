@@ -1,11 +1,11 @@
 // Distant LOD bridge split from CellSceneBuilder to keep core WRLD walk dense.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyTerrain
-import OpenSkyWorldState
+public import OpenSkyTerrain
+public import OpenSkyWorldState
 import simd
 
 nonisolated extension CellSceneBuilder {

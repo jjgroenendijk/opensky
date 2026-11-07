@@ -1,8 +1,8 @@
 // Actor and equipment records for the cell-scene fixture, shared by the world
 // suites and the acceptance chains.
 
-import Foundation
-@testable import OpenSkyCells
+public import Foundation
+@testable public import OpenSkyCells
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
 import simd

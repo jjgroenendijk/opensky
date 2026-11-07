@@ -3,7 +3,7 @@
 // split lets readout and CLI check rows without a window or install.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One objective line under a quest.
 nonisolated public struct JournalObjectiveEntry: Equatable, Sendable {

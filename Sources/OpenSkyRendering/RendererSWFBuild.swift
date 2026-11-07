@@ -1,10 +1,10 @@
 // The static half of a movie's GPU package, built once per movie: tessellated shapes
 // with their fill-run table, bitmap textures, and the gradient ramp atlas.
 
-import Metal
-import OpenSkyFormatsSWF
+public import Metal
+public import OpenSkyFormatsSWF
 import OpenSkyRenderResources
-import OpenSkyShaderTypes
+public import OpenSkyShaderTypes
 import simd
 
 /// CPU-side shape build: tessellates every dictionary shape into one shared
@@ -102,7 +102,7 @@ nonisolated public struct SWFMovieShapeBuilder {
 /// Bitmap and gradient texture uploads.
 nonisolated public enum SWFMovieTextures: Sendable {
     public static func makeBitmaps(
-        device: MTLDevice,
+        device: any MTLDevice,
         movie: SWFMovie
     ) throws -> [UInt16: SWFMovieResources.BitmapEntry] {
         var result: [UInt16: SWFMovieResources.BitmapEntry] = [:]
@@ -122,9 +122,9 @@ nonisolated public enum SWFMovieTextures: Sendable {
                 throw RendererError.textureAllocationFailed
             }
             texture.label = "SWFBitmap\(id)"
-            bitmap.pixels.withUnsafeBytes { bytes in
+            unsafe bitmap.pixels.withUnsafeBytes { bytes in
                 guard let base = bytes.baseAddress else { return }
-                texture.replace(
+                unsafe texture.replace(
                     region: MTLRegionMake2D(0, 0, bitmap.width, bitmap.height),
                     mipmapLevel: 0,
                     withBytes: base,
@@ -142,9 +142,9 @@ nonisolated public enum SWFMovieTextures: Sendable {
     /// between the GRADRECORD stops (pad at the ends). The linearRGB
     /// interpolation mode is treated as normal RGB (documented deferral).
     public static func makeGradientRamp(
-        device: MTLDevice,
+        device: any MTLDevice,
         rows: [SWFGradient]
-    ) throws -> MTLTexture? {
+    ) throws -> any MTLTexture? {
         guard !rows.isEmpty else { return nil }
         let width = 256
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
@@ -162,7 +162,7 @@ nonisolated public enum SWFMovieTextures: Sendable {
         }
         pixels.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.replace(
+            unsafe texture.replace(
                 region: MTLRegionMake2D(0, 0, width, rows.count),
                 mipmapLevel: 0,
                 withBytes: base,

@@ -2,8 +2,8 @@
 // this block a uint32 shader type comes before the name. The per-type tail is read
 // when present. Layout: docs/formats/nif-materials.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct NIFLightingShaderProperty: Sendable {

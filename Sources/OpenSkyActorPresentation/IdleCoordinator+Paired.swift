@@ -2,7 +2,7 @@
 // synchronized clip. See docs/engine/paired-animations.md.
 
 import OpenSkyBehavior
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 extension IdleCoordinator {
     /// The `source` of the report a paired idle leaves.

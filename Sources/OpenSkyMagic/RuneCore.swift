@@ -3,10 +3,10 @@
 // surface and triggered like a proximity mine". See docs/engine/spell-delivery.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
 
 nonisolated public struct RuneSettings: Equatable, Sendable {
     /// `iMaxPlayerRunes`: how many runes the player keeps at once.

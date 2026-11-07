@@ -2,9 +2,9 @@
 // grant checks and outcome sentences. `InventoryCoordinator` is the shell
 // that reads the world. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// Pure inventory rules. Values in, values out.
 nonisolated public enum InventoryCore {

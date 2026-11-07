@@ -2,7 +2,7 @@
 // and loose objects, and when a falling object hurts (docs/engine/impulses.md).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// What a push lands on, by its collision layer.
 nonisolated public enum ImpulseBodyKind: String, Equatable, Sendable, CaseIterable {

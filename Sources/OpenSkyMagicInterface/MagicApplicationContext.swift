@@ -2,7 +2,7 @@
 // entries. See docs/engine/magic.md#conditions.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 
 /// The cast behind the effects being applied right now.
 nonisolated public struct MagicApplicationContext: Equatable, Sendable {

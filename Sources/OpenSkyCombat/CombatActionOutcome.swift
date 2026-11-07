@@ -2,8 +2,8 @@
 // `text` formatters build lines.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
 
 nonisolated public enum MeleeActionOutcome: Equatable, Sendable {
     case idle
@@ -41,7 +41,7 @@ nonisolated public enum ArcheryActionOutcome: Equatable, Sendable {
         case .noAmmunition: "Cannot fire: no ammunition with a flyable PROJ carried."
         case .noLaunchSpeed: "Cannot fire: the projectile has no launch speed."
         case let .fired(id, speed):
-            String(format: "Fired projectile #%d at %.0f units/s.", id, speed)
+            unsafe String(format: "Fired projectile #%d at %.0f units/s.", id, speed)
         case .despawned: "Despawned everything in flight."
         case .clearedStuck: "Pulled every stuck arrow back out."
         case .clearedTrace: "Cleared the shot trace."

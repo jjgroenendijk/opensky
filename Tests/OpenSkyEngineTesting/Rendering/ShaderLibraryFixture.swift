@@ -4,7 +4,7 @@
 // (`make shader-library`) and names it in OPENSKY_SHADER_LIBRARY.
 
 import Foundation
-import Metal
+public import Metal
 
 public enum ShaderLibraryFixtureError: Error, CustomStringConvertible {
     case environmentMissing
@@ -27,11 +27,11 @@ public enum ShaderLibraryFixture {
     nonisolated public static let environmentKey = "OPENSKY_SHADER_LIBRARY"
 
     /// One library per device, loaded once per test process.
-    private static var libraries: [UInt64: MTLLibrary] = [:]
+    private static var libraries: [UInt64: any MTLLibrary] = [:]
 
     /// The compiled shaders for `device`. A missing variable or file throws,
     /// so the test fails with the reason instead of skipping.
-    public static func library(device: MTLDevice) throws -> MTLLibrary {
+    public static func library(device: any MTLDevice) throws -> any MTLLibrary {
         if let library = libraries[device.registryID] {
             return library
         }

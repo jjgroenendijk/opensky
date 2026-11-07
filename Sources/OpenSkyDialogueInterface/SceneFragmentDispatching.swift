@@ -1,5 +1,5 @@
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Where a scene's begin, end, and phase fragments go. In a real session the
 /// Papyrus world bridge conforms; without one the scene runtime counts them unrun.

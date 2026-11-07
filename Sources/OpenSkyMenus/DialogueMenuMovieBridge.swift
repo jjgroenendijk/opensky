@@ -4,7 +4,7 @@
 // The measured contract is in docs/engine/dialogue-menu.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// The three tallies a dialogue bring-up is gated on. Zero of each is the gate
 /// passing; the readout and the CLI probe print all three even at zero, so a

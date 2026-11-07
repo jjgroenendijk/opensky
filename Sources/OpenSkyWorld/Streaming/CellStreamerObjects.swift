@@ -1,10 +1,10 @@
 // Animated objects of the resident cells, for `ObjectBehaviorCoordinator`.
 
-import OpenSkyActorPresentation
+public import OpenSkyActorPresentation
 import OpenSkyCells
 import OpenSkyFormatsESM
-import OpenSkyObjectAnimation
-import simd
+public import OpenSkyObjectAnimation
+public import simd
 
 extension CellStreamer {
     /// Moves each graph object's collision with the model-frame bones its graph last posed.

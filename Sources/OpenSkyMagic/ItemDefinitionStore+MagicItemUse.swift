@@ -1,8 +1,8 @@
 // What consuming an item applies, read from the item index. It lives in the
 // magic feature because the result names an `ActiveEffectSourceKind`.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyMagicInterface
 
 nonisolated extension ItemDefinitionStore {

@@ -3,11 +3,11 @@
 // numbers (docs/engine/ragdoll.md#decapitation, docs/engine/unverified-values.md).
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyWorldState
-import simd
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import OpenSkyWorldState
+public import simd
 
 /// One cut head in flight or at rest.
 nonisolated public struct SeveredHead: Sendable {

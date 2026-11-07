@@ -1,8 +1,8 @@
 // A `WallClock` a test moves by hand, so a frame clock advances by an exact
 // step without waiting for real time.
 
-import OpenSkyRenderCore
-import QuartzCore
+public import OpenSkyRenderCore
+public import QuartzCore
 
 @MainActor
 public final class ManualWallClock: WallClock {

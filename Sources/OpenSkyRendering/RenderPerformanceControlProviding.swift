@@ -2,7 +2,7 @@
 // costs and saves, without `Renderer`.
 
 import Foundation
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 
 /// What the rendering performance readout reads.
 nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
@@ -80,6 +80,6 @@ nonisolated public enum RenderPerformanceReadout: Sendable {
     }
 
     static func megabytes(_ bytes: Int) -> String {
-        String(format: "%.1f MB", Double(bytes) / 1_048_576)
+        unsafe String(format: "%.1f MB", Double(bytes) / 1_048_576)
     }
 }

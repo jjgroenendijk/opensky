@@ -2,7 +2,7 @@
 // The modes and the axis each one turns: docs/formats/nif-sequences.md#billboard-nodes.
 
 import Foundation
-import simd
+public import simd
 
 nonisolated public enum NIFBillboard {
     public static let typeName = "NiBillboardNode"

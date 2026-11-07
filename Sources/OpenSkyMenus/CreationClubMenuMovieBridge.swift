@@ -4,7 +4,7 @@
 // See docs/engine/creation-club.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// A call the Creation Club movie makes that the engine acts on.
 nonisolated public enum CreationClubMovieEvent: Equatable, Sendable {

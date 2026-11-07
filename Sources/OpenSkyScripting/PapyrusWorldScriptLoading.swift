@@ -2,9 +2,9 @@
 // not arrived waits here and runs again after the next drain, in the order it came.
 // See docs/decisions/concurrency.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum PapyrusScriptAvailability: Equatable, Sendable {
     case ready

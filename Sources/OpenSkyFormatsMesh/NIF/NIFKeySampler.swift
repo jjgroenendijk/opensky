@@ -2,7 +2,7 @@
 // quadratic and TBC tangents are read past (docs/formats/nif-sequences.md).
 
 import Foundation
-import simd
+public import simd
 
 nonisolated public enum NIFKeySampler {
     /// The keyed value at `time`: the first key before it, the last key after it.

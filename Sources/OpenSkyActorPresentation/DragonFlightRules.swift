@@ -3,8 +3,8 @@
 // shells. See docs/engine/dragon-flight.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import simd
 
 /// The `GetFlyingState` values (<https://ck.uesp.net/wiki/GetFlyingState_-_Actor>).

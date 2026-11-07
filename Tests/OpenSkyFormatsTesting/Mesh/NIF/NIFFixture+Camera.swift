@@ -2,8 +2,8 @@
 // `NiTransformController`, `NiTransformInterpolator`, and `NiTransformData`.
 // Layouts follow nif.xml; see docs/formats/nif.md#camera-animation.
 
-import Foundation
-import simd
+public import Foundation
+public import simd
 
 extension NIFFixture {
     /// NiCamera after the AV-object prefix: flags, frustum, ortho, viewport,

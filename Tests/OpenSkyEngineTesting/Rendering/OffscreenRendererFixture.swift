@@ -2,16 +2,16 @@
 // suites share. Everything is built in code.
 
 import Foundation
-import Metal
-import MetalKit
+public import Metal
+public import MetalKit
 @testable import OpenSkyFormatsCore
-@testable import OpenSkyRendering
+@testable public import OpenSkyRendering
 import simd
 import Testing
 
 public enum OffscreenRendererFixture {
     /// A Metal 4 device, or nil on a GPU that cannot run the renderer.
-    public static let device: MTLDevice? = {
+    public static let device: any MTLDevice? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4) else { return nil }
@@ -24,7 +24,7 @@ public enum OffscreenRendererFixture {
 
     /// A paused view, so only `renderOffscreen` draws.
     @MainActor
-    public static func pausedView(device: MTLDevice, width: Int, height: Int) -> MTKView {
+    public static func pausedView(device: any MTLDevice, width: Int, height: Int) -> MTKView {
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: width, height: height), device: device)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
@@ -35,12 +35,12 @@ public enum OffscreenRendererFixture {
     /// the app bundle's shaders.
     @MainActor
     public static func makeRenderer(
-        device: MTLDevice,
+        device: any MTLDevice,
         width: Int,
         height: Int,
         scene: RenderScene? = nil,
         camera: SceneCamera? = nil,
-        shaderLibrary: MTLLibrary?
+        shaderLibrary: any MTLLibrary?
     ) throws -> Renderer {
         try Renderer(
             rendering: pausedView(device: device, width: width, height: height),
@@ -62,11 +62,11 @@ public enum OffscreenRendererFixture {
     }
 
     /// The texture's BGRA8 bytes, row after row.
-    public static func pixels(of texture: MTLTexture) -> [UInt8] {
+    public static func pixels(of texture: any MTLTexture) -> [UInt8] {
         var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
         pixels.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base,
                 bytesPerRow: texture.width * 4,
                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),
@@ -125,7 +125,7 @@ public enum OffscreenRendererFixture {
     }
 
     /// A 2x2 light-grey texture, so a lit mesh shows its shading only.
-    public static func solidTexture(device: MTLDevice) throws -> MTLTexture {
+    public static func solidTexture(device: any MTLDevice) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2D
         descriptor.pixelFormat = .rgba8Unorm_srgb
@@ -135,7 +135,7 @@ public enum OffscreenRendererFixture {
         descriptor.storageMode = .shared
         let texture = try #require(device.makeTexture(descriptor: descriptor))
         let bytes = [UInt8](repeating: 200, count: 2 * 2 * 4)
-        texture.replace(
+        unsafe texture.replace(
             region: MTLRegionMake2D(0, 0, 2, 2),
             mipmapLevel: 0,
             withBytes: bytes,
@@ -167,10 +167,10 @@ public struct OffscreenCanvas: Sendable {
 
     /// The device and the shaders this canvas renders with.
     @MainActor
-    public func resources() throws -> (device: MTLDevice, library: MTLLibrary?) {
+    public func resources() throws -> (device: any MTLDevice, library: any MTLLibrary?) {
         let device = try #require(OffscreenRendererFixture.device)
         let library = switch shaders {
-        case .appBundle: nil as MTLLibrary?
+        case .appBundle: nil as any MTLLibrary?
         case .packageFixture: try ShaderLibraryFixture.library(device: device)
         }
         return (device, library)

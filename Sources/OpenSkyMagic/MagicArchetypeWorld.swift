@@ -3,7 +3,7 @@
 // nothing, so a session without the seam leaves the effect counted and harmless.
 // See docs/engine/magic-archetypes.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// Where an actor looks from and toward.

@@ -3,7 +3,7 @@
 // xEdit: docs/formats/magic-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct MagicEffectFlags: OptionSet, Equatable, Sendable {
     public let rawValue: UInt32

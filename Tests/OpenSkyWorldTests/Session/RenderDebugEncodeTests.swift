@@ -109,7 +109,7 @@ struct RenderDebugEncodeTests {
     private static let width = 320
     private static let height = 240
 
-    private static let device: MTLDevice? = {
+    private static let device: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4) else { return nil }
@@ -154,7 +154,7 @@ struct RenderDebugEncodeTests {
     }
 
     @MainActor
-    private static func makeView(device: MTLDevice) -> MTKView {
+    private static func makeView(device: any MTLDevice) -> MTKView {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: width, height: height),
             device: device
@@ -164,7 +164,7 @@ struct RenderDebugEncodeTests {
         return view
     }
 
-    private static func twoLayerScene(device: MTLDevice) throws -> RenderScene {
+    private static func twoLayerScene(device: any MTLDevice) throws -> RenderScene {
         let model = Model(
             meshes: [DemoScene.boxMesh(halfWidth: 32, halfDepth: 32, height: 64)],
             materials: [Material.fallback],
@@ -190,7 +190,7 @@ struct RenderDebugEncodeTests {
         ])
     }
 
-    private static func solidTexture(device: MTLDevice) throws -> MTLTexture {
+    private static func solidTexture(device: any MTLDevice) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm, width: 1, height: 1, mipmapped: false
         )
@@ -199,7 +199,7 @@ struct RenderDebugEncodeTests {
             throw RendererError.textureAllocationFailed
         }
         var pixel: [UInt8] = [220, 220, 220, 255]
-        texture.replace(
+        unsafe texture.replace(
             region: MTLRegionMake2D(0, 0, 1, 1),
             mipmapLevel: 0,
             withBytes: &pixel,
@@ -208,11 +208,11 @@ struct RenderDebugEncodeTests {
         return texture
     }
 
-    private static func readPixels(texture: MTLTexture) -> [UInt8] {
+    private static func readPixels(texture: any MTLTexture) -> [UInt8] {
         var pixels = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
         pixels.withUnsafeMutableBytes { buffer in
             guard let base = buffer.baseAddress else { return }
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base,
                 bytesPerRow: texture.width * 4,
                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),
@@ -222,7 +222,7 @@ struct RenderDebugEncodeTests {
         return pixels
     }
 
-    private static func litPixelCount(_ texture: MTLTexture) -> Int {
+    private static func litPixelCount(_ texture: any MTLTexture) -> Int {
         let pixels = readPixels(texture: texture)
         var lit = 0
         for pixel in stride(from: 0, to: pixels.count, by: 4)

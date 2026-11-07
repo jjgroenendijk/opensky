@@ -2,8 +2,8 @@
 // code names, shader types and flags no draw term uses, and decode failures. Names and
 // counts only.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct NIFMeshGapCensus: Sendable {
     public private(set) var fileCount = 0

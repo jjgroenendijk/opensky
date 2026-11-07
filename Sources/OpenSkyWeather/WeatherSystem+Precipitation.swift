@@ -2,8 +2,8 @@
 // and its `VOLI` for the readout.
 // See docs/formats/environment-shading.md, section "Precipitation mapping".
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyRendering
 
 nonisolated extension WeatherSystem {

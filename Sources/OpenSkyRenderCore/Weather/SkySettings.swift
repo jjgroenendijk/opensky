@@ -3,7 +3,7 @@
 // (https://ck.uesp.net/wiki/Category:Settings). See docs/engine/celestial-sky.md.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct SkySettings: Equatable, Sendable {
     /// Sun path in sky units: east-west reach and midday height, and offset north.

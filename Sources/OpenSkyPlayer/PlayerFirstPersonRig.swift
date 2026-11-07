@@ -3,13 +3,13 @@
 // first-person graph's camera bone. Draw groups rebuild only when the transform
 // moves, which saves work on paused frames.
 
-import Metal
-import OpenSkyActorPresentation
+public import Metal
+public import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyRenderCore
-import OpenSkyRendering
-import simd
+public import OpenSkyRendering
+public import simd
 
 nonisolated public final class PlayerFirstPersonRig {
     public let assembly: ActorAssembly<ActorRenderAsset>
@@ -62,7 +62,7 @@ nonisolated public final class PlayerFirstPersonRig {
 
     /// GPU allocations the arms keep alive, added to the renderer's residency
     /// set at attach and live for the whole session, exactly as the body's are.
-    public var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [any MTLAllocation] {
         render.residencyAllocations
     }
 

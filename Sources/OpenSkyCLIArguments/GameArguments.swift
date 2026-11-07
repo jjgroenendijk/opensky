@@ -1,7 +1,7 @@
 // `game`: drives the running app over its agent control socket
 // (docs/tools/agent-control.md). Words the CLI does not know pass to the app.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct GameOptions: ParsableArguments, Sendable {
     @Flag(help: "Print path: value lines instead of JSON.")

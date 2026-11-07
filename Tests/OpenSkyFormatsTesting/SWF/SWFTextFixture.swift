@@ -3,8 +3,8 @@
 // SWF File Format Specification v19 chapter 10 layouts — never extracted game
 // files (AGENTS.md "Legal & IP boundary").
 
-import Foundation
-@testable import OpenSkyFormatsSWF
+public import Foundation
+@testable public import OpenSkyFormatsSWF
 
 /// Assembles a DefineText (11) / DefineText2 (33) tag body.
 public struct SWFTextBodyBuilder: Sendable {

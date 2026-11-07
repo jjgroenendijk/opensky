@@ -5,10 +5,10 @@
 
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyBehavior
+public import OpenSkyBehavior
 import OpenSkyFormatsAnimation
-import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
 
 /// What the object coordinator reads from the session.
 public protocol ObjectBehaviorWorld: AnyObject {

@@ -8,7 +8,7 @@ nonisolated public enum ObjectAnimationReadout {
         guard !rows.isEmpty else { return "No animated objects loaded.\n\(last)" }
         let row = rows.first { $0.reference == selected } ?? rows[0]
         let file = row.project.split(separator: "\\").last.map(String.init) ?? row.project
-        return """
+        return unsafe """
         Objects: \(rows.count)
         \(String(format: "%08X", row.reference)) \(file)
         State: \(row.activeState ?? "none")

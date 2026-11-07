@@ -4,13 +4,13 @@
 // and the record resolvers. See docs/rendering/visual-effects.md.
 
 import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyRenderCore
-import OpenSkyRendering
-import simd
+public import OpenSkyAudio
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyRenderCore
+public import OpenSkyRendering
+public import simd
 
 /// What the effects need from the session around them.
 @MainActor

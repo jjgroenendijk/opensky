@@ -2,12 +2,12 @@
 // it holds only the key and the cell. HRVD adds the game day of each timed
 // harvest. Both merge into the `RDLT` deltas by key, HRVD last.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// One saved harvested reference, before it is merged back into the delta.
 nonisolated public struct SaveHarvestEntry: Equatable, Sendable {

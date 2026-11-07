@@ -4,7 +4,7 @@
 // Layout and sources: docs/formats/factions.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct FactionDecodeTally: Equatable, RankedSkipReport {
     public var ranked: [(name: String, count: Int)] {

@@ -3,11 +3,11 @@
 // reporter's `CrimeWorld`. The rules live in `CrimeCore`, `CrimeRuntime`, and
 // `GuardResponseState`. See docs/engine/coordinators.md and docs/engine/crime.md.
 
-import OpenSkyConditions
-import OpenSkyCrimeInterface
+public import OpenSkyConditions
+public import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

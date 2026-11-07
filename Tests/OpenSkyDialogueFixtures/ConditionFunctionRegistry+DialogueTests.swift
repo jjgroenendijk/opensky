@@ -2,7 +2,7 @@
 // core and data families plus the quest and dialogue families. The app uses
 // `.standard`, which adds every other feature's functions.
 
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyDialogueInterface
 import OpenSkyQuestsInterface
 

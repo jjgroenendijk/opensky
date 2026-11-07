@@ -3,13 +3,13 @@
 // fake world. The runtime changes the world only through these calls and never
 // reads a clock. See docs/engine/melee-combat.md.
 
-import OpenSkyActorsInterface
-import OpenSkyBehavior
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
-import OpenSkyMagicInterface
-import OpenSkyPhysics
-import OpenSkyProgressionInterface
+public import OpenSkyActorsInterface
+public import OpenSkyBehavior
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
+public import OpenSkyProgressionInterface
 import simd
 
 /// Who is swinging, and from where.

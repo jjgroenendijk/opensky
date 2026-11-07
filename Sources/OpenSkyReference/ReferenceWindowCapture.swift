@@ -3,7 +3,7 @@
 // permission for the app or terminal that asks.
 
 import CoreGraphics
-import Foundation
+public import Foundation
 
 nonisolated public enum ReferenceCaptureError: Error, Equatable, Sendable, LocalizedError {
     case noWindow

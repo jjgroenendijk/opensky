@@ -1,7 +1,7 @@
 // Synthetic Bink 1 container builder. Packets are counter bytes, not real codec data,
 // so a test checks the framing only. Layout: docs/formats/bink.md.
 
-import Foundation
+public import Foundation
 
 public enum BinkFixture: Sendable {
     /// One audio track: its ID, rate, and the flags word (bit 13 stereo, bit 12 DCT).
@@ -98,6 +98,6 @@ public enum BinkFixture: Sendable {
 
 extension Data {
     fileprivate mutating func appendLittleEndian(_ value: some FixedWidthInteger) {
-        Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
+        Swift.withUnsafeBytes(of: value.littleEndian) { unsafe append(contentsOf: $0) }
     }
 }

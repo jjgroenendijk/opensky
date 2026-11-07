@@ -3,7 +3,7 @@
 // the calling thread, so the result is the serial one, whatever thread finished first.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated extension LoadOrderPlugins {
     /// Records per work item: enough to pay for the hand-off, small enough to balance.

@@ -3,9 +3,9 @@
 // bounties. Values in, values out. See docs/engine/coordinators.md.
 
 import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import simd
 

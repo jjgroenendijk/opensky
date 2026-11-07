@@ -4,8 +4,8 @@
 // docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyProgressionInterface
+public import OpenSkyFormatsESM
+public import OpenSkyProgressionInterface
 
 nonisolated public enum PerkEntryPointEvaluator: Sendable {
     /// Folds every operand into `value`, in the documented order.

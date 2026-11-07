@@ -1,10 +1,10 @@
 // The spellbook runtime over the fixture records.
 
-import OpenSkyFeaturesTesting
+public import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
-import OpenSkyInventoryInterface
-@testable import OpenSkyMagic
-@testable import OpenSkyWorldState
+public import OpenSkyInventoryInterface
+@testable public import OpenSkyMagic
+@testable public import OpenSkyWorldState
 
 extension SpellbookFixture {
     /// A spellbook runtime over a fresh store, plus the store so a suite can

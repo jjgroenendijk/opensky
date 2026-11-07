@@ -4,8 +4,8 @@
 
 import Foundation
 import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyQuestsInterface
 
 nonisolated public enum SessionStartOutcome: Equatable, Sendable {

@@ -92,7 +92,7 @@ extension Renderer {
     func nearestUses() -> [ObjectIdentifier: TextureUse] {
         let camera = frameInput.view.position
         var nearest: [ObjectIdentifier: TextureUse] = [:]
-        func note(_ texture: MTLTexture, bounds: ModelBounds, uvPerUnit: Float) {
+        func note(_ texture: any MTLTexture, bounds: ModelBounds, uvPerUnit: Float) {
             let use = TextureUse(bounds: bounds, camera: camera, uvPerUnit: uvPerUnit)
             let key = ObjectIdentifier(texture)
             if use.isFiner(than: nearest[key]) {

@@ -2,8 +2,8 @@
 // (file-length limits).
 
 import CoreGraphics
-import Metal
-import MetalKit
+public import Metal
+public import MetalKit
 import OpenSkyRenderCore
 import Synchronization
 
@@ -43,7 +43,7 @@ extension Renderer {
 
     /// Commits the culling and shadow work, so the GPU runs it while the CPU encodes
     /// the scene pass, then reopens the command buffer on the same allocator.
-    func commitEarlyFrameWork(allocator: MTL4CommandAllocator) {
+    func commitEarlyFrameWork(allocator: any MTL4CommandAllocator) {
         let parts = GPUFrameParts(count: 2)
         earlyFrameParts = parts
         commandBuffer.endCommandBuffer()

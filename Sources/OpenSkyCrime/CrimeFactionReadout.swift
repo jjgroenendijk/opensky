@@ -2,11 +2,11 @@
 // wording is unit-testable.
 
 import Foundation
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 
 nonisolated public enum CrimeFactionReadout: Sendable {

@@ -5,9 +5,9 @@
 // `RagdollRuntime.noteZeroHealth`. See docs/engine/papyrus-actor-natives.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Which of the three base-and-modifier writes a script asked for. One enum and
 /// one bridge method, because only the slot differs. Semantics are at

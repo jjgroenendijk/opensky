@@ -5,8 +5,8 @@
 // so a 24-hour jump cannot burst-fire. The wiki leaves these rules unstated.
 
 import Foundation
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 /// The timer table itself: slots keyed by instance, plus the clock anchors.
 nonisolated public struct PapyrusUpdateTimerRegistry: Sendable {

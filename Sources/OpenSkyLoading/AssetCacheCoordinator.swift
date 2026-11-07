@@ -2,9 +2,9 @@
 // of what the folder holds, and clear. File work runs off the main actor; results
 // come back here, and each observer redraws its page.
 
-import Foundation
-import OpenSkyAssetCache
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyAssetCache
+public import OpenSkyGameData
 
 public final class AssetCacheCoordinator {
     public enum Activity: Equatable, Sendable {

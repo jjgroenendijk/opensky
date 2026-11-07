@@ -4,9 +4,9 @@
 // See docs/engine/audio-decoding.md.
 
 import Foundation
-import OpenSkyActorPresentation
-import OpenSkyAudio
-import OpenSkyFormatsESM
+public import OpenSkyActorPresentation
+public import OpenSkyAudio
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// One actor's spoken line: the voice files still to say, in order.

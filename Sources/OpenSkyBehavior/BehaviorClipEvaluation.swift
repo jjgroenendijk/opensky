@@ -5,7 +5,7 @@
 // with empty `m_triggers`, so both sources fire through one crossing test.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import simd
 
 /// The playing part of a clip, in animation-local seconds.

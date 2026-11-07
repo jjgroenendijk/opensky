@@ -2,7 +2,7 @@
 // verdicts, the station list, and the crosshair plant. AppKit-free.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyWorldInterface

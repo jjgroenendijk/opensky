@@ -3,9 +3,9 @@
 // Each part that has no place in the save is counted with its reason.
 // See docs/engine/ess-export.md.
 
-import Foundation
-import OpenSkyFormatsESM
-import OpenSkyFormatsESS
+public import Foundation
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsESS
 import OpenSkyWorldState
 
 nonisolated public struct ESSExportResult: Sendable {

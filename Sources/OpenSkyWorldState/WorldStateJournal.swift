@@ -5,8 +5,8 @@
 // by `sequence` gives the true order. See docs/engine/runtime-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One recorded component mutation.
 ///

@@ -1,6 +1,6 @@
 // `asset-optimisation`: build, check, and measure the optimised files.
 
-import ArgumentParser
+public import ArgumentParser
 
 /// The optimisation settings. Each one the user leaves out comes from the app's settings.
 public struct AssetCacheSettingsOptions: ParsableArguments, Sendable {

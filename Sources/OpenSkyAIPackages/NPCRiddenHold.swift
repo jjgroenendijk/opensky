@@ -1,11 +1,11 @@
 // A mount the player rides. The player's mount drive moves it, so the movement
 // authority only records the pose, draws it, and persists it (docs/engine/riding.md).
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyWorldState
-import simd
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
+public import OpenSkyWorldState
+public import simd
 
 /// One actor the player steers. Its packages, walks, and turns wait until it is released.
 nonisolated public struct NPCRiddenHold: Equatable, Sendable {

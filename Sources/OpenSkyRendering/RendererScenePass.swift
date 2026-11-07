@@ -1,11 +1,11 @@
-import Metal
+public import Metal
 import MetalKit
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyRenderCore
-import OpenSkyRenderResources
+public import OpenSkyRenderCore
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
-import simd
+public import simd
 
 extension Renderer {
     /// Mutable state threaded through one scene pass's encoders: the open
@@ -13,7 +13,7 @@ extension Renderer {
     /// per-draw uniform ring (visible groups) and the per-instance
     /// transform ring (visible instances), and the accumulating draw stats.
     public struct ScenePassState {
-        public let encoder: MTL4RenderCommandEncoder
+        public let encoder: any MTL4RenderCommandEncoder
         public let slot: Int
         public let frustum: Frustum
         /// The fill mode this frame's geometry draws under — `.lines` in the
@@ -95,7 +95,7 @@ extension Renderer {
             characterLight: characterLightUniform,
             grassLight: SIMD4(light.grassSunColor, grassOutputScale(fog: light.fog))
         )
-        frameUniformBuffer.contents().advanced(by: offset)
+        unsafe frameUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<FrameUniforms>.size)
         return offset
     }
@@ -144,7 +144,7 @@ extension Renderer {
                 group.instances.first?.treeMotion, windWeighted: material.drawState.windWeighted
             )
         )
-        drawUniformBuffer.contents().advanced(by: offset)
+        unsafe drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
         return offset
     }
@@ -162,7 +162,7 @@ extension Renderer {
         var written = 0
         for placed in group.instances {
             guard var transforms = visibleTransform(of: placed, state: &state) else { continue }
-            instanceTransformBuffer.contents()
+            unsafe instanceTransformBuffer.contents()
                 .advanced(by: (base + written) * stride)
                 .copyMemory(from: &transforms, byteCount: MemoryLayout<InstanceTransform>.size)
             written += 1
@@ -202,9 +202,9 @@ extension Renderer {
 
     /// The pipelines one `encode(groups:)` call picks from, by mesh kind.
     public struct GroupPipelines {
-        public let staticMesh: MTLRenderPipelineState
-        public let skinned: MTLRenderPipelineState
-        public let morphedSkinned: MTLRenderPipelineState
+        public let staticMesh: any MTLRenderPipelineState
+        public let skinned: any MTLRenderPipelineState
+        public let morphedSkinned: any MTLRenderPipelineState
 
         /// Debug channels replace the shaded surface for every geometry path at
         /// once, so the shipping set is swapped here rather than at each caller.
@@ -216,7 +216,7 @@ extension Renderer {
             )
         }
 
-        func pipeline(for group: DrawGroup) -> MTLRenderPipelineState {
+        func pipeline(for group: DrawGroup) -> any MTLRenderPipelineState {
             group.faceMorph != nil ? morphedSkinned
                 : (group.mesh.isSkinned ? skinned : staticMesh)
         }
@@ -228,9 +228,9 @@ extension Renderer {
     /// blended groups to `encodeBlendedGroups`.
     public func encode(
         groups: [DrawGroup],
-        staticPipeline: MTLRenderPipelineState,
-        skinnedPipeline: MTLRenderPipelineState,
-        morphedSkinnedPipeline: MTLRenderPipelineState,
+        staticPipeline: any MTLRenderPipelineState,
+        skinnedPipeline: any MTLRenderPipelineState,
+        morphedSkinnedPipeline: any MTLRenderPipelineState,
         skippingBlended: Bool = false,
         state: inout ScenePassState
     ) {
@@ -321,7 +321,7 @@ extension Renderer {
             index: TextureIndex.effectPalette.rawValue
         )
         let surface = material.surface
-        let slots: [(MTLTexture?, TextureIndex)] = [
+        let slots: [(any MTLTexture?, TextureIndex)] = [
             (material.normal, .surfaceNormal),
             (surface.glow, .surfaceGlow),
             (surface.detail, .surfaceDetail),
@@ -403,7 +403,7 @@ extension Renderer {
     /// uniform slot, the world sampler, and the shadow cascade array with its
     /// compare sampler (bound even with shadows off so validation stays clean).
     func bindScenePassFrameArguments(
-        encoder: MTL4RenderCommandEncoder,
+        encoder: any MTL4RenderCommandEncoder,
         frameOffset: Int
     ) {
         encoder.label = "Static Mesh Encoder"

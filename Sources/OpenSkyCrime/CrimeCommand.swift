@@ -1,6 +1,6 @@
 // What the crime coordinator asks the app to do. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One change to the world outside the crime domain.
 nonisolated public enum CrimeCommand: Equatable, Sendable {

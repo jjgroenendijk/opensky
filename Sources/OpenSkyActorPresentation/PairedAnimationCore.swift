@@ -3,8 +3,8 @@
 // See docs/engine/paired-animations.md.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyFormatsESM
+public import OpenSkyBehavior
+public import OpenSkyFormatsESM
 
 /// One paired animation in progress.
 nonisolated public struct PairedAnimationPlay: Equatable, Sendable {

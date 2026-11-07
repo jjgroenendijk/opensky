@@ -2,7 +2,7 @@
 // Category:Settings values (docs/engine/riding.md).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct MountSettings: Equatable, Sendable {
     /// `iHorseTurnDegreesPerSecond`: the fastest a ridden horse turns.

@@ -19,7 +19,7 @@ import Testing
 /// The device and the install one render run is bound to, passed as one value
 /// so the assertion helpers stay inside the parameter cap.
 private struct LocomotionRenderInstall {
-    let device: MTLDevice
+    let device: any MTLDevice
     let root: GameDataRoot
 }
 

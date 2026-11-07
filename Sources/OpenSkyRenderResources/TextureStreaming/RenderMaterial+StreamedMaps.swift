@@ -1,7 +1,7 @@
 // The maps of a material that texture streaming measures, each with the UV density its
 // shader samples it at. See docs/rendering/texture-streaming.md.
 
-import Metal
+public import Metal
 import OpenSkyShaderTypes
 
 nonisolated extension RenderMaterial {
@@ -10,7 +10,7 @@ nonisolated extension RenderMaterial {
 
     /// Every map a lit draw samples across the surface, paired with its UV per world unit.
     /// A cube map and an effect palette are not sampled by UV, so they are left out.
-    public func streamedMaps(uvPerUnit: Float) -> [(texture: MTLTexture, uvPerUnit: Float)] {
+    public func streamedMaps(uvPerUnit: Float) -> [(texture: any MTLTexture, uvPerUnit: Float)] {
         let shared = [
             diffuse, normal, faceTint, surface.glow, surface.environmentMask, surface.backLight
         ]

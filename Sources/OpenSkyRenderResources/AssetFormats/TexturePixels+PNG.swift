@@ -1,8 +1,8 @@
 // Reads an image file into RGBA8 pixels, so two captures can be compared with
 // `TextureImageDifference`, such as a frame with the asset cache on and off.
 
-import CoreGraphics
-import Foundation
+public import CoreGraphics
+public import Foundation
 import ImageIO
 
 nonisolated public enum TexturePixelsImageError: Error, Equatable {
@@ -21,7 +21,7 @@ nonisolated extension TexturePixels {
         var rgba = [UInt8](repeating: 0, count: width * height * 4)
         let drawn = rgba.withUnsafeMutableBytes { raw in
             guard
-                let context = CGContext(
+                let context = unsafe CGContext(
                     data: raw.baseAddress, width: width, height: height, bitsPerComponent: 8,
                     bytesPerRow: width * 4,
                     space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
@@ -41,7 +41,7 @@ nonisolated extension TexturePixels {
             let provider = CGDataProvider(data: Data(rgba) as CFData),
             let space = CGColorSpace(name: CGColorSpace.sRGB)
         else { return nil }
-        return CGImage(
+        return unsafe CGImage(
             width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 32,
             bytesPerRow: width * 4, space: space,
             bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue),

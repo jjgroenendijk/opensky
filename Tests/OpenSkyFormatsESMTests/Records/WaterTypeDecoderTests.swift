@@ -34,7 +34,7 @@ struct WaterTypeDecoderTests {
         var dnam = Data(count: 228)
         func put(_ value: Float, at offset: Int) {
             withUnsafeBytes(of: value.bitPattern.littleEndian) {
-                dnam.replaceSubrange(offset ..< offset + 4, with: $0)
+                unsafe dnam.replaceSubrange(offset ..< offset + 4, with: $0)
             }
         }
         let singles: [(Int, Float)] = [
@@ -87,7 +87,7 @@ struct WaterTypeDecoderTests {
             var dnam = Data(count: size)
             if size == 232 {
                 withUnsafeBytes(of: Float(1).bitPattern.littleEndian) {
-                    dnam.replaceSubrange(228 ..< 232, with: $0)
+                    unsafe dnam.replaceSubrange(228 ..< 232, with: $0)
                 }
             }
             let water = try WaterType(record: ESMFixture.parseRecord(ESMFixture.record(

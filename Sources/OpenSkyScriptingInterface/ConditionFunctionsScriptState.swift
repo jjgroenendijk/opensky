@@ -3,8 +3,8 @@
 // See docs/engine/condition-functions.md#script-state.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// The script state of every form a script changed, keyed by that form.

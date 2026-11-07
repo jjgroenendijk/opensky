@@ -1,8 +1,8 @@
 // The mesh nodes a rig's bones move, so the collision bodies under them move with the
 // pose. See docs/engine/object-animation.md#moving-collision.
 
-import OpenSkyFormatsMesh
-import simd
+public import OpenSkyFormatsMesh
+public import simd
 
 nonisolated public struct MovingPartRig: Sendable {
     /// Each bone's node in the model frame at rest. Nil for a bone the mesh has no node for.

@@ -1,7 +1,7 @@
 // How a tree moves in the wind, from its TREE `CNAM`: the sway of the whole tree and the
 // flutter of its wind-weighted leaves. See docs/rendering/trees.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct TreeMotion: Equatable, Sendable {
     /// Leaf values for a wind-weighted shape with no TREE record, the Creation Kit's

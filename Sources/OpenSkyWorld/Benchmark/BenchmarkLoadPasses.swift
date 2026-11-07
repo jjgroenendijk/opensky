@@ -3,12 +3,12 @@
 // again with its caches full. The live streamer is not touched.
 
 import Foundation
-import Metal
-import OpenSkyAssetCache
+public import Metal
+public import OpenSkyAssetCache
 import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyRenderResources

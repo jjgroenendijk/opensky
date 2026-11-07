@@ -15,7 +15,7 @@ import Testing
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct GrassRenderingTests {
-    private static let device: MTLDevice? = {
+    private static let device: (any MTLDevice)? = {
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
         else { return nil }
         return device
@@ -126,7 +126,7 @@ extension GrassRenderingTests {
         )
     }
 
-    private func makeAsset(device: MTLDevice) throws -> Asset {
+    private func makeAsset(device: any MTLDevice) throws -> Asset {
         let positions: [SIMD3<Float>] = [
             SIMD3(-30, 0, 0), SIMD3(30, 0, 0),
             SIMD3(30, 0, 120), SIMD3(-30, 0, 120)
@@ -165,7 +165,7 @@ extension GrassRenderingTests {
         textureDescriptor.usage = .shaderRead
         let texture = try #require(device.makeTexture(descriptor: textureDescriptor))
         var white = SIMD4<UInt8>(repeating: 255)
-        texture.replace(
+        unsafe texture.replace(
             region: MTLRegionMake2D(0, 0, 1, 1),
             mipmapLevel: 0,
             withBytes: &white,

@@ -2,8 +2,8 @@
 // `finish()` tallies every field nobody read. A field whose decode throws is
 // tallied as malformed and reads as nil, so a bad field costs only itself.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct RecordFields {
     public let formID: FormID

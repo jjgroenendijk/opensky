@@ -5,11 +5,11 @@
 // The Find Matching Reference search is in `QuestReferenceSearch.swift`.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 /// Fills one quest's reference aliases. The rules are in docs/engine/quest-state.md.

@@ -4,10 +4,10 @@
 // docs/engine/world-map.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyScriptingInterface
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldInterface
 import simd
 
 /// What the map reads from and does to the running game.

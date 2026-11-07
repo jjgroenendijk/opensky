@@ -14,7 +14,7 @@ import Testing
 @MainActor
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct ASTCTextureConverterTests {
-    nonisolated private static let device: MTLDevice? = {
+    nonisolated private static let device: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4), device.supportsBCTextureCompression

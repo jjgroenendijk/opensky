@@ -2,7 +2,7 @@
 // the text of the one the player opened. See docs/engine/system-menu.md#help-and-installed-content.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// One row of the Help or Installed Content page, and the text it opens.
 nonisolated public struct SystemMenuTopic: Equatable, Sendable {

@@ -3,8 +3,8 @@
 // dialogue selection trace. See docs/engine/story-manager.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 nonisolated public enum StoryQuestRejection: Equatable, Sendable {
     /// The quest node names a quest the quest store does not have.

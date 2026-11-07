@@ -1,6 +1,6 @@
 // Keeps every story-manager event a coordinator reports, for tests to read.
 
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsCore
 
 @MainActor

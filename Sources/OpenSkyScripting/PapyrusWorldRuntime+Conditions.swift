@@ -1,7 +1,7 @@
 // The script-variable seam `GetVMQuestVariable` and `GetVMScriptVariable` read.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 

@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyInventory
+@testable public import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 @testable import OpenSkyWorldInterface

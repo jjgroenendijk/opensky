@@ -1,7 +1,7 @@
 // The notices of a recipe the player cannot make or an item they cannot improve. The
 // texts are string settings. See docs/engine/crafting.md#refused-crafts.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum CraftingRefusalText: String, GameSettingTextKey {
     case lackComponentsToCreate = "sLackRequiredToCreate"

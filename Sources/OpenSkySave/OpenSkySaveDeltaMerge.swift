@@ -1,6 +1,6 @@
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// A decoded side-chunk entry that stores one component on a reference's `RDLT` delta.
 nonisolated public protocol SaveDeltaComponentEntry: Sendable {

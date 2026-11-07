@@ -3,11 +3,11 @@
 // remainder. Only rows with a violent part are written, so a theft-only session
 // writes no chunk. See docs/formats/opensky-save-actor-chunks.md.
 
-import Foundation
+public import Foundation
 import OpenSkyCrimeInterface
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One actor's violent gold per faction, before it splits the `CRIM` totals.
 nonisolated public struct SaveViolentCrimeGoldEntry: Equatable, Sendable {

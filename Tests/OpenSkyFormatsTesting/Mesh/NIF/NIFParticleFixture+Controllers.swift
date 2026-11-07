@@ -1,6 +1,6 @@
 // A particle system with an emitter controller chain, for the controller decode tests.
 
-import Foundation
+public import Foundation
 
 extension NIFParticleFixture {
     /// Blocks 0-5: node, system, data, box emitter "Emit" (string 1), update controller,

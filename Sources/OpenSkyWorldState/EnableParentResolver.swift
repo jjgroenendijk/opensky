@@ -3,7 +3,7 @@
 // See docs/engine/traps.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension RuntimeReferenceEntry {
     /// The `XESP` link of the placed record, if any.

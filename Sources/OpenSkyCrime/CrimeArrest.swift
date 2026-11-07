@@ -5,10 +5,10 @@
 // See docs/engine/jail.md.
 
 import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 /// The two ways an arrest ends, over the crime ledger and the inventory.
 @MainActor

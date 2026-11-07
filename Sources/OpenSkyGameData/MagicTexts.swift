@@ -3,7 +3,7 @@
 // effects list's time units. See docs/engine/spellcasting.md and docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct MagicTexts: Equatable, Sendable {
     /// Resolved words by setting editor ID. A word not resolved reads as OpenSky's own.

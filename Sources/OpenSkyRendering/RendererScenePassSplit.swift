@@ -6,8 +6,8 @@ import Metal
 
 /// The attachment to copy, and where the renderer keeps the copy between frames.
 struct ScenePassCopy {
-    let source: MTLTexture
-    let target: ReferenceWritableKeyPath<Renderer, MTLTexture?>
+    let source: any MTLTexture
+    let target: ReferenceWritableKeyPath<Renderer, any MTLTexture?>
     let label: String
 }
 
@@ -53,10 +53,10 @@ extension Renderer {
 
     /// The kept copy when it still matches `source`, else a new one in the residency set.
     func keptCopy(
-        matching source: MTLTexture,
-        at path: ReferenceWritableKeyPath<Renderer, MTLTexture?>,
+        matching source: any MTLTexture,
+        at path: ReferenceWritableKeyPath<Renderer, any MTLTexture?>,
         label: String
-    ) -> MTLTexture? {
+    ) -> any MTLTexture? {
         if
             let copy = self[keyPath: path], copy.width == source.width,
             copy.height == source.height, copy.pixelFormat == source.pixelFormat

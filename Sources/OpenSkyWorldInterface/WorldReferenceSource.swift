@@ -1,7 +1,7 @@
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Decoded references and their resident cell, as the bridge needs them.
 ///

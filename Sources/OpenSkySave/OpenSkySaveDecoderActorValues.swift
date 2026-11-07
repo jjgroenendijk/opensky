@@ -2,11 +2,11 @@
 // `ReferenceKey` like `INVN`. Declared counts are checked against the bytes
 // left. Bad floats are normalized by `ActorValueState.init`, not rejected.
 
-import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One actor's saved current values, before they are merged back into the
 /// delta.

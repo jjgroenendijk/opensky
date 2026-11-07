@@ -2,7 +2,7 @@
 // `L-Ctrl` or `Slash`. Menus use the name as the symbol of the key's button art.
 // Layout: docs/formats/controlmap.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct KeyboardNameTable: Equatable, Sendable {
     /// The VFS key of the vanilla file.

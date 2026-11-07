@@ -3,8 +3,8 @@
 // See docs/formats/ess.md#ref-ids.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyFormatsESS
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsESS
 
 nonisolated public enum ESSExportError: Error, Equatable, Sendable {
     /// More full plugins than the save's one-byte plugin index can name.

@@ -1,9 +1,9 @@
 // What the last item, crafting, grant, and trade action did, as values. Only the
 // `text` formatters build lines; the shared sentences live in `InventoryCore`.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 nonisolated public enum ItemActionOutcome: Equatable, Sendable {
     case idle

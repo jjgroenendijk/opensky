@@ -2,7 +2,7 @@
 // and announced to every observer, so a subsystem applies the new value at once
 // and every reader sees the same value.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// Where the settings file lives. A test passes an in-memory fake.

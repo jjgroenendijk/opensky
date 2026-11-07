@@ -1,9 +1,9 @@
 // One water current and the list a water box carries. Rules from the game's
 // behaviour; see docs/engine/water-physics.md#current-lists.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
-import simd
+public import simd
 
 /// Where a current applies inside its water box.
 nonisolated public enum WaterCurrentShape: Equatable, Sendable {

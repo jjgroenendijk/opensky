@@ -2,8 +2,8 @@
 // `fFollowRunMinSlowdownMultiplier`. The CK wiki table names both without a use, so each
 // use is OpenSky's reading (docs/engine/package-schedules.md#followers).
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldInterface
 import simd
 

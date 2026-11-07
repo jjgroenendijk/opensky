@@ -3,7 +3,7 @@
 // prints it. Counts only.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyProgressionInterface
 
 nonisolated public struct PerkGapCensus: Equatable, Sendable {

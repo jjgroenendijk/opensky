@@ -3,8 +3,8 @@
 // not script code, so events queue at depth 0. Handlers a script lacks are counted no-ops.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {

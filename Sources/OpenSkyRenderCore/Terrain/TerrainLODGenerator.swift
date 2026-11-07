@@ -2,7 +2,7 @@
 // skirts, a model-space normal map from VNML, and a diffuse map baked from the texture
 // layers and VCLR. docs/engine/distant-lod.md#generated-terrain has the rules.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import simd
 

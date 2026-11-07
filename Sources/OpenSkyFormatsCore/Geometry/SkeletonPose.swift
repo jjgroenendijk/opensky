@@ -2,7 +2,7 @@
 // per skeleton. Skinning maps its bones to skeleton indices once per skeleton, so a
 // frame hashes no bone names.
 
-import simd
+public import simd
 
 /// One skeleton's bone names and a name-to-index map, built once per skeleton.
 /// A repeated name resolves to its first bone, the order skinning has always used.

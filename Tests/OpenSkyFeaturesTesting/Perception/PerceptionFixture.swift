@@ -1,9 +1,9 @@
 // Perception test inputs: a fake `PerceptionWorld` whose line of sight is a
 // caller predicate, plus observer and target literals.
 
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyPerceptionInterface
-@testable import OpenSkyPhysics
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyPerceptionInterface
+@testable public import OpenSkyPhysics
 import simd
 
 /// A world whose geometry is one closure. `blocked` returns true for a segment

@@ -4,8 +4,8 @@
 // docs/engine/papyrus-registrations.md#line-of-sight.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 import simd
 
 nonisolated public struct LineOfSightWatch: Equatable, Sendable {

@@ -157,7 +157,7 @@ struct BarterPricingTests {
 
     private func setting(_ editorID: String, value: Float, formID: UInt32) -> Data {
         var raw = value.bitPattern.littleEndian
-        let data = withUnsafeBytes(of: &raw) { Data($0) }
+        let data = withUnsafeBytes(of: &raw) { unsafe Data($0) }
         let fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
             + ESMFixture.field("DATA", data)
         return ESMFixture.record("GMST", formID: formID, data: fields)

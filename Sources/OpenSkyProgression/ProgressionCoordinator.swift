@@ -3,11 +3,11 @@
 // attribute pick and the perk point. See docs/engine/coordinators.md,
 // docs/engine/skill-advancement.md and docs/engine/character-leveling.md.
 
-import OpenSkyActorsInterface
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyActorsInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
 
 /// The load order's progression data. Without the AVIF index no skill
 /// advances and no perk tree exists, but the player still levels.

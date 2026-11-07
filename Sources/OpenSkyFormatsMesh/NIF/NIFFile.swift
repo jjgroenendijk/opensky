@@ -2,7 +2,7 @@
 // the footer roots. It decodes no block, so unknown block types can always be
 // skipped. Layout: docs/formats/nif.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct NIFFile: Sendable {

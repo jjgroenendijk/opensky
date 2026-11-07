@@ -2,10 +2,10 @@
 // A sibling of PIDN, whose entries have no length, so appending a field there would
 // break older readers. Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyActorsInterface
+public import Foundation
+public import OpenSkyActorsInterface
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 

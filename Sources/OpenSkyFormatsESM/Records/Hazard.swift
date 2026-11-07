@@ -2,7 +2,7 @@
 // spell, explosion, or trap leaves behind. Layout and sources: docs/formats/hazards.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Hazard: Equatable, Sendable {
     /// DATA, 40 bytes.

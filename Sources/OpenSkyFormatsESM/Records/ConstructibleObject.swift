@@ -3,7 +3,7 @@
 // It is not an inventory item. Layout and sources: docs/formats/recipes.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct ConstructibleObject: Equatable, Sendable {
     /// One CNTO: an item (or a FLST or LVLI of items) and how many the recipe uses.

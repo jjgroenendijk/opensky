@@ -2,7 +2,7 @@
 // object inventory from the fixups. It locates objects but cannot size them;
 // that needs each class's layout. Byte map: docs/formats/hkx-container.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// One class-name table entry: type signature hash + name. `nameOffset` is

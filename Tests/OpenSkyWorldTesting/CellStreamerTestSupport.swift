@@ -3,11 +3,11 @@
 // here at file scope, away from that file's size cap.
 
 import Foundation
-@testable import OpenSkyCells
-@testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyTerrain
-@testable import OpenSkyWorldState
+@testable public import OpenSkyCells
+@testable public import OpenSkyFormatsCore
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyTerrain
+@testable public import OpenSkyWorldState
 
 /// Test build runner: the test stages completions and controls their order,
 /// standing in for the serial DispatchQueue without any async timing.

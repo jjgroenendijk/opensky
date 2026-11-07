@@ -2,13 +2,13 @@
 // start record, and the exclusive dialogue branch a speaker is in. Each merges
 // into the `RDLT` deltas by key. Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
+public import OpenSkyWorldState
 
 /// One saved component of a story chunk, before it is merged back into the delta.
 nonisolated public struct SaveStoryEntry<State: WorldStateComponent>: Equatable, Sendable {

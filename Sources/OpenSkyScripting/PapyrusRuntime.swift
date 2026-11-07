@@ -1,8 +1,8 @@
 // Long-lived Papyrus script library, instance table, and invocation façade.
 
 import Foundation
-import OpenSkyFormatsPEX
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsPEX
+public import OpenSkyScriptingInterface
 
 nonisolated public enum PapyrusRuntimeError: Error, Equatable {
     case missingScript(String)
@@ -13,7 +13,7 @@ nonisolated public enum PapyrusRuntimeError: Error, Equatable {
 
 public final class PapyrusRuntime {
     public let limits: PapyrusLimits
-    public let nativeDispatch: PapyrusNativeDispatch
+    public let nativeDispatch: any PapyrusNativeDispatch
     public let tally: PapyrusTally
     public let coercion = PapyrusCoercion()
 
@@ -64,7 +64,7 @@ public final class PapyrusRuntime {
 
     public init(
         files: [PexFile],
-        nativeDispatch: PapyrusNativeDispatch = PapyrusNativeRegistry.standard,
+        nativeDispatch: any PapyrusNativeDispatch = PapyrusNativeRegistry.standard,
         limits: PapyrusLimits = .standard
     ) {
         self.limits = limits

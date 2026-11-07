@@ -5,8 +5,8 @@
 // actions emit nothing. See docs/engine/skill-advancement.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
 
 /// What was done, in the emitting system's own terms.
 ///

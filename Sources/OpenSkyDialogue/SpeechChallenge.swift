@@ -2,7 +2,7 @@
 // Skyrim.esm: success lines test `GetBribeSuccess` (654) == 1, `GetIntimidateSuccess`
 // (655) == 1, or Speechcraft (actor value 17) >= a global. See docs/engine/dialogue.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum SpeechChallenge: Equatable, Sendable {
     case bribe

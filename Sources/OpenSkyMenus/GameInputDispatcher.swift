@@ -2,8 +2,8 @@
 // keyboard and the agent control server both call it, so the game cannot tell
 // a key press from an injected one (docs/tools/agent-control.md).
 
-import OpenSkyRendering
-import OpenSkyScriptingInterface
+public import OpenSkyRendering
+public import OpenSkyScriptingInterface
 
 /// One logical action. The raw value is the name `openskycli game input` takes.
 nonisolated public enum GameInputAction: String, CaseIterable, Sendable {

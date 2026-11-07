@@ -2,13 +2,13 @@
 // reference, an optional clock, and a save store held in memory.
 
 import Foundation
-@testable import OpenSkyAudio
-@testable import OpenSkyConditions
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyAudio
+@testable public import OpenSkyConditions
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyRuntimeState
+@testable public import OpenSkyRuntimeState
 import OpenSkyWorldConditions
-@testable import OpenSkyWorldState
+@testable public import OpenSkyWorldState
 
 public enum FakeSaveError: Error {
     case unwritable
@@ -27,7 +27,7 @@ public final class FakeRuntimeStateWorld: RuntimeStateWorld {
     public private(set) var appliedResolutions: [Bool] = []
     public private(set) var contextCrosshairs: [ReferenceKey?] = []
     public var slots: [String] = []
-    public var saveError: Error?
+    public var saveError: any Error?
     public private(set) var slotListings = 0
 
     public init() {}

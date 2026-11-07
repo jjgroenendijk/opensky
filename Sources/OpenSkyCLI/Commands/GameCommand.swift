@@ -108,7 +108,7 @@ enum GameCommand {
                 )
             ) { event in
                 print(output(event, options: options))
-                fflush(stdout)
+                unsafe fflush(stdout)
             }
         } catch {
             throw CLIError.failure("\(error.code.rawValue): \(error.message)")

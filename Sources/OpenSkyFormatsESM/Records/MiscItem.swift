@@ -2,7 +2,7 @@
 // Layout and sources: docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct MiscItem: Sendable {
     public let formID: FormID

@@ -2,8 +2,8 @@
 // related string settings. A theft shows the red `sSteal` or `sStealFrom` verb, and a
 // sneaking player sees `sPickpocket` on an actor. See docs/engine/interaction.md.
 
-import OpenSkyGameData
-import OpenSkyWorldInterface
+public import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 nonisolated public enum ActivationText: String, GameSettingTextKey {
     case activate = "sActivate"

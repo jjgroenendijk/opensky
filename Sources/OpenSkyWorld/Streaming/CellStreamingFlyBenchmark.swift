@@ -3,14 +3,14 @@
 // it bounded; footprint, settlement, unload and duplicate-build gates make it repeatable.
 
 import Foundation
-import OpenSkyCells
+public import OpenSkyCells
 import OpenSkyDiagnostics
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRendering
-import OpenSkyTerrain
-import OpenSkyWeather
+public import OpenSkyRendering
+public import OpenSkyTerrain
+public import OpenSkyWeather
 import simd
 
 /// Deterministic path: launch center -> one cell east -> one cell north.

@@ -3,14 +3,14 @@
 // to the world go back to the app as `InventoryCommand` values.
 // See docs/engine/coordinators.md.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
-import OpenSkyProgressionInterface
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyMagicInterface
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 
 /// What `InventoryCoordinator` reads from the running world. Reference lookups
 /// go through the item runtime's `references` instead.

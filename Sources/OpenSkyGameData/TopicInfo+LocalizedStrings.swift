@@ -2,7 +2,7 @@
 // the engine loads. The record shape lives with the parsers in OpenSkyFormatsESM.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension TopicInfo.Response {
     /// Dialogue response text is stored in the plugin's ILSTRINGS table.

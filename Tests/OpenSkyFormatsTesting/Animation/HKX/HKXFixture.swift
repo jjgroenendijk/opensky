@@ -2,7 +2,7 @@
 // SSE 64-bit map in docs/formats/hkx-container.md. Signatures and names are
 // invented. Uses `Data.appendUInt32`/`appendUInt64` from BSAFixture.swift.
 
-import Foundation
+public import Foundation
 @testable import OpenSkyFormatsAnimation
 
 /// Builds a minimal spec-conformant HKX packfile blob. Knobs corrupt one axis

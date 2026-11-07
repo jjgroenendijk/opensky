@@ -5,7 +5,7 @@
 // `.unresolvedParameter`; an actor with no state is `.unavailableActorState`.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {

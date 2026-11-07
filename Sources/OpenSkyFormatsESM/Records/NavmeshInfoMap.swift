@@ -4,7 +4,7 @@
 // Layout documented in docs/formats/navmesh.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 /// One NVMI entry: the index's view of a single NAVM.

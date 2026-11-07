@@ -37,9 +37,9 @@ enum AudioAACCheck {
                     measured.append(result)
                     rows.append([
                         category.rawValue, path, "\(result.frames)",
-                        String(format: "%.3f", result.meanDB),
-                        String(format: "%.4f", result.over2DBShare),
-                        String(format: "%.4f", result.over4DBShare),
+                        unsafe String(format: "%.3f", result.meanDB),
+                        unsafe String(format: "%.4f", result.over2DBShare),
+                        unsafe String(format: "%.4f", result.over4DBShare),
                         "\(result.bestLag)", "\(result.isTransparent)"
                     ].joined(separator: "\t"))
                 } catch {
@@ -68,7 +68,7 @@ enum AudioAACCheck {
         let worst = measured.map(\.meanDB).max() ?? 0
         let average = measured.map(\.meanDB).reduce(0, +) / Double(max(1, measured.count))
         let verdict = !measured.isEmpty && passing == measured.count ? "AAC" : "ALAC"
-        print(String(
+        unsafe print(String(
             format: "[INFO] %@: %d sounds, %d transparent, "
                 + "mean SD avg %.2f dB, worst %.2f dB -> %@",
             category.rawValue, measured.count, passing, average, worst, verdict

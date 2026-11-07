@@ -4,7 +4,7 @@
 // reading is the uncertain one, but any reading only makes a joint stiffer or
 // looser. See docs/engine/ragdoll-solver.md.
 
-import simd
+public import simd
 
 /// One body's end of a joint, in world space at the current pose.
 nonisolated public struct RagdollWorldFrame: Sendable {

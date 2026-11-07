@@ -5,10 +5,10 @@
 // a reason-tagged skip. See docs/engine/actor-resolution.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyRuntimeState
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyRuntimeState
 
 /// Terminal visual-resolution failures.
 nonisolated public enum ActorVisualError: Error, Equatable {
@@ -189,7 +189,7 @@ nonisolated public enum FaceGenPaths: Sendable {
     }
 
     private static func component(for id: ResolvedFormID) -> String {
-        id.plugin.lowercased() + "\\" + String(format: "%08x", id.objectID)
+        unsafe id.plugin.lowercased() + "\\" + String(format: "%08x", id.objectID)
     }
 }
 

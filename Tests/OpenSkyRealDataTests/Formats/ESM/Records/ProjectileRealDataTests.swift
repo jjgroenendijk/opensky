@@ -149,7 +149,7 @@ struct ProjectileRealDataTests {
         let finite = values.filter(\.isFinite).sorted()
         guard let low = finite.first, let high = finite.last else { return "none" }
         let mean = finite.reduce(0, +) / Float(finite.count)
-        return String(format: "min %.3f max %.3f mean %.3f", low, high, mean)
+        return unsafe String(format: "min %.3f max %.3f mean %.3f", low, high, mean)
     }
 
     /// One row per AMMO that names a flyable PROJ, with the drop each reading
@@ -167,7 +167,7 @@ struct ProjectileRealDataTests {
                 ) ?? 0
                 let acceleration = 0.5 * shot.profile.gravityFactor
                     * powf(dropDistance / max(shot.profile.speed, 1), 2)
-                return String(
+                return unsafe String(
                     format: """
                     %@: damage %.0f, speed %.0f, gravity %.3f, range %.0f, \
                     drop at %.0f = %.2f as multiplier / %.4f as acceleration

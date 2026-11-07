@@ -4,11 +4,11 @@
 // loaded area only. See docs/engine/quest-state.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
-import OpenSkyWorldState
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
+public import OpenSkyWorldState
 import simd
 
 /// The loaded world one alias fill pass searches. Built once per quest start.

@@ -4,11 +4,11 @@
 // `OpenSkyMenus`. See docs/engine/coordinators.md and docs/engine/dialogue.md.
 
 import OpenSkyConditions
-import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 import simd
 
 /// Runs one conversation at a time over `DialogueRuntime`, and reads the world

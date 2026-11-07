@@ -4,8 +4,8 @@
 // centroid distance, or zero when a resident teleport can make world-space
 // distance non-admissible.
 
-import HeapModule
-import OpenSkyFormatsESM
+public import HeapModule
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
 

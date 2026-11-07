@@ -3,17 +3,17 @@
 // `native` members, like `Quest.psc`, so `SetStage(10)` dispatches as the
 // native once `PapyrusWorldRuntime.resolveScript` loads the parent chain.
 
-import Foundation
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyFormatsPEX
-import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
+public import Foundation
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsPEX
+public import OpenSkyFormatsTesting
+@testable public import OpenSkyGameData
 @testable import OpenSkyQuests
-@testable import OpenSkyQuestsInterface
+@testable public import OpenSkyQuestsInterface
 @testable import OpenSkyScripting
-import OpenSkyScriptingFixtures
-import OpenSkyScriptingInterface
-@testable import OpenSkyWorldState
+public import OpenSkyScriptingFixtures
+public import OpenSkyScriptingInterface
+@testable public import OpenSkyWorldState
 import Testing
 
 public enum PapyrusQuestFixture {

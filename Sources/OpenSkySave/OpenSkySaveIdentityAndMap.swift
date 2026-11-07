@@ -1,13 +1,13 @@
 // PIDN, MRKS, FOGM, and PMRK chunks: the player's identity, map marker state, the
 // local map fog, and the custom marker. Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveFormat.ChunkTag {
     /// The player's race, sex, name, and face.

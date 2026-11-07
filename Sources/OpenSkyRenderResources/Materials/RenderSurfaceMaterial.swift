@@ -1,20 +1,20 @@
 // The lit-surface textures and constants of one material, ready to bind. An
 // absent texture stays nil and its term stays off.
 
-@preconcurrency import Metal
-import OpenSkyFormatsCore
+@preconcurrency @unsafe public import Metal
+public import OpenSkyFormatsCore
 import OpenSkyShaderTypes
 import simd
 
 nonisolated public struct RenderSurfaceMaterial: Sendable {
     /// ShadingTerm bits.
     public let flags: UInt32
-    public let glow: MTLTexture?
-    public let detail: MTLTexture?
-    public let environment: MTLTexture?
-    public let environmentMask: MTLTexture?
-    public let innerLayer: MTLTexture?
-    public let backLight: MTLTexture?
+    public let glow: any MTLTexture?
+    public let detail: any MTLTexture?
+    public let environment: any MTLTexture?
+    public let environmentMask: any MTLTexture?
+    public let innerLayer: any MTLTexture?
+    public let backLight: any MTLTexture?
     public let specular: SIMD4<Float>
     public let emissive: SIMD4<Float>
     public let lightingEffects: SIMD4<Float>
@@ -26,7 +26,7 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
     public init(material: Material, textureProvider: TextureProvider) {
         let shading = material.shading
         let terms = shading.terms
-        func load(_ key: String?, _ usage: TextureUsage) -> MTLTexture? {
+        func load(_ key: String?, _ usage: TextureUsage) -> any MTLTexture? {
             key.map { textureProvider($0, usage) }
         }
         glow = load(shading.glowTexture, .color)
@@ -61,7 +61,7 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
         }
     }
 
-    public var textures: [MTLTexture] {
+    public var textures: [any MTLTexture] {
         [
             glow, detail, environment, environmentMask, innerLayer, backLight,
             projected?.diffuse, projected?.noise

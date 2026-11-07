@@ -4,8 +4,8 @@
 // tests without Metal. See docs/rendering/visual-effects.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import simd
+public import OpenSkyFormatsESM
+public import simd
 
 /// What an effect follows.
 nonisolated public enum EffectAnchor: Hashable, Sendable {

@@ -2,7 +2,7 @@
 // frame. The renderer's half is `RendererPlayerBody.swift`.
 
 import Metal
-import OpenSkyPlayer
+public import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 

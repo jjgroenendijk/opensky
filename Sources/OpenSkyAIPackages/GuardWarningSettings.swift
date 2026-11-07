@@ -1,7 +1,7 @@
 // How often a Guard procedure warns an intruder before it attacks, from `iGuardWarnings`
 // and `fAITrespassWarningTimer` (<https://ck.uesp.net/wiki/Guard_(Procedure)>).
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct GuardWarningSettings: Equatable, Sendable {
     /// `iGuardWarnings`: the most warnings a guard gives before it attacks.

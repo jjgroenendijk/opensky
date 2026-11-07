@@ -2,8 +2,8 @@
 // and LE (stream 83) differ in the NiGeometry part: SSE has a bound, skin ref,
 // and vertex desc. Layout: docs/formats/nif-particles.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct NIFParticleSystem: Sendable {

@@ -3,9 +3,9 @@
 // translation + ushort / 1000, then the chunk transform). Strip winding
 // alternates. Sources: docs/formats/nif-collision.md.
 
-import Foundation
-import OpenSkyFormatsCore
-import simd
+public import Foundation
+public import OpenSkyFormatsCore
+public import simd
 
 nonisolated public enum NIFCompressedCollisionMesh: Sendable {
     public struct Soup: Sendable {

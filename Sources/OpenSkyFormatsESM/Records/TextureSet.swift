@@ -2,7 +2,7 @@
 // Layout and sources: docs/formats/land.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct TextureSet: Sendable {
     public struct Flags: OptionSet, Equatable, Sendable {

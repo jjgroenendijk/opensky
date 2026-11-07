@@ -3,11 +3,11 @@
 // convert once here by `NIFCollisionModel.havokToEngineScale`, inertia by its square.
 // See docs/engine/dynamic-bodies.md.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import OpenSkyGameData
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
+public import simd
 
 nonisolated extension simd_quatf {
     /// The no-rotation quaternion. `simd` supplies `matrix_identity_float4x4`

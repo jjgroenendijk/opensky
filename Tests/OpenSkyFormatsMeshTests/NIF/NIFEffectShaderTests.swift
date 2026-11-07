@@ -241,7 +241,7 @@ final class NIFEffectShaderTests: XCTestCase {
         // + 8 flags + 16 UV = offset 36) with a huge value.
         bytes.replaceSubrange(
             36 ..< 40,
-            with: withUnsafeBytes(of: UInt32(0xFFFF).littleEndian) { Data($0) }
+            with: withUnsafeBytes(of: UInt32(0xFFFF).littleEndian) { unsafe Data($0) }
         )
         XCTAssertThrowsError(
             try NIFEffectShaderProperty(data: bytes, header: head)

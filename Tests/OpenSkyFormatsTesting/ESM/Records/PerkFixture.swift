@@ -2,8 +2,8 @@
 // is authored from the cited field spec (docs/formats/perks.md) and contains
 // no bytes from the game install (AGENTS.md "Legal & IP boundary").
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum PerkFixture: Sendable {
     /// DATA at record level: trait, level, rank count, playable, hidden.

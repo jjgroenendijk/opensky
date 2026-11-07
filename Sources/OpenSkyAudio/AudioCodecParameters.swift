@@ -3,7 +3,7 @@
 // type is deliberately container-agnostic so a future container can reuse the decoder.
 // See docs/decisions/ffmpeg-audio.md.
 
-import Foundation
+public import Foundation
 
 /// Everything the decoder needs to interpret a stream of compressed packets.
 nonisolated public struct AudioCodecParameters: Equatable, Sendable {

@@ -1,7 +1,7 @@
 // Writers for the save's own types, for building synthetic `.ess` parts in code.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 public enum ESSBytes {
     public static func wstring(_ text: String, into writer: inout BinaryWriter) {

@@ -3,12 +3,12 @@
 // capsule from the facing at the contact frame, not the animation pose, so it may hit
 // early but never late. See docs/engine/melee-combat.md.
 
-import OpenSkyActorsInterface
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
-import OpenSkyPhysics
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
 import simd
 
 /// Everything a swing needs to know about the weapon making it.

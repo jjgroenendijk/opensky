@@ -3,8 +3,8 @@
 // Pure; `ActorGraphCoordinator` is the shell. See docs/engine/actor-graphs.md.
 
 import Foundation
-import OpenSkyBehavior
-import simd
+public import OpenSkyBehavior
+public import simd
 
 /// How far from the camera an actor's graph steps every frame, at a reduced rate, or
 /// not at all. A graph that does not step keeps its last pose.

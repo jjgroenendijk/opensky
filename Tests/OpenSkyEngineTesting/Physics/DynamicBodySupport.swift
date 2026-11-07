@@ -1,12 +1,12 @@
 // Synthetic collision scenes for the physics, capsule, and camera suites: a
 // floor, walls, boxes, and the queries over them, all built in code.
 
-@testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsCore
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
-@testable import OpenSkyPhysics
-import simd
+@testable public import OpenSkyPhysics
+public import simd
 
 public enum DynamicBodyScene {
     /// A floor quad centred on the origin, `extent` units to each side.

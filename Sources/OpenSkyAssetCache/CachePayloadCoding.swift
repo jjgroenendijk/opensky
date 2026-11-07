@@ -2,8 +2,8 @@
 // and strings. A raw copy keeps every float bit, so a decoded value equals the
 // value that was encoded.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public enum CachePayloadError: Error, Equatable, Sendable {
@@ -23,7 +23,7 @@ nonisolated public struct CachePayloadWriter: Sendable {
 
     public mutating func array(_ values: [some BitwiseCopyable]) {
         writer.writeUInt32(UInt32(values.count))
-        values.withUnsafeBytes { writer.write(Data($0)) }
+        values.withUnsafeBytes { unsafe writer.write(Data($0)) }
     }
 
     public mutating func value(_ value: some BitwiseCopyable) {
@@ -75,11 +75,11 @@ nonisolated public struct CachePayloadReader: Sendable {
             throw CachePayloadError.badCount(count)
         }
         let bytes = try Self.wrap { try reader.read(count: count * stride) }
-        return [T](unsafeUninitializedCapacity: count) { buffer, initialized in
+        return unsafe Array(unsafeUninitializedCapacity: count) { buffer, initialized in
             guard count > 0, let target = buffer.baseAddress else { return }
-            bytes.withUnsafeBytes { raw in
+            unsafe bytes.withUnsafeBytes { raw in
                 if let base = raw.baseAddress {
-                    UnsafeMutableRawPointer(target).copyMemory(
+                    unsafe UnsafeMutableRawPointer(target).copyMemory(
                         from: base,
                         byteCount: count * stride
                     )

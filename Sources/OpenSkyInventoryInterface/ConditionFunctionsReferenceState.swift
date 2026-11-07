@@ -3,8 +3,8 @@
 // DoesNotExist. See docs/engine/condition-functions-world.md#reference-state.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 /// One placed reference as these functions see it: plugin baseline plus runtime deltas.
 nonisolated public struct ReferenceConditionFacts: Equatable, Sendable {

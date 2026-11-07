@@ -3,7 +3,7 @@
 // dev-4.1.6 Core/wbDefinitionsTES5.pas; Creation Kit numbers are 4096 higher.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 

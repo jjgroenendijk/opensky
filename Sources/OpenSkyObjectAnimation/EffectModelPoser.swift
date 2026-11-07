@@ -4,13 +4,13 @@
 
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyEffects
+public import OpenSkyEffects
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
 import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyRendering
 import simd
 
 /// The node controllers of an effect model, read off the main actor.

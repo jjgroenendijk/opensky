@@ -1,7 +1,7 @@
 // Native dispatch and suspension boundary for the Papyrus interpreter.
 
 import Foundation
-import OpenSkyFormatsPEX
+public import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {

@@ -3,7 +3,7 @@
 // part on top (docs/engine/behavior-runtime.md).
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import simd
 
 nonisolated extension BehaviorGraphInstance {

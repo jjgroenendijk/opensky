@@ -40,7 +40,7 @@ extension Renderer {
                 colorFalloff: SIMD4(live.color, light.falloffExponent),
                 shadow: pointShadows.uniform(sceneIndex: entry.index, radius: light.radius)
             )
-            pointLightBuffer.contents().advanced(by: (first + index) * stride)
+            unsafe pointLightBuffer.contents().advanced(by: (first + index) * stride)
                 .copyMemory(from: &uniform, byteCount: MemoryLayout<PointLightUniform>.size)
         }
         return PointLightRange(

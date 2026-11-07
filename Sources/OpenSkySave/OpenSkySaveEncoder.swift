@@ -1,12 +1,12 @@
 // Writer for the OpenSky native save container. `encode` never throws. A string over
 // 64 KiB is truncated at a UTF-8 boundary rather than failing the save.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 nonisolated public enum OpenSkySaveEncoder: Sendable {
     /// Serializes a snapshot, its fingerprint and header metadata, byte-deterministic:

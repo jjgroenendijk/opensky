@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyAudio
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One looping animation sound: who started it, and which descriptor.

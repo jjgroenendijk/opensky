@@ -15,8 +15,8 @@ nonisolated public enum MemoryFootprint: Sendable {
             MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size
         )
         let status = withUnsafeMutablePointer(to: &info) { pointer in
-            pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { raw in
-                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), raw, &count)
+            unsafe pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { raw in
+                unsafe task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), raw, &count)
             }
         }
         guard status == KERN_SUCCESS else { return nil }

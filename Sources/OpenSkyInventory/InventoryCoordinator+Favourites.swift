@@ -1,8 +1,8 @@
 // Favourites and their hotkeys: the inventory menu marks an item, a number key 1 to
 // 8 uses it. See docs/engine/inventory-menu.md.
 
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
 /// What a favourite or hotkey action did, for the readout.

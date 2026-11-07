@@ -24,7 +24,7 @@ struct WorldLoadProgressTests {
         let events = Mutex<[WorldLoadEvent]>([])
         let progress = WorldLoadProgress { event in events.withLock { $0.append(event) } }
         let task = Task {
-            withUnsafeCurrentTask { $0?.cancel() }
+            unsafe withUnsafeCurrentTask { unsafe $0?.cancel() }
             _ = try progress.measure(.packages) { 1 }
         }
 

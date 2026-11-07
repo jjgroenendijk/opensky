@@ -3,7 +3,7 @@
 // links. Layout and sources: docs/formats/idle.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct IdleAnimation: Equatable, Sendable {
     /// DATA, 6 bytes. xEdit marks the block unused by the game.

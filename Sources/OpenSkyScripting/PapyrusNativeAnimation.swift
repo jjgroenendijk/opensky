@@ -4,8 +4,8 @@
 // See docs/engine/object-animation.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 
 /// The object behaviour graphs of the running game. The app answers it.
 @MainActor

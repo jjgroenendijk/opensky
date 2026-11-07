@@ -2,10 +2,10 @@
 // `writeChunk`, `writeKey` and `writeCell` are internal on the encoder for files like this.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One owner's inventory paired with the snapshot entry it came from.

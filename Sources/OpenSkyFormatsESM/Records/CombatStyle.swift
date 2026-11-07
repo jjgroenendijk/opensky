@@ -2,8 +2,8 @@
 // run of floats that may stop early, so each one keeps the floats present.
 // Layout and sources: docs/formats/combat-style.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct CombatStyle: Equatable, Sendable {
     /// CSGD members, in file order.

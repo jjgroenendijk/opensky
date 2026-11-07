@@ -5,7 +5,7 @@
 
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 extension SkillAdvancementRuntime {
     /// How many skills a sentence of `days` out of `maximumDays` clears.

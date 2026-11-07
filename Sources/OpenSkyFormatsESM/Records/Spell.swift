@@ -3,7 +3,7 @@
 // a caster needs. Layout and sources: docs/formats/magic-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Spell: Sendable {
     public let formID: FormID

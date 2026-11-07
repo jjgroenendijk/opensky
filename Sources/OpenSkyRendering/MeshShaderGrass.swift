@@ -1,14 +1,14 @@
 // Mesh-shader grass: the meshlets of each grass mesh, the pipeline that culls and draws
 // them, and the counts the readout shows. See docs/rendering/mesh-shader-grass.md.
 
-import Metal
+public import Metal
 import MetalKit
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 nonisolated public enum MeshShaderSupport {
     /// Why `device` cannot run object and mesh shaders; nil when it can.
-    public static func unsupportedReason(_ device: MTLDevice?) -> String? {
+    public static func unsupportedReason(_ device: any MTLDevice?) -> String? {
         guard let device, device.supportsFamily(.apple7) || device.supportsFamily(.mac2) else {
             return "This GPU has no mesh shaders"
         }
@@ -20,17 +20,17 @@ nonisolated public enum MeshShaderSupport {
 final class GrassMeshlets {
     /// Held so its address, the cache key, cannot go to another mesh while cached.
     let mesh: RenderMesh
-    let bounds: MTLBuffer
-    let vertexIndices: MTLBuffer
-    let triangles: MTLBuffer
+    let bounds: any MTLBuffer
+    let vertexIndices: any MTLBuffer
+    let triangles: any MTLBuffer
     let count: Int
 
-    var allocations: [MTLAllocation] {
+    var allocations: [any MTLAllocation] {
         [bounds, vertexIndices, triangles]
     }
 
     /// Nil when the mesh has no triangle or a buffer cannot be made.
-    init?(mesh: RenderMesh, device: MTLDevice) {
+    init?(mesh: RenderMesh, device: any MTLDevice) {
         let built = MeshletBuilder.build(
             indices: mesh.indexArray(), positions: mesh.positionArray()
         )
@@ -43,10 +43,10 @@ final class GrassMeshlets {
                 triangleOffset: meshlet.triangleOffset, triangleCount: meshlet.triangleCount
             )
         }
-        func buffer(_ values: [some Any], _ label: String) -> MTLBuffer? {
+        func buffer(_ values: [some Any], _ label: String) -> any MTLBuffer? {
             let made = values.withUnsafeBytes { bytes in
-                bytes.baseAddress.flatMap {
-                    device.makeBuffer(
+                unsafe bytes.baseAddress.flatMap {
+                    unsafe device.makeBuffer(
                         bytes: $0, length: max(bytes.count, 4), options: .storageModeShared
                     )
                 }
@@ -72,25 +72,25 @@ public struct MeshShaderGrassState {
     /// Off by default: on the M1 it measured no faster than the classic path.
     public var enabled = false
     /// What the pipeline is built from when the path is first used.
-    let library: MTLLibrary
+    let library: any MTLLibrary
     let colorFormat: MTLPixelFormat
     let sampleCount: Int
-    var pipeline: MTLRenderPipelineState?
+    var pipeline: any MTLRenderPipelineState?
     /// Set when the pipeline failed to build; the classic path draws instead.
     var pipelineFailure: String?
     /// Keyed by the grass mesh; dropped with the scene that owned it.
     var meshlets: [ObjectIdentifier: GrassMeshlets] = [:]
     /// Two counters per frame slot, read back once the slot's frame finished.
-    var counters: MTLBuffer?
+    var counters: any MTLBuffer?
     /// One `GrassMeshUniforms` per grass group per frame slot.
-    var uniforms: MTLBuffer?
+    var uniforms: any MTLBuffer?
     var uniformCapacity = 0
     /// The last counts read back, a few frames late.
     public internal(set) var lastCounts = MeshletCounts()
     /// What the last frame sent to the object stage.
     public internal(set) var submitted = MeshletCounts()
 
-    init(library: MTLLibrary, view: MTKView) {
+    init(library: any MTLLibrary, view: MTKView) {
         self.library = library
         colorFormat = view.colorPixelFormat
         sampleCount = view.sampleCount
@@ -132,8 +132,8 @@ nonisolated extension RenderMesh {
     func indexArray() -> [UInt16] {
         guard indexBuffer.storageMode == .shared else { return [] }
         let count = min(indexCount, indexBuffer.length / MemoryLayout<UInt16>.stride)
-        let base = indexBuffer.contents().bindMemory(to: UInt16.self, capacity: count)
-        return Array(UnsafeBufferPointer(start: base, count: count))
+        let base = unsafe indexBuffer.contents().bindMemory(to: UInt16.self, capacity: count)
+        return unsafe Array(UnsafeBufferPointer(start: base, count: count))
     }
 
     /// Vertex positions, read back from the shared interleaved vertex buffer.
@@ -141,10 +141,11 @@ nonisolated extension RenderMesh {
         guard vertexBuffer.storageMode == .shared else { return [] }
         let stride = StaticVertexLayout.stride
         let count = min(vertexCount, vertexBuffer.length / stride)
-        let base = vertexBuffer.contents()
+        let base = unsafe vertexBuffer.contents()
         return (0 ..< count).map { index in
-            let floats = base.advanced(by: index * stride + StaticVertexLayout.positionOffset)
-            return SIMD3(
+            let floats = unsafe base
+                .advanced(by: index * stride + StaticVertexLayout.positionOffset)
+            return unsafe SIMD3(
                 floats.load(as: Float.self),
                 floats.load(fromByteOffset: 4, as: Float.self),
                 floats.load(fromByteOffset: 8, as: Float.self)

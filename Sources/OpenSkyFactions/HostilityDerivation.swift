@@ -7,9 +7,9 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFactionsInterface
+public import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// Resolves what one actor makes of another from factions, relationships,
 /// crime and explicit overrides.

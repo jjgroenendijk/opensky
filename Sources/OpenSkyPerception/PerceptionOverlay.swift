@@ -5,8 +5,8 @@
 // pass is depth-tested so a wall hides it. See docs/engine/detection.md.
 
 import Foundation
-import OpenSkyDiagnostics
-import OpenSkyPerceptionInterface
+public import OpenSkyDiagnostics
+public import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import simd
 

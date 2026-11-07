@@ -2,7 +2,7 @@
 // the stars, or a moon. Layout: docs/formats/nif-materials.md#sky-shader.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct NIFSkyShaderProperty: Equatable, Sendable {

@@ -2,8 +2,8 @@
 // in OpenSkyActors conforms, and the composition root hands it to Magic,
 // Progression, scripting, and the HUD as this protocol.
 
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// The fixed step actor-value regeneration runs at, shared with the features that
 /// advance beside it.

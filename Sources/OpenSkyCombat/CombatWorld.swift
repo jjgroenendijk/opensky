@@ -3,17 +3,17 @@
 // nothing later in a step reads go back as `CombatCommand` values.
 // See docs/engine/combat.md and docs/engine/coordinators.md.
 
-import OpenSkyActorsInterface
-import OpenSkyBehavior
-import OpenSkyCombatInterface
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
-import OpenSkyPhysics
-import OpenSkyProgressionInterface
-import OpenSkyWorldState
+public import OpenSkyActorsInterface
+public import OpenSkyBehavior
+public import OpenSkyCombatInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldState
 import simd
 
 /// What one actor could cast, before `CombatCore` filters it.

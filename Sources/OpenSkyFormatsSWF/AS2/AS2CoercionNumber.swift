@@ -24,7 +24,7 @@ nonisolated extension AS2Coercion {
             return value < 0 ? "-Infinity" : "Infinity"
         }
         if value == value.rounded(.towardZero), abs(value) < positionalLimit {
-            return String(format: "%.0f", value)
+            return unsafe String(format: "%.0f", value)
         }
         return normalizedExponent(String(value))
     }

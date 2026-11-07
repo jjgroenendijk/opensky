@@ -4,7 +4,7 @@
 
 import AVFAudio
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 extension WorldAudioEngine {
     /// The mix's level for `source`; full level without a mix.

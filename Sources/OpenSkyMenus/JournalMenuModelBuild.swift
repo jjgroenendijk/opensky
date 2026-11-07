@@ -5,10 +5,10 @@
 // paragraph from `.dlstrings`.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 
 nonisolated extension JournalMenuModel {
     /// Resolves one lstring, with or without string tables.

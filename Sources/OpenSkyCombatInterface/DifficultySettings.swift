@@ -5,8 +5,8 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyGameData
+public import OpenSkyPhysics
 
 nonisolated public enum DifficultyLevel: Int, CaseIterable, Sendable {
     case novice, apprentice, adept, expert, master, legendary

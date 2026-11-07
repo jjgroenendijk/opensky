@@ -1,9 +1,9 @@
 // Main-app lock seam: the locks in the loaded cells, the selected one, the key
 // override, and the last lockpicking session. AppKit-free. See docs/engine/locks.md.
 
-import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldInterface
 
 /// One lock in the loaded cells.
 nonisolated public struct LockReadoutRow: Equatable, Sendable {

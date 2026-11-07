@@ -3,8 +3,8 @@
 // The stage rules from the Creation Kit wiki are in docs/engine/quest-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// Display state of one quest objective, by QOBJ index. The three flags are
 /// independent, like the `SetObjectiveDisplayed`, `SetObjectiveCompleted`, and

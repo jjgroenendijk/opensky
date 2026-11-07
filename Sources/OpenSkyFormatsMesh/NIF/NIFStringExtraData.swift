@@ -1,7 +1,7 @@
 // `NiStringExtraData`: a named string attached to a block. Prop meshes name
 // their parent bone in one called `Prn`. Layout: docs/formats/nif.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct NIFStringExtraData: Equatable, Sendable {

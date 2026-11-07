@@ -3,9 +3,9 @@
 // perks of both sides. Sources and the order of the terms: docs/engine/melee-damage.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
 
 /// The scale terms of one hit. `plain` changes nothing.
 nonisolated public struct WeaponStrike: Equatable, Sendable {

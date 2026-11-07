@@ -2,8 +2,8 @@
 // each mesh's vertices and indices ready for a GPU buffer, then the whole model: every
 // mesh's arrays, skin streams, and materials. See docs/engine/fast-mesh-loading.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public enum ModelCacheCodec {
@@ -65,7 +65,7 @@ nonisolated public enum ModelCacheCodec {
         to data: inout Data
     ) -> Range<Int> {
         let start = data.count
-        values.withUnsafeBytes { data.append(contentsOf: $0) }
+        values.withUnsafeBytes { unsafe data.append(contentsOf: $0) }
         let end = data.count
         data.append(Data(count: padding(after: end)))
         return start ..< end

@@ -1,9 +1,9 @@
 // Water as boxes: a cell's water, a placed water activator, or a current plane's
 // box. See docs/engine/water-physics.md#where-the-boxes-come-from.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import simd
 
 /// One water box in world space.
 nonisolated public struct WaterVolume: Sendable {

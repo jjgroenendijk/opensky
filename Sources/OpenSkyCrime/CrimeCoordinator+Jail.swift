@@ -5,7 +5,7 @@
 // docs/engine/jail.md.
 
 import OpenSkyConditions
-import OpenSkyCrimeInterface
+public import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface

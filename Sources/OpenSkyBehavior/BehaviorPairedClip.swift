@@ -4,7 +4,7 @@
 // only its own tracks, found by bone name (docs/engine/behavior-clips.md).
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// Which track of a paired clip poses which bone of one actor.
 nonisolated public struct PairedTrackMap: Equatable, Sendable {

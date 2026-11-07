@@ -7,20 +7,20 @@ import Foundation
 
 /// Sole owner of the ffmpeg allocations behind one session. The session's initializer
 /// builds it as a local, because Swift skips a class deinit when its initializer throws.
-nonisolated private final class FFmpegCodecResources {
+@safe nonisolated private final class FFmpegCodecResources {
     var context: UnsafeMutablePointer<AVCodecContext>?
     var packet: UnsafeMutablePointer<AVPacket>?
     var frame: UnsafeMutablePointer<AVFrame>?
 
     deinit {
         // avcodec_free_context also frees the extradata buffer handed to the context.
-        avcodec_free_context(&context)
-        av_packet_free(&packet)
-        av_frame_free(&frame)
+        unsafe avcodec_free_context(&context)
+        unsafe av_packet_free(&packet)
+        unsafe av_frame_free(&frame)
     }
 }
 
-nonisolated final class FFmpegCodecSession {
+@safe nonisolated final class FFmpegCodecSession {
     /// ffmpeg reports "send me more input" and "fully drained" as negative status values.
     private enum Status {
         static let again = -Int32(EAGAIN)
@@ -38,29 +38,29 @@ nonisolated final class FFmpegCodecSession {
         codec id: AVCodecID,
         configure: (UnsafeMutablePointer<AVCodecContext>) throws -> Void
     ) throws {
-        guard let codec = avcodec_find_decoder(id) else {
+        guard let codec = unsafe avcodec_find_decoder(id) else {
             throw FFmpegDecoderError.decoderUnavailable
         }
         let owned = FFmpegCodecResources()
-        guard let context = avcodec_alloc_context3(codec) else {
+        guard let context = unsafe avcodec_alloc_context3(codec) else {
             throw FFmpegDecoderError.allocationFailed("AVCodecContext")
         }
-        owned.context = context
-        try configure(context)
-        let status = avcodec_open2(context, codec, nil)
+        unsafe owned.context = unsafe context
+        try unsafe configure(context)
+        let status = unsafe avcodec_open2(context, codec, nil)
         guard status >= 0 else { throw FFmpegDecoderError.openFailed(code: status) }
-        guard let packet = av_packet_alloc() else {
+        guard let packet = unsafe av_packet_alloc() else {
             throw FFmpegDecoderError.allocationFailed("AVPacket")
         }
-        owned.packet = packet
-        guard let frame = av_frame_alloc() else {
+        unsafe owned.packet = unsafe packet
+        guard let frame = unsafe av_frame_alloc() else {
             throw FFmpegDecoderError.allocationFailed("AVFrame")
         }
-        owned.frame = frame
+        unsafe owned.frame = unsafe frame
         resources = owned
-        self.context = context
-        self.packet = packet
-        self.frame = frame
+        unsafe self.context = unsafe context
+        unsafe self.packet = unsafe packet
+        unsafe self.frame = unsafe frame
     }
 
     /// Sends one packet. An empty packet sends nothing.
@@ -68,23 +68,23 @@ nonisolated final class FFmpegCodecSession {
         guard !data.isEmpty else { return }
         // libavcodec copies the payload into its own padded, reference-counted buffer, so
         // the borrowed pointer only has to stay valid across avcodec_send_packet.
-        let status = data.withUnsafeBytes { raw -> Int32 in
+        let status = unsafe data.withUnsafeBytes { raw -> Int32 in
             guard let base = raw.baseAddress else { return 0 }
-            packet.pointee.data = UnsafeMutableRawPointer(mutating: base)
+            unsafe packet.pointee.data = unsafe UnsafeMutableRawPointer(mutating: base)
                 .assumingMemoryBound(to: UInt8.self)
-            packet.pointee.size = Int32(raw.count)
+            unsafe packet.pointee.size = Int32(raw.count)
             defer {
-                packet.pointee.data = nil
-                packet.pointee.size = 0
+                unsafe packet.pointee.data = nil
+                unsafe packet.pointee.size = 0
             }
-            return avcodec_send_packet(context, packet)
+            return unsafe avcodec_send_packet(context, packet)
         }
         guard status >= 0 else { throw FFmpegDecoderError.decodeFailed(code: status) }
     }
 
     /// Tells the decoder no packet follows, so it hands out what it still holds.
     func sendEnd() throws {
-        let status = avcodec_send_packet(context, nil)
+        let status = unsafe avcodec_send_packet(context, nil)
         guard status >= 0 || status == Status.endOfFile else {
             throw FFmpegDecoderError.decodeFailed(code: status)
         }
@@ -93,14 +93,14 @@ nonisolated final class FFmpegCodecSession {
     /// Hands each finished frame to `body`. The frame is only valid during the call.
     func receiveFrames(_ body: (UnsafeMutablePointer<AVFrame>) throws -> Void) throws {
         while true {
-            let status = avcodec_receive_frame(context, frame)
+            let status = unsafe avcodec_receive_frame(context, frame)
             if status == Status.again || status == Status.endOfFile {
                 return
             }
             guard status >= 0 else { throw FFmpegDecoderError.decodeFailed(code: status) }
             // The frame's buffers are recycled on the next receive, so unref on every path.
-            defer { av_frame_unref(frame) }
-            try body(frame)
+            defer { unsafe av_frame_unref(frame) }
+            try unsafe body(frame)
         }
     }
 
@@ -108,17 +108,17 @@ nonisolated final class FFmpegCodecSession {
     /// first frame and kept for the next calls.
     func receiveSamples(resampler: inout FFmpegResampler?) throws -> [Float] {
         var samples: [Float] = []
-        try receiveFrames { frame in
-            let converter = try resampler ?? FFmpegResampler(matching: frame)
+        try unsafe receiveFrames { frame in
+            let converter = try unsafe resampler ?? FFmpegResampler(matching: frame)
             resampler = converter
-            try samples.append(contentsOf: converter.interleavedFloats(from: frame))
+            try unsafe samples.append(contentsOf: converter.interleavedFloats(from: frame))
         }
         return samples
     }
 
     /// Drops buffered state so the decoder can restart at another packet.
     func reset() {
-        avcodec_flush_buffers(context)
+        unsafe avcodec_flush_buffers(context)
     }
 
     /// Copies codec-private bytes into an ffmpeg-owned buffer. libavcodec requires
@@ -130,15 +130,15 @@ nonisolated final class FFmpegCodecSession {
     ) throws {
         guard !extradata.isEmpty else { return }
         let size = extradata.count
-        guard let buffer = av_mallocz(size + Int(AV_INPUT_BUFFER_PADDING_SIZE)) else {
+        guard let buffer = unsafe av_mallocz(size + Int(AV_INPUT_BUFFER_PADDING_SIZE)) else {
             throw FFmpegDecoderError.allocationFailed("extradata")
         }
-        extradata.withUnsafeBytes { raw in
+        unsafe extradata.withUnsafeBytes { raw in
             if let base = raw.baseAddress {
-                memcpy(buffer, base, size)
+                unsafe memcpy(buffer, base, size)
             }
         }
-        context.pointee.extradata = buffer.assumingMemoryBound(to: UInt8.self)
-        context.pointee.extradata_size = Int32(size)
+        unsafe context.pointee.extradata = unsafe buffer.assumingMemoryBound(to: UInt8.self)
+        unsafe context.pointee.extradata_size = Int32(size)
     }
 }

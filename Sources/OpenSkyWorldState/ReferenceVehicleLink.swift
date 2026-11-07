@@ -3,7 +3,7 @@
 // the live pose. Not saved: the opening cart ride allows no save.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public struct ReferenceVehicleLink: WorldStateComponent, Hashable, Sendable {
     public let carrier: ReferenceKey

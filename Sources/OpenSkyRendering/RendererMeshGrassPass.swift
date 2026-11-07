@@ -45,15 +45,15 @@ extension Renderer {
             drawsGrassWithMeshShaders, prepareMeshGrassBuffers(groupCount: groupCount),
             let counters = meshGrass.counters
         else { return }
-        let values = counters.contents().bindMemory(
+        let values = unsafe counters.contents().bindMemory(
             to: UInt32.self, capacity: 2 * GPUFactory.maxFramesInFlight
         )
-        meshGrass.lastCounts = MeshletCounts(
+        meshGrass.lastCounts = unsafe MeshletCounts(
             tested: Int(values[slot * 2]), drawn: Int(values[slot * 2 + 1]),
             meshes: meshGrass.meshlets.count
         )
-        values[slot * 2] = 0
-        values[slot * 2 + 1] = 0
+        unsafe values[slot * 2] = 0
+        unsafe values[slot * 2 + 1] = 0
     }
 
     /// Encodes `group` through the mesh pipeline; false leaves it to the classic draw.
@@ -116,7 +116,7 @@ extension Renderer {
                 frustum.left, frustum.right, frustum.bottom, frustum.top, frustum.near, frustum.far
             ]
             for (index, plane) in values.enumerated() {
-                planes.storeBytes(
+                unsafe planes.storeBytes(
                     of: plane, toByteOffset: index * MemoryLayout<SIMD4<Float>>.stride,
                     as: SIMD4<Float>.self
                 )
@@ -130,7 +130,7 @@ extension Renderer {
         uniforms.vertexCount = UInt32(meshlets.mesh.vertexCount)
         let offset = Self.meshGrassUniformStride
             * (slot * meshGrass.uniformCapacity + groupIndex)
-        buffer.contents().advanced(by: offset)
+        unsafe buffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<GrassMeshUniforms>.size)
         return buffer.gpuAddress + UInt64(offset)
     }
@@ -142,7 +142,7 @@ extension Renderer {
                 length: 2 * GPUFactory.maxFramesInFlight * MemoryLayout<UInt32>.stride,
                 label: "GrassMeshletCounters"
             )
-            meshGrass.counters?.contents().initializeMemory(
+            unsafe meshGrass.counters?.contents().initializeMemory(
                 as: UInt8.self, repeating: 0, count: 2 * GPUFactory.maxFramesInFlight * 4
             )
         }
@@ -160,7 +160,7 @@ extension Renderer {
         return meshGrass.counters != nil && meshGrass.uniforms != nil
     }
 
-    private func makeMeshGrassBuffer(length: Int, label: String) -> MTLBuffer? {
+    private func makeMeshGrassBuffer(length: Int, label: String) -> any MTLBuffer? {
         guard let buffer = device.makeBuffer(length: length, options: .storageModeShared) else {
             return nil
         }
@@ -194,7 +194,7 @@ extension Renderer {
     }
 
     /// Built on first use, so a run that never turns the path on compiles nothing.
-    private func meshGrassPipeline() -> MTLRenderPipelineState? {
+    private func meshGrassPipeline() -> any MTLRenderPipelineState? {
         if let pipeline = meshGrass.pipeline {
             return pipeline
         }

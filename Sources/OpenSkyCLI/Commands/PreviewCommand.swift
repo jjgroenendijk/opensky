@@ -95,7 +95,7 @@ enum PreviewCommand {
                 texture: frame.texture, to: directory.appending(path: view.image)
             )
             try PreviewReport.json(view).write(to: directory.appending(path: "\(view.view).json"))
-            let coverage = String(format: "%.1f", view.coverage * 100)
+            let coverage = unsafe String(format: "%.1f", view.coverage * 100)
             print("[INFO] \(view.view): \(view.drawCalls) draws, \(view.drawnInstances) "
                 + "instances, \(view.triangles) triangles, \(coverage)% covered"
                 + (view.blank ? " [ERROR] blank" : ""))

@@ -3,9 +3,9 @@
 // states exclude each other, so an illegal mix cannot be written.
 // See docs/engine/combat-behavior.md.
 
-import OpenSkyFormatsESM
-import OpenSkyMagicInterface
-import OpenSkyPerceptionInterface
+public import OpenSkyFormatsESM
+public import OpenSkyMagicInterface
+public import OpenSkyPerceptionInterface
 import simd
 
 /// Where one actor is in a fight.

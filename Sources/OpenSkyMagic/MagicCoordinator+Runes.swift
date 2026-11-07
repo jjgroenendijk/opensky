@@ -4,8 +4,8 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
 

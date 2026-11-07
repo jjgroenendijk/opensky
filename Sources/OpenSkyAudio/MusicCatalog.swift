@@ -6,8 +6,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Where the listener is, expressed as the only fields music selection reads.
 /// The streamer emits a fresh value whenever the center cell changes (exterior

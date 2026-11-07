@@ -1,7 +1,7 @@
 // Synthetic bhk payload builders. Layouts follow NifTools nif.xml; no game
 // bytes or extracted assets are fixtures (AGENTS.md legal boundary).
 
-import Foundation
+public import Foundation
 import simd
 
 public enum NIFCollisionFixture: Sendable {

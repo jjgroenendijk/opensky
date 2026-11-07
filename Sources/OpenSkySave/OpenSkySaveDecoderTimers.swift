@@ -1,8 +1,8 @@
 // PTMR chunk decoding: pending Papyrus update-timer slots. Shaped like the PSCR decoder:
 // the payload is its own `Data`, and the count passes `OpenSkySaveDecoder.validate`.
 
-import Foundation
-import OpenSkyScriptingInterface
+public import Foundation
+public import OpenSkyScriptingInterface
 
 nonisolated public enum OpenSkySaveTimerDecoder: Sendable {
     /// `PTMR` chunk: a timer count, then one entry per armed slot.

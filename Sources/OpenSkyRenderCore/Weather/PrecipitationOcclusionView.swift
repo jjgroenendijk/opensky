@@ -2,7 +2,7 @@
 // direction the rain falls and keeps the highest surface over each spot near the camera,
 // so rain below a roof can be hidden.
 
-import simd
+public import simd
 
 nonisolated public enum PrecipitationOcclusionView {
     /// Half the side of the square the view covers; rain spawns well inside it.

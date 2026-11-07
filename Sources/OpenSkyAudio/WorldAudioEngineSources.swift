@@ -3,11 +3,11 @@
 // purge. Split from WorldAudioEngine.swift (graph + volumes) to stay inside the
 // file-size limits; gain ramps live in WorldAudioEngineFades.swift.
 
-import AVFAudio
-import Foundation
-import OpenSkyFormatsAudio
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import AVFAudio
+public import Foundation
+public import OpenSkyFormatsAudio
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import simd
 
 /// How a source reaches the main mixer. Explicit rather than inferred from the
@@ -370,9 +370,9 @@ extension WorldAudioEngine {
             return true
         }
         silence.frameLength = 1
-        if let channels = silence.floatChannelData {
+        if let channels = unsafe silence.floatChannelData {
             for channel in 0 ..< Int(format.channelCount) {
-                channels[channel][0] = 0
+                unsafe channels[channel][0] = 0
             }
         }
         source.node.scheduleBuffer(silence, at: nil, options: .interruptsAtLoop) {

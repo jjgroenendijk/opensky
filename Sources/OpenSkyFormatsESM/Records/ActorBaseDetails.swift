@@ -2,7 +2,7 @@
 // style, overrides, sounds, destruction, and the face data (morphs, parts,
 // tint layers). Layout and sources: docs/formats/actors.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// One CSDT sound type with its CSDI and CSDC entries.

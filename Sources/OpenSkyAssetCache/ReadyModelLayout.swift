@@ -2,8 +2,8 @@
 // without reading the model's arrays, and where each mesh's ready bytes lie.
 
 import Foundation
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 /// One mesh of a cached model. Its byte ranges count from the start of the payload.
 nonisolated public struct ReadyMeshLayout: Equatable, Sendable {

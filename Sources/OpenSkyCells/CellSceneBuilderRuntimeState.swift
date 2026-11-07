@@ -5,9 +5,9 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One cell's references as a build should place them: the index entries every
 /// placement keeps, the deltas that applied to them, and the effective set that

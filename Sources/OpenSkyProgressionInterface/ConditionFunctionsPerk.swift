@@ -4,7 +4,7 @@
 // See docs/engine/condition-functions.md and docs/engine/perks.md.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {

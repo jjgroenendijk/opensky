@@ -3,11 +3,11 @@
 // transform, fill mapping, and CXFORM. Shapes use the movie's twip-space vertex
 // buffer; text uses the glyph-quad ring. Clip layers use a counting stencil.
 
-import Metal
+public import Metal
 import MetalKit
-import OpenSkyFormatsSWF
-import OpenSkyRenderCore
-import OpenSkyShaderTypes
+public import OpenSkyFormatsSWF
+public import OpenSkyRenderCore
+public import OpenSkyShaderTypes
 import simd
 
 extension Renderer {
@@ -153,16 +153,16 @@ extension Renderer {
     private func writeSWFFrameData(frame: SWFFrameBuilder, movie: SWFMovieResources, slot: Int) {
         let uniformStride = Self.alignedSWFUniformsSize
         let uniformBase = slot * max(1, movie.drawCapacity) * uniformStride
-        let contents = movie.uniformBuffer.contents()
+        let contents = unsafe movie.uniformBuffer.contents()
         for (index, var uniforms) in frame.uniforms.enumerated() {
-            contents.advanced(by: uniformBase + index * uniformStride)
+            unsafe contents.advanced(by: uniformBase + index * uniformStride)
                 .copyMemory(from: &uniforms, byteCount: MemoryLayout<SWFDrawUniforms>.size)
         }
         let glyphBase = slot * max(1, movie.glyphQuadCapacity) * 6
             * MemoryLayout<SWFVertex>.stride
         frame.glyphVertices.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            movie.glyphVertexBuffer.contents().advanced(by: glyphBase)
+            unsafe movie.glyphVertexBuffer.contents().advanced(by: glyphBase)
                 .copyMemory(from: base, byteCount: bytes.count)
         }
     }

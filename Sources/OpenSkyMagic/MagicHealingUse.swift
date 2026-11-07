@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Health one healing effect gave back, already scaled by the effect's skill usage factor.

@@ -6,7 +6,7 @@
 // Documented in docs/engine/vendor-factions.md and docs/engine/papyrus-activation.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 /// The barter operation a Papyrus native may perform.

@@ -3,7 +3,7 @@
 // `LookLeft`, ...), read from the head TRI on the install. See docs/engine/face-morphs.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum FacialExpressionCore {
     /// The TRI target an `INFO` `TRDT` emotion shows, at `value` out of 100.

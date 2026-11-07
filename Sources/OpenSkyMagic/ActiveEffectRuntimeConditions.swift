@@ -6,7 +6,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyMagicInterface
 
 extension ActiveEffectRuntime {

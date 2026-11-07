@@ -2,12 +2,12 @@
 // feeds the real encoder; the byte builders write a file field by field, so a
 // corruption test can put an exact bad value at an exact offset.
 
-import Foundation
-@testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyGameData
-@testable import OpenSkySave
-@testable import OpenSkyWorldState
+public import Foundation
+@testable public import OpenSkyFormatsCore
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyGameData
+@testable public import OpenSkySave
+@testable public import OpenSkyWorldState
 import simd
 
 nonisolated public enum OpenSkySaveFixture {

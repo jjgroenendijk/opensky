@@ -3,7 +3,7 @@
 // furniture seats through `PapyrusFurnitureBridge`.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 /// What the furniture natives reach. The app answers it.

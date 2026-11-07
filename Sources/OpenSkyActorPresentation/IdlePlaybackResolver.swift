@@ -3,11 +3,11 @@
 // graph loads for it. See docs/engine/idle-runtime.md.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
+public import OpenSkyBehavior
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyGameData
 import Synchronization
 
 /// Which way an idle reached its clip.

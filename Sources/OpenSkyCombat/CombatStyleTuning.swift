@@ -4,8 +4,8 @@
 // The table and its reasons: docs/engine/combat-behavior.md#combat-style.
 
 import Foundation
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
 
 /// The style numbers the machine reads, already defaulted, so a test can
 /// write one without building a record.

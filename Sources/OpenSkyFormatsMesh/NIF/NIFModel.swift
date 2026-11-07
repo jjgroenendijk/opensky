@@ -4,7 +4,7 @@
 // skips the asset. See docs/formats/nif.md "Scene graph -> engine mesh".
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated extension NIFFile {

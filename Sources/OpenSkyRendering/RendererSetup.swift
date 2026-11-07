@@ -1,9 +1,9 @@
 // Renderer setup factories: pipelines, depth state, sampler, uniform buffers, residency
 // set. Static, with the device passed in (docs/rendering/metal4-renderer.md).
 
-import Metal
-import MetalKit
-import OpenSkyRenderResources
+public import Metal
+public import MetalKit
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -11,35 +11,35 @@ import simd
 
 /// Skinned shapes with a blending alpha property, such as beards and brows.
 nonisolated public struct SkinnedBlendedPipelines: Sendable {
-    public let skinned: MTLRenderPipelineState
-    public let morphed: MTLRenderPipelineState
+    public let skinned: any MTLRenderPipelineState
+    public let morphed: any MTLRenderPipelineState
 }
 
 /// Shapes whose blend adds light, such as glow cards, by mesh kind.
 nonisolated public struct AdditivePipelines: Sendable {
-    public let staticMesh: MTLRenderPipelineState
-    public let skinned: MTLRenderPipelineState
-    public let morphed: MTLRenderPipelineState
+    public let staticMesh: any MTLRenderPipelineState
+    public let skinned: any MTLRenderPipelineState
+    public let morphed: any MTLRenderPipelineState
 }
 
 /// The scene pass's pipeline states, built together from one library.
 nonisolated public struct RenderPipelines: Sendable {
-    public let sky: MTLRenderPipelineState
+    public let sky: any MTLRenderPipelineState
     /// The cloud layers and the sky objects drawn over the gradient.
     public let skyLayers: SkyLayerPipelines
-    public let opaque: MTLRenderPipelineState
-    public let alphaTest: MTLRenderPipelineState
+    public let opaque: any MTLRenderPipelineState
+    public let alphaTest: any MTLRenderPipelineState
     /// Shapes with a blending alpha property, drawn after water.
-    public let blended: MTLRenderPipelineState
+    public let blended: any MTLRenderPipelineState
     public let skinnedBlended: SkinnedBlendedPipelines
     public let additive: AdditivePipelines
-    public let skinnedOpaque: MTLRenderPipelineState
-    public let skinnedAlphaTest: MTLRenderPipelineState
-    public let morphedSkinnedOpaque: MTLRenderPipelineState
-    public let morphedSkinnedAlphaTest: MTLRenderPipelineState
-    public let grass: MTLRenderPipelineState
-    public let terrain: MTLRenderPipelineState
-    public let water: MTLRenderPipelineState
+    public let skinnedOpaque: any MTLRenderPipelineState
+    public let skinnedAlphaTest: any MTLRenderPipelineState
+    public let morphedSkinnedOpaque: any MTLRenderPipelineState
+    public let morphedSkinnedAlphaTest: any MTLRenderPipelineState
+    public let grass: any MTLRenderPipelineState
+    public let terrain: any MTLRenderPipelineState
+    public let water: any MTLRenderPipelineState
     public let particles: ParticlePipelines
     /// Ribbon bands: strips, rain streaks, and lightning.
     public let ribbons: ParticlePipelines
@@ -49,12 +49,12 @@ nonisolated public struct RenderPipelines: Sendable {
 }
 
 nonisolated public struct ParticlePipelines: Sendable {
-    public let alpha: MTLRenderPipelineState
-    public let additive: MTLRenderPipelineState
-    public let additiveOne: MTLRenderPipelineState
-    public let multiply: MTLRenderPipelineState
+    public let alpha: any MTLRenderPipelineState
+    public let additive: any MTLRenderPipelineState
+    public let additiveOne: any MTLRenderPipelineState
+    public let multiply: any MTLRenderPipelineState
 
-    public func pipeline(for mode: ParticleBlendMode) -> MTLRenderPipelineState {
+    public func pipeline(for mode: ParticleBlendMode) -> any MTLRenderPipelineState {
         switch mode {
         case .alpha: alpha
         case .additive: additive
@@ -67,23 +67,23 @@ nonisolated public struct ParticlePipelines: Sendable {
 /// Sun-shadow depth pipelines, no color attachment. `alphaTest` discards; `skinned`
 /// covers opaque and alpha-tested skinned casters, which cast a solid shadow.
 nonisolated public struct ShadowPipelines: Sendable {
-    public let staticCaster: MTLRenderPipelineState
-    public let alphaTest: MTLRenderPipelineState
-    public let skinned: MTLRenderPipelineState
-    public let morphedSkinned: MTLRenderPipelineState
+    public let staticCaster: any MTLRenderPipelineState
+    public let alphaTest: any MTLRenderPipelineState
+    public let skinned: any MTLRenderPipelineState
+    public let morphedSkinned: any MTLRenderPipelineState
     /// Skinned cutouts, such as hair and fur cards: sample the texture and discard.
-    public let skinnedAlphaTest: MTLRenderPipelineState
-    public let morphedSkinnedAlphaTest: MTLRenderPipelineState
-    public let terrain: MTLRenderPipelineState
+    public let skinnedAlphaTest: any MTLRenderPipelineState
+    public let morphedSkinnedAlphaTest: any MTLRenderPipelineState
+    public let terrain: any MTLRenderPipelineState
 }
 
 /// Every long-lived sun-shadow GPU object, built + stored as a unit so the
 /// renderer init/state stays compact.
 nonisolated public struct ShadowResources {
     public let pipelines: ShadowPipelines
-    public let sampler: MTLSamplerState
+    public let sampler: any MTLSamplerState
     /// Replaced when the player picks another shadow map resolution.
-    public internal(set) var map: MTLTexture
+    public internal(set) var map: any MTLTexture
 }
 
 extension Renderer {
@@ -132,14 +132,16 @@ extension Renderer {
         3
     }
 
-    static func makeEndFrameEvent(device: MTLDevice) throws -> MTLSharedEvent {
+    static func makeEndFrameEvent(device: any MTLDevice) throws -> any MTLSharedEvent {
         guard let event = device.makeSharedEvent() else {
             throw RendererError.sharedEventUnavailable
         }
         return event
     }
 
-    public static func makeCommandAllocators(device: MTLDevice) throws -> [MTL4CommandAllocator] {
+    public static func makeCommandAllocators(device: any MTLDevice) throws
+        -> [any MTL4CommandAllocator]
+    {
         try (0 ..< GPUFactory.maxFramesInFlight).map { _ in
             guard let allocator = device.makeCommandAllocator() else {
                 throw RendererError.commandAllocatorUnavailable
@@ -150,7 +152,7 @@ extension Renderer {
 
     /// The image-space composite pass and the effect layer.
     static func makeEffectResources(
-        view: MTKView, library: MTLLibrary, compiler: PipelineCache
+        view: MTKView, library: any MTLLibrary, compiler: PipelineCache
     ) throws -> ((ImageSpacePassResources, EffectLayer), (GPUCullState, UpscaleState)) {
         let device = compiler.device
         return try (
@@ -174,7 +176,7 @@ extension Renderer {
     /// Grouping their factories keeps Renderer.init below the strict body cap.
     public static func makeAuxiliaryResources(
         view: MTKView,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache
     ) throws -> (
         shadowAndUI: (ShadowResources, UIResources),
@@ -202,7 +204,7 @@ extension Renderer {
     /// Argument table sized for the whole scene pass. Buffers: vertices,
     /// frame + draw uniforms, terrain weights, instance transforms, particles.
     /// Textures: base diffuse + the terrain layer array.
-    public static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
+    public static func makeArgumentTable(device: any MTLDevice) throws -> any MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
         // Highest buffer index is the post-effect uniforms.
         descriptor.maxBufferBindCount = BufferIndex.postEffectUniforms.rawValue + 1
@@ -215,14 +217,16 @@ extension Renderer {
 
     /// Per-frame uniform ring: one aligned slot per in-flight frame.
     /// The frame uniforms and the cube bound where a material has no cube map.
-    static func makeFrameResources(device: MTLDevice) throws -> (MTLBuffer, MTLTexture) {
+    static func makeFrameResources(device: any MTLDevice) throws
+        -> (any MTLBuffer, any MTLTexture)
+    {
         try (
             makeFrameUniformBuffer(device: device),
             TextureLoader.makePlaceholder(device: device, usage: .cube)
         )
     }
 
-    public static func makeFrameUniformBuffer(device: MTLDevice) throws -> MTLBuffer {
+    public static func makeFrameUniformBuffer(device: any MTLDevice) throws -> any MTLBuffer {
         try GPUFactory.makeUniformBuffer(
             device: device,
             length: alignedFrameUniformsSize * GPUFactory.maxFramesInFlight,
@@ -232,7 +236,7 @@ extension Renderer {
 
     /// The shaders the app and openskycli compile into `default.metallib` in
     /// their own bundle.
-    public static func makeBundledShaderLibrary(device: MTLDevice) throws -> MTLLibrary {
+    public static func makeBundledShaderLibrary(device: any MTLDevice) throws -> any MTLLibrary {
         guard let library = device.makeDefaultLibrary() else {
             throw RendererError.defaultLibraryMissing
         }
@@ -241,14 +245,14 @@ extension Renderer {
 
     public static func makePipelines(
         view: MTKView,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache
     ) throws -> RenderPipelines {
         func makeVariant(
             alphaTest: Bool,
             skinned: Bool = false,
             morphed: Bool = false
-        ) throws -> MTLRenderPipelineState {
+        ) throws -> any MTLRenderPipelineState {
             try makeMeshPipeline(
                 MeshPipelineVariant(alphaTest: alphaTest, skinned: skinned, morphed: morphed),
                 library: library, compiler: compiler, view: view
@@ -302,11 +306,11 @@ extension Renderer {
     }
 
     private static func makeAdditivePipelines(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
     ) throws -> AdditivePipelines {
-        func make(skinned: Bool, morphed: Bool) throws -> MTLRenderPipelineState {
+        func make(skinned: Bool, morphed: Bool) throws -> any MTLRenderPipelineState {
             var variant = MeshPipelineVariant(
                 alphaTest: true, skinned: skinned, morphed: morphed, blended: true
             )
@@ -321,7 +325,7 @@ extension Renderer {
     }
 
     private static func makeRibbonPipelines(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
     ) throws -> ParticlePipelines {
@@ -334,7 +338,7 @@ extension Renderer {
     }
 
     private static func makeParticlePipelines(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
     ) throws -> ParticlePipelines {
@@ -356,11 +360,11 @@ extension Renderer {
     /// One pipeline per blend mode for a vertex and fragment function pair.
     static func makeBlendPipelines(
         _ names: BlendPipelineNames,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
     ) throws -> ParticlePipelines {
-        func make(_ mode: ParticleBlendMode) throws -> MTLRenderPipelineState {
+        func make(_ mode: ParticleBlendMode) throws -> any MTLRenderPipelineState {
             try makeParticlePipeline(
                 library: library, compiler: compiler, view: view, mode: mode, names: names
             )
@@ -372,10 +376,10 @@ extension Renderer {
     }
 
     private static func makeSkyPipeline(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = "skyVertex"
@@ -392,10 +396,10 @@ extension Renderer {
     }
 
     private static func makeCloudPipeline(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = "cloudVertex"
@@ -420,10 +424,10 @@ extension Renderer {
     }
 
     private static func makeWaterPipeline(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = "waterVertex"
@@ -450,12 +454,12 @@ extension Renderer {
     }
 
     private static func makeParticlePipeline(
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView,
         mode: ParticleBlendMode,
         names: BlendPipelineNames
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = names.vertex
@@ -496,13 +500,15 @@ extension Renderer {
     /// The scene's material depth states, then the water one. Metal 4 binds the depth
     /// attachment format at pass time (MTKView `depth32Float`), not in the pipeline.
     static func makeDepthStates(
-        device: MTLDevice
-    ) throws -> (MaterialDepthStates, MTLDepthStencilState) {
+        device: any MTLDevice
+    ) throws -> (MaterialDepthStates, any MTLDepthStencilState) {
         try (MaterialDepthStates(device: device), makeWaterDepthState(device: device))
     }
 
     /// Water tests opaque depth but does not write depth while blending.
-    public static func makeWaterDepthState(device: MTLDevice) throws -> MTLDepthStencilState {
+    public static func makeWaterDepthState(device: any MTLDevice) throws
+        -> any MTLDepthStencilState
+    {
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.label = "WaterReadOnlyDepth"
         descriptor.depthCompareFunction = .less
@@ -515,7 +521,7 @@ extension Renderer {
 
     /// Mipmapped trilinear + anisotropic sampler, repeat addressing (world
     /// textures tile). Argument-table binding needs the GPU resource ID.
-    public static func makeSampler(device: MTLDevice) throws -> MTLSamplerState {
+    public static func makeSampler(device: any MTLDevice) throws -> any MTLSamplerState {
         let descriptor = MTLSamplerDescriptor()
         descriptor.label = "TrilinearAniso"
         descriptor.minFilter = .linear

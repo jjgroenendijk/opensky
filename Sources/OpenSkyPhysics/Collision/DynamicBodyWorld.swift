@@ -4,10 +4,10 @@
 // kept sorted by `ReferenceKey`, so trajectories do not depend on hashing.
 // See docs/engine/dynamic-bodies.md.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import simd
 
 /// A body a cell build produced, before the runtime gives it a pose.
 nonisolated public struct DynamicBodyPlacement: Sendable {

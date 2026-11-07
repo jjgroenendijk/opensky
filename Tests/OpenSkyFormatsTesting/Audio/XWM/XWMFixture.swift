@@ -1,7 +1,7 @@
 // Synthetic xWMA builder for the `.xwm` framing tests. Payload bytes are
 // counters, not audio. Layout: docs/formats/xwm.md.
 
-import Foundation
+public import Foundation
 
 public enum XWMFixture: Sendable {
     /// WAVE_FORMAT_WMAUDIO2, the tag vanilla Skyrim SE `.xwm` files carry.

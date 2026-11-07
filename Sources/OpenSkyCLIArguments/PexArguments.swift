@@ -1,4 +1,4 @@
-import ArgumentParser
+public import ArgumentParser
 
 public struct PexArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(

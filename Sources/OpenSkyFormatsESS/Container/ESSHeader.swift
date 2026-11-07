@@ -1,7 +1,7 @@
 // The `.ess` header and screenshot: everything before the body, which a save list
 // reads without decompressing anything. See docs/formats/ess.md#header.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum ESSCompression: UInt16, Sendable {
     case none = 0

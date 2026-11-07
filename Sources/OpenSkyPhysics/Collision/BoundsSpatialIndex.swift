@@ -4,7 +4,7 @@
 // one broadphase implementation. Query output is sorted so physics and tests
 // see a deterministic candidate order.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct BoundsSpatialIndex: Sendable {

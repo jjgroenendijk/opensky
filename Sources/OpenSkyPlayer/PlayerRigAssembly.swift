@@ -2,12 +2,12 @@
 // its mesh caches live there. The main actor binds the meshes to the live pose.
 // See docs/engine/player-camera.md, "The player body".
 
-import OpenSkyActorPresentation
-import OpenSkyFormatsAnimation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyRendering
-import OpenSkyRenderResources
+public import OpenSkyActorPresentation
+public import OpenSkyFormatsAnimation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyRendering
+public import OpenSkyRenderResources
 
 /// One rig to assemble. A result whose `generation` is not the newest is dropped.
 nonisolated public struct PlayerRigRequest: Equatable, Sendable {

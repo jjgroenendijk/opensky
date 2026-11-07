@@ -3,7 +3,7 @@
 // lives in Strings/<plugin>_<language>.{strings,dlstrings,ilstrings}.
 // Layout and sources: docs/formats/strings.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum StringTableError: Error, Equatable, Sendable {
     case malformed(String)

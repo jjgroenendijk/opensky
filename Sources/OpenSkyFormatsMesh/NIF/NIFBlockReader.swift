@@ -3,7 +3,7 @@
 // with. Layout: docs/formats/nif.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated extension BinaryReader {
     /// A string-table index. Nil for -1 or an index past the table: vanilla tables

@@ -4,7 +4,7 @@
 // `CraftButtonPress` to craft and `CloseMenu` to leave. See docs/engine/crafting.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum CraftingMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\craftingmenu.swf"

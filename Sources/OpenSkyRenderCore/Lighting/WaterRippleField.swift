@@ -3,7 +3,7 @@
 // WATR displacement fields. Pure; see docs/rendering/water.md#displacement.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct WaterRipple: Equatable, Sendable {

@@ -85,7 +85,7 @@ struct TerrainSplatRenderTests {
     /// One 512x512 terrain quad at z = 0: red base, green layer, layer
     /// weight 0 on west vertices and 1 on east vertices.
     private static func terrainScene(
-        device: MTLDevice,
+        device: any MTLDevice,
         normal: SIMD4<UInt8>
     ) throws -> RenderScene {
         let mesh = Mesh(
@@ -111,11 +111,12 @@ struct TerrainSplatRenderTests {
             SIMD4(1, 0, 0, 0), .zero, // v2 east
             .zero, .zero // v3 west
         ]
-        let weightsBuffer = try #require(device.makeBuffer(
+        let madeWeightsBuffer = unsafe device.makeBuffer(
             bytes: weights,
             length: weights.count * MemoryLayout<SIMD4<Float>>.stride,
             options: .storageModeShared
-        ))
+        )
+        let weightsBuffer = try #require(madeWeightsBuffer)
 
         let base = try solidTexture(device: device, rgba: SIMD4(255, 0, 0, 255), label: "base-red")
         let layer = try solidTexture(
@@ -142,11 +143,11 @@ struct TerrainSplatRenderTests {
     }
 
     private static func solidTexture(
-        device: MTLDevice,
+        device: any MTLDevice,
         rgba: SIMD4<UInt8>,
         label: String,
         pixelFormat: MTLPixelFormat = .rgba8Unorm_srgb
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2D
         descriptor.pixelFormat = pixelFormat
@@ -160,7 +161,7 @@ struct TerrainSplatRenderTests {
         for _ in 0 ..< 16 {
             bytes.append(contentsOf: [rgba.x, rgba.y, rgba.z, rgba.w])
         }
-        texture.replace(
+        unsafe texture.replace(
             region: MTLRegionMake2D(0, 0, 4, 4),
             mipmapLevel: 0,
             withBytes: bytes,

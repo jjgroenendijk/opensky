@@ -1,8 +1,8 @@
 // Synthetic Skyrim PEX 3.2 builder. Every byte is assembled in code from the
 // public UESP layout; no compiled game script is committed.
 
-import Foundation
-@testable import OpenSkyFormatsPEX
+public import Foundation
+@testable public import OpenSkyFormatsPEX
 
 public enum PexFixture: Sendable {
     public enum Value: Sendable {
@@ -256,7 +256,7 @@ public enum PexFixture: Sendable {
 
 extension Data {
     fileprivate mutating func appendBigEndian(_ value: some FixedWidthInteger) {
-        Swift.withUnsafeBytes(of: value.bigEndian) { append(contentsOf: $0) }
+        Swift.withUnsafeBytes(of: value.bigEndian) { unsafe append(contentsOf: $0) }
     }
 
     fileprivate mutating func appendPexString(_ string: String) {

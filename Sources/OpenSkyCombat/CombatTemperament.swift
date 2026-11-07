@@ -4,9 +4,9 @@
 // (docs/engine/combat-behavior.md, "Confidence and Assistance").
 
 import Foundation
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public struct CombatTemperament: Equatable, Sendable {
     /// `Confidence` actor value: 0 cowardly through 4 foolhardy.

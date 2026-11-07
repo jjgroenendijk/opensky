@@ -2,8 +2,8 @@
 // three-byte ref id. Every read failure becomes `ESSError.truncated` naming the
 // structure. See docs/formats/ess.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct ESSReader: Sendable {
     private var reader: BinaryReader

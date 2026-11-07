@@ -3,8 +3,8 @@
 // and their sources: docs/engine/idle-runtime.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public enum IdleSelectionOrder: Equatable, Sendable {
     /// Any passing candidate, picked at random.

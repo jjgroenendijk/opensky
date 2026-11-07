@@ -1,16 +1,16 @@
 // The GPU half of `EffectShading`: the resolved palette texture and the values
 // the static-mesh fragment reads from `DrawUniforms`.
 
-@preconcurrency import Metal
-import OpenSkyFormatsCore
+@preconcurrency @unsafe public import Metal
+public import OpenSkyFormatsCore
 import OpenSkyShaderTypes
 import simd
 
 nonisolated public struct RenderEffectMaterial: Sendable {
     /// Nil when the shape names no palette; the diffuse is bound in its place.
-    public let palette: MTLTexture?
+    public let palette: any MTLTexture?
     /// The source texture when its file is a volume; the diffuse then holds a placeholder.
-    public let sourceVolume: MTLTexture?
+    public let sourceVolume: any MTLTexture?
     /// `EffectFlag` bits.
     public private(set) var flags: UInt32
     public let baseColor: SIMD4<Float>
@@ -36,7 +36,11 @@ nonisolated public struct RenderEffectMaterial: Sendable {
     }
 
     /// `palette` is the resolved palette texture, nil when the shading uses none.
-    public init(shading: EffectShading, palette: MTLTexture?, sourceVolume: MTLTexture? = nil) {
+    public init(
+        shading: EffectShading,
+        palette: any MTLTexture?,
+        sourceVolume: any MTLTexture? = nil
+    ) {
         self.palette = palette
         self.sourceVolume = sourceVolume
         flags = Self.flags(shading, hasPalette: palette != nil)

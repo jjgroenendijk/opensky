@@ -2,11 +2,11 @@
 // `ReferenceKey`. A rank outside -4...4 is kept, because clamping would invent a
 // rank the script did not set.
 
-import Foundation
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One actor's saved relationship overrides, before they are merged back into
 /// the delta.

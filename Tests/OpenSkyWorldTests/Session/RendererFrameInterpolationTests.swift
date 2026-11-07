@@ -35,7 +35,7 @@ struct RendererFrameInterpolationTests {
         try await renderer.settleUpscaler(width: width, height: height)
     }
 
-    private static func pixels(_ texture: MTLTexture) -> TexturePixels {
+    private static func pixels(_ texture: any MTLTexture) -> TexturePixels {
         TexturePixels(
             width: width, height: height, rgba: OffscreenRendererFixture.pixels(of: texture)
         )

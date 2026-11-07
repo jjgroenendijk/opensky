@@ -2,7 +2,7 @@
 // them for the body-weight layers, such as `mt_idle_skinny.hkx` (docs/formats/hka-animation.md).
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import simd
 
 nonisolated extension BehaviorPoseMath {

@@ -2,12 +2,12 @@
 // asks of the running session. The app answers it; a test passes a fake.
 // See docs/engine/coordinators.md.
 
-import OpenSkyCrimeInterface
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldInterface
+public import OpenSkyCrimeInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldInterface
 import simd
 
 /// What `CrimeCoordinator` reads from and asks of the running world.

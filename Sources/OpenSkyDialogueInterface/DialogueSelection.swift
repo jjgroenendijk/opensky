@@ -3,8 +3,8 @@
 // readout needs the trace, so selection keeps every `ConditionOutcome`.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 /// Why one response was not chosen.
 ///

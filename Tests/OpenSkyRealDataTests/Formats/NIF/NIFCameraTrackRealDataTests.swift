@@ -33,12 +33,16 @@ struct NIFCameraTrackRealDataTests {
                 animated += track.keys?.translations.isEmpty == false ? 1 : 0
                 let start = track.translation(at: track.startTime)
                 let end = track.translation(at: track.stopTime)
+                let fieldOfView = unsafe String(
+                    format: "fov %.0f",
+                    track.horizontalFieldOfView * 180 / .pi
+                )
                 lines.append(
                     "  \(path): \(track.startTime)...\(track.stopTime) s, "
                         + "\(track.keys?.translations.count ?? 0) moves, "
                         + "\(track.keys?.rotations.count ?? 0) turns (\(rotation)), "
                         + "eye \(Self.text(start)) -> \(Self.text(end)), "
-                        + String(format: "fov %.0f", track.horizontalFieldOfView * 180 / .pi)
+                        + fieldOfView
                 )
             } catch {
                 failures.append("  \(path): \(error)")
@@ -62,6 +66,6 @@ struct NIFCameraTrackRealDataTests {
     }
 
     private static func text(_ value: SIMD3<Float>) -> String {
-        String(format: "(%.0f, %.0f, %.0f)", value.x, value.y, value.z)
+        unsafe String(format: "(%.0f, %.0f, %.0f)", value.x, value.y, value.z)
     }
 }

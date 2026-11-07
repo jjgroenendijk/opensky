@@ -4,8 +4,8 @@
 // Recipes use them. See docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 /// Reads one holder's items on demand, so a condition can ask about any actor or
 /// container, not only the holders a context copied in. Each answers nil without a holder.

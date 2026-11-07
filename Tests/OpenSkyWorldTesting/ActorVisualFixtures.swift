@@ -3,10 +3,10 @@
 // boundary"). Used by ActorVisualResolutionTests.
 
 import Foundation
-@testable import OpenSkyActorPresentation
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyActorPresentation
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
+@testable public import OpenSkyGameData
 
 /// Standard scenario: one race (skin torso+feet), an alternate skin, clothes
 /// covering the body slot reachable directly (outfit) or through an LVLI

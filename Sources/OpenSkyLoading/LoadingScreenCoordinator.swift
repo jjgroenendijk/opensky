@@ -4,9 +4,9 @@
 // See docs/engine/loading-screens.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldConditions
 import simd
 

@@ -5,7 +5,7 @@
 // real `.swf` (AGENTS.md "Legal & IP boundary").
 
 import Foundation
-@testable import OpenSkyFormatsSWF
+@testable public import OpenSkyFormatsSWF
 
 public enum SWFRuntimeFixture: Sendable {
     public typealias Action = AS2Fixture.Action

@@ -1,11 +1,11 @@
 // Trigger-volume occupancy and edge events, diffed against the last frame. Once per
 // rendered frame, not per physics substep, and in walk mode only: fly mode has no body.
 
-import OpenSkyCells
+public import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyPhysics
-import OpenSkyPlayer
+public import OpenSkyPhysics
+public import OpenSkyPlayer
 import OpenSkyWorldState
 import simd
 

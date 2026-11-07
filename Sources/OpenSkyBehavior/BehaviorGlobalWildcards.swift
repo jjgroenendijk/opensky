@@ -4,7 +4,7 @@
 // target. Rule and evidence: docs/engine/behavior-state-machines.md.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// A global wildcard as one ancestor machine sees it: which of its own states
 /// to enter, then the start state of each machine below, outermost first.

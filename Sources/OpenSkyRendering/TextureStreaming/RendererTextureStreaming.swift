@@ -3,9 +3,9 @@
 // frames ago. Draws bind a view that starts at the resident level, so the sampler never
 // reads an unmapped level. See docs/rendering/texture-streaming.md.
 
-import Metal
+public import Metal
 import OpenSkyAssetCache
-import OpenSkyRenderResources
+public import OpenSkyRenderResources
 
 /// What the Texture Streaming readout shows.
 nonisolated public struct TextureStreamingStats: Equatable, Sendable {
@@ -25,7 +25,7 @@ nonisolated public struct TextureStreamingStats: Equatable, Sendable {
 
 /// One streamed texture. Levels `residentLevel` and smaller are mapped.
 final class StreamedTextureEntry {
-    weak var texture: MTLTexture?
+    weak var texture: any MTLTexture?
     let source: TextureStreamSource
     let layout: SparseTextureLayout
     var residentLevel: Int
@@ -33,7 +33,7 @@ final class StreamedTextureEntry {
     var tiles: [Int: [SparseTile]] = [:]
     /// A view keeps its parent texture alive, so an unbound view is dropped
     /// (`releaseUnboundViews`); else the texture, and its tiles, would never die.
-    var view: MTLTexture?
+    var view: any MTLTexture?
     var lastBoundFrame = 0
     /// The first level of a read in flight.
     var requestedLevel: Int?
@@ -41,7 +41,7 @@ final class StreamedTextureEntry {
     var unmapAfterFrame: UInt64?
     var unmapLevels: Range<Int> = 0 ..< 0
 
-    init(texture: MTLTexture, source: TextureStreamSource, layout: SparseTextureLayout) {
+    init(texture: any MTLTexture, source: TextureStreamSource, layout: SparseTextureLayout) {
         self.texture = texture
         self.source = source
         self.layout = layout
@@ -49,7 +49,7 @@ final class StreamedTextureEntry {
     }
 
     /// The texture a draw binds: a view of the resident levels.
-    func binding(for texture: MTLTexture, frame: Int) -> MTLTexture {
+    func binding(for texture: any MTLTexture, frame: Int) -> any MTLTexture {
         lastBoundFrame = frame
         if let view {
             return view
@@ -65,7 +65,7 @@ final class StreamedTextureEntry {
 
 /// A copy of staged levels into a texture, encoded before the frame's passes.
 struct StreamedTextureUpload {
-    let texture: MTLTexture
+    let texture: any MTLTexture
     let levels: TextureLevelBytes
     let copyLevels: Range<Int>
 }
@@ -79,12 +79,12 @@ public struct TextureStreamingState {
     public var budgetBytes = 512 << 20
     /// The frame target's height, for the distance rule.
     var viewHeight = 1080
-    var staging: [(frame: UInt64, buffers: [MTLBuffer])] = []
+    var staging: [(frame: UInt64, buffers: [any MTLBuffer])] = []
     /// Staging buffers the GPU has finished with, kept resident for the next upload.
-    var freeStaging: [MTLBuffer] = []
+    var freeStaging: [any MTLBuffer] = []
     public internal(set) var stats = TextureStreamingStats()
 
-    init(device: MTLDevice) {
+    init(device: any MTLDevice) {
         pool = SparseTilePool(device: device, pageSize: TextureStreamingLoadSettings().pageSize)
     }
 
@@ -98,7 +98,7 @@ public struct TextureStreamingState {
 
 extension Renderer {
     /// The texture a draw binds for `texture`: itself, or the view of a streamed one.
-    func streamedBinding(_ texture: MTLTexture) -> MTLResourceID {
+    func streamedBinding(_ texture: any MTLTexture) -> MTLResourceID {
         guard
             !textureStreaming.entries.isEmpty,
             let entry = textureStreaming.entries[ObjectIdentifier(texture)]
@@ -150,7 +150,7 @@ extension Renderer {
         )
     }
 
-    private func raise(_ texture: MTLTexture, with levels: TextureLevelBytes)
+    private func raise(_ texture: any MTLTexture, with levels: TextureLevelBytes)
         -> StreamedTextureUpload?
     {
         guard let entry = textureStreaming.entries[ObjectIdentifier(texture)] else { return nil }
@@ -181,7 +181,7 @@ extension Renderer {
     /// Maps tiles for `levels`; the tail counts as one level. False when the pool is out
     /// of memory, with nothing mapped.
     private func mapLevels(
-        _ levels: Range<Int>, of entry: StreamedTextureEntry, texture: MTLTexture
+        _ levels: Range<Int>, of entry: StreamedTextureEntry, texture: any MTLTexture
     ) -> Bool {
         let layout = entry.layout
         let tiled = levels.filter { $0 < layout.firstLevelInTail && entry.tiles[$0] == nil }
@@ -290,8 +290,8 @@ extension Renderer {
         encoder.barrier(
             afterQueueStages: .resourceState, beforeStages: .blit, visibilityOptions: .device
         )
-        var buffers: [MTLBuffer] = []
-        var created: [MTLBuffer] = []
+        var buffers: [any MTLBuffer] = []
+        var created: [any MTLBuffer] = []
         for upload in uploads {
             guard let staged = stagingBuffer(upload.levels) else { continue }
             buffers.append(staged.buffer)
@@ -314,8 +314,13 @@ extension Renderer {
 
     /// The smallest free staging buffer that fits, or a new one sized to a power of two
     /// so later uploads can reuse it. Only a new buffer changes the residency set.
-    private func stagingBuffer(_ levels: TextureLevelBytes) -> (buffer: MTLBuffer, isNew: Bool)? {
-        levels.ready.bytes.withUnsafeBytes { bytes -> (buffer: MTLBuffer, isNew: Bool)? in
+    private func stagingBuffer(_ levels: TextureLevelBytes)
+        -> (buffer: any MTLBuffer, isNew: Bool)?
+    {
+        unsafe levels.ready.bytes.withUnsafeBytes { bytes -> (
+            buffer: any MTLBuffer,
+            isNew: Bool
+        )? in
             guard let source = bytes.baseAddress else { return nil }
             let fitting = textureStreaming.freeStaging.indices
                 .filter { textureStreaming.freeStaging[$0].length >= bytes.count }
@@ -325,14 +330,14 @@ extension Renderer {
                 }
             if let fitting {
                 let buffer = textureStreaming.freeStaging.remove(at: fitting)
-                buffer.contents().copyMemory(from: source, byteCount: bytes.count)
+                unsafe buffer.contents().copyMemory(from: source, byteCount: bytes.count)
                 return (buffer, false)
             }
             let length = max(Self.minimumStagingBytes, Self.powerOfTwo(atLeast: bytes.count))
             guard let buffer = device.makeBuffer(length: length, options: .storageModeShared) else {
                 return nil
             }
-            buffer.contents().copyMemory(from: source, byteCount: bytes.count)
+            unsafe buffer.contents().copyMemory(from: source, byteCount: bytes.count)
             return (buffer, true)
         }
     }
@@ -342,8 +347,8 @@ extension Renderer {
     }
 
     private func copy(
-        _ upload: StreamedTextureUpload, from buffer: MTLBuffer,
-        encoder: MTL4ComputeCommandEncoder
+        _ upload: StreamedTextureUpload, from buffer: any MTLBuffer,
+        encoder: any MTL4ComputeCommandEncoder
     ) {
         let ready = upload.levels.ready
         for level in upload.copyLevels where upload.levels.levels.contains(level) {

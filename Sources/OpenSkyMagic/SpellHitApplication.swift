@@ -1,8 +1,8 @@
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 import simd
 
 /// Applying one landed spell to the actors it reached.

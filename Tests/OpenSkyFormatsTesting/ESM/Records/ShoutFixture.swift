@@ -1,8 +1,8 @@
 // Byte builders for the shout-family suites, built in code from the published
 // record layouts.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 import Testing
 
 public enum ShoutFixture: Sendable {

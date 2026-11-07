@@ -1,7 +1,7 @@
 // Typed option values. The parser rejects a bad value before a command loads any game
 // data, and the help lists every choice.
 
-import ArgumentParser
+public import ArgumentParser
 import Foundation
 
 /// `WxH`, such as `1280x720`. Each side is 1 to 8192, so a typo cannot ask the GPU for a

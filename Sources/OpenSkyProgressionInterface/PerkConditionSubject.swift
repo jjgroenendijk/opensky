@@ -6,7 +6,7 @@
 // is skipped and counted by `PerkRuntime`. See docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One object a perk effect's condition tab may run against.
 nonisolated public enum PerkConditionSubject: String, CaseIterable, Hashable, Sendable {

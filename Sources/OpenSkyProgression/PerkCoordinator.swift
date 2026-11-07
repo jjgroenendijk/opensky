@@ -3,10 +3,10 @@
 // magic formulas ask. The rules live in `PerkRuntime`.
 // See docs/engine/coordinators.md.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
 
 /// Owns the perk runtime and reads the world through `PerkWorld`. Without
 /// game data the runtime stays nil, and every entry point returns the value

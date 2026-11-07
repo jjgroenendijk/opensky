@@ -1,7 +1,7 @@
 // MSB-first bit reader for SWF's bit-packed fields (UB[n], SB[n]), which can
 // cross byte boundaries. Spec: SWF v19, "Bit values".
 
-import Foundation
+public import Foundation
 
 nonisolated public enum SWFBitReaderError: Error, Equatable, Sendable {
     /// Requested more bits than remain in the backing bytes.

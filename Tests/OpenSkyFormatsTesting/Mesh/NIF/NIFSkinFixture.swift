@@ -1,6 +1,6 @@
 // Skinned block chains that the skin suites share, built from `NIFFixture`.
 
-import Foundation
+public import Foundation
 import simd
 
 extension NIFFixture {

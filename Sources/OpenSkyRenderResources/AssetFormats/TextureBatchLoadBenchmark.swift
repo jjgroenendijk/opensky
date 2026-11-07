@@ -4,11 +4,11 @@
 // LZ4 copies of them. See docs/engine/asset-cache.md, "Direct GPU loading".
 
 import Darwin
-import Foundation
-import Metal
-import OpenSkyAssetCache
+public import Foundation
+public import Metal
+public import OpenSkyAssetCache
 import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum TextureBatchLoadMethod: String, CaseIterable, Sendable {
     case archive
@@ -36,17 +36,17 @@ nonisolated struct TextureBatchItem {
 }
 
 public final class TextureBatchLoadBenchmark {
-    private let device: MTLDevice
+    private let device: any MTLDevice
     private let files: any GameFileSource
     private let items: [TextureBatchItem]
     private let loader: TextureLoader
-    private let queue: MTLIOCommandQueue
+    private let queue: any MTLIOCommandQueue
     /// LZ4 copies of the entries, written once by `prepareCompressedCopies`.
     private var compressed: [URL] = []
 
     /// Uses the textures of `paths` that have a current entry in `reader`'s cache.
     public init(
-        device: MTLDevice,
+        device: any MTLDevice,
         files: any GameFileSource,
         reader: AssetCacheReader,
         paths: [String]
@@ -76,15 +76,15 @@ public final class TextureBatchLoadBenchmark {
             let url = folder.appending(path: "\(index).lz4")
             let data = try Data(contentsOf: item.entry)
             guard
-                let context = MTLIOCreateCompressionContext(
+                let context = unsafe MTLIOCreateCompressionContext(
                     url.path(percentEncoded: false), .lz4, MTLIOCompressionContextDefaultChunkSize()
                 ) else { throw TextureBatchLoadError.compressionFailed(url) }
-            data.withUnsafeBytes { raw in
+            unsafe data.withUnsafeBytes { raw in
                 if let base = raw.baseAddress {
-                    MTLIOCompressionContextAppendData(context, base, raw.count)
+                    unsafe MTLIOCompressionContextAppendData(context, base, raw.count)
                 }
             }
-            guard MTLIOFlushAndDestroyCompressionContext(context) == .complete else {
+            guard unsafe MTLIOFlushAndDestroyCompressionContext(context) == .complete else {
                 throw TextureBatchLoadError.compressionFailed(url)
             }
             return url
@@ -174,7 +174,7 @@ public final class TextureBatchLoadBenchmark {
         return bytes
     }
 
-    private func privateTexture(for ready: ReadyTexture) throws -> MTLTexture {
+    private func privateTexture(for ready: ReadyTexture) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.pixelFormat = TextureLoader.pixelFormat(for: ready.format, usage: .color)
         descriptor.width = ready.width
@@ -213,7 +213,7 @@ public final class TextureBatchLoadBenchmark {
 
     nonisolated private static func processCPUSeconds() -> Double {
         var time = timespec()
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time)
+        unsafe clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time)
         return Double(time.tv_sec) + Double(time.tv_nsec) / 1e9
     }
 }

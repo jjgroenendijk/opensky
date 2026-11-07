@@ -3,8 +3,8 @@
 // the player (no record, no VMAD) can be an `akActionRef`.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// Queues `OnActivate(akActionRef)` on each script of `target`, in

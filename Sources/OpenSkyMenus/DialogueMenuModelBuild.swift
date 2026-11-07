@@ -5,10 +5,10 @@
 // `openskycli menu dialogue --text` (docs/engine/dialogue-menu.md).
 
 import Foundation
-import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension DialogueMenuModel {
     /// What one topic row reads, in the order the records decide it.

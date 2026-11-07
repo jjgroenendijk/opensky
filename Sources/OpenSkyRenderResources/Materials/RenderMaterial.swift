@@ -2,17 +2,17 @@
 // draw uniforms, and its draw state.
 
 import Foundation
-@preconcurrency import Metal
-import OpenSkyFormatsCore
+@preconcurrency @unsafe public import Metal
+public import OpenSkyFormatsCore
 
 /// Resolves a material's texture key to a ready MTLTexture. `key` nil means
 /// the material has no texture — implementations return a placeholder.
-public typealias TextureProvider = (_ key: String?, _ usage: TextureUsage) -> MTLTexture
+public typealias TextureProvider = (_ key: String?, _ usage: TextureUsage) -> any MTLTexture
 
 /// GPU-side material: resolved diffuse texture + the scalar parameters the
 /// shader consumes. A blended static shape draws in the blended pass after water.
 nonisolated public struct RenderMaterial: Sendable {
-    public let diffuse: MTLTexture
+    public let diffuse: any MTLTexture
     public let uvOffset: SIMD2<Float>
     public let uvScale: SIMD2<Float>
     public let alpha: Float
@@ -27,9 +27,9 @@ nonisolated public struct RenderMaterial: Sendable {
     public let effect: RenderEffectMaterial?
     /// A water-shader shape: the water pass draws it, not a draw group.
     public let waterSurface: Bool
-    public let normal: MTLTexture?
+    public let normal: any MTLTexture?
     /// The FaceGen tint the shader overlays on the diffuse; nil on other shapes.
-    public let faceTint: MTLTexture?
+    public let faceTint: any MTLTexture?
     public let surface: RenderSurfaceMaterial
     public let drawState: MaterialDrawState
     /// The source material, kept only when its shader values animate.
@@ -58,7 +58,7 @@ nonisolated public struct RenderMaterial: Sendable {
     }
 
     /// Every texture a draw of this material binds, for the residency set.
-    public var textures: [MTLTexture] {
+    public var textures: [any MTLTexture] {
         [diffuse] + [normal, faceTint, effect?.palette, effect?.sourceVolume].compactMap(\.self)
             + surface.textures
     }

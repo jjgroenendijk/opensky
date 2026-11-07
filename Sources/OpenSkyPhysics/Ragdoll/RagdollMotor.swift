@@ -2,9 +2,9 @@
 // back towards the pose the animation held. It acts on velocity, not with a
 // Havok constraint motor, so it is an approximation. See docs/engine/ragdoll.md.
 
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import OpenSkyFormatsMesh
-import simd
+public import simd
 
 /// The motor settings of one `hkbPoweredRagdollControlsModifier`, in engine units.
 nonisolated public struct RagdollMotor: Equatable, Sendable {

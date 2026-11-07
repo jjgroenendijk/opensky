@@ -4,7 +4,7 @@
 // (docs/engine/combat-behavior.md#flying-combat).
 
 import Foundation
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 
 nonisolated public struct CombatFlightCycle: Equatable, Sendable {
     nonisolated public enum Stage: String, Equatable, Sendable {

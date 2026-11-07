@@ -5,7 +5,7 @@
 // Shared by CLI record/cell commands and main-app Asset Browser catalog.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum ESMWalk: Sendable {
     private static let logger = EngineLogger(

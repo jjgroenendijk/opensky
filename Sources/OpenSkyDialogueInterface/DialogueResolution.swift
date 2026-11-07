@@ -5,8 +5,8 @@
 // See docs/engine/dialogue.md and docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 /// The line an actor says to the player now: its first response's `TRDT` emotion.
 nonisolated public struct DialogueSpokenLine: Equatable, Sendable {

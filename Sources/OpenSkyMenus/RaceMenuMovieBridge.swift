@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum RaceMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\racesex_menu.swf"

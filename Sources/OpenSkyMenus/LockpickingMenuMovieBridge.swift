@@ -3,7 +3,7 @@
 // See docs/engine/locks.md#lockpicking-menu.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// The readout text `SetLockInfo` shows.
 nonisolated public struct LockpickingMovieInfo: Equatable, Sendable {

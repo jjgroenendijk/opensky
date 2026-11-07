@@ -3,7 +3,7 @@
 // first known layout on disk. A missing file means vanilla masters; a configured path
 // that is missing is reported. See docs/formats/plugins-txt.md.
 
-import Foundation
+public import Foundation
 
 /// Where a `plugins.txt` came from. The Settings window turns this into the
 /// note under the path.
@@ -243,7 +243,7 @@ nonisolated public enum PluginsTextLocator: Sendable {
 
     private static func isReadable(_ url: URL, fileManager: FileManager) -> Bool {
         var isDirectory: ObjCBool = false
-        let exists = fileManager.fileExists(
+        let exists = unsafe fileManager.fileExists(
             atPath: url.path(percentEncoded: false),
             isDirectory: &isDirectory
         )

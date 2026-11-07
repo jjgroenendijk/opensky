@@ -5,10 +5,10 @@
 // carries them. See docs/engine/skill-advancement.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
 
 /// Where a skill's `AVSK` parameters come from. A lookup, so a unit test states
 /// the four numbers while a session reads the AVIF record, through one code path.

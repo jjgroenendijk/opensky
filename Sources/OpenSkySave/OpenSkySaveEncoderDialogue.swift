@@ -2,9 +2,9 @@
 
 import Foundation
 import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     private typealias SavedState = (key: ReferenceKey, state: DialogueRuntimeState)

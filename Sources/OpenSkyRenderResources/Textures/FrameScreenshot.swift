@@ -1,10 +1,10 @@
 // Shared rendered-frame screenshot conversion + PNG output. App, CLI, preview,
 // and render tests all feed the same CPU-readable BGRA8 or half-float texture path.
 
-import CoreGraphics
-import Foundation
+public import CoreGraphics
+public import Foundation
 import ImageIO
-import Metal
+public import Metal
 import UniformTypeIdentifiers
 
 public enum FrameScreenshotError: LocalizedError {
@@ -26,7 +26,7 @@ public enum FrameScreenshotError: LocalizedError {
 
 nonisolated public enum FrameScreenshot: Sendable {
     /// Reads a shared-storage BGRA8 or half-float render target into an sRGB CGImage.
-    public static func image(from texture: MTLTexture) -> CGImage? {
+    public static func image(from texture: any MTLTexture) -> CGImage? {
         let width = texture.width
         let height = texture.height
         var pixels = bgraBytes(of: texture)
@@ -34,7 +34,7 @@ nonisolated public enum FrameScreenshot: Sendable {
             guard
                 let base = bytes.baseAddress,
                 let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
-                let context = CGContext(
+                let context = unsafe CGContext(
                     data: base,
                     width: width,
                     height: height,
@@ -50,7 +50,7 @@ nonisolated public enum FrameScreenshot: Sendable {
     }
 
     /// The pixels of a shared-storage render target as RGBA8 rows, top first.
-    public static func rgbaBytes(from texture: MTLTexture) -> Data {
+    public static func rgbaBytes(from texture: any MTLTexture) -> Data {
         var pixels = bgraBytes(of: texture)
         for offset in stride(from: 0, to: pixels.count, by: 4) {
             pixels.swapAt(offset, offset + 2)
@@ -59,7 +59,7 @@ nonisolated public enum FrameScreenshot: Sendable {
     }
 
     /// sRGB BGRA8 bytes. A half-float target holds linear colour, which is encoded here.
-    static func bgraBytes(of texture: MTLTexture) -> [UInt8] {
+    static func bgraBytes(of texture: any MTLTexture) -> [UInt8] {
         let width = texture.width
         let height = texture.height
         let region = MTLRegionMake2D(0, 0, width, height)
@@ -67,14 +67,14 @@ nonisolated public enum FrameScreenshot: Sendable {
             var pixels = [UInt8](repeating: 0, count: width * height * 4)
             pixels.withUnsafeMutableBytes { bytes in
                 guard let base = bytes.baseAddress else { return }
-                texture.getBytes(base, bytesPerRow: width * 4, from: region, mipmapLevel: 0)
+                unsafe texture.getBytes(base, bytesPerRow: width * 4, from: region, mipmapLevel: 0)
             }
             return pixels
         }
         var halves = [Float16](repeating: 0, count: width * height * 4)
         halves.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.getBytes(base, bytesPerRow: width * 8, from: region, mipmapLevel: 0)
+            unsafe texture.getBytes(base, bytesPerRow: width * 8, from: region, mipmapLevel: 0)
         }
         return bgraBytes(linearRGBA: halves.map { Float($0) })
     }
@@ -97,7 +97,7 @@ nonisolated public enum FrameScreenshot: Sendable {
         return UInt8((encoded * 255).rounded())
     }
 
-    public static func write(texture: MTLTexture, to url: URL) throws {
+    public static func write(texture: any MTLTexture, to url: URL) throws {
         guard let image = image(from: texture) else {
             throw FrameScreenshotError.imageCreationFailed
         }

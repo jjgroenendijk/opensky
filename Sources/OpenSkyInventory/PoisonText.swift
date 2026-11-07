@@ -1,7 +1,7 @@
 // The notices of a poison the player cannot put on a weapon. The texts are string
 // settings. See docs/engine/alchemy.md#poison-on-a-weapon.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public enum PoisonText: String, GameSettingTextKey {
     case noWeapon = "sPoisonNoWeaponMessage"

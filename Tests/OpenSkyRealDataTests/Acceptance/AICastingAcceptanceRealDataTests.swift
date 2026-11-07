@@ -128,7 +128,7 @@ struct AICastingAcceptanceRealDataTests {
     ) throws {
         let named = options.compactMap { option in
             chain.spellbook.record(option.spell).map { spell in
-                String(
+                unsafe String(
                     format: "  %@ cost %.0f range %.0f",
                     spell.editorID ?? spell.key.description,
                     option.cost,

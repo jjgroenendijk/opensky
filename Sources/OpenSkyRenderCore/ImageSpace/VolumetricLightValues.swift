@@ -3,7 +3,7 @@
 // docs/rendering/post-effects.md#volumetric-light.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct VolumetricLightValues: Equatable, Sendable {

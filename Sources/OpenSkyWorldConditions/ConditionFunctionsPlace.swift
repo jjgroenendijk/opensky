@@ -4,8 +4,8 @@
 // See docs/engine/condition-functions-world.md#locations.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Who died, where the player stands, and which map markers show.

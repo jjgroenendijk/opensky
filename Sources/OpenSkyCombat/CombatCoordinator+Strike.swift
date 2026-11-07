@@ -4,7 +4,7 @@
 
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface

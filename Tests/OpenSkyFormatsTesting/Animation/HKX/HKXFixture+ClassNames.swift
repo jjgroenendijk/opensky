@@ -1,7 +1,7 @@
 // The payload and class-name table that HKXFixture.build() lays out. Tests read
 // them to predict offsets. See HKXFixture.swift.
 
-import Foundation
+public import Foundation
 
 extension HKXFixture {
     /// Deterministic payload pattern so slice tests can assert exact bytes,

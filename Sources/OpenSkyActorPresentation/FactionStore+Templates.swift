@@ -1,8 +1,8 @@
 // Faction memberships through the actor template chain. The chain walk is
 // `ActorTemplateResolver`, so this join lives beside it, not in GameData.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension FactionStore {
     /// An actor's memberships after `useFactions` inheritance, joined to their records.

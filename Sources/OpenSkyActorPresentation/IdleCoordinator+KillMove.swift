@@ -2,7 +2,7 @@
 // its target. See docs/engine/paired-animations.md#kill-moves.
 
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension IdleCoordinator {

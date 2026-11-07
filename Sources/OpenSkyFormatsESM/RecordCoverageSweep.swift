@@ -3,7 +3,7 @@
 // left unread. The real-data coverage test and `openskycli gaps` share it.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct RecordCoverageSweep: Sendable {
     /// Records seen per type.

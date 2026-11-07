@@ -1,7 +1,7 @@
 // The readout text of scene playback. Values in, values out.
 
 import Foundation
-import OpenSkyDialogueInterface
+public import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 
 public enum SceneCore {
@@ -76,8 +76,9 @@ public enum SceneCore {
     }
 
     public static func text(line: SceneLine) -> String {
-        "\(line.speaker) says \(line.info) in topic \(line.topic) for "
-            + String(format: "%.1f s", line.seconds)
+        let secondsText = unsafe String(format: "%.1f s", line.seconds)
+        return "\(line.speaker) says \(line.info) in topic \(line.topic) for "
+            + secondsText
     }
 
     static func text(reason: SceneEndReason) -> String {

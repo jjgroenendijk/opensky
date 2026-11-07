@@ -6,10 +6,10 @@
 // See docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyMagicInterface
-import OpenSkyProgressionInterface
+public import OpenSkyProgressionInterface
 
 /// What one reconciliation did.
 nonisolated public struct PerkAbilityReport: Equatable, Sendable {

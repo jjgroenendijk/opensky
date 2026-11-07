@@ -2,9 +2,9 @@
 // need the filters and responses, simulation needs the inertial tail.
 // Field order: docs/formats/nif-collision.md and nif-rigid-body.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 /// Everything one rigid-body block holds, before scene transforms compose in.
 nonisolated public struct NIFRigidBodyRecord: Sendable {

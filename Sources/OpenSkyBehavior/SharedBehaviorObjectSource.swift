@@ -1,7 +1,7 @@
 // Decodes each object of one behaviour file once for every graph built over that file.
 // All actors of a race run one graph file, so they share its decode too.
 
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// A `BehaviorObjectSource` that keeps each decode. Build one per decoded file and hand it
 /// to every instance over that file. Not `Sendable`: its owner keeps it on one actor.

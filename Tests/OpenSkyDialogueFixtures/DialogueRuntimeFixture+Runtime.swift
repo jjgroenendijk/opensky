@@ -1,10 +1,10 @@
 // The dialogue runtime over the fixture world.
 
-@testable import OpenSkyDialogue
-@testable import OpenSkyDialogueInterface
-import OpenSkyFeaturesTesting
+@testable public import OpenSkyDialogue
+@testable public import OpenSkyDialogueInterface
+public import OpenSkyFeaturesTesting
 @testable import OpenSkyQuestsInterface
-@testable import OpenSkyWorldState
+@testable public import OpenSkyWorldState
 
 @MainActor
 extension DialogueRuntimeFixture {

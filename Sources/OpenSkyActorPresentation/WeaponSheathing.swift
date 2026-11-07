@@ -2,7 +2,7 @@
 // its hand node onto the sheath node, so a draw or a sheathe needs no rebuild.
 // See docs/engine/actor-resolution.md.
 
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum WeaponSheathing {
     /// `pose` with each hand node in `nodes` placed on its sheath node. A drawn

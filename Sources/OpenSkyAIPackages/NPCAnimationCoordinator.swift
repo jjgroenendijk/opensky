@@ -1,10 +1,10 @@
 // Plays the in-place gait clip that matches each NPC mover's drive. The mover
 // owns the capsule; this only picks the clip. See docs/engine/coordinators.md.
 
-import OpenSkyActorPresentation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyActorPresentation
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyPhysics
 import OpenSkyPlayer
 
 /// What the NPC animation coordinator reads from the session.

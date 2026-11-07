@@ -1,7 +1,7 @@
 // Reads one project's speed tables from the install's speed file.
 
-import OpenSkyFormatsAnimation
-import OpenSkyGameData
+public import OpenSkyFormatsAnimation
+public import OpenSkyGameData
 
 nonisolated extension SpeedSampleProject {
     public static let installPath = "meshes\\speeddatasinglefile.txt"

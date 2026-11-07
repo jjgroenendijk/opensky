@@ -6,8 +6,8 @@
 // `.unavailableDetection` (an untracked pair is not an undetected one).
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {
     public static func installDetection(_ registry: inout ConditionFunctionRegistry) {

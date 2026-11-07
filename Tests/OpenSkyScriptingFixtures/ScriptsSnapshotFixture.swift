@@ -1,7 +1,7 @@
 // Snapshot builder for the Papyrus snapshot, shared by the readout suite and
 // the readout suite.
 
-@testable import OpenSkyScripting
+@testable public import OpenSkyScripting
 
 /// Builds a `ScriptsSnapshot` from only the fields a test cares about. The
 /// snapshot is immutable by design and its memberwise initializer takes twenty

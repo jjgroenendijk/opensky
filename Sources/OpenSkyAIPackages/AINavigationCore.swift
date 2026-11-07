@@ -1,7 +1,7 @@
 // The pure rules of the AI & Navigation readout: the actor list order, which
 // actor the selection resolves to, and the names the readout prints.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One resident actor as the session reports it, before the camera distance.

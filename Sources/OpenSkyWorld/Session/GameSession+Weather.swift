@@ -1,10 +1,10 @@
 // The per-frame weather advance, between the world simulation and the animation step,
 // and the image space that follows the weather or the interior cell.
 
-import OpenSkyCells
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyRenderCore
+public import OpenSkyCells
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWeather
 import OpenSkyWorldState

@@ -2,8 +2,8 @@
 // its sky textures. Source: UESP "Skyrim Mod:Mod File Format/CLMT".
 // Layout: docs/formats/weather.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct Climate: Sendable {
     /// One WLST entry: weather that can occur under this climate + its chance.

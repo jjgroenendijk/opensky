@@ -1,8 +1,8 @@
 // The `SUMM` and `THMB` chunks: what the save and load list shows for one file,
 // readable without decoding the world. See docs/formats/opensky-save.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 /// The list row of a save: who, where, and how long.
 nonisolated public struct SaveSummary: Equatable, Sendable {

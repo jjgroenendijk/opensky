@@ -2,7 +2,7 @@
 // these are OpenSky shapes driven by the LIGH flicker values
 // (docs/formats/lighting.md, docs/engine/interiors.md).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct RenderLightAnimation: Equatable, Sendable {

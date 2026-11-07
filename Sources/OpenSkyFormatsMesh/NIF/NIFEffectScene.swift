@@ -3,8 +3,8 @@
 // drops additive shapes, so it cannot play these. See docs/formats/nif-sequences.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 nonisolated public struct NIFEffectScene: Sendable {
     public struct Node: Sendable {

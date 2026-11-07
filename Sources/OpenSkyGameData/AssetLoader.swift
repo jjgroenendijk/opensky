@@ -2,7 +2,7 @@
 // worker reads and decodes it, and the frame drains finished results at one point.
 // See docs/decisions/concurrency.md.
 
-import Foundation
+public import Foundation
 import Synchronization
 
 nonisolated public enum AssetLoadPriority: Sendable {

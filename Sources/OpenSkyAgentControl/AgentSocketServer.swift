@@ -2,7 +2,7 @@
 // main actor, so no thread or queue is involved (docs/decisions/concurrency.md).
 
 import Darwin
-import Foundation
+public import Foundation
 
 nonisolated public enum AgentSocketEvent: Equatable, Sendable {
     case connected(Int)
@@ -36,11 +36,12 @@ public final class AgentSocketServer {
         try prepareFolder()
         try removeStaleSocket()
         let descriptor = try AgentSocketCalls.makeSocket()
-        let bound = try AgentSocketCalls.withAddress(path) { bind(descriptor, $0, $1) }
-        guard bound == 0, chmod(path, 0o600) == 0, listen(descriptor, 8) == 0 else {
+        let bound = try unsafe AgentSocketCalls
+            .withAddress(path) { unsafe bind(descriptor, $0, $1) }
+        guard bound == 0, unsafe chmod(path, 0o600) == 0, listen(descriptor, 8) == 0 else {
             let failure = AgentSocketCalls.failure("bind \(path)")
             close(descriptor)
-            unlink(path)
+            unsafe unlink(path)
             throw failure
         }
         AgentSocketCalls.setNonBlocking(descriptor)
@@ -55,7 +56,7 @@ public final class AgentSocketServer {
         guard listener >= 0 else { return }
         close(listener)
         listener = -1
-        unlink(path)
+        unsafe unlink(path)
     }
 
     /// Accepts, reads, and flushes once. Never blocks.
@@ -80,7 +81,7 @@ public final class AgentSocketServer {
             let descriptor = accept(listener, nil, nil)
             guard descriptor >= 0 else { break }
             var on: Int32 = 1
-            setsockopt(
+            unsafe setsockopt(
                 descriptor,
                 SOL_SOCKET,
                 SO_NOSIGPIPE,
@@ -151,10 +152,11 @@ public final class AgentSocketServer {
         guard FileManager.default.fileExists(atPath: path) else { return }
         let probe = try AgentSocketCalls.makeSocket()
         defer { close(probe) }
-        let connected = try AgentSocketCalls.withAddress(path) { connect(probe, $0, $1) }
+        let connected = try unsafe AgentSocketCalls
+            .withAddress(path) { unsafe connect(probe, $0, $1) }
         guard connected != 0 else {
             throw AgentFailure(.failed, "another OpenSky app already serves \(path)")
         }
-        unlink(path)
+        unsafe unlink(path)
     }
 }

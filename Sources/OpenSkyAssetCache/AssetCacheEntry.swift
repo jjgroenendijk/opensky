@@ -2,7 +2,7 @@
 // with which converter, then the payload. Pure: bytes in, bytes out.
 // See docs/engine/asset-cache.md, "Entry layout".
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum AssetCacheEntryError: Error, Equatable, Sendable {

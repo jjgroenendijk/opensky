@@ -4,7 +4,7 @@
 // The exit button calls `CloseMenu`. See docs/engine/messages.md#help-topics.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum TutorialMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\tutorialmenu.swf"

@@ -3,8 +3,8 @@
 // bridge and agent control both read it, so they cannot disagree.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One item row: the stack plus everything the row displays.
 ///
@@ -298,7 +298,7 @@ nonisolated extension InventoryMenuEntry {
         default: " [\(stolenCount) stolen]"
         }
         let quest = isQuestItem ? " [quest]" : ""
-        let weightText = String(format: "%.1f", weight)
+        let weightText = unsafe String(format: "%.1f", weight)
         let flags = equipped + stolen + quest
         return "\(name)\(countText)\(flags) · \(weightText) wt · \(value) gold"
     }

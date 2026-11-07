@@ -3,7 +3,7 @@
 // readout comes from one observation. AppKit-free.
 
 import Foundation
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 /// Who an equip or unequip applies to: the player for state and carry weight,
 /// or the nearest actor to see the change on a rendered body.

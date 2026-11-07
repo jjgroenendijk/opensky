@@ -3,7 +3,7 @@
 // Sources: docs/formats/gmst.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum GameSettingError: Error, Equatable, Sendable {
     case expectedGMST(FourCC)

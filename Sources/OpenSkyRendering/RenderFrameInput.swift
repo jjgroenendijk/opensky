@@ -2,9 +2,9 @@
 // simulation fills it once per frame, after every system has run, and the renderer
 // reads only it, so no game value can change half way through an encode.
 
-import OpenSkyPhysics
-import OpenSkyRenderCore
-import simd
+public import OpenSkyPhysics
+public import OpenSkyRenderCore
+public import simd
 
 public struct RenderFrameInput {
     /// The pose every pass draws from: the player's view, or an override standing in for it.

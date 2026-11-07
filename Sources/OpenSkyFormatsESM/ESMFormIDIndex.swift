@@ -2,7 +2,7 @@
 // headers. A lookup then reparses one 24-byte header instead of walking the
 // whole file. Layout: docs/formats/esm.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct ESMFormIDIndex: Sendable {

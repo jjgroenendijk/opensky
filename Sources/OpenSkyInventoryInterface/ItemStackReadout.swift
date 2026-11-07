@@ -1,5 +1,5 @@
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One stack as the readout spells it: what it is, how many, and what to call it.
 nonisolated public struct ItemStackReadout: Equatable, Sendable {

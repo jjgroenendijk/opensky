@@ -2,22 +2,22 @@
 // input targets at the render scale; the scaler writes the output at the display size.
 // See docs/rendering/upscaling.md.
 
-import Metal
-import MetalFX
+public import Metal
+public import MetalFX
 import MetalKit
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 /// The motion and composite pipelines, built once with the renderer.
 public final class UpscaleResources {
-    let cameraMotion: MTLRenderPipelineState
-    let staticMotion: MTLRenderPipelineState
-    let skinnedMotion: MTLRenderPipelineState
-    let composite: MTLRenderPipelineState
+    let cameraMotion: any MTLRenderPipelineState
+    let staticMotion: any MTLRenderPipelineState
+    let skinnedMotion: any MTLRenderPipelineState
+    let composite: any MTLRenderPipelineState
     /// Passes only where a moving surface is the visible one; writes no depth.
-    let motionDepthState: MTLDepthStencilState
-    let uniformBuffer: MTLBuffer
+    let motionDepthState: any MTLDepthStencilState
+    let uniformBuffer: any MTLBuffer
     /// Nil when the GPU has no Metal 4 temporal scaler.
     let temporalUnavailableReason: String?
     let spatialUnavailableReason: String?
@@ -27,13 +27,13 @@ public final class UpscaleResources {
     nonisolated static let outputFormat = MTLPixelFormat.rgba16Float
     static let uniformStride = (MemoryLayout<UpscaleMotionUniforms>.size + 0xFF) & -0x100
 
-    init(view: MTKView, library: MTLLibrary, compiler: PipelineCache) throws {
+    init(view: MTKView, library: any MTLLibrary, compiler: PipelineCache) throws {
         let device = compiler.device
         func make(
             _ recipe: (vertex: String, fragment: String),
             layout: MTLVertexDescriptor? = nil,
             format: MTLPixelFormat
-        ) throws -> MTLRenderPipelineState {
+        ) throws -> any MTLRenderPipelineState {
             let vertex = MTL4LibraryFunctionDescriptor()
             vertex.library = library
             vertex.name = recipe.vertex
@@ -102,12 +102,12 @@ nonisolated struct UpscaleScalerRequest: Equatable, Sendable {
 
 /// The input and output targets of one input and output size, and their scaler.
 final class UpscaleTargets {
-    let color: MTLTexture
-    let depth: MTLTexture
+    let color: any MTLTexture
+    let depth: any MTLTexture
     /// Only the temporal scaler reads motion.
-    let motion: MTLTexture?
+    let motion: any MTLTexture?
     /// The scaler writes here; with interpolation it swaps with `interpolation.history`.
-    private(set) var output: MTLTexture
+    private(set) var output: any MTLTexture
     let scaler: UpscaleScaler
     let interpolation: InterpolationTargets?
     /// What was asked for, with `interpolates` false when MetalFX refused the interpolator.
@@ -128,7 +128,7 @@ final class UpscaleTargets {
         SIMD2(output.width, output.height)
     }
 
-    var allocations: [MTLAllocation] {
+    var allocations: [any MTLAllocation] {
         [color, depth, motion, output].compactMap(\.self) + (interpolation?.allocations ?? [])
     }
 
@@ -143,7 +143,7 @@ final class UpscaleTargets {
         _ request: UpscaleScalerRequest,
         scaler: UpscaleScaler,
         interpolator: (any MTL4FXFrameInterpolator)?,
-        device: MTLDevice
+        device: any MTLDevice
     ) throws {
         let (input, outputSize, colorFormat) = (request.input, request.output, request.colorFormat)
         let usage: (color: MTLTextureUsage, output: MTLTextureUsage)
@@ -172,7 +172,7 @@ final class UpscaleTargets {
         let kind = request.kind
         func texture(
             _ format: MTLPixelFormat, _ size: SIMD2<Int>, _ usage: MTLTextureUsage, _ label: String
-        ) throws -> MTLTexture {
+        ) throws -> any MTLTexture {
             try Self.privateTexture(
                 device: device, format: format, size: size, usage: usage, label: label
             )
@@ -203,9 +203,9 @@ final class UpscaleTargets {
     }
 
     static func privateTexture(
-        device: MTLDevice, format: MTLPixelFormat, size: SIMD2<Int>, usage: MTLTextureUsage,
+        device: any MTLDevice, format: MTLPixelFormat, size: SIMD2<Int>, usage: MTLTextureUsage,
         label: String
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: format, width: size.x, height: size.y, mipmapped: false
         )

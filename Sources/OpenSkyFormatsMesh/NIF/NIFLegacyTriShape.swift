@@ -3,7 +3,7 @@
 // into the same `NIFTriShape` a `BSTriShape` gives. Layout: docs/formats/nif.md#nitrishape.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 /// nif.xml `NiGeometry` at stream 100: the shape's refs, without vertices.

@@ -3,7 +3,7 @@
 // See docs/engine/condition-functions.md#script-variables.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The number variables of each script-carrying object, by folded variable name.
 nonisolated public struct ScriptVariableResolution: ConditionResolution, Sendable {

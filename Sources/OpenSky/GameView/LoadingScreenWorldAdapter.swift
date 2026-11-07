@@ -154,7 +154,7 @@ final class LoadingScreenWorldAdapter {
         if timedOut {
             Self.logger.warning("[WARNING] start area not ready in time; cover lifted")
         }
-        let seconds = String(format: "%.2f", now - since)
+        let seconds = unsafe String(format: "%.2f", now - since)
         Self.logger.notice("[INFO] start cover lifted after \(seconds, privacy: .public) s")
         game.loadingScreens.loadFinished(at: now)
     }

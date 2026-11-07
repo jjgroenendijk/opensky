@@ -2,8 +2,8 @@
 // with that limb. The game's skin decal options set the limits. See docs/rendering/decals.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import simd
+public import OpenSkyFormatsESM
+public import simd
 
 nonisolated public struct SkinDecalRuntime: Sendable {
     /// `uMaxSkinDecals` when the settings give none; unverified.

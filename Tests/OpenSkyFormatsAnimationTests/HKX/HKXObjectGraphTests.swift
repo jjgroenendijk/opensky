@@ -53,11 +53,11 @@ private enum HKXCursorFixture {
     }
 
     private static func littleEndian(_ value: UInt32) -> Data {
-        withUnsafeBytes(of: value.littleEndian) { Data($0) }
+        withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }
     }
 
     private static func littleEndian(_ value: UInt16) -> Data {
-        withUnsafeBytes(of: value.littleEndian) { Data($0) }
+        withUnsafeBytes(of: value.littleEndian) { unsafe Data($0) }
     }
 
     /// Builds the packfile. The global fixups point into `__classnames__`

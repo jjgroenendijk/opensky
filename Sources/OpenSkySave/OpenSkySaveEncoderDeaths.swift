@@ -2,9 +2,9 @@
 // corpse or a cut head still falling has none, and a mid-air pose would float on reload.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsCore
-import OpenSkyWorldState
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsCore
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's death paired with the snapshot entry it came from.

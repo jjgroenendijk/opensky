@@ -3,7 +3,7 @@
 // sword, a plain ring, and the soul gems. Every byte is built here.
 
 import Foundation
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 
 public enum EnchantingFixture {

@@ -4,8 +4,8 @@
 // (docs/engine/dialogue.md#speech-timers).
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyGameData
+public import OpenSkyFormatsCore
+public import OpenSkyGameData
 
 nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
     /// `fGameplayVoiceFilePadding`: "seconds of silence that Skyrim inserts between
@@ -97,7 +97,7 @@ nonisolated public struct SpeechTimerSettings: Equatable, Sendable {
     /// The waits and chances for the Dialogue readout.
     public var readout: String {
         let percent = { (line: NPCSpeechLine) in Int((chance(of: line) * 100).rounded()) }
-        return String(
+        return unsafe String(
             format: "Speech timers: force greet %.1f s · hello %.1f s (gap %.1f s) · "
                 + "combat line %.1f-%.1f s · taunt %.0f-%.0f s · attack %d%% · hit %d%% · "
                 + "taunt %d%% · idle %.0f-%.0f s · comment %.0f s · voice gap %.2f s",

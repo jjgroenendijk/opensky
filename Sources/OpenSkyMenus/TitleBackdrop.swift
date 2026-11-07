@@ -2,7 +2,7 @@
 // the world. See docs/engine/main-menu.md.
 
 import Foundation
-import simd
+public import simd
 
 nonisolated public enum TitleBackdrop: Sendable {
     public static let logoPath = "meshes\\interface\\logo\\logo.nif"

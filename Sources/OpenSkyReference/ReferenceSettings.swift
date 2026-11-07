@@ -2,8 +2,8 @@
 // Skyrim SE, and the Wine that runs it. Both are settings, never constants.
 // See docs/tools/reference-game.md.
 
-import Foundation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyGameData
 
 nonisolated public enum ReferenceSettings {
     public static let prefixEnvironmentKey = "OPENSKY_REFERENCE_PREFIX"

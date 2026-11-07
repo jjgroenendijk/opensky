@@ -156,7 +156,7 @@ nonisolated public enum AgentCommandLine {
     /// Whole numbers print without a fraction, so a FormID or a count reads plainly.
     private static func numberText(_ number: Double) -> String {
         guard number.rounded() == number, abs(number) < 1e15 else {
-            return String(format: "%.4g", number)
+            return unsafe String(format: "%.4g", number)
         }
         return String(Int(number))
     }

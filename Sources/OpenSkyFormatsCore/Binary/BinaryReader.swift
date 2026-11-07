@@ -2,7 +2,7 @@
 // (BSA, ESM, NIF) reads through this so malformed input throws instead of
 // crashing (AGENTS.md "Reverse-engineering discipline").
 
-import Foundation
+public import Foundation
 
 nonisolated public enum BinaryReaderError: Error, Equatable, Sendable {
     /// Read past the end: wanted `count` bytes at `offset`, only `available` left.
@@ -85,10 +85,10 @@ nonisolated public struct BinaryReader: Sendable {
         try requireBytes(count * size)
         let start = offset
         offset += count * size
-        return data.withUnsafeBytes { raw in
+        return unsafe data.withUnsafeBytes { raw in
             (0 ..< count).map { index in
                 let offset = start + index * size
-                return T(littleEndian: raw.loadUnaligned(fromByteOffset: offset, as: T.self))
+                return unsafe T(littleEndian: raw.loadUnaligned(fromByteOffset: offset, as: T.self))
             }
         }
     }
@@ -104,7 +104,9 @@ nonisolated public struct BinaryReader: Sendable {
         try requireBytes(size)
         let start = offset
         offset += size
-        let value = data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: start, as: T.self) }
+        let value = unsafe data.withUnsafeBytes {
+            unsafe $0.loadUnaligned(fromByteOffset: start, as: T.self)
+        }
         return T(littleEndian: value)
     }
 

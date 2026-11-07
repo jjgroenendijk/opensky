@@ -36,7 +36,7 @@ enum PlayerBodyFixture {
 
     @MainActor
     static func assemble(
-        device: MTLDevice,
+        device: any MTLDevice,
         root: GameDataRoot,
         equipped: [FormID]? = nil
     ) throws -> Assembled {

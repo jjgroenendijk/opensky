@@ -3,8 +3,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 extension PapyrusWorldRuntime {
     /// Runs one fixed step: resumes due latent calls, then drains events up to

@@ -5,10 +5,10 @@
 // (<https://ck.uesp.net/wiki/GetLevel_-_Actor>). See docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// What one award of character experience did.

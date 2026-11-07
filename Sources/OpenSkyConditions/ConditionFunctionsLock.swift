@@ -3,7 +3,7 @@
 // bonus on it. See docs/engine/locks.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Lock levels of the references a caller knows about, as XLOC bytes.
 nonisolated public struct LockConditionResolution: Sendable {

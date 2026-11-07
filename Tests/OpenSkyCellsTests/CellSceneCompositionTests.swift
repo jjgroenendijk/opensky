@@ -21,7 +21,7 @@ struct CellSceneCompositionTests {
         device != nil
     }
 
-    private static func texture(device: MTLDevice) throws -> MTLTexture {
+    private static func texture(device: any MTLDevice) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.width = 1
         descriptor.height = 1

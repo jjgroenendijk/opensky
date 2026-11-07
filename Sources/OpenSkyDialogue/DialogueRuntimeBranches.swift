@@ -6,7 +6,7 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyDialogueInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyWorldState

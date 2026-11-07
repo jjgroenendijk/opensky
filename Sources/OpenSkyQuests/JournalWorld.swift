@@ -2,7 +2,7 @@
 // running session. The app answers it; a test passes a fake.
 // See docs/engine/coordinators.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 /// What `JournalCoordinator` reads from the running world.
 @MainActor

@@ -4,7 +4,7 @@
 // Layout: docs/formats/keywords.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum ReferenceRecordSkipKind: SkipTallyKind {
     case unknownField(FourCC)

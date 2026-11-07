@@ -2,8 +2,8 @@
 // from the running session. The app answers it; a test passes a fake.
 // See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// What `ActorValueCoordinator` reads from the running world.
 @MainActor

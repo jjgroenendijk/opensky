@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/story-manager.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct StoryManagerNode: Equatable, Sendable {
     public enum Kind: Equatable, Sendable {

@@ -3,8 +3,8 @@
 // one texel per cell, with the north row first.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyImageKernels
 

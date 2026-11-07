@@ -3,8 +3,8 @@
 // all four. An archive with another name is stale and is deleted on save.
 
 import CryptoKit
-import Foundation
-import Metal
+public import Foundation
+public import Metal
 
 nonisolated public enum PipelineCacheFolder {
     /// The archive folder inside the asset cache folder.
@@ -14,7 +14,7 @@ nonisolated public enum PipelineCacheFolder {
 
     /// The archive for this process, or nil when the shader library or the executable
     /// cannot be found, so nothing identifies the build.
-    public static func archiveURL(inCacheFolder cacheFolder: URL, device: MTLDevice) -> URL? {
+    public static func archiveURL(inCacheFolder cacheFolder: URL, device: any MTLDevice) -> URL? {
         guard
             let library = Bundle.main.url(forResource: "default", withExtension: "metallib"),
             let executable = Bundle.main.executableURL,
@@ -35,7 +35,7 @@ nonisolated public enum PipelineCacheFolder {
         for byte in ([osBuild, gpu] + stamps).joined(separator: "\u{0}").utf8 {
             hash = (hash ^ UInt64(byte)) &* 0x0000_0100_0000_01B3
         }
-        return String(format: "%016llx.mtl4archive", hash)
+        return unsafe String(format: "%016llx.mtl4archive", hash)
     }
 
     private static func fileStamp(_ url: URL) -> String? {

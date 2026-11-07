@@ -1,6 +1,6 @@
 // What the dialogue coordinator asks the app to do. See docs/engine/coordinators.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One change to the world outside the dialogue domain.

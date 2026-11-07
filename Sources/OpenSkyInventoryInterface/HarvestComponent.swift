@@ -2,7 +2,7 @@
 // the harvest. The plant grows back when its cell resets (docs/engine/cell-reset.md).
 // See docs/engine/interaction.md.
 
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// Set on a flora or tree reference once the player harvested it.
 nonisolated public struct ReferenceHarvestState: WorldStateComponent, Hashable, Sendable {

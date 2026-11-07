@@ -3,8 +3,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
     public struct MagicInspectorContext: Sendable {
@@ -107,7 +107,7 @@ nonisolated extension RecordTextDump {
             return "decoded MGEF: editorID \(effect.editorID ?? "-"), name \(name), "
                 + "DATA malformed, skipped \(effect.skipped.total)"
         }
-        return String(
+        return unsafe String(
             format: "decoded MGEF: editorID %@, name %@, archetype %@, casting %@, "
                 + "delivery %@, cost %.3f, related actor value %@, resistance %@, "
                 + "perk %@, keywords [%@], skipped %d",
@@ -149,7 +149,7 @@ nonisolated extension RecordTextDump {
         _ context: MagicContext?
     ) throws -> String? {
         let scroll = try Scroll(record: record, localized: localized)
-        let value = String(
+        let value = unsafe String(
             format: ", value %d, weight %.2f",
             Int(scroll.itemValue.value),
             scroll.itemValue.weight
@@ -168,7 +168,7 @@ nonisolated extension RecordTextDump {
         var line = "decoded \(record.recordType): editorID \(record.editorID ?? "-"), "
             + "name \(display(record.name))"
         if let data = record.data {
-            line += String(
+            unsafe line += String(
                 format: ", type %@, casting %@, delivery %@, charge time %.2f, range %.1f, "
                     + "half-cost perk %@",
                 data.type.description,
@@ -236,7 +236,7 @@ nonisolated extension RecordTextDump {
         _ formListContext: FormListContext?,
         _ context: MagicContext?
     ) -> String {
-        var text = String(
+        var text = unsafe String(
             format: ", type %@, casting %@, delivery %@, charge time %.2f, amount %d",
             data.type.description,
             data.castingType.description,
@@ -264,7 +264,7 @@ nonisolated extension RecordTextDump {
         let unresolved = cost.unresolvedEffects > 0
             ? ", \(cost.unresolvedEffects) unresolved"
             : ""
-        return String(
+        return unsafe String(
             format: "%d (%@, formula %.2f%@)",
             Int(cost.cost),
             source,
@@ -275,7 +275,7 @@ nonisolated extension RecordTextDump {
 
     private static func effectTable(_ effects: [ResolvedSpellEffect]) -> [String] {
         ["  effects (\(effects.count)):"] + effects.map { effect in
-            String(
+            unsafe String(
                 format: "    %@ — magnitude %.2f, area %d, duration %ds, cost %.2f",
                 effect.displayName,
                 effect.item.magnitude,

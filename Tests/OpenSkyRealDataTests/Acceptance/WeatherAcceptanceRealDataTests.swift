@@ -97,9 +97,10 @@ struct WeatherAcceptanceRealDataTests {
         let midVsCloudy = pixelDelta(midFrame, cloudyFrame)
         #expect(midVsClear > Self.distinctThreshold, "mid-frame matched clear endpoint")
         #expect(midVsCloudy > Self.distinctThreshold, "mid-frame matched cloudy endpoint")
+        let lastFraction = unsafe "last=\(String(format: "%.2f", fractions.last ?? 0))"
         return "[INFO] transition mid-frame deltas (px): vs clear=\(midVsClear) "
             + "vs cloudy=\(midVsCloudy); progress samples=\(fractions.count) "
-            + "last=\(String(format: "%.2f", fractions.last ?? 0))"
+            + lastFraction
     }
 
     /// The same weather at 04:00 vs 13:00 must differ (time-of-day blend).
@@ -172,7 +173,7 @@ struct WeatherAcceptanceRealDataTests {
     }
 
     @MainActor
-    private func readPixels(_ texture: MTLTexture) -> [UInt8] {
+    private func readPixels(_ texture: any MTLTexture) -> [UInt8] {
         RenderedPixels.read(texture)
     }
 

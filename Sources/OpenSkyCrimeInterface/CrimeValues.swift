@@ -1,8 +1,8 @@
 import Foundation
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// Why an arrest outcome could not run.
 nonisolated public enum ArrestRefusal: Error, Equatable, Sendable {

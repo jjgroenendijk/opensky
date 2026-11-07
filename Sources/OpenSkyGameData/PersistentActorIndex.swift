@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum PersistentActorIndex {
     /// Each base that has exactly one persistent placed actor in the load order,

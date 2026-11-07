@@ -3,7 +3,7 @@
 // target runs each parsed command. It keeps the nonisolated default because
 // the parser's property wrappers do not build in a main-actor module.
 
-import ArgumentParser
+public import ArgumentParser
 
 /// `--data-root`, accepted before the command name or after it.
 public struct GlobalOptions: ParsableArguments, Sendable {

@@ -4,7 +4,7 @@
 // Layout and evidence: docs/formats/footstep.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// Which of a footstep set's five lists a lookup wants. The raw values are the
 /// DATA array order, not the XCNT order, because that is what the decoder

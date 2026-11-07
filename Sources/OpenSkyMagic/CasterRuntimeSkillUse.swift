@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyProgressionInterface
 
 extension CasterRuntime {

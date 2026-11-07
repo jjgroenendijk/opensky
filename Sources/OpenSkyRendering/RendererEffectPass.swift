@@ -2,7 +2,7 @@
 // meshes after the alpha-tested pass. See docs/rendering/visual-effects.md.
 
 import Metal
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
@@ -77,7 +77,7 @@ extension Renderer {
             )
             let offset = EffectLayer.uniformStride
                 * (state.slot * EffectLayer.membraneLimit + index)
-            effects.uniformBuffer.contents().advanced(by: offset)
+            unsafe effects.uniformBuffer.contents().advanced(by: offset)
                 .copyMemory(from: &uniforms, byteCount: MemoryLayout<MembraneUniforms>.size)
             argumentTable.setAddress(
                 effects.uniformBuffer.gpuAddress + UInt64(offset),

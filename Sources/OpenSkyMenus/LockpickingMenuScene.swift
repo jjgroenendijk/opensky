@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyInventoryInterface
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 import simd
 
 nonisolated extension LockpickingMenuPresentation {

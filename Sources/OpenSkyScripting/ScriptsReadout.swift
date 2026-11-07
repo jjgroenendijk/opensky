@@ -1,7 +1,7 @@
 // Papyrus readout text: pure functions of one `ScriptsSnapshot`, so the wording
 // is tested without AppKit, Metal or an install. No AppKit import, so the CLI builds it.
 
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 nonisolated public enum ScriptsReadout: Sendable {
     /// Instance count, the current interaction target, and the scripts attached

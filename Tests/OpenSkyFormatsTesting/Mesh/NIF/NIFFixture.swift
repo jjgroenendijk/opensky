@@ -4,7 +4,7 @@
 // NiObjectNET, NiAVObject, NiNode, BSTriShape, BSVertexDataSSE); see
 // docs/formats/nif.md.
 
-import Foundation
+public import Foundation
 import simd
 
 public enum NIFFixture: Sendable {

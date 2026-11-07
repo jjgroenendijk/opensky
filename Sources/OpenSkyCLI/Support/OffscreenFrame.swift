@@ -13,7 +13,7 @@ import OpenSkyWorld
 
 /// One rendered offscreen frame + the stats the commands report.
 struct OffscreenFrame {
-    let texture: MTLTexture
+    let texture: any MTLTexture
     let stats: SceneDrawStats
     let uiStats: UIDrawStats
     let worldOverlayStats: WorldOverlayDrawStats
@@ -41,7 +41,7 @@ extension RenderCommand {
     /// Headless MTKView (never shown, no window) carries the pixel-format
     /// config Renderer reads; renderOffscreen never touches its drawable.
     static func renderOffscreen(
-        device: MTLDevice,
+        device: any MTLDevice,
         scene: RenderScene,
         camera: SceneCamera,
         size: (width: Int, height: Int),

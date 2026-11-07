@@ -4,7 +4,7 @@
 // pose moves it. The math is in docs/engine/actor-resolution.md.
 
 import Foundation
-import simd
+public import simd
 
 nonisolated public enum RigidAttachment: Sendable {
     /// `model` rewritten so every mesh is skinned to the single bone `bone`.

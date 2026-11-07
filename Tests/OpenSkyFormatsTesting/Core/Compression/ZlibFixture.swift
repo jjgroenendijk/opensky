@@ -2,20 +2,20 @@
 // ESM records, compressed SWF bodies, and the zlib decoder itself.
 
 import Compression
-import Foundation
+public import Foundation
 
 public enum ZlibFixture {
     /// Full RFC 1950 zlib stream: 2-byte header, deflate payload, adler32.
     public static func stream(_ payload: Data) -> Data {
         let capacity = payload.count + 256
         var deflate = Data(count: capacity)
-        let written = deflate.withUnsafeMutableBytes { destination in
-            payload.withUnsafeBytes { source -> Int in
+        let written = unsafe deflate.withUnsafeMutableBytes { destination in
+            unsafe payload.withUnsafeBytes { source -> Int in
                 guard
                     let destinationBase = destination.baseAddress,
                     let sourceBase = source.baseAddress
                 else { return 0 }
-                return compression_encode_buffer(
+                return unsafe compression_encode_buffer(
                     destinationBase.assumingMemoryBound(to: UInt8.self),
                     capacity,
                     sourceBase.assumingMemoryBound(to: UInt8.self),
@@ -35,7 +35,7 @@ public enum ZlibFixture {
             s1 = (s1 + UInt32(byte)) % 65521
             s2 = (s2 + s1) % 65521
         }
-        Swift.withUnsafeBytes(of: ((s2 << 16) | s1).bigEndian) { out.append(contentsOf: $0) }
+        Swift.withUnsafeBytes(of: ((s2 << 16) | s1).bigEndian) { unsafe out.append(contentsOf: $0) }
         return out
     }
 }

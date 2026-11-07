@@ -3,7 +3,7 @@
 // quality the skill reaches. See docs/engine/crafting.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyWorldState

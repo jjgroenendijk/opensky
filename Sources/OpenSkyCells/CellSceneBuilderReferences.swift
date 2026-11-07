@@ -4,9 +4,9 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// A decoded REFR plus the children group it was stored in.
 nonisolated public struct CollectedReference: Sendable {

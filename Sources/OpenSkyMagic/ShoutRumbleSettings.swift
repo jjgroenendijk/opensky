@@ -3,7 +3,7 @@
 // settings as motor strength is OpenSky's reading (docs/engine/shouts.md#rumble).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct ShoutRumble: Equatable, Sendable {
     public var bigSeconds: Float

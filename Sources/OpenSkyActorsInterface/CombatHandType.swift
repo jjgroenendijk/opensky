@@ -6,8 +6,8 @@
 // See docs/engine/combat-graph-names.md.
 
 import Foundation
-import OpenSkyBehavior
-import OpenSkyFormatsESM
+public import OpenSkyBehavior
+public import OpenSkyFormatsESM
 
 /// One hand's contents as the behavior graph counts them.
 ///

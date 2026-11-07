@@ -4,7 +4,7 @@
 // Layout and sources: docs/formats/shouts-equip-slots.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Shout: Equatable, Sendable {
     /// One SNAM entry: 12 bytes, word FormID, spell FormID, recovery time.

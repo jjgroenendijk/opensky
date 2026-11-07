@@ -2,8 +2,8 @@
 // weather area (RDAT 3, RDWT) and the sound area (RDAT 7, RDSA) and skips the
 // rest. Layout from UESP and xEdit: docs/formats/weather.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct Region: Sendable {

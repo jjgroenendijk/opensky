@@ -4,7 +4,7 @@
 // through `joinFaction` (`Actor.AddToFaction`), resisting through
 // `resistArrest`, and a barter through `openBarter` (`Actor.ShowBarterMenu`).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension CrimeCoordinator {

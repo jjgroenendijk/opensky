@@ -2,7 +2,7 @@
 // and the packets of one frame. Decoding the packets is libavcodec's job.
 // Layout and sources: docs/formats/bink.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum BinkMovieError: Error, Equatable, Sendable {

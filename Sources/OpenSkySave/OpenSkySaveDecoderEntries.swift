@@ -1,11 +1,11 @@
 // RDLT chunk decoding: reference keys, cell locations and component values. The
 // payload is its own `Data`, so a corrupt count cannot read into the next chunk.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 import simd
 
 nonisolated public enum OpenSkySaveEntryDecoder: Sendable {

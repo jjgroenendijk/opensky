@@ -4,7 +4,7 @@
 // Layout and sources: docs/formats/world-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct ModelBase: Sendable {
     /// Record types this decoder accepts. ARMO is not one: its world model is

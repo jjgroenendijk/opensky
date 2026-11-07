@@ -5,8 +5,8 @@
 // them fail. Handlers a script lacks are counted no-ops.
 
 import Foundation
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {

@@ -2,9 +2,9 @@
 // `iDaysToRespawnVendor` days. UESP "Skyrim:Merchants": "Gold is reset ... every 48
 // hours". See docs/engine/vendor-factions.md.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Kept on the player: the game hour each merchant chest was last stocked.
 nonisolated public struct VendorRestockLedger: WorldStateComponent, Hashable, Sendable {

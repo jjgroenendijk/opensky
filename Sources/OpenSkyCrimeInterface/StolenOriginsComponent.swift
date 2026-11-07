@@ -4,8 +4,8 @@
 // have their stolen status removed". Keyed by the thief. See docs/engine/crime.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// How many of one item were stolen from one owning faction.
 nonisolated public struct StolenOrigin: Equatable, Sendable {

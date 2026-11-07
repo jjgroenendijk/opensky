@@ -2,7 +2,7 @@
 // values are UESP "Skyrim:Damage", Fall Damage (docs/engine/combat.md#fall-damage).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct FallDamageSettings: Equatable, Sendable {
     /// One actor kind's curve: no damage up to `heightMin`, then

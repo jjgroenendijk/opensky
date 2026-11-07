@@ -1,7 +1,7 @@
 // Synthetic LCTN records for the location store and the location conditions.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 public enum LocationFixture: Sendable {
     /// One `LCEC`, `ACEC`, or `RCEC` field: a worldspace and its grid cells.

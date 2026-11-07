@@ -2,8 +2,8 @@
 // interior lighting or a cover. The weather advance runs in the session
 // (`GameSession+Weather.swift`).
 
-import Metal
-import OpenSkyRenderCore
+public import Metal
+public import OpenSkyRenderCore
 import simd
 
 extension Renderer {

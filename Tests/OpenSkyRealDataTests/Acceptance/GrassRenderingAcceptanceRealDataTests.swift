@@ -74,7 +74,7 @@ struct GrassRenderingAcceptanceRealDataTests {
         #expect(distanceStats.distanceCulledInstances > 0)
 
         let weatherName = harness.windyWeather.editorID ?? harness.windyWeather.formID.description
-        let report = """
+        let report = unsafe """
         [INFO] grass render acceptance: \(harness.placementCount) placements; \
         \(fullStats.sceneInstances) mesh instances; \(fullStats.drawnInstances) drawn in \
         \(fullStats.drawCalls) calls; \(fullStats.budgetDroppedInstances) budget-dropped
@@ -158,7 +158,7 @@ struct GrassRenderingAcceptanceRealDataTests {
         RenderedPixels.changedCount(lhs, rhs, tolerance: Self.channelNoiseFloor)
     }
 
-    private static func readPixels(_ texture: MTLTexture) -> [UInt8] {
+    private static func readPixels(_ texture: any MTLTexture) -> [UInt8] {
         RenderedPixels.read(texture)
     }
 

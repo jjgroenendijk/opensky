@@ -3,7 +3,7 @@
 // See docs/formats/effect-shaders.md and docs/rendering/visual-effects.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// One alpha curve: ramp up, hold, ramp down to a persistent level, plus a pulse.

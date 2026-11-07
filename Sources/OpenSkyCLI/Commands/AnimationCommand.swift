@@ -65,7 +65,7 @@ enum AnimationCommand {
         {
             print("  annotation track \(index) \"\(track.name ?? "")\"")
             for annotation in track.annotations {
-                print("    \(String(format: "%.3f", annotation.time)) \(annotation.text)")
+                print(unsafe "    \(String(format: "%.3f", annotation.time)) \(annotation.text)")
             }
         }
     }
@@ -99,17 +99,22 @@ enum AnimationCommand {
                 "animation \(index) sample failed: \(String(describing: error))"
             )
         }
+        let durationText = unsafe "duration \(String(format: "%.6f", animation.duration)) s"
         print("animation \(index): \(animation.frameCount) frames x "
             + "\(animation.transformTrackCount) tracks, \(animation.blockCount) blocks, "
-            + "duration \(String(format: "%.6f", animation.duration)) s")
+            + durationText)
         let mapping = binding.transformTrackToBoneIndices.isEmpty ? "identity" : "explicit"
         print("  bone mapping \(mapping): \(animation.transformTrackCount) samples, "
             + "skeleton \(binding.originalSkeletonName ?? "<unnamed>")")
+        let translationMax = unsafe "\(String(format: "%.6f", translationMaximum)), scale max "
+        let scaleMax = unsafe "\(String(format: "%.6f", scaleMaximum)), quaternion norm "
+        let normMin = unsafe "\(String(format: "%.6f", quaternionNormMinimum))..."
+        let normMax = unsafe String(format: "%.6f", quaternionNormMaximum)
         print("  full duration finite + bounded: translation max "
-            + "\(String(format: "%.6f", translationMaximum)), scale max "
-            + "\(String(format: "%.6f", scaleMaximum)), quaternion norm "
-            + "\(String(format: "%.6f", quaternionNormMinimum))..."
-            + String(format: "%.6f", quaternionNormMaximum))
+            + translationMax
+            + scaleMax
+            + normMin
+            + normMax)
     }
 
     private static func maxAbs(_ value: SIMD3<Float>) -> Float {

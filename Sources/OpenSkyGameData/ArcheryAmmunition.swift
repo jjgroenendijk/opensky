@@ -1,5 +1,5 @@
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The selected arrow, reduced to what a shot needs from it.
 nonisolated public struct ArcheryAmmunition: Equatable, Sendable {

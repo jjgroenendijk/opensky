@@ -118,7 +118,7 @@ struct WeaponRecordTests {
         var dnam = InventoryFixture.weaponDNAM(animation: 1, speed: 1, reach: 1, flags: 0, skill: 6)
         for (offset, value) in [(0x34, Float(0.5)), (0x38, 0.25), (0x3C, 0.3)] {
             withUnsafeBytes(of: value.bitPattern.littleEndian) {
-                dnam.replaceSubrange(offset ..< offset + 4, with: $0)
+                unsafe dnam.replaceSubrange(offset ..< offset + 4, with: $0)
             }
         }
         let weapon = try Weapon(

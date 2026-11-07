@@ -1,8 +1,8 @@
 // CELL XCLL and LGTM lighting layouts. Inherit flags are resolved by
 // CellSceneBuilderLighting, not here. Layout: docs/formats/lighting.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct DirectionalAmbientColors: Equatable, Sendable {

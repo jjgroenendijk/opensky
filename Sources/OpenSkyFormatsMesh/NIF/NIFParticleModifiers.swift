@@ -2,8 +2,8 @@
 // model becomes `.unsupported(typeName:)` and does not throw; malformed bytes
 // in a known block do throw. Layout: docs/formats/nif-particles.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public enum NIFParticleModifierDecoder: Sendable {

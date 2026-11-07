@@ -2,7 +2,7 @@
 // `openskycli gmst detection` and the readout show the same rows in the same order.
 
 import Foundation
-import OpenSkyPhysics
+public import OpenSkyPhysics
 
 nonisolated extension DetectionSettings {
     /// Every setting paired with the name it is addressed by. Load-order

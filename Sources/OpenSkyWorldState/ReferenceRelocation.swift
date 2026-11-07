@@ -4,7 +4,7 @@
 // position falls in. See docs/engine/reference-identity.md.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct ReferenceRelocation: WorldStateComponent, Hashable, Sendable {
     public let location: CellSceneLocation

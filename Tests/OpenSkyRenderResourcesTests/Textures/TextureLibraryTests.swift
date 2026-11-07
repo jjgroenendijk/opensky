@@ -15,7 +15,7 @@ import Testing
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct TextureLibraryTests {
     /// nil when this machine cannot run BCn upload tests.
-    private static let bcDevice: MTLDevice? = {
+    private static let bcDevice: (any MTLDevice)? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsBCTextureCompression else { return nil }
@@ -50,7 +50,7 @@ struct TextureLibraryTests {
         try contents.write(to: url)
     }
 
-    private func library(device: MTLDevice) throws -> TextureLibrary {
+    private func library(device: any MTLDevice) throws -> TextureLibrary {
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
         return try TextureLibrary(fileSystem: vfs, device: device)
     }

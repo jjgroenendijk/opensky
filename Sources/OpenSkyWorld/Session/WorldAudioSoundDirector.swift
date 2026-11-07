@@ -3,12 +3,12 @@
 // submix (WorldAudioSoundDirector+Region.swift). A missing engine, store or file means
 // silence, not a crash. Papyrus subscribes to the same `onInteraction` seam beside this.
 
-import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldInterface
+public import Foundation
+public import OpenSkyAudio
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldInterface
 import simd
 
 private struct ResolvedSoundFile {

@@ -1,5 +1,5 @@
-import Foundation
-import OpenSkyFormatsESM
+public import Foundation
+public import OpenSkyFormatsESM
 
 /// Why the player has no body. Every case is reported rather than swallowed:
 /// a bodiless player in third person looks like a rendering bug, and the readout

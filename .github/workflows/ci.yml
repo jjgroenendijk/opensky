@@ -24,7 +24,7 @@ permissions:
 # locally. Each `renovate:` comment names where the version comes from.
 env:
   # renovate: datasource=github-releases depName=nicklockwood/SwiftFormat
-  SWIFTFORMAT_VERSION: 0.64.4
+  SWIFTFORMAT_VERSION: 0.64.5
   # renovate: datasource=github-releases depName=realm/SwiftLint
   SWIFTLINT_VERSION: 0.65.1
   # renovate: datasource=npm depName=markdownlint-cli2
@@ -216,6 +216,7 @@ jobs:
           xcodebuild -version
           system_profiler SPDisplaysDataType
       - run: make swift-baseline
+      - run: make language-rules
       # One run then lists the compile errors of every target, not only the first.
       - name: Keep building after errors
         run: defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES

@@ -1,7 +1,7 @@
 // Snapshots of image-space pass and the visual effects.
 
 import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyRendering
 
 nonisolated public struct VisualEffectSnapshot: Equatable, Sendable {
     public let instances: [VisualEffectInstance]

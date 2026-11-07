@@ -1,8 +1,8 @@
 // Synthetic SPEL, SCRL and MGEF fixtures shared by the spell store and record-dump suites.
 // Every byte is authored here; nothing comes from the game install.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 import Testing
 
 public enum SpellStoreFixture: Sendable {

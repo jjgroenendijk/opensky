@@ -1,11 +1,11 @@
 // Traditional tree LOD build, split from ring selection/terrain placement.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
 import OpenSkyRenderCore
-import OpenSkyRendering
-import simd
+public import OpenSkyRendering
+public import simd
 
 nonisolated extension DistantLODBuilder {
     public struct TreeBuild {

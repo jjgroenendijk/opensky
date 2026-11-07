@@ -3,7 +3,7 @@
 // `unsupportedFormat` instead of playing as noise. Vanilla uses only 16-bit
 // PCM. Layout and sources: docs/formats/wav.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum WAVError: Error, Equatable, Sendable {

@@ -164,6 +164,30 @@ IMPORT = re.compile(
     r"import\s+(?:(?:typealias|struct|class|enum|protocol|let|var|func)\s+)?(\w+)",
     re.M,
 )
+PUBLIC_IMPORT = re.compile(r"^\s*(?:@\w+(?:\([^)]*\))?\s+)*public\s+import\s+(?:\w+\s+)?(\w+)", re.M)
+EXPORTED = re.compile(r"^\s*@_exported\s+import\b", re.M)
+
+
+def public_import_failures(name, path, text):
+    """Rule 11: an interface re-exports only lower modules and interfaces."""
+    found = []
+    if EXPORTED.search(text):
+        found.append(f"rule 11: {path} uses @_exported import; write public import")
+    if name in interfaces:
+        for module in PUBLIC_IMPORT.findall(text):
+            if module in names and kind(module) not in ("lower", "interface"):
+                found.append(f"rule 11: interface {path} publicly imports {module}")
+    return found
+
+
+# Self-check: rule 11 rejects a small violation, so it cannot switch off unnoticed.
+probe_interface = next(iter(sorted(interfaces)), None)
+probe_feature = next(iter(sorted(features)), None)
+if probe_interface and probe_feature:
+    probe = f"public import {probe_feature}\n@_exported import Foundation\n"
+    if len(public_import_failures(probe_interface, "self-check", probe)) != 2:
+        failures.append("rule 11 self-check: a public import of a feature passed")
+
 imports = 0
 for target in targets:
     name = target["name"]
@@ -171,7 +195,9 @@ for target in targets:
     folder = pathlib.Path(target.get("path") or f"{root}/{name}")
     allowed = set(deps[name]) | {name}
     for path in sorted(folder.rglob("*.swift")):
-        for module in IMPORT.findall(path.read_text()):
+        text = path.read_text()
+        failures += public_import_failures(name, path, text)
+        for module in IMPORT.findall(text):
             imports += module in names
             if module in names and module not in allowed:
                 failures.append(

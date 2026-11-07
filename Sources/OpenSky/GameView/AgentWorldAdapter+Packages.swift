@@ -26,7 +26,7 @@ extension AgentWorldAdapter {
             "package": readout?.editorID.map(AgentJSON.string) ?? .null,
             "procedure": readout?.procedure.map { .string("\($0)") } ?? .null,
             "evaluatedAt": readout?.lastEvaluationGameSeconds
-                .map { .string(String(format: "%.1f", $0)) } ?? .null,
+                .map { unsafe .string(String(format: "%.1f", $0)) } ?? .null,
             "override": readout?.override.map { .string("\($0)") } ?? .null,
             "state": machine.map { .string("\($0.state)") } ?? .null,
             "pathIndex": machine.map { .init($0.pathIndex) } ?? .null,

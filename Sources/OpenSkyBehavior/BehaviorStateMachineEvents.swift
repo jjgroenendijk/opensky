@@ -3,7 +3,7 @@
 // fires), and the four machine-level event ids, which vanilla barely uses.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 nonisolated extension BehaviorGraphInstance {
     // MARK: - Notify events

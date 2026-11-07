@@ -21,7 +21,7 @@ struct RenderSceneTests {
         device != nil
     }
 
-    private static func texture(device: MTLDevice) throws -> MTLTexture {
+    private static func texture(device: any MTLDevice) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.width = 1
         descriptor.height = 1
@@ -61,7 +61,7 @@ struct RenderSceneTests {
         )
     }
 
-    private static func renderModel(device: MTLDevice) throws -> RenderModel {
+    private static func renderModel(device: any MTLDevice) throws -> RenderModel {
         let shared = try texture(device: device)
         let model = Model(
             meshes: [mesh(slot: 1), mesh(slot: 0)],

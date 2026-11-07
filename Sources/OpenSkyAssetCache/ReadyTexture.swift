@@ -2,9 +2,9 @@
 // every mip level. The extract converter stores the shipped DDS blocks as they
 // are; the ASTC converter stores re-encoded blocks in the same shape.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsMesh
 
 nonisolated public enum ReadyTextureFormat: UInt8, Sendable, CaseIterable {
     case bc1 = 1, bc2, bc3, bc4, bc5, bc7
@@ -43,7 +43,7 @@ nonisolated public enum ReadyTextureFormat: UInt8, Sendable, CaseIterable {
     /// `3.56` for ASTC 6x6, `8` for BC3.
     public var bitsPerPixelText: String {
         let value = bitsPerPixel
-        return value == value.rounded() ? String(Int(value)) : String(format: "%.2f", value)
+        return unsafe value == value.rounded() ? String(Int(value)) : String(format: "%.2f", value)
     }
 
     /// `BC1`, `ASTC 6x6`.

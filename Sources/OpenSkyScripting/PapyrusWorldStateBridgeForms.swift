@@ -1,6 +1,6 @@
 // Record-data reads for the form natives: form-list entries and `KWDA` keywords.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension PapyrusWorldStateBridge {

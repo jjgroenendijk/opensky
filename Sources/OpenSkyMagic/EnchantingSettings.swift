@@ -1,7 +1,7 @@
 // The arcane enchanter's game settings. UESP "Skyrim:Leveling" gives the disenchanting
 // experience as 1 per 400 gold, which is `fDisenchantSkillUse`. See docs/engine/enchanting.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct EnchantingSettings: Equatable, Sendable {
     /// `fDisenchantSkillUse`: base experience per gold of enchantment value.

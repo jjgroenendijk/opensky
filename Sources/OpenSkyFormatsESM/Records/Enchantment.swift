@@ -3,7 +3,7 @@
 // the unread-field tally. Layout and sources: docs/formats/enchantments.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Enchantment: Sendable {
     public let formID: FormID

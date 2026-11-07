@@ -6,8 +6,8 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 /// The staffs actors hold and the charge on each.
 @MainActor

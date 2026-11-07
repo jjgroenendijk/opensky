@@ -6,7 +6,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// What a resolved footstep event turns into.
 nonisolated public struct ResolvedFootstep: Equatable, Sendable {

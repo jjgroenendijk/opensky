@@ -2,8 +2,8 @@
 // main actor, so a condition body never loads plugins or reads a live streamer.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public struct ConditionDataResolution: Sendable {
     public let keywords: KeywordStore?

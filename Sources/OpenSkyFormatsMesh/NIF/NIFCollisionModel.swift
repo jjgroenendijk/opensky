@@ -3,8 +3,8 @@
 // Layout and sources: docs/formats/nif-collision.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 nonisolated public struct NIFCollisionFilter: Equatable, Sendable, BitwiseCopyable {
     /// NifTools SkyrimLayer raw value.

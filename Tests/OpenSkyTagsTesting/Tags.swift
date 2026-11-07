@@ -1,5 +1,5 @@
 import Foundation
-import Testing
+public import Testing
 
 /// The tags every test target shares. A test plan selects by
 /// them, so the list is in `docs/tools/test-runs.md` too.

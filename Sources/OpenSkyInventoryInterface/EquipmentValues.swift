@@ -1,5 +1,5 @@
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Failures the equipment layer reports. Like `InventoryError`, every one is a
 /// caller mistake rather than malformed input.

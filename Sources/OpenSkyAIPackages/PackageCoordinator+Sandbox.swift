@@ -1,7 +1,7 @@
 // What the idle runtime needs from a running sandbox: the area it takes markers in.
 
-import OpenSkyActorPresentation
-import OpenSkyFormatsESM
+public import OpenSkyActorPresentation
+public import OpenSkyFormatsESM
 import OpenSkyWorldInterface
 
 extension PackageCoordinator {

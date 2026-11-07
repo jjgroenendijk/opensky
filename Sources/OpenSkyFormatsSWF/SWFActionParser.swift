@@ -3,8 +3,8 @@
 // stream and lands in `warnings`, so one bad handler cannot fail a movie.
 // Spec: SWF v19 chapter 5. See docs/formats/swf-actions.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public enum SWFActionParser: Sendable {
     public static let doActionCode: UInt16 = 12

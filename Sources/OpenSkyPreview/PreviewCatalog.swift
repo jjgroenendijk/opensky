@@ -4,8 +4,8 @@
 // OpenSkyTests exercises this). See docs/tools/preview-gui.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// What one catalog row selects.
 nonisolated public enum PreviewSelection: Sendable {

@@ -2,8 +2,8 @@
 // the readout sentences. Values in, values out. See docs/engine/coordinators.md
 // and docs/engine/dialogue-camera.md.
 
-import OpenSkyDialogueInterface
-import OpenSkyFormatsESM
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsESM
 
 /// One command the speaker focus sends to an actor.
 nonisolated public enum DialogueFocusEffect: Equatable, Sendable {

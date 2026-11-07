@@ -5,7 +5,7 @@
 // applied; no vanilla effect used here needs it. See docs/engine/magic.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Which kind of record handed an effect to an actor.
 ///

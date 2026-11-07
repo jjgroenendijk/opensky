@@ -3,9 +3,9 @@
 // rebuilds the cell, as equipment does. The slot has no save tag, so it lasts
 // for the session only. An idle prop is not here: `ActorPropPlayback` draws it.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 nonisolated public enum ActorHeadSource: Equatable, Sendable {
     /// The baked FaceGen mesh and tint, the game's own path.

@@ -4,9 +4,9 @@
 // target. The GPU decode is the reference, because it is what the renderer shows.
 // See docs/engine/asset-cache.md, "Texture quality".
 
-import Foundation
-import Metal
-import OpenSkyAssetCache
+public import Foundation
+public import Metal
+public import OpenSkyAssetCache
 import Synchronization
 
 nonisolated public final class ASTCTextureConverter: AssetConverting, Sendable {
@@ -18,7 +18,7 @@ nonisolated public final class ASTCTextureConverter: AssetConverting, Sendable {
     /// The GPU decode is serialized; the astcenc encode of different files runs in parallel.
     private let decoder: Mutex<Decoder>
 
-    public init(device: MTLDevice, library: MTLLibrary) throws {
+    public init(device: any MTLDevice, library: any MTLLibrary) throws {
         decoder = try Mutex(Decoder(
             loader: TextureLoader(device: device),
             readback: TextureReadback(device: device, library: library)

@@ -2,7 +2,7 @@
 // its keyboard, mouse, and gamepad inputs and its remap flags. The file's own
 // header comment names the columns. Layout: docs/formats/controlmap.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum ControlMapError: Error, Equatable, Sendable {
     case notText

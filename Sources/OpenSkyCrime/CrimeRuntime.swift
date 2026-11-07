@@ -5,11 +5,11 @@
 // The count moves even when nobody saw. See docs/engine/crime.md.
 
 import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyCrimeInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Reads and mutates crime ledgers on top of a `WorldStateStore`, and decides
 /// what one reported crime costs.

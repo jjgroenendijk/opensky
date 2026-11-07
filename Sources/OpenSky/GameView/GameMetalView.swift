@@ -100,8 +100,8 @@ final class GameMetalView: MTKView {
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         // A menu highlights the row under a free cursor, so motion arrives uncaptured too.
-        window?.acceptsMouseMovedEvents = true
-        window?.makeFirstResponder(self)
+        unsafe window?.acceptsMouseMovedEvents = true
+        unsafe window?.makeFirstResponder(self)
     }
 
     // MARK: - Keyboard
@@ -282,7 +282,7 @@ final class GameMetalView: MTKView {
     private func captureCursor() {
         guard !captured else { return }
         captured = true
-        window?.makeFirstResponder(self)
+        unsafe window?.makeFirstResponder(self)
         // Hides the cursor and detaches it from the pointer so we read pure
         // deltas and the cursor cannot leave the window.
         pointerCapture.engage()

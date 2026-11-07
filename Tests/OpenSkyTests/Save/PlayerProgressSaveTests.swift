@@ -61,7 +61,7 @@ struct PlayerProgressSaveTests {
         let data = Self.encode(store.snapshot())
 
         var index = UInt32(bitPattern: ActorValueIdentity.index(of: .magicka)).littleEndian
-        let encoded = withUnsafeBytes(of: &index) { Data($0) }
+        let encoded = withUnsafeBytes(of: &index) { unsafe Data($0) }
         #expect(data.range(of: encoded) != nil)
     }
 

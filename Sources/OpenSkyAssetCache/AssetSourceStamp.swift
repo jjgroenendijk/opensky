@@ -1,7 +1,7 @@
 // What a cache entry was built from. The entry is current only while its source
 // still has the same size, modification time, and content hash.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct AssetSourceStamp: Hashable, Sendable {
     /// The file that provides the asset: an archive name such as
@@ -47,9 +47,9 @@ nonisolated public enum AssetContentHash {
     private static let prime: UInt64 = 0x0000_0100_0000_01B3
 
     public static func of(_ bytes: Data) -> UInt64 {
-        bytes.withUnsafeBytes { buffer in
+        unsafe bytes.withUnsafeBytes { buffer in
             var hash = offsetBasis
-            for byte in buffer {
+            for unsafe byte in unsafe buffer {
                 hash = (hash ^ UInt64(byte)) &* prime
             }
             return hash

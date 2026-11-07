@@ -1,6 +1,6 @@
-import Foundation
+public import Foundation
 @testable import OpenSkyFormatsCore
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyFormatsESM
 import Testing
 
 extension ESMFixture {

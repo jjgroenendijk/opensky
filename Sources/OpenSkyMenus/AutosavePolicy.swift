@@ -2,8 +2,8 @@
 // Gameplay settings. Save on Pause saves when the pause menu opens and the chosen
 // minutes have passed since the last save. Autosaves rotate through a few slots.
 
-import Foundation
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyGameData
 
 nonisolated public enum AutosaveTrigger: String, Equatable, Sendable {
     case rest, wait, travel, pause

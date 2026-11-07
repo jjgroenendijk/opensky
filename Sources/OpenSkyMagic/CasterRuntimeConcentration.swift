@@ -4,9 +4,9 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 extension CasterRuntime {
     /// One frame of a maintained cast: drain, apply the whole seconds that

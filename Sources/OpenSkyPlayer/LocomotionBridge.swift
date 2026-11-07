@@ -4,11 +4,11 @@
 // uses gait speed; the branch keys on `BehaviorRootMotion.isExtracted`, not a speed
 // threshold. See docs/engine/walk-mode.md.
 
-import OpenSkyActorPresentation
-import OpenSkyBehavior
-import OpenSkyCombatInterface
-import OpenSkyPhysics
-import OpenSkyRendering
+public import OpenSkyActorPresentation
+public import OpenSkyBehavior
+public import OpenSkyCombatInterface
+public import OpenSkyPhysics
+public import OpenSkyRendering
 import simd
 
 /// One frame of player intent, in the form the bridge consumes. Filled from

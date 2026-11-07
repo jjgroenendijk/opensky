@@ -3,7 +3,7 @@
 // See docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 
 nonisolated extension MeleeCombatState {
     public var actionFacts: ActorActionFacts {

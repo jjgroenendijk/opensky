@@ -4,8 +4,8 @@
 // from `ConditionRandom`. See docs/engine/global-variables.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 import OpenSkyWorldConditions
 
 nonisolated public enum RuntimeStateConditionRunner: Sendable {

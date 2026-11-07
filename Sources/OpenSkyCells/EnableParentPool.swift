@@ -1,8 +1,8 @@
 // The persistent placements an `XESP` link may name. A parent is persistent, and it
 // can be an object or an actor (CK wiki, "Enable Parent"). See docs/engine/traps.md.
 
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 nonisolated public struct EnableParentPool: Sendable {
     public var references: [FormID: PlacedReference]

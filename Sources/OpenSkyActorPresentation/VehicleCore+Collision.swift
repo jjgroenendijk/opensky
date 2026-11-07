@@ -1,7 +1,7 @@
 // Which linked actors walk through the vehicles' moving collision. See
 // docs/engine/vehicles.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyWorldState
 
 nonisolated extension VehicleCore {

@@ -177,8 +177,9 @@ struct CombatLoopRealDataTests {
         )
         let order = fight.phases.map(\.rawValue).joined(separator: " -> ")
         print("[INFO] \(located.editorID) (\(located.key)) at \(located.actor.placement.position)")
+        let perStep = unsafe "\(String(format: "%.4f", perStepMS)) ms per step offscreen"
         print("[INFO] phases \(order) over \(fight.steps) fixed steps, "
-            + "\(String(format: "%.4f", perStepMS)) ms per step offscreen")
+            + perStep)
         print("[INFO] \(fight.combatWorld.damage[.player, default: 0]) damage taken, "
             + "\(fight.combatWorld.moveRequests.count) path requests refused")
         try Self.report(
@@ -237,7 +238,7 @@ struct CombatLoopRealDataTests {
         steps: Int = budgetSteps,
         file: String = "combat-loop-budget.log"
     ) throws {
-        let text = """
+        let text = unsafe """
         OpenSky combat loop budget (issues #374 and #424)
 
         actors:          \(actors)

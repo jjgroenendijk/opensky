@@ -26,7 +26,7 @@ struct CellSceneBuilderLoadOrderTests {
         fixtures = try CellSceneBuilderTests()
     }
 
-    private func makeBuilder(device: MTLDevice) throws -> CellSceneBuilder {
+    private func makeBuilder(device: any MTLDevice) throws -> CellSceneBuilder {
         let base = try ESMFile(data: fixtures.plugin(
             interiorRecords: fixtures.interiorCellGroup(
                 formID: Self.interior,

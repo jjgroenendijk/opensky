@@ -2,7 +2,7 @@
 // are not collision shapes, so this bends the walk direction around a neighbour ahead
 // and pushes apart two that overlap. OpenSky's own rule; see docs/engine/navigation.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// Another actor a mover should not walk through.

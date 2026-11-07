@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import simd
 

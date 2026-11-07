@@ -4,13 +4,13 @@
 // unless it starts a Random stack. The selection rules are in docs/engine/dialogue.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
-import OpenSkyWorldState
+public import OpenSkyConditions
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
+public import OpenSkyWorldState
 
 /// Reads dialogue selection and writes said-state on top of a
 /// `WorldStateStore`.

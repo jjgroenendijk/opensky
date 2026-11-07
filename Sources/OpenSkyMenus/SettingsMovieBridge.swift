@@ -4,8 +4,8 @@
 // and its list rows carry `text`, `movieType`, `value`, and stepper `options`.
 
 import Foundation
-import OpenSkyFormatsSWF
-import OpenSkyGameData
+public import OpenSkyFormatsSWF
+public import OpenSkyGameData
 
 nonisolated public enum SettingsMovieBridge: Sendable {
     public static let optionsListPath =

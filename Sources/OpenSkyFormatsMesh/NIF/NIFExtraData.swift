@@ -2,9 +2,9 @@
 // `BSX` flags, the `INV` inventory marker, or the `BBX` bound of a skeleton.
 // Layout: docs/formats/nif-extra-data.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
-import simd
+public import simd
 
 /// One extra data block: its name and its decoded value.
 nonisolated public struct NIFExtraData: Equatable, Sendable {

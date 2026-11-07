@@ -41,7 +41,7 @@ struct MeshLibraryTests {
         try contents.write(to: url)
     }
 
-    func library(device: MTLDevice) throws -> MeshLibrary {
+    func library(device: any MTLDevice) throws -> MeshLibrary {
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
         let textures = try TextureLibrary(fileSystem: vfs, device: device)
         return MeshLibrary(fileSystem: vfs, device: device, textures: textures)

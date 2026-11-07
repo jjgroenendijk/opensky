@@ -1,6 +1,6 @@
 // `benchmark`: the cinematic tour in the app's live window.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct BenchmarkArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(

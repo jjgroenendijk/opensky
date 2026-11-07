@@ -3,9 +3,9 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 
 extension MagicCoordinator {
     public var magicEffectControlSnapshot: MagicEffectControlSnapshot {

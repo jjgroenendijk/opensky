@@ -3,7 +3,7 @@
 // The model and its sources: docs/engine/celestial-sky.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum MoonPhase: Int, CaseIterable, Sendable {

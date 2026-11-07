@@ -1,7 +1,7 @@
 // Compiled Papyrus script container (big-endian PEX 3.2).
 // Layout and sources: docs/formats/pex.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum PexError: Error, Equatable, Sendable {
     case truncated(offset: Int, expected: Int, available: Int)

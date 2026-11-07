@@ -2,15 +2,15 @@
 // cell-scene suites share, and the two Metal gates. A library because the
 // acceptance suites build the same cell.
 
-import Foundation
-import Metal
-@testable import OpenSkyCells
+public import Foundation
+public import Metal
+@testable public import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
-@testable import OpenSkyWorldState
+@testable public import OpenSkyWorldState
 import simd
 import Testing
 
@@ -324,7 +324,7 @@ extension CellSceneBuilderFixture {
                 : ESMFixture.topGroup("CELL", contents: interiorRecords))
     }
 
-    public func makeBuilder(pluginData: Data, device: MTLDevice) throws -> CellSceneBuilder {
+    public func makeBuilder(pluginData: Data, device: any MTLDevice) throws -> CellSceneBuilder {
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
         let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)

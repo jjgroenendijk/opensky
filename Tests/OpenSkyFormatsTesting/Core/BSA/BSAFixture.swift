@@ -1,7 +1,7 @@
 // Synthetic BSA v105 builder shared by parser and VFS tests. Fixtures are
 // built in code — never extracted game files (AGENTS.md "Legal & IP boundary").
 
-import Foundation
+public import Foundation
 
 /// Builds a minimal spec-conformant BSA v105 byte blob.
 public struct BSAFixture: Sendable {
@@ -93,15 +93,15 @@ public struct BSAFixture: Sendable {
 
 extension Data {
     public mutating func appendUInt16(_ value: UInt16) {
-        Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
+        Swift.withUnsafeBytes(of: value.littleEndian) { unsafe append(contentsOf: $0) }
     }
 
     public mutating func appendUInt32(_ value: UInt32) {
-        Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
+        Swift.withUnsafeBytes(of: value.littleEndian) { unsafe append(contentsOf: $0) }
     }
 
     public mutating func appendUInt64(_ value: UInt64) {
-        Swift.withUnsafeBytes(of: value.littleEndian) { append(contentsOf: $0) }
+        Swift.withUnsafeBytes(of: value.littleEndian) { unsafe append(contentsOf: $0) }
     }
 
     public mutating func appendFloat32(_ value: Float) {

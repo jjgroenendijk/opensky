@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct DefaultObjectTag: Hashable, Sendable, CustomStringConvertible {
     public let code: FourCC

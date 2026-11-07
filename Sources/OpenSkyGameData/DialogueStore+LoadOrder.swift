@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One plugin's DIAL, INFO, DLBR, DLVW and VTYP records, in its own FormID space.
 nonisolated struct PluginDialogue {

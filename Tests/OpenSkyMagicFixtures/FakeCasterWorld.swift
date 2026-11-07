@@ -2,12 +2,12 @@
 // Answers are stored values and actions are recorded, because the suites check
 // what a cast handed the world, not what the world did with it.
 
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyGameData
-@testable import OpenSkyMagic
-@testable import OpenSkyMagicInterface
-import OpenSkyPhysics
-@testable import OpenSkyProgressionInterface
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyGameData
+@testable public import OpenSkyMagic
+@testable public import OpenSkyMagicInterface
+public import OpenSkyPhysics
+@testable public import OpenSkyProgressionInterface
 import simd
 
 @MainActor

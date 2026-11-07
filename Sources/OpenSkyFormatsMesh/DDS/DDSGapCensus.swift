@@ -1,8 +1,8 @@
 // Which texture variants the install's DDS files use, and which `DDSFile` does not
 // read. Names and counts only.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct DDSGapCensus: Sendable {
     /// Variant, such as "bc7 cubemap" or "unsupported: texture array of 6" -> files.

@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/camera-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct CameraShot: Equatable, Sendable {
     /// DATA. Members from `target` on are optional, so DATA comes in 40 or 44 bytes.

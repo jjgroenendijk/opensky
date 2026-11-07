@@ -3,10 +3,10 @@
 // script shakes on top. See docs/engine/kill-cam.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
 import OpenSkyWorldConditions
 import simd
 

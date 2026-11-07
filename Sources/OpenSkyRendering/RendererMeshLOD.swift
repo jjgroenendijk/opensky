@@ -59,7 +59,7 @@ extension Renderer {
         for level in levels + fading {
             level.withUnsafeBytes { bytes in
                 guard let source = bytes.baseAddress else { return }
-                instanceTransformBuffer.contents().advanced(by: cursor * stride)
+                unsafe instanceTransformBuffer.contents().advanced(by: cursor * stride)
                     .copyMemory(from: source, byteCount: bytes.count)
             }
             cursor += level.count

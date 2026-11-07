@@ -1,7 +1,7 @@
 // The seam other features report crimes and read bounty through. `CrimeReporter` in
 // OpenSkyCrime conforms, and the composition root hands it over as this protocol.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Judges ownership, reports crimes, and reads and writes the player's bounty.
 @MainActor

@@ -3,7 +3,7 @@
 // (docs/engine/distant-lod.md#generated-terrain).
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct TerrainLODLand: Sendable {

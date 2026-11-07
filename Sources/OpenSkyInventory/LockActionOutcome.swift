@@ -2,7 +2,7 @@
 // the rules never build sentences (docs/engine/coordinators.md).
 
 import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 /// A refused press that opens no minigame. The HUD shows the game's own text.
 nonisolated public enum LockNotice: Equatable, Sendable {

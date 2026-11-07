@@ -1,6 +1,6 @@
 // RIFF/WAVE bytes built in code (docs/formats/wav.md), never from a game file.
 
-import Foundation
+public import Foundation
 
 public enum WAVFixture {
     public static func file(

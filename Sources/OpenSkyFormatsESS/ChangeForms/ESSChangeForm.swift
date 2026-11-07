@@ -1,7 +1,7 @@
 // One change form: a record's runtime change, as a ref id, change flags, a form type,
 // a version, and data that may be zlib compressed. See docs/formats/ess-change-forms.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct ESSChangeForm: Equatable, Sendable {

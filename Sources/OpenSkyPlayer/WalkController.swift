@@ -1,10 +1,10 @@
 // Fixed-step player movement: capsule pose, gravity, terrain grounding, static
 // mesh collide-and-slide, slope limit, and bounded step response.
 
-import OpenSkyFormatsESM
-import OpenSkyPhysics
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import simd
 
 nonisolated public struct WalkController: Sendable {

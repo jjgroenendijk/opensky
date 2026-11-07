@@ -2,7 +2,7 @@
 // sky statics, and the linked image spaces, precipitation and lighting.
 // Layout and sources: docs/formats/weather.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// Four values, one per time of day.

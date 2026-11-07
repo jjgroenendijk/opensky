@@ -3,7 +3,7 @@
 // Layout: docs/formats/nif-sequences.md.
 
 import Foundation
-import simd
+public import simd
 
 /// One named animation of a mesh: its timing, its text keys, and its tracks.
 nonisolated public struct NIFSequence: Equatable, Sendable {

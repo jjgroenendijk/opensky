@@ -3,7 +3,7 @@
 // framebuffer size + scale, rasterizing needed glyphs into the atlas. Pure
 // aside from atlas mutation -> two resolves of one scene are byte-identical.
 
-import CoreText
+public import CoreText
 import simd
 
 /// A border stroke on a readout.

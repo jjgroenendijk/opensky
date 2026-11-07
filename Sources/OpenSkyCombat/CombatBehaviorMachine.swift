@@ -6,8 +6,8 @@
 // See docs/engine/combat-behavior.md.
 
 import Foundation
-import OpenSkyCombatInterface
-import OpenSkyConditions
+public import OpenSkyCombatInterface
+public import OpenSkyConditions
 import OpenSkyMagicInterface
 import simd
 

@@ -3,8 +3,8 @@
 // docs/engine/face-morphs.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// How far the eyes drift for one emotion, in radians. Positive heading looks left,
 /// positive pitch looks up.

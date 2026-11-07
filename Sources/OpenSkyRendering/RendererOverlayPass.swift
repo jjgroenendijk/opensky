@@ -1,10 +1,10 @@
 // Depth-tested world-space debug overlay. Sources build a CPU primitive list per frame;
 // one bounded upload feeds one blended pipeline for triangles and lines.
 
-import Metal
-import MetalKit
+public import Metal
+public import MetalKit
 import OpenSkyDiagnostics
-import OpenSkyRenderResources
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 nonisolated public struct WorldOverlayDrawStats: Equatable, Sendable {
@@ -37,9 +37,9 @@ nonisolated public struct WorldOverlayDrawStats: Equatable, Sendable {
 }
 
 nonisolated public struct WorldOverlayResources {
-    public let pipeline: MTLRenderPipelineState
-    public let depthState: MTLDepthStencilState
-    public let vertexBuffer: MTLBuffer
+    public let pipeline: any MTLRenderPipelineState
+    public let depthState: any MTLDepthStencilState
+    public let vertexBuffer: any MTLBuffer
 }
 
 extension Renderer {
@@ -48,9 +48,9 @@ extension Renderer {
     public static let worldOverlayPrimitiveBudget = 65536
 
     public static func makeWorldOverlayResources(
-        device: MTLDevice,
+        device: any MTLDevice,
         view: MTKView,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache
     ) throws -> WorldOverlayResources {
         let verticesPerSlot = worldOverlayPrimitiveBudget * 3
@@ -68,9 +68,9 @@ extension Renderer {
 
     private static func makeWorldOverlayPipeline(
         view: MTKView,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = "overlayVertex"
@@ -99,8 +99,8 @@ extension Renderer {
     /// Overlay geometry is occluded by the world but never modifies depth, so
     /// translucent triangles and their wire/path lines cannot hide later draws.
     private static func makeWorldOverlayDepthState(
-        device: MTLDevice
-    ) throws -> MTLDepthStencilState {
+        device: any MTLDevice
+    ) throws -> any MTLDepthStencilState {
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.label = "WorldOverlayReadOnlyDepth"
         descriptor.depthCompareFunction = .lessEqual
@@ -163,7 +163,7 @@ extension Renderer {
         let offset = slot * verticesPerSlot * stride
         vertices.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            worldOverlayResources.vertexBuffer.contents().advanced(by: offset)
+            unsafe worldOverlayResources.vertexBuffer.contents().advanced(by: offset)
                 .copyMemory(from: base, byteCount: bytes.count)
         }
         return offset

@@ -1,7 +1,7 @@
 // What the player's behavior graph asks of the ragdolls this frame, read off the
 // ragdoll modifiers it evaluated. See docs/engine/ragdoll.md.
 
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// The ragdoll modifier output of one graph update. Nil fields mean no such
 /// modifier ran, and the runtime uses its default.

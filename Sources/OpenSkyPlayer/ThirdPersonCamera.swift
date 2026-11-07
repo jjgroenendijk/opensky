@@ -4,7 +4,7 @@
 // and the shared look angles. See docs/engine/player-camera.md, "Third-person framing".
 
 import OpenSkyFormatsCore
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import OpenSkyRendering
 import simd
 

@@ -111,6 +111,6 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
     }
 
     private static func format(_ value: Float) -> String {
-        String(format: "%.1f", value)
+        unsafe String(format: "%.1f", value)
     }
 }

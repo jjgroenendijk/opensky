@@ -44,7 +44,9 @@ nonisolated public struct CalendarTexts: Equatable, Sendable {
         let hour = Int(clamped.rounded(.down))
         let minute = min(59, Int(((clamped - Float(hour)) * 60).rounded(.down)))
         let twelve = hour % 12 == 0 ? 12 : hour % 12
-        let time = "\(twelve):" + String(format: "%02d", minute) + " " + (hour < 12 ? am : pm)
+        let paddedMinute = unsafe String(format: "%02d", minute)
+        let time = "\(twelve):" + paddedMinute + " " +
+            (hour < 12 ? am : pm)
         let weekdayName = weekdays[min(max(weekday, 0), weekdays.count - 1)]
         let monthName = months[min(max(month, 1), months.count) - 1]
         return "\(weekdayName), \(time), \(ordinal(day))\(of)\(monthName), 4E \(year)"

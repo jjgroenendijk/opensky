@@ -42,7 +42,7 @@ struct RendererMeshGrassTests {
         )
     }
 
-    private static func scene(device: MTLDevice) throws -> RenderScene {
+    private static func scene(device: any MTLDevice) throws -> RenderScene {
         let material = Material(
             diffuseTexture: nil, normalTexture: nil, uvOffset: .zero, uvScale: SIMD2(repeating: 1),
             alpha: 1, glossiness: 0, specularColor: .zero, specularStrength: 0, doubleSided: true,

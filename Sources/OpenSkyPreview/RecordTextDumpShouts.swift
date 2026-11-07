@@ -4,8 +4,8 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
     public static func shoutFamilySummary(
@@ -42,7 +42,7 @@ nonisolated extension RecordTextDump {
             context.shouts
                 .join(shout: shout, sourcePlugin: context.sourcePlugin, spells: context.spells)
                 .map { word in
-                    String(
+                    unsafe String(
                         format: "    %@ — spell %@, recovery %.2fs",
                         word.wordName,
                         word.spellName,
@@ -51,7 +51,7 @@ nonisolated extension RecordTextDump {
                 }
         } else {
             shout.words.map { entry in
-                String(
+                unsafe String(
                     format: "    %@ — spell %@, recovery %.2fs",
                     entry.word?.description ?? "NULL",
                     entry.spell?.description ?? "NULL",
@@ -81,9 +81,10 @@ nonisolated extension RecordTextDump {
         _ context: MagicContext?
     ) throws -> String? {
         let list = try LeveledList(record: record)
+        let flagsText = unsafe String(format: "%02X", list.flags.rawValue)
         let line = "decoded LVSP: editorID \(list.editorID ?? "-"), "
             + "chance none \(list.chanceNone)%, flags 0x"
-            + String(format: "%02X", list.flags.rawValue)
+            + flagsText
             + ", \(list.entries.count) entries"
         let rows = list.entries.map { entry in
             let name = context.map {

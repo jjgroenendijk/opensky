@@ -2,8 +2,8 @@
 // one skill point, at most five times per level. See docs/engine/training.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyProgressionInterface
 
 /// A trainer the player can buy sessions from.

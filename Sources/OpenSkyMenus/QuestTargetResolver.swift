@@ -4,10 +4,10 @@
 // See docs/engine/journal.md, quest markers.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 
 /// One shown objective target, before its alias is resolved.
 nonisolated public struct QuestTargetRequest: Equatable, Sendable {

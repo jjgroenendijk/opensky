@@ -3,7 +3,7 @@
 // flight in the mount drive. See docs/engine/dragon-flight.md#riding.
 
 import Foundation
-import OpenSkyActorPresentation
+public import OpenSkyActorPresentation
 import OpenSkyRendering
 import simd
 

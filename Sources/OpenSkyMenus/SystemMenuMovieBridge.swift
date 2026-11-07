@@ -3,7 +3,7 @@
 // synthetic AS2. The selector it shows is SystemMenuModel.swift.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum SystemMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\quest_journal.swf"

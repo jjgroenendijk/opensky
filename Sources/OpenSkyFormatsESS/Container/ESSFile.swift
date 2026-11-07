@@ -2,7 +2,7 @@
 // read where the file location table says they start, after each offset is checked
 // against the body. See docs/formats/ess.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct ESSFile: Equatable, Sendable {

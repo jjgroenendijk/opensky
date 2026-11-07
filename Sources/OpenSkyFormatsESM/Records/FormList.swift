@@ -4,7 +4,7 @@
 // Layout documented in docs/formats/records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct FormList: Equatable, Sendable {
     public let formID: FormID

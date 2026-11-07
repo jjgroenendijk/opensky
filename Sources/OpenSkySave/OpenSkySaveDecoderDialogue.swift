@@ -1,11 +1,11 @@
 // DLGS and DLGT chunks: said-state per INFO, merged into the `RDLT` deltas by
 // `ReferenceKey`. DLGT adds the day each speaker last said an INFO.
 
-import Foundation
-import OpenSkyDialogueInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One INFO's saved said-state, before it is merged back into its delta.
 nonisolated public struct SaveDialogueEntry: Equatable, Sendable {

@@ -3,8 +3,8 @@
 // `DetectionSettings`. See docs/engine/detection.md.
 
 import Foundation
-import OpenSkyPerceptionInterface
-import OpenSkyPhysics
+public import OpenSkyPerceptionInterface
+public import OpenSkyPhysics
 import simd
 
 nonisolated public enum DetectionFormula: Sendable {

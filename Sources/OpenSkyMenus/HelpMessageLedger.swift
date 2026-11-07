@@ -3,7 +3,7 @@
 // not show again until `ResetHelpMessage`. See docs/engine/messages.md#help-messages.
 
 import Foundation
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 nonisolated public struct HelpMessageLedger: Equatable, Sendable {
     nonisolated public struct Active: Equatable, Sendable {

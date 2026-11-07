@@ -4,13 +4,13 @@
 // `CellScene` values. See docs/engine/cell-streaming.md.
 
 import Foundation
-import Metal
-import OpenSkyAssetCache
-import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
-import OpenSkyGameData
-import OpenSkyRenderCore
-import OpenSkyRenderResources
+public import Metal
+public import OpenSkyAssetCache
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
+public import OpenSkyRenderCore
+public import OpenSkyRenderResources
 import simd
 
 nonisolated public enum MeshLibraryError: Error, Equatable {
@@ -27,7 +27,7 @@ nonisolated public enum MeshLibraryError: Error, Equatable {
 
 nonisolated public final class MeshLibrary {
     public let fileSystem: any GameFileSource
-    public let device: MTLDevice
+    public let device: any MTLDevice
     public let textures: TextureLibrary
     var cache: [String: RenderModel] = [:]
     /// The mesh pool of each mesh particle system, by model key and system index.
@@ -81,7 +81,7 @@ nonisolated public final class MeshLibrary {
         didSet { textures.decodesInParallel = decodesInParallel }
     }
 
-    public init(fileSystem: any GameFileSource, device: MTLDevice, textures: TextureLibrary) {
+    public init(fileSystem: any GameFileSource, device: any MTLDevice, textures: TextureLibrary) {
         self.fileSystem = fileSystem
         self.device = device
         self.textures = textures
@@ -363,19 +363,19 @@ nonisolated extension MeshLibrary {
     public func terrainMesh(
         _ mesh: Mesh,
         weights: [SIMD4<Float>]
-    ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {
+    ) throws -> (mesh: RenderMesh, weightsBuffer: any MTLBuffer) {
         try loadPhases.measure(.mesh) { try uploadTerrain(mesh, weights: weights) }
     }
 
     private func uploadTerrain(
         _ mesh: Mesh,
         weights: [SIMD4<Float>]
-    ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {
+    ) throws -> (mesh: RenderMesh, weightsBuffer: any MTLBuffer) {
         let render = try RenderMesh(device: device, mesh: mesh)
         // Weight stream must cover every vertex the descriptor will fetch.
         guard
             weights.count == mesh.positions.count * 2,
-            let buffer = device.makeBuffer(
+            let buffer = unsafe device.makeBuffer(
                 bytes: weights,
                 length: weights.count * MemoryLayout<SIMD4<Float>>.stride,
                 options: .storageModeShared

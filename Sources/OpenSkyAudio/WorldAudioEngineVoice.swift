@@ -4,9 +4,9 @@
 // See docs/engine/audio-decoding.md.
 
 import AVFAudio
-import Foundation
+public import Foundation
 import OpenSkyFormatsAudio
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 /// What a started voice line hands back: the source to track, how long the

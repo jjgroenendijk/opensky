@@ -2,19 +2,19 @@
 // registry with every feature's functions. It lives above the features because
 // it names all of them; the condition core names none.
 
-import OpenSkyActorsInterface
-import OpenSkyConditions
-import OpenSkyCrimeInterface
-import OpenSkyDialogueInterface
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
+public import OpenSkyActorsInterface
+public import OpenSkyConditions
+public import OpenSkyCrimeInterface
+public import OpenSkyDialogueInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
-import OpenSkyMagicInterface
-import OpenSkyPerceptionInterface
-import OpenSkyProgressionInterface
-import OpenSkyQuestsInterface
+public import OpenSkyMagicInterface
+public import OpenSkyPerceptionInterface
+public import OpenSkyProgressionInterface
+public import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated extension ConditionContext {
     public init(

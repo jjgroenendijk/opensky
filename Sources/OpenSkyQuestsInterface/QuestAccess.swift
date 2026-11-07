@@ -1,8 +1,8 @@
 // The seam scripts and the journal menu reach quests through. `QuestRuntime`
 // conforms, and the composition root hands it over as this protocol.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Quest stages, objectives, and aliases over the world-state store.
 @MainActor

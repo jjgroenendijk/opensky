@@ -30,7 +30,7 @@ nonisolated extension RecordTextDump {
         let details = actor.details
         let morphs = details.faceMorphs.enumerated()
             .filter { $0.element != 0 }
-            .map { String(format: "%d=%.2f", $0.offset, $0.element) }
+            .map { unsafe String(format: "%d=%.2f", $0.offset, $0.element) }
         let tints = details.tintLayers.map { layer -> String in
             let index = layer.index.map { String($0) } ?? "-"
             let amount = layer.interpolation.map { String($0) } ?? "-"

@@ -2,7 +2,7 @@
 // graph variable. See docs/formats/hkx-behavior.md#hkbcharacterdata-and-hkbcharacterstringdata.
 
 import Foundation
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 
 /// The values of one character's properties, by lowercased name. A graph names its
 /// properties in its own list, so a binding finds the value through the name.

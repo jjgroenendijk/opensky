@@ -8,9 +8,9 @@ import Foundation
 import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyRendering
 
 /// Owns the player graphs and body state, and reads the world through `PlayerWorld`.
 public final class PlayerCoordinator {

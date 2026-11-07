@@ -2,8 +2,8 @@
 // CELL) or failed, so no slot is requested twice. A value type, tested without game data
 // or a GPU. See docs/engine/cell-streaming.md.
 
-import OpenSkyFormatsCore
-import OpenSkyTerrain
+public import OpenSkyFormatsCore
+public import OpenSkyTerrain
 import simd
 
 /// What CellStreamer must drive after applying one grid diff: coordinates to

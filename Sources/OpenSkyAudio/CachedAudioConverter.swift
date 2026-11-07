@@ -2,8 +2,8 @@
 // longer use it: ALAC decodes no faster than the shipped files. `asset-cache
 // measure` and `audio aac-check` keep using it (docs/engine/asset-cache-audio.md).
 
-import Foundation
-import OpenSkyAssetCache
+public import Foundation
+public import OpenSkyAssetCache
 import OpenSkyFormatsAudio
 
 nonisolated public struct CachedAudioConverter: AssetConverting {

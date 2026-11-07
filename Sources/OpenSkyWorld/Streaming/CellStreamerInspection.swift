@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyCells
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyTerrain
 
 extension CellStreamer {

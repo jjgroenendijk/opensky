@@ -2,9 +2,9 @@
 // resident actors observe, and answers the AI & Navigation detection section.
 // The pass itself is `PerceptionRuntime`. See docs/engine/coordinators.md.
 
-import OpenSkyDiagnostics
-import OpenSkyFormatsESM
-import OpenSkyPerceptionInterface
+public import OpenSkyDiagnostics
+public import OpenSkyFormatsESM
+public import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import simd
 

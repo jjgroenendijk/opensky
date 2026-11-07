@@ -4,7 +4,7 @@
 // back with `openskycli swf action-run`; see docs/engine/inventory-menu.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// What the movie asked the engine to do, as reported through its outbound
 /// `GameDelegate` calls.

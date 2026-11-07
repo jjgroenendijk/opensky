@@ -172,7 +172,7 @@ struct ParticlePlaybackTests {
         #expect(!frustum(eye: SIMD3(-500, 0, 0), target: SIMD3(-1000, 0, 0)).intersects(bounds))
     }
 
-    private static let device: MTLDevice? = {
+    private static let device: (any MTLDevice)? = {
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
         else { return nil }
         return device
@@ -228,7 +228,7 @@ struct ParticlePlaybackTests {
         return ParticleBlendMode(alpha: alpha)
     }
 
-    private func whiteTexture(device: MTLDevice) throws -> MTLTexture {
+    private func whiteTexture(device: any MTLDevice) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm,
             width: 1,
@@ -238,7 +238,7 @@ struct ParticlePlaybackTests {
         descriptor.usage = .shaderRead
         let texture = try #require(device.makeTexture(descriptor: descriptor))
         var white = SIMD4<UInt8>(repeating: 255)
-        texture.replace(
+        unsafe texture.replace(
             region: MTLRegionMake2D(0, 0, 1, 1),
             mipmapLevel: 0,
             withBytes: &white,
@@ -248,11 +248,11 @@ struct ParticlePlaybackTests {
     }
 
     @MainActor
-    private func pixels(_ texture: MTLTexture) -> [UInt8] {
+    private func pixels(_ texture: any MTLTexture) -> [UInt8] {
         var result = [UInt8](repeating: 0, count: texture.width * texture.height * 4)
         result.withUnsafeMutableBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.getBytes(
+            unsafe texture.getBytes(
                 base,
                 bytesPerRow: texture.width * 4,
                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),

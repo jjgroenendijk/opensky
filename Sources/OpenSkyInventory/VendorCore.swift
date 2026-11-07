@@ -2,10 +2,10 @@
 // vendors and counterparties out. `VendorCoordinator` is the shell that reads
 // the world. See docs/engine/coordinators.md.
 
-import OpenSkyFactionsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// A streamed-in reference that can hold a vendor's stock.
 nonisolated public struct VendorStock: Equatable, Sendable {

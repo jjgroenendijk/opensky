@@ -1,11 +1,11 @@
 // What the movie player plays: a request, a clock, and a source of decoded pictures.
 // The Bink source decodes off the main actor. See docs/engine/movies.md.
 
-import Foundation
-import OpenSkyAudio
-import OpenSkyFormatsAudio
-import OpenSkyFormatsCore
-import OpenSkyGameData
+public import Foundation
+public import OpenSkyAudio
+public import OpenSkyFormatsAudio
+public import OpenSkyFormatsCore
+public import OpenSkyGameData
 import Synchronization
 
 /// The arguments of `Game.PlayBink` (<https://ck.uesp.net/wiki/PlayBink_-_Game>).

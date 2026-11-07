@@ -1,10 +1,10 @@
 // Renderer camera movement split from Renderer.swift for file-length limits.
 
 import OpenSkyPhysics
-import OpenSkyPlayer
-import OpenSkyRenderCore
-import OpenSkyRendering
-import simd
+public import OpenSkyPlayer
+public import OpenSkyRenderCore
+public import OpenSkyRendering
+public import simd
 
 extension GameSession {
     /// Seeds the walk controller from the camera pose during `init`, before every

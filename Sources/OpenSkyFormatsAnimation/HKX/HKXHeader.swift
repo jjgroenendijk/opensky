@@ -6,7 +6,7 @@
 // docs/formats/hkx-container.md records the observed layout.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public enum HKXError: Error, Equatable, Sendable {
     /// First two u32s are not the packfile magic pair.

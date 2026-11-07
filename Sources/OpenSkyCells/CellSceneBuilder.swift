@@ -4,20 +4,20 @@
 
 import Foundation
 import Metal
-import OpenSkyActorPresentation
+public import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyObjectAnimation
-import OpenSkyPhysics
+public import OpenSkyPhysics
 import OpenSkyRenderCore
-import OpenSkyRendering
-import OpenSkyRenderResources
-import OpenSkyTerrain
-import OpenSkyWorldState
+public import OpenSkyRendering
+public import OpenSkyRenderResources
+public import OpenSkyTerrain
+public import OpenSkyWorldState
 import simd
 
 nonisolated public enum CellSceneError: Error, Equatable {

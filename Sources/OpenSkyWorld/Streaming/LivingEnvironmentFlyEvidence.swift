@@ -1,7 +1,7 @@
 // Peak live-system evidence collected across production fly frames.
 
 import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyRendering
 import OpenSkyWeather
 
 nonisolated public struct LivingEnvironmentFlyEvidence: Sendable {

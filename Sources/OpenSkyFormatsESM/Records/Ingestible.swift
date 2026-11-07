@@ -4,7 +4,7 @@
 // Effects resolve through MagicEffectStore. Layout: docs/formats/item-records.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Ingestible: Sendable {
     public struct Flags: OptionSet, Equatable, Sendable {

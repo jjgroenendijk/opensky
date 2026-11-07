@@ -1,9 +1,9 @@
 // The seam other features read perks through. `PerkRuntime` in OpenSkyProgression
 // conforms, and the composition root hands it to Magic as this protocol.
 
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Which perks an actor owns, and what they do to a value at an entry point.
 @MainActor

@@ -2,7 +2,7 @@
 // or ribbon bands for strips, rain streaks, and lightning (docs/rendering/particles.md).
 
 import Metal
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyRenderCore
 import simd
@@ -18,7 +18,7 @@ nonisolated extension ParticlePlayback {
         guard !instances.isEmpty else { return (offset, 0) }
         instances.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            instanceBuffer.contents().advanced(by: offset).copyMemory(
+            unsafe instanceBuffer.contents().advanced(by: offset).copyMemory(
                 from: base,
                 byteCount: bytes.count
             )

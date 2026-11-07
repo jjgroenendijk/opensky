@@ -37,7 +37,7 @@ struct RendererSceneSwapTests {
     /// gets its OWN RenderModel (no instancing collapse) so both the
     /// per-group uniform ring and the per-instance transform ring must
     /// regrow when count exceeds their capacities.
-    private static func crateScene(device: MTLDevice, count: Int) throws -> RenderScene {
+    private static func crateScene(device: any MTLDevice, count: Int) throws -> RenderScene {
         let texture = try OffscreenRendererFixture.solidTexture(device: device)
         let placements = try (0 ..< count).map { index -> RenderPlacement in
             let model = Model(
@@ -204,7 +204,7 @@ struct RendererSceneSwapTests {
 
     // MARK: - Helpers
 
-    private static func litPixelCount(texture: MTLTexture) -> Int {
+    private static func litPixelCount(texture: any MTLTexture) -> Int {
         OffscreenRendererFixture.litPixelCount(OffscreenRendererFixture.pixels(of: texture))
     }
 }

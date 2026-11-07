@@ -2,11 +2,11 @@
 // leveled lists. Merged into the `RDLT` deltas by key. Layout:
 // docs/formats/opensky-save.md.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One saved frozen level, before it is merged back into the delta.
 nonisolated public struct SaveLeveledRollEntry: Equatable, Sendable {

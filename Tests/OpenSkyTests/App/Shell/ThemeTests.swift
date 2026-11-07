@@ -22,7 +22,7 @@ struct ThemeTests {
         let heading = Theme.headingAttributed("Sun shadows", size: 12, color: Theme.gold)
         #expect(heading.string == "SUN SHADOWS")
         var range = NSRange()
-        let attributes = heading.attributes(at: 0, effectiveRange: &range)
+        let attributes = unsafe heading.attributes(at: 0, effectiveRange: &range)
         #expect(range.length == heading.length)
         #expect(attributes[.foregroundColor] as? NSColor == Theme.gold)
         let kern = attributes[.kern] as? CGFloat

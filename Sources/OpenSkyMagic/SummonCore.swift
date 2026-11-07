@@ -4,7 +4,7 @@
 // "If the target is dead, reanimate them". See docs/engine/magic-archetypes.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One actor a caster commands through a running effect.
 nonisolated public struct CommandedActor: Equatable, Sendable {

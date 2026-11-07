@@ -1,9 +1,9 @@
 // The visual links of the abilities a race grants, such as a glow or a lasting
 // membrane. See docs/rendering/visual-effects.md.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 
 extension MagicCoordinator {
     /// The hit-shader and art links of each ability in the `SPLO` list of the

@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/acoustic-space.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct AcousticSpace: Sendable {
     public let formID: FormID

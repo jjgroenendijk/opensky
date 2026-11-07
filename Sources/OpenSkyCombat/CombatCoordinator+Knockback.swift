@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 extension CombatCoordinator {

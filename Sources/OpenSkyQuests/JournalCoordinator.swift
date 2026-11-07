@@ -4,8 +4,8 @@
 // See docs/engine/coordinators.md and docs/engine/journal.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyQuestsInterface
 
 /// Reads and changes quest state for the journal through `JournalWorld`.

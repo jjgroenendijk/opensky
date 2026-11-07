@@ -5,7 +5,7 @@
 // field can fail to resolve. Typed array reads are in the satellite file
 // HKXObjectCursorArrays.swift.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// A read position on one object: section index plus the object's section-local

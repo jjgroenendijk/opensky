@@ -3,7 +3,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyRendering
+public import OpenSkyRendering
 import OpenSkyTerrain
 import OpenSkyWorldState
 

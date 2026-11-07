@@ -5,9 +5,9 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 /// What kind of record put an effect on an actor, as the cures ask it.
 nonisolated public enum ActiveEffectSourceCategory: Equatable, Sendable {

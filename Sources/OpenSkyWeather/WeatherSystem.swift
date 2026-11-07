@@ -3,11 +3,11 @@
 // draw loop. See docs/engine/weather.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyRenderCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyRenderCore
 import OpenSkyShaderTypes
-import OpenSkyWorldState
+public import OpenSkyWorldState
 import simd
 
 nonisolated public final class WeatherSystem {

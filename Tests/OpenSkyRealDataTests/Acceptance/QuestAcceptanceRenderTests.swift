@@ -76,7 +76,7 @@ struct QuestAcceptanceRenderTests {
     private static func publish(
         _ model: JournalMenuModel,
         renderer: Renderer
-    ) throws -> (texture: MTLTexture, pixels: [UInt8]) {
+    ) throws -> (texture: any MTLTexture, pixels: [UInt8]) {
         try renderer.updateSWFRuntime { runtime in
             QuestJournalMovieBridge.publish(model, runtime: runtime)
         }
@@ -87,7 +87,7 @@ struct QuestAcceptanceRenderTests {
     // MARK: - Rendering
 
     @MainActor
-    private static func makeRenderer(device: MTLDevice) throws -> Renderer {
+    private static func makeRenderer(device: any MTLDevice) throws -> Renderer {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: width, height: height), device: device
         )
@@ -99,7 +99,7 @@ struct QuestAcceptanceRenderTests {
     @MainActor
     private static func render(
         _ renderer: Renderer
-    ) throws -> (texture: MTLTexture, pixels: [UInt8]) {
+    ) throws -> (texture: any MTLTexture, pixels: [UInt8]) {
         let texture = try renderer.renderOffscreen(
             width: width, height: height, animationTime: 1
         )
@@ -119,9 +119,9 @@ struct QuestAcceptanceRenderTests {
     /// Gitignored, and linked from the pull request rather than committed.
     @MainActor
     private static func writeFrames(
-        early: (texture: MTLTexture, pixels: [UInt8]),
-        advanced: (texture: MTLTexture, pixels: [UInt8]),
-        direct: (texture: MTLTexture, pixels: [UInt8]),
+        early: (texture: any MTLTexture, pixels: [UInt8]),
+        advanced: (texture: any MTLTexture, pixels: [UInt8]),
+        direct: (texture: any MTLTexture, pixels: [UInt8]),
         changed: Int
     ) throws {
         let logs = try RepositoryLogs.directory()

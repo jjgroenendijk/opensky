@@ -3,8 +3,8 @@
 // Roles and sources: docs/formats/placed-references.md#rooms-and-portals.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyRenderCore
+public import OpenSkyFormatsESM
+public import OpenSkyRenderCore
 import simd
 
 nonisolated public enum RoomPortalGraphBuilder: Sendable {

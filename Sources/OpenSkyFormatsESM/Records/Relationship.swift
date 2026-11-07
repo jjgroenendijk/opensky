@@ -3,7 +3,7 @@
 // Layout and sources: docs/formats/relationships.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// DATA offset 8, uint16. The nine values the Creation Kit names, in the order
 /// both sources list them.

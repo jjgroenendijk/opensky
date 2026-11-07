@@ -3,7 +3,7 @@
 // holds (time, value) pairs. Layout and sources: docs/formats/image-spaces.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// One animated IMAD value. HDR and cinematic channels come as a multiply and an add envelope.
 nonisolated public enum ImageSpaceChannel: Hashable, Sendable {

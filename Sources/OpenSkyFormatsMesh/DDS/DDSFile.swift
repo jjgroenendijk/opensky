@@ -3,8 +3,8 @@
 // cubemaps and volumes when the caller asks; arrays throw `unsupported`.
 // Layout: docs/formats/dds.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public enum DDSError: Error, Equatable, Sendable {
     /// Input violates the documented layout.
@@ -530,12 +530,12 @@ nonisolated extension DDSFile {
     /// 1-byte grey to L, L, L, 255.
     private static func widenLuminance(_ stored: Data) -> Data {
         var out = Data(repeating: 255, count: stored.count * 4)
-        stored.withUnsafeBytes { source in
-            out.withUnsafeMutableBytes { target in
-                for (texel, grey) in source.enumerated() {
-                    target[texel * 4] = grey
-                    target[texel * 4 + 1] = grey
-                    target[texel * 4 + 2] = grey
+        unsafe stored.withUnsafeBytes { source in
+            unsafe out.withUnsafeMutableBytes { target in
+                for unsafe(texel, grey) in unsafe source.enumerated() {
+                    unsafe target[texel * 4] = grey
+                    unsafe target[texel * 4 + 1] = grey
+                    unsafe target[texel * 4 + 2] = grey
                 }
             }
         }
@@ -546,11 +546,11 @@ nonisolated extension DDSFile {
     private static func widenRGB24(_ stored: Data, channels: [Int]) -> Data {
         let texelCount = stored.count / 3
         var out = Data(repeating: 255, count: texelCount * 4)
-        stored.withUnsafeBytes { source in
-            out.withUnsafeMutableBytes { target in
+        unsafe stored.withUnsafeBytes { source in
+            unsafe out.withUnsafeMutableBytes { target in
                 for texel in 0 ..< texelCount {
                     for (slot, channel) in channels.enumerated() {
-                        target[texel * 4 + slot] = source[texel * 3 + channel]
+                        unsafe target[texel * 4 + slot] = unsafe source[texel * 3 + channel]
                     }
                 }
             }

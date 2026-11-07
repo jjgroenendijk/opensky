@@ -2,7 +2,7 @@
 // object LOD .bto files. Segment fields follow NifTools nif.xml
 // (BSSubIndexTriShape, BSGeometrySegmentData, BS stream 100).
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct NIFSubIndexTriShape: Sendable {

@@ -1,8 +1,8 @@
 // WATR water. DNAM gives the colors and the surface fields the water shader reads;
 // the rest stays opaque. Layout and sources: docs/formats/water.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct WaterType: Sendable {

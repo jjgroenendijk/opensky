@@ -2,7 +2,7 @@
 // `DialogueControlSnapshot`, so the wording is testable without AppKit, a
 // Metal device, or an install. No AppKit import: the CLI builds it too.
 
-import OpenSkyDialogueInterface
+public import OpenSkyDialogueInterface
 
 nonisolated public enum DialogueReadout: Sendable {
     /// One rejection reason worded for a readout.

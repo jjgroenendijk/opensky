@@ -2,7 +2,7 @@
 // counts only its own time: a mesh load that reads an archive gives that read
 // to `.archive`. See docs/tools/benchmark.md.
 
-import Foundation
+public import Foundation
 import Synchronization
 
 nonisolated public enum LoadPhase: String, CaseIterable, Codable, Sendable {

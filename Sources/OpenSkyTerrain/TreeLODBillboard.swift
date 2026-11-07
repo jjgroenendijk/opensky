@@ -1,8 +1,8 @@
 // Engine geometry for traditional Skyrim tree LOD: two double-sided planes
 // intersecting at 90 degrees, using one LST rectangle in the worldspace atlas.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsMesh
 import simd
 
 nonisolated public enum TreeLODBillboard: Sendable {

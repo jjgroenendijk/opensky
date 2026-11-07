@@ -147,6 +147,6 @@ nonisolated public enum ESSChangeFlag: Sendable {
 
     /// A flag's UESP name for `signature`, or its hex value.
     public static func name(of flag: UInt32, type signature: String) -> String {
-        names(forType: signature)[flag] ?? String(format: "0x%08X", flag)
+        unsafe names(forType: signature)[flag] ?? String(format: "0x%08X", flag)
     }
 }

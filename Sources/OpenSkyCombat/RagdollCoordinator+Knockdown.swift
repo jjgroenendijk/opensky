@@ -2,7 +2,7 @@
 // out, then it stands where its pelvis lies and the ragdoll pose fades into the get-up
 // clip (docs/engine/ragdoll.md#knockdown).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyPhysics
 import simd

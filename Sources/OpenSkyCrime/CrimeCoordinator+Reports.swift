@@ -5,7 +5,7 @@
 // within `iCrimeAlarmRecDistance` of one. See docs/engine/crime.md.
 
 import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
 

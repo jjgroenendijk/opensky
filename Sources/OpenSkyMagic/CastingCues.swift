@@ -4,8 +4,8 @@
 // shout waits for its exhale. See docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyMagicInterface
 
 /// MGEF `SNDD` sound kinds (UESP "Skyrim Mod:Mod File Format/MGEF").
 nonisolated public enum MagicEffectSoundKind: UInt32, Equatable, Sendable, CaseIterable {

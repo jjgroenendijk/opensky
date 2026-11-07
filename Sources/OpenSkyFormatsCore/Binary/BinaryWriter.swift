@@ -2,7 +2,7 @@
 // to BinaryReader, used by native save/container formats that must round-trip
 // byte-for-byte (AGENTS.md "Reverse-engineering discipline").
 
-import Foundation
+public import Foundation
 
 nonisolated public enum BinaryWriterError: Error, Equatable, Sendable {
     /// The string could not be represented in the requested encoding.
@@ -48,7 +48,7 @@ nonisolated public struct BinaryWriter: Sendable {
 
     private mutating func writeInteger(_ value: some FixedWidthInteger) {
         var littleEndian = value.littleEndian
-        withUnsafeBytes(of: &littleEndian) { data.append(contentsOf: $0) }
+        withUnsafeBytes(of: &littleEndian) { unsafe data.append(contentsOf: $0) }
     }
 
     /// Zero-terminated string ("zstring"): encoded bytes plus a NUL terminator.

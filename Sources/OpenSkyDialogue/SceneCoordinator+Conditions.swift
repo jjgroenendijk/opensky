@@ -3,9 +3,9 @@
 // condition context, which would build this seam again.
 
 import Foundation
-import OpenSkyDialogueInterface
-import OpenSkyFormatsESM
-import OpenSkyQuestsInterface
+public import OpenSkyDialogueInterface
+public import OpenSkyFormatsESM
+public import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 /// The part of the scene seam that does not depend on the aliases.

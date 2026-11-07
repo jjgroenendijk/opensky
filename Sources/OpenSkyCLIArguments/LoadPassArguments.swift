@@ -1,6 +1,6 @@
 // `load-pass`: the benchmark's cold and warm cell builds without the app.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct LoadPassArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(

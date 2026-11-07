@@ -1,14 +1,14 @@
 // Metal 4 render loop; nil injected scene selects synthetic demo state for tests.
 
-import Metal
-import MetalKit
-import OpenSkyDiagnostics
+public import Metal
+public import MetalKit
+public import OpenSkyDiagnostics
 import OpenSkyPhysics
-import OpenSkyRenderCore
-import OpenSkyRenderResources
+public import OpenSkyRenderCore
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import QuartzCore
-import simd
+public import simd
 
 public final class Renderer: NSObject {
     // Members below default to internal (not private) where
@@ -32,25 +32,25 @@ public final class Renderer: NSObject {
 
     /// Near/far at Skyrim scale per docs/decisions/coordinates.md: near 10
     /// units (~14 cm; below ~1 unit destroys depth precision), far 16 cells.
-    public let device: MTLDevice
-    public let commandQueue: MTL4CommandQueue
-    public let commandBuffer: MTL4CommandBuffer
-    public let commandAllocators: [MTL4CommandAllocator]
-    public let argumentTable: MTL4ArgumentTable
-    public let skyPipeline: MTLRenderPipelineState
+    public let device: any MTLDevice
+    public let commandQueue: any MTL4CommandQueue
+    public let commandBuffer: any MTL4CommandBuffer
+    public let commandAllocators: [any MTL4CommandAllocator]
+    public let argumentTable: any MTL4ArgumentTable
+    public let skyPipeline: any MTLRenderPipelineState
     public let skyLayerPipelines: SkyLayerPipelines
-    public let opaquePipeline: MTLRenderPipelineState
-    public let alphaTestPipeline: MTLRenderPipelineState
-    public let blendedPipeline: MTLRenderPipelineState
+    public let opaquePipeline: any MTLRenderPipelineState
+    public let alphaTestPipeline: any MTLRenderPipelineState
+    public let blendedPipeline: any MTLRenderPipelineState
     public let skinnedBlendedPipelines: SkinnedBlendedPipelines
     public let additivePipelines: AdditivePipelines
-    public let skinnedOpaquePipeline: MTLRenderPipelineState
-    public let skinnedAlphaTestPipeline: MTLRenderPipelineState
-    public let morphedSkinnedOpaquePipeline: MTLRenderPipelineState
-    public let morphedSkinnedAlphaTestPipeline: MTLRenderPipelineState
-    public let grassPipeline: MTLRenderPipelineState
-    public let terrainPipeline: MTLRenderPipelineState
-    public let waterPipeline: MTLRenderPipelineState
+    public let skinnedOpaquePipeline: any MTLRenderPipelineState
+    public let skinnedAlphaTestPipeline: any MTLRenderPipelineState
+    public let morphedSkinnedOpaquePipeline: any MTLRenderPipelineState
+    public let morphedSkinnedAlphaTestPipeline: any MTLRenderPipelineState
+    public let grassPipeline: any MTLRenderPipelineState
+    public let terrainPipeline: any MTLRenderPipelineState
+    public let waterPipeline: any MTLRenderPipelineState
     public let particlePipelines: ParticlePipelines
     public let ribbonPipelines: ParticlePipelines
     /// Render-debug twins of the five geometry paths, bound instead of their
@@ -65,9 +65,9 @@ public final class Renderer: NSObject {
     public var renderDebugAppliesOffscreen = false
     /// The colour an offscreen frame clears to; the sky, when drawn, covers it.
     public var offscreenBackground = SIMD3<Double>(0, 0, 0)
-    public let waterDepthState: MTLDepthStencilState
+    public let waterDepthState: any MTLDepthStencilState
     let materialDepthStates: MaterialDepthStates
-    public let sampler: MTLSamplerState
+    public let sampler: any MTLSamplerState
     /// Screen-space UI overlay: pipeline (fills and text premultiplied over the 3D frame,
     /// depth off), sampler, r8 glyph atlas, and the triple-buffered rings. Encode and
     /// resolve live in RendererUIPass.swift.
@@ -250,19 +250,19 @@ public final class Renderer: NSObject {
     public var lastShadowUpdateMS = 0.0
     /// CPU time of the last frame's shadow and scene pass encoding.
     public var lastEncodeMS = 0.0
-    public let frameUniformBuffer: MTLBuffer
+    public let frameUniformBuffer: any MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x drawUniformSlotCapacity
     /// aligned entries. Replaced (regrown) by setScene when a new scene's
     /// drawCount exceeds the capacity.
-    public var drawUniformBuffer: MTLBuffer
+    public var drawUniformBuffer: any MTLBuffer
     /// Per-frame slot count of the draw-uniform ring — power-of-two
     /// headroom over drawCount so per-cell-crossing swaps rarely realloc.
     public var drawUniformSlotCapacity: Int
     /// Per-draw nearest-light arrays, same draw-slot indexing as uniforms.
-    public var pointLightBuffer: MTLBuffer
+    public var pointLightBuffer: any MTLBuffer
     /// Per-instance transform ring: packed `InstanceTransform` entries,
     /// `instanceSlotCapacity` per in-flight frame. Regrows like the draw-uniform ring.
-    public var instanceTransformBuffer: MTLBuffer
+    public var instanceTransformBuffer: any MTLBuffer
     /// Instances per frame slot of the transform ring — power-of-two
     /// headroom over the scene's instanceCount.
     public var instanceSlotCapacity: Int
@@ -272,13 +272,13 @@ public final class Renderer: NSObject {
     /// shadowInstanceBuffer holds every caster once (<= instanceSlotCapacity);
     /// shadowDrawUniformBuffer holds ShadowConstantCascadeCount slots per
     /// draw-ring slot (one ShadowDrawUniforms per cascade per drawn caster).
-    public var shadowInstanceBuffer: MTLBuffer
-    public var shadowDrawUniformBuffer: MTLBuffer
+    public var shadowInstanceBuffer: any MTLBuffer
+    public var shadowDrawUniformBuffer: any MTLBuffer
     /// Old scene resources + rings possibly referenced by in-flight frames
     /// after a swap; strong refs held until their frames provably drain.
     public var retired: [RetiredAllocations] = []
-    public let residencySet: MTLResidencySet
-    public let endFrameEvent: MTLSharedEvent
+    public let residencySet: any MTLResidencySet
+    public let endFrameEvent: any MTLSharedEvent
     public let frameStats = FrameStats()
 
     public var frameIndex: Int
@@ -318,7 +318,7 @@ public final class Renderer: NSObject {
     public var volumetricLight = VolumetricLightValues.fallback
     /// The drawable's format; offscreen frames match it, so every pipeline fits both.
     public let colorPixelFormat: MTLPixelFormat
-    var postEffectDepth: MTLTexture?
+    var postEffectDepth: any MTLTexture?
     var sceneProjection = matrix_identity_float4x4
     /// The game's surface switches that change shader inputs (`SurfaceFeatureSwitches.swift`).
     public var surfaceFeatures = SurfaceFeatureSwitches()
@@ -328,9 +328,9 @@ public final class Renderer: NSObject {
     /// The lit-mesh terms the frame draws; each can be turned off.
     public var shadingTerms = SurfaceShadingTerm.all
     /// Bound in the environment slot of a material without a cube map.
-    public let blackCube: MTLTexture
+    public let blackCube: any MTLTexture
     /// Bound in the effect volume slot of a material whose source is not a volume.
-    public let greyVolume: MTLTexture
+    public let greyVolume: any MTLTexture
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
     public var gpuFrameLog: GPUFrameLog?
     /// Set by a benchmark to time each render pass on the GPU; nil in normal play.
@@ -358,7 +358,7 @@ public final class Renderer: NSObject {
         rendering view: MTKView,
         scene: RenderScene? = nil,
         camera: SceneCamera? = nil,
-        shaderLibrary: MTLLibrary? = nil,
+        shaderLibrary: any MTLLibrary? = nil,
         pipelineCache: PipelineCache? = nil,
         wallClock: any WallClock = MediaWallClock()
     ) throws {
@@ -448,7 +448,7 @@ extension Renderer {
     }
 
     /// The scene's own depth state: test and write.
-    public var depthState: MTLDepthStencilState {
+    public var depthState: any MTLDepthStencilState {
         materialDepthStates.state(test: true, write: true)
     }
 

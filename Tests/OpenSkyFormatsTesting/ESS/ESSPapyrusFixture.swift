@@ -1,7 +1,7 @@
 // A synthetic Papyrus global data table (type 1001), built in code with an interned
 // string table. Layout: docs/formats/ess-papyrus.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 public enum ESSPapyrusFixtureValue {

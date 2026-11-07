@@ -2,7 +2,7 @@
 // own scripts (<https://ck.uesp.net/wiki/OnTrapHitStart_-_ObjectReference>).
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 /// One trap touching one actor, as the trap events report it.

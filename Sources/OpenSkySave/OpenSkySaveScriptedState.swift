@@ -1,11 +1,11 @@
 // SCRS chunk: flags, values, and form links scripts set on a form, and the forms a
 // script added to a list. Layout: docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
-import OpenSkyWorldState
+public import OpenSkyScriptingInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Names in sorted order, so the same state writes the same bytes.

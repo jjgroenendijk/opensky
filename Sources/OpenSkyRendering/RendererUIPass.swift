@@ -2,10 +2,10 @@
 // applies a quad budget, and records it as the last draw of the scene pass (depth off,
 // premultiplied-over, one draw call).
 
-import Metal
-import MetalKit
-import OpenSkyRenderCore
-import OpenSkyRenderResources
+public import Metal
+public import MetalKit
+public import OpenSkyRenderCore
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
 import simd
 
@@ -13,15 +13,15 @@ import simd
 /// state + rings + atlas texture, plus the CPU shelf-packed glyph atlas that
 /// backs the texture.
 nonisolated public struct UIResources {
-    public let pipeline: MTLRenderPipelineState
-    public let depthState: MTLDepthStencilState
-    public let sampler: MTLSamplerState
-    public let atlasTexture: MTLTexture
-    public let vertexBuffer: MTLBuffer
-    public let uniformBuffer: MTLBuffer
+    public let pipeline: any MTLRenderPipelineState
+    public let depthState: any MTLDepthStencilState
+    public let sampler: any MTLSamplerState
+    public let atlasTexture: any MTLTexture
+    public let vertexBuffer: any MTLBuffer
+    public let uniformBuffer: any MTLBuffer
     public let glyphAtlas: UIGlyphAtlas
 
-    public var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [any MTLAllocation] {
         [atlasTexture, vertexBuffer, uniformBuffer]
     }
 }
@@ -33,9 +33,9 @@ extension Renderer {
     public static let alignedUIUniformsSize = (MemoryLayout<UIFrameUniforms>.size + 0xFF) & -0x100
 
     public static func makeUIResources(
-        device: MTLDevice,
+        device: any MTLDevice,
         view: MTKView,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache
     ) throws -> UIResources {
         let atlas = UIGlyphAtlas()
@@ -64,9 +64,9 @@ extension Renderer {
 
     private static func makeUIPipeline(
         view: MTKView,
-        library: MTLLibrary,
+        library: any MTLLibrary,
         compiler: PipelineCache
-    ) throws -> MTLRenderPipelineState {
+    ) throws -> any MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = "uiVertex"
@@ -94,7 +94,7 @@ extension Renderer {
     }
 
     /// UI draws over everything: compare-always, no depth write.
-    private static func makeUIDepthState(device: MTLDevice) throws -> MTLDepthStencilState {
+    private static func makeUIDepthState(device: any MTLDevice) throws -> any MTLDepthStencilState {
         let descriptor = MTLDepthStencilDescriptor()
         descriptor.label = "UIAlwaysNoWrite"
         descriptor.depthCompareFunction = .always
@@ -106,7 +106,7 @@ extension Renderer {
     }
 
     /// Linear clamp-to-edge sampler for the coverage atlas.
-    private static func makeUISampler(device: MTLDevice) throws -> MTLSamplerState {
+    private static func makeUISampler(device: any MTLDevice) throws -> any MTLSamplerState {
         let descriptor = MTLSamplerDescriptor()
         descriptor.label = "UIAtlas"
         descriptor.minFilter = .linear
@@ -122,9 +122,9 @@ extension Renderer {
 
     /// r8Unorm coverage atlas, shared storage (CPU uploads packed glyphs).
     private static func makeUIAtlasTexture(
-        device: MTLDevice,
+        device: any MTLDevice,
         atlas: UIGlyphAtlas
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .r8Unorm,
             width: atlas.width,
@@ -139,7 +139,7 @@ extension Renderer {
         texture.label = "UIGlyphAtlas"
         atlas.pixels.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            texture.replace(
+            unsafe texture.replace(
                 region: MTLRegionMake2D(0, 0, atlas.width, atlas.height),
                 mipmapLevel: 0,
                 withBytes: base,
@@ -159,7 +159,7 @@ extension Renderer {
         guard atlas.revision != uiUploadedAtlasRevision else { return }
         atlas.pixels.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            uiResources.atlasTexture.replace(
+            unsafe uiResources.atlasTexture.replace(
                 region: MTLRegionMake2D(0, 0, atlas.width, atlas.height),
                 mipmapLevel: 0,
                 withBytes: base,
@@ -248,7 +248,7 @@ extension Renderer {
         let offset = slot * capacity * stride
         vertices.withUnsafeBytes { bytes in
             guard let base = bytes.baseAddress else { return }
-            uiResources.vertexBuffer.contents().advanced(by: offset).copyMemory(
+            unsafe uiResources.vertexBuffer.contents().advanced(by: offset).copyMemory(
                 from: base, byteCount: bytes.count
             )
         }
@@ -258,7 +258,7 @@ extension Renderer {
     private func writeUIUniforms(viewportPixels: SIMD2<Float>, slot: Int) -> Int {
         let offset = Self.alignedUIUniformsSize * slot
         var uniforms = UIFrameUniforms(viewportSize: viewportPixels)
-        uiResources.uniformBuffer.contents().advanced(by: offset)
+        unsafe uiResources.uniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<UIFrameUniforms>.size)
         return offset
     }

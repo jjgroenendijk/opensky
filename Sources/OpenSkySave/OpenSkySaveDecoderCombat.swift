@@ -1,11 +1,11 @@
 // CBTS chunk: combat hostility, merged into the `RDLT` deltas by `ReferenceKey`.
 // An unknown hostility byte decodes as neutral, so a newer save still loads.
 
-import Foundation
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// One actor's saved hostility, before it is merged back into the delta.
 nonisolated public struct SaveCombatStateEntry: Equatable, Sendable {

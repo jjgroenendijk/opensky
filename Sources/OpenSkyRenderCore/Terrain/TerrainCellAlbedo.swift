@@ -2,7 +2,7 @@
 // quadrant, each ATXT layer blended over it by its VTXT opacity, times VCLR.
 // Values are gamma, 0 to 1, as the terrain LOD textures store them.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum TerrainCellAlbedo {

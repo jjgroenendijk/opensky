@@ -1,6 +1,6 @@
 // The text summary of a tour result, and the files a run writes.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum BenchmarkReport {
     public static let resultFile = "result.json"
@@ -72,7 +72,7 @@ nonisolated public enum BenchmarkReport {
     }
 
     static func format(_ value: Double) -> String {
-        String(format: value >= 100 ? "%.0f" : "%.1f", value)
+        unsafe String(format: value >= 100 ? "%.0f" : "%.1f", value)
     }
 
     /// Writes `result.json` and `summary.txt` into `folder`, creating it.

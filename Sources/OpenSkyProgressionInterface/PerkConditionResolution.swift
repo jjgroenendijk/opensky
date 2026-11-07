@@ -2,9 +2,9 @@
 // docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Every actor's owned perks plus the PERK store the parameter resolves against.
 nonisolated public struct PerkConditionResolution: Sendable {

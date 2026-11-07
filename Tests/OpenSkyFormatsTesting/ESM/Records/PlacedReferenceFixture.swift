@@ -1,7 +1,7 @@
 // A minimal REFR for the placed-reference field suites.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum PlacedReferenceFixture: Sendable {
     /// The base every fixture reference places.

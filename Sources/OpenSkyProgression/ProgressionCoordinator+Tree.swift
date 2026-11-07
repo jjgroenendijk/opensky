@@ -4,8 +4,8 @@
 // opposite, so it reads the AVIF node run in `INAM` order directly.
 
 import OpenSkyActorsInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyProgressionInterface
 
 extension ProgressionCoordinator {

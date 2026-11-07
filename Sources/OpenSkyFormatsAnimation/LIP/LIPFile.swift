@@ -2,7 +2,7 @@
 // expands to a dense frame-by-frame grid of float32 curve values at 30 frames per
 // second. Layout and evidence: docs/formats/lip.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public enum LIPError: Error, Equatable, Sendable {

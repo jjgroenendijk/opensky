@@ -6,8 +6,8 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyPhysics
+public import OpenSkyGameData
+public import OpenSkyPhysics
 
 nonisolated public struct DetectionSettings: Equatable, Sendable {
     // MARK: - Read from the load order

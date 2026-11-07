@@ -3,7 +3,7 @@
 // and `Exit`. See docs/engine/training.md#training-menu.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 /// What the training card shows for one trainer.
 nonisolated public struct TrainingCard: Equatable, Sendable {

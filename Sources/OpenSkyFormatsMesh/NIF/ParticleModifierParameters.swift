@@ -3,7 +3,7 @@
 // own space. Semantics and their sources: docs/formats/nif-particles.md.
 
 import Foundation
-import simd
+public import simd
 
 /// `NiPSysGravityModifier`: a pull along an axis, or towards a point.
 nonisolated public struct ParticleGravity: Equatable, Sendable {

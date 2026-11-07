@@ -2,8 +2,8 @@
 // knows, and the poison on each weapon. UESP "Skyrim:Alchemy":
 // <https://en.uesp.net/wiki/Skyrim:Alchemy>. See docs/engine/alchemy.md.
 
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One effect of a brewed potion, after the skill and the perks scaled it.
 nonisolated public struct CreatedPotionEffect: Equatable, Sendable {

@@ -1,8 +1,8 @@
 // An empty install tree under the temporary directory, for load-order tests
 // that need real folders but no game data.
 
-import Foundation
-@testable import OpenSkyGameData
+public import Foundation
+@testable public import OpenSkyGameData
 
 public struct TemporaryInstall {
     public let installURL: URL

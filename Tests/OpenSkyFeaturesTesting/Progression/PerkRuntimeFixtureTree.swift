@@ -1,7 +1,7 @@
 // The AVIF perk tree the spend suites climb, and two spell-record helpers.
 // Split from `PerkRuntimeFixture.swift` for the body-length cap.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 

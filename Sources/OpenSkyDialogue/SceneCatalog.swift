@@ -3,8 +3,8 @@
 // See docs/engine/scenes.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 nonisolated public struct CatalogScene: Equatable, Sendable {
     public let formID: FormID

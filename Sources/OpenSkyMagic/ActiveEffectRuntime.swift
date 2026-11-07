@@ -4,12 +4,12 @@
 // entry, and the other effects still apply. See docs/engine/magic.md.
 
 import Foundation
-import OpenSkyActorsInterface
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyWorldState
+public import OpenSkyActorsInterface
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
+public import OpenSkyWorldState
 
 @MainActor
 public struct ActiveEffectRuntime {

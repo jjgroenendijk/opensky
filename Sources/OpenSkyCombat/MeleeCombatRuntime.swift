@@ -5,9 +5,9 @@
 // `MeleeCombatWorld`. See docs/engine/melee-combat.md.
 
 import Foundation
-import OpenSkyActorsInterface
+public import OpenSkyActorsInterface
 import OpenSkyBehavior
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface

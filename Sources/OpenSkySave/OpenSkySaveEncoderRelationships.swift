@@ -2,9 +2,9 @@
 // `ActorRelationshipState.init` sets, so an unchanged set re-encodes identically.
 
 import Foundation
-import OpenSkyFactionsInterface
-import OpenSkyFormatsCore
-import OpenSkyWorldState
+public import OpenSkyFactionsInterface
+public import OpenSkyFormatsCore
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One actor's relationship overrides paired with the snapshot entry they

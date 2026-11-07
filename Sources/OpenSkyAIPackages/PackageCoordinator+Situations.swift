@@ -2,7 +2,7 @@
 // the script package slot. See docs/engine/package-schedules.md, "Package lists".
 
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyWorldConditions
 import OpenSkyWorldState
 

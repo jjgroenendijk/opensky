@@ -6,7 +6,7 @@ import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyWorldState
 import simd

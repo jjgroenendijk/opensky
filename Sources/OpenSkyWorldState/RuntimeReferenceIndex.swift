@@ -3,7 +3,7 @@
 // `CellScene` without a lock. State that outlives the cell lives in a store above.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The decoded record a runtime reference stands for. REFR and ACHR are the
 /// two placement records a cell build retains; both are plain value types.

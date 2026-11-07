@@ -1,8 +1,8 @@
 // Starts, moves, and stops the breath and movement loops of the actors near the listener.
 // The plan is pure (`ActorLoopPlan`); this file applies it. See docs/engine/actor-sounds.md.
 
-import OpenSkyAudio
-import OpenSkyFormatsESM
+public import OpenSkyAudio
+public import OpenSkyFormatsESM
 import simd
 
 extension WorldAudioSoundDirector {

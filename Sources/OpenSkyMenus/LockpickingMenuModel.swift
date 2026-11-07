@@ -2,7 +2,7 @@
 // frame's pick movement and turn. The bindings are OpenSky's and are listed on
 // docs/engine/locks.md.
 
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 /// What the player asks of the lock this frame.
 nonisolated public struct LockpickingIntent: Equatable, Sendable {

@@ -3,7 +3,7 @@
 // matches can reach into earlier output. Sources: docs/formats/bsa.md.
 
 import Compression
-import Foundation
+public import Foundation
 
 nonisolated public enum LZ4Error: Error, Equatable, Sendable {
     case badMagic(UInt32)
@@ -91,13 +91,13 @@ nonisolated public enum LZ4: Sendable {
                 let remaining = max(0, sizeLimit - output.count)
                 let capacity = min(descriptor.maximumBlockSize, remaining + 1)
                 var decoded = Data(count: capacity)
-                let written = decoded.withUnsafeMutableBytes { destination in
-                    block.withUnsafeBytes { source -> Int in
+                let written = unsafe decoded.withUnsafeMutableBytes { destination in
+                    unsafe block.withUnsafeBytes { source -> Int in
                         guard
                             let destinationBase = destination.baseAddress,
                             let sourceBase = source.baseAddress
                         else { return 0 }
-                        return compression_decode_buffer(
+                        return unsafe compression_decode_buffer(
                             destinationBase.assumingMemoryBound(to: UInt8.self),
                             destination.count,
                             sourceBase.assumingMemoryBound(to: UInt8.self),
@@ -198,13 +198,13 @@ nonisolated public enum LZ4: Sendable {
         }
         guard decompressedSize > 0 else { return Data() }
         var output = Data(count: decompressedSize)
-        let written = output.withUnsafeMutableBytes { destination in
-            block.withUnsafeBytes { source -> Int in
+        let written = unsafe output.withUnsafeMutableBytes { destination in
+            unsafe block.withUnsafeBytes { source -> Int in
                 guard
                     let destinationBase = destination.baseAddress,
                     let sourceBase = source.baseAddress
                 else { return 0 }
-                return compression_decode_buffer(
+                return unsafe compression_decode_buffer(
                     destinationBase.assumingMemoryBound(to: UInt8.self),
                     decompressedSize,
                     sourceBase.assumingMemoryBound(to: UInt8.self),

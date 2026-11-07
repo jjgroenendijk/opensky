@@ -1,7 +1,7 @@
 // How a water surface moves and catches light. The cell builder fills it from
 // WATR DNAM (docs/formats/water.md); the water fragment reads it.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct WaterShading: Equatable, Sendable {

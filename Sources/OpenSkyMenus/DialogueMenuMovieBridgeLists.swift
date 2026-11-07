@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated extension DialogueMenuMovieBridge {
     // MARK: - Writing

@@ -4,11 +4,11 @@
 // overlay. See docs/engine/messages.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyRenderCore
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 /// What the message coordinator needs from the app.
 public protocol MessageWorld: SWFLayerWorld {

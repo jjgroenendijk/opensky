@@ -2,8 +2,8 @@
 // and the blood on a weapon after it hits. Pure, so a test can drive them
 // (docs/rendering/visual-effects.md#blood).
 
-import OpenSkyFormatsCore
-import OpenSkyRendering
+public import OpenSkyFormatsCore
+public import OpenSkyRendering
 import simd
 
 /// The splatters on the screen. Each hit on the player adds some; each one fades.

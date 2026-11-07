@@ -2,12 +2,12 @@
 // daily edges, a bounded game-time interval for other changes, and a readout seam.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldConditions
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 
 nonisolated public struct PackageActorReadout: Equatable, Sendable {
     public let actor: ReferenceKey

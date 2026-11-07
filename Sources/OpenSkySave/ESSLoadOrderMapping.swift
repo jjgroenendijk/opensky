@@ -3,8 +3,8 @@
 // through those lists first. See docs/formats/ess.md#ref-ids.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyFormatsESS
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsESS
 
 /// Why a form reference in a save has no meaning in the current load order.
 nonisolated public enum ESSUnmappedReason: Hashable, Sendable {

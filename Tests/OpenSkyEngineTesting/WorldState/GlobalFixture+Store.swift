@@ -1,9 +1,9 @@
 // The global store over synthetic GLOB records.
 
-import Foundation
-@testable import OpenSkyFormatsESM
-import OpenSkyFormatsTesting
-@testable import OpenSkyWorldState
+public import Foundation
+@testable public import OpenSkyFormatsESM
+public import OpenSkyFormatsTesting
+@testable public import OpenSkyWorldState
 
 extension GlobalFixture {
     /// Store over `records` with no masters, so every GLOB resolves to

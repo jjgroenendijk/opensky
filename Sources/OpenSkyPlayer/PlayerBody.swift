@@ -3,13 +3,13 @@
 // space, so the world placement rides the model matrix, and draw groups are rebuilt
 // through `RenderScene(instances:)` when the transform changes.
 
-import Metal
-import OpenSkyActorPresentation
+public import Metal
+public import OpenSkyActorPresentation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyRendering
-import OpenSkyRenderResources
-import simd
+public import OpenSkyFormatsESM
+public import OpenSkyRendering
+public import OpenSkyRenderResources
+public import simd
 
 nonisolated public final class PlayerBody {
     /// The vanilla player base record: `Skyrim.esm` `NPC_ 00000007`, editor ID
@@ -79,7 +79,7 @@ nonisolated public final class PlayerBody {
     /// GPU allocations the body keeps alive. Added to the renderer's residency
     /// set once, at attach, and never removed: unlike a cell's, they are live
     /// for the whole session.
-    public var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [any MTLAllocation] {
         render.residencyAllocations
     }
 

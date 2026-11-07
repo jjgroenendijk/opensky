@@ -1,21 +1,21 @@
 // Decodes a texture of any sampled format to RGBA8 on the GPU. The GPU's own
 // decoder is the reference, because it is what the renderer shows.
 
-import Metal
+public import Metal
 
 /// One render pass per call, waited on. For tools and tests, not for frames.
 nonisolated public final class TextureReadback {
-    private let device: MTLDevice
-    private let copyPipeline: MTLRenderPipelineState
-    private let queue: MTL4CommandQueue
-    private let allocator: MTL4CommandAllocator
-    private let commandBuffer: MTL4CommandBuffer
-    private let argumentTable: MTL4ArgumentTable
-    private let residency: MTLResidencySet
-    private let event: MTLSharedEvent
+    private let device: any MTLDevice
+    private let copyPipeline: any MTLRenderPipelineState
+    private let queue: any MTL4CommandQueue
+    private let allocator: any MTL4CommandAllocator
+    private let commandBuffer: any MTL4CommandBuffer
+    private let argumentTable: any MTL4ArgumentTable
+    private let residency: any MTLResidencySet
+    private let event: any MTLSharedEvent
     private var submitted: UInt64 = 0
 
-    public init(device: MTLDevice, library: MTLLibrary) throws {
+    public init(device: any MTLDevice, library: any MTLLibrary) throws {
         self.device = device
         let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
         copyPipeline = try Self.pipeline("textureReadbackCopy", library, compiler)
@@ -36,7 +36,7 @@ nonisolated public final class TextureReadback {
     }
 
     /// The exact texels of one mip level.
-    public func pixels(of texture: MTLTexture, level: Int) throws -> TexturePixels {
+    public func pixels(of texture: any MTLTexture, level: Int) throws -> TexturePixels {
         guard
             let view = texture.makeTextureView(
                 pixelFormat: texture.pixelFormat,
@@ -54,8 +54,8 @@ nonisolated public final class TextureReadback {
     }
 
     private func run(
-        _ pipeline: MTLRenderPipelineState,
-        source: MTLTexture,
+        _ pipeline: any MTLRenderPipelineState,
+        source: any MTLTexture,
         width: Int,
         height: Int
     ) throws -> TexturePixels {
@@ -75,7 +75,7 @@ nonisolated public final class TextureReadback {
         }
         try encode(pipeline, source: source, target: target)
         var rgba = [UInt8](repeating: 0, count: width * height * 4)
-        target.getBytes(
+        unsafe target.getBytes(
             &rgba,
             bytesPerRow: width * 4,
             from: MTLRegionMake2D(0, 0, width, height),
@@ -85,9 +85,9 @@ nonisolated public final class TextureReadback {
     }
 
     private func encode(
-        _ pipeline: MTLRenderPipelineState,
-        source: MTLTexture,
-        target: MTLTexture
+        _ pipeline: any MTLRenderPipelineState,
+        source: any MTLTexture,
+        target: any MTLTexture
     ) throws {
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
@@ -116,9 +116,9 @@ nonisolated public final class TextureReadback {
 
     private static func pipeline(
         _ fragmentName: String,
-        _ library: MTLLibrary,
-        _ compiler: MTL4Compiler
-    ) throws -> MTLRenderPipelineState {
+        _ library: any MTLLibrary,
+        _ compiler: any MTL4Compiler
+    ) throws -> any MTLRenderPipelineState {
         let vertex = MTL4LibraryFunctionDescriptor()
         vertex.library = library
         vertex.name = "textureReadbackVertex"

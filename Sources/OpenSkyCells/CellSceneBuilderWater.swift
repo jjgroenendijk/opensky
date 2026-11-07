@@ -3,11 +3,11 @@
 // dev-4.1.6 wbDefinitionsTES5.pas.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyRendering
 import OpenSkyRenderResources
 import simd
 

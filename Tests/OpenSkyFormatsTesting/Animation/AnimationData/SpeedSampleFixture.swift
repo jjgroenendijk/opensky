@@ -1,7 +1,7 @@
 // Builds a `speeddatasinglefile.txt` in code: a count line, a name line per project,
 // then one binary block per project. Layout: docs/formats/speed-data.md.
 
-import Foundation
+public import Foundation
 
 public enum SpeedSampleFixture {
     /// One state's directions, each a key and (blend, ground) pairs in file order.
@@ -44,6 +44,6 @@ public enum SpeedSampleFixture {
     }
 
     private static func append(_ value: some FixedWidthInteger, to data: inout Data) {
-        withUnsafeBytes(of: value.littleEndian) { data.append(contentsOf: $0) }
+        withUnsafeBytes(of: value.littleEndian) { unsafe data.append(contentsOf: $0) }
     }
 }

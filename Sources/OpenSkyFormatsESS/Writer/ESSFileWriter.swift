@@ -2,7 +2,7 @@
 // with the file location table computed from the parts. Special Edition saves compress
 // the body as one raw LZ4 block. See docs/formats/ess.md#writing.
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
 
 /// Everything a save file holds, in file order. `ESSFile` is its read side.

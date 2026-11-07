@@ -4,7 +4,7 @@
 // Layout: docs/formats/nif-particles.md#parameter-modifiers.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 import simd
 
 /// `NiPSysAgeDeathModifier`: particles die at the end of their life.

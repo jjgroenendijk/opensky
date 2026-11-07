@@ -1,8 +1,8 @@
 // ARTO art object: a model that a magic effect attaches to a caster, a target,
 // or an enchanted item. Layout and sources: docs/formats/art-objects.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 /// DNAM, a uint32. An unknown value keeps its number.
 nonisolated public enum ArtType: Equatable, Sendable {

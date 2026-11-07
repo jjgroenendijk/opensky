@@ -190,7 +190,7 @@ struct OpenSkySaveIOTests {
         #expect(saves.path(percentEncoded: false)
             .hasPrefix(base.path(percentEncoded: false)))
         var isDirectory: ObjCBool = false
-        let exists = FileManager.default.fileExists(
+        let exists = unsafe FileManager.default.fileExists(
             atPath: saves.path(percentEncoded: false),
             isDirectory: &isDirectory
         )

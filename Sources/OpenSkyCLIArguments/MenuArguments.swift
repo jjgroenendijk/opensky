@@ -1,7 +1,7 @@
 // `menu`: each subcommand runs one vanilla menu movie through its bridge against seeded or
 // real records and prints what the movie built. `swf movie-probe` runs any movie.
 
-import ArgumentParser
+public import ArgumentParser
 
 /// `--ticks` and `--down`, which every menu driver takes.
 public struct MenuDriveOptions: ParsableArguments, Sendable {

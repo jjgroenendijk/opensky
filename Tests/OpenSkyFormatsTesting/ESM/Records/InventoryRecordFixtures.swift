@@ -1,8 +1,8 @@
 // Synthetic subrecord payloads for the inventory record tests, built from the
 // published layouts. Layout: docs/formats/item-records.md.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum InventoryFixture: Sendable {
     /// Parses fixture bytes back into the single record they encode.

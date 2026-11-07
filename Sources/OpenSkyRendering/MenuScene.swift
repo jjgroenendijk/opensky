@@ -2,20 +2,20 @@
 // place of the world. The skills menu's perk sky is one. See
 // docs/rendering/menu-scene.md.
 
-@preconcurrency import Metal
+@preconcurrency @unsafe public import Metal
 import OpenSkyFormatsCore
-import OpenSkyFormatsMesh
+public import OpenSkyFormatsMesh
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
-import simd
+public import simd
 
 /// One shape's vertices and indices on the GPU.
 public final class MenuSceneMesh {
-    public let vertexBuffer: MTLBuffer
-    public let indexBuffer: MTLBuffer
+    public let vertexBuffer: any MTLBuffer
+    public let indexBuffer: any MTLBuffer
     public let indexCount: Int
 
-    public init(shape: NIFEffectScene.Shape, device: MTLDevice) throws {
+    public init(shape: NIFEffectScene.Shape, device: any MTLDevice) throws {
         let vertices = shape.positions.indices.map { index in
             MenuSceneVertex(
                 position: SIMD4(shape.positions[index], 1),
@@ -25,12 +25,12 @@ public final class MenuSceneMesh {
             )
         }
         guard
-            let vertexBuffer = device.makeBuffer(
+            let vertexBuffer = unsafe device.makeBuffer(
                 bytes: vertices,
                 length: max(1, vertices.count) * MemoryLayout<MenuSceneVertex>.stride,
                 options: .storageModeShared
             ),
-            let indexBuffer = device.makeBuffer(
+            let indexBuffer = unsafe device.makeBuffer(
                 bytes: shape.indices, length: max(1, shape.indices.count) * 2,
                 options: .storageModeShared
             )
@@ -46,14 +46,15 @@ public final class MenuSceneMesh {
 /// One shape to draw this frame.
 public struct MenuSceneDraw {
     public let mesh: MenuSceneMesh
-    public let texture: MTLTexture?
-    public let palette: MTLTexture?
+    public let texture: any MTLTexture?
+    public let palette: any MTLTexture?
     /// Shape to world.
     public var transform: float4x4
     public var material: NIFEffectMaterial
 
     public init(
-        mesh: MenuSceneMesh, texture: MTLTexture?, palette: MTLTexture?, transform: float4x4,
+        mesh: MenuSceneMesh, texture: any MTLTexture?, palette: any MTLTexture?,
+        transform: float4x4,
         material: NIFEffectMaterial
     ) {
         self.mesh = mesh

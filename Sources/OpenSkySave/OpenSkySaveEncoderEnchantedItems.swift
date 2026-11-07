@@ -3,9 +3,9 @@
 // so an unchanged owner re-encodes identically.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyMagicInterface
-import OpenSkyWorldState
+public import OpenSkyFormatsCore
+public import OpenSkyMagicInterface
+public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One owner's enchanted-item state paired with the snapshot entry it came

@@ -2,11 +2,11 @@
 // unarmed: nothing resolves an NPC's equipped WEAP into a swing profile yet
 // (docs/engine/combat.md).
 
-import OpenSkyActorsInterface
-import OpenSkyCombatInterface
-import OpenSkyFormatsESM
-import OpenSkyMagicInterface
-import OpenSkyPhysics
+public import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
+public import OpenSkyMagicInterface
+public import OpenSkyPhysics
 import simd
 
 extension CombatCoordinator: CombatLoopWorld {

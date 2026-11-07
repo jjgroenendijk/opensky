@@ -3,7 +3,7 @@
 // Kit wiki "RegisterForSleep - Form"). See docs/engine/papyrus-registrations.md#sleep.
 
 import Foundation
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// False when `handle` names no script instance.

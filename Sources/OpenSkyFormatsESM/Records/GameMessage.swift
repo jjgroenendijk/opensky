@@ -3,7 +3,7 @@
 // docs/formats/loading-screens.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct GameMessage: Equatable, Sendable {
     nonisolated public struct Button: Equatable, Sendable {

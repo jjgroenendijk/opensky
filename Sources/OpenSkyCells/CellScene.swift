@@ -2,19 +2,19 @@
 // world AABB for camera placement.
 
 import Foundation
-import OpenSkyActorPresentation
-import OpenSkyConditions
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyObjectAnimation
-import OpenSkyPhysics
-import OpenSkyRenderCore
-import OpenSkyRendering
+public import OpenSkyActorPresentation
+public import OpenSkyConditions
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyObjectAnimation
+public import OpenSkyPhysics
+public import OpenSkyRenderCore
+public import OpenSkyRendering
 import OpenSkyShaderTypes
-import OpenSkyTerrain
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyTerrain
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 import simd
 
 /// Teleport-capable DOOR placement retained beside render data so main-thread

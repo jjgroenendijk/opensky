@@ -25,7 +25,7 @@ enum AudioCommand {
         }
         print("[INFO] \(path): \(summaryLine(for: file))")
         let codec = file.codec
-        print("  wFormatTag         0x\(String(format: "%04X", codec.formatTag)) (WMAv2)")
+        print(unsafe "  wFormatTag         0x\(String(format: "%04X", codec.formatTag)) (WMAv2)")
         print("  nChannels          \(codec.channelCount)")
         print("  nSamplesPerSec     \(codec.sampleRate)")
         print("  nAvgBytesPerSec    \(codec.averageBytesPerSecond) (\(codec.bitRate) bit/s)")
@@ -46,7 +46,7 @@ enum AudioCommand {
     /// Shared one-line summary, also used by the sweep.
     static func summaryLine(for file: XWMFile) -> String {
         let codec = file.codec
-        let duration = file.declaredDuration.map { String(format: "%.2fs", $0) } ?? "unknown"
+        let duration = file.declaredDuration.map { unsafe String(format: "%.2fs", $0) } ?? "unknown"
         return "\(codec.channelCount)ch \(codec.sampleRate)Hz, "
             + "block \(codec.blockAlign), \(file.packetCount) packets, "
             + "\(file.payloadByteCount) payload bytes, duration \(duration)"

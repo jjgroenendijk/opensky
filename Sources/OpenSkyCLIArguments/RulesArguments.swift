@@ -1,6 +1,6 @@
 // The commands that walk one game rule's record chain and print what it resolves to.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct ArcheryArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(

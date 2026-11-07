@@ -3,7 +3,7 @@
 // the `nameChange` event. See docs/engine/text-entry.md.
 
 import Foundation
-import OpenSkyFormatsSWF
+public import OpenSkyFormatsSWF
 
 nonisolated public enum TextEntryMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\textentry.swf"

@@ -5,17 +5,17 @@
 // install's stores. Nothing here is extracted game data.
 
 import Foundation
-@testable import OpenSkyActors
-@testable import OpenSkyActorsInterface
-@testable import OpenSkyBehavior
-@testable import OpenSkyCombat
-@testable import OpenSkyCombatInterface
+@testable public import OpenSkyActors
+@testable public import OpenSkyActorsInterface
+@testable public import OpenSkyBehavior
+@testable public import OpenSkyCombat
+@testable public import OpenSkyCombatInterface
 import OpenSkyFeaturesTesting
-@testable import OpenSkyFormatsESM
-@testable import OpenSkyGameData
-@testable import OpenSkyMagic
+@testable public import OpenSkyFormatsESM
+@testable public import OpenSkyGameData
+@testable public import OpenSkyMagic
 import OpenSkyMagicFixtures
-@testable import OpenSkyMagicInterface
+@testable public import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
 import OpenSkyWorldConditions

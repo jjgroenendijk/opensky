@@ -118,7 +118,7 @@ struct PapyrusNativeWorldReadTests {
         let fixture = try Fixture.make()
         var bounds = Data()
         for value: Int16 in [-2, -4, -6, 2, 4, 6] {
-            bounds.append(contentsOf: withUnsafeBytes(of: value.littleEndian, Array.init))
+            unsafe bounds.append(contentsOf: withUnsafeBytes(of: value.littleEndian, Array.init))
         }
         let file = try ESMFile(data: ESMFixture.tes4() + ESMFixture.topGroup(
             "MISC",

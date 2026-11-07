@@ -2,7 +2,7 @@
 // placed `XMarkerHeading` or `XMarker` (https://ck.uesp.net/wiki/CenterOnCell).
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum CenterOnCellMarker {
     /// Engine STAT records in `Skyrim.esm`, read from the install's `EDID` fields.

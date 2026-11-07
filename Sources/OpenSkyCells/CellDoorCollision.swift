@@ -3,14 +3,14 @@
 
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyObjectAnimation
-import OpenSkyPhysics
+public import OpenSkyObjectAnimation
+public import OpenSkyPhysics
 import OpenSkyRendering
-import simd
+public import simd
 
 nonisolated public struct CellDoorCollision: Sendable {
     public let reference: FormID

@@ -1,7 +1,7 @@
 // A follower command takes the actor away from its packages, alias packages too, until
 // the command ends. See docs/engine/follower-commands.md#flow.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 extension PackageCoordinator {
     public func holdCommanded(_ actor: ReferenceKey) {

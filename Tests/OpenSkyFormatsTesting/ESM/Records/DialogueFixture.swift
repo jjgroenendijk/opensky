@@ -1,8 +1,8 @@
 // Synthetic DIAL/INFO/VTYP records and DIAL child groups, every byte built in
 // code from the UESP and xEdit layouts. Never extracted game data.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 
 public enum DialogueFixture {
     public static func parse(_ bytes: Data) throws -> ESMRecord {

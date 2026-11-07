@@ -1,7 +1,7 @@
 // The sun, moons, stars, and aurora of the current climate and weather blend.
 
 import OpenSkyGameData
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 
 nonisolated extension WeatherSystem {
     public func celestialSky(

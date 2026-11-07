@@ -221,7 +221,7 @@ enum SWFContainerMenuCommand {
 
 extension SWFContainerMenuCommand {
     private static func describe(_ pricing: BarterPricing) -> String {
-        String(
+        unsafe String(
             format: "speech %.0f, factor %.4f, buy x%.4f, sell x%.4f (%@)",
             pricing.speechSkill,
             pricing.basePriceFactor,

@@ -2,8 +2,8 @@
 // ones a navmesh links to. NAVM geometry is decoded per cell by
 // `CellSceneBuilder.collectNavmeshes`; this index works before a cell streams in.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
 
 nonisolated public struct NavmeshIndex: Sendable {
     public static let logger = EngineLogger(

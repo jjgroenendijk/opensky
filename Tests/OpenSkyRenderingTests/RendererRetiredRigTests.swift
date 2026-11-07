@@ -40,7 +40,7 @@ struct RendererRetiredRigTests {
         }
     }
 
-    private static func crate(device: MTLDevice) throws -> RenderPlacement {
+    private static func crate(device: any MTLDevice) throws -> RenderPlacement {
         let texture = try OffscreenRendererFixture.solidTexture(device: device)
         let model = Model(
             meshes: [DemoScene.boxMesh(halfWidth: 32, halfDepth: 32, height: 64)],

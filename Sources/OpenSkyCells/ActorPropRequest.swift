@@ -1,10 +1,10 @@
 // The idle props an actor holds, such as a broom or a lute. They load on the cell
 // build runner, beside the cell builds, because they share its caches.
 
-import OpenSkyFormatsESM
-import OpenSkyRendering
-import OpenSkyRuntimeState
-import OpenSkyTerrain
+public import OpenSkyFormatsESM
+public import OpenSkyRendering
+public import OpenSkyRuntimeState
+public import OpenSkyTerrain
 
 /// One idle prop to load for one actor, on the actor's own rig.
 nonisolated public struct ActorPropRequest: Equatable, Sendable {

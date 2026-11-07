@@ -3,11 +3,11 @@
 // fixed layout. A pair with no `RELS` row is dropped: `RELS` says which pairs exist.
 // See docs/formats/opensky-save-actor-chunks.md.
 
-import Foundation
+public import Foundation
 import OpenSkyFactionsInterface
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One actor's first-friend ranks, before they lay onto its `RELS` overrides.
 nonisolated public struct SaveRelationshipFavourEntry: Equatable, Sendable {

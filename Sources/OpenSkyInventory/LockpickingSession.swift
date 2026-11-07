@@ -3,7 +3,7 @@
 // GMSTs; turn speeds are OpenSky's. See docs/engine/locks.md.
 
 import Foundation
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 /// The numbers one session plays with, after skill and perks.
 nonisolated public struct LockpickingParameters: Equatable, Sendable {

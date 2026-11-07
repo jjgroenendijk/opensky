@@ -1,7 +1,7 @@
 // A script whose VMAD value reaches a variable only through a property setter.
 
 import Foundation
-@testable import OpenSkyFormatsPEX
+@testable public import OpenSkyFormatsPEX
 @testable import OpenSkyFormatsTesting
 
 extension PapyrusWorldFixture {

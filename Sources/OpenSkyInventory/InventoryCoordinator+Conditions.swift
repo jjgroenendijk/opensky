@@ -1,9 +1,9 @@
 // The equipment and keyword facts of the inventory condition seam.
 // See docs/engine/condition-functions-world.md#equipment.
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 
 extension InventoryCoordinator {
     /// Weapons, shield, and every equipped item of `key`. The hand types stay 0: the

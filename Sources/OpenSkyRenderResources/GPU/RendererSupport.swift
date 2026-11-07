@@ -1,6 +1,6 @@
 // Renderer support types, kept apart to hold Renderer.swift under the file limit.
 
-import Metal
+public import Metal
 
 /// GPU resources retired by a scene swap, still possibly referenced by
 /// frames in flight when they were retired. The strong references here keep
@@ -9,9 +9,9 @@ import Metal
 nonisolated public struct RetiredAllocations {
     /// Highest frame index that may still reference these allocations.
     public let lastFrameIndex: UInt64
-    public let allocations: [MTLAllocation]
+    public let allocations: [any MTLAllocation]
 
-    public init(lastFrameIndex: UInt64, allocations: [MTLAllocation]) {
+    public init(lastFrameIndex: UInt64, allocations: [any MTLAllocation]) {
         self.lastFrameIndex = lastFrameIndex
         self.allocations = allocations
     }

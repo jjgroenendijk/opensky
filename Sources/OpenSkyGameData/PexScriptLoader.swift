@@ -1,8 +1,8 @@
 // PEX path policy and VFS loading. Canonicalization is a pure transform so
 // tests and callers can use it without touching the filesystem.
 
-import Foundation
-import OpenSkyFormatsPEX
+public import Foundation
+public import OpenSkyFormatsPEX
 
 nonisolated public final class PexScriptLoader {
     public static let scriptPrefix = "scripts\\"

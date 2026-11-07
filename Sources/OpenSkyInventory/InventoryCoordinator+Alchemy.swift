@@ -3,9 +3,9 @@
 // `AlchemyRules`. See docs/engine/alchemy.md.
 
 import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldState

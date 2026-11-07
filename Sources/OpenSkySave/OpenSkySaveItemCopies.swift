@@ -2,11 +2,11 @@
 // `ReferenceKey` after `TMPR`, so it replaces the level-only state for that owner.
 // `ItemCopyState.init` drops plain copies, so no content error fails a load.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 nonisolated public enum OpenSkySaveItemCopies: Sendable {
     private static let hasCharge: UInt8 = 1

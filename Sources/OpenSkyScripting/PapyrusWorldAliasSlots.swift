@@ -4,10 +4,10 @@
 // otherwise. See docs/engine/papyrus-quests.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 /// One alias of one quest: the QUST key and the `ALST` or `ALLS` alias ID.
 nonisolated public struct PapyrusAliasSlot: Hashable, Sendable {

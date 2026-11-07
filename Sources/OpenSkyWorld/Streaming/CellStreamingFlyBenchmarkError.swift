@@ -1,7 +1,7 @@
 // Reason-tagged production fly-gate failures.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public enum CellStreamingFlyBenchmarkError: LocalizedError {
     case memoryMeasurementFailed
@@ -41,9 +41,13 @@ nonisolated public enum CellStreamingFlyBenchmarkError: LocalizedError {
         case .memoryMeasurementFailed:
             "cannot read task_vm_info.phys_footprint"
         case let .footprintExceeded(megabytes, cap):
-            String(format: "physical footprint %.0f MB exceeded %.0f MB cap", megabytes, cap)
+            unsafe String(format: "physical footprint %.0f MB exceeded %.0f MB cap", megabytes, cap)
         case let .footprintDidNotPlateau(initial, final):
-            String(format: "physical footprint did not plateau: %.0f -> %.0f MB", initial, final)
+            unsafe String(
+                format: "physical footprint did not plateau: %.0f -> %.0f MB",
+                initial,
+                final
+            )
         case let .sceneSwapFailed(error):
             "scene swap failed: \(String(describing: error))"
         case let .cellBuildFailed(count):
@@ -53,12 +57,12 @@ nonisolated public enum CellStreamingFlyBenchmarkError: LocalizedError {
         case let .duplicateBuilds(counts):
             "duplicate cell builds: \(Self.describe(counts))"
         case let .collisionBuildExceeded(p95, maximum, budget):
-            String(
+            unsafe String(
                 format: "collision build p95 %.2f ms / max %.2f ms exceeded %.2f ms budget",
                 p95, maximum, budget
             )
         case let .actorBuildExceeded(p95, maximum, budget):
-            String(
+            unsafe String(
                 format: "actor build p95 %.2f ms / max %.2f ms exceeded %.2f ms budget",
                 p95, maximum, budget
             )
@@ -75,22 +79,22 @@ nonisolated public enum CellStreamingFlyBenchmarkError: LocalizedError {
             "cell (\(coordinate.x),\(coordinate.y)) has \(failures) static actors "
                 + "but only \(reasons) reasons"
         case let .animationUpdateExceeded(average, p95, budget):
-            String(
+            unsafe String(
                 format: "animation update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
                 average, p95, budget
             )
         case let .shadowUpdateExceeded(average, p95, budget):
-            String(
+            unsafe String(
                 format: "shadow update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
                 average, p95, budget
             )
         case let .audioUpdateExceeded(average, p95, budget):
-            String(
+            unsafe String(
                 format: "audio update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
                 average, p95, budget
             )
         case let .scriptUpdateExceeded(average, p95, budget):
-            String(
+            unsafe String(
                 format: "script update avg %.2f ms / p95 %.2f ms exceeded %.2f ms budget",
                 average, p95, budget
             )

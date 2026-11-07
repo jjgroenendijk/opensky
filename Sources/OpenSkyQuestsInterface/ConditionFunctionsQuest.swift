@@ -6,8 +6,8 @@
 // Return rules come from the wiki pages cited at each registration.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {
     public static func installQuest(_ registry: inout ConditionFunctionRegistry) {

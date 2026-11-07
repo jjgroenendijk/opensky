@@ -1,4 +1,4 @@
-import OpenSkyRendering
+public import OpenSkyRendering
 
 extension Renderer {
     /// Renders one frame, which starts the MetalFX scaler build, then waits for the build.

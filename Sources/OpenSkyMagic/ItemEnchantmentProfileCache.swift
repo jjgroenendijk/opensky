@@ -5,8 +5,8 @@
 // "carries none". See docs/engine/item-enchantments.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyMagicInterface
 
 /// One session's resolved item enchantments.
 nonisolated public struct ItemEnchantmentProfileCache: Sendable {

@@ -6,9 +6,9 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
 extension SpellHand {

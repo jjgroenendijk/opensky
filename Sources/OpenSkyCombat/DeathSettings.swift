@@ -4,7 +4,7 @@
 // (docs/engine/ragdoll.md#death-effects).
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct DeathSettings: Equatable, Sendable {
     /// One kind of attack's push: the damage range, and the force it maps to.

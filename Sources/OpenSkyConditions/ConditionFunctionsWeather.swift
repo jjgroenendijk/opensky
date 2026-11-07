@@ -3,7 +3,7 @@
 // See docs/engine/condition-functions.md#weather.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The current weather and its `DATA` classification.
 nonisolated public struct WeatherConditionResolution: ConditionResolution, Sendable {

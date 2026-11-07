@@ -3,10 +3,10 @@
 // The decisions live in `CombatCore`. See docs/engine/coordinators.md.
 
 import OpenSkyActorsInterface
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 

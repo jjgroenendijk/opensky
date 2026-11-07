@@ -1,8 +1,8 @@
 // The features a `PapyrusWorldStateBridge` reaches, given when it is built.
 
-import OpenSkyGameData
-import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
+public import OpenSkyGameData
+public import OpenSkyQuestsInterface
+public import OpenSkyScriptingInterface
 
 /// Each seam is optional: a native whose seam is missing fails with a reason.
 @MainActor

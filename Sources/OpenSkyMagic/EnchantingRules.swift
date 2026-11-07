@@ -3,7 +3,7 @@
 // values out. See docs/engine/enchanting.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 
 /// One base enchantment as the rules see it.

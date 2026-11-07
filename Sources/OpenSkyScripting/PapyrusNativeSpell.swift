@@ -5,10 +5,10 @@
 // Documented in docs/engine/papyrus-spell-natives.md, with the natives left out on purpose.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagicInterface
-import OpenSkyScriptingInterface
+public import OpenSkyMagicInterface
+public import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
     public static func installSpell(into registry: inout PapyrusNativeRegistry) {

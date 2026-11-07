@@ -79,7 +79,7 @@ enum ActorValueCommand {
         print("  record-authored actor values (\(values.count)):")
         for index in values.keys.sorted() {
             guard let value = values[index] else { continue }
-            print(String(
+            unsafe print(String(
                 format: "    %3d %-24@ %.2f",
                 index,
                 ActorValueIdentity.description(of: index) as NSString,
@@ -114,7 +114,9 @@ enum ActorValueCommand {
 
     private static func reportRace(_ key: String, resolver: ActorValueResolver) throws {
         let matches = resolver.races.values
-            .filter { $0.editorID == key || String(format: "%08X", $0.formID.rawValue) == key }
+            .filter {
+                unsafe $0.editorID == key || String(format: "%08X", $0.formID.rawValue) == key
+            }
             .sorted { $0.formID.rawValue < $1.formID.rawValue }
         guard let race = matches.first else {
             throw CLIError.failure("no RACE record matches \(key)")
@@ -131,7 +133,7 @@ enum ActorValueCommand {
             magicka: stats.magickaRegenPercent,
             stamina: stats.staminaRegenPercent
         )))
-        print(String(
+        unsafe print(String(
             format: "  carry weight %.2f, mass %.2f, unarmed damage %.2f",
             stats.baseCarryWeight,
             stats.baseMass,
@@ -145,7 +147,7 @@ enum ActorValueCommand {
     // MARK: - Formatting
 
     private static func triple(_ values: ActorValues) -> String {
-        String(
+        unsafe String(
             format: "health %.2f, magicka %.2f, stamina %.2f",
             values.health,
             values.magicka,

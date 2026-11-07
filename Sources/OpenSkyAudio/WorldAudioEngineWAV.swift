@@ -1,9 +1,9 @@
 // PCM `.wav` playback. A `.wav` effect is tiny (a footstep is about 26 KB), so it
 // is read into one buffer and scheduled once; long `.xwm` tracks stream instead.
 
-import AVFAudio
-import Foundation
-import OpenSkyFormatsAudio
+public import AVFAudio
+public import Foundation
+public import OpenSkyFormatsAudio
 
 extension WorldAudioEngine {
     /// Builds a PCM buffer from RIFF/WAVE bytes.
@@ -51,7 +51,7 @@ extension WorldAudioEngine {
                 pcmFormat: format,
                 frameCapacity: AVAudioFrameCount(frames)
             ),
-            let target = buffer.floatChannelData
+            let target = unsafe buffer.floatChannelData
         else {
             throw AudioEngineError.formatUnavailable
         }
@@ -63,10 +63,10 @@ extension WorldAudioEngine {
                 for channel in 0 ..< sourceChannels {
                     sum += audio.samples[base + channel]
                 }
-                target[0][frame] = sum / Float(sourceChannels)
+                unsafe target[0][frame] = sum / Float(sourceChannels)
             } else {
                 for channel in 0 ..< sourceChannels {
-                    target[channel][frame] = audio.samples[base + channel]
+                    unsafe target[channel][frame] = audio.samples[base + channel]
                 }
             }
         }

@@ -2,8 +2,8 @@
 // stream. Scaleform GFx extension tags parse as opaque bodies and report as
 // "unknown". Layout and sources: docs/formats/swf.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public enum SWFError: Error, Equatable, Sendable {
     /// Signature is not one of the three SWF magics.

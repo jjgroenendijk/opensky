@@ -10,14 +10,14 @@ nonisolated enum AssetCacheFileRead {
 
     /// The file's bytes. `touching` refreshes an old use date on the open file.
     static func read(_ url: URL, touching: Bool) -> Result<Data, POSIXError> {
-        let descriptor = open(url.path(percentEncoded: false), O_RDONLY | O_CLOEXEC)
+        let descriptor = unsafe open(url.path(percentEncoded: false), O_RDONLY | O_CLOEXEC)
         guard descriptor >= 0 else { return .failure(currentError()) }
         defer { close(descriptor) }
         var info = stat()
-        guard fstat(descriptor, &info) == 0 else { return .failure(currentError()) }
+        guard unsafe fstat(descriptor, &info) == 0 else { return .failure(currentError()) }
         let size = Int(info.st_size)
         var bytes = Data(count: size)
-        let count = bytes.withUnsafeMutableBytes { readFully(descriptor, into: $0) }
+        let count = unsafe bytes.withUnsafeMutableBytes { unsafe readFully(descriptor, into: $0) }
         guard count == size else {
             return .failure(count < 0 ? currentError() : POSIXError(.EIO))
         }
@@ -31,14 +31,14 @@ nonisolated enum AssetCacheFileRead {
     static func readHead(
         _ url: URL, count: Int, touching: Bool
     ) -> Result<(bytes: Data, size: Int), POSIXError> {
-        let descriptor = open(url.path(percentEncoded: false), O_RDONLY | O_CLOEXEC)
+        let descriptor = unsafe open(url.path(percentEncoded: false), O_RDONLY | O_CLOEXEC)
         guard descriptor >= 0 else { return .failure(currentError()) }
         defer { close(descriptor) }
         var info = stat()
-        guard fstat(descriptor, &info) == 0 else { return .failure(currentError()) }
+        guard unsafe fstat(descriptor, &info) == 0 else { return .failure(currentError()) }
         let size = Int(info.st_size)
         var bytes = Data(count: min(count, size))
-        let read = bytes.withUnsafeMutableBytes { readFully(descriptor, into: $0) }
+        let read = unsafe bytes.withUnsafeMutableBytes { unsafe readFully(descriptor, into: $0) }
         guard read == bytes.count else {
             return .failure(read < 0 ? currentError() : POSIXError(.EIO))
         }
@@ -53,7 +53,7 @@ nonisolated enum AssetCacheFileRead {
     ) -> Int {
         var done = 0
         while done < buffer.count {
-            let result = pread(
+            let result = unsafe pread(
                 descriptor, buffer.baseAddress?.advanced(by: done), buffer.count - done,
                 off_t(done)
             )

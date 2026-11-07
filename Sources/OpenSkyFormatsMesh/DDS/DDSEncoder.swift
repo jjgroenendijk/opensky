@@ -2,9 +2,9 @@
 // so a texture painted on the CPU loads through the normal texture path.
 // Layout: docs/formats/dds.md, "CPU decode".
 
-import Foundation
+public import Foundation
 import OpenSkyFormatsCore
-import OpenSkyImageKernels
+public import OpenSkyImageKernels
 
 nonisolated public enum DDSEncoder {
     public static func rgba8888(_ image: DecodedImage) -> Data {

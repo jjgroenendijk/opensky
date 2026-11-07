@@ -4,12 +4,12 @@
 
 import AVFAudio
 import Foundation
-@testable import OpenSkyAudio
-@testable import OpenSkyFormatsESM
+@testable public import OpenSkyAudio
+@testable public import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
-@testable import OpenSkyWorld
-@testable import OpenSkyWorldInterface
+@testable public import OpenSkyGameData
+@testable public import OpenSkyWorld
+@testable public import OpenSkyWorldInterface
 import simd
 import Testing
 

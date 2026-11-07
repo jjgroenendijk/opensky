@@ -174,13 +174,17 @@ enum RenderCommand {
             hiddenCells: built
         )
         if let lod {
+            let brightnessGain = unsafe String(
+                format: "%.3f",
+                lod.renderScene.terrainLODBrightness?.gain ?? .nan
+            )
             print("[INFO] distant LOD: \(lod.blockCount) blocks, "
                 + "\(lod.missingBlockCount) unavailable, \(lod.treeBlockCount) tree blocks, "
                 + "\(lod.missingTreeBlockCount) unavailable tree blocks, "
                 + "\(lod.treeInstanceCount) trees, "
                 + "\(lod.largeReferenceCount) large references, "
                 + "\(lod.generatedTerrainBlockCount) generated terrain blocks, terrain gain "
-                + String(format: "%.3f", lod.renderScene.terrainLODBrightness?.gain ?? .nan))
+                + brightnessGain)
         }
         var scenes = cellScenes.map(\.renderScene)
         if let lod {
@@ -216,7 +220,7 @@ enum RenderCommand {
     /// `settings` go over the saved player settings, so the view distances follow them.
     static func makeBuilder(
         context: CLIContext,
-        device: MTLDevice,
+        device: any MTLDevice,
         settings: [PlayerSettingID: Double] = [:]
     ) throws -> CellSceneBuilder {
         try ColdCellBuilder.makeBuilder(

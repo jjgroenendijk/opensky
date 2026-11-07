@@ -1,9 +1,9 @@
 // The seams scripts reach spells through. `CasterRuntime` and `SpellbookRuntime`
 // conform, and the composition root hands them over as these protocols.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 /// The spells an actor knows and holds ready.
 @MainActor

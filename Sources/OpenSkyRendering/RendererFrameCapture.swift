@@ -1,7 +1,7 @@
 // A Metal GPU trace of one live frame, for a benchmark scene. Metal records a
 // trace only when the process starts with `MTL_CAPTURE_ENABLED=1`.
 
-import Foundation
+public import Foundation
 import Metal
 
 nonisolated public enum FrameCaptureError: Error, Equatable, CustomStringConvertible {

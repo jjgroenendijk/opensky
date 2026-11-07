@@ -23,7 +23,7 @@ enum ArcheryCommand {
         let projectiles = Self.projectiles(in: loadOrder.plugins)
         let settings = ArcherySettings.resolve(store: GameSettingStore(plugins: loadOrder.files))
         for row in settings.report {
-            print(String(
+            unsafe print(String(
                 format: "%@ = %.3f [%@]",
                 row.editorID,
                 row.setting.value,
@@ -75,7 +75,7 @@ enum ArcheryCommand {
         let finite = values.filter(\.isFinite)
         guard let low = finite.first, let high = finite.last else { return "none" }
         let mean = finite.reduce(0, +) / Float(finite.count)
-        return String(format: "min %.3f max %.3f mean %.3f", low, high, mean)
+        return unsafe String(format: "min %.3f max %.3f mean %.3f", low, high, mean)
     }
 
     /// One row per AMMO that names a PROJ: the arrow's own damage, the flight
@@ -119,7 +119,7 @@ enum ArcheryCommand {
         let asAcceleration = profile.speed > 0
             ? 0.5 * projectile.gravityFactor * powf(dropDistance / profile.speed, 2)
             : 0
-        return String(
+        return unsafe String(
             format: """
             %@: damage %.0f, PROJ %@ speed %.0f gravity %.3f range %.0f \
             -> drop at %.0f: %.1f as multiplier, %.4f as acceleration

@@ -3,7 +3,7 @@
 // get-up clip. Values in, values out (docs/engine/ragdoll.md#knockdown).
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum KnockdownPhase: Equatable, Sendable {

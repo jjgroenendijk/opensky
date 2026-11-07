@@ -2,9 +2,9 @@
 // screen effects, the title menu, and a few actor and reference reads. As in
 // `PapyrusActorNatives.swift`, a nil member is a session without that runtime.
 
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
-import simd
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
+public import simd
 
 /// The `Game.PlayBink` arguments (<https://ck.uesp.net/wiki/PlayBink_-_Game>).
 nonisolated public struct PapyrusBinkRequest: Equatable, Sendable {

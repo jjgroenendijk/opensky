@@ -3,8 +3,8 @@
 // See docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// One owned, condition-passing effect at an entry point that picks a spell, a text,
 /// or an activation button.

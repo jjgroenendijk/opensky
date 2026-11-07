@@ -5,9 +5,9 @@
 // See docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Which hand a spell is readied in. A spell that fills both hands is stored in
 /// each. The raw values are the save encoding and must not be renumbered.

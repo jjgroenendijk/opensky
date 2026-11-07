@@ -4,8 +4,8 @@
 // writes nothing. See docs/engine/hostility.md and docs/formats/factions.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One membership: the faction and the rank the actor holds in it.
 ///

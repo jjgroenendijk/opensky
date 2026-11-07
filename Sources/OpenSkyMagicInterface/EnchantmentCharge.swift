@@ -78,9 +78,10 @@ nonisolated public struct EnchantmentCharge: Equatable, Sendable {
     /// that buys.
     public var describedLine: String {
         guard isMetered else {
-            return capacity > 0 ? String(format: "%.0f charge, unmetered", capacity) : "no charge"
+            guard capacity > 0 else { return "no charge" }
+            return unsafe String(format: "%.0f charge, unmetered", capacity)
         }
-        return String(
+        return unsafe String(
             format: "%.0f/%.0f charge, %d use(s) left", remaining, capacity, usesRemaining
         )
     }

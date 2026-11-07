@@ -3,10 +3,10 @@
 // record with this session's deltas on top.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// A reference's current state and the cell that draws it.
 public struct ReferencePlacement {

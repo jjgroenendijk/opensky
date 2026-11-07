@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One CLAS record under its load-order identity.
 nonisolated public struct ResolvedCharacterClass: Equatable, Sendable {

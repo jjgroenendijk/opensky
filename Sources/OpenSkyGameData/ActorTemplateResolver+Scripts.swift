@@ -1,5 +1,5 @@
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated extension ActorTemplateResolver {
     /// `VMAD` scripts after template inheritance, through `useScript` (UESP `NPC_` template flags).

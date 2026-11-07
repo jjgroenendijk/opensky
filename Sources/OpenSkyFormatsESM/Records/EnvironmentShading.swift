@@ -2,8 +2,8 @@
 // material (the snow and moss layer on statics). Layout and sources:
 // docs/formats/environment-shading.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct ShaderParticleGeometry: Equatable, Sendable {
     /// DATA: 40 bytes in the original game, 48 in SE.

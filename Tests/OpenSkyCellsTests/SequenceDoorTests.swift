@@ -9,7 +9,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
-@testable import OpenSkyObjectAnimation
+@testable public import OpenSkyObjectAnimation
 import OpenSkyPhysics
 import simd
 import Testing

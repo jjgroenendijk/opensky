@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyGameData
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 
 extension MapMenuCoordinator {
     /// The marker in the map's worldspace; one in another worldspace stays hidden.

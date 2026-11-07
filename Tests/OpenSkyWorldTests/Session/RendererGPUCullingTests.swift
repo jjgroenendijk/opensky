@@ -34,7 +34,7 @@ struct RendererGPUCullingTests {
     /// A row of crates from x = -6000 to 6000, plus one taller crate a physics body
     /// moves, which must stay on the CPU path.
     private static func crateRowScene(
-        device: MTLDevice,
+        device: any MTLDevice,
         rooms: RoomPortalGraph? = nil
     ) throws -> RenderScene {
         let texture = try OffscreenRendererFixture.solidTexture(device: device)

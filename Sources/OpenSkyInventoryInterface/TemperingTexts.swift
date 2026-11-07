@@ -1,7 +1,7 @@
 // The quality names of an improved item, from the `sHealthDataPrefixWeap1` to `...6`
 // and `sHealthDataPrefixArmo1` to `...6` string settings. See docs/engine/crafting.md.
 
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated public struct TemperingTexts: Equatable, Sendable {
     public var weaponNames = Tempering.names

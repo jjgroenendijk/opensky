@@ -4,8 +4,8 @@
 // Specification v19 chapters 3 and 5, never extracted game files (AGENTS.md
 // "Legal & IP boundary").
 
-import Foundation
-@testable import OpenSkyFormatsSWF
+public import Foundation
+@testable public import OpenSkyFormatsSWF
 
 public enum SWFActionFixture: Sendable {
     /// One record to emit: an opcode plus the operand bytes it carries.

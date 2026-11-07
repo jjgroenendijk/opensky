@@ -6,7 +6,7 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
+@testable public import OpenSkyGameData
 
 public enum PerkActivateFixture {
     public static let pluginName = "PerkActivate.esm"

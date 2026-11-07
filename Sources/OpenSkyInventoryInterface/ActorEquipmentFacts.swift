@@ -2,7 +2,7 @@
 // See docs/engine/condition-functions-world.md#equipment.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// The weapon in one hand.
 nonisolated public struct EquippedWeaponFacts: Equatable, Sendable {

@@ -6,9 +6,9 @@
 // docs/engine/character-leveling.md.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyProgressionInterface
 
 /// Why a perk-point spend was refused. Exhaustive, because the perk tree shows each case as

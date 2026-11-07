@@ -62,7 +62,7 @@ struct TRIFileTests {
 
     private static func bytes(of value: some FixedWidthInteger) -> Data {
         var little = value.littleEndian
-        return withUnsafeBytes(of: &little) { Data($0) }
+        return withUnsafeBytes(of: &little) { unsafe Data($0) }
     }
 }
 

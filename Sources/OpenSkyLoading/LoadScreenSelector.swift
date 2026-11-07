@@ -3,9 +3,9 @@
 // rule and the census behind it: docs/formats/loading-screens.md#selection.
 
 import Foundation
-import OpenSkyConditions
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyConditions
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyWorldConditions
 
 nonisolated public struct LoadScreenSelector: Sendable {

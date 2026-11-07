@@ -3,8 +3,8 @@
 // See docs/engine/papyrus-quests.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsESM
+public import OpenSkyScriptingInterface
 
 nonisolated struct PapyrusLatentQuestWait: Equatable, Sendable {
     let token: UInt64

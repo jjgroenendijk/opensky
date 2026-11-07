@@ -1,6 +1,6 @@
 // `render`: the offscreen world view of a grid cell.
 
-import ArgumentParser
+public import ArgumentParser
 
 public struct RenderArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(

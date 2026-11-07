@@ -3,7 +3,7 @@
 // See docs/engine/furniture.md.
 
 import Foundation
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 /// A root position and a facing.

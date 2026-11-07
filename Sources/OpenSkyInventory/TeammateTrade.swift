@@ -1,9 +1,9 @@
 // A follower's trade: its starting outfit stays with it, and it carries no more than
 // its `CarryWeight`. UESP "Skyrim:Followers". See docs/engine/barter.md#a-followers-trade.
 
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 nonisolated public enum TeammateTradeText: String, GameSettingTextKey {
     case cannotTakeOutfit = "sTeammateCantTakeOutfit"

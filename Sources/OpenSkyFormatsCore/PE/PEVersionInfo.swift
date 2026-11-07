@@ -2,7 +2,7 @@
 // launcher reads it to show which game build the install is. Layout:
 // docs/formats/pe-version.md.
 
-import Foundation
+public import Foundation
 
 nonisolated public enum PEVersionError: Error, Equatable, Sendable {
     case notAnExecutable

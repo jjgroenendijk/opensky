@@ -3,7 +3,7 @@
 // space in start order. Pure. See docs/rendering/image-space.md.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct ImageSpaceModifierInstance: Equatable, Sendable {

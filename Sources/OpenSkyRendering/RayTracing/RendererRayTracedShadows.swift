@@ -2,7 +2,7 @@
 // acceleration structures when the scene changes, and the static-mesh and terrain
 // pipelines trace one ray to the sun per pixel. See docs/rendering/ray-traced-shadows.md.
 
-import Metal
+public import Metal
 import MetalKit
 import OpenSkyRenderCore
 import OpenSkyRenderResources
@@ -10,9 +10,9 @@ import OpenSkyShaderTypes
 
 /// The pipelines that trace: static meshes and terrain.
 struct RayTracedPipelines {
-    let opaque: MTLRenderPipelineState
-    let alphaTest: MTLRenderPipelineState
-    let terrain: MTLRenderPipelineState
+    let opaque: any MTLRenderPipelineState
+    let alphaTest: any MTLRenderPipelineState
+    let terrain: any MTLRenderPipelineState
 }
 
 public struct RayTracedShadowState {
@@ -47,14 +47,14 @@ public struct RayTracedShadowState {
 
 extension Renderer {
     static func makeRayTracing(
-        library: MTLLibrary, compiler: PipelineCache, view: MTKView
+        library: any MTLLibrary, compiler: PipelineCache, view: MTKView
     ) -> RayTracedShadowState {
         let availability = RayTracingAvailability.of(view.device)
         guard availability.isAvailable else {
             return RayTracedShadowState(availability: availability, pipelines: nil)
         }
         func make(_ constants: [FunctionConstantIndex]) throws -> RayTracedPipelines {
-            func mesh(alphaTest: Bool) throws -> MTLRenderPipelineState {
+            func mesh(alphaTest: Bool) throws -> any MTLRenderPipelineState {
                 var variant = MeshPipelineVariant(alphaTest: alphaTest)
                 variant.enabling = constants
                 return try makeMeshPipeline(
@@ -103,7 +103,7 @@ extension Renderer {
         }
     }
 
-    func bindRayTracedScene(_ table: MTL4ArgumentTable) {
+    func bindRayTracedScene(_ table: any MTL4ArgumentTable) {
         guard rayTracedPipelines != nil, let scene = rayTracedShadows.scene else { return }
         table.setResource(
             scene.instanceStructure.gpuResourceID, bufferIndex: BufferIndex.rayScene.rawValue

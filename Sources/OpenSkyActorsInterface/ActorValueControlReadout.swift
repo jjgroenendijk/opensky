@@ -2,7 +2,7 @@
 // check them without a window. See docs/engine/actor-value-store.md.
 
 import Foundation
-import OpenSkyGameData
+public import OpenSkyGameData
 
 nonisolated extension ActorValueKind {
     /// The three-letter tag the readout's bar line uses. Spelled out here rather

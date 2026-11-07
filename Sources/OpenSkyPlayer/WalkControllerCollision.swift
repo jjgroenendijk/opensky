@@ -1,8 +1,8 @@
 // Static mesh horizontal response + bounded step-offset helpers.
 
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyPhysics
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
 import OpenSkyRenderCore
 import simd
 

@@ -3,10 +3,10 @@
 // `PerkActivationPlan` holds the rules. See docs/engine/perks.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyProgressionInterface
-import OpenSkyWorldInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyProgressionInterface
+public import OpenSkyWorldInterface
 
 /// What the activation coordinator needs from the app.
 @MainActor

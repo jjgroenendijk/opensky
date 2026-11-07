@@ -2,8 +2,8 @@
 // `RagdollRuntime` conform, and the composition root hands them over as these
 // protocols.
 
-import OpenSkyActorsInterface
-import OpenSkyFormatsESM
+public import OpenSkyActorsInterface
+public import OpenSkyFormatsESM
 
 /// Starting, stopping, and reading an actor's fight.
 @MainActor

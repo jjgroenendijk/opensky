@@ -5,8 +5,8 @@
 // character ends up.
 
 import Foundation
-import OpenSkyFormatsAnimation
-import simd
+public import OpenSkyFormatsAnimation
+public import simd
 
 /// The travel one update extracted from the root bone: how far the character
 /// moved and how far it turned, in the root bone's own local frame. Never

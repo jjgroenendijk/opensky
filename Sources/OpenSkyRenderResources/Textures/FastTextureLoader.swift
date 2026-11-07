@@ -5,9 +5,9 @@
 // texture copies is freed per command, not pooled by the queue.
 // See docs/engine/asset-cache.md, "Direct GPU loading".
 
-import Foundation
-import Metal
-import OpenSkyAssetCache
+public import Foundation
+public import Metal
+public import OpenSkyAssetCache
 import Synchronization
 
 nonisolated public struct FastTextureLoadStats: Equatable, Sendable {
@@ -72,28 +72,28 @@ nonisolated public final class FastTextureLoadControl: Sendable {
 /// Confined to the one cell-build queue, like `TextureLibrary`.
 nonisolated public final class FastTextureLoader {
     private struct Pending {
-        let texture: MTLTexture
+        let texture: any MTLTexture
         let ready: ReadyTexture
     }
 
     /// A buffer the batch fills from a file range.
     private struct PendingBytes {
-        let buffer: MTLBuffer
+        let buffer: any MTLBuffer
         let file: URL
         let offset: Int
     }
 
     public let control: FastTextureLoadControl
-    private let device: MTLDevice
-    private let queue: MTLIOCommandQueue
-    private var buffer: MTLIOCommandBuffer?
-    private var handles: [URL: MTLIOFileHandle] = [:]
+    private let device: any MTLDevice
+    private let queue: any MTLIOCommandQueue
+    private var buffer: any MTLIOCommandBuffer?
+    private var handles: [URL: any MTLIOFileHandle] = [:]
     private var internalFolders: [URL: Bool] = [:]
     private var pending: [Pending] = []
     private var pendingMeshBytes: [PendingBytes] = []
     private var batchStart: ContinuousClock.Instant?
 
-    public init(device: MTLDevice, control: FastTextureLoadControl) throws {
+    public init(device: any MTLDevice, control: FastTextureLoadControl) throws {
         self.device = device
         self.control = control
         let descriptor = MTLIOCommandQueueDescriptor()
@@ -127,7 +127,7 @@ nonisolated public final class FastTextureLoader {
     /// data until `flush` returns.
     public func enqueue(
         _ entry: AssetCacheEntryRead<ReadyTexture>, usage: TextureUsage, label: String
-    ) throws -> MTLTexture {
+    ) throws -> any MTLTexture {
         let ready = entry.value
         let texture = try TextureLoader.makeTexture(
             device: device,
@@ -188,8 +188,8 @@ nonisolated public final class FastTextureLoader {
 
     private func queueBuffer(
         _ range: Range<Int>, of entry: AssetCacheEntryRead<ReadyModelLayout>,
-        handle: MTLIOFileHandle, label: String
-    ) throws -> MTLBuffer {
+        handle: any MTLIOFileHandle, label: String
+    ) throws -> any MTLBuffer {
         guard let buffer = device.makeBuffer(length: range.count, options: .storageModeShared)
         else { throw RenderMeshError.bufferAllocationFailed }
         buffer.label = label
@@ -245,13 +245,13 @@ nonisolated public final class FastTextureLoader {
             (try? file.seek(toOffset: UInt64(item.offset))) != nil,
             let bytes = try? file.read(upToCount: item.buffer.length)
         else { return }
-        bytes.withUnsafeBytes { raw in
+        unsafe bytes.withUnsafeBytes { raw in
             guard let base = raw.baseAddress else { return }
-            item.buffer.contents().copyMemory(from: base, byteCount: raw.count)
+            unsafe item.buffer.contents().copyMemory(from: base, byteCount: raw.count)
         }
     }
 
-    private func currentBuffer() -> MTLIOCommandBuffer {
+    private func currentBuffer() -> any MTLIOCommandBuffer {
         if let buffer {
             return buffer
         }
@@ -261,7 +261,7 @@ nonisolated public final class FastTextureLoader {
         return buffer
     }
 
-    private func handle(for file: URL) throws -> MTLIOFileHandle {
+    private func handle(for file: URL) throws -> any MTLIOFileHandle {
         if let handle = handles[file] {
             return handle
         }

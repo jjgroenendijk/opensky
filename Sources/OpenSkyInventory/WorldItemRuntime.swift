@@ -5,12 +5,12 @@
 // nothing. See docs/engine/interaction.md.
 
 import Foundation
-import OpenSkyCrimeInterface
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyCrimeInterface
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 import simd
 
 /// Failures the world-item layer reports. Inventory arithmetic failures are

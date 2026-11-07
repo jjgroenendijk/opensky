@@ -3,7 +3,7 @@
 // controller manager with its object palette. Layout: docs/formats/nif-controllers.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 /// A shader property controller: one interpolator drives one variable.
 nonisolated public struct NIFShaderPropertyController: Equatable, Sendable {

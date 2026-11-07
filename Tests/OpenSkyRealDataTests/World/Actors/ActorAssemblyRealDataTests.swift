@@ -83,7 +83,7 @@ struct ActorAssemblyRealDataTests {
     @MainActor
     private func renderAndCapture(
         _ assembly: ActorAssembly<ActorRenderAsset>,
-        device: MTLDevice,
+        device: any MTLDevice,
         minimumDraws: Int
     ) throws {
         let bounds = try #require(assembly.worldBounds)
@@ -112,7 +112,7 @@ struct ActorAssemblyRealDataTests {
         print("[INFO] Heimskr actor assembly frame: \(output.path)")
     }
 
-    private func nonBackgroundFraction(texture: MTLTexture) -> Double {
+    private func nonBackgroundFraction(texture: any MTLTexture) -> Double {
         let pixels = RenderedPixels.read(texture)
         var lit = 0
         for pixel in stride(from: 0, to: pixels.count, by: 4) {

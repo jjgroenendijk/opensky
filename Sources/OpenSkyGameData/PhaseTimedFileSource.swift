@@ -1,7 +1,7 @@
 // A file source that books every read to `LoadPhase.archive`, so a benchmark
 // can see archive time without the VFS knowing about benchmarks.
 
-import Foundation
+public import Foundation
 
 nonisolated public struct PhaseTimedFileSource: GameFileSource {
     public let base: any GameFileSource

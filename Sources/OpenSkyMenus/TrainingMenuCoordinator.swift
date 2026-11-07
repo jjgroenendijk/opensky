@@ -3,7 +3,7 @@
 // is the progression coordinator's. See docs/engine/training.md#training-menu.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 
 /// What the training menu needs from the app.

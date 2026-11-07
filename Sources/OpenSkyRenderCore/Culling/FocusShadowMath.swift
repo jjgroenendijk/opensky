@@ -2,8 +2,8 @@
 // fitted around each of the actors nearest the camera, so their own shadows stay sharp
 // where the cascades are coarse. docs/rendering/shadows.md.
 
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 /// One actor a focus shadow follows.
 nonisolated public struct FocusShadowTarget: Equatable, Sendable {

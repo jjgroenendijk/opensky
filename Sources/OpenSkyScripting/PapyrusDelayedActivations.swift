@@ -1,7 +1,7 @@
 // The `XAPR` delay: the CK wiki "Reference" page gives it as "the number of seconds to
 // wait after the parent's activation before activating this reference".
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// One activate child waiting for its parent's delay to run out.
 nonisolated public struct DelayedActivation: Equatable, Sendable {

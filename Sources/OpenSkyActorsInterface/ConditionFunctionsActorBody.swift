@@ -4,7 +4,7 @@
 // See docs/engine/condition-functions.md.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 

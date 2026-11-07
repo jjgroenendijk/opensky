@@ -2,7 +2,7 @@
 // script asks once, when `Survival_PlayerHasBeenPrompted` is 0, and a Yes sets
 // `Survival_ModeToggle`. See docs/engine/survival-mode.md.
 
-import Foundation
+public import Foundation
 
 /// How a session answers the prompt: with a fixed answer, or by letting the plugin ask.
 nonisolated public enum SurvivalModeAnswer: String, CaseIterable, Sendable {

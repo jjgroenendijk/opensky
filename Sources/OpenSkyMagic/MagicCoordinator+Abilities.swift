@@ -5,7 +5,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyWorldState
 

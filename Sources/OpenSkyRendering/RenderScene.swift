@@ -3,12 +3,12 @@
 // Texture lookup stays caller-supplied so demo + VFS-backed scenes share it.
 
 import Foundation
-@preconcurrency import Metal
-import OpenSkyFormatsCore
-import OpenSkyRenderCore
-import OpenSkyRenderResources
+@preconcurrency @unsafe public import Metal
+public import OpenSkyFormatsCore
+public import OpenSkyRenderCore
+public import OpenSkyRenderResources
 import OpenSkyShaderTypes
-import simd
+public import simd
 
 /// One uploaded engine Model: GPU meshes and materials, shared across instances. The mesh
 /// library keys these by VFS path.
@@ -16,7 +16,7 @@ nonisolated public final class RenderModel: Sendable {
     public let meshes: [RenderMesh]
     public let materials: [RenderMaterial]
 
-    public init(device: MTLDevice, model: Model, textureProvider: TextureProvider) throws {
+    public init(device: any MTLDevice, model: Model, textureProvider: TextureProvider) throws {
         meshes = try model.meshes.map { try RenderMesh(device: device, mesh: $0) }
         materials = model.materials.map {
             RenderMaterial(material: $0, textureProvider: textureProvider)
@@ -37,7 +37,7 @@ nonisolated public final class RenderModel: Sendable {
 
     /// The model with its own skinning palettes, for one actor. The geometry and
     /// textures stay shared. A model with no skinned mesh is returned as is.
-    public func posableCopy(device: MTLDevice) -> RenderModel {
+    public func posableCopy(device: any MTLDevice) -> RenderModel {
         guard meshes.contains(where: \.isSkinned) else { return self }
         return RenderModel(
             meshes: meshes.map { $0.posableCopy(device: device) }, renderMaterials: materials
@@ -512,16 +512,16 @@ nonisolated public struct RenderScene: Sendable {
     }
 
     /// Every GPU allocation the scene touches, deduplicated, for the residency set.
-    public var residencyAllocations: [MTLAllocation] {
+    public var residencyAllocations: [any MTLAllocation] {
         var seen = Set<ObjectIdentifier>()
-        var allocations: [MTLAllocation] = []
-        func add(_ resources: [MTLAllocation]) {
+        var allocations: [any MTLAllocation] = []
+        func add(_ resources: [any MTLAllocation]) {
             allocations.append(contentsOf: resources.filter {
                 seen.insert(ObjectIdentifier($0)).inserted
             })
         }
         for group in opaque + alphaTested {
-            var resources: [MTLAllocation] = [group.mesh.vertexBuffer, group.mesh.indexBuffer]
+            var resources: [any MTLAllocation] = [group.mesh.vertexBuffer, group.mesh.indexBuffer]
                 + group.material.textures
             if let skinning = group.mesh.skinningBuffer {
                 resources.append(skinning)

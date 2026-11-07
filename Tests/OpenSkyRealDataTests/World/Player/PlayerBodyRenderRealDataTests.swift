@@ -31,7 +31,7 @@ struct PlayerBodyRenderRealDataTests {
         let gameSession: GameSession
         let assembled: PlayerBodyFixture.Assembled
         let root: GameDataRoot
-        let device: MTLDevice
+        let device: any MTLDevice
         let feet: SIMD3<Float>
     }
 

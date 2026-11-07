@@ -2,8 +2,8 @@
 // such as foliage use the test bit; translucency uses the blend bit.
 // Bit layout and sources: docs/formats/nif-materials.md.
 
-import Foundation
-import OpenSkyFormatsCore
+public import Foundation
+public import OpenSkyFormatsCore
 
 nonisolated public struct NIFAlphaProperty: Equatable, Sendable {
     public let name: String?

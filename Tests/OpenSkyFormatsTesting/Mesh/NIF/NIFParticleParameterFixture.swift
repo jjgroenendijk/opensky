@@ -2,7 +2,7 @@
 // starts with an unnamed `NiPSysModifier` header. Layouts follow NifTools nif.xml;
 // see docs/formats/nif-particles.md#parameter-modifiers.
 
-import Foundation
+public import Foundation
 import simd
 
 public enum NIFParticleParameterFixture: Sendable {

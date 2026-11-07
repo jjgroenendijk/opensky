@@ -2,12 +2,12 @@
 // restock. Merged into the player's `RDLT` delta. Layout:
 // docs/formats/opensky-save-world-chunks.md.
 
-import Foundation
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyWorldState
+public import Foundation
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
+public import OpenSkyInventoryInterface
+public import OpenSkyWorldState
 
 /// The saved stocking hours, before they are merged back into the player's delta.
 nonisolated public struct SaveVendorRestockLedger: Equatable, Sendable {

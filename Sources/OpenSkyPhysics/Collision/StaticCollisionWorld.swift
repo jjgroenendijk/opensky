@@ -3,11 +3,11 @@
 // by a small AABB BVH. Streaming owns the resulting value beside CellScene;
 // removing the cell releases its shapes + index together.
 
-import OpenSkyFormatsCore
-import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import OpenSkyGameData
-import simd
+public import OpenSkyFormatsCore
+public import OpenSkyFormatsESM
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
+public import simd
 
 nonisolated public struct StaticCollisionShape: Sendable {
     public let reference: FormID

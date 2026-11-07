@@ -5,8 +5,8 @@
 // `equipped` sorted and unique. See docs/engine/inventory-state.md.
 
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyWorldState
+public import OpenSkyFormatsESM
+public import OpenSkyWorldState
 
 /// One stack of identical items: a base FormID, a stolen flag, and a count. The
 /// stolen flag is part of the key, because the game tracks it per copy

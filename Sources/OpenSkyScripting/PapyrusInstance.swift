@@ -5,8 +5,8 @@
 // unqualified and therefore applies to the first child-to-parent match.
 
 import Foundation
-import OpenSkyFormatsPEX
-import OpenSkyScriptingInterface
+public import OpenSkyFormatsPEX
+public import OpenSkyScriptingInterface
 
 /// Rises on every variable change of the instances that share it, so a cached
 /// read of their variables knows when it is stale.

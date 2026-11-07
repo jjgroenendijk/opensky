@@ -3,7 +3,7 @@
 // Name tables are capped; totals keep counting past the cap.
 
 import Foundation
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 /// Counts of everything the condition evaluator could not evaluate, plus the
 /// volume it did evaluate.

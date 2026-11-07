@@ -1,6 +1,6 @@
 import Foundation
-import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyFormatsESM
+public import OpenSkyGameData
 
 /// Failures readying a spell reports. Like `EquipmentError`, each is a caller
 /// mistake or a data answer, never malformed input.

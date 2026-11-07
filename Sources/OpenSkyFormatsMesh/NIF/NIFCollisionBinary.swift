@@ -3,8 +3,8 @@
 // converted to engine units while rotations/scales remain unitless.
 
 import Foundation
-import OpenSkyFormatsCore
-import simd
+public import OpenSkyFormatsCore
+public import simd
 
 nonisolated extension BinaryReader {
     public mutating func readNIFRef() throws -> Int32 {

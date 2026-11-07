@@ -3,7 +3,7 @@
 // Layout: docs/formats/records.md. Policy: docs/engine/global-variables.md.
 
 import Foundation
-import OpenSkyFormatsCore
+public import OpenSkyFormatsCore
 
 nonisolated public struct Global: Equatable, Sendable {
     /// FNAM type character. xEdit enumerates exactly three (`s`, `l`, `f`) and

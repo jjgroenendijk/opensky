@@ -1,8 +1,8 @@
 // Synthetic NVNM and NVMI payload builders for the navmesh decoder tests.
 // Layout: docs/formats/navmesh.md.
 
-import Foundation
-@testable import OpenSkyFormatsESM
+public import Foundation
+@testable public import OpenSkyFormatsESM
 import simd
 
 public enum NavmeshFixture: Sendable {

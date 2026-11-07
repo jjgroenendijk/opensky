@@ -1,7 +1,7 @@
 // Which scripted music type sounds when scripts added several: the `MUSC` priority
 // decides (docs/engine/music.md#scripted-music).
 
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 
 nonisolated public enum ScriptedMusicStack {
     /// A type without `PNAM` ranks as the lowest priority the Creation Kit offers.

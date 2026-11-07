@@ -4,11 +4,11 @@
 // clear when it stops (<https://ck.uesp.net/wiki/Alias>). See docs/engine/quest-state.md.
 
 import Foundation
-import OpenSkyConditions
+public import OpenSkyConditions
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 extension QuestRuntime {

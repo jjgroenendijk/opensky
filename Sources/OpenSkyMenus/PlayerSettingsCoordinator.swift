@@ -3,8 +3,8 @@
 // when a world attaches. See docs/engine/settings.md.
 
 import Foundation
-import OpenSkyFormatsCore
-import OpenSkyGameData
+public import OpenSkyFormatsCore
+public import OpenSkyGameData
 
 /// What the settings change in the running game. The app answers it.
 public protocol PlayerSettingsWorld: AnyObject {
@@ -19,7 +19,7 @@ public protocol PlayerSettingsWorld: AnyObject {
 
 public final class PlayerSettingsCoordinator {
     public let store: PlayerSettingsStore
-    private weak let world: PlayerSettingsWorld?
+    private weak let world: any PlayerSettingsWorld?
     /// How many times each system was told a value, for the readout.
     public private(set) var applyCount = 0
     /// The install's keys plus the player's remaps.
@@ -32,7 +32,7 @@ public final class PlayerSettingsCoordinator {
     /// Call `applyAll()` once the world can take the settings.
     public init(
         store: PlayerSettingsStore,
-        world: PlayerSettingsWorld? = nil,
+        world: any PlayerSettingsWorld? = nil,
         keyNamesLoader: @escaping () -> KeyboardNameTable? = { nil }
     ) {
         self.store = store
@@ -140,7 +140,7 @@ public final class PlayerSettingsCoordinator {
         )
     }
 
-    private func applyCategory(_ id: PlayerSettingID, world: PlayerSettingsWorld) {
+    private func applyCategory(_ id: PlayerSettingID, world: any PlayerSettingsWorld) {
         for (editorID, _) in PlayerSettingsCatalog.audioCategoryEditorIDs
             where id == .categoryVolume(editorID)
         {

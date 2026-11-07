@@ -49,8 +49,9 @@ enum HKXTopologyDump {
             printError("[WARNING] \(misreads.count) misread members "
                 + "(a null optional reports noFixup and is not counted here)")
             for reference in misreads.prefix(nodeListLimit) {
+                let offset = unsafe String(format: "%x", reference.objectOffset)
                 printError("  \(reference.field) at 0x"
-                    + String(format: "%x", reference.objectOffset)
+                    + offset
                     + " — \(reference.miss.rawValue)")
             }
         }
