@@ -136,6 +136,26 @@ struct PlayerCoordinatorTests {
         #expect(provider.bodyRequests.last == [FormID(0x12EB7)])
     }
 
+    /// The male character project is what the character graphs already run, so it loads
+    /// nothing and does not hold the body back. The female one is a project to load.
+    @Test
+    func theMaleCharacterProjectKeepsTheCharacterGraphs() {
+        let provider = FakePlayerRigSource(fileSystem: InMemoryFileSource())
+        let (player, world) = Self.session(source: provider)
+        player.attach(graph: .fixture(), firstPerson: .success(.fixture()))
+        world.playerBehaviorProject = PlayerBehaviorGraph.characterProjectPath
+        world.playerEquippedSet = [FormID(0x12EB7)]
+        player.refreshBody()
+        #expect(provider.bodyRequests.count == 2)
+        #expect(player.graphProject == nil)
+        #expect(PlayerBehaviorGraph.isCharacterProject(
+            "meshes\\actors\\character\\defaultfemale.hkx"
+        ))
+        #expect(!PlayerBehaviorGraph.isCharacterProject(
+            "meshes\\actors\\werewolfbeast\\werewolfbeastproject.hkx"
+        ))
+    }
+
     @Test
     func withoutARendererBothSnapshotsAreUnavailable() {
         let (player, world) = Self.session()

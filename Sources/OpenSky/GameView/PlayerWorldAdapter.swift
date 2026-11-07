@@ -159,7 +159,8 @@ extension PlayerWorldAdapter: PlayerWorld {
         }
     }
 
-    /// The character races share `Actors\Character`'s graphs; a beast race names its own.
+    /// The race's graph for the player's sex: `defaultfemale.hkx` for a female human, or a
+    /// beast race's own project.
     var playerBehaviorProject: String? {
         guard
             let identity = game.worldState.component(PlayerIdentityState.self, for: .player),
@@ -169,11 +170,8 @@ extension PlayerWorldAdapter: PlayerWorld {
         guard let model = (identity.isFemale ? graphs.female : nil) ?? graphs.male else {
             return nil
         }
-        let project = ActorGraphCore.projectPath(modelPath: model.path)
-        return project.hasPrefix(Self.characterFolder) ? nil : project
+        return ActorGraphCore.projectPath(modelPath: model.path)
     }
-
-    private static let characterFolder = "meshes\\actors\\character\\"
 
     /// The footstep set follows the boots of the assembly just built.
     func showPlayerBody(_ body: PlayerBody) throws {

@@ -30,6 +30,14 @@ nonisolated public struct PlayerBehaviorGraph {
     public static let behaviorPath = "meshes\\actors\\character\\behaviors\\0_master.hkx"
     public static let skeletonPath = "meshes\\actors\\character\\character assets\\skeleton.hkx"
     public static let characterPath = "meshes\\actors\\character\\characters\\defaultmale.hkx"
+    /// The project the character graphs come from; a female player runs its sibling.
+    public static let characterProjectPath = "meshes\\actors\\character\\defaultmale.hkx"
+
+    /// True for a project in the human character folder, such as `defaultfemale.hkx`.
+    public static func isCharacterProject(_ project: String) -> Bool {
+        project.lowercased().hasPrefix("meshes\\actors\\character\\")
+    }
+
     /// The first-person set: its own `0_master.hkx`, 99-bone rig and NIF skeleton. Paths
     /// come from the install's archive listing (`openskycli vfs ls _1stperson`). The folder
     /// is `characterassets`, with no space, unlike the third-person `character assets`.
