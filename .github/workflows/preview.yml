@@ -34,13 +34,14 @@ jobs:
     permissions:
       contents: read
       checks: read
+      actions: read
     outputs:
       publish: ${{ steps.plan.outputs.publish }}
       sha: ${{ steps.plan.outputs.sha }}
       tag: ${{ steps.plan.outputs.tag }}
       previous: ${{ steps.plan.outputs.previous }}
     steps:
-      # The plan walks main's first-parent history for a commit whose Lint passed.
+      # The plan reads main's history to check that the last preview holds its commit.
       - uses: actions/checkout@v7
         with:
           ref: main

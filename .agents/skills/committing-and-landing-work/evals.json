@@ -54,7 +54,8 @@
     "files": [],
     "expected_behavior": [
       "Runs gh pr ready so CI starts",
-      "Waits for the Lint check with gh pr checks --watch before merging"
+      "Waits for the Lint check with gh pr checks --watch before merging",
+      "Merges with gh pr merge --rebase, never --merge or --squash"
     ]
   },
   {
@@ -66,6 +67,18 @@
     "expected_behavior": [
       "Makes one commit per issue, each with its own Fixes #n footer",
       "Opens one PR that holds the three commits"
+    ]
+  },
+  {
+    "skills": [
+      "committing-and-landing-work"
+    ],
+    "query": "PR #40 is based on the branch of PR #39. Both are green. Land them.",
+    "files": [],
+    "expected_behavior": [
+      "Retargets #40 to main with gh pr edit --base main before merging #39",
+      "Merges #39 with gh pr merge --rebase and without --delete-branch",
+      "Moves the #40 branch onto main with git rebase --onto origin/main and pushes with --force-with-lease before merging it"
     ]
   }
 ]

@@ -67,11 +67,20 @@ or `Model:`. Allowed trailers:
    is checked here.
 6. When the work is done and verified, `gh pr ready <pr>`, and read the last CI run with
    `gh pr checks <pr> --watch`.
-7. Merge after review with `gh pr merge <pr> --merge`. A merge commit keeps every atomic
-   commit on `main`; the repo disables squash and rebase merging. Done and verified work
-   always lands: commit and open the PR without waiting to be asked.
+7. Merge after review with `gh pr merge <pr> --rebase`. A rebase merge puts every atomic
+   commit on `main` with no merge commit; the repo disables merge commits and squash
+   merging. When the branch no longer rebases cleanly, run `git rebase origin/main`, then
+   `git push --force-with-lease`, and wait for CI again. Done and verified work always
+   lands: commit and open the PR without waiting to be asked.
 
 ## Landing gotchas seen repeatedly
+
+- A rebase merge writes new commits with new SHAs. In a stack of PRs, the next branch
+  still holds the old copies of the merged commits. After the base PR merges, move the next
+  branch onto `main` before you merge it:
+  `git rebase --onto origin/main <old base tip> <next branch>`, then
+  `git push --force-with-lease`. Retarget it first with `gh pr edit <next> --base main`,
+  and do not pass `--delete-branch`, because deleting the base branch closes the next PR.
 
 - A stray worktree can hold `main` (`git worktree list`), making `git checkout main` and
   `gh pr merge --delete-branch` fail with "'main' is already used by worktree". The merge
