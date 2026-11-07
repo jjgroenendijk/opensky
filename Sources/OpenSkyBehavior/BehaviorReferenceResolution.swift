@@ -78,6 +78,7 @@ nonisolated extension BehaviorGraphInstance {
         let child = references.behavior(named: name, skeleton: skeleton, clips: clipSource)
         child?.references = references
         child?.characterProperties = characterProperties
+        child?.speedSamples = speedSamples
         child?.referenceAncestry = referenceAncestry.union([key])
         referencedGraphs[key] = child
         if child == nil {

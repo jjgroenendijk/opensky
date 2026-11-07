@@ -51,9 +51,11 @@ nonisolated extension LocomotionBridge {
         )
         let speed = mount.isMoving ? mount.speed : 0
         write(.real(speed), to: LocomotionGraphNames.speed)
-        write(.real(speed), to: LocomotionGraphNames.speedSampled)
         write(.real(0), to: LocomotionGraphNames.direction)
-        write(.real(mount.turnDelta), to: LocomotionGraphNames.turnDelta)
+        write(
+            .real(Self.turnRate(radians: mount.turnDelta, seconds: deltaTime)),
+            to: LocomotionGraphNames.turnDelta
+        )
         write(.bool(mount.isSprinting), to: LocomotionGraphNames.isSprinting)
         write(.bool(false), to: LocomotionGraphNames.isSneaking)
         write(.real(mount.pitch), to: DragonFlightGraphNames.riderPitchOffset)

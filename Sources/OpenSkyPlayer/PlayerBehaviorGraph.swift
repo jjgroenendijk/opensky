@@ -102,6 +102,7 @@ nonisolated public struct PlayerBehaviorGraph {
         // its jump branch (docs/engine/behavior-clips.md, "Behavior references").
         instance.references = references
         instance.characterProperties = files.characterProperties
+        instance.speedSamples = files.speedSamples
         instance.activate()
         instance.prefetchReachableClips()
         return PlayerBehaviorGraph(
@@ -119,6 +120,7 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
     let ragdoll: HKASkeleton?
     let clipPaths: [String]
     var characterProperties = BehaviorCharacterProperties.empty
+    var speedSamples: SpeedSampleProject?
 
     public static func decode(
         fileSystem: any GameFileSource,
@@ -156,7 +158,8 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
                 BehaviorProjectAsset.character(in: graph).map {
                     BehaviorCharacterProperties(character: $0, in: graph)
                 }
-            } ?? .empty
+            } ?? .empty,
+            speedSamples: SpeedSampleProject.load(forProject: characterPath, from: fileSystem)
         )
     }
 
@@ -179,7 +182,8 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
             behaviorPath: asset.behaviorPath, objectGraph: asset.objectGraph,
             behavior: asset.behavior, rig: asset.skeleton, ragdoll: asset.ragdollSkeleton,
             clipPaths: asset.clipPaths,
-            characterProperties: asset.characterProperties
+            characterProperties: asset.characterProperties,
+            speedSamples: SpeedSampleProject.load(forProject: projectPath, from: fileSystem)
         )
     }
 

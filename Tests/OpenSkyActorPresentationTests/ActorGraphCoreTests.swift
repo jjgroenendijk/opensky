@@ -100,6 +100,11 @@ struct ActorGraphCoreTests {
         #expect(abs(turn - (2 * Float.pi - 6)) < 0.0001)
     }
 
+    @Test func aTurnIsDegreesPerSecond() {
+        #expect(abs(ActorGraphCore.turnRate(radians: .pi / 60, seconds: 1.0 / 60) - 180) < 0.01)
+        #expect(ActorGraphCore.turnRate(radians: 1, seconds: 0) == 0)
+    }
+
     @Test func theRaceGraphPathIsUnderMeshes() {
         #expect(
             ActorGraphCore.projectPath(modelPath: "Actors/Canine/WolfProject.hkx")

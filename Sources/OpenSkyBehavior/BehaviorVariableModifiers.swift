@@ -47,7 +47,12 @@ nonisolated extension BehaviorGraphInstance {
             applyDamping(modifier, step)
         case let modifier as BSSpeedSamplerModifier:
             let goal = step.bound.float("goalSpeed", or: modifier.goalSpeed)
-            writeOutputs(["speedOut": .real(goal)], of: step.node)
+            let sampled = speedSamples?.blendSpeed(
+                state: Int32(step.bound.float("state", or: Float(modifier.state))),
+                direction: step.bound.float("direction", or: modifier.direction),
+                goal: goal
+            )
+            writeOutputs(["speedOut": .real(sampled ?? goal)], of: step.node)
         case let modifier as BSEventOnFalseToTrueModifier:
             applyFalseToTrue(modifier, step)
         case let modifier as BSTimerModifier:
