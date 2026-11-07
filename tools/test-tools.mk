@@ -15,8 +15,11 @@ ck-wiki: ## Download or update the offline Creation Kit wiki in Markdown [ARGS='
 uesp-wiki: ## Download or update the offline UESP wiki (Skyrim pages) in Markdown [ARGS='--source wayback']
 	@$(UV_RUN) wiki-mirror --site uesp $(ARGS)
 
-coverage-floor: ## Fail when a parser module is under COVERAGE_FLOOR in the last `test-unit COVERAGE=1` run
-	@./tools/lint/coverage-floor.sh $(COVERAGE_FLOOR) $(DERIVED_DATA)
+coverage-floor: ## Fail when a format, rule module, or core file is under its floor in the last `test-unit COVERAGE=1` run
+	@./tools/lint/coverage-floor.sh $(COVERAGE_FLOOR) $(RULE_COVERAGE_FLOOR) $(CORE_COVERAGE_FLOOR) $(DERIVED_DATA)
+
+diff-coverage: ## Fail when the branch's changed package lines or new functions did not run in the last `test-unit COVERAGE=1` run [DIFF_BASE=<commit>]
+	@./tools/lint/diff-coverage.sh $(DIFF_COVERAGE_FLOOR) $(DIFF_BASE) $(DERIVED_DATA)
 
 profile: link-shared ## Record a Time Profiler trace of the Release app's benchmark tour [ARGS=...]
 	@$(MAKE) --no-print-directory build-app CONFIG=Release

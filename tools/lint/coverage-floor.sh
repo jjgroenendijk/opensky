@@ -1,49 +1,89 @@
 #!/bin/sh
-# Coverage floor for the parsers: fail when an OpenSkyFormats* module's line
-# coverage in the last test run drops below FLOOR percent. Parsers read
-# untrusted files, so an untested branch there can crash the app
-# (docs/decisions/code-health-automation.md). Each test run rewrites the
-# profile, so run this right after `make test-unit`: a filtered run reads too low.
+# Coverage floors (docs/decisions/test-coverage-rules.md), from the last
+# `make test-unit COVERAGE=1` run. Each test run rewrites the profile, so a
+# filtered run reads too low.
 #
-# It reads the profile with llvm-cov, because `xccov` reports no package files
-# from a bundle built with the compilation cache's prefix mapping.
+#   1. Every OpenSkyFormats* module keeps FORMAT_FLOOR percent line coverage.
+#   2. Every game-rule module (feature, interface, world domain) keeps RULE_FLOOR.
+#   3. Every pure core file (`*Core.swift`) keeps CORE_FLOOR.
 #
-# Usage: tools/lint/coverage-floor.sh FLOOR DERIVED_DATA
+# Usage: tools/lint/coverage-floor.sh FORMAT_FLOOR RULE_FLOOR CORE_FLOOR DERIVED_DATA
+#        tools/lint/coverage-floor.sh --self-check
 set -eu
 
-[ "$#" -eq 2 ] || { echo "[ERROR] usage: coverage-floor.sh FLOOR DERIVED_DATA" >&2; exit 2; }
-floor="$1"
-build="$2/Build"
+cd "$(git rev-parse --show-toplevel)"
 
-# shellcheck disable=SC2012  # newest-by-mtime of a few fixed-name files
-profile="$(ls -t "$build"/ProfileData/*/Coverage.profdata 2>/dev/null | head -1)"
-if [ -z "$profile" ]; then
-  printf '[FAIL] no coverage profile under %s/ProfileData. Run: make test-unit\n' "$build" >&2
-  exit 1
-fi
+python3 - "$@" <<'PY'
+import sys
 
-frameworks="$(find "$build/Products/Debug/PackageFrameworks" -maxdepth 1 \
-  -name 'OpenSkyFormats*.framework' 2>/dev/null | sort)"
-if [ -z "$frameworks" ]; then
-  printf '[FAIL] no OpenSkyFormats frameworks under %s. Run: make test-unit\n' "$build" >&2
-  exit 1
-fi
+sys.path.insert(0, "tools/lint")
+from coverage_profile import lcov, parse_lcov
+from swift_source import rule_modules
 
-low=0
-for framework in $frameworks; do
-  name="$(basename "$framework" .framework)"
-  percent="$(xcrun llvm-cov export -summary-only -instr-profile "$profile" \
-    "$framework/$name" | jq '.data[0].totals.lines.percent')"
-  if awk -v p="$percent" -v f="$floor" 'BEGIN { exit !(p >= f) }'; then
-    printf '[ OK ] %-24s %6.2f%%\n' "$name" "$percent"
-  else
-    printf '[FAIL] %-24s %6.2f%%\n' "$name" "$percent"
-    low=1
-  fi
-done
 
-if [ "$low" -ne 0 ]; then
-  printf '[FAIL] parser coverage under %s%%. Add tests for the untested branches.\n' "$floor" >&2
-  exit 1
-fi
-printf '[ OK ] every parser module at or above %s%% line coverage\n' "$floor"
+def percent(covered, total):
+    return 100.0 if total == 0 else 100.0 * covered / total
+
+
+def units(files, rules):
+    """(label, floor key, covered, total) for each module and core file under a floor."""
+    modules = {}
+    found = []
+    for path, data in files.items():
+        lines = data["lines"]
+        covered = sum(1 for count in lines.values() if count > 0)
+        module = path.split("/")[1]
+        totals = modules.setdefault(module, [0, 0])
+        totals[0] += covered
+        totals[1] += len(lines)
+        if path.endswith("Core.swift"):
+            found.append((path, "core", covered, len(lines)))
+    for module, (covered, total) in sorted(modules.items()):
+        if module.startswith("OpenSkyFormats"):
+            found.append((module, "format", covered, total))
+        elif module in rules:
+            found.append((module, "rule", covered, total))
+    return found
+
+
+def below(found, floors):
+    return [
+        (label, kind, percent(covered, total))
+        for label, kind, covered, total in found
+        if percent(covered, total) < floors[kind]
+    ]
+
+
+def self_check():
+    files = {
+        "Sources/OpenSkyFormatsX/A.swift": {"lines": {1: 1, 2: 0}},
+        "Sources/OpenSkyMagic/MagicCore.swift": {"lines": {1: 1, 2: 1, 3: 0, 4: 0}},
+        "Sources/OpenSkyRendering/R.swift": {"lines": {1: 0}},
+    }
+    floors = {"format": 80, "rule": 60, "core": 75}
+    labels = sorted(label for label, _, _ in below(units(files, {"OpenSkyMagic"}), floors))
+    expected = ["OpenSkyFormatsX", "OpenSkyMagic", "Sources/OpenSkyMagic/MagicCore.swift"]
+    if labels != expected:
+        sys.exit(f"[ERROR] coverage-floor self-check: found {labels}, expected {expected}")
+
+
+self_check()
+if sys.argv[1:] == ["--self-check"]:
+    print("[ OK ] coverage-floor self-check")
+    sys.exit(0)
+if len(sys.argv) != 5:
+    sys.exit("[ERROR] usage: coverage-floor.sh FORMAT_FLOOR RULE_FLOOR CORE_FLOOR DERIVED_DATA")
+floors = dict(zip(("format", "rule", "core"), map(float, sys.argv[1:4])))
+found = units(parse_lcov(lcov(sys.argv[4])), rule_modules())
+failures = below(found, floors)
+for label, kind, value in failures:
+    print(f"[FAIL] {label:48} {value:6.2f}%  (floor {floors[kind]:.0f}% for {kind})")
+if failures:
+    sys.exit(f"[FAIL] {len(failures)} under their coverage floor. Add tests for the untested lines.")
+counts = {kind: sum(1 for _, k, _, _ in found if k == kind) for kind in floors}
+print(
+    f"[ OK ] coverage floors: {counts['format']} format modules >= {floors['format']:.0f}%, "
+    f"{counts['rule']} rule modules >= {floors['rule']:.0f}%, "
+    f"{counts['core']} core files >= {floors['core']:.0f}%"
+)
+PY

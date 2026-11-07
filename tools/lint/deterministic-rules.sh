@@ -18,7 +18,7 @@ import re
 import sys
 
 sys.path.insert(0, "tools/lint")
-from swift_source import line_of, package_files
+from swift_source import line_of, package_files, rule_modules
 
 # Process-wide switches and sinks that one installer fills. Reasons are on the decision page.
 ALLOWED_GLOBALS = {
@@ -52,12 +52,6 @@ EVENT_BUS = re.compile(
     r"\b(NotificationCenter|DistributedNotificationCenter|NSNotification\.Name|Notification\.Name)\b"
 )
 TYPE_DECLARATION = re.compile(r"^\s*(?:[\w()]+ )*(?:enum|struct|class|actor|extension) (\w+)", re.M)
-
-
-def rule_modules():
-    text = open("Package.swift").read()
-    names = set(re.findall(r'\b(?:feature|domain|interface)\(\s*"(\w+)"', text))
-    return names | {name + "Interface" for name in names}
 
 
 def owner(code, offset):

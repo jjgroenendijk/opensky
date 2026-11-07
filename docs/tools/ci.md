@@ -19,7 +19,7 @@ developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 | Format | `swift-format-check`, `metal-format-check`, `cpp-format-check`, `md-lint` |
 | Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `lint-test-plans`, `lint-test-tags`, `lint-test-targets`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `panel-text`, `load-order-only`, `cli-conventions`, `gap-registries`, `duplicates`, `no-suppressions`, `file-length`, `module-size`, `py-format-check`, `py-lint` |
 | Changes | None. It decides whether Build & test runs |
-| Build & test | `swift-baseline`, `ffmpeg`, `astcenc`, `test-unit PLAN=UnitTests COVERAGE=1`, `coverage-floor` |
+| Build & test | `swift-baseline`, `language-rules`, `error-handling`, `deterministic-rules`, `test-order`, `coverage-self-check`, `ffmpeg`, `astcenc`, `test-unit PLAN=UnitTests COVERAGE=1`, `coverage-floor`, `diff-coverage` (pull request only) |
 | Lint | None. It passes only when the jobs above pass |
 
 `Lint` is the one required status check on `main`. A pull request with a lint failure or a

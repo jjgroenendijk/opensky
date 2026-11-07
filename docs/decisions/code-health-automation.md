@@ -45,7 +45,9 @@ baseline files, and updating the baselines after each refactor cost too much.
 | Swift language rules ([Swift language rules](/decisions/language-rules.md)) | The compiler, `make language-rules` | Every build, CI | A few seconds for the self-check |
 | Error handling ([Error handling](/decisions/error-handling.md)) | `tools/lint/error-handling.sh`, `make error-handling` | Lint, CI | Under a second, whole tree |
 | Deterministic game rules ([Deterministic game rules](/decisions/deterministic-rules.md)) | `tools/lint/deterministic-rules.sh`, `make deterministic-rules` | Lint, CI | Under a second, whole tree |
-| Parser coverage floor | `llvm-cov`, `make coverage-floor` | After `make test-unit`, CI | Seconds |
+| Random test order ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `tools/lint/test-order.sh`, `make test-order` | Lint, CI | Under a second, whole tree |
+| Coverage floors: parsers, game rules, pure cores ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `llvm-cov`, `make coverage-floor` | After `make test-unit`, CI | Seconds |
+| Diff coverage ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `llvm-cov`, `make diff-coverage` | After `make test-unit`, CI on a pull request | Seconds |
 
 ## Duplicated code: jscpd
 
@@ -166,15 +168,16 @@ under `Sources` or `Tests`.
 ## Test coverage
 
 The unit plan measures the `OpenSky` app target and the package modules. `make
-coverage-floor`, run after `make test-unit`, fails when an `OpenSkyFormats*` module is under
-`COVERAGE_FLOOR` in the `Makefile`. The floor is the lowest module's value when it was
-set, rounded down to a multiple of 5 percent: 83.07 % for `OpenSkyFormatsSWF` gave 80.
-One floor for all, not one per module, leaves room for the GPU tests that skip on a CI
-runner without Metal 4. CI runs the check after `make test-unit`.
+coverage-floor`, run after `make test-unit`, fails when a parser module, a game-rule module,
+or a pure core file is under its floor, and `make diff-coverage` fails a pull request whose
+new lines or functions no test ran.
+[Test order and coverage rules](/decisions/test-coverage-rules.md) gives each value and its
+reason.
 
-The floor is only for the parsers. They read untrusted files, and a gap there can crash
-the app. A floor for the whole codebase is not used. It pushes people to write tests that
-execute code without checking anything.
+The floors cover the parsers, which read untrusted files, and the game rules, which are pure
+and cheap to test. A floor for the whole codebase is not used. The renderer and the shells
+around Metal and files are reached mostly by the GPU and real-data runs, and a floor there
+pushes people to write tests that execute code without checking anything.
 
 ## Not used
 
