@@ -10,6 +10,7 @@ import Metal
 @testable import OpenSkyCells
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 @testable import OpenSkyNavigation
 @testable import OpenSkyPhysics
@@ -345,11 +346,39 @@ extension DynamicBodyRealDataTests {
         let bounds = ModelBounds(
             min: SIMD3(point.x - 2, point.y - 2, point.z - 256), max: point + SIMD3(2, 2, 0)
         )
-        return solidShapes(of: scene, overlapping: bounds).map {
-            String(
+        return solidShapes(of: scene, overlapping: bounds).flatMap { shape in
+            [String(
                 format: "    under: %@ z %.1f to %.1f",
-                $0.reference.description, $0.bounds.min.z, $0.bounds.max.z
-            )
+                shape.reference.description, shape.bounds.min.z, shape.bounds.max.z
+            )] + flatFaces(of: shape, under: point)
+        }
+    }
+
+    /// The near-horizontal triangles of a soup whose footprint holds `point`: height and facing.
+    private static func flatFaces(
+        of shape: StaticCollisionShape,
+        under point: SIMD3<Float>
+    ) -> [String] {
+        let soup: (vertices: [SIMD3<Float>], indices: [UInt32])
+        switch shape.geometry {
+        case let .triangleSoup(vertices, indices): soup = (vertices, indices)
+        default: return []
+        }
+        let (vertices, indices) = soup
+        let world = vertices.map { DynamicCollisionMath.transform($0, by: shape.transform) }
+        return stride(from: 0, to: indices.count - indices.count % 3, by: 3).compactMap { offset in
+            let corners = (0 ..< 3).map { world[Int(indices[offset + $0])] }
+            let low = simd_min(simd_min(corners[0], corners[1]), corners[2])
+            let high = simd_max(simd_max(corners[0], corners[1]), corners[2])
+            guard point.x >= low.x, point.x <= high.x, point.y >= low.y, point.y <= high.y else {
+                return nil
+            }
+            let normal = simd_normalize(simd_cross(
+                corners[1] - corners[0],
+                corners[2] - corners[0]
+            ))
+            guard abs(normal.z) > 0.7 else { return nil }
+            return String(format: "      face at z %.1f facing z %.2f", corners[0].z, normal.z)
         }
     }
 
