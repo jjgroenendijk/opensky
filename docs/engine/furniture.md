@@ -140,12 +140,13 @@ reads the mesh.
 | --- | --- |
 | `ObjectReference.IsFurnitureInUse(abIgnoreReserved)` | True when an actor holds any marker. With `abIgnoreReserved`, only an actor that sits counts |
 | `ObjectReference.IsFurnitureMarkerInUse(aiMarker, abIgnoreReserved)` | The same for one marker |
-| `Game.SetSittingRotation(afValue)` | Turns the seated player's first-person view `afValue` degrees from the seat's facing; negative looks left. It lasts until the player stands up |
+| `Game.SetSittingRotation(afValue)` | Turns the seated player's first-person view `afValue` degrees from the seat's facing, at most 90 either way; negative looks left. A cart seat works the same way. It lasts until the player stands up |
 
 The signatures and meanings come from the Creation Kit wiki pages of the same names, for
 example <https://ck.uesp.net/wiki/IsFurnitureInUse_-_ObjectReference>. The wiki says
-`SetSittingRotation` does nothing in third person; OpenSky follows that. When the game resets
-the rotation is not documented; resetting it on standing up is OpenSky's choice.
+`SetSittingRotation` does nothing in third person; OpenSky follows that. The game keeps the value
+as the view's yaw offset from the seat, clamps it to 90 degrees, and sets it to 0 when the player
+is not sitting (clean-room read of `SkyrimSE.exe`, 2026-11-07).
 
 ## Checking it in the game
 

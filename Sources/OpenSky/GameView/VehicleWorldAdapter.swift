@@ -49,6 +49,9 @@ final class VehicleWorldAdapter {
     private var ridesPlayer = false
     /// The start of the seat idle the player's view was last turned for.
     private var facedIdleStart: Float?
+    /// The way the player's seat faces, and the `SetSittingRotation` turn from it.
+    private var seatYaw: Float?
+    private var sittingRotation: Float = 0
     /// Wheel contacts by model path, read off the main actor.
     private var wheels: AssetLoader<String, [SIMD2<Float>]>?
 
@@ -127,7 +130,7 @@ extension VehicleWorldAdapter: VehicleWorld {
             case let .placePlayer(pose): placePlayer(at: pose)
             case let .followerMoved(key, pose): vehicleFollowerMoved(key, to: pose)
             case let .followerRests(key, pose): vehicleFollowerRests(key, at: pose)
-            case let .spinWheels(key, distance): spinVehicleWheels(of: key, rolled: distance)
+            case let .spinWheels(key, turns): spinVehicleWheels(of: key, turns: turns)
             }
         }
     }
@@ -159,7 +162,28 @@ extension VehicleWorldAdapter: VehicleWorld {
         facedIdleStart = start
         let world = root * SIMD4(forward, 0)
         guard abs(world.x) + abs(world.y) > 0.001 else { return }
-        gameSession.freeFlyCamera.yaw = atan2(world.y, world.x)
+        seatYaw = atan2(world.y, world.x)
+        turnSeatView()
+    }
+
+    /// `Game.SetSittingRotation` on a cart seat: degrees from the seat's facing, negative
+    /// looks left. Standing up resets it, as the game sets it to 0 off a seat.
+    func setSittingRotation(degrees: Float) {
+        sittingRotation = degrees
+        turnSeatView()
+    }
+
+    private func turnSeatView() {
+        guard
+            game.vehicles.core.links[.player] != nil, let seatYaw,
+            let gameSession = game.gameSession
+        else {
+            seatYaw = nil
+            sittingRotation = 0
+            return
+        }
+        let offset = FurnitureCoordinator.sittingOffset(degrees: sittingRotation)
+        gameSession.freeFlyCamera.yaw = seatYaw - offset
     }
 
     /// A follower drawn by a cell it left moves into the cell it is now in, so it does
@@ -194,6 +218,10 @@ extension VehicleWorldAdapter: VehicleWorld {
         else { return nil }
         let origin = pose.matrices[index].columns.3
         return SIMD3(origin.x, origin.y, origin.z)
+    }
+
+    func vehicleBoneForward(of key: ReferenceKey, named bone: String) -> SIMD3<Float>? {
+        game.idleWorld.idles.idleBoneForward(of: key, named: bone)
     }
 
     func vehicleHasBone(_ key: ReferenceKey, named bone: String) -> Bool {
@@ -231,7 +259,7 @@ extension VehicleWorldAdapter: VehicleWorld {
         }
     }
 
-    func spinVehicleWheels(of key: ReferenceKey, rolled distance: Float) {
+    func spinVehicleWheels(of key: ReferenceKey, turns: VehicleWheelTurns) {
         guard
             let streamer = game.streamer,
             let formID = vehicleFormID(of: key),
@@ -239,7 +267,7 @@ extension VehicleWorldAdapter: VehicleWorld {
                 $0.reference == formID
             })
         else { return }
-        vehicle.pose.publish(vehicle.rig.pose(rolled: distance))
+        vehicle.pose.publish(vehicle.rig.pose(turns))
     }
 
     func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {

@@ -36,6 +36,9 @@ nonisolated public struct VehicleTow: Equatable, Sendable {
     public var wheels: [SIMD2<Float>]?
     /// How far the follower has rolled forward since the link, for its wheels' spin.
     public var rolled: Float = 0
+    /// The heading of the body, from the rear axle to the front one. Nil follows `heading`.
+    public var bodyHeading: Float?
+    public var turns = VehicleWheelTurns()
 }
 
 /// One follower's carrier and how it sits there.
@@ -221,14 +224,17 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         _ tow: inout VehicleTow, hitch: SIMD4<Float>, ground: (SIMD3<Float>) -> Float?
     ) -> float4x4 {
         let flat = SIMD2(hitch.x - tow.position.x, hitch.y - tow.position.y)
+        let previousHeading = tow.heading
         if simd_length(flat) > 0.001 {
             tow.heading = atan2(flat.x, flat.y)
         }
         let direction = SIMD2(sin(tow.heading), cos(tow.heading))
         let spot = SIMD2(hitch.x, hitch.y) - direction * tow.length
         tow.rolled += simd_dot(spot - SIMD2(tow.position.x, tow.position.y), direction)
+        trail(&tow, front: spot, previousHeading: previousHeading)
         let top = max(tow.position.z, hitch.z) + groundSearchHeight
-        let turn = MatrixMath.rotationZ(radians: -(tow.heading - tow.linkHeading))
+        let body = tow.bodyHeading ?? tow.heading
+        let turn = MatrixMath.rotationZ(radians: -(body - tow.linkHeading))
         if let wheels = tow.wheels {
             let level = turn * VehicleWheels.levelled(tow.orientation)
             if

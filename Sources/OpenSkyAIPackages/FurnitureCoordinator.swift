@@ -253,7 +253,12 @@ public final class FurnitureCoordinator {
 
     /// Negative degrees look left, which is a larger counter-clockwise yaw.
     private func turnPlayerView(_ occupancy: FurnitureOccupancy) {
-        let offset = sittingRotation * .pi / 180
+        let offset = Self.sittingOffset(degrees: sittingRotation)
         world?.turnSeatedPlayerView(toYaw: occupancy.seat.seat.facingYaw - offset)
+    }
+
+    /// The game keeps the sitting view within a quarter turn of the seat's facing.
+    public static func sittingOffset(degrees: Float) -> Float {
+        min(max(degrees, -90), 90) * .pi / 180
     }
 }

@@ -13,11 +13,13 @@ nonisolated public enum VehicleWheels {
 
     /// Each node named `Wheel...`, such as the prisoner carriage's `WheelBackLeft`,
     /// with its model-frame transform, in file order.
-    static func nodes(in file: NIFFile) throws -> [(name: String, transform: float4x4)] {
+    static func nodes(
+        in file: NIFFile, prefix: String = "wheel"
+    ) throws -> [(name: String, transform: float4x4)] {
         let hierarchy = try NIFNodeHierarchy(file: file)
         return hierarchy.names.sorted { $0.key < $1.key }.compactMap { index, name in
             guard
-                name.lowercased().hasPrefix("wheel"),
+                name.lowercased().hasPrefix(prefix),
                 let transform = hierarchy.worldTransforms[index]
             else { return nil }
             return (name, transform)

@@ -18,5 +18,5 @@ nonisolated public enum VehicleCommand: Equatable, Sendable {
     /// A follower left its carrier and now rests at the pose.
     case followerRests(ReferenceKey, at: ReferenceTransformOverride)
     /// Turns the follower's wheels for the distance rolled since the link.
-    case spinWheels(ReferenceKey, rolled: Float)
+    case spinWheels(ReferenceKey, turns: VehicleWheelTurns)
 }

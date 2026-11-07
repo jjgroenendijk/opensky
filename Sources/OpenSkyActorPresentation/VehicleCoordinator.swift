@@ -16,6 +16,8 @@ public protocol VehicleWorld: AnyObject {
     func vehicleFormID(of key: ReferenceKey) -> UInt32?
     /// A bone of the reference's live pose, in its root frame; nil while it loads.
     func vehicleBone(of key: ReferenceKey, named bone: String) -> SIMD3<Float>?
+    /// The way a bone faces now, turned from its bind pose's +Y, in the root frame.
+    func vehicleBoneForward(of key: ReferenceKey, named bone: String) -> SIMD3<Float>?
     /// The highest ground at or below `point`: terrain, or a road, bridge, or floor.
     /// The references in `vehicles` are not ground.
     func vehicleGround(at point: SIMD3<Float>, excluding vehicles: Set<ReferenceKey>) -> Float?
@@ -32,7 +34,7 @@ public final class VehicleCoordinator {
     public private(set) var playersLastMount: ReferenceKey?
     /// Each seated rider's body bone in its root frame, read last frame. The exit clip
     /// moves it from the seat to the ground beside the cart.
-    private var riderBodies: [ReferenceKey: SIMD3<Float>] = [:]
+    private var riderBodies: [ReferenceKey: VehicleRiderBody] = [:]
     weak let world: (any VehicleWorld)?
     private var hasDeltas = false
 
@@ -135,7 +137,7 @@ public final class VehicleCoordinator {
         }
         for (key, link) in core.links {
             if case let .towed(tow) = link.seat {
-                commands.append(.spinWheels(key, rolled: tow.rolled))
+                commands.append(.spinWheels(key, turns: tow.turns))
             }
         }
         commands += [
@@ -160,10 +162,16 @@ public final class VehicleCoordinator {
 
     /// Riders on a fixed seat: cart passengers, whose exit idles walk them off the cart.
     private func readRiderBodies(world: any VehicleWorld) {
-        var bodies: [ReferenceKey: SIMD3<Float>] = [:]
+        var bodies: [ReferenceKey: VehicleRiderBody] = [:]
         for (key, link) in core.links {
-            guard case .fixed = link.seat else { continue }
-            bodies[key] = world.vehicleBone(of: key, named: VehicleCore.bodyBone)
+            guard
+                case .fixed = link.seat,
+                let position = world.vehicleBone(of: key, named: VehicleCore.bodyBone)
+            else { continue }
+            bodies[key] = VehicleRiderBody(
+                position: position,
+                forward: world.vehicleBoneForward(of: key, named: VehicleCore.bodyBone)
+            )
         }
         riderBodies = bodies
     }

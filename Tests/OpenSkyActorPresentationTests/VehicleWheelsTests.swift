@@ -121,11 +121,41 @@ struct VehicleWheelsTests {
         ))
         let rig = try #require(try VehicleWheelRig(file: file))
         #expect(rig.skeleton.boneNames == ["WheelBackLeft"])
-        let quarter = try #require(rig.pose(rolled: .pi * 50 / 2).first)
+        var turns = VehicleWheelTurns()
+        turns.rearRolled = .pi * 50 / 2
+        let quarter = try #require(rig.pose(turns).first)
         #expect(quarter.translation == [-70, -215, 50])
         // Rolling forward along +Y carries the top of the wheel forward.
         let top = quarter.rotation.act(SIMD3(0, 0, 1))
         #expect(simd_length(top - SIMD3(0, 1, 0)) < 0.001)
+    }
+
+    @Test func theFrontAxleSwivelsAndTheOuterWheelRollsFurther() {
+        var core = VehicleCore()
+        core.tow(
+            Self.cart, by: Self.horse,
+            followerPose: ReferenceTransformOverride(position: [0, -200, 0]),
+            carrierPose: ReferenceTransformOverride(position: .zero)
+        )
+        core.setWheels([[-60, 0], [60, 0], [-60, -215], [60, -215]], for: Self.cart)
+        for step in 1 ... 20 {
+            let angle = Float(step) * 0.05
+            let ahead = ReferenceTransformOverride(position: [
+                sin(angle) * 400,
+                cos(angle) * 400,
+                0
+            ])
+            _ = core.advance(base: { _ in ahead })
+        }
+        guard case let .towed(tow)? = core.links[Self.cart]?.seat else {
+            Issue.record("the cart is not towed")
+            return
+        }
+        #expect(tow.turns.steer > 0.01, "turning right, the front axle points right of the body")
+        #expect(abs(tow.turns.steer) <= VehicleCore.maximumSteer)
+        let left = tow.turns.rolled(front: false, side: -60)
+        let right = tow.turns.rolled(front: false, side: 60)
+        #expect(left > right, "the outer wheel of a right turn rolls further")
     }
 
     @Test func aModelWithoutWheelsHasNoRig() throws {
