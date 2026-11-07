@@ -130,6 +130,7 @@ final class AIWorldAdapter {
             gameSession?.instancePoses.npcDeltas = deltas
         }
         streamer.npcStandingActors = { [weak self] in self?.standingActors() ?? [] }
+        wireBodyShapes(streamer: streamer)
         streamer.npcWaterPushRace = { [weak game] actor in
             game?.effectsWorld.waterPushRace(of: actor) ?? .normal
         }

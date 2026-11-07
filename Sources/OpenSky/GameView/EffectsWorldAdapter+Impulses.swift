@@ -127,7 +127,7 @@ extension EffectsWorldAdapter: ImpulseWorld {
         !(race(of: actor)?.flags.contains(.notPushable) ?? false)
     }
 
-    private func race(of actor: ReferenceKey) -> Race? {
+    func race(of actor: ReferenceKey) -> Race? {
         guard
             let base = actor == .player ? nil : game.streamer?.residentActorEntry(key: actor)?
                 .placedActor?.base,

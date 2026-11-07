@@ -33,6 +33,7 @@ public struct NPCMover {
     public let preferredGait: LocomotionGait?
     let runSlowdown: FollowSettings?
     let walkRunBlend: Float?
+    let longBody: LongBodyShape?
     /// The other actors near this one for the step in progress.
     private(set) var neighbours: [NPCNeighbour] = []
     /// The jump across a ledge link in progress.
@@ -55,6 +56,7 @@ public struct NPCMover {
         preferredGait = start.gait
         runSlowdown = start.runSlowdown
         walkRunBlend = start.walkRunBlend
+        longBody = start.longBody
         legStart = start.placement.position
         yaw = NPCYawMath.yaw(fromHeading: start.placement.rotation.z)
         controller = WalkController(
@@ -132,11 +134,14 @@ public struct NPCMover {
         let radius = capsule.radius
         let race = world.waterPushRace(actor)
         let configuration = configuration
+        let query: WalkController.CollisionQuery = ignoresStatics
+            ? { _ in [] } : world.collisionQuery(for: actor)
+        let (longBody, yaw) = (longBody, yaw)
         controller.update(
             frameTime: frameTime,
             yaw: yaw,
             sampleGround: ignoresStatics ? staticFloorSampler(world: world) : world.sampleGround,
-            collisionQuery: ignoresStatics ? { _ in [] } : world.collisionQuery(for: actor)
+            collisionQuery: query
         ) { state in
             var plan = LocomotionStepPlan()
             let remaining = SIMD2(
@@ -152,6 +157,12 @@ public struct NPCMover {
                     neighbours: neighbours
                 ) : .zero
             plan.horizontalDisplacement = direction * wanted
+            if let longBody {
+                plan.horizontalDisplacement += longBody.correction(
+                    feet: state.feetPosition, yaw: yaw, displacement: plan.horizontalDisplacement,
+                    lift: configuration.stepHeight.value, query: query
+                )
+            }
             plan.swimSurfaceHeight = water.swimSurface
             plan.motionSource = wanted > 0 ? .configuredSpeed : .idle
             plan.applyCurrent(
@@ -231,24 +242,6 @@ public struct NPCMover {
         advancePastReachedWaypoints(emissions: &emissions)
     }
 
-    private mutating func collectTriggerEdges(
-        world: NPCMovementWorld,
-        into emissions: inout NPCMoverEmissions
-    ) {
-        let current = world.triggersAt(PlayerCapsuleState(
-            capsule: capsule, feetPosition: controller.feetPosition
-        ))
-        let entered = current.subtracting(occupiedTriggers)
-        let left = occupiedTriggers.subtracting(current)
-        occupiedTriggers = current
-        emissions.triggers += entered.sorted().map {
-            TriggerTransitionEvent(reference: $0, phase: .enter, actor: actor)
-        }
-        emissions.triggers += left.sorted().map {
-            TriggerTransitionEvent(reference: $0, phase: .leave, actor: actor)
-        }
-    }
-
     private mutating func finish(
         _ finalState: NPCMovementState,
         reason: NPCMovementSettleReason,
@@ -266,5 +259,25 @@ public struct NPCMover {
             TriggerTransitionEvent(reference: $0, phase: .leave, actor: actor)
         }
         occupiedTriggers.removeAll()
+    }
+}
+
+extension NPCMover {
+    private mutating func collectTriggerEdges(
+        world: NPCMovementWorld,
+        into emissions: inout NPCMoverEmissions
+    ) {
+        let current = world.triggersAt(PlayerCapsuleState(
+            capsule: capsule, feetPosition: controller.feetPosition
+        ))
+        let entered = current.subtracting(occupiedTriggers)
+        let left = occupiedTriggers.subtracting(current)
+        occupiedTriggers = current
+        emissions.triggers += entered.sorted().map {
+            TriggerTransitionEvent(reference: $0, phase: .enter, actor: actor)
+        }
+        emissions.triggers += left.sorted().map {
+            TriggerTransitionEvent(reference: $0, phase: .leave, actor: actor)
+        }
     }
 }

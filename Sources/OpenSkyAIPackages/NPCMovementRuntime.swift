@@ -82,6 +82,8 @@ public struct NPCMoveStart {
     public var runSlowdown: FollowSettings?
     /// Where the speed sits from walk (0) to run (1); nil uses the gait's own speed.
     public var walkRunBlend: Float?
+    /// The end spheres of a long body such as a horse; nil for an upright one.
+    public var longBody: LongBodyShape?
 
     public init(
         actor: ReferenceKey,
