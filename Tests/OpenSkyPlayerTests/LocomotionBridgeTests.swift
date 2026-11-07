@@ -253,7 +253,7 @@ struct LocomotionBridgeTests {
         let graph = Self.graph()
         let bridge = LocomotionBridge(configuration: .synthetic, graph: graph)
         var surface: Float = 0
-        bridge.sampleWater = { _ in surface }
+        bridge.sampleWater = { _ in WaterReading(surface: surface) }
         Self.settle(&controller, camera: &camera, bridge: bridge)
         #expect(!controller.isSwimming)
 
@@ -284,7 +284,7 @@ struct LocomotionBridgeTests {
     @Test
     func swimmingHoldsDepthWithNoVerticalInput() {
         let bridge = LocomotionBridge(configuration: .synthetic)
-        bridge.sampleWater = { _ in 200 }
+        bridge.sampleWater = { _ in WaterReading(surface: 200) }
         let plan = bridge.plan(Self.state())
         #expect(plan.isSwimming)
         #expect(plan.swimVerticalVelocity == 0)

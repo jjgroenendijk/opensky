@@ -9,13 +9,19 @@ import OpenSkyGameData
 import simd
 
 nonisolated public enum ExplosionFalloff {
-    /// Full damage at the center, falling linearly to zero at the edge. A zero radius
-    /// reaches only the center point.
+    /// Full damage at the center, falling as `1 - (d / R)^2` to zero at the edge. A zero
+    /// radius reaches only the center point.
     public static func damage(_ base: Float, radius: Float, distance: Float) -> Float {
         guard base.isFinite, base > 0, distance.isFinite else { return 0 }
         guard radius.isFinite, radius > 0 else { return distance <= 0 ? base : 0 }
-        let fraction = max(distance, 0) / radius
-        return fraction >= 1 ? 0 : base * (1 - fraction)
+        return base * fraction(radius: radius, distance: distance)
+    }
+
+    /// The share of a blast that reaches `distance`: `1 - (d / R)^2`, 0 past the radius.
+    public static func fraction(radius: Float, distance: Float) -> Float {
+        guard radius.isFinite, radius > 0, distance.isFinite else { return distance <= 0 ? 1 : 0 }
+        let share = max(distance, 0) / radius
+        return share >= 1 ? 0 : 1 - share * share
     }
 
     /// Modifier strength for a viewer `distance` away: 1 at the center, 0 at the

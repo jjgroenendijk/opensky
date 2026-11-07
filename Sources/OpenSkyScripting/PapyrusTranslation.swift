@@ -53,6 +53,13 @@ nonisolated public struct PapyrusTranslation: Equatable, Sendable {
         ReferenceTransformOverride(position: position, rotation: rotation, scale: scale)
     }
 
+    /// Zero once the position arrived, even while the rotation still turns.
+    public var velocity: SIMD3<Float> {
+        let offset = targetPosition - position
+        let distance = simd_length(offset)
+        return distance > 0 ? offset / distance * speed : .zero
+    }
+
     public var isComplete: Bool {
         position == targetPosition && rotationLeft == .zero
     }

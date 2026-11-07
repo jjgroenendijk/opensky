@@ -268,6 +268,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     func combatTemperament(of key: ReferenceKey, toward target: ReferenceKey) -> CombatTemperament?
     /// True when `helper`'s Assistance and its regard for `ally` make it join `ally`'s fight.
     func combatAssists(_ helper: ReferenceKey, ally: ReferenceKey) -> Bool
+    /// Starts a paired kill move by `actor` on `target` in place of its swing.
+    func startCombatKillMove(by actor: ReferenceKey, on target: ReferenceKey, damage: Float)
+        -> Bool
 }
 
 extension CombatLoopWorld {
@@ -333,6 +336,13 @@ nonisolated extension CombatLoopWorld {
     }
 
     public func combatIgnoredByPackage(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    /// A session with no idle tree plays every swing.
+    public func startCombatKillMove(
+        by _: ReferenceKey, on _: ReferenceKey, damage _: Float
+    ) -> Bool {
         false
     }
 

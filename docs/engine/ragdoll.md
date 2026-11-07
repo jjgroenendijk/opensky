@@ -95,7 +95,10 @@ Three ragdoll modifier classes are decoded ([behavior node classes](/formats/hkx
 | `BSRagdollContactListenerModifier` | Used: its `m_contactEvent` fires when a ragdoll first touches the world |
 
 `m_bones` is not read. The ragdoll is every bone the skeleton NIF has a body for. That is the same
-set on every vanilla character, and it comes from the physics data, not the graph. `0_master.hkx`
+set on every vanilla character, and it comes from the physics data, not the graph. The game works
+the same way: only a bone with a rigid body gets physics, and the other bones follow it. A powered
+modifier's bone weights set how hard each body is pulled toward the animated pose; they never take
+a body out of the simulation (clean-room read of `SkyrimSE.exe`, 2026-11-07). `0_master.hkx`
 has exactly one instance of the class, `DriveRagdollRB`, which blends over 0.5 seconds. A session
 with no graph uses that value.
 
@@ -228,8 +231,54 @@ At zero health an essential player kneels in bleedout with the rules above, and 
 `sMiscPlayerDeadMessage`, and `fPlayerDeathReloadTime` seconds later the newest save loads. With
 no save, a message box offers `sMiscPlayerDeadLoadOption` and `sMiscPlayerDeadMenuOption`. The
 order of the message and the load is OpenSky's reading. `openskycli game state player` shows the
-phase under `death`. The player's body does not fall as a ragdoll yet.
+phase under `death`.
+
+The dead player's body falls as a ragdoll, through the same path as an NPC's. The death events go
+to the player's graph, and its hand-off starts the bodies; a graph that takes neither starts them at
+once. The last hit pushes the body as it pushes an NPC's. Unlike an NPC, the player gets no death
+component: the reload brings the player back, so nothing about the fall is saved. The player body is
+drawn apart from the cell's actors, so its simulated bones go to that body, not to the scene.
+
+A first-person view sits inside the head, so the view steps out to third person when the player
+dies. `state player` shows `ragdoll` true while the body is simulated. The load or the main menu
+removes the ragdoll and returns the body to its graph.
+
+## Knockdown
+
+A living actor can fall as a ragdoll and get up again. The rules come from a clean-room read of the
+game's behaviour; the graph names come from the install's character graph. Every knockdown goes
+through one path: a melee or explosion knockdown ([impulses](/engine/impulses.md)),
+`PushActorAway`, `KnockAreaEffect`, a cloak knock such as Shield Charge
+([magic archetypes](/engine/magic-archetypes.md#cloak-knock)), and a Grab Actor throw.
+
+- A race with the "No Knockdowns" flag (RACE 0x400000) staggers instead.
+- The death ragdoll starts at the animated pose, or wakes if the actor already lies. Every body
+  then gains `magnitude` Havok metres a second away from the source, times its share: the torso
+  and head all of it, the upper limbs 0.75, the lower limbs 0.5, and the hands and feet 0.25.
+  A negative magnitude pulls.
+- The graph takes `RagdollInstant`, which enters its `FullyRagdoll` state, and the movement
+  runtime holds the actor where it fell. A knocked-down actor does not fight.
+- It gets up when the faster of its pelvis and spine moves slower than 0.025 m²/s² in Havok units
+  (about 11 units a second), or after `fExplosionKnockStateExplodeDownTime` (15) seconds.
+- To get up, it stands over its pelvis, on its lowest body, and faces from its pelvis to its neck.
+  The graph takes `GetUpStart`, which enters `GetUpFromRagdoll`. Its `iGetUpType` pose matcher
+  picks 1 on land and 2 in water ([actor state graph](/engine/actor-state-graph.md)).
+- The ragdoll pose fades into the get-up clip over the `hkbGetUpModifier` duration, or over
+  1 second when the graph runs none. Then the ragdoll ends and the hold lets the actor go.
+- An actor that dies while down stays a corpse.
+
+`openskycli game debug knockdown <ref> [magnitude]` knocks an actor down away from the player.
+`openskycli game state impulses` lists each knockdown under `knockdowns`, with its `phase`
+(`down` or `gettingUp`) and the seconds `remaining` or `elapsed`.
+
+[WARNING] The share of each limb is read from the game's part order and mapped to bone names by
+OpenSky, and the 1 second fallback is OpenSky's. Both are in the
+[unverified values](/engine/unverified-values.md).
+
+The player falls the same way. The view steps out of first person, the controls lock as they
+do in bleedout, and the player's own graph takes the two events. At the get-up the player stands
+over the pelvis and keeps the camera's facing. A player who dies while down stays down.
 
 ## Not done yet
 
-- Ragdolls without death, such as paralysis or a knockdown.
+- Paralysis does not ragdoll.

@@ -32,7 +32,7 @@ The cell build sends each player-solid `bhkRigidBody` to one of two places:
 | Simulated, the reference has a `ReferenceKey`, no joint binds it, and a convex volume survives | The cell's dynamic bodies |
 | Anything else | The static collision set |
 
-Three rules keep this from taking geometry out of the world:
+Four rules keep this from taking geometry out of the world:
 
 - A body with no runtime key stays static. So the collision-only build (`openskycli collision`)
   reports the same shapes it always did. A build flag can also turn the split off for such tools.
@@ -40,6 +40,11 @@ Three rules keep this from taking geometry out of the world:
   whose board is fixed and whose contents are not. Moving the whole model would take the shelf.
 - A model whose bodies are bound by joints stays static. A hanging rack with its joint ignored
   would fall out of the world.
+- A static (`STAT`) base never simulates, even where its mesh has a simulated body, such as
+  wall-mounted antlers. The Creation Kit's clutter tutorial says statics "cannot be moved,
+  interacted with, or otherwise influenced by the player"
+  ([source](https://ck.uesp.net/wiki/Bethesda_Tutorial_Clutter)). A script's `SetMotionType`
+  still wins.
 
 A reference becomes one rigid body, because it has one key, one placement, and one transform to
 save. Its simulated bodies are welded: masses add, the center of mass is their mass-weighted mean,
@@ -138,15 +143,31 @@ non-zero count is a bug.
 The player capsule is a character controller with no mass, so the shove is modelled, not solved. A
 body whose collider overlaps the capsule gets an impulse along the flat direction from the capsule
 to the body. Its size comes from the player's horizontal speed, the body's mass, and an efficiency
-of 0.35. A walking person braces, and does not pass on the whole stride. A value of 1 makes light
-clutter fly. Only the part of the walk that goes into the body counts, so walking away from a crate
-does not drag it.
+of 0.175. A walking person braces, and does not pass on the whole stride. Only the part of the walk
+that goes into the body counts, so walking away from a crate does not drag it.
+
+The game then scales the push by the body's mass and collision layer (clean-room read of
+`SkyrimSE.exe`, 2026-11-07). Masses are in kilograms, which Havok uses too:
+
+| Body | Factor |
+| --- | --- |
+| Mass 0 or below, or 95 or more | 0, no push |
+| Layer 6, projectile | 0 |
+| Layer 10, props | 0.1 above 47.5 kg, else 3 |
+| Layer 14, trap | 0.1 |
+| Any other layer, such as clutter and weapons | 2 |
+
+When the push before the factor would move the body faster than 1,000 Havok units per second, the
+factor shrinks by the same ratio. The 0.175 is OpenSky's: with the clutter factor of 2 a body takes
+0.35 of the player's momentum. The game's own contact impulse is not known.
 
 The speed comes from how far the capsule moved since the last frame. A frame faster than a set
 limit was a teleport, such as a door or a camera reset, and gives no shove.
 
 A dropped item needs no special path. The next build places the spawned reference like any other,
-and if its model has a simulated body, it falls and settles.
+and if its model has a simulated body, it falls and settles. A model without collision stays where
+it was placed. The game does the same: it makes no default body for such a model (clean-room read
+of `SkyrimSE.exe`, 2026-11-07; players also report it).
 
 ## Streaming
 
@@ -194,3 +215,4 @@ handles worst: it runs about 24 times slower unoptimized. So the 2 ms step budge
   for piles of clutter, but it is not a full face-clipping manifold. A tall stack settles instead of
   resting perfectly.
 - The player capsule sees moving bodies through the shared query, but is not part of the solve.
+  The game also pushes clutter from its character controller and scales that push, as above.

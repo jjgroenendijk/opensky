@@ -9,6 +9,8 @@ import OpenSkyFormatsAnimation
 nonisolated struct BehaviorBlenderEntry {
     let child: HKBBlenderGeneratorChild
     let bound: [String: BehaviorVariableValue]
+    /// A bone weight array the child binds from a character property.
+    var characterWeights: [Float]?
 }
 
 nonisolated extension BehaviorGraphInstance {
@@ -17,15 +19,21 @@ nonisolated extension BehaviorGraphInstance {
     func blendChildren(
         _ blender: HKBBlenderFields,
         bound: [String: BehaviorVariableValue],
-        threshold: Float,
         depth: Int,
-        deltaTime: Float
+        deltaTime: Float,
+        weights override: [Float]? = nil
     ) -> [BehaviorBlendChild] {
         noteBlendGaps(blender)
         let entries = blender.children.map { $0.flatMap(blenderEntry(at:)) }
         let parametric = blender.flags & BehaviorBlenderFlag.parametricBlend != 0
-        let weights = childWeights(blender, entries: entries, bound: bound)
-        let active = entries.indices.filter { entries[$0] != nil && weights[$0] > threshold }
+        let weights = override.flatMap { $0.count == entries.count ? $0 : nil }
+            ?? childWeights(blender, entries: entries, bound: bound)
+        let keepsAll = blender.flags & BehaviorBlenderFlag
+            .dontDeactivateChildrenWithZeroWeights != 0
+        let active = entries.indices.filter { index in
+            entries[index] != nil
+                && (weights[index] != 0 || keepsAll || index == blender.indexOfSyncMasterChild)
+        }
         let synced = blender.flags & BehaviorBlenderFlag.sync != 0
             || active.contains(blender.indexOfSyncMasterChild)
         var cycle = BehaviorSharedCycle()
@@ -63,7 +71,9 @@ nonisolated extension BehaviorGraphInstance {
             let child = node.object as? HKBBlenderGeneratorChild
         else { return nil }
         markReached(target)
-        return BehaviorBlenderEntry(child: child, bound: boundValues(of: node))
+        var entry = BehaviorBlenderEntry(child: child, bound: boundValues(of: node))
+        entry.characterWeights = characterBoneWeights(of: node, path: "boneWeights")
+        return entry
     }
 
     /// Each child's share of the blend. A parametric blender reads `m_weight` as the
@@ -76,17 +86,22 @@ nonisolated extension BehaviorGraphInstance {
         let authored = entries.map { entry in
             entry.map { $0.bound.float("m_weight", or: $0.child.weight) } ?? .nan
         }
+        let smooths = blender.flags & BehaviorBlenderFlag.smoothGeneratorWeights != 0
         guard blender.flags & BehaviorBlenderFlag.parametricBlend != 0 else {
-            return authored.map { $0.isNaN ? 0 : $0 }
+            return authored.map { weight in
+                let clamped = weight.isNaN ? 0 : min(max(weight, 0), 1)
+                return smooths ? BehaviorParametricBlend.smoothed(clamped) : clamped
+            }
         }
         let low = bound.float("m_minCyclicBlendParameter", or: blender.minCyclicBlendParameter)
         let high = bound.float("m_maxCyclicBlendParameter", or: blender.maxCyclicBlendParameter)
         let isCyclic = blender.flags & BehaviorBlenderFlag.isParametricBlendCyclic != 0
-        return BehaviorParametricBlend.weights(
+        let weights = BehaviorParametricBlend.weights(
             positions: authored,
             parameter: bound.float("m_blendParameter", or: blender.blendParameter),
             cyclic: isCyclic && low < high ? low ... high : nil
         )
+        return smooths ? weights.map(BehaviorParametricBlend.smoothed) : weights
     }
 
     /// The leader and the cycle length the active children share: the sync master's
@@ -132,14 +147,11 @@ nonisolated extension BehaviorGraphInstance {
             motionWeight: motionScale * entry.bound.float(
                 "m_worldFromModelWeight", or: child.worldFromModelWeight
             ),
-            boneWeights: boneWeights(at: child.boneWeights)
+            boneWeights: entry.characterWeights ?? boneWeights(at: child.boneWeights)
         )
     }
 
     private func noteBlendGaps(_ blender: HKBBlenderFields) {
-        if blender.flags & BehaviorBlenderFlag.smoothGeneratorWeights != 0 {
-            tally.note(.blenderSmoothWeightsIgnored)
-        }
         if blender.subtractLastChild {
             tally.note(.blenderSubtractLastChild)
         }

@@ -1,10 +1,11 @@
 // Bone levels of detail on an actor's rig: past a `BSBoneLODExtraData` distance, the
 // named bone and every bone after it in the rig's order keep their last pose.
-// The rule and its sources: docs/formats/nif-controllers.md#node-controller-rules.
+// The rule: docs/formats/nif-controllers.md#node-controller-rules.
 
 import Foundation
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsMesh
+import simd
 
 nonisolated public struct ActorBoneLOD: Equatable, Sendable {
     public struct Cutoff: Equatable, Sendable {
@@ -21,7 +22,7 @@ nonisolated public struct ActorBoneLOD: Equatable, Sendable {
         var cutoffs: [Cutoff] = []
         for entry in bones {
             guard
-                let name = entry.name,
+                entry.distance > 0, let name = entry.name,
                 let bone = rig.boneNames.firstIndex(where: {
                     $0.caseInsensitiveCompare(name) == .orderedSame
                 })
@@ -30,6 +31,14 @@ nonisolated public struct ActorBoneLOD: Equatable, Sendable {
         }
         guard !cutoffs.isEmpty else { return nil }
         self.cutoffs = cutoffs.sorted { ($0.distance, $0.bone) < ($1.distance, $1.bone) }
+    }
+
+    /// The distance the cutoffs compare with: across the ground only, divided by the scale.
+    public static func distance(
+        from viewer: SIMD3<Float>, to feet: SIMD3<Float>, scale: Float
+    ) -> Float {
+        let across = simd_distance(SIMD2(viewer.x, viewer.y), SIMD2(feet.x, feet.y))
+        return scale > 0 ? across / scale : across
     }
 
     /// The first rig bone that holds its pose at `distance`, or nil when every bone moves.

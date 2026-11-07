@@ -141,6 +141,8 @@ nonisolated public final class CellSceneBuilder {
     var encounterZones: EncounterZoneStore?
     /// Immutable decoded rig/idle assets; playback objects remain cell-owned.
     public var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
+    /// Lag bones by skeleton mesh path; nil inside records a skeleton without one.
+    var actorLagBoneRigs: [String: ActorLagBoneRig?] = [:]
     /// Decoded expression TRI files by resource path. A file does not change while the
     /// game runs, so a rebuild reuses it; a failure is kept too.
     var faceMorphFiles: [String: Result<TRIFile, AssetLoadFailure>] = [:]
@@ -150,6 +152,8 @@ nonisolated public final class CellSceneBuilder {
     var objectBehaviorAssets: [String: BehaviorProjectAsset?] = [:]
     /// Sequence door rigs by mesh key; nil inside records a mesh without one.
     var sequenceDoorRigs: [String: SequenceDoorRig?] = [:]
+    /// Graph object meshes' moving nodes by mesh key; nil inside records none.
+    var movingPartRigs: [String: MovingPartRig?] = [:]
     /// Node controller rigs by mesh key; nil inside records a mesh without one.
     var nodeControllerRigs: [String: NodeControllerRig?] = [:]
     public let pluginName: String
@@ -286,7 +290,8 @@ nonisolated public final class CellSceneBuilder {
                 world: world,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence,
-                vehicleFollowers: resolved.vehicleFollowers
+                vehicleFollowers: resolved.vehicleFollowers,
+                waterVolumes: waterVolumes(effective, found: found, in: environment)
             ),
             counts: counts
         )
@@ -533,6 +538,7 @@ nonisolated extension CellSceneBuilder {
                 )
             {
                 instance.isSequenceDoor = doors[ref.formID] != nil
+                instance.sequenceDoorKind = doors[ref.formID]?.kind ?? .door
                 instance.treeMotion = resolved.treeData.map(TreeMotion.init)
                 instances.append(instance)
             }

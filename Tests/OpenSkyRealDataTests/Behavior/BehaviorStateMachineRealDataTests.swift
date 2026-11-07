@@ -74,25 +74,17 @@ struct BehaviorStateMachineRealDataTests {
     /// to be documented before it lands.
     private func assertGaps(_ instance: BehaviorGraphInstance, log: inout [String]) throws {
         let known: Set = [
-            "blenderSmoothWeightsIgnored",
             "blenderSubtractLastChild",
             "clipPingPongAsLoop",
             "clipMirrored",
-            "clipUserControlled",
             "depthCapReached",
             "disabledNode",
-            "poseMatchingAsBlender",
             "stateMachineNoStartState",
-            "stateMachineRandomTransitionFixed",
-            "stateMachineTransitionInterrupted",
-            "synchronizedClipMarkerIgnored",
             "transitionBlendCurveApproximated",
             "transitionConditionUnparsed",
             "transitionConditionUnresolved",
             "transitionEffectUnevaluated",
-            "transitionFromNestedStateIgnored",
             "transitionStartFractionIgnored",
-            "transitionStateChangeNotDelayed",
             "transitionTimeIntervalIgnored",
             "unresolvedBehaviorReference"
         ]

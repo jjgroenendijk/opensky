@@ -149,7 +149,7 @@ struct PlayerBodyRealDataTests {
         body: PlayerBody
     ) throws -> [float4x4] {
         let surface = harness.controller.feetPosition.z + PlayerBodyFixture.swimSurfaceDepth
-        harness.bridge.sampleWater = { _ in surface }
+        harness.bridge.sampleWater = { _ in WaterReading(surface: surface) }
         defer { harness.bridge.sampleWater = nil }
         let result = harness.run(
             input: CameraInput(moveForward: 1, dt: Self.step),

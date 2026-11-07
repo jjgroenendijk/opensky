@@ -64,41 +64,45 @@ its shadow keeps the rest pose.
 
 ## Automatic expressions
 
-Every loaded face blinks, and a speaker's face shows the emotion of the line it says. These
-weights are a third layer, added to the manual and lip weights and clamped like them.
+Every loaded face blinks, and shows its fear, combat, mood, or the emotion of the line it says.
+These weights are a third layer, added to the manual and lip weights and clamped like them.
+The player's assembled face runs the same rules as an NPC's.
 
-A dialogue response's `TRDT` emotion picks one target of the expression TRI, at the response's
-emotion value out of 100. The names were read from `malehead.tri` on the install:
+### Mood and combat
 
-| Emotion | Target |
-| --- | --- |
-| Anger | `DialogueAnger` |
-| Disgust | `DialogueDisgusted` |
-| Fear | `DialogueFear` |
-| Sad | `DialogueSad` |
-| Happy | `DialogueHappy` |
-| Surprise | `DialogueSurprise` |
-| Puzzled | `DialoguePuzzled` |
-| Neutral | nothing |
+Each face moves toward one goal. The goal is the first rule that fits:
 
-In the dialogue menu the emotion holds until the next response or the end of the conversation.
-A scene line holds it for the line's length.
+1. The actor flees: `DialogueFear` at 1.
+2. An NPC in combat: `DialogueAnger` at 1 while it speaks, else `CombatAnger` at 1. The player
+   shows `CombatAnger` at 1 while it draws or swings a weapon.
+3. The actor speaks: the target of the line's `TRDT` emotion, at its emotion value out of 100.
+4. Otherwise: the `Mood*` target of the actor's `Mood` actor value, at 0.5.
 
-The face does not jump to a new emotion. Each change moves a number of emotion points in a
-number of seconds, both picked at random between their settings. The face then eases at that
-speed, toward the new emotion and away from the old one, and back to nothing when the emotion
-ends.
+| Emotion or mood | Line target | Mood target | `Mood` value |
+| --- | --- | --- | --- |
+| Neutral | nothing | nothing | 0 |
+| Anger | `DialogueAnger` | `MoodAnger` | 1 |
+| Fear | `DialogueFear` | `MoodFear` | 2 |
+| Happy | `DialogueHappy` | `MoodHappy` | 3 |
+| Sad | `DialogueSad` | `MoodSad` | 4 |
+| Surprise | `DialogueSurprise` | `MoodSurprise` | 5 |
+| Puzzled | `DialoguePuzzled` | `MoodPuzzled` | 6 |
+| Disgust | `DialogueDisgusted` | `MoodDisgusted` | 7 |
 
-| Part | Settings | Vanilla |
-| --- | --- | --- |
-| Seconds per change | `fGameplaySpeakingEmotionMinChangeValue`, `...MaxChangeValue` | 1.5 |
-| Points per change, out of 100 | `fGameplayiSpeakingEmotionMinDeltaChange`, `...MaxDeltaChange` | 100 |
+The target names were read from `malehead.tri` on the install. It has no `MoodNeutral` shape, so
+a neutral mood shows nothing. The `Mood` order is the order of the `Mood*` slots in the
+`SetExpressionOverride` list (<https://ck.uesp.net/wiki/SetExpressionOverride_-_Actor>).
 
-So a vanilla emotion fades in over 1.5 seconds. `fGameplaySpeakingEmotionMaxChangeValue` is not
-in `Skyrim.esm`.
+In the dialogue menu a line's emotion holds until the next response or the end of the
+conversation. A scene line holds it for the line's length.
 
-[WARNING] The wiki gives these four settings no meaning or units. Seconds and emotion points are
-OpenSky's reading of the names, not observed in the game.
+The face does not jump to a new goal. Every weight moves toward the goal at 2 plus the goal's
+strength per second, where the strength is the goal's largest weight. So a full emotion fades in
+over a third of a second, and a face with no goal relaxes at 2 per second. A weight closer than
+one step snaps to the goal.
+
+Source: a clean-room read of `SkyrimSE.exe` on 2026-11-07. These rules never set
+`CombatShout`, so OpenSky does not either.
 
 ### Blinks
 
@@ -157,7 +161,5 @@ Any pair that worked still morphs.
 
 ## Not done yet
 
-- Race sliders and chargen morphs on an NPC's assembled head. The player's head takes them
-  ([race menu](/engine/race-menu.md#the-drawn-head)).
-- Body morphs other than weight ([actor resolution](/engine/actor-resolution.md)).
-- Mood and combat expressions (`Mood*`, `CombatAnger`, `CombatShout`).
+- The expression TRI's `SkinnyMorph` target. The game likely drives it by body weight, by an
+  unknown formula.

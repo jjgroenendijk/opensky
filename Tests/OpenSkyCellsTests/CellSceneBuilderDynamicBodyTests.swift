@@ -39,7 +39,9 @@ extension CellSceneBuilderTests {
                 temporaryRefs: refrRecord(
                     formID: 0x200, base: 0x100, position: SIMD3(100, 200, 300)
                 ),
-                statRecords: statRecord(formID: 0x100, modelPath: "clutter\\barrel.nif")
+                modelBaseRecords: ["MSTT": modelBaseRecord(
+                    type: "MSTT", formID: 0x100, modelPath: "clutter\\barrel.nif"
+                )]
             ),
             device: device
         )
@@ -77,7 +79,9 @@ extension CellSceneBuilderTests {
                 temporaryRefs: refrRecord(
                     formID: 0x200, base: 0x100, position: SIMD3(100, 200, 300)
                 ),
-                statRecords: statRecord(formID: 0x100, modelPath: "clutter\\barrel.nif")
+                modelBaseRecords: ["MSTT": modelBaseRecord(
+                    type: "MSTT", formID: 0x100, modelPath: "clutter\\barrel.nif"
+                )]
             ),
             device: device
         )
@@ -131,6 +135,32 @@ extension CellSceneBuilderTests {
         #expect(scene.staticCollision.stats.shapeCount == 1)
     }
 
+    /// A static never moves, even where its mesh carries a simulated body, such as
+    /// wall-mounted antlers.
+    @Test(.enabled(if: Self.hasDevice))
+    func aStaticBaseKeepsItsSimulatedBodyFixed() throws {
+        try writeLooseFile(
+            "meshes/clutter/antlers.nif",
+            Self.clutterNIF(motionSystem: 4, dynamics: Self.movableDynamics)
+        )
+        let device = try #require(Self.device)
+        let builder = try makeBuilder(
+            pluginData: plugin(
+                temporaryRefs: refrRecord(formID: 0x200, base: 0x100),
+                statRecords: statRecord(formID: 0x100, modelPath: "clutter\\antlers.nif")
+            ),
+            device: device
+        )
+        builder.simulatesDynamicBodies = true
+
+        let scene = try builder.buildScene(
+            worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2
+        )
+
+        #expect(scene.dynamicBodies.isEmpty)
+        #expect(scene.staticCollision.stats.shapeCount == 1)
+    }
+
     /// A collision-only build has no runtime reference index behind it, so a
     /// body has no key to be registered under and stays static rather than
     /// being dropped from the world entirely.
@@ -144,7 +174,9 @@ extension CellSceneBuilderTests {
         let builder = try makeBuilder(
             pluginData: plugin(
                 temporaryRefs: refrRecord(formID: 0x200, base: 0x100),
-                statRecords: statRecord(formID: 0x100, modelPath: "clutter\\barrel.nif")
+                modelBaseRecords: ["MSTT": modelBaseRecord(
+                    type: "MSTT", formID: 0x100, modelPath: "clutter\\barrel.nif"
+                )]
             ),
             device: device
         )
@@ -173,7 +205,9 @@ extension CellSceneBuilderTests {
         let builder = try makeBuilder(
             pluginData: plugin(
                 temporaryRefs: refrRecord(formID: 0x200, base: 0x100),
-                statRecords: statRecord(formID: 0x100, modelPath: "clutter\\rock.nif")
+                modelBaseRecords: ["MSTT": modelBaseRecord(
+                    type: "MSTT", formID: 0x100, modelPath: "clutter\\rock.nif"
+                )]
             ),
             device: device
         )

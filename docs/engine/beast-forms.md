@@ -42,8 +42,11 @@ form a mod adds.
 The race has its own behaviour project. `WerewolfBeastRace` names
 `Actors\WerewolfBeast\WerewolfBeastProject.hkx`, and `DLC1VampireBeastRace` names
 `Actors\VampireLord\VampireLord.hkx`. The character races name projects under
-`Actors\Character`. When the player's race names another folder, the player runs that project's
-graph and rig in place of `0_master.hkx`, and the body waits for it. A beast form has no
+`Actors\Character`: `DefaultMale.hkx`, and `DefaultFemale.hkx` for the female graph. When the
+player's race and sex name a project other than `DefaultMale.hkx`, the player runs that
+project's graph and rig in place of the male character set, and the body waits for it. A female
+player so runs the female character file, whose properties differ, such as `IsFemale` 1, and
+keeps the first-person graph. A beast form has no
 first-person graph, so the scripts and the debug switch force the third-person camera. When the
 race changes back, the character graphs return. They stay loaded during the form.
 

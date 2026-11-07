@@ -1,6 +1,6 @@
-// Sequence doors in a cell build: a door that is not a load door, runs no behaviour
-// graph, and whose mesh has `Open` and `Close` sequences draws its own node-skinned
-// copy. See docs/engine/object-animation.md#sequence-doors.
+// Sequence doors in a cell build: a door or container that runs no behaviour graph and
+// whose mesh has `Open` and `Close` sequences draws its own node-skinned copy.
+// See docs/engine/object-animation.md#sequence-doors.
 
 import OpenSkyActorPresentation
 import OpenSkyFormatsAnimation
@@ -17,20 +17,27 @@ nonisolated extension CellSceneBuilder {
         let ref: PlacedReference
         let modelPath: String
         let rig: SequenceDoorRig
+        let kind: CellSequenceDoor.Kind
     }
+
+    /// Base types whose meshes open and close with `Open` and `Close` sequences.
+    static let sequenceDoorTypes: Set<FourCC> = ["DOOR", "CONT"]
 
     /// The references in `refs` that are sequence doors, with their rigs.
     func sequenceDoors(in refs: [PlacedReference]) -> [FormID: SequenceDoorBase] {
         let bases = modelBaseIndexBuildingIfNeeded()
         var doors: [FormID: SequenceDoorBase] = [:]
-        for ref in refs where ref.teleportDestination == nil {
+        for ref in refs {
             guard
-                let base = bases[ref.base.rawValue], base.recordType == "DOOR",
+                let base = bases[ref.base.rawValue],
+                Self.sequenceDoorTypes.contains(base.recordType),
                 let path = base.modelPath,
                 meshes.behaviorProjectPath(forPath: path) == nil,
                 let rig = sequenceDoorRig(modelPath: path)
             else { continue }
-            doors[ref.formID] = SequenceDoorBase(ref: ref, modelPath: path, rig: rig)
+            let kind: CellSequenceDoor.Kind = base.recordType == "CONT" ? .containerLid
+                : ref.teleportDestination == nil ? .door : .loadDoor
+            doors[ref.formID] = SequenceDoorBase(ref: ref, modelPath: path, rig: rig, kind: kind)
         }
         return doors
     }
@@ -63,7 +70,7 @@ nonisolated extension CellSceneBuilder {
             instances[index] = copy.instance
             let door = CellSequenceDoor(
                 reference: instance.formID, rig: rig, pose: copy.pose,
-                nodes: nodes, placement: instance.transform
+                nodes: nodes, placement: instance.transform, kind: instance.sequenceDoorKind
             )
             result.append((door, copy.playback))
         }

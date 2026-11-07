@@ -54,6 +54,7 @@ nonisolated extension ConditionFunctions {
         })
 
         let gaits: [String: (UInt16, @Sendable (ActorConditionState) -> Bool?)] = [
+            "IsInDangerousWater": (332, \.isInDangerousWater),
             "IsSwimming": (185, \.isSwimming),
             "IsSneaking": (286, \.isSneaking),
             "IsSprinting": (568, \.isSprinting)

@@ -117,6 +117,9 @@ extension MeleeCombatRuntime {
         }
         strikeKind = kind
         powerDirection = kind == .power ? direction : nil
+        if startsKillMove(world: world) {
+            return
+        }
         let event = switch kind {
         case .normal: CombatGraphNames.attackStart
         case .power: direction.eventName

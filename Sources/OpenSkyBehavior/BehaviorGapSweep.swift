@@ -22,6 +22,9 @@ nonisolated public struct BehaviorGapSweep {
     /// File sets whose skeleton is missing or does not load.
     public private(set) var foldersWithoutSkeleton: [String] = []
 
+    /// The character properties of the file set being swept.
+    private var properties = BehaviorCharacterProperties.empty
+
     public init() {}
 
     /// A class the evaluator runs as a node, by Havok's naming.
@@ -80,6 +83,7 @@ nonisolated public struct BehaviorGapSweep {
                 continue
             }
             let clips = InstallBehaviorClipSource(fileSystem: fileSystem, paths: set.animations)
+            sweep.properties = set.character.flatMap { loadProperties($0, fileSystem) } ?? .empty
             for path in set.behaviors {
                 do {
                     try sweep.step(path, fileSystem: fileSystem, skeleton: skeleton, clips: clips)
@@ -108,6 +112,7 @@ nonisolated public struct BehaviorGapSweep {
             graph: graph, in: objectGraph, skeleton: skeleton, clips: clips, tallyNameLimit: 4096
         )
         let source = HKXBehaviorObjectSource(graph: objectGraph)
+        instance.characterProperties = properties
         instance.activate()
         update(instance, times: Self.idleUpdates, source: source)
         for name in instance.events.names.compactMap(\.self)
@@ -133,6 +138,17 @@ nonisolated public struct BehaviorGapSweep {
         }
     }
 
+    private static func loadProperties(
+        _ path: String, _ fileSystem: VirtualFileSystem
+    ) -> BehaviorCharacterProperties? {
+        guard
+            let data = try? fileSystem.contents(forPath: path),
+            let graph = try? HKXObjectGraph(file: HKXFile(data: data)),
+            let character = BehaviorProjectAsset.character(in: graph)
+        else { return nil }
+        return BehaviorCharacterProperties(character: character, in: graph)
+    }
+
     private static func loadSkeleton(
         _ path: String,
         _ fileSystem: VirtualFileSystem
@@ -140,10 +156,11 @@ nonisolated public struct BehaviorGapSweep {
         guard
             let data = try? fileSystem.contents(forPath: path),
             let file = try? HKXFile(data: data),
-            let rig = (try? HKASkeleton.skeletons(in: file))?.first
+            let skeletons = try? HKASkeleton.skeletons(in: file),
+            let rig = skeletons.first
         else {
             return nil
         }
-        return BehaviorSkeleton(rig)
+        return BehaviorSkeleton(rig, ragdoll: skeletons.dropFirst().first)
     }
 }

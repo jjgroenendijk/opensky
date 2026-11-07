@@ -23,6 +23,10 @@ public protocol PapyrusTrapWorldBridge: AnyObject {
         _ actor: ReferenceKey, awayFrom source: ReferenceKey,
         along direction: SIMD3<Float>?, speed: Float
     ) -> Bool
+    /// Knocks an actor down as a ragdoll, away from `source` at `magnitude` Havok metres a
+    /// second; a negative magnitude pulls. False when nothing knocked it.
+    func knockDownActor(_ actor: ReferenceKey, awayFrom source: ReferenceKey, magnitude: Float)
+        -> Bool
     /// Staggers an actor by `magnitude`, 0 to 1. False when it cannot stagger.
     func staggerActor(_ actor: ReferenceKey, magnitude: Float) -> Bool
     /// Sets whether a reference's collision simulates. False when it has no cell.
@@ -45,9 +49,6 @@ struct TrapWorldTarget {
 }
 
 extension PapyrusNativeFunctions {
-    /// `PushActorAway` force to speed, in units per second. [WARNING] Not confirmed.
-    static let knockbackSpeedPerForce: Float = 100
-
     static func installTrapWorld(into registry: inout PapyrusNativeRegistry) {
         installPlaceAtMe(into: &registry)
         installPlaceActorAtMe(into: &registry)
@@ -71,9 +72,7 @@ extension PapyrusNativeFunctions {
                 let force = float(call, at: 1), force.isFinite
             else { return failure(call, "PushActorAway needs an actor and a force") }
             // A negative force pulls the actor in (CK wiki "PushActorAway").
-            _ = target.trapWorld.pushActor(
-                actor, awayFrom: target.key, along: nil, speed: force * knockbackSpeedPerForce
-            )
+            _ = target.trapWorld.knockDownActor(actor, awayFrom: target.key, magnitude: force)
             return .returned(.none)
         }
     }

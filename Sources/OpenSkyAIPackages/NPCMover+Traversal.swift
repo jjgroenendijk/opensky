@@ -15,14 +15,27 @@ struct NPCMoverStepPlan {
 extension NPCMover {
     /// Water deep enough to swim, with the player's enter and exit depths, so an actor
     /// does not flicker between swimming and wading at the edge.
-    func swimSurface(world: NPCMovementWorld) -> Float? {
+    func swimSurface(_ water: WaterReading?) -> Float? {
         let feet = controller.feetPosition
-        guard let surface = world.sampleWater(SIMD2(feet.x, feet.y)), surface.isFinite else {
-            return nil
-        }
+        guard let surface = water?.surface, surface.isFinite else { return nil }
         let threshold = isSwimming
             ? LocomotionBridge.swimExitDepth : LocomotionBridge.swimEnterDepth
         return surface - feet.z >= threshold ? surface : nil
+    }
+
+    /// Near on the ground, and within one capsule height up or down. A patrol marker
+    /// can float above the ground, and a waypoint on the floor above is not reached.
+    func isReached(_ waypoint: SIMD3<Float>) -> Bool {
+        let feet = controller.feetPosition
+        let flatFeet = SIMD2(feet.x, feet.y)
+        let flatWaypoint = SIMD2(waypoint.x, waypoint.y)
+        // A swimmer floats over a waypoint on the bed below it.
+        guard isSwimming || abs(feet.z - waypoint.z) <= capsule.height else { return false }
+        return simd_distance(flatFeet, flatWaypoint) <= NPCMovementRuntime.waypointTolerance
+            || NPCAvoidance.isTaken(
+                flatWaypoint, from: flatFeet, radius: capsule.radius,
+                tolerance: NPCMovementRuntime.waypointTolerance, neighbours: neighbours
+            )
     }
 
     /// Moves the actor along its ledge arc. The controller restarts at the landing.

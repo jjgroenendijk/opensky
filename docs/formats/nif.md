@@ -329,6 +329,9 @@ are static.
   6,001 are unnamed water planes under the `WATER` node of terrain LOD, which the water
   pipeline draws. The named ones are helpers, such as water `CurrentPlane:0`, particle
   emitter sources (`emitFireBall:0`), and `OrderedAlphaBound`.
+- A shape named `CurrentPlane` or `CurrentPlane:<n>`, and the first child of a node named
+  `CurrentPlane`, is dropped too. The collision decode keeps its transform and bound radius as a
+  water current ([water physics](/engine/water-physics.md#current-planes)).
 - A ref out of range, a loop, or depth above 64 is an error. A subtree used under two
   parents is allowed; only a loop on the current path is an error.
 - Every scene walk (bind pose, meshes, particles, collision targets) uses one explicit work

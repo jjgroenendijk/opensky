@@ -4,6 +4,7 @@
 // can integrate horizontal motion twice. Only the jump impulse writes vertical velocity.
 // See docs/engine/walk-mode.md.
 
+import OpenSkyPhysics
 import simd
 
 /// What the controller shows the planner before a fixed step runs.
@@ -52,6 +53,11 @@ nonisolated public struct LocomotionStepPlan: Equatable, Sendable {
     public var swimVerticalVelocity: Float = 0
     /// Where `horizontalDisplacement` came from, for readouts and tests.
     public var motionSource: LocomotionMotionSource = .idle
+    /// The water over the feet, or nil on dry land.
+    public var water: WaterReading?
+    /// What a current added to this step, game units per second; already in
+    /// `horizontalDisplacement`.
+    public var waterPush = SIMD3<Float>()
 
     public var isSwimming: Bool {
         swimSurfaceHeight != nil

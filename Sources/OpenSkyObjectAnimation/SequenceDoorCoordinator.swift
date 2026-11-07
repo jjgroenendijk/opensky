@@ -12,9 +12,9 @@ import simd
 /// What the door coordinator reads from the session.
 public protocol SequenceDoorWorld: AnyObject {
     func residentSequenceDoors() -> [CellSequenceDoor]
-    /// The reference's open state: the plugin's, or the one a save, script, or
-    /// activation wrote.
-    func sequenceDoorWantsOpen(_ reference: UInt32) -> Bool
+    /// The door's open state: the plugin's, or the one a save, script, or activation
+    /// wrote. A container lid is open while its container menu is.
+    func sequenceDoorWantsOpen(_ door: CellSequenceDoor) -> Bool
 }
 
 public final class SequenceDoorCoordinator {
@@ -34,6 +34,8 @@ public final class SequenceDoorCoordinator {
 
     weak let world: (any SequenceDoorWorld)?
     private(set) var running: [UInt32: Running] = [:]
+    /// Load doors swinging open for a transition. Nothing saves the swing.
+    private var swinging: Set<UInt32> = []
     /// The camera billboards turn to; nil leaves them at rest.
     private let viewer: () -> NIFBillboard.Viewer?
     /// Off holds every door in the pose it has; billboards keep turning.
@@ -62,13 +64,14 @@ public final class SequenceDoorCoordinator {
                 continue
             }
             let motion = SequenceDoorMotion(
-                open: world.sequenceDoorWantsOpen(door.reference), rig: door.rig
+                open: world.sequenceDoorWantsOpen(door), rig: door.rig
             )
             running[door.reference] = Running(door: door, motion: motion)
         }
         let departed = running.keys.filter { !seen.contains($0) }.sorted()
         for reference in departed {
             running.removeValue(forKey: reference)
+            swinging.remove(reference)
         }
         return departed.map { .setLeaves(nil, reference: $0) }
     }
@@ -81,11 +84,15 @@ public final class SequenceDoorCoordinator {
             guard let entry = running[reference] else { continue }
             if isEnabled {
                 let before = entry.motion
+                let swings = swinging.contains(reference)
                 let keys = entry.motion.step(
-                    wantsOpen: world.sequenceDoorWantsOpen(reference),
+                    wantsOpen: swings || world.sequenceDoorWantsOpen(entry.door),
                     deltaTime: deltaTime, rig: entry.door.rig
                 )
-                commands += keys.map { .textKey($0, reference: reference) }
+                // The transition plays the door's sound already.
+                if !swings {
+                    commands += keys.map { .textKey($0, reference: reference) }
+                }
                 entry.needsPublish = entry.needsPublish || entry.motion != before
             }
             let rig = entry.door.rig
@@ -118,12 +125,19 @@ public final class SequenceDoorCoordinator {
         entry.door.pose.publish(nodes.bonePoses(graph: local, animator: entry.animator))
     }
 
+    /// A load door the player used swings open while the transition holds.
+    public func swingOpen(_ reference: UInt32) {
+        guard running[reference]?.door.kind == .loadDoor else { return }
+        swinging.insert(reference)
+    }
+
     /// The `GetOpenState` code of a resident sequence door, or nil for any other
     /// reference. A door told to move before its next step already answers the move.
     public func openStateCode(of reference: UInt32) -> Int32? {
-        guard let phase = running[reference]?.motion.phase else { return nil }
+        guard let entry = running[reference] else { return nil }
+        let phase = entry.motion.phase
         guard
-            let wantsOpen = world?.sequenceDoorWantsOpen(reference),
+            let wantsOpen = world?.sequenceDoorWantsOpen(entry.door),
             wantsOpen != phase.isOpenSide
         else { return phase.openStateCode }
         return (wantsOpen ? SequenceDoorMotion.Phase.opening : .closing).openStateCode

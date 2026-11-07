@@ -33,7 +33,11 @@ moves the cart as a trailer instead:
 - Each frame the cart moves along the line from where it was toward the horse, until it is that
   distance behind the horse. So the cart trails the horse's path and cuts corners, and a horse
   that turns on the spot does not swing the cart sideways.
-- The cart's +Y axis, the way its shafts point, turns to face the horse. The game's harness pulls
+- The front axle, where the cart's origin is, turns to face the horse. The body trails it: the rear
+  axle follows the front one along the line between them, as a towed trailer does. So in a curve
+  the front axle swivels against the body, by at most 60 degrees, an OpenSky limit.
+- Before the wheels are known, or for a cart with one axle, the cart's +Y axis, the way its
+  shafts point, turns to face the horse. The game's harness pulls
   the shafts into line, and plugins do not place every cart exactly on its horse's line.
   `MQ101Cart1Ref` and `MQ101Cart1HorseREF` share the yaw 6.062, but the horse stands about
   36 units left of the cart's axis. A cart that kept that 10 degree angle would ride skewed, with
@@ -65,12 +69,15 @@ moves the cart as a trailer instead:
 A towed cart whose mesh has wheel nodes turns its wheels as it rolls. The cell build gives such a
 cart its own copy of the mesh, with each wheel's shapes bound to its node, the way an animated
 object is drawn ([object animation](/engine/object-animation.md)). Each wheel turns about the
-model's X axis by the distance the cart rolled forward, divided by the wheel's radius. The radius
-is the height of the wheel node's centre: about 59 for the back wheels of the prisoner carriage and
-about 48 for the front ones.
+model's X axis by the distance it rolled forward, divided by its radius. The radius is the height
+of the wheel node's centre: about 59 for the back wheels of the prisoner carriage and about 48 for
+the front ones.
 
-The front wheels do not steer. The cart already turns its whole body toward the horse each frame,
-so `FrontBar` would always point straight ahead.
+Each axle counts how far it rolled and how far it turned. A wheel rolls its axle's distance, plus
+its side offset times the turn, so the outer wheel of a curve rolls further than the inner one.
+
+The `FrontBar` node, with the front wheels and the shafts below it, swivels about its own origin
+by the angle between the front axle and the body.
 
 ## Collision
 
@@ -177,7 +184,9 @@ marks that moment. OpenSky takes any actor off its vehicle on that event.
 The rider's root is still on the cart's root at that moment, but the exit clip has carried the
 body off the cart. So the rider stands where the clip left its `NPC COM [COM ]` bone, read on the
 last frame before the event, at the ground height there. Without that, every passenger would
-stand in the middle of the cart. The rider keeps the heading of its seat.
+stand in the middle of the cart. The rider also turns the way that bone faces, compared with the
+bind pose, where the body faces +Y. So a prisoner who steps off the side of the cart faces away
+from it, not along the cart.
 
 ## Saving
 
@@ -188,9 +197,4 @@ before it got on no longer counts as where it is.
 
 ## Where OpenSky differs
 
-- `Game.SetSittingRotation` turns only a player who sits in furniture
-  ([furniture](/engine/furniture.md#papyrus)); on a cart seat the player keeps the view it had.
-- A rider leaving a cart keeps its seat's heading. The exit clip also turns the body, but OpenSky
-  reads only where the body bone is, not which way it faces.
-- The front axle does not swivel under the cart, and the wheels do not turn at different speeds
-  in a curve.
+- The cart is not a physics body: it follows the horse by the trailer rule above.

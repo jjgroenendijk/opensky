@@ -53,6 +53,11 @@ nonisolated public struct ResolvedActorAppearance: Equatable, Sendable {
     public var skinTone: SIMD3<Float>?
     /// FTST, the face texture set (complexion). A Traits-tab field; nil uses the race's.
     public var faceTexture: FormID?
+    /// NAM9 sliders, NAMA parts, and the TINI tint layers: the face an assembled head
+    /// shows. Traits-tab fields.
+    public var faceMorphs: [Float] = []
+    public var faceParts: [Int32] = []
+    public var tintLayers: [ActorTintLayer] = []
 }
 
 /// Stat-relevant fields of one actor after template resolution. Separate from
@@ -239,6 +244,15 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             }.value,
             faceTexture: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.details.headTexture, source: $0.formID)
+            }.value,
+            faceMorphs: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.details.faceMorphs, source: $0.formID)
+            }.value,
+            faceParts: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.details.faceParts, source: $0.formID)
+            }.value,
+            tintLayers: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.details.tintLayers, source: $0.formID)
             }.value
         )
     }
@@ -473,6 +487,26 @@ nonisolated extension ResolvedActorAppearance {
 }
 
 nonisolated extension PlayerAppearanceOverride {
+    /// An NPC's own face, as the race menu would describe it: its sliders, parts, tint
+    /// layers, and complexion. Nil without a race. `TINV` is a percent.
+    public init?(face appearance: ResolvedActorAppearance) {
+        guard let race = appearance.race.value else { return nil }
+        self.init(
+            race: race, isFemale: appearance.isFemale.value, headParts: [],
+            hairColor: appearance.hairColor.value
+        )
+        faceMorphs = appearance.faceMorphs
+        faceParts = appearance.faceParts
+        tints = appearance.tintLayers.compactMap { layer in
+            guard let index = layer.index, let color = layer.color else { return nil }
+            let percent = Float(layer.interpolation ?? 0)
+            return PlayerAppearanceTint(maskIndex: index, color: color, strength: percent / 100)
+        }
+        faceTexture = appearance.faceTexture
+        skinTone = appearance.skinTone
+        weight = appearance.weight
+    }
+
     /// `TINP` 6, the race mask whose layer colours the face and the body alike.
     public static let skinToneMaskType: UInt16 = 6
     /// The neutral grey of the skin shader's overlay: a layer at strength 0 gives it.

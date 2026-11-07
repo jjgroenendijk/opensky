@@ -59,6 +59,7 @@ protocol RuntimeStateWorldHost: AnyObject {
     var messages: MessageCoordinator { get }
     var questNotices: QuestNoticeCoordinator { get }
     var ragdoll: RagdollCoordinator { get }
+    var player: PlayerCoordinator { get }
     var mountWorld: MountWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var perception: PerceptionCoordinator { get }
@@ -391,7 +392,9 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         game.combatWorld.run(game.combat.prepareForPersistence())
         game.messages.reloadHelpRecords()
         game.questNotices.reset()
-        game.ragdoll.playerDeath.reset()
+        game.ragdoll.resetPlayerDeath()
+        // A load reloads the player's 3D, which drops a script's eye texture.
+        game.player.eyeTextureSet = nil
         // `AVOV` keeps no temporary modifiers, so the restored effects rebuild
         // them: the player now, every other actor when its cell streams back in.
         game.magic.noteEffectsRestored()

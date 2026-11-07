@@ -8,7 +8,9 @@
 import Foundation
 import Metal
 @testable import OpenSkyCells
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 @testable import OpenSkyNavigation
 @testable import OpenSkyPhysics
@@ -36,6 +38,8 @@ struct DynamicBodyRealDataTests {
     /// a body that left the geometry it was authored in rather than one that
     /// fell onto the floor beneath it.
     private static let maximumSettledDropUnits: Float = 512
+    /// Clutter rests on the surface it was placed on, so it drops little more than its own height.
+    private static let maximumShelfDropUnits: Float = 64
 
     /// How long the probe simulates, in fixed steps. Five seconds of world
     /// time, which is past the point vanilla clutter stops moving.
@@ -80,17 +84,21 @@ struct DynamicBodyRealDataTests {
         // Every simulated reference comes to rest within five seconds of world
         // time, near where it was authored. Both checks are needed: clutter that
         // falls out of the world and clutter that never sleeps each pass one.
-        withKnownIssue("#1587: a jug falls through its shelf's top board and never rests") {
-            #expect(
-                settle.sleepingCount == world.bodyCount,
-                Comment(rawValue: "\(world.bodyCount - settle.sleepingCount) of \(world.bodyCount) "
-                    + "never came to rest: \(settle.awakeKeys)")
-            )
-        }
+        #expect(
+            settle.sleepingCount == world.bodyCount,
+            Comment(rawValue: "\(world.bodyCount - settle.sleepingCount) of \(world.bodyCount) "
+                + "never came to rest: \(settle.awakeKeys)")
+        )
         #expect(
             settle.maximumDrop < Self.maximumSettledDropUnits,
             "a body fell \(settle.maximumDrop) units out of the geometry it was authored in"
         )
+        withKnownIssue("#1834: a goblet falls through the noble wall shelf") {
+            #expect(
+                settle.maximumDrop < Self.maximumShelfDropUnits,
+                "a body fell \(settle.maximumDrop) units, through the surface it stood on"
+            )
+        }
         #expect(shove.movedBodyCount > 0, "a shove moved nothing")
         // And what the renderer would be handed after all that is non-empty:
         // clutter that settled away from where the plugin authored it is drawn
@@ -206,9 +214,7 @@ extension DynamicBodyRealDataTests {
         let starts = Dictionary(
             world.bodies.map { ($0.key, $0.position) }, uniquingKeysWith: { first, _ in first }
         )
-        let step = DynamicStepWorld(staticCandidates: { bounds in
-            scene.staticCollision.candidates(overlapping: bounds)
-        })
+        let step = DynamicStepWorld(staticCandidates: { solidShapes(of: scene, overlapping: $0) })
         var result = SettleResult()
         var totalNanoseconds: UInt64 = 0
         for _ in 0 ..< settleSteps {
@@ -256,9 +262,7 @@ extension DynamicBodyRealDataTests {
         }
         var result = ShoveResult()
         result.wokenBodyCount = world.bodies.count(where: { !$0.isSleeping })
-        let step = DynamicStepWorld(staticCandidates: { bounds in
-            scene.staticCollision.candidates(overlapping: bounds)
-        })
+        let step = DynamicStepWorld(staticCandidates: { solidShapes(of: scene, overlapping: $0) })
         for _ in 0 ..< 120 {
             world.advance(by: WalkController.fixedTimeStep, world: step)
         }
@@ -319,7 +323,7 @@ extension DynamicBodyRealDataTests {
                 maximumDistance: 4096
             )
             let floor = ShapeSweeper.firstHit(
-                query: down, shapes: scene.staticCollision.candidates(overlapping: down.bounds)
+                query: down, shapes: solidShapes(of: scene, overlapping: down.bounds)
             )
             lines.append(String(
                 format: "  %@ start (%.0f, %.0f, %.0f) r %.1f drop %.2f, floor %@, asleep %@",
@@ -330,14 +334,71 @@ extension DynamicBodyRealDataTests {
                 Self.describe(floor),
                 world.body(for: entry.key)?.isSleeping == true ? "yes" : "no"
             ))
+            if entry.position.z - end.z >= maximumShelfDropUnits {
+                lines += column(under: entry.position, scene: scene)
+            }
         }
         return lines.joined(separator: "\n") + "\n"
+    }
+
+    /// The shapes in a thin column under a body that fell far, to show what it fell past.
+    private static func column(under point: SIMD3<Float>, scene: CellScene) -> [String] {
+        let bounds = ModelBounds(
+            min: SIMD3(point.x - 2, point.y - 2, point.z - 256), max: point + SIMD3(2, 2, 0)
+        )
+        return solidShapes(of: scene, overlapping: bounds).flatMap { shape in
+            [String(
+                format: "    under: %@ z %.1f to %.1f",
+                shape.reference.description, shape.bounds.min.z, shape.bounds.max.z
+            )] + flatFaces(of: shape, under: point)
+        }
+    }
+
+    /// The near-horizontal triangles of a soup whose footprint holds `point`: height and facing.
+    private static func flatFaces(
+        of shape: StaticCollisionShape,
+        under point: SIMD3<Float>
+    ) -> [String] {
+        let soup: (vertices: [SIMD3<Float>], indices: [UInt32])
+        switch shape.geometry {
+        case let .triangleSoup(vertices, indices): soup = (vertices, indices)
+        default: return []
+        }
+        let (vertices, indices) = soup
+        let world = vertices.map { DynamicCollisionMath.transform($0, by: shape.transform) }
+        return stride(from: 0, to: indices.count - indices.count % 3, by: 3).compactMap { offset in
+            let corners = (0 ..< 3).map { world[Int(indices[offset + $0])] }
+            let low = simd_min(simd_min(corners[0], corners[1]), corners[2])
+            let high = simd_max(simd_max(corners[0], corners[1]), corners[2])
+            guard point.x >= low.x, point.x <= high.x, point.y >= low.y, point.y <= high.y else {
+                return nil
+            }
+            let normal = simd_normalize(simd_cross(
+                corners[1] - corners[0],
+                corners[2] - corners[0]
+            ))
+            guard abs(normal.z) > 0.7 else { return nil }
+            return String(format: "      face at z %.1f facing z %.2f", corners[0].z, normal.z)
+        }
+    }
+
+    /// The fixed shapes and the closed moving ones, such as a cupboard's, as the streamer
+    /// hands them to the dynamic world.
+    private static func solidShapes(
+        of scene: CellScene, overlapping bounds: ModelBounds
+    ) -> [StaticCollisionShape] {
+        scene.staticCollision.candidates(overlapping: bounds)
+            + scene.doorCollision.flatMap { $0.shapes(leafDeltas: nil, overlapping: bounds) }
     }
 
     /// A downward sweep's answer, for the report.
     private static func describe(_ hit: ShapeSweepHit?) -> String {
         guard let hit else { return "none" }
-        return hit.startsOverlapping ? "overlapping" : String(format: "%.1f", hit.distance)
+        guard hit.startsOverlapping else { return String(format: "%.1f", hit.distance) }
+        return String(
+            format: "overlapping %@ normal (%.2f, %.2f, %.2f) at z %.1f",
+            hit.reference.description, hit.normal.x, hit.normal.y, hit.normal.z, hit.position.z
+        )
     }
 
     private static func write(name: String, report: String) throws {

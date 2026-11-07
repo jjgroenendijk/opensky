@@ -78,6 +78,10 @@ extension AgentWorldAdapter {
         guard let raw = UInt32(digits, radix: 16) else {
             throw AgentFailure(.invalidArgument, "set must be a hex FormID")
         }
+        if actor.key == .player {
+            game.player.eyeTextureSet = FormID(raw)
+            return ["ref": .formID(actor.formID.rawValue), "eyeTexture": eyeTexture(of: actor.key)]
+        }
         guard let cell = game.streamer?.cellLocation(of: actor.key) else {
             throw AgentFailure(.notFound, "\(reference) has no 3D")
         }
@@ -114,7 +118,10 @@ extension AgentWorldAdapter {
     }
 
     func eyeTexture(of key: ReferenceKey) -> AgentJSON {
-        game.worldState.component(ActorPresentationState.self, for: key)?.eyeTextureSet
+        if key == .player {
+            return game.player.eyeTextureSet.map { .formID($0.rawValue) } ?? .null
+        }
+        return game.worldState.component(ActorPresentationState.self, for: key)?.eyeTextureSet
             .map { .formID($0.rawValue) } ?? .null
     }
 }

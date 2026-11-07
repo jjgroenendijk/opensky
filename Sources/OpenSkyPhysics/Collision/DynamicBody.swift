@@ -77,6 +77,8 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
     public let boundingRadius: Float
     /// The heaviest body's SkyrimLayer, which sets how hard a push moves it.
     public let collisionLayer: UInt8
+    /// The material's `MATT` `BNAM`: 0 hangs in water, more floats.
+    public var buoyancy: Float = 0
 
     /// Vanilla clutter leaves the velocity ceilings at Havok's defaults, which
     /// are large enough that a body accelerating unchecked between two walls
@@ -157,6 +159,7 @@ nonisolated public struct DynamicBodyDefinition: Sendable {
         boundingRadius = placed.reduce(0) { max($0, $1.boundingRadius) }
         let heaviest = simulated.max { $0.dynamics.mass < $1.dynamics.mass } ?? simulated[0]
         collisionLayer = heaviest.rigidBodyFilter.layer
+        buoyancy = material.flatMap { materials?.materials[$0.rawValue]?.buoyancy } ?? 0
     }
 
     /// Every simulated body's shapes as convex volumes and as placed geometry,
@@ -404,6 +407,15 @@ nonisolated public struct DynamicBody: Sendable {
         linearVelocity += impulse * definition.inverseMass
         angularVelocity += worldInverseInertia * simd_cross(worldPoint - position, impulse)
             * angularScale
+    }
+
+    /// Adds a turn alone, in kilogram square engine units per second, waking the body.
+    public mutating func applyAngularImpulse(_ impulse: SIMD3<Float>) {
+        guard impulse.isFiniteVector, simd_length_squared(impulse) > Float.ulpOfOne else {
+            return
+        }
+        wake()
+        angularVelocity += worldInverseInertia * impulse
     }
 
     public mutating func wake() {

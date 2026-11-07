@@ -199,6 +199,12 @@ inside a ragdoll, once each physics step after the bodies move.
   The point is the other reference's node and offset when the constraint is made, such as the
   rope's `JointHelper01` in `HangedManScript`. In the solve, the point is a body too heavy to
   move.
+- A link joins two loose bodies, such as a key and a chain a mod hangs from it. Both wake.
+- A link joins a loose body to a ragdoll bone, such as a lantern a mod hangs from a corpse's
+  hand. The loose bodies and the ragdolls step in two worlds, so this link is solved after both
+  have stepped in a frame, once per fixed step the frame covers.
+
+No vanilla script asks for the last two; a mod can.
 
 Each offset is in its body's own space, in engine units. The CK wiki does not give the unit.
 A ragdoll that stops simulating drops its links and pins, as the wiki says a constraint breaks

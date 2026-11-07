@@ -111,7 +111,7 @@ nonisolated public struct HKBBehaviorGraphData: Equatable, Sendable {
         )
     }
 
-    private static func variableInfos(
+    static func variableInfos(
         at field: HKXField,
         cursor: inout HKXObjectCursor,
         graph: HKXObjectGraph

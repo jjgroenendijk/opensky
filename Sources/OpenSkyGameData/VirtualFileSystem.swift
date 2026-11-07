@@ -200,6 +200,12 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
         return components.joined(separator: "\\")
     }
 
+    /// A record's model path as a file key under `meshes\`, the folder records omit.
+    public static func meshPath(_ path: String) throws -> String {
+        let normalized = try normalize(path)
+        return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
+    }
+
     // MARK: - Loose files
 
     private func looseFileURL(for normalized: String) -> URL? {

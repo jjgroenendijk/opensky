@@ -15,6 +15,7 @@ public struct BehaviorTransitionSpec: Sendable {
     public var effect: HKXPointerTarget?
     public var condition: HKXPointerTarget?
     public var toNestedStateId = -1
+    public var fromNestedStateId = -1
     public var triggerInterval = HKBStateMachineTimeInterval(
         enterEventId: -1, exitEventId: -1, enterTime: 0, exitTime: 0
     )
@@ -30,6 +31,7 @@ public struct BehaviorTransitionSpec: Sendable {
         effect: HKXPointerTarget? = nil,
         condition: HKXPointerTarget? = nil,
         toNestedStateId: Int = -1,
+        fromNestedStateId: Int = -1,
         triggerInterval: HKBStateMachineTimeInterval = HKBStateMachineTimeInterval(
             enterEventId: -1, exitEventId: -1, enterTime: 0, exitTime: 0
         ),
@@ -44,6 +46,7 @@ public struct BehaviorTransitionSpec: Sendable {
         self.effect = effect
         self.condition = condition
         self.toNestedStateId = toNestedStateId
+        self.fromNestedStateId = fromNestedStateId
         self.triggerInterval = triggerInterval
         self.initiateInterval = initiateInterval
     }
@@ -111,7 +114,7 @@ public enum BehaviorStateMachineFixture {
                     condition: $0.condition,
                     eventId: $0.eventId,
                     toStateId: $0.toStateId,
-                    fromNestedStateId: -1,
+                    fromNestedStateId: $0.fromNestedStateId,
                     toNestedStateId: $0.toNestedStateId,
                     priority: $0.priority,
                     flags: $0.flags

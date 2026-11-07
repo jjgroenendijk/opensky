@@ -75,6 +75,10 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     public internal(set) var bodies: [DynamicBody] = []
     /// Bodies held at a fixed point, as scripts add them.
     public internal(set) var pins: [PhysicsPin] = []
+    /// Two loose bodies held together.
+    public internal(set) var links: [PhysicsLink] = []
+    /// A loose body (`first`) held to a ragdoll bone (`second`).
+    public internal(set) var ragdollLinks: [PhysicsLink] = []
     /// Pose each body was placed at, for the readout's reset action.
     private var placedPoses: [ReferenceKey: (position: SIMD3<Float>, orientation: simd_quatf)] = [:]
     /// Resting poses observed since the last drain, for persistence.
@@ -92,7 +96,7 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     /// from how far it walked. Nil before the first walk-mode frame.
     public var lastPushFeetPosition: SIMD3<Float>?
     /// Bodies the player's last shove moved, which a witness may comment on.
-    public private(set) var lastPushCount = 0
+    public internal(set) var lastPushCount = 0
     public var isFrozen = false
     public private(set) var lastStats = DynamicStepStats()
 
@@ -352,54 +356,18 @@ nonisolated public struct DynamicBodyWorld: Sendable {
         _ impulse: SIMD3<Float>,
         at point: SIMD3<Float>,
         to key: ReferenceKey,
-        angularScale: Float = 1
+        angularScale: Float = 1,
+        angular: SIMD3<Float> = .zero
     ) {
         guard let index = bodies.firstIndex(where: { $0.key == key }) else { return }
         bodies[index].applyImpulse(impulse, at: point, angularScale: angularScale)
+        bodies[index].applyAngularImpulse(angular)
     }
 
-    /// The push a moving player capsule gives the clutter it walks into. The capsule
-    /// has no mass, so the shove is modeled: an overlapping body gets a horizontal
-    /// impulse sized by the player's speed and the body's mass.
-    public mutating func push(
-        capsule: PlayerCapsule,
-        feetPosition: SIMD3<Float>,
-        velocity: SIMD3<Float>
-    ) {
-        lastPushCount = 0
-        let horizontal = SIMD3<Float>(velocity.x, velocity.y, 0)
-        let speed = simd_length(horizontal)
-        guard speed > Float.ulpOfOne else { return }
-        let segment = (
-            feetPosition + SIMD3<Float>(0, 0, capsule.radius),
-            feetPosition + SIMD3<Float>(0, 0, capsule.height - capsule.radius)
-        )
-        for index in bodies.indices {
-            let body = bodies[index]
-            let near = DynamicCollisionMath.closestPoint(onSegment: segment, to: body.position)
-            let combined = capsule.radius + body.definition.boundingRadius
-            guard simd_distance_squared(near, body.position) <= combined * combined else {
-                continue
-            }
-            var direction = SIMD3<Float>(
-                body.position.x - near.x, body.position.y - near.y, 0
-            )
-            let length = simd_length(direction)
-            direction = length > Float.ulpOfOne ? direction / length : horizontal / speed
-            // Only the component of the walk that is into the body pushes it;
-            // walking away from a crate must not drag it along.
-            let approach = max(0, simd_dot(horizontal, direction))
-            guard approach > Float.ulpOfOne else { continue }
-            let impulse = direction * approach * body.definition.mass * Self.pushEfficiency
-            bodies[index].applyImpulse(impulse, at: near)
-            lastPushCount += 1
-        }
-    }
-
-    /// How much of the player's momentum a shove transfers. Below one because a
-    /// walking actor braces rather than transferring its whole stride, and
-    /// because a value of one makes light clutter fly.
-    public static let pushEfficiency: Float = 0.35
+    /// How much of the player's momentum a shove transfers before the game's factor.
+    /// With the clutter factor of 2 it passes on 0.35 of the stride; more makes light
+    /// clutter fly.
+    public static let pushEfficiency: Float = 0.175
 
     public init() {}
 }

@@ -78,6 +78,21 @@ nonisolated public struct NIFNodeAnimator: Sendable {
         }
     }
 
+    /// Poses each node `sequence` moves at `seconds` after it started. A behaviour graph's
+    /// sequence generator plays a sequence this way, before `step` runs the lag bones.
+    public mutating func play(_ sequence: NIFSequence, after seconds: Float) {
+        let time = sequence.keyTime(after: seconds)
+        for track in sequence.tracks {
+            guard
+                case let .node(name) = track.target, case let .transform(channel) = track.channel,
+                let node = animation.nodes.firstIndex(where: {
+                    $0.name?.caseInsensitiveCompare(name) == .orderedSame
+                })
+            else { continue }
+            locals[node] = pose(channel, at: time, node)
+        }
+    }
+
     /// The node's transform in the mesh.
     public func modelTransform(of node: Int) -> NIFNodeTransform {
         var transform = faced[node] ?? locals[node]

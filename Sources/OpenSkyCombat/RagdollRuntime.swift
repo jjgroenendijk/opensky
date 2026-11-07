@@ -162,6 +162,14 @@ public final class RagdollRuntime: DeathReporting {
         }
         seam.writeDeathState(.justDied, for: key, in: actor.cell)
         deathEventsQueued += seam.queueActorDeathEvents(for: key, killer: killer)
+        startFall(of: key)
+        return true
+    }
+
+    /// Plays the death events and hands the skeleton to physics on the graph's cue,
+    /// or at once without a graph. Writes no death, so the player's own death uses it.
+    public func startFall(of key: ReferenceKey) {
+        guard let seam, !world.isRagdolling(key), !pendingHandOffs.contains(key) else { return }
         var accepted = false
         for name in RagdollGraphNames.deathEvents {
             accepted = seam.raiseRagdollEvent(name, on: key) || accepted
@@ -173,7 +181,6 @@ public final class RagdollRuntime: DeathReporting {
             fallbackDeathCount += 1
             activate(key, instant: false)
         }
-        return true
     }
 
     /// Whether `key` reads as dead right now.
@@ -213,8 +220,18 @@ public final class RagdollRuntime: DeathReporting {
     }
 
     /// A script's ball-and-socket link between two ragdolls' bones.
-    public func addLink(_ link: RagdollLink) -> Bool {
+    public func addLink(_ link: PhysicsLink) -> Bool {
         world.addLink(link)
+    }
+
+    /// Solves the links from loose bodies to this runtime's ragdoll bones.
+    public func solveLinks(to loose: inout DynamicBodyWorld, frameTime: Float) {
+        world.solveLinks(to: &loose, frameTime: frameTime)
+    }
+
+    /// Whether `end` names a bone body of a live ragdoll.
+    public func hasBody(_ end: PhysicsLinkEnd) -> Bool {
+        world.hasBody(end)
     }
 
     public func addPin(_ pin: PhysicsPin) -> Bool {
@@ -255,6 +272,18 @@ public final class RagdollRuntime: DeathReporting {
         world.add(instance, for: key, in: actor.cell)
         pendingHandOffs.remove(key)
         return true
+    }
+
+    /// Starts or wakes the ragdoll of a living `key` and adds `speed` units a second to
+    /// each body, away from `source`, by `weight` of its bone.
+    /// - Returns: true when `key` now ragdolls.
+    @discardableResult
+    public func knock(
+        _ key: ReferenceKey, awayFrom source: SIMD3<Float>, speed: Float,
+        weight: (String) -> Float
+    ) -> Bool {
+        guard world.isRagdolling(key) || activate(key, instant: false) else { return false }
+        return world.update(key) { $0.push(awayFrom: source, speed: speed, weight: weight) }
     }
 
     /// The dev trigger: kills `key` if it is not dead already, then hands off

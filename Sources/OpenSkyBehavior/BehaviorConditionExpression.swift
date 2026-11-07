@@ -44,6 +44,13 @@ nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
     }
 
     public let root: Node
+    /// Every variable the text names, kept so a test does not walk the tree twice.
+    public let variableNames: [String]
+
+    public init(root: Node) {
+        self.root = root
+        variableNames = Self.names(in: root)
+    }
 
     /// Parses `source`, or returns nil when it is empty or does not fit the
     /// grammar above. Never throws and never traps: the text is external input.
@@ -55,8 +62,23 @@ nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
     }
 
     /// True or false when every name resolves, nil when one does not.
+    /// The game compiles a condition all or nothing, so one undeclared name fails
+    /// it even where `||` or `&&` would never read that name.
     public func evaluate(in variables: BehaviorVariableStore) -> Bool? {
-        Self.truth(of: root, in: variables)
+        guard variableNames.allSatisfy({ variables.index(of: $0) != nil }) else {
+            return nil
+        }
+        return Self.truth(of: root, in: variables)
+    }
+
+    private static func names(in node: Node) -> [String] {
+        switch node {
+        case .number: []
+        case let .variable(name): [name]
+        case let .negation(inner): names(in: inner)
+        case let .comparison(lhs, _, rhs), let .conjunction(lhs, rhs), let .disjunction(lhs, rhs):
+            names(in: lhs) + names(in: rhs)
+        }
     }
 
     private static func truth(of node: Node, in variables: BehaviorVariableStore) -> Bool? {

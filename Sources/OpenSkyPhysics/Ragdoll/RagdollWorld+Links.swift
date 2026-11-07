@@ -1,13 +1,13 @@
 // Script constraints on ragdolls, as `Game.AddHavokBallAndSocketConstraint` adds them:
-// a link holds a pivot on two ragdolls' bones together, and a pin holds a bone at a
-// fixed point. Rotation stays free. A ragdoll that stops simulating drops both
+// a link holds a pivot on two bodies together, and a pin holds a bone at a fixed point.
+// Rotation stays free. A ragdoll that stops simulating drops both
 // (docs/engine/ragdoll-solver.md, "Script links").
 
 import Foundation
 import OpenSkyFormatsESM
 import simd
 
-nonisolated public struct RagdollLink: Equatable, Sendable {
+nonisolated public struct PhysicsLink: Equatable, Sendable {
     public let first: PhysicsLinkEnd
     public let second: PhysicsLinkEnd
 
@@ -19,13 +19,29 @@ nonisolated public struct RagdollLink: Equatable, Sendable {
     func joins(_ one: PhysicsLinkEnd, _ other: PhysicsLinkEnd) -> Bool {
         PhysicsLinkEnd.pair(first, second, is: one, other)
     }
+
+    /// One substep of holding the two pivots together.
+    func solve(_ firstBody: inout DynamicBody, _ secondBody: inout DynamicBody, dt: Float) {
+        var bodies = [firstBody, secondBody]
+        RagdollConstraintSolver.solve(
+            joints: [RagdollJointDefinition(
+                bodyA: 0, bodyB: 1,
+                frameA: .pivot(first.offset - firstBody.definition.centerOfMass),
+                frameB: .pivot(second.offset - secondBody.definition.centerOfMass),
+                limits: .point
+            )],
+            bodies: &bodies, dt: dt
+        )
+        firstBody = bodies[0]
+        secondBody = bodies[1]
+    }
 }
 
 nonisolated extension RagdollWorld {
     /// Adds `link` when both ends name a bone body of a live ragdoll. A link between
     /// the same two bones replaces the old one. Both ragdolls wake.
     @discardableResult
-    public mutating func addLink(_ link: RagdollLink) -> Bool {
+    public mutating func addLink(_ link: PhysicsLink) -> Bool {
         guard
             let first = body(of: link.first), let second = body(of: link.second),
             first != second
@@ -71,21 +87,36 @@ nonisolated extension RagdollWorld {
             guard let first = body(of: link.first), let second = body(of: link.second) else {
                 continue
             }
-            var bodies = [
-                ragdolls[first.ragdoll].instance.bodies[first.bone],
-                ragdolls[second.ragdoll].instance.bodies[second.bone]
-            ]
-            RagdollConstraintSolver.solve(
-                joints: [RagdollJointDefinition(
-                    bodyA: 0, bodyB: 1,
-                    frameA: .pivot(link.first.offset - bodies[0].definition.centerOfMass),
-                    frameB: .pivot(link.second.offset - bodies[1].definition.centerOfMass),
-                    limits: .point
-                )],
-                bodies: &bodies, dt: dt
-            )
-            ragdolls[first.ragdoll].instance.bodies[first.bone] = bodies[0]
-            ragdolls[second.ragdoll].instance.bodies[second.bone] = bodies[1]
+            var one = ragdolls[first.ragdoll].instance.bodies[first.bone]
+            var other = ragdolls[second.ragdoll].instance.bodies[second.bone]
+            link.solve(&one, &other, dt: dt)
+            ragdolls[first.ragdoll].instance.bodies[first.bone] = one
+            ragdolls[second.ragdoll].instance.bodies[second.bone] = other
+        }
+    }
+
+    /// Whether `end` names a bone body of a live ragdoll.
+    public func hasBody(_ end: PhysicsLinkEnd) -> Bool {
+        body(of: end) != nil
+    }
+
+    /// Solves the links from loose bodies to ragdoll bones. The two worlds step apart,
+    /// so this runs after both, in fixed steps covering `frameTime`.
+    public mutating func solveLinks(to loose: inout DynamicBodyWorld, frameTime: Float) {
+        guard !isFrozen, !loose.ragdollLinks.isEmpty, frameTime > 0 else { return }
+        let steps = min(max(Int((frameTime / PhysicsStep.fixedTimeStep).rounded()), 1), 8)
+        for _ in 0 ..< steps {
+            for link in loose.ragdollLinks {
+                guard
+                    let bone = body(of: link.second),
+                    let index = loose.bodies.firstIndex(where: { $0.key == link.first.reference })
+                else { continue }
+                var ragdollBody = ragdolls[bone.ragdoll].instance.bodies[bone.bone]
+                loose.bodies[index].wake()
+                link.solve(&loose.bodies[index], &ragdollBody, dt: PhysicsStep.fixedTimeStep)
+                ragdolls[bone.ragdoll].instance.bodies[bone.bone] = ragdollBody
+                ragdolls[bone.ragdoll].instance.wake()
+            }
         }
     }
 

@@ -38,15 +38,24 @@ parts loop.
   shader multiplies by them. A mesh without vertex colors gets the color as its vertex
   color.
 
-## Differences from the baked head
+## Shape, colour, and expressions
 
-- An NPC's face part gets no tint layers and no `FTST` face texture set. Skin color comes
-  only from the texture set. The player's head gets its tint layers and chargen morphs from
-  the race menu ([drawn head](/engine/race-menu.md#the-drawn-head)).
-- The assembled head is static. It has no expression morphs (`.tri`), so it does not
-  blink or speak.
-- An NPC's race morphs and chargen sliders are not applied. Its face part keeps its default
-  shape.
+An assembled head, on an NPC or on the player, gets the same face data the race menu edits:
+
+- Each head part's TRI files share one morph buffer per skinned mesh. The `HDPT` `NAM0` kind
+  says what each file is: 0 race, 1 expression, 2 chargen. A file whose vertex count differs
+  from the mesh is left out.
+- The race TRI has one target per race, named after the race, such as `NordRace`. The head
+  shows the target of the race's morph race (`RACE` `NAM8`), else its own, at weight 1.
+- The chargen TRI takes the `NAM9` sliders and the `NAMA` parts, as on the
+  [race menu](/engine/race-menu.md#the-drawn-head) page.
+- The race and chargen weights never change. The expression TRI's targets move with blinks,
+  expressions, and lip sync ([face morphs](/engine/face-morphs.md)).
+- The face part paints the `TINI` tint layers into a face tint, at each layer's `TINC` colour
+  and `TINV` percent. `FTST` picks the complexion texture set.
+
+[WARNING] The race target at weight 1 is OpenSky's reading of the data, not observed in the
+game ([unverified values](/engine/unverified-values.md)).
 
 On the install, Heimskr's assembled head covers the same pixels as his baked head with an
 intersection-over-union above 0.85.

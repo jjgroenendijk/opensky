@@ -69,7 +69,11 @@ final class CinematicCameraWorldAdapter {
 
     /// A hostile actor died. When it was the last one, a kill cam may play on it.
     func actorDied(_ key: ReferenceKey) {
-        guard key != .player, game.factions.hostility(of: key) == .hostile else { return }
+        // A kill move started its own kill cam, which keeps playing.
+        guard
+            key != .player, !game.cinematicCamera.isPlaying,
+            game.factions.hostility(of: key) == .hostile
+        else { return }
         let remaining = game.actorWorld.combatActors().filter {
             $0.key != key && !$0.isDead && game.factions.hostility(of: $0.key) == .hostile
         }.count

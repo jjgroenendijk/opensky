@@ -48,6 +48,9 @@ public final class ObjectBehaviorCoordinator {
         var animator: NIFNodeAnimator?
         /// The graph's own local bones, last published.
         var graphBones: [HKABonePose] = []
+        /// Seconds each mesh sequence the graph plays has run. A sequence starts again
+        /// when the graph comes back to it.
+        var sequenceClocks: [String: Float] = [:]
 
         init(
             object: CellAnimatedObject,
@@ -202,6 +205,7 @@ public final class ObjectBehaviorCoordinator {
             skeleton: BehaviorSkeleton(object.asset.skeleton, rootBoneIndex: -1),
             clips: clips
         )
+        instance.characterProperties = object.asset.characterProperties
         instance.activate()
         instance.prefetchReachableClips()
         return Running(object: object, instance: instance, clips: clips)
@@ -211,6 +215,7 @@ public final class ObjectBehaviorCoordinator {
     private func publishNodes(_ entry: Running, deltaTime: Float) {
         guard let rig = entry.object.nodes else { return }
         let placement = entry.object.placement
+        playSequences(entry, deltaTime: deltaTime)
         entry.animator?.step(
             deltaTime: deltaTime, placement: NodeControllerCoordinator.transform(placement)
         )
@@ -218,6 +223,20 @@ public final class ObjectBehaviorCoordinator {
             entry.animator?.face(camera.local(to: placement))
         }
         entry.object.pose.publish(rig.bonePoses(graph: entry.graphBones, animator: entry.animator))
+    }
+
+    /// Poses the nodes of each mesh sequence the graph's sequence generators played.
+    private func playSequences(_ entry: Running, deltaTime: Float) {
+        let names = entry.instance.gamebryoSequences.map { $0.lowercased() }
+        guard !names.isEmpty || !entry.sequenceClocks.isEmpty else { return }
+        var clocks: [String: Float] = [:]
+        for name in names where clocks[name] == nil {
+            let seconds = entry.sequenceClocks[name].map { $0 + max(deltaTime, 0) } ?? 0
+            clocks[name] = seconds
+            guard let sequence = entry.object.nodes?.nodes?.sequence(named: name) else { continue }
+            entry.animator?.play(sequence, after: seconds)
+        }
+        entry.sequenceClocks = clocks
     }
 
     private func finishWaits(on reference: UInt32, event: String) {

@@ -15,22 +15,26 @@ nonisolated public struct PlayerRigRequest: Equatable, Sendable {
     public let firstPerson: Bool
     public let equipped: [FormID]?
     public let appearance: PlayerAppearanceOverride?
+    /// The texture set `Actor.SetEyeTexture` gave the player's eyes.
+    public let eyeTextureSet: FormID?
 
     public init(
         generation: Int, firstPerson: Bool, equipped: [FormID]?,
-        appearance: PlayerAppearanceOverride?
+        appearance: PlayerAppearanceOverride?, eyeTextureSet: FormID? = nil
     ) {
         self.generation = generation
         self.firstPerson = firstPerson
         self.equipped = equipped
         self.appearance = appearance
+        self.eyeTextureSet = eyeTextureSet
     }
 }
 
 /// The meshes of one rig, before they are bound to a skeleton and a pose.
 nonisolated public struct PlayerRigAssembly: Sendable {
     public let assembly: ActorAssembly<ActorRenderAsset>
-    /// Chargen slider morphs on the head parts; empty for the arms and a baked head.
+    /// Race, chargen, and expression morphs on the head parts; empty for the arms and a
+    /// baked head.
     public let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
 
     public init(

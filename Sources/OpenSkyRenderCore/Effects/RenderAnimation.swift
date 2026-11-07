@@ -44,4 +44,10 @@ nonisolated public protocol SharedPoseAnimation: RenderAnimation {
         _ pose: SkeletonPose,
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int
+    /// Tells the actor the frame's clock before its pose applies, for state that trails.
+    func advanceClock(to time: Float)
+}
+
+nonisolated extension SharedPoseAnimation {
+    public func advanceClock(to _: Float) {}
 }

@@ -18,9 +18,8 @@ import OpenSkyWorldState
 import simd
 
 extension EffectsWorldAdapter: ImpulseWorld {
-    /// The splash sound. No setting names it, so this is the one `SNDR` whose editor
-    /// ID says so. [WARNING] Not confirmed against the game.
-    static let splashSound = "PHYWaterSplash"
+    // The splash sound. No setting names it, so this is the one `SNDR` whose editor
+    // ID says so. [WARNING] Not confirmed against the game.
 
     func makeImpulses() -> ImpulseRuntime {
         guard let settings = game.worldData?.gameSettings
@@ -72,7 +71,8 @@ extension EffectsWorldAdapter: ImpulseWorld {
 
     func applyBodyImpulse(_ impulse: BodyImpulse) {
         game.streamer?.dynamicBodies.applyImpulse(
-            impulse.linear, at: impulse.point, to: impulse.key, angularScale: impulse.angularScale
+            impulse.linear, at: impulse.point, to: impulse.key, angularScale: impulse.angularScale,
+            angular: impulse.angular
         )
     }
 
@@ -95,23 +95,72 @@ extension EffectsWorldAdapter: ImpulseWorld {
         game.streamer?.sampleWaterHeight(at: position)
     }
 
-    func waterFlow(at position: SIMD2<Float>) -> SIMD2<Float>? {
-        game.streamer?.sampleWaterFlow(at: position)
+    func waterCurrent(at point: SIMD3<Float>) -> SIMD3<Float>? {
+        game.streamer?.water(at: point)?.current
+    }
+
+    func isDangerousWater(at point: SIMD3<Float>) -> Bool {
+        game.streamer?.water(at: point)?.isDangerous ?? false
     }
 
     func raceSize(of actor: ReferenceKey) -> Int {
-        let normal = 1
+        race(of: actor)?.details.properties.map { Int($0.size) } ?? 1
+    }
+
+    /// How a current pushes `actor`: its race size and whether it only swims.
+    func waterPushRace(of actor: ReferenceKey) -> WaterPushRace {
+        let water = game.combat.impulses?.water ?? .vanilla
+        let race = race(of: actor)
+        guard
+            let strong = WaterImpacts.strongCurrent(
+                raceSize: race?.details.properties.map { Int($0.size) } ?? 1, settings: water
+            )
+        else { return .normal }
+        let flags = race?.flags ?? []
+        return WaterPushRace(
+            strongCurrent: strong,
+            isSwimOnly: flags.contains(.swims) && flags.isDisjoint(with: [.walks, .flies])
+        )
+    }
+
+    func isPushable(_ actor: ReferenceKey) -> Bool {
+        !(race(of: actor)?.flags.contains(.notPushable) ?? false)
+    }
+
+    private func race(of actor: ReferenceKey) -> Race? {
         guard
             let base = actor == .player ? nil : game.streamer?.residentActorEntry(key: actor)?
                 .placedActor?.base,
             let resolver = game.worldData?.actorValueBaselines?.resolver
-        else { return normal }
+        else { return nil }
         let identity = ActorIdentityRecords(resolver: resolver)
-        let race = identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
-        return race?.details.properties.map { Int($0.size) } ?? normal
+        return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
     }
 
-    /// OpenSky has no knockdown ragdoll for the living, so a knockdown pushes too.
+    func actorHealth(of actor: ReferenceKey) -> (current: Float, maximum: Float)? {
+        game.combatWorld.health(of: actor)
+    }
+
+    /// Every knockdown lands here. A "No Knockdowns" race staggers instead. An actor
+    /// with no ragdoll, and the player, slides on its capsule at the knock's speed.
+    func knockDown(_ actor: ReferenceKey, from source: SIMD3<Float>, magnitude: Float) -> Bool {
+        guard magnitude.isFinite, magnitude != 0 else { return false }
+        if race(of: actor)?.flags.contains(.noKnockdowns) == true {
+            return game.magicWorld.staggerActor(actor, magnitude: 1)
+        }
+        let downTime = game.combat.impulses?.settings.knockdownTime
+            ?? ImpulseSettings.vanilla.knockdownTime
+        if game.ragdoll.knockDown(actor, from: source, magnitude: magnitude, downTime: downTime) {
+            return true
+        }
+        guard let feet = trapPosition(of: actor) else { return false }
+        let away = SIMD3(feet.x - source.x, feet.y - source.y, 0)
+        guard simd_length(away) > 0.001 else { return false }
+        let speed = magnitude * GameplayImpulse.havokScale
+        return knockActor(actor, velocity: simd_normalize(away) * speed, knockdown: true)
+    }
+
+    /// A push along the ground on the actor's capsule.
     func knockActor(_ actor: ReferenceKey, velocity: SIMD3<Float>, knockdown _: Bool) -> Bool {
         guard simd_length(velocity) > 0, velocity.x.isFinite, velocity.y.isFinite else {
             return false
@@ -132,9 +181,9 @@ extension EffectsWorldAdapter: ImpulseWorld {
         game.renderer?.addWaterRipple(
             at: splash.position, strength: splash.weight == .heavy ? 1 : 0.6
         )
-        guard splash.weight != .silent else { return }
+        guard let sound = splash.weight.sound else { return }
         game.audio.soundDirector?.playAnimationSound(
-            editorID: Self.splashSound, source: splash.source ?? .player, at: splash.position
+            editorID: sound, source: splash.source ?? .player, at: splash.position
         )
     }
 }

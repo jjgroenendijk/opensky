@@ -25,6 +25,10 @@ private final class FakeVehicleWorld: VehicleWorld {
         nil
     }
 
+    func vehicleBoneForward(of _: ReferenceKey, named _: String) -> SIMD3<Float>? {
+        nil
+    }
+
     func vehicleGround(at _: SIMD3<Float>, excluding _: Set<ReferenceKey>) -> Float? {
         nil
     }

@@ -97,6 +97,22 @@ struct PlayerCoordinatorTests {
         #expect(player.firstPersonFailureReason != nil)
     }
 
+    /// `Actor.SetEyeTexture` on the player rebuilds both rigs with the set, once.
+    @Test
+    func aScriptEyeTextureRebuildsThePlayerRigsWithIt() {
+        let provider = FakePlayerRigSource()
+        let (player, world) = Self.session(source: provider)
+        withExtendedLifetime(world) {
+            player.attach(graph: .fixture(), firstPerson: .success(.fixture()))
+            player.refreshBody()
+            player.eyeTextureSet = FormID(0x0F1D3A)
+            player.refreshBody()
+            player.refreshBody()
+        }
+        let sets = provider.requests.map(\.eyeTextureSet)
+        #expect(sets == [nil, nil, FormID(0x0F1D3A), FormID(0x0F1D3A)])
+    }
+
     /// A race with its own project holds the body back until that graph loads. One that
     /// cannot load is reported once, and the body rebuilds on the character graphs.
     @Test
@@ -118,6 +134,26 @@ struct PlayerCoordinatorTests {
         #expect(player.graphProject == nil)
         #expect(world.playerLocomotion?.graph === graph.instance)
         #expect(provider.bodyRequests.last == [FormID(0x12EB7)])
+    }
+
+    /// The male character project is what the character graphs already run, so it loads
+    /// nothing and does not hold the body back. The female one is a project to load.
+    @Test
+    func theMaleCharacterProjectKeepsTheCharacterGraphs() {
+        let provider = FakePlayerRigSource(fileSystem: InMemoryFileSource())
+        let (player, world) = Self.session(source: provider)
+        player.attach(graph: .fixture(), firstPerson: .success(.fixture()))
+        world.playerBehaviorProject = PlayerBehaviorGraph.characterProjectPath
+        world.playerEquippedSet = [FormID(0x12EB7)]
+        player.refreshBody()
+        #expect(provider.bodyRequests.count == 2)
+        #expect(player.graphProject == nil)
+        #expect(PlayerBehaviorGraph.isCharacterProject(
+            "meshes\\actors\\character\\defaultfemale.hkx"
+        ))
+        #expect(!PlayerBehaviorGraph.isCharacterProject(
+            "meshes\\actors\\werewolfbeast\\werewolfbeastproject.hkx"
+        ))
     }
 
     @Test

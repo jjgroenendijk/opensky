@@ -74,15 +74,16 @@ extension RuntimeStateWorldAdapter {
         var facts: [ReferenceKey: ReferenceConditionFacts] = [:]
         for entry in references.sortedEntries() {
             let state = game.worldState.resolvedState(for: entry)
+            let action = game.streamer?.residentInteraction(reference: entry.formID)?.action
             facts[entry.key] = ReferenceConditionFacts(
                 lock: ReferenceLockState.resolve(
                     baseline: entry.placedReference?.lock,
                     delta: game.worldState.component(ReferenceLockState.self, for: entry.key)
                 ),
                 isOpen: state.activation.isOpen,
-                isDoor: game.streamer?.residentInteraction(reference: entry.formID)?
-                    .action == .open,
-                isDeleted: state.deletion.isDeleted
+                isDoor: action == .open,
+                isDeleted: state.deletion.isDeleted,
+                canOpen: action == .open || action == .search
             )
         }
         return ReferenceConditionResolution(facts: facts)
@@ -188,5 +189,8 @@ extension RuntimeStateWorldAdapter {
         state.isSneaking = gait.map { $0 == .sneak }
         state.isSprinting = gait.map { $0 == .sprint }
         state.isSwimming = gait.map { $0 == .swim }
+        state.isInDangerousWater = game.gameSession.map {
+            $0.locomotion.status.lastPlan.water?.isDangerous ?? false
+        }
     }
 }

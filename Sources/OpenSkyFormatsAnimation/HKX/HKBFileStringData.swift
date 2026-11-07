@@ -67,13 +67,21 @@ nonisolated public struct HKBCharacterData: Equatable, Sendable {
     public let behaviorFilename: String?
     public let animationNames: [String?]
     public let characterPropertyNames: [String?]
+    public var characterPropertyInfos: [HKBVariableInfo] = []
+    public var characterPropertyValues: HKBVariableValueSet?
+    public var mirroredSkeletonInfo: HKXPointerTarget?
+    public var scale: Float?
     public let unresolved: [HKXUnresolvedReference]
 
     public static let className = "hkbCharacterData"
     /// Read through `m_stringData`, never as an object of its own.
     public static let stringDataClassName = "hkbCharacterStringData"
 
+    private static let propertyInfosField = HKXField(0x60, "m_characterPropertyInfos")
+    private static let propertyValuesField = HKXField(0x80, "m_characterPropertyValues")
+    private static let mirroredSkeletonInfoField = HKXField(0xA0, "m_mirroredSkeletonInfo")
     private static let stringDataField = HKXField(0x98, "m_stringData")
+    private static let scaleField = HKXField(0xA8, "m_scale")
     private static let animationNamesField = HKXField(0x30, "m_animationNames")
     private static let characterPropertyNamesField = HKXField(
         0x50, "m_characterPropertyNames"
@@ -97,7 +105,7 @@ nonisolated public struct HKBCharacterData: Equatable, Sendable {
                 unresolved: owner.unresolved
             )
         }
-        return HKBCharacterData(
+        var character = HKBCharacterData(
             name: cursor.string(at: nameField),
             rigName: cursor.string(at: rigNameField),
             ragdollName: cursor.string(at: ragdollNameField),
@@ -106,5 +114,13 @@ nonisolated public struct HKBCharacterData: Equatable, Sendable {
             characterPropertyNames: cursor.stringArray(at: characterPropertyNamesField),
             unresolved: owner.unresolved + cursor.unresolved
         )
+        character.characterPropertyInfos = HKBBehaviorGraphData.variableInfos(
+            at: propertyInfosField, cursor: &owner, graph: graph
+        )
+        character.characterPropertyValues = owner.pointer(at: propertyValuesField)
+            .flatMap { HKBVariableValueSet.decode(at: $0, in: graph) }
+        character.mirroredSkeletonInfo = owner.pointer(at: mirroredSkeletonInfoField)
+        character.scale = owner.float32(at: scaleField)
+        return character
     }
 }

@@ -7,6 +7,7 @@ import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyEffects
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
@@ -165,7 +166,7 @@ final class WorldSessionWiring {
             streamer?.collisionCandidates(overlapping: bounds) ?? []
         }
         gameSession.locomotion.sampleWater = { [weak streamer] position in
-            streamer?.sampleWaterHeight(at: position)
+            streamer?.water(at: position)
         }
         streamer.onWorldspaceChanged.register(.weather) { [weak gameSession] editorID in
             gameSession?.weather?.setWorldspace(editorID: editorID)
@@ -199,6 +200,9 @@ final class WorldSessionWiring {
         streamer.onDynamicPosesChanged = { [weak gameSession] deltas in
             gameSession?.instancePoses.dynamicDeltas = deltas
         }
+        streamer.onLoadDoorUsed = { [unowned game] door in
+            game.objectAnimationWorld.doors.swingOpen(door.rawValue)
+        }
         let input = game.cameraInput
         let frameSteps = gameSession.frameSteps
         let mounts = game.mountWorld
@@ -227,6 +231,9 @@ final class WorldSessionWiring {
                 playerCapsule: gameSession.flatMap(Self.playerCapsule(of:)),
                 frameTime: gameSession?.lastCameraDelta ?? 0
             )
+            if let walk = gameSession?.walkController {
+                streamer?.recordPlayerSwim(at: walk.feetPosition, isSwimming: walk.isSwimming)
+            }
         }
         // The center cell's regions feed region-weighted weather selection, on
         // the draw loop's thread.

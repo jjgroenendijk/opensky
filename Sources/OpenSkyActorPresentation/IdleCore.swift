@@ -15,12 +15,16 @@ nonisolated public struct IdleMarkerPlacement: Sendable {
     public let reference: ReferenceKey
     public let marker: ResolvedRecord<IdleMarker>
     public let position: SIMD3<Float>
+    /// The marker's `angleZ`: the way an actor faces before its idle starts.
+    public let heading: Float
 
     public init(
         reference: ReferenceKey,
         marker: ResolvedRecord<IdleMarker>,
-        position: SIMD3<Float>
+        position: SIMD3<Float>,
+        heading: Float = 0
     ) {
+        self.heading = heading
         self.reference = reference
         self.marker = marker
         self.position = position
@@ -34,13 +38,16 @@ nonisolated public struct IdleReferencePlacement: Sendable {
     /// The plugin that placed the reference; its base FormID is relative to it.
     public let plugin: String
     public let position: SIMD3<Float>
+    public let heading: Float
 
     public init(
         reference: ReferenceKey,
         base: FormID,
         plugin: String,
-        position: SIMD3<Float>
+        position: SIMD3<Float>,
+        heading: Float = 0
     ) {
+        self.heading = heading
         self.reference = reference
         self.base = base
         self.plugin = plugin
@@ -57,6 +64,9 @@ nonisolated public struct IdleActorPresence: Sendable {
     public let isDead: Bool
     /// A sandbox's area; nil looks round the actor's feet.
     public var area: IdleSearchArea?
+    /// The idle list of the actor's current package, played while it stands still.
+    public var packageIdles: IdlePackageList?
+    public var isStill = false
 
     public init(
         key: ReferenceKey,
@@ -68,6 +78,30 @@ nonisolated public struct IdleActorPresence: Sendable {
         self.feet = feet
         self.procedure = procedure
         self.isDead = isDead
+    }
+}
+
+/// A package's `IDLA` list, resolved: the idles it plays while its actor stands still.
+nonisolated public struct IdlePackageList: Equatable, Sendable {
+    public let package: FormID
+    public let idles: [ResolvedFormID]
+    /// `IDLF`: bit 0 plays in sequence, bit 2 plays each idle once.
+    public let flags: UInt8
+    public let timer: Float?
+
+    public init(package: FormID, idles: [ResolvedFormID], flags: UInt8, timer: Float?) {
+        self.package = package
+        self.idles = idles
+        self.flags = flags
+        self.timer = timer
+    }
+
+    public var order: IdleSelectionOrder {
+        flags & 0x01 != 0 ? .sequence : .random
+    }
+
+    public var isDoOnce: Bool {
+        flags & 0x04 != 0
     }
 }
 
@@ -106,6 +140,8 @@ nonisolated public enum IdleCore {
     public static let claimRadius: Float = 1024
     /// Close enough to the marker to start idling.
     public static let arrivalRadius: Float = 48
+    /// How far from the marker's facing an actor may stand when its idle starts.
+    public static let facingTolerance: Float = .pi / 180
     /// The clip event that kills the actor playing it, as the executionee's chop clip
     /// raises it. OpenSky's reading of the name; no source documents it.
     public static let killEvent = "KillActor"

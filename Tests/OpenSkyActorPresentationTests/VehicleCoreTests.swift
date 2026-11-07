@@ -207,13 +207,18 @@ struct VehicleCoreTests {
     /// A cart rider that got off stands where its exit clip left its body, on the ground.
     @Test func anExitedRiderStandsWhereItsBodyEnded() {
         let seat = ReferenceTransformOverride(position: [100, 0, 50])
-        let standing = VehicleCore.standingPose(seat: seat, body: [30, 60, 90]) { _ in 10 }
+        let body = VehicleRiderBody(position: [30, 60, 90])
+        let standing = VehicleCore.standingPose(seat: seat, body: body) { _ in 10 }
         #expect(Self.near(standing.position, [130, 60, 10]))
 
         let turned = ReferenceTransformOverride(position: [100, 0, 50], rotation: [0, 0, .pi])
-        let behind = VehicleCore.standingPose(seat: turned, body: [30, 60, 90]) { _ in nil }
+        let behind = VehicleCore.standingPose(seat: turned, body: body) { _ in nil }
         #expect(Self.near(behind.position, [70, -60, 50]))
         #expect(behind.rotation == turned.rotation)
+
+        let facingRight = VehicleRiderBody(position: [30, 60, 90], forward: [1, 0, 0])
+        let turnedOff = VehicleCore.standingPose(seat: seat, body: facingRight) { _ in nil }
+        #expect(abs(turnedOff.rotation.z - .pi / 2) < 0.0001, "it faces the way its body turned")
     }
 
     /// The cart's horse and riders walk through the cart; a mounted escort does not.

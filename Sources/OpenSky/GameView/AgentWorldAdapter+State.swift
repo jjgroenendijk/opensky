@@ -21,6 +21,7 @@ import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyQuests
@@ -242,6 +243,8 @@ extension AgentWorldAdapter {
             ],
             "healthCues": healthCueState(),
             "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
+            "ragdoll": .bool(game.ragdoll.runtime?.world.isRagdolling(.player) == true),
+            "eyeTexture": eyeTexture(of: .player),
             "controls": [
                 "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),
                 "savingDisabled": .bool(locks.savingDisabled),
@@ -341,6 +344,10 @@ extension AgentWorldAdapter {
             ),
             "skinDecals": .array(skinDecalBones(of: actor.key).map(AgentJSON.string)),
             "constraints": physicsConstraints(of: actor.key),
+            "lagBones": .object(
+                (game.actorPlayback(for: actor.key)?.lagBoneOffsets ?? [:])
+                    .mapValues(AgentJSON.init)
+            ),
             "graph": graph
         ])
     }

@@ -8,11 +8,13 @@ import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyObjectAnimation
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -21,6 +23,7 @@ import simd
 protocol ObjectAnimationWorldHost: AnyObject {
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorWorld: ActorWorldAdapter { get }
+    var containerMenu: ContainerMenuController { get }
     var effectGraphs: EffectGraphCoordinator { get }
     var objectBehaviors: ObjectBehaviorCoordinator { get }
     var sequenceDoors: SequenceDoorCoordinator { get }
@@ -63,6 +66,7 @@ final class ObjectAnimationWorldAdapter {
     private func advance(_ delta: Float) {
         objects.sync()
         objects.tick(deltaTime: delta)
+        game.streamer?.poseMovingCollision { [objects] in objects.boneMatrices(of: $0) }
         run(doors.sync())
         run(doors.tick(deltaTime: delta))
         game.nodeControllers.sync()
@@ -166,8 +170,16 @@ extension ObjectAnimationWorldAdapter: PapyrusObjectAnimationBridge {
         game.effectGraphs.setSubGraphVariable(value, named: name, on: actor)
     }
 
+    /// A moving door's phase, or 0 for a resident reference that cannot open: one whose
+    /// use action is neither open nor search (CK wiki "GetOpenState - ObjectReference").
     func openStateCode(of key: ReferenceKey) -> Int32? {
-        reference(of: key).flatMap { doors.openStateCode(of: $0) }
+        guard let reference = reference(of: key) else { return nil }
+        if let code = doors.openStateCode(of: reference) {
+            return code
+        }
+        guard let interaction = game.streamer?.residentInteraction(reference: FormID(reference))
+        else { return 0 }
+        return [.open, .search].contains(interaction.action) ? nil : 0
     }
 }
 
@@ -176,11 +188,18 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
         game.streamer?.residentSequenceDoors() ?? []
     }
 
-    func sequenceDoorWantsOpen(_ reference: UInt32) -> Bool {
-        guard let entry = game.streamer?.referenceEntry(formID: FormID(reference)) else {
+    func sequenceDoorWantsOpen(_ door: CellSequenceDoor) -> Bool {
+        guard let entry = game.streamer?.referenceEntry(formID: FormID(door.reference)) else {
             return false
         }
-        return game.worldState.resolvedState(for: entry).activation.isOpen
+        switch door.kind {
+        case .door:
+            return game.worldState.resolvedState(for: entry).activation.isOpen
+        case .loadDoor:
+            return false
+        case .containerLid:
+            return game.containerMenu.isOpen && game.containerMenu.container?.key == entry.key
+        }
     }
 
     func run(_ commands: [SequenceDoorCommand]) {
@@ -190,6 +209,7 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
                 guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key
                 else { continue }
                 game.gameSession?.animationEvents?.handle(name, from: key)
+                game.scripts.runtime?.queueAnimationEvent(sender: key, name: name)
             case let .setLeaves(deltas, reference):
                 game.streamer?.sequenceDoorLeaves[reference] = deltas
             }

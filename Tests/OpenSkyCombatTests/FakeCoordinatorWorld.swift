@@ -32,6 +32,10 @@ final class FakeCoordinatorWorld: CombatWorld {
     private(set) var perkQuestions: [PerkEntryPoint: PerkEvaluationSubjects] = [:]
     private(set) var spellHits: [SpellHit] = []
     var healths: [ReferenceKey: (current: Float, maximum: Float)] = [:]
+    var unkillable: Set<ReferenceKey> = []
+    var inKillMove: Set<ReferenceKey> = []
+    var playsKillMoves = true
+    private(set) var killMoves: [KillMoveAttempt] = []
     var casting: [ReferenceKey: CombatCastingFacts] = [:]
     var styles: [ReferenceKey: CombatStyleTuning] = [:]
     /// Who each observer has detected; everyone else is unaware.
@@ -121,6 +125,19 @@ final class FakeCoordinatorWorld: CombatWorld {
 
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)? {
         healths[key]
+    }
+
+    func canBeKilled(_ target: ReferenceKey, by _: ReferenceKey) -> Bool {
+        !unkillable.contains(target)
+    }
+
+    func startKillMove(_ attempt: KillMoveAttempt) -> Bool {
+        killMoves.append(attempt)
+        return playsKillMoves
+    }
+
+    func isInKillMove(_ key: ReferenceKey) -> Bool {
+        inKillMove.contains(key)
     }
 
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool {

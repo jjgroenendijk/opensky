@@ -3,6 +3,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering
 
@@ -15,14 +16,9 @@ nonisolated extension CellSceneBuilder {
         guard let skeletonPath = assembly.visual.skeletonPath else {
             return .failure(.unsupportedSkeleton("<missing>"))
         }
-        let normalizedPath: String
-        do {
-            normalizedPath = try VirtualFileSystem.normalize(skeletonPath)
-        } catch {
+        guard let meshPath = try? VirtualFileSystem.meshPath(skeletonPath) else {
             return .failure(.unsupportedSkeleton(skeletonPath))
         }
-        let meshPath = normalizedPath.hasPrefix("meshes\\")
-            ? normalizedPath : "meshes\\" + normalizedPath
         let key = ActorAnimationCacheKey(
             skeletonPath: meshPath,
             female: assembly.visual.appearance.isFemale.value
@@ -48,8 +44,24 @@ nonisolated extension CellSceneBuilder {
             transform: assembly.transform,
             sheathNodes: assembly.visual.sheathNodes,
             armorAddons: assembly.visual.wornArmorAddons,
-            posesSeveredHead: severedHead
+            posesSeveredHead: severedHead,
+            lagBones: lagBoneRig(skeletonMeshPath: meshPath, clip: clip)
         ))
+    }
+
+    /// The lag bones of a skeleton mesh, read once per skeleton.
+    nonisolated func lagBoneRig(
+        skeletonMeshPath path: String, clip: ActorAnimationClip
+    ) -> ActorLagBoneRig? {
+        if let known = actorLagBoneRigs[path] {
+            return known
+        }
+        let file = fileSystem.flatMap { try? NIFFile(data: $0.contents(forPath: path)) }
+        let rig = file.flatMap {
+            ActorLagBoneRig(file: $0, rigBones: Set(clip.skeleton.boneNames))
+        }
+        actorLagBoneRigs[path] = .some(rig)
+        return rig
     }
 
     nonisolated private func loadAnimationClip(

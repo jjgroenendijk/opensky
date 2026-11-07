@@ -28,6 +28,12 @@ final class FakeTrapWorld: PapyrusTrapWorldBridge {
     var impulses: [(impulse: SIMD3<Float>, reference: ReferenceKey)] = []
     var pushes: [Push] = []
     var staggers: [(actor: ReferenceKey, magnitude: Float)] = []
+    struct Knockdown {
+        let source: ReferenceKey
+        let magnitude: Float
+    }
+
+    var knockdowns: [Knockdown] = []
     var motionTypes: [ReferenceKey: ReferenceMotionType] = [:]
     var resets: [(reference: ReferenceKey, target: ReferenceKey?)] = []
     var shots: [Shot] = []
@@ -49,6 +55,13 @@ final class FakeTrapWorld: PapyrusTrapWorldBridge {
         along direction: SIMD3<Float>?, speed: Float
     ) -> Bool {
         pushes.append(Push(source: source, direction: direction, speed: speed))
+        return true
+    }
+
+    func knockDownActor(
+        _: ReferenceKey, awayFrom source: ReferenceKey, magnitude: Float
+    ) -> Bool {
+        knockdowns.append(Knockdown(source: source, magnitude: magnitude))
         return true
     }
 

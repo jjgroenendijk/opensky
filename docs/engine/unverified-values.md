@@ -35,7 +35,12 @@ the detail and the sources it did find.
 | NPC combo chance | 0.3 per swing, at most 3 swings, no Offensive Mult term | [combat behaviour](/engine/combat-behavior.md) |
 | NPC back-off time | At most 2 s | [combat behaviour](/engine/combat-behavior.md) |
 | Combat setting formulas | Read from the setting names | [combat](/engine/combat.md) |
-| Knockback and knockdown formulas | Read from the setting names | [impulses](/engine/impulses.md) |
+| Melee knockdown magnitude | The knockback slide speed over 69.99 | [impulses](/engine/impulses.md#hits) |
+| Explosion knockdown magnitude | The `EXPL` force | [impulses](/engine/impulses.md#explosions) |
+| Knockdown limb shares | Torso and head 1, upper limbs 0.75, lower limbs 0.5, hands and feet 0.25, by bone name | [ragdoll](/engine/ragdoll.md#knockdown) |
+| Get-up fallback blend | 1 s when the graph runs no `hkbGetUpModifier` | [ragdoll](/engine/ragdoll.md#knockdown) |
+| `KnockAreaEffect` scale | Magnitude 1 knocks down at 14 Havok m/s | [papyrus session natives](/engine/papyrus-session-natives.md) |
+| Actor splash | An actor splashes heavy going in, and not coming out | [impulses](/engine/impulses.md#water) |
 | Kill camera timing | OpenSky's numbers | [kill camera](/engine/kill-cam.md) |
 | Projectile settings | Formulas read from the setting names | [projectiles](/engine/projectiles.md) |
 | Arrow gravity unit | Read as the record value with no scale | [projectiles format](/formats/projectiles.md) |
@@ -74,7 +79,8 @@ the detail and the sources it did find.
 | Horse turn ramp | Starts at 0, adds `iHorseTurnDegreesRampUpPerSecond` each second up to `iHorseTurnDegreesPerSecond`; resets when the turn ends | [riding](/engine/riding.md#steering) |
 | Horse sprint drain and HUD | The player's sprint drain at no worn weight; the stamina meter shows the horse's stamina | [riding](/engine/riding.md#sprint-and-stamina) |
 | Head tracking | 384 units; angles in degrees; behind angle and neck share | [head tracking](/engine/head-tracking.md) |
-| Face morph settings | Units read as seconds and emotion points; offsets as radians | [face morphs](/engine/face-morphs.md) |
+| Face morph settings | Units read as seconds; eye offsets as radians | [face morphs](/engine/face-morphs.md) |
+| Race morph weight | The race's own TRI target at weight 1 on an assembled head | [head part assembly](/engine/head-part-assembly.md#shape-colour-and-expressions) |
 | Navigation | 128-unit ledge rule; 512-unit gait rule | [navigation](/engine/navigation.md) |
 | `GetCurrentAIProcedure` of procedures not measured | -1 | [world condition functions](/engine/condition-functions-world.md#packages) |
 | Package fallback on a blocked path | A guess at the game's rule | [package schedules](/engine/package-schedules.md) |
@@ -108,6 +114,9 @@ the detail and the sources it did find.
 | `NPC` and `2_` event prefixes | Come off a paired half's events | [paired animations](/engine/paired-animations.md) |
 | Paired animation time limit | 30 s without an end event | [paired animations](/engine/paired-animations.md) |
 | NaN in a clip track | Read as the part's identity | [animation](/formats/hka-animation.md) |
+| State machine random seed | Seed `0x5EED` for every instance | [state machines](/engine/behavior-state-machines.md#transitions) |
+| Pose matching frame heading | Removed about up before matching | [behaviour runtime](/engine/behavior-runtime.md#pose-matching) |
+| Pose matching pelvis speed | Live pelvis travel per second, in model space | [behaviour runtime](/engine/behavior-runtime.md#pose-matching) |
 
 ## Items, crime, and progression
 
@@ -144,6 +153,9 @@ the detail and the sources it did find.
 | Weather global meaning | OpenSky's reading | [weather format](/formats/weather.md) |
 | Location tie rule | Inferred | [locations](/formats/locations.md) |
 | Terrain with no height | No guessed height | [terrain](/engine/terrain.md) |
+| Current push speed cap | The swim speed while swimming, else the run speed | [water physics](/engine/water-physics.md#actors-in-a-current) |
+| Cell water box floor | The lowest land height of the cell; 4096 units deep without land | [water physics](/engine/water-physics.md#where-the-boxes-come-from) |
+| Shaped current positions | Read as Havok units | [water physics](/engine/water-physics.md#current-lists) |
 | World sound roll interval | OpenSky's interval | [world sounds](/engine/world-sfx.md) |
 | Music above a region | Not confirmed | [music](/engine/music.md) |
 | Loading screen timing | 1.5 s; 0.4 s fade | [loading screens](/engine/loading-screens.md) |
@@ -207,13 +219,14 @@ the detail and the sources it did find.
 | Light flicker curves, period unit, slow factor | OpenSky's values | [lighting](/formats/lighting.md) |
 | Texture scroll rate with no period | OpenSky's rate | [NIF materials](/formats/nif-materials.md) |
 | Controller threshold | 0.5 | [NIF controllers](/formats/nif-controllers.md) |
+| Path bank sign and bend measure | Rolls with the turn's sign; bend is heading change per unit length | [NIF controllers](/formats/nif-controllers.md#node-controller-rules) |
 | Particle modifier readings | Items marked "inferred" | [NIF particles](/formats/nif-particles.md) |
 | Rotation extra data | Read as thousandths of a radian | [NIF extra data](/formats/nif-extra-data.md) |
 | Volume texture depth | 0.5 | [DDS](/formats/dds.md) |
 | Distant LOD level limit | `2 x level1`, capped | [distant LOD](/engine/distant-lod.md) |
 | First-person shadow rule | OpenSky's rule | [first person](/engine/first-person.md) |
 | Main menu smoke and start | Placement checked by eye | [main menu](/engine/main-menu.md) |
-| Race menu camera and Age control | OpenSky's framing | [race menu](/engine/race-menu.md) |
+| Race menu camera | OpenSky's framing | [race menu](/engine/race-menu.md) |
 | `WarHorseMode` HUD rule | Inferred | [HUD](/rendering/hud.md) |
 | `RFCT` rotate-to-face flag | Not used | [visual effects](/rendering/visual-effects.md) |
 
@@ -243,3 +256,9 @@ the detail and the sources it did find.
 | Tree sway and leaf flutter | `treeSwayTilt` 0.1, leaf side share 0.5, leaf fade at 4096 units, defaults leaf amplitude 3 and frequency 1 | [trees](/rendering/trees.md) |
 | Skin decal projection depth | The box reaches as far in front of and behind the decal as its widest half side | [decals](/rendering/decals.md#skin-decals) |
 | Skin decal bone | The body bone with the nearest origin to the hit; weapon, shield, quiver, camera, magic, arrow, and root nodes skipped | [decals](/rendering/decals.md#skin-decals) |
+| Static idle random roll | 12 steps, rolled when the idle is chosen, for an actor that runs no graph | [idle runtime](/engine/idle-runtime.md#playback) |
+| Line speaker and listener idles | Both start with the line, without the idles' own conditions | [scenes](/engine/scenes.md#idles) |
+| Package idle list | Plays only while the actor stands still and has no marker | [idle runtime](/engine/idle-runtime.md#package-idles) |
+| Player shove efficiency | 0.175 of the player's momentum, before the game's mass and layer factor | [dynamic bodies](/engine/dynamic-bodies.md#the-players-shove) |
+| Cart front axle swivel limit | 60 degrees either way from the body | [vehicles](/engine/vehicles.md#towing) |
+| Swim breadcrumb trail | A point every 128 units, the last 64 kept; joined within 1,024 units, serves targets within 512 of its end | [navigation](/engine/navigation.md#swimming-after-the-player) |

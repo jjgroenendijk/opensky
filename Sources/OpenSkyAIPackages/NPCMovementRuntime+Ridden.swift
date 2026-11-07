@@ -43,4 +43,8 @@ extension NPCMovementRuntime {
     public func isRidden(_ actor: ReferenceKey) -> Bool {
         ridden[actor] != nil
     }
+
+    public func riddenHold(of actor: ReferenceKey) -> NPCRiddenHold? {
+        ridden[actor]
+    }
 }

@@ -14,13 +14,17 @@ nonisolated public struct DynamicStepWorld {
     /// Engine units per second squared, Z-up. Defaults to the same constant the
     /// player capsule falls under.
     public var gravity = SIMD3<Float>(0, 0, -PhysicsStep.gravity)
+    /// Nil where nothing floats, as on a ragdoll.
+    public var water: DynamicWaterWorld?
 
     public init(
         staticCandidates: @escaping (ModelBounds) -> [StaticCollisionShape] = { _ in [] },
-        gravity: SIMD3<Float> = SIMD3(0, 0, -PhysicsStep.gravity)
+        gravity: SIMD3<Float> = SIMD3(0, 0, -PhysicsStep.gravity),
+        water: DynamicWaterWorld? = nil
     ) {
         self.staticCandidates = staticCandidates
         self.gravity = gravity
+        self.water = water
     }
 }
 
@@ -156,7 +160,11 @@ nonisolated public enum DynamicBodySolver: Sendable {
         dt: Float
     ) {
         let definition = body.definition
-        body.linearVelocity += world.gravity * definition.gravityFactor * dt
+        let gravity = world.gravity * definition.gravityFactor
+        body.linearVelocity += gravity * dt
+        if let water = world.water, let immersion = water.immersion(of: body) {
+            WaterBuoyancy.apply(to: &body, immersion: immersion, gravity: gravity, dt: dt)
+        }
         body.linearVelocity *= max(0, 1 - definition.linearDamping * dt)
         body.angularVelocity *= max(0, 1 - definition.angularDamping * dt)
         body.linearVelocity = clamped(body.linearVelocity, to: definition.maximumLinearSpeed)

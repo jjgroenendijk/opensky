@@ -111,8 +111,17 @@ Bindings also run the other way. A member that a modifier computes, such as
 variable after the modifier runs. A bit-addressed binding sets or clears one bit. Without this,
 a graph's own state flags never change.
 
-A binding that cannot be applied is counted, not guessed. Examples: a character property, a
-variable index out of range, a bit index past 32, or an empty path that binds the whole object.
+A binding of type 1 reads a character property instead of a graph variable. The index names
+a property in the graph's own list, and the value comes from the character file by that name
+([character data](/formats/hkx-behavior.md#hkbcharacterdata-and-hkbcharacterstringdata)).
+Most vanilla ones bind a blender child's or a bone switch's bone weights. A referenced graph
+reads the same character's properties.
+
+The enable binding applies only to modifiers. A disabled modifier leaves the pose as it is
+and writes no bound outputs.
+
+A binding that cannot be applied is counted, not guessed. Examples: a variable index out of
+range, a bit index past 32, or an empty path that binds the whole object.
 
 ## Generators
 
@@ -122,16 +131,59 @@ variable index out of range, a bit index past 32, or an empty path that binds th
 | `hkbBlenderGenerator` | Weighted or parametric blend of its children, masked per bone and optionally synced ([blending](/engine/behavior-clips.md)) |
 | `hkbManualSelectorGenerator` | Runs the child at `selectedGeneratorIndex`. Out of range gives the reference pose |
 | `hkbModifierGenerator` | Runs its child, then its modifier over the result |
-| `hkbPoseMatchingGenerator` | Runs as its blender base, and is counted |
+| `hkbPoseMatchingGenerator` | Its blender, with weights it sets itself ([pose matching](#pose-matching)) |
 | `hkbStateMachine` | See [state machines](/engine/behavior-state-machines.md) |
 | `BSiStateTaggingGenerator` | Runs its default generator, and reports `m_iStateToSetAs` as the graph's `iState` tag. The highest `m_iPriority` wins ([actor state graph](/engine/actor-state-graph.md#drunk-actors)) |
 | `BSBoneSwitchGenerator` | Default generator, with each child's pose replacing it on the bones its bone weights cover |
-| `BSCyclicBlendTransitionGenerator` | Its blender, with `m_fBlendParameter` as the blender's parameter. `m_EventToCrossBlend` starts a crossfade from the pose of that moment, over `m_fTransitionDuration` with `m_eBlendCurve` |
-| `BSOffsetAnimationGenerator` | Default generator plus the offset clip's difference from the reference pose. The clip is held at the fraction `m_fOffsetVariable` makes of the offset range |
+| `BSCyclicBlendTransitionGenerator` | Its blender, with `m_fBlendParameter` as the blender's parameter. `m_EventToFreezeBlendValue` holds the parameter. `m_EventToCrossBlend`, only while held or blending, frees it and crossfades from a copy of the held blender, which keeps running at the held parameter, over `m_fTransitionDuration` with `m_eBlendCurve`. A repeat during the crossfade mirrors its progress: elapsed `e` becomes `d - e` |
+| `BSOffsetAnimationGenerator` | Default generator plus the additive offset clip at weight 1. `f` is where `m_fOffsetVariable` sits in the offset range, clamped, and 0 for an empty range. The clip plays at `D/(n-1) + (D - D/(n-1)) f` for duration `D` and `n` frames, and is sampled again only when that time reaches another frame and `f` changed. An offset clip that is not additive adds nothing |
 | `hkbReferencePoseGenerator` | The reference pose |
 | `BSSynchronizedClipGenerator` | The wrapped clip, phase-synchronized. Marker alignment is counted |
 | `hkbBehaviorReferenceGenerator` | Runs another behavior file ([behavior references](/engine/behavior-clips.md)) |
 | Anything else | The reference pose, and the class is named in the tally |
+
+## Pose matching
+
+`hkbPoseMatchingGenerator` picks the child whose start pose is closest to the live pose. The
+get-up after a ragdoll uses it to choose between getting up from the back and from the front.
+
+- Three bones, `m_rootBoneIndex`, `m_otherBoneIndex`, and `m_anotherBoneIndex`, span a frame:
+  the first axis points from root to other, and the third is the normal of the plane with
+  another. The indices are ragdoll bones. A ragdoll bone maps to the rig bone of the same name
+  without its `Ragdoll_` prefix.
+- Each child is sampled once at its start time, which gives its signature. The error of a child
+  is `1 - |dot(live, signature)|`, and the lowest error is best. The first update picks the
+  best at once.
+- After that, the best child must stay best for `(1 - e) m_minSwitchTimeNoError +
+  e m_minSwitchTimeFullError`, and the pelvis must move at `m_minSpeedToSwitch` or faster.
+- The current child's weight rises by `m_blendSpeed` per second to 1, and the others fall to 0.
+  While matching, the children stay at their start. `m_startPlayingEventId` lets them play, and
+  `m_startMatchingEventId` matches again and restarts the current clip.
+- The live pose is what the engine passes as the physics pose, or else the pose the graph showed
+  last.
+
+## Mirrored clips
+
+A clip with flag 4 plays mirrored. The character file's `hkbMirroredSkeletonInfo` names each
+bone's partner and the mirror axis; `defaultmale.hkx` has the axis (1, 0, 0). With `A` the 180
+degree turn about the axis and `M` the model-space reference rotations, the frame change of bone
+`b` is `I(b) = conj(M_b) A M_partner(b)`, snapped to the nearest of the 24 axis-aligned
+rotations when the dot is 0.9 or more. `I(-1)` is `A`.
+
+The sample of bone `k` goes to `b = partner(k)`: the rotation becomes
+`I(parent(b)) q conj(I(b))` (`conj(I(parent(b)))` on the right for an additive clip), the
+translation `-I(parent(b)) t`, and the scale stays. Root travel is mirrored with `I(-1)`. A
+character file without the info plays the clip unmirrored, and that is counted.
+
+## Clip travel
+
+A clip whose `m_extractedMotion` is an `hkaDefaultAnimatedReferenceFrame` travels by that frame:
+samples spread evenly over its duration, each a position and a heading about `m_up`, linear
+between samples. Any other reference frame class is approximated from the root bone and
+counted. A user-controlled clip sits at `m_cropStartAmountLocalTime` plus
+`m_userControlledTimeFraction` of the cropped length; the fraction is clamped to 0 to 1, and
+speed, time step, and looping do not apply. A playback speed between -0.001 and 0.001 becomes
+0.001, or -0.001 when it is 0 or less.
 
 ## Modifiers
 
@@ -155,6 +207,10 @@ Variable modifiers, which write their outputs back through the bindings:
   2 when it turns true, 3 every update after it first held. The grammar has numbers, variables,
   `+ - * / %`, comparisons, `&& || !`, and the functions in `BehaviorExpressionFunctions`. An
   event name the graph does not declare, such as `SoundPlay.X`, goes to `unboundEvents`.
+  A statement whose text does not parse, or that names an undeclared variable, does nothing that
+  update, and the other statements still run. The game does the same: it compiles each statement
+  once, and a statement that fails gives no result. One vanilla statement assigns the undeclared
+  `State`, so it never writes anything in the game either.
 - `BSIsActiveModifier`, `BSInterpValueModifier`, `hkbDampingModifier`, `BSSpeedSamplerModifier`,
   `BSDecomposeVectorModifier`, `BSGetTimeStepModifier`, `hkbTransformVectorModifier`,
   `BSIStateManagerModifier`, and `BSModifyOnceModifier`.
@@ -209,13 +265,15 @@ These are guesses, marked as guesses:
 
 - The parametric weights and the shared cycle of a synced blender follow the flag names and the
   runtime members in the class reflection data, not a description of Havok's maths
-  ([parametric blend](/engine/behavior-clips.md#parametric-blend)). The smooth-weights flag
-  (0x4) is not used; each such blender counts one `blenderSmoothWeightsIgnored`. That only the
+  ([parametric blend](/engine/behavior-clips.md#parametric-blend)). That only the
   leader of a synced blender raises annotations is also a choice; authored triggers still fire
   from every child.
-- Root motion is the difference of two samples of the root bone, in its own local frame. Vanilla
-  data has no root motion to measure ([walk mode](/engine/walk-mode.md)), so the extracted motion
-  class is not decoded.
+- Without a reference frame, root motion is the difference of two samples of the root bone, in
+  its own local frame ([walk mode](/engine/walk-mode.md)).
+- The pose matching frame has its heading about up removed, so a ragdoll matches whichever way
+  it faces. The source does not say whether Havok removes it. The pelvis speed is the live
+  pelvis bone's travel per second, in model space.
+- The pose matching mode at activation comes from `m_mode`: 0 matches, any other value plays.
 - The root bone is bone 0, which is `NPC Root [Root]` in every vanilla rig. The index can be
   configured, but nothing reads it from the character file yet.
 - `BSEventEveryNEventsModifier.m_randomizeNumberOfEvents` draws each N from a random source with
@@ -226,8 +284,6 @@ These are guesses, marked as guesses:
   `BSSpeedSamplerModifier` (passes `goalSpeed` to `speedOut`), `hkbDampingModifier` (one PID
   step per update), `BSTweenerModifier`, `BSLimbIKModifier`, and the aim axis conventions of the
   look-at and direct-at modifiers.
-- `BSCyclicBlendTransitionGenerator.m_EventToFreezeBlendValue` changes nothing: the parameter
-  of its parametric blender is not held.
 - A state machine writes its current state ID to `m_syncVariableIndex` when the index names a
   variable, so two machines that share it stay in step
   ([state machines](/engine/behavior-state-machines.md)). No source confirms that Havok writes
@@ -235,11 +291,6 @@ These are guesses, marked as guesses:
 - Transition effect flag bits other than sync are not used. Local decode notes read bit 0 as
   ignore-from-generator, bit 2 as ignore-world-from-model, and bit 3 as ignore-to-generator. No
   independent source confirms that, and each one changes how root motion crosses a blend.
-
-- An additive clip is added as `base * change` for both `m_blendHint` values, and its blender
-  weight is not normalised against the full children
-  ([additive clips](/engine/behavior-clips.md#additive-clips)). No source gives the order or the
-  weighting.
 
 The transition order and the crossfade interrupt rule are also choices, explained on the
 [state machines](/engine/behavior-state-machines.md) page.

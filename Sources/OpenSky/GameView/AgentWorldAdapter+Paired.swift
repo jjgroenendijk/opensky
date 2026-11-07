@@ -38,6 +38,7 @@ extension AgentWorldAdapter {
                 "idle": .string(play.idle), "event": .string(play.event),
                 "killMove": .bool(play.isKillMove),
                 "partnerTookEvent": .bool(play.partnerTookEvent),
+                "partnerAtMark": .bool(play.isAtMark),
                 "lead": actorJSON(play.lead), "partner": actorJSON(play.partner)
             ]
         })
@@ -50,7 +51,9 @@ extension AgentWorldAdapter {
             : game.actorGraphs.instance(of: key)
         return [
             "ref": .string("\(key)"),
-            "clips": .array((graph?.pairedClipNames ?? []).map { .string($0) })
+            "clips": .array((graph?.pairedClipNames ?? []).map { .string($0) }),
+            "getToMarkTime": graph?.synchronizedMark.map { .number(Double($0.getToMarkTime)) }
+                ?? .null
         ]
     }
 }

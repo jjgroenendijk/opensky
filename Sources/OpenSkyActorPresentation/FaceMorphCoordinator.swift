@@ -11,13 +11,21 @@ public protocol FaceMorphWorld: AnyObject {
     func faceMorphPlayback(for actor: FormID) -> FaceMorphPlayback?
     /// Every loaded face, for blinking.
     var faceMorphPlaybacks: [FaceMorphPlayback] { get }
+    /// The fear, combat, and mood state the face of `actor` shows.
+    func faceMood(of actor: FormID) -> FaceMoodInput
+}
+
+extension FaceMorphWorld {
+    public func faceMood(of _: FormID) -> FaceMoodInput {
+        .calm
+    }
 }
 
 public final class FaceMorphCoordinator {
     /// An emotion on one face, until an animation time, or until cleared.
     private struct HeldEmotion {
         let emotion: TopicInfo.Response.Emotion
-        let weights: [String: Float]
+        let value: UInt32
         let until: Float?
     }
 
@@ -25,10 +33,8 @@ public final class FaceMorphCoordinator {
     private struct FaceState {
         var nextBlink: Float
         var blinkStart: Float?
-        /// The emotion weights on screen, easing toward the held emotion.
+        /// The expression weights on screen, easing toward the goal.
         var shown: [String: Float] = [:]
-        /// Emotion weight per second of the latest change.
-        var rate: Float = .infinity
     }
 
     weak let world: (any FaceMorphWorld)?
@@ -36,7 +42,7 @@ public final class FaceMorphCoordinator {
     public var automaticBlinkingEnabled = true
     public var dialogueExpressionsEnabled = true
     public var eyeMovementEnabled = true
-    /// A number in 0 ..< 1 for blink gaps and emotion change speeds. A test fixes it.
+    /// A number in 0 ..< 1 for blink gaps. A test fixes it.
     public var random: () -> Float = { Float.random(in: 0 ..< 1) }
     private var emotions: [FormID: HeldEmotion] = [:]
     private var faces: [FormID: FaceState] = [:]
@@ -62,19 +68,15 @@ public final class FaceMorphCoordinator {
         return world.faceMorphPlayback(for: actor)
     }
 
-    /// Shows `emotion` on `actor`'s face. With `seconds`, it ends on its own. The face
-    /// moves to it at the speaking emotion change speed.
+    /// Shows `emotion` on `actor`'s face while it speaks. With `seconds`, it ends on its
+    /// own.
     public func showEmotion(
         _ emotion: TopicInfo.Response.Emotion, value: UInt32, on actor: FormID,
         now: Float, seconds: Float? = nil
     ) {
         emotions[actor] = HeldEmotion(
-            emotion: emotion,
-            weights: FacialExpressionCore.emotionWeights(emotion, value: value),
-            until: seconds.map { now + max($0, 0) }
+            emotion: emotion, value: value, until: seconds.map { now + max($0, 0) }
         )
-        let rate = settings.speakingEmotionRate(rolls: (random(), random()))
-        faces[actor, default: FaceState(nextBlink: now + blinkDelay())].rate = rate
     }
 
     public func clearEmotion(on actor: FormID) {
@@ -91,8 +93,11 @@ public final class FaceMorphCoordinator {
             let actor = playback.actor
             var face = faces[actor] ?? FaceState(nextBlink: now + blinkDelay())
             let held = emotions[actor]
-            let goal = dialogueExpressionsEnabled ? held?.weights ?? [:] : [:]
-            let step = face.rate.isFinite ? face.rate * elapsed : .infinity
+            let goal = dialogueExpressionsEnabled ? FacialMoodRules.goal(
+                world?.faceMood(of: actor) ?? .calm,
+                speaking: held.map { ($0.emotion, $0.value) }
+            ) : [:]
+            let step = FacialMoodRules.rate(toward: goal) * elapsed
             face.shown = FacialExpressionCore.ease(face.shown, toward: goal, step: step)
             let eyes = eyeMovementEnabled ? FacialExpressionCore.eyeWeights(
                 eyeOffset(of: actor, held: held, now: now), settings: settings

@@ -65,9 +65,9 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
         state.withLock { $0.weights }
     }
 
-    public var targetNames: [String] {
-        Array(Set(bindings.values.flatMap { $0.targets.map(\.name) })).sorted()
-    }
+    /// Built once: the buffers' targets never change.
+    public let targetNames: [String]
+    private let targetSet: Set<String>
 
     public init(
         actor: FormID,
@@ -77,13 +77,15 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
     ) {
         self.actor = actor
         self.bindings = bindings
+        targetSet = Set(bindings.values.flatMap { $0.targets.map(\.name) })
+        targetNames = targetSet.sorted()
         self.pairedPaths = pairedPaths
         self.misses = misses
     }
 
     @discardableResult
     public func setWeight(_ weight: Float, for target: String) -> Bool {
-        guard targetNames.contains(target) else {
+        guard targetSet.contains(target) else {
             state.withLock { $0.unknownTargetCount += 1 }
             return false
         }
@@ -94,8 +96,9 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
 
     @discardableResult
     public func setLipWeights(_ weights: [String: Float]) -> Int {
-        let targets = Set(targetNames)
-        state.withLock { $0.lipWeights = weights.filter { targets.contains($0.key) } }
+        state.withLock { [targetSet] in
+            $0.lipWeights = weights.filter { targetSet.contains($0.key) }
+        }
         return applyWeights()
     }
 
@@ -106,8 +109,7 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
     /// Uploads only when the weights changed, so a face between blinks costs nothing.
     @discardableResult
     public func setExpressionWeights(_ weights: [String: Float]) -> Bool {
-        let targets = Set(targetNames)
-        let known = weights.filter { targets.contains($0.key) }
+        let known = weights.filter { targetSet.contains($0.key) }
         let changed = state.withLock { state in
             guard state.expressionWeights != known else { return false }
             state.expressionWeights = known

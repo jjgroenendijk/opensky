@@ -54,7 +54,7 @@ nonisolated extension BehaviorGraphInstance {
             info.flags & BehaviorTransitionFlag.disableCondition == 0,
             let target = info.condition else { return true }
         guard let expression = condition(at: target) else {
-            tally.note(.transitionConditionUnparsed)
+            tally.note(.transitionConditionUnparsed, text: conditionSource(at: target))
             return false
         }
         guard let result = expression.evaluate(in: variables) else {
@@ -138,7 +138,10 @@ nonisolated extension BehaviorGraphInstance {
         _ machine: HKBStateMachine,
         state: BehaviorMachineState
     ) -> Int? {
-        if events.isActive(id: machine.returnToPreviousStateEventId), state.previousStateId >= 0 {
+        if
+            events.isActive(id: machine.returnToPreviousStateEventId), state.previousStateId >= 0,
+            state.previousStateId != state.currentStateId
+        {
             return state.previousStateId
         }
         if events.isActive(id: machine.randomTransitionEventId) {
@@ -153,27 +156,26 @@ nonisolated extension BehaviorGraphInstance {
         return nil
     }
 
-    /// The "random" pick, made deterministic: the enabled state with the highest
-    /// `m_probability`, ties broken by the lowest id. An engine that decides
-    /// animation from an unseeded random source cannot be stepped twice with
-    /// the same result, so the choice is fixed and tallied — the same call
-    /// `BSEventEveryNEventsModifier` already makes.
+    /// The random event's pick: the targets of the current state's transitions and the
+    /// wildcards that pass the usual rules and allow a random pick, weighted by the target
+    /// state's `m_probability`.
     private func randomTransitionStateId(
         _ machine: HKBStateMachine,
         state: BehaviorMachineState
     ) -> Int? {
-        tally.note(.stateMachineRandomTransitionFixed)
-        var best: (id: Int, probability: Float)?
-        for info in enabledStates(of: machine) where info.stateId != state.currentStateId {
-            guard let current = best else {
-                best = (info.stateId, info.probability)
-                continue
-            }
-            if (info.probability, -info.stateId) > (current.probability, -current.id) {
-                best = (info.stateId, info.probability)
-            }
+        let targets = randomCandidates(machine: machine, state: state).compactMap { info in
+            stateInfo(of: machine, id: info.toStateId)?.info
         }
-        return best?.id
+        return stateMachineRandom.pick(targets.map { ($0.stateId, $0.probability) })
+    }
+
+    /// A random start state among the enabled states, by `m_probability`.
+    func randomStartStateId(_ machine: HKBStateMachine) -> Int? {
+        stateMachineRandom.pick(enabledStates(of: machine).map { ($0.stateId, $0.probability) })
+    }
+
+    func firstEnabledStateId(_ machine: HKBStateMachine) -> Int? {
+        enabledStates(of: machine).first?.stateId
     }
 
     /// The next state id above or below the current one, wrapping when
@@ -218,5 +220,47 @@ nonisolated extension BehaviorGraphInstance {
                 blendWeight: state.transition?.weight ?? 1
             )
         )
+    }
+}
+
+/// `m_startStateMode` values.
+nonisolated public enum BehaviorStartStateMode {
+    public static let sync = 1
+    public static let random = 2
+}
+
+/// The state machines' random source: a 32-bit linear congruential generator.
+/// [WARNING] The seed is OpenSky's choice; the game seeds one per character.
+nonisolated public struct BehaviorStateMachineRandom: Equatable, Sendable {
+    private var state: UInt32
+
+    public init(seed: UInt32 = 0x5EED) {
+        state = seed
+    }
+
+    /// A value in [0, 1).
+    public mutating func next() -> Float {
+        state = state &* 1_664_525 &+ 1_013_904_223
+        return Float(Double(state) / 4_294_967_296)
+    }
+
+    /// The id whose share of the summed probability covers the drawn value.
+    public mutating func pick(_ weighted: [(id: Int, probability: Float)]) -> Int? {
+        Self.pick(weighted, roll: next())
+    }
+
+    /// The entry whose share of the summed weights holds `roll`, a value in 0..<1.
+    public static func pick(_ weighted: [(id: Int, probability: Float)], roll: Float) -> Int? {
+        let total = weighted.reduce(Float(0)) { $0 + max($1.probability, 0) }
+        guard total > 0 else { return weighted.first?.id }
+        let drawn = roll * total
+        var sum: Float = 0
+        for entry in weighted {
+            sum += max(entry.probability, 0)
+            if drawn < sum {
+                return entry.id
+            }
+        }
+        return weighted.last?.id
     }
 }

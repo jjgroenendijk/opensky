@@ -15,23 +15,28 @@ nonisolated public struct ReferenceConditionFacts: Equatable, Sendable {
     public var isDoor: Bool
     /// Picked up or otherwise deleted at runtime.
     public var isDeleted: Bool
+    /// A door or container: something the use key opens.
+    public var canOpen: Bool
 
     public init(
         lock: ReferenceLockState? = nil,
         isOpen: Bool = false,
         isDoor: Bool = false,
-        isDeleted: Bool = false
+        isDeleted: Bool = false,
+        canOpen: Bool = true
     ) {
         self.lock = lock
         self.isOpen = isOpen
         self.isDoor = isDoor
         self.isDeleted = isDeleted
+        self.canOpen = canOpen
     }
 
-    /// `GetOpenState` codes: 1 open, 3 closed. OpenSky has no opening or closing phase,
-    /// so 2 and 4 never occur, as for the `GetOpenState` native.
+    /// `GetOpenState` codes: 1 open, 3 closed, 0 for a reference that cannot open. The
+    /// native also answers 2 opening and 4 closing; the condition reads no door motion.
     public var openState: Float {
-        isOpen ? 1 : 3
+        guard canOpen else { return 0 }
+        return isOpen ? 1 : 3
     }
 }
 

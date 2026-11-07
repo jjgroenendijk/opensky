@@ -1,12 +1,15 @@
-// A sequence door's collision, kept out of the static set so each leaf's shapes
-// move with the leaf. See docs/engine/object-animation.md#sequence-doors.
+// The collision of a sequence door or a graph object, kept out of the static set so each
+// moving part's shapes move with it. See docs/engine/object-animation.md#moving-collision.
 
+import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
+import OpenSkyGameData
 import OpenSkyObjectAnimation
 import OpenSkyPhysics
+import OpenSkyRendering
 import simd
 
 nonisolated public struct CellDoorCollision: Sendable {
@@ -17,6 +20,19 @@ nonisolated public struct CellDoorCollision: Sendable {
     public let fixed: [StaticCollisionShape]
     /// Each leaf's shapes, by rig bone.
     public let leaves: [[StaticCollisionShape]]
+    /// The graph object's nodes, so its bone poses give the leaf deltas. Nil for a door.
+    public let movingParts: MovingPartRig?
+
+    public init(
+        reference: FormID, placement: float4x4, fixed: [StaticCollisionShape],
+        leaves: [[StaticCollisionShape]], movingParts: MovingPartRig? = nil
+    ) {
+        self.reference = reference
+        self.placement = placement
+        self.fixed = fixed
+        self.leaves = leaves
+        self.movingParts = movingParts
+    }
 
     /// The shapes with each leaf moved by its model-frame delta. Nil deltas leave
     /// every leaf where the build placed it.
@@ -53,33 +69,42 @@ nonisolated extension StaticCollisionShape {
 }
 
 nonisolated extension CellSceneBuilder {
-    /// Takes the shapes of each sequence door out of `set` and places the door's
-    /// solid bodies again, grouped by the leaf each body's node moves with.
+    /// A reference whose collision moves: its mesh, its part count, and each block's part.
+    struct MovingCollisionSource {
+        let ref: PlacedReference
+        let modelPath: String
+        let partCount: Int
+        let part: (Int) -> Int?
+        let movingParts: MovingPartRig?
+    }
+
+    /// Takes the shapes of each sequence door and graph object out of `set` and places
+    /// their solid bodies again, grouped by the part each body's node moves with.
     func splitDoorCollision(
         _ set: StaticCollisionSet, refs: [PlacedReference]
     ) -> (fixed: StaticCollisionSet, doors: [CellDoorCollision]) {
-        let doors = sequenceDoors(in: refs)
-        guard !doors.isEmpty, let library = collisionModels else { return (set, []) }
+        let sources = movingCollisionSources(in: refs)
+        guard !sources.isEmpty, let library = collisionModels else { return (set, []) }
         let materials = materialTypeIndexBuildingIfNeeded()
         let fixed = StaticCollisionSet(
             location: set.location,
-            shapes: set.shapes.filter { doors[$0.reference] == nil },
+            shapes: set.shapes.filter { sources[$0.reference] == nil },
             stats: set.stats,
             buildDurationMS: set.buildDurationMS
         )
-        let collisions = doors.keys.sorted { $0.rawValue < $1.rawValue }.compactMap { formID in
-            doors[formID].flatMap { door -> CellDoorCollision? in
-                guard let model = try? library.model(path: door.modelPath) else { return nil }
+        let collisions = sources.keys.sorted { $0.rawValue < $1.rawValue }.compactMap { formID in
+            sources[formID].flatMap { source -> CellDoorCollision? in
+                guard let model = try? library.model(path: source.modelPath) else { return nil }
                 let placement = MatrixMath.placement(
-                    position: door.ref.placement.position,
-                    rotation: door.ref.placement.rotation,
-                    scale: door.ref.scale
+                    position: source.ref.placement.position,
+                    rotation: source.ref.placement.rotation,
+                    scale: source.ref.scale
                 )
                 var groups: [Int?: [StaticCollisionShape]] = [:]
                 for body in model.bodies where body.isPlayerSolid && !body.dynamics.isSimulated {
-                    let leaf = door.rig.leaf(ofBlock: Int(body.targetBlock))
+                    let part = source.part(Int(body.targetBlock))
                     for shape in body.shapes {
-                        groups[leaf, default: []] += StaticCollisionShape.placed(
+                        groups[part, default: []] += StaticCollisionShape.placed(
                             reference: formID,
                             transform: placement * body.transform * shape.transform,
                             geometry: shape.geometry,
@@ -91,10 +116,48 @@ nonisolated extension CellSceneBuilder {
                     reference: formID,
                     placement: placement,
                     fixed: groups[Int?.none] ?? [],
-                    leaves: door.rig.skeleton.bones.indices.map { groups[$0] ?? [] }
+                    leaves: (0 ..< source.partCount).map { groups[$0] ?? [] },
+                    movingParts: source.movingParts
                 )
             }
         }
         return (fixed, collisions)
+    }
+
+    private func movingCollisionSources(
+        in refs: [PlacedReference]
+    ) -> [FormID: MovingCollisionSource] {
+        var sources = sequenceDoors(in: refs).mapValues { door in
+            MovingCollisionSource(
+                ref: door.ref, modelPath: door.modelPath,
+                partCount: door.rig.skeleton.bones.count,
+                part: { door.rig.leaf(ofBlock: $0) }, movingParts: nil
+            )
+        }
+        let bases = modelBaseIndexBuildingIfNeeded()
+        for ref in refs where sources[ref.formID] == nil {
+            guard
+                let base = bases[ref.base.rawValue], let path = base.modelPath,
+                let asset = objectBehavior(recordType: base.recordType, modelPath: path),
+                let rig = movingPartRig(modelPath: path, boneNames: asset.skeleton.boneNames)
+            else { continue }
+            sources[ref.formID] = MovingCollisionSource(
+                ref: ref, modelPath: path, partCount: rig.rests.count,
+                part: { rig.part(ofBlock: $0) }, movingParts: rig
+            )
+        }
+        return sources
+    }
+
+    /// The moving nodes of a graph object mesh, read once per mesh.
+    func movingPartRig(modelPath: String, boneNames: [String]) -> MovingPartRig? {
+        guard let fileSystem, let key = try? meshes.meshKey(for: modelPath) else { return nil }
+        if let known = movingPartRigs[key] {
+            return known
+        }
+        let rig = (try? NIFFile(data: fileSystem.contents(forPath: key)))
+            .flatMap { try? MovingPartRig(file: $0, boneNames: boneNames) }
+        movingPartRigs[key] = .some(rig)
+        return rig
     }
 }

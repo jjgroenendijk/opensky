@@ -45,6 +45,7 @@ protocol StoryWorldHost: AnyObject {
     var faceMorphs: FaceMorphCoordinator { get }
     var followerCommandWorld: FollowerCommandWorldAdapter { get }
     var headTracking: HeadTrackingCoordinator { get }
+    var idles: IdleCoordinator { get }
     var hud: HUDCoordinator { get }
     var mapWorld: MapWorldAdapter { get }
     var packages: PackageCoordinator { get }
@@ -388,6 +389,7 @@ extension StoryWorldAdapter: SceneWorld {
                 now: game.renderer?.animationTime ?? 0, seconds: seconds
             )
         }
+        playResponseIdles(of: id, speaker: speaker, listener: lookAt)
         let text = info
             .map { responseTexts(of: $0).compactMap(\.self).joined(separator: " ") } ?? ""
         game.subtitles.say(

@@ -41,6 +41,10 @@ public final class PlayerCoordinator {
     /// The set the newest rigs were requested for, to detect a change.
     private var equipped: [FormID]?
     private var appearance: PlayerAppearanceOverride?
+    /// The eye texture the drawn body was built with.
+    private var builtEyeTextureSet: FormID?
+    /// `Actor.SetEyeTexture` on the player. It lasts until the body's 3D reloads.
+    public var eyeTextureSet: FormID?
     /// The shown rigs' playbacks, which take the draw state each frame.
     private var rigAnimations: [Bool: PlayerAnimationPlayback] = [:]
     /// Why there is no body, when there is none.
@@ -155,9 +159,13 @@ public final class PlayerCoordinator {
         rebuildBody()
     }
 
-    /// The race project the body should run: the world's, unless it failed to load.
+    /// The race project the body should run: the world's, unless it failed to load or
+    /// is the male character project the character graphs already run.
     private var wantedProject: String? {
-        guard let wanted = world?.playerBehaviorProject, wanted != failedProject else {
+        guard
+            let wanted = world?.playerBehaviorProject, wanted != failedProject,
+            wanted.lowercased() != PlayerBehaviorGraph.characterProjectPath
+        else {
             return nil
         }
         return wanted
@@ -176,7 +184,8 @@ public final class PlayerCoordinator {
         graphLoads?.submit(.race(wanted), priority: .needed)
     }
 
-    /// A race graph runs alone: a beast form has no first-person rig.
+    /// A beast form's graph runs alone, with no first-person rig. The female character
+    /// project keeps the first-person graph, which both sexes share.
     private func attachRace(_ project: String, _ result: PlayerGraphDecode) {
         guard project == loadingProject else { return }
         loadingProject = nil
@@ -186,7 +195,12 @@ public final class PlayerCoordinator {
             let raceGraph = PlayerBehaviorGraph.build(
                 files, fileSystem: fileSystem, clipWorker: Self.clipWorker(fileSystem)
             )
-            show(graph: raceGraph, firstPerson: nil, project)
+            let sharesFirstPerson = PlayerBehaviorGraph.isCharacterProject(project)
+            show(
+                graph: raceGraph,
+                firstPerson: sharesFirstPerson ? characterGraphs?.firstPerson : nil,
+                project
+            )
         case let .failure(error):
             failedProject = project
             raceGraphFailureReason = PlayerBodyError.behavior(error).localizedDescription
@@ -217,6 +231,7 @@ public final class PlayerCoordinator {
         guard
             world?.playerEquippedSet != equipped
             || world?.playerAppearanceOverride != appearance
+            || eyeTextureSet != builtEyeTextureSet
         else { return }
         rebuildBody()
     }
@@ -228,11 +243,12 @@ public final class PlayerCoordinator {
         let appearance = world.playerAppearanceOverride
         self.equipped = equipped
         self.appearance = appearance
+        builtEyeTextureSet = eyeTextureSet
         generation += 1
         for firstPerson in firstPersonGraph == nil ? [false] : [false, true] {
             source.requestPlayerRig(PlayerRigRequest(
                 generation: generation, firstPerson: firstPerson,
-                equipped: equipped, appearance: appearance
+                equipped: equipped, appearance: appearance, eyeTextureSet: eyeTextureSet
             ))
         }
     }
@@ -314,7 +330,8 @@ nonisolated public enum PlayerGraphKind: Hashable, Sendable {
                     try PlayerBehaviorGraphFiles.decode(
                         fileSystem: fileSystem,
                         behaviorPath: PlayerBehaviorGraph.firstPersonBehaviorPath,
-                        skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath
+                        skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath,
+                        characterPath: PlayerBehaviorGraph.firstPersonCharacterPath
                     )
                 case let .race(project):
                     try PlayerBehaviorGraphFiles.decode(

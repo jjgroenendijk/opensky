@@ -1,6 +1,6 @@
-// The game settings behind the automatic face: blinks, eye drift by emotion, and how
-// fast a speaker's emotion changes. Vanilla values are the Creation Kit wiki's
-// "Category:Settings" table. See docs/engine/face-morphs.md.
+// The game settings behind the automatic face: blinks and eye drift by emotion.
+// Vanilla values are the Creation Kit wiki's "Category:Settings" table. See
+// docs/engine/face-morphs.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -53,14 +53,6 @@ nonisolated public struct FaceAnimationSettings: Equatable, Sendable {
     public var eyeTrackZ: Float = 20
     /// `fAIHeadTrackPickNewOffsetTimer`: seconds between two eye drifts.
     public var eyePickNewOffset: Float = 2
-    /// `fGameplaySpeakingEmotionMinChangeValue` and `...MaxChangeValue`: seconds one
-    /// emotion change takes.
-    public var speakingChangeMin: Float = 1.5
-    public var speakingChangeMax: Float = 1.5
-    /// `fGameplayiSpeakingEmotionMinDeltaChange` and `...MaxDeltaChange`: emotion points,
-    /// out of 100, one change moves.
-    public var speakingDeltaMin: Float = 100
-    public var speakingDeltaMax: Float = 100
 
     public static let vanilla = Self()
 
@@ -75,15 +67,6 @@ nonisolated public struct FaceAnimationSettings: Equatable, Sendable {
         default: "Neutral"
         }
         return eyeRanges[name] ?? eyeRanges["Neutral"] ?? .still
-    }
-
-    /// Emotion weight per second for one change. `rolls` are two numbers in 0 ..< 1.
-    /// A change of no time is instant.
-    public func speakingEmotionRate(rolls: (Float, Float)) -> Float {
-        let seconds = speakingChangeMin + (speakingChangeMax - speakingChangeMin) * rolls.0
-        let points = speakingDeltaMin + (speakingDeltaMax - speakingDeltaMin) * rolls.1
-        guard seconds > 0 else { return .infinity }
-        return max(points, 0) / 100 / seconds
     }
 
     public static func resolve(store: GameSettingStore) -> Self {
@@ -103,12 +86,6 @@ nonisolated public struct FaceAnimationSettings: Equatable, Sendable {
         store.read("fTrackEyeXY", into: &settings, \.eyeTrackXY)
         store.read("fTrackEyeZ", into: &settings, \.eyeTrackZ)
         store.read("fAIHeadTrackPickNewOffsetTimer", into: &settings, \.eyePickNewOffset)
-        let speaking = "fGameplaySpeakingEmotion"
-        let speakingPoints = "fGameplayiSpeakingEmotion"
-        store.read("\(speaking)MinChangeValue", into: &settings, \.speakingChangeMin)
-        store.read("\(speaking)MaxChangeValue", into: &settings, \.speakingChangeMax)
-        store.read("\(speakingPoints)MinDeltaChange", into: &settings, \.speakingDeltaMin)
-        store.read("\(speakingPoints)MaxDeltaChange", into: &settings, \.speakingDeltaMax)
         return settings
     }
 }

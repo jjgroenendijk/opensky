@@ -190,6 +190,13 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
         else {
             return nil
         }
-        return SplineBehaviorClip(animation: animation, binding: binding)
+        let frame = graph.objects(ofClass: HKADefaultAnimatedReferenceFrame.className).first
+            .flatMap {
+                HKADefaultAnimatedReferenceFrame.decode(
+                    at: HKXPointerTarget(sectionIndex: $0.sectionIndex, dataOffset: $0.dataOffset),
+                    in: graph
+                )
+            }
+        return SplineBehaviorClip(animation: animation, binding: binding, referenceFrame: frame)
     }
 }

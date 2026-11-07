@@ -116,10 +116,13 @@ public struct BehaviorTriggerSpec: Sendable {
 public struct BehaviorBindingSpec: Sendable {
     public let memberPath: String
     public let variableIndex: Int
+    /// 0 binds a graph variable, 1 a character property.
+    public let bindingType: Int
 
-    public init(_ memberPath: String, _ variableIndex: Int) {
+    public init(_ memberPath: String, _ variableIndex: Int, bindingType: Int = 0) {
         self.memberPath = memberPath
         self.variableIndex = variableIndex
+        self.bindingType = bindingType
     }
 }
 
@@ -161,7 +164,8 @@ public enum BehaviorFixture {
     /// bit pattern the packfile would hold.
     public static func graphData(
         variables: [BehaviorVariableSpec] = [],
-        events: [String] = []
+        events: [String] = [],
+        characterProperties: [String] = []
     ) -> HKBBehaviorGraphData {
         HKBBehaviorGraphData(
             attributeDefaults: [],
@@ -175,14 +179,14 @@ public enum BehaviorFixture {
             variableInitialValues: HKBVariableValueSet(
                 wordValues: variables.map { word(for: $0.type, value: $0.initial) },
                 quadValues: variables.map { SIMD4($0.initial, 0, 0, 0) },
-                variantCount: 0,
+                variantTargets: [],
                 unresolved: []
             ),
             stringData: HKBBehaviorGraphStringData(
                 eventNames: events,
                 attributeNames: [],
                 variableNames: variables.map(\.name),
-                characterPropertyNames: [],
+                characterPropertyNames: characterProperties,
                 unresolved: []
             ),
             unresolved: []
@@ -224,7 +228,7 @@ public enum BehaviorFixture {
                     memberPath: $0.memberPath,
                     variableIndex: $0.variableIndex,
                     bitIndex: -1,
-                    bindingType: 0
+                    bindingType: $0.bindingType
                 )
             },
             indexOfBindingToEnable: indexOfBindingToEnable,
@@ -278,6 +282,7 @@ public enum BehaviorFixture {
         _ name: String,
         children: [HKXPointerTarget?],
         threshold: Float = 0,
+        flags: Int = 0,
         bindingSet: HKXPointerTarget? = nil
     ) -> HKBBlenderGenerator {
         HKBBlenderGenerator(
@@ -288,7 +293,7 @@ public enum BehaviorFixture {
                 minCyclicBlendParameter: 0,
                 maxCyclicBlendParameter: 0,
                 indexOfSyncMasterChild: -1,
-                flags: 0,
+                flags: flags,
                 subtractLastChild: false,
                 children: children
             ),

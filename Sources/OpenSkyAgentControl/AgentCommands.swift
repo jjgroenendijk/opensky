@@ -201,6 +201,8 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
     case paired(reference: String, target: String, idle: String)
     /// Knocks an actor back as a melee hit of `damage` from the player would.
     case knock(reference: String, damage: Float)
+    /// Knocks an actor down as a ragdoll, away from the player, as `PushActorAway` does.
+    case knockdown(reference: String, magnitude: Float)
     /// Gives the player a perk by editor ID, or takes it away, as `Actor.AddPerk` does.
     case perk(editorID: String, owned: Bool)
     /// Puts the player in a beast form, `werewolf` or `vampirelord`, or ends it with `none`.
@@ -310,6 +312,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         case "shadows": try .shadows(args.string("quality"))
         case "flight": try parseFlight(args)
         case "knock": try parseKnock(args)
+        case "knockdown": try parseKnockdown(args)
         case "perk": try .perk(editorID: args.string("perk"), owned: args.bool("on", default: true))
         case "form": try .beastForm(args.string("form").lowercased())
         case "link":

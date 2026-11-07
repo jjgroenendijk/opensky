@@ -6,6 +6,7 @@ import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyRenderCore
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
@@ -46,11 +47,21 @@ extension RagdollWorldAdapter {
             }
         case .die:
             _ = game.scripts.bridge?.stopActorCombat(.player)
+            showPlayerFall()
             game.audio.musicDirector?.playSpecialMusic(.death)
             game.hud.showNotification(deathTexts[.reloading])
         case .reloadNewestSave:
             reloadNewestSave()
         }
+    }
+
+    /// The body falls as a ragdoll. A first-person eye sits inside the head, so the
+    /// view steps out to third person to show it.
+    private func showPlayerFall() {
+        if game.gameSession?.movementMode == .walk {
+            game.gameSession?.setMovementMode(.thirdPerson)
+        }
+        game.ragdoll.dropPlayerBody()
     }
 
     /// With no save, the player picks between loading again and the main menu.
@@ -70,7 +81,7 @@ extension RagdollWorldAdapter {
             if index == 0 {
                 reloadNewestSave()
             } else {
-                game.ragdoll.playerDeath.reset()
+                game.ragdoll.resetPlayerDeath()
                 game.quitToMainMenu()
             }
         }

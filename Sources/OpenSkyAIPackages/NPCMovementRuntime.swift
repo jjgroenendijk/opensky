@@ -22,8 +22,10 @@ public struct NPCMovementWorld {
     /// Actors that are not walking, such as the player and standing NPCs, that a mover
     /// steers around. Walking actors come from the runtime itself.
     public var standingActors: () -> [NPCNeighbour] = { [] }
-    /// The water surface height over a point, or nil where there is no water.
-    public var sampleWater: (SIMD2<Float>) -> Float? = { _ in nil }
+    /// The water at a point, or nil where there is none.
+    public var sampleWater: (SIMD3<Float>) -> WaterReading? = { _ in nil }
+    /// The size and movement facts of an actor's race that decide a current's push.
+    public var waterPushRace: (ReferenceKey) -> WaterPushRace = { _ in .normal }
     /// The carriers and riders of the vehicle links, and the query they collide with:
     /// one without the vehicles' moving collision.
     public var vehicleActors: Set<ReferenceKey> = []
@@ -37,7 +39,8 @@ public struct NPCMovementWorld {
         triggersAt: @escaping (PlayerCapsuleState) -> Set<ReferenceKey>,
         hasGround: @escaping (SIMD2<Float>) -> Bool = { _ in true },
         standingActors: @escaping () -> [NPCNeighbour] = { [] },
-        sampleWater: @escaping (SIMD2<Float>) -> Float? = { _ in nil },
+        sampleWater: @escaping (SIMD3<Float>) -> WaterReading? = { _ in nil },
+        waterPushRace: @escaping (ReferenceKey) -> WaterPushRace = { _ in .normal },
         vehicleActors: Set<ReferenceKey> = [],
         collisionQueryIgnoringVehicles: WalkController.CollisionQuery? = nil
     ) {
@@ -49,6 +52,7 @@ public struct NPCMovementWorld {
         self.hasGround = hasGround
         self.standingActors = standingActors
         self.sampleWater = sampleWater
+        self.waterPushRace = waterPushRace
         self.vehicleActors = vehicleActors
         self.collisionQueryIgnoringVehicles = collisionQueryIgnoringVehicles
     }
@@ -327,6 +331,36 @@ public struct NPCMovementRuntime {
         in snapshot: @autoclosure () -> WorldStateSnapshot
     ) -> ReferenceTransformOverride {
         transform(for: entry.key) ?? snapshot().resolvedState(for: entry).transform
+    }
+
+    public func isWalking(_ actor: ReferenceKey) -> Bool {
+        movers[actor] != nil
+    }
+
+    /// Parks an actor at `transform`, as root motion moves one that stands still. An actor
+    /// that never moved is parked from its authored placement first.
+    public mutating func place(_ start: NPCFaceStart, at transform: ReferenceTransformOverride) {
+        guard ridden[start.actor] == nil else { return }
+        if parked[start.actor] == nil {
+            parked[start.actor] = NPCParkedMovement(
+                readout: NPCMovementReadout(
+                    actor: start.actor, state: .halted, feetPosition: start.placement.position,
+                    yaw: NPCYawMath.yaw(fromHeading: start.placement.rotation.z),
+                    waypointIndex: 0, waypointCount: 0, gait: .walk, repathCount: 0
+                ),
+                transform: ReferenceTransformOverride(
+                    placement: start.placement,
+                    scale: start.scale
+                ),
+                formID: start.formID, scale: start.scale,
+                drawnPlacement: drawnPlacement(of: start.actor) ?? start.placement
+            )
+        }
+        rest(start.actor, at: transform)
+    }
+
+    public func isSliding(_ actor: ReferenceKey) -> Bool {
+        slides[actor] != nil || ridden[actor] != nil
     }
 
     /// What one actor is turning towards, when it is turning.

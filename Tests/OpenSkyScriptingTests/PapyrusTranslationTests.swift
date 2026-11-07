@@ -24,6 +24,13 @@ struct PapyrusTranslationTests {
         #expect(abs(move.position.x - 50) < 0.001)
     }
 
+    @Test func movesAtItsSpeedTowardTheTargetUntilItArrives() throws {
+        var move = try Self.move(rotation: SIMD3(0, 0, 1), cap: 0.1)
+        #expect(move.velocity == SIMD3(100, 0, 0))
+        _ = move.advance(by: 1)
+        #expect(move.velocity == .zero)
+    }
+
     @Test func signalsAlmostCompleteOnceThenCompletesAtTheTarget() throws {
         var move = try Self.move()
         let steps = (0 ..< 10).map { _ in move.advance(by: 0.125) }

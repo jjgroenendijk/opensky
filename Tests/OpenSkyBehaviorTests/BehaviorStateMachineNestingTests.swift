@@ -18,7 +18,12 @@ struct BehaviorStateMachineNestingTests {
         var table = BehaviorObjectTable()
         var root: HKXPointerTarget?
 
-        init(nestedStartStateId: Int = 0, toNestedStateId: Int = -1, sitFlags: Int = 0) {
+        /// A `returnFromNestedStateId` adds a "go" transition back to "Outer_Idle"
+        /// that needs the nested machine in that state.
+        init(
+            nestedStartStateId: Int = 0, toNestedStateId: Int = -1, sitFlags: Int = 0,
+            returnFromNestedStateId: Int? = nil
+        ) {
             let idle = table.add(
                 BehaviorFixture.clipGenerator("idle", animationName: "left"), at: 0x100
             )
@@ -51,11 +56,24 @@ struct BehaviorStateMachineNestingTests {
                 ),
                 at: 0x600
             )
+            let returns = returnFromNestedStateId.map { nested in
+                table.add(
+                    BehaviorStateMachineFixture.transitions([
+                        BehaviorTransitionSpec(
+                            eventId: 0, toStateId: 0,
+                            flags: BehaviorTransitionFlag.disableCondition
+                                | BehaviorTransitionFlag.fromNestedStateIsValid,
+                            fromNestedStateId: nested
+                        )
+                    ]),
+                    at: 0x530
+                )
+            }
             let moveState = table.add(
                 BehaviorStateMachineFixture.stateInfo(
                     BehaviorStateSpec(
                         stateId: 1, name: "Outer_Move", generator: inner,
-                        enterNotifyEvents: outerEnter
+                        transitions: returns, enterNotifyEvents: outerEnter
                     )
                 ),
                 at: 0x610
@@ -167,6 +185,19 @@ struct BehaviorStateMachineNestingTests {
 
     /// `FLAG_TO_NESTED_STATE_ID_IS_VALID` puts the nested machine into the state
     /// the transition names rather than into its own start state.
+    /// `FLAG_FROM_NESTED_STATE_ID_IS_VALID` lets the transition fire only while the
+    /// nested machine is in the named state.
+    @Test(arguments: [(0, "Outer_Idle"), (1, "Outer_Move")])
+    func aTransitionCanRequireANestedSourceState(required: Int, expected: String) {
+        let graph = NestedGraph(returnFromNestedStateId: required).instance()
+        graph.update(deltaTime: Self.step)
+        graph.raiseEvent(named: "go")
+        graph.update(deltaTime: Self.step)
+        graph.raiseEvent(named: "go")
+        graph.update(deltaTime: Self.step)
+        #expect(graph.activeStates.first?.stateName == expected)
+    }
+
     @Test func aTransitionCanNameTheNestedStartState() {
         let graph = NestedGraph(toNestedStateId: 1).instance()
         graph.update(deltaTime: Self.step)

@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyBehavior
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
+import OpenSkyPhysics
 @testable import OpenSkyPlayer
 @testable import OpenSkyRenderCore
 import simd
@@ -71,9 +72,9 @@ nonisolated enum LocomotionAcceptanceWorld {
         return TerrainGroundSample(height: height(at: position), normal: normal)
     }
 
-    /// Water surface at a world XY, or nil where the route is dry.
-    static func sampleWater(_ position: SIMD2<Float>) -> Float? {
-        (waterStartX ... waterEndX).contains(position.x) ? waterSurface : nil
+    /// Still water over the wet stretch of the route, or nil where it is dry.
+    static func sampleWater(_ position: SIMD3<Float>) -> WaterReading? {
+        (waterStartX ... waterEndX).contains(position.x) ? WaterReading(surface: waterSurface) : nil
     }
 }
 

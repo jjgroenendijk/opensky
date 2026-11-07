@@ -2,6 +2,7 @@
 // when the player presses a locked one. See docs/engine/papyrus-script-state.md#player-controls.
 
 import OpenSkyCombat
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyPlayer
@@ -15,7 +16,7 @@ extension GameSessionScope {
         let death = ragdoll.playerDeath
         if death.isDead {
             locks.disabled = Set(PlayerControlGroup.allCases)
-        } else if death.isBleedingOut {
+        } else if death.isBleedingOut || ragdoll.knockdowns.isKnockedDown(.player) {
             locks.disabled.formUnion([.movement, .fighting, .sneaking, .activate])
         }
         return locks

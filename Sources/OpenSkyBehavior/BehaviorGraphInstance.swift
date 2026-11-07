@@ -80,6 +80,14 @@ nonisolated public struct BehaviorNodeState: Equatable, Sendable {
     public var eventThreshold = 0
     /// The pose a cyclic blend crossfades away from, while it does.
     public var crossBlendSource: BehaviorPose?
+    /// The blend parameter a cyclic blend transition holds while frozen.
+    public var frozenBlendParameter: Float?
+    /// The offset clip pose a `BSOffsetAnimationGenerator` holds, and where it was taken.
+    public var offsetLayer: BehaviorPose?
+    public var offsetFrame: Int?
+    public var offsetFraction: Float = 0
+    /// What an `hkbPoseMatchingGenerator` keeps between updates.
+    public var poseMatch: BehaviorPoseMatchState?
 }
 
 /// What one update produced: the pose, the root travel kept beside it, and the
@@ -186,6 +194,8 @@ nonisolated public final class BehaviorGraphInstance {
     public var footIkError = SIMD3<Float>()
     /// The pose each cyclic blend generator produced last, so a crossfade can start from it.
     public var cyclicLastPoses: [HKXPointerTarget: BehaviorPose] = [:]
+    /// The held blender each cyclic blend fades away from, which keeps running.
+    public var cyclicCopies: [HKXPointerTarget: BehaviorCyclicCopy] = [:]
     /// True while a synced blender runs a follower, whose annotations repeat the leader's.
     public var mutesClipAnnotations = false
     /// The blend parameter a cyclic blend generator hands its blender, by blender.
@@ -193,6 +203,8 @@ nonisolated public final class BehaviorGraphInstance {
     /// The source of every random choice the graph makes. Seeded the same for
     /// every instance, so two runs with the same input stay identical.
     public var random = BehaviorRandom()
+    /// The state machines' own random source, for random start states and transitions.
+    public var stateMachineRandom = BehaviorStateMachineRandom()
 
     /// What every state machine the last update reached is doing, in walk
     /// order. This is the state path items 14.5 and 14.6 read, and what the
@@ -208,6 +220,9 @@ nonisolated public final class BehaviorGraphInstance {
     /// walk order: the graph's own mesh plays them, not the skeleton.
     public private(set) var gamebryoSequences: [String] = []
     var gamebryoSequencesThisUpdate: [String] = []
+    /// How the last update's synchronized clip brings its actor to the mark, or nil.
+    public private(set) var synchronizedMark: BehaviorSynchronizedMark?
+    var synchronizedMarkThisUpdate: BehaviorSynchronizedMark?
 
     /// What the update in progress raised that this graph declares no event for.
     public var unboundEvents: [String] = []
@@ -219,7 +234,18 @@ nonisolated public final class BehaviorGraphInstance {
     var pairedClips: [String: PairedBehaviorClip] = [:]
     /// The bones of the last update that had every clip it reached, held while
     /// a clip loads so the character keeps its pose instead of snapping to rest.
-    private var lastCompleteBones: [HKABonePose]?
+    private(set) var lastCompleteBones: [HKABonePose]?
+
+    /// What a character-property binding reads, and the graph's own property names.
+    public var characterProperties = BehaviorCharacterProperties.empty {
+        didSet {
+            mirror = characterProperties.mirror.map { BehaviorMirror($0, skeleton: skeleton) }
+        }
+    }
+
+    /// The character's mirror, built when its properties arrive.
+    public private(set) var mirror: BehaviorMirror?
+    public let characterPropertyNames: [String?]
 
     /// Compiled nodes, cached so a DAG node shared by ten parents decodes
     /// once. The optional is stored so a miss is remembered as a miss.
@@ -238,6 +264,7 @@ nonisolated public final class BehaviorGraphInstance {
         self.skeleton = skeleton
         self.clips = clips
         variables = BehaviorVariableStore(data: data)
+        characterPropertyNames = data?.stringData?.characterPropertyNames ?? []
         events = BehaviorEventQueue(data: data)
         tally = BehaviorTally(nameLimit: tallyNameLimit)
     }
@@ -307,6 +334,7 @@ nonisolated public final class BehaviorGraphInstance {
         activeStatesThisUpdate = []
         stateTagThisUpdate = nil
         gamebryoSequencesThisUpdate = []
+        synchronizedMarkThisUpdate = nil
         referencedResults = [:]
         pendingClipPhase = nil
         unboundEvents = []
@@ -320,6 +348,7 @@ nonisolated public final class BehaviorGraphInstance {
         activeStates = activeStatesThisUpdate
         stateTag = stateTagThisUpdate
         gamebryoSequences = gamebryoSequencesThisUpdate
+        synchronizedMark = synchronizedMarkThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
         // The memo names the references this update ran; stale, it would keep a
         // later deactivation from stopping a child.
@@ -345,17 +374,6 @@ nonisolated public final class BehaviorGraphInstance {
             firedEvents: events.endUpdate(),
             unboundEvents: unboundEvents
         )
-    }
-
-    /// Runs the deactivation hooks of `targets` and forgets their state.
-    func deactivateNodes(_ targets: Set<HKXPointerTarget>) {
-        for target in targets.sorted(by: Self.isOrderedBefore) {
-            if let object = object(at: target) {
-                noteDeactivation(of: object, at: target)
-            }
-            nodeStates[target] = nil
-        }
-        reachedThisUpdate.subtract(targets)
     }
 
     // MARK: - Object access
@@ -387,11 +405,6 @@ nonisolated public final class BehaviorGraphInstance {
         )
         compiled[target] = node
         return node
-    }
-
-    /// The decoded object at `target` as `Value`, or nil.
-    public func object<Value: HKBClass>(at target: HKXPointerTarget, as _: Value.Type) -> Value? {
-        object(at: target) as? Value
     }
 
     /// The clip a generator names, or nil: a wait while it loads, else one tally entry.
@@ -432,6 +445,12 @@ nonisolated public final class BehaviorGraphInstance {
         // `isDisabled` already reads the enable binding.
         for index in compiled.bindings.indices where index != compiled.enableIndex {
             let binding = compiled.bindings[index]
+            // A bone weight array is an object; the blender child reads it itself.
+            if binding.bindingType == 1, characterProperty(binding).map(
+                characterProperties.holdsObject(named:)
+            ) == true {
+                continue
+            }
             guard let value = resolve(binding) else { continue }
             guard let path = compiled.paths[index], let memberPath = binding.memberPath else {
                 // An empty path binds the object wholesale, which only Havok's
@@ -458,13 +477,10 @@ nonisolated public final class BehaviorGraphInstance {
     /// The current value of one binding, or nil with a tally entry when it
     /// cannot be applied.
     private func resolve(_ binding: HKBVariableBinding) -> BehaviorVariableValue? {
-        guard binding.bindingType == 0 else {
-            // Character properties come from `hkbCharacterData`, which this instance
-            // does not hold; the locomotion bridge supplies them.
-            tally.noteUnappliedBinding(binding.memberPath)
-            return nil
-        }
-        guard let value = variables.value(at: binding.variableIndex) else {
+        let value = binding.bindingType == 1
+            ? characterProperty(binding).flatMap(characterProperties.value(named:))
+            : binding.bindingType == 0 ? variables.value(at: binding.variableIndex) : nil
+        guard let value else {
             tally.noteUnappliedBinding(binding.memberPath)
             return nil
         }
@@ -480,6 +496,13 @@ nonisolated public final class BehaviorGraphInstance {
 }
 
 nonisolated extension BehaviorGraphInstance {
+    /// The name of the character property a type 1 binding reads, from the graph's list.
+    func characterProperty(_ binding: HKBVariableBinding) -> String? {
+        let index = binding.variableIndex
+        guard characterPropertyNames.indices.contains(index) else { return nil }
+        return characterPropertyNames[index]
+    }
+
     /// True when `node`'s binding set names a binding that disables it.
     public func isDisabled(_ node: BehaviorCompiledNode) -> Bool {
         guard

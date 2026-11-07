@@ -60,15 +60,25 @@ nonisolated extension BehaviorGraphInstance {
         state.phase = state.localTime / window.length
 
         let samples = clip.samples(at: window.start + state.localTime)
+        let mirror = clipMirror(for: generator)
         let base = clip.isAdditive
             ? BehaviorPoseMath.unchanged(boneCount: skeleton.referencePose.count).bones
             : skeleton.referencePose
         var pose = BehaviorPose(
-            bones: BehaviorPoseMath.applying(samples, to: base), isAdditive: clip.isAdditive
+            bones: BehaviorPoseMath.applying(
+                mirror?.mirroring(samples, isAdditive: clip.isAdditive) ?? samples, to: base
+            ),
+            isAdditive: clip.isAdditive
         )
-        pose.rootMotion = rootMotion(
-            &state, clip: clip, samples: samples, wrapped: wrapped, jumped: jumped
-        )
+        let motion = clip.referenceFrame.map { frame in
+            jumped ? .identity : frame.motion(
+                from: window.start + state.previousLocalTime,
+                to: window.start + state.localTime,
+                wrapped: wrapped,
+                window: window.start ... window.start + window.length
+            )
+        } ?? rootMotion(&state, clip: clip, samples: samples, wrapped: wrapped, jumped: jumped)
+        pose.rootMotion = mirror?.mirroring(motion) ?? motion
         fireTriggers(generator, state: state, window: window, wrapped: wrapped)
         fireAnnotations(
             clip, state: state, window: window, wrapped: wrapped, justSeeded: !wasSeeded
@@ -86,11 +96,26 @@ nonisolated extension BehaviorGraphInstance {
         window: BehaviorClipWindow,
         deltaTime: Float
     ) -> Float {
-        let speed = bound.float("m_playbackSpeed", or: generator.playbackSpeed)
+        let speed = Self.playbackSpeed(bound.float("m_playbackSpeed", or: generator.playbackSpeed))
         let enforced = bound.float("m_enforcedDuration", or: generator.enforcedDuration)
         let scale = enforced > 0 ? window.length / enforced : 1
         let advance = deltaTime * speed * scale
         return advance.isFinite ? advance : 0
+    }
+
+    /// A speed this close to 0 runs at the smallest speed instead, backwards at 0 itself.
+    static func playbackSpeed(_ speed: Float) -> Float {
+        guard abs(speed) < 0.001 else { return speed }
+        return speed <= 0 ? -0.001 : 0.001
+    }
+
+    /// The character's mirror when `generator` plays mirrored, tallied when there is none.
+    private func clipMirror(for generator: HKBClipGenerator) -> BehaviorMirror? {
+        guard generator.flags & 0x4 != 0 else { return nil }
+        if mirror == nil {
+            tally.note(.clipMirrored)
+        }
+        return mirror
     }
 
     /// Places a freshly activated clip at `m_startTime` and records the root
@@ -130,9 +155,6 @@ nonisolated extension BehaviorGraphInstance {
         bound: [String: BehaviorVariableValue],
         generator: HKBClipGenerator
     ) -> Bool {
-        if generator.flags & 0x4 != 0 {
-            tally.note(.clipMirrored)
-        }
         switch generator.mode {
         case 1, 3:
             // 3 is ping pong, which reverses at each edge. It runs as a loop and is
@@ -151,7 +173,6 @@ nonisolated extension BehaviorGraphInstance {
             }
             return wrapped
         case 2:
-            tally.note(.clipUserControlled)
             let fraction = bound.float(
                 "m_userControlledTimeFraction", or: generator.userControlledTimeFraction
             )
@@ -208,9 +229,8 @@ nonisolated extension BehaviorGraphInstance {
         }
         defer { state.previousRootPose = current }
         guard clip.carriesExtractedMotion else { return .identity }
-        // A clip that does carry a reference frame has its travel approximated
-        // from the root bone, because `hkaAnimatedReferenceFrame` itself is not
-        // decoded. Tallied so the approximation is visible rather than assumed.
+        // A reference frame that is not the even-sampled kind is approximated
+        // from the root bone, and tallied.
         tally.note(.clipExtractedMotionApproximated)
         guard !jumped else { return .identity }
         guard

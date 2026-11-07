@@ -22,6 +22,7 @@ nonisolated extension CellSceneBuilder {
         assemblePlayer(
             equipped: request.equipped,
             appearance: request.appearance,
+            eyeTextureSet: request.eyeTextureSet,
             firstPerson: request.firstPerson,
             label: request.firstPerson ? "player arms" : "player body"
         )
@@ -29,7 +30,9 @@ nonisolated extension CellSceneBuilder {
             let morphs = request.firstPerson ? nil : request.appearance
             return PlayerRigAssembly(
                 assembly: assembly,
-                faceMorphs: morphs.map { chargenMorphs(assembly: assembly, appearance: $0) } ?? [:]
+                faceMorphs: morphs.map {
+                    assembledHeadMorphs(assembly: assembly, face: $0).bindings
+                } ?? [:]
             )
         }
     }
@@ -67,6 +70,7 @@ nonisolated extension CellSceneBuilder {
     private func assemblePlayer(
         equipped: [FormID]?,
         appearance override: PlayerAppearanceOverride?,
+        eyeTextureSet: FormID?,
         firstPerson: Bool,
         label: String
     ) -> Result<ActorAssembly<ActorRenderAsset>, PlayerBodyError> {
@@ -81,7 +85,10 @@ nonisolated extension CellSceneBuilder {
             var visual = try resolvers.visual.resolve(appearance: appearance, equipped: equipped)
             // The install bakes no FaceGen head for the player base, so the
             // player's head is always built from its head parts.
-            visual.headSource = .assembled
+            visual = visual.presenting(
+                ActorPresentationState(headSource: .assembled, eyeTextureSet: eyeTextureSet),
+                textureSets: resolvers.visual.textureSets
+            )
             if let override, !firstPerson {
                 visual = chargenVisual(visual, appearance: override)
             }

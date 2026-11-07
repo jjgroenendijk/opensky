@@ -14,47 +14,61 @@ body, see [dynamic bodies](/engine/dynamic-bodies.md)) an impulse. An impulse is
 change of momentum, in kilogram units per second.
 
 Sources: the setting values come from the install (`openskycli gmst list fKnock`). A setting
-the install does not define keeps its engine default from the UESP page
+the install does not define keeps its engine default from the CK wiki settings list
+(<https://ck.uesp.net/wiki/Category:Settings>) or the UESP page
 "Skyrim Mod:Mod File Format/GMST/Defaults". The CK wiki pages
 `fKnockdownCurrentHealthThreshold` and `fKnockdownBaseHealthThreshold`
 (<https://ck.uesp.net/wiki/FKnockdownCurrentHealthThreshold>) say what the two thresholds
-mean. No source gives the formulas, so every formula below is OpenSky's reading. Issue #1689
-tracks measuring them in the game.
+mean. The formulas come from a clean-room read of the game's behaviour. The RACE flags
+"Not Pushable" (0x400) and "No Knockdowns" (0x400000) come from UESP
+(<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/RACE>).
 
 ## Hits
 
-A melee or ranged hit that lands and does not kill knocks its target back, away from the
-attacker, when its damage is at least `fKnockdownCurrentHealthThreshold` (50) percent of the
-target's current health.
+A melee hit that lands and does not kill knocks its target back, away from the attacker.
+A blocked hit takes no push, and neither does a race with the "Not Pushable" flag.
+A ranged hit pushes no actor; its knock values push loose bodies only.
 
-- The push covers `damage * fKnockbackDamageMult` (5) units, at most `fKnockbackForceMax`
-  (128), in `fKnockbackTime` (0.3) seconds.
-- The hit knocks down when its damage is at least `fKnockdownBaseHealthThreshold` (75)
-  percent of base health, or when a roll falls below `fKnockdownChance` (0.25). A knockdown
-  pushes the full `fKnockbackForceMax`.
-- A ranged hit pushes `fProjectileKnockMultBiped` (0.25) times as far.
+- The push covers `(damage * fKnockbackDamageMult + fKnockbackDamageBase) *
+  (fKnockbackAgilMult * 50 + fKnockbackAgilBase)` units, at most `fKnockbackForceMax` (128),
+  in `fKnockbackTime` (0.3) seconds. The 50 is a fixed agility, because Skyrim has no
+  agility attribute.
+- The hit knocks down when its damage is over `fKnockdownBaseHealthThreshold` (75) percent of
+  base health.
+- Otherwise, when its damage is over `fKnockdownCurrentHealthThreshold` (50) percent of
+  current health, it rolls a per-mille chance of `(damage * fKnockdownDamageMult (0.3) +
+  fKnockdownDamageBase) / (fKnockdownAgilMult * 50 + fKnockdownAgilBase)`, at most
+  `fKnockdownChance` (0.25).
 
-Example: a 20 point swing on an actor with 40 of 100 health pushes 100 units in 0.3 seconds.
+Example: a 20 point swing pushes `(20 * 5 + 50) * 0.6 = 90` units in 0.3 seconds. On an actor
+with 30 of 100 health it knocks down with a chance of `20 * 0.3 / 50 = 0.12`.
 
-The game ragdolls a knocked-down actor. OpenSky has no ragdoll for a living actor yet
-(issue #1658), so a knockdown is a longer push on the capsule.
+A knockdown ragdolls the actor ([knockdown](/engine/ragdoll.md#knockdown)). Each body gains the
+slide speed over 69.99, in Havok metres a second.
 
 ## Explosions
 
-An `EXPL` force falls off linearly to zero at the radius, as its damage does.
+An explosion's damage falls off as `1 - (d / R)^2` at distance `d` in radius `R`. Its push
+does not fall off: every loose body in the radius takes the same push.
 
-- A loose body takes `force * fExplosionForceMultLinear * fGameplayImpulseMult<kind>` Havok
-  units, measured at its nearest side, times 69.99 to reach engine units. The kind comes
-  from the body's collision layer: `L_PROPS` uses `...Prop` (0.1), `L_DEBRIS_LARGE` uses
-  `...DebrisLarge` (1), the trap layers use `...Trap` (0.15), and every other layer uses
-  `...Clutter` (1). The layer numbers are the install's `COLL` record indices.
-- The push points away from the blast, raised by `fExplosionForceClutterUpBias` (0.5).
-  The same impulse at the nearest side turns the body, times `fExplosionForceMultAngular`.
-- A body lighter than `fGameplayImpulseMinMass` (5 kg) changes speed as if it weighed that.
-- The object the projectile struck takes `fExplosionSourceRefMult` (3) times the push.
-- An actor in the radius is knocked along the ground at
-  `force * fGameplayImpulseMultBiped (0.04) * 69.99` units per second, the reading the
-  cloak knock in [magic archetypes](/engine/magic-archetypes.md) also uses.
+- The impulse is `force * fGameplayImpulseScale (150) * fGameplayImpulseMult<kind>`, in
+  engine units. The kind comes from the body's collision layer: `L_PROPS` uses `...Prop`
+  (0.1), `L_DEBRIS_LARGE` uses `...DebrisLarge` (1), the trap layers use `...Trap` (0.15),
+  the biped layers use `...Biped` (0.04), and every other layer uses `...Clutter` (1). The
+  layer numbers are the install's `COLL` record indices.
+- A body lighter than `fGameplayImpulseMinMass` (5 kg) takes `mass / 5` of it. The object the
+  projectile struck takes `fExplosionSourceRefMult` (3) times the force. No impulse passes
+  `fExplosionMaxImpulse` (8000).
+- The push points away from the blast centre, times `fExplosionForceMultLinear`. A biped body
+  adds `fExplosionForceClutterUpBias` (0.5) upward. Each axis of the turn is a random part of
+  the impulse, from minus to plus, times `fExplosionForceMultAngular`.
+- The `EXPL` flags pick how a blast treats actors: 0x4 always knocks them down, 0x8 knocks
+  them down by the hit formula above with the blast's damage, and a blast with neither does
+  not knock. An actor knocks down only where the falloff is over
+  `fExplosionForceKnockdownMinimum` (0.15).
+
+Example: a force of 6 pushes a 10 kg crate with `6 * 150 = 900` kilogram units per second at
+any distance in the radius.
 
 ## Projectiles
 
@@ -88,21 +102,26 @@ or a slide does not rattle.
 
 ## Water
 
-Water comes from the resident exterior cells: the `XCLW` height and the `WATR` linear
-velocity of the cell's water type.
+Water comes from the water boxes of the resident cells: cell water, placed water such as rivers,
+and current planes ([water physics](/engine/water-physics.md)). Nothing splashes in dangerous
+water.
 
-- An actor or a loose body that goes below the surface shows `sSplashParticles` there. A key
-  that first appears under water does not splash, because it may have loaded there.
-- The splash sound is the `SNDR` `PHYWaterSplash`, because no setting names one. A body of
-  `fSplashSoundLight` (5 kg) or more plays it; lighter bodies splash in silence. The
-  `...Medium` (20) and `...Heavy` (35) tiers are kept in the readout. An actor splashes
-  heavy.
-- An explosion within `fExplosionSplashRadius` (250) units of the surface shows
-  `sExplosionSplashParticles`. `Update.esm` sets that model to `FXEmptyObject.nif`, so
-  nothing shows in the unmodded game. Under water the blast radius shrinks by
-  `fExplosionWaterRadiusRatio` (0.1).
+- A loose body that crosses the surface, up or down, shows `sSplashParticles` there. A key
+  that first appears under water does not splash, because it may have loaded there. A body
+  that does not move up or down does not splash.
+- Its splash value is its mass plus `fSplashSoundVelocityMult` (0.05) times its vertical
+  speed, times `fSplashSoundOutMult` (0.5) when it leaves the water. A value over
+  `fSplashSoundHeavy` (35) plays `CWaterLarge` at scale `fSplashScale1` (1), over
+  `...Medium` (20) `CWaterMedium` at `fSplashScale2` (0.75), and over `...Light` (5)
+  `CWaterSmall` at `fSplashScale3` (0.4). A lighter body splashes in silence.
+- Two splashes anywhere keep `fSplashSoundTimer` (0.25) seconds apart.
+- An actor splashes heavy when it goes in, and makes no splash when it comes out.
+- An explosion splashes when the surface is higher than its centre plus
+  `fExplosionWaterRadiusRatio` (0.1) of its radius. The splash shows
+  `sExplosionSplashParticles` at radius over `fExplosionSplashRadius` (250) of its size.
+  `Update.esm` sets that model to `FXEmptyObject.nif`, so nothing shows in the unmodded game.
 - An actor in water that flows at `fWaterKnockdownVelocity` (5) times its size factor or
-  faster is knocked down along the flow, once per entry. The factor is
+  faster, in Havok units per second, is knocked down along the flow, once per entry. The factor is
   `fWaterKnockdownSizeSmall` (0.6), `...Normal` (0.75), `...Large` (1.25), or
   `...VeryLarge` (1.5), by the RACE `DATA` size. The fastest vanilla water type,
   `RiverWaterFlowSE`, flows at about 2.8, so nothing in the unmodded game passes.
@@ -110,5 +129,6 @@ velocity of the cell's water type.
 ## Checking it in the game
 
 `openskycli game state impulses` shows the settings in use and the newest knocks, pushes,
-splashes, physics hits, and collisions (`speedLoss`, `gain`, `material`). `openskycli game debug
-knock <ref> <damage>` knocks an actor back as a melee hit from the player would.
+splashes (`weight`, `sound`, `scale`), physics hits, and collisions (`speedLoss`, `gain`,
+`material`). `openskycli game debug knock <ref> <damage>` knocks an actor back as a melee
+hit from the player would.

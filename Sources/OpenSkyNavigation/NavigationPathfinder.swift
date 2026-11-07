@@ -153,18 +153,33 @@ nonisolated public enum NavigationPathfinder: Sendable {
         in graph: RuntimeNavigationGraph
     ) -> Float {
         guard
-            let sourceCenter = graph.triangle(source)?.centroid,
-            let targetCenter = graph.triangle(transition.target)?.centroid
+            let sourceTriangle = graph.triangle(source),
+            let targetTriangle = graph.triangle(transition.target)
         else { return .greatestFiniteMagnitude }
-        switch transition.portal {
+        let sourceCenter = sourceTriangle.centroid
+        let targetCenter = targetTriangle.centroid
+        let length: Float = switch transition.portal {
         case let .edge(first, second):
-            let midpoint = (first + second) / 2
-            return simd_distance(sourceCenter, midpoint) + simd_distance(midpoint, targetCenter)
+            simd_distance(sourceCenter, (first + second) / 2)
+                + simd_distance((first + second) / 2, targetCenter)
         case let .door(_, sourceDoor, targetDoor):
-            return simd_distance(sourceCenter, sourceDoor) + simd_distance(targetDoor, targetCenter)
+            simd_distance(sourceCenter, sourceDoor) + simd_distance(targetDoor, targetCenter)
         case let .ledge(from, landing):
-            return simd_distance(sourceCenter, from) + simd_distance(from, landing)
+            simd_distance(sourceCenter, from) + simd_distance(from, landing)
                 + simd_distance(landing, targetCenter) + Self.ledgePenalty
+        }
+        return length * waterFactor(
+            from: sourceTriangle.flags.contains(.water), to: targetTriangle.flags.contains(.water)
+        )
+    }
+
+    /// A swim costs more than a walk, and entering the water more still, so a path swims
+    /// only where the way round on land is far longer.
+    static func waterFactor(from sourceIsWater: Bool, to targetIsWater: Bool) -> Float {
+        switch (sourceIsWater, targetIsWater) {
+        case (false, true): 5
+        case (true, _): 4
+        case (false, false): 1
         }
     }
 

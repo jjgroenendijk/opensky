@@ -21,11 +21,15 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
     public let objectGraph: HKXObjectGraph
     public let behavior: HKBBehaviorGraph
     public let skeleton: HKASkeleton
+    /// The rig file's second skeleton, the ragdoll's, where it has one.
+    public let ragdollSkeleton: HKASkeleton?
     /// The rig's archive path, such as `...\character assets\skeleton.hkx`.
     public let rigPath: String
     /// Archive paths of the clips the character file lists. With `folderClips`, then the
     /// other clips of the project's `animations` folder, which a referenced file can name.
     public let clipPaths: [String]
+    /// The character file's property values, which type 1 bindings read.
+    public var characterProperties = BehaviorCharacterProperties.empty
 
     /// The events the graph declares, in index order. Papyrus sends these by name.
     public var eventNames: [String] {
@@ -47,10 +51,8 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
         guard let characterName = project?.characterFilenames.compactMap(\.self).first
         else { throw BehaviorProjectAssetError.noCharacter(projectPath) }
         let characterPath = join(folder, characterName)
-        let character = try objects(characterPath, fileSystem) { graph in
-            graph.objects(ofClass: HKBCharacterData.className).lazy
-                .compactMap { HKBCharacterData.decode(at: target($0), in: graph) }.first
-        }
+        let characterGraph = try read(characterPath, fileSystem)
+        let character = Self.character(in: characterGraph)
         guard
             let character, let behaviorName = character.behaviorFilename,
             let rigName = character.rigName
@@ -61,7 +63,8 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
             throw BehaviorProjectAssetError.noGraph(behaviorPath)
         }
         let rigPath = join(folder, rigName)
-        guard let rig = try? HKASkeleton.skeletons(in: read(rigPath, fileSystem)).first else {
+        let skeletons = (try? HKASkeleton.skeletons(in: read(rigPath, fileSystem))) ?? []
+        guard let rig = skeletons.first else {
             throw BehaviorProjectAssetError.noSkeleton(rigPath)
         }
         let listed = character.animationNames.compactMap(\.self).map { join(folder, $0) }
@@ -75,9 +78,24 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
             objectGraph: graph,
             behavior: behavior,
             skeleton: rig,
+            ragdollSkeleton: skeletons.dropFirst().first,
             rigPath: rigPath,
-            clipPaths: listed + extra
+            clipPaths: listed + extra,
+            characterProperties: BehaviorCharacterProperties(
+                character: character, in: characterGraph
+            )
         )
+    }
+
+    /// The rig as a behaviour graph poses it, with its ragdoll bones.
+    public var behaviorSkeleton: BehaviorSkeleton {
+        BehaviorSkeleton(skeleton, ragdoll: ragdollSkeleton)
+    }
+
+    /// The first `hkbCharacterData` of a character file.
+    public static func character(in graph: HKXObjectGraph) -> HKBCharacterData? {
+        graph.objects(ofClass: HKBCharacterData.className).lazy
+            .compactMap { HKBCharacterData.decode(at: target($0), in: graph) }.first
     }
 
     public static func folder(of path: String) -> String {

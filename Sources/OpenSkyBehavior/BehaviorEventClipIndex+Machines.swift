@@ -51,15 +51,23 @@ nonisolated extension BehaviorEventClipIndex {
         }
         if let machine = object as? HKBStateMachine {
             let states = Self.states(of: machine, in: events.graph)
+            let startId = startStateId(of: machine, among: states)
             guard
-                let start = states.first(where: { $0.stateId == machine.startStateId })
-                ?? states.first,
+                let start = states.first(where: { $0.stateId == startId }) ?? states.first,
                 let generator = start.generator
             else { return nil }
             let entered = BehaviorStatePosition(
                 file: descent.file, machine: target, state: start.stateId
             )
             return descend(generator, descent, position: entered, visited: &visited)
+        }
+        // Without graph variables a selector runs the child its authored index names.
+        if
+            let selector = object as? HKBManualSelectorGenerator,
+            selector.generators.indices.contains(selector.selectedGeneratorIndex),
+            let chosen = selector.generators[selector.selectedGeneratorIndex]
+        {
+            return descend(chosen, descent, position: position, visited: &visited)
         }
         if let reference = object as? HKBBehaviorReferenceGenerator {
             return referencedClip(reference, event: descent.event, depth: descent.depth)
@@ -70,6 +78,16 @@ nonisolated extension BehaviorEventClipIndex {
             }
         }
         return nil
+    }
+
+    private func startStateId(
+        of machine: HKBStateMachine, among states: [HKBStateMachineStateInfo]
+    ) -> Int {
+        guard machine.startStateMode == BehaviorStartStateMode.random else {
+            return machine.startStateId
+        }
+        let enabled = states.filter(\.enable).map { (id: $0.stateId, probability: $0.probability) }
+        return BehaviorStateMachineRandom.pick(enabled, roll: roll) ?? machine.startStateId
     }
 
     private func referencedClip(

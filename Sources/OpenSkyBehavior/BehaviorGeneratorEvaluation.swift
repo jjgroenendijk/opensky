@@ -70,9 +70,8 @@ nonisolated extension BehaviorGraphInstance {
                 blender.blender, bound: bound, depth: next, deltaTime: deltaTime
             )
         case let matching as HKBPoseMatchingGenerator:
-            tally.note(.poseMatchingAsBlender)
-            return evaluateBlend(
-                matching.blender, bound: bound, depth: next, deltaTime: deltaTime
+            return evaluatePoseMatching(
+                matching, at: target, bound: bound, depth: next, deltaTime: deltaTime
             )
         case let selector as HKBManualSelectorGenerator:
             return evaluateSelector(
@@ -116,7 +115,9 @@ nonisolated extension BehaviorGraphInstance {
                 cyclic, at: target, bound: bound, depth: depth, deltaTime: deltaTime
             )
         case let offset as BSOffsetAnimationGenerator:
-            return evaluateOffsetAnimation(offset, bound: bound, depth: depth, deltaTime: deltaTime)
+            return evaluateOffsetAnimation(
+                offset, at: target, bound: bound, depth: depth, deltaTime: deltaTime
+            )
         case is HKBReferencePoseGenerator:
             return skeleton.restPose
         case let synced as BSSynchronizedClipGenerator:
@@ -139,12 +140,14 @@ nonisolated extension BehaviorGraphInstance {
     // MARK: - Blending
 
     /// `hkbBlenderGenerator`: mixes child poses by `m_weight` and root travel by
-    /// `m_worldFromModelWeight`. A child under `m_referencePoseWeightThreshold` is dropped.
+    /// `m_worldFromModelWeight`. A bone whose weights sum to at most
+    /// `m_referencePoseWeightThreshold` takes the reference pose for the rest.
     public func evaluateBlend(
         _ blender: HKBBlenderFields,
         bound: [String: BehaviorVariableValue],
         depth: Int,
-        deltaTime: Float
+        deltaTime: Float,
+        weights: [Float]? = nil
     ) -> BehaviorPose {
         let threshold = bound.float(
             "m_referencePoseWeightThreshold",
@@ -152,7 +155,7 @@ nonisolated extension BehaviorGraphInstance {
                 .referencePoseWeightThreshold
         )
         let children = blendChildren(
-            blender, bound: bound, threshold: threshold, depth: depth, deltaTime: deltaTime
+            blender, bound: bound, depth: depth, deltaTime: deltaTime, weights: weights
         )
         let masked = children.map {
             BehaviorPoseMath.MaskedChild(
@@ -162,8 +165,10 @@ nonisolated extension BehaviorGraphInstance {
         let full = masked.filter { !$0.pose.isAdditive }
         var blended = full.isEmpty
             ? BehaviorPoseMath.unchanged(boneCount: skeleton.referencePose.count)
-            : BehaviorPoseMath.blend(masked: full, fallback: skeleton.restPose)
-        // Each additive child adds on top at its own weight; it is not normalised.
+            : BehaviorPoseMath.blend(
+                masked: full, fallback: skeleton.restPose, referenceThreshold: threshold
+            )
+        // Each additive child adds on top at its own weight, after the normal children.
         for layer in masked where layer.pose.isAdditive {
             blended = BehaviorPoseMath.adding(
                 layer.pose,
@@ -190,6 +195,13 @@ nonisolated extension BehaviorGraphInstance {
         else { return nil }
         markReached(target)
         return array.boneWeights
+    }
+
+    // MARK: - Object access
+
+    /// The decoded object at `target` as `Value`, or nil.
+    public func object<Value: HKBClass>(at target: HKXPointerTarget, as _: Value.Type) -> Value? {
+        object(at: target) as? Value
     }
 
     // MARK: - Selection

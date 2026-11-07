@@ -20,9 +20,15 @@ extension CellStreamer {
         pushDynamicBodies(player: player, frameTime: frameTime)
         dynamicBodies.advance(
             by: frameTime,
-            world: DynamicStepWorld(staticCandidates: { [weak self] bounds in
-                self?.staticCollisionCandidates(overlapping: bounds) ?? []
-            })
+            world: DynamicStepWorld(
+                staticCandidates: { [weak self] bounds in
+                    self?.staticCollisionCandidates(overlapping: bounds) ?? []
+                },
+                water: DynamicWaterWorld(
+                    sample: { [weak self] point in self?.water(at: point) },
+                    player: player?.feetPosition
+                )
+            )
         )
         dynamicBodies.retainBodies(occupying: Set(residentDynamicBodyScenes().keys))
         for settled in dynamicBodies.drainSettledTransforms() {

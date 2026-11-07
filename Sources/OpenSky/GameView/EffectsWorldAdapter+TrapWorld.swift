@@ -59,6 +59,13 @@ extension EffectsWorldAdapter: PapyrusTrapWorldBridge {
         return knockActor(actor, velocity: simd_normalize(flat) * speed, knockdown: false)
     }
 
+    func knockDownActor(
+        _ actor: ReferenceKey, awayFrom source: ReferenceKey, magnitude: Float
+    ) -> Bool {
+        guard let from = trapPosition(of: source) else { return false }
+        return knockDown(actor, from: from, magnitude: magnitude)
+    }
+
     func staggerActor(_ actor: ReferenceKey, magnitude: Float) -> Bool {
         game.magicWorld.staggerActor(actor, magnitude: magnitude)
     }

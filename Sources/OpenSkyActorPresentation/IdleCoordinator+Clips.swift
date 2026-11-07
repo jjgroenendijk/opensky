@@ -39,7 +39,7 @@ extension IdleCoordinator {
     }
 
     /// Within one `advance`, actors share the world's context until a state write.
-    private func worldConditionContext() -> ConditionContext {
+    func worldConditionContext() -> ConditionContext {
         guard let world else { return ConditionContext() }
         guard isAdvancing else { return world.idleConditionContext() }
         let sequence = world.idleStateSequence
@@ -52,7 +52,12 @@ extension IdleCoordinator {
     }
 
     /// `target` replaces the furniture as the conditions' Target, such as a dragon's perch.
-    func selector(for actor: ReferenceKey, target: ReferenceKey? = nil) -> IdleSelector {
+    /// `adjust` adds what only the caller knows, such as whether its attack kills.
+    func selector(
+        for actor: ReferenceKey,
+        target: ReferenceKey? = nil,
+        adjust: ((inout ConditionContext) -> Void)? = nil
+    ) -> IdleSelector {
         var base: ConditionContext?
         let project = graphProject(of: actor)
         let check: IdleSelector.Check = { [weak self] idle in
@@ -61,8 +66,11 @@ extension IdleCoordinator {
                 return "behavior graph"
             }
             var context = base ?? self?.conditionContext(for: actor) ?? ConditionContext()
-            if let target {
+            if base == nil, let target {
                 context.target = target
+            }
+            if base == nil {
+                adjust?(&context)
             }
             base = context
             var evaluator = ConditionEvaluator(context: context)

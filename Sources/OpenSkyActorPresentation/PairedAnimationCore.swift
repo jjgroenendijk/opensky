@@ -3,6 +3,7 @@
 // See docs/engine/paired-animations.md.
 
 import Foundation
+import OpenSkyBehavior
 import OpenSkyFormatsESM
 
 /// One paired animation in progress.
@@ -18,6 +19,12 @@ nonisolated public struct PairedAnimationPlay: Equatable, Sendable {
     public let start: Float
     /// False when the partner's graph did not take the event, so only the lead plays.
     public internal(set) var partnerTookEvent = true
+    /// Where the partner stood when the pair started; it moves from here to the mark.
+    public internal(set) var partnerStart: PairedActorPose?
+    /// True once the partner stands on the mark.
+    public internal(set) var isAtMark = false
+    /// True once an update ran without the partner's graph showing a synchronized clip.
+    var waitedForMark = false
 
     public init(
         lead: ReferenceKey, partner: ReferenceKey, idle: String, event: String, start: Float
@@ -84,5 +91,42 @@ nonisolated public enum PairedAnimationCore {
 
     public static func hasExpired(_ play: PairedAnimationPlay, now: Float) -> Bool {
         now - play.start >= maximumSeconds || now < play.start
+    }
+}
+
+/// Where one actor of a pair stands: its feet, and its heading in radians about z.
+nonisolated public struct PairedActorPose: Equatable, Sendable {
+    public let feet: SIMD3<Float>
+    public let heading: Float
+
+    public init(feet: SIMD3<Float>, heading: Float) {
+        self.feet = feet
+        self.heading = heading
+    }
+}
+
+nonisolated extension PairedAnimationCore {
+    /// The partner `seconds` after the pair started, on its way from `start` to `mark`.
+    /// The move is linear in time (docs/engine/paired-animations.md#reaching-the-mark).
+    public static func approach(
+        from start: PairedActorPose, to mark: PairedActorPose, after seconds: Float,
+        _ synchronized: BehaviorSynchronizedMark
+    ) -> PairedActorPose {
+        guard synchronized.reorientsSupportCharacter else {
+            return PairedActorPose(feet: mark.feet, heading: start.heading)
+        }
+        let time = synchronized.getToMarkTime
+        let progress = time > 0 && seconds.isFinite ? min(max(seconds / time, 0), 1) : 1
+        let turn = remainder(mark.heading - start.heading, 2 * Float.pi)
+        return PairedActorPose(
+            feet: start.feet + (mark.feet - start.feet) * progress,
+            heading: progress >= 1 ? mark.heading : start.heading + turn * progress
+        )
+    }
+
+    public static func reachesMark(after seconds: Float, _ synchronized: BehaviorSynchronizedMark)
+        -> Bool
+    {
+        !synchronized.reorientsSupportCharacter || seconds >= synchronized.getToMarkTime
     }
 }

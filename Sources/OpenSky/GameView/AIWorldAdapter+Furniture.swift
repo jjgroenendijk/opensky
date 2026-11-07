@@ -277,5 +277,6 @@ extension AIWorldAdapter: PapyrusFurnitureBridge {
 
     func setSittingRotation(degrees: Float) {
         game.furniture.setSittingRotation(degrees: degrees)
+        game.vehicleWorld.setSittingRotation(degrees: degrees)
     }
 }

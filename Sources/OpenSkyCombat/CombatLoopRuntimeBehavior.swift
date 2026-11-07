@@ -153,6 +153,15 @@ extension CombatLoopRuntime {
         if behaviors[actor.key]?.pendingCast?.purpose == .shout {
             world.turnCombatActor(actor.key, toward: target.feet)
         }
+        if step.startedAttack, startsKillMove(
+            actor: actor,
+            weapon: weapon,
+            target: target,
+            world: world
+        ) {
+            parkBehavior(of: actor.key)
+            return
+        }
         if step.startedAttack {
             world.playCombatClip(.attack, on: actor.key)
             world.applyCombatSwingSpell(blow(by: actor.key, weapon: weapon), at: target.key)
@@ -212,17 +221,48 @@ extension CombatLoopRuntime {
         target: MeleeTarget,
         world: any CombatLoopWorld
     ) {
+        guard reaches(actor: actor, weapon: weapon, target: target) else { return }
+        apply(from: actor, weapon: weapon, to: target.key, world: world)
+    }
+
+    /// A swing whose target is in reach may play a kill move instead.
+    private func startsKillMove(
+        actor: CombatActorObservation,
+        weapon: MeleeWeaponProfile,
+        target: MeleeTarget,
+        world: any CombatLoopWorld
+    ) -> Bool {
+        guard reaches(actor: actor, weapon: weapon, target: target) else { return false }
+        let blow = blow(by: actor.key, weapon: weapon)
+        let damage = damage(of: blow, weapon: weapon, on: target.key, world: world)
+        return world.startCombatKillMove(by: actor.key, on: target.key, damage: damage.applied)
+    }
+
+    private func reaches(
+        actor: CombatActorObservation, weapon: MeleeWeaponProfile, target: MeleeTarget
+    ) -> Bool {
         let volume = MeleeSwing.volume(
             feet: actor.feet,
             capsule: actor.capsule,
             facing: facing(from: actor.feet, toward: target.feet, fallback: actor.facing),
-            reach: MeleeSwing.reach(
-                weapon: weapon, settings: settings, actorScale: actor.scale
-            )
+            reach: MeleeSwing.reach(weapon: weapon, settings: settings, actorScale: actor.scale)
         )
-        let hits = MeleeHitDetector.hits(swing: volume, targets: [target], attacker: actor.key)
-        guard !hits.isEmpty else { return }
-        apply(from: actor, weapon: weapon, to: target.key, world: world)
+        return !MeleeHitDetector.hits(swing: volume, targets: [target], attacker: actor.key)
+            .isEmpty
+    }
+
+    private func damage(
+        of blow: CombatBlow, weapon: MeleeWeaponProfile, on target: ReferenceKey,
+        world: any CombatLoopWorld
+    ) -> MeleeDamageResult {
+        MeleeDamage.resolve(
+            weapon: weapon,
+            block: world.combatBlock(of: target),
+            settings: settings,
+            blockSkill: world.combatBlockSkill(of: target),
+            bonusMultiplier: world.combatBlockMultiplier(of: target),
+            strike: world.combatStrike(blow, on: target)
+        )
     }
 
     /// One landed blow: the pinned 15.4 damage formula, the health write, and,
@@ -234,14 +274,7 @@ extension CombatLoopRuntime {
         world: any CombatLoopWorld
     ) {
         let blow = blow(by: actor.key, weapon: weapon)
-        let damage = MeleeDamage.resolve(
-            weapon: weapon,
-            block: world.combatBlock(of: target),
-            settings: settings,
-            blockSkill: world.combatBlockSkill(of: target),
-            bonusMultiplier: world.combatBlockMultiplier(of: target),
-            strike: world.combatStrike(blow, on: target)
-        )
+        let damage = damage(of: blow, weapon: weapon, on: target, world: world)
         let landed = world.applyCombatBlow(damage.applied, to: target, blow: blow)
         if landed {
             world.applyCombatHitSpell(blow, on: target)

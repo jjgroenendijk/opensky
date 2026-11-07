@@ -1,4 +1,4 @@
-// Additive clips (`m_blendHint` 1 or 2) store per-bone changes, not poses. Vanilla uses
+// Additive clips (`m_blendHint` 1) store per-bone changes, not poses. Vanilla uses
 // them for the body-weight layers, such as `mt_idle_skinny.hkx` (docs/formats/hka-animation.md).
 
 import Foundation
@@ -16,17 +16,24 @@ nonisolated extension BehaviorPoseMath {
         BehaviorPose(bones: Array(repeating: unchangedBone, count: count), isAdditive: true)
     }
 
-    /// `change` added to `base` at `weight`: the rotation turns the bone in its own frame,
-    /// and the translation adds in the parent's frame.
+    /// `change` applied in the parent's frame on top of `base`, then mixed with `base` at
+    /// `weight`: the rotation by a sign-aligned normalised lerp, as the game's Havok does.
     public static func adding(_ change: HKABonePose, to base: HKABonePose, weight: Float)
         -> HKABonePose
     {
-        let amount = clamped(weight)
-        let rotation = slerp(identityRotation, change.rotation, amount)
+        let amount = max(weight, 0)
+        let full = HKABonePose(
+            translation: change.translation + change.rotation.act(base.translation),
+            rotation: change.rotation * base.rotation,
+            scale: change.scale * base.scale
+        )
+        let aligned = simd_dot(base.rotation.vector, full.rotation.vector) < 0 ? -amount : amount
         return HKABonePose(
-            translation: base.translation + change.translation * amount,
-            rotation: normalized(base.rotation * rotation),
-            scale: base.scale * mix(SIMD3<Float>(repeating: 1), change.scale, amount)
+            translation: base.translation + (full.translation - base.translation) * amount,
+            rotation: normalized(simd_quatf(
+                vector: base.rotation.vector * (1 - amount) + full.rotation.vector * aligned
+            )),
+            scale: base.scale + (full.scale - base.scale) * amount
         )
     }
 

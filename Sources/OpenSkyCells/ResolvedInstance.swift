@@ -2,6 +2,7 @@
 
 import OpenSkyBehavior
 import OpenSkyFormatsCore
+import OpenSkyObjectAnimation
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
@@ -25,6 +26,8 @@ nonisolated public struct ResolvedInstance {
     public var emittance: EmittanceSource?
     /// A door whose `Open` and `Close` sequences move its leaves.
     public var isSequenceDoor = false
+    /// What drives the sequence door's open state.
+    public var sequenceDoorKind = CellSequenceDoor.Kind.door
     /// A TREE's wind motion; nil for every other base.
     public var treeMotion: TreeMotion?
 }

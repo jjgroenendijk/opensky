@@ -50,4 +50,18 @@ struct ActorBoneLODTests {
                 nil
         )
     }
+
+    @Test func theDistanceIsAcrossTheGroundAndShrinksWithTheActorsScale() {
+        let viewer = SIMD3<Float>(0, 0, 500)
+        #expect(ActorBoneLOD.distance(from: viewer, to: [300, 400, 0], scale: 1) == 500)
+        #expect(ActorBoneLOD.distance(from: viewer, to: [300, 400, 0], scale: 2) == 250)
+    }
+
+    @Test func anEntryWithoutADistanceIsSkipped() {
+        let lod = ActorBoneLOD(
+            bones: [.init(distance: 0, node: nil, name: "Camera")],
+            rig: Self.rig
+        )
+        #expect(lod == nil)
+    }
 }

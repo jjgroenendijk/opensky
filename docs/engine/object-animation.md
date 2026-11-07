@@ -75,13 +75,36 @@ A variable read or write converts between the graph's type and the type the nati
 as a Papyrus cast does: true is 1, and any number other than 0 is true. A variable the graph
 does not declare fails the native, so the script gets the default value.
 
+## Mesh sequences
+
+A graph state can play a `BGSGamebryoSequenceGenerator`. It names an `NiControllerSequence` of
+the object's own mesh, such as `AnimIdle` of the windmill fan
+`architecture\farmhouse\farmhousewindmill\farmhousewindmillfan.nif`. Confirmed on the install:
+91 behaviour files use the generator, among them windmills, forges, wayshrines, and traps.
+
+The rig of a graph mesh poses each node a sequence of the mesh moves. Each step, the
+coordinator samples every sequence the graph's generators played, at the seconds since the
+graph reached it. A loop wraps and a clamp holds its last key. A sequence the graph comes back
+to starts again at its first key.
+
+## Moving collision
+
+A graph object's collision moves with its bones. The cell build takes the object's solid bodies
+out of the static set and groups each one by the rig bone its node moves with: the node with
+the bone's name, or its nearest such ancestor. After each graph step, each group moves by its
+bone's move from the node's rest transform. A body on no bone stays where it is. Sequence doors
+use the same path with their leaves ([Sequence doors](#sequence-doors)).
+
+The swinging blade's body moves with `Blade01`, so the player cannot walk through the blade. The
+blade's hit still comes from trap contact ([traps](/engine/traps.md#trap-contact)).
+
+Activators, doors, furniture, containers, and moving statics are checked for a graph.
+
 ## Where OpenSky differs
 
-- `BGSGamebryoSequenceGenerator` is decoded but not played. A graph state that plays one holds
-  the last pose. The blade project has three.
-- The moving part has no collision body. A swinging blade does not hit; the trigger volume
-  does.
-- `FURN`, `CONT`, and `MSTT` references are not checked for a graph.
+- `BGSGamebryoSequenceGenerator` plays its sequence whole. Its blend mode and percent are read
+  but not used.
+- A node that only a mesh sequence moves draws in motion, but its collision stays at rest.
 
 ## Sequence doors
 
@@ -93,8 +116,9 @@ Confirmed on the install: the Helgen gate `Clutter\Helgen\HelgenGate01.nif` move
 and `DoorRight` over 4 seconds, and Solitude, Windhelm, Riften, Markarth, and Dwemer doors use
 the same two names.
 
-A cell build treats a `DOOR` reference as a sequence door when it has no `XTEL` teleport, its
-mesh names no behaviour graph, and its mesh has both sequences. Like an object with a graph, it
+A cell build treats a `DOOR` or `CONT` reference as a sequence door when its mesh names no
+behaviour graph and has both sequences. A chest lid opens this way, such as
+`clutter\containers\chest01\chest01.nif`. Like an object with a graph, it
 draws its own node-skinned copy, with one root bone per leaf node.
 
 The open state is the reference's activation state in the world state, so a save keeps it.
@@ -120,12 +144,12 @@ door's solid bodies again and groups them by the leaf their node moves with. Eac
 query moves a leaf's shapes by the leaf's move from rest, so an open gate does not block the
 path. A body on no leaf, such as a frame, stays where it is.
 
-### Where OpenSky differs for sequence doors
+A load door plays its open sequence while the load-door hold runs, then the transition starts.
+It is never saved open. A container lid opens while the container menu shows that container.
+Each text key also reaches Papyrus `OnAnimationEvent`, as a graph's events do.
 
-- A load door does not play its sequences; the use key starts the transition.
-- `GetOpenState` answers 1 or 3 for any other reference, where the game answers 0 for a
-  reference that cannot open.
-- Text keys reach Papyrus `OnAnimationEvent` only through the graph path, not from sequence doors.
+`GetOpenState` answers 0 for a resident reference that cannot open: one whose use action is
+neither open nor search.
 
 ## Node controllers
 

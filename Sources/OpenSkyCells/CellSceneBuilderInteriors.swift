@@ -160,6 +160,9 @@ nonisolated extension CellSceneBuilder {
             counts: counts
         )
         scene.imageSpace = found.cell.extras.imageSpace
+        scene.waterVolumes = buildWaterVolumes(
+            refs: effective, cellWater: nil, grid: nil, terrain: nil
+        )
         return finished(
             scene, hazards: collectHazards(in: found, resolved: resolved), collision: collision
         )

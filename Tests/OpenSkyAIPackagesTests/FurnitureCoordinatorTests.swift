@@ -158,6 +158,8 @@ struct FurnitureCoordinatorTests {
         _ = try furniture.use(bench, by: .player).get()
         furniture.setSittingRotation(degrees: -90)
         #expect(abs((world.viewYaw ?? 0) - .pi) < 0.0001)
+        furniture.setSittingRotation(degrees: -200)
+        #expect(abs((world.viewYaw ?? 0) - .pi) < 0.0001, "the turn stops at 90 degrees")
         furniture.stand(.player)
         #expect(furniture.sittingRotation == 0)
     }

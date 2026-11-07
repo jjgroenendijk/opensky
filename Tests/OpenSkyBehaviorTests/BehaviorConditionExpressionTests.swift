@@ -69,10 +69,10 @@ struct BehaviorConditionExpressionTests {
 
     @Test func anUnknownVariableMakesEvaluationFail() {
         #expect(holds("bMissing == 1") == nil)
-        // Short-circuiting still reports the failure it did not need, because a
-        // condition that cannot be fully read must block rather than guess.
-        #expect(holds("bStopped && bMissing") == false)
-        #expect(holds("bReady || bMissing") == true)
+        // The game compiles all or nothing, so a name the short circuit would skip
+        // still fails the whole condition.
+        #expect(holds("bStopped && bMissing") == nil)
+        #expect(holds("bReady || bMissing") == nil)
     }
 
     @Test func refusesTextTheGrammarHasNoPlaceFor() {
@@ -82,6 +82,8 @@ struct BehaviorConditionExpressionTests {
         #expect(BehaviorConditionExpression.parse("bReady & bStopped") == nil)
         #expect(BehaviorConditionExpression.parse("bReady + 1") == nil)
         #expect(BehaviorConditionExpression.parse("\"text\"") == nil)
+        // The vanilla stagger condition: the comma makes the whole text fail.
+        #expect(BehaviorConditionExpression.parse("(bReady > .3) || (bStopped > .3 , < .7)") == nil)
     }
 
     @Test func theSmoothCurveIsFlatAtBothEnds() {

@@ -105,7 +105,7 @@ extension MagicWorldAdapter {
         return [.player]
     }
 
-    /// Pushes along the ground, as `PushActorAway` does: OpenSky has no knockdown ragdoll.
+    /// Knocks each target down, as `PushActorAway` does, at the projectile's push.
     func knock(_ targets: [ReferenceKey], awayFrom source: ReferenceKey, by payload: SpellPayload) {
         guard
             let link = payload.projectile,
@@ -118,7 +118,9 @@ extension MagicWorldAdapter {
         )
         guard speed > 0 else { return }
         for target in targets {
-            _ = game.effectsWorld.pushActor(target, awayFrom: source, along: nil, speed: speed)
+            _ = game.effectsWorld.knockDownActor(
+                target, awayFrom: source, magnitude: speed / NIFCollisionModel.havokToEngineScale
+            )
         }
     }
 

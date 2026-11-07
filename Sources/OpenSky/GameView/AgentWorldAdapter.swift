@@ -13,6 +13,7 @@ import OpenSkyCombat
 import OpenSkyDialogue
 import OpenSkyEffects
 import OpenSkyFactions
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyLoading
@@ -48,6 +49,7 @@ protocol AgentWorldHost: AnyObject {
     var followerCommands: FollowerCommandCoordinator { get }
     var followerCommandWorld: FollowerCommandWorldAdapter { get }
     var actorGraphs: ActorGraphCoordinator { get }
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
     var actorValues: ActorValueCoordinator { get }
     var actorWorld: ActorWorldAdapter { get }
     var audio: AudioCoordinator { get }
@@ -59,6 +61,7 @@ protocol AgentWorldHost: AnyObject {
     var containerMenu: ContainerMenuController { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
+    var effectsWorld: EffectsWorldAdapter { get }
     var effectGraphs: EffectGraphCoordinator { get }
     var effectModelPoser: EffectModelPoser { get }
     var factions: FactionCoordinator { get }

@@ -145,6 +145,8 @@ public final class CellStreamer {
     /// Player-driven door motion boundaries. World audio consumes these to
     /// start the authored movement loop, retire it, and play the close sound.
     public var onInteractionAnimation: ((InteractionAnimationEvent) -> Void)?
+    /// The player used a load door, which swings open while the transition holds.
+    public var onLoadDoorUsed: ((FormID) -> Void)?
     /// Source placement retained across an asynchronous door build. Runtime
     /// state rebuilds have no player interaction and leave this nil.
     public var doorMotionInteraction: PlacedInteraction?

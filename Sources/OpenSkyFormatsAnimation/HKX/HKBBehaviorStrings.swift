@@ -47,9 +47,12 @@ nonisolated public struct HKBBehaviorGraphStringData: Equatable, Sendable {
 nonisolated public struct HKBVariableValueSet: Equatable, Sendable {
     public let wordValues: [Int]
     public let quadValues: [SIMD4<Float>]
-    /// Pointer-typed variables are references to other objects; the census
-    /// needs only how many there are, so the targets are not followed here.
-    public let variantCount: Int
+    /// Pointer-typed values, such as a character's bone weight arrays. Not followed here.
+    public let variantTargets: [HKXPointerTarget?]
+    public var variantCount: Int {
+        variantTargets.count
+    }
+
     public let unresolved: [HKXUnresolvedReference]
 
     public static let className = "hkbVariableValueSet"
@@ -89,7 +92,7 @@ nonisolated public struct HKBVariableValueSet: Equatable, Sendable {
         return HKBVariableValueSet(
             wordValues: words,
             quadValues: quads,
-            variantCount: cursor.arrayCount(at: variantValuesField) ?? 0,
+            variantTargets: cursor.pointerArray(at: variantValuesField),
             unresolved: cursor.unresolved
         )
     }

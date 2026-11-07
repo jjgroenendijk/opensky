@@ -65,6 +65,7 @@ final class EffectGraphProject {
             skeleton: skeleton, clips: clips, objects: objects
         )
         instance.references = references
+        instance.characterProperties = asset.characterProperties
         instance.activate()
         if !hasPrefetched {
             hasPrefetched = true

@@ -5,8 +5,11 @@ import Foundation
 import OpenSkyAgentControl
 import OpenSkyCombat
 import OpenSkyFormatsESM
+import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyWorld
 import simd
 
 extension AgentWorldAdapter {
@@ -17,6 +20,11 @@ extension AgentWorldAdapter {
             "available": .bool(true),
             "settings": [
                 "knockbackDamageMult": .init(settings.knockbackDamageMult),
+                "knockbackDamageBase": .init(settings.knockbackDamageBase),
+                "knockdownChance": .init(settings.knockdownChance),
+                "gameplayImpulseScale": .init(settings.gameplayImpulseScale),
+                "explosionMaxImpulse": .init(settings.explosionMaxImpulse),
+                "splashTimer": .init(impulses.water.splashTimer),
                 "knockbackForceMax": .init(settings.knockbackForceMax),
                 "knockbackTime": .init(settings.knockbackTime),
                 "knockdownCurrentHealthThreshold": .init(settings.knockdownCurrentHealthThreshold),
@@ -25,9 +33,24 @@ extension AgentWorldAdapter {
                 "splashModel": .string(impulses.water.splashModel),
                 "waterKnockdownVelocity": .init(impulses.water.knockdownVelocity)
             ],
+            "knockdowns": knockdownsJSON(),
             "splashCount": .init(impulses.splashCount),
             "waterRings": .init(game.renderer?.waterRipples.ripples.count ?? 0),
+            "playerWater": playerWaterJSON(),
             "events": .array(impulses.events.map(eventJSON))
+        ]
+    }
+
+    /// The water over the player's feet and what its current added to the last step.
+    private func playerWaterJSON() -> AgentJSON {
+        guard let plan = game.gameSession?.locomotion.status.lastPlan, let water = plan.water
+        else { return .null }
+        return [
+            "surface": .init(water.surface),
+            "current": .init(water.current),
+            "push": .init(plan.waterPush),
+            "dangerous": .bool(water.isDangerous),
+            "waterType": water.waterType.map { .formID($0.rawValue) } ?? .null
         ]
     }
 
@@ -40,6 +63,41 @@ extension AgentWorldAdapter {
             "speed": knock.map { .init($0.speed) } ?? .null,
             "knockdown": .bool(knock?.isKnockdown ?? false)
         ]
+    }
+
+    func knockDebug(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentJSON {
+        switch command {
+        case let .knock(reference, damage): try knock(reference, damage: damage)
+        case let .knockdown(reference, magnitude): try knockDown(reference, magnitude: magnitude)
+        default: throw AgentFailure(.invalidArgument, "not a knock command")
+        }
+    }
+
+    func knockDown(_ reference: String, magnitude: Float) throws(AgentFailure) -> AgentJSON {
+        let actor = try resolveReference(reference)
+        let source = game.combat.meleeAttacker.feet
+        let knocked = game.effectsWorld.knockDown(actor.key, from: source, magnitude: magnitude)
+        return [
+            "ref": .formID(actor.formID.rawValue),
+            "knocked": .bool(knocked),
+            "ragdoll": .bool(game.ragdoll.knockdowns.isKnockedDown(actor.key))
+        ]
+    }
+
+    private func knockdownsJSON() -> AgentJSON {
+        let phases = game.ragdoll.knockdowns.phases
+        return .array(phases.keys.sorted().compactMap { key in
+            switch phases[key] {
+            case let .down(remaining):
+                ["ref": reference(key), "phase": "down", "remaining": .init(remaining)]
+            case let .gettingUp(elapsed, duration):
+                [
+                    "ref": reference(key), "phase": "gettingUp", "elapsed": .init(elapsed),
+                    "duration": .init(duration)
+                ]
+            case nil: nil
+            }
+        })
     }
 
     private func eventJSON(_ event: ImpulseEvent) -> AgentJSON {
@@ -58,6 +116,8 @@ extension AgentWorldAdapter {
             [
                 "kind": "splash", "ref": splash.source.map(reference) ?? .null,
                 "weight": .string(splash.weight.rawValue), "model": .string(splash.model),
+                "sound": splash.weight.sound.map(AgentJSON.string) ?? .null,
+                "scale": .init(splash.scale),
                 "position": .array([splash.position.x, splash.position.y, splash.position.z]
                     .map { .init($0) })
             ]

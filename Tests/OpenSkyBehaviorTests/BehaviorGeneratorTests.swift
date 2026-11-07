@@ -13,27 +13,45 @@ struct BehaviorGeneratorTests {
 
     @Test func twoChildrenBlendAtTheirNormalizedWeights() {
         var table = BehaviorObjectTable()
-        let (root, _) = blendGraph(&table, firstWeight: 3, secondWeight: 1)
+        let (root, _) = blendGraph(&table, firstWeight: 0.75, secondWeight: 0.25)
         let graph = BehaviorFixture.instance(
             root: root,
             table: table,
             clips: BehaviorFixture.staticClipPair(left: 0, right: 10)
         )
-        // 0 + (10 - 0) * (1 / (3 + 1)) = 2.5.
+        // 0 + (10 - 0) * (0.25 / (0.75 + 0.25)) = 2.5.
         #expect(abs(graph.update(deltaTime: 1 / 30).bones[1].translation.x - 2.5) < 1e-4)
     }
 
-    @Test func aChildUnderTheReferencePoseThresholdIsDropped() {
+    @Test func aBoneUnderTheReferencePoseThresholdFillsUpWithTheReferencePose() {
         var table = BehaviorObjectTable()
         let (root, _) = blendGraph(
-            &table, firstWeight: 0.01, secondWeight: 1, threshold: 0.1
+            &table, firstWeight: 0.02, secondWeight: 0.03, threshold: 0.1
         )
         let graph = BehaviorFixture.instance(
             root: root,
             table: table,
             clips: BehaviorFixture.staticClipPair(left: 0, right: 10)
         )
-        #expect(abs(graph.update(deltaTime: 1 / 30).bones[1].translation.x - 10) < 1e-4)
+        // The children give x 6 at weight 0.05; the reference (0, 10, 0) takes the other 0.05.
+        let bone = graph.update(deltaTime: 1 / 30).bones[1]
+        #expect(simd_distance(bone.translation, SIMD3(3, 5, 0)) < 1e-4)
+    }
+
+    @Test func smoothedWeightsEaseEachChildWeight() {
+        var table = BehaviorObjectTable()
+        let (root, _) = blendGraph(
+            &table, firstWeight: 1, secondWeight: 0.25,
+            flags: BehaviorBlenderFlag.smoothGeneratorWeights
+        )
+        let graph = BehaviorFixture.instance(
+            root: root,
+            table: table,
+            clips: BehaviorFixture.staticClipPair(left: 0, right: 10)
+        )
+        // 0.25 eases to 0.15625, so the right clip has 0.15625 / 1.15625 of the blend.
+        let expected: Float = 10 * 0.15625 / 1.15625
+        #expect(abs(graph.update(deltaTime: 1 / 30).bones[1].translation.x - expected) < 1e-4)
     }
 
     @Test func aBoundBlendWeightMovesTheBlend() {
@@ -54,9 +72,13 @@ struct BehaviorGeneratorTests {
         )
         #expect(abs(graph.update(deltaTime: 1 / 30).bones[1].translation.x - 5) < 1e-4)
 
+        graph.setVariable(.real(0.2), named: "Blend")
+        // 0 + 10 * (0.2 / (1 + 0.2)).
+        #expect(abs(graph.update(deltaTime: 1 / 30).bones[1].translation.x - 10 / 6) < 1e-4)
+
+        // A weight above 1 counts as 1.
         graph.setVariable(.real(3), named: "Blend")
-        // 0 + 10 * (3 / (1 + 3)) = 7.5.
-        #expect(abs(graph.update(deltaTime: 1 / 30).bones[1].translation.x - 7.5) < 1e-4)
+        #expect(abs(graph.update(deltaTime: 1 / 30).bones[1].translation.x - 5) < 1e-4)
     }
 
     @Test func aSelectorIndexOutsideItsChildrenProducesTheReferencePose() {
@@ -183,6 +205,7 @@ struct BehaviorGeneratorTests {
         firstWeight: Float,
         secondWeight: Float,
         threshold: Float = 0,
+        flags: Int = 0,
         secondBinding: HKXPointerTarget? = nil
     ) -> (HKXPointerTarget, [HKXPointerTarget]) {
         let first = table.add(
@@ -202,7 +225,7 @@ struct BehaviorGeneratorTests {
         )
         let root = table.add(
             BehaviorFixture.blender(
-                "blend", children: [firstChild, secondChild], threshold: threshold
+                "blend", children: [firstChild, secondChild], threshold: threshold, flags: flags
             ),
             at: 0x140
         )

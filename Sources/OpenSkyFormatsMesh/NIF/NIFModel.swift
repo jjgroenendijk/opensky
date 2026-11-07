@@ -95,8 +95,8 @@ nonisolated extension NIFFile {
                     || block.typeName == NIFSwitchNode.typeName
                 {
                     guard
-                        let node = try drawableNode(block),
-                        !node.object.isHidden else { continue }
+                        let node = try drawableNode(block), !node.object.isHidden,
+                        !NIFCurrentPlane.isCurrentPlane(node.object.name) else { continue }
                     guard !Self.isEditorMarker(node.object.name) else {
                         editorMarkerShapeCount += 1
                         continue
@@ -141,7 +141,10 @@ nonisolated extension NIFFile {
                 editorMarkerShapeCount += 1
                 return
             }
-            guard !shape.object.isHidden, try !isUndrawableShape(shape) else {
+            guard
+                !shape.object.isHidden, !NIFCurrentPlane.isCurrentPlane(shape.object.name),
+                try !isUndrawableShape(shape)
+            else {
                 skippedShapeCount += 1
                 return
             }

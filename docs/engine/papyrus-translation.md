@@ -56,6 +56,13 @@ one transform write, when the move ends or stops.
 While a move runs, `GetPositionX`, `GetAngleZ`, `GetDistance`, and the other script reads see the
 live pose. A walking actor's position still comes from its locomotion.
 
+## Loose bodies in the way
+
+The moving reference keeps its built collision, which is not a physics body. So each frame
+the loose bodies inside its `OBND` box, grown by each body's radius, take on the move's
+velocity along its path. A body that already moves faster that way keeps its speed. The
+rotation does not push.
+
 ## Where OpenSky differs from the game
 
 | Behaviour | What OpenSky does | Why |

@@ -226,7 +226,14 @@ nonisolated extension AgentCommandCatalog {
             "debug.knock", "Knock an actor back as a melee hit from the player would.",
             positionals: [
                 required("ref", refHelp),
-                required("damage", "The hit's damage. It must reach half the current health.")
+                required("damage", "The hit's damage; a killing hit does not knock.")
+            ]
+        ),
+        command(
+            "debug.knockdown", "Knock an actor down as a ragdoll, away from the player.",
+            positionals: [
+                required("ref", refHelp),
+                optional("magnitude", "Havok metres a second; 10 by default, negative pulls.")
             ]
         ),
         command(

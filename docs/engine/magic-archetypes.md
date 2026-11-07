@@ -190,13 +190,11 @@ asks for a knock-down, so the push can only come from the projectile. Dawnguard'
 
 When a cloak's spell lands, OpenSky pushes each target away from the cloak's holder at
 `impactForce * fProjectileKnockMultBiped` (0.25), read as a Havok speed and scaled to units: about
-875 units a second for Shield Charge. The push slides the actor on its capsule, the path
-`PushActorAway` uses. The flame, frost, and shock cloaks name projectiles with an impact force of 5
-or 10, so they push a little too.
+875 units a second for Shield Charge. The push knocks the actor down as a ragdoll, the path
+`PushActorAway` uses ([knockdown](/engine/ragdoll.md#knockdown)). The flame, frost, and shock
+cloaks name projectiles with an impact force of 5 or 10, so they knock down a little too.
 
-[WARNING] The speed scale is OpenSky's reading; no source gives it. The game ragdolls a
-knocked-down actor and plays a get-up. OpenSky has no knockdown ragdoll, so the actor slides and
-stays on its feet.
+[WARNING] The speed scale is OpenSky's reading; no source gives it.
 
 ## Summons, races, and feeding
 
@@ -248,10 +246,11 @@ renews ends after 1.5 seconds, an OpenSky number.
 - Grab Actor: "Can pick up and throw selected NPC. ... Distance at which the target is held is
   based on the GrabActorOffset actor value of the caster." The actor is held on the aim ray at
   that distance, never nearer than `fMagicGrabActorMinDistance` (120). The `Grabbed` actor value
-  is 1, and the actor counts as paralysed. When the hold ends, a grabbed player is knocked back
-  with `fMagicGrabActorThrowForce` (15) times 100 units a second, the scale `PushActorAway`
-  uses. [WARNING] An NPC has no outside velocity yet, so it is set down instead of thrown. The
-  wiki's list of actors it does not affect is not checked.
+  is 1, and the actor counts as paralysed. When the hold ends, a grabbed NPC is knocked down
+  along the aim at `fMagicGrabActorThrowForce` (15) Havok metres a second
+  ([knockdown](/engine/ragdoll.md#knockdown)), and a grabbed player is knocked back at 15 times
+  100 units a second. [WARNING] The player's scale is OpenSky's. The wiki's list of actors it
+  does not affect is not checked.
 - Guide: "Creates a trail of Hazard objects from the caster to the nearest quest target." The
   trail follows the navmesh path to the nearest tracked quest target, one hazard every
   `fMagicGuideSpacing` (46) units, at most `iMagicGuideWaypoints` (44). With no target the
