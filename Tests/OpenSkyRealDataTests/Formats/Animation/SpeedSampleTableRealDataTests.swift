@@ -20,6 +20,6 @@ struct SpeedSampleTableRealDataTests {
         )
         let walk = try #require(human.blendSpeed(state: 0, direction: 0, goal: 100))
         #expect(walk > 120 && walk < 150, "blend \(walk)")
-        #expect(table.projects["horse"]?.states[60] != nil)
+        #expect(table.projects["horseproject"]?.states[60] != nil)
     }
 }
