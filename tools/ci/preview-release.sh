@@ -2,8 +2,9 @@
 # Plans and publishes the nightly preview release (docs/tools/releases.md).
 # `plan` prints GitHub step outputs: publish=true|false, tag, sha, and the
 # previous preview tag. It takes the newest main commit whose Lint check passed,
-# because a later push cancels the run on an older one. It skips when the last
-# preview already holds that commit. It needs the checkout's first-parent history.
+# because a later push cancels the run on an older one. Only the head commit of a
+# push gets a CI run, so it asks for the heads of recent push runs. It skips when
+# the last preview already holds that commit, which needs the checkout's history.
 # `publish DMG` creates the pre-release from those outputs, passed as env.
 #
 # Usage: tools/ci/preview-release.sh plan
@@ -17,12 +18,14 @@ version=$(awk -F' = ' '/^MARKETING_VERSION/ { print $2 }' config/Build/Base.xcco
 case "${1:-}" in
 plan)
     sha=""
-    for commit in $(git log --first-parent --format=%H -n 30); do
+    heads=$(gh run list --workflow ci.yml --branch main --event push --limit 30 \
+        --json headSha --jq '.[].headSha')
+    for commit in $heads; do
         lint=$(gh api "repos/$GH_REPO/commits/$commit/check-runs?check_name=Lint" \
             --jq '[.check_runs[].conclusion] | index("success") != null')
         if [ "$lint" = true ]; then sha=$commit; break; fi
     done
-    [ -n "$sha" ] || { echo "[ERROR] no main commit with a passing Lint in the last 30" >&2; exit 1; }
+    [ -n "$sha" ] || { echo "[ERROR] no main push with a passing Lint in the last 30 CI runs" >&2; exit 1; }
     previous=$(gh release list --limit 200 --json tagName --jq '.[].tagName' \
         | grep -E "^v${version}-preview\.[0-9]+$" | sort -t. -k4 -n | tail -n 1 || true)
     number=$(( ${previous##*.} + 0 ))

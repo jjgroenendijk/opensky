@@ -17,8 +17,10 @@ only our own build. The user's game install is never read or packed.
 `.github/workflows/preview.yml` publishes a preview every night at 02:41 UTC, and on demand with
 `gh workflow run preview.yml`. Its plan job, on Linux, runs `tools/ci/preview-release.sh plan`:
 
-1. Walk `main`'s first-parent history and take the newest commit whose `Lint` check passed. The
-   newest commit may have no result, because a later push to `main` cancels the older run.
+1. List the head commits of the recent CI runs for pushes to `main`, and take the newest one
+   whose `Lint` check passed. A rebase merge puts many commits on `main` in one push, and only
+   the head commit of a push gets a CI run. The newest head may have no result, because a later
+   push to `main` cancels the older run.
 2. Skip when the last preview of this version already holds that commit, so a quiet night
    publishes nothing.
 3. Name the tag `v<MARKETING_VERSION>-preview.<N>`, one above the last preview of that version.
