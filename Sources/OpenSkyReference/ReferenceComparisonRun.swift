@@ -2,6 +2,7 @@
 // folder and the launcher page reads back.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public struct ReferenceComparisonRun: Equatable, Sendable {
     public let directory: URL
@@ -31,8 +32,8 @@ nonisolated public struct ReferenceComparisonRun: Equatable, Sendable {
     }
 
     public func readReport() -> ReferenceComparisonReport? {
-        guard let data = try? Data(contentsOf: report) else { return nil }
-        return try? JSONDecoder().decode(ReferenceComparisonReport.self, from: data)
+        guard let data = attempt({ try Data(contentsOf: report) }) else { return nil }
+        return attempt { try JSONDecoder().decode(ReferenceComparisonReport.self, from: data) }
     }
 }
 

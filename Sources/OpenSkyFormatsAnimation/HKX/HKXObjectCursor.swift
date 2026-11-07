@@ -109,7 +109,7 @@ nonisolated public struct HKXObjectCursor: Sendable {
     ) -> Value? {
         if tagValue != nil {
             var reader = BinaryReader(tagBytes(at: field, size: size))
-            return try? read(&reader)
+            return attempt { try read(&reader) }
         }
         let offset = base + field.offset
         guard containsSectionRange(offset, size) else {
@@ -117,7 +117,7 @@ nonisolated public struct HKXObjectCursor: Sendable {
             return nil
         }
         var reader = BinaryReader(payload, offset: offset)
-        guard let value = try? read(&reader) else {
+        guard let value = attempt({ try read(&reader) }) else {
             recordMiss(field, .outOfBounds)
             return nil
         }
@@ -193,7 +193,7 @@ nonisolated public struct HKXObjectCursor: Sendable {
             return nil
         }
         var reader = BinaryReader(stringPayload, offset: target.dataOffset)
-        guard let value = try? reader.readZString(.strict(.ascii)) else {
+        guard let value = attempt({ try reader.readZString(.strict(.ascii)) }) else {
             recordMiss(field, .undecodableString)
             return nil
         }

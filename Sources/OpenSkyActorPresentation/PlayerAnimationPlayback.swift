@@ -138,7 +138,7 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
 
     private func rigMatrices(of bones: [HKABonePose]) -> [float4x4]? {
         guard !bones.isEmpty else { return nil }
-        return try? SkeletonPoseMath.worldMatrices(skeleton: skeleton, localPoses: bones)
+        return attempt { try SkeletonPoseMath.worldMatrices(skeleton: skeleton, localPoses: bones) }
     }
 
     /// The graph's latest pose in rig space, one matrix per skeleton bone.

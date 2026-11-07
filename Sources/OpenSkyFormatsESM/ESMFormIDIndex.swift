@@ -93,7 +93,9 @@ nonisolated public struct ESMFormIDIndex: Sendable {
         let offset = Int(entry.offset)
         var reader = BinaryReader(data, offset: offset)
         // A saved index that no longer fits the file finds another record here.
-        guard let header = try? ESMRecord.Header(reader: &reader), header.formID == formID
+        guard
+            let header = attempt({ try ESMRecord.Header(reader: &reader) }),
+            header.formID == formID
         else { return nil }
         let dataStart = offset + ESMRecord.Header.size
         return ESMRecord(
@@ -139,7 +141,7 @@ nonisolated public struct ESMFormIDIndex: Sendable {
             units.append(Unit(group: group, owners: owners))
             return
         }
-        guard let children = try? group.children() else { return }
+        guard let children = attempt({ try group.children() }) else { return }
         let owners = owners.entering(group)
         for child in children {
             switch child {
@@ -152,7 +154,7 @@ nonisolated public struct ESMFormIDIndex: Sendable {
 
     /// A malformed group is skipped, as in `ESMWalk`.
     private static func collect(group: ESMGroup, owners: Owners, into found: inout [Entry]) {
-        guard let children = try? group.children() else { return }
+        guard let children = attempt({ try group.children() }) else { return }
         let owners = owners.entering(group)
         for child in children {
             switch child {

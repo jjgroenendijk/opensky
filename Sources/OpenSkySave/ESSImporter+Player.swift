@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFactionsInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsESS
 import OpenSkyMagicInterface
@@ -34,11 +35,13 @@ nonisolated extension ESSImporter {
         let form = file.changeForms.first {
             $0.type?.signature == "NPC_" && $0.form == ESSActorBaseChange.playerBase
         }
-        return form.flatMap { try? ESSActorBaseChange($0) }
+        return form.flatMap { element in attempt { try ESSActorBaseChange(element) } }
     }
 
     private mutating func importIdentity(_ base: ESSActorBaseChange?) {
-        let race = base?.race.flatMap { try? form($0, signature: ["RACE"]).get() }
+        let race = base?.race.flatMap { race in
+            attempt { try form(race, signature: ["RACE"]).get() }
+        }
             ?? records.race(editorID: file.header.playerRaceEditorID)
         guard let race, let raceID = mapping.currentFormID(race) else {
             let missing = "race \(file.header.playerRaceEditorID) not found"
@@ -109,7 +112,7 @@ nonisolated extension ESSImporter {
     }
 
     private mutating func importPlacement() {
-        guard let location = try? file.playerLocation() else {
+        guard let location = attempt({ try file.playerLocation() }) else {
             report.update("player") { $0.skip("player location table") }
             return
         }
@@ -132,6 +135,7 @@ nonisolated extension ESSImporter {
             $0.form == ESSRefID(kind: .default, value: Self.playerReference.objectID)
                 && $0.type?.signature == "ACHR"
         }
-        return player.flatMap { try? ESSReferenceChange($0) }?.placement?.rotation.z
+        return player.flatMap { element in attempt { try ESSReferenceChange(element) } }?
+            .placement?.rotation.z
     }
 }

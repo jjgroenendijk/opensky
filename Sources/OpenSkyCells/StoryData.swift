@@ -2,6 +2,7 @@
 // indexes, and the load order the `.seq` pass walks. See docs/engine/scenes.md
 // and docs/engine/story-manager.md.
 
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 
@@ -47,7 +48,7 @@ nonisolated public struct StoryData: Sendable {
             scenes: SceneStore(plugins: plugins),
             storyManager: StoryManagerStore(plugins: plugins),
             plugins: plugins.map { plugin in
-                let header = try? PluginHeader(tes4: plugin.file.tes4)
+                let header = attempt { try PluginHeader(tes4: plugin.file.tes4) }
                 return StoryPlugin(name: plugin.name, masters: header?.masters ?? [])
             },
             social: settings.map(SocialSettings.resolve(store:)) ?? .documentedDefaults

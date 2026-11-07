@@ -24,7 +24,7 @@ nonisolated extension MeshLibrary {
         var seen = Set<String>()
         let pathKeys = paths.compactMap { path -> String? in
             guard
-                let pathKey = try? meshKey(for: path), seen.insert(pathKey).inserted,
+                let pathKey = attempt({ try meshKey(for: path) }), seen.insert(pathKey).inserted,
                 predecoded[pathKey] == nil, prelaid[pathKey] == nil,
                 !isLoaded(pathKey: pathKey)
             else { return nil }
@@ -52,7 +52,7 @@ nonisolated extension MeshLibrary {
         // Workers read the archives too; the phase of this fan-out holds their time.
         let files = fileSystem.untimed
         let parsed = ParallelDecode.map(misses) { pathKey -> PredecodedMesh? in
-            guard let data = try? files.contents(forPath: pathKey)
+            guard let data = attempt({ try files.contents(forPath: pathKey) })
             else { return .failure(.fileNotFound(path: pathKey)) }
             return Self.parse(data, pathKey: pathKey, characterSkeleton: skeleton)
         }
@@ -60,7 +60,8 @@ nonisolated extension MeshLibrary {
         predecoded.merge(results) { _, new in new }
         prelaid.merge(layouts) { _, new in new }
         let materials = layouts.values.flatMap(\.value.materials)
-            + results.values.flatMap { (try? $0.get().model.materials) ?? [] }
+            + results.values
+            .flatMap { element in attempt { try element.get().model.materials } ?? [] }
         textures.prefetch(materials: materials)
     }
 
@@ -75,13 +76,14 @@ nonisolated extension MeshLibrary {
     /// decode needs the actor's skeleton, so only the file parse can run ahead.
     public func preparse(paths: some Sequence<String>) {
         guard decodesInParallel else { return }
-        let keys = Set(paths.compactMap { try? meshKey(for: $0) })
+        let keys = Set(paths.compactMap { element in attempt { try meshKey(for: element) } })
             .filter { preparsed[$0] == nil && !actorDecodedPaths.contains($0) }
         guard keys.count >= ParallelDecode.minimumParallelItems else { return }
         let files = fileSystem.untimed
         let parsed = loadPhases.measure(.mesh) {
             ParallelDecode.map(keys) { key in
-                (try? files.contents(forPath: key)).flatMap { try? NIFFile(data: $0) }
+                attempt { try files.contents(forPath: key) }
+                    .flatMap { element in attempt { try NIFFile(data: element) } }
             }
         }
         preparsed.merge(parsed) { _, new in new }

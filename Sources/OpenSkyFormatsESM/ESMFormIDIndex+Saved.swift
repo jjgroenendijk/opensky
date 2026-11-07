@@ -35,9 +35,9 @@ nonisolated extension ESMFormIDIndex {
         guard saved.count >= Self.headerSize else { return nil }
         var reader = BinaryReader(saved)
         guard
-            let magic = try? reader.readUInt32(), magic == Self.savedMagic.rawValue,
-            let version = try? reader.readUInt32(), version == Self.savedVersion,
-            let count = try? Int(reader.readUInt32()),
+            let magic = attempt({ try reader.readUInt32() }), magic == Self.savedMagic.rawValue,
+            let version = attempt({ try reader.readUInt32() }), version == Self.savedVersion,
+            let count = attempt({ try Int(reader.readUInt32()) }),
             saved.count == Self.headerSize + count * Self.entrySize
         else { return nil }
         var entries: [Entry] = []
@@ -45,8 +45,10 @@ nonisolated extension ESMFormIDIndex {
         let limit = file.data.count - ESMRecord.Header.size
         for _ in 0 ..< count {
             guard
-                let formID = try? reader.readUInt32(), let offset = try? reader.readUInt32(),
-                let cell = try? reader.readUInt32(), let world = try? reader.readUInt32(),
+                let formID = attempt({ try reader.readUInt32() }),
+                let offset = attempt({ try reader.readUInt32() }),
+                let cell = attempt({ try reader.readUInt32() }),
+                let world = attempt({ try reader.readUInt32() }),
                 Int(offset) <= limit, formID >= entries.last?.formID ?? 0
             else { return nil }
             entries.append(Entry(formID: formID, offset: offset, cell: cell, world: world))

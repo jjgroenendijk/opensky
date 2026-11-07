@@ -555,16 +555,19 @@ nonisolated extension CellSceneBuilder {
         counts: inout BuildCounts
     ) -> ResolvedInstance? {
         do {
-            let animated = behavior.flatMap {
-                try? meshes.animatedObjectModel(
-                    path: modelPath,
-                    bones: Set(objectPoseRig(modelPath: modelPath, asset: $0)?.skeleton.boneNames
-                        ?? $0.skeleton.boneNames),
-                    reference: ref.formID.rawValue, surface: surface
-                )
+            let animated = behavior.flatMap { asset in
+                attempt {
+                    try meshes.animatedObjectModel(
+                        path: modelPath,
+                        bones: Set(objectPoseRig(modelPath: modelPath, asset: asset)?.skeleton
+                            .boneNames ?? asset.skeleton.boneNames),
+                        reference: ref.formID.rawValue,
+                        surface: surface
+                    )
+                }
             }
             return try ResolvedInstance(
-                sortKey: (try? VirtualFileSystem.normalize(modelPath)) ?? modelPath,
+                sortKey: attempt { try VirtualFileSystem.normalize(modelPath) } ?? modelPath,
                 formID: ref.formID.rawValue,
                 modelPath: modelPath,
                 model: animated ?? meshes.model(path: modelPath, surface: surface),

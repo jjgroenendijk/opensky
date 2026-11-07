@@ -4,6 +4,7 @@
 // reports progress after every file, and records a failed file without stopping.
 
 public import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 import Synchronization
 
@@ -86,7 +87,7 @@ nonisolated public final class AssetCacheBuilder: Sendable {
     /// One item per path and converter that accepts it, in path order.
     public func plan(paths: [String]) -> [AssetCacheBuildItem] {
         paths.sorted().flatMap { path in
-            let key = (try? VirtualFileSystem.normalize(path)) ?? path
+            let key = attempt { try VirtualFileSystem.normalize(path) } ?? path
             return converters.filter { $0.accepts(path: key) }
                 .map { AssetCacheBuildItem(path: key, converter: $0) }
         }

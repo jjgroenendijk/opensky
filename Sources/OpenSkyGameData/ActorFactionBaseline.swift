@@ -4,6 +4,7 @@
 // See docs/engine/hostility.md.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 /// What plugin data authors about one actor's social standing.
@@ -43,7 +44,8 @@ nonisolated public struct ActorFactionBaselineResolver: Sendable {
     /// What plugin data authors for `base`. A broken template chain resolves to
     /// `ActorFactionBaseline.none`: no factions and no fights, the safe failure.
     public func baseline(for base: FormID) -> ActorFactionBaseline {
-        guard let resolved = try? templates.resolveFactions(base: base) else { return .none }
+        guard let resolved = attempt({ try templates.resolveFactions(base: base) })
+        else { return .none }
         return ActorFactionBaseline(
             memberships: resolved.factions.value,
             aiData: resolved.aiData.value ?? .absent,

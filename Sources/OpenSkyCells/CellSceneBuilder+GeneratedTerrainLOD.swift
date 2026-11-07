@@ -68,7 +68,12 @@ nonisolated extension CellSceneBuilder {
         guard
             let store = distantLODBuilder?.configurationStore,
             store.snapshot().configuration.generatedTerrain,
-            let world = try? worldChildrenGroup(editorID: lodWorldspace, localized: pluginLocalized)
+            let world = attempt({
+                try worldChildrenGroup(
+                    editorID: lodWorldspace,
+                    localized: pluginLocalized
+                )
+            })
         else { return nil }
         let worlds = worldspaceIndexBuildingIfNeeded()
         let height = world.worldspace?.source(of: .useLandData, in: worlds).defaultLandHeight
@@ -83,8 +88,8 @@ nonisolated extension CellSceneBuilder {
         if let cached = terrainLODTextures[key] {
             return cached
         }
-        let image = (try? fileSystem?.contents(forPath: path))
-            .flatMap { try? DDSDecoder.smallLevel($0, edge: edge) }
+        let image = attempt { try fileSystem?.contents(forPath: path) }
+            .flatMap { element in attempt { try DDSDecoder.smallLevel(element, edge: edge) } }
         let texture = image.flatMap {
             TerrainLODTexture(width: $0.width, height: $0.height, rgba: $0.rgba)
         }

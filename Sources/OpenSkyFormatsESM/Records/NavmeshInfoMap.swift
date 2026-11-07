@@ -132,7 +132,7 @@ nonisolated public struct NavmeshInfoMap: Sendable {
             case "NVER":
                 version = try reader.readUInt32()
             case "NVMI":
-                if let info = try? NavmeshInfo(field: field) {
+                if let info = attempt({ try NavmeshInfo(field: field) }) {
                     infos.append(info)
                 } else {
                     malformed += 1

@@ -83,7 +83,7 @@ nonisolated public struct NIFMeshGapCensus: Sendable {
     private mutating func recordShaderless(_ block: NIFFile.Block, in file: NIFFile) {
         guard
             NIFFile.Flattener.shapeTypes.contains(block.typeName),
-            let shape = try? NIFTriShape.decode(block, in: file),
+            let shape = attempt({ try NIFTriShape.decode(block, in: file) }),
             shape.shaderPropertyRef < 0
         else { return }
         shaderlessShapes.add(shape.object.name ?? "(unnamed)")

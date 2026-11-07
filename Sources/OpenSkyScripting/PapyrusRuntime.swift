@@ -1,6 +1,7 @@
 // Long-lived Papyrus script library, instance table, and invocation façade.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsPEX
 public import OpenSkyScriptingInterface
 
@@ -220,7 +221,7 @@ public final class PapyrusRuntime {
     public func resolvesObject(_ handle: PapyrusObjectHandle, as typeName: String) -> Bool {
         guard
             let instance = instance(for: handle),
-            let chain = try? scriptChain(from: instance.rootScriptName)
+            let chain = attempt({ try scriptChain(from: instance.rootScriptName) })
         else {
             return false
         }

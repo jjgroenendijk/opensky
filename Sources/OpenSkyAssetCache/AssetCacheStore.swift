@@ -5,6 +5,7 @@
 // least-recently-used removal.
 
 public import Foundation
+import OpenSkyFormatsCore
 import Synchronization
 
 /// What one lookup asks for: a kind of asset from one source, built by one
@@ -229,12 +230,14 @@ nonisolated public final class AssetCacheStore: Sendable {
     /// header.
     public func entryState(_ request: AssetCacheRequest) -> AssetCacheEntryState {
         let url = entryURL(kind: request.kind, source: request.source)
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return .missing }
+        guard let handle = attemptIfPresent({ try FileHandle(forReadingFrom: url) })
+        else { return .missing }
         defer { try? handle.close() }
         guard
-            let prefix = try? handle.read(upToCount: AssetCacheEntryCodec.maximumHeaderSize),
-            let size = try? handle.seekToEnd(),
-            let (header, payloadEnd) = try? AssetCacheEntryCodec.decodeHeader(prefix),
+            let prefix =
+            attempt({ try handle.read(upToCount: AssetCacheEntryCodec.maximumHeaderSize) }),
+            let size = attempt({ try handle.seekToEnd() }),
+            let (header, payloadEnd) = attempt({ try AssetCacheEntryCodec.decodeHeader(prefix) }),
             payloadEnd == Int(size), Self.staleness(of: header, for: request) == nil
         else { return .stale }
         return .current
@@ -353,7 +356,7 @@ nonisolated public final class AssetCacheStore: Sendable {
             }
             for case let url as URL in walker where url.pathExtension == Self.entryExtension {
                 guard
-                    let values = try? url.resourceValues(forKeys: Set(keys)),
+                    let values = attemptIfPresent({ try url.resourceValues(forKeys: Set(keys)) }),
                     values.isRegularFile == true
                 else {
                     continue

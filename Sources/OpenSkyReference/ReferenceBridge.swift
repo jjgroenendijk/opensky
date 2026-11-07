@@ -3,6 +3,7 @@
 // `OpenSkyBridge/state.json` four times a second (docs/tools/reference-game.md).
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public enum ReferenceBridgeError: Error, Equatable, Sendable, LocalizedError {
     case notRunning
@@ -51,12 +52,13 @@ nonisolated public struct ReferenceBridge: Sendable {
     public func state(now: Date = Date()) -> ReferenceBridgeState? {
         let path = stateFile.path(percentEncoded: false)
         guard
-            let attributes = try? FileManager.default.attributesOfItem(atPath: path),
+            let attributes =
+            attemptIfPresent({ try FileManager.default.attributesOfItem(atPath: path) }),
             let written = attributes[.modificationDate] as? Date,
             now.timeIntervalSince(written) < Self.liveSeconds,
             let data = FileManager.default.contents(atPath: path)
         else { return nil }
-        return try? JSONDecoder().decode(ReferenceBridgeState.self, from: data)
+        return attempt { try JSONDecoder().decode(ReferenceBridgeState.self, from: data) }
     }
 
     /// Writes one batch under a name that sorts after every earlier one, and returns it.
@@ -129,9 +131,11 @@ nonisolated public enum ReferenceBridgePart: String, CaseIterable, Sendable {
 
     public static func missing(in prefix: ReferencePrefix) -> [Self] {
         let plugins = prefix.bridgePlugin.deletingLastPathComponent()
-        let names = (try? FileManager.default.contentsOfDirectory(
-            atPath: plugins.path(percentEncoded: false)
-        )) ?? []
+        let names = attemptIfPresent {
+            try FileManager.default.contentsOfDirectory(
+                atPath: plugins.path(percentEncoded: false)
+            )
+        } ?? []
         return missing(
             names: Set(names.map { $0.lowercased() }),
             hasLoader: FileManager.default.fileExists(

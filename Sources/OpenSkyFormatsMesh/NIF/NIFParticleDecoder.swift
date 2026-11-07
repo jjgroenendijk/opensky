@@ -36,12 +36,13 @@ nonisolated extension NIFFile {
     private func meshPool(of block: NIFFile.Block) -> Int32 {
         guard
             block.typeName == NIFMeshParticleData.systemTypeName,
-            let system = try? NIFParticleSystem(data: block.data, header: header),
+            let system = attempt({ try NIFParticleSystem(data: block.data, header: header) }),
             system.dataRef >= 0, Int(system.dataRef) < blocks.count,
             blocks[Int(system.dataRef)].typeName == NIFMeshParticleData.typeName
         else { return -1 }
         var reader = BinaryReader(blocks[Int(system.dataRef)].data)
-        return (try? NIFMeshParticleData(reader: &reader, header: header))?.particleMeshesRef ?? -1
+        return attempt { try NIFMeshParticleData(reader: &reader, header: header) }?
+            .particleMeshesRef ?? -1
     }
 
     /// The names of the node blocks above `block`, lowercased, nearest first. The step
@@ -52,7 +53,7 @@ nonisolated extension NIFFile {
         var steps = 0
         while let index = current, steps < Self.maxParticleGraphDepth {
             var reader = BinaryReader(blocks[index].data)
-            if let name = try? NIFObjectPrefix(reader: &reader, header: header).name {
+            if let name = attempt({ try NIFObjectPrefix(reader: &reader, header: header).name }) {
                 names.append(name.lowercased())
             }
             current = parents[index]

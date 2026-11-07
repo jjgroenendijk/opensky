@@ -27,7 +27,7 @@ nonisolated public struct NIFFile: Sendable {
         for index in 0 ..< header.blockCount {
             let size = header.blockSizes[index]
             let typeName = header.blockTypes[header.blockTypeIndices[index]]
-            guard size >= 0, let payload = try? reader.read(count: size) else {
+            guard size >= 0, let payload = attempt({ try reader.read(count: size) }) else {
                 throw NIFError.malformed(
                     "block \(index) (\(typeName), \(size) bytes) extends past end of file"
                 )

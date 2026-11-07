@@ -21,7 +21,7 @@ nonisolated extension MeshLibrary {
         if let skeleton = actorSkeletons[pathKey] {
             return .success(ActorSkeletonAsset(pathKey: pathKey, skeleton: skeleton))
         }
-        guard let data = try? fileSystem.contents(forPath: pathKey) else {
+        guard let data = attempt({ try fileSystem.contents(forPath: pathKey) }) else {
             return .failure(.missing)
         }
         do {
@@ -87,12 +87,13 @@ nonisolated extension MeshLibrary {
     /// hangs from that bone as a weapon does (docs/engine/actor-resolution.md). The file
     /// read here is kept for the decode, so a worn model is read from its archive once.
     func rigidParentBone(path: String) -> String? {
-        guard let key = try? meshKey(for: path) else { return nil }
+        guard let key = attempt({ try meshKey(for: path) }) else { return nil }
         if let known = rigidParentBones[key] {
             return known
         }
         let file = preparsed[key]
-            ?? (try? fileSystem.contents(forPath: key)).flatMap { try? NIFFile(data: $0) }
+            ?? attempt { try fileSystem.contents(forPath: key) }
+            .flatMap { element in attempt { try NIFFile(data: element) } }
         if preparsed[key] == nil, !actorDecodedPaths.contains(key) {
             preparsed[key] = file
         }
@@ -195,9 +196,9 @@ nonisolated extension MeshLibrary {
         triedCharacterSkeleton = true
         let path = "meshes\\actors\\character\\character assets\\skeleton.nif"
         guard
-            let data = try? fileSystem.contents(forPath: path),
-            let file = try? NIFFile(data: data),
-            let skeleton = try? NIFSkeleton(file: file)
+            let data = attempt({ try fileSystem.contents(forPath: path) }),
+            let file = attempt({ try NIFFile(data: data) }),
+            let skeleton = attempt({ try NIFSkeleton(file: file) })
         else { return nil }
         cachedCharacterSkeleton = skeleton
         return skeleton

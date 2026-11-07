@@ -6,6 +6,7 @@ public import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyConditions
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyPhysics
@@ -250,10 +251,12 @@ public final class RagdollCoordinator {
     static func definitionLoader(_ library: NIFCollisionLibrary) -> DefinitionLoader {
         { path, skeleton, scale in
             guard
-                let model = try? library.model(path: path),
-                let bind = try? SkeletonPoseMath.worldMatrices(
-                    skeleton: skeleton, localPoses: skeleton.referencePose
-                )
+                let model = attempt({ try library.model(path: path) }),
+                let bind = attempt({
+                    try SkeletonPoseMath.worldMatrices(
+                        skeleton: skeleton, localPoses: skeleton.referencePose
+                    )
+                })
             else { return nil }
             return RagdollDefinition(
                 model: model, boneNames: skeleton.boneNames, bindMatrices: bind, scale: scale

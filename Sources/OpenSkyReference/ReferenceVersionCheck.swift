@@ -3,6 +3,7 @@
 
 import CryptoKit
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public struct ReferenceInstallFingerprint: Equatable, Sendable {
     public var buildID: String?
@@ -30,7 +31,7 @@ nonisolated public struct ReferenceInstallFingerprint: Equatable, Sendable {
     /// Reads the manifest and hashes each `.esm` in `Data/`. Runs off the main actor.
     @concurrent
     public static func read(gameDirectory: URL, manifest: URL) async throws -> Self {
-        let text = try? String(contentsOf: manifest, encoding: .utf8)
+        let text = attempt { try String(contentsOf: manifest, encoding: .utf8) }
         let data = gameDirectory.appending(path: "Data", directoryHint: .isDirectory)
         let names = try FileManager.default.contentsOfDirectory(
             atPath: data.path(percentEncoded: false)

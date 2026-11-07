@@ -221,7 +221,7 @@ public final class WorldAudioFootstepDirector {
     ) -> AudioTriggerRefusal? {
         guard let soundStore else { return refuse(.noSoundRecords) }
         guard
-            let sound = try? soundStore.resolveAny(resolved.sound),
+            let sound = attempt({ try soundStore.resolveAny(resolved.sound) }),
             let path = sound.filePaths.first
         else { return refuse(.soundUnresolved(tag: tag, sound: resolved.sound)) }
         if culls, isOutOfRange(sound, at: position) {

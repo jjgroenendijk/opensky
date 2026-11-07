@@ -1,6 +1,7 @@
 // Renderer precipitation setup + per-frame feed, split for size limits.
 
 public import Metal
+import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 
@@ -40,7 +41,8 @@ extension Renderer {
                 return
             }
         }
-        guard let swap = try? precipitation.setSnowLook(wanted, texture: texture) else { return }
+        guard let swap = attempt({ try precipitation.setSnowLook(wanted, texture: texture) })
+        else { return }
         // The textures stay: the generated flake and the record textures are kept.
         residencySet.removeAllocations(swap.retired.filter { !($0 is (any MTLTexture)) })
         residencySet.addAllocations(swap.added)

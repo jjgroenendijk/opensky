@@ -402,7 +402,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
                 )
             }
             bookkeeping.withLock { $0.cachedAssets = cached }
-            if let metric = try? result.map(Self.metric(for:)).get() {
+            if let metric = attempt({ try result.map(Self.metric(for:)).get() }) {
                 bookkeeping.withLock { $0.buildMetrics[coordinate] = metric }
             }
             let entry = CellBuildResult(

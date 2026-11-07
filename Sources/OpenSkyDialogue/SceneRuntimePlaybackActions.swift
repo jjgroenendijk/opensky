@@ -7,6 +7,7 @@
 
 import Foundation
 import OpenSkyDialogueInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
@@ -67,7 +68,7 @@ extension SceneRuntime.Playback {
         guard
             let topic = id.flatMap({ dialogue.dialogue.topic($0) }),
             let offer = dialogue.selectTopics([topic], speaker: speaker).offers.first,
-            (try? dialogue.choose(offer.info, speaker: speaker)) != nil
+            attempt({ try dialogue.choose(offer.info, speaker: speaker) }) != nil
         else {
             note(.noLine(index))
             complete(index)

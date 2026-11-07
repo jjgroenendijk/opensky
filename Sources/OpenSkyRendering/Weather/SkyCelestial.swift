@@ -122,7 +122,7 @@ public final class SkyCelestial {
     }
 
     nonisolated static func key(_ path: String) -> String? {
-        try? VirtualFileSystem.normalize(path)
+        attempt { try VirtualFileSystem.normalize(path) }
     }
 
     /// A record names its textures relative to `textures\` and its models to `meshes\`.

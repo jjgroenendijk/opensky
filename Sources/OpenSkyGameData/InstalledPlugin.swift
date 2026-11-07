@@ -2,6 +2,7 @@
 // name and what its TES4 header says about it.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 nonisolated public struct InstalledPlugin: Equatable, Sendable {
@@ -26,7 +27,7 @@ nonisolated public struct InstalledPlugin: Equatable, Sendable {
 
     /// A header that does not parse leaves only the name.
     public init(name: String, file: ESMFile) {
-        let header = try? PluginHeader(tes4: file.tes4)
+        let header = attempt { try PluginHeader(tes4: file.tes4) }
         self.init(
             name: name, author: header?.author, summary: header?.description,
             masters: header?.masters ?? []

@@ -131,7 +131,7 @@ nonisolated public struct ReferenceRecordCatalog: Sendable {
 
     public static func editorID(in record: ESMRecord) -> String? {
         guard
-            let field = try? record.fields().first(where: { $0.type == "EDID" }),
+            let field = attempt({ try record.fields().first(where: { $0.type == "EDID" }) }),
             field.data.last == 0
         else { return nil }
         return String(data: Data(field.data.dropLast()), encoding: .utf8)

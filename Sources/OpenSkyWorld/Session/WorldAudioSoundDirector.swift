@@ -340,14 +340,9 @@ extension WorldAudioSoundDirector {
 
     /// A descriptor with several files plays one of them at random, as the game does.
     private func resolveSound(id: FormID) -> ResolvedSoundFile? {
-        guard let soundStore else { return nil }
-        let resolved: ResolvedSound
-        do {
-            resolved = try soundStore.resolveAny(id)
-        } catch {
-            return nil
-        }
-        guard !resolved.filePaths.isEmpty else { return nil }
+        guard
+            let soundStore, let resolved = attempt({ try soundStore.resolveAny(id) }),
+            !resolved.filePaths.isEmpty else { return nil }
         let path = resolved.filePaths[regionSounds.pick(count: resolved.filePaths.count)]
         return ResolvedSoundFile(
             path: path,

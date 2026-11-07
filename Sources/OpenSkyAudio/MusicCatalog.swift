@@ -221,7 +221,7 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
         isInterior: Bool = false,
         seed: UInt64 = 0
     ) -> MusicSelection {
-        guard let resolved = try? musicStore.resolve(musicType: id) else {
+        guard let resolved = attempt({ try musicStore.resolve(musicType: id) }) else {
             return .silent(state: isInterior ? .interior : .exploration)
         }
         let type = resolved.musicType

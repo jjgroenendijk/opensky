@@ -5,6 +5,7 @@
 // See docs/formats/plugins-txt.md.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public enum PluginLoadOrder: Sendable {
     /// Why a plugin is in the order. Drives the Settings window.s second
@@ -119,9 +120,11 @@ nonisolated public enum PluginLoadOrder: Sendable {
         root: GameDataRoot,
         fileManager: FileManager
     ) -> [String: String] {
-        let contents = (try? fileManager.contentsOfDirectory(
-            atPath: root.dataURL.path(percentEncoded: false)
-        )) ?? []
+        let contents = attemptIfPresent {
+            try fileManager.contentsOfDirectory(
+                atPath: root.dataURL.path(percentEncoded: false)
+            )
+        } ?? []
         return Dictionary(
             contents.filter(Self.isPlugin).map { ($0.lowercased(), $0) },
             uniquingKeysWith: { first, _ in first }
@@ -134,10 +137,10 @@ nonisolated public enum PluginLoadOrder: Sendable {
         if URL(filePath: name).pathExtension.lowercased() == "esl" {
             return true
         }
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
+        guard let handle = attempt({ try FileHandle(forReadingFrom: url) }) else { return false }
         defer { try? handle.close() }
         guard
-            let header = try? handle.read(upToCount: 12),
+            let header = attempt({ try handle.read(upToCount: 12) }),
             header.count == 12,
             header.prefix(4).elementsEqual("TES4".utf8)
         else { return false }
@@ -153,7 +156,7 @@ nonisolated public enum PluginLoadOrder: Sendable {
     private static func readLines(_ url: URL, fileManager: FileManager) -> [String] {
         guard
             fileManager.fileExists(atPath: url.path(percentEncoded: false)),
-            let data = try? Data(contentsOf: url),
+            let data = attempt({ try Data(contentsOf: url) }),
             let text = String(data: data, encoding: .utf8)
             ?? String(data: data, encoding: .windowsCP1252)
         else { return [] }

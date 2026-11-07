@@ -220,7 +220,7 @@ nonisolated public final class MeshLibrary {
         guard
             let loader = textures.fastMeshLoader,
             let entry = readyLayout(pathKey: pathKey),
-            let meshes = try? loader.enqueue(entry, label: pathKey)
+            let meshes = attempt({ try loader.enqueue(entry, label: pathKey) })
         else { return nil }
         let layout = entry.value
         textures.beginKeyCapture()
@@ -283,7 +283,7 @@ nonisolated public final class MeshLibrary {
     /// Shapes dropped during flatten for an already-loaded path (nil if the
     /// path was never successfully loaded).
     public func skippedShapeCount(forPath path: String) -> Int? {
-        guard let key = try? meshKey(for: path) else { return nil }
+        guard let key = attempt({ try meshKey(for: path) }) else { return nil }
         return skippedShapes[key]
     }
 
@@ -299,7 +299,7 @@ nonisolated public final class MeshLibrary {
     }
 
     public func bounds(forPath path: String, surface: ModelSurfaceOverride) -> ModelBounds? {
-        guard let pathKey = try? meshKey(for: path) else { return nil }
+        guard let pathKey = attempt({ try meshKey(for: path) }) else { return nil }
         let key = cacheKey(path: pathKey, terrainLODClipMask: nil, surface: surface)
         return modelBounds[key]
     }
@@ -308,7 +308,7 @@ nonisolated public final class MeshLibrary {
         forPath path: String,
         terrainLODClipMask: TerrainLODClipMask?
     ) -> ModelBounds? {
-        guard let pathKey = try? meshKey(for: path) else { return nil }
+        guard let pathKey = attempt({ try meshKey(for: path) }) else { return nil }
         let key = cacheKey(path: pathKey, terrainLODClipMask: terrainLODClipMask)
         return modelBounds[key]
     }
@@ -350,7 +350,7 @@ nonisolated public final class MeshLibrary {
     /// Normalizes a MODL-style path and prepends the "meshes\\" root when the
     /// record omitted it. Rejects empty/escaping paths as not-found.
     public func meshKey(for path: String) throws -> String {
-        guard let normalized = try? VirtualFileSystem.normalize(path) else {
+        guard let normalized = attempt({ try VirtualFileSystem.normalize(path) }) else {
             throw MeshLibraryError.fileNotFound(path: path)
         }
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
@@ -439,9 +439,11 @@ nonisolated extension MeshLibrary {
     ) -> Model {
         guard
             let thinPath = BodyWeightBlend.thinPath(forHeavy: heavyPathKey),
-            let thin = try? decode(
-                pathKey: thinPath, actorSkeleton: actorSkeleton, explicitActorSkeleton: true
-            )
+            let thin = attempt({
+                try decode(
+                    pathKey: thinPath, actorSkeleton: actorSkeleton, explicitActorSkeleton: true
+                )
+            })
         else { return heavy }
         return BodyWeightBlend.blend(
             thin: thin.model, heavy: heavy, weight: Float(Self.weightStep(weight)) / 10
@@ -470,7 +472,7 @@ nonisolated extension MeshLibrary {
             return (model, [])
         }
         guard explicitActorSkeleton else {
-            guard let data = try? fileSystem.contents(forPath: pathKey) else {
+            guard let data = attempt({ try fileSystem.contents(forPath: pathKey) }) else {
                 throw MeshLibraryError.fileNotFound(path: pathKey)
             }
             let skeleton = pathKey.hasPrefix(Self.characterMeshPrefix) ? characterSkeleton() : nil
@@ -501,7 +503,7 @@ nonisolated extension MeshLibrary {
 nonisolated extension MeshLibrary {
     /// The NIF behind an actor part, read on the build thread.
     private func actorFile(pathKey: String) throws -> NIFFile {
-        guard let data = try? fileSystem.contents(forPath: pathKey) else {
+        guard let data = attempt({ try fileSystem.contents(forPath: pathKey) }) else {
             throw MeshLibraryError.fileNotFound(path: pathKey)
         }
         do {
@@ -520,12 +522,12 @@ nonisolated extension MeshLibrary {
 nonisolated extension MeshLibrary {
     /// The behaviour project an object mesh names, or nil. Each path is read once.
     public func behaviorProjectPath(forPath path: String) -> String? {
-        guard let pathKey = try? meshKey(for: path) else { return nil }
+        guard let pathKey = attempt({ try meshKey(for: path) }) else { return nil }
         if let known = behaviorProjects[pathKey] {
             return known
         }
-        let project = (try? fileSystem.contents(forPath: pathKey))
-            .flatMap { try? NIFFile(data: $0) }
+        let project = attempt { try fileSystem.contents(forPath: pathKey) }
+            .flatMap { element in attempt { try NIFFile(data: element) } }
             .flatMap(NIFBehaviorGraphExtraData.projectPath(in:))
         behaviorProjects[pathKey] = .some(project)
         return project
@@ -533,12 +535,12 @@ nonisolated extension MeshLibrary {
 
     /// The furniture markers a mesh holds. Each path is read once.
     public func furnitureMarkers(forPath path: String) -> [NIFFurnitureMarker] {
-        guard let pathKey = try? meshKey(for: path) else { return [] }
+        guard let pathKey = attempt({ try meshKey(for: path) }) else { return [] }
         if let known = furnitureMarkerSets[pathKey] {
             return known
         }
-        let markers = (try? fileSystem.contents(forPath: pathKey))
-            .flatMap { try? NIFFile(data: $0) }
+        let markers = attempt { try fileSystem.contents(forPath: pathKey) }
+            .flatMap { element in attempt { try NIFFile(data: element) } }
             .map(NIFFurnitureMarker.markers(in:)) ?? []
         furnitureMarkerSets[pathKey] = markers
         return markers
@@ -546,12 +548,12 @@ nonisolated extension MeshLibrary {
 
     /// The add-on nodes a mesh holds. Each path is read once.
     public func addOnNodes(forPath path: String) -> [NIFAddOnNode] {
-        guard let pathKey = try? meshKey(for: path) else { return [] }
+        guard let pathKey = attempt({ try meshKey(for: path) }) else { return [] }
         if let known = addOnNodeSets[pathKey] {
             return known
         }
-        let nodes = (try? fileSystem.contents(forPath: pathKey))
-            .flatMap { try? NIFFile(data: $0).addOnNodes() } ?? []
+        let nodes = attempt { try fileSystem.contents(forPath: pathKey) }
+            .flatMap { element in attempt { try NIFFile(data: element).addOnNodes() } } ?? []
         addOnNodeSets[pathKey] = nodes
         return nodes
     }
@@ -572,7 +574,7 @@ nonisolated extension MeshLibrary {
             textures.markTouched(modelTextureKeys[key] ?? [])
             return hit
         }
-        guard let data = try? fileSystem.contents(forPath: pathKey) else {
+        guard let data = attempt({ try fileSystem.contents(forPath: pathKey) }) else {
             throw MeshLibraryError.fileNotFound(path: pathKey)
         }
         let model: Model

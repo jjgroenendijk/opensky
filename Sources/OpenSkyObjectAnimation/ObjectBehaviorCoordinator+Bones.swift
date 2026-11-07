@@ -19,9 +19,11 @@ extension ObjectBehaviorCoordinator {
     public func boneMatrices(of reference: UInt32) -> [simd_float4x4]? {
         guard let entry = running[reference] else { return nil }
         let local = entry.object.nodes == nil ? entry.object.pose.bones : entry.graphBones
-        return try? SkeletonPoseMath.worldMatrices(
-            skeleton: entry.object.asset.skeleton, localPoses: local
-        )
+        return attempt {
+            try SkeletonPoseMath.worldMatrices(
+                skeleton: entry.object.asset.skeleton, localPoses: local
+            )
+        }
     }
 
     /// One named bone in the object's own space, from the pose last published.

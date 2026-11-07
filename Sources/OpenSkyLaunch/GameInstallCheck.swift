@@ -102,13 +102,18 @@ nonisolated public enum GameInstallCheck {
     ) -> GameInstallSummary {
         var summary = GameInstallSummary()
         let dataURL = installURL.appending(path: "Data", directoryHint: .isDirectory)
-        guard let names = try? fileManager.contentsOfDirectory(atPath: dataURL.path) else {
+        guard
+            let names =
+            attemptIfPresent({ try fileManager.contentsOfDirectory(atPath: dataURL.path) })
+        else {
             summary.problems.append(unreadableFolder(dataURL, fileManager: fileManager))
             return summary
         }
-        summary.gameVersion = try? PEVersionInfo.fileVersion(
-            url: installURL.appending(path: executableName)
-        )
+        summary.gameVersion = attempt {
+            try PEVersionInfo.fileVersion(
+                url: installURL.appending(path: executableName)
+            )
+        }
         let lowered = Dictionary(names.map { ($0.lowercased(), $0) }) { first, _ in first }
         for master in requiredMasters where lowered[master.lowercased()] == nil {
             summary.problems.append(GameInstallProblem(

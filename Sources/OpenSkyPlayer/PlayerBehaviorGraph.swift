@@ -6,6 +6,7 @@
 public import Foundation
 public import OpenSkyBehavior
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 nonisolated public enum PlayerBehaviorGraphError: LocalizedError, Equatable, Sendable {
@@ -129,7 +130,7 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
         characterPath: String = PlayerBehaviorGraph.characterPath
     ) throws(PlayerBehaviorGraphError) -> PlayerBehaviorGraphFiles {
         let behaviorFile = try read(behaviorPath, from: fileSystem)
-        guard let objectGraph = try? HKXObjectGraph(file: behaviorFile) else {
+        guard let objectGraph = attempt({ try HKXObjectGraph(file: behaviorFile) }) else {
             throw PlayerBehaviorGraphError.invalid(behaviorPath)
         }
         guard let behavior = HKBBehaviorGraph.graphs(in: objectGraph).first else {
@@ -137,13 +138,13 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
         }
         let rigFile = try read(skeletonPath, from: fileSystem)
         guard
-            let skeletons = try? HKASkeleton.skeletons(in: rigFile),
+            let skeletons = attempt({ try HKASkeleton.skeletons(in: rigFile) }),
             let rig = skeletons.first
         else {
             throw PlayerBehaviorGraphError.noSkeleton(skeletonPath)
         }
-        let characterGraph = (try? read(characterPath, from: fileSystem))
-            .flatMap { try? HKXObjectGraph(file: $0) }
+        let characterGraph = attempt { try read(characterPath, from: fileSystem) }
+            .flatMap { element in attempt { try HKXObjectGraph(file: element) } }
         return PlayerBehaviorGraphFiles(
             behaviorPath: behaviorPath,
             objectGraph: objectGraph,
@@ -202,10 +203,10 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
         _ path: String,
         from fileSystem: any GameFileSource
     ) throws(PlayerBehaviorGraphError) -> HKXFile {
-        guard let data = try? fileSystem.contents(forPath: path) else {
+        guard let data = attempt({ try fileSystem.contents(forPath: path) }) else {
             throw PlayerBehaviorGraphError.missing(path)
         }
-        guard let file = try? HKXFile(data: data) else {
+        guard let file = attempt({ try HKXFile(data: data) }) else {
             throw PlayerBehaviorGraphError.invalid(path)
         }
         return file

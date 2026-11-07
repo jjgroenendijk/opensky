@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -110,7 +111,7 @@ extension MagicCoordinator {
             )
         }
         guard !world.itemHasKeyword("ReusableSoulGem", on: gem.item) else { return }
-        _ = try? inventory.remove(gem.item, count: 1, from: .player)
+        _ = attempt { try inventory.remove(gem.item, count: 1, from: .player) }
     }
 }
 

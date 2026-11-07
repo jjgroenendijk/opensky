@@ -3,6 +3,7 @@
 // (<https://ck.uesp.net/wiki/AI_Packages_Tab>, <https://ck.uesp.net/wiki/AddScriptPackage>).
 
 public import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyWorldConditions
 public import OpenSkyWorldState
@@ -34,7 +35,7 @@ nonisolated extension ActorPackageRuntime {
     ) -> Bool {
         guard actors[actor] != nil else { return false }
         if let package {
-            guard let resolved = try? store.resolve(package) else { return false }
+            guard let resolved = attempt({ try store.resolve(package) }) else { return false }
             actors[actor]?.scriptPackage = ScriptPackageSlot(
                 package: package,
                 isConstrained: resolved.package.general.flags.contains(.mustComplete)
@@ -89,7 +90,10 @@ nonisolated extension ActorPackageRuntime {
                 stack: override.packages, clock: clock, context: &context, ranToday: ranToday
             ).map { ($0, .scene) }
         }
-        if let script = state.scriptPackage, let package = try? store.resolve(script.package) {
+        if
+            let script = state.scriptPackage,
+            let package = attempt({ try store.resolve(script.package) })
+        {
             return (package, .script)
         }
         var lists: [([FormID], PackageSource)] = []

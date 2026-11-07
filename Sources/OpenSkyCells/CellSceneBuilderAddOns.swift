@@ -21,10 +21,10 @@ nonisolated extension CellSceneBuilder {
             for node in nodes {
                 guard
                     let path = models[node.index],
-                    let model = try? meshes.model(path: path)
+                    let model = attempt({ try meshes.model(path: path) })
                 else { continue }
                 added.append(ResolvedInstance(
-                    sortKey: (try? VirtualFileSystem.normalize(path)) ?? path,
+                    sortKey: attempt { try VirtualFileSystem.normalize(path) } ?? path,
                     formID: instance.formID,
                     modelPath: path,
                     model: model,

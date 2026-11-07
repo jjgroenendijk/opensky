@@ -5,6 +5,7 @@
 import CryptoKit
 public import Foundation
 public import Metal
+import OpenSkyFormatsCore
 
 nonisolated public enum PipelineCacheFolder {
     /// The archive folder inside the asset cache folder.
@@ -41,7 +42,7 @@ nonisolated public enum PipelineCacheFolder {
     private static func fileStamp(_ url: URL) -> String? {
         let keys: Set<URLResourceKey> = [.fileSizeKey, .contentModificationDateKey]
         guard
-            let values = try? url.resourceValues(forKeys: keys),
+            let values = attemptIfPresent({ try url.resourceValues(forKeys: keys) }),
             let size = values.fileSize,
             let date = values.contentModificationDate
         else { return nil }
@@ -61,8 +62,9 @@ nonisolated public enum PipelineCacheFolder {
     /// True when the archive matches the checksum written when it was saved.
     static func isIntact(_ fileURL: URL) -> Bool {
         guard
-            let expected = try? Data(contentsOf: checksumURL(for: fileURL)),
-            let archive = try? Data(contentsOf: fileURL, options: .mappedIfSafe)
+            let expected = attemptIfPresent({ try Data(contentsOf: checksumURL(for: fileURL)) }),
+            let archive =
+            attemptIfPresent({ try Data(contentsOf: fileURL, options: .mappedIfSafe) })
         else { return false }
         return Data(SHA256.hash(data: archive)) == expected
     }

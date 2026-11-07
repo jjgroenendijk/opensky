@@ -165,7 +165,7 @@ nonisolated extension CellSceneBuilder {
         for placement in resolveCollisionPlacements(refs: refs) {
             // The static pass already counted this model's load failure.
             guard
-                let model = try? collisionModels.model(path: placement.modelPath),
+                let model = attempt({ try collisionModels.model(path: placement.modelPath) }),
                 model.bodies.contains(where: \.isTriggerVolume) else { continue }
             guard let key = keys[placement.reference] else {
                 stats.unkeyedReferenceCount += 1

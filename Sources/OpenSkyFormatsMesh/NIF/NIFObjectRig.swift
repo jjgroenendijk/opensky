@@ -49,13 +49,14 @@ nonisolated extension NIFFile {
 
     private func nodeChildren(_ block: Block) -> [Int32] {
         if block.typeName == NIFSwitchNode.typeName {
-            return (try? NIFSwitchNode(data: block.data, header: header).children) ?? []
+            return attempt { try NIFSwitchNode(data: block.data, header: header).children } ?? []
         }
         if block.typeName == "BSMultiBoundNode" {
-            return (try? NIFMultiBoundNode(data: block.data, header: header).children) ?? []
+            return attempt { try NIFMultiBoundNode(data: block.data, header: header).children } ??
+                []
         }
         guard NIFNode.traversedTypes.contains(block.typeName) else { return [] }
-        return (try? NIFNode(data: block.data, header: header).children) ?? []
+        return attempt { try NIFNode(data: block.data, header: header).children } ?? []
     }
 
     /// The nearest ancestor node the rig names. The step limit stops a cyclic file.

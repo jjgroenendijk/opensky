@@ -25,6 +25,16 @@ struct FrameScheduleTests {
         #expect(schedule.registeredPhases == [.scripts, .packages, .story])
     }
 
+    @Test func aSecondStepForOnePhaseIsDropped() {
+        let schedule = FrameSchedule<FrameStep, Int>()
+        var order: [String] = []
+        schedule.register(.hud) { order.append("first:\($0)") }
+        schedule.register(.hud) { order.append("second:\($0)") }
+        schedule(1)
+        #expect(order == ["first:1"])
+        #expect(schedule.registeredPhases == [.hud])
+    }
+
     @Test func aLateStepTakesItsOwnSlot() {
         let schedule = FrameSchedule<FrameStep, Int>()
         var order: [String] = []

@@ -3,6 +3,7 @@
 // so the world advances one fixed step per frame. See docs/tools/benchmark.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyRendering
 import simd
 
@@ -119,7 +120,12 @@ public final class BenchmarkTourCoordinator {
         if request.loadPasses, let inputs = world.loadInputs, let first = firstPlayableScene() {
             phase = .loading
             Task { [weak self] in
-                let passes = try? await BenchmarkLoadPasses.run(place: first.place, inputs: inputs)
+                let passes = await attempt {
+                    try await BenchmarkLoadPasses.run(
+                        place: first.place,
+                        inputs: inputs
+                    )
+                }
                 self?.finishLoadPasses(passes)
             }
         } else {

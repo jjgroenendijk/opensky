@@ -118,7 +118,7 @@ nonisolated public final class SoundRecordStore {
     /// separator is stripped; a `:` names a drive and is rejected.
     private static func canonicalSoundPath(_ track: String) -> String? {
         guard
-            let normalized = try? VirtualFileSystem.normalize(track),
+            let normalized = attempt({ try VirtualFileSystem.normalize(track) }),
             !normalized.contains(":")
         else {
             return nil
@@ -130,6 +130,6 @@ nonisolated public final class SoundRecordStore {
         if normalized.hasPrefix("sound\\") {
             return normalized
         }
-        return try? VirtualFileSystem.normalize("sound\\\(normalized)")
+        return attempt { try VirtualFileSystem.normalize("sound\\\(normalized)") }
     }
 }

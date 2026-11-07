@@ -40,9 +40,11 @@ nonisolated public final class ActorAnimationClip: Sendable {
     /// The rig's bind pose as skeleton-world matrices, in bone order. The frame
     /// a ragdoll's bodies are authored against.
     public var bindWorldMatrices: [float4x4] {
-        (try? SkeletonPoseMath.worldMatrices(
-            skeleton: skeleton, localPoses: skeleton.referencePose
-        )) ?? []
+        attempt {
+            try SkeletonPoseMath.worldMatrices(
+                skeleton: skeleton, localPoses: skeleton.referencePose
+            )
+        } ?? []
     }
 
     /// The pose at `time` as skeleton-world matrices in bone order, which is
@@ -70,14 +72,18 @@ nonisolated public final class ActorAnimationClip: Sendable {
         guard animation.duration > 0 else { return nil }
         let sampleTime = time.truncatingRemainder(dividingBy: animation.duration)
         guard
-            let samples = try? animation.boneLocalTransforms(
-                at: sampleTime,
-                binding: binding
-            ),
-            let world = try? SkeletonPoseMath.worldMatrices(
-                skeleton: skeleton,
-                samples: samples
-            )
+            let samples = attempt({
+                try animation.boneLocalTransforms(
+                    at: sampleTime,
+                    binding: binding
+                )
+            }),
+            let world = attempt({
+                try SkeletonPoseMath.worldMatrices(
+                    skeleton: skeleton,
+                    samples: samples
+                )
+            })
         else { return nil }
         return SkeletonPose(bones: boneIndex, matrices: world)
     }
@@ -148,9 +154,11 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
             let snapshot = buffer.snapshot
             if snapshot.revision != revision {
                 revision = snapshot.revision
-                pose = snapshot.bones.isEmpty ? nil : (try? SkeletonPoseMath.worldMatrices(
-                    skeleton: skeleton, localPoses: snapshot.bones
-                )).map { SkeletonPose(bones: boneIndex, matrices: $0) }
+                pose = snapshot.bones.isEmpty ? nil : attempt {
+                    try SkeletonPoseMath.worldMatrices(
+                        skeleton: skeleton, localPoses: snapshot.bones
+                    )
+                }.map { SkeletonPose(bones: boneIndex, matrices: $0) }
             }
             return pose
         }

@@ -101,7 +101,7 @@ nonisolated private struct ClipActionsDecoder {
     mutating func run(_ reader: inout BinaryReader) {
         // Reserved UI16 (must be 0), then the declared union of events.
         guard
-            (try? reader.readUInt16()) != nil,
+            attempt({ try reader.readUInt16() }) != nil,
             let declared = readFlags(&reader)
         else {
             warnings.append(.malformedClipActions(offset: base))
@@ -124,7 +124,10 @@ nonisolated private struct ClipActionsDecoder {
         if events.isEmpty {
             return false // ClipActionEndFlag
         }
-        guard let size = try? Int(reader.readUInt32()), size <= reader.bytesRemaining else {
+        guard
+            let size = attempt({ try Int(reader.readUInt32()) }),
+            size <= reader.bytesRemaining
+        else {
             warnings.append(.malformedClipActions(offset: offset))
             return false
         }
@@ -133,14 +136,14 @@ nonisolated private struct ClipActionsDecoder {
         var keyCode: UInt8?
         var actionSize = size
         if events.contains(.keyPress) {
-            guard size >= 1, let code = try? reader.readUInt8() else {
+            guard size >= 1, let code = attempt({ try reader.readUInt8() }) else {
                 warnings.append(.malformedClipActions(offset: offset))
                 return false
             }
             keyCode = code
             actionSize = size - 1
         }
-        guard let bytes = try? reader.read(count: actionSize) else {
+        guard let bytes = attempt({ try reader.read(count: actionSize) }) else {
             warnings.append(.malformedClipActions(offset: offset))
             return false
         }
@@ -154,9 +157,9 @@ nonisolated private struct ClipActionsDecoder {
 
     private func readFlags(_ reader: inout BinaryReader) -> SWFClipEventFlags? {
         if SWFClipActionsParser.flagWidth(version: version) == 4 {
-            return (try? reader.readUInt32()).map(SWFClipEventFlags.init(rawValue:))
+            return attempt { try reader.readUInt32() }.map(SWFClipEventFlags.init(rawValue:))
         }
-        return (try? reader.readUInt16())
+        return attempt { try reader.readUInt16() }
             .map { SWFClipEventFlags(rawValue: UInt32($0)) }
     }
 }

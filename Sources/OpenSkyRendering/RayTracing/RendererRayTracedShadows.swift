@@ -4,6 +4,7 @@
 
 public import Metal
 import MetalKit
+import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
@@ -72,7 +73,12 @@ extension Renderer {
             )
         }
         // A pipeline that fails to build leaves the effect unavailable, not the renderer.
-        let pipelines = try? (make([.rayTracedShadows]), make([.rayTracedShadows, .rayShadowView]))
+        let pipelines = attempt {
+            try (
+                make([.rayTracedShadows]),
+                make([.rayTracedShadows, .rayShadowView])
+            )
+        }
         return RayTracedShadowState(
             availability: pipelines == nil
                 ? .unavailable(reason: "The ray-traced pipelines failed to build") : availability,

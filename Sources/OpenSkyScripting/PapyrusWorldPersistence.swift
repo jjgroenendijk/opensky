@@ -94,7 +94,7 @@ extension PapyrusWorldRuntime {
             return handle
         }
         guard
-            let handle = try? runtime.makeInstance(scriptName: key.scriptName)
+            let handle = attempt({ try runtime.makeInstance(scriptName: key.scriptName) })
         else {
             return nil
         }

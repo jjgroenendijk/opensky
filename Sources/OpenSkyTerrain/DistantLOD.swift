@@ -447,13 +447,15 @@ nonisolated public final class DistantLODBuilder {
         let ring = blocks.ring ?? unhidden
         var placements = blocks.placements
         let missing = blocks.missing
-        let trees = (try? buildTrees(
-            worldspace: worldspace,
-            settings: settings,
-            configuration: configuration,
-            center: center,
-            hiddenCells: hiddenCells
-        )) ?? TreeBuild(placements: [], blockCount: 0, missingBlockCount: 1)
+        let trees = attempt {
+            try buildTrees(
+                worldspace: worldspace,
+                settings: settings,
+                configuration: configuration,
+                center: center,
+                hiddenCells: hiddenCells
+            )
+        } ?? TreeBuild(placements: [], blockCount: 0, missingBlockCount: 1)
         placements.append(contentsOf: trees.placements)
         var scene = DistantLODScene(
             renderScene: RenderScene(instances: placements),
@@ -550,7 +552,7 @@ nonisolated public final class DistantLODBuilder {
 
     /// The cells the worldspace's LOD covers, from its `lodsettings` file.
     public func area(worldspace: String) -> LODWaterLayout.Rectangle? {
-        guard let settings = try? settings(worldspace: worldspace) else { return nil }
+        guard let settings = attempt({ try settings(worldspace: worldspace) }) else { return nil }
         return LODWaterLayout.Rectangle(
             origin: settings.origin, width: settings.stride, height: settings.stride
         )

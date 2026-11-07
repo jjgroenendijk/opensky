@@ -2,6 +2,7 @@
 // leveled lock of (player level, authored level, stored level). See docs/engine/locks.md.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyFormatsESS
 
@@ -40,7 +41,7 @@ nonisolated public struct ESSLockSurvey: Equatable, Sendable {
             guard
                 change.type?.isReference == true,
                 change.has(ESSChangeFlag.Object.extraLock),
-                let decoded = try? ESSReferenceChange(change),
+                let decoded = attempt({ try ESSReferenceChange(change) }),
                 case let .lock(level, flags, key)? = decoded.extraData?.entries
                     .first(where: { $0.type == 42 })
             else { return nil }

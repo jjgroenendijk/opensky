@@ -335,6 +335,9 @@ rules:
   interface module publicly imports only lower modules and interfaces (`make module-graph` rule 11).
 - `ExistentialAny` and strict memory safety are on too: a protocol type is written `any X`, and an
   unsafe expression is marked `unsafe` ([Swift language rules](/decisions/language-rules.md)).
+- A package module does not swallow an error: write `attempt { try call() }` from
+  `OpenSkyFormatsCore`, which logs the failure, or throw. The formats, game data, and save
+  modules do not trap ([Error handling](/decisions/error-handling.md)).
 
 After a module is renamed or removed, delete its old products from `Build/Products` in the build cache
 (including `PackageFrameworks/`) and from `.build/`. Otherwise a stale `.swiftmodule` still

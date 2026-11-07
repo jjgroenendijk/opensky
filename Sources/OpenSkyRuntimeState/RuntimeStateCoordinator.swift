@@ -3,6 +3,7 @@
 // resident cell: correct, but broader than needed.
 
 import OpenSkyConditions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyWorldState
@@ -111,7 +112,7 @@ extension RuntimeStateCoordinator {
     public var runtimeStateSaveSlots: [String] {
         if cachedSlotNames == nil, slotListing == nil, let world {
             slotListing = Task {
-                self.cachedSlotNames = await (try? world.saveSlots()) ?? []
+                self.cachedSlotNames = await attempt { try await world.saveSlots() } ?? []
                 self.slotListing = nil
             }
         }

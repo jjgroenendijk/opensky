@@ -6,6 +6,7 @@
 @preconcurrency @unsafe public import AVFAudio
 import Foundation
 public import OpenSkyFormatsAudio
+import OpenSkyFormatsCore
 import Synchronization
 
 nonisolated public final class AudioSourceStreamer: Sendable {
@@ -70,7 +71,7 @@ nonisolated public final class AudioSourceStreamer: Sendable {
         queue.async { [self] in
             let parameters = AudioCodecParameters(xwm: file.codec)
             let started = state.withLock { decode in
-                decode.decoder = try? WMADecoder(parameters: parameters)
+                decode.decoder = attempt { try WMADecoder(parameters: parameters) }
                 guard decode.decoder != nil else { return false }
                 scheduleMore(&decode)
                 return true

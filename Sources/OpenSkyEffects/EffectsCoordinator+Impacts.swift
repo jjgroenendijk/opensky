@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyAudio
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyRenderCore
@@ -172,9 +173,11 @@ extension EffectsCoordinator {
                 live[id] = existing
                 continue
             }
-            let playbacks = (try? meshes.particlePlaybacks(
-                path: model.path, placementTransform: model.transform, formID: UInt32(id)
-            )) ?? []
+            let playbacks = attempt {
+                try meshes.particlePlaybacks(
+                    path: model.path, placementTransform: model.transform, formID: UInt32(id)
+                )
+            } ?? []
             live[id] = EffectParticles(playbacks: playbacks, placement: model.transform)
             changed = changed || !playbacks.isEmpty
         }

@@ -19,7 +19,7 @@ nonisolated public enum PersistentActorIndex {
                 guard let top = plugin.file.topGroup(of: type) else { continue }
                 visit(top, depth: 0) { record in
                     guard
-                        let actor = try? PlacedActor(record: record),
+                        let actor = attempt({ try PlacedActor(record: record) }),
                         let base = index.resolvedID(actor.base, fromPlugin: plugin.name),
                         let reference = index.resolvedID(actor.formID, fromPlugin: plugin.name)
                     else { return }
@@ -35,7 +35,7 @@ nonisolated public enum PersistentActorIndex {
     private static let maximumDepth = 8
 
     private static func visit(_ group: ESMGroup, depth: Int, _ body: (ESMRecord) -> Void) {
-        guard depth < maximumDepth, let children = try? group.children() else { return }
+        guard depth < maximumDepth, let children = attempt({ try group.children() }) else { return }
         for child in children {
             switch child {
             case let .record(record):

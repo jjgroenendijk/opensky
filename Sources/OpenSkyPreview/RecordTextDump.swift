@@ -232,7 +232,7 @@ nonisolated public enum RecordTextDump: Sendable {
     }
 
     private static func fieldLines(record: ESMRecord) -> [String] {
-        guard let fields = try? record.fields() else {
+        guard let fields = attempt({ try record.fields() }) else {
             return ["[WARNING] field payload failed to parse"]
         }
         var lines = ["fields (\(fields.count)):"]

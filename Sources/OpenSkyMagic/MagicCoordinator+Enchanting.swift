@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -75,7 +76,7 @@ extension MagicCoordinator {
         let items = inventory.baselines.items
         let worth = items.gameValue(of: item) - (items.definition(item)?.value ?? 0)
         let itemName = world.itemName(item)
-        _ = try? inventory.remove(item, count: 1, from: .player)
+        _ = attempt { try inventory.remove(item, count: 1, from: .player) }
         writeEnchanting(state.learning(base))
         reportEnchantingUse(enchantingSettings.disenchantExperience(worth: worth))
         return noteEnchanting(.learned(item: itemName, base: root.displayName))

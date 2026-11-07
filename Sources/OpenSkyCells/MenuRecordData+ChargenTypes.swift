@@ -2,6 +2,7 @@
 // once while the world loads. See docs/engine/race-menu.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 
@@ -21,7 +22,8 @@ nonisolated extension MenuRecordData {
 
     private static func chargenTypes(path: String, fileSystem: any GameFileSource) -> [Int: Int]? {
         let key = path.lowercased().hasPrefix("meshes\\") ? path : "meshes\\\(path)"
-        guard let tri = try? TRIFile(data: fileSystem.contents(forPath: key)) else { return nil }
+        guard let tri = attempt({ try TRIFile(data: fileSystem.contents(forPath: key)) })
+        else { return nil }
         let names = tri.morphTargets.map(\.name)
         return Dictionary(uniqueKeysWithValues: FaceMorphCounts.groups.map {
             ($0.partIndex, FaceMorphCounts.highestType($0.targetPrefix, in: names))

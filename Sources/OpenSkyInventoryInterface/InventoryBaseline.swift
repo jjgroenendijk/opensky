@@ -135,7 +135,7 @@ nonisolated public struct InventoryBaselineResolver {
         case let .container(base):
             return items.container(base)?.entries.contains { isLeveled($0.item) } ?? false
         case let .actor(base):
-            guard let resolved = try? actors.resolve(base: base) else { return false }
+            guard let resolved = attempt({ try actors.resolve(base: base) }) else { return false }
             let hasLeveledHop = resolved.chain.contains {
                 if case .leveled = $0 {
                     true
@@ -144,8 +144,8 @@ nonisolated public struct InventoryBaselineResolver {
                 }
             }
             let outfit = resolved.defaultOutfit.value.flatMap { outfits[$0.rawValue] }?.items
-            let carried = (try? actors.resolveCarriedItems(base: base).value)?.map(\.item)
-            let spells = (try? actors.resolveSpells(base: base).spells.value) ?? []
+            let carried = attempt { try actors.resolveCarriedItems(base: base).value }?.map(\.item)
+            let spells = attempt { try actors.resolveSpells(base: base).spells.value } ?? []
             return hasLeveledHop || ((outfit ?? []) + (carried ?? [])).contains(where: isLeveled)
                 || spells.contains { actors.leveledSpells[$0.rawValue] != nil }
         case .player, .generated:
@@ -180,16 +180,16 @@ nonisolated public struct InventoryBaselineResolver {
     private func actorBaseline(
         _ base: FormID, templates: ActorTemplateResolver
     ) -> ReferenceInventoryState {
-        guard let resolved = try? templates.resolve(base: base) else { return .empty }
+        guard let resolved = attempt({ try templates.resolve(base: base) }) else { return .empty }
         let roll = templates.roll(for: base)
         let worn = resolved.defaultOutfit.value.flatMap { outfitStacks($0, roll: roll) } ?? []
         var carriedStacks: [InventoryStack] = []
-        let carried = (try? templates.resolveCarriedItems(base: base).value) ?? []
+        let carried = attempt { try templates.resolveCarriedItems(base: base).value } ?? []
         for entry in carried {
             expand(entry.item, count: entry.count, roll: Roll(roll), into: &carriedStacks)
         }
         let outfit = worn.map(\.item)
-        let style = (try? templates.resolveCombatStyle(base: base))?.value
+        let style = attempt { try templates.resolveCombatStyle(base: base) }?.value
         let picks = equipment.carriedPicks(
             worn: outfit,
             carried: carriedStacks.filter { $0.count >= 1 }.map(\.item),
@@ -216,7 +216,8 @@ nonisolated public struct InventoryBaselineResolver {
         for base: FormID, roll: LeveledRoll, level: Int
     ) -> [InventoryStack] {
         let templates = actors.rolling(roll)
-        guard let item = (try? templates.resolveDeathItem(base: base))?.value else { return [] }
+        guard let item = attempt({ try templates.resolveDeathItem(base: base) })?.value
+        else { return [] }
         return expanded(item, count: 1, request: leveling.request(atLevel: level), seed: roll.seed)
     }
 

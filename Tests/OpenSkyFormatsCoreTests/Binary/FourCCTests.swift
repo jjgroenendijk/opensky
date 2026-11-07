@@ -13,6 +13,12 @@ struct FourCCTests {
         #expect(FourCC(stringLiteral: "GRUP").rawValue == 0x5055_5247)
     }
 
+    @Test func aLiteralOfTheWrongLengthIsTheInvalidCode() {
+        #expect(FourCC(stringLiteral: "ABC") == .invalidLiteral)
+        #expect(FourCC(stringLiteral: "WEAPON") == .invalidLiteral)
+        #expect(FourCC(stringLiteral: "") == .invalidLiteral)
+    }
+
     @Test func describesPrintableCodesAsText() {
         #expect(FourCC(stringLiteral: "WRLD").description == "WRLD")
         #expect(FourCC(rawValue: 0x0000_0001).description == "0x00000001")

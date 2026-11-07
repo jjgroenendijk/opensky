@@ -3,6 +3,7 @@
 // See docs/engine/ess-import.md#the-saves-folder.
 
 public import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESS
 public import OpenSkyGameData
 
@@ -48,7 +49,7 @@ nonisolated public struct ESSSaveFolder: Sendable {
         guard let directory else { return .notSet }
         let path = directory.path(percentEncoded: false)
         guard FileManager.default.fileExists(atPath: path) else { return .missing(path) }
-        let count = (try? ESSSaveFolder(directory: directory).saveURLs().count) ?? 0
+        let count = attempt { try ESSSaveFolder(directory: directory).saveURLs().count } ?? 0
         return count == 0 ? .empty(path) : .ready(path, count: count)
     }
 
@@ -63,7 +64,9 @@ nonisolated public struct ESSSaveFolder: Sendable {
     /// Every save, newest first. Reads only the header and screenshot of each.
     public func listings() throws -> [ESSSaveListing] {
         try saveURLs().map { url in
-            let modified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
+            let modified = attemptIfPresent {
+                try url.resourceValues(forKeys: [.contentModificationDateKey])
+            }?
                 .contentModificationDate ?? .distantPast
             do {
                 let summary = try ESSSummary(data: Data(contentsOf: url, options: .mappedIfSafe))

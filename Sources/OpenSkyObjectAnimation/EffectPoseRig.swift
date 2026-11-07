@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyBehavior
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsMesh
 public import simd
 
@@ -20,8 +21,13 @@ nonisolated public struct EffectPoseRig: Sendable {
 
     /// Nil when nothing in the model moves.
     public init?(nodes: NodeControllerRig?, graph rig: HKASkeleton?) {
-        let graphRest = rig.flatMap {
-            try? SkeletonPoseMath.worldMatrices(skeleton: $0, localPoses: $0.referencePose)
+        let graphRest = rig.flatMap { element in
+            attempt {
+                try SkeletonPoseMath.worldMatrices(
+                    skeleton: element,
+                    localPoses: element.referencePose
+                )
+            }
         }
         let graph = graphRest == nil ? nil : rig
         let graphNames = (graph?.boneNames ?? []).map { $0.lowercased() }
@@ -74,7 +80,12 @@ nonisolated public struct EffectPoseRig: Sendable {
         var graphMoved = false
         if
             let graph, !local.isEmpty,
-            let posed = try? SkeletonPoseMath.worldMatrices(skeleton: graph, localPoses: local)
+            let posed = attempt({
+                try SkeletonPoseMath.worldMatrices(
+                    skeleton: graph,
+                    localPoses: local
+                )
+            })
         {
             for (index, matrix) in posed.enumerated() where index < matrices.count {
                 matrices[index] = matrix

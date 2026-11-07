@@ -37,8 +37,8 @@ nonisolated public enum SWFActionParser: Sendable {
         }
         var reader = BinaryReader(tag.body)
         guard
-            let spriteId = try? reader.readUInt16(),
-            let actionBytes = try? reader.read(count: reader.bytesRemaining)
+            let spriteId = attempt({ try reader.readUInt16() }),
+            let actionBytes = attempt({ try reader.read(count: reader.bytesRemaining) })
         else {
             throw SWFActionError.truncatedTag(tag.code)
         }
@@ -74,7 +74,7 @@ nonisolated private struct Framer {
     /// stop: a clean `ActionEndFlag`, or a framing failure already warned about.
     private mutating func step() -> Bool {
         let offset = reader.offset
-        guard let code = try? reader.readUInt8() else {
+        guard let code = attempt({ try reader.readUInt8() }) else {
             warnings.append(.truncatedRecord(offset: offset, code: SWFActionParser.endFlag))
             return false
         }
@@ -84,8 +84,8 @@ nonisolated private struct Framer {
         var payload = Data()
         if code >= SWFActionRecord.operandFlag {
             guard
-                let length = try? reader.readUInt16(),
-                let bytes = try? reader.read(count: Int(length))
+                let length = attempt({ try reader.readUInt16() }),
+                let bytes = attempt({ try reader.read(count: Int(length)) })
             else {
                 warnings.append(.truncatedRecord(offset: offset, code: code))
                 return false

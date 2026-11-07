@@ -48,7 +48,10 @@ nonisolated public struct InventoryItemPreview: Equatable, Sendable {
 
     /// An item record's MODL path is relative to `meshes\`.
     static func meshPath(_ path: String) -> String? {
-        guard let normalized = try? VirtualFileSystem.normalize(path), !normalized.isEmpty else {
+        guard
+            let normalized = attempt({ try VirtualFileSystem.normalize(path) }),
+            !normalized.isEmpty
+        else {
             return nil
         }
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized

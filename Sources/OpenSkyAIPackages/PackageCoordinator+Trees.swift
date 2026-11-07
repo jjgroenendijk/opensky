@@ -2,6 +2,7 @@
 // quest alias holds, or one the actor's own schedule picked.
 // See docs/engine/package-schedules.md, "Procedure tree" and "In a session".
 
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import simd
 
@@ -115,7 +116,7 @@ extension PackageCoordinator {
         }
         // A seat reserved on the walk there is freed too, though the actor never sat.
         world?.unseatPackageActor(actor, from: execution.seat)
-        if let package = try? store?.resolve(execution.package).package {
+        if let package = attempt({ try store?.resolve(execution.package).package }) {
             world?.packageProcedure(
                 PackageScriptEvent(kind: .change, actor: actor, package: package)
             )

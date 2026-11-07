@@ -38,7 +38,7 @@ public final class RecordTextures {
         if path.lowercased().hasPrefix("data\\") {
             path.removeFirst(5)
         }
-        return (try? VirtualFileSystem.normalize(path)) ?? path.lowercased()
+        return attempt { try VirtualFileSystem.normalize(path) } ?? path.lowercased()
     }
 
     /// The three layer maps of `paths`, or nil while any is missing or loading.

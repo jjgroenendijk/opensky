@@ -7,6 +7,7 @@ public import Metal
 public import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyRenderCore
 public import OpenSkyRendering
 public import simd
@@ -38,10 +39,12 @@ nonisolated public final class PlayerFirstPersonRig {
         guard
             let cameraBoneIndex,
             !animation.pose.bones.isEmpty,
-            let world = try? SkeletonPoseMath.worldMatrices(
-                skeleton: animation.skeleton,
-                localPoses: animation.pose.bones
-            ),
+            let world = attempt({
+                try SkeletonPoseMath.worldMatrices(
+                    skeleton: animation.skeleton,
+                    localPoses: animation.pose.bones
+                )
+            }),
             cameraBoneIndex < world.count
         else { return nil }
         return world[cameraBoneIndex]

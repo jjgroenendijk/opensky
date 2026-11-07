@@ -125,7 +125,7 @@ public final class SkyClouds {
     /// The record spells a layer texture relative to `textures\`.
     public static func texturePath(_ texture: String) -> String {
         let path = "textures\\" + texture
-        return (try? VirtualFileSystem.normalize(path)) ?? path.lowercased()
+        return attempt { try VirtualFileSystem.normalize(path) } ?? path.lowercased()
     }
 
     func texture(_ texture: String) -> any MTLTexture? {

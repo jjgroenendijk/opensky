@@ -2,6 +2,7 @@
 // so they play non-positional. See docs/engine/world-sfx.md#region-sounds.
 
 import OpenSkyAudio
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 extension WorldAudioSoundDirector {
@@ -34,7 +35,8 @@ extension WorldAudioSoundDirector {
     }
 
     private func regionSound(_ entry: AmbienceBed.Entry) -> RegionSound? {
-        guard let descriptor = try? soundStore?.resolveAny(entry.sound).descriptor else {
+        guard let descriptor = attempt({ try soundStore?.resolveAny(entry.sound).descriptor })
+        else {
             return nil
         }
         return RegionSound(

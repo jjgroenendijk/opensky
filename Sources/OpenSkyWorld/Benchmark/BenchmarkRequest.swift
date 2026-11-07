@@ -3,6 +3,7 @@
 // and muted unless it asks otherwise, so it does not take over the machine.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 nonisolated public enum BenchmarkRequestError: Error, Equatable, CustomStringConvertible {
@@ -207,7 +208,7 @@ nonisolated public struct BenchmarkRequest: Codable, Equatable, Sendable {
     public var encodedJSON: String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
-        let data = (try? encoder.encode(self)) ?? Data()
+        let data = attempt { try encoder.encode(self) } ?? Data()
         return String(bytes: data, encoding: .utf8) ?? "{}"
     }
 }

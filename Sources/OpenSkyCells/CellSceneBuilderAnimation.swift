@@ -3,6 +3,7 @@
 
 public import OpenSkyActorPresentation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 public import OpenSkyRendering
@@ -16,7 +17,7 @@ nonisolated extension CellSceneBuilder {
         guard let skeletonPath = assembly.visual.skeletonPath else {
             return .failure(.unsupportedSkeleton("<missing>"))
         }
-        guard let meshPath = try? VirtualFileSystem.meshPath(skeletonPath) else {
+        guard let meshPath = attempt({ try VirtualFileSystem.meshPath(skeletonPath) }) else {
             return .failure(.unsupportedSkeleton(skeletonPath))
         }
         let key = ActorAnimationCacheKey(
@@ -56,7 +57,8 @@ nonisolated extension CellSceneBuilder {
         if let known = actorLagBoneRigs[path] {
             return known
         }
-        let file = fileSystem.flatMap { try? NIFFile(data: $0.contents(forPath: path)) }
+        let file = fileSystem
+            .flatMap { element in attempt { try NIFFile(data: element.contents(forPath: path)) } }
         let rig = file.flatMap {
             ActorLagBoneRig(file: $0, rigBones: Set(clip.skeleton.boneNames))
         }
@@ -78,7 +80,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated private func readHKX(path: String) throws -> HKXFile {
-        guard let fileSystem, let data = try? fileSystem.contents(forPath: path) else {
+        guard let fileSystem, let data = attempt({ try fileSystem.contents(forPath: path) }) else {
             throw ActorAnimationLoadError.missing(path)
         }
         do {

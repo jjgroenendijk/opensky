@@ -23,7 +23,9 @@ nonisolated public struct NIFStringExtraData: Equatable, Sendable {
     /// block is skipped.
     public static func all(in file: NIFFile) -> [NIFStringExtraData] {
         file.blocks.filter { $0.typeName == typeName }
-            .compactMap { try? NIFStringExtraData(data: $0.data, header: file.header) }
+            .compactMap { element in
+                attempt { try NIFStringExtraData(data: element.data, header: file.header) }
+            }
     }
 
     /// The `Prn` value, or nil when the file names no parent bone.

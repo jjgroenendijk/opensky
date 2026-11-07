@@ -3,6 +3,7 @@
 // its file has; a store that matches no preset reads as Custom.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public enum GraphicsPreset: Int, CaseIterable, Sendable {
     case low, medium, high, ultra
@@ -46,7 +47,7 @@ nonisolated public struct GraphicsPresetFiles: Sendable {
             let url = installURL.appending(path: preset.fileName)
             guard
                 fileManager.fileExists(atPath: url.path),
-                let data = try? Data(contentsOf: url)
+                let data = attempt({ try Data(contentsOf: url) })
             else {
                 continue
             }

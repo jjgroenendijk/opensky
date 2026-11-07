@@ -172,4 +172,5 @@ Every rule on this page and in [Coordinators](/engine/coordinators.md) has a che
 | A new `DispatchQueue` has a row in [Concurrency](/decisions/concurrency.md) | SwiftLint `new_dispatch_queue` |
 | A module stays below 30,000 source lines | `make module-size` ([Module size](/tools/modules.md#module-size)) |
 | A protocol type is written `any X`, an import is `internal` unless it says `public import`, and unsafe code is marked `unsafe` | The compiler, set up and self-checked by `make language-rules` ([Swift language rules](/decisions/language-rules.md)) |
+| A package module never swallows an error with `try?` or an empty `catch`, except on the allowed calls, and the formats, game data, and save modules never trap | `make error-handling` ([Error handling](/decisions/error-handling.md)) |
 | An interface module publicly imports only lower modules and interfaces, and no file uses `@_exported import` | `make module-graph` rule 11 |

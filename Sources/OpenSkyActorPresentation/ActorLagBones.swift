@@ -20,7 +20,7 @@ nonisolated public struct ActorLagBoneRig: Sendable {
 
     /// The lag bones of `file` that hang from a bone of `rig`, nil when there are none.
     public init?(file: NIFFile, rigBones: Set<String>) {
-        guard let animation = try? NIFNodeAnimation(file: file) else { return nil }
+        guard let animation = attempt({ try NIFNodeAnimation(file: file) }) else { return nil }
         var bones: [Bone] = []
         for controller in animation.controllers {
             guard

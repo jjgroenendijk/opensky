@@ -5,6 +5,7 @@
 import Foundation
 public import OpenSkyBehavior
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
@@ -105,10 +106,10 @@ nonisolated public final class IdlePlaybackResolver {
         let index = BehaviorEventClipIndex { name in
             guard
                 let path = Self.behaviorPath(name, project: project),
-                let data = try? files.contents(forPath: path),
-                let file = try? HKXFile(data: data)
+                let data = attempt({ try files.contents(forPath: path) }),
+                let file = attempt({ try HKXFile(data: data) })
             else { return nil }
-            return try? HKXObjectGraph(file: file)
+            return attempt { try HKXObjectGraph(file: file) }
         }
         indexes[project] = index
         return index
@@ -193,10 +194,10 @@ nonisolated public final class IdlePlaybackResolver {
         var texts: [String] = []
         for path in clipPaths {
             guard
-                let data = try? files.contents(forPath: path),
+                let data = attempt({ try files.contents(forPath: path) }),
                 data.range(of: Data("nimObj".utf8)) != nil,
-                let graph = try? HKXObjectGraph.decode(data),
-                let clips = try? HKASplineCompressedAnimation.animations(in: graph)
+                let graph = attempt({ try HKXObjectGraph.decode(data) }),
+                let clips = attempt({ try HKASplineCompressedAnimation.animations(in: graph) })
             else { continue }
             texts += clips.flatMap(\.annotations).map(\.text)
         }
@@ -243,7 +244,7 @@ nonisolated public final class IdlePlaybackResolver {
         if let cached = propBones[path] {
             return cached
         }
-        let bone = (try? NIFFile(data: files.contents(forPath: path)))
+        let bone = attempt { try NIFFile(data: files.contents(forPath: path)) }
             .flatMap(NIFStringExtraData.parentBone(in:))
         propBones[path] = bone
         return bone
@@ -254,7 +255,9 @@ nonisolated public final class IdlePlaybackResolver {
             return cached
         }
         let path = project + "character assets\\skeleton.hkx"
-        let bones = (try? HKASkeleton.skeletons(in: HKXFile(data: files.contents(forPath: path))))?
+        let bones = attempt {
+            try HKASkeleton.skeletons(in: HKXFile(data: files.contents(forPath: path)))
+        }?
             .flatMap(\.boneNames) ?? []
         skeletonBones[project] = bones
         return bones

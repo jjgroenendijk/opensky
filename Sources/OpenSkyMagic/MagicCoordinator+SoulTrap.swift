@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -89,9 +90,9 @@ extension MagicCoordinator {
         if
             let linked = gem.gem.linkedGem,
             Int(soul.size.rawValue) >= gem.capacity,
-            (try? inventory.remove(gem.item, count: 1, from: .player)) != nil
+            attempt({ try inventory.remove(gem.item, count: 1, from: .player) }) != nil
         {
-            _ = try? inventory.add(linked, count: 1, to: .player)
+            _ = attempt { try inventory.add(linked, count: 1, to: .player) }
             return
         }
         let size = soul.size.rawValue

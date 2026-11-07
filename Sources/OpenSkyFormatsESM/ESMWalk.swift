@@ -22,7 +22,7 @@ nonisolated public enum ESMWalk: Sendable {
     }
 
     private static func walk(group: ESMGroup, _ body: (ESMRecord) -> Bool) -> Bool {
-        guard let children = try? group.children() else {
+        guard let children = attempt({ try group.children() }) else {
             logger.warning("malformed group skipped")
             return true
         }
@@ -79,10 +79,10 @@ nonisolated public enum ESMWalk: Sendable {
 
     /// EDID zstring of a record, nil when absent or undecodable.
     public static func editorID(of record: ESMRecord) -> String? {
-        guard let fields = try? record.fields() else { return nil }
+        guard let fields = attempt({ try record.fields() }) else { return nil }
         for field in fields where field.type == "EDID" {
             var reader = BinaryReader(field.data)
-            return try? reader.readZString()
+            return attempt { try reader.readZString() }
         }
         return nil
     }

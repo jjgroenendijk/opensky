@@ -4,6 +4,7 @@
 // See docs/engine/papyrus-spell-natives.md and docs/engine/spellcasting.md.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
@@ -76,7 +77,7 @@ extension PapyrusWorldStateBridge {
         // them." (<https://ck.uesp.net/wiki/EquipSpell_-_Actor>) The learn is
         // therefore part of the equip rather than a caller's responsibility.
         caster.spellbookAccess.learn(spell, on: holder)
-        return (try? caster.spellbookAccess.equip(spell, in: hand, on: holder)) != nil
+        return attempt { try caster.spellbookAccess.equip(spell, in: hand, on: holder) } != nil
     }
 
     @discardableResult

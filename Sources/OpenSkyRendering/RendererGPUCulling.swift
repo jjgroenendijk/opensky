@@ -2,6 +2,7 @@
 // changes, and encodes the cull dispatches before the shadow and scene passes.
 
 import Metal
+import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 import simd
@@ -91,9 +92,11 @@ extension Renderer {
             retireAllocations(old.allocations)
         }
         // A failed allocation leaves the CPU path drawing this scene.
-        gpuCull.scene = try? GPUCullScene(
-            scene: scene, device: device, framesInFlight: GPUFactory.maxFramesInFlight
-        )
+        gpuCull.scene = attempt {
+            try GPUCullScene(
+                scene: scene, device: device, framesInFlight: GPUFactory.maxFramesInFlight
+            )
+        }
         if let fresh = gpuCull.scene {
             residencySet.addAllocations(fresh.allocations)
             residencySet.commit()

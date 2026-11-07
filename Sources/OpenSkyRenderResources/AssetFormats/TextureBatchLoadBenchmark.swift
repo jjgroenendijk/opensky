@@ -7,6 +7,7 @@ import Darwin
 public import Foundation
 public import Metal
 public import OpenSkyAssetCache
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
 
@@ -202,7 +203,7 @@ public final class TextureBatchLoadBenchmark {
         guard
             case let .hit(hit) = reader.store.lookup(request, touching: false),
             !hit.payload.isEmpty,
-            let texture = try? ReadyTextureCodec.decode(hit.payload)
+            let texture = attempt({ try ReadyTextureCodec.decode(hit.payload) })
         else { return nil }
         return TextureBatchItem(
             path: source.path, entry: reader.store.entryURL(kind: .texture, source: source),

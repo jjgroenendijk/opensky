@@ -2,6 +2,7 @@
 // `state.json` (reference/bridge/, docs/tools/reference-game.md#the-bridge-plugin).
 
 import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
     public var version: Int
@@ -84,7 +85,7 @@ nonisolated public enum ReferenceSettingValue: Codable, Equatable, Sendable {
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
-        if let flag = try? container.decode(Bool.self) {
+        if let flag = try container.decodeIfType(Bool.self) {
             self = .bool(flag)
         } else {
             self = try .number(container.decode(Double.self))

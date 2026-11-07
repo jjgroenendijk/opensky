@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 nonisolated public enum BehaviorEventProbe {
@@ -59,8 +60,8 @@ nonisolated public enum BehaviorEventProbe {
         }
         guard
             let skeletonPath = set.skeleton,
-            let data = try? fileSystem.contents(forPath: skeletonPath),
-            let rig = (try? HKASkeleton.skeletons(in: HKXFile(data: data)))?.first
+            let data = attempt({ try fileSystem.contents(forPath: skeletonPath) }),
+            let rig = attempt({ try HKASkeleton.skeletons(in: HKXFile(data: data)) })?.first
         else { throw Failure.noSkeleton(set.name) }
         let objects = try HKXObjectGraph(file: HKXFile(data: fileSystem.contents(forPath: key)))
         guard let graph = HKBBehaviorGraph.graphs(in: objects).first else {

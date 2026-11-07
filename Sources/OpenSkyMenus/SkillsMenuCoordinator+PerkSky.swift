@@ -3,6 +3,7 @@
 // empty loading cover. See docs/engine/perk-sky.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyProgressionInterface
 import OpenSkyRendering
@@ -100,7 +101,7 @@ extension SkillsMenuCoordinator {
         sky.trees = trees
         guard shown, let renderer = world?.renderer else { return }
         renderer.setMenuScene(nil)
-        try? renderer.setLoadingCover(nil)
+        attempt { try renderer.setLoadingCover(nil) }
     }
 
     func tickSky(now: Double) {
@@ -120,7 +121,7 @@ extension SkillsMenuCoordinator {
                 models.dome.nodePosition(PerkSkyLayout.anchorName(slot: slot), playing: [])
                     ?? PerkSkyLayout.defaultAnchor(slot: slot)
             }
-            try? renderer.setLoadingCover([])
+            attempt { try renderer.setLoadingCover([]) }
         }
         if isClosing, sky.closedAt == nil {
             sky.closedAt = now
@@ -296,8 +297,10 @@ extension SkillsMenuCoordinator {
         guard moved else { return }
         sky.namePoints = points
         guard movieLoaded, model.isInTree else { return }
-        try? renderer.updateSWFRuntime { runtime in
-            StatsMenuMovieBridge.publishPerkNames(model, points: points, runtime: runtime)
+        attempt {
+            try renderer.updateSWFRuntime { runtime in
+                StatsMenuMovieBridge.publishPerkNames(model, points: points, runtime: runtime)
+            }
         }
     }
 

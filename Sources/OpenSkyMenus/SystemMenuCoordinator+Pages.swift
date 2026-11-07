@@ -4,6 +4,7 @@
 // returns. The movie mirrors the Settings page (docs/engine/system-menu.md).
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyRendering
 
@@ -274,8 +275,10 @@ extension SystemMenuCoordinator {
 
     private func mirrorMovie(_ state: String) {
         guard movieLoaded, let renderer else { return }
-        try? renderer.updateSWFRuntime { runtime in
-            SettingsMovieBridge.startState(state, runtime: runtime)
+        attempt {
+            try renderer.updateSWFRuntime { runtime in
+                SettingsMovieBridge.startState(state, runtime: runtime)
+            }
         }
     }
 
@@ -286,9 +289,11 @@ extension SystemMenuCoordinator {
             store.catalog.definition(id).map { (definition: $0, value: store.value(id)) }
         }
         let selected = settingsPage.rowIndex
-        try? renderer.updateSWFRuntime { runtime in
-            SettingsMovieBridge.startState(SettingsMovieBridge.optionsState, runtime: runtime)
-            SettingsMovieBridge.publish(rows, selected: selected, runtime: runtime)
+        attempt {
+            try renderer.updateSWFRuntime { runtime in
+                SettingsMovieBridge.startState(SettingsMovieBridge.optionsState, runtime: runtime)
+                SettingsMovieBridge.publish(rows, selected: selected, runtime: runtime)
+            }
         }
     }
 

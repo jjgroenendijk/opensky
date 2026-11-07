@@ -1,6 +1,7 @@
 // Reads one project's speed tables from the install's speed file.
 
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 nonisolated extension SpeedSampleProject {
@@ -12,7 +13,7 @@ nonisolated extension SpeedSampleProject {
         forProject projectPath: String,
         from files: any GameFileSource
     ) -> Self? {
-        guard let data = try? files.contents(forPath: installPath) else { return nil }
-        return (try? SpeedSampleTable(data: data))?.project(forBehaviorPath: projectPath)
+        guard let data = attempt({ try files.contents(forPath: installPath) }) else { return nil }
+        return attempt { try SpeedSampleTable(data: data) }?.project(forBehaviorPath: projectPath)
     }
 }

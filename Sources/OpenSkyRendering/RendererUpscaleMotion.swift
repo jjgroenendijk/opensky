@@ -4,6 +4,7 @@
 // are the visible surface. See docs/rendering/upscaling.md.
 
 import Metal
+import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
@@ -189,12 +190,14 @@ extension Renderer {
         if count > upscale.motionInstanceCapacity {
             let capacity = Self.slotCapacity(for: count)
             guard
-                let buffer = try? GPUFactory.makeUniformBuffer(
-                    device: device,
-                    length: MemoryLayout<MotionInstance>.stride * capacity * GPUFactory
-                        .maxFramesInFlight,
-                    label: "MotionInstances"
-                )
+                let buffer = attempt({
+                    try GPUFactory.makeUniformBuffer(
+                        device: device,
+                        length: MemoryLayout<MotionInstance>.stride * capacity * GPUFactory
+                            .maxFramesInFlight,
+                        label: "MotionInstances"
+                    )
+                })
             else { return nil }
             if let old = upscale.motionInstances {
                 retireAllocations([old])

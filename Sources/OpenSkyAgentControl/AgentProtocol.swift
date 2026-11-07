@@ -3,6 +3,7 @@
 // the protocol version (docs/tools/agent-control.md).
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public enum AgentProtocol {
     /// Raised on any change a client of the old version would misread.
@@ -139,7 +140,7 @@ nonisolated public enum AgentLineCodec {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         // Every type sent here is plain data, so encoding cannot fail.
-        var data = (try? encoder.encode(value)) ?? Data("{}".utf8)
+        var data = attempt { try encoder.encode(value) } ?? Data("{}".utf8)
         data.append(UInt8(ascii: "\n"))
         return data
     }

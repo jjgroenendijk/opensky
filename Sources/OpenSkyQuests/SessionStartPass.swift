@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyQuestsInterface
@@ -63,7 +64,7 @@ nonisolated public struct PluginQuestList: Sendable {
         files: any GameFileSource
     ) -> PluginQuestList {
         let path = StartGameQuestList.path(forPlugin: plugin)
-        guard files.exists(path), let data = try? files.contents(forPath: path) else {
+        guard files.exists(path), let data = attempt({ try files.contents(forPath: path) }) else {
             return PluginQuestList(plugin: plugin, masters: masters, list: nil)
         }
         let list = Result { () throws(StartGameQuestListError) in

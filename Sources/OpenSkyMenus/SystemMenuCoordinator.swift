@@ -89,7 +89,7 @@ public final class SystemMenuCoordinator {
     /// The movie's `SystemPage` state at the last check, to see a topic's text close.
     var lastMovieState: Int?
     /// Called once; finding the data root walks the file system.
-    public var locateDataRoot: () -> GameDataRoot? = { try? GameDataLocator.locate() }
+    public var locateDataRoot: () -> GameDataRoot? = { attempt { try GameDataLocator.locate() } }
     private var dataRoot: GameDataRoot?
     private var dataRootResolved = false
 

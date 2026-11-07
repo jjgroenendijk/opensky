@@ -53,10 +53,14 @@ nonisolated extension MeshLibrary {
         if let known = particleMeshModels[key] {
             return known
         }
-        let model = (try? fileSystem.contents(forPath: pathKey))
-            .flatMap { try? NIFFile(data: $0) }
-            .flatMap { try? $0.particleMeshModel(pool: definition.meshPool) }
-            .flatMap { $0.meshes.isEmpty ? nil : try? makeRenderModel($0, key: key) }
+        let model = attempt { try fileSystem.contents(forPath: pathKey) }
+            .flatMap { element in attempt { try NIFFile(data: element) } }
+            .flatMap { element in
+                attempt { try element.particleMeshModel(pool: definition.meshPool) }
+            }
+            .flatMap { element in
+                element.meshes.isEmpty ? nil : attempt { try makeRenderModel(element, key: key) }
+            }
         particleMeshModels[key] = .some(model)
         return model
     }

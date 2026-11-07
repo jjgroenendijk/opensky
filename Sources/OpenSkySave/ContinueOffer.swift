@@ -2,6 +2,7 @@
 // summary, or why there is nothing to continue. Skyrim saves join when M29 lands.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public struct ContinueOffer: Equatable, Sendable {
     /// The slot Continue loads; nil when the button is disabled.
@@ -54,7 +55,10 @@ nonisolated extension OpenSkySaveStore {
     /// Reads the list chunks of every slot off the main actor.
     @concurrent
     public static func continueOffer() async -> ContinueOffer {
-        guard let store = try? defaultStore(), let listings = try? store.listings() else {
+        guard
+            let store = attempt({ try defaultStore() }),
+            let listings = attempt({ try store.listings() })
+        else {
             return .noSaves
         }
         return ContinueOffer(listings: listings)

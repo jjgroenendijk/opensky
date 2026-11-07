@@ -71,9 +71,9 @@ nonisolated extension CellSceneBuilder {
     /// The first textured material of a model, read straight from its NIF.
     private func modelTextures(path: String?) -> Material? {
         guard
-            let path, let fileSystem, let key = try? meshes.meshKey(for: path),
-            let data = try? fileSystem.contents(forPath: key),
-            let model = try? NIFFile(data: data).model()
+            let path, let fileSystem, let key = attempt({ try meshes.meshKey(for: path) }),
+            let data = attempt({ try fileSystem.contents(forPath: key) }),
+            let model = attempt({ try NIFFile(data: data).model() })
         else { return nil }
         return model.materials.first { $0.diffuseTexture != nil }
     }

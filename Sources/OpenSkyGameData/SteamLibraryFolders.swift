@@ -2,6 +2,7 @@
 // without setup. The file is Valve's KeyValues text: `"path"  "/Volumes/data/steam"`.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public enum SteamLibraryFolders: Sendable {
     /// Steam's library list on macOS.
@@ -22,7 +23,8 @@ nonisolated public enum SteamLibraryFolders: Sendable {
     /// The Skyrim SE folder inside each library listed in `fileURL`, or none when
     /// the file is missing or unreadable.
     public static func skyrimInstallCandidates(fileURL: URL = defaultFileURL) -> [URL] {
-        guard let text = try? String(contentsOf: fileURL, encoding: .utf8) else { return [] }
+        guard let text = attempt({ try String(contentsOf: fileURL, encoding: .utf8) })
+        else { return [] }
         return paths(in: text).map { library in
             URL(filePath: library, directoryHint: .isDirectory)
                 .appending(path: "steamapps/common/Skyrim Special Edition")

@@ -3,6 +3,7 @@
 // game. The CLI and the launcher page share it.
 
 public import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 nonisolated public enum ReferenceLauncherError: Error, Equatable, Sendable, LocalizedError {
@@ -45,7 +46,7 @@ nonisolated public enum ReferenceLauncher {
         guard let ini = prefix.prefsIni() else { throw ReferenceLauncherError.noWineUser }
         try requireInsidePrefix(ini.deletingLastPathComponent(), prefix: prefix)
         func read(_ url: URL) -> String? {
-            try? String(contentsOf: url, encoding: .utf8)
+            attempt { try String(contentsOf: url, encoding: .utf8) }
         }
         let high = prefix.gameDirectory.appending(path: GraphicsPreset.high.fileName)
         var text = read(ini) ?? read(high) ?? ""
@@ -65,8 +66,8 @@ nonisolated public enum ReferenceLauncher {
         guard let ini = prefix.gameIni() else { throw ReferenceLauncherError.noWineUser }
         try requireInsidePrefix(ini.deletingLastPathComponent(), prefix: prefix)
         let fallback = prefix.gameDirectory.appending(path: "Skyrim_Default.ini")
-        let text = (try? String(contentsOf: ini, encoding: .utf8))
-            ?? (try? String(contentsOf: fallback, encoding: .utf8)) ?? ""
+        let text = attempt { try String(contentsOf: ini, encoding: .utf8) }
+            ?? attempt { try String(contentsOf: fallback, encoding: .utf8) } ?? ""
         try FileManager.default.createDirectory(
             at: ini.deletingLastPathComponent(), withIntermediateDirectories: true
         )
@@ -96,7 +97,7 @@ nonisolated public enum ReferenceLauncher {
         pgrep.executableURL = URL(filePath: "/usr/bin/pgrep")
         pgrep.arguments = ["-i", "-f", "steam.exe"]
         pgrep.standardOutput = FileHandle.nullDevice
-        guard (try? pgrep.run()) != nil else { return false }
+        guard attempt({ try pgrep.run() }) != nil else { return false }
         pgrep.waitUntilExit()
         return pgrep.terminationStatus == 0
     }
@@ -176,11 +177,15 @@ nonisolated public enum ReferenceLauncher {
     /// Every `.ess` the reference game wrote, newest first.
     public static func saves(in prefix: ReferencePrefix) -> [URL] {
         guard let saves = prefix.savesDirectory() else { return [] }
-        let files = (try? FileManager.default.contentsOfDirectory(
-            at: saves, includingPropertiesForKeys: [.contentModificationDateKey]
-        )) ?? []
+        let files = attemptIfPresent {
+            try FileManager.default.contentsOfDirectory(
+                at: saves, includingPropertiesForKeys: [.contentModificationDateKey]
+            )
+        } ?? []
         func written(_ url: URL) -> Date {
-            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+            let values = attemptIfPresent {
+                try url.resourceValues(forKeys: [.contentModificationDateKey])
+            }
             return values?.contentModificationDate ?? .distantPast
         }
         return files.filter { $0.pathExtension.lowercased() == "ess" }

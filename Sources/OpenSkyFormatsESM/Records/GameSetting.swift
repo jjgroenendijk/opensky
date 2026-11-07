@@ -58,7 +58,7 @@ nonisolated public struct GameSetting: Equatable, Sendable {
     private static func decodeEditorID(_ field: ESMField) throws -> String {
         var reader = BinaryReader(field.data)
         guard
-            let value = try? reader.readZString(),
+            let value = attempt({ try reader.readZString() }),
             reader.bytesRemaining == 0
         else {
             throw GameSettingError.invalidString(editorID: "EDID")
@@ -117,7 +117,7 @@ nonisolated public struct GameSetting: Equatable, Sendable {
         }
         var reader = BinaryReader(field.data)
         guard
-            let bytes = try? reader.readZStringData(),
+            let bytes = attempt({ try reader.readZStringData() }),
             reader.bytesRemaining == 0
         else {
             throw GameSettingError.invalidString(editorID: editorID)

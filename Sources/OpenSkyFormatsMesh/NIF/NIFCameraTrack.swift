@@ -94,7 +94,8 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
         for (index, block) in file.blocks.enumerated()
             where NIFNode.traversedTypes.contains(block.typeName)
         {
-            guard let node = try? NIFNode(data: block.data, header: file.header) else { continue }
+            guard let node = attempt({ try NIFNode(data: block.data, header: file.header) })
+            else { continue }
             for child in node.children where child >= 0 {
                 parents[Int(child)] = (index, node.object)
             }

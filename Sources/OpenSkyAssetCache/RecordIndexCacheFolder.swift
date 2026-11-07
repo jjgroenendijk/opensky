@@ -3,6 +3,7 @@
 // file, and the old one stays unused (docs/engine/asset-cache.md#saved-formid-indexes).
 
 public import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 nonisolated public struct RecordIndexCacheFolder: FormIDIndexStore {
@@ -15,7 +16,7 @@ nonisolated public struct RecordIndexCacheFolder: FormIDIndexStore {
     }
 
     public func savedIndex(for stamp: ESMFileStamp) -> Data? {
-        try? Data(contentsOf: file(for: stamp))
+        attemptIfPresent { try Data(contentsOf: file(for: stamp)) }
     }
 
     /// A failed write only costs the next session a walk, so it is not reported.

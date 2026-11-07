@@ -1,6 +1,7 @@
 // The race, sex, voice type, and name of an actor base after template inheritance, as the
 // Papyrus identity natives answer them. Pure: built over the record indexes.
 
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 nonisolated public struct ActorIdentityRecords: Sendable {
@@ -19,22 +20,22 @@ nonisolated public struct ActorIdentityRecords: Sendable {
     /// `useTraits` decides which record of the template chain gives the race. A
     /// placed actor passes its `roll`, which picks its leveled template.
     public func race(ofBase base: FormID, roll: LeveledRoll? = nil) -> FormID? {
-        (try? templates.rolling(roll).resolve(base: base))?.race.value
+        attempt { try templates.rolling(roll).resolve(base: base) }?.race.value
     }
 
     public func isFemale(ofBase base: FormID, roll: LeveledRoll? = nil) -> Bool? {
-        (try? templates.rolling(roll).resolve(base: base))?.isFemale.value
+        attempt { try templates.rolling(roll).resolve(base: base) }?.isFemale.value
     }
 
     /// `VTCK` after `useTraits` inheritance.
     public func voiceType(ofBase base: FormID, roll: LeveledRoll? = nil) -> FormID? {
-        (try? templates.rolling(roll).resolve(base: base))?.voiceType.value
+        attempt { try templates.rolling(roll).resolve(base: base) }?.voiceType.value
     }
 
     /// The `FULL` of an actor base, after `useBaseData`, or of a race.
     public func name(of form: FormID) -> LString? {
         if templates.actors[form.rawValue] != nil {
-            return (try? templates.resolveName(base: form))?.value
+            return attempt { try templates.resolveName(base: form) }?.value
         }
         return races[form.rawValue]?.name
     }

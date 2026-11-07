@@ -3,6 +3,7 @@
 public import Metal
 public import MetalKit
 public import OpenSkyDiagnostics
+import OpenSkyFormatsCore
 import OpenSkyPhysics
 public import OpenSkyRenderCore
 public import OpenSkyRenderResources
@@ -428,7 +429,7 @@ public final class Renderer: NSObject {
 
         super.init()
         // A failed save only costs the next launch a compile.
-        try? compiler.saveIfNeeded()
+        attempt { try compiler.saveIfNeeded() }
     }
 }
 

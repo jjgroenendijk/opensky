@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 nonisolated public struct BehaviorGapSweep {
@@ -142,8 +143,8 @@ nonisolated public struct BehaviorGapSweep {
         _ path: String, _ fileSystem: VirtualFileSystem
     ) -> BehaviorCharacterProperties? {
         guard
-            let data = try? fileSystem.contents(forPath: path),
-            let graph = try? HKXObjectGraph(file: HKXFile(data: data)),
+            let data = attempt({ try fileSystem.contents(forPath: path) }),
+            let graph = attempt({ try HKXObjectGraph(file: HKXFile(data: data)) }),
             let character = BehaviorProjectAsset.character(in: graph)
         else { return nil }
         return BehaviorCharacterProperties(character: character, in: graph)
@@ -154,9 +155,9 @@ nonisolated public struct BehaviorGapSweep {
         _ fileSystem: VirtualFileSystem
     ) -> BehaviorSkeleton? {
         guard
-            let data = try? fileSystem.contents(forPath: path),
-            let file = try? HKXFile(data: data),
-            let skeletons = try? HKASkeleton.skeletons(in: file),
+            let data = attempt({ try fileSystem.contents(forPath: path) }),
+            let file = attempt({ try HKXFile(data: data) }),
+            let skeletons = attempt({ try HKASkeleton.skeletons(in: file) }),
             let rig = skeletons.first
         else {
             return nil

@@ -3,6 +3,7 @@
 // See docs/engine/ess-export.md.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 public import OpenSkyGameData
@@ -54,7 +55,7 @@ nonisolated extension ESSPluginIndex {
         var next = name
         var depth = 0
         while !next.isEmpty, depth < 32, exportScripts[next.lowercased()] == nil {
-            guard let object = (try? loader.load(next))?.objects.first else { return }
+            guard let object = attempt({ try loader.load(next) })?.objects.first else { return }
             let variables = object.variables.map { variable in
                 ESSExportScript.Variable(
                     name: variable.name, typeName: variable.typeName,

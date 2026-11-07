@@ -2,6 +2,7 @@
 // highlighted save, and the confirmed load. See docs/engine/main-menu.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyRendering
 
@@ -53,16 +54,20 @@ extension TitleMenuCoordinator {
         switch call.request {
         case .characters:
             let names = TitleMenuLoadBridge.characters(rows)
-            try? renderer.updateSWFRuntime {
-                TitleMenuLoadBridge.fillCharacters(names, runtime: $0)
+            attempt {
+                try renderer.updateSWFRuntime {
+                    TitleMenuLoadBridge.fillCharacters(names, runtime: $0)
+                }
             }
         case .characterSelected:
             let names = TitleMenuLoadBridge.characters(rows)
             let name = index.flatMap { names.indices.contains($0) ? names[$0] : nil }
             loadListRows = name.map { TitleMenuLoadBridge.saves(of: $0, in: rows) } ?? []
             let saves = loadListRows
-            try? renderer.updateSWFRuntime {
-                TitleMenuLoadBridge.fillSaves(saves, runtime: $0)
+            attempt {
+                try renderer.updateSWFRuntime {
+                    TitleMenuLoadBridge.fillSaves(saves, runtime: $0)
+                }
             }
         case .screenshot:
             renderer.replaceSWFImage(
@@ -71,9 +76,9 @@ extension TitleMenuCoordinator {
                 width: TitleMenuLoadBridge.screenshotWidth,
                 height: TitleMenuLoadBridge.screenshotHeight
             )
-            try? renderer.updateSWFRuntime { $0.callMovie("ScreenshotReady") }
+            attempt { try renderer.updateSWFRuntime { $0.callMovie("ScreenshotReady") } }
         case .confirmLoad:
-            try? renderer.updateSWFRuntime { $0.callMovie("ConfirmOKToLoad") }
+            attempt { try renderer.updateSWFRuntime { $0.callMovie("ConfirmOKToLoad") } }
         case .load:
             guard let row = loadListRow(index) else { return }
             load(row.slot)

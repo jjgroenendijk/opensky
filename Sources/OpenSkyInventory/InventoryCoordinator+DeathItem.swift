@@ -1,6 +1,7 @@
 // The death item: an actor's `INAM` list goes into its inventory when it dies,
 // rolled at the actor's own level. See docs/engine/leveled-lists.md.
 
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventoryInterface
@@ -19,9 +20,11 @@ extension InventoryCoordinator {
             for: base, roll: runtime.inventory.roll(of: holder), level: actorLevel
         )
         guard
-            !stacks.isEmpty, (try? runtime.inventory.apply(
-                removing: [], adding: stacks, on: holder
-            )) != nil else { return [] }
+            !stacks.isEmpty, attempt({
+                try runtime.inventory.apply(
+                    removing: [], adding: stacks, on: holder
+                )
+            }) != nil else { return [] }
         return stacks
     }
 }

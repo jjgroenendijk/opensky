@@ -6,6 +6,7 @@
 
 import OpenSkyConditions
 public import OpenSkyCrimeInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -103,7 +104,7 @@ extension CrimeCoordinator {
     private func giveBack(_ stay: JailStay) {
         guard let inventory = world.inventory else { return }
         for piece in stay.outfit where inventory.count(of: piece, in: .player) > 0 {
-            _ = try? inventory.remove(piece, count: 1, from: .player)
+            _ = attempt { try inventory.remove(piece, count: 1, from: .player) }
         }
         if let belongings = stay.belongings {
             moveAll(from: chestHolder(belongings), to: .player, keeping: nil)
@@ -124,9 +125,11 @@ extension CrimeCoordinator {
                 keptOne = true
                 count -= 1
             }
-            guard count > 0, (try? inventory.remove(stack.item, count: count, from: source)) != nil
+            guard
+                count > 0,
+                attempt({ try inventory.remove(stack.item, count: count, from: source) }) != nil
             else { continue }
-            _ = try? inventory.add(stack.item, count: count, to: target)
+            _ = attempt { try inventory.add(stack.item, count: count, to: target) }
         }
     }
 }

@@ -75,16 +75,14 @@ nonisolated public enum CellDirectory {
     ) -> CellDirectoryEntry? {
         let localized = file.isLocalized
         if
-            let top = file.topGroup(of: "CELL"), let children = try? top.children(),
+            let children = file.topChildren(of: "CELL"),
             let entry = search(children, matching: matching, worldspace: nil, localized: localized)
         {
             return entry
         }
-        guard let top = file.topGroup(of: "WRLD"), let children = try? top.children() else {
-            return nil
-        }
+        guard let children = file.topChildren(of: "WRLD") else { return nil }
         for (world, group) in worldChildren(children, localized: localized) {
-            guard let nested = try? group.children() else { continue }
+            guard let nested = attempt({ try group.children() }) else { continue }
             if
                 let entry = search(
                     nested,
@@ -108,7 +106,7 @@ nonisolated public enum CellDirectory {
         for child in children {
             switch child {
             case let .record(record) where record.type == "WRLD":
-                world = (try? Worldspace(record: record, localized: localized))
+                world = attempt { try Worldspace(record: record, localized: localized) }
                     .flatMap { decoded in decoded.editorID.map { (record.formID, $0) } }
             case let .group(group) where group.kind == .worldChildren:
                 guard let world, group.parentFormID == world.formID else { continue }
@@ -129,12 +127,12 @@ nonisolated public enum CellDirectory {
         guard let resolved = loadOrder.space.resolve(formID) else { return nil }
         for plugin in loadOrder.plugins.reversed() {
             guard
-                let top = plugin.file.topGroup(of: "WRLD"), let children = try? top.children(),
+                let children = plugin.file.topChildren(of: "WRLD"),
                 let local = plugin.translation.source.localFormID(of: resolved)
             else { continue }
             let found: ExteriorPlacement? = plugin.decode {
                 for (world, group) in worldChildren(children, localized: plugin.localized) {
-                    guard let nested = try? group.children() else { continue }
+                    guard let nested = attempt({ try group.children() }) else { continue }
                     if let placement = placement(of: local, in: nested) {
                         return ExteriorPlacement(placement: placement, worldspace: world)
                     }
@@ -158,7 +156,7 @@ nonisolated public enum CellDirectory {
         guard let resolved = loadOrder.space.resolve(formID) else { return nil }
         for plugin in loadOrder.plugins.reversed() {
             guard
-                let top = plugin.file.topGroup(of: "CELL"), let children = try? top.children(),
+                let children = plugin.file.topChildren(of: "CELL"),
                 let local = plugin.translation.source.localFormID(of: resolved)
             else { continue }
             let found = plugin.decode { placementInCell(of: local, in: children, cell: nil) }
@@ -180,7 +178,7 @@ nonisolated public enum CellDirectory {
                 guard let cell, let placement = placement(of: record) else { continue }
                 return (placement, cell)
             case let .group(group):
-                guard let nested = try? group.children() else { continue }
+                guard let nested = attempt({ try group.children() }) else { continue }
                 let owner = group.parentFormID ?? cell
                 if let found = placementInCell(of: formID, in: nested, cell: owner) {
                     return found
@@ -194,8 +192,8 @@ nonisolated public enum CellDirectory {
 
     private static func placement(of record: ESMRecord) -> PlacedReference.Placement? {
         switch record.type {
-        case "REFR": (try? PlacedReference(record: record))?.placement
-        case "ACHR": (try? PlacedActor(record: record))?.placement
+        case "REFR": attempt { try PlacedReference(record: record) }?.placement
+        case "ACHR": attempt { try PlacedActor(record: record) }?.placement
         default: nil
         }
     }
@@ -208,7 +206,7 @@ nonisolated public enum CellDirectory {
             case let .record(record) where record.formID == formID.rawValue:
                 return placement(of: record)
             case let .group(group):
-                guard let nested = try? group.children() else { continue }
+                guard let nested = attempt({ try group.children() }) else { continue }
                 if let found = placement(of: formID, in: nested) {
                     return found
                 }
@@ -230,11 +228,11 @@ nonisolated public enum CellDirectory {
             case let .record(record) where record.type == "CELL":
                 guard
                     matching(record),
-                    let cell = try? Cell(record: record, localized: localized)
+                    let cell = attempt({ try Cell(record: record, localized: localized) })
                 else { continue }
                 return entry(for: cell, worldspace: worldspace, childrenAfter: index, in: children)
             case let .group(group):
-                guard let nested = try? group.children() else { continue }
+                guard let nested = attempt({ try group.children() }) else { continue }
                 let entry = search(
                     nested, matching: matching, worldspace: worldspace, localized: localized
                 )
@@ -278,7 +276,7 @@ nonisolated public enum CellDirectory {
         visitReferences(in: group) { record in
             guard found == nil else { return false }
             guard
-                let reference = try? PlacedReference(record: record),
+                let reference = attempt({ try PlacedReference(record: record) }),
                 let destination = reference.teleportDestination
             else { return true }
             found = destination.door
@@ -288,7 +286,7 @@ nonisolated public enum CellDirectory {
     }
 
     private static func visitReferences(in group: ESMGroup, _ body: (ESMRecord) -> Bool) {
-        guard let children = try? group.children() else { return }
+        guard let children = attempt({ try group.children() }) else { return }
         for child in children {
             switch child {
             case let .record(record) where record.type == "REFR":
@@ -299,5 +297,12 @@ nonisolated public enum CellDirectory {
                 continue
             }
         }
+    }
+}
+
+nonisolated extension ESMFile {
+    /// The children of the top group for `recordType`, or nil when the file has none.
+    fileprivate func topChildren(of recordType: FourCC) -> [ESMGroup.Child]? {
+        topGroup(of: recordType).flatMap { top in attempt { try top.children() } }
     }
 }

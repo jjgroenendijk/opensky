@@ -22,7 +22,12 @@ nonisolated extension CellSceneBuilder {
         _ = actorResolversBuildingIfNeeded()
         guard
             let worldspace,
-            let world = try? worldChildrenGroup(editorID: worldspace, localized: pluginLocalized)
+            let world = attempt({
+                try worldChildrenGroup(
+                    editorID: worldspace,
+                    localized: pluginLocalized
+                )
+            })
         else { return }
         _ = findCell(in: world, gridX: 0, gridY: 0, localized: pluginLocalized)
         _ = persistentParentPool(in: world, localized: pluginLocalized)
