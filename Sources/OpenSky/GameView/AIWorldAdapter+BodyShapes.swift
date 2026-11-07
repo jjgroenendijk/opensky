@@ -1,5 +1,5 @@
-// The skeleton bound an NPC mover sizes a long body from (docs/engine/character-shapes.md).
-// It loads off the main actor; a mover that starts before it is ready walks upright.
+// What an NPC mover reads per actor: the skeleton bound it sizes a long body from
+// (docs/engine/character-shapes.md), loaded off the main actor, and its movement type.
 
 import OpenSkyActorPresentation
 import OpenSkyCells
@@ -25,6 +25,16 @@ extension AIWorldAdapter {
             }
             _ = bounds.drain()
             return bounds.value(for: ActorGraphCore.projectPath(modelPath: skeleton))
+        }
+    }
+
+    /// The speeds of the movement type the actor's graph state names.
+    func wireMovementTypes(streamer: CellStreamer) {
+        streamer.npcMovementSpeeds = { [weak game] actor in
+            guard
+                let game, let name = game.actorGraphWorld.graphs.movementStateName(of: actor)
+            else { return nil }
+            return game.worldData?.movementTypes.type(named: name)?.speeds
         }
     }
 }

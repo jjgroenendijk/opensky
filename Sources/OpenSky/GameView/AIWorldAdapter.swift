@@ -131,6 +131,7 @@ final class AIWorldAdapter {
         }
         streamer.npcStandingActors = { [weak self] in self?.standingActors() ?? [] }
         wireBodyShapes(streamer: streamer)
+        wireMovementTypes(streamer: streamer)
         streamer.npcWaterPushRace = { [weak game] actor in
             game?.effectsWorld.waterPushRace(of: actor) ?? .normal
         }

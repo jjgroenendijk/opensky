@@ -135,7 +135,6 @@ nonisolated public enum ActorGraphNames {
     public static let state = "iState"
     /// The `iState` constants a drunk and a sober actor report.
     public static let drunkState = "iState_NPCDrunk"
-    public static let defaultState = "iState_NPCDefault"
 }
 
 /// What one actor's graph is fed in one step.
@@ -200,11 +199,10 @@ nonisolated public enum ActorGraphCore {
         ]
     }
 
-    /// The `iState` constant to write after the graph's drunk tag changed, else nil. Only
-    /// the change is written, so an NPC keeps any other `iState` its graph holds.
-    public static func stateConstant(wasDrunk: Bool, isDrunk: Bool) -> String? {
-        guard wasDrunk != isDrunk else { return nil }
-        return isDrunk ? ActorGraphNames.drunkState : ActorGraphNames.defaultState
+    /// `iState` after a step: the winning state tag, else the value the graph started with
+    /// (docs/engine/actor-state-graph.md#how-istate-is-encoded).
+    public static func state(tag: Int32?, rest: Int32?) -> Int32? {
+        tag ?? rest
     }
 
     /// `weapAdj` for an actor weight from 0 (thin) to 100 (heavy)

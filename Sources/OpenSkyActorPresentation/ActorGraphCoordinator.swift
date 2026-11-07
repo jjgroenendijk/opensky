@@ -135,10 +135,17 @@ public final class ActorGraphCoordinator {
         var isLent = false
         /// The graph tagged the drunk state on the last step.
         var isDrunk = false
+        /// The `iState` the graph started with: 0 for a human, 60 for a horse.
+        let restState: Int32?
+        /// The name of each `iState_*` value, which names a movement type.
+        let stateNames: [Int32: String]
 
         init(project: Project, instance: BehaviorGraphInstance) {
             self.project = project
             self.instance = instance
+            restState = instance.variable(named: ActorGraphNames.state)
+                .map { Int32(truncatingIfNeeded: $0.intValue) }
+            stateNames = ActorGraphCore.stateNames(of: instance)
         }
     }
 
@@ -317,7 +324,7 @@ public final class ActorGraphCoordinator {
         let result = instance.update(deltaTime: seconds)
         applyRootMotion(result.rootMotion, of: instance, to: candidate)
         entry.steps += 1
-        entry.noteDrunkTag()
+        entry.noteStateTag()
         if !result.bones.isEmpty {
             entry.heldFromBone = entry.project.boneLOD?.firstHeldBone(atDistance: lodDistance)
             entry.lastBones = ActorBoneLOD.holding(

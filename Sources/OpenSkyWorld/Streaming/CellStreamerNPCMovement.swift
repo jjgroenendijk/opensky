@@ -27,6 +27,7 @@ public struct CellStreamerNPCMovementState {
     public var waterPushRace: ((ReferenceKey) -> WaterPushRace)?
     /// The half size of an actor's skeleton bound (`BBX`), once it has loaded.
     public var bodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)?
+    public var movementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)?
     /// Rest writes no resident build has drawn yet, oldest first, per actor.
     public var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
     /// The rest write in progress, so its store mutation rebuilds no cell.
@@ -95,6 +96,11 @@ extension CellStreamer {
     public var npcStandingActors: (() -> [NPCNeighbour])? {
         get { npcMovementState.standingActors }
         set { npcMovementState.standingActors = newValue }
+    }
+
+    public var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? {
+        get { npcMovementState.movementSpeeds }
+        set { npcMovementState.movementSpeeds = newValue }
     }
 
     public var npcBodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)? {
@@ -389,6 +395,9 @@ extension CellStreamer {
             vehicleActors: npcMovementState.vehicleLinkedActors,
             collisionQueryIgnoringVehicles: { [weak self] bounds in
                 self?.collisionCandidatesIgnoringVehicles(overlapping: bounds) ?? []
+            },
+            movementSpeeds: { [weak self] actor in
+                self?.npcMovementState.movementSpeeds?(actor)
             }
         ))
     }

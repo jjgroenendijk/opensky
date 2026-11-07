@@ -34,6 +34,8 @@ public struct NPCMover {
     let runSlowdown: FollowSettings?
     let walkRunBlend: Float?
     let longBody: LongBodyShape?
+    /// This step's movement type speeds, from the actor's graph state.
+    var movementSpeeds: MovementType.Speeds?
     /// The other actors near this one for the step in progress.
     private(set) var neighbours: [NPCNeighbour] = []
     /// The jump across a ledge link in progress.
@@ -88,6 +90,7 @@ public struct NPCMover {
         let sample = world.sampleWater(feet)
         let water = swimSurface(sample)
         isSwimming = water != nil
+        movementSpeeds = world.movementSpeeds(actor)
         let step = stepPlan(frameTime: frameTime)
         yaw = step.yaw
         gait = step.gait
