@@ -48,6 +48,15 @@ extension CellStreamer {
             + dynamicBodies.placedShapes(overlapping: bounds)
     }
 
+    /// What a character's capsule collides with: the same, without the light clutter
+    /// a character walks through.
+    public func characterCollisionCandidates(
+        overlapping bounds: ModelBounds
+    ) -> [StaticCollisionShape] {
+        staticCollisionCandidates(overlapping: bounds)
+            + dynamicBodies.characterShapes(overlapping: bounds)
+    }
+
     /// The immutable half alone, which is what the dynamic solver collides its
     /// bodies against — a body must not be handed itself as an obstacle.
     public func staticCollisionCandidates(
@@ -58,14 +67,14 @@ extension CellStreamer {
             + doorCollisionCandidates(overlapping: bounds)
     }
 
-    /// Every candidate but the vehicles' moving collision, for an actor that rides
-    /// or pulls a vehicle.
+    /// A character's candidates but the vehicles' moving collision, for an actor that
+    /// rides or pulls a vehicle.
     public func collisionCandidatesIgnoringVehicles(
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
         fixedCollisionCandidates(overlapping: bounds)
             + doorCollisionCandidates(overlapping: bounds)
-            + dynamicBodies.placedShapes(overlapping: bounds)
+            + dynamicBodies.characterShapes(overlapping: bounds)
     }
 
     /// The nearest hit over every collision candidate, the per-cell trees walked

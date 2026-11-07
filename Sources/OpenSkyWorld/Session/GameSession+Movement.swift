@@ -228,6 +228,9 @@ extension GameSession {
             pitch: freeFlyCamera.pitch
         )
         locomotion.acceptFrame(frameInput)
+        walkController.carryVelocity = characterCarry?(
+            walkController.capsule, walkController.feetPosition
+        ) ?? .zero
         walkController.update(
             camera: &freeFlyCamera,
             input: frameInput,

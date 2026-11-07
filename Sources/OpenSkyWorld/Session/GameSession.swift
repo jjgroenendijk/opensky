@@ -32,6 +32,8 @@ public final class GameSession: RenderFrameDriver {
     /// GameViewController. Empty in renderer-only paths. Walk mode, the
     /// cameras and precipitation all query it.
     public var collisionQuery: CapsuleWorldCollider.CandidateQuery?
+    /// The velocity a heavy moving body gives the player's capsule at its feet.
+    public var characterCarry: ((PlayerCapsule, SIMD3<Float>) -> SIMD3<Float>)?
     /// Where physics, NPCs, vehicles, and scripts have moved references. Published
     /// once per frame by their ticks; empty without them.
     public var instancePoses = RenderInstancePoses()
