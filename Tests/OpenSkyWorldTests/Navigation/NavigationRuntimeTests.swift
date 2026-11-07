@@ -218,6 +218,14 @@ struct NavigationRuntimeTests {
         #expect(path.waypoints[crossing.waypointIndex + 1].z == -100)
     }
 
+    @Test
+    func aSwimCostsFourTimesAWalkAndEnteringTheWaterFive() {
+        #expect(NavigationPathfinder.waterFactor(from: false, to: false) == 1)
+        #expect(NavigationPathfinder.waterFactor(from: false, to: true) == 5)
+        #expect(NavigationPathfinder.waterFactor(from: true, to: true) == 4)
+        #expect(NavigationPathfinder.waterFactor(from: true, to: false) == 4)
+    }
+
     private static let crossCellQuery = NavigationPathQuery(
         start: SIMD3(1, 1, 0),
         target: SIMD3(9, 9, 0),

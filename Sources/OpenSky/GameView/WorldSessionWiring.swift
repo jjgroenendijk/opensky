@@ -231,6 +231,9 @@ final class WorldSessionWiring {
                 playerCapsule: gameSession.flatMap(Self.playerCapsule(of:)),
                 frameTime: gameSession?.lastCameraDelta ?? 0
             )
+            if let walk = gameSession?.walkController {
+                streamer?.recordPlayerSwim(at: walk.feetPosition, isSwimming: walk.isSwimming)
+            }
         }
         // The center cell's regions feed region-weighted weather selection, on
         // the draw loop's thread.

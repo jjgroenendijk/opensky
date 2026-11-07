@@ -36,6 +36,19 @@ struct IdleCoreTests {
         #expect(IdleCoordinator.defaultStateEvent == "IdleForceDefaultState")
     }
 
+    @Test func eachPlanVariantRollsTheMiddleOfItsSlot() throws {
+        let idle = try IdleAnimation(record: ESMFixture.record("IDLE", formID: 1, fields: []))
+        let record = ResolvedRecord(
+            id: ResolvedFormID(plugin: "Test.esm", objectID: 1), record: idle,
+            sourcePlugin: "Test.esm"
+        )
+        let first = IdlePlanKey(record)
+        let last = IdlePlanKey(record, variant: IdlePlanKey.variants - 1)
+        #expect(abs(first.roll - 0.5 / 12) < 0.0001)
+        #expect(abs(last.roll - 11.5 / 12) < 0.0001)
+        #expect(first != last)
+    }
+
     @Test func sandboxAndTheIdleMarkerProcedureUseMarkers() {
         #expect(IdleCore.usesMarkers(.sandbox))
         #expect(IdleCore.usesMarkers(.useIdleMarker))

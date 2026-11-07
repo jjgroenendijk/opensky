@@ -246,9 +246,14 @@ nonisolated public struct BehaviorStateMachineRandom: Equatable, Sendable {
 
     /// The id whose share of the summed probability covers the drawn value.
     public mutating func pick(_ weighted: [(id: Int, probability: Float)]) -> Int? {
+        Self.pick(weighted, roll: next())
+    }
+
+    /// The entry whose share of the summed weights holds `roll`, a value in 0..<1.
+    public static func pick(_ weighted: [(id: Int, probability: Float)], roll: Float) -> Int? {
         let total = weighted.reduce(Float(0)) { $0 + max($1.probability, 0) }
         guard total > 0 else { return weighted.first?.id }
-        let drawn = next() * total
+        let drawn = roll * total
         var sum: Float = 0
         for entry in weighted {
             sum += max(entry.probability, 0)

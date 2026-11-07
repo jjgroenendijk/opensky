@@ -32,6 +32,10 @@ whose procedure name contains `IdleMarker`. A dead actor does not look.
 - The actor walks to the marker through the normal move command. A marker it cannot reach
   is skipped for that actor, so it does not retry every frame.
 - The actor has arrived when it stands within 48 units of the marker.
+- Once it stops walking, the actor turns on the spot to the marker's facing, the Z rotation of
+  the marker reference. Its first idle there starts when it faces within 1 degree. The game uses
+  the same rule; furniture uses 10 degrees and a heading marker 5 (clean-room read of
+  `SkyrimSE.exe`, 2026-11-07).
 - The actor lets go of the marker when it dies, leaves the loaded cells, or changes to a
   package that does not use markers. A playing idle finishes first.
 - A sandboxing actor also lets go when its activity time runs out. Its idle stops at once.
@@ -55,6 +59,14 @@ failing condition function), not reached, already played, or no animation.
 The next pick happens after the longer of the clip time and the marker timer (`IDLT`),
 and at least one second later.
 
+## Package idles
+
+A package can list idles of its own (`IDLF`, `IDLT`, `IDLA`, [packages](/formats/packages.md)).
+An actor that has no marker and stands still in that package plays from the list, with the same
+rules as a marker list: flag 0x01 plays in sequence, 0x04 plays each idle once, and the next pick
+waits for the timer. A scene's package action plays its idles this way. When the actor walks off
+or its package changes, the list stops; a playing idle finishes first.
+
 ## Playback
 
 An `IDLE` names a behavior file (`DNAM`), or takes its nearest ancestor's
@@ -69,7 +81,10 @@ the clip statically:
    (transition flag 0x2000), use the first state machine below that state. A wrapper
    generator can sit between the state and the state machine.
 3. Take the first clip generator below the target state. A state machine on the way enters
-   its start state (`m_startStateId`), as a live graph does. The clip path is relative to the
+   its start state (`m_startStateId`), as a live graph does. A machine with a random start
+   (`m_startStateMode` 2) enters a state picked by the states' `m_probability`, from a roll
+   made when the idle is chosen. A manual selector runs the child its authored
+   `m_selectedGeneratorIndex` names. The clip path is relative to the
    project folder (`meshes\actors\character\`). Paired idles use `..\` in the path, which
    is resolved before the lookup.
 4. When that clip plays once, and one of its clip triggers fires a transition of its own state,
@@ -200,8 +215,8 @@ it.
 ## Differences from the game
 
 - An actor without a running graph, such as one past the graph distance, gets its clip and prop
-  statically through the graph ([playback](#playback)). So a graph that picks a clip at random
-  or by a variable always plays the first clip, and a transition that waits for a condition or a
-  variable is taken at once. An actor that runs its own graph plays the idle as the game does.
-- The actor does not turn to the marker's facing.
+  statically through the graph ([playback](#playback)). The random roll has 12 steps, so a state
+  whose share is below one twelfth may never play. A selector bound to a variable always plays
+  its authored child, and a transition that waits for a condition or a variable is taken at once.
+  An actor that runs its own graph plays the idle as the game does.
 - Props and idles are not saved. A loaded game starts with no idle playing.

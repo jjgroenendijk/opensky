@@ -58,8 +58,14 @@ another in a doorway stands instead of walking on the spot. The thresholds are O
 ## Pose
 
 While a graph runs, it poses the actor. A combat or idle clip that overrides the pose still wins
-while it plays. The mover still moves the actor: OpenSky ignores the graph's root motion, so the
-path follower and the graph cannot disagree about where the actor stands.
+while it plays.
+
+The mover moves a walking actor; the graph's walk and run states keep `bAnimationDriven` false,
+so the game also moves them by the movement speed. When the graph sets `bAnimationDriven`, as an
+attack, an idle, or a turn in place does, its root motion moves and turns a standing actor. With
+`bAllowRotation` also set, only the travel applies. Root motion does not move an actor that walks,
+turns to a target, sits, plays a paired clip, or flies, because those already place it (clean-room
+read of `SkyrimSE.exe`, 2026-11-07).
 
 A rider on a horse does not run a graph. It plays the rider clip of its mount's gait instead.
 

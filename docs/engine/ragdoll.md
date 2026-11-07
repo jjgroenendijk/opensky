@@ -95,7 +95,10 @@ Three ragdoll modifier classes are decoded ([behavior node classes](/formats/hkx
 | `BSRagdollContactListenerModifier` | Used: its `m_contactEvent` fires when a ragdoll first touches the world |
 
 `m_bones` is not read. The ragdoll is every bone the skeleton NIF has a body for. That is the same
-set on every vanilla character, and it comes from the physics data, not the graph. `0_master.hkx`
+set on every vanilla character, and it comes from the physics data, not the graph. The game works
+the same way: only a bone with a rigid body gets physics, and the other bones follow it. A powered
+modifier's bone weights set how hard each body is pulled toward the animated pose; they never take
+a body out of the simulation (clean-room read of `SkyrimSE.exe`, 2026-11-07). `0_master.hkx`
 has exactly one instance of the class, `DriveRagdollRB`, which blends over 0.5 seconds. A session
 with no graph uses that value.
 

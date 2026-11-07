@@ -13,6 +13,7 @@ import simd
 
 public struct CellStreamerNPCMovementState {
     public var runtime = NPCMovementRuntime()
+    public var swimBreadcrumbs = SwimBreadcrumbs()
     public var configuration = PlayerMovementConfiguration.synthetic
     public var onPersist: ((NPCMovementPersistence) -> Void)?
     public var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
@@ -117,7 +118,13 @@ extension CellStreamer {
             target: point,
             capsuleRadius: PlayerCapsule.standard.radius
         ))
-        guard case let .path(path) = result else {
+        let swim = npcMovementState.swimBreadcrumbs.trail(from: standing.position, to: point)
+        let found: NavigationPath? = if case let .path(path) = result {
+            path
+        } else {
+            swim.map(NavigationPath.through)
+        }
+        guard let path = found else {
             guard case let .miss(reason) = result else { return .noPath(.disconnected) }
             return .noPath(reason)
         }
@@ -177,6 +184,67 @@ extension CellStreamer {
         ))
         onNPCPosesChanged?(npcMovement.instanceDeltas())
         return true
+    }
+
+    /// Moves a standing actor on the ground and turns its heading, as its graph's root
+    /// motion does. A walking, turning, carried, or knocked actor keeps its own driver.
+    public func moveStandingActor(
+        _ actor: ReferenceKey, by displacement: SIMD2<Float>, turning headingTurn: Float
+    ) {
+        guard
+            npcMovementState.carried[actor] == nil, !npcMovement.isWalking(actor),
+            npcMovement.facing(for: actor) == nil, !npcMovement.isSliding(actor),
+            let entry = referenceEntry(key: actor), entry.placedActor != nil
+        else { return }
+        bindNPCMovementCallbacks()
+        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
+        var position = standing.position
+        position.x += displacement.x
+        position.y += displacement.y
+        var rotation = standing.rotation
+        rotation.z += headingTurn
+        npcMovement.place(
+            NPCFaceStart(
+                actor: actor, formID: entry.formID, placement: standing.placement,
+                scale: standing.scale, target: position
+            ),
+            at: ReferenceTransformOverride(
+                position: position,
+                rotation: rotation,
+                scale: standing.scale
+            )
+        )
+        onNPCPosesChanged?(npcMovement.instanceDeltas())
+    }
+
+    /// Where the player swims, so a follower can swim after it off the navmesh.
+    public func recordPlayerSwim(at feet: SIMD3<Float>, isSwimming: Bool) {
+        npcMovementState.swimBreadcrumbs.record(feet, isSwimming: isSwimming)
+    }
+
+    public func isActorWalking(_ actor: ReferenceKey) -> Bool {
+        npcMovement.isWalking(actor)
+    }
+
+    /// Turns a standing actor to a heading (`angleZ`) and returns the turn still left. A
+    /// walking actor turns once it stops, so it reports the whole turn. Nil when it cannot turn.
+    public func turnActor(
+        _ actor: ReferenceKey, toHeading heading: Float, within tolerance: Float
+    ) -> Float? {
+        guard
+            npcMovementState.carried[actor] == nil,
+            let entry = referenceEntry(key: actor), entry.placedActor != nil
+        else { return nil }
+        guard !npcMovement.isWalking(actor) else { return .pi }
+        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
+        let remaining = NPCYawMath.shortestTurn(from: standing.rotation.z, to: heading)
+        guard abs(remaining) > tolerance else {
+            releaseActorFacing(actor)
+            return remaining
+        }
+        let ahead = SIMD3(sin(heading), cos(heading), 0) * 100
+        faceActor(actor, towards: standing.position + ahead)
+        return remaining
     }
 
     /// Releases a facing hold, leaving the actor where it now stands.

@@ -39,7 +39,7 @@ extension IdleCoordinator {
     }
 
     /// Within one `advance`, actors share the world's context until a state write.
-    private func worldConditionContext() -> ConditionContext {
+    func worldConditionContext() -> ConditionContext {
         guard let world else { return ConditionContext() }
         guard isAdvancing else { return world.idleConditionContext() }
         let sequence = world.idleStateSequence

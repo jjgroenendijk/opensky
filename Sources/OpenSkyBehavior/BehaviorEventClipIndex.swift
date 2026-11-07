@@ -105,6 +105,9 @@ nonisolated public final class BehaviorEventClipIndex {
 
     private let load: Loader
     private var graphs: [String: GraphEvents?] = [:]
+    /// A value in 0..<1 that picks the state a random-start machine enters, as a
+    /// running graph rolls one.
+    public var roll: Float = 0
 
     public init(load: @escaping Loader) {
         self.load = load

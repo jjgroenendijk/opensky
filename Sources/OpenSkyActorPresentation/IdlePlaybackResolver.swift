@@ -115,28 +115,30 @@ nonisolated public final class IdlePlaybackResolver {
     }
 
     public func plan(
-        for idle: ResolvedRecord<IdleAnimation>, from position: BehaviorStatePosition? = nil
+        for idle: ResolvedRecord<IdleAnimation>, from position: BehaviorStatePosition? = nil,
+        variant: Int = 0
     ) -> IdlePlaybackPlan {
-        let key = IdlePlanKey(idle, from: position)
+        let key = IdlePlanKey(idle, from: position, variant: variant)
         if let cached = plans[key] {
             return cached
         }
-        let plan = resolve(idle.record, from: position)
+        let plan = resolve(idle.record, from: position, roll: key.roll)
         plans[key] = plan
         return plan
     }
 
     private func resolve(
-        _ idle: IdleAnimation, from position: BehaviorStatePosition?
+        _ idle: IdleAnimation, from position: BehaviorStatePosition?, roll: Float
     ) -> IdlePlaybackPlan {
         guard let event = idle.animationEvent, !event.isEmpty else {
             return IdlePlaybackPlan(event: nil, path: .none(.noEvent), clipPath: nil, prop: .none)
         }
         let project = Self.projectFolder(of: idle.fileName)
+        let index = index(project: project)
+        index.roll = roll
         if
             let behavior = idle.fileName,
-            let clip = index(project: project)
-                .clip(forEvent: event, behaviorFile: behavior, from: position)
+            let clip = index.clip(forEvent: event, behaviorFile: behavior, from: position)
         {
             return plan(event: event, clip: clip, project: project)
         }
@@ -303,22 +305,35 @@ nonisolated public final class IdlePlaybackResolver {
 nonisolated public struct IdlePlanKey: Hashable, Sendable {
     public let idle: ResolvedRecord<IdleAnimation>
     public let position: BehaviorStatePosition?
+    /// Which of `variants` rolls picks a random-start machine's state.
+    public let variant: Int
+
+    /// Few enough that the plan cache stays small; 12 splits evenly into 2, 3, 4, and 6.
+    public static let variants = 12
 
     public init(
         _ idle: ResolvedRecord<IdleAnimation>,
-        from position: BehaviorStatePosition? = nil
+        from position: BehaviorStatePosition? = nil,
+        variant: Int = 0
     ) {
         self.idle = idle
         self.position = position
+        self.variant = variant
+    }
+
+    /// The roll in 0..<1 the variant stands for, centred in its slot.
+    public var roll: Float {
+        (Float(min(max(variant, 0), Self.variants - 1)) + 0.5) / Float(Self.variants)
     }
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.idle.id == rhs.idle.id && lhs.position == rhs.position
+        lhs.idle.id == rhs.idle.id && lhs.position == rhs.position && lhs.variant == rhs.variant
     }
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(idle.id)
         hasher.combine(position)
+        hasher.combine(variant)
     }
 }
 
@@ -333,7 +348,10 @@ nonisolated extension IdlePlaybackResolver {
         let box = IdlePlaybackResolverBox(
             IdlePlaybackResolver(files: files, animatedObjects: animatedObjects)
         )
-        return { key in box.resolver.withLock { $0.plan(for: key.idle, from: key.position) } }
+        return { key in
+            box.resolver
+                .withLock { $0.plan(for: key.idle, from: key.position, variant: key.variant) }
+        }
     }
 }
 

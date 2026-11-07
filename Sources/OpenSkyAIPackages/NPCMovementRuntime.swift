@@ -333,6 +333,36 @@ public struct NPCMovementRuntime {
         transform(for: entry.key) ?? snapshot().resolvedState(for: entry).transform
     }
 
+    public func isWalking(_ actor: ReferenceKey) -> Bool {
+        movers[actor] != nil
+    }
+
+    /// Parks an actor at `transform`, as root motion moves one that stands still. An actor
+    /// that never moved is parked from its authored placement first.
+    public mutating func place(_ start: NPCFaceStart, at transform: ReferenceTransformOverride) {
+        guard ridden[start.actor] == nil else { return }
+        if parked[start.actor] == nil {
+            parked[start.actor] = NPCParkedMovement(
+                readout: NPCMovementReadout(
+                    actor: start.actor, state: .halted, feetPosition: start.placement.position,
+                    yaw: NPCYawMath.yaw(fromHeading: start.placement.rotation.z),
+                    waypointIndex: 0, waypointCount: 0, gait: .walk, repathCount: 0
+                ),
+                transform: ReferenceTransformOverride(
+                    placement: start.placement,
+                    scale: start.scale
+                ),
+                formID: start.formID, scale: start.scale,
+                drawnPlacement: drawnPlacement(of: start.actor) ?? start.placement
+            )
+        }
+        rest(start.actor, at: transform)
+    }
+
+    public func isSliding(_ actor: ReferenceKey) -> Bool {
+        slides[actor] != nil || ridden[actor] != nil
+    }
+
     /// What one actor is turning towards, when it is turning.
     public func facing(for actor: ReferenceKey) -> NPCFacingHold? {
         facings[actor]

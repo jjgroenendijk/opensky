@@ -415,6 +415,9 @@ extension BehaviorStateMachineTests {
         #expect(second.pick([(id: 4, probability: 0.2), (id: 9, probability: 0.8)]) == 9)
         var none = BehaviorStateMachineRandom()
         #expect(none.pick([(id: 3, probability: 0)]) == 3)
+        let weights = [(id: 4, probability: Float(1)), (id: 9, probability: 3)]
+        #expect(BehaviorStateMachineRandom.pick(weights, roll: 0.2) == 4)
+        #expect(BehaviorStateMachineRandom.pick(weights, roll: 0.3) == 9)
     }
 
     // MARK: - Priority and delay

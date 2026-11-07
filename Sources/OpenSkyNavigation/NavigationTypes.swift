@@ -59,6 +59,15 @@ nonisolated public struct NavigationPath: Equatable, Sendable {
 
 nonisolated extension NavigationPath {
     /// One leg to `point` with no corridor, so no cell rebuild invalidates it.
+    /// A path through `points` in order, with no navmesh under it.
+    public static func through(_ points: [SIMD3<Float>]) -> NavigationPath {
+        NavigationPath(
+            waypoints: points, doorCrossings: [],
+            stats: NavigationPathStats(nodesExpanded: 0, corridorTriangleCount: 0),
+            corridor: [], cellSequences: [:], target: points.last ?? .zero
+        )
+    }
+
     public static func straight(to point: SIMD3<Float>) -> NavigationPath {
         NavigationPath(
             waypoints: [point], doorCrossings: [],

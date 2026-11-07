@@ -166,6 +166,21 @@ clock runs. It stops when the game clock stops, for example in a menu.
 Each way runs the end fragment. A scene with flag 0x02 (stop quest on end) stops its quest, but only
 when it finished on its own.
 
+## Idles
+
+A scene record has no idle fields. Idles come from three places:
+
+- a package action's package plays its own idle list ([package idles](/engine/idle-runtime.md#package-idles));
+- a line plays its response's speaker idle (`SNAM`) on the speaker and its listener idle
+  (`LNAM`) on the actor it looks at, when the line starts;
+- a fragment calls `PlayIdle`.
+
+A line also turns the speaker's head toward its `HTID` alias ([head tracking](/engine/head-tracking.md)).
+These idles play without their own conditions, because the author picked them.
+
+[WARNING] When the game starts the speaker and listener idles in a line is not known. OpenSky
+starts both with the line.
+
 ## Fragments
 
 Scene fragments are in the `VMAD` tail of the `SCEN` ([VMAD](/formats/vmad.md)). Slot 0x01 is
@@ -225,6 +240,4 @@ its two speakers and ends.
 
 ## Not done yet
 
-- Scenes play no idles. A line turns the speaker's head toward its `HTID` alias
-  ([head tracking](/engine/head-tracking.md)).
 - Observing combat is not known, so the observe-combat behaviour flags never act.

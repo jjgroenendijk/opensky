@@ -61,6 +61,8 @@ public protocol ActorGraphWorld: AnyObject {
     func actorGraphFired(_ event: String, from actor: ReferenceKey)
     /// A wait that finished, by its token; true when its event fired.
     func animationWaitFinished(token: UInt64, fired: Bool)
+    /// Moves a standing actor by its graph's root motion. A walking actor ignores it.
+    func applyRootMotion(_ step: ActorRootMotionStep, to actor: ReferenceKey)
 }
 
 /// A project decoded off the main actor, with its behaviour folder indexed.
@@ -337,6 +339,7 @@ public final class ActorGraphCoordinator {
         }
         entry.pendingEvents = []
         let result = instance.update(deltaTime: seconds)
+        applyRootMotion(result.rootMotion, of: instance, to: candidate)
         entry.steps += 1
         entry.noteDrunkTag()
         if !result.bones.isEmpty {

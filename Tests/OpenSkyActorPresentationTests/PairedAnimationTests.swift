@@ -46,6 +46,10 @@ private final class PairedIdleWorld: IdleWorld {
         .started
     }
 
+    func turnActor(_: ReferenceKey, toHeading _: Float, within _: Float) -> Float? {
+        nil
+    }
+
     func setProp(_: ActorPropAttachment?, on _: ReferenceKey) {}
     func idleAnimationEvent(_: String, on _: ReferenceKey) {}
 

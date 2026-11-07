@@ -256,3 +256,7 @@ the detail and the sources it did find.
 | Tree sway and leaf flutter | `treeSwayTilt` 0.1, leaf side share 0.5, leaf fade at 4096 units, defaults leaf amplitude 3 and frequency 1 | [trees](/rendering/trees.md) |
 | Skin decal projection depth | The box reaches as far in front of and behind the decal as its widest half side | [decals](/rendering/decals.md#skin-decals) |
 | Skin decal bone | The body bone with the nearest origin to the hit; weapon, shield, quiver, camera, magic, arrow, and root nodes skipped | [decals](/rendering/decals.md#skin-decals) |
+| Static idle random roll | 12 steps, rolled when the idle is chosen, for an actor that runs no graph | [idle runtime](/engine/idle-runtime.md#playback) |
+| Line speaker and listener idles | Both start with the line, without the idles' own conditions | [scenes](/engine/scenes.md#idles) |
+| Package idle list | Plays only while the actor stands still and has no marker | [idle runtime](/engine/idle-runtime.md#package-idles) |
+| Swim breadcrumb trail | A point every 128 units, the last 64 kept; joined within 1,024 units, serves targets within 512 of its end | [navigation](/engine/navigation.md#swimming-after-the-player) |

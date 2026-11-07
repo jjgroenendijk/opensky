@@ -43,6 +43,9 @@ A-star search runs over triangles:
 - A ledge edge link (type 1, ledge up, or type 2, ledge down) costs the walk to the edge middle,
   the jump to the nearest point of the target triangle, the walk on, and 128 more units. So a
   path walks around a ledge when the way round is short. The 128 is OpenSky's own number.
+- A leg inside a water triangle (triangle flag bit 9) costs 4 times its length, and a step from a
+  land triangle into a water triangle costs 5 times. So a path swims only where walking round is
+  far longer.
 - Ties are broken by total estimate, then remaining estimate, then triangle ID. So the result is
   the same every time.
 
@@ -161,7 +164,19 @@ The overlay pass draws triangles, then lines, with premultiplied alpha and a rea
 offscreen. It draws at most 65,536 primitives per frame, and counts what it drew and dropped.
 `openskycli render --navmesh-overlay` captures it ([CLI](/tools/cli.md)).
 
-## Not done yet
+## What the game does the same way
 
-Movers do not jump over an obstacle the navmesh does not link with a ledge. A swim follows the
-navmesh path, so water with no navmesh under it is not crossed.
+The game also jumps only at ledge links: it has no jump over a gap or an obstacle the navmesh
+does not link. A swim also follows the navmesh, which covers water surfaces with water triangles,
+so an NPC crosses open water only where that navmesh exists. The game splits a path at each
+ledge and at each land and water crossing, as OpenSky does. The water costs above come from the
+same read (clean-room read of `SkyrimSE.exe`, 2026-11-07).
+
+## Swimming after the player
+
+The game has a store per follower for the player's swim path, so a follower with no water navmesh
+can swim after the player. How the game fills and uses it was not traced. OpenSky keeps one trail:
+while the player swims, it drops a point every 128 units and keeps the last 64. When a move finds
+no navmesh path, and its target is within 512 units of the newest point, the actor joins the trail
+at its nearest point, within 1,024 units, and swims along it to the target.
+Leaving the water keeps the trail, so a follower left on the far bank still crosses.

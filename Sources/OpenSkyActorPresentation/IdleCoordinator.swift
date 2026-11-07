@@ -26,6 +26,10 @@ public protocol IdleWorld: AnyObject {
     /// The clock actor clips play on; nil without a renderer.
     var idleAnimationTime: Float? { get }
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
+    /// Turns a standing actor towards `heading` and returns how far it still has to turn,
+    /// in radians. Nil when it cannot turn at all, such as a vehicle's rider.
+    func turnActor(_ actor: ReferenceKey, toHeading heading: Float, within tolerance: Float)
+        -> Float?
     /// Shows a prop on the actor, or removes it with nil. It rebuilds no cell.
     func setProp(_ prop: ActorPropAttachment?, on actor: ReferenceKey)
     /// Sends an idle's event to an actor that runs its own behavior graph. `state` is the
@@ -66,6 +70,9 @@ public final class IdleCoordinator {
     struct Session {
         var marker: IdleMarkerPlacement?
         var arrived = false
+        var faced = false
+        /// The package whose idle list this actor plays, while it has no marker.
+        var packageList: FormID?
         var nextEntry = 0
         var played: Set<ResolvedFormID> = []
         var reselectAt: Float = 0
@@ -78,6 +85,7 @@ public final class IdleCoordinator {
         let selection: IdleSelection
         let source: String
         let timer: Float?
+        var variant = 0
     }
 
     struct Playing {
@@ -191,6 +199,7 @@ public final class IdleCoordinator {
         expirePairs(now: now)
         approachMarks(now: now)
         claimMarkers(actors: actors)
+        updatePackageIdles(actors: actors)
         for key in sessions.keys.sorted() {
             guard let actor = actors[key] else { continue }
             step(actor, now: now)
@@ -206,7 +215,8 @@ public final class IdleCoordinator {
                 IdleMarkerPlacement(
                     reference: placement.reference,
                     marker: $0,
-                    position: placement.position
+                    position: placement.position,
+                    heading: placement.heading
                 )
             }
         }
@@ -257,6 +267,7 @@ public final class IdleCoordinator {
             var session = sessions[key] ?? Session()
             session.marker = marker
             session.arrived = arrived
+            session.faced = false
             sessions[key] = session
         }
     }
@@ -301,9 +312,16 @@ public final class IdleCoordinator {
             retry(waiting, on: actor.key, now: now)
             return
         }
-        guard let marker = session.marker, session.arrived, now >= session.reselectAt else {
+        if session.marker == nil, session.packageList != nil, now >= session.reselectAt {
+            selectPackageIdle(for: actor, now: now)
             return
         }
+        guard
+            let marker = session.marker, session.arrived, now >= session.reselectAt,
+            session.faced || faces(
+                marker,
+                actor: actor.key
+            ) else { return }
         select(at: marker, for: actor.key, now: now)
     }
 }
@@ -347,6 +365,7 @@ extension IdleCoordinator {
         timer: Float? = nil,
         now: Float
     ) -> IdleReport {
+        let variant = sessions[actor]?.waiting?.variant ?? planVariant(for: actor)
         sessions[actor]?.waiting = nil
         guard let picked = selection.chosen, let plans else {
             return record(IdleReport(
@@ -355,9 +374,9 @@ extension IdleCoordinator {
             ))
         }
         let chosen = store?.inheritingBehaviorFile(picked) ?? picked
-        let waiting = Waiting(selection: selection, source: source, timer: timer)
+        let waiting = Waiting(selection: selection, source: source, timer: timer, variant: variant)
         let plan: IdlePlaybackPlan
-        switch plans.state(of: IdlePlanKey(chosen, from: positions[actor])) {
+        switch plans.state(of: IdlePlanKey(chosen, from: positions[actor], variant: variant)) {
         case let .ready(ready): plan = ready
         case .loading: return wait(waiting, on: actor, chosen: chosen, plan: nil)
         case let .failed(failure):
@@ -410,6 +429,24 @@ extension IdleCoordinator {
 
 /// Waiting for a load and recording the outcome of a play.
 extension IdleCoordinator {
+    /// The actor turns to the marker's facing before its first idle there.
+    private func faces(_ marker: IdleMarkerPlacement, actor: ReferenceKey) -> Bool {
+        let remaining = world?.turnActor(
+            actor, toHeading: marker.heading, within: IdleCore.facingTolerance
+        )
+        if let remaining, abs(remaining) > IdleCore.facingTolerance {
+            return false
+        }
+        sessions[actor]?.faced = true
+        return true
+    }
+
+    /// An actor that runs its own graph rolls there; one without plays a rolled variant.
+    private func planVariant(for actor: ReferenceKey) -> Int {
+        let runsGraph = worldConditionContext().graphVariables.graphs[actor] != nil
+        return runsGraph || actor == .player ? 0 : random(IdlePlanKey.variants)
+    }
+
     private func retry(_ waiting: Waiting, on actor: ReferenceKey, now: Float) {
         let report = play(
             waiting.selection, on: actor, source: waiting.source, timer: waiting.timer, now: now

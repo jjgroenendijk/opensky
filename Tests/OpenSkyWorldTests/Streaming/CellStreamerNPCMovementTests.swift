@@ -43,6 +43,44 @@ struct CellStreamerNPCMovementTests {
         #expect(simd_distance(SIMD2(feet.x, feet.y), SIMD2(150, 150)) < 20)
     }
 
+    @Test
+    func aStandingActorTurnsToAHeadingThenLetsGo() throws {
+        let streamer = try Self.streamerWithWalker()
+        let tolerance = Float.pi / 180
+        let first = try #require(streamer.turnActor(
+            Self.actor,
+            toHeading: .pi / 2,
+            within: tolerance
+        ))
+        #expect(abs(first) > tolerance)
+        var remaining = first
+        for _ in 0 ..< 600 where abs(remaining) > tolerance {
+            streamer.advanceNPCMovement(frameTime: 1.0 / 60)
+            remaining = try #require(streamer.turnActor(
+                Self.actor,
+                toHeading: .pi / 2,
+                within: tolerance
+            ))
+        }
+        #expect(abs(remaining) <= tolerance)
+        #expect(streamer.npcMovementReadouts().allSatisfy { $0.state != .turning })
+        #expect(streamer.moveActor(Self.actor, to: SIMD3(150, 30, 0)) == .started)
+        #expect(streamer.turnActor(Self.actor, toHeading: 0, within: tolerance) == .pi)
+    }
+
+    @Test
+    func rootMotionMovesAStandingActorButNotAWalkingOne() throws {
+        let streamer = try Self.streamerWithWalker()
+        streamer.moveStandingActor(Self.actor, by: SIMD2(5, 0), turning: 0.25)
+        let entry = try #require(streamer.referenceEntry(key: Self.actor))
+        let moved = streamer.npcMovement.standingTransform(of: entry, in: streamer.stateSource())
+        #expect(simd_distance(moved.position, SIMD3(35, 30, 0)) < 0.001)
+        #expect(abs(moved.rotation.z - 0.25) < 0.001)
+        #expect(streamer.moveActor(Self.actor, to: SIMD3(150, 30, 0)) == .started)
+        streamer.moveStandingActor(Self.actor, by: SIMD2(100, 0), turning: 0)
+        #expect(streamer.isActorWalking(Self.actor))
+    }
+
     private static func streamerWithWalker() throws -> CellStreamer {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)

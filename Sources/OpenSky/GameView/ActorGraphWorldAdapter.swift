@@ -180,4 +180,17 @@ extension ActorGraphWorldAdapter: ActorGraphWorld {
     func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback? {
         game.actorPlayback(for: actor)
     }
+
+    /// A seat, a furniture clip, a paired clip, or a flight already places the actor.
+    func applyRootMotion(_ step: ActorRootMotionStep, to actor: ReferenceKey) {
+        let idles = game.idleWorld.idles
+        guard
+            idles.furnitureResolution.uses[actor] == nil, idles.rootMotion(of: actor) == nil,
+            !idles.pairs.contains(where: { $0.lead == actor || $0.partner == actor }),
+            game.dragonFlight.phase(of: actor) == .grounded
+        else { return }
+        game.streamer?.moveStandingActor(
+            actor, by: step.displacement, turning: step.headingTurn
+        )
+    }
 }
