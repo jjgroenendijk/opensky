@@ -17,6 +17,11 @@ extension AgentWorldAdapter {
             "available": .bool(true),
             "settings": [
                 "knockbackDamageMult": .init(settings.knockbackDamageMult),
+                "knockbackDamageBase": .init(settings.knockbackDamageBase),
+                "knockdownChance": .init(settings.knockdownChance),
+                "gameplayImpulseScale": .init(settings.gameplayImpulseScale),
+                "explosionMaxImpulse": .init(settings.explosionMaxImpulse),
+                "splashTimer": .init(impulses.water.splashTimer),
                 "knockbackForceMax": .init(settings.knockbackForceMax),
                 "knockbackTime": .init(settings.knockbackTime),
                 "knockdownCurrentHealthThreshold": .init(settings.knockdownCurrentHealthThreshold),
@@ -58,6 +63,8 @@ extension AgentWorldAdapter {
             [
                 "kind": "splash", "ref": splash.source.map(reference) ?? .null,
                 "weight": .string(splash.weight.rawValue), "model": .string(splash.model),
+                "sound": splash.weight.sound.map(AgentJSON.string) ?? .null,
+                "scale": .init(splash.scale),
                 "position": .array([splash.position.x, splash.position.y, splash.position.z]
                     .map { .init($0) })
             ]

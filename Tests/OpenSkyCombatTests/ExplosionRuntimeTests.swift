@@ -102,9 +102,9 @@ struct ExplosionRuntimeTests {
         try ExplosionRuntime(records: records(), itemPlugin: plugin, world: world)
     }
 
-    @Test func damageFallsOffLinearlyToTheEdge() {
+    @Test func damageFallsOffWithTheSquareOfTheDistance() {
         #expect(ExplosionFalloff.damage(50, radius: 200, distance: 0) == 50)
-        #expect(ExplosionFalloff.damage(50, radius: 200, distance: 100) == 25)
+        #expect(ExplosionFalloff.damage(50, radius: 200, distance: 100) == 37.5)
         #expect(ExplosionFalloff.damage(50, radius: 200, distance: 250) == 0)
         #expect(ExplosionFalloff.damage(50, radius: 0, distance: 0) == 50)
         #expect(ExplosionFalloff.imageSpaceStrength(radius: 0, distance: 900) == 1)
@@ -122,7 +122,7 @@ struct ExplosionRuntimeTests {
         let spec = try #require(runtime.spec(for: Self.key(0x900)))
         #expect(spec.placement == .hazard(Self.key(0x901)))
         let report = runtime.detonate(spec, at: SIMD3(0, 0, 60), cause: .debug)
-        #expect(world.damage == [Self.npc: 25])
+        #expect(world.damage == [Self.npc: 37.5])
         #expect(world.sounds == [Self.key(0x902)])
         #expect(world.hazards == [Self.key(0x901)])
         #expect(world.models == ["fx/blast.nif"])

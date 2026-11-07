@@ -12,10 +12,18 @@ nonisolated public struct WaterImpactSettings: Equatable, Sendable {
     public var splashModel = "Effects\\waterSplash.nif"
     /// `sExplosionSplashParticles`: the model an explosion at the surface shows.
     public var explosionSplashModel = "Effects\\ExplosionSplash.nif"
-    /// `fSplashSoundLight`, `...Medium`, `...Heavy`: kilograms a body needs for each sound.
+    /// `fSplashSoundLight`, `...Medium`, `...Heavy`: the splash value each sound needs.
     public var splashSoundLight: Float = 5
     public var splashSoundMedium: Float = 20
     public var splashSoundHeavy: Float = 35
+    /// `fSplashSoundVelocityMult`: the splash value per unit a second of vertical speed.
+    public var splashVelocityMult: Float = 0.05
+    /// `fSplashSoundOutMult`: a body leaving the water splashes this much.
+    public var splashOutMult: Float = 0.5
+    /// `fSplashSoundTimer`: seconds between two splashes anywhere.
+    public var splashTimer: Float = 0.25
+    /// `fSplashScale1` to `3`: the particle scale of a heavy, medium and light splash.
+    public var splashScales: [Float] = [1, 0.75, 0.4]
     /// `fExplosionSplashRadius`: a blast this close to the surface splashes.
     public var explosionSplashRadius: Float = 250
     /// `fExplosionWaterRadiusRatio`: what a blast under water keeps of its radius.
@@ -38,6 +46,12 @@ nonisolated public struct WaterImpactSettings: Equatable, Sendable {
             ("fSplashSoundLight", \.splashSoundLight),
             ("fSplashSoundMedium", \.splashSoundMedium),
             ("fSplashSoundHeavy", \.splashSoundHeavy),
+            ("fSplashSoundVelocityMult", \.splashVelocityMult),
+            ("fSplashSoundOutMult", \.splashOutMult),
+            ("fSplashSoundTimer", \.splashTimer),
+            ("fSplashScale1", \.splashScales[0]),
+            ("fSplashScale2", \.splashScales[1]),
+            ("fSplashScale3", \.splashScales[2]),
             ("fExplosionSplashRadius", \.explosionSplashRadius),
             ("fExplosionWaterRadiusRatio", \.explosionWaterRadiusRatio),
             ("fWaterKnockdownVelocity", \.knockdownVelocity),
@@ -58,6 +72,16 @@ nonisolated public enum SplashWeight: String, Equatable, Sendable {
     /// Too light for any splash sound; the model still shows.
     case silent
     case light, medium, heavy
+
+    /// The `SNDR` the splash plays.
+    public var sound: String? {
+        switch self {
+        case .silent: nil
+        case .light: "CWaterSmall"
+        case .medium: "CWaterMedium"
+        case .heavy: "CWaterLarge"
+        }
+    }
 }
 
 /// One splash to show and play.
@@ -68,6 +92,8 @@ nonisolated public struct SplashEvent: Equatable, Sendable {
     public let position: SIMD3<Float>
     public let model: String
     public let weight: SplashWeight
+    /// The particle scale.
+    public var scale: Float = 1
 }
 
 /// One actor or body, as the splash test sees it this frame.
@@ -78,12 +104,18 @@ nonisolated public struct WaterSample: Equatable, Sendable {
     public let mass: Float?
     /// The surface height here, or nil where there is no water.
     public let waterHeight: Float?
+    /// Units a second upward.
+    public let verticalSpeed: Float
 
-    public init(key: ReferenceKey, position: SIMD3<Float>, mass: Float?, waterHeight: Float?) {
+    public init(
+        key: ReferenceKey, position: SIMD3<Float>, mass: Float?, waterHeight: Float?,
+        verticalSpeed: Float = 0
+    ) {
         self.key = key
         self.position = position
         self.mass = mass
         self.waterHeight = waterHeight
+        self.verticalSpeed = verticalSpeed
     }
 
     var isUnderwater: Bool {
@@ -100,37 +132,55 @@ nonisolated public struct WaterSample: Equatable, Sendable {
 }
 
 nonisolated public enum WaterImpacts {
-    public static func weight(mass: Float?, settings: WaterImpactSettings) -> SplashWeight {
+    /// The splash a body makes: its mass plus `fSplashSoundVelocityMult` times its vertical
+    /// speed, times `fSplashSoundOutMult` when it leaves. An actor splashes heavy.
+    public static func weight(
+        mass: Float?, verticalSpeed: Float = 0, leaving: Bool = false,
+        settings: WaterImpactSettings
+    ) -> SplashWeight {
         guard let mass else { return .heavy }
-        if mass >= settings.splashSoundHeavy {
+        var value = mass + settings.splashVelocityMult * abs(verticalSpeed)
+        if leaving {
+            value *= settings.splashOutMult
+        }
+        if value > settings.splashSoundHeavy {
             return .heavy
         }
-        if mass >= settings.splashSoundMedium {
+        if value > settings.splashSoundMedium {
             return .medium
         }
-        return mass >= settings.splashSoundLight ? .light : .silent
+        return value > settings.splashSoundLight ? .light : .silent
     }
 
-    /// A splash for an explosion within `fExplosionSplashRadius` of the surface.
+    /// The particle scale of a splash of `weight`.
+    public static func scale(of weight: SplashWeight, settings: WaterImpactSettings) -> Float {
+        let scales = settings.splashScales
+        return switch weight {
+        case .heavy: scales.first ?? 1
+        case .medium: scales.count > 1 ? scales[1] : 1
+        case .light: scales.count > 2 ? scales[2] : 1
+        case .silent: 1
+        }
+    }
+
+    /// A splash for a blast under water: the surface above it is higher than its centre
+    /// plus `fExplosionWaterRadiusRatio` of its radius. Scaled by radius over
+    /// `fExplosionSplashRadius`.
     public static func explosionSplash(
-        at center: SIMD3<Float>, waterHeight: Float?, settings: WaterImpactSettings
+        at center: SIMD3<Float>, radius: Float, waterHeight: Float?,
+        settings: WaterImpactSettings
     ) -> SplashEvent? {
         guard
-            let waterHeight, abs(center.z - waterHeight) <= settings.explosionSplashRadius
+            let waterHeight,
+            waterHeight > center.z + radius * settings.explosionWaterRadiusRatio
         else { return nil }
-        return SplashEvent(
+        var splash = SplashEvent(
             source: nil, position: SIMD3(center.x, center.y, waterHeight),
             model: settings.explosionSplashModel, weight: .heavy
         )
-    }
-
-    /// The radius a blast reaches with: shrunk by `fExplosionWaterRadiusRatio` under water.
-    public static func explosionRadius(
-        _ radius: Float, at center: SIMD3<Float>, waterHeight: Float?,
-        settings: WaterImpactSettings
-    ) -> Float {
-        guard let waterHeight, center.z < waterHeight else { return radius }
-        return radius * max(settings.explosionWaterRadiusRatio, 0)
+        splash.scale = settings.explosionSplashRadius > 0
+            ? radius / settings.explosionSplashRadius : 1
+        return splash
     }
 
     /// Whether flowing water of `flowSpeed` knocks down an actor of RACE `size`
@@ -146,18 +196,21 @@ nonisolated public enum WaterImpacts {
     }
 }
 
-/// Remembers who was under water last frame, so each entry splashes once.
+/// Remembers who was under water last frame, so each crossing splashes once, and when
+/// the last splash played, so splashes keep `fSplashSoundTimer` apart.
 nonisolated public struct SplashTracker: Equatable, Sendable {
     private var underwater: Set<ReferenceKey> = []
     private var seen: Set<ReferenceKey> = []
+    private var sinceSplash: Float = .infinity
 
     public init() {}
 
-    /// The splashes of the samples that went under since the last call. A key seen for
-    /// the first time never splashes: it may have loaded in the water.
+    /// The splashes of the samples that crossed the surface since the last call. A key
+    /// seen for the first time never splashes: it may have loaded in the water.
     public mutating func update(
-        _ samples: [WaterSample], settings: WaterImpactSettings
+        _ samples: [WaterSample], deltaTime: Float = 0, settings: WaterImpactSettings
     ) -> [SplashEvent] {
+        sinceSplash += max(deltaTime, 0)
         var events: [SplashEvent] = []
         var nowUnder: Set<ReferenceKey> = []
         for sample in samples {
@@ -165,16 +218,25 @@ nonisolated public struct SplashTracker: Equatable, Sendable {
             if under {
                 nowUnder.insert(sample.key)
             }
+            let wasUnder = underwater.contains(sample.key)
             guard
-                under, seen.contains(sample.key), !underwater.contains(sample.key),
-                let height = sample.waterHeight
+                under != wasUnder, seen.contains(sample.key), let height = sample.waterHeight,
+                abs(sample.verticalSpeed) >= 0.001 || sample.mass == nil,
+                sinceSplash >= settings.splashTimer
             else { continue }
-            events.append(SplashEvent(
+            let weight = WaterImpacts.weight(
+                mass: sample.mass, verticalSpeed: sample.verticalSpeed, leaving: !under,
+                settings: settings
+            )
+            guard under || (sample.mass != nil && weight != .silent) else { continue }
+            var event = SplashEvent(
                 source: sample.key,
                 position: SIMD3(sample.position.x, sample.position.y, height),
-                model: settings.splashModel,
-                weight: WaterImpacts.weight(mass: sample.mass, settings: settings)
-            ))
+                model: settings.splashModel, weight: weight
+            )
+            event.scale = WaterImpacts.scale(of: weight, settings: settings)
+            events.append(event)
+            sinceSplash = 0
         }
         underwater = nowUnder
         seen = Set(samples.map(\.key))

@@ -18,9 +18,8 @@ import OpenSkyWorldState
 import simd
 
 extension EffectsWorldAdapter: ImpulseWorld {
-    /// The splash sound. No setting names it, so this is the one `SNDR` whose editor
-    /// ID says so. [WARNING] Not confirmed against the game.
-    static let splashSound = "PHYWaterSplash"
+    // The splash sound. No setting names it, so this is the one `SNDR` whose editor
+    // ID says so. [WARNING] Not confirmed against the game.
 
     func makeImpulses() -> ImpulseRuntime {
         guard let settings = game.worldData?.gameSettings
@@ -72,7 +71,8 @@ extension EffectsWorldAdapter: ImpulseWorld {
 
     func applyBodyImpulse(_ impulse: BodyImpulse) {
         game.streamer?.dynamicBodies.applyImpulse(
-            impulse.linear, at: impulse.point, to: impulse.key, angularScale: impulse.angularScale
+            impulse.linear, at: impulse.point, to: impulse.key, angularScale: impulse.angularScale,
+            angular: impulse.angular
         )
     }
 
@@ -100,15 +100,35 @@ extension EffectsWorldAdapter: ImpulseWorld {
     }
 
     func raceSize(of actor: ReferenceKey) -> Int {
-        let normal = 1
+        race(of: actor)?.details.properties.map { Int($0.size) } ?? 1
+    }
+
+    func isPushable(_ actor: ReferenceKey) -> Bool {
+        !(race(of: actor)?.flags.contains(.notPushable) ?? false)
+    }
+
+    private func race(of actor: ReferenceKey) -> Race? {
         guard
             let base = actor == .player ? nil : game.streamer?.residentActorEntry(key: actor)?
                 .placedActor?.base,
             let resolver = game.worldData?.actorValueBaselines?.resolver
-        else { return normal }
+        else { return nil }
         let identity = ActorIdentityRecords(resolver: resolver)
-        let race = identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
-        return race?.details.properties.map { Int($0.size) } ?? normal
+        return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
+    }
+
+    func actorHealth(of actor: ReferenceKey) -> (current: Float, maximum: Float)? {
+        game.combatWorld.health(of: actor)
+    }
+
+    /// Until the living ragdoll lands, a knockdown is a full knockback push.
+    func knockDown(_ actor: ReferenceKey, from source: SIMD3<Float>, magnitude _: Float) -> Bool {
+        guard let feet = game.actorWorld.combatActor(key: actor)?.feet else { return false }
+        let away = SIMD3(feet.x - source.x, feet.y - source.y, 0)
+        guard simd_length(away) > 0.001 else { return false }
+        let speed = ImpulseSettings.vanilla.knockbackForceMax / ImpulseSettings.vanilla
+            .knockbackTime
+        return knockActor(actor, velocity: simd_normalize(away) * speed, knockdown: true)
     }
 
     /// OpenSky has no knockdown ragdoll for the living, so a knockdown pushes too.
@@ -132,9 +152,9 @@ extension EffectsWorldAdapter: ImpulseWorld {
         game.renderer?.addWaterRipple(
             at: splash.position, strength: splash.weight == .heavy ? 1 : 0.6
         )
-        guard splash.weight != .silent else { return }
+        guard let sound = splash.weight.sound else { return }
         game.audio.soundDirector?.playAnimationSound(
-            editorID: Self.splashSound, source: splash.source ?? .player, at: splash.position
+            editorID: sound, source: splash.source ?? .player, at: splash.position
         )
     }
 }

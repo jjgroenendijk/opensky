@@ -1,6 +1,5 @@
 // The game settings that decide how hard hits, explosions, and projectiles push actors
-// and loose objects, and when a falling object hurts. The CK wiki gives each value but
-// not the formula, so each use is OpenSky's reading (docs/engine/impulses.md).
+// and loose objects, and when a falling object hurts (docs/engine/impulses.md).
 
 import Foundation
 import OpenSkyGameData
@@ -50,8 +49,15 @@ nonisolated public struct ImpulseKindMultipliers: Equatable, Sendable {
 }
 
 nonisolated public struct ImpulseSettings: Equatable, Sendable {
-    /// `fKnockbackDamageMult`: units of push per point of damage.
+    /// The agility the knock formulas read; the game passes this fixed value.
+    public static let knockAgility: Float = 50
+
+    /// `fKnockbackDamageMult` and `fKnockbackDamageBase`: push units per point of damage.
     public var knockbackDamageMult: Float = 5
+    public var knockbackDamageBase: Float = 50
+    /// `fKnockbackAgilMult` and `fKnockbackAgilBase`: the agility scale of the push.
+    public var knockbackAgilityMult: Float = -0.008
+    public var knockbackAgilityBase: Float = 1
     /// `fKnockbackForceMax`: the longest push, in units.
     public var knockbackForceMax: Float = 128
     /// `fKnockbackTime`: seconds the push takes.
@@ -61,8 +67,21 @@ nonisolated public struct ImpulseSettings: Equatable, Sendable {
     public var knockdownCurrentHealthThreshold: Float = 50
     /// `fKnockdownBaseHealthThreshold`: a hit of this percent of base health knocks down.
     public var knockdownBaseHealthThreshold: Float = 75
-    /// `fKnockdownChance`: the knockdown roll, 0 to 1.
+    /// `fKnockdownChance`: the highest knockdown chance, 0 to 1.
     public var knockdownChance: Float = 0.25
+    /// `fKnockdownDamageMult`, `...DamageBase`, `...AgilMult`, `...AgilBase`: the chance.
+    public var knockdownDamageMult: Float = 0.3
+    public var knockdownDamageBase: Float = 0
+    public var knockdownAgilityMult: Float = 1
+    public var knockdownAgilityBase: Float = 0
+    /// `fExplosionForceKnockdownMinimum`: the falloff a blast needs to knock down.
+    public var explosionKnockdownMinimum: Float = 0.15
+    /// `fExplosionKnockStateExplodeDownTime`: seconds a knocked-down actor may lie.
+    public var knockdownTime: Float = 15
+    /// `fGameplayImpulseScale`: an explosion's force to a body impulse.
+    public var gameplayImpulseScale: Float = 150
+    /// `fExplosionMaxImpulse`: the largest impulse one blast gives a body.
+    public var explosionMaxImpulse: Float = 8000
     /// `fExplosionForceMultLinear` and `...Angular`.
     public var explosionLinearMult: Float = 1
     public var explosionAngularMult: Float = 1
@@ -102,6 +121,17 @@ nonisolated public struct ImpulseSettings: Equatable, Sendable {
         var settings = vanilla
         let fields: [(String, WritableKeyPath<Self, Float>)] = [
             ("fKnockbackDamageMult", \.knockbackDamageMult),
+            ("fKnockbackDamageBase", \.knockbackDamageBase),
+            ("fKnockbackAgilMult", \.knockbackAgilityMult),
+            ("fKnockbackAgilBase", \.knockbackAgilityBase),
+            ("fKnockdownDamageMult", \.knockdownDamageMult),
+            ("fKnockdownDamageBase", \.knockdownDamageBase),
+            ("fKnockdownAgilMult", \.knockdownAgilityMult),
+            ("fKnockdownAgilBase", \.knockdownAgilityBase),
+            ("fExplosionForceKnockdownMinimum", \.explosionKnockdownMinimum),
+            ("fExplosionKnockStateExplodeDownTime", \.knockdownTime),
+            ("fGameplayImpulseScale", \.gameplayImpulseScale),
+            ("fExplosionMaxImpulse", \.explosionMaxImpulse),
             ("fKnockbackForceMax", \.knockbackForceMax),
             ("fKnockbackTime", \.knockbackTime),
             ("fKnockdownCurrentHealthThreshold", \.knockdownCurrentHealthThreshold),

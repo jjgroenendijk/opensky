@@ -356,10 +356,12 @@ nonisolated public struct DynamicBodyWorld: Sendable {
         _ impulse: SIMD3<Float>,
         at point: SIMD3<Float>,
         to key: ReferenceKey,
-        angularScale: Float = 1
+        angularScale: Float = 1,
+        angular: SIMD3<Float> = .zero
     ) {
         guard let index = bodies.firstIndex(where: { $0.key == key }) else { return }
         bodies[index].applyImpulse(impulse, at: point, angularScale: angularScale)
+        bodies[index].applyAngularImpulse(angular)
     }
 
     /// The push a moving player capsule gives the clutter it walks into. The capsule

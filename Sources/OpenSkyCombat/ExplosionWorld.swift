@@ -34,6 +34,8 @@ nonisolated public struct ExplosionSpec: Equatable, Sendable {
     public var light: ReferenceKey?
     /// `DATA` impact data set, played on the surface under the blast.
     public var impactDataSet: ReferenceKey?
+    /// Whether the blast knocks down the actors it reaches.
+    public var knockdown = ExplosionKnockdown.never
 
     public init(
         name: String,

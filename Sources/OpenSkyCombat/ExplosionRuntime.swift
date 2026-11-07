@@ -23,7 +23,7 @@ public final class ExplosionRuntime {
     public private(set) var detonationTotal = 0
     /// Placed objects that were neither a hazard nor debris.
     public private(set) var skippedPlacements = 0
-    private var seed: UInt64 = 0x0E5D_1A57
+    var seed: UInt64 = 0x0E5D_1A57
     /// The push settings and the readout log. Nil pushes nothing.
     public var impulses: ImpulseRuntime?
 
@@ -57,7 +57,7 @@ public final class ExplosionRuntime {
         source: FormID? = nil
     ) -> ExplosionReport {
         detonationTotal += 1
-        let radius = reach(of: spec, at: position)
+        let radius = spec.radius
         var damaged: [ReferenceKey: Float] = [:]
         if spec.damage > 0, let world {
             for target in world.explosionTargets() {
@@ -177,6 +177,7 @@ public final class ExplosionRuntime {
         )
         spec.light = records.resolve(data?.light, from: resolved)
         spec.impactDataSet = records.resolve(data?.impactDataSet, from: resolved)
+        spec.knockdown = ExplosionKnockdown(flags: data?.flags)
         return spec
     }
 

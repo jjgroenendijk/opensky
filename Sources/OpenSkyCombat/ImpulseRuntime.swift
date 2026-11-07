@@ -24,9 +24,15 @@ public protocol ImpulseWorld: ImpulseBodyWorld {
     func waterFlow(at position: SIMD2<Float>) -> SIMD2<Float>?
     /// RACE size: 0 small, 1 normal, 2 large, 3 very large.
     func raceSize(of actor: ReferenceKey) -> Int
+    /// False for an actor whose race is "Not Pushable": a hit does not knock it back.
+    func isPushable(_ actor: ReferenceKey) -> Bool
     /// Pushes an actor along the ground. False when it cannot be pushed.
     @discardableResult
     func knockActor(_ actor: ReferenceKey, velocity: SIMD3<Float>, knockdown: Bool) -> Bool
+    /// Knocks an actor down, away from `source`, with `magnitude` in Havok metres a second.
+    @discardableResult
+    func knockDown(_ actor: ReferenceKey, from source: SIMD3<Float>, magnitude: Float) -> Bool
+    func actorHealth(of actor: ReferenceKey) -> (current: Float, maximum: Float)?
     @discardableResult
     func applyPhysicsDamage(_ amount: Float, to actor: ReferenceKey) -> Bool
     func showSplash(_ splash: SplashEvent)
@@ -81,11 +87,11 @@ public final class ImpulseRuntime {
         self.world = world
     }
 
-    public func advance() {
+    public func advance(deltaTime: Float = 0) {
         guard let world else { return }
         let actors = world.impulseActors()
         let bodies = world.impulseBodies()
-        splash(actors: actors, bodies: bodies, world: world)
+        splash(actors: actors, bodies: bodies, deltaTime: deltaTime, world: world)
         strike(actors: actors, bodies: bodies, world: world)
         for collision in collisions.update(bodies) {
             world.playCollision(collision)
@@ -109,7 +115,9 @@ public final class ImpulseRuntime {
         record(.splash(splash))
     }
 
-    private func splash(actors: [MeleeTarget], bodies: [ImpulseBody], world: any ImpulseWorld) {
+    private func splash(
+        actors: [MeleeTarget], bodies: [ImpulseBody], deltaTime: Float, world: any ImpulseWorld
+    ) {
         let samples = actors.map { actor in
             WaterSample(
                 key: actor.key, position: actor.feet, mass: nil,
@@ -118,10 +126,11 @@ public final class ImpulseRuntime {
         } + bodies.map { body in
             WaterSample(
                 key: body.key, position: body.position, mass: body.mass,
-                waterHeight: world.waterHeight(at: SIMD2(body.position.x, body.position.y))
+                waterHeight: world.waterHeight(at: SIMD2(body.position.x, body.position.y)),
+                verticalSpeed: body.velocity.z
             )
         }
-        for event in splashes.update(samples, settings: water) {
+        for event in splashes.update(samples, deltaTime: deltaTime, settings: water) {
             play(event)
         }
         world.waterContacts(samples.filter(\.isWading))

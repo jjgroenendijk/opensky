@@ -406,6 +406,15 @@ nonisolated public struct DynamicBody: Sendable {
             * angularScale
     }
 
+    /// Adds a turn alone, in kilogram square engine units per second, waking the body.
+    public mutating func applyAngularImpulse(_ impulse: SIMD3<Float>) {
+        guard impulse.isFiniteVector, simd_length_squared(impulse) > Float.ulpOfOne else {
+            return
+        }
+        wake()
+        angularVelocity += worldInverseInertia * impulse
+    }
+
     public mutating func wake() {
         isSleeping = false
         restingSteps = 0

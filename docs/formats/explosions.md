@@ -58,8 +58,9 @@ Each `DATA` field is one model: a uint8 percentage, a zstring path, and a uint8 
 
 On detonation OpenSky:
 
-1. Damages every actor whose capsule axis is within the radius. Damage falls linearly from
-   the full `DATA` damage at the center to zero at the radius.
+1. Damages every actor whose capsule axis is within the radius. Damage is the full `DATA`
+   damage times `1 - (d / R)^2`, at distance `d` in radius `R`
+   ([impulses](/engine/impulses.md#explosions)).
 2. Plays sound 1 and sound 2 at the center.
 3. Shows the `MODL` model at the center for 2 s.
 4. Starts the `MNAM` image-space modifier. Its strength falls linearly from 1 at the center

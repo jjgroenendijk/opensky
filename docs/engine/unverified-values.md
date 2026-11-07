@@ -35,7 +35,9 @@ the detail and the sources it did find.
 | NPC combo chance | 0.3 per swing, at most 3 swings, no Offensive Mult term | [combat behaviour](/engine/combat-behavior.md) |
 | NPC back-off time | At most 2 s | [combat behaviour](/engine/combat-behavior.md) |
 | Combat setting formulas | Read from the setting names | [combat](/engine/combat.md) |
-| Knockback and knockdown formulas | Read from the setting names | [impulses](/engine/impulses.md) |
+| Melee knockdown magnitude | The knockback slide speed over 69.99 | [impulses](/engine/impulses.md#hits) |
+| Explosion knockdown magnitude | The `EXPL` force | [impulses](/engine/impulses.md#explosions) |
+| Actor splash | An actor splashes heavy going in, and not coming out | [impulses](/engine/impulses.md#water) |
 | Kill camera timing | OpenSky's numbers | [kill camera](/engine/kill-cam.md) |
 | Projectile settings | Formulas read from the setting names | [projectiles](/engine/projectiles.md) |
 | Arrow gravity unit | Read as the record value with no scale | [projectiles format](/formats/projectiles.md) |

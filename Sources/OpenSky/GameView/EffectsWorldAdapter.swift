@@ -58,6 +58,8 @@ final class EffectsWorldAdapter {
 
     unowned let game: any EffectsWorldHost
     private(set) var cameraPosition: SIMD3<Float>?
+    /// When the impulse step last ran, for the splash timer.
+    private var lastImpulseStep: TimeInterval?
     /// The heartbeat's script-sound instance; 0 when none plays.
     var heartbeatSound: Int32 = 0
     /// Actors whose race abilities were looked at, so each is resolved once.
@@ -88,8 +90,11 @@ final class EffectsWorldAdapter {
             guard let self, let gameSession else { return }
             cameraPosition = position
             tick(gameSession: gameSession, streamer: streamer)
+            let now = ProcessInfo.processInfo.systemUptime
+            let delta = Float(now - (lastImpulseStep ?? now))
+            lastImpulseStep = now
             if gameSession.movementMode.isPlayerControlled {
-                game.combat.impulses?.advance()
+                game.combat.impulses?.advance(deltaTime: delta)
             }
         }
     }
