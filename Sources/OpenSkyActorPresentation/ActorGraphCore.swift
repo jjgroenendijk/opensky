@@ -178,7 +178,7 @@ nonisolated public enum ActorGraphCore {
     }
 
     /// The variables one step writes, in write order. An NPC walks where it faces, so
-    /// `Direction` stays 0. `weapAdj` comes last.
+    /// `Direction` stays 0. The graph's speed sampler writes `SpeedSampled`.
     public static func variables(_ input: ActorGraphStepInput)
         -> [(name: String, value: BehaviorVariableValue)]
     {
@@ -186,7 +186,6 @@ nonisolated public enum ActorGraphCore {
         let speed = input.motion.isMoving ? input.speed : 0
         return [
             (Names.speed, .real(speed)),
-            (Names.speedSampled, .real(speed)),
             (Names.direction, .real(0)),
             (Names.turnDelta, .real(input.turnDelta)),
             (Names.isSprinting, .bool(input.motion.isSprinting)),
@@ -220,6 +219,11 @@ nonisolated public enum ActorGraphCore {
     {
         guard seconds > 0 else { return 0 }
         return simd_length(SIMD2(new.x - old.x, new.y - old.y)) / seconds
+    }
+
+    /// `TurnDelta`: degrees per second, positive left (docs/engine/locomotion-graph.md).
+    public static func turnRate(radians: Float, seconds: Float) -> Float {
+        seconds > 0 ? radians / seconds * 180 / .pi : 0
     }
 
     /// The shortest turn from `old` to `new`, in (-pi, pi].

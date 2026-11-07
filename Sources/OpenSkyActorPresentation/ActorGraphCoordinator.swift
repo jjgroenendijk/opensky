@@ -71,6 +71,8 @@ nonisolated struct LoadedActorGraphProject: Sendable {
     let referencePaths: [String: String]
     /// From the `skeleton.nif` beside the rig.
     let boneLOD: ActorBoneLOD?
+    /// This project's tables in `speeddatasinglefile.txt`, for its speed samplers.
+    let speedSamples: SpeedSampleProject?
 
     static func load(_ files: any GameFileSource) -> @Sendable (String) throws -> Self {
         { path in
@@ -81,7 +83,8 @@ nonisolated struct LoadedActorGraphProject: Sendable {
                 files, rootPath: asset.behaviorPath
             )
             return Self(
-                asset: asset, referencePaths: references, boneLOD: boneLOD(of: asset, files)
+                asset: asset, referencePaths: references, boneLOD: boneLOD(of: asset, files),
+                speedSamples: SpeedSampleProject.load(forProject: path, from: files)
             )
         }
     }
@@ -102,34 +105,6 @@ nonisolated struct LoadedActorGraphProject: Sendable {
 
 @MainActor
 public final class ActorGraphCoordinator {
-    /// One project's shared decode, clips, and behaviour references.
-    final class Project {
-        let asset: BehaviorProjectAsset
-        let clips: InstallBehaviorClipSource
-        let references: InstallBehaviorReferenceSource
-        let skeleton: BehaviorSkeleton
-        let boneLOD: ActorBoneLOD?
-        /// One decode of the graph file for every actor of the race.
-        let objects: SharedBehaviorObjectSource
-        /// Every actor of the race reaches the same clips, so the first one asks for them.
-        var hasPrefetched = false
-
-        init(_ loaded: LoadedActorGraphProject, files: any GameFileSource) {
-            asset = loaded.asset
-            objects = SharedBehaviorObjectSource(graph: loaded.asset.objectGraph)
-            let worker = SerialAssetLoadWorker<String, SplineBehaviorClip>(
-                queue: AssetLoadQueue.background,
-                load: InstallBehaviorClipSource.load(fileSystem: files)
-            )
-            clips = InstallBehaviorClipSource(paths: loaded.asset.clipPaths, worker: worker)
-            references = InstallBehaviorReferenceSource(
-                fileSystem: files, pathsByName: loaded.referencePaths
-            )
-            skeleton = loaded.asset.behaviorSkeleton
-            boneLOD = loaded.boneLOD
-        }
-    }
-
     enum ProjectState {
         case loading
         case ready(Project)
@@ -290,6 +265,7 @@ public final class ActorGraphCoordinator {
         )
         instance.references = project.references
         instance.characterProperties = project.asset.characterProperties
+        instance.speedSamples = project.speedSamples
         instance.activate()
         if !project.hasPrefetched {
             project.hasPrefetched = true
@@ -426,5 +402,37 @@ nonisolated struct ActorGraphVariables: GraphVariableReading {
 
     func graphVariableFloat(_ name: String) -> Float? {
         store.value(of: name)?.realValue
+    }
+}
+
+extension ActorGraphCoordinator {
+    /// One project's shared decode, clips, and behaviour references.
+    final class Project {
+        let asset: BehaviorProjectAsset
+        let clips: InstallBehaviorClipSource
+        let references: InstallBehaviorReferenceSource
+        let skeleton: BehaviorSkeleton
+        let boneLOD: ActorBoneLOD?
+        let speedSamples: SpeedSampleProject?
+        /// One decode of the graph file for every actor of the race.
+        let objects: SharedBehaviorObjectSource
+        /// Every actor of the race reaches the same clips, so the first one asks for them.
+        var hasPrefetched = false
+
+        init(_ loaded: LoadedActorGraphProject, files: any GameFileSource) {
+            asset = loaded.asset
+            objects = SharedBehaviorObjectSource(graph: loaded.asset.objectGraph)
+            let worker = SerialAssetLoadWorker<String, SplineBehaviorClip>(
+                queue: AssetLoadQueue.background,
+                load: InstallBehaviorClipSource.load(fileSystem: files)
+            )
+            clips = InstallBehaviorClipSource(paths: loaded.asset.clipPaths, worker: worker)
+            references = InstallBehaviorReferenceSource(
+                fileSystem: files, pathsByName: loaded.referencePaths
+            )
+            skeleton = loaded.asset.behaviorSkeleton
+            boneLOD = loaded.boneLOD
+            speedSamples = loaded.speedSamples
+        }
     }
 }

@@ -363,9 +363,9 @@ nonisolated public final class LocomotionBridge {
         direction: SIMD2<Float>,
         moving: Bool
     ) {
-        let turnDelta = previousYaw.map { Self.shortestAngle(from: $0, to: state.yaw) } ?? 0
+        let turn = previousYaw.map { Self.shortestAngle(from: $0, to: state.yaw) } ?? 0
+        let turnDelta = Self.turnRate(radians: turn, seconds: state.dt)
         write(.real(moving ? speed(of: gait) : 0), to: LocomotionGraphNames.speed)
-        write(.real(moving ? speed(of: gait) : 0), to: LocomotionGraphNames.speedSampled)
         write(
             .real(Self.graphDirection(of: direction, yaw: state.yaw)),
             to: LocomotionGraphNames.direction

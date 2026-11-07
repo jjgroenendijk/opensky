@@ -236,6 +236,9 @@ nonisolated public final class BehaviorGraphInstance {
     /// a clip loads so the character keeps its pose instead of snapping to rest.
     private(set) var lastCompleteBones: [HKABonePose]?
 
+    /// The project's speed tables, which the graph's speed samplers look up.
+    public var speedSamples: SpeedSampleProject?
+
     /// What a character-property binding reads, and the graph's own property names.
     public var characterProperties = BehaviorCharacterProperties.empty {
         didSet {

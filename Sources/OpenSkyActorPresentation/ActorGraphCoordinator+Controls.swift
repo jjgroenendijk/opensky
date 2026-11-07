@@ -28,12 +28,16 @@ extension ActorGraphCoordinator.Running {
         shown = next
         let turn = lastRotation.map {
             // Placement rotation turns clockwise; the graph's turn is counter-clockwise.
-            -ActorGraphCore.turnDelta(from: $0, to: candidate.rotationZ)
+            ActorGraphCore.turnRate(
+                radians: -ActorGraphCore.turnDelta(from: $0, to: candidate.rotationZ),
+                seconds: seconds
+            )
         } ?? 0
         lastFeet = candidate.feet
         lastRotation = candidate.rotationZ
         var input = ActorGraphStepInput(
-            motion: next, speed: gait.speed, turnDelta: turn, deltaTime: seconds
+            motion: next, speed: gait.speed / max(candidate.scale, 0.01), turnDelta: turn,
+            deltaTime: seconds
         )
         input.weight = candidate.weight
         return input

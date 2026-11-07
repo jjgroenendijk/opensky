@@ -42,6 +42,12 @@ nonisolated extension LocomotionBridge {
         return turn < 0 ? turn + 1 : turn
     }
 
+    /// `TurnDelta` for a counter-clockwise turn of `radians` over `seconds`: degrees per
+    /// second, positive left (docs/engine/locomotion-graph.md).
+    public static func turnRate(radians: Float, seconds: Float) -> Float {
+        seconds > 0 ? radians / seconds * 180 / .pi : 0
+    }
+
     /// Signed angle from one heading to another, in (-pi, pi].
     public static func shortestAngle(from start: Float, to end: Float) -> Float {
         var delta = (end - start).truncatingRemainder(dividingBy: 2 * .pi)

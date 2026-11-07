@@ -33,13 +33,18 @@ declares 230 variables and 1,217 events, and a name that only sounds right resol
 
 | Variable | Type | Written as |
 | --- | --- | --- |
-| `Speed`, `SpeedSampled` | real | The gait speed, or 0 when standing |
+| `Speed` | real | The gait speed divided by the actor's scale, or 0 when standing |
 | `Direction` | real | Fraction of a turn clockwise from facing, in [0, 1): 0 ahead, 0.25 right, 0.75 left |
-| `TurnDelta` | real | Yaw change over the step |
+| `TurnDelta` | real | Turn rate in degrees per second, positive left |
 | `IsSprinting`, `IsSneaking` | bool | The resolved gait |
 | `iIsInSneak` | int32 | The same sneak state, in its int spelling |
 | `bInJumpState` | bool | True while off the ground |
 | `SpeedWalk`, `SpeedRun` | real | The configured gait speeds |
+
+The engine never writes `SpeedSampled`. The graph's speed sampler writes it from `Speed`
+through the [speed data](/formats/speed-data.md) table, so the blend plays feet at the speed the
+body moves. `TurnDelta` is the yaw rate times -57.2958, the game's heading turning clockwise
+(clean-room read of `SkyrimSE.exe`, 2026-11-07).
 
 The `Direction` unit comes from the graph data. `MT_Direction_Blend` in `mt_behavior.hkx` is a
 cyclic parametric blender over 0 to 1, with `MT_ForwardBlend` at 0, `MT_RightBlend` at 0.25,
