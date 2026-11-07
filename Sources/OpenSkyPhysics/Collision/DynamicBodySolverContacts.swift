@@ -1,5 +1,7 @@
 // Contact resolution for the dynamic solver: accumulated sequential impulses, normal
-// impulse kept non-negative, friction clamped to it. Penetration leaves through the
+// impulse kept non-negative, friction accumulated and clamped to it. Each patch of
+// contacts carries the weight first, then the points take what rotation is left. Penetration leaves
+// through the
 // positions, so a resting body can sleep. See docs/engine/dynamic-narrowphase.md.
 
 import simd
@@ -13,12 +15,12 @@ nonisolated extension DynamicBodySolver {
     ) {
         guard !contacts.isEmpty else { return }
         wakeSleepingBodies(in: contacts, bodies: &bodies)
-        var accumulated = [Float](repeating: 0, count: contacts.count)
+        var state = ContactSolveState(contacts: contacts, bodies: bodies)
+        state.warmStart(bodies: &bodies)
         for _ in 0 ..< iterationCount {
-            solveContactVelocityIteration(
-                contacts: contacts, accumulated: &accumulated, bodies: &bodies
-            )
+            solveContactVelocityIteration(state: &state, bodies: &bodies)
         }
+        state.storeWarmImpulses(in: &bodies)
         correctPositions(contacts: contacts, bodies: &bodies)
     }
 
@@ -33,15 +35,13 @@ nonisolated extension DynamicBodySolver {
         dt: Float
     ) -> Int {
         wakeSleepingBodies(in: contacts, bodies: &bodies)
-        var contactImpulses = [Float](repeating: 0, count: contacts.count)
+        var contactState = ContactSolveState(contacts: contacts, bodies: bodies)
         var jointState = RagdollConstraintSolver.VelocityState(jointCount: joints.count)
         var violations = 0
         let iterationTime = dt / Float(RagdollConstraintSolver.iterationCount)
         for iteration in 0 ..< RagdollConstraintSolver.iterationCount {
             if iteration.isMultiple(of: 2) {
-                solveContactVelocityIteration(
-                    contacts: contacts, accumulated: &contactImpulses, bodies: &bodies
-                )
+                solveContactVelocityIteration(state: &contactState, bodies: &bodies)
             }
             violations = RagdollConstraintSolver.solveVelocityIteration(
                 joints: joints,
@@ -50,9 +50,7 @@ nonisolated extension DynamicBodySolver {
                 state: &jointState
             )
             if !iteration.isMultiple(of: 2) {
-                solveContactVelocityIteration(
-                    contacts: contacts, accumulated: &contactImpulses, bodies: &bodies
-                )
+                solveContactVelocityIteration(state: &contactState, bodies: &bodies)
             }
         }
         RagdollConstraintSolver.correctPoses(joints: joints, bodies: &bodies)
@@ -79,17 +77,30 @@ nonisolated extension DynamicBodySolver {
     }
 
     private static func solveContactVelocityIteration(
-        contacts: [DynamicContact],
-        accumulated: inout [Float],
+        state: inout ContactSolveState,
         bodies: inout [DynamicBody]
     ) {
-        for (index, contact) in contacts.enumerated() {
-            accumulated[index] = applyNormalImpulse(
-                contact,
-                accumulated: accumulated[index],
-                bodies: &bodies
+        // Every other sweep runs backwards, so no corner of a box always goes first.
+        let backward = !state.sweeps.isMultiple(of: 2)
+        state.sweeps += 1
+        solve(&state.patches, backward: backward, bodies: &bodies)
+        solve(&state.points, backward: backward, bodies: &bodies)
+    }
+
+    private static func solve(
+        _ set: inout ContactSet, backward: Bool, bodies: inout [DynamicBody]
+    ) {
+        let order = backward
+            ? Array(set.contacts.indices.reversed()) : Array(set.contacts.indices)
+        for index in order {
+            let contact = set.contacts[index]
+            set.normal[index] = applyNormalImpulse(
+                contact, accumulated: set.normal[index], bodies: &bodies
             )
-            applyFrictionImpulse(contact, normalImpulse: accumulated[index], bodies: &bodies)
+            set.friction[index] = applyFrictionImpulse(
+                contact, normalImpulse: set.normal[index],
+                accumulated: set.friction[index], bodies: &bodies
+            )
         }
     }
 
@@ -144,22 +155,32 @@ nonisolated extension DynamicBodySolver {
         return total
     }
 
+    /// The friction impulse so far, kept inside the cone the normal impulse allows,
+    /// so four passes cannot add four times the limit.
     private static func applyFrictionImpulse(
         _ contact: DynamicContact,
         normalImpulse: Float,
+        accumulated: SIMD3<Float>,
         bodies: inout [DynamicBody]
-    ) {
-        guard normalImpulse > 0 else { return }
+    ) -> SIMD3<Float> {
         let velocity = relativeVelocity(contact, bodies: bodies)
         let tangential = velocity - contact.normal * simd_dot(velocity, contact.normal)
         let speed = simd_length(tangential)
-        guard speed > Float.ulpOfOne else { return }
-        let direction = tangential / speed
-        let effective = effectiveMass(contact, normal: direction, bodies: bodies)
-        guard effective > Float.ulpOfOne else { return }
-        let limit = contact.friction * normalImpulse
-        let impulse = min(speed / effective, limit)
-        apply(impulse: direction * -impulse, contact: contact, bodies: &bodies)
+        var total = accumulated
+        if speed > Float.ulpOfOne {
+            let direction = tangential / speed
+            let effective = effectiveMass(contact, normal: direction, bodies: bodies)
+            if effective > Float.ulpOfOne {
+                total -= direction * (speed / effective)
+            }
+        }
+        let limit = contact.friction * max(normalImpulse, 0)
+        let length = simd_length(total)
+        if length > limit {
+            total = length > Float.ulpOfOne ? total / length * limit : .zero
+        }
+        apply(impulse: total - accumulated, contact: contact, bodies: &bodies)
+        return total
     }
 
     private static func relativeVelocity(
@@ -197,7 +218,7 @@ nonisolated extension DynamicBodySolver {
         return simd_dot(simd_cross(rotated, lever), normal)
     }
 
-    private static func apply(
+    static func apply(
         impulse: SIMD3<Float>,
         contact: DynamicContact,
         bodies: inout [DynamicBody]
@@ -231,5 +252,30 @@ nonisolated extension DynamicBodySolver {
         body.angularVelocity = clamped(
             body.angularVelocity, to: body.definition.maximumAngularSpeed
         )
+    }
+}
+
+/// Contacts and the impulses each has taken so far in this substep.
+nonisolated struct ContactSet {
+    let contacts: [DynamicContact]
+    var normal: [Float]
+    var friction: [SIMD3<Float>]
+
+    init(_ contacts: [DynamicContact]) {
+        self.contacts = contacts
+        normal = [Float](repeating: 0, count: contacts.count)
+        friction = [SIMD3<Float>](repeating: .zero, count: contacts.count)
+    }
+}
+
+/// One substep's patches and points.
+nonisolated struct ContactSolveState {
+    var patches: ContactSet
+    var points: ContactSet
+    var sweeps = 0
+
+    init(contacts: [DynamicContact], bodies: [DynamicBody]) {
+        patches = ContactSet(DynamicContactPatch.supports(of: contacts, bodies: bodies))
+        points = ContactSet(contacts)
     }
 }

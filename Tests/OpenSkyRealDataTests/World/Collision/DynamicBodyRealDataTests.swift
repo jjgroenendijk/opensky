@@ -93,12 +93,10 @@ struct DynamicBodyRealDataTests {
             settle.maximumDrop < Self.maximumSettledDropUnits,
             "a body fell \(settle.maximumDrop) units out of the geometry it was authored in"
         )
-        withKnownIssue("#1834: a goblet falls through the noble wall shelf") {
-            #expect(
-                settle.maximumDrop < Self.maximumShelfDropUnits,
-                "a body fell \(settle.maximumDrop) units, through the surface it stood on"
-            )
-        }
+        #expect(
+            settle.maximumDrop < Self.maximumShelfDropUnits,
+            "a body fell \(settle.maximumDrop) units, off the surface it stood on"
+        )
         #expect(shove.movedBodyCount > 0, "a shove moved nothing")
         // And what the renderer would be handed after all that is non-empty:
         // clutter that settled away from where the plugin authored it is drawn
@@ -370,15 +368,22 @@ extension DynamicBodyRealDataTests {
             let corners = (0 ..< 3).map { world[Int(indices[offset + $0])] }
             let low = simd_min(simd_min(corners[0], corners[1]), corners[2])
             let high = simd_max(simd_max(corners[0], corners[1]), corners[2])
-            guard point.x >= low.x, point.x <= high.x, point.y >= low.y, point.y <= high.y else {
+            guard
+                point.x >= low.x - 12, point.x <= high.x + 12,
+                point.y >= low.y - 12, point.y <= high.y + 12
+            else {
                 return nil
             }
             let normal = simd_normalize(simd_cross(
                 corners[1] - corners[0],
                 corners[2] - corners[0]
             ))
-            guard abs(normal.z) > 0.7 else { return nil }
-            return String(format: "      face at z %.1f facing z %.2f", corners[0].z, normal.z)
+            return String(
+                format: "      face (%.1f %.1f %.1f) (%.1f %.1f %.1f) (%.1f %.1f %.1f)"
+                    + " n %.2f %.2f %.2f",
+                corners[0].x, corners[0].y, corners[0].z, corners[1].x, corners[1].y, corners[1].z,
+                corners[2].x, corners[2].y, corners[2].z, normal.x, normal.y, normal.z
+            )
         }
     }
 
