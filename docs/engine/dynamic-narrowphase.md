@@ -95,6 +95,43 @@ because a face gives steadier contacts.
 A hull's faces and edges are found once per body. The points that lie on each plane, sorted around
 the plane's centre, make its face. Parallel edge directions are merged, so a box has three.
 
+## Contact patches
+
+A body's contacts that share one surface, the same other body, and a normal within about 11
+degrees form a patch. The solver handles a patch first, as one contact, then each point.
+
+The patch contact sits where the body's centre of mass projects onto the patch, along the normal.
+When that projection is outside the patch's polygon, it moves to the polygon's nearest edge. So
+a body whose centre is over its foot carries its weight there with no spin, and a body leaning
+past its edge still tips over that edge. The points that follow see only what rotation is left.
+
+A solver that takes the corners one at a time lets the first corner cancel all of gravity's
+speed, so the other corners have nothing left to stop. Every step then pushes the same corner,
+and that steady one-sided push spins the body. Vanilla clutter makes this worse: its authored
+inertia is large, so a contact impulse barely turns it. The glazed goblet (`GlazedGoblet01`), a
+wide cup on a narrow foot, spins this way off its foot and off its shelf without patches.
+
+Friction is added up per contact over the passes and kept inside the limit the normal impulse
+allows, so four passes cannot add four full friction impulses.
+
+## Warm starting
+
+Each contact starts a substep with the impulse it ended the last substep with, before the
+solver passes run. This is called warm starting. A contact matches one from the last substep
+when it has the same other body, is the same kind (patch or point), and lies within 2 units of
+it in the body's own frame. It starts with 90% of that impulse. A wrong match then fades out
+instead of pushing on.
+
+Every second pass runs through the contacts in reverse order, so the same corner does not
+always go first.
+
+Four passes that start from zero cannot carry the weight of a tall stack down to the floor: a
+stack of five boxes leans and falls. Carried over, the impulses add up over the substeps, and
+the stack rests. The first substep has nothing to start
+from, so the top box of such a stack can shift by about a unit while it settles.
+
+[WARNING] The match distance and the 90% share are OpenSky's choices, not values from the game.
+
 ## Two limits
 
 - Contact margin, 1.5 units, is added to every sample's skin. A hull corner has no skin of its own.

@@ -312,6 +312,8 @@ nonisolated public struct DynamicBody: Sendable {
     public var restingSteps = 0
     /// The surface of the last contact, for the collision sound.
     public var lastSurface: DynamicSurfaceTouch?
+    /// The impulses of the last substep's contacts, to start the next one from.
+    public var warmImpulses: [DynamicWarmImpulse] = []
 
     public init(
         key: ReferenceKey,

@@ -260,5 +260,6 @@ the detail and the sources it did find.
 | Line speaker and listener idles | Both start with the line, without the idles' own conditions | [scenes](/engine/scenes.md#idles) |
 | Package idle list | Plays only while the actor stands still and has no marker | [idle runtime](/engine/idle-runtime.md#package-idles) |
 | Player shove efficiency | 0.175 of the player's momentum, before the game's mass and layer factor | [dynamic bodies](/engine/dynamic-bodies.md#the-players-shove) |
+| Contact warm start | A contact within 2 units of last substep's starts with 90% of its impulse; passes alternate direction | [dynamic contacts](/engine/dynamic-narrowphase.md#warm-starting) |
 | Cart front axle swivel limit | 60 degrees either way from the body | [vehicles](/engine/vehicles.md#towing) |
 | Swim breadcrumb trail | A point every 128 units, the last 64 kept; joined within 1,024 units, serves targets within 512 of its end | [navigation](/engine/navigation.md#swimming-after-the-player) |

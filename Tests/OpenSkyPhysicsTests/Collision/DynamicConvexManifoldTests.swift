@@ -1,5 +1,5 @@
 // Body against body contacts: two hulls meet by face clipping or at crossed edges,
-// two capsules at their closest points.
+// two capsules at their closest points, and a tall stack rests still.
 
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
@@ -94,6 +94,32 @@ struct DynamicConvexManifoldTests {
         #expect(contacts.count == 1)
         #expect(contact.normal.z < -0.99, "the lower capsule is pushed down")
         #expect(simd_length(contact.point - SIMD3(5, 0, 2.5)) < 0.01)
+    }
+
+    @Test
+    func aStackOfFiveBoxesRestsStill() {
+        let world = DynamicStepWorld(
+            staticCandidates: DynamicBodyScene.query([DynamicBodyScene.floor()])
+        )
+        var bodies: [DynamicBody] = []
+        for level in 0 ..< 5 {
+            let height: Float = 10 + Float(level) * 20.5
+            bodies.append(DynamicBodyScene.cube(
+                key: .generated(UInt64(level + 1)), center: SIMD3(0, 0, height),
+                half: 10, mass: 10
+            ))
+        }
+        DynamicBodyScene.run(bodies: &bodies, world: world, steps: 600)
+        // A resting contact keeps the margin less the slop between the boxes. The first
+        // substep has no impulses to start from, so the top box may shift a little.
+        let gap = DynamicBodyContacts.contactMargin - DynamicBodySolver.penetrationSlop
+        for (level, body) in bodies.enumerated() {
+            let expected = 10 + Float(level) * (20 + gap)
+            #expect(abs(body.position.z - expected) < 1, "level \(level) at \(body.position)")
+            #expect(simd_length(body.position.xy) < 2, "level \(level) slid to \(body.position)")
+        }
+        let resting = bodies.allSatisfy(\.isSleeping)
+        #expect(resting, "the stack never came to rest")
     }
 }
 
