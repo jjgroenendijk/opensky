@@ -228,7 +228,10 @@ nonisolated extension CellSceneBuilder {
                 placement: ref.placement,
                 scale: ref.scale
             )
+            // A static never moves, even where its mesh carries a simulated body,
+            // such as wall-mounted antlers (CK wiki, Bethesda Tutorial Clutter).
             placement.motionType = motionTypes[ref.formID]
+                ?? (base.recordType == "STAT" ? .keyframed : nil)
             return placement
         }
     }

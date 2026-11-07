@@ -49,6 +49,13 @@ hovering three units over a shelf board found the board's underside twenty units
 was twenty units inside, and was pushed down through it. So a triangle returns its distance whether
 or not there is penetration, and the caller keeps the nearest answer of either kind.
 
+The same rule holds across shapes. A compressed mesh is placed as several shapes, so a board's top
+face and its underside can be in different ones. A sample behind a face is dropped when another
+shape has a nearer face that the sample is outside of. A sample in front of a face, inside its skin,
+is the normal resting contact and is always kept. Without this, a jug on the farmhouse shelf and one
+on a thin table were pushed down through the board in the
+[real-data probe](/testing.md).
+
 ### A triangle is prepared once
 
 A step asks the same triangle about every sample of every nearby body. So each triangle stores its

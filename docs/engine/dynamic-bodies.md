@@ -32,7 +32,7 @@ The cell build sends each player-solid `bhkRigidBody` to one of two places:
 | Simulated, the reference has a `ReferenceKey`, no joint binds it, and a convex volume survives | The cell's dynamic bodies |
 | Anything else | The static collision set |
 
-Three rules keep this from taking geometry out of the world:
+Four rules keep this from taking geometry out of the world:
 
 - A body with no runtime key stays static. So the collision-only build (`openskycli collision`)
   reports the same shapes it always did. A build flag can also turn the split off for such tools.
@@ -40,6 +40,11 @@ Three rules keep this from taking geometry out of the world:
   whose board is fixed and whose contents are not. Moving the whole model would take the shelf.
 - A model whose bodies are bound by joints stays static. A hanging rack with its joint ignored
   would fall out of the world.
+- A static (`STAT`) base never simulates, even where its mesh has a simulated body, such as
+  wall-mounted antlers. The Creation Kit's clutter tutorial says statics "cannot be moved,
+  interacted with, or otherwise influenced by the player"
+  ([source](https://ck.uesp.net/wiki/Bethesda_Tutorial_Clutter)). A script's `SetMotionType`
+  still wins.
 
 A reference becomes one rigid body, because it has one key, one placement, and one transform to
 save. Its simulated bodies are welded: masses add, the center of mass is their mass-weighted mean,

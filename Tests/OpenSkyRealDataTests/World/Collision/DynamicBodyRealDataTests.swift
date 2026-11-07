@@ -8,6 +8,7 @@
 import Foundation
 import Metal
 @testable import OpenSkyCells
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyNavigation
@@ -91,7 +92,7 @@ struct DynamicBodyRealDataTests {
             settle.maximumDrop < Self.maximumSettledDropUnits,
             "a body fell \(settle.maximumDrop) units out of the geometry it was authored in"
         )
-        withKnownIssue("#1587: a jug falls through its shelf's top board") {
+        withKnownIssue("#1834: a goblet falls through the noble wall shelf") {
             #expect(
                 settle.maximumDrop < Self.maximumShelfDropUnits,
                 "a body fell \(settle.maximumDrop) units, through the surface it stood on"
@@ -212,9 +213,7 @@ extension DynamicBodyRealDataTests {
         let starts = Dictionary(
             world.bodies.map { ($0.key, $0.position) }, uniquingKeysWith: { first, _ in first }
         )
-        let step = DynamicStepWorld(staticCandidates: { bounds in
-            scene.staticCollision.candidates(overlapping: bounds)
-        })
+        let step = DynamicStepWorld(staticCandidates: { solidShapes(of: scene, overlapping: $0) })
         var result = SettleResult()
         var totalNanoseconds: UInt64 = 0
         for _ in 0 ..< settleSteps {
@@ -262,9 +261,7 @@ extension DynamicBodyRealDataTests {
         }
         var result = ShoveResult()
         result.wokenBodyCount = world.bodies.count(where: { !$0.isSleeping })
-        let step = DynamicStepWorld(staticCandidates: { bounds in
-            scene.staticCollision.candidates(overlapping: bounds)
-        })
+        let step = DynamicStepWorld(staticCandidates: { solidShapes(of: scene, overlapping: $0) })
         for _ in 0 ..< 120 {
             world.advance(by: WalkController.fixedTimeStep, world: step)
         }
@@ -325,7 +322,7 @@ extension DynamicBodyRealDataTests {
                 maximumDistance: 4096
             )
             let floor = ShapeSweeper.firstHit(
-                query: down, shapes: scene.staticCollision.candidates(overlapping: down.bounds)
+                query: down, shapes: solidShapes(of: scene, overlapping: down.bounds)
             )
             lines.append(String(
                 format: "  %@ start (%.0f, %.0f, %.0f) r %.1f drop %.2f, floor %@, asleep %@",
@@ -336,14 +333,43 @@ extension DynamicBodyRealDataTests {
                 Self.describe(floor),
                 world.body(for: entry.key)?.isSleeping == true ? "yes" : "no"
             ))
+            if entry.position.z - end.z >= maximumShelfDropUnits {
+                lines += column(under: entry.position, scene: scene)
+            }
         }
         return lines.joined(separator: "\n") + "\n"
+    }
+
+    /// The shapes in a thin column under a body that fell far, to show what it fell past.
+    private static func column(under point: SIMD3<Float>, scene: CellScene) -> [String] {
+        let bounds = ModelBounds(
+            min: SIMD3(point.x - 2, point.y - 2, point.z - 256), max: point + SIMD3(2, 2, 0)
+        )
+        return solidShapes(of: scene, overlapping: bounds).map {
+            String(
+                format: "    under: %@ z %.1f to %.1f",
+                $0.reference.description, $0.bounds.min.z, $0.bounds.max.z
+            )
+        }
+    }
+
+    /// The fixed shapes and the closed moving ones, such as a cupboard's, as the streamer
+    /// hands them to the dynamic world.
+    private static func solidShapes(
+        of scene: CellScene, overlapping bounds: ModelBounds
+    ) -> [StaticCollisionShape] {
+        scene.staticCollision.candidates(overlapping: bounds)
+            + scene.doorCollision.flatMap { $0.shapes(leafDeltas: nil, overlapping: bounds) }
     }
 
     /// A downward sweep's answer, for the report.
     private static func describe(_ hit: ShapeSweepHit?) -> String {
         guard let hit else { return "none" }
-        return hit.startsOverlapping ? "overlapping" : String(format: "%.1f", hit.distance)
+        guard hit.startsOverlapping else { return String(format: "%.1f", hit.distance) }
+        return String(
+            format: "overlapping %@ normal (%.2f, %.2f, %.2f) at z %.1f",
+            hit.reference.description, hit.normal.x, hit.normal.y, hit.normal.z, hit.position.z
+        )
     }
 
     private static func write(name: String, report: String) throws {

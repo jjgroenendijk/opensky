@@ -190,6 +190,34 @@ struct DynamicBodySolverTests {
         #expect(bodies[0].isSleeping)
     }
 
+    /// A compressed mesh is placed as several shapes, so a board's top face and its
+    /// underside can sit in different ones. The near top face still decides.
+    @Test
+    func aBoardSplitAcrossShapesHoldsTheBodyOnIt() {
+        let corners: [SIMD3<Float>] = [
+            SIMD3(-200, -200, 0), SIMD3(200, -200, 0), SIMD3(200, 200, 0), SIMD3(-200, 200, 0)
+        ]
+        func face(z: Float, indices: [UInt32]) -> StaticCollisionShape {
+            StaticCollisionShape(
+                reference: FormID(2),
+                transform: MatrixMath.translation(SIMD3(0, 0, z)),
+                geometry: .triangleSoup(vertices: corners, indices: indices),
+                bounds: ModelBounds(min: SIMD3(-200, -200, z), max: SIMD3(200, 200, z))
+            )
+        }
+        let top = face(z: 108, indices: [0, 1, 2, 0, 2, 3])
+        let underside = face(z: 92, indices: [0, 2, 1, 0, 3, 2])
+        let world = DynamicStepWorld(
+            staticCandidates: DynamicBodyScene.query([DynamicBodyScene.floor(), underside, top])
+        )
+        var bodies = [DynamicBodyScene.cube(key: .generated(1), center: SIMD3(0, 0, 118.5))]
+
+        DynamicBodyScene.run(bodies: &bodies, world: world, steps: 600)
+
+        #expect(bodies[0].position.z > 108, "the body sank through the board")
+        #expect(bodies[0].isSleeping)
+    }
+
     /// Six by six boxes dropped from staggered heights onto a floor, run long
     /// enough to settle and then some.
     private static func runStressScene() -> [DynamicBody] {
