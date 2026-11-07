@@ -77,8 +77,9 @@ Rules that hold across all four:
 - At the end, build only the Xcode products the change reaches, one target each:
   `make build-app`, `make build-cli`, and `make build-tests` (every bundle of a plan,
   `PLAN=UnitTests` by default, without running a test).
-- `make coverage-floor` needs a run with `COVERAGE=1`; CI runs it on every push. Run it
-  locally only when a parser change deletes tests or adds untested branches.
+- `make coverage-floor` and `make diff-coverage` need a run with `COVERAGE=1`; CI runs
+  them after the unit tests. Run them locally with `PLAN=UnitTests COVERAGE=1` when a
+  change deletes tests or adds code no test reaches.
 - After a failure, `make test-report` names the failing tests and messages, and shows
   time per tag. Do not hand-parse `.xcresult` JSON.
 - Every plan sets a time allowance. A test that fails on it is a hang to fix, not a

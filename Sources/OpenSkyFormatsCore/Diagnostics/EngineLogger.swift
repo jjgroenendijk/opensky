@@ -87,21 +87,44 @@ nonisolated public struct EngineLogLine: Equatable, Sendable {
 /// `limit` lines, so a process nobody drains does not grow.
 nonisolated public enum EngineLogTap {
     public static let limit = 512
-    private static let lines = Mutex<[EngineLogLine]>([])
+    private static let lines = Mutex(EngineLogRing(limit: limit))
 
     static func record(category: String, message: String) {
-        lines.withLock { lines in
-            lines.append(EngineLogLine(category: category, message: message))
-            if lines.count > limit {
-                lines.removeFirst(lines.count - limit)
-            }
-        }
+        lines.withLock { $0.append(EngineLogLine(category: category, message: message)) }
     }
 
     public static func drain() -> [EngineLogLine] {
-        lines.withLock { lines in
+        lines.withLock { $0.drain(category: nil) }
+    }
+
+    static func drain(category: String) -> [EngineLogLine] {
+        lines.withLock { $0.drain(category: category) }
+    }
+}
+
+nonisolated struct EngineLogRing: Sendable {
+    let limit: Int
+    private var lines: [EngineLogLine] = []
+
+    init(limit: Int) {
+        self.limit = limit
+    }
+
+    mutating func append(_ line: EngineLogLine) {
+        lines.append(line)
+        if lines.count > limit {
+            lines.removeFirst(lines.count - limit)
+        }
+    }
+
+    /// Removes and returns the lines of `category`, or every line for nil.
+    mutating func drain(category: String?) -> [EngineLogLine] {
+        guard let category else {
             defer { lines.removeAll(keepingCapacity: true) }
             return lines
         }
+        let drained = lines.filter { $0.category == category }
+        lines.removeAll { $0.category == category }
+        return drained
     }
 }

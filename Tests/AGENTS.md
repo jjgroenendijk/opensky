@@ -110,6 +110,12 @@ the `Quick` plan names the tags to skip in `OPENSKY_SKIPPED_TAGS` and this trait
 them. A tag narrows a run (`make test-unit PLAN=GPU`) but never pulls a real-data test into a
 unit run: a plan picks bundles, a tag picks tests inside them.
 
+## Test order
+
+Every plan runs its tests in random order, and no suite carries `.serialized`
+(`make test-order`, `docs/decisions/test-coverage-rules.md`). A test that shares state with
+others reads only its own part of it, such as the log lines of its own category.
+
 ## Flaky tests
 
 A flaky test fails sometimes and passes sometimes on the same code. When you find one:

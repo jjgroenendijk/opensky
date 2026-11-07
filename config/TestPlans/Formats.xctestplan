@@ -270,34 +270,42 @@
   "testTargets": [
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsCoreTests", "name": "OpenSkyFormatsCoreTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsESMTests", "name": "OpenSkyFormatsESMTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsMeshTests", "name": "OpenSkyFormatsMeshTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsAnimationTests", "name": "OpenSkyFormatsAnimationTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsAudioTests", "name": "OpenSkyFormatsAudioTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsPEXTests", "name": "OpenSkyFormatsPEXTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsSWFTests", "name": "OpenSkyFormatsSWFTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyFormatsESSTests", "name": "OpenSkyFormatsESSTests"}
     }
   ],

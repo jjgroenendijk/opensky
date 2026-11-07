@@ -8,8 +8,10 @@ import Synchronization
 import Testing
 
 @MainActor
-@Suite(.serialized)
 struct AgentSocketTests {
+    /// Other suites run beside this one and can hold the main actor for seconds, so the
+    /// wait is long; a passing run returns as soon as the reply arrives.
+    nonisolated private static let wait: Double = 30
     private let path: String
 
     init() {
@@ -17,7 +19,8 @@ struct AgentSocketTests {
         path = "/tmp/opensky-agent-\(UUID().uuidString.prefix(8)).sock"
     }
 
-    /// Runs `client` off the main actor and polls `coordinator` until it returns.
+    /// Runs `client` on its own thread and polls `coordinator` until it returns. A
+    /// blocking client on the shared task pool could starve the suites beside it.
     /// The fake draws one frame per poll, as the app's display does.
     private func drive<Value: Sendable>(
         _ coordinator: AgentControlCoordinator,
@@ -25,15 +28,15 @@ struct AgentSocketTests {
         client: @escaping @Sendable () throws -> Value
     ) async throws -> Value {
         let outcome = Mutex<Result<Value, any Error>?>(nil)
-        let task = Task { @concurrent in
+        Thread {
             let result = Result { try client() }
             outcome.withLock { $0 = result }
-        }
-        for _ in 0 ..< 2000 {
+        }.start()
+        let deadline = ContinuousClock.now + .seconds(Self.wait)
+        while ContinuousClock.now < deadline {
             coordinator.poll()
             world?.drawFrame()
             if let result = outcome.withLock({ $0 }) {
-                await task.value
                 return try result.get()
             }
             try await Task.sleep(for: .milliseconds(2))
@@ -46,10 +49,13 @@ struct AgentSocketTests {
         _ requests: [AgentRequest]
     ) throws -> [AgentReply] {
         let client = AgentSocketClient(path: path)
-        _ = try client.connect(timeout: 5)
+        _ = try client.connect(timeout: Self.wait)
         return try requests.map { request in
             try client.send(request)
-            return try AgentLineCodec.decode(AgentReply.self, from: client.readLine(timeout: 5))
+            return try AgentLineCodec.decode(
+                AgentReply.self,
+                from: client.readLine(timeout: Self.wait)
+            )
         }
     }
 
@@ -110,18 +116,21 @@ struct AgentSocketTests {
         defer { server.stop() }
         let path = path
         let outcome = Mutex<AgentErrorCode?>(nil)
-        let task = Task { @concurrent in
+        let finished = Mutex(false)
+        Thread {
+            defer { finished.withLock { $0 = true } }
             do {
-                _ = try AgentSocketClient(path: path).connect(timeout: 5)
+                _ = try AgentSocketClient(path: path).connect(timeout: Self.wait)
             } catch let failure as AgentFailure {
                 outcome.withLock { $0 = failure.code }
             } catch {
                 outcome.withLock { $0 = .failed }
             }
-        }
+        }.start()
         var hello = AgentHello(appVersion: "test", dataRoot: nil, worldReady: false)
         hello.protocolVersion = AgentProtocol.version + 1
-        for _ in 0 ..< 500 {
+        let deadline = ContinuousClock.now + .seconds(Self.wait)
+        while ContinuousClock.now < deadline {
             for case let .connected(id) in server.poll() {
                 server.send(AgentLineCodec.encode(hello), to: id)
             }
@@ -130,7 +139,9 @@ struct AgentSocketTests {
             }
             try await Task.sleep(for: .milliseconds(2))
         }
-        _ = await task.result
+        while !finished.withLock({ $0 }) {
+            try await Task.sleep(for: .milliseconds(2))
+        }
         #expect(outcome.withLock { $0 } == .versionMismatch)
     }
 }

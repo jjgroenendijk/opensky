@@ -270,50 +270,62 @@
   "testTargets": [
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyGameDataTests", "name": "OpenSkyGameDataTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyBehaviorTests", "name": "OpenSkyBehaviorTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyAgentControlTests", "name": "OpenSkyAgentControlTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyLaunchTests", "name": "OpenSkyLaunchTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyReferenceTests", "name": "OpenSkyReferenceTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyAssetCacheTests", "name": "OpenSkyAssetCacheTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyPhysicsTests", "name": "OpenSkyPhysicsTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyRenderCoreTests", "name": "OpenSkyRenderCoreTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyRenderResourcesTests", "name": "OpenSkyRenderResourcesTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyRenderingTests", "name": "OpenSkyRenderingTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyAudioTests", "name": "OpenSkyAudioTests"}
     },
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyWorldStateTests", "name": "OpenSkyWorldStateTests"}
     }
   ],

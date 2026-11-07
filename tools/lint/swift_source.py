@@ -50,3 +50,10 @@ def package_files():
         if not path.exists() or path.name.startswith("._") or path.parts[1] in XCODE_ONLY:
             continue
         yield path.parts[1], name, code_only(path.read_text())
+
+
+def rule_modules():
+    """The game-rule modules: each feature, interface, and world-domain module."""
+    text = pathlib.Path("Package.swift").read_text()
+    names = set(re.findall(r'\b(?:feature|domain|interface)\(\s*"(\w+)"', text))
+    return names | {name + "Interface" for name in names}

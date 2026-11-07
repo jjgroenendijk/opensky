@@ -19,6 +19,7 @@
   },
   "testTargets" : [
     {
+      "randomExecutionOrdering": true,
       "target" : {"containerPath" : "container:OpenSky.xcodeproj", "identifier" : "5AD1000130001093001700A1", "name" : "OpenSkyRealDataTests"},
       "selectedTags" : {"tags" : ["perf"]}
     }

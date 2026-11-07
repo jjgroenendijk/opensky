@@ -49,4 +49,16 @@ struct MagicCoreTests {
         #expect(MagicCore.castText(.released(spell: .player, heldSeconds: 1.5, magickaSpent: 30))
             == "Maintained for 1.5s, 30 magicka spent.")
     }
+
+    @Test func readingTextSaysWhatTheBookDid() {
+        let read = SpellTomeReading(taught: false, alreadyRead: true)
+        #expect(MagicCore.readingText(read, book: "Book") == "Book was already read.")
+        let taught = SpellTomeReading(taught: true, alreadyRead: false)
+        #expect(
+            MagicCore.readingText(taught, book: "Book")
+                == "Read Book and learned the spell it teaches."
+        )
+        let nothing = SpellTomeReading(taught: false, alreadyRead: false)
+        #expect(MagicCore.readingText(nothing, book: "Book") == "Read Book; it taught nothing new.")
+    }
 }

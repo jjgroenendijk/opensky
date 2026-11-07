@@ -205,7 +205,10 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
+      # Depth 2 keeps the merge commit's base, which `make diff-coverage` diffs against.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
       # The download overlaps the steps up to "Wait for the Metal Toolchain".
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
@@ -219,6 +222,8 @@ jobs:
       - run: make language-rules
       - run: make error-handling
       - run: make deterministic-rules
+      - run: make test-order
+      - run: make coverage-self-check
       # One run then lists the compile errors of every target, not only the first.
       - name: Keep building after errors
         run: defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES
@@ -286,6 +291,9 @@ jobs:
       # without coverage, so this is the one run that sees every test.
       - run: make test-unit PLAN=UnitTests COVERAGE=1 XCODEBUILD_FLAGS="$BUILD_FLAGS"
       - run: make coverage-floor
+      # A pull request checks out its merge commit, whose first parent is the base.
+      - if: github.event_name == 'pull_request'
+        run: make diff-coverage DIFF_BASE=HEAD^1
       - if: steps.sdk.outputs.cache-hit != 'true' && github.event_name == 'push'
         uses: actions/cache/save@v6
         with:

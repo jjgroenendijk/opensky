@@ -270,6 +270,7 @@
   "testTargets": [
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:OpenSky.xcodeproj", "identifier": "5A3BAE183000109300177F95", "name": "OpenSkyTests"}
     }
   ],

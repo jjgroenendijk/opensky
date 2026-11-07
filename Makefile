@@ -125,10 +125,14 @@ METAL_FLAGS      := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
 # twenty minutes of reading. Split or cut a page over it; do not raise it.
 DOCS_MAX_LINES   := 400
 
-# Line coverage each OpenSkyFormats* module keeps in a `make test` run: the value
-# measured when the floor was set, rounded down to a multiple of 5. Raise it when
-# coverage grows; lower it only with a reason in the commit.
+# Line coverage floors in a `make test-unit COVERAGE=1` run, per OpenSkyFormats*
+# module, game-rule module, pure core file, and the lines a branch changes. The
+# reasons for each value are in docs/decisions/test-coverage-rules.md.
 COVERAGE_FLOOR   := 80
+RULE_COVERAGE_FLOOR := 55
+CORE_COVERAGE_FLOOR := 75
+DIFF_COVERAGE_FLOOR := 80
+DIFF_BASE        ?= $(shell git merge-base HEAD origin/main 2>/dev/null || echo HEAD)
 
 ICON_SVG         := Sources/OpenSky/Resources/Branding/opensky-logo.svg
 ICON_DIR         := Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
@@ -200,7 +204,7 @@ seed-build-tree: #| Clone the newest build tree for a checkout that has none yet
 ##@ Format and lint
 
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
-        swift-baseline language-rules error-handling deterministic-rules swift-format swift-lint metal-format md-format md-lint sh-lint \
+        swift-baseline language-rules error-handling deterministic-rules test-order coverage-self-check swift-format swift-lint metal-format md-format md-lint sh-lint \
         py-format py-format-check py-lint \
         cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
         docs-links docs-length agent-files workflow-lint comment-length panel-text load-order-only cli-conventions comment-blocks comment-apply \
@@ -208,7 +212,7 @@ seed-build-tree: #| Clone the newest build tree for a checkout that has none yet
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
-check: swift-baseline language-rules error-handling deterministic-rules format-check lint docs-links ## The same gate without writing files [ALL=1 lints every Swift file]
+check: swift-baseline language-rules error-handling deterministic-rules test-order coverage-self-check format-check lint docs-links ## The same gate without writing files [ALL=1 lints every Swift file]
 
 format: swift-format metal-format cpp-format md-format py-format ## Autoformat Swift, Metal, C++, Markdown, and Python
 
@@ -236,6 +240,13 @@ error-handling: #| Check no package module swallows an error and no file-reading
 
 deterministic-rules: #| Check game rules read no hidden random source or clock, and no global state
 	@./tools/lint/deterministic-rules.sh
+
+test-order: #| Check every test plan shuffles its tests and no suite is serialized
+	@./tools/lint/test-order.sh
+
+coverage-self-check: #| Run the coverage scripts on synthetic data, without a test run
+	@./tools/lint/coverage-floor.sh --self-check
+	@./tools/lint/diff-coverage.sh --self-check
 
 swift-format: #| Autoformat the changed Swift files [ALL=1 whole tree]
 	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to format"; exit 0; }; \
@@ -453,7 +464,7 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # and a run fails when an entry matched no test (tools/test-selectors.sh).
 
 .PHONY: test-unit test-rerun test-package test-ui test-sanitize test-real test-report test-perms \
-        coverage-floor sanitizer-shaders profile benchmark benchmark-again gaps launch-sample ck-wiki uesp-wiki
+        coverage-floor diff-coverage sanitizer-shaders profile benchmark benchmark-again gaps launch-sample ck-wiki uesp-wiki
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"

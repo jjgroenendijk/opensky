@@ -3,10 +3,10 @@ import Foundation
 import OpenSkyTagsTesting
 import Testing
 
-@Suite(.serialized, .tags(.parser))
+@Suite(.tags(.parser))
 struct EngineLoggerTests {
     private func drained(_ category: String) -> [String] {
-        EngineLogTap.drain().filter { $0.category == category }.map(\.message)
+        EngineLogTap.drain(category: category).map(\.message)
     }
 
     @Test func tapKeepsErrorAndFaultLinesOnly() {
@@ -20,14 +20,20 @@ struct EngineLoggerTests {
         #expect(drained(category).isEmpty)
     }
 
-    @Test func tapKeepsOnlyTheNewestLines() {
-        let category = "EngineLoggerTests-\(UUID())"
-        let logger = EngineLogger(subsystem: "nl.jjgroenendijk.opensky.tests", category: category)
-        for index in 0 ..< EngineLogTap.limit + 3 {
-            logger.error("\(index)")
+    @Test func ringKeepsOnlyTheNewestLines() {
+        var ring = EngineLogRing(limit: 4)
+        for index in 0 ..< 7 {
+            ring.append(EngineLogLine(category: "c", message: "\(index)"))
         }
-        let lines = drained(category)
-        #expect(lines.count == EngineLogTap.limit)
-        #expect(lines.first == "3")
+        #expect(ring.drain(category: nil).map(\.message) == ["3", "4", "5", "6"])
+        #expect(ring.drain(category: nil).isEmpty)
+    }
+
+    @Test func drainingOneCategoryKeepsTheOthers() {
+        var ring = EngineLogRing(limit: 4)
+        ring.append(EngineLogLine(category: "a", message: "1"))
+        ring.append(EngineLogLine(category: "b", message: "2"))
+        #expect(ring.drain(category: "a").map(\.message) == ["1"])
+        #expect(ring.drain(category: nil).map(\.message) == ["2"])
     }
 }

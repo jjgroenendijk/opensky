@@ -270,6 +270,7 @@
   "testTargets": [
     {
       "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyAgentControlTests", "name": "OpenSkyAgentControlTests"}
     }
   ],

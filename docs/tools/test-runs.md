@@ -231,11 +231,11 @@ framework under `PackageFrameworks/`, and the bundle lists none of them as a cov
 run rewrites that profile, so read it right after `make test-unit`. A filtered run covers less and
 reads too low.
 
-`make coverage-floor` fails when an `OpenSkyFormats*` module is under the floor, `COVERAGE_FLOOR` in
-the `Makefile`. CI runs it after the unit tests.
-Only the parsers have a floor: they read untrusted files, and the value is finding defensive
-branches that no test takes, the malformed-input paths behind "malformed input must not crash"
-([code-health automation](/decisions/code-health-automation.md)).
+`make coverage-floor` fails when a parser module, a game-rule module, or a pure core file is
+under its floor in the `Makefile`. `make diff-coverage` fails when the lines a branch changes in
+package modules, or a function it adds, did not run in a test. CI runs both after the unit tests,
+the second on a pull request only. The values and their reasons are in
+[Test order and coverage rules](/decisions/test-coverage-rules.md).
 
 ## Sanitizers
 
