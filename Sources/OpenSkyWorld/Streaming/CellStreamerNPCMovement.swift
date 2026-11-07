@@ -141,12 +141,14 @@ extension CellStreamer {
             guard case let .miss(reason) = result else { return .noPath(.disconnected) }
             return .noPath(reason)
         }
+        let bounds = npcMovementState.bodyHalfExtents?(actor)
         var start = NPCMoveStart(
             actor: actor,
             formID: entry.formID,
             placement: standing.placement,
             scale: standing.scale,
-            capsule: .standard,
+            capsule: bounds.flatMap { .upright(halfExtents: $0, scale: standing.scale) }
+                ?? .standard,
             configuration: npcMovementConfiguration,
             path: path,
             ignoresStatics: direct,
@@ -154,9 +156,7 @@ extension CellStreamer {
         )
         start.runSlowdown = runSlowdown
         start.walkRunBlend = walkRunBlend
-        start.longBody = npcMovementState.bodyHalfExtents?(actor).flatMap {
-            LongBodyShape(halfExtents: $0, scale: standing.scale)
-        }
+        start.longBody = bounds.flatMap { LongBodyShape(halfExtents: $0, scale: standing.scale) }
         let started = npcMovement.start(start)
         return started ? .started : .moverCapReached
     }
