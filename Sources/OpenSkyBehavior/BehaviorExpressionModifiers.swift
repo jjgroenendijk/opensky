@@ -61,18 +61,14 @@ nonisolated extension BehaviorGraphInstance {
     ) {
         let lookup: (String) -> Float? = { [variables] in variables.value(of: $0)?.realValue }
         switch statement {
+        // The game skips a statement that names an undeclared variable, and keeps
+        // running the others (docs/engine/behavior-runtime.md).
         case let .assignment(name, expression):
             guard let index = variables.index(of: name), let value = expression.evaluate(lookup)
-            else {
-                tally.note(.expressionUnresolved)
-                return
-            }
+            else { return }
             writeVariable(.real(value), at: index)
         case let .event(name, condition):
-            guard let value = condition.evaluate(lookup) else {
-                tally.note(.expressionUnresolved)
-                return
-            }
+            guard let value = condition.evaluate(lookup) else { return }
             let truth = value != 0
             let send = switch mode {
             case BehaviorExpressionEventMode.sendOnTrue: truth
@@ -110,15 +106,10 @@ nonisolated extension BehaviorGraphInstance {
         markReached(rangesTarget)
         var state = markReached(step.target)
         let input = step.bound.float("inputValue", or: modifier.inputValue)
-        var lower = step.bound.float("lowerBound", or: modifier.lowerBound)
-        var band: Int?
-        for (index, range) in ranges.eventData.enumerated() {
-            if input >= lower, input <= range.upperBound {
-                band = index
-                break
-            }
-            lower = range.upperBound
-        }
+        let lower = step.bound.float("lowerBound", or: modifier.lowerBound)
+        let band = input >= lower
+            ? ranges.eventData.firstIndex { input <= $0.upperBound }
+            : nil
         if let band {
             let range = ranges.eventData[band]
             if

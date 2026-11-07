@@ -178,6 +178,17 @@ nonisolated extension BehaviorGraphInstance {
 
     // MARK: - Deactivation
 
+    /// Runs the deactivation hooks of `targets` and forgets their state.
+    func deactivateNodes(_ targets: Set<HKXPointerTarget>) {
+        for target in targets.sorted(by: Self.isOrderedBefore) {
+            if let object = object(at: target) {
+                noteDeactivation(of: object, at: target)
+            }
+            nodeStates[target] = nil
+        }
+        reachedThisUpdate.subtract(targets)
+    }
+
     /// Runs a node's deactivation: `BSEventOnDeactivateModifier` raises its event, and
     /// `hkbStateMachine` leaves its state, and a behavior reference stops its graph.
     public func noteDeactivation(of object: any HKBClass, at target: HKXPointerTarget) {

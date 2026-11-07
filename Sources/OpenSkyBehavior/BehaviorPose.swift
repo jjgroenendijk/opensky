@@ -70,6 +70,8 @@ nonisolated public struct BehaviorSkeleton: Equatable, Sendable {
     public let parentIndices: [Int]
     /// Name per bone. A paired clip finds its bones by these names.
     public let boneNames: [String]
+    /// Ragdoll bone -> bone of this skeleton, or -1. Pose matching names ragdoll bones.
+    public var ragdollBones: [Int] = []
 
     public init(
         referencePose: [HKABonePose], rootBoneIndex: Int = 0, parentIndices: [Int] = [],
@@ -81,11 +83,24 @@ nonisolated public struct BehaviorSkeleton: Equatable, Sendable {
         self.boneNames = boneNames
     }
 
-    public init(_ skeleton: HKASkeleton, rootBoneIndex: Int = 0) {
+    /// A ragdoll bone maps to the rig bone of its name without the `Ragdoll_` prefix.
+    public init(_ skeleton: HKASkeleton, ragdoll: HKASkeleton? = nil, rootBoneIndex: Int = 0) {
         self.init(
             referencePose: skeleton.referencePose, rootBoneIndex: rootBoneIndex,
             parentIndices: skeleton.parentIndices, boneNames: skeleton.boneNames
         )
+        let byName = Dictionary(
+            skeleton.boneNames.enumerated().map { ($0.element.lowercased(), $0.offset) }
+        ) { first, _ in first }
+        ragdollBones = (ragdoll?.boneNames ?? []).map { name in
+            let bare = name.lowercased()
+            return byName[bare.hasPrefix("ragdoll_") ? String(bare.dropFirst(8)) : bare] ?? -1
+        }
+    }
+
+    /// The bone of this skeleton a ragdoll bone stands for, or -1.
+    public func bone(forRagdollBone index: Int) -> Int {
+        ragdollBones.indices.contains(index) ? ragdollBones[index] : -1
     }
 
     /// The parent of `bone`, or -1 for a root or an index out of range.

@@ -5,6 +5,7 @@
 // the player graph never sets are named but not acted on.
 
 import Foundation
+import OpenSkyFormatsAnimation
 
 /// `hkbStateMachineTransitionInfo::TransitionFlags`, as far as the vanilla
 /// player graph exercises them.
@@ -15,12 +16,16 @@ nonisolated public enum BehaviorTransitionFlag: Sendable {
     public static let useInitiateInterval = 0x2
     /// No other transition may replace this one while its destination plays.
     public static let uninterruptibleWhilePlaying = 0x4
-    /// No other transition may replace this one while it is still blending.
-    public static let uninterruptibleWhileBlending = 0x8
+    /// No other transition may replace this one while its state change waits.
+    public static let uninterruptibleWhileDelayed = 0x8
     /// The state change waits for the blend to finish.
     public static let delayStateChange = 0x10
     /// The transition is authored but switched off.
     public static let disabled = 0x20
+    /// `m_returnToPreviousStateEventId` may not return through this transition.
+    public static let disallowReturnToPreviousState = 0x40
+    /// The random transition event may not pick this transition.
+    public static let disallowRandomTransition = 0x80
     /// `m_condition` is not evaluated. Set by the exporter on every transition
     /// that carries no condition object.
     public static let disableCondition = 0x100
@@ -103,11 +108,49 @@ nonisolated public struct BehaviorTransition: Equatable, Sendable {
         effectFlags & BehaviorTransitionEffectFlag.sync != 0
     }
 
-    /// True while no other transition may replace this one.
-    public var isUninterruptible: Bool {
-        let mask = BehaviorTransitionFlag.uninterruptibleWhilePlaying
-            | BehaviorTransitionFlag.uninterruptibleWhileBlending
-        return transitionFlags & mask != 0
+    /// The transition's `m_priority`: a new one needs at least as much to replace it.
+    public var priority = 0
+    /// The transition that was running when this one started. It keeps running as this
+    /// one's source pose until it ends.
+    public var interrupted: [BehaviorTransition] = []
+    /// With `FLAG_DELAY_STATE_CHANGE`, the destination. The machine stays in
+    /// `fromStateId` until the blend ends.
+    public var delayedStateId: Int?
+
+    public var isUninterruptibleWhilePlaying: Bool {
+        transitionFlags & BehaviorTransitionFlag.uninterruptibleWhilePlaying != 0
+    }
+
+    /// True when this transition keeps a new one with `info` from replacing it.
+    public func refuses(_ info: HKBStateMachineTransitionInfo) -> Bool {
+        if isUninterruptibleWhilePlaying || info.priority < priority {
+            return true
+        }
+        let delayedLock = transitionFlags & BehaviorTransitionFlag.uninterruptibleWhileDelayed
+        return delayedStateId != nil && delayedLock != 0
+    }
+
+    /// Steps this transition and every one it interrupted; a finished inner one ends.
+    public mutating func advance(by deltaTime: Float) {
+        elapsed += max(deltaTime, 0)
+        interrupted = interrupted.compactMap { inner in
+            var inner = inner
+            inner.advance(by: deltaTime)
+            return inner.isFinished ? nil : inner
+        }
+    }
+
+    /// Keeps at most `limit` transitions in the chain; the oldest end first.
+    public mutating func trim(to limit: Int) {
+        guard limit > 1 else {
+            interrupted = []
+            return
+        }
+        interrupted = interrupted.map { inner in
+            var inner = inner
+            inner.trim(to: limit - 1)
+            return inner
+        }
     }
 }
 

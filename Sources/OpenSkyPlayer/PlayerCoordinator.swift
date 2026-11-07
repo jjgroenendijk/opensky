@@ -320,7 +320,8 @@ nonisolated public enum PlayerGraphKind: Hashable, Sendable {
                     try PlayerBehaviorGraphFiles.decode(
                         fileSystem: fileSystem,
                         behaviorPath: PlayerBehaviorGraph.firstPersonBehaviorPath,
-                        skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath
+                        skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath,
+                        characterPath: PlayerBehaviorGraph.firstPersonCharacterPath
                     )
                 case let .race(project):
                     try PlayerBehaviorGraphFiles.decode(

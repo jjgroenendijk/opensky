@@ -205,6 +205,7 @@ public final class ObjectBehaviorCoordinator {
             skeleton: BehaviorSkeleton(object.asset.skeleton, rootBoneIndex: -1),
             clips: clips
         )
+        instance.characterProperties = object.asset.characterProperties
         instance.activate()
         instance.prefetchReachableClips()
         return Running(object: object, instance: instance, clips: clips)

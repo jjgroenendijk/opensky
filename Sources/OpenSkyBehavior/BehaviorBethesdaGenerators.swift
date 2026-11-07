@@ -23,12 +23,14 @@ nonisolated extension BehaviorGraphInstance {
                 let data = node.object as? BSBoneSwitchGeneratorBoneData
             else { continue }
             markReached(target)
+            let authored = data.boneWeight.flatMap { target in
+                markReached(target)
+                return object(at: target, as: HKBBoneWeightArray.self)?.boneWeights
+            }
             guard
-                let weightsTarget = data.boneWeight,
-                let weights = object(at: weightsTarget, as: HKBBoneWeightArray.self)?.boneWeights,
+                let weights = characterBoneWeights(of: node, path: "spBoneWeight") ?? authored,
                 !weights.isEmpty
             else { continue }
-            markReached(weightsTarget)
             let child = skeleton.absolute(
                 evaluateGenerator(at: data.generator, depth: depth, deltaTime: deltaTime)
             )
@@ -151,45 +153,67 @@ nonisolated extension BehaviorGraphInstance {
         return pose
     }
 
-    /// `BSOffsetAnimationGenerator`: the default pose plus the offset clip's
-    /// difference from the reference pose, with the clip held at the fraction
-    /// `m_fOffsetVariable` makes of the range from start to end.
+    /// `BSOffsetAnimationGenerator`: the default pose plus the additive offset clip,
+    /// held at the frame `m_fOffsetVariable` picks in the range from start to end.
     func evaluateOffsetAnimation(
         _ offset: BSOffsetAnimationGenerator,
+        at target: HKXPointerTarget,
         bound: [String: BehaviorVariableValue],
         depth: Int,
         deltaTime: Float
     ) -> BehaviorPose {
-        var pose = skeleton.absolute(evaluateGenerator(
-            at: offset.defaultGenerator,
-            depth: depth,
-            deltaTime: deltaTime
+        let pose = skeleton.absolute(evaluateGenerator(
+            at: offset.defaultGenerator, depth: depth, deltaTime: deltaTime
         ))
         let start = bound.float("fOffsetRangeStart", or: offset.offsetRangeStart)
         let end = bound.float("fOffsetRangeEnd", or: offset.offsetRangeEnd)
         let value = bound.float("fOffsetVariable", or: offset.offsetVariable)
-        let fraction = end != start ? min(max((value - start) / (end - start), 0), 1) : 0
+        let fraction = Self.offsetFraction(value, start: start, end: end)
+        let frames = offsetFrameCount(offset)
+        let phase = Self.offsetPhase(fraction, frameCount: frames)
+        let frame = min(Int(phase * Float(max(frames - 1, 0))), max(frames - 2, 0))
+        var state = markReached(target)
         let outer = pendingClipPhase
-        pendingClipPhase = (fraction, false)
-        let layer = evaluateGenerator(at: offset.offsetClipGenerator, depth: depth, deltaTime: 0)
+        pendingClipPhase = (phase, false)
+        let sampled = evaluateGenerator(
+            at: offset.offsetClipGenerator, depth: depth, deltaTime: 0
+        )
         pendingClipPhase = outer
-        if layer.isAdditive {
-            return BehaviorPoseMath.adding(layer, to: pose) { _ in 1 }
+        let moved = abs(fraction - state.offsetFraction) > Self.offsetEpsilon
+        if state.offsetLayer == nil || (frame != state.offsetFrame && moved) {
+            state.offsetLayer = sampled
+            state.offsetFrame = frame
+            state.offsetFraction = fraction
         }
-        let rest = skeleton.referencePose
-        for bone in pose.bones.indices
-            where layer.bones.indices.contains(bone) && rest.indices.contains(bone)
-        {
-            let base = pose.bones[bone]
-            let added = layer.bones[bone]
-            let delta = BehaviorPoseMath.normalized(rest[bone].rotation.inverse * added.rotation)
-            pose.bones[bone] = HKABonePose(
-                translation: base.translation + added.translation - rest[bone].translation,
-                rotation: BehaviorPoseMath.normalized(base.rotation * delta),
-                scale: base.scale
-            )
-        }
-        return pose
+        nodeStates[target] = state
+        guard let layer = state.offsetLayer, layer.isAdditive else { return pose }
+        return BehaviorPoseMath.adding(layer, to: pose) { _ in 1 }
+    }
+
+    static let offsetEpsilon: Float = 1.19e-7
+
+    /// Where the variable sits in the range, clamped; an empty range is 0.
+    static func offsetFraction(_ value: Float, start: Float, end: Float) -> Float {
+        let range = end - start
+        guard abs(range) > offsetEpsilon, value.isFinite else { return 0 }
+        return min(max((value - start) / range, 0), 1)
+    }
+
+    /// The clip phase for `fraction`: from the second frame at 0 to the end at 1.
+    static func offsetPhase(_ fraction: Float, frameCount: Int) -> Float {
+        guard frameCount > 1 else { return fraction }
+        let first = 1 / Float(frameCount - 1)
+        return first + (1 - first) * fraction
+    }
+
+    private func offsetFrameCount(_ offset: BSOffsetAnimationGenerator) -> Int {
+        guard
+            let target = offset.offsetClipGenerator,
+            let generator = object(at: target, as: HKBClipGenerator.self)
+        else { return 0 }
+        return clipSource.clip(
+            named: generator.animationName, bindingIndex: generator.animationBindingIndex
+        )?.frameCount ?? 0
     }
 
     /// Blends two poses. When only one is additive, both become full poses first.

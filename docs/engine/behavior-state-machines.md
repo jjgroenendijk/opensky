@@ -13,19 +13,22 @@ rest of the runtime is on the [behavior graph runtime](/engine/behavior-runtime.
 
 ## States
 
-A machine holds one current state and at most one transition in progress. The machine's state
-outlives deactivation, because `m_startStateMode` 2 re-enters whatever was current when the machine
-stopped. 121 of the 1,963 machines in the vanilla player graph use that mode.
+A machine holds one current state and a transition in progress, which can hold the
+transitions it interrupted.
 
 Entering picks the start state. The first match wins:
 
 1. The state ID a parent's transition named with `FLAG_TO_NESTED_STATE_ID_IS_VALID`. This is how a
    parent machine sends the machine inside its destination state to a chosen state, instead of that
    machine's own start state.
-2. For `m_startStateMode` 2, the remembered ID.
+2. For `m_startStateMode` 2, a random enabled state, drawn by `m_probability`. 121 of the 1,963
+   machines in the vanilla player graph use that mode.
 3. For `m_startStateMode` 1, the value of the variable at `m_syncVariableIndex`.
 4. `m_startStateId`, with any binding on `startStateId` applied. The vanilla data uses that binding
-   a lot.
+   a lot. Mode 3, the chooser, also uses it.
+
+A start state the machine does not hold, or one that is disabled, falls back to the first enabled
+state in array order. Only a machine with no enabled state is counted.
 
 Entering raises the state's `m_enterNotifyEvents` and the machine's
 `m_eventToSendWhenStateOrTransitionChanges`. Leaving raises `m_exitNotifyEvents`. So does
@@ -67,6 +70,8 @@ hold:
   interval opens when its `m_enterEventId` is raised and closes on its `m_exitEventId`. Every time
   bound in the vanilla player graph is zero, so a non-zero bound is counted.
 - Its condition holds (see below).
+- With `FLAG_FROM_NESTED_STATE_ID_IS_VALID`, the machine inside the current state is in
+  `m_fromNestedStateId`.
 
 Of the candidates that can fire, the highest `m_priority` wins. At equal priority, the state's own
 transition beats a wildcard. After that, array order wins. No source consulted documents Havok's
@@ -89,16 +94,19 @@ Havok's exact rule. The path rule above is ours, and it is what makes the player
 `Cart_State`.
 
 The state changes when the transition starts: `currentStateId` becomes the destination, the exit
-and enter events fire, and the effect only fades out the old pose. That is why
-`FLAG_DELAY_STATE_CHANGE` exists as a separate flag. It is set on 14 of the 3,769 transitions in
-the vanilla player graph, and it is counted, not used.
+and enter events fire, and the effect only fades out the old pose. `FLAG_DELAY_STATE_CHANGE`
+postpones that: the source state stays current until the effect ends. It is set on 14 of the
+3,769 transitions in the vanilla player graph. A transition with no effect ends every blend and
+switches at once.
 
-An event that arrives during a crossfade starts a new transition from the machine's current state.
-The older blend is dropped, not nested, and each drop counts one
-`stateMachineTransitionInterrupted`. Havok allows effects to stack, so here an interruption can
-jump by the part of the old blend still running. A transition with
-`FLAG_UNINTERRUPTIBLE_WHILE_PLAYING` or `FLAG_UNINTERRUPTIBLE_WHILE_BLENDING` refuses the new
-candidate.
+An event that arrives during a crossfade can start a new transition. The new effect fades from the
+running blend, which keeps running and advancing, to its own target. At most
+`m_maxSimultaneousTransitions` run at once; the oldest ends first. A running transition refuses the
+new one when:
+
+- it has `FLAG_UNINTERRUPTIBLE_WHILE_PLAYING`, or
+- the new one has a lower `m_priority`, or
+- it is a delayed state change with `FLAG_UNINTERRUPTIBLE_WHILE_DELAYED`.
 
 Entering a state starts its generator from the beginning, even when the old state is still
 blending out of it. Nodes that the old state also runs keep their state. The swinging blade trap
@@ -109,12 +117,17 @@ the blade swings again and again. This is observed behaviour; no Havok source de
 
 The four machine-level event IDs are checked only when no transition fired:
 
-- `m_returnToPreviousStateEventId` goes back one state.
+- `m_returnToPreviousStateEventId` goes back one state, when there is one and it differs from the
+  current one. A transition with `FLAG_DISALLOW_RETURN_TO_PREVIOUS_STATE` cannot be returned
+  through.
 - `m_transitionToNextHigherStateEventId` and `m_transitionToNextLowerStateEventId` step through the
   sorted state IDs, and respect `m_wrapAroundStateId`.
-- `m_randomTransitionEventId` picks the enabled state with the highest `m_probability`, with ties
-  going to the lowest ID, and counts `stateMachineRandomTransitionFixed`. A graph that picks
-  animation from an unseeded random source cannot be stepped twice with the same result.
+- `m_randomTransitionEventId` picks one of the transitions that could fire from the current state
+  and the wildcards, leaving out those with `FLAG_DISALLOW_RANDOM_TRANSITION`. The pick is by the
+  target state's `m_probability`, against a draw `u / 2^32` from the generator
+  `u' = u * 1664525 + 1013904223`. Mode 2 start states draw from it too. Each instance has its own
+  generator. Its seed, `0x5EED`, is OpenSky's choice; the game seeds one per character. So two
+  instances stepped the same way pick the same states.
 
 Of 530 machines in the two `mt_behavior` files, four name a random transition event and none name
 the other three.
@@ -130,17 +143,19 @@ runtime uses was then checked against the install:
 | `0x1` | `USE_TRIGGER_INTERVAL` | 24 transitions |
 | `0x2` | `USE_INITIATE_INTERVAL` | 144, each with an event pair |
 | `0x4` | `UNINTERRUPTIBLE_WHILE_PLAYING` | 70 |
-| `0x8` | `UNINTERRUPTIBLE_WHILE_BLENDING` | Never set |
+| `0x8` | `UNINTERRUPTIBLE_WHILE_DELAYED` | Never set |
 | `0x10` | `DELAY_STATE_CHANGE` | 14 |
 | `0x20` | `DISABLED` | 2 |
+| `0x40` | `DISALLOW_RETURN_TO_PREVIOUS_STATE` | Never set |
+| `0x80` | `DISALLOW_RANDOM_TRANSITION` | Never set |
 | `0x100` | `DISABLE_CONDITION` | 3,340, exactly the transitions with a null `m_condition` |
 | `0x200` | `ALLOW_SELF_TRANSITION` | 75 |
 | `0x400` | `IS_GLOBAL_WILDCARD` | 729, only in wildcard arrays |
 | `0x800` | `IS_LOCAL_WILDCARD` | 1,167, only in wildcard arrays |
-| `0x1000` | `FROM_NESTED_STATE_ID_IS_VALID` | 24. Counted, not used |
+| `0x1000` | `FROM_NESTED_STATE_ID_IS_VALID` | 24 |
 | `0x2000` | `TO_NESTED_STATE_ID_IS_VALID` | 642, only where the ID names a nested state |
 
-`0x40`, `0x80`, and `0x4000` are never set. The `0x100` match is the strongest evidence here. A bit
+`0x4000` is never set. The `0x100` match is the strongest evidence here. A bit
 that is set on every transition with no condition object, and clear on every transition with one,
 can only mean "do not evaluate the condition".
 
@@ -171,9 +186,14 @@ There are no string literals, no arithmetic, no function calls, and no assignmen
 float, and a bare variable is true when it is not zero. That is how `!bBlendOutSlow` reads.
 
 Text that does not parse, or names a variable the graph does not declare, blocks the transition and
-is counted (`transitionConditionUnparsed`, `transitionConditionUnresolved`). Blocking fails where it
-can be seen. An animation that does not start looks like a bug. An animation that starts wrongly
-looks like engine behavior.
+is counted (`transitionConditionUnparsed`, `transitionConditionUnresolved`). The game does the same.
+It removes tabs and newlines, then compiles the text once, all or nothing. Text that fails gives no
+result, and a condition with no result is false. No part of it counts, not even a valid `||` part.
+
+One vanilla condition fails this way, in the game too:
+`(staggerDirection < .25) || (staggerDirection > .75) || (staggerMagnitude > .3 , < .7)`. The comma
+inside a plain parenthesis is an error, so that stagger transition never fires. The count stays,
+because it also catches text the game accepts and this grammar does not.
 
 ## Crossfades
 

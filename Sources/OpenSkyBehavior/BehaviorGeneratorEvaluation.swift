@@ -70,9 +70,8 @@ nonisolated extension BehaviorGraphInstance {
                 blender.blender, bound: bound, depth: next, deltaTime: deltaTime
             )
         case let matching as HKBPoseMatchingGenerator:
-            tally.note(.poseMatchingAsBlender)
-            return evaluateBlend(
-                matching.blender, bound: bound, depth: next, deltaTime: deltaTime
+            return evaluatePoseMatching(
+                matching, at: target, bound: bound, depth: next, deltaTime: deltaTime
             )
         case let selector as HKBManualSelectorGenerator:
             return evaluateSelector(
@@ -116,7 +115,9 @@ nonisolated extension BehaviorGraphInstance {
                 cyclic, at: target, bound: bound, depth: depth, deltaTime: deltaTime
             )
         case let offset as BSOffsetAnimationGenerator:
-            return evaluateOffsetAnimation(offset, bound: bound, depth: depth, deltaTime: deltaTime)
+            return evaluateOffsetAnimation(
+                offset, at: target, bound: bound, depth: depth, deltaTime: deltaTime
+            )
         case is HKBReferencePoseGenerator:
             return skeleton.restPose
         case let synced as BSSynchronizedClipGenerator:
@@ -145,14 +146,17 @@ nonisolated extension BehaviorGraphInstance {
         _ blender: HKBBlenderFields,
         bound: [String: BehaviorVariableValue],
         depth: Int,
-        deltaTime: Float
+        deltaTime: Float,
+        weights: [Float]? = nil
     ) -> BehaviorPose {
         let threshold = bound.float(
             "m_referencePoseWeightThreshold",
             or: blender
                 .referencePoseWeightThreshold
         )
-        let children = blendChildren(blender, bound: bound, depth: depth, deltaTime: deltaTime)
+        let children = blendChildren(
+            blender, bound: bound, depth: depth, deltaTime: deltaTime, weights: weights
+        )
         let masked = children.map {
             BehaviorPoseMath.MaskedChild(
                 pose: $0.pose, weight: $0.weight, boneWeights: $0.boneWeights
@@ -191,6 +195,13 @@ nonisolated extension BehaviorGraphInstance {
         else { return nil }
         markReached(target)
         return array.boneWeights
+    }
+
+    // MARK: - Object access
+
+    /// The decoded object at `target` as `Value`, or nil.
+    public func object<Value: HKBClass>(at target: HKXPointerTarget, as _: Value.Type) -> Value? {
+        object(at: target) as? Value
     }
 
     // MARK: - Selection

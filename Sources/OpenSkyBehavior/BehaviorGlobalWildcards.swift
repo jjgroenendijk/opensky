@@ -33,12 +33,14 @@ nonisolated extension BehaviorGraphInstance {
             best = route
         }
         guard let best, stateInfo(of: machine, id: best.stateId) != nil else { return false }
-        if state.transition != nil {
-            tally.note(.stateMachineTransitionInterrupted)
+        if let running = state.transition, running.refuses(best.info) {
+            return false
         }
-        switchState(
-            &state, to: best.stateId, machine: machine, transition: effect(for: best.info)
-        )
+        var effect = effect(for: best.info)
+        effect?.priority = best.info.priority
+        effect?.interrupted = state.transition.map { [$0] } ?? []
+        effect?.trim(to: machine.maxSimultaneousTransitions)
+        switchState(&state, to: best.stateId, machine: machine, transition: effect)
         pendingNestedStateIds = best.nestedStateIds
         return true
     }

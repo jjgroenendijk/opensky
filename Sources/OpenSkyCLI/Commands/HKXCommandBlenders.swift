@@ -7,7 +7,7 @@ import OpenSkyFormatsAnimation
 enum HKXBlenderDump {
     static func print(file: HKXFile) throws {
         let graph = try HKXObjectGraph(file: file)
-        let variables = (try? HKBBehaviorCensus.census(of: file))?.variables.map(\.name) ?? []
+        let variables = HKXBindingNames(file: file)
         for ref in graph.objectRefs {
             let target = HKXPointerTarget(
                 sectionIndex: ref.sectionIndex,
@@ -45,7 +45,7 @@ enum HKXBlenderDump {
     /// `Class "node" member=variable` for each binding whose variable contains `text`.
     static func printBindings(file: HKXFile, containing text: String) throws {
         let graph = try HKXObjectGraph(file: file)
-        let variables = (try? HKBBehaviorCensus.census(of: file))?.variables.map(\.name) ?? []
+        let variables = HKXBindingNames(file: file)
         let wanted = text.lowercased()
         for ref in graph.objectRefs {
             let target = HKXPointerTarget(
@@ -63,7 +63,7 @@ enum HKXBlenderDump {
     }
 
     private static func describeChild(
-        _ target: HKXPointerTarget?, in graph: HKXObjectGraph, variables: [String?]
+        _ target: HKXPointerTarget?, in graph: HKXObjectGraph, variables: HKXBindingNames
     ) -> String {
         guard
             let target,
@@ -89,7 +89,7 @@ enum HKXBlenderDump {
 
     /// `member=variable` for each variable binding on `object`.
     private static func boundMembers(
-        of object: any HKBClass, in graph: HKXObjectGraph, variables: [String?]
+        of object: any HKBClass, in graph: HKXObjectGraph, variables: HKXBindingNames
     ) -> String {
         guard
             let reference = object.references.first(where: { $0.field == "m_variableBindingSet" }),
@@ -97,9 +97,28 @@ enum HKXBlenderDump {
             as? HKBVariableBindingSet
         else { return "" }
         return set.bindings.map { binding in
-            let name = variables.indices.contains(binding.variableIndex)
-                ? variables[binding.variableIndex] ?? "?" : "#\(binding.variableIndex)"
-            return "\(binding.memberPath ?? "?")=\(name)"
+            "\(binding.memberPath ?? "?")=\(variables.name(of: binding))"
         }.joined(separator: " ")
+    }
+}
+
+/// The names a binding can point at: a graph variable, or with binding type 1 a
+/// character property, shown as `character:<name>`.
+struct HKXBindingNames {
+    let variables: [String?]
+    let properties: [String?]
+
+    init(file: HKXFile) {
+        let census = try? HKBBehaviorCensus.census(of: file)
+        variables = census?.variables.map(\.name) ?? []
+        properties = census?.characterPropertyNames ?? []
+    }
+
+    func name(of binding: HKBVariableBinding) -> String {
+        let isProperty = binding.bindingType == 1
+        let names = isProperty ? properties : variables
+        let index = binding.variableIndex
+        let name = names.indices.contains(index) ? names[index] ?? "?" : "#\(index)"
+        return isProperty ? "character:" + name : name
     }
 }

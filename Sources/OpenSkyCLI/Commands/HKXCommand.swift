@@ -47,6 +47,7 @@ enum HKXCommand {
         printClassNames(file)
         printObjects(file)
         printCensus(file)
+        HKXCharacterDump.print(file: file)
         HKXTopologyDump.print(file: file)
     }
 

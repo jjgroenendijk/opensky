@@ -168,7 +168,8 @@ extension GapsGatherer {
                 unit: "features",
                 done: nil,
                 left: Self.ranked(features),
-                usesUnit: "hits"
+                usesUnit: "hits",
+                notes: tally.rankedGapTexts.map { "\($0.count)x \($0.name)" }
             )
         ]
     }

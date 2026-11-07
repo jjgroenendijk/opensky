@@ -39,10 +39,7 @@ nonisolated extension BehaviorGraphInstance {
         // update already shows one step of its crossfade rather than a frame of
         // the pose it is leaving, and one that reaches its duration is dropped
         // here rather than posed at a weight of exactly 1.
-        if var transition = state.transition {
-            transition.elapsed += max(deltaTime, 0)
-            state.transition = transition.isFinished ? nil : transition
-        }
+        advanceTransition(&state, machine: machine, deltaTime: deltaTime)
         machineStates[target] = state
         publishMachineOutputs(machine, at: target, currentStateId: state.currentStateId)
         // Reported before the pose walk rather than after it, so a machine
@@ -58,8 +55,8 @@ nonisolated extension BehaviorGraphInstance {
     // MARK: - Entering
 
     /// Places a newly active machine on its start state. Mode 0 uses `m_startStateId`
-    /// (with bindings), mode 1 `m_syncVariableIndex`, mode 2 the last current state.
-    /// A transition into a nested state overrides all three.
+    /// (with bindings), mode 1 `m_syncVariableIndex`, mode 2 a random state by
+    /// `m_probability`. A transition into a nested state overrides all three.
     private func enterStartState(
         _ state: inout BehaviorMachineState,
         machine: HKBStateMachine,
@@ -67,17 +64,24 @@ nonisolated extension BehaviorGraphInstance {
     ) {
         var stateId = bound.int("startStateId", or: machine.startStateId)
         if
-            machine.startStateMode == 1,
+            machine.startStateMode == BehaviorStartStateMode.sync,
             let synced = variables.value(at: machine.syncVariableIndex)
         {
             stateId = synced.intValue
         }
-        if machine.startStateMode == 2, state.currentStateId >= 0 {
-            stateId = state.currentStateId
+        if
+            machine.startStateMode == BehaviorStartStateMode.random,
+            let picked = randomStartStateId(machine)
+        {
+            stateId = picked
         }
         if let nested = pendingNestedStateIds.first {
             stateId = nested
             pendingNestedStateIds.removeFirst()
+        }
+        // A missing or disabled start state falls back to the first enabled state.
+        if stateInfo(of: machine, id: stateId) == nil, let first = firstEnabledStateId(machine) {
+            stateId = first
         }
         state.isEntered = true
         state.previousStateId = -1
@@ -126,22 +130,24 @@ nonisolated extension BehaviorGraphInstance {
         // The outgoing walk must not use up or clear the start states the
         // transition handed to the incoming state's machines.
         let pending = pendingNestedStateIds
-        let outgoing = statePose(
-            transition.fromStateId, machine: machine, depth: depth, deltaTime: deltaTime
+        var poses: [Int: BehaviorPose] = [:]
+        let outgoing = sourcePose(
+            of: transition, machine: machine, depth: depth, deltaTime: deltaTime, poses: &poses
         )
         pendingNestedStateIds = pending
         if transition.synchronizes {
             let source = stateInfo(of: machine, id: transition.fromStateId)?.info.generator
             pendingClipPhase = clipPhase(under: source).map { ($0, true) }
         }
-        let incoming = statePose(
-            state.currentStateId, machine: machine, depth: depth, deltaTime: deltaTime
+        let incoming = sharedStatePose(
+            transition.delayedStateId ?? state.currentStateId,
+            machine: machine, depth: depth, deltaTime: deltaTime, poses: &poses
         )
         pendingClipPhase = nil
         return blendFull(outgoing, incoming, weight: transition.weight)
     }
 
-    private func statePose(
+    func statePose(
         _ stateId: Int,
         machine: HKBStateMachine,
         depth: Int,
@@ -164,13 +170,16 @@ nonisolated extension BehaviorGraphInstance {
         machine: HKBStateMachine,
         at target: HKXPointerTarget
     ) {
-        if let transition = state.transition, transition.isUninterruptible {
+        if let transition = state.transition, transition.isUninterruptibleWhilePlaying {
             return
         }
         guard let choice = bestCandidate(machine: machine, state: state) else {
             if !selectGlobalWildcard(&state, machine: machine, at: target) {
                 selectMachineEventTransition(&state, machine: machine)
             }
+            return
+        }
+        if let transition = state.transition, transition.refuses(choice.info) {
             return
         }
         begin(choice, in: &state, machine: machine)
@@ -195,7 +204,7 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// The current state's transitions, then the machine's wildcards.
-    private func candidates(
+    func candidates(
         machine: HKBStateMachine,
         state: BehaviorMachineState
     ) -> [BehaviorTransitionCandidate] {
@@ -231,7 +240,8 @@ nonisolated extension BehaviorGraphInstance {
         let allowsSelf = info.flags & BehaviorTransitionFlag.allowSelfTransition != 0
         guard
             !isSelf || allowsSelf, stateInfo(of: machine, id: info.toStateId) != nil,
-            isIntervalOpen(info) else { return false }
+            isIntervalOpen(info), isNestedSourceMet(info, machine: machine, state: state)
+        else { return false }
         return isConditionMet(info)
     }
 
@@ -243,18 +253,27 @@ nonisolated extension BehaviorGraphInstance {
         machine: HKBStateMachine
     ) {
         let info = candidate.info
-        if state.transition != nil {
-            tally.note(.stateMachineTransitionInterrupted)
+        let running = state.transition
+        guard var effect = effect(for: info) else {
+            // A transition with no effect ends every blend and switches at once.
+            switchState(&state, to: info.toStateId, machine: machine, transition: nil)
+            notePendingNested(info)
+            return
         }
+        effect.priority = info.priority
+        effect.interrupted = running.map { [$0] } ?? []
+        effect.trim(to: machine.maxSimultaneousTransitions)
         if info.flags & BehaviorTransitionFlag.delayStateChange != 0 {
-            tally.note(.transitionStateChangeNotDelayed)
+            effect.fromStateId = state.currentStateId
+            effect.delayedStateId = info.toStateId
+            state.transition = effect
+        } else {
+            switchState(&state, to: info.toStateId, machine: machine, transition: effect)
         }
-        if info.flags & BehaviorTransitionFlag.fromNestedStateIsValid != 0 {
-            tally.note(.transitionFromNestedStateIgnored)
-        }
-        switchState(
-            &state, to: info.toStateId, machine: machine, transition: effect(for: info)
-        )
+        notePendingNested(info)
+    }
+
+    private func notePendingNested(_ info: HKBStateMachineTransitionInfo) {
         if info.flags & BehaviorTransitionFlag.toNestedStateIsValid != 0 {
             pendingNestedStateIds = [info.toNestedStateId]
         }

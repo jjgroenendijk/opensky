@@ -311,8 +311,8 @@ struct BehaviorStateMachineTests {
 
     // MARK: - Interruption
 
-    /// An event arriving mid-crossfade starts a new one from wherever the
-    /// machine has got to, and the abandoned blend is tallied.
+    /// An event arriving mid-crossfade starts a new one that fades from the first
+    /// blend, which keeps running.
     @Test func anEventDuringACrossfadeStartsANewOne() {
         let graph = TwoStateGraph(
             leftTransitions: [BehaviorTransitionSpec(eventId: 0, toStateId: 1)],
@@ -325,10 +325,8 @@ struct BehaviorStateMachineTests {
         graph.raiseEvent(named: "go")
         graph.update(deltaTime: Self.step)
         graph.raiseEvent(named: "back")
-        // Blending back toward Left: one step of the new 0.4 s blend, so the
-        // outgoing Right pose still contributes three quarters.
-        #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 7.5)
-        #expect(graph.tally.featureGaps["stateMachineTransitionInterrupted"] == 1)
+        // The first blend is half way (5), and the new one shows a quarter of Left (0).
+        #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 3.75)
         #expect(graph.activeStates.first?.stateName == "Left")
     }
 
@@ -354,7 +352,7 @@ struct BehaviorStateMachineTests {
 
     @Test func anUninterruptibleTransitionRefusesTheNewEvent() {
         let flags = BehaviorTransitionFlag.disableCondition
-            | BehaviorTransitionFlag.uninterruptibleWhileBlending
+            | BehaviorTransitionFlag.uninterruptibleWhilePlaying
         let graph = TwoStateGraph(
             leftTransitions: [
                 BehaviorTransitionSpec(eventId: 0, toStateId: 1, flags: flags)
@@ -369,7 +367,6 @@ struct BehaviorStateMachineTests {
         graph.update(deltaTime: Self.step)
         graph.raiseEvent(named: "back")
         #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 5)
-        #expect(graph.tally.featureGaps["stateMachineTransitionInterrupted"] == nil)
     }
 
     // MARK: - Notify events
@@ -388,17 +385,74 @@ struct BehaviorStateMachineTests {
         #expect(fired == ["leftLeft", "enteredRight"])
     }
 
-    @Test func startStateModeTwoResumesWhereItStopped() {
-        let graph = TwoStateGraph(
-            leftTransitions: [BehaviorTransitionSpec(eventId: 0, toStateId: 1)],
-            startStateMode: 2
-        ).instance()
-        graph.raiseEvent(named: "go")
-        #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 10)
-        graph.deactivate()
-        #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 10)
-    }
-
     private static let selfFlags = BehaviorTransitionFlag.disableCondition
         | BehaviorTransitionFlag.allowSelfTransition
+}
+
+extension BehaviorStateMachineTests {
+    // MARK: - Start state
+
+    /// A start state the machine does not hold falls back to its first enabled state.
+    @Test func aMissingStartStateFallsBackToTheFirstState() {
+        let graph = TwoStateGraph(startStateId: 7).instance()
+        #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 0)
+        #expect(graph.activeStates.first?.stateName == "Left")
+    }
+
+    /// Mode 2 draws the start state by probability each time the machine starts.
+    @Test func startStateModeTwoDrawsAStartState() {
+        let graph = TwoStateGraph(startStateMode: 2).instance()
+        let x = graph.update(deltaTime: Self.step).bones[1].translation.x
+        #expect(x == 0 || x == 10)
+    }
+
+    /// The draw is the linear congruential step `u * 1664525 + 1013904223`.
+    @Test func theRandomPickFollowsTheSummedProbability() {
+        var random = BehaviorStateMachineRandom(seed: 0)
+        // 1013904223 / 2^32 = 0.236, below the first share of 0.25.
+        #expect(random.pick([(id: 4, probability: 1), (id: 9, probability: 3)]) == 4)
+        var second = BehaviorStateMachineRandom(seed: 0)
+        #expect(second.pick([(id: 4, probability: 0.2), (id: 9, probability: 0.8)]) == 9)
+        var none = BehaviorStateMachineRandom()
+        #expect(none.pick([(id: 3, probability: 0)]) == 3)
+    }
+
+    // MARK: - Priority and delay
+
+    /// A running transition refuses a new one of lower priority.
+    @Test func aLowerPriorityTransitionCannotInterrupt() {
+        let graph = TwoStateGraph(
+            leftTransitions: [BehaviorTransitionSpec(eventId: 0, toStateId: 1, priority: 2)],
+            rightTransitions: [BehaviorTransitionSpec(eventId: 1, toStateId: 0, priority: 1)],
+            effect: BehaviorStateMachineFixture.blendingEffect(
+                duration: 0.4, blendCurve: BehaviorBlendCurve.linear
+            )
+        ).instance()
+        graph.update(deltaTime: Self.step)
+        graph.raiseEvent(named: "go")
+        graph.update(deltaTime: Self.step)
+        graph.raiseEvent(named: "back")
+        #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 5)
+        #expect(graph.activeStates.first?.stateName == "Right")
+    }
+
+    /// A delayed state change keeps the source state current until the blend ends.
+    @Test func aDelayedTransitionChangesStateWhenItEnds() {
+        let flags = BehaviorTransitionFlag.disableCondition
+            | BehaviorTransitionFlag.delayStateChange
+        let graph = TwoStateGraph(
+            leftTransitions: [BehaviorTransitionSpec(eventId: 0, toStateId: 1, flags: flags)],
+            effect: BehaviorStateMachineFixture.blendingEffect(
+                duration: 0.2, blendCurve: BehaviorBlendCurve.linear
+            )
+        ).instance()
+        graph.update(deltaTime: Self.step)
+        graph.raiseEvent(named: "go")
+        graph.update(deltaTime: Self.step)
+        #expect(graph.activeStates.first?.stateName == "Left")
+        graph.update(deltaTime: Self.step)
+        graph.update(deltaTime: Self.step)
+        #expect(graph.activeStates.first?.stateName == "Right")
+        #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 10)
+    }
 }

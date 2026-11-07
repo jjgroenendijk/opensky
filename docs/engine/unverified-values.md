@@ -113,6 +113,9 @@ the detail and the sources it did find.
 | `NPC` and `2_` event prefixes | Come off a paired half's events | [paired animations](/engine/paired-animations.md) |
 | Paired animation time limit | 30 s without an end event | [paired animations](/engine/paired-animations.md) |
 | NaN in a clip track | Read as the part's identity | [animation](/formats/hka-animation.md) |
+| State machine random seed | Seed `0x5EED` for every instance | [state machines](/engine/behavior-state-machines.md#transitions) |
+| Pose matching frame heading | Removed about up before matching | [behaviour runtime](/engine/behavior-runtime.md#pose-matching) |
+| Pose matching pelvis speed | Live pelvis travel per second, in model space | [behaviour runtime](/engine/behavior-runtime.md#pose-matching) |
 
 ## Items, crime, and progression
 

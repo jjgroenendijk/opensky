@@ -20,6 +20,10 @@ nonisolated public protocol BehaviorClip {
     /// place, and the evaluator reports no root motion for it at all rather
     /// than differencing a root bone that only jitters.
     var carriesExtractedMotion: Bool { get }
+    /// Sampled frames in the clip; 0 when unknown.
+    var frameCount: Int { get }
+    /// The decoded travel path when the clip carries an even-sampled one.
+    var referenceFrame: HKADefaultAnimatedReferenceFrame? { get }
     /// The clip's own annotations, earliest first, in seconds from clip start.
     /// Each one names an event the evaluator raises as playback passes it —
     /// which is where Skyrim's `FootLeft` and `FootRight` come from, so a clip
@@ -39,6 +43,14 @@ nonisolated extension BehaviorClip {
     /// reference frame, and neither does any vanilla animation.
     public var carriesExtractedMotion: Bool {
         false
+    }
+
+    public var referenceFrame: HKADefaultAnimatedReferenceFrame? {
+        nil
+    }
+
+    public var frameCount: Int {
+        0
     }
 
     /// Unannotated unless the clip says otherwise, so a test clip built in code
@@ -99,6 +111,17 @@ nonisolated public struct EmptyBehaviorClipSource: BehaviorClipSource, Sendable 
 nonisolated public struct SplineBehaviorClip: BehaviorClip, Sendable {
     public let animation: HKASplineCompressedAnimation
     public let binding: HKAAnimationBinding
+    public let referenceFrame: HKADefaultAnimatedReferenceFrame?
+
+    public init(
+        animation: HKASplineCompressedAnimation,
+        binding: HKAAnimationBinding,
+        referenceFrame: HKADefaultAnimatedReferenceFrame? = nil
+    ) {
+        self.animation = animation
+        self.binding = binding
+        self.referenceFrame = referenceFrame
+    }
 
     public var duration: Float {
         animation.duration
@@ -106,6 +129,10 @@ nonisolated public struct SplineBehaviorClip: BehaviorClip, Sendable {
 
     public var carriesExtractedMotion: Bool {
         animation.carriesExtractedMotion
+    }
+
+    public var frameCount: Int {
+        animation.frameCount
     }
 
     public var annotations: [HKAAnnotation] {

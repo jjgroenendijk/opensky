@@ -49,6 +49,8 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
     /// and so on.
     public private(set) var featureGaps: [String: Int] = [:]
     public private(set) var featureGapTotal = 0
+    /// `slug: text` -> times a gap came from that authored text, such as a condition.
+    public private(set) var gapTexts: [String: Int] = [:]
 
     public private(set) var generatorsEvaluated = 0
     public private(set) var modifiersEvaluated = 0
@@ -63,13 +65,6 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
     public enum Gap: String, Sendable {
         /// A state machine's start state could not be located by id.
         case stateMachineNoStartState
-        /// A transition fired while another was still blending, and the older
-        /// blend was dropped rather than nested inside the new one.
-        case stateMachineTransitionInterrupted
-        /// `m_randomTransitionEventId` fired and the destination was chosen by
-        /// highest `m_probability` rather than at random, because an unseeded
-        /// random source cannot be stepped deterministically.
-        case stateMachineRandomTransitionFixed
         /// A transition's condition string did not fit the authored expression
         /// grammar, so the transition was blocked.
         case transitionConditionUnparsed
@@ -82,11 +77,6 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         /// A transition effect asked for a blend curve with no formula here,
         /// and was run as the smooth curve.
         case transitionBlendCurveApproximated
-        /// `FLAG_DELAY_STATE_CHANGE` was set and the state change was made
-        /// immediately anyway.
-        case transitionStateChangeNotDelayed
-        /// `m_fromNestedStateId` was marked valid and ignored.
-        case transitionFromNestedStateIgnored
         /// A trigger or initiate interval carried a non-zero time bound, which
         /// is read as an event window only.
         case transitionTimeIntervalIgnored
@@ -94,19 +84,14 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         case transitionStartFractionIgnored
         /// `hkbClipGenerator` ping-pong playback was run as a plain loop.
         case clipPingPongAsLoop
-        /// `hkbClipGenerator` user-controlled playback was run from
-        /// `m_userControlledTimeFraction` without an external driver.
-        case clipUserControlled
-        /// `hkbClipGenerator::ClipFlags` mirroring was ignored.
+        /// A mirrored clip played unmirrored, because the character file has no
+        /// `hkbMirroredSkeletonInfo`.
         case clipMirrored
-        /// A clip carries an `hkaAnimatedReferenceFrame`, and its travel was
-        /// approximated by differencing the root bone rather than by decoding
-        /// that reference frame. No file in a vanilla install reaches this.
+        /// A clip's `hkaAnimatedReferenceFrame` is not the even-sampled kind, and its
+        /// travel was approximated by differencing the root bone.
         case clipExtractedMotionApproximated
         /// A blender subtracted-last-child blend was run as an ordinary blend.
         case blenderSubtractLastChild
-        /// `hkbPoseMatchingGenerator` was run as its blender base.
-        case poseMatchingAsBlender
         /// A `hkbBehaviorReferenceGenerator` names a behavior file no source
         /// could supply (`BehaviorReferenceSource`).
         case unresolvedBehaviorReference
@@ -115,8 +100,6 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         case disabledNode
         /// An `hkbEvaluateExpressionModifier` statement did not fit the grammar.
         case expressionUnparsed
-        /// An expression statement named a variable this graph does not declare.
-        case expressionUnresolved
         /// A non-additive `hkbTwistModifier` with a model-space axis was run as additive.
         case twistModelAxisAsAdditive
         /// Recursion stopped at the depth cap, which means the graph is deeper
@@ -173,6 +156,12 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         Self.bump(&featureGaps, gap.rawValue, limit: nameLimit)
     }
 
+    /// Notes `gap` and the text that caused it, so a report can name the text.
+    public mutating func note(_ gap: Gap, text: String?) {
+        note(gap)
+        Self.bump(&gapTexts, "\(gap.rawValue): \(text ?? "<none>")", limit: nameLimit)
+    }
+
     /// Adds one to `key`, refusing new keys past `limit` so a pathological
     /// graph cannot grow a table without bound. The totals above are bumped by
     /// the caller and keep counting either way. Static because passing a stored
@@ -222,6 +211,10 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         Self.ranked(featureGaps)
     }
 
+    public var rankedGapTexts: [(name: String, count: Int)] {
+        Self.ranked(gapTexts)
+    }
+
     public var rankedBoundMemberPaths: [(name: String, count: Int)] {
         Self.ranked(boundMemberPaths)
     }
@@ -246,6 +239,7 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         Self.merge(&unappliedBindings, other.unappliedBindings, limit: limit)
         Self.merge(&undecodableObjects, other.undecodableObjects, limit: limit)
         Self.merge(&featureGaps, other.featureGaps, limit: limit)
+        Self.merge(&gapTexts, other.gapTexts, limit: limit)
         Self.merge(&boundMemberPaths, other.boundMemberPaths, limit: limit)
     }
 

@@ -3,6 +3,7 @@
 // leaves it at the defaults, where the character stands at the origin on flat ground.
 
 import Foundation
+import OpenSkyFormatsAnimation
 import simd
 
 /// Answers where the ground is under a point, in model space.
@@ -23,6 +24,9 @@ nonisolated public struct BehaviorCharacterContext {
     public var ground: (any BehaviorGroundProbe)?
     /// Papyrus `Debug.SetFootIK`: off, foot IK leaves the pose as animated.
     public var footIk: Bool
+    /// The bones as physics holds them, such as a ragdoll's, in this graph's
+    /// skeleton. Nil means the pose the graph showed last.
+    public var livePose: [HKABonePose]?
 
     public init(
         worldPosition: SIMD3<Float> = SIMD3(),

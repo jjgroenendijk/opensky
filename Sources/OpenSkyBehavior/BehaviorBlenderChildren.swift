@@ -9,6 +9,8 @@ import OpenSkyFormatsAnimation
 nonisolated struct BehaviorBlenderEntry {
     let child: HKBBlenderGeneratorChild
     let bound: [String: BehaviorVariableValue]
+    /// A bone weight array the child binds from a character property.
+    var characterWeights: [Float]?
 }
 
 nonisolated extension BehaviorGraphInstance {
@@ -18,12 +20,14 @@ nonisolated extension BehaviorGraphInstance {
         _ blender: HKBBlenderFields,
         bound: [String: BehaviorVariableValue],
         depth: Int,
-        deltaTime: Float
+        deltaTime: Float,
+        weights override: [Float]? = nil
     ) -> [BehaviorBlendChild] {
         noteBlendGaps(blender)
         let entries = blender.children.map { $0.flatMap(blenderEntry(at:)) }
         let parametric = blender.flags & BehaviorBlenderFlag.parametricBlend != 0
-        let weights = childWeights(blender, entries: entries, bound: bound)
+        let weights = override.flatMap { $0.count == entries.count ? $0 : nil }
+            ?? childWeights(blender, entries: entries, bound: bound)
         let keepsAll = blender.flags & BehaviorBlenderFlag
             .dontDeactivateChildrenWithZeroWeights != 0
         let active = entries.indices.filter { index in
@@ -67,7 +71,9 @@ nonisolated extension BehaviorGraphInstance {
             let child = node.object as? HKBBlenderGeneratorChild
         else { return nil }
         markReached(target)
-        return BehaviorBlenderEntry(child: child, bound: boundValues(of: node))
+        var entry = BehaviorBlenderEntry(child: child, bound: boundValues(of: node))
+        entry.characterWeights = characterBoneWeights(of: node, path: "boneWeights")
+        return entry
     }
 
     /// Each child's share of the blend. A parametric blender reads `m_weight` as the
@@ -141,7 +147,7 @@ nonisolated extension BehaviorGraphInstance {
             motionWeight: motionScale * entry.bound.float(
                 "m_worldFromModelWeight", or: child.worldFromModelWeight
             ),
-            boneWeights: boneWeights(at: child.boneWeights)
+            boneWeights: entry.characterWeights ?? boneWeights(at: child.boneWeights)
         )
     }
 

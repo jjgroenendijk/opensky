@@ -123,7 +123,7 @@ public final class ActorGraphCoordinator {
             references = InstallBehaviorReferenceSource(
                 fileSystem: files, pathsByName: loaded.referencePaths
             )
-            skeleton = BehaviorSkeleton(loaded.asset.skeleton)
+            skeleton = loaded.asset.behaviorSkeleton
             boneLOD = loaded.boneLOD
         }
     }
@@ -287,6 +287,7 @@ public final class ActorGraphCoordinator {
             skeleton: project.skeleton, clips: project.clips, objects: project.objects
         )
         instance.references = project.references
+        instance.characterProperties = project.asset.characterProperties
         instance.activate()
         if !project.hasPrefetched {
             project.hasPrefetched = true

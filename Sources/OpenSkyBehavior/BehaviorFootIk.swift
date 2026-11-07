@@ -26,11 +26,10 @@ nonisolated extension BehaviorGraphInstance {
             or: modifier.originalGroundHeightMS
         )
         let offset = bound.float("verticalOffset", or: modifier.verticalOffset)
-        let onOffGain = physicsRequests.footIkGains?["onOffGain"] ?? modifier.gains
-            .value("onOffGain")
+        let onOffGain = Self.timed(gain("onOffGain", modifier), step.deltaTime)
         var model = BehaviorModelPose(pose, skeleton: skeleton)
         var result = pose
-        var errors = SIMD3<Float>()
+        var errors: [Float] = []
         for (slot, leg) in modifier.legs.enumerated() {
             guard [leg.hipIndex, leg.kneeIndex, leg.ankleIndex].allSatisfy(model.contains) else {
                 continue
@@ -42,11 +41,11 @@ nonisolated extension BehaviorGraphInstance {
                     raise(leg.ungroundedEvent)
                 }
                 state.flags[slot] = true
-                state.weights[slot] *= 1 - min(max(onOffGain, 0), 1)
+                state.weights[slot] *= 1 - onOffGain
                 continue
             }
             state.flags[slot] = false
-            state.weights[slot] += (1 - state.weights[slot]) * min(max(onOffGain, 0), 1)
+            state.weights[slot] += (1 - state.weights[slot]) * onOffGain
             let error = ground - animatedGround + offset
             var goal = ankle + SIMD3(0, 0, error)
             if leg.maxAnkleHeightMS > leg.minAnkleHeightMS {
@@ -55,15 +54,35 @@ nonisolated extension BehaviorGraphInstance {
                     ground + leg.maxAnkleHeightMS
                 )
             }
-            errors.z += error
+            errors.append(error)
             Self.solveTwoBone(
                 leg, toward: ankle + (goal - ankle) * state.weights[slot], model: &model,
                 pose: &result
             )
         }
         nodeStates[step.target] = state
-        footIkError = modifier.legs.isEmpty ? SIMD3() : errors / Float(modifier.legs.count)
+        let feedback = gain("worldFromModelFeedbackGain", modifier)
+        footIkError = feedback > 0 ? SIMD3(0, 0, Self.combinedError(
+            errors, bias: gain("errorUpDownBias", modifier)
+        ) * Self.timed(feedback, step.deltaTime)) : SIMD3()
         return result
+    }
+
+    /// The controls modifier's gain when one runs, else the foot IK modifier's own.
+    private func gain(_ name: String, _ modifier: HKBFootIkModifier) -> Float {
+        physicsRequests.footIkGains?[name] ?? modifier.gains.value(name)
+    }
+
+    /// A gain is a rate at 30 updates a second, so a step of `deltaTime` applies this much.
+    static func timed(_ gain: Float, _ deltaTime: Float) -> Float {
+        min(max(gain * deltaTime * 30, 0), 1)
+    }
+
+    /// The bias picks between the foot that must move down most (0) and the one that
+    /// must move up most (1).
+    static func combinedError(_ errors: [Float], bias: Float) -> Float {
+        guard let low = errors.min(), let high = errors.max() else { return 0 }
+        return (1 - bias) * low + bias * high
     }
 
     private func groundHeight(

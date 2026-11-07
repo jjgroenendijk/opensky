@@ -29,6 +29,7 @@ nonisolated public enum PlayerBehaviorGraphError: LocalizedError, Equatable, Sen
 nonisolated public struct PlayerBehaviorGraph {
     public static let behaviorPath = "meshes\\actors\\character\\behaviors\\0_master.hkx"
     public static let skeletonPath = "meshes\\actors\\character\\character assets\\skeleton.hkx"
+    public static let characterPath = "meshes\\actors\\character\\characters\\defaultmale.hkx"
     /// The first-person set: its own `0_master.hkx`, 99-bone rig and NIF skeleton. Paths
     /// come from the install's archive listing (`openskycli vfs ls _1stperson`). The folder
     /// is `characterassets`, with no space, unlike the third-person `character assets`.
@@ -36,6 +37,9 @@ nonisolated public struct PlayerBehaviorGraph {
         "meshes\\actors\\character\\_1stperson\\behaviors\\0_master.hkx"
     public static let firstPersonSkeletonPath =
         "meshes\\actors\\character\\_1stperson\\characterassets\\skeletonfirst.hkx"
+    /// Its own character file: 37 properties, where the third-person one has 39.
+    public static let firstPersonCharacterPath =
+        "meshes\\actors\\character\\_1stperson\\characters\\firstperson.hkx"
     /// The NIF rig the first-person arm meshes skin against. RACE names only
     /// the third-person skeleton (ANAM), so this one is a constant here — the
     /// install ships exactly one and no record points at it.
@@ -82,13 +86,14 @@ nonisolated public struct PlayerBehaviorGraph {
         let instance = BehaviorGraphInstance(
             graph: files.behavior,
             in: files.objectGraph,
-            skeleton: BehaviorSkeleton(files.rig),
+            skeleton: BehaviorSkeleton(files.rig, ragdoll: files.ragdoll),
             clips: clips
         )
         // `0_master.hkx` is a shell: the locomotion states live in the behavior
         // files it references by name, so without this the graph can only reach
         // its jump branch (docs/engine/behavior-clips.md, "Behavior references").
         instance.references = references
+        instance.characterProperties = files.characterProperties
         instance.activate()
         instance.prefetchReachableClips()
         return PlayerBehaviorGraph(
@@ -103,12 +108,15 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
     let objectGraph: HKXObjectGraph
     let behavior: HKBBehaviorGraph
     let rig: HKASkeleton
+    let ragdoll: HKASkeleton?
     let clipPaths: [String]
+    var characterProperties = BehaviorCharacterProperties.empty
 
     public static func decode(
         fileSystem: any GameFileSource,
         behaviorPath: String = PlayerBehaviorGraph.behaviorPath,
-        skeletonPath: String = PlayerBehaviorGraph.skeletonPath
+        skeletonPath: String = PlayerBehaviorGraph.skeletonPath,
+        characterPath: String = PlayerBehaviorGraph.characterPath
     ) throws(PlayerBehaviorGraphError) -> PlayerBehaviorGraphFiles {
         let behaviorFile = try read(behaviorPath, from: fileSystem)
         guard let objectGraph = try? HKXObjectGraph(file: behaviorFile) else {
@@ -124,15 +132,23 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
         else {
             throw PlayerBehaviorGraphError.noSkeleton(skeletonPath)
         }
+        let characterGraph = (try? read(characterPath, from: fileSystem))
+            .flatMap { try? HKXObjectGraph(file: $0) }
         return PlayerBehaviorGraphFiles(
             behaviorPath: behaviorPath,
             objectGraph: objectGraph,
             behavior: behavior,
             rig: rig,
+            ragdoll: skeletons.dropFirst().first,
             clipPaths: InstallBehaviorClipSource.animationPaths(
                 in: fileSystem,
                 folder: InstallBehaviorClipSource.animationFolder(forBehaviorPath: behaviorPath)
-            )
+            ),
+            characterProperties: characterGraph.flatMap { graph in
+                BehaviorProjectAsset.character(in: graph).map {
+                    BehaviorCharacterProperties(character: $0, in: graph)
+                }
+            } ?? .empty
         )
     }
 
@@ -153,7 +169,9 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
         }
         return PlayerBehaviorGraphFiles(
             behaviorPath: asset.behaviorPath, objectGraph: asset.objectGraph,
-            behavior: asset.behavior, rig: asset.skeleton, clipPaths: asset.clipPaths
+            behavior: asset.behavior, rig: asset.skeleton, ragdoll: asset.ragdollSkeleton,
+            clipPaths: asset.clipPaths,
+            characterProperties: asset.characterProperties
         )
     }
 

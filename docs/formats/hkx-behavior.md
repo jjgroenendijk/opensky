@@ -145,15 +145,22 @@ file each. So paths are relative to the project file's folder.
 ## hkbCharacterData and hkbCharacterStringData
 
 A character file links one behavior file to one rig and to its list of clips.
-`hkbCharacterData`, size 176. OpenSky reads only `m_stringData`; the other rows let you
-check the offset.
+`hkbCharacterData`, size 176:
 
 | Offset | Field | Type |
 | --- | --- | --- |
 | 0x60 | `m_characterPropertyInfos` | `hkArray<hkbVariableInfo>` |
 | 0x80 | `m_characterPropertyValues` | pointer to `hkbVariableValueSet` |
 | 0x98 | `m_stringData` | pointer to `hkbCharacterStringData` |
+| 0xA0 | `m_mirroredSkeletonInfo` | pointer to `hkbMirroredSkeletonInfo` |
 | 0xA8 | `m_scale` | `hkReal` |
+
+A character property is a variable that belongs to the character, not to one graph. Its
+type is in `m_characterPropertyInfos`, its name in `m_characterPropertyNames`, and its
+starting value in `m_characterPropertyValues`, all at the same index. A pointer property
+stores, as its word, an index into the variant list. `defaultmale.hkx` has 39 properties
+and 29 variants, and every variant is an `hkbBoneWeightArray`. A graph names the properties it uses
+in its own `m_characterPropertyNames`, and a binding finds the value through that name.
 
 `hkbCharacterStringData`, size 192. Offsets 0x10 to 0x90 are nine `hkArray<hkStringPtr>`
 lists, in this order: `m_deformableSkinNames`, `m_rigidSkinNames`, `m_animationNames`,

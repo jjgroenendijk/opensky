@@ -11,6 +11,8 @@ nonisolated public struct BehaviorFileSet: Equatable, Sendable {
     public let behaviors: [String]
     public let skeleton: String?
     public let animations: [String]
+    /// The `characters...` file whose properties the graphs' bindings read.
+    public var character: String?
 }
 
 nonisolated extension BehaviorGapSweep {
@@ -35,31 +37,43 @@ nonisolated extension BehaviorGapSweep {
             return BehaviorFileSet(
                 name: folder + variant,
                 behaviors: behaviorsByKey[key]?.sorted() ?? [],
-                skeleton: skeleton(among: inside, folder: folder, variant: variant),
-                animations: inside.filter { $0.contains("\\animations\\") }
+                skeleton: asset(among: inside, folder: folder, variant: variant, kind: .skeleton),
+                animations: inside.filter { $0.contains("\\animations\\") },
+                character: asset(among: inside, folder: folder, variant: variant, kind: .character)
             )
         }
     }
 
-    /// A `skeleton*.hkx` in a `character assets...` folder directly under `folder`.
-    /// The folder with the same suffix wins, then a folder with none, then the first.
-    private static func skeleton(
+    enum AssetKind {
+        case skeleton, character
+
+        var folder: String {
+            self == .skeleton ? "characterassets" : "characters"
+        }
+    }
+
+    /// A `skeleton*.hkx` in a `character assets...` folder, or a character file in a
+    /// `characters...` folder, directly under `folder`. The folder with the same suffix
+    /// wins, then a folder with none, then the first.
+    private static func asset(
         among paths: [String],
         folder: String,
-        variant: String
+        variant: String,
+        kind: AssetKind
     ) -> String? {
         let depth = folder.split(separator: "\\").count
         let candidates = paths.filter { path in
             let parts = path.split(separator: "\\")
             guard parts.count == depth + 2, let file = parts.last else { return false }
             let assets = parts[depth].replacingOccurrences(of: " ", with: "")
-            return assets.hasPrefix("characterassets") && file.hasPrefix("skeleton")
+            let named = kind == .character || file.hasPrefix("skeleton")
+            return assets.hasPrefix(kind.folder) && named
                 && !file.contains("female") && file.hasSuffix(".hkx")
         }.sorted()
         func assetSuffix(_ path: String) -> String {
             let assets = path.split(separator: "\\")[depth]
             return assets.replacingOccurrences(of: " ", with: "")
-                .dropFirst("characterassets".count).description
+                .dropFirst(kind.folder.count).description
         }
         let wanted = variant.replacingOccurrences(of: " ", with: "")
         return candidates.first { assetSuffix($0) == wanted }
