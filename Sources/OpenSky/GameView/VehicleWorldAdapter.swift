@@ -210,10 +210,14 @@ extension VehicleWorldAdapter: VehicleWorld {
         streamer.requestRebuild(of: .exterior(drawing))
     }
 
+    /// The player has no playback, so its bones come from the idle clip it plays.
     func vehicleBone(of key: ReferenceKey, named bone: String) -> SIMD3<Float>? {
+        guard let playback = game.actorPlayback(for: key) else {
+            return game.idleWorld.idles.idleBone(of: key, named: bone)
+        }
         guard
             let renderer = game.renderer,
-            let pose = game.actorPlayback(for: key)?.skeletonPose(at: renderer.animationTime),
+            let pose = playback.skeletonPose(at: renderer.animationTime),
             let index = pose.bones.index(of: bone),
             pose.matrices.indices.contains(index)
         else { return nil }
@@ -277,7 +281,11 @@ extension VehicleWorldAdapter: VehicleWorld {
     }
 
     func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
-        guard key != .player else { return }
+        guard key != .player else {
+            game.gameSession?.playerSeat = nil
+            game.gameSession?.placePlayerFeet(at: pose.position)
+            return
+        }
         let cell = game.streamer?.cellLocation(of: key)
         game.worldState.set(pose, for: key, in: cell)
         game.worldState.reset(.vehicleLink, for: key)

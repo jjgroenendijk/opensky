@@ -178,13 +178,36 @@ call `SetVehicle` (read with `openskycli pex`):
   `ExitCartEnd`. It never calls `SetVehicle(None)`. Its properties give the player seat
   `IdleCartPrisonerCExit`, the passengers `IdleCartPrisonerAExit`, `IdleCartPrisonerBExit`, and
   `IdleCartPrisonerDExit`. A quick exit plays `IdleCartExitInstant` instead, but only while the
-  global `CartQuickExit` is 1, and its default is 0. `0_master.hkx` declares no such event, so
-  the graph ignores it and no `ExitCartEnd` follows.
+  global `CartQuickExit` is 1, and its default is 0. `0_master.hkx` declares no such event, but
+  `idlebehavior.hkx` does: its state `SpecialCartExitIdle` sends `ExitCartBegin` and then
+  `ExitCartEnd` as it starts. [WARNING] OpenSky does not play that state yet.
 - `CartDriverScript` is the only caller of `SetVehicle(None)`: the carriage driver leaves its seat
   with it, then plays `IdleCartDriverExit`.
 
 So the game ends a link on its own when the exit state ends, and `ExitCartEnd` is the event that
 marks that moment. OpenSky takes any actor off its vehicle on that event.
+
+How the exit state ends (clean-room read of `SkyrimSE.exe` and the graphs, 2026-11-07):
+
+- Each exit state plays its clip once and then holds the last frame. It does not leave on its own.
+  It sends `ExitCartEnd` only when it is left.
+- The graph leaves `Cart_State` for `Root` on the event `CartExit`. Neither the engine nor a script
+  sends it. Only the driver's exit clip does, as a trigger 0.2 s before its end. So for the driver,
+  `CartExit` comes first and `ExitCartEnd` follows in the same graph update.
+- A prisoner's exit clip has no `CartExit` trigger. Its one trigger, `OffsetBoundStandingCartStart`
+  (`OffsetBoundStandingStart` for seat A), switches the arms to the bound standing pose. What
+  makes a prisoner's exit state send `ExitCartEnd` was not found.
+- On `ExitCartBegin` the engine stops pinning the rider to the cart, so the clip's root motion
+  carries it off. On `ExitCartEnd` the engine ends the link itself, as `SetVehicle(None)` does.
+- The clips end far from the seat. `CartPrisonerCExit` ends about 330 units behind the seat's root,
+  turned about 167 degrees. `CartDriverExit` ends about 106 units to the side, turned about 99
+  degrees.
+- Seating the player with `IdleCartPrisonerCIdle` puts the player's camera in a cart view mode,
+  and `IdleCartPrisonerCExit` ends it.
+
+[WARNING] OpenSky sends a prisoner's `ExitCartEnd` when the idle's clip time ends. The game's
+trigger for it is unknown. The player's graph then stays in the exit state, holding the bound
+standing arms, until another idle leaves it.
 
 The rider's root is still on the cart's root at that moment, but the exit clip has carried the
 body off the cart. So the rider stands where the clip left its `NPC COM [COM ]` bone, read on the
@@ -192,6 +215,9 @@ last frame before the event, at the ground height there. Without that, every pas
 stand in the middle of the cart. The rider also turns the way that bone faces, compared with the
 bind pose, where the body faces +Y. So a prisoner who steps off the side of the cart faces away
 from it, not along the cart.
+
+The player stands at that point too. Its body bone comes from the exit idle's clip, because the
+player's body has no clip playback of its own. The player's view keeps its heading.
 
 ## Saving
 
