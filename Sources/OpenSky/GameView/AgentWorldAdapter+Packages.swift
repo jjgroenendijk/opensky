@@ -7,6 +7,7 @@ import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyWorld
@@ -38,6 +39,7 @@ extension AgentWorldAdapter {
                 .string("\($0.state) waypoint \($0.waypointIndex) of \($0.waypointCount)"
                     + " at \($0.feetPosition)")
             } ?? .null,
+            "movement": movementReadout(key),
             "vehicle": vehicleReadout(key),
             "vehicleLinks": .array(links.keys.sorted()
                 .map { .string("\($0) -> \(links[$0]?.carrier as Any)") }),
@@ -52,6 +54,25 @@ extension AgentWorldAdapter {
             } ?? .null,
             "idleTrace": .array((game.idleWorld.idles.idleSnapshot(for: key).report?.trace ?? [])
                 .map { .string(IdleReadout.traceLine($0)) })
+        ]
+    }
+
+    /// The movement type the actor's graph names, its speeds, and the shape it collides as.
+    private func movementReadout(_ key: ReferenceKey) -> AgentJSON {
+        let name = game.actorGraphs.movementStateName(of: key)
+        let speeds = game.streamer?.npcMovementSpeeds?(key)
+        let scale = game.streamer?.npcTransform(for: key)?.scale ?? 1
+        let bounds = game.streamer?.npcBodyHalfExtents?(key)
+        let capsule = bounds.flatMap { PlayerCapsule.upright(halfExtents: $0, scale: scale) }
+        let long = bounds.flatMap { LongBodyShape(halfExtents: $0, scale: scale) }
+        return [
+            "type": name.map(AgentJSON.string) ?? .null,
+            "walk": speeds.map { .init($0.forwardWalk * scale) } ?? .null,
+            "run": speeds.map { .init($0.forwardRun * scale) } ?? .null,
+            "capsuleRadius": capsule.map { .init($0.radius) } ?? .null,
+            "capsuleHeight": capsule.map { .init($0.height) } ?? .null,
+            "endRadius": long.map { .init($0.endRadius) } ?? .null,
+            "endOffset": long.map { .init($0.endOffset) } ?? .null
         ]
     }
 
