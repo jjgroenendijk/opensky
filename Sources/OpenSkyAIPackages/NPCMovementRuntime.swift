@@ -22,8 +22,10 @@ public struct NPCMovementWorld {
     /// Actors that are not walking, such as the player and standing NPCs, that a mover
     /// steers around. Walking actors come from the runtime itself.
     public var standingActors: () -> [NPCNeighbour] = { [] }
-    /// The water surface height over a point, or nil where there is no water.
-    public var sampleWater: (SIMD2<Float>) -> Float? = { _ in nil }
+    /// The water at a point, or nil where there is none.
+    public var sampleWater: (SIMD3<Float>) -> WaterReading? = { _ in nil }
+    /// The size and movement facts of an actor's race that decide a current's push.
+    public var waterPushRace: (ReferenceKey) -> WaterPushRace = { _ in .normal }
     /// The carriers and riders of the vehicle links, and the query they collide with:
     /// one without the vehicles' moving collision.
     public var vehicleActors: Set<ReferenceKey> = []
@@ -37,7 +39,8 @@ public struct NPCMovementWorld {
         triggersAt: @escaping (PlayerCapsuleState) -> Set<ReferenceKey>,
         hasGround: @escaping (SIMD2<Float>) -> Bool = { _ in true },
         standingActors: @escaping () -> [NPCNeighbour] = { [] },
-        sampleWater: @escaping (SIMD2<Float>) -> Float? = { _ in nil },
+        sampleWater: @escaping (SIMD3<Float>) -> WaterReading? = { _ in nil },
+        waterPushRace: @escaping (ReferenceKey) -> WaterPushRace = { _ in .normal },
         vehicleActors: Set<ReferenceKey> = [],
         collisionQueryIgnoringVehicles: WalkController.CollisionQuery? = nil
     ) {
@@ -49,6 +52,7 @@ public struct NPCMovementWorld {
         self.hasGround = hasGround
         self.standingActors = standingActors
         self.sampleWater = sampleWater
+        self.waterPushRace = waterPushRace
         self.vehicleActors = vehicleActors
         self.collisionQueryIgnoringVehicles = collisionQueryIgnoringVehicles
     }

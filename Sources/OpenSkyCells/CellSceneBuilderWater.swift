@@ -14,6 +14,8 @@ import simd
 nonisolated public struct WaterBuild {
     public let item: WaterDrawItem
     public let height: Float
+    /// The `WATR` the cell uses, its own or the worldspace's.
+    public var waterType: FormID?
 }
 
 nonisolated struct ResolvedWorldWater {
@@ -62,7 +64,8 @@ nonisolated extension CellSceneBuilder {
         }
         guard let height, height.isFinite else { return nil }
 
-        let look = resolvedWaterLook(for: found.cell.waterType ?? worldWater.type)
+        let waterType = found.cell.waterType ?? worldWater.type
+        let look = resolvedWaterLook(for: waterType)
         guard let mesh = sharedWaterPlane() else { return nil }
 
         let origin = SIMD3<Float>(
@@ -84,7 +87,7 @@ nonisolated extension CellSceneBuilder {
         if look.shading.flowMapped {
             item.flowMap = flowMapPath(x: grid.x, y: grid.y)
         }
-        return WaterBuild(item: item, height: height)
+        return WaterBuild(item: item, height: height, waterType: waterType)
     }
 
     /// The per-cell flow map sits under the folder of the plugin that made it; the

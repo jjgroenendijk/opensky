@@ -93,7 +93,7 @@ struct NPCMoverTraversalTests {
         )
         var mover = Self.mover(path: path)
         var world = NPCMovementRuntimeTests.world()
-        world.sampleWater = { _ in 200 }
+        world.sampleWater = { _ in WaterReading(surface: 200) }
         _ = mover.advance(by: 0.05, world: world)
         #expect(mover.isSwimming)
         _ = mover.advance(by: 0.05, world: world)
@@ -106,7 +106,7 @@ struct NPCMoverTraversalTests {
         )
         var mover = Self.mover(path: path)
         var world = NPCMovementRuntimeTests.world()
-        world.sampleWater = { _ in 40 }
+        world.sampleWater = { _ in WaterReading(surface: 40) }
         _ = mover.advance(by: 0.05, world: world)
         #expect(!mover.isSwimming)
         #expect(mover.gait != .swim)

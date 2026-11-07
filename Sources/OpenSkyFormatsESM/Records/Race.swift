@@ -97,7 +97,9 @@ nonisolated public struct Race: Sendable {
         /// clear on creature races like cow/dog/bear.
         public static let faceGenHead = Flags(rawValue: 0x0000_0002)
         public static let child = Flags(rawValue: 0x0000_0004)
+        public static let swims = Flags(rawValue: 0x0000_0040)
         public static let flies = Flags(rawValue: 0x0000_0080)
+        public static let walks = Flags(rawValue: 0x0000_0100)
         /// A hit does not knock the actor back.
         public static let notPushable = Flags(rawValue: 0x0000_0400)
         public static let noBloodSpray = Flags(rawValue: 0x0000_2000)

@@ -40,6 +40,7 @@ import simd
 protocol AIWorldHost: AnyObject {
     var followerCommands: FollowerCommandCoordinator { get }
     var dragonFlightWorld: DragonFlightWorldAdapter { get }
+    var effectsWorld: EffectsWorldAdapter { get }
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
     var actorGraphWorld: ActorGraphWorldAdapter { get }
     var actorValues: ActorValueCoordinator { get }
@@ -129,6 +130,10 @@ final class AIWorldAdapter {
             gameSession?.instancePoses.npcDeltas = deltas
         }
         streamer.npcStandingActors = { [weak self] in self?.standingActors() ?? [] }
+        streamer.npcWaterPushRace = { [weak game] actor in
+            game?.effectsWorld.waterPushRace(of: actor) ?? .normal
+        }
+        gameSession.locomotion.waterPushRace = game.effectsWorld.waterPushRace(of: .player)
         // A walker drawn by the cell it left would vanish when that cell unloads, so
         // it moves into the cell it entered, and the cell it left drops it.
         streamer.onNPCCellHandoff = { [weak game, weak streamer] persistence in

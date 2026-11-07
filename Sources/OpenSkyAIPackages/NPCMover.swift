@@ -34,7 +34,7 @@ public struct NPCMover {
     let runSlowdown: FollowSettings?
     let walkRunBlend: Float?
     /// The other actors near this one for the step in progress.
-    private var neighbours: [NPCNeighbour] = []
+    private(set) var neighbours: [NPCNeighbour] = []
     /// The jump across a ledge link in progress.
     public internal(set) var hop: NPCLedgeHop?
     public private(set) var isSwimming = false
@@ -83,7 +83,8 @@ public struct NPCMover {
         }
 
         let feet = controller.feetPosition
-        let water = swimSurface(world: world)
+        let sample = world.sampleWater(feet)
+        let water = swimSurface(sample)
         isSwimming = water != nil
         let step = stepPlan(frameTime: frameTime)
         yaw = step.yaw
@@ -93,7 +94,7 @@ public struct NPCMover {
             continueHop(frameTime: frameTime)
         } else if world.hasGround(SIMD2(feet.x, feet.y)) {
             walk(
-                toward: waypoint, step: step, swimSurface: water,
+                toward: waypoint, step: step, water: (sample, water),
                 frameTime: frameTime, world: world
             )
         } else {
@@ -123,12 +124,14 @@ public struct NPCMover {
     private mutating func walk(
         toward waypoint: SIMD3<Float>,
         step: NPCMoverStepPlan,
-        swimSurface: Float?,
+        water: (sample: WaterReading?, swimSurface: Float?),
         frameTime: Float,
         world: NPCMovementWorld
     ) {
         let neighbours = neighbours
         let radius = capsule.radius
+        let race = world.waterPushRace(actor)
+        let configuration = configuration
         controller.update(
             frameTime: frameTime,
             yaw: yaw,
@@ -149,8 +152,11 @@ public struct NPCMover {
                     neighbours: neighbours
                 ) : .zero
             plan.horizontalDisplacement = direction * wanted
-            plan.swimSurfaceHeight = swimSurface
+            plan.swimSurfaceHeight = water.swimSurface
             plan.motionSource = wanted > 0 ? .configuredSpeed : .idle
+            plan.applyCurrent(
+                water.sample, state: state, configuration: configuration, race: race
+            )
             return plan
         }
     }
@@ -158,21 +164,6 @@ public struct NPCMover {
     private mutating func advancePastReachedWaypoints() {
         var emissions = NPCMoverEmissions()
         advancePastReachedWaypoints(emissions: &emissions)
-    }
-
-    /// Near on the ground, and within one capsule height up or down. A patrol marker
-    /// can float above the ground, and a waypoint on the floor above is not reached.
-    private func isReached(_ waypoint: SIMD3<Float>) -> Bool {
-        let feet = controller.feetPosition
-        let flatFeet = SIMD2(feet.x, feet.y)
-        let flatWaypoint = SIMD2(waypoint.x, waypoint.y)
-        // A swimmer floats over a waypoint on the bed below it.
-        guard isSwimming || abs(feet.z - waypoint.z) <= capsule.height else { return false }
-        return simd_distance(flatFeet, flatWaypoint) <= NPCMovementRuntime.waypointTolerance
-            || NPCAvoidance.isTaken(
-                flatWaypoint, from: flatFeet, radius: capsule.radius,
-                tolerance: NPCMovementRuntime.waypointTolerance, neighbours: neighbours
-            )
     }
 
     private mutating func advancePastReachedWaypoints(

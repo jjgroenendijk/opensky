@@ -95,12 +95,32 @@ extension EffectsWorldAdapter: ImpulseWorld {
         game.streamer?.sampleWaterHeight(at: position)
     }
 
-    func waterFlow(at position: SIMD2<Float>) -> SIMD2<Float>? {
-        game.streamer?.sampleWaterFlow(at: position)
+    func waterCurrent(at point: SIMD3<Float>) -> SIMD3<Float>? {
+        game.streamer?.water(at: point)?.current
+    }
+
+    func isDangerousWater(at point: SIMD3<Float>) -> Bool {
+        game.streamer?.water(at: point)?.isDangerous ?? false
     }
 
     func raceSize(of actor: ReferenceKey) -> Int {
         race(of: actor)?.details.properties.map { Int($0.size) } ?? 1
+    }
+
+    /// How a current pushes `actor`: its race size and whether it only swims.
+    func waterPushRace(of actor: ReferenceKey) -> WaterPushRace {
+        let water = game.combat.impulses?.water ?? .vanilla
+        let race = race(of: actor)
+        guard
+            let strong = WaterImpacts.strongCurrent(
+                raceSize: race?.details.properties.map { Int($0.size) } ?? 1, settings: water
+            )
+        else { return .normal }
+        let flags = race?.flags ?? []
+        return WaterPushRace(
+            strongCurrent: strong,
+            isSwimOnly: flags.contains(.swims) && flags.isDisjoint(with: [.walks, .flies])
+        )
     }
 
     func isPushable(_ actor: ReferenceKey) -> Bool {

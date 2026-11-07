@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import simd
 
@@ -132,6 +133,9 @@ nonisolated public struct WaterSample: Equatable, Sendable {
 }
 
 nonisolated public enum WaterImpacts {
+    /// The knockdown speeds are in Havok units per second.
+    public static let havokScale = NIFCollisionModel.havokToEngineScale
+
     /// The splash a body makes: its mass plus `fSplashSoundVelocityMult` times its vertical
     /// speed, times `fSplashSoundOutMult` when it leaves. An actor splashes heavy.
     public static func weight(
@@ -183,16 +187,21 @@ nonisolated public enum WaterImpacts {
         return splash
     }
 
-    /// Whether flowing water of `flowSpeed` knocks down an actor of RACE `size`
-    /// (0 small, 1 normal, 2 large, 3 very large).
+    /// Whether flowing water of `flowSpeed`, in Havok units per second, knocks down
+    /// an actor of RACE `size` (0 small, 1 normal, 2 large, 3 very large).
     public static func knocksDown(
         flowSpeed: Float, raceSize: Int, settings: WaterImpactSettings
     ) -> Bool {
-        let factors = settings.knockdownSizeFactors
-        guard !factors.isEmpty, flowSpeed.isFinite, settings.knockdownVelocity > 0
+        guard let strong = strongCurrent(raceSize: raceSize, settings: settings), flowSpeed.isFinite
         else { return false }
-        let factor = factors[min(max(raceSize, 0), factors.count - 1)]
-        return flowSpeed >= settings.knockdownVelocity * factor
+        return flowSpeed >= strong
+    }
+
+    /// `fWaterKnockdownVelocity` times the size factor, Havok units per second.
+    public static func strongCurrent(raceSize: Int, settings: WaterImpactSettings) -> Float? {
+        let factors = settings.knockdownSizeFactors
+        guard !factors.isEmpty, settings.knockdownVelocity > 0 else { return nil }
+        return settings.knockdownVelocity * factors[min(max(raceSize, 0), factors.count - 1)]
     }
 }
 

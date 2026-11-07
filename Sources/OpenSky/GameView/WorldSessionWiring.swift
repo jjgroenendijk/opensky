@@ -166,7 +166,7 @@ final class WorldSessionWiring {
             streamer?.collisionCandidates(overlapping: bounds) ?? []
         }
         gameSession.locomotion.sampleWater = { [weak streamer] position in
-            streamer?.sampleWaterHeight(at: position)
+            streamer?.water(at: position)
         }
         streamer.onWorldspaceChanged.register(.weather) { [weak gameSession] editorID in
             gameSession?.weather?.setWorldspace(editorID: editorID)

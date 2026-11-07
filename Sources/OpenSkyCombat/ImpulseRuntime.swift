@@ -20,8 +20,10 @@ public protocol ImpulseWorld: ImpulseBodyWorld {
     func impulseActors() -> [MeleeTarget]
     /// The water surface height here, or nil where there is none.
     func waterHeight(at position: SIMD2<Float>) -> Float?
-    /// The `WATR` linear velocity here, units per second.
-    func waterFlow(at position: SIMD2<Float>) -> SIMD2<Float>?
+    /// The water current at a point under a surface, game units per second.
+    func waterCurrent(at point: SIMD3<Float>) -> SIMD3<Float>?
+    /// Water of a `WATR` with flag 0x1, where nothing splashes.
+    func isDangerousWater(at point: SIMD3<Float>) -> Bool
     /// RACE size: 0 small, 1 normal, 2 large, 3 very large.
     func raceSize(of actor: ReferenceKey) -> Int
     /// False for an actor whose race is "Not Pushable": a hit does not knock it back.
@@ -130,7 +132,9 @@ public final class ImpulseRuntime {
                 verticalSpeed: body.velocity.z
             )
         }
-        for event in splashes.update(samples, deltaTime: deltaTime, settings: water) {
+        for event in splashes.update(samples, deltaTime: deltaTime, settings: water)
+            where !world.isDangerousWater(at: event.position)
+        {
             play(event)
         }
         world.waterContacts(samples.filter(\.isWading))
@@ -156,15 +160,14 @@ public final class ImpulseRuntime {
     private func knockInFastWater(_ actors: [MeleeTarget], world: any ImpulseWorld) {
         var stillIn: Set<ReferenceKey> = []
         for actor in actors {
-            let ground = SIMD2(actor.feet.x, actor.feet.y)
             guard
-                let height = world.waterHeight(at: ground), actor.feet.z < height,
-                let flow = world.waterFlow(at: ground),
+                let current = world.waterCurrent(at: actor.feet),
                 WaterImpacts.knocksDown(
-                    flowSpeed: simd_length(flow), raceSize: world.raceSize(of: actor.key),
-                    settings: water
+                    flowSpeed: simd_length(SIMD2(current.x, current.y)) / WaterImpacts.havokScale,
+                    raceSize: world.raceSize(of: actor.key), settings: water
                 )
             else { continue }
+            let flow = SIMD2(current.x, current.y)
             stillIn.insert(actor.key)
             guard !inFastWater.contains(actor.key) else { continue }
             let velocity = SIMD3(flow.x, flow.y, 0)

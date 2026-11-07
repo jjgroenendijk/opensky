@@ -23,6 +23,7 @@ public struct CellStreamerNPCMovementState {
     public var onCellHandoff: ((NPCMovementPersistence) -> Void)?
     /// The player and the standing actors walkers steer around.
     public var standingActors: (() -> [NPCNeighbour])?
+    public var waterPushRace: ((ReferenceKey) -> WaterPushRace)?
     /// Rest writes no resident build has drawn yet, oldest first, per actor.
     public var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
     /// The rest write in progress, so its store mutation rebuilds no cell.
@@ -91,6 +92,12 @@ extension CellStreamer {
     public var npcStandingActors: (() -> [NPCNeighbour])? {
         get { npcMovementState.standingActors }
         set { npcMovementState.standingActors = newValue }
+    }
+
+    /// The race facts that decide how a current pushes a walking NPC.
+    public var npcWaterPushRace: ((ReferenceKey) -> WaterPushRace)? {
+        get { npcMovementState.waterPushRace }
+        set { npcMovementState.waterPushRace = newValue }
     }
 
     /// A `direct` move walks the straight line to `point` on the terrain, without a
@@ -299,7 +306,8 @@ extension CellStreamer {
                 self?.interiorScene != nil || self?.sampleTerrain(at: position) != nil
             },
             standingActors: { [weak self] in self?.npcStandingActors?() ?? [] },
-            sampleWater: { [weak self] position in self?.sampleWaterHeight(at: position) },
+            sampleWater: { [weak self] position in self?.water(at: position) },
+            waterPushRace: { [weak self] actor in self?.npcWaterPushRace?(actor) ?? .normal },
             vehicleActors: npcMovementState.vehicleLinkedActors,
             collisionQueryIgnoringVehicles: { [weak self] bounds in
                 self?.collisionCandidatesIgnoringVehicles(overlapping: bounds) ?? []

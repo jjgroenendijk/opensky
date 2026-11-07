@@ -28,6 +28,7 @@ nonisolated public struct CellSceneComposition {
     public private(set) var cells: [CellCoordinate: CellScene] = [:] {
         didSet {
             residentCollision = cells.values.map(\.staticCollision)
+            residentWater = cells.values.map(\.waterVolumes).filter { !$0.volumes.isEmpty }
             residentActors = Self.mergedActorEntries(cells)
             residentActorsByKey = Dictionary(residentActors.map { ($0.key, $0) }) { first, _ in
                 first
@@ -47,6 +48,7 @@ nonisolated public struct CellSceneComposition {
     /// Kept apart from `cells`, so a collision query walks small values and does not
     /// copy each whole `CellScene` out of the dictionary.
     private var residentCollision: [StaticCollisionSet] = []
+    private var residentWater: [WaterVolumeSet] = []
     /// `actorEntries()`, merged when residency changes rather than on each read.
     private var residentActors: [RuntimeReferenceEntry] = []
     private var residentActorsByKey: [ReferenceKey: RuntimeReferenceEntry] = [:]
@@ -270,22 +272,19 @@ nonisolated public struct CellSceneComposition {
         return cells[coordinate]?.terrainHeightField?.sample(at: position)
     }
 
-    /// Water height over resident full cells, by the `sampleTerrain(at:)` ownership rule.
-    /// Nil where the owner is not resident or has no water.
-    public func sampleWaterHeight(at position: SIMD2<Float>) -> Float? {
-        let coordinate = CellGridManager.cellCoordinate(
-            for: SIMD3<Float>(position.x, position.y, 0)
-        )
-        return cells[coordinate]?.waterHeight
+    /// The water at a point over every resident cell, since a placed water box can
+    /// cross a cell seam. The highest surface wins (docs/engine/water-physics.md).
+    public func water(at point: SIMD3<Float>) -> WaterReading? {
+        residentWater.water(at: point)
     }
 
-    /// The `WATR` linear velocity of the owner cell's water, by the same rule.
-    public func sampleWaterFlow(at position: SIMD2<Float>) -> SIMD2<Float>? {
-        let coordinate = CellGridManager.cellCoordinate(
-            for: SIMD3<Float>(position.x, position.y, 0)
-        )
-        return cells[coordinate]?.renderScene.water.first?.look.shading.flowVelocity
+    /// The highest water surface over `position`, at any height.
+    public func sampleWaterHeight(at position: SIMD2<Float>) -> Float? {
+        water(at: SIMD3(position, Self.anyHeight))?.surface
     }
+
+    /// Above any land, so a box's footprint alone decides.
+    public static let anyHeight: Float = 1_000_000
 
     /// Broadphase over resident per-cell BVHs. Cross-cell capsule queries can
     /// touch both sides of a seam; each cell remains independently evictable.

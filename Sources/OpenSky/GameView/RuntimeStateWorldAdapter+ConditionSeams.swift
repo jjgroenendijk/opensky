@@ -189,5 +189,8 @@ extension RuntimeStateWorldAdapter {
         state.isSneaking = gait.map { $0 == .sneak }
         state.isSprinting = gait.map { $0 == .sprint }
         state.isSwimming = gait.map { $0 == .swim }
+        state.isInDangerousWater = game.gameSession.map {
+            $0.locomotion.status.lastPlan.water?.isDangerous ?? false
+        }
     }
 }

@@ -12,7 +12,8 @@ private final class FakeImpulseWorld: ImpulseWorld, ExplosionWorld {
     var bodies: [ImpulseBody] = []
     var actors: [MeleeTarget] = []
     var surface: Float? = 0
-    var flow = SIMD2<Float>(0, 0)
+    var current: SIMD3<Float>?
+    var dangerous = false
     var size = 1
     var impulses: [BodyImpulse] = []
     var knocks: [(ReferenceKey, SIMD3<Float>)] = []
@@ -36,8 +37,12 @@ private final class FakeImpulseWorld: ImpulseWorld, ExplosionWorld {
         surface
     }
 
-    func waterFlow(at _: SIMD2<Float>) -> SIMD2<Float>? {
-        flow
+    func waterCurrent(at _: SIMD3<Float>) -> SIMD3<Float>? {
+        current
+    }
+
+    func isDangerousWater(at _: SIMD3<Float>) -> Bool {
+        dangerous
     }
 
     func raceSize(of _: ReferenceKey) -> Int {
@@ -177,13 +182,13 @@ struct ImpulseRuntimeTests {
     @Test func fastWaterKnocksDownAlongItsFlow() {
         let runtime = ImpulseRuntime(world: world)
         world.surface = 100
-        world.flow = SIMD2(4, 0)
+        world.current = SIMD3(4 * WaterImpacts.havokScale, 0, 0)
         world.actors = [MeleeTarget(key: .player, feet: SIMD3(0, 0, 0))]
         runtime.advance()
         runtime.advance()
-        // 4 units a second passes 5 times the normal 0.75.
+        // 4 Havok units a second passes 5 times the normal 0.75.
         #expect(world.knocks.count == 1)
-        #expect(world.knocks.first?.1.x == 4)
+        #expect(world.knocks.first?.1.x == 4 * WaterImpacts.havokScale)
         world.size = 3
         #expect(!WaterImpacts.knocksDown(flowSpeed: 4, raceSize: 3, settings: .vanilla))
     }

@@ -52,6 +52,8 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var isSneaking: Bool?
     public var isSprinting: Bool?
     public var isSwimming: Bool?
+    /// Feet under the surface of a `WATR` with flag 0x1. Nil where nothing samples water.
+    public var isInDangerousWater: Bool?
     /// The base record's `ACBS` flags. Nil for the player, who has no NPC_ record here.
     public var recordFlags: ActorBase.Flags?
     /// Whether a summon or a raised corpse serves a caster now.

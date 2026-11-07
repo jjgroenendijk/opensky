@@ -44,11 +44,13 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
                 ))
             }
         }
-        return NIFCollisionModel(
+        var model = NIFCollisionModel(
             bodies: bodies,
             unsupportedReachableBlocks: unsupported,
             decodeFailures: failures
         )
+        model.currentPlanes = scene.currentPlanes
+        return model
     }
 
     private mutating func decodeCollisionObject(
@@ -263,7 +265,10 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
                 ))
             }
         }
-        return SceneTargets(transforms: visitor.transforms, names: visitor.names)
+        return SceneTargets(
+            transforms: visitor.transforms, names: visitor.names,
+            currentPlanes: visitor.currentPlanes
+        )
     }
 }
 
@@ -272,6 +277,7 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
 nonisolated public struct SceneTargets: Sendable {
     public let transforms: [Int: float4x4]
     public let names: [Int: String]
+    public var currentPlanes: [NIFCurrentPlane] = []
 }
 
 nonisolated private struct CollisionTargetTransformVisitor {
@@ -279,6 +285,9 @@ nonisolated private struct CollisionTargetTransformVisitor {
     var transforms: [Int: float4x4] = [:]
     /// Block index -> node name. The bone name on a character skeleton.
     var names: [Int: String] = [:]
+    var currentPlanes: [NIFCurrentPlane] = []
+    /// A node named `CurrentPlane` makes its first child the plane shape.
+    private var planeChildren: Set<Int> = []
 
     mutating func walk(from root: Int32) throws {
         var stack = NIFGraphStack(root: root, parent: file.walkParent(ofRoot: root))
@@ -303,6 +312,9 @@ nonisolated private struct CollisionTargetTransformVisitor {
             let world = parent * node.object.localTransform
             transforms[index] = world
             names[index] = node.object.name
+            if NIFCurrentPlane.isCurrentPlane(node.object.name), let first = node.children.first {
+                planeChildren.insert(Int(first))
+            }
             stack.push(
                 children: node.children,
                 parent: world,
@@ -310,12 +322,21 @@ nonisolated private struct CollisionTargetTransformVisitor {
             )
         } else if block.typeName == "BSTriShape" {
             let shape = try NIFTriShape(data: block.data, header: file.header)
-            transforms[index] = parent * shape.object.localTransform
-            names[index] = shape.object.name
+            visitShape(shape, index: index, parent: parent)
         } else if block.typeName == "BSSubIndexTriShape" {
             let shape = try NIFSubIndexTriShape(data: block.data, header: file.header).shape
-            transforms[index] = parent * shape.object.localTransform
-            names[index] = shape.object.name
+            visitShape(shape, index: index, parent: parent)
+        }
+    }
+
+    private mutating func visitShape(_ shape: NIFTriShape, index: Int, parent: float4x4) {
+        let world = parent * shape.object.localTransform
+        transforms[index] = world
+        names[index] = shape.object.name
+        if NIFCurrentPlane.isCurrentPlane(shape.object.name) || planeChildren.contains(index) {
+            currentPlanes.append(NIFCurrentPlane(
+                transform: world, boundRadius: shape.boundingSphereRadius
+            ))
         }
     }
 }

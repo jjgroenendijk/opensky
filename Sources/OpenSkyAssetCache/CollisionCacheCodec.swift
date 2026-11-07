@@ -23,6 +23,8 @@ nonisolated public enum CollisionCacheCodec {
         out.strings(model.decodeFailures.map(\.message))
         out.int(model.bodies.count)
         model.bodies.forEach { encode($0, into: &out) }
+        out.array(model.currentPlanes.map(\.transform))
+        out.array(model.currentPlanes.map(\.boundRadius))
         return out.data
     }
 
@@ -37,8 +39,12 @@ nonisolated public enum CollisionCacheCodec {
         }
         let bodyCount = try ModelCacheCodec.count(input.int(), in: data)
         let bodies = try (0 ..< bodyCount).map { _ in try body(&input) }
-        guard input.isAtEnd else { throw CachePayloadError.truncated }
-        return NIFCollisionModel(
+        let planeTransforms = try input.array(float4x4.self)
+        let planeRadii = try input.array(Float.self)
+        guard input.isAtEnd, planeTransforms.count == planeRadii.count else {
+            throw CachePayloadError.truncated
+        }
+        var model = NIFCollisionModel(
             bodies: bodies,
             unsupportedReachableBlocks: Dictionary(
                 zip(names, counts.map { Int($0) }), uniquingKeysWith: { first, _ in first }
@@ -47,6 +53,10 @@ nonisolated public enum CollisionCacheCodec {
                 NIFCollisionFailure(block: Int($0), message: $1)
             }
         )
+        model.currentPlanes = zip(planeTransforms, planeRadii).map {
+            NIFCurrentPlane(transform: $0, boundRadius: $1)
+        }
+        return model
     }
 
     private static func encode(_ body: NIFCollisionBody, into out: inout CachePayloadWriter) {

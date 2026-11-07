@@ -42,6 +42,7 @@ nonisolated public struct CellGeometryBuild {
     public var vehicleFollowers: Set<UInt32> = []
     /// An interior's rooms and portals, for occlusion culling.
     public var rooms: RoomPortalGraph?
+    public var waterVolumes: WaterVolumeSet = .empty
 
     public var referenceIndex: RuntimeReferenceIndex {
         RuntimeReferenceIndex(
@@ -224,6 +225,7 @@ nonisolated extension CellSceneBuilder {
         _ found: FoundCell, geometry: CellGeometryBuild, to scene: inout CellScene
     ) {
         scene.cellFormID = FormID(found.formID)
+        scene.waterVolumes = geometry.waterVolumes
         scene.trespass = CellTrespassFlags(
             isPublicArea: found.cell.flags.contains(.publicArea),
             isOffLimits: found.cell.isOffLimits

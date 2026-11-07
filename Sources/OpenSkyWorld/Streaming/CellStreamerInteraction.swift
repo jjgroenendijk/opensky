@@ -20,17 +20,22 @@ extension CellStreamer {
     }
 
     /// Water-surface height for the locomotion bridge's swim test.
-    /// Interiors report none: a vanilla interior authors its water as placed
-    /// geometry rather than as the cell-wide plane XCLW describes.
     public func sampleWaterHeight(at position: SIMD2<Float>) -> Float? {
-        guard interiorScene == nil else { return nil }
+        if let interiorScene {
+            return [interiorScene.waterVolumes].water(at: SIMD3(
+                position,
+                CellSceneComposition.anyHeight
+            ))?.surface
+        }
         return composition.sampleWaterHeight(at: position)
     }
 
-    /// The water's flow, units per second, where `sampleWaterHeight` finds water.
-    public func sampleWaterFlow(at position: SIMD2<Float>) -> SIMD2<Float>? {
-        guard interiorScene == nil else { return nil }
-        return composition.sampleWaterFlow(at: position)
+    /// The water at a point: its surface, its current, and its type.
+    public func water(at point: SIMD3<Float>) -> WaterReading? {
+        if let interiorScene {
+            return [interiorScene.waterVolumes].water(at: point)
+        }
+        return composition.water(at: point)
     }
 
     /// Every collision candidate overlapping `bounds`: the per-cell static geometry

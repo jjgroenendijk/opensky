@@ -81,6 +81,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 310 | `GetInWorldspace` | `WRLD` | 1 in an exterior cell of that worldspace |
 | 313 | `GetPairedAnimation` | none | 1 while the actor plays either half of a paired animation |
 | 323 | `GetCombatState` | none | 0 not in combat, 1 in combat, 2 searching |
+| 332 | `IsInDangerousWater` | none | 1 while the actor's feet are under water whose `WATR` has flag 0x1 |
 | 353 | `IsActor` | none | 1 when the run-on is an actor |
 | 354 | `IsEssential` | none | 1 when the base record has the essential flag |
 | 362 | `HasLinkedRef` | `KYWD` or null | 1 when an `XLKR` link has that keyword |
@@ -262,6 +263,8 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
   unavailable.
 - `IsSprinting` and `IsSwimming` read the player's gait, like `IsSneaking`. An NPC fails as
   unavailable.
+- `IsInDangerousWater` reads the water the player's last step found
+  ([water physics](/engine/water-physics.md#dangerous-water)). An NPC fails as unavailable.
 - `IsEssential`, `IsProtected`, and `IsUnique` read the `ACBS` flags 0x02, 0x800, and 0x20 of
   the actor's own `NPC_` record (UESP "Skyrim Mod:Mod File Format/NPC_"), not a template's.
   A script's `SetEssential` is not read here yet. The player fails as unavailable.

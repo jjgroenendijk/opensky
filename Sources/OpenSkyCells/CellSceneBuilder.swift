@@ -290,7 +290,8 @@ nonisolated public final class CellSceneBuilder {
                 world: world,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence,
-                vehicleFollowers: resolved.vehicleFollowers
+                vehicleFollowers: resolved.vehicleFollowers,
+                waterVolumes: waterVolumes(effective, found: found, in: environment)
             ),
             counts: counts
         )

@@ -118,6 +118,8 @@ nonisolated public struct CellScene: Sendable {
     public var nodeAnimations: [CellNodeAnimation] = []
     /// The sequence doors' collision, moved with their leaves.
     public var doorCollision: [CellDoorCollision] = []
+    /// Swimmable water and currents (docs/engine/water-physics.md).
+    public var waterVolumes: WaterVolumeSet = .empty
 
     public init(
         renderScene: RenderScene,

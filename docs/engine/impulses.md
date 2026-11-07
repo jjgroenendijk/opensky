@@ -102,8 +102,9 @@ or a slide does not rattle.
 
 ## Water
 
-Water comes from the resident exterior cells: the `XCLW` height and the `WATR` linear
-velocity of the cell's water type.
+Water comes from the water boxes of the resident cells: cell water, placed water such as rivers,
+and current planes ([water physics](/engine/water-physics.md)). Nothing splashes in dangerous
+water.
 
 - A loose body that crosses the surface, up or down, shows `sSplashParticles` there. A key
   that first appears under water does not splash, because it may have loaded there. A body
@@ -120,7 +121,7 @@ velocity of the cell's water type.
   `sExplosionSplashParticles` at radius over `fExplosionSplashRadius` (250) of its size.
   `Update.esm` sets that model to `FXEmptyObject.nif`, so nothing shows in the unmodded game.
 - An actor in water that flows at `fWaterKnockdownVelocity` (5) times its size factor or
-  faster is knocked down along the flow, once per entry. The factor is
+  faster, in Havok units per second, is knocked down along the flow, once per entry. The factor is
   `fWaterKnockdownSizeSmall` (0.6), `...Normal` (0.75), `...Large` (1.25), or
   `...VeryLarge` (1.5), by the RACE `DATA` size. The fastest vanilla water type,
   `RiverWaterFlowSE`, flows at about 2.8, so nothing in the unmodded game passes.

@@ -182,6 +182,26 @@ nonisolated public struct NIFCollisionFailure: Equatable, Sendable {
     }
 }
 
+/// A hidden `CurrentPlane` shape, where a creek or waterfall current pushes
+/// (docs/engine/water-physics.md#current-planes).
+nonisolated public struct NIFCurrentPlane: Equatable, Sendable {
+    /// Model-local.
+    public let transform: float4x4
+    /// The shape's own bound radius, before `transform` scales it.
+    public let boundRadius: Float
+
+    public init(transform: float4x4, boundRadius: Float) {
+        self.transform = transform
+        self.boundRadius = boundRadius
+    }
+
+    /// `CurrentPlane` or `CurrentPlane:0`, in any case.
+    public static func isCurrentPlane(_ name: String?) -> Bool {
+        guard let name = name?.lowercased() else { return false }
+        return name == "currentplane" || name.hasPrefix("currentplane:")
+    }
+}
+
 nonisolated public struct NIFCollisionModel: Sendable {
     /// 64 Skyrim units/yard converted to units/metre. Community constant;
     /// verified against vanilla Whiterun render/collision bounds in 4.2 probe.
@@ -192,6 +212,7 @@ nonisolated public struct NIFCollisionModel: Sendable {
     public let unsupportedReachableBlocks: [String: Int]
     /// Per-root decode failures; other roots remain available.
     public let decodeFailures: [NIFCollisionFailure]
+    public var currentPlanes: [NIFCurrentPlane] = []
 
     public init(
         bodies: [NIFCollisionBody], unsupportedReachableBlocks: [String: Int],

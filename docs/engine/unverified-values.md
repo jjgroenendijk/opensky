@@ -153,6 +153,9 @@ the detail and the sources it did find.
 | Weather global meaning | OpenSky's reading | [weather format](/formats/weather.md) |
 | Location tie rule | Inferred | [locations](/formats/locations.md) |
 | Terrain with no height | No guessed height | [terrain](/engine/terrain.md) |
+| Current push speed cap | The swim speed while swimming, else the run speed | [water physics](/engine/water-physics.md#actors-in-a-current) |
+| Cell water box floor | The lowest land height of the cell; 4096 units deep without land | [water physics](/engine/water-physics.md#where-the-boxes-come-from) |
+| Shaped current positions | Read as Havok units | [water physics](/engine/water-physics.md#current-lists) |
 | World sound roll interval | OpenSky's interval | [world sounds](/engine/world-sfx.md) |
 | Music above a region | Not confirmed | [music](/engine/music.md) |
 | Loading screen timing | 1.5 s; 0.4 s fade | [loading screens](/engine/loading-screens.md) |

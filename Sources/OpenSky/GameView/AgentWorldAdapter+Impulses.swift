@@ -5,8 +5,11 @@ import Foundation
 import OpenSkyAgentControl
 import OpenSkyCombat
 import OpenSkyFormatsESM
+import OpenSkyPhysics
+import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyWorld
 import simd
 
 extension AgentWorldAdapter {
@@ -33,7 +36,21 @@ extension AgentWorldAdapter {
             "knockdowns": knockdownsJSON(),
             "splashCount": .init(impulses.splashCount),
             "waterRings": .init(game.renderer?.waterRipples.ripples.count ?? 0),
+            "playerWater": playerWaterJSON(),
             "events": .array(impulses.events.map(eventJSON))
+        ]
+    }
+
+    /// The water over the player's feet and what its current added to the last step.
+    private func playerWaterJSON() -> AgentJSON {
+        guard let plan = game.gameSession?.locomotion.status.lastPlan, let water = plan.water
+        else { return .null }
+        return [
+            "surface": .init(water.surface),
+            "current": .init(water.current),
+            "push": .init(plan.waterPush),
+            "dangerous": .bool(water.isDangerous),
+            "waterType": water.waterType.map { .formID($0.rawValue) } ?? .null
         ]
     }
 

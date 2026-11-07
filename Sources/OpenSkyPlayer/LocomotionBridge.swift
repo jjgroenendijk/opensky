@@ -63,8 +63,9 @@ nonisolated public final class LocomotionBridge {
     /// The first-person graph, run beside the third-person one. Nil until attached, or on
     /// an install with no first-person files; then no arms are drawn.
     public private(set) var firstPersonGraph: BehaviorGraphInstance?
-    /// Water surface height at a world XY, or nil where the cell has no water.
-    public var sampleWater: ((SIMD2<Float>) -> Float?)?
+    /// The water at a world point, or nil where there is none.
+    public var sampleWater: ((SIMD3<Float>) -> WaterReading?)?
+    public var waterPushRace = WaterPushRace.normal
     /// The pose the last graph update produced, published here because only this steps
     /// the graph, on the simulation clock (PlayerAnimationPlayback.swift).
     public let pose: PlayerPoseBuffer
@@ -151,7 +152,7 @@ nonisolated public final class LocomotionBridge {
     public init(
         configuration: PlayerMovementConfiguration,
         graph: BehaviorGraphInstance? = nil,
-        sampleWater: ((SIMD2<Float>) -> Float?)? = nil,
+        sampleWater: ((SIMD3<Float>) -> WaterReading?)? = nil,
         pose: PlayerPoseBuffer = PlayerPoseBuffer()
     ) {
         self.pose = pose
@@ -182,7 +183,8 @@ nonisolated public final class LocomotionBridge {
             status.lastPlan = .still
             return .still
         }
-        let swim = resolveSwim(at: state)
+        let water = sampleWater?(state.feetPosition)
+        let swim = resolveSwim(water, at: state)
         let gait = resolveGait(swimming: swim != nil)
         let direction = intentDirection(yaw: state.yaw)
         let moving = direction != SIMD2<Float>()
@@ -211,6 +213,7 @@ nonisolated public final class LocomotionBridge {
         )
         plan.horizontalDisplacement = resolved.displacement
         plan.motionSource = resolved.source
+        plan.applyCurrent(water, state: state, configuration: configuration, race: waterPushRace)
 
         previousYaw = state.yaw
         wasMoving = moving
@@ -283,12 +286,8 @@ nonisolated public final class LocomotionBridge {
     /// The water surface to swim against, or nil to stay on land. Hysteresis:
     /// entering needs `swimEnterDepth`, leaving needs the shallower
     /// `swimExitDepth`.
-    private func resolveSwim(at state: LocomotionStepState) -> Float? {
-        guard
-            let sampleWater,
-            let surface = sampleWater(SIMD2(state.feetPosition.x, state.feetPosition.y)),
-            surface.isFinite
-        else { return nil }
+    private func resolveSwim(_ water: WaterReading?, at state: LocomotionStepState) -> Float? {
+        guard let surface = water?.surface, surface.isFinite else { return nil }
         let depth = surface - state.feetPosition.z
         let threshold = wasSwimming ? Self.swimExitDepth : Self.swimEnterDepth
         return depth >= threshold ? surface : nil
