@@ -114,7 +114,7 @@ final class AIWorldAdapter {
     }
 
     func wireNPCMovement(gameSession: GameSession, streamer: CellStreamer) {
-        streamer.npcMovementConfiguration = gameSession.locomotion.configuration
+        streamer.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
         let worldState = game.worldState
         let packages = game.packages
         let commands = game.followerCommands
