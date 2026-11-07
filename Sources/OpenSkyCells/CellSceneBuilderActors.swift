@@ -311,7 +311,7 @@ nonisolated extension CellSceneBuilder {
             let roll = entry.map { leveledRoll(of: $0.key, base: actor.base, deltas: deltas) }
             let templates = resolvers.template.rolling(roll)
             let appearance = try templates.resolve(base: actor.base)
-            let visual = try resolvers.visual.resolve(
+            var visual = try resolvers.visual.resolve(
                 appearance: appearance,
                 equipped: runtimeEquipment(entry: entry, deltas: deltas),
                 roll: roll,
@@ -320,6 +320,12 @@ nonisolated extension CellSceneBuilder {
                 entry.flatMap { deltas[$0.key]?.component(ActorPresentationState.self) },
                 textureSets: resolvers.visual.textureSets
             )
+            if
+                visual.headSource == .assembled,
+                let face = PlayerAppearanceOverride(face: appearance)
+            {
+                visual = chargenVisual(visual, appearance: face)
+            }
             let placed = actorApplyingRuntimeTransform(actor, entry: entry, deltas: deltas)
             let death = entry.flatMap { deltas[$0.key]?.component(ActorDeathState.self) }
             guard death?.severedNode != nil else { return .resolved(placed, visual, head: nil) }

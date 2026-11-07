@@ -47,10 +47,9 @@ struct FacialExpressionCoreTests {
         #expect(weights["LookRight"] == nil && weights["LookUp"] == nil)
     }
 
-    @Test func aSpeakingEmotionEasesInAtTheChangeSpeed() {
-        let settings = FaceAnimationSettings.vanilla
-        let rate = settings.speakingEmotionRate(rolls: (0.3, 0.7))
-        #expect(abs(rate - 1 / 1.5) < 0.0001, "100 points over 1.5 seconds")
+    @Test func anExpressionEasesInAtTwoPlusItsStrengthPerSecond() {
+        #expect(FacialMoodRules.rate(toward: ["DialogueHappy": 1]) == 3)
+        #expect(FacialMoodRules.rate(toward: [:]) == 2)
         let half = FacialExpressionCore.ease([:], toward: ["DialogueHappy": 1], step: 0.5)
         #expect(half == ["DialogueHappy": 0.5])
         let gone = FacialExpressionCore.ease(half, toward: [:], step: 1)
@@ -59,13 +58,11 @@ struct FacialExpressionCoreTests {
 
     @Test func theFaceSettingsComeFromTheGame() throws {
         let store = try GameSettingFixture.store([
-            "fBlinkDelayMax": .float(4), "fEyePitchMaxOffsetEmotionSad": .float(0.2),
-            "fGameplaySpeakingEmotionMaxChangeValue": .float(3)
+            "fBlinkDelayMax": .float(4), "fEyePitchMaxOffsetEmotionSad": .float(0.2)
         ])
         let settings = FaceAnimationSettings.resolve(store: store)
         #expect(settings.blinkDelayMax == 4 && settings.blinkDelayMin == 0.5)
         #expect(settings.eyeRanges["Sad"]?.pitchMax == 0.2)
-        #expect(settings.speakingChangeMax == 3)
     }
 
     @Test func aBlinkIsAddedOnTopOfAnEmotion() {

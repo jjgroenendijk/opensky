@@ -73,10 +73,11 @@ No TRI holds more types than its count allows. Each race's `MPAV` fields (UESP "
 Mod:Mod File Format/RACE", <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/RACE>) set every
 bit of their first two flag words in vanilla, so they do not limit the types.
 
-[WARNING] The vanilla Head category also has an Age control (`sRSMAge`). No record names what it
-changes, so OpenSky leaves it out. A lead: each race's `FTSM`/`FTSF` list mixes complexion
-texture sets with age ones, such as `SkinHeadMaleNordComplexion_Age40` and
-`SkinHeadMaleKhajiitOld`. The movie's own test list sends only one `ChangeFaceDetails` slider.
+The game's race menu has no Age control, although the `sRSMAge` label exists. Age shows only
+through Complexion: each race's `FTSM`/`FTSF` list mixes complexion texture sets with age ones,
+such as `SkinHeadMaleNordComplexion_Age40` and `SkinHeadMaleKhajiitOld`, and Complexion's range
+is that list. Laugh Lines is a tint mask. Source: a clean-room read of `SkyrimSE.exe` on
+2026-11-07; the movie's own test list also sends only one `ChangeFaceDetails` slider.
 
 ## Limited mode
 
@@ -235,7 +236,3 @@ and the player's body is drawn even in first person. It uses the
 [dialogue camera](/engine/dialogue-camera.md) framing, taken from the side the player faces.
 [WARNING] The game's race menu camera is not documented, and `Skyrim.esm` has no setting for it,
 so this framing is OpenSky's choice.
-
-## Not done yet
-
-- The Age control, above.

@@ -3,6 +3,7 @@
 // live in the coordinators (docs/engine/coordinators.md).
 
 import OpenSkyActorPresentation
+import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
 import OpenSkyCombat
@@ -24,6 +25,7 @@ import simd
 @MainActor
 protocol PlayerWorldHost: AnyObject {
     var actorWorld: ActorWorldAdapter { get }
+    var actorValues: ActorValueCoordinator { get }
     var audio: AudioCoordinator { get }
     var combat: CombatCoordinator { get }
     var dialogueMenu: DialogueMenuController { get }
@@ -215,12 +217,38 @@ extension PlayerWorldAdapter: FaceMorphWorld {
     }
 
     func faceMorphPlayback(for actor: FormID) -> FaceMorphPlayback? {
-        game.renderer?.scene.faceMorphPlayback(for: actor)
+        if actor == PlayerBody.actorFormID {
+            return game.gameSession?.playerBody?.face
+        }
+        return game.renderer?.scene.faceMorphPlayback(for: actor)
     }
 
     var faceMorphPlaybacks: [FaceMorphPlayback] {
-        game.renderer?.scene.animations.compactMap { $0 as? FaceMorphPlayback } ?? []
+        let scene = game.renderer?.scene.animations.compactMap { $0 as? FaceMorphPlayback }
+        return (scene ?? []) + [game.gameSession?.playerBody?.face].compactMap(\.self)
     }
+
+    func faceMood(of actor: FormID) -> FaceMoodInput {
+        let key = actor == PlayerBody.actorFormID
+            ? ReferenceKey.player : game.streamer?.referenceEntry(formID: actor)?.key
+        guard let key else { return .calm }
+        let facts = key == .player
+            ? game.combat.playerActionFacts : game.combat.loop?.phase(of: key)?.actionFacts
+        let mood = game.actorWorld.actorValueHolder(for: key).flatMap { holder in
+            game.actorValues.runtime?.value(at: Self.moodActorValue, on: holder)
+        }
+        // The player's face reads only its own draw and swing, an NPC's its combat.
+        let swings = [ActorAttackState.draw, .swing].contains(facts?.attackState ?? .none)
+        return FaceMoodInput(
+            isFleeing: facts?.isFleeing == true,
+            isInCombat: key != .player && game.actorWorld.isInCombat(key),
+            isAttacking: key == .player && swings,
+            mood: mood.map { Int($0) } ?? 0
+        )
+    }
+
+    /// `Mood`, actor value 4.
+    private static let moodActorValue: Int32 = 4
 }
 
 extension PlayerWorldAdapter: HeadTrackingWorld {

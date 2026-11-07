@@ -33,52 +33,10 @@ nonisolated extension CellSceneBuilder {
         return visual
     }
 
-    /// One morph buffer per skinned head part mesh whose part has a chargen TRI
-    /// of the same vertex count, already set to the slider weights.
-    func chargenMorphs(
-        assembly: ActorAssembly<ActorRenderAsset>, appearance: PlayerAppearanceOverride
-    ) -> [ObjectIdentifier: FaceMorphBuffer] {
-        let weights = ChargenMorphs.weights(
-            morphs: appearance.faceMorphs,
-            parts: appearance.faceParts
-        )
-        guard !weights.isEmpty, let records = actorVisualResolver?.headParts, let fileSystem else {
-            return [:]
-        }
-        var buffers: [ObjectIdentifier: FaceMorphBuffer] = [:]
-        for model in assembly.models {
-            guard
-                case let .headPart(part) = model.role,
-                let path = records[part.formID.rawValue]?.morphPaths
-                    .first(where: { $0.kind == .chargen })?.path,
-                case let .success(tri) = faceMorphFile(Self.meshKey(path), fileSystem: fileSystem)
-            else { continue }
-            for mesh in model.asset.model.meshes where mesh.isSkinned {
-                guard
-                    let buffer = try? FaceMorphBuffer(
-                        device: meshes.device,
-                        tri: tri,
-                        mesh: mesh
-                    )
-                else {
-                    Self.logger.info("chargen TRI \(path, privacy: .public) does not fit its mesh")
-                    continue
-                }
-                buffer.update(weights: weights)
-                buffers[ObjectIdentifier(mesh)] = buffer
-            }
-        }
-        return buffers
-    }
-
     /// The tint masks of the player's race and sex.
     func raceTintMasks(_ appearance: PlayerAppearanceOverride) -> [RaceTintMask] {
         let head = actorVisualResolver?.races[appearance.race.rawValue]?.details.headData
         return (appearance.isFemale ? head?.female : head?.male)?.tintMasks ?? []
-    }
-
-    private static func meshKey(_ path: String) -> String {
-        path.lowercased().hasPrefix("meshes\\") ? path : "meshes\\\(path)"
     }
 
     /// A key named after the tint layers, so the same face reuses one upload.

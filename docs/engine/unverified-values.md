@@ -79,7 +79,8 @@ the detail and the sources it did find.
 | Horse turn ramp | Starts at 0, adds `iHorseTurnDegreesRampUpPerSecond` each second up to `iHorseTurnDegreesPerSecond`; resets when the turn ends | [riding](/engine/riding.md#steering) |
 | Horse sprint drain and HUD | The player's sprint drain at no worn weight; the stamina meter shows the horse's stamina | [riding](/engine/riding.md#sprint-and-stamina) |
 | Head tracking | 384 units; angles in degrees; behind angle and neck share | [head tracking](/engine/head-tracking.md) |
-| Face morph settings | Units read as seconds and emotion points; offsets as radians | [face morphs](/engine/face-morphs.md) |
+| Face morph settings | Units read as seconds; eye offsets as radians | [face morphs](/engine/face-morphs.md) |
+| Race morph weight | The race's own TRI target at weight 1 on an assembled head | [head part assembly](/engine/head-part-assembly.md#shape-colour-and-expressions) |
 | Navigation | 128-unit ledge rule; 512-unit gait rule | [navigation](/engine/navigation.md) |
 | `GetCurrentAIProcedure` of procedures not measured | -1 | [world condition functions](/engine/condition-functions-world.md#packages) |
 | Package fallback on a blocked path | A guess at the game's rule | [package schedules](/engine/package-schedules.md) |
@@ -222,7 +223,7 @@ the detail and the sources it did find.
 | Distant LOD level limit | `2 x level1`, capped | [distant LOD](/engine/distant-lod.md) |
 | First-person shadow rule | OpenSky's rule | [first person](/engine/first-person.md) |
 | Main menu smoke and start | Placement checked by eye | [main menu](/engine/main-menu.md) |
-| Race menu camera and Age control | OpenSky's framing | [race menu](/engine/race-menu.md) |
+| Race menu camera | OpenSky's framing | [race menu](/engine/race-menu.md) |
 | `WarHorseMode` HUD rule | Inferred | [HUD](/rendering/hud.md) |
 | `RFCT` rotate-to-face flag | Not used | [visual effects](/rendering/visual-effects.md) |
 

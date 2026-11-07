@@ -30,7 +30,9 @@ nonisolated extension CellSceneBuilder {
             let morphs = request.firstPerson ? nil : request.appearance
             return PlayerRigAssembly(
                 assembly: assembly,
-                faceMorphs: morphs.map { chargenMorphs(assembly: assembly, appearance: $0) } ?? [:]
+                faceMorphs: morphs.map {
+                    assembledHeadMorphs(assembly: assembly, face: $0).bindings
+                } ?? [:]
             )
         }
     }

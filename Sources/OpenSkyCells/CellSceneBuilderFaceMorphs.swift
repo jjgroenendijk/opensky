@@ -9,6 +9,7 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyRenderResources
+import OpenSkyRuntimeState
 
 nonisolated private struct FaceMorphAssociationState {
     var bindings: [ObjectIdentifier: FaceMorphBuffer] = [:]
@@ -21,6 +22,9 @@ nonisolated extension CellSceneBuilder {
         assembly: ActorAssembly<ActorRenderAsset>
     ) -> FaceMorphPlayback? {
         guard let resolver = actorVisualResolver, let fileSystem else { return nil }
+        if assembly.visual.headSource == .assembled {
+            return assembledFacePlayback(assembly: assembly)
+        }
         let parts = resolver.expressionHeadParts(for: assembly.visual.appearance)
         let faceModels = assembly.models.filter {
             if case .faceGenHead = $0.role {
@@ -43,6 +47,21 @@ nonisolated extension CellSceneBuilder {
             bindings: state.bindings,
             pairedPaths: state.pairedPaths.sorted(),
             misses: state.misses
+        )
+    }
+
+    /// A head built from parts carries its morphs in its own head part meshes.
+    private func assembledFacePlayback(
+        assembly: ActorAssembly<ActorRenderAsset>
+    ) -> FaceMorphPlayback? {
+        guard let face = PlayerAppearanceOverride(face: assembly.visual.appearance) else {
+            return nil
+        }
+        let morphs = assembledHeadMorphs(assembly: assembly, face: face)
+        guard !morphs.bindings.isEmpty else { return nil }
+        return FaceMorphPlayback(
+            actor: assembly.actor, bindings: morphs.bindings,
+            pairedPaths: morphs.pairedPaths, misses: morphs.misses
         )
     }
 

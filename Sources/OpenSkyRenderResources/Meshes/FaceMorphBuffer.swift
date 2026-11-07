@@ -74,20 +74,31 @@ nonisolated public final class FaceMorphBuffer: Sendable {
     public let buffer: MTLBuffer
     public let vertexCount: Int
     public let targets: [FaceMorphTarget]
+    /// Weights that never change, such as the chargen sliders, added under every update.
+    public let fixedWeights: [String: Float]
     /// Written on the main actor after the build queue hands the buffer over.
     private let deltas: Mutex<[MorphVertexDelta]>
 
-    public init(device: MTLDevice, tri: TRIFile, mesh: RenderMesh) throws {
-        guard tri.baseVertices.count == mesh.vertexCount else {
+    public convenience init(device: MTLDevice, tri: TRIFile, mesh: RenderMesh) throws {
+        try self.init(device: device, tris: [tri], mesh: mesh)
+    }
+
+    /// One buffer for several TRI files of the same mesh, such as a head part's race,
+    /// chargen, and expression morphs.
+    public init(
+        device: MTLDevice, tris: [TRIFile], mesh: RenderMesh, fixedWeights: [String: Float] = [:]
+    ) throws {
+        if let wrong = tris.first(where: { $0.baseVertices.count != mesh.vertexCount }) {
             throw FaceMorphError.vertexCountMismatch(
-                tri: tri.baseVertices.count, mesh: mesh.vertexCount
+                tri: wrong.baseVertices.count, mesh: mesh.vertexCount
             )
         }
         vertexCount = mesh.vertexCount
-        let targets = FaceMorphComposer.targets(from: tri)
+        let targets = tris.flatMap(FaceMorphComposer.targets(from:))
         self.targets = targets
+        self.fixedWeights = fixedWeights
         deltas = Mutex(FaceMorphComposer.compose(
-            targets: targets, weights: [:], vertexCount: mesh.vertexCount
+            targets: targets, weights: fixedWeights, vertexCount: mesh.vertexCount
         ))
         let length = vertexCount * MorphVertexLayout.stride * GPUFactory.maxFramesInFlight
         guard let buffer = device.makeBuffer(length: length, options: .storageModeShared) else {
@@ -102,7 +113,8 @@ nonisolated public final class FaceMorphBuffer: Sendable {
 
     public func update(weights: [String: Float]) {
         let composed = FaceMorphComposer.compose(
-            targets: targets, weights: weights, vertexCount: vertexCount
+            targets: targets, weights: weights.merging(fixedWeights) { $1 },
+            vertexCount: vertexCount
         )
         deltas.withLock { $0 = composed }
     }

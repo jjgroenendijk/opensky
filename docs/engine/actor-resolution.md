@@ -221,6 +221,10 @@ A part whose model path ends in `_1.nif` loads its `_0.nif` sibling too. Each po
 normal moves from thin to heavy by the weight. A shape whose vertex count differs between the
 two files keeps the heavy vertices, and a missing sibling keeps the heavy model.
 
+The weight blend is the only body morph the game has. Heads add the race and chargen morphs
+([head part assembly](/engine/head-part-assembly.md#shape-colour-and-expressions)). Source: a
+clean-room read of `SkyrimSE.exe` on 2026-11-07.
+
 Where OpenSky differs: the weight rounds to tenths, so the cache holds at most 11 copies of one
 body. An actor with no `NAM7` reads as 50; no source gives the game's default.
 

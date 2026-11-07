@@ -33,7 +33,8 @@ nonisolated public struct PlayerRigRequest: Equatable, Sendable {
 /// The meshes of one rig, before they are bound to a skeleton and a pose.
 nonisolated public struct PlayerRigAssembly: Sendable {
     public let assembly: ActorAssembly<ActorRenderAsset>
-    /// Chargen slider morphs on the head parts; empty for the arms and a baked head.
+    /// Race, chargen, and expression morphs on the head parts; empty for the arms and a
+    /// baked head.
     public let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
 
     public init(
