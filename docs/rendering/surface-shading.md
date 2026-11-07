@@ -234,13 +234,14 @@ game's was (53, 99, 116), which is the game's colour encoded as sRGB a second ti
 
 ## Output clamp
 
-After fog, the game's lighting shader multiplies the colour by a scale that it sets each frame,
-and then clamps each channel to at most 1 (behaviour described from a clean-room read of the
-game's shaders in `Skyrim - Shaders.bsa` and of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). The
-clamp comes before any frame-wide step such as eye adaptation, so a surface that is brighter
-than 1 after lighting cannot get brighter on screen. OpenSky clamps lit meshes and terrain the
-same way. It applies no scale, because the read did not find its value. Effect shapes, grass,
-water, and the sky are not clamped.
+After fog, the game's lighting shader multiplies the colour by a fixed scene scale of 1/1.2 and
+clamps each channel to at most 1 (behaviour described from a clean-room read of the game's
+shaders in `Skyrim - Shaders.bsa` and of `SkyrimSE.exe` 1.7.104.0, 2026-11-06). The scale does
+not depend on the hour, the weather, or the image space. The sky takes the same scale with its
+sky scale ([light scales](/rendering/image-space.md#bloom-and-light-scales)). The clamp comes
+before any frame-wide step, so a surface brighter than 1 after lighting cannot get brighter on
+screen. OpenSky does both for lit meshes and terrain. The scale applies to the gamma value, so
+in linear terms it is `(1/1.2)^2.2`. Effect shapes, grass, water, and the sky are not clamped.
 
 ## Refraction
 

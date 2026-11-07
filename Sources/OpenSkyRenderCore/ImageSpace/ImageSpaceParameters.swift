@@ -14,7 +14,8 @@ nonisolated public struct ImageSpaceHDR: Equatable, Sendable {
     public var receiveBloomThreshold: Float = 0
     public var white: Float = 0
     public var sunlightScale: Float = 1
-    public var skyScale: Float = 1
+    /// Added to the sky, so no image space adds nothing.
+    public var skyScale: Float = 0
     public var eyeAdaptStrength: Float = 0
 
     public init() {}

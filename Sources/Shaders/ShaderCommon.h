@@ -302,11 +302,13 @@ static inline float3 applyFog(float3 color, float3 worldPosition, constant Frame
     return toLinear(mix(toGamma(color), fogColor, fog.y));
 }
 
-// The game's lighting shader clamps each channel of the fogged colour to 1, before any
-// frame-wide step such as eye adaptation (docs/rendering/surface-shading.md).
+// The game's lighting shader ends by scaling the fogged colour by 1/1.2 in its gamma values
+// and clamping each channel to 1, before any frame-wide step (docs/rendering/surface-shading.md).
+constant float litOutputScale = 0.8333333;
+
 static inline float3 clampLitOutput(float3 color)
 {
-    return min(color, float3(1.0));
+    return min(color * pow(litOutputScale, 2.2), float3(1.0));
 }
 
 // An additive colour adds to what is behind it, which the fog already covers, so the

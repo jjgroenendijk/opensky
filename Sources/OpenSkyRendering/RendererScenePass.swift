@@ -66,8 +66,7 @@ extension Renderer {
             shadowsEnabled: shadowsActiveThisFrame ? 1 : 0,
             shadowInverseResolution: 1 / Float(shadow.map.width),
             shadowSampleRadius: shadowSampleRadius,
-            weatherSkyEnabled: light.weatherSky == nil ? 0 : skyCelestial != nil
-                && frameCelestial != nil ? 2 : 1,
+            weatherSkyEnabled: weatherSkyMode(light),
             weatherSkyUpperColor: light.weatherSky?.skyUpper ?? .zero,
             weatherSkyLowerColor: light.weatherSky?.skyLower ?? .zero,
             weatherHorizonColor: light.weatherSky?.horizon ?? .zero,
@@ -583,5 +582,10 @@ extension Renderer {
         encodeFirstPersonArms(descriptor: descriptor, state: &state)
         state.encoder.setTriangleFillMode(.fill)
         return true
+    }
+
+    /// 0 without a weather sky, 2 when the sky objects draw too, else 1.
+    func weatherSkyMode(_ light: FrameLight) -> UInt32 {
+        light.weatherSky == nil ? 0 : skyCelestial != nil && frameCelestial != nil ? 2 : 1
     }
 }

@@ -69,7 +69,9 @@ typedef struct
     /// rgb tint, a opacity.
     vector_float4 colorAlpha;
     vector_float2 uvOffset;
-    vector_float2 padding;
+    /// Added to the gamma colour: the scene scale times the image space sky scale.
+    float lift;
+    float padding;
 } CloudLayerUniforms;
 
 typedef NS_ENUM(EnumBackingType, SkyObjectFlag)

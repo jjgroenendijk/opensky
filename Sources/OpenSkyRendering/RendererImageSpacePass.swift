@@ -209,11 +209,12 @@ extension Renderer {
             && ToneMappingState.isActive(parameters.hdr)
         let measured = imageSpacePass.takeMeanLuminance(slot: slot)
         let deltaTime = eyeAdaptationClock.advance(to: CACurrentMediaTime(), paused: false)
-        if toneMaps, let measured {
+        if frameInput.imageSpace.passEnabled, let measured {
             eyeAdaptation.advance(
-                measured: measured, speed: parameters.hdr.eyeAdaptSpeed, deltaTime: deltaTime
+                measured: measured, speed: parameters.hdr.eyeAdaptSpeed,
+                strength: parameters.hdr.eyeAdaptStrength, deltaTime: deltaTime
             )
-        } else if !toneMaps {
+        } else if !frameInput.imageSpace.passEnabled {
             eyeAdaptation.reset()
         }
         guard let target = descriptor.colorAttachments[0].texture else { return nil }
@@ -226,12 +227,12 @@ extension Renderer {
         let grades = frameInput.imageSpace.passEnabled
             && (toneMaps || blooms || !parameters.isNeutral)
         guard grades || post != nil else { return nil }
-        let toneMapping = toneMaps
-            ? SIMD4(
-                eyeAdaptation.exposure(strength: parameters.hdr.eyeAdaptStrength),
-                parameters.hdr.white, parameters.hdr.eyeAdaptStrength > 0 ? 1 : 0, 0
-            )
-            : SIMD4(1, 0, 0, 0)
+        // x exposure, y white, z 1 measures and 2 also tone maps, w the adapted X the
+        // contrast pivots around.
+        let toneMapping = SIMD4<Float>(
+            eyeAdaptation.exposure, parameters.hdr.white, toneMaps ? 2 : 1,
+            eyeAdaptation.adaptedLuminance ?? 0.5
+        )
         return ImageSpaceGrade(
             uniforms: Self.uniforms(
                 grades ? parameters : .neutral, targetHeight: target.height,

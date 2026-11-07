@@ -1,47 +1,70 @@
-// The HDR tone-mapping stage's CPU half: the eye follows the measured scene
-// brightness at the `IMGS` speed, and the exposure follows the eye at the `IMGS`
-// strength. The scale constants are OpenSky's own. See docs/rendering/image-space.md.
+// The HDR tone-mapping stage's CPU half: two channels follow the measured scene
+// luminance at rates from the `IMGS` speed and strength, and their ratio is the
+// exposure. See docs/rendering/image-space.md#hdr-tone-mapping.
 
 import Foundation
 
 nonisolated public struct EyeAdaptation: Equatable, Sendable {
-    /// The mean scene luminance the exposure brings the frame towards.
+    /// The scene luminance the character light assumes before the first measurement.
     public static let key: Float = 0.18
-    public static let exposureRange: ClosedRange<Float> = 0.25 ... 4
-    /// `IMGS` speeds are 30 to 45; divided by this they give 1.5 to 2.25 per second.
-    public static let speedScale: Float = 20
-    /// `IMGS` strengths are 1 to 25; strength / (strength + this) gives a 0-1 weight.
-    public static let strengthHalfPoint: Float = 10
+    /// `IMGS` speed and strength scales; the speed is a percent of the gap per 1/30 s.
+    public static let speedScale: Float = 2
+    public static let strengthScale: Float = 0.4
+    /// No step is smaller than this, so the eye always reaches the scene.
+    public static let minimumStep: Float = 1 / 256
+    /// Every lit pixel and the sky end times this scale (the shaders' `litOutputScale`).
+    public static let sceneScale: Float = 1 / 1.2
 
-    /// Nil until the first measurement.
+    /// The slow channel X. The contrast pivots around it. Nil until the first measurement.
     public private(set) var adaptedLuminance: Float?
+    /// The fast channel Y; the exposure is Y / X.
+    public private(set) var fastLuminance: Float?
     public private(set) var measuredLuminance: Float?
 
     public init() {}
 
-    /// Moves the eye towards `measured`. The first measurement sets it at once.
-    public mutating func advance(measured: Float, speed: Float, deltaTime: Float) {
-        guard measured.isFinite, measured > 0 else { return }
+    /// Moves both channels towards `measured`. The first measurement sets them at once.
+    public mutating func advance(measured: Float, speed: Float, strength: Float, deltaTime: Float) {
+        guard measured.isFinite, measured >= 0 else { return }
         measuredLuminance = measured
-        guard let adapted = adaptedLuminance, speed > 0 else {
+        guard let slow = adaptedLuminance, let fast = fastLuminance else {
             adaptedLuminance = measured
+            fastLuminance = measured
             return
         }
-        let rate = 1 - exp(-max(deltaTime, 0) * speed / Self.speedScale)
-        adaptedLuminance = adapted + (measured - adapted) * rate
+        let frames = 30 * max(deltaTime.isFinite ? deltaTime : 0, 0)
+        let percent = 0.01 * speed * Self.speedScale
+        let weight = strength * Self.strengthScale
+        let slowShare = weight > 0 ? percent / weight : 1
+        adaptedLuminance = Self.chase(
+            slow,
+            measured,
+            rate: Self.rate(share: slowShare, frames: frames)
+        )
+        fastLuminance = Self.chase(fast, measured, rate: Self.rate(share: percent, frames: frames))
     }
 
     public mutating func reset() {
         adaptedLuminance = nil
+        fastLuminance = nil
         measuredLuminance = nil
     }
 
-    /// The scale on scene color: above 1 in the dark, below 1 in bright light.
-    public func exposure(strength: Float) -> Float {
-        guard let adapted = adaptedLuminance, adapted > 0, strength > 0 else { return 1 }
-        let weight = strength / (strength + Self.strengthHalfPoint)
-        let exposure = pow(Self.key / adapted, weight)
-        return min(max(exposure, Self.exposureRange.lowerBound), Self.exposureRange.upperBound)
+    /// The scale on scene luminance: 1 in a steady scene, a short change after a cut.
+    public var exposure: Float {
+        guard let slow = adaptedLuminance, let fast = fastLuminance, slow > 0 else { return 1 }
+        return fast / slow
+    }
+
+    static func rate(share: Float, frames: Float) -> Float {
+        1 - pow(max(1 - share, 0), frames)
+    }
+
+    static func chase(_ previous: Float, _ target: Float, rate: Float) -> Float {
+        let gap = target - previous
+        let step = gap * rate
+        guard step != 0 else { return previous }
+        return previous + (step > 0 ? 1 : -1) * min(abs(gap), max(abs(step), minimumStep))
     }
 }
 
@@ -56,15 +79,12 @@ nonisolated public struct ToneMappingState: Equatable, Sendable {
         hdr.eyeAdaptStrength > 0 || hdr.white > 0
     }
 
-    /// Fixed-point steps per unit of log2 luminance in the GPU sum.
-    public static let logScale: Float = 256
-    /// Added to log2 luminance so every sample is positive; 2^-16 is black.
-    public static let logOffset: Float = 16
+    /// Fixed-point steps per unit of luminance in the GPU sum.
+    public static let fixedPointScale: Float = 1024
 
-    /// The mean luminance from the GPU's sum of fixed-point log2 samples.
+    /// The plain mean luminance from the GPU's sum of fixed-point samples.
     public static func meanLuminance(sum: UInt32, count: UInt32) -> Float? {
         guard count > 0 else { return nil }
-        let meanLog = Float(sum) / Float(count) / logScale - logOffset
-        return exp2(meanLog)
+        return Float(sum) / Float(count) / fixedPointScale
     }
 }

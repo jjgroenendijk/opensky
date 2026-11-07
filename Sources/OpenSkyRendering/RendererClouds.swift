@@ -37,7 +37,8 @@ extension Renderer {
             var uniforms = CloudLayerUniforms(
                 colorAlpha: SIMD4(layer.color, layer.alpha),
                 uvOffset: Self.cloudOffset(layer.velocity, seconds: animationTime),
-                padding: .zero
+                lift: lightScales.skyLift,
+                padding: 0
             )
             skyClouds.uniforms.contents().advanced(by: offset)
                 .copyMemory(from: &uniforms, byteCount: MemoryLayout<CloudLayerUniforms>.size)

@@ -150,8 +150,12 @@ extension Renderer {
             PostEffectSettings.volumetricReachPerSamplingRange * look.samplingRangeFactor,
             look.phaseFunctionScattering
         )
+        // The frame's sun colour carries the image space sunlight scale, which only the
+        // lit shaders take; the weight undoes it.
+        let sunlight = max(lightScales.sunlight, 0.001)
         uniforms.volumetricColour = SIMD4(
-            look.color * look.customColorContribution, 1 - look.customColorContribution
+            look.color * look.customColorContribution,
+            (1 - look.customColorContribution) / sunlight
         )
         uniforms.volumetricDensity = SIMD4(
             look.densityContribution,

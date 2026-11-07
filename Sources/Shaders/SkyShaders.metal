@@ -137,5 +137,6 @@ fragment float4 cloudFragment(
     float4 texel = cloudMap.sample(trilinear, in.texcoord);
     // The dome's vertex colours are (1, 0, 0, a): only the alpha, an edge fade, is used.
     float alpha = texel.a * layer.colorAlpha.a * in.color.a;
-    return float4(texel.rgb * toLinear(layer.colorAlpha.rgb), alpha);
+    // The game adds the sky scale lift to the cloud's gamma colour.
+    return float4(toLinear(toGamma(texel.rgb) * layer.colorAlpha.rgb + layer.lift), alpha);
 }

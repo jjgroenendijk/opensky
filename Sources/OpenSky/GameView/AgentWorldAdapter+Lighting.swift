@@ -15,8 +15,7 @@ extension AgentWorldAdapter {
         let grade = session.imageSpace.current
         var result: [String: AgentJSON] = [
             "eyeLuminance": renderer.eyeAdaptation.adaptedLuminance.map(AgentJSON.init) ?? .null,
-            "exposure": .init(renderer.eyeAdaptation
-                .exposure(strength: grade.hdr.eyeAdaptStrength)),
+            "exposure": .init(renderer.eyeAdaptation.exposure),
             "imageSpace": [
                 "eyeAdaptSpeed": .init(grade.hdr.eyeAdaptSpeed),
                 "eyeAdaptStrength": .init(grade.hdr.eyeAdaptStrength),
