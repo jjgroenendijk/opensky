@@ -50,7 +50,9 @@ nonisolated public struct MovementType: Equatable, Sendable {
             var reader = BinaryReader(data)
             var floats: [Float] = []
             for _ in 0 ..< data.count / 4 {
-                guard let value = try? reader.readFloat32(), value.isFinite else { return nil }
+                guard
+                    let value = attempt({ try reader.readFloat32() }),
+                    value.isFinite else { return nil }
                 floats.append(value)
             }
             self.init(values: floats)

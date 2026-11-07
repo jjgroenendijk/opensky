@@ -3,6 +3,7 @@
 // See docs/engine/actor-values.md.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 /// Which plugin record an actor's baseline comes from.
@@ -248,7 +249,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
     private func actorBaseline(base: FormID, resolver: ActorValueResolver?) -> ActorValueBaseline {
         guard
             let resolver,
-            let resolved = try? resolver.resolve(base: base)
+            let resolved = attempt({ try resolver.resolve(base: base) })
         else {
             return fallback
         }
@@ -260,7 +261,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             isChild: resolved.race
                 .flatMap { resolver.races[$0.rawValue]?.flags.contains(.child) } ?? false,
             race: resolved.race,
-            isFemale: (try? resolver.templates.resolve(base: base))?.isFemale.value
+            isFemale: attempt { try resolver.templates.resolve(base: base) }?.isFemale.value
         )
         baseline.recordFlags = resolver.templates.actors[base.rawValue]?.flags ?? []
         let race = resolved.race.flatMap { resolver.races[$0.rawValue] }

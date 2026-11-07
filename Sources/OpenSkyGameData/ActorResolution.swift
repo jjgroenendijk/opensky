@@ -358,7 +358,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
     /// The `NPC_` the last leveled hop chose, or `base` when the chain has no leveled
     /// list (<https://ck.uesp.net/wiki/GetLeveledActorBase_-_Actor>).
     public func leveledBase(of base: FormID) -> FormID? {
-        guard let (_, chain) = try? resolveChain(base: base) else { return nil }
+        guard let (_, chain) = attempt({ try resolveChain(base: base) }) else { return nil }
         for link in chain.reversed() {
             if case let .leveled(_, chosen) = link {
                 return chosen

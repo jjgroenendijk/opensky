@@ -3,6 +3,7 @@
 // docs/formats/packages.md#procedure-tree; branch rules on the Creation Kit wiki
 // page "Category:Package Templates".
 
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyWorldInterface
 
@@ -103,7 +104,7 @@ nonisolated public struct PackageProcedureTree: Equatable, Sendable {
     public static func of(_ template: Package, fallback: PackageProcedureKind) -> Self {
         guard
             !template.details.branches.isEmpty,
-            let tree = try? Self(branches: template.details.branches)
+            let tree = attempt({ try Self(branches: template.details.branches) })
         else { return Self(single: fallback) }
         return tree
     }

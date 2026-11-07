@@ -70,7 +70,7 @@ nonisolated public final class MusicRecordStore {
     /// `\Data\` is stripped (209 of 242 vanilla tracks use it); a `:` is rejected.
     public static func canonicalMusicPath(_ track: String) -> String? {
         guard
-            let normalized = try? VirtualFileSystem.normalize(track),
+            let normalized = attempt({ try VirtualFileSystem.normalize(track) }),
             !normalized.contains(":")
         else {
             return nil
@@ -81,7 +81,7 @@ nonisolated public final class MusicRecordStore {
         if normalized.hasPrefix("music\\") {
             return normalized
         }
-        return try? VirtualFileSystem.normalize("music\\\(normalized)")
+        return attempt { try VirtualFileSystem.normalize("music\\\(normalized)") }
     }
 
     /// Extension every music asset in the shipped archives actually uses.
@@ -110,7 +110,7 @@ nonisolated public final class MusicRecordStore {
         } catch {
             guard
                 let sibling = shippedAudioSibling(of: path),
-                let data = try? load(sibling)
+                let data = attempt({ try load(sibling) })
             else {
                 throw error
             }

@@ -1,6 +1,7 @@
 // The text summary of a tour result, and the files a run writes.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public enum BenchmarkReport {
     public static let resultFile = "result.json"
@@ -103,13 +104,15 @@ nonisolated public enum BenchmarkReport {
     public static func latestRun(in parent: URL = defaultParent)
         -> (folder: URL, result: BenchmarkTourResult)?
     {
-        let folders = (try? FileManager.default.contentsOfDirectory(
-            at: parent, includingPropertiesForKeys: nil, options: .skipsHiddenFiles
-        )) ?? []
+        let folders = attemptIfPresent {
+            try FileManager.default.contentsOfDirectory(
+                at: parent, includingPropertiesForKeys: nil, options: .skipsHiddenFiles
+            )
+        } ?? []
         for folder in folders.sorted(by: { $0.lastPathComponent > $1.lastPathComponent }) {
             if
-                let data = try? Data(contentsOf: folder.appending(path: resultFile)),
-                let result = try? BenchmarkTourResult.decode(json: data)
+                let data = attempt({ try Data(contentsOf: folder.appending(path: resultFile)) }),
+                let result = attempt({ try BenchmarkTourResult.decode(json: data) })
             {
                 return (folder, result)
             }

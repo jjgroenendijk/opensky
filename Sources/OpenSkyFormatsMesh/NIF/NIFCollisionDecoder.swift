@@ -138,7 +138,7 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
     private mutating func decodeConstraints(_ refs: [Int32]) -> [NIFCollisionConstraint] {
         var constraints: [NIFCollisionConstraint] = []
         for ref in refs {
-            guard let (index, block) = try? resolvedBlock(ref) else {
+            guard let (index, block) = attempt({ try resolvedBlock(ref) }) else {
                 failures.append(NIFCollisionFailure(
                     block: Int(ref),
                     message: "constraint ref \(ref) out of range"

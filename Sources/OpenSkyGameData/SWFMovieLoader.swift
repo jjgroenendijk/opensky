@@ -68,9 +68,9 @@ nonisolated public final class SWFMovieLoader {
         if let cached = cachedSources[path] {
             return cached
         }
-        let movie = (try? fileSystem.contents(forPath: path))
-            .flatMap { try? SWFFile(data: $0) }
-            .flatMap { try? SWFMovie(file: $0) }
+        let movie = attempt { try fileSystem.contents(forPath: path) }
+            .flatMap { element in attempt { try SWFFile(data: element) } }
+            .flatMap { element in attempt { try SWFMovie(file: element) } }
         cachedSources[path] = movie
         return movie
     }
@@ -89,7 +89,7 @@ nonisolated public final class SWFMovieLoader {
     }
 
     private func makeFontEnvironment() -> FontEnvironment {
-        guard let data = try? fileSystem.contents(forPath: Self.fontConfigPath) else {
+        guard let data = attempt({ try fileSystem.contents(forPath: Self.fontConfigPath) }) else {
             return FontEnvironment(config: SWFFontConfig.parse(""), library: SWFFontLibrary())
         }
         let text = GameText.decode(data)
@@ -98,7 +98,7 @@ nonisolated public final class SWFMovieLoader {
         for movie in config.fontlibs {
             // fontlib names are install-relative paths ("Interface\fonts_en.swf");
             // the VFS normalizes case and separators.
-            if let file = try? SWFFile(data: fileSystem.contents(forPath: movie)) {
+            if let file = attempt({ try SWFFile(data: fileSystem.contents(forPath: movie)) }) {
                 library.register(movie: movie, file: file)
             }
         }

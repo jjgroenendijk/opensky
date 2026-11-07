@@ -21,7 +21,7 @@ nonisolated public struct ESMFileStamp: Hashable, Sendable {
     init?(url: URL) {
         let keys: Set<URLResourceKey> = [.fileSizeKey, .contentModificationDateKey]
         guard
-            let values = try? url.resourceValues(forKeys: keys),
+            let values = attemptIfPresent({ try url.resourceValues(forKeys: keys) }),
             let size = values.fileSize, let modified = values.contentModificationDate
         else { return nil }
         self.init(

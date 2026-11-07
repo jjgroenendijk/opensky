@@ -50,9 +50,11 @@ nonisolated public enum ArchiveLoadOrder: Sendable {
     /// case-insensitively; a listed but absent archive is logged and skipped.
     /// Plugin archives follow `pluginOrder`, then the alphabetical tail.
     public static func resolve(installURL: URL, dataURL: URL, pluginOrder: [String] = []) -> [URL] {
-        let contents = (try? FileManager.default.contentsOfDirectory(
-            atPath: dataURL.path(percentEncoded: false)
-        )) ?? []
+        let contents = attemptIfPresent {
+            try FileManager.default.contentsOfDirectory(
+                atPath: dataURL.path(percentEncoded: false)
+            )
+        } ?? []
         var archivesOnDisk: [String: String] = [:] // lowercased -> on-disk name
         for name in contents where name.lowercased().hasSuffix(".bsa") {
             archivesOnDisk[name.lowercased()] = name

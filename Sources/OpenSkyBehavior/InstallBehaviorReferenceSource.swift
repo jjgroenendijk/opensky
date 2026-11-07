@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 nonisolated public final class InstallBehaviorReferenceSource: BehaviorReferenceSource {
@@ -80,8 +81,8 @@ nonisolated public final class InstallBehaviorReferenceSource: BehaviorReference
         if let cached = decoded[path] {
             return cached
         }
-        let result: DecodedBehavior? = (try? fileSystem.contents(forPath: path))
-            .flatMap { try? HKXObjectGraph.decode($0) }
+        let result: DecodedBehavior? = attempt { try fileSystem.contents(forPath: path) }
+            .flatMap { element in attempt { try HKXObjectGraph.decode(element) } }
             .flatMap { objectGraph in
                 HKBBehaviorGraph.graphs(in: objectGraph).first.map {
                     DecodedBehavior(

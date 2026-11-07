@@ -1,6 +1,7 @@
 // Native dispatch and suspension boundary for the Papyrus interpreter.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
@@ -144,6 +145,6 @@ extension PapyrusInterpreter {
         if case let .identifier(name) = destination, frame.compiled.binding(for: name).isDiscard {
             return .none
         }
-        return (try? destinationType(destination, frame: frame)) ?? .none
+        return attempt { try destinationType(destination, frame: frame) } ?? .none
     }
 }

@@ -57,7 +57,7 @@ extension JournalMenuModel {
         var misc: [JournalQuestEntry] = []
         for quest in runtime.quests.journalQuests() {
             guard
-                let state = try? runtime.state(of: quest.formID),
+                let state = attempt({ try runtime.state(of: quest.formID) }),
                 state.isRunning || state.isCompleted || state.isFailed else { continue }
             // A DLC quest's text IDs point into its own plugin's tables.
             var entry = makeEntry(

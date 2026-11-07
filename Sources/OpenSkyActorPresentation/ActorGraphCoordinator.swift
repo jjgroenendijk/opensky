@@ -6,6 +6,7 @@ import Foundation
 public import OpenSkyBehavior
 public import OpenSkyConditions
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
@@ -96,8 +97,8 @@ nonisolated struct LoadedActorGraphProject: Sendable {
         guard asset.rigPath.hasSuffix(".hkx") else { return nil }
         let nifPath = String(asset.rigPath.dropLast(4)) + ".nif"
         guard
-            let data = try? files.contents(forPath: nifPath),
-            let bones = (try? NIFNodeAnimation(file: NIFFile(data: data)))?.boneLOD?.bones
+            let data = attempt({ try files.contents(forPath: nifPath) }),
+            let bones = attempt({ try NIFNodeAnimation(file: NIFFile(data: data)) })?.boneLOD?.bones
         else { return nil }
         return ActorBoneLOD(bones: bones, rig: asset.skeleton)
     }

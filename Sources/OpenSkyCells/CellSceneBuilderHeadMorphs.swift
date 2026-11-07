@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyActorPresentation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
@@ -44,10 +45,12 @@ nonisolated extension CellSceneBuilder {
                 let fitting = files.filter { $0.1.baseVertices.count == mesh.vertexCount }
                 guard
                     !fitting.isEmpty,
-                    let buffer = try? FaceMorphBuffer(
-                        device: meshes.device, tris: fitting.map(\.1), mesh: mesh,
-                        fixedWeights: fixed
-                    )
+                    let buffer = attempt({
+                        try FaceMorphBuffer(
+                            device: meshes.device, tris: fitting.map(\.1), mesh: mesh,
+                            fixedWeights: fixed
+                        )
+                    })
                 else { continue }
                 result.bindings[ObjectIdentifier(mesh)] = buffer
                 result.pairedPaths += fitting.map(\.0)

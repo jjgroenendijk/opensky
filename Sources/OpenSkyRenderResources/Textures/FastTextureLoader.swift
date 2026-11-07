@@ -8,6 +8,7 @@
 public import Foundation
 public import Metal
 public import OpenSkyAssetCache
+import OpenSkyFormatsCore
 import Synchronization
 
 nonisolated public struct FastTextureLoadStats: Equatable, Sendable {
@@ -113,7 +114,9 @@ nonisolated public final class FastTextureLoader {
         if let known = internalFolders[folder] {
             return known
         }
-        let isInternal = (try? folder.resourceValues(forKeys: [.volumeIsInternalKey]))?
+        let isInternal = attemptIfPresent {
+            try folder.resourceValues(forKeys: [.volumeIsInternalKey])
+        }?
             .volumeIsInternal ?? false
         internalFolders[folder] = isInternal
         return isInternal
@@ -239,11 +242,11 @@ nonisolated public final class FastTextureLoader {
 
     /// The CPU fallback for a failed batch. A short read leaves zeros, which draw nothing.
     private static func fillFromFile(_ item: PendingBytes) {
-        guard let file = try? FileHandle(forReadingFrom: item.file) else { return }
+        guard let file = attempt({ try FileHandle(forReadingFrom: item.file) }) else { return }
         defer { try? file.close() }
         guard
-            (try? file.seek(toOffset: UInt64(item.offset))) != nil,
-            let bytes = try? file.read(upToCount: item.buffer.length)
+            attempt({ try file.seek(toOffset: UInt64(item.offset)) }) != nil,
+            let bytes = attempt({ try file.read(upToCount: item.buffer.length) })
         else { return }
         unsafe bytes.withUnsafeBytes { raw in
             guard let base = raw.baseAddress else { return }

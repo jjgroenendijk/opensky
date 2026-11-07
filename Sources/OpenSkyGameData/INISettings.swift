@@ -77,7 +77,7 @@ nonisolated public struct INISettings: Equatable, Sendable {
         let sources = candidates.compactMap { candidate -> INISettingsSource? in
             guard
                 fileManager.fileExists(atPath: candidate.url.path),
-                let data = try? Data(contentsOf: candidate.url) else { return nil }
+                let data = attempt({ try Data(contentsOf: candidate.url) }) else { return nil }
             return INISettingsSource(name: candidate.name, file: INIFile(data: data))
         }
         return INISettings(sources: sources)

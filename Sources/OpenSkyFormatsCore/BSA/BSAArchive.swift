@@ -109,7 +109,7 @@ nonisolated public struct BSAArchive: Sendable {
     }
 
     private static func readHeader(_ reader: inout BinaryReader) throws -> Header {
-        guard let magic = try? reader.read(count: 4), magic == Data("BSA\0".utf8) else {
+        guard let magic = attempt({ try reader.read(count: 4) }), magic == Data("BSA\0".utf8) else {
             throw BSAError.notABSA
         }
         let version = try reader.readUInt32()

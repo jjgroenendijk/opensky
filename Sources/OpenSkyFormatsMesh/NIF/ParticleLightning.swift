@@ -51,7 +51,7 @@ nonisolated extension NIFFile {
             else { return nil }
             let target = Int(controller.base.targetRef)
             guard let transform = modelTransform(of: target, parents: parents) else { return nil }
-            let shape = try? NIFTriShape.decode(blocks[target], in: self)
+            let shape = attempt { try NIFTriShape.decode(blocks[target], in: self) }
             var system = ParticleSystemDefinition(
                 name: shape?.object.name, worldTransform: transform, worldSpace: false,
                 maxParticles: 0, emitters: [], modifiers: [], subtextureOffsets: [],
@@ -69,7 +69,7 @@ nonisolated extension NIFFile {
     private static func lightningController(_ block: Block) -> NIFLightningController? {
         guard block.typeName == NIFLightningController.typeName else { return nil }
         var reader = BinaryReader(block.data)
-        return try? NIFLightningController(reader: &reader)
+        return attempt { try NIFLightningController(reader: &reader) }
     }
 
     /// The block's transform in the model, composed up its parents. Nil for a block no
@@ -80,7 +80,8 @@ nonisolated extension NIFFile {
         var steps = 0
         while let index = current, steps < 64 {
             var reader = BinaryReader(blocks[index].data)
-            guard let object = try? NIFObjectPrefix(reader: &reader, header: header) else {
+            guard let object = attempt({ try NIFObjectPrefix(reader: &reader, header: header) })
+            else {
                 return nil
             }
             guard let parent = parents[index] else {
@@ -99,12 +100,12 @@ nonisolated extension NIFFile {
             ref >= 0, Int(ref) < blocks.count,
             blocks[Int(ref)].typeName == "BSEffectShaderProperty"
         else { return nil }
-        return try? NIFEffectShaderProperty(data: blocks[Int(ref)].data, header: header)
+        return attempt { try NIFEffectShaderProperty(data: blocks[Int(ref)].data, header: header) }
     }
 
     private func alphaProperty(at ref: Int32) -> NIFAlphaProperty? {
         guard ref >= 0, Int(ref) < blocks.count, blocks[Int(ref)].typeName == "NiAlphaProperty"
         else { return nil }
-        return try? NIFAlphaProperty(data: blocks[Int(ref)].data, header: header)
+        return attempt { try NIFAlphaProperty(data: blocks[Int(ref)].data, header: header) }
     }
 }

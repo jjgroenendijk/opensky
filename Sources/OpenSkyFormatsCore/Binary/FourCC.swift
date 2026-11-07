@@ -14,8 +14,9 @@ nonisolated public struct FourCC: Hashable, Sendable {
 }
 
 nonisolated extension FourCC: ExpressibleByStringLiteral {
-    /// Programmer-supplied literals only (`"WRLD"`); traps on wrong length. Each
-    /// `case "WRLD":` of a field switch runs this, so it must not allocate.
+    /// Programmer-supplied literals only (`"WRLD"`). A literal of the wrong length gives
+    /// `invalidLiteral`, which no file holds. Each `case "WRLD":` of a field switch runs
+    /// this, so it must not allocate.
     @inlinable
     public init(stringLiteral value: StringLiteralType) {
         var packed: UInt32 = 0
@@ -26,8 +27,7 @@ nonisolated extension FourCC: ExpressibleByStringLiteral {
             }
             count += 1
         }
-        precondition(count == 4, "FourCC literal must be exactly 4 bytes")
-        self.init(rawValue: packed)
+        self.init(rawValue: count == 4 ? packed : 0)
     }
 
     fileprivate static func packed(_ bytes: [UInt8]) -> UInt32 {
@@ -36,6 +36,10 @@ nonisolated extension FourCC: ExpressibleByStringLiteral {
 }
 
 nonisolated extension FourCC {
+    /// Four zero bytes: a code literal of the wrong length. A record or field signature
+    /// is printable ASCII, so this never matches one.
+    public static let invalidLiteral = FourCC(rawValue: 0)
+
     /// Text from a user, such as a command-line option: four ASCII characters, or nil.
     public init?(text: String) {
         let bytes = Array(text.utf8)

@@ -30,9 +30,10 @@ nonisolated public final class AgentClientSession {
                 throw AgentFailure(.timeout, "\(command): no reply within \(Int(timeout)) s")
             }
             let line = try client.readLine(timeout: remaining)
-            if let stream = try? JSONDecoder().decode(AgentStreamLine.self, from: line) {
-                if stream.id == request.id {
-                    onEvent(stream.event)
+            let kind = try AgentLineCodec.decode(LineKind.self, from: line)
+            if let event = kind.event {
+                if kind.id == request.id {
+                    onEvent(event)
                 }
                 continue
             }
@@ -42,4 +43,10 @@ nonisolated public final class AgentClientSession {
             }
         }
     }
+}
+
+/// A stream line carries an `event`; a reply does not.
+nonisolated private struct LineKind: Decodable {
+    var id: Int?
+    var event: AgentEvent?
 }

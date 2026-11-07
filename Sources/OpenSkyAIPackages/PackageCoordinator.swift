@@ -3,6 +3,7 @@
 // rules live in `ActorPackageRuntime`. See docs/engine/coordinators.md.
 
 public import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyNavigation
@@ -318,7 +319,8 @@ public final class PackageCoordinator {
         for arrival in change.arrived {
             let roll = world.packageLeveledRoll(of: arrival.actor, base: arrival.base)
             guard
-                (try? runtime.register(actor: arrival.actor, base: arrival.base, roll: roll))
+                attempt({
+                    try runtime.register(actor: arrival.actor, base: arrival.base, roll: roll) })
                 != nil
             else { continue }
             registeredActors[arrival.actor] = arrival.base
@@ -466,7 +468,7 @@ public final class PackageCoordinator {
     func reportEnds(of actor: ReferenceKey, since before: Int) {
         guard
             let execution = executions[actor], execution.ends > before,
-            let package = try? store?.resolve(execution.package).package
+            let package = attempt({ try store?.resolve(execution.package).package })
         else { return }
         world?.packageProcedure(PackageScriptEvent(kind: .end, actor: actor, package: package))
     }

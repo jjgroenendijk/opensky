@@ -1,6 +1,7 @@
 // Faction memberships through the actor template chain. The chain walk is
 // `ActorTemplateResolver`, so this join lives beside it, not in GameData.
 
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 
@@ -13,7 +14,8 @@ nonisolated extension FactionStore {
         resolver: ActorTemplateResolver,
         fromPlugin sourcePlugin: String
     ) -> [ResolvedFactionMembership] {
-        guard let resolved = try? resolver.resolveFactions(base: base) else { return [] }
+        guard let resolved = attempt({ try resolver.resolveFactions(base: base) })
+        else { return [] }
         return memberships(resolved.factions.value, fromPlugin: sourcePlugin)
     }
 }

@@ -3,6 +3,7 @@
 // See docs/engine/follower-commands.md.
 
 import OpenSkyCrimeInterface
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
@@ -27,14 +28,13 @@ extension InventoryCoordinator {
         for stack in runtime.inventory.inventory(of: source).stacks {
             let verdict: OwnershipVerdict = isBody
                 ? .unowned : runtime.crime?.verdict(on: key, item: stack.item) ?? .unowned
-            do {
+            let transferred: Void? = attempt {
                 try runtime.inventory.transfer(
                     stack.item, count: stack.count, from: source, to: destination,
                     markingStolen: verdict.isTheft
                 )
-            } catch {
-                continue
             }
+            guard transferred != nil else { continue }
             moved = true
             if verdict.isTheft {
                 runtime.crime?.reportTheft(

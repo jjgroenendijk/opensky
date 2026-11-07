@@ -2,6 +2,7 @@
 // engine's sources (<https://ck.uesp.net/wiki/Sound_Script>).
 
 import OpenSkyAudio
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import simd
 
@@ -14,7 +15,7 @@ extension WorldAudioSoundDirector {
     ) -> Int32 {
         guard
             engine.isRunning,
-            let descriptor = try? soundStore?.resolveAny(formID).descriptor
+            let descriptor = attempt({ try soundStore?.resolveAny(formID).descriptor })
         else { return 0 }
         let id = scriptSounds.begin(waitToken: waitToken)
         playResolved(

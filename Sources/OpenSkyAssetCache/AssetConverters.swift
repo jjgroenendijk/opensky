@@ -74,7 +74,7 @@ nonisolated public struct ReadyMeshConverter: AssetConverting {
         {
             return nil
         }
-        guard (try? file.particleSystems())?.isEmpty ?? false else { return nil }
+        guard attempt({ try file.particleSystems() })?.isEmpty ?? false else { return nil }
         return try ModelCacheCodec.encode(file.model(skeleton: nil))
     }
 }

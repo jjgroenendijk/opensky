@@ -33,7 +33,12 @@ nonisolated extension CellSceneBuilder {
             let origins = builder.brightnessSampleOrigins(
                 worldspace: worldspace, maximum: Self.brightnessSampleBlocks
             ),
-            let world = try? worldChildrenGroup(editorID: worldspace, localized: pluginLocalized)
+            let world = attempt({
+                try worldChildrenGroup(
+                    editorID: worldspace,
+                    localized: pluginLocalized
+                )
+            })
         else { return [] }
         var samples: [SIMD2<Float>] = []
         for origin in origins {
@@ -61,8 +66,8 @@ nonisolated extension CellSceneBuilder {
             return cached
         }
         let mean = distantLODBuilder.flatMap { builder in
-            (try? builder.fileSystem.contents(forPath: path))
-                .flatMap { try? DDSDecoder.smallLevel($0, edge: 4) }
+            attempt { try builder.fileSystem.contents(forPath: path) }
+                .flatMap { element in attempt { try DDSDecoder.smallLevel(element, edge: 4) } }
                 .map(Self.meanColour)
         }
         terrainTextureMeans[path] = .some(mean)

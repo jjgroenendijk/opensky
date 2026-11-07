@@ -59,7 +59,7 @@ nonisolated extension CellSceneBuilder {
             for case let .record(record) in records
                 where record.type == "PHZD" && !record.isDeleted
             {
-                if let placed = try? PlacedProjectile(record: record) {
+                if let placed = attempt({ try PlacedProjectile(record: record) }) {
                     hazards.append(placed)
                 }
             }

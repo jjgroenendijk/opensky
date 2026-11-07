@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyQuestsInterface
@@ -187,7 +188,7 @@ extension PapyrusWorldStateBridge {
     private func syncAliasScripts(of slot: PapyrusAliasSlot, _ resolved: ResolvedQuestBridge) {
         world?.aliasResolution = resolved.runtime.aliasResolution()
         world?.retireAliasScripts(of: slot)
-        if (try? resolved.runtime.state(of: resolved.quest.formID).isRunning) == true {
+        if attempt({ try resolved.runtime.state(of: resolved.quest.formID).isRunning }) == true {
             attachQuestScripts(resolved.quest, key: slot.quest)
         }
     }
@@ -256,7 +257,7 @@ extension PapyrusWorldStateBridge {
     private func attachIdleQuest(_ key: ReferenceKey) -> Bool {
         guard
             world?.hasDeferredWork(forQuest: key) == false,
-            let quest = try? resolveQuest(key).quest, !quest.script.scripts.isEmpty
+            let quest = questRuntime?.quests.quest(key: key), !quest.script.scripts.isEmpty
         else {
             return false
         }
@@ -274,7 +275,9 @@ extension PapyrusWorldStateBridge {
         waitsForTargets: Bool = true
     ) -> Int {
         guard let world else { return 0 }
-        let aliases = questRuntime.flatMap { try? $0.aliasState(of: quest.formID) } ?? .empty
+        let aliases = questRuntime
+            .flatMap { element in attempt { try element.aliasState(of: quest.formID) } } ??
+            .empty
         // The binding seam is refreshed before the attach rather than after,
         // because the properties bound during it are exactly the alias-typed
         // ones this quest just filled.

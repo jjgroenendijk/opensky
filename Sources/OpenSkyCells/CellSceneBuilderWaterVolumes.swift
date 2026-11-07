@@ -82,7 +82,7 @@ nonisolated extension CellSceneBuilder {
         for placement in resolveCollisionPlacements(refs: refs) {
             guard
                 let ref = byFormID[placement.reference],
-                let model = try? collisionModels.model(path: placement.modelPath)
+                let model = attempt({ try collisionModels.model(path: placement.modelPath) })
             else { continue }
             let waterType = bases[ref.base.rawValue]?.details.waterType
             if let waterType, let water = placedWater(

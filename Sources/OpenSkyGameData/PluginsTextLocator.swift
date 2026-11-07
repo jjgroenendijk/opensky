@@ -4,6 +4,7 @@
 // that is missing is reported. See docs/formats/plugins-txt.md.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 /// Where a `plugins.txt` came from. The Settings window turns this into the
 /// note under the path.
@@ -200,9 +201,11 @@ nonisolated public enum PluginsTextLocator: Sendable {
             home.appending(path: "Library/Containers/com.isaacmarovitz.Whisky/Bottles")
         ]
         for bottleHome in bottleHomes {
-            let names = (try? fileManager.contentsOfDirectory(
-                atPath: bottleHome.path(percentEncoded: false)
-            )) ?? []
+            let names = attemptIfPresent {
+                try fileManager.contentsOfDirectory(
+                    atPath: bottleHome.path(percentEncoded: false)
+                )
+            } ?? []
             prefixes.append(contentsOf: names.sorted().map {
                 bottleHome.appending(path: $0, directoryHint: .isDirectory)
             })
@@ -217,9 +220,11 @@ nonisolated public enum PluginsTextLocator: Sendable {
         fileManager: FileManager
     ) -> [URL] {
         let users = prefix.appending(path: "drive_c/users", directoryHint: .isDirectory)
-        let names = (try? fileManager.contentsOfDirectory(
-            atPath: users.path(percentEncoded: false)
-        )) ?? []
+        let names = attemptIfPresent {
+            try fileManager.contentsOfDirectory(
+                atPath: users.path(percentEncoded: false)
+            )
+        } ?? []
         return names
             .filter { $0.caseInsensitiveCompare("Public") != .orderedSame && !$0.hasPrefix(".") }
             .sorted()

@@ -75,9 +75,9 @@ nonisolated public final class LocalizedStrings: Sendable {
         case let .inline(string):
             string
         case let .tableID(id):
-            try? table(of: kind)?.string(id: id)
+            attempt { try table(of: kind)?.string(id: id) }
         case let .pluginTableID(id, plugin):
-            try? scoped(to: plugin).table(of: kind)?.string(id: id)
+            attempt { try scoped(to: plugin).table(of: kind)?.string(id: id) }
         }
     }
 

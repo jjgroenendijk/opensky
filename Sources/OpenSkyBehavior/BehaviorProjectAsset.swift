@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 nonisolated public enum BehaviorProjectAssetError: Error, Equatable {
@@ -63,7 +64,7 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
             throw BehaviorProjectAssetError.noGraph(behaviorPath)
         }
         let rigPath = join(folder, rigName)
-        let skeletons = (try? HKASkeleton.skeletons(in: read(rigPath, fileSystem))) ?? []
+        let skeletons = attempt { try HKASkeleton.skeletons(in: read(rigPath, fileSystem)) } ?? []
         guard let rig = skeletons.first else {
             throw BehaviorProjectAssetError.noSkeleton(rigPath)
         }
@@ -127,10 +128,11 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
         _ path: String,
         _ fileSystem: any GameFileSource
     ) throws -> HKXObjectGraph {
-        let data = (try? fileSystem.contents(forPath: path))
-            ?? tagfilePath(path).flatMap { try? fileSystem.contents(forPath: $0) }
+        let data = attempt { try fileSystem.contents(forPath: path) }
+            ?? tagfilePath(path)
+            .flatMap { element in attempt { try fileSystem.contents(forPath: element) } }
         guard let data else { throw BehaviorProjectAssetError.missing(path) }
-        guard let graph = try? HKXObjectGraph.decode(data) else {
+        guard let graph = attempt({ try HKXObjectGraph.decode(data) }) else {
             throw BehaviorProjectAssetError.invalid(path)
         }
         return graph

@@ -4,6 +4,7 @@
 
 public import Metal
 import MetalFX
+import OpenSkyFormatsCore
 public import OpenSkyRenderCore
 import OpenSkyRenderResources
 import OpenSkyShaderTypes
@@ -311,10 +312,12 @@ extension Renderer {
         }
         guard
             let scaler = built.scaler,
-            let targets = try? UpscaleTargets(
-                request, scaler: scaler, interpolator: built.interpolator,
-                device: pipelineCache.device
-            )
+            let targets = attempt({
+                try UpscaleTargets(
+                    request, scaler: scaler, interpolator: built.interpolator,
+                    device: pipelineCache.device
+                )
+            })
         else {
             upscale.creationFailure = "MetalFX refused a \(upscale.upscaler) scaler for \(sizes)"
             return nil

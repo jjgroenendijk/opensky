@@ -152,7 +152,7 @@ nonisolated extension CellSceneBuilder {
         case let .actor(actor):
             let templates = actorResolversBuildingIfNeeded().template
                 .rolling(leveledRoll(of: key, base: actor.base, deltas: deltas))
-            return (try? templates.resolveScripts(base: actor.base).value) ?? []
+            return attempt { try templates.resolveScripts(base: actor.base).value } ?? []
         }
     }
 }

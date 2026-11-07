@@ -3,6 +3,7 @@
 // install or inside a git checkout, where it could be committed.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public enum AssetCacheLocationError: Error, Equatable, Sendable {
     case insideGameInstall
@@ -32,7 +33,8 @@ nonisolated public struct AssetCacheVolume: Equatable, Sendable {
         let keys: Set<URLResourceKey> = [
             .volumeIsInternalKey, .volumeIsLocalKey, .volumeAvailableCapacityForImportantUsageKey
         ]
-        guard let values = try? probe.resourceValues(forKeys: keys) else { return nil }
+        guard let values = attemptIfPresent({ try probe.resourceValues(forKeys: keys) })
+        else { return nil }
         return Self(
             isInternal: values.volumeIsInternal ?? false,
             isLocal: values.volumeIsLocal ?? true,

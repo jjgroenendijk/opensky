@@ -3,6 +3,7 @@
 // rules live in `InventoryCore`. See docs/engine/coordinators.md.
 
 public import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
@@ -210,7 +211,7 @@ public final class InventoryCoordinator {
                 equipment.catalog.item(item)?.animationType != nil
                     && equipment.catalog.item(item)?.occupancy.hands.contains(.rightHand) == true
             }),
-            (try? runtime.drop(weapon, count: 1, from: holder, at: placement)) != nil
+            attempt({ try runtime.drop(weapon, count: 1, from: holder, at: placement) }) != nil
         else { return nil }
         storyEvents?.reportStoryEvent(.removeItem(
             weapon, reference: nil, owner: nil, how: .dropped

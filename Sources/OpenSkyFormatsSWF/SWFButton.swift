@@ -136,9 +136,9 @@ nonisolated public struct SWFButton: Equatable, Sendable {
             var reader = BinaryReader(body)
             reader.skip(start)
             guard
-                let size = try? Int(reader.readUInt16()),
-                let transitions = try? reader.readUInt8(),
-                let keyByte = try? reader.readUInt8()
+                let size = attempt({ try Int(reader.readUInt16()) }),
+                let transitions = attempt({ try reader.readUInt8() }),
+                let keyByte = attempt({ try reader.readUInt8() })
             else { break }
             let end = size == 0 ? body.count : start + size
             guard end > start + 4, end <= body.count else { break }

@@ -4,6 +4,7 @@
 
 public import Foundation
 public import OpenSkyAssetCache
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 public final class AssetCacheCoordinator {
@@ -241,10 +242,12 @@ public final class AssetCacheCoordinator {
     @concurrent
     nonisolated private static func usage(settings: AssetCacheSettings) async -> AssetCacheUsage? {
         guard
-            let folder = try? settings.effectiveFolder(),
+            let folder = attempt({ try settings.effectiveFolder() }),
             FileManager.default.fileExists(atPath: folder.path(percentEncoded: false))
         else { return nil }
-        return try? AssetCacheStore(root: folder, limitBytes: AssetCacheStore.noLimit).usage()
+        return attempt {
+            try AssetCacheStore(root: folder, limitBytes: AssetCacheStore.noLimit).usage()
+        }
     }
 
     nonisolated static func message(for error: any Error) -> String {

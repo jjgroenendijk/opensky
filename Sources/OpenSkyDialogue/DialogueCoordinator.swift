@@ -201,13 +201,13 @@ public final class DialogueCoordinator {
     /// says it and the menu does not open (<https://ck.uesp.net/wiki/Dialogue_Branch>).
     public func forcedGoodbye(for speaker: ReferenceKey) -> FormID? {
         guard let runtime, let info = runtime.forcedGoodbye(for: speaker) else { return nil }
-        return (try? runtime.choose(info, speaker: speaker)) == nil ? nil : info
+        return attempt { try runtime.choose(info, speaker: speaker) } == nil ? nil : info
     }
 
     func sayAlone(_ selection: DialogueSelection?, speaker: ReferenceKey) -> FormID? {
         guard
             let runtime, let offer = selection?.offers.first,
-            (try? runtime.choose(offer.info, speaker: speaker)) != nil
+            attempt({ try runtime.choose(offer.info, speaker: speaker) }) != nil
         else { return nil }
         return offer.info
     }

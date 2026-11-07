@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 
 /// Loads clips on demand, so only the clips a graph reaches are read. Capped,
@@ -95,7 +96,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
         { path in
             // A tagfile set names its clips `.hkx` too.
             let tagfile = path.hasSuffix(".hkx") ? String(path.dropLast(4)) + ".hkt" : path
-            let data = try (try? fileSystem.contents(forPath: path))
+            let data = try attempt { try fileSystem.contents(forPath: path) }
                 ?? fileSystem.contents(forPath: tagfile)
             guard let clip = decode(data) else {
                 throw AssetLoadFailure(reason: "no usable clip in \(path)")
@@ -117,7 +118,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
         }
         switch loading {
         case let .immediate(fileSystem):
-            let clip = (try? fileSystem.contents(forPath: path)).flatMap(Self.decode)
+            let clip = attempt { try fileSystem.contents(forPath: path) }.flatMap(Self.decode)
             store(clip, for: key)
             return clip
         case let .worker(worker):
@@ -151,7 +152,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
         for completion in finished {
             let key = Self.key(completion.key)
             inFlight.remove(key)
-            store(try? completion.result.get(), for: key)
+            store(attempt { try completion.result.get() }, for: key)
         }
         return finished.count
     }
@@ -172,9 +173,9 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
 
     private static func decode(_ data: Data) -> SplineBehaviorClip? {
         guard
-            let graph = try? HKXObjectGraph.decode(data),
-            let binding = (try? HKAAnimationBinding.bindings(in: graph))?.first,
-            let animations = try? HKASplineCompressedAnimation.animations(in: graph)
+            let graph = attempt({ try HKXObjectGraph.decode(data) }),
+            let binding = attempt({ try HKAAnimationBinding.bindings(in: graph) })?.first,
+            let animations = attempt({ try HKASplineCompressedAnimation.animations(in: graph) })
         else {
             return nil
         }
@@ -185,7 +186,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
         } ?? animations.first
         guard
             let animation,
-            (try? binding.boneIndices(transformTrackCount: animation.transformTrackCount))
+            attempt({ try binding.boneIndices(transformTrackCount: animation.transformTrackCount) })
             != nil
         else {
             return nil

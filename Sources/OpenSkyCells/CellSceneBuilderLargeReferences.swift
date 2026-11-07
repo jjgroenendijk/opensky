@@ -51,9 +51,11 @@ nonisolated extension CellSceneBuilder {
         let deltas = state.deltasByKey()
         for cell in cells.sorted(by: { ($0.x, $0.y) < ($1.x, $1.y) }) {
             guard
-                let source = try? exteriorBuildSource(
-                    worldspaceEditorID: worldspaceEditorID, gridX: cell.x, gridY: cell.y
-                )
+                let source = attempt({
+                    try exteriorBuildSource(
+                        worldspaceEditorID: worldspaceEditorID, gridX: cell.x, gridY: cell.y
+                    )
+                })
             else { continue }
             let collected = collectTaggedReferences(in: source.cell, counts: &counts)
             let wanted = pick(cell, collected)
@@ -83,9 +85,11 @@ nonisolated extension CellSceneBuilder {
         state: WorldStateSnapshot = .empty
     ) -> DistantReferences {
         guard
-            let world = try? worldChildrenGroup(
-                editorID: worldspaceEditorID, localized: pluginLocalized
-            )
+            let world = attempt({
+                try worldChildrenGroup(
+                    editorID: worldspaceEditorID, localized: pluginLocalized
+                )
+            })
         else { return DistantReferences() }
         let cells = temporaryFullLODCells(in: world).subtracting(loadedCells)
         return cellReferencePlacements(
@@ -132,9 +136,11 @@ nonisolated extension CellSceneBuilder {
     ) -> DistantReferences {
         var result = DistantReferences()
         guard
-            let world = try? worldChildrenGroup(
-                editorID: worldspaceEditorID, localized: pluginLocalized
-            )
+            let world = attempt({
+                try worldChildrenGroup(
+                    editorID: worldspaceEditorID, localized: pluginLocalized
+                )
+            })
         else { return result }
         let wanted = persistentReferences(in: world, localized: pluginLocalized).filter {
             $0.isFullLOD

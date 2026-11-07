@@ -64,7 +64,7 @@ nonisolated public final class NIFCollisionLibrary {
     /// (docs/decisions/concurrency.md). A failure is left to the serial load, which throws it.
     public func predecode(paths: some Sequence<String>) {
         guard decodesInParallel else { return }
-        let keys = Set(paths.compactMap { try? meshKey(for: $0) })
+        let keys = Set(paths.compactMap { element in attempt { try meshKey(for: element) } })
             .filter { cache[$0] == nil && predecoded[$0] == nil }
         guard keys.count >= ParallelDecode.minimumParallelItems else { return }
         let (cacheReader, files) = (assetCache, fileSystem.untimed)
@@ -72,8 +72,8 @@ nonisolated public final class NIFCollisionLibrary {
             if let converted = cacheReader?.value(forPath: key, decoder: .collision) {
                 return converted
             }
-            return (try? files.contents(forPath: key))
-                .flatMap { try? NIFFile(data: $0).collisionModel() }
+            return attempt { try files.contents(forPath: key) }
+                .flatMap { element in attempt { try NIFFile(data: element).collisionModel() } }
         }
     }
 
@@ -102,11 +102,11 @@ nonisolated public final class NIFCollisionLibrary {
     }
 
     public func canonicalKey(for path: String) -> String {
-        (try? meshKey(for: path)) ?? path
+        attempt { try meshKey(for: path) } ?? path
     }
 
     private func meshKey(for path: String) throws -> String {
-        guard let normalized = try? VirtualFileSystem.normalize(path) else {
+        guard let normalized = attempt({ try VirtualFileSystem.normalize(path) }) else {
             throw NIFCollisionLibraryError.fileNotFound(path: path)
         }
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized

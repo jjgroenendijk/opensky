@@ -3,6 +3,7 @@
 
 import Foundation
 public import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyWorldConditions
@@ -293,7 +294,7 @@ nonisolated public struct ActorPackageRuntime {
     ) -> ResolvedPackage? {
         for id in stack where !ranToday.contains(id) {
             guard
-                let package = try? store.resolve(id),
+                let package = attempt({ try store.resolve(id) }),
                 package.package.schedule.matches(clock) else { continue }
             var evaluator = ConditionEvaluator(context: context)
             evaluator.context.formIDTranslation = store.translation(of: id)
@@ -310,7 +311,7 @@ nonisolated public struct ActorPackageRuntime {
     private func nextEvaluation(after clock: GameClock, stack: [FormID]) -> Double {
         let interval = Self.maximumReevaluationGameMinutes
         let boundary = stack.compactMap { id in
-            try? store.resolve(id).package.schedule.minutesUntilBoundary(after: clock)
+            attempt { try store.resolve(id).package.schedule.minutesUntilBoundary(after: clock) }
         }.compactMap(\.self).min()
         let minutes = min(interval, boundary ?? interval)
         return clock.totalGameSeconds + Double(minutes * 60)

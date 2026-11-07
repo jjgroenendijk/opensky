@@ -70,7 +70,7 @@ nonisolated public enum NIFCollisionSweep: Sendable {
         do {
             let file = try NIFFile(data: fileSystem.contents(forPath: path))
             let collision = file.collisionModel()
-            let renderBounds = try? ModelBounds.containing(model: file.model())
+            let renderBounds = attempt { try ModelBounds.containing(model: file.model()) }
             return NIFCollisionAssetReport(
                 path: path,
                 collisionRootCount: file.blocks.count(where: {

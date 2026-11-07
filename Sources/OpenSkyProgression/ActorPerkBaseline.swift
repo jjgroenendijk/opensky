@@ -4,6 +4,7 @@
 // so one `resolveSpells` walk serves both. See docs/engine/perks.md.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 
@@ -35,7 +36,7 @@ nonisolated public struct ActorPerkBaselineResolver: Sendable {
     /// resolves to an empty list rather than propagating, the rule every
     /// baseline resolver here states.
     public func baseline(for base: FormID) -> [FormID] {
-        guard let resolved = try? templates.resolveSpells(base: base) else { return [] }
+        guard let resolved = attempt({ try templates.resolveSpells(base: base) }) else { return [] }
         return resolved.perks.value
     }
 

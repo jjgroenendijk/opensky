@@ -145,7 +145,12 @@ nonisolated public struct MapMarker: Equatable, Sendable {
     /// FULL as display text for a plugin with the given localized flag.
     public func name(localized: Bool) -> LString? {
         guard let nameField else { return nil }
-        return try? LString(field: ESMField(type: "FULL", data: nameField), localized: localized)
+        return attempt {
+            try LString(
+                field: ESMField(type: "FULL", data: nameField),
+                localized: localized
+            )
+        }
     }
 }
 

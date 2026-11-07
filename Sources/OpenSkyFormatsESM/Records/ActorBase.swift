@@ -187,7 +187,7 @@ nonisolated public struct ActorBase: Sendable {
                 // A malformed AIDT leaves the actor without AI data rather than
                 // failing the record, the rule every optional field group here
                 // follows.
-                aiData = try? ActorAIData(field: field)
+                aiData = attempt { try ActorAIData(field: field) }
             default:
                 // The FormID-valued appearance fields and the VMAD fallthrough
                 // live in their own pass, which is what keeps this switch inside

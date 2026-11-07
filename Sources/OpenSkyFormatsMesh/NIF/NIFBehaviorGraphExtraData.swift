@@ -24,7 +24,9 @@ nonisolated public struct NIFBehaviorGraphExtraData: Equatable, Sendable {
     /// The first behaviour graph block in the file, or nil. A short block is skipped.
     public static func first(in file: NIFFile) -> NIFBehaviorGraphExtraData? {
         file.blocks.lazy.filter { $0.typeName == typeName }
-            .compactMap { try? NIFBehaviorGraphExtraData(data: $0.data, header: file.header) }
+            .compactMap { element in
+                attempt { try NIFBehaviorGraphExtraData(data: element.data, header: file.header) }
+            }
             .first
     }
 

@@ -3,6 +3,7 @@
 // marks sit between encoders only (docs/tools/benchmark.md).
 
 public import Metal
+import OpenSkyFormatsCore
 import OpenSkyRenderResources
 
 /// The passes in frame order. A pass that a frame skips takes no time.
@@ -42,7 +43,8 @@ public final class GPUPassTimer {
         descriptor.count = Self.entriesPerSlot
         var heaps: [any MTL4CounterHeap] = []
         for _ in 0 ..< slots {
-            guard let heap = try? device.makeCounterHeap(descriptor: descriptor) else { return nil }
+            guard let heap = attempt({ try device.makeCounterHeap(descriptor: descriptor) })
+            else { return nil }
             heap.label = "GPU Pass Timer"
             heaps.append(heap)
         }
@@ -110,7 +112,7 @@ public final class GPUPassTimer {
         defer { slotFrames[slot] = nil }
         guard
             count > 1,
-            let data = try? heaps[slot].resolveCounterRange(0 ..< count),
+            let data = attempt({ try heaps[slot].resolveCounterRange(0 ..< count) }),
             data.count >= count * MemoryLayout<UInt64>.stride
         else { return }
         let ticks = unsafe data

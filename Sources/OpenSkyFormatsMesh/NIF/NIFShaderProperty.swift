@@ -131,8 +131,8 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
         glossiness = try reader.readFloat32()
         specularColor = try reader.readVector3()
         specularStrength = try reader.readFloat32()
-        lightingEffect1 = (try? reader.readFloat32()) ?? 0.3
-        lightingEffect2 = (try? reader.readFloat32()) ?? 2
+        lightingEffect1 = attempt { try reader.readFloat32() } ?? 0.3
+        lightingEffect2 = attempt { try reader.readFloat32() } ?? 2
         tail = Self.readTail(shaderType: shaderType, reader: &reader)
     }
 
@@ -141,25 +141,27 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
         var tail = Tail()
         switch shaderType {
         case 1, 16:
-            tail.environmentMapScale = (try? reader.readFloat32()) ?? 1
+            tail.environmentMapScale = attempt { try reader.readFloat32() } ?? 1
         case 5, 6:
-            tail.tintColor = try? reader.readVector3()
+            tail.tintColor = attempt { try reader.readVector3() }
         case 14:
             if
-                let sparkle = try? SIMD4(
-                    reader.readFloat32(), reader.readFloat32(), reader.readFloat32(),
-                    reader.readFloat32()
-                )
+                let sparkle = attempt({
+                    try SIMD4(
+                        reader.readFloat32(), reader.readFloat32(), reader.readFloat32(),
+                        reader.readFloat32()
+                    )
+                })
             {
                 tail.sparkle = sparkle
             }
         case 11:
-            tail.innerLayerThickness = (try? reader.readFloat32()) ?? 5
-            tail.refractionScale = (try? reader.readFloat32()) ?? 0.25
-            if let scale = try? SIMD2(reader.readFloat32(), reader.readFloat32()) {
+            tail.innerLayerThickness = attempt { try reader.readFloat32() } ?? 5
+            tail.refractionScale = attempt { try reader.readFloat32() } ?? 0.25
+            if let scale = attempt({ try SIMD2(reader.readFloat32(), reader.readFloat32()) }) {
                 tail.innerLayerScale = scale
             }
-            tail.environmentStrength = (try? reader.readFloat32()) ?? 1
+            tail.environmentStrength = attempt { try reader.readFloat32() } ?? 1
         default:
             break
         }

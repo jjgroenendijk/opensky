@@ -78,7 +78,7 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
 
     /// True when the path resolves to a loose file or an archive entry.
     public func exists(_ path: String) -> Bool {
-        guard let normalized = try? Self.normalize(path) else { return false }
+        guard let normalized = attempt({ try Self.normalize(path) }) else { return false }
         if looseFileURL(for: normalized) != nil {
             return true
         }
@@ -100,12 +100,14 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
     /// A loose file reports its own size and time; an archive entry reports its
     /// stored size and the archive's time.
     public func provenance(forPath path: String) -> GameFileProvenance? {
-        guard let normalized = try? Self.normalize(path) else { return nil }
+        guard let normalized = attempt({ try Self.normalize(path) }) else { return nil }
         if let url = looseFileURL(for: normalized) {
-            let values = try? url.resourceValues(forKeys: [
-                .fileSizeKey,
-                .contentModificationDateKey
-            ])
+            let values = attemptIfPresent {
+                try url.resourceValues(forKeys: [
+                    .fileSizeKey,
+                    .contentModificationDateKey
+                ])
+            }
             return GameFileProvenance(
                 origin: GameFileProvenance.looseOrigin,
                 size: UInt64(values?.fileSize ?? 0),
@@ -150,7 +152,7 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
     /// archives. Opens every archive, so use it only for small known folders such as
     /// Interface/Translations.
     public func fileNames(inDirectory directory: String) -> [String] {
-        guard let normalized = try? Self.normalize(directory) else { return [] }
+        guard let normalized = attempt({ try Self.normalize(directory) }) else { return [] }
         let prefix = normalized + "\\"
         var paths: Set<String> = []
         for name in looseFileNames(inDirectory: normalized) {
@@ -178,12 +180,15 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
             url.append(path: onDisk, directoryHint: .isDirectory)
             directoryKey = directoryKey.isEmpty ? component : directoryKey + "\\" + component
         }
-        let contents = (try? FileManager.default.contentsOfDirectory(
-            at: url,
-            includingPropertiesForKeys: [.isRegularFileKey]
-        )) ?? []
+        let contents = attemptIfPresent {
+            try FileManager.default.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: [.isRegularFileKey]
+            )
+        } ?? []
         return contents.filter { entry in
-            (try? entry.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true
+            attemptIfPresent { try entry.resourceValues(forKeys: [.isRegularFileKey]) }?
+                .isRegularFile == true
         }.map(\.lastPathComponent)
     }
 
@@ -235,9 +240,11 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
             if let listing = cache.directories[key] {
                 return listing[lowercasedName]
             }
-            let names = (try? FileManager.default.contentsOfDirectory(
-                atPath: url.path(percentEncoded: false)
-            )) ?? []
+            let names = attemptIfPresent {
+                try FileManager.default.contentsOfDirectory(
+                    atPath: url.path(percentEncoded: false)
+                )
+            } ?? []
             var listing: [String: String] = [:]
             listing.reserveCapacity(names.count)
             for name in names {
@@ -266,8 +273,10 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
             if let modified = slot.modified {
                 return (slot.url.lastPathComponent, modified)
             }
-            let date = try? slot.url.resourceValues(forKeys: [.contentModificationDateKey])
-                .contentModificationDate
+            let date = attemptIfPresent {
+                try slot.url.resourceValues(forKeys: [.contentModificationDateKey])
+                    .contentModificationDate
+            }
             let modified = Int64(date?.timeIntervalSince1970 ?? 0)
             cache.archives[index].modified = modified
             return (slot.url.lastPathComponent, modified)

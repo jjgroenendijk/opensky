@@ -290,8 +290,8 @@ nonisolated public struct PlacedReference: Sendable {
         to links: inout [LinkedReference]
     ) {
         var reader = BinaryReader(data)
-        guard let first = try? FormID(reader.readUInt32()) else { return }
-        if data.count >= 8, let second = try? FormID(reader.readUInt32()) {
+        guard let first = attempt({ try FormID(reader.readUInt32()) }) else { return }
+        if data.count >= 8, let second = attempt({ try FormID(reader.readUInt32()) }) {
             links.append(LinkedReference(keyword: first.isNull ? nil : first, ref: second))
         } else {
             links.append(LinkedReference(keyword: nil, ref: first))

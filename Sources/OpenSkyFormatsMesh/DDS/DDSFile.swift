@@ -233,12 +233,17 @@ nonisolated public struct DDSFile: Sendable {
     /// mip chain still answers true.
     public static func declaresVolume(_ data: Data) -> Bool {
         var reader = BinaryReader(data)
-        guard let header = try? readHeader(reader: &reader) else { return false }
+        guard let header = attempt({ try readHeader(reader: &reader) }) else { return false }
         if header.isVolume {
             return true
         }
         guard header.pixelFormat.flags & Layout.flagFourCC != 0 else { return false }
-        let resolved = try? resolveFormat(fourCC: header.pixelFormat.fourCC, reader: &reader)
+        let resolved = attempt {
+            try resolveFormat(
+                fourCC: header.pixelFormat.fourCC,
+                reader: &reader
+            )
+        }
         return resolved?.isVolume ?? false
     }
 

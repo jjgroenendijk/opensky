@@ -44,7 +44,7 @@ nonisolated public struct NIFFurnitureMarker: Equatable, Sendable {
     /// The markers of the first marker block in the file. A malformed block gives none.
     public static func markers(in file: NIFFile) -> [NIFFurnitureMarker] {
         file.blocks.lazy.filter { typeNames.contains($0.typeName) }
-            .compactMap { try? decode($0.data) }
+            .compactMap { element in attempt { try decode(element.data) } }
             .first ?? []
     }
 }

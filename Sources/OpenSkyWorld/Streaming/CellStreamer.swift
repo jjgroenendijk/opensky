@@ -510,7 +510,9 @@ extension CellStreamer {
             departed.meshKeys.formUnion(lod.assets.meshKeys)
             departed.textureKeys.formUnion(lod.assets.textureKeys)
         }
-        for scene in pending.compactMap({ try? $0.result.get() }) + staged {
+        for scene in pending
+            .compactMap({ element in attempt { try element.result.get() } }) + staged
+        {
             departed.meshKeys.formUnion(scene.assets.meshKeys)
             departed.textureKeys.formUnion(scene.assets.textureKeys)
         }

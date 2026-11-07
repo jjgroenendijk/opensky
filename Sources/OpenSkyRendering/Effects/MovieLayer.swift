@@ -171,7 +171,10 @@ extension Renderer {
         let layer = effects.movie
         var planes = layer.slots[slot]
         if planes?.fits(picture) != true {
-            guard let made = try? MovieLayer.makePlanes(device: device, picture: picture) else {
+            guard
+                let made =
+                attempt({ try MovieLayer.makePlanes(device: device, picture: picture) })
+            else {
                 return nil
             }
             retireAllocations(planes?.allocations ?? [])

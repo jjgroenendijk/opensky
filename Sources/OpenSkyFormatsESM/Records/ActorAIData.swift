@@ -238,8 +238,8 @@ nonisolated public struct ActorAIData: Equatable, Sendable {
         assistance = try ActorAssistance(rawValue: reader.readUInt8())
         usesAggroRadiusBehavior = try reader.readUInt8() & 0x01 != 0
         unknown = try reader.readUInt8()
-        warnDistance = try? reader.readUInt32()
-        warnOrAttackDistance = try? reader.readUInt32()
-        attackDistance = try? reader.readUInt32()
+        warnDistance = attempt { try reader.readUInt32() }
+        warnOrAttackDistance = attempt { try reader.readUInt32() }
+        attackDistance = attempt { try reader.readUInt32() }
     }
 }

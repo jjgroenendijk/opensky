@@ -92,8 +92,8 @@ nonisolated extension ActorTemplateResolver {
     /// nothing; the appearance path already reports it.
     public func carriedItems(base: FormID) -> CarriedItems {
         CarriedItems(
-            entries: (try? resolveCarriedItems(base: base).value) ?? [],
-            combatStyle: (try? resolveCombatStyle(base: base))?.value
+            entries: attempt { try resolveCarriedItems(base: base).value } ?? [],
+            combatStyle: attempt { try resolveCombatStyle(base: base) }?.value
         )
     }
 }

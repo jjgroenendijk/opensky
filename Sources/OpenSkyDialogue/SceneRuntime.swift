@@ -5,6 +5,7 @@
 
 import Foundation
 public import OpenSkyDialogueInterface
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyWorldState
 
@@ -180,7 +181,7 @@ public struct SceneRuntime {
     public func questDidStart(_ quest: FormID) -> [SceneEvent] {
         catalog.scenes(ofQuest: quest)
             .filter { $0.scene.flags.contains(.beginOnQuestStart) }
-            .flatMap { (try? start($0.formID)) ?? [] }
+            .flatMap { element in attempt { try start(element.formID) } ?? [] }
     }
 }
 

@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyActorPresentation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyObjectAnimation
@@ -25,20 +26,23 @@ nonisolated extension CellSceneBuilder {
     /// A mesh that names a behaviour graph plays only its lag bones: its keyed controllers
     /// are a baked preview the graph replaces, such as the forge's 33-second smithing idle.
     func nodeControllerRig(modelPath: String) -> NodeControllerRig? {
-        guard let fileSystem, let key = try? meshes.meshKey(for: modelPath) else { return nil }
+        guard
+            let fileSystem,
+            let key = attempt({ try meshes.meshKey(for: modelPath) }) else { return nil }
         if let known = nodeControllerRigs[key] {
             return known
         }
         var rig: NodeControllerRig?
         let lagOnly = meshes.behaviorProjectPath(forPath: modelPath) != nil
         if
-            let data = try? fileSystem.contents(forPath: key),
+            let data = attempt({ try fileSystem.contents(forPath: key) }),
             Self.nodeControllerMarkers.contains(where: { data.range(of: $0) != nil })
             || lagOnly && data.range(of: Self.sequenceMarker) != nil
         {
-            rig = (try? NIFFile(data: data)).flatMap {
-                try? NodeControllerRig(file: $0, lagOnly: lagOnly)
-            }
+            rig = attempt { try NIFFile(data: data) }
+                .flatMap { element in
+                    attempt { try NodeControllerRig(file: element, lagOnly: lagOnly) }
+                }
         }
         nodeControllerRigs[key] = .some(rig)
         return rig

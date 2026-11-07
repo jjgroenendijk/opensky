@@ -16,7 +16,7 @@ nonisolated extension NIFFile {
         else { return matrix_identity_float4x4 }
         var reader = BinaryReader(blocks[Int(root)].data)
         guard
-            let object = try? NIFObjectPrefix(reader: &reader, header: header),
+            let object = attempt({ try NIFObjectPrefix(reader: &reader, header: header) }),
             object.scale != 0
         else { return matrix_identity_float4x4 }
         return object.localTransform.inverse

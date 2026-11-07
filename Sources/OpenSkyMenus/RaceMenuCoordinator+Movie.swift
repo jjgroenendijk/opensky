@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
@@ -106,11 +107,13 @@ extension RaceMenuCoordinator {
             world?.applyPlayerIdentity(model.identity)
         }
         self.model = model
-        try? renderer?.updateSWFRuntime { runtime in
-            if republish {
-                RaceMenuMovieBridge.publishSliders(model, runtime: runtime)
+        attempt {
+            try renderer?.updateSWFRuntime { runtime in
+                if republish {
+                    RaceMenuMovieBridge.publishSliders(model, runtime: runtime)
+                }
+                RaceMenuMovieBridge.finishChange(runtime: runtime)
             }
-            RaceMenuMovieBridge.finishChange(runtime: runtime)
         }
         if done {
             close()

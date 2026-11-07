@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyDialogueInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsESS
 import OpenSkyInventoryInterface
@@ -171,7 +172,7 @@ nonisolated extension ESSImporter {
     }
 
     private mutating func importQuest(_ change: ESSChangeForm) {
-        guard let decoded = try? ESSQuestChange(change) else {
+        guard let decoded = attempt({ try ESSQuestChange(change) }) else {
             report.update("quests") { $0.skip("undecodable quest change") }
             return
         }

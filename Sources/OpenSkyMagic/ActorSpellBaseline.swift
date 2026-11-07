@@ -5,6 +5,7 @@
 // (`LvlBanditWizard`). See docs/engine/ai-spell-use.md and docs/engine/leveled-lists.md.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 
@@ -64,7 +65,8 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
     /// The spell list plugin data authors for `base`. A broken template chain gives an
     /// empty baseline, as in `InventoryBaselineResolver.actorBaseline`.
     public func baseline(for base: FormID) -> ActorSpellBaseline {
-        guard let resolved = try? templates.resolveSpells(base: base) else { return .none }
+        guard let resolved = attempt({ try templates.resolveSpells(base: base) })
+        else { return .none }
         let race = resolved.race.value.flatMap { races[$0.rawValue] }
         return ActorSpellBaseline(
             actorSpells: expand(resolved.spells.value, for: base),

@@ -187,10 +187,16 @@ public final class EffectModelPoser: EffectModelPosing {
         let reference = 0xFF00_0000 | nextCopy
         guard
             let meshes = meshes(),
-            let model = try? meshes.animatedObjectModel(
-                path: path, bones: Set(rig.skeleton.boneNames), reference: reference,
-                surface: ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
-            )
+            let model = attempt({
+                try meshes.animatedObjectModel(
+                    path: path, bones: Set(rig.skeleton.boneNames), reference: reference,
+                    surface: ModelSurfaceOverride(
+                        diffuseTexture: nil,
+                        normalTexture: nil,
+                        tint: nil
+                    )
+                )
+            })
         else {
             poseRigs[path] = .some(nil)
             return nil
@@ -224,7 +230,7 @@ public final class EffectModelPoser: EffectModelPosing {
     private func drainLoads() {
         guard let loader else { return }
         for completion in loader.takeFinished() {
-            nodeRigs[completion.key] = .ready((try? completion.result.get())?.rig)
+            nodeRigs[completion.key] = .ready(attempt { try completion.result.get() }?.rig)
         }
     }
 }

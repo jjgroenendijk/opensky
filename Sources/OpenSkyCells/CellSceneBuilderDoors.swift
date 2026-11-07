@@ -44,12 +44,14 @@ nonisolated extension CellSceneBuilder {
 
     /// The rig of a door mesh, read once per mesh. Nil for a mesh without both sequences.
     func sequenceDoorRig(modelPath: String) -> SequenceDoorRig? {
-        guard let fileSystem, let key = try? meshes.meshKey(for: modelPath) else { return nil }
+        guard
+            let fileSystem,
+            let key = attempt({ try meshes.meshKey(for: modelPath) }) else { return nil }
         if let known = sequenceDoorRigs[key] {
             return known
         }
-        let rig = (try? NIFFile(data: fileSystem.contents(forPath: key)))
-            .flatMap { try? SequenceDoorRig(file: $0) }
+        let rig = attempt { try NIFFile(data: fileSystem.contents(forPath: key)) }
+            .flatMap { element in attempt { try SequenceDoorRig(file: element) } }
         sequenceDoorRigs[key] = .some(rig)
         return rig
     }

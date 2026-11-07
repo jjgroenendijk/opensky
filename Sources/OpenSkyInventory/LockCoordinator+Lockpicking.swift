@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyConditions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
@@ -40,7 +41,9 @@ extension LockCoordinator {
         switch event {
         case .pickBroke:
             if let items, let lockpickItem {
-                _ = try? items.inventory.remove(lockpickItem, count: 1, from: items.player)
+                _ = attempt {
+                    try items.inventory.remove(lockpickItem, count: 1, from: items.player)
+                }
             }
             sessionExperience += report(uses: settings.brokenUses, action: .lockpickBroken)
             lastAction = .pickBroke
@@ -108,7 +111,7 @@ extension LockCoordinator {
             items.inventory.count(of: key, in: items.player) == 0,
             random.uniform(in: 0 ... 100) < target.perks.keyRewardChance
         else { return false }
-        return (try? items.inventory.add(key, count: 1, to: items.player)) != nil
+        return attempt { try items.inventory.add(key, count: 1, to: items.player) } != nil
     }
 
     private func report(uses: Float, action: SkillAdvanceAction) -> Float {

@@ -159,7 +159,9 @@ nonisolated public struct PreviewSceneBuilder {
         case "NPC_":
             return builder.previewActor(base: record.formID, placement: placement)
         case "ARMO":
-            let armor = try? record.decode { try Armor(record: $0, localized: record.localized) }
+            let armor = attempt {
+                try record.decode { try Armor(record: $0, localized: record.localized) }
+            }
             let model = armor?.details.maleWorldModel ?? armor?.details.femaleWorldModel
             guard let path = model?.path else {
                 throw .unsupportedRecord(type: type.description, name: name)

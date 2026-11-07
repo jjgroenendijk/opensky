@@ -210,7 +210,7 @@ public final class ScriptCoordinator {
                     .parentClassName,
                 !parent.isEmpty,
                 visited.insert(PapyrusRuntime.key(parent)).inserted,
-                let file = try? load(parent)
+                let file = attempt({ try load(parent) })
             {
                 chain.append(file)
                 current = parent

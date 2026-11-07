@@ -241,11 +241,13 @@ nonisolated extension NIFFile.Flattener {
             let block = try block(at: index)
             if
                 block.typeName == NIFFile.effectShaderType,
-                let material = try? effectMaterial(
-                    block: block,
-                    alphaBlock: key.alphaPropertyBlock,
-                    animation: shaderAnimation(key)
-                )
+                let material = attempt({
+                    try effectMaterial(
+                        block: block,
+                        alphaBlock: key.alphaPropertyBlock,
+                        animation: shaderAnimation(key)
+                    )
+                })
             {
                 return material
             }
@@ -300,8 +302,8 @@ nonisolated extension NIFFile.Flattener {
 
     /// The shader's controllers on their own clock; nil when none moves or they fail.
     private func shaderAnimation(_ key: SlotKey) -> MaterialAnimation? {
-        key.shaderPropertyBlock.flatMap {
-            try? NIFShaderAnimation.animation(ofShader: $0, file: file)
+        key.shaderPropertyBlock.flatMap { element in
+            attempt { try NIFShaderAnimation.animation(ofShader: element, file: file) }
         }
     }
 }
@@ -336,7 +338,8 @@ nonisolated extension NIFFile.Flattener {
         let block = try block(at: Int(shape.shaderPropertyRef))
         guard
             block.typeName == NIFFile.effectShaderType,
-            let effect = try? NIFEffectShaderProperty(data: block.data, header: file.header)
+            let effect =
+            attempt({ try NIFEffectShaderProperty(data: block.data, header: file.header) })
         else { return false }
         return effect.sourceTexturePath == nil
     }

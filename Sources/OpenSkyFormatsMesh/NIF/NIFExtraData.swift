@@ -172,10 +172,13 @@ nonisolated extension NIFFile {
     public func extraData(of block: Int) -> [NIFExtraData] {
         guard blocks.indices.contains(block) else { return [] }
         var reader = BinaryReader(blocks[block].data)
-        guard let net = try? NIFObjectNET(reader: &reader, header: header) else { return [] }
+        guard let net = attempt({ try NIFObjectNET(reader: &reader, header: header) })
+        else { return [] }
         return net.extraDataRefs.compactMap { ref in
             guard ref >= 0, Int(ref) < blocks.count else { return nil }
-            return try? NIFBlockDecoders.decode(blocks[Int(ref)], header: header) as? NIFExtraData
+            return attempt {
+                try NIFBlockDecoders.decode(blocks[Int(ref)], header: header)
+            } as? NIFExtraData
         }
     }
 

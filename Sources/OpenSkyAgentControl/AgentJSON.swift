@@ -2,6 +2,7 @@
 // command reads and writes a small, documented shape (docs/tools/agent-control.md).
 
 import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public enum AgentJSON: Equatable, Sendable {
     case null
@@ -107,13 +108,13 @@ nonisolated extension AgentJSON: Codable {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() {
             self = .null
-        } else if let value = try? container.decode(Bool.self) {
+        } else if let value = try container.decodeIfType(Bool.self) {
             self = .bool(value)
-        } else if let value = try? container.decode(Double.self) {
+        } else if let value = try container.decodeIfType(Double.self) {
             self = .number(value)
-        } else if let value = try? container.decode(String.self) {
+        } else if let value = try container.decodeIfType(String.self) {
             self = .string(value)
-        } else if let value = try? container.decode([AgentJSON].self) {
+        } else if let value = try container.decodeIfType([AgentJSON].self) {
             self = .array(value)
         } else {
             self = try .object(container.decode([String: AgentJSON].self))

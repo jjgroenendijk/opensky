@@ -4,6 +4,7 @@
 // windowless.
 
 import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public enum ReferenceSteamRepair {
     /// Valve's helper is tens of megabytes; the wrapper is a few kilobytes.
@@ -19,13 +20,16 @@ nonisolated public enum ReferenceSteamRepair {
         guard files.fileExists(atPath: prefix.webHelperWrapper.path(percentEncoded: false)) else {
             throw ReferenceLauncherError.noWrapper
         }
-        let folders = (try? files.contentsOfDirectory(
-            at: prefix.cefDirectory, includingPropertiesForKeys: nil
-        )) ?? []
+        let folders = attemptIfPresent {
+            try files.contentsOfDirectory(
+                at: prefix.cefDirectory, includingPropertiesForKeys: nil
+            )
+        } ?? []
         var changed = 0
         for folder in folders where folder.lastPathComponent.hasPrefix("cef.win") {
             let helper = folder.appending(path: helperName)
-            let size = (try? helper.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            let size = attemptIfPresent { try helper.resourceValues(forKeys: [.fileSizeKey]) }?
+                .fileSize ?? 0
             guard size > wrapperSizeLimit else { continue }
             let real = folder.appending(path: realHelperName)
             try? files.removeItem(at: real)
@@ -42,19 +46,31 @@ nonisolated public enum ReferenceSteamRepair {
     public static func removeBrowserLocks(prefix: ReferencePrefix) -> Int {
         let files = FileManager.default
         let users = prefix.driveC.appending(path: "users", directoryHint: .isDirectory)
-        let caches = ((try? files.contentsOfDirectory(at: users, includingPropertiesForKeys: nil))
+        let caches = (attemptIfPresent {
+            try files.contentsOfDirectory(
+                at: users,
+                includingPropertiesForKeys: nil
+            )
+        }
             ?? []).map { $0.appending(path: "AppData/Local/Steam/htmlcache") }
         var folders = caches
         for cache in caches {
-            folders += (try? files.contentsOfDirectory(at: cache, includingPropertiesForKeys: nil))
+            folders += attemptIfPresent {
+                try files.contentsOfDirectory(
+                    at: cache,
+                    includingPropertiesForKeys: nil
+                )
+            }
                 ?? []
         }
         var removed = 0
         for folder in folders {
-            let entries = (try? files.contentsOfDirectory(
-                at: folder,
-                includingPropertiesForKeys: nil
-            ))
+            let entries = attemptIfPresent {
+                try files.contentsOfDirectory(
+                    at: folder,
+                    includingPropertiesForKeys: nil
+                )
+            }
                 ?? []
             for entry in entries where isLock(entry.lastPathComponent) {
                 if (try? files.removeItem(at: entry)) != nil {

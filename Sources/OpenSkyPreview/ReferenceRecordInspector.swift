@@ -258,10 +258,10 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
     ) -> [ResolvedFormID: [String]] {
         var usage: [ResolvedFormID: [String]] = [:]
         for (id, indexed) in index.records {
-            guard let fields = try? indexed.record.fields() else { continue }
+            guard let fields = attempt({ try indexed.record.fields() }) else { continue }
             var list = KeywordList()
             for field in fields {
-                guard (try? list.decode(field: field)) != nil else { break }
+                guard attempt({ try list.decode(field: field) }) != nil else { break }
             }
             let editorID = ReferenceRecordCatalog.editorID(in: indexed.record) ?? id.description
             let user = "\(editorID) — \(indexed.sourcePlugin) — \(id)"

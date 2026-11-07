@@ -94,7 +94,7 @@ nonisolated extension HKXObjectCursor {
             return nil
         }
         var reader = BinaryReader(payload, offset: view.dataOffset)
-        guard let bytes = try? reader.read(count: view.count) else {
+        guard let bytes = attempt({ try reader.read(count: view.count) }) else {
             recordMiss(field, .outOfBounds)
             return nil
         }

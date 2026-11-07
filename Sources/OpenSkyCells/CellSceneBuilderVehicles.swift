@@ -3,6 +3,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRenderCore
@@ -20,9 +21,9 @@ nonisolated extension CellSceneBuilder {
             where followers.contains(instance.formID) && instance.animated == nil
         {
             guard
-                let key = try? meshes.meshKey(for: instance.modelPath),
-                let file = try? NIFFile(data: fileSystem.contents(forPath: key)),
-                let rig = try? VehicleWheelRig(file: file),
+                let key = attempt({ try meshes.meshKey(for: instance.modelPath) }),
+                let file = attempt({ try NIFFile(data: fileSystem.contents(forPath: key)) }),
+                let rig = attempt({ try VehicleWheelRig(file: file) }),
                 let copy = posedCopy(of: instance, skeleton: rig.skeleton)
             else { continue }
             instances[index] = copy.instance
@@ -38,10 +39,12 @@ nonisolated extension CellSceneBuilder {
     ) -> PosedCopy? {
         let bones = Set(skeleton.boneNames)
         guard
-            let model = try? meshes.animatedObjectModel(
-                path: instance.modelPath, bones: bones,
-                reference: instance.formID, surface: instance.surface
-            )
+            let model = attempt({
+                try meshes.animatedObjectModel(
+                    path: instance.modelPath, bones: bones,
+                    reference: instance.formID, surface: instance.surface
+                )
+            })
         else { return nil }
         var posed = ResolvedInstance(
             sortKey: instance.sortKey, formID: instance.formID,

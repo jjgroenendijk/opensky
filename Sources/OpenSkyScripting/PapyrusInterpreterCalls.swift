@@ -1,6 +1,7 @@
 // Method, parent, and static call opcodes.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
@@ -381,7 +382,7 @@ extension PapyrusInterpreter {
         of functionName: String,
         from declared: String
     ) -> PapyrusScriptIndex? {
-        guard let chain = try? runtime.indexChain(from: declared) else { return nil }
+        guard let chain = attempt({ try runtime.indexChain(from: declared) }) else { return nil }
         return chain.first { $0.declaresNative(functionName) }
     }
 

@@ -3,6 +3,7 @@
 // instead (docs/tools/reference-game.md).
 
 public import Foundation
+import OpenSkyFormatsCore
 
 /// Reads Steam's own logs: `console_log.txt` gets the start-up line once the client is up,
 /// and `connection_log.txt` gets the logon line once the account is logged on.
@@ -51,20 +52,22 @@ nonisolated public struct ReferenceSteamReadiness: Equatable, Sendable {
     }
 
     private static func length(_ url: URL) -> UInt64 {
-        let attributes = try? FileManager.default.attributesOfItem(
-            atPath: url.path(percentEncoded: false)
-        )
+        let attributes = attemptIfPresent {
+            try FileManager.default.attributesOfItem(
+                atPath: url.path(percentEncoded: false)
+            )
+        }
         return (attributes?[.size] as? NSNumber)?.uint64Value ?? 0
     }
 
     /// A log shorter than `offset` was started again, so all of it is new.
     private static func text(_ url: URL, after offset: UInt64) -> String {
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return "" }
+        guard let handle = attempt({ try FileHandle(forReadingFrom: url) }) else { return "" }
         defer { try? handle.close() }
         let start = length(url) < offset ? 0 : offset
         guard
-            (try? handle.seek(toOffset: start)) != nil,
-            let data = try? handle.readToEnd()
+            attempt({ try handle.seek(toOffset: start) }) != nil,
+            let data = attempt({ try handle.readToEnd() })
         else { return "" }
         // Latin-1 reads any bytes, and both lines are plain ASCII.
         return String(bytes: data, encoding: .isoLatin1) ?? ""

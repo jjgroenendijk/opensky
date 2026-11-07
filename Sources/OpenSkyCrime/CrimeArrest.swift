@@ -6,6 +6,7 @@
 
 import Foundation
 public import OpenSkyCrimeInterface
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventoryInterface
@@ -62,9 +63,9 @@ public struct CrimeArrest {
         guard owed > 0 else { throw .noBounty }
         let gold = inventory.goldCount(of: .player)
         guard gold >= owed else { throw .cannotAfford(owed: owed, gold: gold) }
-        // Checked above, so the removal cannot fail; `try?` keeps a surprise
-        // from crashing the session rather than hiding a real error path.
-        _ = try? inventory.remove(inventory.goldFormID, count: owed, from: .player)
+        // Checked above, so the removal cannot fail; `attempt` logs a surprise
+        // instead of crashing the session.
+        _ = attempt { try inventory.remove(inventory.goldFormID, count: owed, from: .player) }
         let confiscated = removeStolen ? confiscate(into: evidence) : []
         crime.clearCrimeGold(of: faction)
         return ArrestSettlement(
@@ -114,7 +115,7 @@ public struct CrimeArrest {
 
     private func confiscate(into evidence: InventoryHolder?) -> [InventoryStack] {
         guard let evidence else { return [] }
-        return (try? inventory.confiscateStolen(from: .player, to: evidence)) ?? []
+        return attempt { try inventory.confiscateStolen(from: .player, to: evidence) } ?? []
     }
 
     public init(crime: CrimeRuntime, inventory: any InventoryAccess) {

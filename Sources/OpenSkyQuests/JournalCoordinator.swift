@@ -4,6 +4,7 @@
 // See docs/engine/coordinators.md and docs/engine/journal.md.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyQuestsInterface
@@ -50,7 +51,7 @@ public final class JournalCoordinator {
     public func entries() -> [JournalQuestStatus] {
         guard let runtime else { return [] }
         return runtime.quests.journalQuests().compactMap { quest in
-            (try? runtime.state(of: quest.formID)).map {
+            attempt { try runtime.state(of: quest.formID) }.map {
                 JournalQuestStatus(quest: quest, state: $0)
             }
         }
@@ -62,7 +63,7 @@ public final class JournalCoordinator {
             !editorID.isEmpty,
             let runtime,
             let quest = runtime.quests.quest(editorID: editorID),
-            let state = try? runtime.state(of: quest.formID)
+            let state = attempt({ try runtime.state(of: quest.formID) })
         else {
             return nil
         }
@@ -117,7 +118,9 @@ public final class JournalCoordinator {
     /// movie reads as "no change".
     @discardableResult
     public func toggleTracking(_ id: FormID) -> Bool? {
-        guard let runtime, (try? runtime.state(of: id))?.isRunning == true else { return nil }
+        guard
+            let runtime,
+            attempt({ try runtime.state(of: id) })?.isRunning == true else { return nil }
         let tracked = !runtime.isTracked(id)
         runtime.setTracked(id, tracked)
         let name = runtime.quests.quest(id)?.editorID ?? id.description

@@ -34,7 +34,7 @@ nonisolated public struct SWFFontLibrary: Sendable {
         let exportNames = exportNamesByCharacterId(file)
         var added = 0
         for tag in file.tags where SWFFontDefinition.tagCodes.contains(tag.code) {
-            guard let font = try? SWFFontParser.parse(tag: tag) else { continue }
+            guard let font = attempt({ try SWFFontParser.parse(tag: tag) }) else { continue }
             let index = fonts.count
             fonts.append(Resolved(movie: movie, font: font))
             added += 1
@@ -81,7 +81,7 @@ nonisolated public struct SWFFontLibrary: Sendable {
     private func exportNamesByCharacterId(_ file: SWFFile) -> [UInt16: String] {
         var names: [UInt16: String] = [:]
         for tag in file.tags where tag.code == 56 {
-            guard let pairs = try? decodeExportAssets(tag) else { continue }
+            guard let pairs = attempt({ try decodeExportAssets(tag) }) else { continue }
             for pair in pairs where names[pair.characterId] == nil {
                 names[pair.characterId] = pair.name
             }

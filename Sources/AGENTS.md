@@ -55,6 +55,9 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   type is written `any X`. An import is `internal`: write `public import X` only when a public
   declaration of the file uses a type of `X`. An unsafe pointer or C call is marked `unsafe`.
   A `@preconcurrency import`, needed for Metal, is written `@preconcurrency @unsafe import`.
+- No `try?` in a package module, except on `removeItem` and `close`. A failure the game
+  survives goes through `attempt { try call() }`, which logs it; any other failure throws a typed
+  error. The formats, game data, and save modules never trap (`docs/decisions/error-handling.md`).
 
 ## Bulk edits
 

@@ -154,7 +154,7 @@ nonisolated public struct ActorValueResolver: Sendable {
 
     /// The class `base` uses after its templates, or nil when the chain does not resolve.
     public func characterClass(ofBase base: FormID) -> CharacterClass? {
-        (try? templates.resolveStats(base: base)).flatMap {
+        attempt { try templates.resolveStats(base: base) }.flatMap {
             characterClass($0.stats.value.characterClass)
         }
     }

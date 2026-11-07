@@ -34,8 +34,9 @@ nonisolated public struct PlacedRecordLookup: Sendable {
             let found = index.record(withFormID: formID), !found.record.isDeleted
         else { return nil }
         let decoded: RuntimeReferenceRecord? = switch found.record.type {
-        case "REFR": (try? found.decode(PlacedReference.init(record:))).map { .reference($0) }
-        case "ACHR": (try? found.decode(PlacedActor.init(record:))).map { .actor($0) }
+        case "REFR": attempt { try found.decode(PlacedReference.init(record:)) }
+            .map { .reference($0) }
+        case "ACHR": attempt { try found.decode(PlacedActor.init(record:)) }.map { .actor($0) }
         default: nil
         }
         guard let decoded else { return nil }
@@ -50,13 +51,15 @@ nonisolated public struct PlacedRecordLookup: Sendable {
 
     private func baseScripts(of record: RuntimeReferenceRecord) -> [AttachedScript] {
         if case let .actor(actor) = record {
-            return (try? templates?.resolveScripts(base: actor.base).value) ?? []
+            return attempt { try templates?.resolveScripts(base: actor.base).value } ?? []
         }
         guard
             case let .reference(reference) = record,
             let base = index.record(withFormID: reference.base),
             ModelBase.supportedTypes.contains(base.record.type),
-            let decoded = try? base.decode({ try ModelBase(record: $0, localized: base.localized) })
+            let decoded = attempt({
+                try base.decode { try ModelBase(record: $0, localized: base.localized) }
+            })
         else { return [] }
         return decoded.scriptData.scripts
     }
@@ -70,11 +73,15 @@ nonisolated public struct PlacedRecordLookup: Sendable {
             let found = index.record(withFormID: formID), !found.record.isDeleted
         else { return [] }
         if found.record.type == "ARMO" {
-            let armor = try? found.decode { try Armor(record: $0, localized: found.localized) }
+            let armor = attempt {
+                try found.decode { try Armor(record: $0, localized: found.localized) }
+            }
             return armor?.details.scriptData.scripts ?? []
         }
         guard ModelBase.supportedTypes.contains(found.record.type) else { return [] }
-        let base = try? found.decode { try ModelBase(record: $0, localized: found.localized) }
+        let base = attempt {
+            try found.decode { try ModelBase(record: $0, localized: found.localized) }
+        }
         return base?.scriptData.scripts ?? []
     }
 
@@ -86,14 +93,17 @@ nonisolated public struct PlacedRecordLookup: Sendable {
             let found = index.record(withFormID: base)
         else { return nil }
         let path: String? = if found.record.type == "STAT" {
-            (try? found.decode(StaticObject.init(record:)))?.modelPath
+            attempt { try found.decode(StaticObject.init(record:)) }?.modelPath
         } else if ModelBase.supportedTypes.contains(found.record.type) {
-            (try? found.decode { try ModelBase(record: $0, localized: found.localized) })?
+            attempt { try found.decode { try ModelBase(record: $0, localized: found.localized) } }?
                 .modelPath
         } else {
             nil
         }
-        guard let path, let normalized = try? VirtualFileSystem.normalize(path) else { return nil }
+        guard
+            let path,
+            let normalized = attempt({ try VirtualFileSystem.normalize(path) })
+        else { return nil }
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
     }
 
@@ -136,7 +146,7 @@ nonisolated public struct PlacedRecordLookup: Sendable {
     public func location(ofCell formID: FormID) -> CellSceneLocation? {
         guard
             let found = index.record(withFormID: formID), found.record.type == "CELL",
-            let cell = try? Cell(record: found.record, localized: found.localized)
+            let cell = attempt({ try Cell(record: found.record, localized: found.localized) })
         else { return nil }
         if cell.isInterior {
             return .interior(formID)
@@ -149,7 +159,8 @@ nonisolated public struct PlacedRecordLookup: Sendable {
         guard
             let cellID = index.cellFormID(containing: formID),
             let found = index.record(withFormID: cellID), found.record.type == "CELL",
-            let cell = try? Cell(record: found.record, localized: found.localized), cell.isInterior
+            let cell = attempt({ try Cell(record: found.record, localized: found.localized) }),
+            cell.isInterior
         else { return nil }
         return cellID
     }

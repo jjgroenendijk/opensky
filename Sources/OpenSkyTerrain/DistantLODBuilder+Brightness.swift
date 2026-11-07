@@ -34,7 +34,7 @@ nonisolated extension DistantLODSelection {
 nonisolated extension DistantLODBuilder {
     /// Nil when the worldspace has no `lodsettings` file.
     public func brightnessSampleOrigins(worldspace: String, maximum: Int) -> [CellCoordinate]? {
-        guard let settings = try? settings(worldspace: worldspace) else { return nil }
+        guard let settings = attempt({ try settings(worldspace: worldspace) }) else { return nil }
         return DistantLODSelection.brightnessSampleOrigins(settings: settings, maximum: maximum)
     }
 
@@ -47,8 +47,8 @@ nonisolated extension DistantLODBuilder {
         let key = worldspace.lowercased()
         let path = "textures\\terrain\\\(key)\\\(key).4.\(blockOrigin.x).\(blockOrigin.y).dds"
         guard
-            let data = try? fileSystem.contents(forPath: path),
-            let image = try? DDSDecoder.smallLevel(data, edge: 4),
+            let data = attempt({ try fileSystem.contents(forPath: path) }),
+            let image = attempt({ try DDSDecoder.smallLevel(data, edge: 4) }),
             image.width == 4, image.height == 4
         else { return [:] }
         return Self.cellColours(image, blockOrigin: blockOrigin)

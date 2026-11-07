@@ -3,6 +3,7 @@
 // active stacks. See docs/formats/ess-papyrus.md.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public struct ESSPapyrusScript: Equatable, Sendable {
     public let name: String
@@ -92,7 +93,7 @@ nonisolated public struct ESSPapyrus: Equatable, Sendable {
         do throws(ESSError) {
             self = try Self(data: data, idWidth: 4)
         } catch {
-            guard let wide = try? Self(data: data, idWidth: 8) else { throw error }
+            guard let wide = attempt({ try Self(data: data, idWidth: 8) }) else { throw error }
             self = wide
         }
     }

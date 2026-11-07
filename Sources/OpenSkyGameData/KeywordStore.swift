@@ -90,10 +90,10 @@ nonisolated public struct KeywordStore: Sendable {
         guard
             let keyword = self.keyword(keyword)?.id,
             case let .record(indexed) = index.lookup(form),
-            let fields = try? indexed.record.fields() else { return nil }
+            let fields = attempt({ try indexed.record.fields() }) else { return nil }
         var list = KeywordList()
         for field in fields {
-            guard (try? list.decode(field: field)) != nil else { return nil }
+            guard attempt({ try list.decode(field: field) }) != nil else { return nil }
         }
         return list.keywords.contains { raw in
             resolvedID(raw, fromPlugin: indexed.sourcePlugin) == keyword

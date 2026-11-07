@@ -29,7 +29,7 @@ nonisolated public struct RaceMorphGroup: Equatable, Sendable {
     public var flags: UInt32? {
         guard let variants, variants.count >= 4 else { return nil }
         var reader = BinaryReader(variants)
-        return try? reader.readUInt32()
+        return attempt { try reader.readUInt32() }
     }
 }
 

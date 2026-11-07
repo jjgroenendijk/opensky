@@ -308,7 +308,7 @@ public final class HUDCoordinator {
     }
 
     private func fail(_ error: any Error, renderer: Renderer) {
-        try? renderer.setSWFMovie(nil)
+        attempt { try renderer.setSWFMovie(nil) }
         isLoaded = false
         loadError = String(describing: error)
         Self.logger.error("[ERROR] HUD disabled: \(String(describing: error), privacy: .public)")

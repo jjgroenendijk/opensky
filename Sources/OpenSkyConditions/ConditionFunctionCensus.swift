@@ -2,6 +2,7 @@
 // functions no registry entry answers. Counts only; no record is kept.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 nonisolated public struct ConditionFunctionCensus: Equatable, Sendable {
@@ -20,7 +21,7 @@ nonisolated public struct ConditionFunctionCensus: Equatable, Sendable {
     public mutating func record(fields: [ESMField]) {
         var list = ConditionList()
         for field in fields {
-            _ = try? list.decode(field: field)
+            _ = attempt { try list.decode(field: field) }
         }
         for condition in list.conditions {
             record(condition)

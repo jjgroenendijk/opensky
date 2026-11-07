@@ -5,6 +5,7 @@
 
 public import Foundation
 public import Metal
+import OpenSkyFormatsCore
 
 /// What the cache did since the renderer was built.
 nonisolated public struct PipelineCacheStats: Equatable, Sendable {
@@ -68,7 +69,7 @@ public final class PipelineCache {
         // matches the checksum written beside it reaches Metal.
         guard
             PipelineCacheFolder.isIntact(fileURL),
-            let archive = try? device.makeArchive(url: fileURL)
+            let archive = attempt({ try device.makeArchive(url: fileURL) })
         else {
             PipelineCacheFolder.remove(fileURL)
             return (nil, .unreadable)
@@ -80,7 +81,10 @@ public final class PipelineCache {
     public func makeRenderPipelineState(
         descriptor: MTL4PipelineDescriptor
     ) throws -> any MTLRenderPipelineState {
-        if let archive, let state = try? archive.makeRenderPipelineState(descriptor: descriptor) {
+        if
+            let archive,
+            let state = attempt({ try archive.makeRenderPipelineState(descriptor: descriptor) })
+        {
             stats.hits += 1
             return state
         }
@@ -91,7 +95,10 @@ public final class PipelineCache {
     public func makeComputePipelineState(
         descriptor: MTL4ComputePipelineDescriptor
     ) throws -> any MTLComputePipelineState {
-        if let archive, let state = try? archive.makeComputePipelineState(descriptor: descriptor) {
+        if
+            let archive,
+            let state = attempt({ try archive.makeComputePipelineState(descriptor: descriptor) })
+        {
             stats.hits += 1
             return state
         }

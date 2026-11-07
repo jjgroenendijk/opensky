@@ -34,7 +34,7 @@ public final class PlayerSettingsFile: PlayerSettingsPersistence {
 
     /// The saved settings' bytes, or nil when there are none yet.
     public static func savedData() -> Data? {
-        try? defaultFile().loadSettings()
+        attempt { try defaultFile().loadSettings() }
     }
 
     public func loadSettings() throws -> Data? {

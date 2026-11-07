@@ -215,7 +215,7 @@ extension PapyrusWorldRuntime {
         guard
             let handle = instancesByKey[item.key],
             let instance = runtime.instance(for: handle),
-            let chain = try? runtime.scriptChain(from: item.script.name)
+            let chain = attempt({ try runtime.scriptChain(from: item.script.name) })
         else {
             skips.note(.bindingFailed)
             return

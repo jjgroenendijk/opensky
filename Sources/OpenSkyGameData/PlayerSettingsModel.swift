@@ -3,6 +3,7 @@
 // files forward. Bad stored values fall back to the default.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public struct PlayerSettingsModel: Equatable, Sendable {
     public static let schemaVersion = 3
@@ -73,9 +74,11 @@ nonisolated extension PlayerSettingsModel {
             "keyBindings": keyBindings,
             "texts": Dictionary(uniqueKeysWithValues: texts.map { ($0.key.rawValue, $0.value) })
         ]
-        return (try? JSONSerialization.data(
-            withJSONObject: document, options: [.sortedKeys, .prettyPrinted]
-        )) ?? Data()
+        return attempt {
+            try JSONSerialization.data(
+                withJSONObject: document, options: [.sortedKeys, .prettyPrinted]
+            )
+        } ?? Data()
     }
 
     /// Unknown ids, non-numbers, and out-of-range values are dropped one by one, so
@@ -83,7 +86,8 @@ nonisolated extension PlayerSettingsModel {
     public init(decoding data: Data, catalog: PlayerSettingsCatalog) throws {
         self.init()
         guard
-            let document = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let document =
+            attempt({ try JSONSerialization.jsonObject(with: data) }) as? [String: Any]
         else {
             throw PlayerSettingsCodecError.notAnObject
         }

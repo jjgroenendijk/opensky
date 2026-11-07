@@ -1,6 +1,7 @@
 // Identifier resolution, assignment, casts, and hierarchy lookup.
 
 import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsPEX
 public import OpenSkyScriptingInterface
 
@@ -157,7 +158,7 @@ extension PapyrusInterpreter {
         if let slot = binding.slot {
             return frame.compiled.slotTypes[slot]
         }
-        let declared = try? declaredVariable(name, frame: frame)
+        let declared = attempt { try declaredVariable(name, frame: frame) }
         return declared.map { PapyrusType(name: $0.variable.typeName) }
     }
 

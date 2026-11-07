@@ -6,6 +6,7 @@
 public import Foundation
 public import Metal
 public import OpenSkyAssetCache
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
 
@@ -91,7 +92,7 @@ nonisolated public final class TextureLibrary {
         }
         // Fall back to the raw key if normalize rejects it; contents(forPath:)
         // then throws and the miss branch logs + placeholders it once.
-        let normalized = (try? VirtualFileSystem.normalize(key)) ?? key
+        let normalized = attempt { try VirtualFileSystem.normalize(key) } ?? key
         if usage == .effectSource {
             let colour = texture(key: normalized, usage: .color)
             return volumePaths
@@ -113,7 +114,7 @@ nonisolated public final class TextureLibrary {
     /// Uploads DDS bytes made at runtime under `key`, so a material that names the
     /// key finds them as if they came from an archive.
     public func register(dds: Data, key: String, usage: TextureUsage) {
-        let normalized = (try? VirtualFileSystem.normalize(key)) ?? key
+        let normalized = attempt { try VirtualFileSystem.normalize(key) } ?? key
         cache[CacheKey(path: normalized, usage: usage)] = loader.texture(
             dds: dds, usage: usage, label: normalized
         )
@@ -152,7 +153,8 @@ nonisolated public final class TextureLibrary {
         if let entry = assetCache?.entry(forPath: path, decoder: .readyTexture) {
             return .cached(entry)
         }
-        guard let data = try? fileSystem.contents(forPath: path) else { return .missing }
+        guard let data = attempt({ try fileSystem.contents(forPath: path) })
+        else { return .missing }
         return .archive(data)
     }
 
@@ -204,7 +206,10 @@ nonisolated public final class TextureLibrary {
                     fastLoader.recordExternalSkip()
                     return loader.texture(ready: entry.value, usage: usage, label: path)
                 }
-                if let texture = try? fastLoader.enqueue(entry, usage: usage, label: path) {
+                if
+                    let texture =
+                    attempt({ try fastLoader.enqueue(entry, usage: usage, label: path) })
+                {
                     return texture
                 }
             }
@@ -222,7 +227,7 @@ nonisolated public final class TextureLibrary {
     /// The archive bytes, with no cache or streaming. Cubemaps and volumes always load
     /// this way, and so does a volume asked for as a colour map, because no cache holds it.
     private func loadDirect(path: String, usage: TextureUsage) -> any MTLTexture {
-        guard let data = try? fileSystem.contents(forPath: path) else {
+        guard let data = attempt({ try fileSystem.contents(forPath: path) }) else {
             missingCount += 1
             missingPaths.insert(path)
             return loader.missingTexture(usage: usage, label: path)

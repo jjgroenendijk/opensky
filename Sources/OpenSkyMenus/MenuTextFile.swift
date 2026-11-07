@@ -9,7 +9,7 @@ nonisolated public enum MenuTextFile {
     /// The file's text, or nil when the install lacks it.
     @concurrent
     public static func load(_ path: String, from files: any GameFileSource) async -> String? {
-        guard let data = try? files.contents(forPath: path) else { return nil }
+        guard let data = attempt({ try files.contents(forPath: path) }) else { return nil }
         return GameText.decode(data)
     }
 }

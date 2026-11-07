@@ -3,6 +3,7 @@
 // cross VMs, so they are counted and dropped.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsESS
 import OpenSkyScriptingInterface
@@ -116,7 +117,7 @@ nonisolated extension ESSImporter {
     }
 
     mutating func importCreatedObjects() {
-        guard let objects = try? file.createdObjects() else {
+        guard let objects = attempt({ try file.createdObjects() }) else {
             report.update("created forms") { $0.skip("created objects table") }
             return
         }

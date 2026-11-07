@@ -50,7 +50,7 @@ nonisolated public enum ModelCacheCodec {
     /// Payload bytes from its start to the end of the layout block; nil before 8 bytes.
     public static func layoutByteCount(head: Data) -> Int? {
         var reader = BinaryReader(head)
-        guard let length = try? reader.readUInt64(), length <= UInt64(Int32.max) else {
+        guard let length = attempt({ try reader.readUInt64() }), length <= UInt64(Int32.max) else {
             return nil
         }
         return 8 + Int(length)

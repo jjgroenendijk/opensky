@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyGameData
 
 /// One project's clip list and motion table.
@@ -38,8 +39,10 @@ nonisolated extension IdlePlaybackResolver {
                 let clipPath = Self.animationDataFolder + stem + ".txt"
                 let motionPath = Self.animationDataFolder + "boundanims\\anims_" + stem + ".txt"
                 guard
-                    let clips = text(clipPath).flatMap({ try? AnimationDataProject(text: $0) }),
-                    let motions = text(motionPath).flatMap({ try? AnimationMotionTable(text: $0) })
+                    let clipText = text(clipPath),
+                    let clips = attempt({ try AnimationDataProject(text: clipText) }),
+                    let motionText = text(motionPath),
+                    let motions = attempt({ try AnimationMotionTable(text: motionText) })
                 else { return nil }
                 return IdleMotionProject(clips: clips, motions: motions)
             }
@@ -48,6 +51,6 @@ nonisolated extension IdlePlaybackResolver {
     }
 
     private func text(_ path: String) -> String? {
-        (try? files.contents(forPath: path)).flatMap { String(bytes: $0, encoding: .utf8) }
+        attempt { try files.contents(forPath: path) }.flatMap { String(bytes: $0, encoding: .utf8) }
     }
 }

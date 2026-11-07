@@ -22,7 +22,7 @@ nonisolated public struct StartGameQuestList: Equatable, Sendable {
         quests.reserveCapacity(data.count / 4)
         var reader = BinaryReader(data)
         while reader.bytesRemaining >= 4 {
-            guard let raw = try? reader.readUInt32() else { break }
+            guard let raw = attempt({ try reader.readUInt32() }) else { break }
             quests.append(FormID(raw))
         }
         self.quests = quests

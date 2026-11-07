@@ -2,6 +2,7 @@
 // Skyrim files stay read-only.
 
 public import Foundation
+import OpenSkyFormatsCore
 import Synchronization
 
 nonisolated public struct TerrainLODConfiguration: Equatable, Sendable {
@@ -123,10 +124,12 @@ nonisolated public enum TerrainLODSettings: Sendable {
     ) -> TerrainLODConfigurationSnapshot {
         let catalog = PlayerSettingsCatalog.vanilla.applyingINIDefaults(ini)
         guard
-            let settings, let model = try? PlayerSettingsModel(
-                decoding: settings,
-                catalog: catalog
-            )
+            let settings, let model = attempt({
+                try PlayerSettingsModel(
+                    decoding: settings,
+                    catalog: catalog
+                )
+            })
         else { return snapshot }
         func distance(_ key: String) -> Float {
             Float(model.value(PlayerSettingID("graphics.\(key)"), in: catalog))

@@ -5,6 +5,7 @@
 // Rules: docs/engine/inventory-state.md, "Script item natives".
 
 import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventoryInterface
@@ -46,7 +47,13 @@ extension InventoryCoordinator {
             return InventoryResult(nil)
         }
         let dropped = min(count, runtime.inventory.count(of: item, in: runtime.player))
-        guard dropped > 0, let spawned = try? runtime.drop(item, count: dropped, at: placement)
+        guard dropped > 0, let spawned = attempt({
+            try runtime.drop(
+                item,
+                count: dropped,
+                at: placement
+            )
+        })
         else { return InventoryResult(nil) }
         storyEvents?.reportStoryEvent(.removeItem(item, reference: nil, owner: nil, how: .dropped))
         scriptNote("Script dropped \(dropped) \(name(of: item)).")
@@ -91,11 +98,12 @@ extension InventoryCoordinator {
     public func scriptEquipItem(_ item: FormID, on key: ReferenceKey) -> InventoryResult<Bool> {
         guard let equipment, let holder = scriptHolder(key) else { return InventoryResult(false) }
         if equipment.inventory.count(of: item, in: holder) == 0 {
-            guard (try? equipment.inventory.add(item, count: 1, to: holder)) != nil else {
+            guard attempt({ try equipment.inventory.add(item, count: 1, to: holder) }) != nil else {
                 return InventoryResult(false)
             }
         }
-        guard (try? equipment.equip(item, on: holder)) != nil else { return InventoryResult(false) }
+        guard attempt({ try equipment.equip(item, on: holder) }) != nil
+        else { return InventoryResult(false) }
         scriptNote("Script equipped \(name(of: item)) on \(holderName(holder)).")
         return InventoryResult(true, commands: [.equipmentChanged(holder)])
     }
@@ -183,11 +191,11 @@ extension InventoryCoordinator {
         }
         for piece in pieces {
             if inventory.count(of: piece.item, in: holder) == 0 {
-                guard (try? inventory.add(piece.item, count: 1, to: holder)) != nil else {
+                guard attempt({ try inventory.add(piece.item, count: 1, to: holder) }) != nil else {
                     continue
                 }
             }
-            _ = try? equipment.equip(piece.item, on: holder)
+            _ = attempt { try equipment.equip(piece.item, on: holder) }
         }
         scriptNote("Script set the outfit of \(holderName(holder)).")
         return InventoryResult(true, commands: [.equipmentChanged(holder)])

@@ -112,7 +112,7 @@ nonisolated public final class AssetCacheReader: Sendable {
     /// The source stamp the cache keys `path` by, or nil when no file provides it.
     public func stamp(forPath path: String) -> AssetSourceStamp? {
         guard
-            let normalized = try? VirtualFileSystem.normalize(path),
+            let normalized = attempt({ try VirtualFileSystem.normalize(path) }),
             let provenance = files.provenance(forPath: normalized)
         else { return nil }
         return AssetSourceStamp(

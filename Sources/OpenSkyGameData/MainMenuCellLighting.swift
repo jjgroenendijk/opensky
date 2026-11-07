@@ -25,11 +25,12 @@ nonisolated public struct MainMenuCellLighting: Equatable, Sendable {
             let formID = loadOrder.space.localFormID(of: id),
             let found = loadOrder.record(withFormID: formID),
             found.record.type == "CELL",
-            let cell = try? found.decode({ try Cell(record: $0, localized: found.localized) })
+            let cell =
+            attempt({ try found.decode { try Cell(record: $0, localized: found.localized) } })
         else { return nil }
         let template = cell.lightingTemplate
             .flatMap { loadOrder.record(withFormID: $0) }
-            .flatMap { found in try? found.decode { try LightingTemplate(record: $0) } }
+            .flatMap { found in attempt { try found.decode { try LightingTemplate(record: $0) } } }
         self.init(cell: cell.lighting, template: template?.values)
     }
 }

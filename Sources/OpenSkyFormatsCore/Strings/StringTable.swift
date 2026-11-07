@@ -55,8 +55,8 @@ nonisolated public struct StringTable: Sendable {
         self.kind = kind
         var reader = BinaryReader(data)
         guard
-            let entryCount = try? Int(reader.readUInt32()),
-            let dataSize = try? Int(reader.readUInt32())
+            let entryCount = attempt({ try Int(reader.readUInt32()) }),
+            let dataSize = attempt({ try Int(reader.readUInt32()) })
         else {
             throw StringTableError.malformed("file shorter than 8-byte header")
         }
@@ -99,8 +99,8 @@ nonisolated public struct StringTable: Sendable {
         let bytes: Data
         if kind.isLengthPrefixed {
             guard
-                let length = try? Int(reader.readUInt32()),
-                var framed = try? reader.read(count: length)
+                let length = attempt({ try Int(reader.readUInt32()) }),
+                var framed = attempt({ try reader.read(count: length) })
             else {
                 throw StringTableError.entryOutOfRange(id: id)
             }
@@ -110,7 +110,7 @@ nonisolated public struct StringTable: Sendable {
             }
             bytes = framed
         } else {
-            guard let zstring = try? reader.readZStringData() else {
+            guard let zstring = attempt({ try reader.readZStringData() }) else {
                 throw StringTableError.entryOutOfRange(id: id)
             }
             bytes = zstring

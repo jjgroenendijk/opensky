@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 
 /// One loadable animation, as the evaluator needs it: how long it runs and what
 /// the bones look like at a time inside it.
@@ -158,7 +159,7 @@ nonisolated public struct SplineBehaviorClip: BehaviorClip, Sendable {
     public func samples(at time: Float) -> [HKABoneTransformSample] {
         guard animation.duration > 0, time.isFinite else { return [] }
         let clamped = min(max(time, 0), animation.duration)
-        return (try? animation.boneLocalTransforms(at: clamped, binding: binding)) ?? []
+        return attempt { try animation.boneLocalTransforms(at: clamped, binding: binding) } ?? []
     }
 }
 

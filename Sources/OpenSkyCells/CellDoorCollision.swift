@@ -94,7 +94,8 @@ nonisolated extension CellSceneBuilder {
         )
         let collisions = sources.keys.sorted { $0.rawValue < $1.rawValue }.compactMap { formID in
             sources[formID].flatMap { source -> CellDoorCollision? in
-                guard let model = try? library.model(path: source.modelPath) else { return nil }
+                guard let model = attempt({ try library.model(path: source.modelPath) })
+                else { return nil }
                 let placement = MatrixMath.placement(
                     position: source.ref.placement.position,
                     rotation: source.ref.placement.rotation,
@@ -151,12 +152,16 @@ nonisolated extension CellSceneBuilder {
 
     /// The moving nodes of a graph object mesh, read once per mesh.
     func movingPartRig(modelPath: String, boneNames: [String]) -> MovingPartRig? {
-        guard let fileSystem, let key = try? meshes.meshKey(for: modelPath) else { return nil }
+        guard
+            let fileSystem,
+            let key = attempt({ try meshes.meshKey(for: modelPath) }) else { return nil }
         if let known = movingPartRigs[key] {
             return known
         }
-        let rig = (try? NIFFile(data: fileSystem.contents(forPath: key)))
-            .flatMap { try? MovingPartRig(file: $0, boneNames: boneNames) }
+        let rig = attempt { try NIFFile(data: fileSystem.contents(forPath: key)) }
+            .flatMap { element in
+                attempt { try MovingPartRig(file: element, boneNames: boneNames) }
+            }
         movingPartRigs[key] = .some(rig)
         return rig
     }

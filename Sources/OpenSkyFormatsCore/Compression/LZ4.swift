@@ -125,14 +125,14 @@ nonisolated public enum LZ4: Sendable {
     private static func readBlock(
         _ reader: inout BinaryReader
     ) throws -> (data: Data?, uncompressed: Bool) {
-        guard let blockSize = try? reader.readUInt32() else {
+        guard let blockSize = attempt({ try reader.readUInt32() }) else {
             throw LZ4Error.truncatedFrame
         }
         if blockSize == 0 {
             return (nil, false)
         }
         let length = Int(blockSize & 0x7FFF_FFFF)
-        guard let block = try? reader.read(count: length) else {
+        guard let block = attempt({ try reader.read(count: length) }) else {
             throw LZ4Error.truncatedBlock
         }
         return (block, blockSize & 0x8000_0000 != 0)

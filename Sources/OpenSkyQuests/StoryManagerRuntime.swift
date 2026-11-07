@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyQuestsInterface
@@ -78,7 +79,7 @@ public struct StoryManagerRuntime {
     }
 
     func isRunning(_ quest: FormID) -> Bool {
-        (try? quests.state(of: quest).isRunning) ?? false
+        attempt { try quests.state(of: quest).isRunning } ?? false
     }
 
     /// Starts one quest and records the start for hours until reset.

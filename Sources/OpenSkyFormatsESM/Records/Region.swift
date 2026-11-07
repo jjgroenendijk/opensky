@@ -258,7 +258,7 @@ nonisolated public struct Region: Sendable {
     private static func readMusicType(_ data: Data) -> FormID? {
         guard data.count == 4 else { return nil }
         var reader = BinaryReader(data)
-        guard let raw = try? reader.readUInt32() else { return nil }
+        guard let raw = attempt({ try reader.readUInt32() }) else { return nil }
         let formID = FormID(raw)
         return formID.isNull ? nil : formID
     }

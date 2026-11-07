@@ -146,7 +146,7 @@ nonisolated public struct LoadOrderRecordIndex: Sendable {
         plugin: LoadOrderPlugin,
         into placed: inout Placed
     ) {
-        guard let items = try? group.children() else { return }
+        guard let items = attempt({ try group.children() }) else { return }
         let isPersistent = group.kind == .cellPersistentChildren
         let ownsRecords = isPersistent || group.kind == .cellTemporaryChildren
         let world = group.kind == .worldChildren

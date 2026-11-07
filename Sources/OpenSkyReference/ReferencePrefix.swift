@@ -3,6 +3,7 @@
 // install OpenSky reads.
 
 public import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public struct ReferencePrefix: Equatable, Sendable {
     public static let appID = "489830"
@@ -102,9 +103,11 @@ nonisolated public struct ReferencePrefix: Equatable, Sendable {
 
     public func documentsDirectory() -> URL? {
         let users = driveC.appending(path: "users", directoryHint: .isDirectory)
-        let names = (try? FileManager.default.contentsOfDirectory(
-            atPath: users.path(percentEncoded: false)
-        )) ?? []
+        let names = attemptIfPresent {
+            try FileManager.default.contentsOfDirectory(
+                atPath: users.path(percentEncoded: false)
+            )
+        } ?? []
         return documentsDirectory(users: names)
     }
 

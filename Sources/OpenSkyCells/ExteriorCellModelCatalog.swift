@@ -82,7 +82,7 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
         var paths: Set<String> = []
         for ref in references.values {
             guard let rawPath = bases[ref.base.rawValue] else { continue }
-            if let normalized = try? VirtualFileSystem.normalize(rawPath) {
+            if let normalized = attempt({ try VirtualFileSystem.normalize(rawPath) }) {
                 let path = normalized.hasPrefix("meshes\\")
                     ? normalized
                     : "meshes\\" + normalized

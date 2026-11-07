@@ -354,12 +354,12 @@ targets += foundation(
 // (docs/tools/reference-game.md). Developer tooling; the app shows it only once set up.
 targets += foundation(
     "OpenSkyReference",
-    dependencies: ["OpenSkyGameData"],
+    dependencies: ["OpenSkyFormatsCore", "OpenSkyGameData"],
     tests: ["OpenSkyGameData"]
 )
 targets += foundation("OpenSkyDiagnostics", dependencies: ["OpenSkyShaderTypes"])
 // The agent control protocol, socket, and router; the app and openskycli both link it.
-targets += foundation("OpenSkyAgentControl", tests: [])
+targets += foundation("OpenSkyAgentControl", dependencies: ["OpenSkyFormatsCore"], tests: [])
 targets += foundation(
     "OpenSkyPhysics",
     dependencies: [
@@ -765,8 +765,8 @@ targets += domain(
 targets += domain(
     "OpenSkyRuntimeState",
     dependencies: [
-        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyAudio", "OpenSkyWorldState",
-        "OpenSkyConditions", "OpenSkyWorldConditions"
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyAudio",
+        "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyWorldConditions"
     ],
     tests: worldTestBase
 )

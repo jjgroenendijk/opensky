@@ -19,7 +19,7 @@ nonisolated enum TextureSource: Sendable {
     var ready: ReadyTexture? {
         switch self {
         case let .cached(entry): entry.value
-        case let .archive(data): (try? DDSFile(data: data)).map(ReadyTexture.init(dds:))
+        case let .archive(data): attempt { try DDSFile(data: data) }.map(ReadyTexture.init(dds:))
         case .missing: nil
         }
     }
@@ -65,7 +65,7 @@ nonisolated extension TextureLibrary {
             let usage = usage == .effectSource ? .color : usage
             if
                 let key, usage == .color || usage == .data,
-                let path = try? VirtualFileSystem.normalize(key)
+                let path = attempt({ try VirtualFileSystem.normalize(key) })
             {
                 let request = Request(path: path, usage: usage)
                 let key = CacheKey(path: path, usage: usage)
@@ -88,7 +88,7 @@ nonisolated extension TextureLibrary {
             if let entry = cacheReader?.entry(forPath: path, decoder: .readyTexture) {
                 return .cached(entry)
             }
-            guard let data = try? files.contents(forPath: path) else { return .missing }
+            guard let data = attempt({ try files.contents(forPath: path) }) else { return .missing }
             return .archive(data)
         }
         let fastFiles = Set(sources.values.compactMap { source -> URL? in
@@ -121,16 +121,20 @@ nonisolated private struct UploadPlan: Sendable {
         }
         switch source {
         case let .cached(entry) where !fastFiles.contains(entry.file):
-            prepared.uploaded = try? TextureLoader.upload(
-                ready: entry.value, usage: usage, label: path, device: device
-            )
+            prepared.uploaded = attempt {
+                try TextureLoader.upload(
+                    ready: entry.value, usage: usage, label: path, device: device
+                )
+            }
         case let .archive(data):
-            prepared.uploaded = try? Self.upload(
-                dds: data,
-                usage: usage,
-                label: path,
-                device: device
-            )
+            prepared.uploaded = attempt {
+                try Self.upload(
+                    dds: data,
+                    usage: usage,
+                    label: path,
+                    device: device
+                )
+            }
         case .cached, .missing:
             break
         }

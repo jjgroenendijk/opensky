@@ -2,6 +2,7 @@
 // install's credits, and gives the layer back to the title movie when it ends.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
@@ -10,7 +11,9 @@ extension TitleMenuCoordinator {
     func showCredits() {
         guard let files = world?.gameFiles else {
             lastResult = "Credits: no game data"
-            try? world?.renderer?.updateSWFRuntime(TitleMenuMovieBridge.returnToMain(runtime:))
+            attempt {
+                try world?.renderer?.updateSWFRuntime(TitleMenuMovieBridge.returnToMain(runtime:))
+            }
             return
         }
         Task {
@@ -20,8 +23,10 @@ extension TitleMenuCoordinator {
                 self.startCredits(credits)
             } else {
                 self.lastResult = "Credits: no credits text"
-                try? self.world?.renderer?
-                    .updateSWFRuntime(TitleMenuMovieBridge.returnToMain(runtime:))
+                attempt {
+                    try self.world?.renderer?
+                        .updateSWFRuntime(TitleMenuMovieBridge.returnToMain(runtime:))
+                }
             }
         }
     }

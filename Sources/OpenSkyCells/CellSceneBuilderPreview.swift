@@ -163,7 +163,7 @@ nonisolated extension CellSceneBuilder {
     public func previewEntryEye(door: FormID) -> PlacedReference.Placement? {
         guard
             let record = pluginLoadOrder.record(withFormID: door),
-            let placed = try? record.decode({ try PlacedReference(record: $0) }),
+            let placed = attempt({ try record.decode { try PlacedReference(record: $0) } }),
             let arrival = placed.teleportDestination?.placement
         else { return nil }
         return PlacedReference.Placement(

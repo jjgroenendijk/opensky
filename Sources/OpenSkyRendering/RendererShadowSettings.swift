@@ -2,6 +2,7 @@
 // cascade array and retires the old one once the frames that use it finish.
 
 import Metal
+import OpenSkyFormatsCore
 import OpenSkyRenderCore
 
 extension Renderer {
@@ -10,7 +11,7 @@ extension Renderer {
         let size = shadowSettings.resolution
         guard
             shadow.map.width != size,
-            let map = try? Self.makeShadowMap(device: device, resolution: size)
+            let map = attempt({ try Self.makeShadowMap(device: device, resolution: size) })
         else { return }
         retireAllocations([shadow.map])
         residencySet.addAllocation(map)

@@ -30,7 +30,7 @@ nonisolated extension ESSPluginIndex {
     ) -> ESSPluginIndex {
         var records = ESSPluginIndex(loadOrder: plugins.map(\.name), light: lightNames(plugins))
         records.walk(plugins, wanted: changedReferences(in: file, records: records))
-        if let scripts, let papyrus = try? file.papyrus() {
+        if let scripts, let papyrus = attempt({ try file.papyrus() }) {
             for script in papyrus.scripts {
                 records.loadScript(script.name, from: scripts)
             }
@@ -41,7 +41,7 @@ nonisolated extension ESSPluginIndex {
     /// Indexes every plugin's forms, and the placed references in `wanted`.
     mutating func walk(_ plugins: [(name: String, file: ESMFile)], wanted: Set<Key>) {
         for plugin in plugins {
-            guard let header = try? plugin.file.pluginHeader() else { continue }
+            guard let header = attempt({ try plugin.file.pluginHeader() }) else { continue }
             var walk = Walk(
                 resolver: header.formIDResolver(pluginName: plugin.name), wanted: wanted
             )
@@ -80,7 +80,7 @@ nonisolated extension ESSPluginIndex {
         var next: String? = name
         var depth = 0
         while let current = next, !current.isEmpty, depth < 32 {
-            guard let object = (try? loader.load(current))?.objects.first else { break }
+            guard let object = attempt({ try loader.load(current) })?.objects.first else { break }
             let owner = current.lowercased()
             for variable in object.variables {
                 declared[variable.name.lowercased()] = declared[variable.name.lowercased()] ?? owner
@@ -105,7 +105,7 @@ nonisolated private struct Walk {
 
     /// `space` is the worldspace of an exterior, or the interior cell, being walked.
     mutating func visit(_ group: ESMGroup, exterior: Bool, space: ResolvedFormID?) {
-        guard let children = try? group.children() else { return }
+        guard let children = attempt({ try group.children() }) else { return }
         let isCellChildren = group.kind.map(Self.cellChildKinds.contains) ?? false
         if isCellChildren, wanted.isEmpty {
             return
@@ -130,7 +130,7 @@ nonisolated private struct Walk {
             let id = resolver.resolve(FormID(record.formID))
         else { return }
         var form = ESSPluginIndex.Form(signature: record.type)
-        if record.type == "GLOB", let global = try? Global(record: record) {
+        if record.type == "GLOB", let global = attempt({ try Global(record: record) }) {
             form.editorID = global.editorID
             form.globalType = global.valueType
         } else if
@@ -150,15 +150,15 @@ nonisolated private struct Walk {
         else { return }
         placed[ESSPluginIndex.Key(id)] = ESSPluginIndex.Placed(
             signature: record.type, flags: record.flags.rawValue, space: space,
-            lock: (try? PlacedReference(record: record))?.lock
+            lock: attempt { try PlacedReference(record: record) }?.lock
         )
         guard
-            let fields = try? record.fields(),
+            let fields = attempt({ try record.fields() }),
             let name = fields.first(where: { $0.type == "NAME" }), name.data.count >= 4
         else { return }
         var reader = BinaryReader(name.data)
         guard
-            let raw = try? reader.readUInt32(),
+            let raw = attempt({ try reader.readUInt32() }),
             let base = resolver.resolve(FormID(raw)) else { return }
         bases[ESSPluginIndex.Key(id)] = base
     }

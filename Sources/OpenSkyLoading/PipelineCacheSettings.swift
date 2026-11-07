@@ -4,6 +4,7 @@
 public import Foundation
 public import Metal
 import OpenSkyAssetCache
+import OpenSkyFormatsCore
 public import OpenSkyGameData
 public import OpenSkyRenderResources
 
@@ -25,7 +26,7 @@ extension PipelineCache {
 
     /// The folder that holds the archives, whether or not the cache is on.
     public static func archiveFolder(store: PlayerSettingsStore) -> URL? {
-        (try? AssetCacheSettings(store: store).effectiveFolder())
+        attempt { try AssetCacheSettings(store: store).effectiveFolder() }
             .map(PipelineCacheFolder.folder(inCacheFolder:))
     }
 }

@@ -3,6 +3,7 @@
 // main-actor bound, so the CLI can use it. See docs/formats/opensky-save.md.
 
 public import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyScriptingInterface
@@ -191,9 +192,11 @@ nonisolated extension OpenSkySaveStore {
     public func listings() throws -> [OpenSkySaveSlotListing] {
         try listSlots().map { slot in
             let url = try url(forSlot: slot)
-            let modified = (try? fileManager.attributesOfItem(
-                atPath: url.path(percentEncoded: false)
-            )[.modificationDate] as? Date) ?? .distantPast
+            let modified = attemptIfPresent {
+                try fileManager.attributesOfItem(
+                    atPath: url.path(percentEncoded: false)
+                )
+            }?[.modificationDate] as? Date ?? .distantPast
             do {
                 let summary = try OpenSkySaveSummaryCodec.readSummary(Data(contentsOf: url))
                 return OpenSkySaveSlotListing(

@@ -43,6 +43,7 @@ baseline files, and updating the baselines after each refactor cost too much.
 | Architecture rules ([architecture styles](/engine/architecture.md#machine-checks)) | SwiftLint `custom_rules`, `module-graph` | Lint | Part of the current lint |
 | Module size | `tools/lint/module-size.sh`, `make module-size` | Lint | Under a second, whole tree |
 | Swift language rules ([Swift language rules](/decisions/language-rules.md)) | The compiler, `make language-rules` | Every build, CI | A few seconds for the self-check |
+| Error handling ([Error handling](/decisions/error-handling.md)) | `tools/lint/error-handling.sh`, `make error-handling` | Lint, CI | Under a second, whole tree |
 | Parser coverage floor | `llvm-cov`, `make coverage-floor` | After `make test-unit`, CI | Seconds |
 
 ## Duplicated code: jscpd

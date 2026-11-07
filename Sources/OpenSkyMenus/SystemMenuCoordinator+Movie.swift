@@ -3,6 +3,7 @@
 // with the movie's state, so the readout and the key capture follow it.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
@@ -271,7 +272,7 @@ extension SystemMenuCoordinator {
 
     private func updateMovie(_ body: (SWFMovieRuntime) -> Void) {
         guard movieLoaded, let renderer else { return }
-        try? renderer.updateSWFRuntime(body)
+        attempt { try renderer.updateSWFRuntime(body) }
     }
 }
 
