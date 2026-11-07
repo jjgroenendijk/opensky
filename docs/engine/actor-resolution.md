@@ -166,6 +166,13 @@ A shield model is rigid: it has no skin. Its `Prn` extra data names `SHIELD`, as
 becomes an attachment on `Shield`, not a part skinned to the body. A rigid model drawn as a
 body part sits at the actor's origin, which put the shield at the feet.
 
+Any other worn model with no skin and a `Prn` hangs from that bone the same way. The vampire
+lord's cape, `meshes\actors\vampirelord\character assets\vampirecape.nif`, is one plain
+`BSTriShape` with no skin, and its `Prn` names `NPC Spine2 [Spn2]` (read on the install). So it
+rides the upper spine and stays rigid. A clean-room read of `SkyrimSE.exe`, 2026-11-07, found
+that the game's cape cloth starts only on a cape whose geometry has dynamic vertices
+(`BSDynamicTriShape`), so the vanilla cape does not swing in the game either.
+
 An `AMMO` model holds the quiver with its arrows under the node `ArrowQuiver`, and the arrow on
 the string (`Arrow:0`) beside it. Its `Prn` names `QUIVER`. The quiver draws only the
 `ArrowQuiver` branch, so no loose arrow hangs at the back.

@@ -49,6 +49,9 @@ nonisolated extension MeshLibrary {
         bodyWeight: Float?,
         keeping cut: DismemberCut?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
+        if let bone = rigidParentBone(path: path) {
+            return loadActorAttachment(path: path, bone: bone, skeleton: skeleton)
+        }
         let weight = bodyWeight
             .flatMap { BodyWeightBlend.thinPath(forHeavy: path) != nil ? $0 : nil }
         do {
@@ -78,6 +81,22 @@ nonisolated extension MeshLibrary {
         } catch {
             return .failure(.invalid)
         }
+    }
+
+    /// The `Prn` bone of a worn model with no skin, such as the vampire lord's cape: it
+    /// hangs from that bone as a weapon does (docs/engine/actor-resolution.md).
+    func rigidParentBone(path: String) -> String? {
+        guard let key = try? meshKey(for: path) else { return nil }
+        if let known = rigidParentBones[key] {
+            return known
+        }
+        let file = (try? fileSystem.contents(forPath: key)).flatMap { try? NIFFile(data: $0) }
+        let bone = file.flatMap { file in
+            file.blocks.contains { $0.typeName.hasSuffix("SkinInstance") }
+                ? nil : NIFStringExtraData.parentBone(in: file)
+        }
+        rigidParentBones[key] = .some(bone)
+        return bone
     }
 
     public func loadActorAttachment(
