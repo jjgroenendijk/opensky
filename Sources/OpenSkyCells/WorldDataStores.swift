@@ -119,6 +119,8 @@ nonisolated public struct WorldDataStores {
     public var characterLevelSettings: CharacterLevelSettings = .documentedDefaults
     /// GMST-derived walk/run values plus explicit documented fallbacks.
     public var movementConfiguration: PlayerMovementConfiguration = .synthetic
+    /// Every `MOVT` record, which an actor's graph state picks its speeds from.
+    public var movementTypes: MovementTypeStore = .empty
     /// A ridden horse's gaits, from its movement types.
     public var mountMovementConfiguration: PlayerMovementConfiguration = .synthetic
     /// A dragon's flight, from the dragon movement types.

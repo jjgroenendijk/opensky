@@ -48,7 +48,7 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     public static let velocityZ = "VelocityZ"
 
     public static let variables = [
-        speed, speedSampled, direction, turnDelta,
+        speed, direction, turnDelta,
         isSprinting, isSneaking, isInSneak, inJumpState,
         speedWalk, speedRun, isPlayer, isPlayerInt, isNPC, timeDelta, velocityZ
     ]

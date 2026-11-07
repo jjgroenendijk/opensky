@@ -114,7 +114,7 @@ final class AIWorldAdapter {
     }
 
     func wireNPCMovement(gameSession: GameSession, streamer: CellStreamer) {
-        streamer.npcMovementConfiguration = gameSession.locomotion.configuration
+        streamer.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
         let worldState = game.worldState
         let packages = game.packages
         let commands = game.followerCommands
@@ -130,6 +130,8 @@ final class AIWorldAdapter {
             gameSession?.instancePoses.npcDeltas = deltas
         }
         streamer.npcStandingActors = { [weak self] in self?.standingActors() ?? [] }
+        wireBodyShapes(streamer: streamer)
+        wireMovementTypes(streamer: streamer)
         streamer.npcWaterPushRace = { [weak game] actor in
             game?.effectsWorld.waterPushRace(of: actor) ?? .normal
         }

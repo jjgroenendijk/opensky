@@ -6,13 +6,10 @@ import OpenSkyBehavior
 import Testing
 
 struct ActorGraphCoreTests {
-    @Test func onlyAChangeOfTheDrunkTagWritesIState() {
-        #expect(ActorGraphCore.stateConstant(wasDrunk: false, isDrunk: false) == nil)
-        #expect(ActorGraphCore.stateConstant(wasDrunk: true, isDrunk: true) == nil)
-        #expect(ActorGraphCore.stateConstant(wasDrunk: false, isDrunk: true) == "iState_NPCDrunk")
-        #expect(
-            ActorGraphCore.stateConstant(wasDrunk: true, isDrunk: false) == "iState_NPCDefault"
-        )
+    @Test func theStateTagWinsOverTheGraphsStartingState() {
+        #expect(ActorGraphCore.state(tag: 15, rest: 0) == 15)
+        #expect(ActorGraphCore.state(tag: nil, rest: 60) == 60)
+        #expect(ActorGraphCore.state(tag: nil, rest: nil) == nil)
     }
 
     @Test func aGraphStepsEveryFrameNearAndLessOftenFurtherOut() {
@@ -98,6 +95,11 @@ struct ActorGraphCoreTests {
     @Test func aTurnTakesTheShortWayRound() {
         let turn = ActorGraphCore.turnDelta(from: 3, to: -3)
         #expect(abs(turn - (2 * Float.pi - 6)) < 0.0001)
+    }
+
+    @Test func aTurnIsDegreesPerSecond() {
+        #expect(abs(ActorGraphCore.turnRate(radians: .pi / 60, seconds: 1.0 / 60) - 180) < 0.01)
+        #expect(ActorGraphCore.turnRate(radians: 1, seconds: 0) == 0)
     }
 
     @Test func theRaceGraphPathIsUnderMeshes() {

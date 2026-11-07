@@ -123,6 +123,8 @@ nonisolated public struct MovementType: Equatable, Sendable {
 /// as with GMSTs. Lookup is case-insensitive, like every editor-ID lookup.
 nonisolated public struct MovementTypeStore: Equatable, Sendable {
     public private(set) var types: [String: MovementType] = [:]
+    /// By `MNAM` in lower case, the name a graph's `iState_*` constant carries.
+    public private(set) var typesByName: [String: MovementType] = [:]
     public private(set) var skippedRecords = SkippedRecords()
 
     public static let empty = MovementTypeStore(types: [:])
@@ -139,6 +141,11 @@ nonisolated public struct MovementTypeStore: Equatable, Sendable {
 
     public func type(editorID: String) -> MovementType? {
         types[editorID.lowercased()]
+    }
+
+    /// The type a graph state names, such as `HorseDefault` for `iState_HorseDefault`.
+    public func type(named name: String) -> MovementType? {
+        typesByName[name.lowercased()]
     }
 
     /// The forward speeds of one movement type, or nil when the record or its
@@ -163,6 +170,9 @@ nonisolated public struct MovementTypeStore: Equatable, Sendable {
         for type in decoded {
             if let editorID = type.editorID {
                 types[editorID.lowercased()] = type
+            }
+            if let name = type.name {
+                typesByName[name.lowercased()] = type
             }
         }
     }

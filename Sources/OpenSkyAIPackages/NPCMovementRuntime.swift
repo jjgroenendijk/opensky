@@ -30,6 +30,9 @@ public struct NPCMovementWorld {
     /// one without the vehicles' moving collision.
     public var vehicleActors: Set<ReferenceKey> = []
     public var collisionQueryIgnoringVehicles: WalkController.CollisionQuery?
+    /// The speeds of the movement type an actor's graph state names; nil keeps the
+    /// default type's (docs/engine/navigation.md#npc-path-following).
+    public var movementSpeeds: (ReferenceKey) -> MovementType.Speeds? = { _ in nil }
 
     public init(
         sampleGround: @escaping WalkController.GroundSampler,
@@ -42,7 +45,8 @@ public struct NPCMovementWorld {
         sampleWater: @escaping (SIMD3<Float>) -> WaterReading? = { _ in nil },
         waterPushRace: @escaping (ReferenceKey) -> WaterPushRace = { _ in .normal },
         vehicleActors: Set<ReferenceKey> = [],
-        collisionQueryIgnoringVehicles: WalkController.CollisionQuery? = nil
+        collisionQueryIgnoringVehicles: WalkController.CollisionQuery? = nil,
+        movementSpeeds: @escaping (ReferenceKey) -> MovementType.Speeds? = { _ in nil }
     ) {
         self.sampleGround = sampleGround
         self.collisionQuery = collisionQuery
@@ -55,6 +59,7 @@ public struct NPCMovementWorld {
         self.waterPushRace = waterPushRace
         self.vehicleActors = vehicleActors
         self.collisionQueryIgnoringVehicles = collisionQueryIgnoringVehicles
+        self.movementSpeeds = movementSpeeds
     }
 
     /// A horse is not blocked by the cart it pulls, nor a rider by the cart it sits on.
@@ -82,6 +87,8 @@ public struct NPCMoveStart {
     public var runSlowdown: FollowSettings?
     /// Where the speed sits from walk (0) to run (1); nil uses the gait's own speed.
     public var walkRunBlend: Float?
+    /// The end spheres of a long body such as a horse; nil for an upright one.
+    public var longBody: LongBodyShape?
 
     public init(
         actor: ReferenceKey,

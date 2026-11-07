@@ -162,8 +162,44 @@ states the game's tie rule.
 OpenSky treats an actor as drunk while its graph's tag equals `iState_NPCDrunk`:
 
 - The player's `iState` takes `iState_NPCDrunk` (step 6 above).
-- An NPC's `iState` is set to `iState_NPCDefault` or `iState_NPCDrunk` when the tag changes. OpenSky
-  writes no other `iState` for an NPC yet.
+- An NPC's `iState` takes the winning tag's value after each step, and the value the graph
+  started with when nothing tags: 0 (`iState_NPCDefault`) for a human, 60 (`iState_HorseDefault`)
+  for a horse.
+
+## How the game picks `iState`
+
+A clean-room read of `SkyrimSE.exe`, 2026-11-07, found the rule for every actor, the player
+included: each running tagging generator pushes its value with its priority, and the highest
+priority wins. With no tag, `iState` keeps the graph's starting value. The graph's speed sampler
+reads `iState` as its table ([speed data](/formats/speed-data.md)), and the movement type whose name
+matches the `iState_*` constant sets the actor's speeds. OpenSky does this for an NPC's walk and
+run. The tags, read from the install's behaviour files:
+
+| Tag | Value | Priority |
+| --- | --- | --- |
+| `MT_Drunk_iStateGen` | 15 (`NPCDrunk`) | 1 |
+| `1HM_iStateGen` | 6 (`NPC1HM`) | 2 |
+| `2HM_iStateGen`, `2HW_iStateGen` | 7 (`NPC2HM`) | 3 |
+| `Bow_iStateGen`, `CrossBow_iStateGen` | 8 (`NPCBow`) | 4 |
+| `Magic_iStateGen`, `MagicReady_iStateGen` | 9 (`NPCMagic`) | 5 |
+| `Sprint_iStateGen` | 1 (`NPCSprinting`) | 7 |
+| A normal attack | 12 (`NPCAttacking`) | 8 |
+| A two-handed attack | 13 (`NPCAttacking2H`) | 9 |
+| An NPC power attack | 14 (`NPCPowerAttacking`) | 10 |
+| `MagicCasting_iStateGen` | 10 (`NPCMagicCasting`) | 11 |
+| `Sneak_iStateGen`, `MT_Sneak_iStateGen` | 2 (`NPCSneaking`) | 12 |
+| A bow or crossbow attack or reload | 3 (`NPCBowDrawn`) | 13 |
+| A quick shot | 16 (`NPCBowDrawnQuickShot`) | 14 |
+| `BlockDefault_iStateGen`, `MagicBlock_iStateGen` | 4 (`NPCBlocking`) | 15 |
+| A shield charge | 17 (`NPCBlockingShieldCharge`) | 16 |
+| `BleedOut_iStateGen` | 5 (`NPCBleedout`) | 17 |
+| `sneakBowQuickShot_iStateGen` | 2 (`NPCSneaking`) | 22 |
+
+The player's power attacks tag 12, not 14. The horse graph starts at 60 and tags 61
+(`HorseSprint`), 62 (`HorseFall`), and 63 (`HorseSwim`). No tag sets 11 (`NPCHorse`); what sets
+it is not known.
+
+[WARNING] The player's `iState` still follows OpenSky's own order above, not the tags.
 
 After `DrunkStop` the actor stays drunk until the blend out of `MT_Drunk` ends, because the
 tagging generator runs as long as the old state is blended in.

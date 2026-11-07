@@ -1,17 +1,17 @@
 ---
 type: Subsystem
 title: Dynamic body contacts
-description: How a moving body finds contacts against convex shapes and triangle meshes, the
-  three rules that make a surface's side trustworthy, and shape sweeps.
+description: How a moving body finds contacts against convex shapes, triangle meshes, and
+  other moving bodies, the three rules that make a surface's side trustworthy, and shape sweeps.
 tags: [engine, physics, collision, havok]
 ---
 
 # Dynamic body contacts
 
-This page covers how the [dynamic body](/engine/dynamic-bodies.md) solver finds contacts. Every
-contact comes from one sample point with a skin radius on one body, tested against the other
-surface. A hull's samples are its corners, and a radial volume's are its two segment ends. The only
-question asked of the other surface is: how deep is this sphere inside you?
+This page covers how the [dynamic body](/engine/dynamic-bodies.md) solver finds contacts. A
+contact with the static world comes from one sample point with a skin radius on one body, tested
+against the other surface. A hull's samples are its corners, and a radial volume's are its two
+segment ends. The only question asked of the other surface is: how deep is this sphere inside you?
 
 For a convex volume, the answer is the least separated face plane of a hull, or the closest point
 on the segment of a radial volume.
@@ -67,6 +67,70 @@ Triangle work runs in the shape's own space. A placed shape has many more corner
 samples. So moving a few samples through one inverse matrix is cheaper than moving every triangle
 through the forward one. The placement is a rotation and translation with uniform scale, so lengths
 convert back exactly.
+
+## Body against body
+
+Two moving bodies are tested one volume pair at a time. Each pair kind has its own test, so a
+stack rests on whole faces, not on the corners that happen to be inside the other body.
+
+| Pair | Test |
+| --- | --- |
+| Two hulls | Separating axes, then face clipping |
+| Two spheres or capsules | The closest points of their two segments |
+| A hull and a sphere or capsule | Each one's samples against the other's volume, as above |
+
+The hull test is the textbook separating axis test (SAT). The axes are each hull's face normals
+and the cross product of every pair of edge directions, one from each hull. An axis on which the
+hulls are apart by more than the contact margin ends the test with no contact. Otherwise the axis
+with the least overlap wins. An edge axis wins only when it beats the best face by 0.05 units,
+because a face gives steadier contacts.
+
+- A face axis makes that face the reference face. The other hull's face that points most against
+  it is clipped to the reference face's sides (Sutherland-Hodgman clipping). Every clipped point
+  within the margin is a contact, placed on the reference face. More than four are cut to four:
+  the deepest, the one farthest from it, and the two that spread them most. So a box on a box
+  touches at four corners, and a box over an edge touches only where it is over the face.
+- An edge axis gives one contact, at the closest points of the two edges.
+
+A hull's faces and edges are found once per body. The points that lie on each plane, sorted around
+the plane's centre, make its face. Parallel edge directions are merged, so a box has three.
+
+## Contact patches
+
+A body's contacts that share one surface, the same other body, and a normal within about 11
+degrees form a patch. The solver handles a patch first, as one contact, then each point.
+
+The patch contact sits where the body's centre of mass projects onto the patch, along the normal.
+When that projection is outside the patch's polygon, it moves to the polygon's nearest edge. So
+a body whose centre is over its foot carries its weight there with no spin, and a body leaning
+past its edge still tips over that edge. The points that follow see only what rotation is left.
+
+A solver that takes the corners one at a time lets the first corner cancel all of gravity's
+speed, so the other corners have nothing left to stop. Every step then pushes the same corner,
+and that steady one-sided push spins the body. Vanilla clutter makes this worse: its authored
+inertia is large, so a contact impulse barely turns it. The glazed goblet (`GlazedGoblet01`), a
+wide cup on a narrow foot, spins this way off its foot and off its shelf without patches.
+
+Friction is added up per contact over the passes and kept inside the limit the normal impulse
+allows, so four passes cannot add four full friction impulses.
+
+## Warm starting
+
+Each contact starts a substep with the impulse it ended the last substep with, before the
+solver passes run. This is called warm starting. A contact matches one from the last substep
+when it has the same other body, is the same kind (patch or point), and lies within 2 units of
+it in the body's own frame. It starts with 90% of that impulse. A wrong match then fades out
+instead of pushing on.
+
+Every second pass runs through the contacts in reverse order, so the same corner does not
+always go first.
+
+Four passes that start from zero cannot carry the weight of a tall stack down to the floor: a
+stack of five boxes leans and falls. Carried over, the impulses add up over the substeps, and
+the stack rests. The first substep has nothing to start
+from, so the top box of such a stack can shift by about a unit while it settles.
+
+[WARNING] The match distance and the 90% share are OpenSky's choices, not values from the game.
 
 ## Two limits
 

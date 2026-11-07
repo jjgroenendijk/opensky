@@ -145,6 +145,30 @@ struct ActorEquipmentRealDataTests {
         #expect(allSkinned)
     }
 
+    /// The vampire lord's cape has no skin; its `Prn` hangs it on the upper spine, so a
+    /// plain body-part load must come back bound to a bone, not at the feet.
+    @Test(.enabled(if: RealDataEnvironment.canRender))
+    @MainActor
+    func anUnskinnedCapeRidesItsParentBone() throws {
+        let device = try #require(RealDataEnvironment.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let vfs = VirtualFileSystem(root: root)
+        let meshes = try MeshLibrary(
+            fileSystem: vfs, device: device, textures: TextureLibrary(
+                fileSystem: vfs,
+                device: device
+            )
+        )
+        let skeletonPath = "meshes\\actors\\vampirelord\\character assets\\skeleton.nif"
+        let skeleton = try meshes.loadActorSkeleton(path: skeletonPath).get()
+        let capePath = "meshes\\actors\\vampirelord\\character assets\\vampirecape.nif"
+        #expect(meshes.rigidParentBone(path: capePath) == "NPC Spine2 [Spn2]")
+        let cape = try meshes.loadActorModel(path: capePath, skeleton: skeleton).get()
+        let skinned = cape.model.meshes.allSatisfy(\.isSkinned)
+        #expect(!cape.model.meshes.isEmpty)
+        #expect(skinned)
+    }
+
     @MainActor
     private func render(
         _ assembly: ActorAssembly<ActorRenderAsset>,

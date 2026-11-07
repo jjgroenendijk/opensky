@@ -28,12 +28,16 @@ extension ActorGraphCoordinator.Running {
         shown = next
         let turn = lastRotation.map {
             // Placement rotation turns clockwise; the graph's turn is counter-clockwise.
-            -ActorGraphCore.turnDelta(from: $0, to: candidate.rotationZ)
+            ActorGraphCore.turnRate(
+                radians: -ActorGraphCore.turnDelta(from: $0, to: candidate.rotationZ),
+                seconds: seconds
+            )
         } ?? 0
         lastFeet = candidate.feet
         lastRotation = candidate.rotationZ
         var input = ActorGraphStepInput(
-            motion: next, speed: gait.speed, turnDelta: turn, deltaTime: seconds
+            motion: next, speed: gait.speed / max(candidate.scale, 0.01), turnDelta: turn,
+            deltaTime: seconds
         )
         input.weight = candidate.weight
         return input
@@ -41,15 +45,14 @@ extension ActorGraphCoordinator.Running {
 }
 
 extension ActorGraphCoordinator.Running {
-    /// Tells the graph `iState` when its drunk tag changed (docs/engine/actor-state-graph.md).
-    func noteDrunkTag() {
-        let drunk = instance.isTaggingState(ActorGraphNames.drunkState)
-        if
-            let name = ActorGraphCore.stateConstant(wasDrunk: isDrunk, isDrunk: drunk),
-            let value = instance.variable(named: name)
-        {
-            instance.setVariable(value, named: ActorGraphNames.state)
-        }
-        isDrunk = drunk
+    /// Writes the step's state tag into `iState`, which picks the speed sampler's table
+    /// (docs/engine/actor-state-graph.md).
+    func noteStateTag() {
+        isDrunk = instance.isTaggingState(ActorGraphNames.drunkState)
+        guard
+            let value = ActorGraphCore.state(tag: instance.stateTag?.value, rest: restState),
+            instance.variable(named: ActorGraphNames.state) != .int(value)
+        else { return }
+        instance.setVariable(.int(value), named: ActorGraphNames.state)
     }
 }

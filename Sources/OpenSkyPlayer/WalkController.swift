@@ -39,6 +39,8 @@ nonisolated public struct WalkController: Sendable {
     public internal(set) var verticalVelocity: Float = 0
     /// Horizontal speed from a trap or a push, units per second. It fades on the ground.
     public internal(set) var knockback = SIMD2<Float>()
+    /// The velocity of a heavy moving body that carries or pushes the capsule this frame.
+    public var carryVelocity = SIMD3<Float>()
     public internal(set) var isGrounded = false
     public private(set) var hasUnresolvedPenetration = false
     /// True while the last step resolved in water deep enough to swim. Gravity,
@@ -142,7 +144,7 @@ nonisolated public struct WalkController: Sendable {
         let direction = simd_length(plan.horizontalDisplacement) > 0
             ? simd_normalize(plan.horizontalDisplacement)
             : SIMD2<Float>()
-        var candidateXY = currentXY + plan.horizontalDisplacement + knockbackStep(dt: dt)
+        var candidateXY = currentXY + plan.horizontalDisplacement + pushStep(dt: dt)
         if
             !plan.isSwimming,
             isBlockedSlope(at: candidateXY, direction: direction, sampleGround: sampleGround)

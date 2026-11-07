@@ -12,9 +12,10 @@ Movable clutter in loaded cells becomes simulated rigid bodies. They run on the 
 step, collide with the [static collision world](/engine/collision-world.md) and with each other,
 are pushed by the player, and are saved where they come to rest.
 
-Contacts and shape sweeps are on the [dynamic body contacts](/engine/dynamic-narrowphase.md)
-page, and drawing on the [drawing moving bodies](/engine/dynamic-body-drawing.md) page. The same
-step also solves a ragdoll's joints ([ragdoll joint solver](/engine/ragdoll-solver.md)).
+Contacts, between two bodies as well, and shape sweeps are on the
+[dynamic body contacts](/engine/dynamic-narrowphase.md) page, and drawing on the
+[drawing moving bodies](/engine/dynamic-body-drawing.md) page. The same step also solves a
+ragdoll's joints ([ragdoll joint solver](/engine/ragdoll-solver.md)).
 
 ## Which bodies simulate
 
@@ -164,6 +165,24 @@ factor shrinks by the same ratio. The 0.175 is OpenSky's: with the clutter facto
 The speed comes from how far the capsule moved since the last frame. A frame faster than a set
 limit was a teleport, such as a door or a camera reset, and gives no shove.
 
+## A body against a character
+
+A body touching a character's capsule is handled by its layer and mass, as the game's character
+controller does (clean-room read of `SkyrimSE.exe`, 2026-11-07):
+
+| Body | Blocks the character | Moves the character |
+| --- | --- | --- |
+| Layer 4, 5, or 6 (clutter, weapon, projectile) under 95 kg | No | No |
+| The same layers at 95 kg or more | Yes | Yes, by its velocity |
+| Layer 10, props | Yes | No |
+| Any other layer | Yes | Yes, by its velocity |
+
+So the player walks through a bucket or a plate, and the shove above is the only thing that moves
+it. A heavy crate stops the player. When it moves, the player standing on it rides along, and one
+moving into the player pushes them. The carry is the whole velocity of a body under the feet, and
+the part of another body's velocity that points at the capsule. NPCs walk with the same rule, and
+the third-person camera uses it too. The use-key ray still sees every body.
+
 A dropped item needs no special path. The next build places the spawned reference like any other,
 and if its model has a simulated body, it falls and settles. A model without collision stays where
 it was placed. The game does the same: it makes no default body for such a model (clean-room read
@@ -208,11 +227,3 @@ handles worst: it runs about 24 times slower unoptimized. So the 2 ms step budge
 `@testable import` needs `ENABLE_TESTABILITY`, and uses its own derived data folder. A normal
 `make test-real` checks the step against a loose limit, to catch a large regression
 ([testing](/testing.md)).
-
-## Not done yet
-
-- Body against body contact is a sample against a convex shape in both directions. That is enough
-  for piles of clutter, but it is not a full face-clipping manifold. A tall stack settles instead of
-  resting perfectly.
-- The player capsule sees moving bodies through the shared query, but is not part of the solve.
-  The game also pushes clutter from its character controller and scales that push, as above.

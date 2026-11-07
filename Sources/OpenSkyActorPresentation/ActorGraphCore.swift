@@ -135,7 +135,6 @@ nonisolated public enum ActorGraphNames {
     public static let state = "iState"
     /// The `iState` constants a drunk and a sober actor report.
     public static let drunkState = "iState_NPCDrunk"
-    public static let defaultState = "iState_NPCDefault"
 }
 
 /// What one actor's graph is fed in one step.
@@ -178,7 +177,7 @@ nonisolated public enum ActorGraphCore {
     }
 
     /// The variables one step writes, in write order. An NPC walks where it faces, so
-    /// `Direction` stays 0. `weapAdj` comes last.
+    /// `Direction` stays 0. The graph's speed sampler writes `SpeedSampled`.
     public static func variables(_ input: ActorGraphStepInput)
         -> [(name: String, value: BehaviorVariableValue)]
     {
@@ -186,7 +185,6 @@ nonisolated public enum ActorGraphCore {
         let speed = input.motion.isMoving ? input.speed : 0
         return [
             (Names.speed, .real(speed)),
-            (Names.speedSampled, .real(speed)),
             (Names.direction, .real(0)),
             (Names.turnDelta, .real(input.turnDelta)),
             (Names.isSprinting, .bool(input.motion.isSprinting)),
@@ -201,11 +199,10 @@ nonisolated public enum ActorGraphCore {
         ]
     }
 
-    /// The `iState` constant to write after the graph's drunk tag changed, else nil. Only
-    /// the change is written, so an NPC keeps any other `iState` its graph holds.
-    public static func stateConstant(wasDrunk: Bool, isDrunk: Bool) -> String? {
-        guard wasDrunk != isDrunk else { return nil }
-        return isDrunk ? ActorGraphNames.drunkState : ActorGraphNames.defaultState
+    /// `iState` after a step: the winning state tag, else the value the graph started with
+    /// (docs/engine/actor-state-graph.md#how-istate-is-encoded).
+    public static func state(tag: Int32?, rest: Int32?) -> Int32? {
+        tag ?? rest
     }
 
     /// `weapAdj` for an actor weight from 0 (thin) to 100 (heavy)
@@ -220,6 +217,11 @@ nonisolated public enum ActorGraphCore {
     {
         guard seconds > 0 else { return 0 }
         return simd_length(SIMD2(new.x - old.x, new.y - old.y)) / seconds
+    }
+
+    /// `TurnDelta`: degrees per second, positive left (docs/engine/locomotion-graph.md).
+    public static func turnRate(radians: Float, seconds: Float) -> Float {
+        seconds > 0 ? radians / seconds * 180 / .pi : 0
     }
 
     /// The shortest turn from `old` to `new`, in (-pi, pi].

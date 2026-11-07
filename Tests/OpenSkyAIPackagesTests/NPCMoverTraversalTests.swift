@@ -1,5 +1,6 @@
 // A walking actor jumps across a navmesh ledge link, swims in deep water, and keeps
-// the gait its package prefers, at a script's speed between walk and run.
+// the gait its package prefers, at a script's speed between walk and run, and at the
+// speeds of the movement type its graph names.
 
 @testable import OpenSkyAIPackages
 @testable import OpenSkyFormatsESM
@@ -51,6 +52,28 @@ struct NPCMoverTraversalTests {
         #expect(plan.gait == .walk)
         let full = Self.mover(path: path, gait: .run, walkRunBlend: 1).stepPlan(frameTime: 0.05)
         #expect(abs(full.speed - run) < 1e-4)
+    }
+
+    /// A horse's graph names `Horse_Default_MT`, so it walks at 125 and runs at 450,
+    /// times its scale.
+    @Test func theGraphsMovementTypeSetsTheSpeed() {
+        let path = NPCMovementRuntimeTests.path(
+            waypoints: [SIMD3(100, 0, 0)], target: SIMD3(100, 0, 0)
+        )
+        var mover = Self.mover(path: path, gait: .walk)
+        mover.movementSpeeds = MovementType.Speeds(values: [
+            100, 400, 100, 400, 125.11, 450, 108.08, 300, 1.57, 1.57, 4.71
+        ])
+        #expect(abs(mover.stepPlan(frameTime: 0.05).speed - 125.11) < 1e-3)
+        var start = NPCMoveStart(
+            actor: Self.actor, formID: FormID(1),
+            placement: PlacedReference.Placement(position: .zero, rotation: .zero),
+            scale: 2, capsule: .standard, configuration: .synthetic, path: path, gait: .run
+        )
+        start.walkRunBlend = nil
+        var scaled = NPCMover(start: start)
+        scaled.movementSpeeds = mover.movementSpeeds
+        #expect(abs(scaled.stepPlan(frameTime: 0.05).speed - 900) < 1e-3)
     }
 
     @Test func arcPeaksAboveTheHigherEndAndLands() {

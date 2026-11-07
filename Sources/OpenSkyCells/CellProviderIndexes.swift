@@ -56,6 +56,7 @@ nonisolated public struct CellProviderIndexes {
         let movement: PlayerMovementConfiguration
         /// A ridden horse's gaits.
         let mountMovement: PlayerMovementConfiguration
+        let movementTypes: MovementTypeStore
         let dragonFlight: DragonFlightSettings
         let barter: BarterPricing
         let combat: CombatSettings
@@ -74,6 +75,7 @@ nonisolated public struct CellProviderIndexes {
         init(plugins: [(name: String, file: ESMFile)]) {
             let settings = GameSettingStore(plugins: plugins)
             let movementTypes = MovementTypeStore(plugins: plugins)
+            self.movementTypes = movementTypes
             movement = PlayerMovementConfiguration.resolve(
                 store: settings, movementTypes: movementTypes
             )
@@ -208,6 +210,7 @@ nonisolated public struct CellProviderIndexes {
         stores.speechCheckSettings = tuning.speechChecks
         stores.gameSettings = tuning.store
         stores.mountMovementConfiguration = tuning.mountMovement
+        stores.movementTypes = tuning.movementTypes
         stores.dragonFlightSettings = tuning.dragonFlight
         return stores
     }

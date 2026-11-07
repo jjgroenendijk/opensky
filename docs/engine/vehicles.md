@@ -89,7 +89,8 @@ places those shapes at the follower's live pose, moved from the pose the build p
 A horse is not blocked by the cart it pulls, and a rider by the cart it sits on. Every rider,
 and every actor linked by any chain of links to a towed cart, walks with a collision query that
 leaves out the vehicles' moving collision. A rider moves with its seat, so it cannot drift into
-a cart. A mounted escort's horse is neither, so a cart blocks it. The cart's own ground search
+a cart. A mounted escort's horse is neither, so a cart blocks it, with the front and back of its
+long body ([character shapes](/engine/character-shapes.md)). The cart's own ground search
 also leaves it out. A seated player does not walk, so the cart cannot push
 the player out of the seat.
 
