@@ -27,6 +27,8 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     public internal(set) var seat: PackageSeat?
     /// The package's preferred speed, when its flag turns it on.
     public let gait: LocomotionGait?
+    /// Where the preferred speed sits between walk and run: fast walk and jog.
+    public let walkRunBlend: Float?
     /// The procedure inputs by `PKC2` index, read once because every tick asks for them.
     public let values: [Int8: Package.DataValue]
 
@@ -35,6 +37,7 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
         self.fromSchedule = fromSchedule
         ridesHorse = package.ridesHorse
         gait = Self.gait(of: package.package.general)
+        walkRunBlend = Self.walkRunBlend(of: package.package.general)
         values = Self.values(of: package)
         runner = PackageTreeRunner(
             tree: package.tree, seed: UInt64(package.package.formID.rawValue)
@@ -69,7 +72,18 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
         )
     }
 
-    /// Jog runs and fast walk walks, because an NPC has only the walk and run gaits.
+    /// The game's speed scale is 1.25 for fast walk and 1.5 for jog, where 1 walks and 2
+    /// runs (clean-room read of `SkyrimSE.exe`, 2026-11-07).
+    static func walkRunBlend(of general: Package.GeneralData) -> Float? {
+        guard general.flags.contains(.usesPreferredSpeed) else { return nil }
+        return switch general.preferredSpeed {
+        case .fastWalk: 0.25
+        case .jog: 0.5
+        case .walk, .run, .unknown: nil
+        }
+    }
+
+    /// Jog runs and fast walk walks, and `walkRunBlend` sets their speed.
     static func gait(of general: Package.GeneralData) -> LocomotionGait? {
         guard general.flags.contains(.usesPreferredSpeed) else { return nil }
         return switch general.preferredSpeed {

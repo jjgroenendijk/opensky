@@ -15,6 +15,7 @@ final class FakePackageWorld: PackageWorld {
     private(set) var contextReads = 0
     private(set) var moves: [SIMD3<Float>] = []
     private(set) var gaits: [LocomotionGait?] = []
+    private(set) var walkRunBlends: [Float?] = []
     private(set) var movers: [ReferenceKey] = []
     var horse: ReferenceKey?
     var moverSlotsFull = false
@@ -40,9 +41,11 @@ final class FakePackageWorld: PackageWorld {
     }
 
     func movePackageActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool, gait: LocomotionGait?
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool, gait: LocomotionGait?,
+        walkRunBlend: Float?
     ) -> PackageMoveResult {
         gaits.append(gait)
+        walkRunBlends.append(walkRunBlend)
         moves.append(point)
         movers.append(actor)
         return moverSlotsFull ? .busy : .started
