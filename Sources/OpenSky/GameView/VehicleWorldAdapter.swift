@@ -131,6 +131,7 @@ extension VehicleWorldAdapter: VehicleWorld {
             case let .followerMoved(key, pose): vehicleFollowerMoved(key, to: pose)
             case let .followerRests(key, pose): vehicleFollowerRests(key, at: pose)
             case let .spinWheels(key, turns): spinVehicleWheels(of: key, turns: turns)
+            case let .carrierHitched(key, pose): hitchCarrier(key, at: pose)
             }
         }
     }
@@ -270,6 +271,11 @@ extension VehicleWorldAdapter: VehicleWorld {
         vehicle.pose.publish(vehicle.rig.pose(turns))
     }
 
+    private func hitchCarrier(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
+        game.worldState.set(pose, for: key, in: game.streamer?.cellLocation(of: key))
+        game.streamer?.placeStandingActor(key, at: pose)
+    }
+
     func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
         guard key != .player else { return }
         let cell = game.streamer?.cellLocation(of: key)
@@ -289,7 +295,9 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
     }
 
     func tether(_ vehicle: ReferenceKey, to horse: ReferenceKey) {
-        guard vehicles.tow(vehicle, by: horse) else { return }
+        let commands = vehicles.tow(vehicle, by: horse)
+        guard !commands.isEmpty else { return }
+        run(commands)
         let cell = game.streamer?.cellLocation(of: vehicle)
         game.worldState.set(ReferenceVehicleLink(carrier: horse), for: vehicle, in: cell)
     }

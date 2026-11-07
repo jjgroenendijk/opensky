@@ -23,8 +23,8 @@ nonisolated public struct VehicleWheelTurns: Equatable, Sendable {
 }
 
 nonisolated extension VehicleCore {
-    /// The most a front axle swivels from the body. OpenSky's own limit.
-    public static let maximumSteer: Float = .pi / 3
+    /// The game's front turntable hinge stops at 40 degrees each way.
+    public static let maximumSteer: Float = 40 * .pi / 180
 
     /// The distance between the front and the rear axle, or 0 for one axle.
     static func wheelbase(_ wheels: [SIMD2<Float>]?) -> Float {

@@ -73,19 +73,21 @@ public final class VehicleCoordinator {
         return true
     }
 
-    /// `TetherToHorse`: the cart trails the horse at the distance it has now.
-    @discardableResult
-    public func tow(_ cart: ReferenceKey, by horse: ReferenceKey) -> Bool {
+    /// `TetherToHorse`: the horse steps to the front of the cart, facing its way, and the
+    /// cart trails it from there.
+    public func tow(_ cart: ReferenceKey, by horse: ReferenceKey) -> [VehicleCommand] {
         guard
             let world,
             let cartPose = currentPose(of: cart),
             let horsePose = currentPose(of: horse)
-        else { return false }
+        else { return [] }
+        let hitched = VehicleCore.hitchedPose(of: horsePose, ahead: cartPose)
         let linked = linkedReferences.union([cart, horse])
-        return core.tow(
-            cart, by: horse, followerPose: cartPose, carrierPose: horsePose,
+        guard core.tow(
+            cart, by: horse, followerPose: cartPose, carrierPose: hitched,
             ground: { world.vehicleGround(at: $0, excluding: linked) }
-        )
+        ) else { return [] }
+        return [.carrierHitched(horse, at: hitched)]
     }
 
     /// `standing` rests the rider where its exit idle left its body, not on its seat.

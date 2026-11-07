@@ -262,5 +262,4 @@ the detail and the sources it did find.
 | Player shove efficiency | 0.175 of the player's momentum, before the game's mass and layer factor | [dynamic bodies](/engine/dynamic-bodies.md#the-players-shove) |
 | Contact warm start | A contact within 2 units of last substep's starts with 90% of its impulse; passes alternate direction | [dynamic contacts](/engine/dynamic-narrowphase.md#warm-starting) |
 | Long body end lift | End spheres ride 32 units, the walk step height, above the feet | [character shapes](/engine/character-shapes.md#long-bodies) |
-| Cart front axle swivel limit | 60 degrees either way from the body | [vehicles](/engine/vehicles.md#towing) |
 | Swim breadcrumb trail | A point every 128 units, the last 64 kept; joined within 1,024 units, serves targets within 512 of its end | [navigation](/engine/navigation.md#swimming-after-the-player) |

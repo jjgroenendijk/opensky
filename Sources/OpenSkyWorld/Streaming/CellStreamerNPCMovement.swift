@@ -207,28 +207,46 @@ extension CellStreamer {
     public func moveStandingActor(
         _ actor: ReferenceKey, by displacement: SIMD2<Float>, turning headingTurn: Float
     ) {
+        guard npcMovement.facing(for: actor) == nil else { return }
+        placeStandingActor(actor) { standing in
+            var position = standing.position
+            position.x += displacement.x
+            position.y += displacement.y
+            var rotation = standing.rotation
+            rotation.z += headingTurn
+            return ReferenceTransformOverride(
+                position: position, rotation: rotation, scale: standing.scale
+            )
+        }
+    }
+
+    /// Puts a standing actor at `transform`, as `TetherToHorse` puts the horse ahead of its
+    /// cart. A walking, carried, or knocked actor keeps its own driver.
+    public func placeStandingActor(
+        _ actor: ReferenceKey,
+        at transform: ReferenceTransformOverride
+    ) {
+        placeStandingActor(actor) { _ in transform }
+    }
+
+    private func placeStandingActor(
+        _ actor: ReferenceKey,
+        moved: (ReferenceTransformOverride) -> ReferenceTransformOverride
+    ) {
         guard
             npcMovementState.carried[actor] == nil, !npcMovement.isWalking(actor),
-            npcMovement.facing(for: actor) == nil, !npcMovement.isSliding(actor),
+            !npcMovement.isSliding(actor),
             let entry = referenceEntry(key: actor), entry.placedActor != nil
         else { return }
         bindNPCMovementCallbacks()
         let standing = npcMovement.standingTransform(of: entry, in: stateSource())
-        var position = standing.position
-        position.x += displacement.x
-        position.y += displacement.y
-        var rotation = standing.rotation
-        rotation.z += headingTurn
+        let target = moved(standing)
         npcMovement.place(
             NPCFaceStart(
                 actor: actor, formID: entry.formID, placement: standing.placement,
-                scale: standing.scale, target: position
+                scale: standing.scale, target: target.position
             ),
-            at: ReferenceTransformOverride(
-                position: position,
-                rotation: rotation,
-                scale: standing.scale
-            )
+            at: target
         )
         onNPCPosesChanged?(npcMovement.instanceDeltas())
     }
