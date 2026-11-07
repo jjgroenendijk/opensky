@@ -26,6 +26,11 @@ nonisolated extension WalkController {
     }
 
     /// This step's knockback displacement. The knockback fades while grounded.
+    /// This step's move from a knockback and from a body that carries the capsule.
+    mutating func pushStep(dt: Float) -> SIMD2<Float> {
+        knockbackStep(dt: dt) + SIMD2(carryVelocity.x, carryVelocity.y) * dt
+    }
+
     mutating func knockbackStep(dt: Float) -> SIMD2<Float> {
         let displacement = knockback * dt
         if isGrounded {

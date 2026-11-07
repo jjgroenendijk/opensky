@@ -359,7 +359,7 @@ extension CellStreamer {
         npcMovement.advance(by: frameTime, world: NPCMovementWorld(
             sampleGround: { [weak self] position in self?.sampleTerrain(at: position) },
             collisionQuery: { [weak self] bounds in
-                self?.collisionCandidates(overlapping: bounds) ?? []
+                self?.characterCollisionCandidates(overlapping: bounds) ?? []
             },
             repath: { [weak self] query in
                 self?.findPath(query) ?? .miss(.disconnected)

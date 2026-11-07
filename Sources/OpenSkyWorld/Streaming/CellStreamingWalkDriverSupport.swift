@@ -171,7 +171,7 @@ extension CellStreamingWalkDriver {
                 dt: Self.inputTimeStep
             ),
             sampleGround: streamer.sampleTerrain,
-            collisionQuery: streamer.collisionCandidates
+            collisionQuery: streamer.characterCollisionCandidates
         )
     }
 

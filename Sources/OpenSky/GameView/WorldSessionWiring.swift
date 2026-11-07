@@ -13,6 +13,7 @@ import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyObjectAnimation
+import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyRenderCore
@@ -163,7 +164,10 @@ final class WorldSessionWiring {
             streamer?.sampleTerrain(at: position)
         }
         gameSession.collisionQuery = { [weak streamer] bounds in
-            streamer?.collisionCandidates(overlapping: bounds) ?? []
+            streamer?.characterCollisionCandidates(overlapping: bounds) ?? []
+        }
+        gameSession.characterCarry = { [weak streamer] capsule, feet in
+            streamer?.dynamicBodies.characterCarry(capsule: capsule, feetPosition: feet) ?? .zero
         }
         gameSession.locomotion.sampleWater = { [weak streamer] position in
             streamer?.water(at: position)
