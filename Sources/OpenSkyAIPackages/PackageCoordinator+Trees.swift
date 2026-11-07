@@ -189,7 +189,8 @@ extension PackageCoordinator {
                 ? world.movePackageActor(
                     walker, to: point,
                     direct: execution?.isDirect ?? false,
-                    gait: paces[actor] ?? execution?.gait
+                    gait: paces[actor] ?? execution?.gait,
+                    walkRunBlend: paces[actor] == nil ? execution?.walkRunBlend : nil
                 )
                 : .busy
         }

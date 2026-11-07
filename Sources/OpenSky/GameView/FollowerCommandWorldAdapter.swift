@@ -226,7 +226,9 @@ extension FollowerCommandWorldAdapter: FollowerCommandWorld {
     }
 
     func moveFollower(_ follower: ReferenceKey, to point: SIMD3<Float>) -> Bool {
-        game.aiWorld.movePackageActor(follower, to: point, direct: false, gait: nil) == .started
+        game.aiWorld.movePackageActor(
+            follower, to: point, direct: false, gait: nil, walkRunBlend: nil
+        ) == .started
     }
 
     func stopFollower(_ follower: ReferenceKey) {
