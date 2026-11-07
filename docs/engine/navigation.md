@@ -86,10 +86,13 @@ long frame is clamped to 100 ms, so it cannot jump.
   Without the flag, a leg longer than 512 units runs and a shorter one walks.
 - [WARNING] An NPC has only the walk and run gaits, so jog and fast walk use the nearest one.
   The 512-unit rule is OpenSky's choice; the game's default speed rule is not documented.
-- A gait's speed is the forward speed of `NPC_Default_MT` (`MOVT` `SPED`): walk 80.1 and run
-  370 units per second, times the actor's scale. The game blends the speed s between gaits, with
-  W the walk and R the run: s up to 1 gives s × W, s from 1 to 2 gives (2 − s) × W + (s − 1) × R.
-  Fast walk is 1.25 and jog is 1.5 (clean-room read of `SkyrimSE.exe`, 2026-11-07).
+- A gait's speed is the forward walk or run of the movement type (`MOVT` `SPED`) that the actor's
+  graph state names: `iState` 60 is `iState_HorseDefault`, so a horse uses the `MOVT` named
+  `HorseDefault`, walk 125.11 and run 450. Without a running graph, the default `NPC_Default_MT`
+  gives walk 80.1 and run 370. Either is multiplied by the actor's scale ([actor state
+  graph](/engine/actor-state-graph.md#how-the-game-picks-istate)). The game blends the speed s
+  between gaits, with W the walk and R the run: s up to 1 gives s × W, s from 1 to 2 gives (2 − s) ×
+  W + (s − 1) × R. Fast walk is 1.25 and jog is 1.5 (clean-room read of `SkyrimSE.exe`, 2026-11-07).
 - A waypoint counts as reached within 12 units.
 - At a door, the mover reaches the door point, reports the door, and moves its capsule to the
   paired door.

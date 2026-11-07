@@ -45,15 +45,14 @@ extension ActorGraphCoordinator.Running {
 }
 
 extension ActorGraphCoordinator.Running {
-    /// Tells the graph `iState` when its drunk tag changed (docs/engine/actor-state-graph.md).
-    func noteDrunkTag() {
-        let drunk = instance.isTaggingState(ActorGraphNames.drunkState)
-        if
-            let name = ActorGraphCore.stateConstant(wasDrunk: isDrunk, isDrunk: drunk),
-            let value = instance.variable(named: name)
-        {
-            instance.setVariable(value, named: ActorGraphNames.state)
-        }
-        isDrunk = drunk
+    /// Writes the step's state tag into `iState`, which picks the speed sampler's table
+    /// (docs/engine/actor-state-graph.md).
+    func noteStateTag() {
+        isDrunk = instance.isTaggingState(ActorGraphNames.drunkState)
+        guard
+            let value = ActorGraphCore.state(tag: instance.stateTag?.value, rest: restState),
+            instance.variable(named: ActorGraphNames.state) != .int(value)
+        else { return }
+        instance.setVariable(.int(value), named: ActorGraphNames.state)
     }
 }

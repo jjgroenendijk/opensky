@@ -6,13 +6,10 @@ import OpenSkyBehavior
 import Testing
 
 struct ActorGraphCoreTests {
-    @Test func onlyAChangeOfTheDrunkTagWritesIState() {
-        #expect(ActorGraphCore.stateConstant(wasDrunk: false, isDrunk: false) == nil)
-        #expect(ActorGraphCore.stateConstant(wasDrunk: true, isDrunk: true) == nil)
-        #expect(ActorGraphCore.stateConstant(wasDrunk: false, isDrunk: true) == "iState_NPCDrunk")
-        #expect(
-            ActorGraphCore.stateConstant(wasDrunk: true, isDrunk: false) == "iState_NPCDefault"
-        )
+    @Test func theStateTagWinsOverTheGraphsStartingState() {
+        #expect(ActorGraphCore.state(tag: 15, rest: 0) == 15)
+        #expect(ActorGraphCore.state(tag: nil, rest: 60) == 60)
+        #expect(ActorGraphCore.state(tag: nil, rest: nil) == nil)
     }
 
     @Test func aGraphStepsEveryFrameNearAndLessOftenFurtherOut() {

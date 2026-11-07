@@ -1,6 +1,7 @@
 // The parts of a mover's step that leave plain walking: the gait and speed plan,
 // swimming, ledge hops, gliding without ground, and the cell hand-off.
 
+import OpenSkyFormatsESM
 import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -61,10 +62,10 @@ extension NPCMover {
     func speed(of gait: LocomotionGait) -> Float {
         let base = switch gait {
         case .swim: configuration.swimSpeed.value
-        case .run: configuration.runSpeed.value
+        case .run: movementSpeeds?.forwardRun ?? configuration.runSpeed.value
         case .sprint: configuration.sprintSpeed.value
         case .sneak: configuration.sneakSpeed.value
-        case .walk: configuration.walkSpeed.value
+        case .walk: movementSpeeds?.forwardWalk ?? configuration.walkSpeed.value
         }
         return scale > 0 && scale.isFinite ? base * scale : base
     }
