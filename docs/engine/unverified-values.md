@@ -37,6 +37,9 @@ the detail and the sources it did find.
 | Combat setting formulas | Read from the setting names | [combat](/engine/combat.md) |
 | Melee knockdown magnitude | The knockback slide speed over 69.99 | [impulses](/engine/impulses.md#hits) |
 | Explosion knockdown magnitude | The `EXPL` force | [impulses](/engine/impulses.md#explosions) |
+| Knockdown limb shares | Torso and head 1, upper limbs 0.75, lower limbs 0.5, hands and feet 0.25, by bone name | [ragdoll](/engine/ragdoll.md#knockdown) |
+| Get-up fallback blend | 1 s when the graph runs no `hkbGetUpModifier` | [ragdoll](/engine/ragdoll.md#knockdown) |
+| `KnockAreaEffect` scale | Magnitude 1 knocks down at 14 Havok m/s | [papyrus session natives](/engine/papyrus-session-natives.md) |
 | Actor splash | An actor splashes heavy going in, and not coming out | [impulses](/engine/impulses.md#water) |
 | Kill camera timing | OpenSky's numbers | [kill camera](/engine/kill-cam.md) |
 | Projectile settings | Formulas read from the setting names | [projectiles](/engine/projectiles.md) |

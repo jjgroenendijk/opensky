@@ -57,6 +57,10 @@ public final class RagdollCoordinator {
     public internal(set) var deathEffects = DeathEffectCounts()
     /// The player's own zero health. The app steps it each world tick.
     public var playerDeath = PlayerDeath()
+    /// Living actors on the ground after a knock.
+    public internal(set) var knockdowns = KnockdownTracker()
+    /// Knockdown commands raised between frames, run with the next frame's.
+    var queuedKnockdownCommands: [RagdollCommand] = []
 
     public init(store: WorldStateStore, world: any RagdollSessionWorld, data: RagdollSessionData?) {
         self.store = store
@@ -92,7 +96,7 @@ public final class RagdollCoordinator {
         runtime.contactEvent = controls.contactEvent
         runtime.advance(by: delta)
         advanceSeveredHeads(by: delta)
-        return recoveries + murders
+        return recoveries + murders + advanceKnockdowns(delta: delta, runtime: runtime)
     }
 
     /// Rebuilt each frame, so a corpse whose cell unloaded stops being drawn as
@@ -133,8 +137,9 @@ public final class RagdollCoordinator {
             let actor = ragdollActor(for: key),
             let animated = world.animatedPose(of: key)
         else { return nil }
+        let weight = knockdowns.ragdollWeight(of: key).map { min($0, instance.simulationWeight) }
         let bones = instance.blendedBoneMatrices(
-            animated: animated, worldToActor: actor.actorToWorld.inverse
+            animated: animated, worldToActor: actor.actorToWorld.inverse, weight: weight
         )
         drawnRagdollBones[key] = bones
         return bones

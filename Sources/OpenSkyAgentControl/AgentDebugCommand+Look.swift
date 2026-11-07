@@ -47,6 +47,12 @@ nonisolated extension AgentDebugCommand {
         return try .knock(reference: args.string("ref"), damage: damage)
     }
 
+    static func parseKnockdown(_ args: AgentArguments) throws(AgentFailure) -> Self {
+        let magnitude = try args.optionalFloat("magnitude") ?? 10
+        guard magnitude.isFinite, magnitude != 0 else { throw args.invalid("magnitude", "not 0") }
+        return try .knockdown(reference: args.string("ref"), magnitude: magnitude)
+    }
+
     static func parseGamepad(_ args: AgentArguments) throws(AgentFailure) -> Self {
         let count = try args.optionalInt("count")
         if let count, !(0 ... 3).contains(count) {

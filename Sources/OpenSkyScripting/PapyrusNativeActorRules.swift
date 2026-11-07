@@ -12,9 +12,9 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension PapyrusNativeFunctions {
-    /// `KnockAreaEffect` magnitude 1 to speed, in units per second. [WARNING] OpenSky's
-    /// reading: no open source gives the game's scale.
-    static let knockAreaSpeed: Float = 1000
+    /// `KnockAreaEffect` magnitude 1 as a knockdown, in Havok metres a second.
+    /// [WARNING] OpenSky's reading: no open source gives the game's scale.
+    static let knockAreaMagnitude: Float = 14
 
     static func installActorRules(into registry: inout PapyrusNativeRegistry) {
         installDeferredKill(into: &registry)
@@ -185,12 +185,12 @@ extension PapyrusNativeFunctions {
                 let centre = position(of: key, bridge)
             else { return failure(call, "KnockAreaEffect needs a magnitude and a radius") }
             guard let trapWorld = bridge.trapWorld else { return .deviated(.none, .stubbed) }
-            let speed = min(max(magnitude, 0), 1) * knockAreaSpeed
+            let knock = min(max(magnitude, 0), 1) * knockAreaMagnitude
             let actors = findCandidates(
                 bridge, filter: .actors, bases: [], around: centre, radius: radius
             )
             for actor in actors.map(\.key).sorted() where actor != key {
-                _ = trapWorld.pushActor(actor, awayFrom: key, along: nil, speed: speed)
+                _ = trapWorld.knockDownActor(actor, awayFrom: key, magnitude: knock)
             }
             return .returned(.none)
         }

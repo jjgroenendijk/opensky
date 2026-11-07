@@ -121,17 +121,26 @@ extension EffectsWorldAdapter: ImpulseWorld {
         game.combatWorld.health(of: actor)
     }
 
-    /// Until the living ragdoll lands, a knockdown is a full knockback push.
-    func knockDown(_ actor: ReferenceKey, from source: SIMD3<Float>, magnitude _: Float) -> Bool {
-        guard let feet = game.actorWorld.combatActor(key: actor)?.feet else { return false }
+    /// Every knockdown lands here. A "No Knockdowns" race staggers instead. An actor
+    /// with no ragdoll, and the player, slides on its capsule at the knock's speed.
+    func knockDown(_ actor: ReferenceKey, from source: SIMD3<Float>, magnitude: Float) -> Bool {
+        guard magnitude.isFinite, magnitude != 0 else { return false }
+        if race(of: actor)?.flags.contains(.noKnockdowns) == true {
+            return game.magicWorld.staggerActor(actor, magnitude: 1)
+        }
+        let downTime = game.combat.impulses?.settings.knockdownTime
+            ?? ImpulseSettings.vanilla.knockdownTime
+        if game.ragdoll.knockDown(actor, from: source, magnitude: magnitude, downTime: downTime) {
+            return true
+        }
+        guard let feet = trapPosition(of: actor) else { return false }
         let away = SIMD3(feet.x - source.x, feet.y - source.y, 0)
         guard simd_length(away) > 0.001 else { return false }
-        let speed = ImpulseSettings.vanilla.knockbackForceMax / ImpulseSettings.vanilla
-            .knockbackTime
+        let speed = magnitude * GameplayImpulse.havokScale
         return knockActor(actor, velocity: simd_normalize(away) * speed, knockdown: true)
     }
 
-    /// OpenSky has no knockdown ragdoll for the living, so a knockdown pushes too.
+    /// A push along the ground on the actor's capsule.
     func knockActor(_ actor: ReferenceKey, velocity: SIMD3<Float>, knockdown _: Bool) -> Bool {
         guard simd_length(velocity) > 0, velocity.x.isFinite, velocity.y.isFinite else {
             return false

@@ -195,6 +195,18 @@ nonisolated public struct RagdollWorld: Sendable {
         ragdolls.first { $0.key == key }?.instance
     }
 
+    /// Changes the ragdoll of `key` in place. False when it has none.
+    @discardableResult
+    public mutating func update(
+        _ key: ReferenceKey,
+        _ change: (inout RagdollInstance) -> Void
+    ) -> Bool {
+        guard let index = ragdolls.firstIndex(where: { $0.key == key }) else { return false }
+        change(&ragdolls[index].instance)
+        wasSettled.remove(key)
+        return true
+    }
+
     public func isRagdolling(_ key: ReferenceKey) -> Bool {
         ragdolls.contains { $0.key == key }
     }

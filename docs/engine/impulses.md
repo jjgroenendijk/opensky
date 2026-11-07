@@ -43,8 +43,8 @@ A ranged hit pushes no actor; its knock values push loose bodies only.
 Example: a 20 point swing pushes `(20 * 5 + 50) * 0.6 = 90` units in 0.3 seconds. On an actor
 with 30 of 100 health it knocks down with a chance of `20 * 0.3 / 50 = 0.12`.
 
-The game ragdolls a knocked-down actor. OpenSky has no ragdoll for a living actor yet
-(issue #1658), so a knockdown is a full `fKnockbackForceMax` push on the capsule.
+A knockdown ragdolls the actor ([knockdown](/engine/ragdoll.md#knockdown)). Each body gains the
+slide speed over 69.99, in Havok metres a second.
 
 ## Explosions
 

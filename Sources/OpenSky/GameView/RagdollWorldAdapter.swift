@@ -118,6 +118,12 @@ final class RagdollWorldAdapter {
                 enterBleedout(key)
             case let .leaveBleedout(key):
                 leaveBleedout(key)
+            case let .enterKnockdown(key):
+                enterKnockdown(key)
+            case let .getUp(key, feet, yaw):
+                getUp(key, feet: feet, yaw: yaw)
+            case let .endKnockdown(key):
+                endKnockdown(key)
             }
         }
     }

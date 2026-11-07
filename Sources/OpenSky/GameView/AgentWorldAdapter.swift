@@ -61,6 +61,7 @@ protocol AgentWorldHost: AnyObject {
     var containerMenu: ContainerMenuController { get }
     var dialogueMenu: DialogueMenuController { get }
     var dialogueWorld: DialogueWorldAdapter { get }
+    var effectsWorld: EffectsWorldAdapter { get }
     var effectGraphs: EffectGraphCoordinator { get }
     var effectModelPoser: EffectModelPoser { get }
     var factions: FactionCoordinator { get }

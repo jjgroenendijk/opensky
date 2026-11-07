@@ -274,6 +274,18 @@ public final class RagdollRuntime: DeathReporting {
         return true
     }
 
+    /// Starts or wakes the ragdoll of a living `key` and adds `speed` units a second to
+    /// each body, away from `source`, by `weight` of its bone.
+    /// - Returns: true when `key` now ragdolls.
+    @discardableResult
+    public func knock(
+        _ key: ReferenceKey, awayFrom source: SIMD3<Float>, speed: Float,
+        weight: (String) -> Float
+    ) -> Bool {
+        guard world.isRagdolling(key) || activate(key, instant: false) else { return false }
+        return world.update(key) { $0.push(awayFrom: source, speed: speed, weight: weight) }
+    }
+
     /// The dev trigger: kills `key` if it is not dead already, then hands off
     /// without waiting for a graph. What the readout's button calls.
     ///

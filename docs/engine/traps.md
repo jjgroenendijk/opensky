@@ -121,17 +121,18 @@ stagger)` knocks the hit actor back at `pushback` units per second, along the tr
 With no velocity it pushes away from the trap. A stagger above 0 staggers the actor with that
 magnitude, at most 1, through the same path a stagger spell takes.
 
-`PushActorAway(actor, force)` pushes away from the receiver at 100 units per second per point
-of force. A negative force pulls the actor in, as the CK wiki
-([PushActorAway](https://ck.uesp.net/wiki/PushActorAway_-_ObjectReference)) notes.
+`PushActorAway(actor, force)` knocks the actor down away from the receiver, "as if an explosion
+had gone off": each body of its ragdoll gains `force` Havok metres a second
+([knockdown](/engine/ragdoll.md#knockdown)). A negative force pulls the actor in, as the CK wiki
+([PushActorAway](https://ck.uesp.net/wiki/PushActorAway_-_ObjectReference)) notes. An actor with
+no ragdoll, and the player, slide on the capsule at the same speed.
 
 The knockback is horizontal, is capped at 1500 units per second, and fades on the ground in
 about one second. The player slides on the walk capsule. An NPC that is walking takes the push
 on its walk capsule. A standing NPC slides on a capsule of its own until the push drops below
 5 units per second on the ground, or for at most 3 seconds, and then stands where it stopped.
 
-[WARNING] Neither scale is confirmed against the game. The game also ragdolls an actor that
-`PushActorAway` hits, "as if an explosion had gone off"; OpenSky only slides it.
+[WARNING] The trap pushback scale is not confirmed against the game.
 
 ## Motion type
 

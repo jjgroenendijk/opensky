@@ -17,4 +17,11 @@ nonisolated public enum RagdollCommand: Equatable, Sendable {
     case enterBleedout(ReferenceKey)
     /// The actor stands up with at least this share of its health.
     case leaveBleedout(ReferenceKey)
+    /// A living actor fell as a ragdoll: it stops moving and fighting until it is up.
+    case enterKnockdown(ReferenceKey)
+    /// The actor starts its get-up clip, standing at `feet` and facing `yaw`, or as it
+    /// faced when no neck bone shows the way.
+    case getUp(ReferenceKey, feet: SIMD3<Float>, yaw: Float?)
+    /// The knockdown is over: the actor stood up, died, or left the loaded cells.
+    case endKnockdown(ReferenceKey)
 }

@@ -275,6 +275,10 @@ extension CombatWorldAdapter: CombatWorld {
         game.packages.ignoresCombat(key) || game.aiWorld.isAIDisabled(key)
     }
 
+    func isKnockedDown(_ key: ReferenceKey) -> Bool {
+        game.ragdoll.knockdowns.isKnockedDown(key)
+    }
+
     func level(of key: ReferenceKey) -> Int? {
         guard
             let runtime = game.actorValues.runtime,

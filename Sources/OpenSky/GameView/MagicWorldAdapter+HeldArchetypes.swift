@@ -102,13 +102,20 @@ extension MagicWorldAdapter {
         streamer.steerRiddenActor(actor, to: point, yaw: 0)
     }
 
-    /// The player is knocked back; an NPC has no outside velocity, so it lands where
-    /// it was let go.
+    /// The player is knocked back; an NPC is knocked down along the throw.
     func throwActor(_ actor: ReferenceKey, along direction: SIMD3<Float>, force: Float) {
-        guard actor == .player, let gameSession = game.gameSession else { return }
         let flat = SIMD3(direction.x, direction.y, 0)
         guard simd_length(flat) > 0 else { return }
-        gameSession.walkController.knock(simd_normalize(flat) * force * Self.throwSpeedPerForce)
+        guard actor == .player else {
+            guard let feet = feet(of: actor) else { return }
+            _ = game.effectsWorld.knockDown(
+                actor, from: feet - simd_normalize(flat) * 100, magnitude: force
+            )
+            return
+        }
+        game.gameSession?.walkController.knock(
+            simd_normalize(flat) * force * Self.throwSpeedPerForce
+        )
     }
 
     /// `fMagicGrabActorThrowForce` to speed, units per second. [WARNING] Not confirmed;

@@ -270,7 +270,7 @@ struct PapyrusNativeTrapTests {
         #expect(trapWorld.impulses.count == 1)
     }
 
-    @Test func pushActorAwayPushesFromTheReceiver() throws {
+    @Test func pushActorAwayKnocksDownFromTheReceiver() throws {
         let fixture = try Fixture.make()
         let trapWorld = FakeTrapWorld()
         fixture.session.bridge.trapWorld = trapWorld
@@ -278,10 +278,9 @@ struct PapyrusNativeTrapTests {
             "PushActorAway", arguments: [.object(fixture.receiver), .float(2)]
         )
         #expect(result == .returned(.none))
-        #expect(trapWorld.pushes.first?.source == fixture.key)
-        #expect(trapWorld.pushes.first?.direction == nil)
-        #expect(trapWorld.pushes.first?.speed == 2 * PapyrusNativeFunctions.knockbackSpeedPerForce)
+        #expect(trapWorld.knockdowns.first?.source == fixture.key)
+        #expect(trapWorld.knockdowns.first?.magnitude == 2)
         _ = fixture.call("PushActorAway", arguments: [.object(fixture.receiver), .float(-1)])
-        #expect(trapWorld.pushes.last?.speed == -PapyrusNativeFunctions.knockbackSpeedPerForce)
+        #expect(trapWorld.knockdowns.last?.magnitude == -1)
     }
 }

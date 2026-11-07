@@ -77,7 +77,8 @@ new game clears it. `openskycli game debug fade` starts one, and `state frame` s
   engine itself names. Activating the pile activates the actor too, so the player searches the
   dead actor's inventory through the pile.
 - `UnLockOwnedDoorsInCell` unlocks the doors of the actor's cell that its base owns.
-- `KnockAreaEffect` pushes the actors in the radius away from the caster.
+- `KnockAreaEffect` knocks the actors in the radius down, away from the caster
+  ([knockdown](/engine/ragdoll.md#knockdown)).
 - `ForceAddRagdollToWorld` starts a ragdoll at once.
 - `PlayImpactEffect` casts a line from the reference, or from the named node, along the given
   direction and length. The direction turns with the node when `abApplyNodeRotation` is set:
@@ -181,8 +182,8 @@ The sub-graph natives are in [effect graphs](/engine/effect-graphs.md).
   half of `afWalkRunPercent` and run from half up, so its feet can slide.
 - `OnPlayerBowShot` and `Game.IsPlayerSungazing` count the player as looking at the sun within
   5 degrees of it. No open source or game setting gives the game's angle.
-- `KnockAreaEffect` pushes at 1000 units a second for a magnitude of 1. No open source or game
-  setting gives the game's scale.
+- `KnockAreaEffect` knocks down at 14 Havok metres a second for a magnitude of 1. No open source
+  or game setting gives the game's scale.
 - `Debug.SetFootIK` lasts until the session ends and is not kept in a save. No source says
   whether the game keeps it.
 - A loose body and a ragdoll do not link to each other, and neither do two loose bodies. No

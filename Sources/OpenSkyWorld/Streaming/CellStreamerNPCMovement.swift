@@ -236,6 +236,10 @@ extension CellStreamer {
         onNPCPosesChanged?(npcMovement.instanceDeltas())
     }
 
+    public func riddenHold(of actor: ReferenceKey) -> NPCRiddenHold? {
+        npcMovement.riddenHold(of: actor)
+    }
+
     @discardableResult
     public func releaseRiddenActor(_ actor: ReferenceKey) -> Bool {
         bindNPCMovementCallbacks()

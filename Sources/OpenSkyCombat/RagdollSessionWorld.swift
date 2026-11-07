@@ -97,6 +97,8 @@ public protocol RagdollSessionWorld: AnyObject {
     func blocksBleedoutRecovery(of key: ReferenceKey) -> Bool
     /// Restores `share` of the actor's maximum health while it kneels.
     func restoreHealthShare(_ share: Float, of key: ReferenceKey)
+    /// The seconds the running `hkbGetUpModifier` blends over, or nil when none runs.
+    func getUpDuration(of key: ReferenceKey) -> Float?
 }
 
 extension RagdollSessionWorld {
@@ -142,4 +144,8 @@ extension RagdollSessionWorld {
     }
 
     public func restoreHealthShare(_: Float, of _: ReferenceKey) {}
+
+    public func getUpDuration(of _: ReferenceKey) -> Float? {
+        nil
+    }
 }

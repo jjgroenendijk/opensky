@@ -155,6 +155,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence
     /// True while `key`'s current AI package has the Ignore Combat flag.
     func packageIgnoresCombat(_ key: ReferenceKey) -> Bool
+    /// True while `key` lies knocked down or gets up.
+    func isKnockedDown(_ key: ReferenceKey) -> Bool
     /// `key`'s level, or nil when it has no actor values.
     func level(of key: ReferenceKey) -> Int?
     /// What `observer` makes of `target` through factions and relationships.
@@ -217,6 +219,10 @@ extension CombatWorld {
     }
 
     public func packageIgnoresCombat(_: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func isKnockedDown(_: ReferenceKey) -> Bool {
         false
     }
 
