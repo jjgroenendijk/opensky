@@ -14,7 +14,7 @@ public import OpenSkyObjectAnimation
 import OpenSkyPlayer
 import OpenSkyRendering
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldInterface
 
 /// What `EffectGraphWorldAdapter` reads from the session. `GameSessionScope` conforms.
@@ -34,15 +34,6 @@ public final class EffectGraphWorldAdapter {
 
     public init(game: any EffectGraphWorldHost) {
         self.game = game
-    }
-
-    /// After the actor and object graphs, so the events they raised this frame reach
-    /// the effect graphs in the same frame.
-    public func wire(gameSession: GameSession) {
-        guard game.audioFileSystem != nil else { return }
-        gameSession.worldTick.register(.effectGraphs) { [weak self] delta in
-            self?.game.effectGraphs.tick(deltaTime: delta)
-        }
     }
 }
 

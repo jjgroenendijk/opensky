@@ -4,7 +4,7 @@ import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyEffects
@@ -19,7 +19,7 @@ import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyScripting
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -42,37 +42,9 @@ public struct ScriptReferenceBindingsAdapter {
 }
 
 extension ScriptReferenceBindingsAdapter {
-    public func wireReferenceRules(_ hooks: inout PapyrusGameNatives, provider: WorldDataStores) {
-        hooks.clearExtraArrows = { [weak game] actor in
-            guard let game, let host = game.streamer?.referenceEntry(key: actor)?.formID else {
-                return 0
-            }
-            return game.combat.archery?.projectiles.removeArrows(stuckIn: host) ?? 0
-        }
-        let impacts = provider.footstepStore.map(MeleeImpactResolver.init(footsteps:))
-        hooks.playImpact = { [weak owner] dataSet, pick in
-            guard
-                owner != nil, let impacts, let id = game.scripts.bridge?.localFormID(of: dataSet),
-                let hit = impactHit(of: pick),
-                let impact = impacts.resolve(dataSet: id, material: hit.material)
-            else { return false }
-            game.combatWorld.playImpact(impact, at: hit.position)
-            return true
-        }
-        hooks.resetCell = { [weak game] cell in
-            guard
-                let game, let reset = game.gameSession?.cellReset,
-                let id = game.scripts.bridge?.localFormID(of: cell),
-                let location = game.streamer?.placedRecords?.location(ofCell: id)
-            else { return false }
-            reset.flagForReset(location)
-            return true
-        }
-    }
-
     /// Where `PlayImpactEffect`'s pick meets a surface. A node not readable now picks
     /// from the reference. "Local" rotation is the node's turn inside its parent node.
-    private func impactHit(of pick: PapyrusImpactPick) -> ImpactPickHit? {
+    func impactHit(of pick: PapyrusImpactPick) -> ImpactPickHit? {
         guard
             let streamer = game.streamer,
             let state = game.scripts.bridge?.referenceState(for: pick.source)

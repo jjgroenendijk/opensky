@@ -44,22 +44,7 @@ public final class ActivationRefusalWorldAdapter {
         self.game = game
     }
 
-    public func wire() {
-        guard let streamer = game.streamer else { return }
-        streamer.activationGate.register(.notice) { [weak self] target in
-            guard let self else { return nil }
-            let texts = game.mapWorld.settingTexts(ActivationRefusalText.self)
-            return ActivationRefusalRule.refusal(facts(for: target), texts: texts).map {
-                .notice($0)
-            }
-        }
-        streamer.activationGate.refusals.register(.notice) { [weak self] event in
-            guard let self, case let .notice(text) = event.refusal else { return }
-            game.hud.showNotification(text)
-        }
-    }
-
-    private func facts(for target: InteractionTarget) -> ActivationFacts {
+    func facts(for target: InteractionTarget) -> ActivationFacts {
         let interaction = target.interaction
         var facts = ActivationFacts(action: interaction.action)
         facts.parentActivateOnly = interaction.parentActivateOnly

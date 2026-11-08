@@ -28,7 +28,7 @@ import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -78,25 +78,6 @@ public final class DialogueWorldAdapter {
         speakersHost = game
         outcomesHost = game
         self.game = game
-    }
-
-    /// Hostility and death decide who is worth talking to, so the candidate
-    /// list is built here, not in streaming.
-    public func wireDialogue(streamer: CellStreamer) {
-        streamer.talk.candidateSource = { [weak self] ray in
-            self?.speakers.talkCandidates(along: ray) ?? []
-        }
-        // Activating a living actor while sneaking opens its pockets instead of a talk.
-        streamer.talk.activations.register(.dialogue) { [weak self] event in
-            guard let game = self?.game else { return }
-            if game.mountWorld.mountOnActivation(event.speaker) {
-                return
-            }
-            if game.player.isSneaking, game.containerMenu.openPickpocket(of: event.speaker) {
-                return
-            }
-            game.dialogueMenu.begin(with: event.speaker)
-        }
     }
 }
 

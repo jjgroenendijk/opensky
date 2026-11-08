@@ -14,7 +14,7 @@ import OpenSkyRendering
 import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -61,15 +61,7 @@ public final class ObjectAnimationWorldAdapter {
         self.game = game
     }
 
-    /// After the vehicles, so a cart's events and an object's events keep one order.
-    public func wire(gameSession: GameSession) {
-        guard game.audioFileSystem != nil else { return }
-        gameSession.worldTick.register(.objectAnimation) { [weak self] delta in
-            self?.advance(delta)
-        }
-    }
-
-    private func advance(_ delta: Float) {
+    func advance(_ delta: Float) {
         objects.sync()
         objects.tick(deltaTime: delta)
         game.streamer?.poseMovingCollision { [objects] in objects.boneMatrices(of: $0) }

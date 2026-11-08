@@ -25,7 +25,7 @@ import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 public import OpenSkyWorldState
@@ -103,20 +103,6 @@ public final class MagicWorldAdapter {
         self.game = game
     }
 
-    /// After `wireActorValues`, because every effect writes an actor value, and after
-    /// `wireWorldItems`, because the spellbook reads the equipment.
-    public func wireMagic(gameSession: GameSession) {
-        let coordinator = game.magic
-        // `Mod Spell Cost` folds through the caster's own copy of the perks.
-        coordinator.caster?.perks = game.perks.runtime
-        if coordinator.effects != nil {
-            registerEffects(coordinator, gameSession: gameSession)
-        }
-        if coordinator.caster != nil {
-            registerCasting(coordinator, gameSession: gameSession)
-        }
-    }
-
     public func sessionData(
         provider: WorldDataStores,
         store worldState: WorldStateStore
@@ -167,7 +153,7 @@ public final class MagicWorldAdapter {
     }
 
     /// Chained after regeneration and the Papyrus VM, on the same delta.
-    private func registerEffects(_ coordinator: any MagicPort, gameSession: GameSession) {
+    func registerEffects(_ coordinator: any MagicPort, gameSession: GameSession) {
         let worldTick = gameSession.worldTick
         worldTick.register(.magicEffects) { [weak self, weak coordinator, weak gameSession] delta in
             self?.archetypeEffects.run(coordinator?.advanceEffects(delta: delta) ?? [])
@@ -182,7 +168,7 @@ public final class MagicWorldAdapter {
     }
 
     /// A frame step, beside melee: a cast is timed against the rendered frame.
-    private func registerCasting(_ coordinator: any MagicPort, gameSession: GameSession) {
+    func registerCasting(_ coordinator: any MagicPort, gameSession: GameSession) {
         let frameSteps = gameSession.frameSteps
         frameSteps.register(.spellCasting) { [weak self, weak coordinator, weak gameSession] _ in
             guard let coordinator, let gameSession else { return }

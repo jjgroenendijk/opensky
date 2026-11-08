@@ -102,37 +102,7 @@ public final class InventoryWorldAdapter {
         self.game = game
     }
 
-    /// After the audio and Papyrus subscribers, so the activation sound plays
-    /// whether or not the take succeeds. The crime reporter joins the take path.
-    public func wireWorldItems(streamer: CellStreamer) {
-        streamer.onInteraction.register(.worldItems) { [weak self] event in
-            guard let self else { return }
-            let action = event.target.interaction.action
-            if action == .take, openBook(event.target.interaction) {
-                return
-            }
-            if event.target.interaction.isBed {
-                // An inmate's bed asks to serve the sentence (UESP "Skyrim:Crime").
-                if game.crime.jailStay != nil {
-                    askToServeSentence()
-                    return
-                }
-                game.menuScreens.sleepWait.open(
-                    sleeping: true, bed: event.target.interaction.reference
-                )
-                return
-            }
-            if useFurniture(event.target.interaction) {
-                return
-            }
-            run(game.inventory.handleInteraction(action))
-            if action == .use, game.inventory.isCrafting {
-                game.menuScreens.crafting.open()
-            }
-        }
-    }
-
-    private func askToServeSentence() {
+    func askToServeSentence() {
         let words = game.mapWorld.settingTexts(MessageBoxText.self)
         game.messages.presentChoices(
             title: nil, text: game.crime.crimeTexts.serveSentenceQuestion,
@@ -186,7 +156,7 @@ public final class InventoryWorldAdapter {
 
     /// A chair or a bench seats the player. A crafting station keeps its menu, and a bed
     /// its rest menu. False while the furniture switch is off.
-    private func useFurniture(_ interaction: PlacedInteraction) -> Bool {
+    func useFurniture(_ interaction: PlacedInteraction) -> Bool {
         guard
             !interaction.seats.isEmpty,
             (interaction.station?.workbench.benchType ?? WorkbenchType.none) == WorkbenchType.none,
@@ -213,7 +183,7 @@ public final class InventoryWorldAdapter {
     }
 
     /// A book is read where it lies, as in the game; its bar offers to take it.
-    private func openBook(_ interaction: PlacedInteraction) -> Bool {
+    func openBook(_ interaction: PlacedInteraction) -> Bool {
         let book = game.menuScreens.book
         guard book.isBook(interaction.base), let runtime = game.inventory.runtime else {
             return false

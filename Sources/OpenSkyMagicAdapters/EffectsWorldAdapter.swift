@@ -23,7 +23,7 @@ public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyScripting
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -50,9 +50,9 @@ public final class EffectsWorldAdapter {
     public static let basePlugin = "Skyrim.esm"
 
     public unowned let game: any EffectsWorldHost
-    public private(set) var cameraPosition: SIMD3<Float>?
+    public internal(set) var cameraPosition: SIMD3<Float>?
     /// When the impulse step last ran, for the splash timer.
-    private var lastImpulseStep: TimeInterval?
+    var lastImpulseStep: TimeInterval?
     /// The heartbeat's script-sound instance; 0 when none plays.
     public var heartbeatSound: Int32 = 0
     /// Actors whose race abilities were looked at, so each is resolved once.
@@ -106,30 +106,6 @@ public final class EffectsWorldAdapter {
 
     public var explosions: any ExplosionRuntimePort {
         game.combat.explosions
-    }
-
-    public func wireEffects(
-        provider: WorldDataStores,
-        streamer: CellStreamer,
-        gameSession: GameSession
-    ) {
-        guard let records = provider.effectRecords else { return }
-        gameSession.imageSpaceLinks = ImageSpaceLinks(
-            records: records, weatherPlugin: Self.basePlugin
-        )
-        game.effects.applyGraphicsSettings(game.playerSettings.store)
-        let frameSteps = gameSession.frameSteps
-        frameSteps.register(.effects) { [weak self, weak gameSession, weak streamer] position in
-            guard let self, let gameSession else { return }
-            cameraPosition = position
-            tick(gameSession: gameSession, streamer: streamer)
-            let now = ProcessInfo.processInfo.systemUptime
-            let delta = Float(now - (lastImpulseStep ?? now))
-            lastImpulseStep = now
-            if gameSession.movementMode.isPlayerControlled {
-                game.combat.impulses?.advance(deltaTime: delta)
-            }
-        }
     }
 
     /// The visual, image-space, and sound side of one landed spell.
@@ -204,7 +180,7 @@ public final class EffectsWorldAdapter {
 
     /// Steps by wall-clock time, and not at all while a menu pauses the world. The
     /// interior's image space and the effect draw lists update every frame.
-    private func tick(gameSession: GameSession, streamer: CellStreamer?, now: Date = Date()) {
+    func tick(gameSession: GameSession, streamer: CellStreamer?, now: Date = Date()) {
         let renderer = gameSession.renderer
         gameSession.imageSpaceLinks?.interior = streamer?.interiorScene.map {
             InteriorImageSpace(imageSpace: $0.imageSpace, plugin: Self.basePlugin)

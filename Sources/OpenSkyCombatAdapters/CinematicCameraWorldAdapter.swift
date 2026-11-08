@@ -20,7 +20,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import simd
 
@@ -40,8 +40,8 @@ public protocol CinematicCameraWorldHost: AnyObject {
 public final class CinematicCameraWorldAdapter {
     public unowned let game: any CinematicCameraWorldHost
     /// Camera tracks by CAMS model path, all requested at wiring, off the main actor.
-    private var tracks: AssetLoader<String, NIFCameraTrack>?
-    private var lastFrame: Date?
+    var tracks: AssetLoader<String, NIFCameraTrack>?
+    var lastFrame: Date?
 
     public init(game: any CinematicCameraWorldHost) {
         self.game = game
@@ -54,23 +54,6 @@ public final class CinematicCameraWorldAdapter {
             settings.baseOdds = KillCamSettings.resolve(store: store).baseOdds
         }
         return settings
-    }
-
-    public func wire(gameSession: GameSession) {
-        wireTracks(gameSession: gameSession)
-        // Frame steps run under a menu too; the shot keeps real time, so a
-        // paused frame advances nothing.
-        gameSession.frameSteps.register(.cinematicCamera) { [weak self, weak gameSession] _ in
-            guard let self, let gameSession else { return }
-            let now = Date()
-            let seconds = gameSession.worldSimPaused ? 0 : lastFrame
-                .map { now.timeIntervalSince($0) } ?? 0
-            lastFrame = now
-            apply(game.cinematicCamera.tick(realSeconds: min(
-                seconds,
-                CinematicCameraCoordinator.longestFrameSeconds
-            )))
-        }
     }
 
     /// A hostile actor died. When it was the last one, a kill cam may play on it.
@@ -88,23 +71,6 @@ public final class CinematicCameraWorldAdapter {
             target: key,
             remainingHostiles: remaining
         )
-    }
-
-    /// A shot whose track has not arrived plays without one, as a shot with no model does.
-    private func wireTracks(gameSession: GameSession) {
-        guard let files = game.worldData?.scriptFileSystem else {
-            return
-        }
-        let tracks = AssetLoader<String, NIFCameraTrack> { model in
-            try NIFCameraTrack(file: NIFFile(data: files.contents(forPath: "meshes\\" + model)))
-        }
-        for shot in cameraPaths?.shots.records ?? [] {
-            if let model = shot.record.model?.path {
-                tracks.prefetch(model)
-            }
-        }
-        self.tracks = tracks
-        gameSession.assetDrains.register(.cinematicTracks) { _ in tracks.drain() }
     }
 
     public func anchorPosition(of key: ReferenceKey) -> SIMD3<Float>? {

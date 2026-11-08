@@ -1,5 +1,4 @@
-// Routes menu keys and pointer events to the menu on top of the stack, and wires
-// the settings, menu text, sounds, and frame tick that every menu movie shares.
+// Routes menu keys and pointer events to the menu on top of the stack.
 
 import AppKit
 import OpenSkyAIPackages
@@ -26,9 +25,9 @@ protocol MenuRouterHost: MenuSoundHost {
 final class MenuRouter {
     unowned let game: any MenuRouterHost
     private let hotkeys: MenuHotkeys
-    private let ticks: MenuFrameTick
+    let ticks: MenuFrameTick
     private let routeHosts: MenuRoutes
-    private let monitor = GamepadMonitor()
+    let monitor = GamepadMonitor()
     var gamepads: any GamepadMonitorPort {
         monitor
     }
@@ -43,31 +42,6 @@ final class MenuRouter {
     /// The bound keys that open a menu or save, outside any menu, and the map's own keys.
     func run(_ action: GameInputAction) {
         hotkeys.run(action)
-    }
-
-    /// Settings, key bindings, menu text, the menu natives, map discovery, and
-    /// the menu movies' late calls.
-    func wire(gameSession: GameSession) {
-        let renderer = gameSession.renderer
-        game.playerSettings.loadControlMap(try? game.controlMapLoader?())
-        game.playerSettings.applyAll()
-        game.audio.engineStarted
-            .register(.playerSettings) { [weak game] _ in game?.playerSettings.applyAll() }
-        if let labels = game.menuTextLoader?() {
-            renderer.swfTextTranslator = { labels.label(for: $0) }
-        }
-        monitor.onDisconnect = { [weak game] in
-            guard let game else { return }
-            let texts = game.mapWorld.settingTexts(GamepadNoticeText.self)
-            game.messages.presentChoices(
-                title: texts[.title], text: texts[.message], buttons: [texts[.confirm]]
-            ) { _ in }
-        }
-        let sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
-        renderer.swfSoundPlayer = { sounds.play(editorID: $0 ?? MenuSoundPlayer.okSound) }
-        gameSession.frameSteps.register(.menuRouting) { [ticks, weak renderer, monitor] _ in
-            ticks.tick(renderer: renderer, monitor: monitor)
-        }
     }
 
     /// The one menu input consumer routes by the top of the menu stack. Each

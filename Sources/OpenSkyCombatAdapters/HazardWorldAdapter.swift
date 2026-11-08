@@ -3,7 +3,7 @@
 // magic coordinator. The rules live in the coordinator (docs/engine/traps.md).
 
 import Foundation
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -46,8 +46,8 @@ public final class HazardWorldAdapter {
     public static let longestStep: Float = 0.25
 
     private let dependencies: HazardWorldDependencies
-    public private(set) var store: HazardStore?
-    private var lastFrame: Date?
+    public internal(set) var store: HazardStore?
+    var lastFrame: Date?
 
     public init(_ dependencies: HazardWorldDependencies) {
         self.dependencies = dependencies
@@ -57,21 +57,7 @@ public final class HazardWorldAdapter {
         dependencies.hazards()
     }
 
-    public func wireHazards(
-        provider: WorldDataStores,
-        streamer: CellStreamer,
-        gameSession: GameSession
-    ) {
-        store = provider.lockTrapData.hazards
-        streamer.cellHazards.register(.hazards) { [weak self] event in
-            self?.load(event)
-        }
-        gameSession.frameSteps.register(.hazards) { [weak self, weak gameSession] _ in
-            self?.tick(paused: gameSession?.worldSimPaused ?? true)
-        }
-    }
-
-    private func load(_ event: CellHazardEvent) {
+    func load(_ event: CellHazardEvent) {
         let placements = event.hazards.compactMap { hazard -> HazardPlacement? in
             guard let key = hazard.hazardKey, let spec = store?.spec(for: key) else { return nil }
             return HazardPlacement(id: hazard.key, spec: spec, position: hazard.position)
@@ -80,7 +66,7 @@ public final class HazardWorldAdapter {
     }
 
     /// Steps by wall-clock time, and not at all while a menu pauses the world.
-    private func tick(paused: Bool, now: Date = Date()) {
+    func tick(paused: Bool, now: Date = Date()) {
         defer { lastFrame = paused ? nil : now }
         guard !paused, let lastFrame else { return }
         let seconds = Float(now.timeIntervalSince(lastFrame))

@@ -17,7 +17,7 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -62,15 +62,6 @@ public final class IdleWorldAdapter {
             let clips = game.animationClips
         else { return nil }
         return IdleSessionData(store: store, files: files, clips: clips)
-    }
-
-    /// After packages, because the pass reads each actor's current procedure.
-    public func wireIdles(gameSession: GameSession) {
-        let idles = idles
-        guard idles.store != nil else { return }
-        gameSession.worldTick.register(.idles) { [weak idles] _ in
-            idles?.advance()
-        }
     }
 }
 

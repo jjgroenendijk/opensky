@@ -23,7 +23,7 @@ import OpenSkyPlayer
 public import OpenSkyRendering
 import OpenSkyScripting
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -95,31 +95,6 @@ public final class RagdollWorldAdapter {
                 collisionModels: game.audioFileSystem.map(NIFCollisionLibrary.init),
                 deathSettings: DeathSettings.resolve(store: provider.gameSettings)
             )
-        }
-    }
-
-    /// A world-tick step, so the ragdolls see the same simulated
-    /// delta as the other systems, and a menu-paused frame stops a falling
-    /// corpse. The pose reaches the scene on the drawn frame, so a paused
-    /// corpse stays where it was.
-    public func wireRagdoll(gameSession: GameSession) {
-        let ragdoll = game.ragdoll
-        let worldTick = gameSession.worldTick
-        worldTick.register(.ragdoll) { [weak self, weak ragdoll, weak gameSession] delta in
-            guard let ragdoll, let gameSession else { return }
-            let locomotion = gameSession.locomotion
-            self?.run(ragdoll.advance(
-                events: locomotion.graphEvents.drain(locomotion.ragdollEventConsumer),
-                controls: locomotion.ragdollGraphControls,
-                delta: delta
-            ))
-            self?.playerFall.advancePlayerDeath(delta: delta)
-            if let streamer = self?.game.streamer {
-                ragdoll.runtime?.solveLinks(to: &streamer.dynamicBodies, frameTime: delta)
-            }
-        }
-        gameSession.frameSteps.register(.ragdoll) { [weak self, weak ragdoll] _ in
-            self?.run(ragdoll?.publishPoses() ?? [])
         }
     }
 

@@ -107,7 +107,10 @@ final class GameSessionScope {
         GameSessionScopeFactories(scope: self)
     }
 
-    lazy var sessionWiring = WorldSessionWiring(game: self)
+    /// Actor clips for idles, gaits, and combat reactions, loaded off the main actor.
+    lazy var animationClips: ActorClipLoader? = audioFileSystem
+        .map { ActorClipLoader.clips(files: $0) }
+    lazy var animationEvents = AnimationEventWorldAdapter(game: ports)
 
     /// The audio engine, the world directors and the audio picker state.
     lazy var audio = AudioCoordinator(world: audioWorld)

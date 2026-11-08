@@ -68,19 +68,7 @@ final class BenchmarkRunHost {
         pending == nil ? nil : LoadPhaseRecorder()
     }
 
-    /// Wires a new game window; it starts the pending tour once its session starts.
-    func attach(game: GameViewController, window: NSWindow) {
-        game.onSessionStart = { [weak self, weak window] session in
-            // Muted before the first frame, so the world's first sounds stay silent too.
-            if self?.pending?.muted == true {
-                session.audio.outputMuted = true
-            }
-            guard let window else { return }
-            self?.attach(tour: session.benchmarkWorld, window: window)
-        }
-    }
-
-    private func attach(tour: BenchmarkWorldAdapter, window: NSWindow) {
+    func attach(tour: BenchmarkWorldAdapter, window: NSWindow) {
         self.tour = tour
         playToolbar.benchmark = tour
         tour.onRunningChange = { [weak window, playToolbar] running in

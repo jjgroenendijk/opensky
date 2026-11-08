@@ -39,16 +39,6 @@ public final class BeastFormWorldAdapter {
         return PlayerBeastForm.resolve(beastFormFlag: flag, raceEditorID: playerRace?.editorID)
     }
 
-    /// After the mount gate, so a rider hears the door refusal first.
-    public func wire() {
-        guard let streamer = game.streamer else { return }
-        streamer.activationGate.register(.beastForm) { [weak self] target in
-            guard let self else { return nil }
-            let canTake = playerRace?.flags.contains(.canPickUpItems) ?? true
-            return form.refusal(for: target.interaction.action, raceCanPickUpItems: canTake)
-        }
-    }
-
     /// The debug switch: the form's race and `SetBeastForm`, without the change scripts.
     /// `.none` restores the race the player had before. False when the race is not loaded.
     public func force(_ wanted: PlayerBeastForm) -> Bool {
@@ -74,7 +64,7 @@ public final class BeastFormWorldAdapter {
         game.worldData?.actorValueBaselines?.resolver?.races ?? [:]
     }
 
-    private var playerRace: Race? {
+    var playerRace: Race? {
         game.worldState.component(PlayerIdentityState.self, for: .player)
             .flatMap { races[$0.race.rawValue] }
     }

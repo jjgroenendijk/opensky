@@ -96,7 +96,7 @@ and the package tests can use it. `GameViewController` keeps only the view, the 
 render loop. It holds the coordinators and forwards to them. A
 coordinator takes its port in its initializer and returns the changes it wants outside its
 domain as commands, which the app runs. The lint rule `late_attached_world` fails a
-late-attach method, such as `attach(world:)` or `wire(host:)`, in a package module. The lint
+late-attach method, such as `attach(world:)` or `wire(host:)`, in a package module or the app. The lint
 rule `controller_outside_composition_root` fails code that names `GameViewController` outside
 the app shell and the `GameViewController` files; a comment may still name it.
 
@@ -159,8 +159,8 @@ Every rule on this page and in [Coordinators](/engine/coordinators.md) has a che
 | A feature uses another feature only through its `Interface` module | `make module-graph`, rules 1 to 9 |
 | Only the composition root names `GameViewController` | SwiftLint `controller_outside_composition_root` |
 | No `GameViewController` extension outside its own files | SwiftLint `game_view_controller_extension` |
-| No late-attach method in a package module | SwiftLint `late_attached_world` |
-| No `wire...` or `install...` method in a package module, except a static one | SwiftLint `late_setter_method` |
+| No late-attach method in a package module or the app | SwiftLint `late_attached_world` |
+| No `wire...` or `install...` method in a package module or the app, except a static or private one | SwiftLint `late_setter_method` |
 | No coordinator property that holds a dependency and other modules can set | SwiftLint `late_setter_property` |
 | Only the session scope builds a game coordinator | SwiftLint `coordinator_outside_session_scope` |
 | An action returns a typed outcome, not `String` | SwiftLint `action_returns_text` |

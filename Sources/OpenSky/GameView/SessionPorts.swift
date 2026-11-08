@@ -470,7 +470,7 @@ extension SessionPorts {
     }
 
     var animationClips: ActorClipLoader? {
-        scope.sessionWiring.animationClips
+        scope.animationClips
     }
 
     func showControlRefusal(_ refusal: PlayerControlRefusal) {
@@ -547,7 +547,7 @@ extension SessionPorts {
 }
 
 extension SessionPorts {
-    func installAudio(
+    func takeStartedAudio(
         engine: WorldAudioEngine, sounds: WorldAudioSoundDirector,
         music: WorldMusicDirector, footsteps: WorldAudioFootstepDirector
     ) {

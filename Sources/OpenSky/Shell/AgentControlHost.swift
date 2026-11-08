@@ -25,10 +25,19 @@ final class AgentControlHost {
         }
     )
     private let environment: [String: String]
-    private weak var game: GameViewController?
+    /// The game window's view controller, read on each request so a new window counts.
+    private let currentGame: () -> GameViewController?
+    private var game: GameViewController? {
+        currentGame()
+    }
+
     private var timer: Timer?
 
-    init(environment: [String: String] = ProcessInfo.processInfo.environment) {
+    init(
+        currentGame: @escaping () -> GameViewController?,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) {
+        self.currentGame = currentGame
         self.environment = environment
         coordinator.appVersion = Bundle.main
             .object(forInfoDictionaryKey: "CFBundleShortVersionString")
@@ -44,11 +53,6 @@ final class AgentControlHost {
         coordinator.setEnabled(LaunchPreferences.opensAgentControl(
             setting: store.bool(.agentControl), environment: environment
         ))
-    }
-
-    func attach(game: GameViewController, root: GameDataRoot?) {
-        game.dataRoot = root
-        self.game = game
     }
 
     /// Removes the socket file on a normal quit.

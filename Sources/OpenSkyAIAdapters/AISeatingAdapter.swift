@@ -15,7 +15,7 @@ import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -43,23 +43,6 @@ public struct AISeatingAdapter {
 }
 
 extension AISeatingAdapter {
-    /// After the vehicles, so the switch is set before a package sits.
-    public func wireFurniture(gameSession: GameSession) {
-        gameSession.playerFurniture = owner
-        let furniture = game.furniture
-        let store = game.playerSettingsStore
-        furniture.isEnabled = store.bool(.furniture)
-        // The launcher page writes the switch while a session runs.
-        store.observe { [weak furniture, weak store] id in
-            guard id == .furniture, let store else { return }
-            furniture?.isEnabled = store.bool(.furniture)
-        }
-        gameSession.worldTick.register(.furniture) { [weak owner] _ in
-            owner?.seating.releaseMovedPlayer()
-            owner?.seating.game.furniture.advance()
-        }
-    }
-
     public func packageSeat(
         in furniture: ReferenceKey, actor: ReferenceKey, animation: UInt16
     ) -> PackageSeat? {
@@ -96,7 +79,7 @@ extension AISeatingAdapter {
     public static let seatLeaveDistance: Float = 256
 
     /// A teleport or a cell change that took the seated or rising player away ends the seat.
-    private func releaseMovedPlayer() {
+    func releaseMovedPlayer() {
         let seated = game.furniture.occupancies[.player]
         guard
             let occupancy = seated ?? game.furniture.exits[.player],

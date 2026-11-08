@@ -203,7 +203,7 @@ and the ragdoll's push land in the same frame as the damage. Every cast reaches 
 
 SwiftLint runs these rules in `make check` and CI (`tools/lint/.swiftlint.yml`):
 
-- `late_setter_method` fails a method in a package module whose name starts with `wire` or
+- `late_setter_method` fails a method in a package module or the app whose name starts with `wire` or
   `install`. A `static` method is allowed, because it fills a registry value, such as the
   Papyrus native installers. A `private` helper is allowed, because only its own type calls
   it. The older rule `late_attached_world` keeps failing `attach(world:)` and the like.

@@ -24,7 +24,7 @@ import OpenSkyQuests
 import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -54,42 +54,20 @@ public final class ActorWorldAdapter {
     /// What the enemy health bar last showed; nil when it is hidden.
     private var publishedEnemy: HUDEnemyHealth?
     /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
-    private var baseNames: [LeveledActorRollKey: String?] = [:]
+    var baseNames: [LeveledActorRollKey: String?] = [:]
     /// Each reference's name, kept until a leveled roll is written or the strings load.
-    private var referenceNames: (key: ReferenceNamesKey, names: [ReferenceKey: String?])?
+    var referenceNames: (key: ReferenceNamesKey, names: [ReferenceKey: String?])?
     /// `combatActors()` and what it was built from. A death, a move, or a residency
     /// change advances one of the revisions, so the next read builds it again.
-    private var actorList: (key: ActorListKey, actors: [CombatActorObservation])?
+    var actorList: (key: ActorListKey, actors: [CombatActorObservation])?
 
     public init(game: any ActorWorldHost) {
         self.game = game
     }
 
-    public func wireActorValues(provider: WorldDataStores, gameSession: GameSession) {
-        baseNames = [:]
-        referenceNames = nil
-        actorList = nil
-        let coordinator = game.actorValues
-        guard coordinator.runtime != nil else { return }
-        let settings = provider.gameSettings
-        // Chained after the Papyrus VM, so neither unhooks the other. The
-        // renderer gates the delta, so a menu-paused frame regenerates nothing.
-        gameSession.worldTick.register(.actorValues) { [weak coordinator] delta in
-            coordinator?.advance(delta: delta)
-        }
-        gameSession.frameSteps.register(.actorValues) { [weak self, weak gameSession] _ in
-            self?.publishHUDMeters(gameSession: gameSession)
-        }
-        gameSession.breath = PlayerBreath(settings: BreathSettings.resolve(store: settings))
-        gameSession.worldTick.register(.breath) { [weak self, weak gameSession] delta in
-            guard let gameSession else { return }
-            self?.advanceBreath(delta: delta, gameSession: gameSession)
-        }
-    }
-
     /// Drowning costs health once the breath runs out; the `Water Breathing` actor value
     /// above 0 keeps the breath full.
-    private func advanceBreath(delta: Float, gameSession: GameSession) {
+    func advanceBreath(delta: Float, gameSession: GameSession) {
         guard delta > 0 else { return }
         let runtime = game.actorValues.runtime
         let status = gameSession.locomotion.status
@@ -206,7 +184,7 @@ public final class ActorWorldAdapter {
         return name
     }
 
-    private func publishHUDMeters(gameSession: GameSession?) {
+    func publishHUDMeters(gameSession: GameSession?) {
         guard let gameSession, game.hud.isLoaded, let runtime = game.actorValues.runtime else {
             return
         }
@@ -340,13 +318,13 @@ extension ActorWorldAdapter: ActorValueWorld {
 }
 
 /// The inputs of `ActorWorldAdapter`'s per-reference names.
-private struct ReferenceNamesKey: Hashable {
+struct ReferenceNamesKey: Hashable {
     let rolls: UInt64
     let namesResolve: Bool
 }
 
 /// The inputs of one `ActorWorldAdapter.combatActors()` list.
-private struct ActorListKey: Hashable {
+struct ActorListKey: Hashable {
     let streamer: ObjectIdentifier
     let poses: UInt64
     let deltas: UInt64
