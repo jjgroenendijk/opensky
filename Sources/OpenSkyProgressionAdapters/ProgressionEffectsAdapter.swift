@@ -3,6 +3,7 @@ import OpenSkyActors
 public import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventory
@@ -64,9 +65,9 @@ extension ProgressionEffectsAdapter {
             let key = quests.quests.key(for: quest)
         else { return }
         if let bridge = game.scripts.bridge {
-            _ = try? bridge.setQuestStage(stage, for: key)
+            _ = attempt { try bridge.setQuestStage(stage, for: key) }
         } else {
-            _ = try? quests.setStage(stage, on: quest)
+            _ = attempt { try quests.setStage(stage, on: quest) }
         }
     }
 

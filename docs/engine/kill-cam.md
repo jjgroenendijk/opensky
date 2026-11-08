@@ -73,3 +73,6 @@ choice; no source gives the game's.
 
 The shake adds to whatever pose is active: the player camera, the dialogue camera, or a
 kill cam. `Game.ForceFirstPerson` and `Game.ForceThirdPerson` set the camera mode directly.
+
+OpenSky's choice: the shot looks at a point 96 units above the actor's feet, times its scale,
+and one frame steps the shot by at most 0.1 s, so a stall does not skip a stage.

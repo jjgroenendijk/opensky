@@ -108,6 +108,11 @@ public final class VehicleWorldAdapter {
     }
 }
 
+extension VehicleWorldAdapter {
+    /// A head bone pointing straight up or down gives no seat yaw.
+    static let uprightForward: Float = 0.001
+}
+
 extension VehicleWorldAdapter: VehicleWorld {
     public func vehiclePose(of key: ReferenceKey) -> ReferenceTransformOverride? {
         if key == .player {
@@ -165,7 +170,7 @@ extension VehicleWorldAdapter: VehicleWorld {
         else { return }
         facedIdleStart = start
         let world = root * SIMD4(forward, 0)
-        guard abs(world.x) + abs(world.y) > 0.001 else { return }
+        guard abs(world.x) + abs(world.y) > Self.uprightForward else { return }
         seatYaw = atan2(world.y, world.x)
         turnSeatView()
     }

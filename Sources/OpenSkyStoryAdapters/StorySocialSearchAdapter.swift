@@ -105,7 +105,7 @@ extension StorySocialSearchAdapter {
     /// Eye to the body's chest, about half a standing actor's eye height.
     public func socialCanSee(_ observer: SocialActor, _ body: SocialActor) -> Bool {
         let eye = observer.feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight)
-        let chest = body.feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight / 2)
+        let chest = body.feet + SIMD3(0, 0, PlayerCapsule.standard.torsoHeight)
         return game.aiWorld.perceptionHasLineOfSight(from: eye, to: chest)
     }
 

@@ -312,14 +312,11 @@ extension AgentTeleportJob {
     private func useLoadedReference() {
         guard let text = lookedUpReference else { return }
         lookedUpReference = nil
-        do throws(AgentFailure) {
-            let reference = try adapter.resolveReference(text)
-            if let spot = Self.standingSpot(of: reference.key, game: game) {
-                exactFeet = spot
-            }
-        } catch {
-            return
-        }
+        guard
+            let reference = attempt({ try adapter.resolveReference(text) }),
+            let spot = Self.standingSpot(of: reference.key, game: game)
+        else { return }
+        exactFeet = spot
     }
 
     // MARK: - References outside the loaded cells
@@ -379,10 +376,7 @@ extension AgentTeleportJob {
     }
 
     private static func center(of grid: CellCoordinate) -> SIMD2<Float> {
-        SIMD2(
-            (Float(grid.x) + 0.5) * CellCoordinate.cellSize,
-            (Float(grid.y) + 0.5) * CellCoordinate.cellSize
-        )
+        grid.centre
     }
 
     /// Next to a loaded actor, where it stands now, or on a loaded reference.

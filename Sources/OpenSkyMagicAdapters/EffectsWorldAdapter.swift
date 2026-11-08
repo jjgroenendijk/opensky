@@ -194,7 +194,10 @@ public final class EffectsWorldAdapter {
     ) -> MeshLibrary? {
         guard
             let fileSystem = provider.scriptFileSystem,
-            let textures = try? TextureLibrary(fileSystem: fileSystem, device: renderer.device)
+            let textures = attempt({ try TextureLibrary(
+                fileSystem: fileSystem,
+                device: renderer.device
+            ) })
         else { return nil }
         return MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: textures)
     }
@@ -260,10 +263,12 @@ public final class EffectsWorldAdapter {
         }
     }
 
-    /// A generated key no world-state spawn uses: the top bit marks effect spawns.
+    /// The top bit marks effect spawns, so no world-state spawn uses the key.
+    private static let effectSpawnBit: UInt64 = 0x8000_0000_0000_0000
+
     public func nextHazardKey() -> ReferenceKey {
         spawnedHazards += 1
-        return .generated(0x8000_0000_0000_0000 | spawnedHazards)
+        return .generated(Self.effectSpawnBit | spawnedHazards)
     }
 
     private static let logger = EngineLogger(

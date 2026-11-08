@@ -48,7 +48,7 @@ extension MapQuestsAdapter {
     public var questTargets: [QuestTargetMarker] {
         guard let runtime = game.journal.runtime else { return [] }
         let requests = runtime.trackedQuests().flatMap { quest in
-            guard let state = try? runtime.state(of: quest.formID) else {
+            guard let state = attempt({ try runtime.state(of: quest.formID) }) else {
                 return [QuestTargetRequest]()
             }
             return QuestTargetResolver.requests(

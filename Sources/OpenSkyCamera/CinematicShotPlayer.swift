@@ -17,7 +17,10 @@ nonisolated public struct CinematicAnchor: Equatable, Sendable {
     /// Height of the point the camera looks at, such as the chest.
     public var focusHeight: Float
 
-    public init(position: SIMD3<Float>, yaw: Float, focusHeight: Float = 96) {
+    /// The chest of an actor of scale 1, in units above its feet.
+    public static let chestHeight: Float = 96
+
+    public init(position: SIMD3<Float>, yaw: Float, focusHeight: Float = chestHeight) {
         self.position = position
         self.yaw = yaw
         self.focusHeight = focusHeight

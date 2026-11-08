@@ -65,7 +65,8 @@ extension AIDetectionSenseAdapter {
         DetectionTargetTraits(
             equippedWeight: game.inventory.playerWornArmourWeight,
             lightLevel: playerPerk(
-                lightLevel(at: feet + SIMD3(0, 0, eyeHeight * 0.5)), at: .modDetectionLight
+                lightLevel(at: feet + SIMD3(0, 0, PlayerCapsule.torsoHeight(eyeHeight: eyeHeight))),
+                at: .modDetectionLight
             ),
             muffle: actorValue(Self.movementNoiseMultIndex, of: .player) ?? 0,
             actionSound: playerActionSound(),

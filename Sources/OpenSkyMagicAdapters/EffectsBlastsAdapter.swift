@@ -82,12 +82,16 @@ extension EffectsBlastsAdapter {
 
     /// Above every visual effect instance id, so a projectile keeps its own particles.
     public static let projectileInstanceBase = 1 << 30
+    /// The smallest light falloff exponent; at 0 the light would not fade at all.
+    private static let flattestFalloff: Float = 0.01
+    /// A projectile slower than this, squared, has no direction of its own.
+    private static let stillSpeedSquared: Float = 1e-6
 
     /// Each live projectile's model along its velocity.
     public func projectileModels() -> [VisualEffectModel] {
         (game.combat.archery?.projectiles.live ?? []).compactMap { projectile in
             guard let model = projectile.profile.visuals.model else { return nil }
-            let along = simd_length_squared(projectile.state.velocity) > 1e-6
+            let along = simd_length_squared(projectile.state.velocity) > Self.stillSpeedSquared
                 ? projectile.state.velocity : projectile.launchDirection
             return VisualEffectModel(
                 path: model,
@@ -125,7 +129,7 @@ extension EffectsBlastsAdapter {
         return RenderPointLight(
             position: position, radius: Float(record.radius),
             color: record.color * max(0, record.fade) * max(0, strength),
-            falloffExponent: max(0.01, record.falloffExponent)
+            falloffExponent: max(Self.flattestFalloff, record.falloffExponent)
         )
     }
 

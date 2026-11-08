@@ -117,7 +117,7 @@ extension MenuWorldTeleportsAdapter {
 
     public func coverUntilFirstMove() {
         owner.newGameCoverSince = game.simulationClock.now
-        try? game.renderer?.setLoadingCover([])
+        attempt { try game.renderer?.setLoadingCover([]) }
         game.hud.setCovered(true)
         installStartTicker()
     }
@@ -125,7 +125,7 @@ extension MenuWorldTeleportsAdapter {
     private func liftNewGameCover() {
         guard owner.newGameCoverSince != nil else { return }
         owner.newGameCoverSince = nil
-        try? game.renderer?.setLoadingCover(nil)
+        attempt { try game.renderer?.setLoadingCover(nil) }
         game.hud.setCovered(false)
     }
 

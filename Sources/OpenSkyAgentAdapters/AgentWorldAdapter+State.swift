@@ -95,19 +95,17 @@ extension AgentWorldAdapter {
     public func resolveReference(_ text: String) throws(AgentFailure) -> AgentReference {
         switch text.lowercased() {
         case "player":
-            return AgentReference(key: .player, formID: FormID(0x14))
+            return AgentReference(key: .player, formID: .playerReference)
         case "target":
             guard let target = game.streamer?.interactionTarget else {
                 throw AgentFailure(.notFound, "nothing is under the crosshair")
             }
             return try resolveFormID(target.interaction.reference)
         default:
-            let digits = text.hasPrefix("0x") || text
-                .hasPrefix("0X") ? String(text.dropFirst(2)) : text
-            guard let raw = UInt32(digits, radix: 16) else {
+            guard let formID = FormID(hexText: text) else {
                 throw AgentFailure(.invalidArgument, "ref must be player, target, or a hex FormID")
             }
-            return try resolveFormID(FormID(raw))
+            return try resolveFormID(formID)
         }
     }
 

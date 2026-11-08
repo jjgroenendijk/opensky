@@ -158,7 +158,7 @@ extension AgentActorReadoutAdapter {
             let base, let templates = game.actorValues.runtime?.baselines.resolver?.templates
         else { return .null }
         let roll = game.worldState.leveledRoll(of: key, base: base, with: templates.leveling)
-        guard let chain = try? templates.rolling(roll).resolve(base: base).chain else {
+        guard let chain = attempt({ try templates.rolling(roll).resolve(base: base).chain }) else {
             return .null
         }
         let hops: [AgentJSON] = chain.compactMap { link in

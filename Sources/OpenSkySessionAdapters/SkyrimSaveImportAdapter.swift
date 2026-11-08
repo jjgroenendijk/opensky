@@ -5,6 +5,7 @@
 
 public import Foundation
 public import OpenSkyAgentControl
+import OpenSkyFormatsCore
 import OpenSkyFormatsESS
 import OpenSkyGameData
 import OpenSkyInventory
@@ -39,7 +40,9 @@ public enum SkyrimSaveImportAdapter {
     /// The folder setting's saves, or none when it is unset or unreadable.
     public static func rows() async -> [SaveSlotRow] {
         guard let folder = ESSSaveFolderSetting.folder() else { return [] }
-        let listings = await (try? ESSSaveFolder(directory: folder).readListings()) ?? []
+        let listings = await attempt { try await ESSSaveFolder(directory: folder).readListings()
+        } ??
+            []
         return listings.map(row)
     }
 

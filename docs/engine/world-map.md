@@ -128,6 +128,8 @@ are in
 `.logs/fast-travel-time/routes.tsv`. For example, Riverwood to Winterhold is 171746 units:
 the table says 12 hours, and OpenSky gives 11.9.
 
+OpenSky's choice: with no movement type for the walk, fast travel takes 80 units per second.
+
 ## Map movie
 
 `Interface\map.swf` draws the markers, the date, and the button bar over the 3D map view.

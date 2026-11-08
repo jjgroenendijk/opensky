@@ -121,30 +121,27 @@ extension MagicSpellDeliveryAdapter {
             let key = game.combat.loop?.combatTarget(of: caster), key != .player,
             let target = game.combat.combatActor(key: key)
         {
-            return target.feet + SIMD3(0, 0, target.capsule.height / 2)
+            return target.feet + SIMD3(0, 0, target.capsule.centreHeight)
         }
         let player = game.combat.meleeAttacker
-        return player.feet + SIMD3(0, 0, player.capsule.height / 2)
+        return player.feet + SIMD3(0, 0, player.capsule.centreHeight)
     }
 
-    /// Half of the ward's front arc. UESP "Skyrim:Ward": "the angle of protection is
-    /// pretty generous (around 90 degrees)".
-    public static let wardHalfArc: Float = .pi / 4
     /// How far the wall ray starts from the impact, so the surface a projectile hit
     /// does not count as the wall.
     public static let sightStartOffset: Float = 2
 
     public func actor(_ target: ReferenceKey, faces source: ReferenceKey) -> Bool {
         guard let holder = standing(target), let caster = standing(source) else { return true }
-        let toward = SIMD2(caster.feet.x - holder.feet.x, caster.feet.y - holder.feet.y)
-        guard simd_length(toward) > .ulpOfOne else { return true }
-        let forward = SIMD2(cosf(holder.facing), sinf(holder.facing))
-        return simd_dot(simd_normalize(toward), forward) >= cosf(Self.wardHalfArc)
+        return WardArc.covers(
+            holder: SIMD2(holder.feet.x, holder.feet.y), facing: holder.facing,
+            source: SIMD2(caster.feet.x, caster.feet.y)
+        )
     }
 
     public func point(_ point: SIMD3<Float>, canSee target: ReferenceKey) -> Bool {
         guard let actor = standing(target) else { return true }
-        let centre = actor.feet + SIMD3(0, 0, actor.height / 2)
+        let centre = actor.feet + SIMD3(0, 0, PlayerCapsule.centreHeight(height: actor.height))
         let path = centre - point
         let distance = simd_length(path)
         guard distance > Self.sightStartOffset else { return true }

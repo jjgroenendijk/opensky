@@ -12,6 +12,7 @@ import OpenSkyCrime
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFactions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventory
@@ -130,7 +131,7 @@ extension CombatMotionAdapter {
             let engine = game.gameSession?.worldAudio, engine.isRunning,
             let assets = game.audio.assets,
             let sounds = game.worldData?.soundStore,
-            let sound = try? sounds.resolveAny(impact.sound),
+            let sound = attempt({ try sounds.resolveAny(impact.sound) }),
             let path = sound.filePaths.first
         else { return }
         let request = AudioPlayRequest(
@@ -138,7 +139,7 @@ extension CombatMotionAdapter {
             gain: gain, soundCategory: sound.descriptor.category
         )
         assets.request(path) { result in
-            _ = try? engine.playPositional(asset: result.get(), request: request)
+            _ = attempt { try engine.playPositional(asset: result.get(), request: request) }
         }
     }
 

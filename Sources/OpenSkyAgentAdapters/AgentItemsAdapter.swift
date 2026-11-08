@@ -113,15 +113,17 @@ extension AgentItemsAdapter {
             "count": .init(Int(runtime.inventory.count(of: definition.formID, in: runtime.player)))
         ]
         if equip {
-            let outcome = game.inventoryWorld.run(
-                game.inventory.equipItem(definition.formID, on: .player)
-            )
-            guard case .equipped = outcome else {
-                throw AgentFailure(.invalidArgument, "equip refused: \(outcome.text)")
-            }
+            try equipOnPlayer(definition.formID)
             result["equipped"] = true
         }
         return .object(result)
+    }
+
+    private func equipOnPlayer(_ item: FormID) throws(AgentFailure) {
+        let outcome = game.inventoryWorld.run(game.inventory.equipItem(item, on: .player))
+        guard case .equipped = outcome else {
+            throw AgentFailure(.invalidArgument, "equip refused: \(outcome.text)")
+        }
     }
 
     public func kill(_ text: String) throws(AgentFailure) -> AgentJSON {

@@ -17,9 +17,10 @@ The adapter needs parts of the session. It does not get the whole session. It ge
 protocol that lists only the parts it reads. `SessionPorts` in the app answers every host, and
 the session scope builds each adapter with it (`/decisions/session-scope.md`).
 
-`tools/lint/app-architecture.sh` checks the rules below. `make lint`, `make check`, and CI run
-it. It reads every tracked Swift file, so `ALL=1` changes nothing for it. It first runs each
-rule on a small synthetic violation, which must fail.
+`tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks
+rule 5 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI
+run both. Each reads every adapter or app file, so `ALL=1` changes nothing for them. Each first
+runs its rules on a small synthetic violation, which must fail.
 
 ## The rules
 
@@ -29,6 +30,7 @@ rule on a small synthetic violation, which must fail.
 | 2 | A host member is a port or a value type | A port can be faked in a test; a concrete class, a view, or another adapter cannot |
 | 3 | A host has at most 12 members, its inherited hosts included | A wide host hides what the adapter depends on |
 | 4 | An app or adapter type has at most 4 extension files and 600 lines | Matches the file length warning, so one type stays readable in one sitting |
+| 5 | An adapter has no magic number and no function over complexity 6 | A game rule in an adapter has no unit test; in its feature module it has one |
 
 A port is a protocol from an interface module or a foundation module, or a class from a data
 layer, such as `WorldDataStores`. A value type is a struct, an enum, a type alias, or a type of
@@ -37,6 +39,12 @@ the standard library, Foundation, or `simd`.
 Rule 3 counts members of inherited hosts, because the adapter can reach them all. Example:
 `MenuRouterHost` refines `MenuSoundHost`, so its 5 members and the 3 of `MenuSoundHost` count
 as 8.
+
+Rule 5 counts a `switch` as one branch, because a switch that maps one enum to another is
+not a game rule. A number moves with its rule into the feature module, with a unit test, such
+as `WardArc.halfArc` in `OpenSkyMagic`. A technical number, such as a distance below which two
+points are the same, gets a named constant in the adapter. A value without a source also gets a
+row in `/engine/unverified-values.md`.
 
 ## Splitting a large adapter
 

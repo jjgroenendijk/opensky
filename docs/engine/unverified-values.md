@@ -49,6 +49,8 @@ the detail and the sources it did find.
 | Body parts on the head side of a cut | 30, 31, 41 to 44, 50, 55, 130 to 132, 141 to 143, 150 | [ragdoll](/engine/ragdoll.md#decapitation) |
 | Cut head sphere | 10 units radius, 5 kg | [ragdoll](/engine/ragdoll.md#decapitation) |
 | Cut head launch | 120 units/s away, 160 units/s up, 6 rad/s turn | [ragdoll](/engine/ragdoll.md#decapitation) |
+| Kill cam focus | 96 units above the feet, times the actor's scale; a frame steps the shot by at most 0.1 s | [kill cam](/engine/kill-cam.md) |
+| Splash ripple strength | 1 for a heavy splash, 0.6 for the others | [sky and water](/engine/sky-water.md) |
 
 ## Magic
 
@@ -95,6 +97,12 @@ the detail and the sources it did find.
 | Weapon change while drawn | Sheathe the old hand, then draw the new one | [combat graph names](/engine/combat-graph-names.md) |
 | Vehicle trailer and gait clips | An approximation of the game | [vehicles](/engine/vehicles.md) |
 | Dragon animation | A guess; its graph does not run | [actor animation](/engine/actor-animation.md) |
+| Dragon rider target lock | 0.25 rad off the view centre, up to 8000 units; Switch Target looks 60 degrees | [riding](/engine/riding.md) |
+| Dismount without race data | 50 units left of the saddle, 65 up | [riding](/engine/riding.md#mounting-and-dismounting) |
+| Driven actor stands still | Below 0.5 units per second | [riding](/engine/riding.md) |
+| Follower without a Morality value | Morality 3: commits no crime | [package schedules](/engine/package-schedules.md) |
+| Package line and look times | 3 s for a line with no voice length, 3 s of head turn for DialogueActivate | [package schedules](/engine/package-schedules.md) |
+| Aim and light points on a body | A spell aims at the capsule's middle; detection reads light at half the eye height | [detection](/engine/detection.md) |
 
 ## Animation graphs
 
@@ -164,6 +172,7 @@ the detail and the sources it did find.
 | Custom marker aim and questions | 5% of the map camera height; the question order | [world map](/engine/world-map.md#custom-marker) |
 | Speaker matrix on two speakers | Centre and surrounds add at -3 dB, LFE dropped, the mono row only | [sound output](/formats/sound-output-reverb.md#output-model-mapping) |
 | Special music triggers | Level up with the notice, cleared with the notice, death when the player dies | [music](/engine/music.md#special-music) |
+| Fast travel walk speed fallback | 80 units per second when no movement type gives one | [world map](/engine/world-map.md) |
 
 ## Rendering
 

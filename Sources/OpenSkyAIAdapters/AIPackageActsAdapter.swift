@@ -9,6 +9,7 @@ import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
@@ -247,7 +248,8 @@ extension AIPackageActsAdapter {
             return items?.ingestibles[base]?.flags.contains(.food) == true
         case .furniture, .bed, .chair:
             let seats = game.streamer?.residentInteraction(reference: entry.formID)?.seats ?? []
-            let wanted: UInt16? = type == .bed ? 2 : type == .chair ? 1 : nil
+            let wanted: UInt16? = type == .bed ? NIFFurnitureMarker.sleepAnimation
+                : type == .chair ? NIFFurnitureMarker.sitAnimation : nil
             return seats.contains { wanted == nil || $0.animationType == wanted }
         }
     }
@@ -279,10 +281,11 @@ extension AIPackageActsAdapter {
         guard
             let topic, let runtime = game.dialogue.runtime,
             let offer = runtime.topics(linked: [topic], speaker: speaker).offers.first,
-            (try? runtime.choose(offer.info, speaker: speaker)) != nil,
+            attempt({ try runtime.choose(offer.info, speaker: speaker) }) != nil,
             let info = runtime.dialogue.info(offer.info)
         else { return .failed }
-        let seconds = game.storyWorld.lineDuration(of: info, speaker: speaker) ?? 3
+        let seconds = game.storyWorld.lineDuration(of: info, speaker: speaker)
+            ?? PackageActionResult.unvoicedLineSeconds
         game.storyWorld.speak(
             info: offer.info, speaker: speaker, lookAt: target, seconds: seconds
         )
@@ -302,8 +305,9 @@ extension AIPackageActsAdapter {
     /// DialogueActivate: OpenSky has no conversations between two NPCs, so the actor
     /// turns its head to the target.
     public func look(at target: ReferenceKey, from actor: ReferenceKey) -> PackageActionResult {
-        game.headTracking.setLookTarget(target, for: actor, seconds: 3)
-        return .lasts(seconds: 3)
+        let seconds = PackageActionResult.lookSeconds
+        game.headTracking.setLookTarget(target, for: actor, seconds: seconds)
+        return .lasts(seconds: seconds)
     }
 
     /// The graph events that draw and sheathe the weapon.

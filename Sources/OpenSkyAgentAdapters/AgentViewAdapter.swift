@@ -37,11 +37,12 @@ extension AgentViewAdapter {
         let cell = target.interiorCell.map { CellSceneLocation.interior(FormID(stored: $0)) }
             ?? .exterior(CellCoordinate(containing: target.feet))
         let place = SavePlayerPlace(
-            cell: cell, feet: target.feet, yaw: target.yawDegrees * .pi / 180,
+            cell: cell, feet: target.feet, yaw: MatrixMath.radians(fromDegrees: target.yawDegrees),
             worldspace: target.interiorCell == nil ? target.worldspace : nil
         )
         let job = try AgentTeleportJob(
-            adapter: owner, place: place, pitch: target.pitchDegrees * .pi / 180
+            adapter: owner, place: place,
+            pitch: MatrixMath.radians(fromDegrees: target.pitchDegrees)
         )
         if let hour = target.hour {
             game.runtimeState.setGameClockHour(hour)
@@ -70,9 +71,9 @@ extension AgentViewAdapter {
             place = .exterior(worldspace: streamer.worldspaceEditorID, grid: SIMD2(grid.x, grid.y))
         }
         return ReferenceView(
-            feet: feet, yawDegrees: remainder(camera.yaw * 180 / .pi, 360),
-            pitchDegrees: camera.pitch * 180 / .pi,
-            fovYDegrees: gameSession.viewFOVYRadians * 180 / .pi,
+            feet: feet, yawDegrees: MatrixMath.signedDegrees(fromRadians: camera.yaw),
+            pitchDegrees: MatrixMath.degrees(fromRadians: camera.pitch),
+            fovYDegrees: MatrixMath.degrees(fromRadians: gameSession.viewFOVYRadians),
             gameHour: game.runtimeState.runtimeStateClock.hourOfDay, place: place,
             weatherFormID: gameSession.weather?.currentWeatherID?.rawValue,
             firstPerson: gameSession.movementMode == .walk
@@ -82,8 +83,8 @@ extension AgentViewAdapter {
     public func viewState() throws(AgentFailure) -> AgentJSON {
         let view = try referenceView()
         guard
-            let data = try? JSONEncoder().encode(view),
-            let json = try? JSONDecoder().decode(AgentJSON.self, from: data)
+            let data = attempt({ try JSONEncoder().encode(view) }),
+            let json = attempt({ try JSONDecoder().decode(AgentJSON.self, from: data) })
         else { throw AgentFailure(.failed, "cannot encode the view") }
         return json
     }

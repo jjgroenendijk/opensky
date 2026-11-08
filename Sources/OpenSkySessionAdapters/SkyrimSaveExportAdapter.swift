@@ -3,6 +3,7 @@
 // `ESSExporter`. See docs/engine/ess-export.md.
 
 public import Foundation
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMenus
@@ -48,7 +49,7 @@ public enum SkyrimSaveExportAdapter {
             index: index, baselines: game.inventory.runtime?.inventory.baselines
         )
         let header = ESSExportHeader(
-            saveNumber: UInt32((try? folder.saveURLs().count) ?? 0) + 1,
+            saveNumber: UInt32(attempt { try folder.saveURLs().count } ?? 0) + 1,
             gameDate: gameDate(contents.clock ?? GameClock(), game: game),
             experienceForNextLevel: game.progression.leveling?.experienceForNextLevel ?? 0,
             savedAt: Date()

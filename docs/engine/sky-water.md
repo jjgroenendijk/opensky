@@ -66,3 +66,5 @@ alpha-tested objects, grass, water, then particles, rain and snow, and overlays.
 Water has its own pipeline: straight alpha blending, depth test "less", no depth writes, no
 culling. The shader mixes the shallow and deep water colors by distance, adds the reflection
 color by a Fresnel term from the view angle, and moves cheap crossed sine ripples over time.
+
+OpenSky's choice: a heavy splash makes a ripple of strength 1, and any other splash 0.6.

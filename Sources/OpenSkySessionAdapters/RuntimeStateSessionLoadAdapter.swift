@@ -11,6 +11,7 @@ import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDialogue
 import OpenSkyFactions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -68,7 +69,7 @@ extension RuntimeStateSessionLoadAdapter {
     /// A changed load order throws `SaveFailure.contentMissing`, or `.noMasterFiles` when
     /// no plugin of the save is loaded; `checksLoadOrder: false` loads it anyway.
     public func loadSession(slot: String, checksLoadOrder: Bool) async throws {
-        let current = checksLoadOrder ? try? await owner.pluginFingerprint() : nil
+        let current = checksLoadOrder ? await attempt { try await owner.pluginFingerprint() } : nil
         let file: OpenSkySaveFile
         do {
             file = try await owner.store().read(slot: slot, verifyingAgainst: current)

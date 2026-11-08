@@ -110,7 +110,7 @@ extension IdlePlacementAdapter {
         guard actor != .player else {
             return PairedActorPose(
                 feet: gameSession.walkController.feetPosition,
-                heading: Float.pi / 2 - gameSession.freeFlyCamera.yaw
+                heading: NPCYawMath.heading(fromYaw: gameSession.freeFlyCamera.yaw)
             )
         }
         return game.actorWorld.combatActor(key: actor)
@@ -121,7 +121,7 @@ extension IdlePlacementAdapter {
         guard let gameSession = game.gameSession else { return }
         if actor == .player {
             gameSession.placePlayerFeet(at: pose.feet)
-            gameSession.freeFlyCamera.yaw = Float.pi / 2 - pose.heading
+            gameSession.freeFlyCamera.yaw = NPCYawMath.yaw(fromHeading: pose.heading)
         } else {
             game.streamer?.restActor(actor, at: ReferenceTransformOverride(
                 position: pose.feet, rotation: SIMD3(0, 0, pose.heading)

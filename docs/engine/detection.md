@@ -260,3 +260,6 @@ searches.
 
 `openskycli gmst detection` prints every setting with its source, and
 `openskycli gmst list <s>` prints any group of game settings ([CLI](/tools/cli.md)).
+
+OpenSky's choice: detection reads the light level at half the player's eye height, and a spell
+aims at the middle of its target's capsule.

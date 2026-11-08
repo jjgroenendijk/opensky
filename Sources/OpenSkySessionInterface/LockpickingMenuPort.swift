@@ -8,10 +8,3 @@ public protocol LockpickingMenuPort: AnyObject {
     func tick(now: Date)
     func route(_ event: MenuInputEvent)
 }
-
-/// The default arguments a protocol requirement cannot carry.
-extension LockpickingMenuPort {
-    public func tick() {
-        tick(now: Date())
-    }
-}

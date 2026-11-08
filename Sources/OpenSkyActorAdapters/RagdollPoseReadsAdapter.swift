@@ -113,12 +113,12 @@ extension RagdollPoseReadsAdapter {
         guard
             let body = game.gameSession?.playerBody,
             let skeletonPath = body.assembly.visual.skeletonPath
-                .flatMap({ try? VirtualFileSystem.meshPath($0) }),
+                .flatMap({ path in attempt { try VirtualFileSystem.meshPath(path) } }),
             let animated = body.animation.animatedBoneMatrices,
             let cell = game.streamer?.currentCellLocation
         else { return nil }
         return RagdollActorPose(
-            reference: FormID(0x14),
+            reference: .playerReference,
             cell: cell,
             scale: 1,
             actorToWorld: body.transform,

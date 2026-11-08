@@ -3,6 +3,7 @@ import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyEffects
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
@@ -218,7 +219,7 @@ extension AgentMenuReadoutAdapter {
         guard let quests = game.journalMenu.questRuntime else {
             throw AgentFailure(.notReady, "no quest data is loaded")
         }
-        guard let state = try? quests.state(editorID: editorID) else {
+        guard let state = attempt({ try quests.state(editorID: editorID) }) else {
             throw AgentFailure(.notFound, "no quest '\(editorID)'")
         }
         return [
@@ -234,7 +235,7 @@ extension AgentMenuReadoutAdapter {
     /// Each reference alias by name, with the reference that fills it or null.
     private func aliasFills(_ editorID: String, in quests: any QuestRuntimePort) -> AgentJSON {
         guard let quest = quests.quests.quest(editorID: editorID) else { return .null }
-        let table = try? quests.aliasState(of: quest.formID)
+        let table = attempt { try quests.aliasState(of: quest.formID) }
         var fills: [String: AgentJSON] = [:]
         for alias in quest.aliases where alias.category == .reference {
             let name = alias.name ?? String(alias.id)

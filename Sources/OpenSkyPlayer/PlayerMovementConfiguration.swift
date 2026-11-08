@@ -63,6 +63,9 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
         )
     }
 
+    /// The fast travel walk speed, in units per second, when no movement type gives one.
+    public static let fallbackTravelSpeed: Float = 80
+
     /// Historic explicit values for synthetic scenes, tests, and benchmarks.
     public static let synthetic = PlayerMovementConfiguration(
         walkSpeed: MovementSetting(value: 180, source: "OpenSky synthetic"),

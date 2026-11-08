@@ -45,6 +45,11 @@ nonisolated public enum SplashWeight: String, Equatable, Sendable {
         case .heavy: "CWaterLarge"
         }
     }
+
+    /// How strong a ripple the splash leaves on the water surface, 0 to 1.
+    public var rippleStrength: Float {
+        self == .heavy ? 1 : 0.6
+    }
 }
 
 nonisolated public struct WaterImpactSettings: Equatable, Sendable {

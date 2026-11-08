@@ -184,8 +184,9 @@ extension FollowerCommandWorldAdapter: FollowerCommandWorld {
         guard
             let index = ActorValueIdentity.index(named: "Morality"),
             let holder = game.actorWorld.actorValueHolder(for: follower)
-        else { return 3 }
-        return game.actorValues.runtime?.value(at: index, on: holder) ?? 3
+        else { return FollowerCommandRules.lawfulMorality }
+        return game.actorValues.runtime?.value(at: index, on: holder)
+            ?? FollowerCommandRules.lawfulMorality
     }
 
     public func sayFavorLine(_ subtype: FourCC, follower: ReferenceKey) {

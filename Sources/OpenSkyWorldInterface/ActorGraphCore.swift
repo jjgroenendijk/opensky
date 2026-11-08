@@ -11,6 +11,8 @@ nonisolated public struct ActorGraphMotion: Equatable, Sendable {
     public var isInCombatStance: Bool
 
     public static let still = ActorGraphMotion()
+    /// Slower than this, in units per second, a driven actor counts as standing.
+    public static let movingSpeed: Float = 0.5
 
     public init(
         isMoving: Bool = false,

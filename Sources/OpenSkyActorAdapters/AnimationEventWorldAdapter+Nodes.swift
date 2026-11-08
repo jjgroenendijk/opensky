@@ -28,9 +28,9 @@ extension AnimationEventWorldAdapter {
             let body = game.gameSession?.playerBody,
             let index = body.animation.skeleton.boneNames
                 .firstIndex(where: { $0.caseInsensitiveCompare(name) == .orderedSame }),
-            let bones = try? SkeletonPoseMath.worldMatrices(
+            let bones = attempt({ try SkeletonPoseMath.worldMatrices(
                 skeleton: body.animation.skeleton, localPoses: body.animation.pose.bones
-            ),
+            ) }),
             bones.indices.contains(index)
         else { return nil }
         return body.transform * bones[index]

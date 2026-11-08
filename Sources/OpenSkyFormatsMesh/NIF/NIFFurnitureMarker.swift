@@ -13,6 +13,8 @@ nonisolated public struct NIFFurnitureMarker: Equatable, Sendable {
     public let heading: Float
     /// 1 sit, 2 sleep, 4 lean.
     public let animationType: UInt16
+    public static let sitAnimation: UInt16 = 1
+    public static let sleepAnimation: UInt16 = 2
     /// 0x01 front, 0x02 behind, 0x04 right, 0x08 left, 0x10 up.
     public let entryPoints: UInt16
 

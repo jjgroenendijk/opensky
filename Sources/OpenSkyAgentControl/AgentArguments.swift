@@ -76,15 +76,25 @@ nonisolated public struct AgentArguments: Sendable {
     /// A position given as `[x, y, z]` or as `"x,y,z"`.
     public func vector(_ name: String) throws(AgentFailure) -> SIMD3<Float> {
         guard let value = values[name] else { throw missing(name) }
-        let parts: [Double?] = switch value {
-        case let .array(items): items.map(\.doubleValue)
-        case let .string(text):
-            text.split(separator: ",").map { Double($0.trimmingCharacters(in: .whitespaces)) }
-        default: []
+        let point: SIMD3<Float>? = switch value {
+        case let .array(items): Self.point(from: items.map(\.doubleValue))
+        case let .string(text): Self.point(fromText: text)
+        default: nil
         }
+        guard let point else { throw invalid(name, "three numbers x,y,z") }
+        return point
+    }
+
+    /// `"x,y,z"` as a point, or nil when it is not three finite numbers.
+    public static func point(fromText text: String) -> SIMD3<Float>? {
+        point(from: text.split(separator: ",")
+            .map { Double($0.trimmingCharacters(in: .whitespaces)) })
+    }
+
+    private static func point(from parts: [Double?]) -> SIMD3<Float>? {
         let numbers = parts.compactMap(\.self)
         guard parts.count == 3, numbers.count == 3, numbers.allSatisfy(\.isFinite) else {
-            throw invalid(name, "three numbers x,y,z")
+            return nil
         }
         return SIMD3(Float(numbers[0]), Float(numbers[1]), Float(numbers[2]))
     }

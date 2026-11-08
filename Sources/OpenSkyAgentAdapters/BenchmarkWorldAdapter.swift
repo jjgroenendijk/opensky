@@ -66,6 +66,13 @@ public final class BenchmarkWorldAdapter {
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Benchmark"
     )
+    /// The overlay redraws every this many frames, so drawing it costs the tour little.
+    private static let overlayFrames = 6
+    /// The frames a tour waits after its last screenshot request, so the capture lands.
+    private static let screenshotFrames = 30
+    private static let millisecondsPerSecond = 1000.0
+    /// A probe pushed farther than this, in units, started inside something.
+    private static let pushedOut: Float = 0.01
     public unowned let game: any BenchmarkWorldHost
     public var tour: any BenchmarkTourPort {
         game.benchmarkTour
@@ -161,7 +168,7 @@ public final class BenchmarkWorldAdapter {
         game.gameSession?.renderer.swfEnabled = false
         tour.tick()
         ticks += 1
-        if ticks % 6 == 0 {
+        if ticks % Self.overlayFrames == 0 {
             view?.showOverlay(tour.snapshot)
         }
     }
@@ -187,7 +194,7 @@ public final class BenchmarkWorldAdapter {
         guard reportsAppStart, let report = game.worldLoadReport else { return nil }
         reportsAppStart = false
         let sinceStart = BenchmarkAppStart.processStart()
-            .map { Date().timeIntervalSince($0) * 1000 }
+            .map { Date().timeIntervalSince($0) * Self.millisecondsPerSecond }
         return BenchmarkAppStart(
             report: report, session: game.sessionStartTiming, processToWorldReadyMS: sinceStart
         )
@@ -198,7 +205,7 @@ public final class BenchmarkWorldAdapter {
             finish(result)
             return
         }
-        finishing = (result, 30)
+        finishing = (result, Self.screenshotFrames)
     }
 
     private func drainFinish() {
@@ -300,11 +307,12 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
 
     public func isBlocked(_ point: SIMD3<Float>, radius: Float) -> Bool {
         guard let query = game.gameSession?.collisionQuery else { return false }
-        let capsule = PlayerCapsule(radius: radius, height: radius * 2, eyeHeight: radius)
+        let capsule = PlayerCapsule.ball(radius: radius)
         let bottom = point - SIMD3(0, 0, radius)
         let probe = CapsuleWorldCollider(capsule: capsule)
             .move(from: bottom, displacement: .zero, query: query)
-        return probe.hasUnresolvedPenetration || simd_distance(probe.position, bottom) > 0.01
+        return probe.hasUnresolvedPenetration || simd_distance(probe.position, bottom) > Self
+            .pushedOut
             || probe.contacts.contains { $0.depth > 0 }
     }
 

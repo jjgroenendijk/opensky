@@ -90,6 +90,6 @@ extension StorySceneCastAdapter {
         guard
             let runtime = owner.questRuntime,
             let key = runtime.quests.key(for: quest) else { return }
-        try? game.scripts.bridge?.stopQuest(for: key)
+        attempt { try game.scripts.bridge?.stopQuest(for: key) }
     }
 }
