@@ -13,8 +13,8 @@ run_url="$2"
 title="Weekly checks fail on main"
 
 open_issue="$(gh issue list --state open --label bug --label code-health \
-  --search "\"$title\" in:title" --json number,title \
-  --jq "map(select(.title == \"$title\")) | first | .number // empty")"
+  --search "\"$title\" in:title" --json number,title,state \
+  --jq "map(select(.title == \"$title\" and .state == \"OPEN\")) | first | .number // empty")"
 
 case "$result" in
   success)
