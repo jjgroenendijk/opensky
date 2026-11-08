@@ -1,7 +1,7 @@
 ---
 type: Tool
 title: Build system and xcodebuild invocation
-description: How the Makefile and the tools/ scripts share one xcodebuild invocation - the config/
+description: How the Makefile and the tools/ scripts share one xcodebuild invocation - the src/config/
   xcconfig layer, the OpenSkyShaderTypes module, compilation caching across worktrees, signing,
   output filtering, warnings as errors, and the products path.
 tags: [tool, build, make, xcodebuild]
@@ -34,21 +34,24 @@ shows the shared prefix on every line, which checks that it still holds.
 
 ### The workspace and the start-up scan
 
-`OpenSky.xcworkspace` holds the project and, as a folder, the package at the repository root. Only
+`src/OpenSky.xcworkspace` holds the project and, as a folder, the package in `src/`. Only
 that folder reference puts the package test targets into a test plan's build: through
-`-project OpenSky.xcodeproj`, or a workspace that names `Package.swift` instead of the folder,
+`-project src/OpenSky.xcodeproj`, or a workspace that names `src/Package.swift` instead of the folder,
 `build-for-testing` succeeds and writes an `.xctestrun` with no package test bundle in it
 (measured 2026-10-05). So every command line uses the workspace.
 
-The folder reference has a price. At every start, before it resolves the package graph,
-xcodebuild scans every visible file under that folder, through symlinks; a hidden name such as
-`.build` or `.cache` is skipped. On 2026-10-05 a worktree whose root held a link to the
-212,000-file compilation cache store spent 9 to 30 s in that scan, and 1 to 2 s once the link
-was gone; 29,000 files added under a visible `logs/` cost 12 s; the main checkout, whose root
-held 573,000 files of old build output and the store, listed its schemes in 109 s. That is why the
-store lives under the hidden `.cache/`, why run output goes to the hidden `.logs/` and `make prune`
-keeps one day of it, why `make clean` removes a `DerivedData*` tree left in a checkout, and why
-nothing else that grows should be visible under the root.
+The folder reference has a price. At every start, before it resolves the package graph, Xcode's
+package watcher (`SPMPackageDirectoryStructureFileSystemWatcher` in a `sample` of xcodebuild) reads
+every entry under the package folder. It skips only entries named `.git`, `.swiftpm`, or `.build`,
+at any depth. It does not follow a symlink. Hidden names such as `.cache` or `.claude` are read
+like any other. No setting adds a name to that list.
+
+So the package sits in `src/`, and everything that grows stays outside it at the repository root:
+the build cache in `.cache/`, run output in `.logs/`, and Claude Code's worktrees in
+`.claude/worktrees/`. Inside `src/` only `.build/` (SwiftPM's own output) and the small
+`src/.vendor/` grow. Measured on 2026-11-08: with the package at the repository root, the main
+checkout held 142 linked worktrees (about 7.4 million files) and 141 GB of build trees, and
+`xcodebuild -list` took 154 s there against 7 s in a worktree.
 
 The build trees live in the main checkout's hidden `.cache/Build/`, on the data volume, and the
 internal disk holds only the app's asset cache. About twenty worktrees are alive at once, and each
@@ -115,7 +118,7 @@ fit in memory. `make test-rerun` takes no lock, because it compiles nothing.
 | Knob | Default | Changes |
 | --- | --- | --- |
 | `CONFIG` | `Debug` | The configuration for `build-app`, `build-cli`, `test-unit`, `app-path`, and `cli-path`. `install` is always Release |
-| `DESTINATION` | `platform=macOS` | The test destination |
+| `DESTINATION` | `platform=macOS,arch=arm64` | The test destination. Without `arch`, two "My Mac" entries match and xcodebuild warns |
 | `CACHE_ROOT` | `<main checkout>/.cache/Build` | Where every checkout's build tree and the build locks live, exported as `OPENSKY_CACHE_ROOT` |
 | `BUILD_CACHE_GB` | `200` | The [budget](#the-build-cache-budget) for all trees together, exported as `OPENSKY_BUILD_CACHE_GB` |
 | `DERIVED_DATA` | `$(CACHE_ROOT)/<checkout folder name>` | The build cache, exported to scripts as `OPENSKY_DERIVED_DATA` |
@@ -126,14 +129,14 @@ fit in memory. `make test-rerun` takes no lock, because it compiles nothing.
 | `OPENSKY_MAX_ERRORS` | `40` | How many unique errors the filtered output prints |
 | `OPENSKY_BUILD_SLOTS` | `2` | How many builds run on the machine at once |
 
-## Build settings in config/
+## Build settings in src/config/
 
-Every build setting is in a text file under `config/Build/`. The project file has empty
+Every build setting is in a text file under `src/config/Build/`. The project file has empty
 `buildSettings` and names these files as bases. So a setting change is a one-line diff a review can
 read, and the project file, the worst merge conflict surface, holds no copies of the values.
 
 ```text
-config/
+src/config/
 ├── Build/
 │   ├── Base.xcconfig        deployment target, SDK, Swift mode, warnings, versioning
 │   ├── Debug.xcconfig       #include Base + -Onone, dwarf, testability
@@ -148,12 +151,12 @@ config/
     └── *.xctestplan         the four test plans (see test runs)
 ```
 
-The test plans are in `config/TestPlans/` for the same reason ([test runs](/tools/test-runs.md)).
+The test plans are in `src/config/TestPlans/` for the same reason ([test runs](/tools/test-runs.md)).
 `Debug.xcconfig` and `Release.xcconfig` are the project's base configurations for every target. The
 target files sit above them and apply to both configurations of one target. Only a setting that
 differs per configuration inside one target still belongs in the project file.
 
-The project's files never reach a package target, whose settings come from `Package.swift`.
+The project's files never reach a package target, whose settings come from `src/Package.swift`.
 `Overrides.xcconfig` is the one place for a setting that has to: the `Makefile` and
 `tools/xcodebuild-lib.sh` export `XCODE_XCCONFIG_FILE` pointing at it, and xcodebuild applies that
 file above every target in the build. A build started from the Xcode window does not read it. It
@@ -162,14 +165,14 @@ turns off a missing-dependency check that is wrong for package framework variant
 It also holds the prefix-mapping settings and `SWIFT_PACKAGE_NAME`, which keep the shared
 compilation cache key the same in every worktree (see below).
 
-`tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `config/Build/*.xcconfig` and the project
+`tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `src/config/Build/*.xcconfig` and the project
 file, so the Swift 6 mode check still catches a configuration that slips back
 ([Swift toolchain](/tools/swift-toolchain.md)).
 
 ## The OpenSkyShaderTypes module
 
 Structs and constants shared by Swift and the Metal shaders live in
-`Sources/OpenSkyShaderTypes/ShaderTypes.h`, next to a `module.modulemap` that declares
+`src/Sources/OpenSkyShaderTypes/ShaderTypes.h`, next to a `module.modulemap` that declares
 `module OpenSkyShaderTypes { header "ShaderTypes.h" export * }`. The folder is a clang target of the
 Swift package, so a file that writes `import OpenSkyShaderTypes` sees the types and no other file
 does. SwiftPM links a clang target's object file, so the target also holds `ShaderTypes.m`, which
@@ -187,7 +190,7 @@ every compile task. The reason for the module is explicit dependencies and two d
 
 ## Compilation caching
 
-`COMPILATION_CACHE_ENABLE_CACHING = YES` in `config/Build/Base.xcconfig` turns on Xcode 26's compilation
+`COMPILATION_CACHE_ENABLE_CACHING = YES` in `src/config/Build/Base.xcconfig` turns on Xcode 26's compilation
 cache. Each compile task is keyed on its command line and inputs, and a task with a known key
 replays the stored result instead of compiling. Explicit modules, which the cache needs, are already
 on by default. The store is `$(COMPILATION_CACHE)`, passed as `COMPILATION_CACHE_CAS_PATH` on every
@@ -229,9 +232,9 @@ store over by size instead ([CI](/tools/ci.md#caches)).
 A task's key holds its whole command line, so any path or name that differs per checkout or per
 tree makes every other worktree miss. Two inputs did that:
 
-- Absolute paths. `config/Build/Overrides.xcconfig` sets `SWIFT_ENABLE_PREFIX_MAPPING`,
+- Absolute paths. `src/config/Build/Overrides.xcconfig` sets `SWIFT_ENABLE_PREFIX_MAPPING`,
   `SWIFT_ENABLE_PROJECT_PREFIX_MAPPING`, `CLANG_ENABLE_PREFIX_MAPPING`, and
-  `CLANG_ENABLE_PROJECT_PREFIX_MAPPING` for Debug. Xcode then rewrites the checkout path to
+  `CLANG_ENABLE_PROJECT_PREFIX_MAPPING` for Debug. Xcode then rewrites the package folder `src/` to
   `/^src`, derived-data temporaries to `/^derived`, and products to `/^built`. The settings must
   be in that file: a project `.xcconfig` does not reach the package targets, which hold the engine.
 - The package name. SwiftPM names the root package after the checkout folder and passes it to
@@ -242,9 +245,8 @@ tree makes every other worktree miss. Two inputs did that:
 Measured on 2026-10-18 with both in place, a Debug `make build-app` from a second checkout into a
 fresh tree hit 647 of 688 tasks; before, it hit 12. Every checkout passes the same store path, the main
 checkout's. `make link-shared`, run first by every
-building target, links a worktree's `.vendor/ffmpeg` to the main checkout's, and moves a store
-still at the old visible path `DerivedData/` under `.cache/`
-([the start-up scan](#the-workspace-and-the-start-up-scan)).
+building target, links a worktree's `src/.vendor` to the main checkout's. It lives inside the
+package folder so that prefix mapping covers its header paths too.
 
 The mapping has three costs:
 
@@ -254,11 +256,11 @@ The mapping has three costs:
   outside the checkout too, so `make test-real` passes the checkout to the test process as
   `TEST_RUNNER_OPENSKY_CHECKOUT`, and real-data suites write into its `.logs/`.
 - Debug info names sources `/^src/...`. A command-line `lldb` needs
-  `settings set target.source-map /^src <checkout>`.
+  `settings set target.source-map /^src <checkout>/src`.
 
 ## Signing
 
-`config/Build/Signing.xcconfig` names the identity and team, and every target that makes a bundle
+`src/config/Build/Signing.xcconfig` names the identity and team, and every target that makes a bundle
 includes it: the app, the CLI, the unit test bundles, and the UI test runner.
 
 ```text
@@ -280,7 +282,7 @@ A machine without the certificate, and CI, override on the command line, which b
 make test-unit XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
 ```
 
-A hand-written, gitignored `config/Build/Local.xcconfig` is the lasting form; the `#include?` picks
+A hand-written, gitignored `src/config/Build/Local.xcconfig` is the lasting form; the `#include?` picks
 it up. Check a build with `codesign -dv --verbose=2 <bundle>`: `Authority=Apple Development: ...`
 with a `TeamIdentifier` is right, and `Signature=adhoc` causes repeated prompts.
 
@@ -356,7 +358,7 @@ offset. So an old object reads the wrong field and crashes with `EXC_BAD_ACCESS`
 
 So after every failed build, `tools/failed-build-records.sh` reads the transcript and deletes
 the record of each target with a failed compile. The target is the folder of the failed file
-below `Sources/` or `Tests/`. A target without its record is compiled whole in the next
+below `src/Sources/` or `src/Tests/`. A target without its record is compiled whole in the next
 build. `tools/xcodebuild-run.sh` does this for xcodebuild, in `$(DERIVED_DATA)/Build`.
 `make compile` and `make test-package` do it for `swift build`, in `.build/out`. The cost
 is one full compile of each failed target, and only after a failure.
@@ -369,7 +371,7 @@ signature does not verify, and the next build that needs the bundle builds it ag
 
 ## Warnings are errors
 
-`SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` is in `config/Build/Base.xcconfig`, next to
+`SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` is in `src/config/Build/Base.xcconfig`, next to
 `MTL_TREAT_WARNINGS_AS_ERRORS`, so it covers every target. SwiftLint never sees compiler warnings,
 and before this setting the test targets had gathered about a hundred. Expect a toolchain upgrade that
 adds a deprecation warning to break the build. Fix the warning. Do not turn the setting off.

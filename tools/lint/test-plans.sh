@@ -1,5 +1,5 @@
 #!/bin/sh
-# Check the rules every test plan under config/TestPlans/ follows.
+# Check the rules every test plan under src/config/TestPlans/ follows.
 #
 # docs/tools/test-runs.md explains each rule. In short: every plan is in the
 # scheme, sets test timeouts, never repeats or retries tests, and selects by
@@ -18,9 +18,9 @@ import re
 import sys
 
 ROOT = pathlib.Path.cwd()
-PLANS = ROOT / "config/TestPlans"
-SCHEME = ROOT / "OpenSky.xcodeproj/xcshareddata/xcschemes/OpenSky.xcscheme"
-TAGS = ROOT / "Tests/OpenSkyTagsTesting/Tags.swift"
+PLANS = ROOT / "src/config/TestPlans"
+SCHEME = ROOT / "src/OpenSky.xcodeproj/xcshareddata/xcschemes/OpenSky.xcscheme"
+TAGS = ROOT / "src/Tests/OpenSkyTagsTesting/Tags.swift"
 TIMEOUT_KEYS = (
     "defaultTestExecutionTimeAllowance",
     "maximumTestExecutionTimeAllowance",
@@ -32,7 +32,7 @@ TAG_PLANS = {"GPU": "gpu"}
 LAYER_PLANS = ("Formats", "Engine", "Features", "App")
 # Quick is every package target, skipping the tests that need seconds or a GPU.
 # Xcode ignores a plan's skippedTags, so the plan names them in the environment
-# and each tagged test reads it (Tests/OpenSkyTagsTesting/Tags.swift).
+# and each tagged test reads it (src/Tests/OpenSkyTagsTesting/Tags.swift).
 QUICK_SKIPS = "slow,gpu"
 problems = []
 
@@ -47,7 +47,7 @@ declared_tags = set(re.findall(r"@Tag public static var (\w+)", TAGS.read_text()
 
 in_scheme = set(re.findall(r"container:config/TestPlans/(\w+)\.xctestplan", SCHEME.read_text()))
 for name in sorted(set(plans) ^ in_scheme):
-    where = "the scheme" if name in plans else "config/TestPlans/"
+    where = "the scheme" if name in plans else "src/config/TestPlans/"
     problems.append(f"{name}.xctestplan is missing from {where}")
 
 for name, plan in plans.items():
@@ -85,7 +85,7 @@ for name in LAYER_PLANS:
 if sorted(layered) != sorted(unit if (unit := [e["target"]["name"] for e in plans.get("UnitTests", {}).get("testTargets", [])]) else []):
     problems.append(f"layer plans {LAYER_PLANS} must list every UnitTests target exactly once")
 # Every unit test folder is a target UnitTests runs; real-data and UI have their own plans.
-folders = {p.name for p in pathlib.Path("Tests").iterdir()
+folders = {p.name for p in pathlib.Path("src/Tests").iterdir()
            if p.is_dir() and p.name.endswith("Tests")} - {"OpenSkyRealDataTests", "OpenSkyUITests"}
 for name in sorted(folders - set(unit)):
     problems.append(f"UnitTests: must list the test target {name}")

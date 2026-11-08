@@ -5,7 +5,7 @@
 # build reuses objects with an old field layout (docs/tools/build-system.md).
 # Without its record, the driver compiles the whole target again.
 #
-# A target is the folder of a failed file, below Sources/ or Tests/.
+# A target is the folder of a failed file, below src/Sources/ or src/Tests/.
 #
 # Usage: tools/failed-build-records.sh [-d] TRANSCRIPT BUILD_DIR
 #   BUILD_DIR holds Intermediates.noindex: $OPENSKY_DERIVED_DATA/Build for

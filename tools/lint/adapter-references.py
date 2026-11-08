@@ -18,8 +18,8 @@ ROLE_REFERENCE = 1 << 2
 REL_CONTAINED_BY = 1 << 16
 TYPE_KINDS = {5, 6, 7, 8}  # enum, struct, class, protocol
 INSTANCE_PROPERTY = 19
-ADAPTER_FOLDER = re.compile(r"^Sources/(OpenSky\w*Adapters|OpenSky/GameView)/")
-# The build cache maps the checkout to this prefix (docs/tools/build-system.md).
+ADAPTER_FOLDER = re.compile(r"^src/Sources/(OpenSky\w*Adapters|OpenSky/GameView)/")
+# The build cache maps the package folder, src/, to this prefix (docs/tools/build-system.md).
 CACHE_PREFIX = "/^src/"
 
 
@@ -194,7 +194,8 @@ def main():
         return 1
     definitions, owner_properties, references = {}, set(), []
     for path, record in record_files(lib, store).items():
-        relative = next((path[len(root):] for root in (repo + "/", CACHE_PREFIX)
+        prefixes = ((repo + "/", ""), (CACHE_PREFIX, "src/"))
+        relative = next((base + path[len(root):] for root, base in prefixes
                          if path.startswith(root)), None)
         if relative is None or not ADAPTER_FOLDER.search(relative) \
                 or not (pathlib.Path(repo) / relative).exists():

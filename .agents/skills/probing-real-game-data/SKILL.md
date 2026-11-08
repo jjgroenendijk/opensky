@@ -14,7 +14,8 @@ A probe is not throwaway code. It lands in `openskycli`, so the next session, th
 the next agent writes it again from nothing.
 
 Two things this skill deliberately does not repeat: how to write a test in this repo
-(`Tests/OpenSkyTests/AGENTS.md` and `Tests/OpenSkyRealDataTests/AGENTS.md` load automatically when you
+(`src/Tests/OpenSkyTests/AGENTS.md` and `src/Tests/OpenSkyRealDataTests/AGENTS.md` load
+automatically when you
 touch those directories, and cover `@MainActor`, env gating, `make test-real`, and fixtures),
 and the CLI subcommand reference (`docs/tools/cli.md`).
 
@@ -41,7 +42,7 @@ single `ESMFile(url:)`. A record a DLC or mod overrides is only right that way, 
 `make lint` (`load-order-only`) fails on a single-file open outside the format modules.
 
 When the check is a pass/fail assertion that should keep holding, such as pixel values
-from an offscreen render, write it as a real-data test in `Tests/OpenSkyRealDataTests/`
+from an offscreen render, write it as a real-data test in `src/Tests/OpenSkyRealDataTests/`
 that stays, copying the shape of `CellRenderRealDataTests.swift`. That folder is the whole
 `RealData` plan, so a class there runs under `make test-real` with the data root in the
 host. Never `swift path/to/script.swift` against engine sources: a script cannot import the

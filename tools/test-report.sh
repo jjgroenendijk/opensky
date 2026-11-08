@@ -120,7 +120,7 @@ PY
 # Pass, fail, and time per shared tag. The result bundle does not carry Swift
 # Testing tags, so each test is matched to the tags its suite and @Test declare
 # in the sources. Times from a parallel run include waits for the main actor.
-python3 - "$tests_json" "$(git rev-parse --show-toplevel)/Tests" <<'PY'
+python3 - "$tests_json" "$(git rev-parse --show-toplevel)/src/Tests" <<'PY'
 import collections
 import json
 import pathlib

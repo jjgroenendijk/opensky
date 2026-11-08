@@ -129,7 +129,7 @@ idea, so it becomes a GitHub issue, not an inline change.
 ## Isolation per subsystem
 
 Every package module uses `defaultIsolation(MainActor.self)` (see `librarySettings` in
-`Package.swift`). So code runs on the main actor unless it says otherwise. Data that crosses
+`src/Package.swift`). So code runs on the main actor unless it says otherwise. Data that crosses
 threads is a `nonisolated` `Sendable` value type, for example `SkinningPalette`. Shared
 mutable state off the main thread uses `Mutex`, as in `WorldAudioEngine`.
 
@@ -171,7 +171,7 @@ Every rule on this page and in [Coordinators](/engine/coordinators.md) has a che
 | The renderer holds no game state and is not cast to the session | `make module-graph` rule 10, SwiftLint `renderer_downcast` |
 | The Papyrus bridge gains collaborators only through a native family | SwiftLint `papyrus_loose_closure` |
 | A system joins the frame only through a `FrameSchedule` phase | SwiftLint `frame_callback_property` |
-| No new `@unchecked Sendable`, `Task.detached`, `DispatchQueue.main`, or semaphore in `Sources/` | SwiftLint `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore` |
+| No new `@unchecked Sendable`, `Task.detached`, `DispatchQueue.main`, or semaphore in `src/Sources/` | SwiftLint `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore` |
 | A new `DispatchQueue` has a row in [Concurrency](/decisions/concurrency.md) | SwiftLint `new_dispatch_queue` |
 | A module stays below 30,000 source lines | `make module-size` ([Module size](/tools/modules.md#module-size)) |
 | A protocol type is written `any X`, an import is `internal` unless it says `public import`, and unsafe code is marked `unsafe` | The compiler, set up and self-checked by `make language-rules` ([Swift language rules](/decisions/language-rules.md)) |

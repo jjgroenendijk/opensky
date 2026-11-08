@@ -39,8 +39,8 @@ def changed_lines(diff):
         text = ANSI.sub("", raw)
         if text.startswith("+++ "):
             path = text[6:] if text.startswith("+++ b/") else ""
-            usable = (path.startswith("Sources/") and path.endswith(".swift")
-                      and path.split("/")[1] not in skipped)
+            usable = (path.startswith("src/Sources/") and path.endswith(".swift")
+                      and path.split("/")[2] not in skipped)
             lines = changed.setdefault(path, set()) if usable else None
         elif (hunk := HUNK.match(text)):
             number = int(hunk.group(1))
@@ -70,26 +70,26 @@ def check(changed, files, readable_names):
 
 def self_check():
     diff = (
-        "diff --git a/Sources/OpenSkyMagic/A.swift b/Sources/OpenSkyMagic/A.swift\n"
-        "+++ b/Sources/OpenSkyMagic/A.swift\n@@ -0,0 +1,4 @@\n"
+        "diff --git a/src/Sources/OpenSkyMagic/A.swift b/src/Sources/OpenSkyMagic/A.swift\n"
+        "+++ b/src/Sources/OpenSkyMagic/A.swift\n@@ -0,0 +1,4 @@\n"
         f"{NEW}+a\n{NEW}+b\n{NEW}+c\n{MOVED}+moved\n"
-        "diff --git a/Sources/OpenSky/B.swift b/Sources/OpenSky/B.swift\n"
-        "+++ b/Sources/OpenSky/B.swift\n@@ -0,0 +1,1 @@\n+b\n"
-        "diff --git a/Sources/OpenSkyMagicAdapters/C.swift b/Sources/OpenSkyMagicAdapters/C.swift\n"
-        "+++ b/Sources/OpenSkyMagicAdapters/C.swift\n@@ -0,0 +1,1 @@\n+c\n"
+        "diff --git a/src/Sources/OpenSky/B.swift b/src/Sources/OpenSky/B.swift\n"
+        "+++ b/src/Sources/OpenSky/B.swift\n@@ -0,0 +1,1 @@\n+b\n"
+        "diff --git a/src/Sources/OpenSkyMagicAdapters/C.swift b/src/Sources/OpenSkyMagicAdapters/C.swift\n"
+        "+++ b/src/Sources/OpenSkyMagicAdapters/C.swift\n@@ -0,0 +1,1 @@\n+c\n"
     )
     changed = changed_lines(diff)
-    if changed != {"Sources/OpenSkyMagic/A.swift": {1, 2, 3}}:
+    if changed != {"src/Sources/OpenSkyMagic/A.swift": {1, 2, 3}}:
         sys.exit(f"[ERROR] diff-coverage self-check: changed lines {changed}")
     files = {
-        "Sources/OpenSkyMagic/A.swift": {
+        "src/Sources/OpenSkyMagic/A.swift": {
             "lines": {1: 1, 2: 0, 3: 0, 9: 0},
             "functions": [(1, "f", 1), (2, "g", 0), (3, "c", 0), (9, "old", 0)],
         }
     }
     names = {"c": "closure #1 in f()"}
     covered, executable, untested = check(changed, files, names)
-    if (covered, executable, untested) != (1, 3, ["Sources/OpenSkyMagic/A.swift:2: g"]):
+    if (covered, executable, untested) != (1, 3, ["src/Sources/OpenSkyMagic/A.swift:2: g"]):
         sys.exit(f"[ERROR] diff-coverage self-check: {covered}/{executable}, {untested}")
     # A Quick run kept after the last source change merges in; an older App run does not.
     if current_profiles("newest", [("Quick", 5), ("App", 1)], 3) != ["newest", "Quick"]:
@@ -106,7 +106,7 @@ floor, base, derived_data = float(sys.argv[1]), sys.argv[2], sys.argv[3]
 diff = subprocess.run(
     ["git", *COLOURS, "diff", "--color=always", "--color-moved=zebra",
      "--color-moved-ws=allow-indentation-change", "-U0", "--diff-filter=AMR", base, "--",
-     "Sources/*.swift"],
+     "src/Sources/*.swift"],
     capture_output=True, text=True, check=True,
 ).stdout
 changed = changed_lines(diff)

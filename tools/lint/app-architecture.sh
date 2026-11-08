@@ -51,7 +51,7 @@ def braces(code, start):
 
 
 def module_of(path):
-    return path.split("/")[1]
+    return path.split("/")[2]
 
 
 def is_adapter_module(module):
@@ -178,23 +178,23 @@ def check(sources):
 def self_check():
     many = "\n".join(f"    var v{index}: Int {{ get }}" for index in range(HOST_MEMBERS + 1))
     cases = {
-        "rule 1": {"Sources/OpenSky/GameView/A.swift": "final class MagicWorldAdapter {}\n"},
+        "rule 1": {"src/Sources/OpenSky/GameView/A.swift": "final class MagicWorldAdapter {}\n"},
         "rule 2": {
-            "Sources/OpenSky/GameView/B.swift": "protocol BHost: AnyObject {\n    var renderer: Renderer { get }\n}\n",
-            "Sources/OpenSkyRendering/R.swift": "public final class Renderer {}\n",
+            "src/Sources/OpenSky/GameView/B.swift": "protocol BHost: AnyObject {\n    var renderer: Renderer { get }\n}\n",
+            "src/Sources/OpenSkyRendering/R.swift": "public final class Renderer {}\n",
         },
-        "rule 3": {"Sources/OpenSky/GameView/C.swift": f"protocol CHost: AnyObject {{\n{many}\n}}\n"},
+        "rule 3": {"src/Sources/OpenSky/GameView/C.swift": f"protocol CHost: AnyObject {{\n{many}\n}}\n"},
         "rule 4": {
-            f"Sources/OpenSky/GameView/D{index}.swift": "extension DThing {\n}\n"
+            f"src/Sources/OpenSky/GameView/D{index}.swift": "extension DThing {\n}\n"
             for index in range(TYPE_EXTENSION_FILES + 1)
-        } | {"Sources/OpenSky/GameView/D.swift": "final class DThing {}\n"},
+        } | {"src/Sources/OpenSky/GameView/D.swift": "final class DThing {}\n"},
     }
     for rule, sources in cases.items():
         if not any(rule + ":" in problem for problem in check(sources)):
             sys.exit(f"[ERROR] app-architecture self-check: {rule} missed its violation")
     clean = {
-        "Sources/OpenSkyMagicInterface/P.swift": "public protocol SpellHitApplying {}\n",
-        "Sources/OpenSky/GameView/E.swift": "import AppKit\nprotocol EHost: AnyObject {\n"
+        "src/Sources/OpenSkyMagicInterface/P.swift": "public protocol SpellHitApplying {}\n",
+        "src/Sources/OpenSky/GameView/E.swift": "import AppKit\nprotocol EHost: AnyObject {\n"
         "    var hits: any SpellHitApplying { get }\n    var count: Int { get }\n}\n"
         "final class ViewAdapter {}\n",
     }
@@ -204,7 +204,7 @@ def self_check():
 
 self_check()
 tracked = subprocess.run(
-    ["git", "ls-files", "Sources/*.swift"], capture_output=True, text=True, check=True
+    ["git", "ls-files", "src/Sources/*.swift"], capture_output=True, text=True, check=True
 ).stdout.split()
 sources = {
     path: pathlib.Path(path).read_text()

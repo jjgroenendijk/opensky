@@ -33,7 +33,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Parser | New or updated synthetic-fixture tests, `make test-package T='OpenSkyFormatsESMTests/Suite'`, then `make test-unit PLAN=Formats` |
 | Math routine | New or updated tests, `make test-package T='Target/Suite'` for the suites that cover it |
 | Engine logic in one subsystem | `make test-unit PLAN=<layer>` for its layer (`Engine`, `Features`, or `App`), narrowed with `T=` while iterating |
-| Shared types, `ShaderTypes.h`, project or `config/` files, file moves between `OpenSky/` and a package module | `make build-app`, `make build-cli`, or `make build-tests` for the products the change reaches, then `make test-unit` |
+| Shared types, `ShaderTypes.h`, project or `src/config/` files, file moves between `OpenSky/` and a package module | `make build-app`, `make build-cli`, or `make build-tests` for the products the change reaches, then `make test-unit` |
 | Rendering or shaders | `make test-unit PLAN=GPU`, plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make test-real T='Class/method()'`, one run per affected test |
 | App UI | `make build-app`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
@@ -46,7 +46,7 @@ before a push; push and read `gh pr checks <n> --watch`.
 
 Find the suites for a file with `grep -rl 'TypeName' Tests`. Suite names follow the type
 under test (`BSAArchive` is covered by `BSAArchiveTests`). The plans and what each one builds
-are in `Tests/AGENTS.md`.
+are in `src/Tests/AGENTS.md`.
 
 A behavior change without a test that would have failed before it is unverified: write the
 test first, watch it fail, then fix.
@@ -134,7 +134,7 @@ These guard the machine and are not optional:
 
 A test that fails, then passes on the same code, is flaky. Do not rerun it until it passes,
 and never add a retry: both hide a real bug. `make test-unit T='Target/Suite/test()' N=100`
-shows it fails sometimes. Then follow the rule in `Tests/AGENTS.md`: disable it with
+shows it fails sometimes. Then follow the rule in `src/Tests/AGENTS.md`: disable it with
 `.disabled("flaky: #NNN")` and open a `bug` issue with the run directory.
 
 ## Report it

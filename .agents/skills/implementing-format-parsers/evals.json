@@ -7,7 +7,7 @@
     "files": [],
     "expected_behavior": [
       "Looks up the layout in an open spec such as xEdit wbDefinitionsTES5.pas or UESP before writing code, and records the version read",
-      "Places the parser in Sources/OpenSkyFormatsESM/Records/ with an init(record:) entry point, following the shape of Footstep.swift",
+      "Places the parser in src/Sources/OpenSkyFormatsESM/Records/ with an init(record:) entry point, following the shape of Footstep.swift",
       "Adds .parser-tagged tests in OpenSkyFormatsESMTests built from ESMFixture, with no extracted game file",
       "Writes docs/formats/idle.md with the spec citation, and keeps the code comment to one line plus a link to that page"
     ]
@@ -19,7 +19,7 @@
     "query": "The NIF parser crashes on a mod mesh with an unknown block type. Fix it.",
     "files": [],
     "expected_behavior": [
-      "Writes a synthetic fixture in Tests/OpenSkyFormatsTesting/Mesh that reproduces the unknown block and a test that fails first, not a copy of the mod file",
+      "Writes a synthetic fixture in src/Tests/OpenSkyFormatsTesting/Mesh that reproduces the unknown block and a test that fails first, not a copy of the mod file",
       "Makes the parser skip and count the unknown block instead of trapping",
       "Uses the family's typed error and no force-unwrap on file data"
     ]

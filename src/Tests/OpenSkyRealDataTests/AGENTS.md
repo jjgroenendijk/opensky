@@ -3,7 +3,7 @@
 Every env-gated suite that runs against the user's own Skyrim SE install, and nothing else.
 This is the whole `RealData` test plan: the plan selects this target and does not narrow it
 further, so a file here runs under `make test-real` by virtue of being here (issue #418).
-General test rules live in `Tests/OpenSkyTests/AGENTS.md`; only what differs is below. Running
+General test rules live in `src/Tests/OpenSkyTests/AGENTS.md`; only what differs is below. Running
 engine code against the install to check a hypothesis is a different job — load the
 `probing-real-game-data` skill for that.
 
@@ -29,7 +29,7 @@ forward `OPENSKY_DATA_ROOT` into the host.
 
 Support code only these suites use — a probe harness, a report writer, a real-terrain
 driver — belongs here too. Support shared with the synthetic suites goes in
-`Tests/HostedTestSupport/`, which both test targets compile.
+`src/Tests/HostedTestSupport/`, which both test targets compile.
 
 ## Running them
 

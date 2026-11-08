@@ -17,11 +17,11 @@ check a hypothesis is a different job: load the `probe` skill for that.
 
 ## Real-data tests live in another target
 
-A suite that reads the user's own install belongs in `Tests/OpenSkyRealDataTests/`, not here, and
+A suite that reads the user's own install belongs in `src/Tests/OpenSkyRealDataTests/`, not here, and
 `make lint` fails when one is written here instead: it would never run. `make test-real`
 runs that bundle and only that bundle, and inside `make test-unit` an env-gated suite silently
 skips, because a plain `xcodebuild test` does not forward `OPENSKY_DATA_ROOT` into the host.
-`Tests/OpenSkyRealDataTests/AGENTS.md` has the shape to copy.
+`src/Tests/OpenSkyRealDataTests/AGENTS.md` has the shape to copy.
 
 Nothing here reads a real install: `GameDataLocator` withholds the persisted
 `OpenSkyDataRoot` default and the Steam fallback inside a test host, so a unit test cannot
@@ -32,18 +32,18 @@ quietly reach one even by accident (issue #362).
 This target holds the suites that need the app module, an acceptance chain, or two feature
 implementations. The last kind lives in `<Feature>/`, for example `Magic/CasterRuntimeTests`.
 Every other suite goes in a package test target, including one that builds a `Renderer`;
-`Tests/AGENTS.md` has the rule.
+`src/Tests/AGENTS.md` has the rule.
 
-`Tests/HostedTestSupport/` is compiled into this bundle and `OpenSkyRealDataTests`. It holds the
+`src/Tests/HostedTestSupport/` is compiled into this bundle and `OpenSkyRealDataTests`. It holds the
 fixtures both bundles use that need the app or two implementations. `Support/` holds the
-ones only this bundle uses. Other fixtures are in the `Tests/OpenSky<Layer>Testing/` and
-`Tests/<Name>Fixtures/` libraries, which this bundle links through `OpenSkyTestSupport`.
+ones only this bundle uses. Other fixtures are in the `src/Tests/OpenSky<Layer>Testing/` and
+`src/Tests/<Name>Fixtures/` libraries, which this bundle links through `OpenSkyTestSupport`.
 
 ## Fixtures and output
 
 - Fixtures are synthetic and built in code — never a real extracted file. The existing
   helpers are `BSAFixture`, `ESMFixture`, `NIFFixture`, and `StringTableFixture`, in
-  `Tests/OpenSkyFormatsTesting/`.
+  `src/Tests/OpenSkyFormatsTesting/`.
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
   value or write an artifact to gitignored `.logs/`.

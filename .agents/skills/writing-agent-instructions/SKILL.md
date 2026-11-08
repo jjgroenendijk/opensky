@@ -25,8 +25,8 @@ copy instead of adding a second one.
 1. **A lint rule or `make` target**, when a machine can check it. A check cannot be
    forgotten; prose can. Mirror a new gate in `ci.yml` (root `AGENTS.md`, Code quality).
 2. **A better name, type, or signature**, when the code can make the wrong use hard.
-3. **A nested `AGENTS.md`**, when the rule applies only in one folder, such as `Sources/`
-   or `Tests/`. It loads only when an agent works there. It needs a `CLAUDE.md` symlink
+3. **A nested `AGENTS.md`**, when the rule applies only in one folder, such as `src/Sources/`
+   or `src/Tests/`. It loads only when an agent works there. It needs a `CLAUDE.md` symlink
    beside it; `make lint` checks this.
 4. **A skill**, when the rule applies only to one kind of task. Extend the matching skill;
    add a new one only for a task no skill covers.

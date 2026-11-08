@@ -231,26 +231,26 @@ jobs:
       - uses: actions/cache/restore@v6
         id: ffmpeg
         with:
-          path: .vendor/ffmpeg
+          path: src/.vendor/ffmpeg
           key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
       # The app and CLI link the vendored ffmpeg, and a fresh checkout has none.
       - run: make ffmpeg
       - if: steps.ffmpeg.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
-          path: .vendor/ffmpeg
+          path: src/.vendor/ffmpeg
           key: ${{ steps.ffmpeg.outputs.cache-primary-key }}
       - uses: actions/cache/restore@v6
         id: astcenc
         with:
-          path: .vendor/astcenc
+          path: src/.vendor/astcenc
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
       # The ASTC texture encoder links the vendored astcenc static library.
       - run: make astcenc
       - if: steps.astcenc.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
-          path: .vendor/astcenc
+          path: src/.vendor/astcenc
           key: ${{ steps.astcenc.outputs.cache-primary-key }}
       # A pull request keeps its own compilation cache and falls back to main's.
       - name: Cache keys

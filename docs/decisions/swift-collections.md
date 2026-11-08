@@ -13,9 +13,9 @@ tags: [decision, dependency, swiftpm, navigation, scripting, streaming]
 - The package depends on [swift-collections](https://github.com/apple/swift-collections) from
   Apple. Its license is Apache 2.0, which allows redistributing OpenSky's code with it.
 - Modules depend on the smallest product they need, `HeapModule` or `DequeModule`, never on the
-  umbrella `Collections` product. A product is declared in `Package.swift` next to the local
+  umbrella `Collections` product. A product is declared in `src/Package.swift` next to the local
   modules. `tools/lint/module-graph.sh` treats it as a module below every layer.
-- The tracked `Package.resolved` pins the version, and Renovate proposes updates.
+- The tracked `src/Package.resolved` pins the version, and Renovate proposes updates.
 
 ## Where it is used
 

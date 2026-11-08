@@ -74,7 +74,7 @@ struct has no identity to hold.
 ## Adapter modules
 
 The adapters live in eleven modules, one per feature group, such as `OpenSkyMagicAdapters` and
-`OpenSkyStoryAdapters`. `Package.swift` declares them with the `composition` helper:
+`OpenSkyStoryAdapters`. `src/Package.swift` declares them with the `composition` helper:
 
 - They may import feature implementations, because an adapter connects them.
 - No other package module may import them. Only the app and `openskycli` link them.

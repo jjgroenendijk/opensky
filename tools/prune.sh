@@ -156,7 +156,7 @@ if [ -d "$worktree_home" ]; then
         add "stale worktree cache" "$checkout/DerivedData"
         add "stale worktree cache" "$checkout/DerivedData-optimized"
         add "stale worktree cache" "$checkout/DerivedData-index"
-        add "stale worktree cache" "$checkout/.build"
+        add "stale worktree cache" "$checkout/src/.build"
         add "stale worktree output" "$checkout/build"
         add "stale worktree output" "$checkout/.logs"
         add "stale worktree output" "$checkout/logs"

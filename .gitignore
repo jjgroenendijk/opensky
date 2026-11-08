@@ -16,17 +16,17 @@ xcuserdata/
 *.dSYM
 
 # ── Vendored native dependencies (built by make bootstrap, never committed) ───
-# tools/vendor-ffmpeg.sh builds a decode-only LGPL ffmpeg into .vendor/ffmpeg.
-/.vendor/
+# tools/vendor-ffmpeg.sh builds a decode-only LGPL ffmpeg into src/.vendor/ffmpeg.
+/src/.vendor/
 
 # ── Per-developer build settings ──────────────────────────────────────────────
-# Optional signing override, included by config/Build/Signing.xcconfig when present. Nothing
+# Optional signing override, included by src/config/Build/Signing.xcconfig when present. Nothing
 # creates it; write one by hand to sign with something other than the checked-in identity.
-/config/Build/Local.xcconfig
+/src/config/Build/Local.xcconfig
 
 # ── SwiftPM ───────────────────────────────────────────────────────────────────
 .swiftpm/
-/Packages/
+/src/Packages/
 
 # ── Tooling / OS ──────────────────────────────────────────────────────────────
 .venv/
@@ -41,7 +41,7 @@ node_modules/
 # Render captures stay local (.logs/ or temp), never in source control.
 *.[pP][nN][gG]
 # Exception: AppIcon PNGs generated from our own SVG (make icon) — no game content.
-!Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset/icon_*.png
+!src/Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset/icon_*.png
 # Exception: README screenshots of OpenSky's own launcher, no game frame (AGENTS.md).
 !docs/images/launcher-*.png
 

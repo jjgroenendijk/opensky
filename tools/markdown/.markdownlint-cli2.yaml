@@ -21,13 +21,13 @@ config:
 # a run on a few paths stays on those paths.
 ignores:
   - node_modules
-  - .build
+  - "**/.build"
   - build
   - DerivedData
   - DerivedData-optimized   # the optimized real-data perf build's own cache
   - DerivedData-index       # the uncached index build `make health` scans
   - .logs           # gitignored scratch output; agents drop free-form notes here
-  - .vendor         # vendored upstream sources built by make bootstrap, not ours to lint
+  - src/.vendor      # vendored upstream sources built by make bootstrap, not ours to lint
   - .cache          # caches, among them the wiki mirrors (make ck-wiki, make uesp-wiki)
   - "**/.venv"      # uv environments of the Python tools
   - .claude/worktrees  # linked worktrees nested below the main checkout

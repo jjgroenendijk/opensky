@@ -1,7 +1,7 @@
 #!/bin/sh
 # Check that every Swift Testing suite carries the shared tags its files call for.
 #
-# The tags live in Tests/OpenSkyTagsTesting/Tags.swift. A suite needs:
+# The tags live in src/Tests/OpenSkyTagsTesting/Tags.swift. A suite needs:
 #   .acceptance  when it is declared under an Acceptance/ folder,
 #   .gpu         when a file of the suite reaches a Metal device,
 #   .parser      when it is declared in a format test target.
@@ -21,7 +21,7 @@ import re
 import sys
 
 ROOT = pathlib.Path.cwd()
-TESTS = ROOT / "Tests"
+TESTS = ROOT / "src/Tests"
 # The UI bundle is XCTest, so Swift Testing tags do not apply to it.
 SKIPPED_TARGETS = {"OpenSkyUITests"}
 DEVICE = re.compile(
@@ -259,7 +259,7 @@ def main():
     for error in errors:
         print(f"[ERROR] {error}", file=sys.stderr)
     if errors:
-        print("[ERROR] fix: make lint-test-tags FIX=1 (tags only); see Tests/AGENTS.md",
+        print("[ERROR] fix: make lint-test-tags FIX=1 (tags only); see src/Tests/AGENTS.md",
               file=sys.stderr)
         return 1
     return 0

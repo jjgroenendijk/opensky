@@ -1,7 +1,7 @@
 # Periphery unused-code scan (make health). Paths resolve against the repo root.
 # tools/lint/unused-code.sh passes --index-store-path, because the index tree is a
 # make variable. Why each setting: docs/decisions/code-health-automation.md.
-project: OpenSky.xcworkspace
+project: src/OpenSky.xcworkspace
 schemes:
   - OpenSky
   - OpenSkyCLI

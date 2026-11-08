@@ -69,12 +69,12 @@ jobs:
       # Restore only: the CI workflow owns these caches.
       - uses: actions/cache/restore@v6
         with:
-          path: .vendor/ffmpeg
+          path: src/.vendor/ffmpeg
           key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
       - run: make ffmpeg
       - uses: actions/cache/restore@v6
         with:
-          path: .vendor/astcenc
+          path: src/.vendor/astcenc
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
       - run: make astcenc
       - uses: actions/cache/restore@v6

@@ -6,7 +6,7 @@ legally-owned install from disk and runs it. Trade-offs resolve in this order: l
 cleanliness, correctness, native feel, performance, feature completeness.
 
 This file holds what applies to every task. Rules for one part of the tree live in the
-`AGENTS.md` of that folder (`Sources/`, `Tests/`, and some below them), and they load when
+`AGENTS.md` of that folder (`src/Sources/`, `src/Tests/`, and some below them), and they load when
 you work there. Task workflows live in skills. A change to repo layout, tooling, or
 conventions updates the matching file in the same commit.
 
@@ -45,9 +45,9 @@ conflict.
   `git mv`, and AppleDouble `._*` files are ignored.
 - Xcode 26 and 27 ship without the Metal Toolchain. `make bootstrap`, once per checkout,
   downloads it.
-- Target membership under `Sources/` follows the folder, not a list in the project file:
+- Target membership under `src/Sources/` follows the folder, not a list in the project file:
   `OpenSky/` builds only into the app, `OpenSkyCLI/` only into the CLI, and `Shaders/` into
-  both. Every other folder is a module in `Package.swift`, linked by the app and the CLI
+  both. Every other folder is a module in `src/Package.swift`, linked by the app and the CLI
   through one product, so a new module needs no project-file edit. An app-only source
   (AppKit, Cocoa, SwiftUI) outside `OpenSky/` breaks the CLI build; `make cli-boundary`
   catches it.
@@ -64,7 +64,7 @@ conflict.
 - Anything that builds runs in a background shell: it can pass the tool timeout. Two builds
   run at a time on the machine: `make` waits for a free build slot and says whose builds it
   waits for.
-- Linked worktrees share the main checkout's `.vendor/ffmpeg` through `make`, so a worktree
+- Linked worktrees share the main checkout's `src/.vendor/ffmpeg` through `make`, so a worktree
   needs no `make bootstrap`. The cache's prefix mapping makes `#filePath` read
   `/^src/...`; find the checkout at runtime instead (`docs/tools/build-system.md`).
 - The only git hook is `pre-commit` in `tools/githooks/`, which runs the file-length check;
@@ -89,12 +89,15 @@ conflict.
 
 ## Where things live
 
-- `Package.swift` declares every engine module. `docs/tools/modules.md` lists each one with
+- `src/` holds the Swift package, the Xcode workspace and project, and their `config/`. Xcode
+  reads every file under `src/` at each build start, so anything that grows (caches, logs,
+  worktrees) stays at the repository root, outside `src/` (`docs/tools/build-system.md`).
+- `src/Package.swift` declares every engine module. `docs/tools/modules.md` lists each one with
   its layer and gives the import rules. Read it before you add a module or an import.
-- `config/Build/*.xcconfig` holds every build setting, signing included, never the pbxproj
-  (`docs/tools/build-system.md`). `config/TestPlans/` holds the test plans
+- `src/config/Build/*.xcconfig` holds every build setting, signing included, never the pbxproj
+  (`docs/tools/build-system.md`). `src/config/TestPlans/` holds the test plans
   (`docs/tools/test-runs.md`).
-- `.logs/` and `.vendor/` are gitignored. A script writes its output into
+- `.logs/` and `src/.vendor/` are gitignored. A script writes its output into
   `.logs/<script>/<UTC timestamp>/` through `tools/run-dir.sh` and points `latest` at it.
   Link the run directory, never a loose file (`docs/tools/run-output.md`).
 - `reference/` holds the developer-only tooling for the Windows reference game, run under
@@ -181,7 +184,7 @@ absent from it run at SwiftLint defaults.
 No file is longer than 800 lines, in any language. Above 600 lines `make file-length` and
 the pre-commit hook print a warning: split the file then, while the split is still easy.
 A file over 800 lines fails the hook, `make check`, and CI. Split it to below 600 lines.
-`Package.swift` is the one exception, because SwiftPM reads a single manifest file.
+`src/Package.swift` is the one exception, because SwiftPM reads a single manifest file.
 
 ## Writing style (agent output, docs, comments, commit bodies)
 

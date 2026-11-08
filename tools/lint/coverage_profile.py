@@ -23,8 +23,8 @@ def current_profiles(newest, kept, sources_changed):
 
 def sources_changed():
     """When a file the package modules build from last changed."""
-    files = [path for path in pathlib.Path("Sources").rglob("*") if path.is_file()]
-    return max((path.stat().st_mtime for path in files + [pathlib.Path("Package.swift")]), default=0)
+    files = [path for path in pathlib.Path("src/Sources").rglob("*") if path.is_file()]
+    return max((path.stat().st_mtime for path in files + [pathlib.Path("src/Package.swift")]), default=0)
 
 
 def merged_profile(build):
@@ -81,13 +81,13 @@ def lcov(derived_data):
 
 
 def source_path(name):
-    """`Sources/...` for a profile path, which may carry the cache's `/^src/` prefix."""
-    marker = name.find("Sources/")
+    """`src/Sources/...` for a profile path, which may carry the cache's `/^src/` prefix."""
+    marker = name.find("src/Sources/")
     return name[marker:] if marker >= 0 else None
 
 
 def parse_lcov(text):
-    """{path: {"lines": {line: count}, "functions": [(line, name, count)]}} for Sources/."""
+    """{path: {"lines": {line: count}, "functions": [(line, name, count)]}} for src/Sources/."""
     files, current, starts = {}, None, {}
     for raw in text.splitlines():
         key, _, value = raw.partition(":")

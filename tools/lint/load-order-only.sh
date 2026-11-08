@@ -7,9 +7,9 @@ set -eu
 cd "$(git rev-parse --show-toplevel)"
 
 report="$(
-  git ls-files -z -- 'Sources/*.swift' |
+  git ls-files -z -- 'src/Sources/*.swift' |
     xargs -0 grep -n 'ESMFile(url:' |
-    grep -v -e '^Sources/OpenSkyFormats' -e '^Sources/OpenSkyGameData/ActivePluginFiles.swift:' ||
+    grep -v -e '^src/Sources/OpenSkyFormats' -e '^src/Sources/OpenSkyGameData/ActivePluginFiles.swift:' ||
     true
 )"
 

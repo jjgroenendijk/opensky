@@ -1,6 +1,6 @@
 #!/bin/sh
 # Module size check (docs/tools/modules.md#module-size). Counts the Swift source lines
-# of each folder under Sources/, without blank lines and comments, and prints them
+# of each folder under src/Sources/, without blank lines and comments, and prints them
 # sorted. Over WARN lines it warns; over LIMIT lines it fails, unless the module is on
 # module-size-exceptions.txt with an open issue that splits it.
 set -eu
@@ -58,7 +58,7 @@ def code_lines(text):
 
 
 sizes = {}
-for folder in sorted(pathlib.Path("Sources").iterdir()):
+for folder in sorted(pathlib.Path("src/Sources").iterdir()):
     if folder.is_dir():
         lines = sum(code_lines(path.read_text()) for path in folder.rglob("*.swift"))
         if lines:

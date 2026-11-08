@@ -8,7 +8,7 @@
 # Usage: tools/comment-blocks.sh dump [-n LINES] [-r] [PATH...]
 #          -n  only blocks of at least LINES lines (default 7, over the limit)
 #          -r  also shorter blocks that cite an issue or a milestone
-#          PATH  files or folders (default Sources Tests)
+#          PATH  files or folders (default src/Sources src/Tests)
 #        tools/comment-blocks.sh apply SPEC
 #          A range that is no longer exactly one comment block is refused, and
 #          its file is left untouched.
@@ -30,7 +30,7 @@ dump() {
         esac
     done
     shift $((OPTIND - 1))
-    [ "$#" -gt 0 ] || set -- Sources Tests
+    [ "$#" -gt 0 ] || set -- src/Sources src/Tests
     git ls-files -- "$@" | grep -E '\.(swift|metal|h)$' |
         awk -v min="$min" -v refs="$refs" '
             function flush(   i, cited) {

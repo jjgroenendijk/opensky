@@ -22,9 +22,9 @@ so it is always current.
 
 | Part | Place |
 | --- | --- |
-| Arguments: names, options, flags, help, `validate()` | `Sources/OpenSkyCLIArguments/`, one struct per command, swift-argument-parser |
-| Runner: the `CLIRunnable` extension that calls the command | `Sources/OpenSkyCLI/CommandRunners.swift` |
-| Command: parse results in, print out | `Sources/OpenSkyCLI/Commands/<Name>Command.swift` |
+| Arguments: names, options, flags, help, `validate()` | `src/Sources/OpenSkyCLIArguments/`, one struct per command, swift-argument-parser |
+| Runner: the `CLIRunnable` extension that calls the command | `src/Sources/OpenSkyCLI/CommandRunners.swift` |
+| Command: parse results in, print out | `src/Sources/OpenSkyCLI/Commands/<Name>Command.swift` |
 | Logic worth a test | The package module of its domain, unit-tested there; the command only parses and prints |
 | An app command for `game` | `AgentCommandCatalog` in `OpenSkyAgentControl`; the CLI reads it |
 
@@ -57,7 +57,7 @@ A new subcommand copies a sibling, such as `ReferenceArguments+Bridge.swift`.
    changes `docs/tools/reference-game.md`.
 2. A run in `tools/probe.sh`, or one line in `tools/lint/cli-probe-exceptions.txt` saying
    why the probe cannot run it, such as "it needs a running reference game".
-3. A parse test in `Tests/OpenSkyCLIArgumentsTests/` when the change adds a name scripts use.
+3. A parse test in `src/Tests/OpenSkyCLIArgumentsTests/` when the change adds a name scripts use.
 4. The probe's expected text when an output format changes, because the probe greps it.
 
 ## Verify

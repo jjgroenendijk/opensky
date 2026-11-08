@@ -132,7 +132,6 @@ Retires per host when it changes behaviour.
 | --- | --- | --- |
 | `Virtual filesystem overlay file '.../all-product-headers.yaml' not found` in `make build-app` | A package test builds the same checkout at the same time. Run them one after the other | An overlapping build passes (checked 2026-10-24, Xcode 27) |
 | `DVTAssertInvalidatableObjectIsValid` in `IDESwiftPackageBuildable.blueprint` before any test runs | The build before failed and removed the `OpenSky` driver records. Run `make test-unit` again | A failed build is no longer followed by it (checked 2026-10-28, Xcode 27) |
-| `DVTInvalidation.swift:37 ... Message sent to invalidated object` after `Resolve Package Graph` repeats | The main checkout is the package root and holds `.cache/Build/` and `.claude/worktrees/`, where other builds write, so Xcode keeps re-resolving. Build and test from a linked worktree; `make test-rerun` also works in the main checkout | `make test-unit` in the main checkout runs while another worktree builds (checked 2026-10-26, Xcode 27.1) |
 | `ValidateCAS` fails with `CAS validation requires exclusive access but CAS was in use` | Another checkout's build used the shared compilation cache store while this build validated it. Build again | A build validates the store while another build uses it (checked 2026-11-07, Xcode 27.2) |
 | `invalid or unsupported format for signature` naming a `.cstemp` file | A build stopped during `codesign`. Run `find "$OPENSKY_DERIVED_DATA/Build/Products" -name '*.cstemp' -delete` and build again. `make test-package` keeps its products in `.build/out/Products`; a failed compile there leaves them too, and the next run fails on `libOpenSkyTestSupport.a` | Xcode cleans its own signing temp files (checked 2026-10-04) |
 | `EXC_BAD_ACCESS` after a protocol or struct change | The incremental build does not recompile callers when a requirement is added mid-protocol, or a stored property is added to a struct another file stores. Add requirements at the end, or touch the callers. A clean CI build is not affected | The driver tracks layout changes (checked 2026-10-11, Xcode 27.0) |
@@ -170,12 +169,12 @@ Retires when swift-build reports a replayed job to the driver: `make build-cli` 
 ### Package framework variants warn about declared dependencies
 
 Checked 2026-10-01 on Xcode 27.0. A unit build prints lines like `warning: 'OpenSkyFormatsESM'
-is missing a dependency on 'OpenSkyFormatsCore'`, although `Package.swift` declares it. A test
+is missing a dependency on 'OpenSkyFormatsCore'`, although `src/Package.swift` declares it. A test
 bundle links each engine target again, so Xcode builds it as a dynamic variant, and Swift
 Build's `DIAGNOSE_MISSING_TARGET_DEPENDENCIES` finds no edge from a variant. Fixed upstream in
 [swift-build PR 1457](https://github.com/swiftlang/swift-build/pull/1457).
 
-`config/Build/Overrides.xcconfig` turns the check off where `MACH_O_TYPE` is `mh_dylib`. The
+`src/config/Build/Overrides.xcconfig` turns the check off where `MACH_O_TYPE` is `mh_dylib`. The
 imports are still checked by `make module-graph`.
 
 Retires when the installed Xcode ships that fix: delete the override, and a clean

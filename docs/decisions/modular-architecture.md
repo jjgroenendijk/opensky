@@ -13,7 +13,7 @@ OpenSky follows [The Modular Architecture](https://tuist.dev/en/docs/guides/feat
 an optional `FeatureFixtures` (see below). A feature uses another feature only through its
 Interface. The app and `OpenSkyCLI` build the implementations and
 pass them in (dependency injection).
-[Swift modules](/tools/modules.md) describes the layout and the `Package.swift` helpers.
+[Swift modules](/tools/modules.md) describes the layout and the `src/Package.swift` helpers.
 
 ## Why TMA
 
@@ -33,7 +33,7 @@ a fake depends only on Interfaces, so one shared library builds no feature imple
 ## Why no Tuist
 
 TMA is a set of rules, not a tool. Tuist generates Xcode projects, and OpenSky already avoids
-project-file edits: target membership follows the folder, and `Package.swift` declares every
+project-file edits: target membership follows the folder, and `src/Package.swift` declares every
 module ([build system](/tools/build-system.md)). A second project generator would add a tool
 and a second source of truth. So the rules are checked on the package graph instead.
 
@@ -63,7 +63,7 @@ runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI
 | 10. Renderer | `OpenSkyRendering` depends only on the formats, `OpenSkyGameData`, the asset cache, `OpenSkyRenderCore`, `OpenSkyRenderResources`, and its draw helpers. Game state reaches it in `RenderFrameInput` | Gate |
 | 11. Interface exports | An Interface publicly imports only lower modules and other Interfaces, and no file uses `@_exported import` | Gate |
 | 12. Used dependencies | Every declared dependency of a target is imported by at least one of its files | Gate |
-| 13. Stable dependencies | A module under `Sources/` depends only on a module whose instability is not higher than its own, or on an Interface | Gate |
+| 13. Stable dependencies | A module under `src/Sources/` depends only on a module whose instability is not higher than its own, or on an Interface | Gate |
 
 Rule 7 matters because Xcode builds all package modules into one product. A module can then
 compile with an `import` it never declared, and break later in `swift test` or on another
@@ -92,7 +92,7 @@ the type generic over the part that names the less stable module. `PlayerRigAsse
 generic over its asset for this reason: the interface module holds the rig, and only the
 player module names the renderer's `ActorRenderAsset`.
 
-`Package.swift` checks rules 1 and 2 partly too, when the manifest loads. It rejects a
+`src/Package.swift` checks rules 1 and 2 partly too, when the manifest loads. It rejects a
 dependency on a module declared later, and a dependency on a feature implementation. The
 script adds the layer list, the Interface rules, the complete sets, and the imports.
 
@@ -102,14 +102,14 @@ Some fixtures need the feature's own implementation. Two examples: `FakeCombatWo
 `CombatLoopWorld`, a seam that `OpenSkyCombat` declares, and `CellStreamerFixture` builds a
 real cell streamer. The feature's tests and the acceptance chains in the Xcode bundles both use
 them, and a test target cannot import another test target. TMA has no target for this, so
-OpenSky adds one: `FeatureFixtures`, in `Tests/FeatureFixtures/`.
+OpenSky adds one: `FeatureFixtures`, in `src/Tests/FeatureFixtures/`.
 
 Rules 4 and 5 keep it narrow. A `Fixtures` library may build only its own feature, and only
 `FeatureTests` and the Xcode bundles link it. So another feature's tests still reach the
 feature only through its Interface and its `Testing` fakes.
 
 A fixture that needs two implementations is integration support. It goes in
-`Tests/HostedTestSupport/` when both Xcode bundles use it, else in `Tests/OpenSkyTests/Support/`.
+`src/Tests/HostedTestSupport/` when both Xcode bundles use it, else in `src/Tests/OpenSkyTests/Support/`.
 
 ## The layers
 
