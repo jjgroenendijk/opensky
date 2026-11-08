@@ -32,7 +32,7 @@ one test leaves state behind, and the next one passes only because of it.
 
 ## Coverage floors
 
-The floors read the profile of the last `make test-unit COVERAGE=1` run with `llvm-cov`
+The floors read the merged profile of the recent `make test-unit COVERAGE=1` runs with `llvm-cov`
 ([Test runs](/tools/test-runs.md#code-coverage)). Each value is our own choice: no source
 gives a number. The `Makefile` holds the values.
 

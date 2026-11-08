@@ -16,7 +16,8 @@
 # leaves new stale copies, it removes them and builds once more; the stale check
 # also removes the copies of the modules above, so one pass is enough.
 # A test run fails when an -only-testing selector matched no test
-# (tools/test-selectors.sh).
+# (tools/test-selectors.sh). A failed test run ends with each failing test and
+# its message (tools/test-report.sh --failures).
 #
 # The transcript goes to .logs/<name>/<UTC timestamp>/<name>.log (issue #347);
 # a caller that has already opened a run directory passes it in so one run of
@@ -175,6 +176,10 @@ if [ "$status" -ne 0 ] && [ "${OPENSKY_XCODEBUILD_RAW:-0}" != "1" ] && [ -z "${u
     && ! grep -qE 'error: |failed|errored|^✘' "$shown_file"; then
     printf '[INFO] no diagnostic matched; last 40 transcript lines:\n'
     tail -n 40 "$log"
+fi
+# A failed test run names its failing tests; the bundle holds why, so print it here.
+if [ "$status" -ne 0 ] && [ -e "$bundle/Info.plist" ]; then
+    "$root/tools/test-report.sh" --failures "$bundle" || true
 fi
 printf '[INFO] full transcript: %s\n' "$log"
 exit "$status"
