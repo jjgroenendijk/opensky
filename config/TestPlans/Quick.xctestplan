@@ -445,6 +445,11 @@
     {
       "parallelizable": true,
       "randomExecutionOrdering": true,
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyWorldConditionFunctionsTests", "name": "OpenSkyWorldConditionFunctionsTests"}
+    },
+    {
+      "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyWorldConditionsTests", "name": "OpenSkyWorldConditionsTests"}
     },
     {

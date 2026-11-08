@@ -80,8 +80,8 @@ smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
 
 `UITests` lists `OpenSkyUITests` alone. `RealData` lists `OpenSkyRealDataTests` with the
 `.smoke` tag and carries the data root into the test host; `RealDataAll` is the whole
-bundle (`make test-real ALL=1`). `make lint-test-plans` checks that the four layer plans
-list every `UnitTests` target exactly once.
+bundle (`make test-real ALL=1`). `make lint-test-plans` checks that `UnitTests` lists every
+unit test folder, and that the four layer plans list every `UnitTests` target exactly once.
 
 Never list the UI bundle in a plan beside an app-hosted unit bundle: the app blocks as a
 test host while the UI runner waits for it, and the run deadlocks
