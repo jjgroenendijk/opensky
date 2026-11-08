@@ -34,6 +34,7 @@ baseline files, and updating the baselines after each refactor cost too much.
 | --- | --- | --- | --- |
 | Duplicated code | jscpd, `make duplicates` | Lint | Under a second, whole tree |
 | Unused code | Periphery, `make health` | Health | Index build plus about 1.5 min scan |
+| No adapter uses another ([Ports and adapters](/decisions/ports-and-adapters.md)) | `tools/lint/adapter-references.py`, `make health` | Health | Seconds after the index build |
 | Module graph (TMA) | `tools/lint/module-graph.sh` | Lint | Seconds, no build |
 | Comment length | `tools/lint/comment-length.sh` | Lint | Under a second |
 | File length | `tools/lint/file-length.sh`, `make file-length` | Lint, pre-commit hook | Under a second |

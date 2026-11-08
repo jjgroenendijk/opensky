@@ -142,11 +142,6 @@ public final class RuntimeStateWorldAdapter {
         self.game = game
     }
 
-    public static var saveAppVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-            ?? "unknown"
-    }
-
     /// Every resident actor plus the player, with the combat loop's fight
     /// filled in both directions.
     public func actorResolution() -> ActorStateResolution {

@@ -69,7 +69,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
         listings = await attempt { try await game.runtimeStateWorld.saveListings() } ?? []
         let texts = saveTexts
         saveRows = await listings.map { Self.row($0, texts: texts) }
-            + SkyrimSaveImportAdapter.rows()
+            + SkyrimSaveImport.rows()
         hasListed = true
         return saveRows
     }
@@ -102,7 +102,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
         )
         lastSkyrimExport = .running
         do {
-            let (url, report) = try await SkyrimSaveExportAdapter.export(contents, game: saveFiles)
+            let (url, report) = try await SkyrimSaveExport.export(contents, game: saveFiles)
             lastSkyrimExport = .exported(url.lastPathComponent, report.lines)
             await refreshSaveRows()
             return url.lastPathComponent
@@ -127,8 +127,8 @@ public final class SaveGameWorldAdapter: SaveGameService {
 
     private func load(slot: String, checksLoadOrder: Bool) async throws {
         game.effectsWorld.resetHealthCues()
-        if SkyrimSaveImportAdapter.isImport(slot) {
-            try await SkyrimSaveImportAdapter.load(slot: slot, game: saveFiles)
+        if SkyrimSaveImport.isImport(slot) {
+            try await SkyrimSaveImport.load(slot: slot, game: saveFiles)
             await refreshSaveRows()
             resetPlayTime()
             lastSaveDate = Date()
@@ -145,7 +145,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
     }
 
     public func deleteSave(slot: String) async throws {
-        guard !SkyrimSaveImportAdapter.isImport(slot) else { return }
+        guard !SkyrimSaveImport.isImport(slot) else { return }
         try await game.runtimeStateWorld.deleteSave(slot: slot)
         await refreshSaveRows()
     }

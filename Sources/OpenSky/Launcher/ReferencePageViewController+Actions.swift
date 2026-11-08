@@ -37,7 +37,7 @@ extension ReferencePageViewController {
         }
         actions.placeNextGameWindow(contentRect: split.openSkyContent)
         if let save {
-            actions.continueGame(slot: SkyrimSaveImportAdapter.slot(for: save))
+            actions.continueGame(slot: SkyrimSaveImport.slot(for: save))
             return
         }
         Task { [weak actions] in
@@ -119,7 +119,7 @@ extension ReferencePageViewController {
     @objc func importSave() {
         switch ReferencePageActions.newestSave(prefix: ReferenceSettings.prefix()) {
         case let .success(save):
-            context.actions?.continueGame(slot: SkyrimSaveImportAdapter.slot(for: save))
+            context.actions?.continueGame(slot: SkyrimSaveImport.slot(for: save))
         case let .failure(error):
             show(ReferenceNotice(error.message, isProblem: true), in: viewLabel)
         }

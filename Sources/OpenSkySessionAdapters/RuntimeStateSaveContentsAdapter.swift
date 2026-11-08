@@ -87,7 +87,7 @@ extension RuntimeStateSaveContentsAdapter {
             snapshot: game.worldState.snapshot(),
             metadata: SaveCreationMetadata(
                 creationTimestamp: UInt64(max(0, Date().timeIntervalSince1970)),
-                appVersion: RuntimeStateWorldAdapter.saveAppVersion
+                appVersion: SaveAppVersion.current
             ),
             clock: game.gameSession?.gameClock,
             scripts: game.scripts.runtime?.instanceStates() ?? [],

@@ -407,8 +407,9 @@ $(SHADER_LIBRARY): $(SHADER_SOURCES)
 # uncached, so its first run in a checkout is a full build; later runs are
 # incremental. The OpenSky scheme builds openskycli for testing, so the two plans
 # cover the app, the CLI, and every test bundle.
-health: health-index ## Build the index, then fail on any unused code (Periphery)
+health: health-index ## Build the index, then fail on unused code or an adapter that uses another
 	@./tools/lint/unused-code.sh $(PERIPHERY_CFG) "$(INDEX_DATA)/Index.noindex/DataStore"
+	@python3 tools/lint/adapter-references.py "$(INDEX_DATA)/Index.noindex/DataStore" .
 
 health-index: link-shared
 	@$(XCB_RUN) health-unit $(call xcb_index,$(SCHEME)) \
