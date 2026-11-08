@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, "tools/lint")
-from coverage_profile import demangled, is_closure, lcov, parse_lcov
+from coverage_profile import current_profiles, demangled, is_closure, lcov, parse_lcov
 from swift_source import XCODE_ONLY, wiring_modules
 
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
@@ -91,6 +91,9 @@ def self_check():
     covered, executable, untested = check(changed, files, names)
     if (covered, executable, untested) != (1, 3, ["Sources/OpenSkyMagic/A.swift:2: g"]):
         sys.exit(f"[ERROR] diff-coverage self-check: {covered}/{executable}, {untested}")
+    # A Quick run kept after the last source change merges in; an older App run does not.
+    if current_profiles("newest", [("Quick", 5), ("App", 1)], 3) != ["newest", "Quick"]:
+        sys.exit("[ERROR] diff-coverage self-check: kept profiles chosen wrongly")
 
 
 self_check()

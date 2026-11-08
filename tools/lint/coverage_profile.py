@@ -4,23 +4,57 @@ It reads the profile with llvm-cov, because `xccov` reports no package files fro
 bundle built with the compilation cache's prefix mapping.
 """
 
+import filecmp
+import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 
 # Swift closures are functions to llvm-cov; a closure that never ran inside a tested
 # function is a branch, so the line rule counts it and the function rule does not.
 CLOSURE_MARKS = ("closure #", "implicit closure", "autoclosure")
 
 
-def profile_objects(derived_data):
-    """The newest profile and every package module binary of the Debug build."""
-    build = pathlib.Path(derived_data) / "Build"
+def current_profiles(newest, kept, sources_changed):
+    """The newest profile, and each plan's kept profile no older than the sources."""
+    return [newest] + [path for path, modified in kept if modified >= sources_changed]
+
+
+def sources_changed():
+    """When a file the package modules build from last changed."""
+    files = [path for path in pathlib.Path("Sources").rglob("*") if path.is_file()]
+    return max((path.stat().st_mtime for path in files + [pathlib.Path("Package.swift")]), default=0)
+
+
+def merged_profile(build):
+    """One profile over the newest run and every current kept run (`make test-unit`)."""
     profiles = sorted(
         build.glob("ProfileData/*/Coverage.profdata"), key=lambda path: path.stat().st_mtime
     )
     if not profiles:
         sys.exit(f"[FAIL] no coverage profile under {build}/ProfileData. Run: make test-unit COVERAGE=1")
+    kept = [
+        (path, path.stat().st_mtime)
+        for path in sorted(build.glob("ProfileData/*.profdata"))
+        if not filecmp.cmp(path, profiles[-1], shallow=False)
+    ]
+    chosen = current_profiles(profiles[-1], kept, sources_changed())
+    if len(chosen) == 1:
+        return chosen[0]
+    merged = pathlib.Path(tempfile.gettempdir()) / f"opensky-coverage-{os.getpid()}.profdata"
+    command = ["xcrun", "llvm-profdata", "merge", "-o", str(merged)] + [str(path) for path in chosen]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        sys.exit(f"[FAIL] llvm-profdata merge: {result.stderr.strip()[:400]}")
+    print(f"[INFO] coverage merged from {len(chosen)} runs: " + ", ".join(p.name for p in chosen))
+    return merged
+
+
+def profile_objects(derived_data):
+    """The merged profile and every package module binary of the Debug build."""
+    build = pathlib.Path(derived_data) / "Build"
+    profile = merged_profile(build)
     products = build / "Products/Debug"
     objects = [
         framework / framework.stem
@@ -29,7 +63,7 @@ def profile_objects(derived_data):
     ] + sorted(products.glob("OpenSky*.o"))
     if not objects:
         sys.exit(f"[FAIL] no package modules under {products}. Run: make test-unit COVERAGE=1")
-    return profiles[-1], objects
+    return profile, objects
 
 
 def lcov(derived_data):

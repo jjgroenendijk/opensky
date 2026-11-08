@@ -10,9 +10,16 @@
 # reader" — indistinguishable from a real failure. This script waits briefly for
 # finalization and reports "bundle not ready" as its own state.
 #
-# Usage: tools/test-report.sh [RESULTS_DIR]   (default DerivedData/TestResults)
+# Usage: tools/test-report.sh [--failures] [RESULTS_DIR | BUNDLE.xcresult]
+#        (default DerivedData/TestResults). --failures prints only the failing
+#        tests and their messages; a failed test run calls it that way.
 set -eu
 
+failures_only=""
+if [ "${1:-}" = "--failures" ]; then
+    failures_only="yes"
+    shift
+fi
 results_dir="${1:-${OPENSKY_DERIVED_DATA:-$PWD/DerivedData}/TestResults}"
 
 newest() {
@@ -23,7 +30,10 @@ newest() {
         2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-
 }
 
-bundle="$(newest "$results_dir")"
+case "$results_dir" in
+    *.xcresult) bundle="$results_dir" ;;
+    *) bundle="$(newest "$results_dir")" ;;
+esac
 if [ -z "$bundle" ]; then
     # shellcheck disable=SC2012  # need newest-by-mtime across the DerivedData glob
     bundle="$(ls -td \
@@ -49,7 +59,7 @@ while [ ! -e "$bundle/Info.plist" ]; do
 done
 
 echo "[INFO] $bundle"
-xcrun xcresulttool get test-results summary --path "$bundle"
+[ -n "$failures_only" ] || xcrun xcresulttool get test-results summary --path "$bundle"
 
 # Summary above prints counts; now name each failing test + its message so a
 # failure is actionable without hand-parsing JSON (the recurring pain point).
@@ -105,6 +115,7 @@ if fails:
 else:
     print("\n[INFO] no failing tests in this bundle")
 PY
+[ -z "$failures_only" ] || exit 0
 
 # Pass, fail, and time per shared tag. The result bundle does not carry Swift
 # Testing tags, so each test is matched to the tags its suite and @Test declare

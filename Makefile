@@ -504,11 +504,16 @@ XCB_PERF         := xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) \
 PLAN             ?= Quick
 UNIT_PLANS       := Quick Formats Engine Features App UnitTests GPU
 check_plan = $(if $(filter $(PLAN),$(UNIT_PLANS)),,$(error PLAN must be one of: $(UNIT_PLANS)))
+# Each run overwrites Xcode's one profile, so a copy per plan lets the coverage
+# checks merge a Quick run and an App run, as CI's whole plan counts both.
+keep_coverage = profile="$$(ls -t $(DERIVED_DATA)/Build/ProfileData/*/Coverage.profdata 2>/dev/null | head -n 1)"; \
+	[ -z "$$profile" ] || cp "$$profile" "$(DERIVED_DATA)/Build/ProfileData/$(PLAN).profdata"
 test-unit: link-shared $(SHADER_LIBRARY) ## Run a unit plan [PLAN=Quick|Formats|Engine|Features|App|UnitTests|GPU] [T='Target/Suite/test(),...'] [N=100] [COVERAGE=1]
 	@$(check_plan)TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test-unit $(XCB_TEST) $(call test_bundle,unit-$(PLAN)) \
 		-testPlan $(PLAN) $(call only_testing,OpenSkyTests) $(coverage_flag) \
-		$(if $(N),-run-tests-until-failure -test-iterations $(N)) build-for-testing test-without-building
+		$(if $(N),-run-tests-until-failure -test-iterations $(N)) build-for-testing test-without-building; \
+		status=$$?; $(if $(COVERAGE),$(keep_coverage);) exit $$status
 
 # The .xctestrun that the last test-unit or build-tests run of PLAN wrote. A rerun
 # through it skips the build system: seconds instead of minutes. It runs the

@@ -130,6 +130,9 @@ default, xcodebuild collected a system log archive after the last bundle finishe
 106 MB bundle and about 9 s of a 37 s test phase on 2026-10-05, on a green run too. The test
 output, the failures, and the per-test durations stay in the bundle.
 
+A failed run prints each failing test with its failure message, read from the bundle by
+`make test-report`'s `--failures` mode, so the cause shows without a second command.
+
 `xcodebuild` builds every buildable in a scheme's Test action before it looks at `-only-testing`, so
 a selector never saves building a bundle. A plan does, because the plan decides what is built.
 `T=...` adds `-only-testing` on top of the target's plan. `T` takes a comma list, for example
@@ -228,8 +231,11 @@ instrumented program writes `default.profraw` into its working directory when it
 with `llvm-cov`, not the result bundle with `xccov`. Each package module builds into its own
 framework under `PackageFrameworks/`, and the bundle lists none of them as a coverage product. So
 `xccov` reports only the app, with no files, and a plan's package targets change nothing. Each test
-run rewrites that profile, so read it right after `make test-unit`. A filtered run covers less and
-reads too low.
+run rewrites that profile, so `make test-unit COVERAGE=1` also keeps a copy as
+`Build/ProfileData/<PLAN>.profdata`. The checks merge the newest profile with every kept copy that
+is newer than the last change under `Sources/` or to `Package.swift`, with `llvm-profdata merge`.
+So `PLAN=Quick` and then `PLAN=App` count the app-hosted suites as CI's whole plan does, and a copy
+from before a source edit drops out. A filtered run covers less and reads too low.
 
 `make coverage-floor` fails when a parser module, a game-rule module, or a pure core file is
 under its floor in the `Makefile`. `make diff-coverage` fails when the lines a branch changes in
