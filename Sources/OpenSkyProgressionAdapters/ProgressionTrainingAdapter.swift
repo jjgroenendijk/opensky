@@ -1,5 +1,6 @@
 import OpenSkyAudio
 public import OpenSkyCells
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -64,9 +65,10 @@ extension ProgressionTrainingAdapter {
             let inventory = game.inventory.runtime?.inventory,
             let holder = game.streamer?.inventoryHolder(of: trainer),
             inventory.goldCount(of: .player) >= gold,
-            (try? inventory.remove(inventory.goldFormID, count: Int32(gold), from: .player)) != nil
+            attempt({ try inventory.remove(inventory.goldFormID, count: Int32(gold), from: .player)
+            }) != nil
         else { return false }
-        _ = try? inventory.add(inventory.goldFormID, count: Int32(gold), to: holder)
+        _ = attempt { try inventory.add(inventory.goldFormID, count: Int32(gold), to: holder) }
         return true
     }
 

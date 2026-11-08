@@ -127,13 +127,7 @@ extension ScriptSkyBindingsAdapter: PapyrusWeatherControlling {
             let id = weatherFormID(weather),
             let record = weatherSystem?.store.weather(id)
         else { return nil }
-        return switch record.data?.precipitation ?? .none {
-        case .none: -1
-        case .pleasant: 0
-        case .cloudy: 1
-        case .rainy: 2
-        case .snow: 3
-        }
+        return (record.data?.precipitation ?? .none).papyrusClassification
     }
 
     /// The load-order FormID of a `WTHR`, or nil when the key names none.

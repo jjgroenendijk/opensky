@@ -78,7 +78,8 @@ extension MapTravelAdapter {
             let streamer = game.streamer else { return false }
         let from = gameSession.walkController.feetPosition
         let walk = game.worldData?
-            .movementConfiguration.travelSpeed.value ?? 80
+            .movementConfiguration.travelSpeed.value ?? PlayerMovementConfiguration
+            .fallbackTravelSpeed
         let seconds = FastTravelRule.gameSeconds(
             distance: simd_distance(from, marker.position), walkSpeed: walk,
             speedMultiplier: owner.mapSettings.fastTravelSpeedMultiplier,
@@ -103,7 +104,8 @@ extension MapTravelAdapter {
             renderer.camera = camera
             gameSession.reseedMovement(camera: camera)
         }
-        game.scripts.runtime?.queuePlayerFastTravelEnd(gameHours: Float(seconds / 3600))
+        game.scripts.runtime?
+            .queuePlayerFastTravelEnd(gameHours: Float(seconds / GameClock.secondsPerHour))
         game.saveGames.autosave(.travel)
         return true
     }

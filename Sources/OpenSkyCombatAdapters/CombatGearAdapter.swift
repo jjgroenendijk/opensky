@@ -12,6 +12,7 @@ import OpenSkyCrime
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFactions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -92,12 +93,12 @@ extension CombatGearAdapter {
             let runtime = game.inventory.runtime,
             let holder = game.streamer?.inventoryHolder(of: key)
         else { return false }
-        return (try? runtime.inventory.add(item, count: count, to: holder)) != nil
+        return attempt { try runtime.inventory.add(item, count: count, to: holder) } != nil
     }
 
     @discardableResult
     public func removeOneFromPlayer(_ item: FormID) -> Bool {
         guard let runtime = game.inventory.runtime else { return false }
-        return (try? runtime.inventory.remove(item, count: 1, from: runtime.player)) != nil
+        return attempt { try runtime.inventory.remove(item, count: 1, from: runtime.player) } != nil
     }
 }

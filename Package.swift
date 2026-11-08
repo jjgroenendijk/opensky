@@ -1359,7 +1359,8 @@ targets += composition(
     "OpenSkyProgressionAdapters",
     dependencies: [
         "OpenSkyActors", "OpenSkyAudio", "OpenSkyCells", "OpenSkyCombat", "OpenSkyConditions",
-        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventory", "OpenSkyInventoryInterface",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventory",
+        "OpenSkyInventoryInterface",
         "OpenSkyMagic", "OpenSkyMenus", "OpenSkyPlayer", "OpenSkyProgression",
         "OpenSkyProgressionInterface", "OpenSkyQuests", "OpenSkyQuestsInterface",
         "OpenSkyRuntimeState", "OpenSkyScripting", "OpenSkySessionInterface", "OpenSkyWorld",

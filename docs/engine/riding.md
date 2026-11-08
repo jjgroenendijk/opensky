@@ -105,3 +105,7 @@ the dismount. A mount that dies or unloads drops the rider at once.
 
 - [INFO] The ridden mount's capsule (radius 40, height 160) is OpenSky's value.
 - [INFO] The camera eye sits the player's standing eye height above the saddle.
+- [INFO] A dragon rider locks a target 0.25 rad off the view centre, up to 8000 units away;
+  Switch Target looks 60 degrees off it. A driven actor slower than 0.5 units per second
+  stands. A race without mount data dismounts 50 units left of the saddle and 65 up. All
+  are OpenSky's values.

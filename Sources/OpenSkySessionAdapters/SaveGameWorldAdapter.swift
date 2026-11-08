@@ -66,7 +66,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
     /// A listing failure reads as no saves: the list is a readout.
     @discardableResult
     public func refreshSaveRows() async -> [SaveSlotRow] {
-        listings = await (try? game.runtimeStateWorld.saveListings()) ?? []
+        listings = await attempt { try await game.runtimeStateWorld.saveListings() } ?? []
         let texts = saveTexts
         saveRows = await listings.map { Self.row($0, texts: texts) }
             + SkyrimSaveImportAdapter.rows()
@@ -265,7 +265,8 @@ public final class SaveGameWorldAdapter: SaveGameService {
         } ?? listing.modified
         let title = summary.map { "\(listing.slot) - \($0.characterName)" } ?? listing.slot
         let detail = summary.map {
-            "\(texts.level) \($0.level), \($0.locationName), \(playTimeText($0.playSeconds))"
+            let playTime = SavePlayTime.text(seconds: $0.playSeconds)
+            return "\(texts.level) \($0.level), \($0.locationName), \(playTime)"
         } ?? listing.error ?? ""
         let thumbnail = listing.summary?.thumbnail
         return SaveSlotRow(
@@ -274,18 +275,13 @@ public final class SaveGameWorldAdapter: SaveGameService {
             character: summary.map {
                 SaveSlotCharacter(
                     name: $0.characterName, race: $0.raceName, level: $0.level,
-                    playTime: playTimeText($0.playSeconds)
+                    playTime: SavePlayTime.text(seconds: $0.playSeconds)
                 )
             },
             picture: thumbnail.map {
                 SaveSlotPicture(width: $0.width, height: $0.height, rgba: $0.rgba)
             }
         )
-    }
-
-    public static func playTimeText(_ seconds: Double) -> String {
-        let minutes = Int(seconds / 60)
-        return unsafe String(format: "%d:%02d", minutes / 60, minutes % 60)
     }
 
     private func summary() -> SaveSummary {
@@ -308,9 +304,9 @@ public final class SaveGameWorldAdapter: SaveGameService {
 
     private func thumbnail() -> SaveThumbnail? {
         guard
-            let texture = try? game.renderer?.renderOffscreen(
+            let texture = attempt({ try game.renderer?.renderOffscreen(
                 width: Self.thumbnailSize.width, height: Self.thumbnailSize.height
-            )
+            ) })
         else { return nil }
         return SaveThumbnail(
             width: texture.width, height: texture.height,

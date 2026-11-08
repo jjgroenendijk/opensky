@@ -7,6 +7,7 @@ public import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyEffects
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -110,13 +111,13 @@ extension ScriptSessionBindingsAdapter {
             width > 0, height > 0,
             let pictures = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask)
                 .first,
-            let texture = try? renderer.renderOffscreen(width: width, height: height)
+            let texture = attempt({ try renderer.renderOffscreen(width: width, height: height) })
         else { return false }
         let file = (name.isEmpty ? "ScreenShot" : name) + ".png"
         let url = pictures.appending(path: "OpenSky").appending(path: file)
-        try? FileManager.default.createDirectory(
-            at: url.deletingLastPathComponent(), withIntermediateDirectories: true
-        )
-        return (try? FrameScreenshot.write(texture: texture, to: url)) != nil
+        let folder = url.deletingLastPathComponent()
+        let files = FileManager.default
+        attempt { try files.createDirectory(at: folder, withIntermediateDirectories: true) }
+        return attempt { try FrameScreenshot.write(texture: texture, to: url) } != nil
     }
 }

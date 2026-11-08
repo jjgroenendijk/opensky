@@ -244,7 +244,7 @@ public final class StoryWorldAdapter {
             let stage = record.stages.first(where: { $0.flags.contains(.startUpStage) }),
             let key = runtime.quests.key(for: quest)
         {
-            _ = try? game.scripts.bridge?.setQuestStage(stage.index, for: key)
+            _ = attempt { try game.scripts.bridge?.setQuestStage(stage.index, for: key) }
         }
         scenes.questDidStart(quest)
     }

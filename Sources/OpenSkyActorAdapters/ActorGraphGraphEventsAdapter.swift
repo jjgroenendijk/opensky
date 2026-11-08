@@ -6,6 +6,7 @@ public import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
@@ -75,7 +76,8 @@ extension ActorGraphGraphEventsAdapter {
         let female = identity.isFemale(ofBase: base, roll: roll) ?? false
         let model = (female ? graphs?.female : nil) ?? graphs?.male
         let path = model.map { ActorGraphCore.projectPath(modelPath: $0.path) }
-        let weight = (try? resolver.templates.rolling(roll).resolve(base: base).weight) ?? 50
+        let weight = attempt { try resolver.templates.rolling(roll).resolve(base: base).weight } ??
+            ResolvedActorAppearance.defaultWeight
         let graphBase = ActorGraphWorldAdapter.GraphBase(path: path, weight: weight)
         owner.graphBases[key] = graphBase
         return graphBase
@@ -109,7 +111,7 @@ extension ActorGraphGraphEventsAdapter {
         if let cached = owner.actorSounds[cacheKey] {
             return cached
         }
-        let chain = (try? templates.rolling(roll).resolve(base: base).chain) ?? []
+        let chain = attempt { try templates.rolling(roll).resolve(base: base).chain } ?? []
         let npc = chain.lazy.compactMap { link -> FormID? in
             if case let .npc(id) = link {
                 return id

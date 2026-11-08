@@ -12,6 +12,7 @@ import OpenSkyCrime
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFactions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventory
@@ -155,11 +156,11 @@ extension CombatActorFactsAdapter {
             case let .actor(base)? = game.actorWorld.actorValueHolder(for: key)?.subject,
             let resolver = game.worldData?.actorValueBaselines?
                 .resolver,
-            let link = try? resolver.templates
-                .rolling(game.worldState.leveledRoll(
-                    of: key, base: base, with: resolver.templates.leveling
-                ))
-                .resolveCombatStyle(base: base).value,
+            let link = attempt({ try resolver.templates
+                    .rolling(game.worldState.leveledRoll(
+                        of: key, base: base, with: resolver.templates.leveling
+                    ))
+                    .resolveCombatStyle(base: base).value }),
             let style = game.worldData?.presentationRecords?
                 .combatStyles.resolve(link, fromPlugin: resolver.pluginName)
         else { return nil }

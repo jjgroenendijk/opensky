@@ -27,6 +27,9 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
         public let mount: SIMD3<Float>
         public let dismount: SIMD3<Float>
         public let camera: SIMD3<Float>
+
+        /// Where a rider steps off a race without mount data: left of the saddle, above it.
+        public static let fallbackDismount = SIMD3<Float>(-50, 0, 65)
     }
 
     public let skillBoosts: [SkillBoost]

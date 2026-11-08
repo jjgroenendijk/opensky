@@ -2,6 +2,7 @@
 // answers `LockWorld` from the session systems. The rules live in the coordinator
 // (docs/engine/coordinators.md, docs/engine/locks.md).
 
+import Foundation
 import OpenSkyActors
 import OpenSkyConditions
 import OpenSkyCrime
@@ -57,18 +58,21 @@ public final class LockWorldAdapter {
         }
         // Frame steps run while the menu pauses the world; the menu keeps its own clock.
         gameSession.frameSteps.register(.lockpicking) { [weak menu] _ in
-            menu?.tick()
+            menu?.tick(now: Date())
         }
         renderer.worldOverlaySources
             .register(identifier: "lock-selection") { [weak locks] _, list in
                 guard let position = locks?.selectedInteraction?.position else { return }
-                list.addMarker(at: position, size: Self.markerSize, color: Self.markerColor)
+                list.addMarker(
+                    at: position,
+                    size: Self.markerSize,
+                    color: WorldOverlayMarkerColour.lock
+                )
             }
     }
 
     /// The selected lock's marker: yellow, about a door's half width.
     public static let markerSize: Float = 48
-    public static let markerColor = SIMD4<Float>(1, 0.85, 0.2, 1)
 }
 
 extension LockWorldAdapter: LockWorld {

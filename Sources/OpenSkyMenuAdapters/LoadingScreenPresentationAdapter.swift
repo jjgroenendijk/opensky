@@ -56,7 +56,8 @@ extension LoadingScreenPresentationAdapter {
         }
         if !frame.drawsObject, !owner.movieFadedOut, owner.movie.isLoaded {
             owner.movieFadedOut = true
-            try? game.renderer?.updateSWFOverlay(LoadingMenuMovieBridge.fadeOut(runtime:))
+            attempt { try game.renderer?.updateSWFOverlay(LoadingMenuMovieBridge.fadeOut(runtime:))
+            }
         }
     }
 

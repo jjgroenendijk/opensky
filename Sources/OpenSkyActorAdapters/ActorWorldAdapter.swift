@@ -199,7 +199,7 @@ public final class ActorWorldAdapter {
         if let cached = baseNames[rollKey] {
             return cached
         }
-        let name = (try? templates.rolling(roll).resolveName(base: base))
+        let name = attempt { try templates.rolling(roll).resolveName(base: base) }
             .flatMap { strings.resolve($0.value) }
             .flatMap { $0.isEmpty ? nil : $0 }
         baseNames[rollKey] = .some(name)

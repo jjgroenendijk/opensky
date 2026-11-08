@@ -27,7 +27,6 @@ public struct TrapControlDependencies {
 
 public final class TrapControlAdapter {
     public static let markerSize: Float = 48
-    public static let markerColor = SIMD4<Float>(1, 0.3, 0.2, 1)
 
     private let dependencies: TrapControlDependencies
     public private(set) var selected: ReferenceKey?
@@ -41,7 +40,11 @@ public final class TrapControlAdapter {
             guard let position = self?.selectedEntry?.placedReference?.placement.position else {
                 return
             }
-            list.addMarker(at: position, size: Self.markerSize, color: Self.markerColor)
+            list.addMarker(
+                at: position,
+                size: Self.markerSize,
+                color: WorldOverlayMarkerColour.trap
+            )
         }
     }
 

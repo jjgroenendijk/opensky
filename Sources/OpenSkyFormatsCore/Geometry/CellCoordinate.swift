@@ -16,6 +16,11 @@ nonisolated public struct CellCoordinate: Hashable, Sendable {
     /// The edge length of one exterior cell, in game units.
     public static let cellSize: Float = 4096
 
+    /// The middle of the cell's square, in world units.
+    public var centre: SIMD2<Float> {
+        SIMD2((Float(x) + 0.5) * Self.cellSize, (Float(y) + 0.5) * Self.cellSize)
+    }
+
     /// The exterior cell whose square holds `position`.
     public init(containing position: SIMD3<Float>) {
         self.init(

@@ -68,12 +68,17 @@ extension EffectsTrapControlAdapter {
         return true
     }
 
+    /// Closer than this, in units, a body has not moved.
+    private static let samePlace: Float = 0.01
+    /// Closer than this, in radians, a body has not turned.
+    private static let sameAngle: Float = 0.0001
+
     /// A body that never moved needs no transform write, which would rebuild the cell.
     private static func isSamePose(
         _ pose: PlacedReference.Placement, as position: SIMD3<Float>, _ rotation: SIMD3<Float>
     ) -> Bool {
-        simd_distance(pose.position, position) < 0.01
-            && simd_reduce_max(simd_abs(pose.rotation - rotation)) < 0.0001
+        simd_distance(pose.position, position) < samePlace
+            && simd_reduce_max(simd_abs(pose.rotation - rotation)) < sameAngle
     }
 
     /// Clears the moves and the motion type, or moves the object to `target`. Its

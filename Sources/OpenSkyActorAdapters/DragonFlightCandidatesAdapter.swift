@@ -39,7 +39,7 @@ public struct DragonFlightCandidatesAdapter {
 extension DragonFlightCandidatesAdapter {
     public func candidate(_ actor: CombatActorObservation) -> DragonFlightCandidate {
         var candidate = DragonFlightCandidate(
-            key: actor.key, feet: actor.feet, yaw: .pi / 2 - actor.facing
+            key: actor.key, feet: actor.feet, yaw: NPCYawMath.heading(fromYaw: actor.facing)
         )
         if
             let loop = game.combat.loop, let target = loop.targets[actor.key],
@@ -64,12 +64,13 @@ extension DragonFlightCandidatesAdapter {
             let holder = game.actorWorld.actorValueHolder(for: actor.key),
             let values = game.actorValues.runtime
         {
-            let health = values.fraction(at: DragonFlightWorldAdapter.healthIndex, on: holder) ?? 1
+            let health = ActorValueIdentity.index(named: "Health")
+                .flatMap { values.fraction(at: $0, on: holder) } ?? 1
             candidate.isInjured = health < values.baseline(of: holder).injuredHealthPercent
-            candidate.isRended = (values.value(
-                at: DragonFlightWorldAdapter.dragonRendIndex,
-                on: holder
-            ) ?? 0) > 0
+            // The actor value Dragonrend's `VoiceDragonrendEffectScript` raises.
+            let rend = ActorValueIdentity.index(named: "Dragon Rend")
+                .flatMap { values.value(at: $0, on: holder) } ?? 0
+            candidate.isRended = rend > 0
         }
         return candidate
     }

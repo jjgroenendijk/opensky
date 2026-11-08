@@ -9,6 +9,9 @@ import OpenSkyWorldState
 import simd
 
 nonisolated public enum FollowerCommandRules {
+    /// Morality 3, for a follower whose value cannot be read: it commits no crime.
+    public static let lawfulMorality: Float = 3
+
     /// Morality 0 commits any crime, 1 also attacks enemies, 2 only steals, and 3 none
     /// (UESP "Skyrim:Followers", Morality).
     public static func allows(_ crime: FollowerCommandCrime?, morality: Float) -> Bool {

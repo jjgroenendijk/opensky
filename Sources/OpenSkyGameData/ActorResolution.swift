@@ -48,7 +48,8 @@ nonisolated public struct ResolvedActorAppearance: Equatable, Sendable {
     public let defaultOutfit: ActorSourcedField<FormID?>
     /// NAM7, 0 (thin) to 100 (heavy), a Traits-tab field. A record without it
     /// reads as 50, which is an assumption: no source gives the default.
-    public var weight: Float = 50
+    public var weight: Float = defaultWeight
+    public static let defaultWeight: Float = 50
     /// QNAM, the skin colour of the body's skin-tint shapes. A Traits-tab field.
     public var skinTone: SIMD3<Float>?
     /// FTST, the face texture set (complexion). A Traits-tab field; nil uses the race's.

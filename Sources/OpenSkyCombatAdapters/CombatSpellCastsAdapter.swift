@@ -1,5 +1,6 @@
 import OpenSkyActors
 public import OpenSkyCombat
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -66,7 +67,7 @@ extension CombatSpellCastsAdapter {
         guard
             let runtime = game.magic.caster,
             let holder = game.actorWorld.actorValueHolder(for: key),
-            (try? runtime.spellbook.equip(spell, in: Self.castHand, on: holder)) != nil
+            attempt({ try runtime.spellbook.equip(spell, in: Self.castHand, on: holder) }) != nil
         else { return false }
         return runtime.begin(Self.castHand, on: holder).failure == nil
     }

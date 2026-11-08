@@ -187,15 +187,17 @@ public final class LoadingScreenWorldAdapter {
             meshes == nil,
             let fileSystem = game.worldData?.scriptFileSystem
         {
-            meshes = (try? TextureLibrary(fileSystem: fileSystem, device: renderer.device)).map {
-                MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: $0)
-            }
+            meshes = attempt { try TextureLibrary(fileSystem: fileSystem, device: renderer.device) }
+                .map {
+                    MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: $0)
+                }
         }
         do {
             guard let model = try meshes?.model(path: path) else { return [] }
             let view = coverView(gameSession)
             let radius = meshes?.bounds(forPath: path)
-                .map { simd_length($0.max - $0.min) / 2 } ?? 64
+                .map { simd_distance($0.max, $0.min) * Self.halfDiagonal } ?? Self
+                .fallbackCoverRadius
             return [RenderPlacement(
                 model: model,
                 transform: frame.objectTransform(
@@ -231,6 +233,10 @@ public final class LoadingScreenWorldAdapter {
     }
 
     public static let turnDegreesPerPoint: Float = 0.5
+    /// A model's radius is half its bound's diagonal.
+    private static let halfDiagonal: Float = 0.5
+    /// The radius of a cover model whose bound is unknown, in units.
+    private static let fallbackCoverRadius: Float = 64
     public static let turnDegreesPerKey: Float = 10
 
     public static let logger = EngineLogger(

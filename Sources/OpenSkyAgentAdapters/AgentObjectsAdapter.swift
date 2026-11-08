@@ -136,9 +136,7 @@ extension AgentObjectsAdapter {
 
     /// A reference, or `x,y,z` for a spot on the ground.
     private func commandTarget(_ text: String) throws(AgentFailure) -> FollowerCommandTarget? {
-        let numbers = text.split(separator: ",").compactMap { Float($0) }
-        if numbers.count == 3 {
-            let point = SIMD3(numbers[0], numbers[1], numbers[2])
+        if let point = AgentArguments.point(fromText: text) {
             return FollowerCommandTarget(key: nil, kind: .ground, position: point)
         }
         return try game.followerCommandWorld.commandTarget(owner.resolveReference(text).key)
@@ -270,7 +268,7 @@ extension AgentObjectsAdapter {
         ))
         return [
             "position": .init(SIMD3(matrix.columns.3.x, matrix.columns.3.y, matrix.columns.3.z)),
-            "rotationDegrees": .init(rotation.angle * 180 / .pi)
+            "rotationDegrees": .init(MatrixMath.degrees(fromRadians: rotation.angle))
         ]
     }
 
@@ -345,7 +343,7 @@ extension AgentObjectsAdapter {
                 "name": .string(row.name),
                 "position": .init(row.translation),
                 "forward": .init(axis),
-                "rotationDegrees": .init(row.rotation.angle * 180 / .pi),
+                "rotationDegrees": .init(MatrixMath.degrees(fromRadians: row.rotation.angle)),
                 "controllers": .array(row.controllers.map { .string($0) }),
                 "active": .bool(row.isActive),
                 "frozen": .bool(row.isFrozen)

@@ -78,10 +78,6 @@ public final class DragonFlightWorldAdapter {
         }
         return game.dragonFlight.phase(of: actor).isFlying
     }
-
-    public static let healthIndex = ActorValueIdentity.index(named: "Health") ?? 24
-    /// The actor value Dragonrend's `VoiceDragonrendEffectScript` raises.
-    public static let dragonRendIndex = ActorValueIdentity.index(named: "Dragon Rend") ?? 155
 }
 
 extension DragonFlightWorldAdapter: DragonFlightWorld {
@@ -108,7 +104,11 @@ extension DragonFlightWorldAdapter: DragonFlightWorld {
                 let key = streamer.referenceEntry(formID: interaction.reference)?.key
             else { return [] }
             return seats.map { seat in
-                DragonPerch(reference: key, feet: seat.root, yaw: .pi / 2 - seat.heading)
+                DragonPerch(
+                    reference: key,
+                    feet: seat.root,
+                    yaw: NPCYawMath.yaw(fromHeading: seat.heading)
+                )
             }
         }
     }
@@ -131,7 +131,10 @@ extension DragonFlightWorldAdapter: DragonFlightWorld {
         for (name, value) in inputs {
             game.actorGraphs.setVariable(value, named: name, on: actor)
         }
-        game.actorGraphs.setMotion(ActorGraphMotion(isMoving: state.speed > 0.5), for: actor)
+        game.actorGraphs.setMotion(
+            ActorGraphMotion(isMoving: state.speed > ActorGraphMotion.movingSpeed),
+            for: actor
+        )
     }
 
     public func flightReachedPackageTarget(_ actor: ReferenceKey) {

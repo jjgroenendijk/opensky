@@ -10,6 +10,7 @@ import OpenSkyCombat
 import OpenSkyDialogue
 import OpenSkyEffects
 import OpenSkyFactions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
@@ -97,7 +98,7 @@ extension AgentInputAdapter {
         if yawDegrees != 0 || pitchDegrees != 0 {
             game.messages.noteInputEvent(GameInputAction.lookHelpEvent)
         }
-        let pointsPerDegree = Float.pi / 180 / FreeFlyCamera.lookSensitivity
+        let pointsPerDegree = MatrixMath.radians(fromDegrees: 1) / FreeFlyCamera.lookSensitivity
         game.cameraInput.addLook(
             right: yawDegrees * pointsPerDegree,
             up: pitchDegrees * pointsPerDegree

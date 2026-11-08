@@ -28,39 +28,25 @@ public struct MountDragonRidingAdapter {
 }
 
 extension MountDragonRidingAdapter {
-    /// How far from the view centre, in radians, an actor can be locked.
-    public static let lockCone: Float = 0.25
-    /// The farthest a rider locks a target from, in units.
-    public static let lockRange: Float = 8000
-
-    /// How far from the view centre, in radians, Switch Target looks: about the view.
-    public static let switchCone: Float = .pi / 3
-
     /// The living actor closest to the view centre, inside the lock cone and range.
     public func lockCandidate() -> ReferenceKey? {
-        actorsInView(within: Self.lockCone).min { $0.angle < $1.angle }?.key
+        actorsInView(within: MountTargeting.lockCone).min { $0.view.angle < $1.view.angle }?.key
     }
 
     /// The living actors in view and range, left to right as the rider sees them.
     public func switchCandidates() -> [ReferenceKey] {
-        actorsInView(within: Self.switchCone).sorted { $0.bearing > $1.bearing }.map(\.key)
+        actorsInView(within: MountTargeting.switchCone)
+            .sorted { $0.view.bearing > $1.view.bearing }.map(\.key)
     }
 
-    /// Each actor inside `cone` of the view centre and the lock range: its angle off the
-    /// centre and its bearing, counter-clockwise from the view.
     private func actorsInView(within cone: Float) -> [ActorInView] {
         guard let camera = game.gameSession?.freeFlyCamera else { return [] }
         let mount = owner.mounts.drive?.mount
-        let heading = atan2(camera.forward.y, camera.forward.x)
         return game.actorWorld.combatActors().compactMap { actor in
             guard !actor.isDead, actor.key != .player, actor.key != mount else { return nil }
-            let offset = actor.feet - camera.position
-            let distance = simd_length(offset)
-            guard distance > 1, distance <= Self.lockRange else { return nil }
-            let angle = acos(min(max(simd_dot(offset / distance, camera.forward), -1), 1))
-            guard angle <= cone else { return nil }
-            let bearing = remainder(atan2(offset.y, offset.x) - heading, 2 * Float.pi)
-            return ActorInView(key: actor.key, angle: angle, bearing: bearing)
+            return MountTargeting.view(
+                of: actor.feet - camera.position, forward: camera.forward, within: cone
+            ).map { ActorInView(key: actor.key, view: $0) }
         }
     }
 
@@ -89,6 +75,5 @@ extension MountDragonRidingAdapter {
 
 private struct ActorInView {
     let key: ReferenceKey
-    let angle: Float
-    let bearing: Float
+    let view: MountTargetView
 }

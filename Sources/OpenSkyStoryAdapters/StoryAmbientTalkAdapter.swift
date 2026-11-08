@@ -104,7 +104,7 @@ extension StoryAmbientTalkAdapter {
         guard
             let runtime = game.dialogue.runtime,
             let offer = runtime.topics(subtype: subtype, speaker: speaker).offers.first,
-            (try? runtime.choose(offer.info, speaker: speaker)) != nil,
+            attempt({ try runtime.choose(offer.info, speaker: speaker) }) != nil,
             let info = runtime.dialogue.info(offer.info)
         else { return nil }
         let seconds = owner.lineDuration(of: info, speaker: speaker) ?? SceneLine.defaultSeconds

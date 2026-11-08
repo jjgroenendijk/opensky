@@ -243,7 +243,7 @@ extension MountWorldAdapter: MountWorld {
 
     public func dismountOffset(of key: ReferenceKey) -> SIMD3<Float> {
         race(of: key)?.details.properties?.mountOffsets?.dismount
-            ?? SIMD3(-50, 0, 65)
+            ?? RaceProperties.MountOffsets.fallbackDismount
     }
 }
 

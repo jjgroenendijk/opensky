@@ -10,6 +10,7 @@ import OpenSkyCrime
 import OpenSkyDiagnostics
 import OpenSkyDialogue
 import OpenSkyFactions
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -152,7 +153,7 @@ extension AIPackageMovesAdapter {
         var stacks: [ReferenceKey: PackageAliasStack] = [:]
         let running = quests.runningQuests().map(\.quest).sorted { $0.priority > $1.priority }
         for quest in running where quest.aliases.contains(where: { !$0.packages.isEmpty }) {
-            guard let table = try? quests.aliasState(of: quest.formID) else { continue }
+            guard let table = attempt({ try quests.aliasState(of: quest.formID) }) else { continue }
             for alias in quest.aliases where !alias.packages.isEmpty {
                 guard let actor = table.reference(forAlias: alias.id), stacks[actor] == nil else {
                     continue

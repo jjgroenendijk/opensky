@@ -27,6 +27,8 @@ public protocol CinematicCameraWorld: AnyObject {
 }
 
 public final class CinematicCameraCoordinator {
+    /// The longest real step one frame advances a shot by, so a stall does not skip it.
+    public static let longestFrameSeconds = 0.1
     public let settings: KillCamSettings
     public private(set) var player: CinematicShotPlayer?
     public private(set) var attacker: ReferenceKey?

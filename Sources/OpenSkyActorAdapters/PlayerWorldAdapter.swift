@@ -108,7 +108,7 @@ public final class PlayerWorldAdapter {
                 )
             }
             inputs.weight = game.worldState.component(PlayerIdentityState.self, for: .player)?
-                .face.weight ?? 50
+                .face.weight ?? ResolvedActorAppearance.defaultWeight
             inputs.isBowDrawn = game.combat.archery?.state.phase.isFullyDrawn ?? false
             inputs.castingLeft = game.magic.wantsCast(.left)
             inputs.castingRight = game.magic.wantsCast(.right)

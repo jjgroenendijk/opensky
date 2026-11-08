@@ -4,6 +4,7 @@ import OpenSkyActors
 public import OpenSkyAgentControl
 import OpenSkyCombat
 import OpenSkyCombatInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
@@ -95,7 +96,7 @@ extension AgentMotionAdapter {
             "phase": .string("\(mounts.phase)"),
             "speed": .init(drive.motion.speed),
             "heading": .init(drive.heading),
-            "turnRateDegrees": .init(drive.turnRamp.rate * 180 / .pi),
+            "turnRateDegrees": .init(MatrixMath.degrees(fromRadians: drive.turnRamp.rate)),
             "sprintAllowed": .bool(drive.bridge.isSprintAllowed),
             "stamina": mountStamina(drive.mount),
             "flight": drive.flight.map { .object(Self.flightJSON($0)) } ?? .null,

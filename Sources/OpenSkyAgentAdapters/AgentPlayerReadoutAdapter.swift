@@ -64,8 +64,8 @@ extension AgentPlayerReadoutAdapter {
         let camera = gameSession.freeFlyCamera
         var result: [String: AgentJSON] = [
             "position": .init(camera.position),
-            "yaw": .init(remainder(camera.yaw * 180 / .pi, 360)),
-            "pitch": .init(camera.pitch * 180 / .pi),
+            "yaw": .init(MatrixMath.signedDegrees(fromRadians: camera.yaw)),
+            "pitch": .init(MatrixMath.degrees(fromRadians: camera.pitch)),
             "movementMode": .string(String(describing: gameSession.movementMode)),
             "cell": owner.actorReadout.cellState(at: camera.position),
             "worldspace": game.streamer.map { .string($0.worldspaceEditorID) } ?? .null,
@@ -138,7 +138,7 @@ extension AgentPlayerReadoutAdapter {
             "zoomed": .bool(gameSession.bowZoomViewShare < 1),
             "viewShare": .init(gameSession.bowZoomViewShare),
             "timeScale": .init(gameSession.bowZoomTimeScale),
-            "fovYDegrees": .init(gameSession.viewFOVYRadians * 180 / .pi),
+            "fovYDegrees": .init(MatrixMath.degrees(fromRadians: gameSession.viewFOVYRadians)),
             "staminaPauseSeconds": .init(
                 game.actorValues.runtime?.regenerationPause(.stamina, of: .player) ?? 0
             )

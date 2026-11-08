@@ -78,7 +78,7 @@ extension ScriptActorBindingsAdapter {
         bridge.sessionNatives
             .packageTemplate = { [weak game] package in game?.packages.template(of: package) }
         bridge.perceptionNatives.lightLevel = { [weak game] feet in
-            let body = SIMD3<Float>(0, 0, PlayerCapsule.standard.eyeHeight * 0.5)
+            let body = SIMD3<Float>(0, 0, PlayerCapsule.standard.torsoHeight)
             return game?.aiWorld.lightLevel(at: feet + body) ?? 1
         }
         bridge.sessionNatives.cellFog = { [weak owner] cell, change in

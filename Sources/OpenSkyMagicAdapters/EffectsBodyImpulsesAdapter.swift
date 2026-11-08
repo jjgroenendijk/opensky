@@ -39,6 +39,9 @@ public struct EffectsBodyImpulsesAdapter {
 }
 
 extension EffectsBodyImpulsesAdapter {
+    /// Closer than this, in units, the push from the source has no direction.
+    private static let sameSpot: Float = 0.001
+
     // The splash sound. No setting names it, so this is the one `SNDR` whose editor
     // ID says so. [WARNING] Not confirmed against the game.
 
@@ -180,7 +183,7 @@ extension EffectsBodyImpulsesAdapter {
         }
         guard let feet = owner.trapControl.trapPosition(of: actor) else { return false }
         let away = SIMD3(feet.x - source.x, feet.y - source.y, 0)
-        guard simd_length(away) > 0.001 else { return false }
+        guard simd_length(away) > Self.sameSpot else { return false }
         let speed = magnitude * GameplayImpulse.havokScale
         return knockActor(actor, velocity: simd_normalize(away) * speed, knockdown: true)
     }
@@ -208,7 +211,7 @@ extension EffectsBodyImpulsesAdapter {
     public func showSplash(_ splash: SplashEvent) {
         owner.effects.showModel(splash.model, at: .point(splash.position), cause: .impact)
         game.renderer?.addWaterRipple(
-            at: splash.position, strength: splash.weight == .heavy ? 1 : 0.6
+            at: splash.position, strength: splash.weight.rippleStrength
         )
         guard let sound = splash.weight.sound else { return }
         game.audio.soundDirector?.playAnimationSound(

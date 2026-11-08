@@ -1,0 +1,9 @@
+# Rule 5 of docs/decisions/ports-and-adapters.md: an adapter holds no game rule.
+# A number gets a name, or moves with its rule into the feature module.
+only_rules:
+  - cyclomatic_complexity
+  - no_magic_numbers
+cyclomatic_complexity:
+  warning: 6
+  error: 7
+  ignores_case_statements: true

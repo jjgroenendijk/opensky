@@ -66,7 +66,10 @@ public final class CinematicCameraWorldAdapter {
             let seconds = gameSession.worldSimPaused ? 0 : lastFrame
                 .map { now.timeIntervalSince($0) } ?? 0
             lastFrame = now
-            apply(game.cinematicCamera.tick(realSeconds: min(seconds, 0.1)))
+            apply(game.cinematicCamera.tick(realSeconds: min(
+                seconds,
+                CinematicCameraCoordinator.longestFrameSeconds
+            )))
         }
     }
 
@@ -172,7 +175,7 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
         return CinematicAnchor(
             position: actor.feet,
             yaw: actor.facing,
-            focusHeight: 96 * actor.scale
+            focusHeight: CinematicAnchor.chestHeight * actor.scale
         )
     }
 

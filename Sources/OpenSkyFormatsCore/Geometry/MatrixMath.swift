@@ -25,6 +25,14 @@ nonisolated public enum MatrixMath: Sendable {
         radians / .pi * 180
     }
 
+    /// One whole turn, in radians.
+    public static let fullTurn: Float = 2 * .pi
+
+    /// Degrees in -180...180, for a readout of a heading that can wind past one turn.
+    public static func signedDegrees(fromRadians radians: Float) -> Float {
+        remainder(degrees(fromRadians: radians), 360)
+    }
+
     /// Rodrigues rotation about an arbitrary axis.
     public static func rotation(radians: Float, axis: SIMD3<Float>) -> float4x4 {
         let unit = simd_normalize(axis)

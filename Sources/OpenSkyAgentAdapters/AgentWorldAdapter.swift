@@ -12,6 +12,7 @@ import OpenSkyCombat
 import OpenSkyDialogue
 import OpenSkyEffects
 import OpenSkyFactions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventory
@@ -56,6 +57,8 @@ public final class AgentWorldAdapter {
     private var quitScheduled = false
 
     public static let maximumTimeScale = 16.0
+    /// How long a quit waits, so the reply leaves the socket before the app exits.
+    private static let replyDrainSeconds = 0.2
 
     public let renderHost: any AgentRenderHost
     public let actorsHost: any AgentActorsHost
@@ -268,9 +271,8 @@ extension AgentWorldAdapter: AgentControlWorld {
     public func quitApplication() {
         guard !quitScheduled else { return }
         quitScheduled = true
-        // A short delay lets the reply leave the socket before the app exits.
         Task { @MainActor [terminateApp] in
-            try? await Task.sleep(for: .milliseconds(200))
+            await attempt { try await Task.sleep(for: .seconds(Self.replyDrainSeconds)) }
             terminateApp()
         }
     }

@@ -339,3 +339,6 @@ one ([reference identity](/engine/reference-identity.md#moved-references)). The 
 rebuilt without it. Without this, a horse that walked far from its plugin cell would vanish when
 that cell unloads. A vehicle follower, such as a cart, does the same when its pose enters
 another loaded cell ([vehicles](/engine/vehicles.md)).
+
+OpenSky's choices: a line with no voice length lasts 3 s. A follower whose Morality cannot be
+read is treated as Morality 3, so it commits no crime.

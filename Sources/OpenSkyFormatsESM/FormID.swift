@@ -18,6 +18,16 @@ nonisolated public struct FormID: Hashable, Sendable {
         self.rawValue = rawValue
     }
 
+    /// `PlayerRef`, the player's placed reference in `Skyrim.esm`.
+    public static let playerReference = FormID(stored: 0x14)
+
+    /// Hexadecimal text, with or without a `0x` prefix, such as `0x00012E49` or `12e49`.
+    public init?(hexText text: String) {
+        let digits = text.lowercased().hasPrefix("0x") ? text.dropFirst(2) : Substring(text)
+        guard let value = UInt32(digits, radix: 16) else { return nil }
+        self.init(stored: value)
+    }
+
     /// Index into the owning plugin's master list; values at/above the
     /// master count mean the plugin itself.
     public var masterIndex: Int {

@@ -80,7 +80,7 @@ extension AgentFrameReadoutAdapter {
         return [
             "sunDirection": .init(sky.sunDirection), "lightDirection": .init(sky.lightDirection),
             "sunAlpha": .init(sky.sunAlpha), "glareScale": .init(sky.glareScale),
-            "starsAngleDegrees": .init(sky.starsAngle * 180 / .pi),
+            "starsAngleDegrees": .init(MatrixMath.degrees(fromRadians: sky.starsAngle)),
             "moonGlare": game.gameSession?.currentResolvedWeather
                 .map { .init($0.moonGlare) } ?? .null,
             "moons": .array(sky.moons.map { moon in

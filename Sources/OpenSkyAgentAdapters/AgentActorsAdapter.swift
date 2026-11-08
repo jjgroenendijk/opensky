@@ -93,9 +93,7 @@ extension AgentActorsAdapter {
 
     public func setEyes(_ reference: String, textureSet: String) throws(AgentFailure) -> AgentJSON {
         let actor = try owner.resolveReference(reference)
-        let digits = textureSet.lowercased().hasPrefix("0x")
-            ? String(textureSet.dropFirst(2)) : textureSet
-        guard let raw = UInt32(digits, radix: 16) else {
+        guard let raw = FormID(hexText: textureSet)?.rawValue else {
             throw AgentFailure(.invalidArgument, "set must be a hex FormID")
         }
         if actor.key == .player {

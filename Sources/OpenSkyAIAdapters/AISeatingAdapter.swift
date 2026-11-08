@@ -266,7 +266,7 @@ extension AISeatingAdapter {
         gameSession.playerSeat = nil
         gameSession.placePlayerFeet(at: pose.root)
         if gameSession.movementMode == .walk {
-            gameSession.freeFlyCamera.yaw = Float.pi / 2 - pose.heading
+            gameSession.freeFlyCamera.yaw = NPCYawMath.yaw(fromHeading: pose.heading)
         }
     }
 
