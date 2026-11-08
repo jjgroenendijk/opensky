@@ -21,11 +21,13 @@ DEFINES_MODULE = $(OPENSKY_DEFINES_MODULE_$(PRODUCT_NAME):default=$(inherited))
 // Compilation-cache keys must not depend on where a checkout or its build tree
 // lives, or no other worktree can reuse an entry. Prefix mapping turns the checkout
 // into /^src, the tree into /^derived, and products into /^built; it has to reach
-// the package targets, which hold the engine. Debug only, as Release ships.
-SWIFT_ENABLE_PREFIX_MAPPING[config=Debug] = YES
-SWIFT_ENABLE_PROJECT_PREFIX_MAPPING[config=Debug] = YES
-CLANG_ENABLE_PREFIX_MAPPING[config=Debug] = YES
-CLANG_ENABLE_PROJECT_PREFIX_MAPPING[config=Debug] = YES
+// the package targets, which hold the engine. The build that ships passes
+// OPENSKY_PREFIX_MAPPING=NO, so its dSYM names real source paths.
+OPENSKY_PREFIX_MAPPING = YES
+SWIFT_ENABLE_PREFIX_MAPPING = $(OPENSKY_PREFIX_MAPPING)
+SWIFT_ENABLE_PROJECT_PREFIX_MAPPING = $(OPENSKY_PREFIX_MAPPING)
+CLANG_ENABLE_PREFIX_MAPPING = $(OPENSKY_PREFIX_MAPPING)
+CLANG_ENABLE_PROJECT_PREFIX_MAPPING = $(OPENSKY_PREFIX_MAPPING)
 // SwiftPM names the package after the checkout folder and passes it to every
 // compile as -package-name, which put each worktree's name in the keys.
 SWIFT_PACKAGE_NAME = opensky
