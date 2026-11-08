@@ -61,10 +61,16 @@ runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI
 | 8. Composition | `OpenSkyPreview`, the app, and the CLI may depend on anything | Allowed |
 | 9. World domains | A domain of the world feature depends on lower modules, Interfaces, and earlier domains. Of the features, only `OpenSkyWorld` depends on a domain. Every domain has a `Tests` target | Gate |
 | 10. Renderer | `OpenSkyRendering` depends only on the formats, `OpenSkyGameData`, the asset cache, `OpenSkyRenderCore`, `OpenSkyRenderResources`, and its draw helpers. Game state reaches it in `RenderFrameInput` | Gate |
+| 11. Interface exports | An Interface publicly imports only lower modules and other Interfaces, and no file uses `@_exported import` | Gate |
+| 12. Used dependencies | Every declared dependency of a target is imported by at least one of its files | Gate |
 
 Rule 7 matters because Xcode builds all package modules into one product. A module can then
 compile with an `import` it never declared, and break later in `swift test` or on another
 build order.
+
+Rule 12 keeps the declared graph equal to the used graph. The stability check reads the
+declared edges, so an edge no file uses would make a module look less stable than it is. A
+test target lists `OpenSkyTagsTesting` itself when it tags its tests.
 
 `Package.swift` checks rules 1 and 2 partly too, when the manifest loads. It rejects a
 dependency on a module declared later, and a dependency on a feature implementation. The
