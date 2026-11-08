@@ -124,9 +124,10 @@ served from a warm cache, wrote 276 index units for about 5,000 Swift files. So 
 cannot reuse the cached build of Build & test. It builds uncached on its own runner, at the same
 time as Build & test. It also builds `OpenSkyRealDataTests`, which no other job compiles.
 
-Measured 2026-11-08 on the first run of the job (#1885): `make health` took 16.4 minutes and the
-whole job 17, while Build & test took 22. So the job adds no time to a run; it costs a fourth
-macOS runner. On the development Mac the same uncached build takes about 9 minutes.
+Measured 2026-11-08 on #1885: the job takes 17 to 19 minutes, of which `make health` is about 16.
+Build & test takes 22 minutes with a cold compilation cache and 10.5 with a warm one. So the job
+adds up to 8.5 minutes to a run, and it costs a fourth macOS runner. #1887 tracks an incremental
+index build. On the development Mac the same uncached build takes about 9 minutes.
 
 ## Caches
 
