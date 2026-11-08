@@ -7,6 +7,7 @@ import OpenSkyActorPresentation
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
+import OpenSkyWorldInterface
 import Testing
 
 @Suite(.tags(.gpu))

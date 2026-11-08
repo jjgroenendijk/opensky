@@ -9,6 +9,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyNavigation
 @testable import OpenSkyPlayer
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

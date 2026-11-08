@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing
 

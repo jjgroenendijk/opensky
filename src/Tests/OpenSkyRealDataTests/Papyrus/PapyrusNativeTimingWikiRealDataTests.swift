@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyTagsTesting
 import Testing
 

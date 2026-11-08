@@ -10,6 +10,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyLoading
 @testable import OpenSkyMenus
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 import OpenSkyTagsTesting

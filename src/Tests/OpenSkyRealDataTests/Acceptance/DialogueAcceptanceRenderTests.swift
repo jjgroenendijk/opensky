@@ -14,6 +14,7 @@ import OpenSkyActorPresentation
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyNavigation
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld

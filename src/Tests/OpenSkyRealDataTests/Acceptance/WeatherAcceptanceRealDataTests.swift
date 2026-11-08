@@ -8,10 +8,12 @@ import MetalKit
 @testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWeather
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 import Testing
 

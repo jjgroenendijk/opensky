@@ -1,6 +1,7 @@
 // Renders the first cell offscreen for 360 frames and checks the frame budget.
 
 import OpenSkyCells
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyTagsTesting
 import Testing

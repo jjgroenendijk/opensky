@@ -11,6 +11,7 @@ import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 import OpenSkyTagsTesting

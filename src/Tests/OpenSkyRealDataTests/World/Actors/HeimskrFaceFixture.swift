@@ -8,8 +8,10 @@ import OpenSkyCells
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyPlayer
 @testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 import Testing
 

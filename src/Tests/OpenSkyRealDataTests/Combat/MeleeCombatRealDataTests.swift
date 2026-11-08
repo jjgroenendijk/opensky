@@ -16,6 +16,7 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
 @testable import OpenSkyProgressionInterface
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import simd
 import Testing

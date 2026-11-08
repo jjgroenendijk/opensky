@@ -13,10 +13,12 @@ import MetalKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
+import OpenSkyPlayer
 @testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
+import OpenSkyWorldInterface
 import simd
 import Testing
 
