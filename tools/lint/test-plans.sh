@@ -84,6 +84,11 @@ for name in LAYER_PLANS:
         problems.append(f"{name}: a layer plan selects whole targets, no tags")
 if sorted(layered) != sorted(unit if (unit := [e["target"]["name"] for e in plans.get("UnitTests", {}).get("testTargets", [])]) else []):
     problems.append(f"layer plans {LAYER_PLANS} must list every UnitTests target exactly once")
+# Every unit test folder is a target UnitTests runs; real-data and UI have their own plans.
+folders = {p.name for p in pathlib.Path("Tests").iterdir()
+           if p.is_dir() and p.name.endswith("Tests")} - {"OpenSkyRealDataTests", "OpenSkyUITests"}
+for name in sorted(folders - set(unit)):
+    problems.append(f"UnitTests: must list the test target {name}")
 quick = plans.get("Quick", {}).get("testTargets", [])
 if [e["target"]["name"] for e in quick] != [t for t in unit if t != "OpenSkyTests"]:
     problems.append("Quick: must list every UnitTests target but OpenSkyTests, in the same order")
