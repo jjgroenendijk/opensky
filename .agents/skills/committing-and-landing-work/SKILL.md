@@ -16,7 +16,7 @@ so this skill is how the rest is done right.
 2. `make check` green, and the change verified as the `testing-and-verifying` skill
    describes. `make check` lints the Swift files the branch changed and includes the
    duplicate, comment-length, and suppression gates. The whole unit plan runs in CI on
-   every push; `make health` and the sanitizers run in the weekly CI workflow.
+   every push, and so does `make health`; the sanitizers run in the weekly CI workflow.
 3. Staged files legal: nothing extracted from the game install. New binary blob -> stop, ask.
 
 ## Message format
@@ -66,7 +66,7 @@ or `Model:`. Allowed trailers:
    the format defined by `docs/tools/acceptance-record.md`. Nothing enforces this, so it
    is checked here.
 6. When the work is done and verified, `gh pr ready <pr>`, and read the last CI run with
-   `gh pr checks <pr> --watch`.
+   `gh pr checks <pr> --watch`. Marking ready starts no new run; the last push's run counts.
 7. Merge after review with `gh pr merge <pr> --rebase`. A rebase merge puts every atomic
    commit on `main` with no merge commit; the repo disables merge commits and squash
    merging. When the branch no longer rebases cleanly, run `git rebase origin/main`, then

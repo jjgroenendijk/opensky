@@ -9,8 +9,9 @@ tags: [tool, ci, lint, github-actions]
 
 # Continuous integration
 
-`.github/workflows/ci.yml` runs on every pull request, draft or ready for review, and on every push
-to `main`. Every check
+`.github/workflows/ci.yml` runs on every push to a pull request, draft or not, and on every push
+to `main`. Marking a draft ready starts no run: the run of its last push tested the same commit,
+and a second run took 7 to 17 minutes with no new result. Every check
 runs on an `xcode-27` runner (macOS 27), so CI uses the same platform, Xcode, and tools as a
 developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 
@@ -19,6 +20,7 @@ developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 | Format | `swift-format-check`, `metal-format-check`, `cpp-format-check`, `md-lint` |
 | Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `lint-test-plans`, `lint-test-tags`, `lint-test-targets`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `panel-text`, `load-order-only`, `cli-conventions`, `gap-registries`, `duplicates`, `no-suppressions`, `file-length`, `module-size`, `py-format-check`, `py-lint` |
 | Changes | None. It decides whether Build & test runs |
+| Index checks | `health` |
 | Build & test | `swift-baseline`, `language-rules`, `error-handling`, `deterministic-rules`, `test-order`, `coverage-self-check`, `ffmpeg`, `astcenc`, `test-unit PLAN=UnitTests COVERAGE=1`, `coverage-floor`, `diff-coverage` (pull request only) |
 | Lint | None. It passes only when the jobs above pass |
 
@@ -87,10 +89,9 @@ The job builds the app, the CLI, and every test bundle, and runs the `UnitTests`
 ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identity.
 
 - **No game data.** A runner has no Skyrim install. The job sets no `OPENSKY_DATA_ROOT`, so a
-  test gated on the install skips. The real-data suites only compile: the `OpenSky` scheme builds
-  `OpenSkyRealDataTests` for testing, so the unit build compiles it in the same `xcodebuild` call.
-  `make realdata-plan` checks that every such suite lives in `OpenSkyRealDataTests`, which the
-  unit plan does not include.
+  test gated on the install skips. The real-data suites only compile, in the `Index checks` job:
+  a build of the unit plan does not compile `OpenSkyRealDataTests`. `make realdata-plan` checks
+  that every such suite lives in `OpenSkyRealDataTests`, which the unit plan does not include.
 - **Metal 4.** A test that needs a Metal 4 GPU gates on `device.supportsFamily(.metal4)` and
   skips without one. The runner's virtual GPU has no Metal 4, so these tests run only on a
   developer machine.
@@ -113,6 +114,18 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
   and keeps a copy in `.logs/build-timing/`. The job uploads `.logs/` on every run, not only on
   failure, so `gh run download <run> -n build-test-logs` gets the start time and duration of every
   build task.
+
+## Index checks
+
+`make health` runs every check that reads the index store: Periphery's unused-code scan and the
+adapter rule (`tools/lint/adapter-references.py`). A task replayed from the compilation cache
+writes almost no index data. Measured 2026-11-08: a Debug build of the CLI into an empty tree,
+served from a warm cache, wrote 276 index units for about 5,000 Swift files. So the index build
+cannot reuse the cached build of Build & test. It builds uncached on its own runner, at the same
+time as Build & test. It also builds `OpenSkyRealDataTests`, which no other job compiles.
+
+Measured 2026-11-08 on the development Mac: the uncached index build of the unit plan took 400 s,
+the real-data target 2 minutes more, and the two scans under a minute.
 
 ## Caches
 
@@ -148,10 +161,15 @@ The compilation cache roughly halves the build:
 
 ## Weekly
 
-`weekly.yml` runs on Sunday night and on demand (`gh workflow run weekly.yml`). It holds the
-checks that take an hour or recompile everything, so they run on a runner rather than in a
-session: `make test-sanitize SAN=thread`, `SAN=address`, and `make health`. A failure is read
-from the run, not from a pull request, so the person who reads it opens an issue.
+`weekly.yml` runs on Sunday night and on demand (`gh workflow run weekly.yml`). It holds only
+`make test-sanitize SAN=thread` and `SAN=address`. Each rebuilds everything with instrumentation,
+which costs too much on every pull request.
+
+No pull request fails on a weekly finding, so the `Report` job keeps one issue,
+"Weekly checks fail on main", with the `bug` and `code-health` labels
+(`tools/ci/weekly-issue.sh`). A failed run opens it, or comments on it when it is open. A green
+run closes it. To test the step, `gh workflow run weekly.yml --ref <branch> -f force_failure=true`
+fails the checks at once and opens the issue.
 
 ## Preview releases
 

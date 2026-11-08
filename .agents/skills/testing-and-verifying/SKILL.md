@@ -38,10 +38,10 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Behavior that only shows on the real install | `make test-real T='Class/method()'`, one run per affected test |
 | App UI | `make build-app`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
 | A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
-| Milestone acceptance | `make health`, `make test-real ALL=1`, `make test-ui`, and the acceptance record (format in `docs/tools/acceptance-record.md`) in the closing PR. A milestone about load or frame time adds `make launch-sample` on the installed Release app |
+| Milestone acceptance | `make test-real ALL=1`, `make test-ui`, and the acceptance record (format in `docs/tools/acceptance-record.md`) in the closing PR. A milestone about load or frame time adds `make launch-sample` on the installed Release app |
 
 The whole unit plan (`make test-unit PLAN=UnitTests`) and the sanitizers run in CI: the
-unit plan on every push, the sanitizers and `make health` weekly. Do not run them locally
+unit plan and `make health` on every push, the sanitizers weekly. Do not run them locally
 before a push; push and read `gh pr checks <n> --watch`.
 
 Find the suites for a file with `grep -rl 'TypeName' Tests`. Suite names follow the type

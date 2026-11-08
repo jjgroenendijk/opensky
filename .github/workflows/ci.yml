@@ -2,13 +2,14 @@ name: CI
 
 # The checks run on macOS, like a developer machine (docs/tools/ci.md). Each step
 # runs the same make target as `make check`. The lint checks share two jobs, so one
-# run uses at most 3 macOS runners at a time; the Free plan allows 5 per account.
+# run uses at most 4 macOS runners at a time; the Free plan allows 5 per account.
 # The Changes and Lint jobs only read results, so they run on Linux.
 # A draft pull request runs too, so the full unit plan runs on a runner while the
-# author keeps working; a newer push cancels the older run.
+# author keeps working; a newer push cancels the older run. Marking a draft ready
+# starts no run, because the last push already tested the same commit.
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
   workflow_dispatch:
@@ -182,7 +183,7 @@ jobs:
           echo "build=$build" | tee -a "$GITHUB_OUTPUT"
 
   # Only tests that need no game data: a runner has no install, and the job sets no
-  # OPENSKY_DATA_ROOT, so a gated test skips. The scheme also compiles the real-data suites.
+  # OPENSKY_DATA_ROOT, so a gated test skips. Index checks compiles the real-data suites.
   build-test:
     name: Build & test
     needs: changes
@@ -336,12 +337,53 @@ jobs:
           include-hidden-files: true
           retention-days: 7
 
+  # The checks that read the index store: unused code and the adapter rule. A build
+  # replayed from the compilation cache writes almost no index data, so this job builds
+  # uncached on its own runner, beside Build & test (docs/tools/ci.md#index-checks).
+  index-checks:
+    name: Index checks
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 60
+    env:
+      BUILD_FLAGS: CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= -skipPackagePluginValidation -skipMacroValidation
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start Metal Toolchain download
+        run: tools/ci/metal-toolchain.sh start
+      - run: make swift-baseline
+      - uses: actions/cache/restore@v6
+        with:
+          path: src/.vendor/ffmpeg
+          key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
+      - run: make ffmpeg
+      - uses: actions/cache/restore@v6
+        with:
+          path: src/.vendor/astcenc
+          key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
+      - run: make astcenc
+      # Periphery is the one tool the CI image does not ship. The cask in the
+      # periphery tap no longer installs, so take the Homebrew core formula.
+      - run: brew install periphery
+      - name: Wait for the Metal Toolchain
+        run: tools/ci/metal-toolchain.sh wait
+      - run: make health XCODEBUILD_FLAGS="$BUILD_FLAGS"
+      - name: Upload logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: index-checks-logs
+          path: .logs/
+          include-hidden-files: true
+          retention-days: 7
+
   # The one required status check on main. A new job goes into `needs`, and branch
   # protection needs no change. Build & test may skip only when Changes said so.
   lint:
     name: Lint
     if: ${{ always() }}
-    needs: [changes, format, static-checks, build-test]
+    needs: [changes, format, static-checks, build-test, index-checks]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -350,9 +392,10 @@ jobs:
           RESULTS: ${{ join(needs.*.result, ' ') }}
           BUILD_NEEDED: ${{ needs.changes.outputs.build }}
           BUILD_RESULT: ${{ needs.build-test.result }}
+          INDEX_RESULT: ${{ needs.index-checks.result }}
         run: |
           echo "$RESULTS"
           for result in $RESULTS; do
             [ "$result" = success ] || [ "$result" = skipped ] || exit 1
           done
-          [ "$BUILD_NEEDED" = false ] || [ "$BUILD_RESULT" = success ]
+          [ "$BUILD_NEEDED" = false ] || { [ "$BUILD_RESULT" = success ] && [ "$INDEX_RESULT" = success ]; }

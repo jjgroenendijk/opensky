@@ -174,8 +174,8 @@ downgrading a rule: `make lint` fails on any suppression comment, on duplicated 
 on a comment block over 6 lines, with no baseline file
 (`docs/decisions/code-health-automation.md`). Parse and load failures use `throws` with typed
 errors, and malformed input must not crash: no force-unwrap, force-try, or force-cast on data
-from external files. `make health` (unused code) runs in the weekly CI workflow and once in a
-milestone's closing PR, not per change.
+from external files. `make health` (unused code and the index-store checks) runs in CI on each
+pull request; locally only when a pull request fails it.
 
 Size code to the lint limits while writing, not after a failed `make fix`; that has been
 the top recurring time sink. The thresholds are in `tools/lint/.swiftlint.yml`, and rules
