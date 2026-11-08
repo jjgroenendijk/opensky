@@ -53,7 +53,9 @@ def package_files():
 
 
 def rule_modules():
-    """The game-rule modules: each feature, interface, and world-domain module."""
+    """The game-rule modules: each feature, interface, and world-domain module. A composition
+    module and its interface hold ports and wiring, not rules."""
     text = pathlib.Path("Package.swift").read_text()
     names = set(re.findall(r'\b(?:feature|domain|interface)\(\s*"(\w+)"', text))
-    return names | {name + "Interface" for name in names}
+    composed = set(re.findall(r'\bcomposition\(\s*"(\w+)"', text))
+    return {module for name in names - composed for module in (name, name + "Interface")}
