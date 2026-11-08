@@ -245,3 +245,18 @@ public struct GameInputDispatcher {
         }
     }
 }
+
+nonisolated extension GameInputAction {
+    /// Looking around with the pointer ends a "Look" help message, as in the game.
+    public static let lookHelpEvent = "Look"
+
+    /// The help message event this action ends, as a key press does in the game.
+    public var helpEvent: String? {
+        switch self {
+        case .activate: "Activate"
+        case .jump: "Jump"
+        case .sneak: "Sneak"
+        default: nil
+        }
+    }
+}

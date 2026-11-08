@@ -20,30 +20,11 @@ import pathlib
 import re
 import sys
 
-# Rule 1. The lower modules, lowest layer first. A lower module depends only on
-# a module in a lower layer.
-LAYERS = [
-    ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder", "OpenSkyImageKernels",
-     "OpenSkyCLIArguments"],
-    ["OpenSkyFormatsCore"],
-    ["OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",
-     "OpenSkyFormatsAudio", "OpenSkyFormatsPEX", "OpenSkyFormatsSWF", "OpenSkyFormatsESS"],
-    ["OpenSkyGameData"],
-    ["OpenSkyBehavior", "OpenSkyLaunch", "OpenSkyAssetCache", "OpenSkyReference"],
-    ["OpenSkyPhysics", "OpenSkyDiagnostics", "OpenSkyAgentControl"],
-    ["OpenSkyRenderCore", "OpenSkyRenderResources"],
-    ["OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState"],
-    ["OpenSkyConditions"],
-]
-# Rule 9. The domains of the world feature, lowest first. A domain depends on lower
-# modules, interfaces, and earlier domains. Of the features, only the world feature
-# may depend on a domain; other features use OpenSkyWorldInterface.
-DOMAINS = [
-    "OpenSkyWorldConditions", "OpenSkyWeather", "OpenSkyNavigation", "OpenSkyTerrain",
-    "OpenSkyEffects", "OpenSkyCamera", "OpenSkyRuntimeState", "OpenSkyActorPresentation",
-    "OpenSkyObjectAnimation", "OpenSkyPlayer", "OpenSkyAIPackages", "OpenSkyCells",
-    "OpenSkyLoading",
-]
+# Rule 1. The lower modules, lowest layer first (module_layers.py). A lower module
+# depends only on a module in a lower layer.
+sys.path.insert(0, "tools/lint")
+from module_layers import DOMAINS, LAYERS
+
 DOMAIN_OWNER = "OpenSkyWorld"
 # Rule 10. The renderer draws from one RenderFrameInput per frame and holds no game
 # state, so it depends only on these: formats, loaded data, assets, and draw helpers.
@@ -78,6 +59,7 @@ testing = {n for n in test_side if n.endswith("Testing")}
 fixtures = {n for n in test_side if n.endswith("Fixtures")}
 interfaces = {n for n in names if n.endswith("Interface") and n not in tests}
 domain = {name: index for index, name in enumerate(DOMAINS)}
+COMPOSITION |= {n for n in names if n.endswith("Adapters")}
 features = names - set(layer) - set(domain) - COMPOSITION - tests - test_side - interfaces
 failures = []
 for name in sorted(test_side - testing - fixtures):

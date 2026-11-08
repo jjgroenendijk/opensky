@@ -1,13 +1,18 @@
 // The coordinators that need the cell streamer or the frame session, built at session
 // start. Each adapter then joins them to the frame (docs/decisions/session-scope.md).
 
+import OpenSkyActorAdapters
 import OpenSkyActorPresentation
 import OpenSkyCells
 import OpenSkyEffects
 import OpenSkyInventory
+import OpenSkyInventoryAdapters
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyMagicAdapters
 import OpenSkyMagicInterface
+import OpenSkyMenuAdapters
+import OpenSkyScriptAdapters
 import OpenSkyScripting
 import OpenSkyWorld
 

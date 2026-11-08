@@ -2,15 +2,21 @@
 // every system to it and to the renderer, in dependency order.
 
 import Foundation
+import OpenSkyActorAdapters
 import OpenSkyActorPresentation
+import OpenSkyAIAdapters
 import OpenSkyAIPackages
 import OpenSkyCells
+import OpenSkyCombatAdapters
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyInventoryAdapters
 import OpenSkyMagic
+import OpenSkyMagicAdapters
+import OpenSkyMenuAdapters
 import OpenSkyMenus
 import OpenSkyObjectAnimation
 import OpenSkyPhysics
@@ -20,7 +26,9 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkySessionAdapters
 import OpenSkySessionInterface
+import OpenSkyStoryAdapters
 import OpenSkyTerrain
 import OpenSkyWeather
 import OpenSkyWorld
@@ -195,7 +203,7 @@ final class WorldSessionWiring {
             gameSession?.weather?.setRegions(regions)
         }
         streamer.onInteractionTargetChanged = { [weak game] target in
-            game?.hud.updateTarget(game?.inventoryWorld.labelled(target))
+            game?.hud.updateTarget(game?.inventoryWorld.perks.labelled(target))
         }
     }
 
@@ -227,7 +235,7 @@ final class WorldSessionWiring {
         buildAnimationEvents(gameSession: gameSession)
         // The Talk filter reads the death and hostility state the systems above keep.
         game.dialogueWorld.wireDialogue(streamer: streamer)
-        game.dialogueWorld.wireDialogueCamera(gameSession: gameSession)
+        game.dialogueWorld.cameraWiring.wireDialogueCamera(gameSession: gameSession)
         // Scenes speak through the dialogue index, so they come after it.
         game.storyWorld.wireStory(provider: provider, gameSession: gameSession)
         game.followerCommandWorld.wire(gameSession: gameSession)

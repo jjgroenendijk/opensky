@@ -2,6 +2,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyCells
+import OpenSkyMenuAdapters
 import OpenSkyPlayer
 import OpenSkyWorldInterface
 

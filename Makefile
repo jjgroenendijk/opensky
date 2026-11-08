@@ -208,7 +208,7 @@ seed-build-tree: #| Clone the newest build tree for a checkout that has none yet
         py-format py-format-check py-lint \
         cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
         docs-links docs-length agent-files workflow-lint comment-length panel-text load-order-only cli-conventions comment-blocks comment-apply \
-        duplicates no-suppressions file-length module-size
+        duplicates no-suppressions file-length module-size app-architecture
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -226,7 +226,7 @@ metal-format-check: #| Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint py-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text load-order-only cli-conventions gap-registries duplicates no-suppressions file-length module-size ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint py-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text load-order-only cli-conventions gap-registries duplicates no-suppressions file-length module-size app-architecture ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: #| Check for the Apple Swift that CI uses and Swift 6 mode in every target
@@ -320,6 +320,9 @@ file-length: #| Fail on a changed file over 800 lines, warn over 600 [ALL=1 whol
 # Every module, whatever the branch changed: a module grows with each change.
 module-size: #| Print each module's source lines; warn over 20,000, fail over 30,000
 	@./tools/lint/module-size.sh
+
+app-architecture: #| Check adapter modules, narrow hosts, and type sizes in the app layer
+	@./tools/lint/app-architecture.sh
 
 docs-length: #| Check no docs page is longer than DOCS_MAX_LINES
 	@find docs -name '*.md' -exec wc -l {} + | LC_ALL=C sort -k2 | awk -v max=$(DOCS_MAX_LINES) \

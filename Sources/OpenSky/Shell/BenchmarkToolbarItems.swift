@@ -2,6 +2,7 @@
 // window gets a toolbar with only these two for the length of a run.
 
 import AppKit
+import OpenSkyAgentAdapters
 
 @MainActor
 final class BenchmarkToolbarItems: NSObject {
@@ -72,12 +73,12 @@ final class BenchmarkToolbarItems: NSObject {
         let running = benchmark?.isRunning ?? false
         overlayButton.isEnabled = running
         stopButton.isEnabled = running
-        overlayButton.state = (benchmark?.overlay.isOverlayEnabled ?? false) && running ? .on : .off
+        overlayButton.state = (benchmark?.view?.isOverlayEnabled ?? false) && running ? .on : .off
     }
 
     @objc private func toggleOverlay() {
         guard let benchmark else { return }
-        benchmark.overlay.isOverlayEnabled = overlayButton.state == .on
+        benchmark.view?.isOverlayEnabled = overlayButton.state == .on
     }
 
     @objc private func stopTour() {

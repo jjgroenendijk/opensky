@@ -4,6 +4,7 @@
 import AppKit
 import MetalKit
 import OpenSkyActorPresentation
+import OpenSkyAgentAdapters
 import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
@@ -14,14 +15,17 @@ import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyMagic
+import OpenSkyMenuAdapters
 import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyProgression
+import OpenSkyProgressionAdapters
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyStoryAdapters
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -48,7 +52,7 @@ extension GameSessionScope {
         gameSession.frameSteps.register(.hud) { [weak self] _ in
             guard let self else { return }
             // Before the HUD draws, so a skill notice from this frame shows now.
-            progressionWorld.run(progression.takeCommands())
+            progressionWorld.training.run(progression.takeCommands())
             updateQuestNotices()
             hud.updatePlayerModes(hudModeInputs(gameSession))
             hud.setActivateLocked(playerControlLocks.disabled.contains(.activate))
@@ -77,7 +81,7 @@ extension GameSessionScope {
             loadingWorld.coverSessionStart()
             titleMenu.load(continueSlot)
         } else if launch.launchStart != .normal {
-            menuWorld.startPlayer(at: launch.launchStart)
+            menuWorld.teleports.startPlayer(at: launch.launchStart)
         } else if launch.startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
             openTitleScreen()
         } else {
@@ -100,7 +104,10 @@ extension GameSessionScope {
         let input = cameraInput
         menuMode.onModeChange = { [weak self, weak gameSession, weak input] route, paused in
             gameSession?.worldSimPaused = paused
-            self?.menuRouter.modeChanged(to: route)
+            if let self {
+                (hostView as? GameMetalView)?
+                    .setMenuCursorFree(menuRouter.menuCursorFree(for: route))
+            }
             // Released on the route flip, not the pause: the dialogue menu
             // captures input without stopping the world.
             if route == .menu {

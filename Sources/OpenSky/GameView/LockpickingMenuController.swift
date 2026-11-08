@@ -24,14 +24,12 @@ protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
     var crime: any CrimePort { get }
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }
-    var progression: any ProgressionPort { get }
     var swfMovies: any SWFMovieSourcePort { get }
     var inventoryWorld: any InventoryWorldPort { get }
     var menuMode: any MenuModePort { get }
     var renderer: (any RendererPort)? { get }
     var gameSession: (any GameSessionPort)? { get }
     var streamer: (any CellStreamerPort)? { get }
-    var worldData: WorldDataStores? { get }
 }
 
 /// Holds the open lockpicking session's input and overlay for `game`.
@@ -41,28 +39,35 @@ final class LockpickingMenuController {
     static let longestStep: Float = 0.1
 
     unowned let game: any LockpickingMenuHost
-    private(set) var controls = LockpickingMenuControls()
-    private(set) var presentation: LockpickingMenuPresentation?
-    private var lastFrame: Date?
-    private var wasTurning = false
+    var controls = LockpickingMenuControls()
+    var presentation: LockpickingMenuPresentation?
+    var lastFrame: Date?
+    var wasTurning = false
     private let sounds: MenuSoundPlayer
-    private lazy var movie = MenuMovieDriver<Never>(
+    lazy var movie = MenuMovieDriver<Never>(
         movies: game.swfMovies, hud: game.hud, label: "lockpicking movie"
     ) { [weak self] in self?.game.renderer }
-    private var movieInfo: LockpickingMovieInfo?
-    private var lockSource: LockpickingLockSource?
-    private var openedAt: Date?
+    var movieInfo: LockpickingMovieInfo?
+    var lockSource: LockpickingLockSource?
+    var openedAt: Date?
     /// When the pick in hand went in, so its intro plays again after a break.
-    private var pickStartedAt: Date?
-    private var brokeAt: Date?
-    private(set) var drawsLockModel = false
+    var pickStartedAt: Date?
+    var brokeAt: Date?
+    var drawsLockModel = false
 
-    init(game: any LockpickingMenuHost) {
+    let boardHost: any LockpickingBoardHost
+
+    var board: LockpickingBoardAdapter {
+        LockpickingBoardAdapter(owner: self, game: boardHost)
+    }
+
+    init(game: some LockpickingMenuHost & LockpickingBoardHost) {
+        boardHost = game
         self.game = game
         sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
     }
 
-    private var locks: any LockPort {
+    var locks: any LockPort {
         game.inventory.locks
     }
 
@@ -93,15 +98,15 @@ final class LockpickingMenuController {
         game.menuMode.present(Self.identifier)
         play(.enter)
         startMovie()
-        publish()
+        board.publish()
     }
 
-    private func startMovie() {
+    func startMovie() {
         movieInfo = nil
         movie.start(MenuMovie(
             path: LockpickingMenuMovieBridge.moviePath,
             activate: LockpickingMenuMovieBridge.activate(runtime:),
-            didLoad: { [weak self] in self?.publishMovie(force: true) }
+            didLoad: { [weak self] in self?.board.publishMovie(force: true) }
         ), while: { [weak self] in self?.isOpen == true })
     }
 
@@ -116,7 +121,7 @@ final class LockpickingMenuController {
         open(refusal.target)
     }
 
-    private func close() {
+    func close() {
         let target = locks.sessionTarget
         let opened = locks.lastOutcome?.opened == true && locks.session?.isFinished == true
         locks.closeLockpicking()
@@ -144,105 +149,7 @@ final class LockpickingMenuController {
         close()
     }
 
-    /// Steps the session by the wall-clock time since the last frame. The world is
-    /// paused under the menu, so its clock does not move.
-    func tick(now: Date = Date()) {
-        guard isOpen, let session = locks.session else { return }
-        _ = movie.tick(now: now.timeIntervalSinceReferenceDate)
-        let seconds = lastFrame.map { Float(now.timeIntervalSince($0)) } ?? 0
-        lastFrame = now
-        let intent = controls.intent(seconds: min(seconds, Self.longestStep))
-        let input = LockpickingInput(pickDelta: intent.pickDelta, turning: intent.turning)
-        if intent.turning != wasTurning {
-            play(intent.turning ? .cylinderTurn : .cylinderStop)
-            wasTurning = intent.turning
-        }
-        let events = game.inventoryWorld
-            .run(locks.stepLockpicking(min(seconds, Self.longestStep), input: input))
-        for event in events {
-            switch event {
-            case .pickBroke:
-                play(.pickBreak)
-                brokeAt = now
-            case .opened: play(.unlock)
-            case .outOfPicks, .cancelled: break
-            }
-        }
-        guard locks.session?.isFinished != true else {
-            close()
-            return
-        }
-        if let brokeAt, now.timeIntervalSince(brokeAt) > Double(LockpickingLockPose.breakSeconds) {
-            self.brokeAt = nil
-            pickStartedAt = now
-        }
-        publish(straining: session.isStraining(input))
-        drawLock(now: now)
-    }
-
-    /// Draws the install's lock and pick in the menu scene once both meshes are in.
-    private func drawLock(now: Date) {
-        guard let frame = presentation, let renderer = game.renderer else { return }
-        if lockSource == nil, let files = game.worldData?.scriptFileSystem {
-            lockSource = LockpickingLockSource(fileSystem: files)
-        }
-        guard let models = lockSource?.models(device: renderer.device) else { return }
-        func seconds(since date: Date?) -> Float {
-            Float(date.map { now.timeIntervalSince($0) } ?? 0)
-        }
-        let pose = LockpickingLockPose(
-            pickSeconds: seconds(since: pickStartedAt), lockSeconds: seconds(since: openedAt),
-            pickAngle: frame.pickAngle, lockRotation: frame.lockRotation,
-            isStraining: frame.isStraining,
-            brokenSeconds: brokeAt == nil ? nil : seconds(since: brokeAt)
-        )
-        renderer.setMenuScene(LockpickingLockSource.scene(pose, models: models))
-        guard !drawsLockModel else { return }
-        drawsLockModel = true
-        publish(straining: frame.isStraining)
-    }
-
-    private func publish(straining: Bool = false) {
-        guard let session = locks.session else { return }
-        let next = LockpickingMenuPresentation(
-            title: locks.sessionTarget?.interaction.name ?? "Lock",
-            difficulty: session.parameters.difficulty,
-            pickAngle: session.pickAngle,
-            halfArc: session.parameters.halfArc,
-            lockRotation: session.lockRotation,
-            pickHealth: session.pickHealth,
-            picksRemaining: session.picksRemaining,
-            isStraining: straining,
-            drawsLockModel: drawsLockModel
-        )
-        guard next != presentation else { return }
-        presentation = next
-        game.gameSession?.uiScene = next.scene
-        publishMovie()
-    }
-
-    /// The readout changes only when a pick breaks; the debug angles change every frame.
-    private func publishMovie(force: Bool = false) {
-        guard movie.isLoaded, let frame = presentation else { return }
-        let index = ActorValueIdentity.index(named: "Lockpicking")
-        let skill = game.progression.skillsMenuSkills.first { $0.index == index }
-        let info = LockpickingMovieInfo(
-            skillLevel: Int(skill?.level ?? 0),
-            skillProgress: skill?.progress ?? 0,
-            lockLevel: locks.texts.name(of: frame.difficulty),
-            picksRemaining: frame.picksRemaining
-        )
-        let infoChanged = force || info != movieInfo
-        movieInfo = info
-        movie.publish { runtime in
-            if infoChanged {
-                LockpickingMenuMovieBridge.publish(info, runtime: runtime)
-            }
-            LockpickingMenuMovieBridge.publish(frame, runtime: runtime)
-        }
-    }
-
-    private func play(_ sound: LockpickingSound) {
+    func play(_ sound: LockpickingSound) {
         sounds.play(editorID: sound.rawValue)
     }
 }

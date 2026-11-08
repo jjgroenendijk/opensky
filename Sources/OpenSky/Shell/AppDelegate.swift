@@ -4,9 +4,11 @@
 
 import AppKit
 import MetalKit
+import OpenSkyAgentAdapters
 import OpenSkyAgentControl
 import OpenSkyGameData
 import OpenSkyLaunch
+import OpenSkyMenuAdapters
 import OpenSkyReference
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -172,7 +174,7 @@ extension AppDelegate: LauncherActions {
 
     func referenceView() -> ReferenceView? {
         let game = gameWindow?.contentViewController as? GameViewController
-        return try? game?.session?.agentWorld.referenceView()
+        return try? game?.session?.agentWorld.view.referenceView()
     }
 
     func followReference(_ view: ReferenceView) -> Bool {

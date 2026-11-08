@@ -1,14 +1,22 @@
 // The player's locked controls, from the scripts and the beast form, and the game's text
 // when the player presses a locked one. See docs/engine/papyrus-script-state.md#player-controls.
 
+import OpenSkyActorAdapters
 import OpenSkyCombat
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyMenuAdapters
 import OpenSkyMenus
+import OpenSkyObjectAnimation
 import OpenSkyPlayer
+import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 extension GameSessionScope {
     var playerControlLocks: PlayerControlLocks {
@@ -35,5 +43,28 @@ extension GameSessionScope {
         if let text {
             hud.showNotification(text)
         }
+    }
+}
+
+extension GameSessionScope {
+    /// The quest notices the HUD shows each frame the quest state changed.
+    func updateQuestNotices() {
+        guard let runtime = journal.runtime else { return }
+        questNotices.update(
+            runtime: runtime, quests: runtime.runtimeQuests(),
+            revision: runtime.store.revision(of: [.quest]),
+            strings: journal.strings, aliases: journalMenu.aliasNaming(runtime: runtime)
+        )
+    }
+
+    /// The camera that world billboards and effect billboards turn to.
+    var billboardViewer: NIFBillboard.Viewer? {
+        gameSession.map { NIFBillboard.Viewer(camera: $0.freeFlyCamera) }
+    }
+}
+
+extension GameSessionScope {
+    var playerBeastForm: PlayerBeastForm {
+        beastForms.form
     }
 }

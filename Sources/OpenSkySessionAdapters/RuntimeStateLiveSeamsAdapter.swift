@@ -1,0 +1,90 @@
+import Foundation
+import OpenSkyActorPresentation
+import OpenSkyActors
+import OpenSkyActorsInterface
+import OpenSkyAIPackages
+public import OpenSkyConditions
+import OpenSkyCrimeInterface
+import OpenSkyDialogue
+import OpenSkyDialogueInterface
+import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyInventory
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
+import OpenSkyMenus
+import OpenSkyMenusInterface
+import OpenSkyPhysics
+import OpenSkyPlayer
+import OpenSkyQuestsInterface
+import OpenSkyScripting
+import OpenSkyScriptingInterface
+public import OpenSkySessionInterface
+import OpenSkyWeather
+import OpenSkyWorld
+import OpenSkyWorldConditions
+import OpenSkyWorldInterface
+import OpenSkyWorldState
+
+/// What `RuntimeStateLiveSeamsAdapter` reads from the session.
+@MainActor
+public protocol RuntimeStateLiveSeamsHost: AnyObject {
+    var actorGraphWorld: any ActorGraphWorldPort { get }
+    var aiWorld: any AIWorldPort { get }
+    var dialogue: any DialoguePort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var idleWorld: any IdleWorldPort { get }
+    var menuMode: any MenuModePort { get }
+    var packages: any PackagePort { get }
+    var scenes: any ScenePort { get }
+    var scripts: any ScriptPort { get }
+}
+
+/// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
+public struct RuntimeStateLiveSeamsAdapter {
+    public unowned let owner: RuntimeStateWorldAdapter
+    public unowned let game: any RuntimeStateLiveSeamsHost
+}
+
+extension RuntimeStateLiveSeamsAdapter {
+    public func addLiveSeams(to context: inout ConditionContext) {
+        context.scriptVariables = game.scripts.runtime?.scriptVariableResolution() ?? .empty
+        context.scriptedState = game.scripts.bridge?.scriptedStateResolution() ?? .empty
+        context.scenes = game.scenes.conditionResolution(aliases: context.aliases)
+        context.weather = weatherResolution()
+        context.furniture = game.idleWorld.idles.furnitureResolution
+        context.graphVariables = game.actorGraphWorld.graphVariableResolution()
+        let warnings = game.packages.trespassWarnings
+        if !warnings.isEmpty {
+            context.crime.situation?.trespassWarnings = warnings
+        }
+        if let inventory = owner.inventoryFacts.inventoryResolution(context: context) {
+            context.inventory = inventory
+        }
+        context.referenceFacts = owner.referenceMotion.referenceFacts(of: context.references)
+        context.motion = owner.referenceMotion.motionResolution(references: context.references)
+        context.places = owner.referenceMotion.placeResolution(references: context.references)
+        owner.referenceMotion.addMountSeams(to: &context)
+        context.menus = MenuConditionResolution(
+            isMenuOpen: game.menuMode.topMenu != nil,
+            isLoading: game.menuMode.topMenu == MenuIdentifier.loadingMenu
+        )
+        context.dialogue = DialogueResolution(
+            speakerInDialogue: game.dialogue.conversationSpeaker, line: game.dialogue.spokenLine
+        )
+        context.packages = game.packages.runtime?.conditionResolution { location, actor in
+            game.aiWorld.isWithin(location, actor: actor)
+        } ?? .empty
+    }
+
+    private func weatherResolution() -> WeatherConditionResolution {
+        guard
+            let weather = game.gameSession?.weather,
+            let current = weather.currentWeatherID
+        else { return .empty }
+        return WeatherConditionResolution(
+            weather: current,
+            precipitation: weather.store.weather(current)?.data?.precipitation ?? .none
+        )
+    }
+}

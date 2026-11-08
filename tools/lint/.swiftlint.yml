@@ -145,6 +145,8 @@ custom_rules:
     name: "Late setter method"
     regex: '^[ \t]*(@\w+(\([^)]*\))?\s+)*((public|open|package|internal|final|override|nonisolated|mutating)\s+)*func\s+(wire|install)\w*\s*[<(]'
     included: 'Sources/OpenSky[A-Z][A-Za-z]*/.*\.swift$'
+    # The adapter modules are part of the composition root: they connect a started session.
+    excluded: 'Sources/OpenSky[A-Za-z]*Adapters/.*\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Take the dependency in the initializer; no wire or install method (docs/decisions/session-scope.md)"
     severity: error
