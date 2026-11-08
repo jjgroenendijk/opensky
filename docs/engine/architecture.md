@@ -153,7 +153,7 @@ declared order.
 
 Every rule on this page and in [Coordinators](/engine/coordinators.md) has a check in
 `make check` and CI. The adapter rule needs the index store a build writes, so it runs in
-`make health` and the weekly workflow. The SwiftLint rules are in `tools/lint/.swiftlint.yml`.
+`make health` and the `Index checks` CI job on each pull request. The SwiftLint rules are in `tools/lint/.swiftlint.yml`.
 
 | Rule | Check |
 | --- | --- |

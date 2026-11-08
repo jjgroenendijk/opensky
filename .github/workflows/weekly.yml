@@ -1,13 +1,18 @@
 name: Weekly checks
 
-# The slow checks that no change needs on every push: the unit tests under each
-# sanitizer, and the unused-code scan. They run on a macOS runner once a week and
-# on demand, so a session never waits for them (docs/tools/ci.md). A finding is
-# a regression to file as an issue, not a reason to rerun.
+# The unit tests under each sanitizer. Each one rebuilds everything with
+# instrumentation, too slow for every push, so they run on a macOS runner once a
+# week and on demand (docs/tools/ci.md). A failed run opens an issue, or comments
+# on the open one, and a green run closes it.
 on:
   schedule:
     - cron: "17 3 * * 0"
   workflow_dispatch:
+    inputs:
+      force_failure:
+        description: Fail at once, to test the issue step
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -33,10 +38,9 @@ jobs:
             command: make test-sanitize SAN=thread XCODEBUILD_FLAGS="$BUILD_FLAGS"
           - name: Address sanitizer
             command: make test-sanitize SAN=address XCODEBUILD_FLAGS="$BUILD_FLAGS"
-          # Periphery reads the index store, so this job keeps it on.
-          - name: Unused code
-            command: make health XCODEBUILD_FLAGS="${BUILD_FLAGS/COMPILER_INDEX_STORE_ENABLE=NO/}"
     steps:
+      - if: inputs.force_failure
+        run: exit 1
       - uses: actions/checkout@v7
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
@@ -54,10 +58,6 @@ jobs:
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
       # The ASTC texture encoder links the vendored astcenc static library.
       - run: make astcenc
-      # Periphery is the one tool the CI image does not ship. The cask in the
-      # periphery tap no longer installs, so take the Homebrew core formula.
-      - if: matrix.name == 'Unused code'
-        run: brew install periphery
       - name: Wait for the Metal Toolchain
         run: tools/ci/metal-toolchain.sh wait
       - run: ${{ matrix.command }}
@@ -69,3 +69,21 @@ jobs:
           path: .logs/
           include-hidden-files: true
           retention-days: 14
+
+  report:
+    name: Report
+    if: ${{ always() }}
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RESULT: ${{ needs.checks.result }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: tools/ci/weekly-issue.sh "$RESULT" "$RUN_URL"

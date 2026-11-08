@@ -53,7 +53,7 @@
     "query": "The work on my draft PR is done and verified. Land it.",
     "files": [],
     "expected_behavior": [
-      "Runs gh pr ready so CI starts",
+      "Runs gh pr ready, then reads the last push's CI run instead of waiting for a new one",
       "Waits for the Lint check with gh pr checks --watch before merging",
       "Merges with gh pr merge --rebase, never --merge or --squash"
     ]
