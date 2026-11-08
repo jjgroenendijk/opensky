@@ -6,6 +6,8 @@
 #   1. At least FLOOR percent of the changed executable lines ran in a test.
 #   2. Every function the branch adds ran in a test. Closures count under rule 1.
 #
+# A block git sees as moved unchanged is not new: rename detection for lines.
+#
 # Usage: tools/lint/diff-coverage.sh FLOOR BASE DERIVED_DATA
 #        tools/lint/diff-coverage.sh --self-check
 set -eu
@@ -21,24 +23,31 @@ sys.path.insert(0, "tools/lint")
 from coverage_profile import demangled, is_closure, lcov, parse_lcov
 from swift_source import XCODE_ONLY, wiring_modules
 
-HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", re.MULTILINE)
+HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
+# The colours `git diff --color-moved` gets, so a moved added line is told apart.
+NEW, MOVED = "\x1b[32m", "\x1b[34m"
+COLOURS = ["-c", "color.diff.new=green", "-c", "color.diff.newMoved=blue",
+           "-c", "color.diff.newMovedAlternative=blue"]
 
 
 def changed_lines(diff):
-    """{path: {line}} for the lines a `git diff -U0` adds or changes."""
-    changed, path = {}, None
+    """{path: {line}} for the lines a coloured `git diff -U0` adds, without moved ones."""
+    changed, lines, number = {}, None, 0
     skipped = XCODE_ONLY | wiring_modules()
-    for block in re.split(r"^diff --git ", diff, flags=re.MULTILINE)[1:]:
-        match = re.search(r"^\+\+\+ b/(.+)$", block, re.MULTILINE)
-        path = match.group(1) if match else None
-        if not path or not path.startswith("Sources/") or not path.endswith(".swift"):
-            continue
-        if path.split("/")[1] in skipped:
-            continue
-        lines = changed.setdefault(path, set())
-        for hunk in HUNK.finditer(block):
-            start, count = int(hunk.group(1)), int(hunk.group(2) or 1)
-            lines.update(range(start, start + count))
+    for raw in diff.splitlines():
+        text = ANSI.sub("", raw)
+        if text.startswith("+++ "):
+            path = text[6:] if text.startswith("+++ b/") else ""
+            usable = (path.startswith("Sources/") and path.endswith(".swift")
+                      and path.split("/")[1] not in skipped)
+            lines = changed.setdefault(path, set()) if usable else None
+        elif (hunk := HUNK.match(text)):
+            number = int(hunk.group(1))
+        elif text.startswith("+") and lines is not None:
+            if not raw.startswith(MOVED):
+                lines.add(number)
+            number += 1
     return changed
 
 
@@ -62,11 +71,12 @@ def check(changed, files, readable_names):
 def self_check():
     diff = (
         "diff --git a/Sources/OpenSkyMagic/A.swift b/Sources/OpenSkyMagic/A.swift\n"
-        "+++ b/Sources/OpenSkyMagic/A.swift\n@@ -0,0 +1,3 @@\n"
+        "+++ b/Sources/OpenSkyMagic/A.swift\n@@ -0,0 +1,4 @@\n"
+        f"{NEW}+a\n{NEW}+b\n{NEW}+c\n{MOVED}+moved\n"
         "diff --git a/Sources/OpenSky/B.swift b/Sources/OpenSky/B.swift\n"
-        "+++ b/Sources/OpenSky/B.swift\n@@ -0,0 +1,3 @@\n"
+        "+++ b/Sources/OpenSky/B.swift\n@@ -0,0 +1,1 @@\n+b\n"
         "diff --git a/Sources/OpenSkyMagicAdapters/C.swift b/Sources/OpenSkyMagicAdapters/C.swift\n"
-        "+++ b/Sources/OpenSkyMagicAdapters/C.swift\n@@ -0,0 +1,3 @@\n"
+        "+++ b/Sources/OpenSkyMagicAdapters/C.swift\n@@ -0,0 +1,1 @@\n+c\n"
     )
     changed = changed_lines(diff)
     if changed != {"Sources/OpenSkyMagic/A.swift": {1, 2, 3}}:
@@ -91,7 +101,9 @@ if len(sys.argv) != 4:
     sys.exit("[ERROR] usage: diff-coverage.sh FLOOR BASE DERIVED_DATA")
 floor, base, derived_data = float(sys.argv[1]), sys.argv[2], sys.argv[3]
 diff = subprocess.run(
-    ["git", "diff", "-U0", "--diff-filter=AMR", base, "--", "Sources/*.swift"],
+    ["git", *COLOURS, "diff", "--color=always", "--color-moved=zebra",
+     "--color-moved-ws=allow-indentation-change", "-U0", "--diff-filter=AMR", base, "--",
+     "Sources/*.swift"],
     capture_output=True, text=True, check=True,
 ).stdout
 changed = changed_lines(diff)

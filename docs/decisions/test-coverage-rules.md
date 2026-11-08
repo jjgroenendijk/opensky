@@ -60,6 +60,13 @@ side of the merge commit it checks out.
    line is a changed line. A closure is not counted here, because a closure that never ran
    inside a tested function is an untaken branch, and rule 1 counts its lines.
 
+A line that git's moved-code detection (`git diff --color-moved`) marks as moved unchanged is
+not a changed line, even when its indentation changed. Moving a type to another module does
+not make its code new, as rename detection already does for a whole file. A moved line that
+also changed, for example one that gained `public`, still counts. Example: moving
+`struct Ward { func absorb() }` to an interface module counts nothing; making `absorb()`
+public there counts its first line.
+
 The app and the CLI targets are outside both rules: they are not package modules, and the UI
 tests cover them. The modules declared with `composition()` and their interfaces, such as
 `OpenSkyMagicAdapters` and `OpenSkySessionInterface`, are outside too, for the reason the
