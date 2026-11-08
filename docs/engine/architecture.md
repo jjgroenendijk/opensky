@@ -152,11 +152,14 @@ declared order.
 ## Machine checks
 
 Every rule on this page and in [Coordinators](/engine/coordinators.md) has a check in
-`make check` and CI. The SwiftLint rules are in `tools/lint/.swiftlint.yml`.
+`make check` and CI. The adapter rule needs the index store a build writes, so it runs in
+`make health` and the weekly workflow. The SwiftLint rules are in `tools/lint/.swiftlint.yml`.
 
 | Rule | Check |
 | --- | --- |
 | A feature uses another feature only through its `Interface` module | `make module-graph`, rules 1 to 9 |
+| A module depends only on a module at least as stable, or on an `Interface` | `make module-graph` rule 13 |
+| No adapter uses the type of an adapter outside its own family | `make health`, `tools/lint/adapter-references.py` |
 | Only the composition root names `GameViewController` | SwiftLint `controller_outside_composition_root` |
 | No `GameViewController` extension outside its own files | SwiftLint `game_view_controller_extension` |
 | No late-attach method in a package module or the app | SwiftLint `late_attached_world` |

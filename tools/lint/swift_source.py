@@ -52,10 +52,16 @@ def package_files():
         yield path.parts[1], name, code_only(path.read_text())
 
 
+def wiring_modules():
+    """Each module declared with composition(), and its interface: ports and wiring, no rule."""
+    text = pathlib.Path("Package.swift").read_text()
+    composed = set(re.findall(r'\bcomposition\(\s*"(\w+)"', text))
+    return composed | {name + "Interface" for name in composed}
+
+
 def rule_modules():
-    """The game-rule modules: each feature, interface, and world-domain module. A composition
-    module and its interface hold ports and wiring, not rules."""
+    """The game-rule modules: each feature, interface, and world-domain module, without the
+    wiring modules."""
     text = pathlib.Path("Package.swift").read_text()
     names = set(re.findall(r'\b(?:feature|domain|interface)\(\s*"(\w+)"', text))
-    composed = set(re.findall(r'\bcomposition\(\s*"(\w+)"', text))
-    return {module for name in names - composed for module in (name, name + "Interface")}
+    return {module for name in names for module in (name, name + "Interface")} - wiring_modules()

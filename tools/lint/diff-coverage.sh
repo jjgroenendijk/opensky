@@ -19,7 +19,7 @@ import sys
 
 sys.path.insert(0, "tools/lint")
 from coverage_profile import demangled, is_closure, lcov, parse_lcov
-from swift_source import XCODE_ONLY
+from swift_source import XCODE_ONLY, wiring_modules
 
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", re.MULTILINE)
 
@@ -27,12 +27,13 @@ HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", re.MULTILINE)
 def changed_lines(diff):
     """{path: {line}} for the lines a `git diff -U0` adds or changes."""
     changed, path = {}, None
+    skipped = XCODE_ONLY | wiring_modules()
     for block in re.split(r"^diff --git ", diff, flags=re.MULTILINE)[1:]:
         match = re.search(r"^\+\+\+ b/(.+)$", block, re.MULTILINE)
         path = match.group(1) if match else None
         if not path or not path.startswith("Sources/") or not path.endswith(".swift"):
             continue
-        if path.split("/")[1] in XCODE_ONLY:
+        if path.split("/")[1] in skipped:
             continue
         lines = changed.setdefault(path, set())
         for hunk in HUNK.finditer(block):
@@ -64,6 +65,8 @@ def self_check():
         "+++ b/Sources/OpenSkyMagic/A.swift\n@@ -0,0 +1,3 @@\n"
         "diff --git a/Sources/OpenSky/B.swift b/Sources/OpenSky/B.swift\n"
         "+++ b/Sources/OpenSky/B.swift\n@@ -0,0 +1,3 @@\n"
+        "diff --git a/Sources/OpenSkyMagicAdapters/C.swift b/Sources/OpenSkyMagicAdapters/C.swift\n"
+        "+++ b/Sources/OpenSkyMagicAdapters/C.swift\n@@ -0,0 +1,3 @@\n"
     )
     changed = changed_lines(diff)
     if changed != {"Sources/OpenSkyMagic/A.swift": {1, 2, 3}}:
