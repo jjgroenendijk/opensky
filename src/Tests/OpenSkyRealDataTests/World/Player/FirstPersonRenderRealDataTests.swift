@@ -18,6 +18,7 @@ import OpenSkyCells
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 import Testing
 import UniformTypeIdentifiers

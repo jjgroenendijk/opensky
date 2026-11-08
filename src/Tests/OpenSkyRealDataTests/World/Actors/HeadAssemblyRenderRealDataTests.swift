@@ -9,10 +9,12 @@ import Metal
 import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyPlayer
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 @testable import OpenSkyRuntimeState
 import OpenSkyTagsTesting
+import OpenSkyWorldInterface
 import simd
 import Testing
 

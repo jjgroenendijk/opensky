@@ -11,6 +11,7 @@ import MetalKit
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 import OpenSkyTagsTesting

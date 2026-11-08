@@ -19,6 +19,7 @@ import OpenSkyCombatFixtures
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
 import OpenSkyTagsTesting
+import OpenSkyWorldInterface
 import simd
 import Testing
 

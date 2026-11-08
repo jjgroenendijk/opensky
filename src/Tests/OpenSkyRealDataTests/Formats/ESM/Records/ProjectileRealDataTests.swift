@@ -7,6 +7,7 @@
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPlayer

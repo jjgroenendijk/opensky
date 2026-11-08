@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyWorldInterface
 import Testing
 
 @MainActor

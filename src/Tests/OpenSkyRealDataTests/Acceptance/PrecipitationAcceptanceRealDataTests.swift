@@ -16,6 +16,7 @@ import MetalKit
 import OpenSkyTagsTesting
 @testable import OpenSkyWeather
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import Testing
 
 @Suite(.tags(.acceptance, .gpu))

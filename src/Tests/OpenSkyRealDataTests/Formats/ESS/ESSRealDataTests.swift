@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyFormatsESS
 @testable import OpenSkyGameData
 import OpenSkySave
+import OpenSkySaveInterface
 import OpenSkyTagsTesting
 import Testing
 

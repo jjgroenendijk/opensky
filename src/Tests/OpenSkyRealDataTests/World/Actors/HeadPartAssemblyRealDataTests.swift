@@ -9,6 +9,7 @@ import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyTagsTesting
+import OpenSkyWorldInterface
 import Testing
 
 @Suite(.tags(.gpu))

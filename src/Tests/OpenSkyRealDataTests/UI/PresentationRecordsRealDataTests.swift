@@ -13,6 +13,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyLoading
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyWorldConditions
 import Testing
 

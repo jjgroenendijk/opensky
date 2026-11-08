@@ -8,6 +8,7 @@ import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyWorldInterface
 import Testing
 
 struct CreatureClipRealDataTests {

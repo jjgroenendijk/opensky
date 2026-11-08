@@ -6,6 +6,7 @@
 import Foundation
 @testable import OpenSkyCells
 @testable import OpenSkyDialogue
+import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

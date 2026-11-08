@@ -9,11 +9,13 @@ import OpenSkyActorPresentation
 import OpenSkyBehavior
 @testable import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
 @testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 import Testing
 
