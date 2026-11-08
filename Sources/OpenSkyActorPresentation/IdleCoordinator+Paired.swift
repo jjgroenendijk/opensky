@@ -3,6 +3,7 @@
 
 import OpenSkyBehavior
 public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 
 extension IdleCoordinator {
     /// The `source` of the report a paired idle leaves.

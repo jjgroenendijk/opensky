@@ -8,7 +8,7 @@ import Synchronization
 
 /// What a menu coordinator reads from the app. nil while Metal 4 is unavailable.
 public protocol SWFLayerWorld: AnyObject {
-    var renderer: Renderer? { get }
+    var renderer: (any RendererPort)? { get }
     /// The player's view pose; nil without a game session.
     var viewCamera: FreeFlyCamera? { get }
     /// The screen-space UI the next frame draws.
@@ -129,16 +129,4 @@ public final class SWFMovieSource {
 /// The worker's movie loader, with its import and font caches.
 nonisolated private final class SWFMovieLoaderBox: Sendable {
     let loader = Mutex<SWFMovieLoader?>(nil)
-}
-
-extension Renderer {
-    /// Shows a menu movie at full scale and starts its runtime. False when no runtime started.
-    public func startMenuMovie(
-        _ scene: SWFMovieScene, prepare: ((SWFMovieRuntime) -> Void)? = nil
-    ) throws -> Bool {
-        try setSWFMovie(scene)
-        swfEnabled = true
-        swfScale = 1
-        return try startSWFRuntime(prepare: prepare) != nil
-    }
 }

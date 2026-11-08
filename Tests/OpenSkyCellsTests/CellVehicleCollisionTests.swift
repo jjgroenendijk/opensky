@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyNavigation
 import OpenSkyPhysics
+import OpenSkyWorldInterface
 import simd
 import Testing
 

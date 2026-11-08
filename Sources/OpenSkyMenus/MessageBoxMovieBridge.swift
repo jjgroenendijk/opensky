@@ -5,6 +5,7 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 nonisolated public enum MessageBoxMovieBridge: Sendable {
     public static let moviePath = "interface\\messagebox.swf"

@@ -1,6 +1,7 @@
 // The real time a session's frames ran, for `Utility.GetCurrentRealTime`.
 
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import Testing
 
 struct RendererGameTimeTests {

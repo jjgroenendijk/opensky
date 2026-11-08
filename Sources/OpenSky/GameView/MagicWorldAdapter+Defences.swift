@@ -2,8 +2,10 @@
 // faces the caster, and whether a wall stands between the impact and a bystander.
 
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkySessionInterface
 import simd
 
 extension MagicWorldAdapter {

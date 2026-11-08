@@ -17,14 +17,6 @@ public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
 
-/// Teleport-capable DOOR placement retained beside render data so main-thread
-/// interaction can select a nearby door without touching plugin bytes.
-nonisolated public struct PlacedDoor: Equatable, Sendable {
-    public let reference: FormID
-    public let position: SIMD3<Float>
-    public let destination: PlacedReference.TeleportDestination
-}
-
 /// One built exterior cell, ready to render.
 nonisolated public struct CellScene: Sendable {
     public let renderScene: RenderScene
@@ -343,5 +335,16 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
         return "[INFO] \(cellName) (\(gridX),\(gridY)): \(totalRefCount) refs, "
             + "\(drawnRefCount) drawn, \(skipped), \(modelCount) models, "
             + "\(textureCount) textures (\(missingTextureCount) missing)\(terrain)"
+    }
+}
+
+nonisolated extension CellScene {
+    public var locationKey: CellLocationKey {
+        CellLocationKey(
+            location: location,
+            locationLink: locationLink,
+            ownerPluginName: ownerPluginName,
+            worldspace: worldspace
+        )
     }
 }

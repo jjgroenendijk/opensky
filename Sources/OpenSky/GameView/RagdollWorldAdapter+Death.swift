@@ -9,10 +9,13 @@ import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

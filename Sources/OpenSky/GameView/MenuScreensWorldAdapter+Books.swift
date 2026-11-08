@@ -10,6 +10,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyScripting
+import OpenSkySessionInterface
 
 extension MenuScreensWorldAdapter: BookMenuWorld {
     private var items: ItemDefinitionStore? {

@@ -7,6 +7,7 @@ import OpenSkyAIPackages
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -15,35 +16,36 @@ import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
 /// What `IdleWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol IdleWorldHost: AnyObject {
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
-    var actorGraphWorld: ActorGraphWorldAdapter { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var aiWorld: AIWorldAdapter { get }
+    var actorGraphWorld: any ActorGraphWorldPort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var aiWorld: any AIWorldPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    var packages: PackageCoordinator { get }
-    var player: PlayerCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var idles: IdleCoordinator { get }
-    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
-    var scripts: ScriptCoordinator { get }
+    var packages: any PackagePort { get }
+    var player: any PlayerPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var idles: any IdlePort { get }
+    var runtimeStateWorld: any RuntimeStateWorldPort { get }
+    var scripts: any ScriptPort { get }
     var sessionWiring: WorldSessionWiring { get }
-    var streamer: CellStreamer? { get }
-    var vehicleWorld: VehicleWorldAdapter { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var vehicleWorld: any VehicleWorldPort { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class IdleWorldAdapter {
     unowned let game: any IdleWorldHost
-    var idles: IdleCoordinator {
+    var idles: any IdlePort {
         game.idles
     }
 
@@ -148,10 +150,6 @@ extension IdleWorldAdapter: IdleWorld {
 
     var idleStateSequence: UInt64 {
         game.worldState.nextJournalSequence
-    }
-
-    func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback? {
-        game.actorPlayback(for: actor)
     }
 
     var idleAnimationTime: Float? {

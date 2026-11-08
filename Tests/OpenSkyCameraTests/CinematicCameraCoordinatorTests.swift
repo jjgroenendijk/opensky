@@ -8,6 +8,7 @@ import OpenSkyConditions
 import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+import OpenSkyWorldInterface
 import simd
 import Testing
 

@@ -8,6 +8,7 @@ import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyCrime
 import OpenSkyEffects
 import OpenSkyFormatsCore
@@ -21,6 +22,7 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -29,33 +31,33 @@ import simd
 /// What `RagdollWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol RagdollWorldHost: AnyObject {
-    var audio: AudioCoordinator { get }
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
-    var actorGraphWorld: ActorGraphWorldAdapter { get }
-    var actorValues: ActorValueCoordinator { get }
+    var audio: any AudioPort { get }
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
+    var actorGraphWorld: any ActorGraphWorldPort { get }
+    var actorValues: any ActorValuePort { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var audioFileSystem: (any GameFileSource)? { get }
-    var cinematicWorld: CinematicCameraWorldAdapter { get }
-    var containerMenu: ContainerMenuController { get }
-    var crime: CrimeCoordinator { get }
-    var effects: EffectsCoordinator { get }
-    var effectsWorld: EffectsWorldAdapter { get }
-    var inventory: InventoryCoordinator { get }
-    var magic: MagicCoordinator { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var ragdoll: RagdollCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var scripts: ScriptCoordinator { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var streamer: CellStreamer? { get }
+    var cinematicWorld: any CinematicCameraWorldPort { get }
+    var containerMenu: any ContainerMenuPort { get }
+    var crime: any CrimePort { get }
+    var effects: any EffectsPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
+    var inventory: any InventoryPort { get }
+    var magic: any MagicPort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var ragdoll: any RagdollPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var scripts: any ScriptPort { get }
+    var storyWorld: any StoryWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
-    var hud: HUDCoordinator { get }
-    var messages: MessageCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
-    var saveGames: SaveGameWorldAdapter { get }
-    var titleMenu: TitleMenuCoordinator { get }
+    var worldState: any WorldStateStorePort { get }
+    var hud: any HUDPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var saveGames: any SaveGameWorldPort { get }
+    var titleMenu: any TitleMenuPort { get }
     func quitToMainMenu()
 }
 

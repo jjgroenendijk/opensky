@@ -6,6 +6,7 @@ import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsSWF
 import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyRendering
 
 /// What one menu does to its movie during bring-up.
@@ -55,18 +56,18 @@ public final class MenuMovieSession {
     public private(set) var path: String?
     public private(set) var holdsLayer = false
     private var request = 0
-    private let movies: SWFMovieSource?
-    private let hud: HUDCoordinator?
-    private let renderer: () -> Renderer?
+    private let movies: (any MenuMovieLoading)?
+    private let hud: (any MenuLayerOwner)?
+    private let renderer: () -> (any RendererPort)?
     private let label: String
     private let logger: EngineLogger?
 
     public init(
-        movies: SWFMovieSource?,
-        hud: HUDCoordinator?,
+        movies: (any MenuMovieLoading)?,
+        hud: (any MenuLayerOwner)?,
         label: String,
         logger: EngineLogger? = nil,
-        renderer: @escaping () -> Renderer?
+        renderer: @escaping () -> (any RendererPort)?
     ) {
         self.movies = movies
         self.hud = hud
@@ -76,7 +77,7 @@ public final class MenuMovieSession {
     }
 
     /// The renderer while the movie is up, for sending it input.
-    public var loadedRenderer: Renderer? {
+    public var loadedRenderer: (any RendererPort)? {
         isLoaded ? renderer() : nil
     }
 

@@ -11,6 +11,7 @@ import OpenSkyEngineTesting
 @testable import OpenSkyPlayer
 @testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 
 extension LocomotionBridgeTests {

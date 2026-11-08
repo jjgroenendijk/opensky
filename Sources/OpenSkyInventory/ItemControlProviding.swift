@@ -5,14 +5,6 @@
 import Foundation
 public import OpenSkyInventoryInterface
 
-/// Who an equip or unequip applies to: the player for state and carry weight,
-/// or the nearest actor to see the change on a rendered body.
-nonisolated public enum EquipmentTargetSelector: Equatable, Sendable {
-    case player
-    /// The resident ACHR closest to the player.
-    case nearestActor
-}
-
 /// One equipped item as the readout spells it.
 nonisolated public struct EquippedItemReadout: Equatable, Sendable {
     public let name: String

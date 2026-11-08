@@ -6,6 +6,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 extension ScriptWorldAdapter: PapyrusMusicControlling {

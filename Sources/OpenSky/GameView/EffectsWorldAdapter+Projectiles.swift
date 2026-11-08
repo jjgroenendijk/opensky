@@ -3,11 +3,14 @@
 // docs/engine/spell-delivery.md#what-a-projectile-shows.
 
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkySessionInterface
+import OpenSkyWorldInterface
 import simd
 
 extension EffectsWorldAdapter {

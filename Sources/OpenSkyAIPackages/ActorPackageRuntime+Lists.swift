@@ -6,17 +6,8 @@ public import OpenSkyConditions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyWorldConditions
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
-
-/// Where an actor's current package came from, in the order selection tries them.
-nonisolated public enum PackageSource: Equatable, Sendable {
-    case scene
-    case script
-    case situation(PackageSituation)
-    case alias
-    case own
-    case defaults
-}
 
 /// The one package `AddScriptPackage` gave the actor.
 nonisolated struct ScriptPackageSlot: Equatable, Sendable {

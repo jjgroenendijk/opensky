@@ -8,6 +8,7 @@ import OpenSkyEngineTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
+import OpenSkyWorldInterface
 
 @MainActor
 final class FakePlayerWorld: PlayerWorld {

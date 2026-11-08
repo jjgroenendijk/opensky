@@ -11,6 +11,7 @@ import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
 @testable public import OpenSkyObjectAnimation
 import OpenSkyPhysics
+import OpenSkyWorldInterface
 import simd
 import Testing
 

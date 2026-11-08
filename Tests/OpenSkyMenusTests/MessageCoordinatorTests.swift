@@ -5,6 +5,7 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScriptingInterface
@@ -12,7 +13,7 @@ import Testing
 
 @MainActor
 final class FakeMessageWorld: MessageWorld, MenuInputConsumer {
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         nil
     }
 

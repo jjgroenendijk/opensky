@@ -4,6 +4,7 @@
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 import Testing
 
 struct MeleeCombatStateTests {

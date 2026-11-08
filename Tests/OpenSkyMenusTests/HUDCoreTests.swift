@@ -2,6 +2,7 @@
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 @testable import OpenSkyWorldInterface
 import simd
 import Testing

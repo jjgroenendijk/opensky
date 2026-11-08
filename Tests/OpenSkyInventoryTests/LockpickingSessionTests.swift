@@ -3,6 +3,7 @@
 
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
+import OpenSkyWorldState
 import Testing
 
 struct LockpickingSessionTests {

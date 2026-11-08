@@ -7,6 +7,8 @@ import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
+import OpenSkySessionInterface
 
 extension DialogueMenuController {
     var snapshot: DialogueControlSnapshot {

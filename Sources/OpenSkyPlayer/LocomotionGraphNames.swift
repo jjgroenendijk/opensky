@@ -5,6 +5,7 @@
 import Foundation
 public import OpenSkyBehavior
 public import OpenSkyPhysics
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public enum LocomotionGraphNames: Sendable {

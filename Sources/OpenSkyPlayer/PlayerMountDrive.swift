@@ -8,21 +8,8 @@ public import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyRenderCore
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
-
-/// The ground and collision one mount step runs against.
-public struct MountStepWorld {
-    public let sampleGround: WalkController.GroundSampler
-    public let collisionQuery: WalkController.CollisionQuery
-
-    public init(
-        sampleGround: @escaping WalkController.GroundSampler,
-        collisionQuery: @escaping WalkController.CollisionQuery
-    ) {
-        self.sampleGround = sampleGround
-        self.collisionQuery = collisionQuery
-    }
-}
 
 /// What starting a mount drive needs.
 public struct PlayerMountDriveStart {

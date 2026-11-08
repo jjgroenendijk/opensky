@@ -7,6 +7,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 public import OpenSkyWeather
+public import OpenSkyWorldInterface
 import simd
 
 extension WorldRenderControls {

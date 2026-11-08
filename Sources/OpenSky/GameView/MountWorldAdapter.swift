@@ -6,6 +6,7 @@ import OpenSkyActorPresentation
 import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyCrimeInterface
@@ -18,6 +19,7 @@ import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -26,25 +28,25 @@ import simd
 /// What `MountWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MountWorldHost: AnyObject {
-    var actorGraphWorld: ActorGraphWorldAdapter { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var aiWorld: AIWorldAdapter { get }
-    var mounts: MountCoordinator { get }
-    var crime: CrimeCoordinator { get }
-    var gameSession: GameSession? { get }
-    var magic: MagicCoordinator { get }
-    var magicWorld: MagicWorldAdapter { get }
-    var messages: MessageCoordinator { get }
-    var perks: PerkCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var vehicleWorld: VehicleWorldAdapter { get }
+    var actorGraphWorld: any ActorGraphWorldPort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var aiWorld: any AIWorldPort { get }
+    var mounts: any MountPort { get }
+    var crime: any CrimePort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var magic: any MagicPort { get }
+    var magicWorld: any MagicWorldPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var perks: any PerkPort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var vehicleWorld: any VehicleWorldPort { get }
     var worldData: WorldDataStores? { get }
 }
 
 final class MountWorldAdapter {
     unowned let game: any MountWorldHost
-    var mounts: MountCoordinator {
+    var mounts: any MountPort {
         game.mounts
     }
 
@@ -120,7 +122,7 @@ final class MountWorldAdapter {
         case let .boardPlayer(mount):
             // A paired clip's end event from before this phase must not end it.
             if let locomotion = game.gameSession?.locomotion {
-                _ = locomotion.graphEvents.drain(locomotion.mountEventConsumer)
+                locomotion.drainMountEvents()
             }
             vehicles.board(.player, on: mount)
         case let .seatPlayer(mount, bone): vehicles.seat(.player, on: mount, bone: bone)
@@ -256,7 +258,7 @@ extension MountWorldAdapter: PlayerMountDriving {
     ) -> (motion: MountMotion, yaw: Float)? {
         if let locomotion = game.gameSession?.locomotion {
             run(mounts.handleRiderEvents(
-                locomotion.graphEvents.drain(locomotion.mountEventConsumer)
+                locomotion.drainMountEvents()
             ))
         }
         run(mounts.advance(

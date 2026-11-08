@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 public import OpenSkyRendering
 
 /// The measured contract of `titles.swf`: its first frame stops the clips `sequence1` to
@@ -31,7 +32,7 @@ public final class TitleSequenceCoordinator {
     /// A clip asked for before the movie loaded, played once it is up.
     private var pendingClip: String?
 
-    public init(movies: SWFMovieSource?, renderer: @escaping () -> Renderer?) {
+    public init(movies: (any MenuMovieLoading)?, renderer: @escaping () -> (any RendererPort)?) {
         overlay = MenuMovieOverlay(movies: movies, renderer: renderer)
     }
 

@@ -2,6 +2,7 @@
 // down by the blast's mode, and a splash under water (docs/engine/impulses.md#explosions).
 
 import Foundation
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 import simd

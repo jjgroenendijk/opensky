@@ -4,12 +4,14 @@
 import OpenSkyActorsInterface
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 extension MagicWorldAdapter {

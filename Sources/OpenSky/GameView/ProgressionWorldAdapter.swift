@@ -19,31 +19,33 @@ import OpenSkyProgressionInterface
 import OpenSkyQuests
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `ProgressionWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol ProgressionWorldHost: AnyObject {
-    var audio: AudioCoordinator { get }
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var combat: CombatCoordinator { get }
-    var dialogueWorld: DialogueWorldAdapter { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
+    var audio: any AudioPort { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var combat: any CombatPort { get }
+    var dialogueWorld: any DialogueWorldPort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
-    var magic: MagicCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var perks: PerkCoordinator { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var streamer: CellStreamer? { get }
+    var magic: any MagicPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var perks: any PerkPort { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
-    var journalMenu: JournalMenuController { get }
-    var scripts: ScriptCoordinator { get }
+    var worldState: any WorldStateStorePort { get }
+    var journalMenu: any JournalMenuPort { get }
+    var scripts: any ScriptPort { get }
     var playerBeastForm: PlayerBeastForm { get }
 }
 
@@ -57,10 +59,10 @@ final class ProgressionWorldAdapter {
 
     /// The caster takes the runtime when its cast loop is built. The live
     /// conditions carry the globals, so no snapshot of them is kept.
-    func perkRuntime() -> PerkRuntime? {
+    func perkRuntime(store worldState: WorldStateStore) -> PerkRuntime? {
         guard let store = game.worldData?.perkStore else { return nil }
         var runtime = PerkRuntime(
-            store: game.worldState, perks: store, conditionRegistry: .standard
+            store: worldState, perks: store, conditionRegistry: .standard
         )
         runtime.liveConditions = { [weak game] references in
             game?.runtimeState.conditionContext(indexing: references) ?? ConditionContext()
@@ -132,12 +134,7 @@ extension ProgressionWorldAdapter: PerkWorld {
     }
 
     func reconcileAbilities(on holder: ActorValueHolder, perks: PerkRuntime) {
-        guard let spells = game.magic.caster?.spellbook.spells else { return }
-        _ = game.magic.withEffects { effects in
-            PerkAbilityApplication.reconcile(
-                on: holder, perks: perks, spells: spells, using: &effects
-            )
-        }
+        game.magic.reconcilePerkAbilities(on: holder, perks: perks)
     }
 }
 

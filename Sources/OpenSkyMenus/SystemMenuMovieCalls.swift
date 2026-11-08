@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 nonisolated extension SystemMenuMovieBridge {
     public static let saveLoadListPath = "\(systemPagePath)/SaveLoadPanel/List_mc"

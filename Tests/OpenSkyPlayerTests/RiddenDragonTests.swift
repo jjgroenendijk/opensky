@@ -6,6 +6,7 @@ import OpenSkyFormatsESM
 import OpenSkyPhysics
 @testable import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 import Testing
 

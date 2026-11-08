@@ -6,6 +6,7 @@ import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkySessionInterface
 import OpenSkyWorld
 import simd
 

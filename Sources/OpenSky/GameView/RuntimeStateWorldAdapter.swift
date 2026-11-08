@@ -10,6 +10,7 @@ import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDialogue
@@ -28,8 +29,10 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySave
+import OpenSkySaveInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldConditions
@@ -39,37 +42,37 @@ import OpenSkyWorldState
 /// What `RuntimeStateWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol RuntimeStateWorldHost: AnyObject {
-    var dragonFlight: DragonFlightCoordinator { get }
-    var dragonFlightWorld: DragonFlightWorldAdapter { get }
-    var actorGraphWorld: ActorGraphWorldAdapter { get }
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var aiWorld: AIWorldAdapter { get }
-    var combat: CombatCoordinator { get }
-    var combatWorld: CombatWorldAdapter { get }
-    var crime: CrimeCoordinator { get }
-    var dialogue: DialogueCoordinator { get }
-    var factions: FactionCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var idleWorld: IdleWorldAdapter { get }
-    var inventory: InventoryCoordinator { get }
-    var magic: MagicCoordinator { get }
-    var menuMode: MenuModeController { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var messages: MessageCoordinator { get }
-    var questNotices: QuestNoticeCoordinator { get }
-    var ragdoll: RagdollCoordinator { get }
-    var player: PlayerCoordinator { get }
-    var mountWorld: MountWorldAdapter { get }
-    var packages: PackageCoordinator { get }
-    var perception: PerceptionCoordinator { get }
-    var gameSession: GameSession? { get }
-    var scenes: SceneCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var vehicleWorld: VehicleWorldAdapter { get }
+    var dragonFlight: any DragonFlightPort { get }
+    var dragonFlightWorld: any DragonFlightWorldPort { get }
+    var actorGraphWorld: any ActorGraphWorldPort { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var aiWorld: any AIWorldPort { get }
+    var combat: any CombatPort { get }
+    var combatWorld: any CombatWorldPort { get }
+    var crime: any CrimePort { get }
+    var dialogue: any DialoguePort { get }
+    var factions: any FactionPort { get }
+    var hud: any HUDPort { get }
+    var idleWorld: any IdleWorldPort { get }
+    var inventory: any InventoryPort { get }
+    var magic: any MagicPort { get }
+    var menuMode: any MenuModePort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var questNotices: any QuestNoticePort { get }
+    var ragdoll: any RagdollPort { get }
+    var player: any PlayerPort { get }
+    var mountWorld: any MountWorldPort { get }
+    var packages: any PackagePort { get }
+    var perception: any PerceptionPort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var scenes: any ScenePort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var vehicleWorld: any VehicleWorldPort { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class RuntimeStateWorldAdapter {
@@ -109,7 +112,7 @@ final class RuntimeStateWorldAdapter {
     }
 
     /// Actor values, death and equipment are store writes; the fight is each machine's phase.
-    private func residentActorStates(values: ActorValueRuntime)
+    private func residentActorStates(values: any ActorValueRuntimePort)
         -> [ReferenceKey: ActorConditionState]
     {
         let members = game.actorWorld.combatActors().compactMap { observation in
@@ -140,7 +143,7 @@ final class RuntimeStateWorldAdapter {
     /// peaceful actor holds nothing out.
     private func actorConditionState(
         holder: ActorValueHolder,
-        values: ActorValueRuntime,
+        values: any ActorValueRuntimePort,
         isDead: Bool = false
     ) -> ActorConditionState {
         let baseline = values.baseline(of: holder)
@@ -429,13 +432,6 @@ private struct ResidentReferencePlaces {
     let places: ReferencePlaces
 }
 
-/// Each reference's location and whether its cell is an interior.
-private struct ReferencePlaces {
-    var locations: [ReferenceKey: ResolvedFormID] = [:]
-    var interiors: [ReferenceKey: Bool] = [:]
-    var cells: [ReferenceKey: ReferenceCell] = [:]
-}
-
 /// The record data every live condition reads. Each evaluator translates a record's
 /// FormIDs into the load-order space, so the stores are read in that space.
 extension RuntimeStateWorldAdapter {
@@ -454,12 +450,16 @@ extension RuntimeStateWorldAdapter {
     }
 
     /// The location a resident cell belongs to; nil without location data.
-    func location(of scene: CellScene) -> ResolvedFormID? {
-        cellLocationResolver()?.location(of: scene)
+    func location(of scene: any CellScenePort) -> ResolvedFormID? {
+        location(of: scene.locationKey)
+    }
+
+    func location(of key: CellLocationKey) -> ResolvedFormID? {
+        cellLocationResolver()?.location(of: key)
     }
 
     /// The `NAM1` music type of a resident cell's location.
-    func locationMusicType(of scene: CellScene) -> FormID? {
+    func locationMusicType(of scene: CellLocationKey) -> FormID? {
         cellLocationResolver()?.musicType(of: scene)
     }
 
@@ -481,7 +481,7 @@ extension RuntimeStateWorldAdapter {
         if let cached = referencePlaces, cached.cells == cells, cached.count == count {
             places = cached.places
         } else {
-            places = residentPlaces(in: streamer.residentScenes)
+            places = streamer.residentReferencePlaces { [self] in location(of: $0) }
             referencePlaces = ResidentReferencePlaces(cells: cells, count: count, places: places)
         }
         if
@@ -491,19 +491,6 @@ extension RuntimeStateWorldAdapter {
             places.locations[.player] = location(of: scene)
             places.interiors[.player] = scene.isInterior
             places.cells[.player] = scene.referenceCell
-        }
-        return places
-    }
-
-    private func residentPlaces(in scenes: [CellScene]) -> ReferencePlaces {
-        var places = ReferencePlaces()
-        places.locations = cellLocationResolver()?.referenceLocations(in: scenes) ?? [:]
-        for scene in scenes {
-            let cell = scene.referenceCell
-            for entry in scene.references.sortedEntries() {
-                places.interiors[entry.key] = scene.isInterior
-                places.cells[entry.key] = cell
-            }
         }
         return places
     }

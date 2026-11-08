@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+public import OpenSkyMenusInterface
 import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd
@@ -24,17 +25,17 @@ public final class HUDCoordinator {
     /// A loading screen hides the HUD, as `LoadingMenu` does in the game.
     public private(set) var isCovered = false
 
-    private let movies: SWFMovieSource
+    private let movies: any MenuMovieLoading
     /// Bumped by each start and suspend, so only the newest start shows the HUD.
     private var startRequest = 0
     private weak let world: any SWFLayerWorld?
 
-    public init(movies: SWFMovieSource, world: any SWFLayerWorld? = nil) {
+    public init(movies: any MenuMovieLoading, world: any SWFLayerWorld? = nil) {
         self.movies = movies
         self.world = world
     }
 
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         world?.renderer
     }
 
@@ -271,7 +272,7 @@ public final class HUDCoordinator {
     }
 
     /// `initialize` also fills the meters, so only a fresh movie asks for it.
-    private func publish(renderer: Renderer, initialize: Bool) throws {
+    private func publish(renderer: any RendererPort, initialize: Bool) throws {
         let camera = world?.viewCamera ?? renderer.frameInput.view
         let heading = HUDCore.headingDegrees(camera.yaw)
         let markers = effectiveMarkers(cameraPosition: camera.position)
@@ -307,7 +308,7 @@ public final class HUDCoordinator {
         sync.lastHeadingDegrees = heading
     }
 
-    private func fail(_ error: any Error, renderer: Renderer) {
+    private func fail(_ error: any Error, renderer: any RendererPort) {
         attempt { try renderer.setSWFMovie(nil) }
         isLoaded = false
         loadError = String(describing: error)

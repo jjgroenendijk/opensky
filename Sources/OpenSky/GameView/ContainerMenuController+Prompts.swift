@@ -3,6 +3,7 @@
 // (`sNotEnoughVendorGold`). See docs/engine/barter.md.
 
 import OpenSkyMenus
+import OpenSkyMenusInterface
 
 extension ContainerMenuController {
     /// Left and right move by one, up and down by ten. Accept moves the count or

@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
+import OpenSkyWorldInterface
 import Testing
 
 struct HeadPartResolverTests {

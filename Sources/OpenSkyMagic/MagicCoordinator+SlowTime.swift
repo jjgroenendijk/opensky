@@ -7,25 +7,8 @@
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
-
-/// How fast the world and the player run, as shares of normal speed.
-nonisolated public struct MagicTimeScales: Equatable, Sendable {
-    public var world: Float
-    public var player: Float
-
-    public static let normal = Self(world: 1, player: 1)
-
-    public init(world: Float, player: Float) {
-        self.world = world
-        self.player = player
-    }
-
-    public var isSlowed: Bool {
-        world < 1 || player < 1
-    }
-}
 
 nonisolated public enum SlowTimeRule {
     /// The player's share of normal speed while time is slow, before entry point 70.

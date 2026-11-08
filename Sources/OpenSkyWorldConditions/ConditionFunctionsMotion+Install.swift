@@ -3,6 +3,7 @@
 import Foundation
 public import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import simd
 
 nonisolated extension ConditionFunctions {

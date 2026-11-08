@@ -4,6 +4,7 @@ import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct InputBindingsTests {

@@ -5,6 +5,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyPhysics
 public import OpenSkyRenderCore
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public struct WalkController: Sendable {

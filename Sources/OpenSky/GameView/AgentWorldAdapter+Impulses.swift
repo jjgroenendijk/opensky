@@ -4,12 +4,15 @@
 import Foundation
 import OpenSkyAgentControl
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 extension AgentWorldAdapter {

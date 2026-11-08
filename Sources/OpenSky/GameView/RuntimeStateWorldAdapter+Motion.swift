@@ -5,8 +5,10 @@ import Foundation
 import OpenSkyAIPackages
 import OpenSkyFormatsESM
 import OpenSkyPlayer
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension RuntimeStateWorldAdapter {

@@ -3,20 +3,12 @@
 // camera's saved player pose, so simulation never sees them.
 // See docs/engine/kill-cam.md.
 
-public import OpenSkyCamera
+import OpenSkyCamera
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
-
-public struct RendererCinematicCameraState {
-    /// The shot's pose this frame, or nil when no shot plays.
-    public var pose: CinematicCameraPose?
-    /// The shake's offset this frame, in world units.
-    public var shakeOffset = SIMD3<Float>.zero
-    /// True when the last resolve pulled the eye in front of geometry.
-    public var isCollisionLimited = false
-}
 
 extension GameSession {
     public var isCinematicCameraEngaged: Bool {

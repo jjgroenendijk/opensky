@@ -2,6 +2,7 @@
 // nothing moves the body. See docs/engine/idle-runtime.md.
 
 import OpenSkyBehavior
+import OpenSkyWorldInterface
 import simd
 
 nonisolated extension LocomotionBridge {

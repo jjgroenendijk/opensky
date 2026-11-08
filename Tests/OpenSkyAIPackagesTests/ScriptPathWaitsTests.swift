@@ -3,6 +3,7 @@
 @testable import OpenSkyAIPackages
 @testable import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyWorldInterface
 import Testing
 
 struct ScriptPathWaitsTests {

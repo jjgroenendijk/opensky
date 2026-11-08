@@ -8,6 +8,7 @@ import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 enum LoadPassCommand {
     static func run(context: CLIContext, arguments: LoadPassArguments) async throws {

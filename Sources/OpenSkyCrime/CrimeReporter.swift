@@ -316,3 +316,9 @@ extension CrimeKind {
         }
     }
 }
+
+extension CrimeReporter {
+    public func setReportsPlayerCrimes(_ reports: Bool) {
+        runtime.reportsPlayerCrimes = reports
+    }
+}

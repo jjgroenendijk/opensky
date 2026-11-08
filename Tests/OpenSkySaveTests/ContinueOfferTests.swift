@@ -4,6 +4,7 @@
 import Foundation
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+import OpenSkySaveInterface
 import Testing
 
 struct ContinueOfferTests {

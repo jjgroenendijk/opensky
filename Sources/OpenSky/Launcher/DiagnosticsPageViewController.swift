@@ -6,6 +6,7 @@ import Metal
 import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 final class DiagnosticsPageViewController: NSViewController {
     let layout = LauncherPageLayout()

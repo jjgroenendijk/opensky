@@ -8,6 +8,7 @@
 import Foundation
 public import OpenSkyFormatsSWF
 import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyRendering
 
 nonisolated extension ContainerMenuMovieBridge {
@@ -137,7 +138,7 @@ nonisolated extension ContainerMenuMovieBridge {
     /// repaints late.
     @MainActor
     @discardableResult
-    public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
+    public static func send(_ event: MenuInputEvent, renderer: any RendererPort) throws -> Bool {
         try InventoryMenuMovieBridge.send(event, renderer: renderer)
     }
 }

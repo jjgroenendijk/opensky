@@ -2,6 +2,7 @@
 // target stands, and the breath at it (docs/engine/dragon-flight.md#riding).
 
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -9,6 +10,7 @@ import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import simd
 
@@ -68,7 +70,7 @@ extension MountWorldAdapter {
             let spell = game.magic.npcShouts(of: holder).lazy
                 .compactMap({ $0.words.last(where: { $0.spell != nil })?.spell }).first
         else { return }
-        game.scripts.bridge?.castSpell(spell.key, from: mount, at: target)
+        game.scripts.bridge?.castSpell(spell.key, from: mount, at: target, blame: nil)
     }
 }
 

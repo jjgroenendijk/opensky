@@ -4,6 +4,7 @@
 // See docs/formats/explosions.md, section "Runtime".
 
 import Foundation
+public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyPhysics

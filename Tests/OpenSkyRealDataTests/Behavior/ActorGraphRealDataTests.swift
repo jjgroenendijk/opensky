@@ -9,6 +9,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyWorldInterface
 import simd
 import Testing
 

@@ -9,6 +9,7 @@ public import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 public import OpenSkyFormatsMesh
 public import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 /// What the object coordinator reads from the session.
 public protocol ObjectBehaviorWorld: AnyObject {
@@ -18,25 +19,6 @@ public protocol ObjectBehaviorWorld: AnyObject {
     func objectGraphFired(_ event: String, from reference: UInt32)
     /// A wait that finished, by its token; true when its event fired.
     func animationWaitFinished(token: UInt64, fired: Bool)
-}
-
-/// One line of the object animation readout.
-nonisolated public struct ObjectAnimationRow: Equatable, Sendable {
-    public let reference: UInt32
-    public let project: String
-    public let events: [String]
-    public let activeState: String?
-    /// Every active state, outermost first; a blend runs several machines at once.
-    public var activeStates: [String] = []
-    /// True while a clip the graph reached is still loading, so the pose holds.
-    public var isWaitingForClip = false
-
-    public init(reference: UInt32, project: String, events: [String], activeState: String?) {
-        self.reference = reference
-        self.project = project
-        self.events = events
-        self.activeState = activeState
-    }
 }
 
 public final class ObjectBehaviorCoordinator {

@@ -3,6 +3,7 @@
 // `MenuWorldPolicy.leavesWorldRunning` takes input without stopping the world.
 
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 @MainActor

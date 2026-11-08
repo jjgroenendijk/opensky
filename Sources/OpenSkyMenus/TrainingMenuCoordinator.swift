@@ -5,6 +5,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 /// What the training menu needs from the app.
 public protocol TrainingMenuWorld: MenuScreenWorld {
@@ -26,8 +27,8 @@ public final class TrainingMenuCoordinator: MenuScreen<TrainingMovieEvent> {
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any TrainingMenuWorld)? = nil
     ) {
         self.world = world

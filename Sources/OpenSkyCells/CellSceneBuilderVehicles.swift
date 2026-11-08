@@ -8,6 +8,7 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
+public import OpenSkyWorldInterface
 
 nonisolated extension CellSceneBuilder {
     /// Rigs the wheels of each follower in `instances`, replacing its model with its

@@ -3,7 +3,7 @@
 // The rules live in `AINavigationCore`. See docs/engine/coordinators.md.
 
 public import OpenSkyFormatsESM
-public import OpenSkyNavigation
+import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyWorldInterface

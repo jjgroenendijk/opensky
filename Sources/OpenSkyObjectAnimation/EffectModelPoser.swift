@@ -11,6 +11,7 @@ public import OpenSkyFormatsMesh
 public import OpenSkyGameData
 import OpenSkyRenderCore
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
 
 /// The node controllers of an effect model, read off the main actor.
@@ -24,13 +25,6 @@ nonisolated struct LoadedEffectNodes: Sendable {
             return try Self(rig: NodeControllerRig(file: file, lagOnly: lagOnly))
         }
     }
-}
-
-/// One effect model the poser draws, for `game state effects`.
-nonisolated public struct PosedEffectRow: Equatable, Sendable {
-    public let effectID: Int
-    public let modelPath: String
-    public let bones: [String]
 }
 
 @MainActor

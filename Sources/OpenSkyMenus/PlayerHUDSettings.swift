@@ -1,4 +1,5 @@
 import OpenSkyGameData
+public import OpenSkyMenusInterface
 
 nonisolated public struct PlayerHUDSettings: Equatable, Sendable {
     public var crosshair: Bool

@@ -5,6 +5,7 @@
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
+import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing

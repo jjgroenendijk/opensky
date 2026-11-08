@@ -5,60 +5,11 @@
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyPhysics
-public import OpenSkyPlayer
+import OpenSkyPhysics
+import OpenSkyPlayer
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 public import simd
-
-nonisolated public enum NPCMovementState: String, Equatable, Sendable {
-    case moving
-    case awaitingRepath
-    case arrived
-    case gaveUp
-    /// Stopped on request before reaching the target, which is what an actor
-    /// that came into weapon range or gave up a chase does.
-    case halted
-    /// Turning on the spot towards a point, feet planted.
-    case turning
-    /// Turned, and holding that bearing until the hold is released.
-    case facing
-    /// Carrying the player, who steers it.
-    case ridden
-    /// Sliding from a push until it fades.
-    case knockedBack
-}
-
-nonisolated public enum NPCMovementSettleReason: String, Equatable, Sendable {
-    case arrival
-    case giveUp
-    case halt
-    case cellHandoff
-    case save
-    /// An in-place turn reached the bearing it was asked for.
-    case turn
-}
-
-nonisolated public struct NPCMovementReadout: Equatable, Sendable {
-    public let actor: ReferenceKey
-    public let state: NPCMovementState
-    public let feetPosition: SIMD3<Float>
-    public let yaw: Float
-    public let waypointIndex: Int
-    public let waypointCount: Int
-    public let gait: LocomotionGait
-    public let repathCount: Int
-}
-
-/// What the movement authority publishes to animation and combat. A drive may
-/// run a behavior graph or select in-place gait clips; neither can write the
-/// capsule pose through this value.
-nonisolated public struct NPCLocomotionDriveUpdate: Equatable, Sendable {
-    public let actor: ReferenceKey
-    public let intent: LocomotionIntent
-    public let gait: LocomotionGait
-    /// The MATT under the mover's feet, so its steps sound like the ground. Nil when unknown.
-    public var groundMaterial: FormID?
-}
 
 /// The rigid move from where the cell build drew an actor to where it stands now.
 /// The renderer applies it to the actor's baked instance, so nothing rebuilds.

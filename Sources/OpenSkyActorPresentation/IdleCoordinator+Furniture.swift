@@ -7,6 +7,7 @@ public import OpenSkyConditions
 public import OpenSkyFormatsAnimation
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 extension IdleCoordinator {
     /// The tree the game picks a furniture entry idle from.

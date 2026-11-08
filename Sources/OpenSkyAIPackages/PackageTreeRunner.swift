@@ -5,6 +5,7 @@
 
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 
 /// What the runner asks of the session: branch conditions and leaf setups.
 @MainActor

@@ -4,6 +4,7 @@
 import AppKit
 import MetalKit
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 final class BenchmarkWindowMode {
     private var window: NSWindow?

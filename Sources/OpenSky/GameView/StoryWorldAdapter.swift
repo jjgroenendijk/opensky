@@ -18,44 +18,48 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPerception
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `StoryWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol StoryWorldHost: AnyObject {
-    var actorWorld: ActorWorldAdapter { get }
-    var aiWorld: AIWorldAdapter { get }
-    var audio: AudioCoordinator { get }
+    var actorWorld: any ActorWorldPort { get }
+    var aiWorld: any AIWorldPort { get }
+    var audio: any AudioPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    var combat: CombatCoordinator { get }
-    var scenes: SceneCoordinator { get }
-    var storyManager: StoryManagerCoordinator { get }
-    var crime: CrimeCoordinator { get }
-    var perception: PerceptionCoordinator { get }
-    var dialogue: DialogueCoordinator { get }
-    var dialogueWorld: DialogueWorldAdapter { get }
-    var faceMorphs: FaceMorphCoordinator { get }
-    var followerCommandWorld: FollowerCommandWorldAdapter { get }
-    var headTracking: HeadTrackingCoordinator { get }
-    var idles: IdleCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
-    var packages: PackageCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var subtitles: SubtitleCoordinator { get }
-    var worldState: WorldStateStore { get }
+    var combat: any CombatPort { get }
+    var scenes: any ScenePort { get }
+    var storyManager: any StoryManagerPort { get }
+    var crime: any CrimePort { get }
+    var perception: any PerceptionPort { get }
+    var dialogue: any DialoguePort { get }
+    var dialogueWorld: any DialogueWorldPort { get }
+    var faceMorphs: any FaceMorphPort { get }
+    var followerCommandWorld: any FollowerCommandWorldPort { get }
+    var headTracking: any HeadTrackingPort { get }
+    var idles: any IdlePort { get }
+    var hud: any HUDPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var packages: any PackagePort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var subtitles: any SubtitlePort { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class StoryWorldAdapter {
@@ -77,11 +81,11 @@ final class StoryWorldAdapter {
     var framesSinceAmbientSpeech = 0
     var lastAmbientSpeechSeconds: Double?
 
-    var scenes: SceneCoordinator {
+    var scenes: any ScenePort {
         game.scenes
     }
 
-    var storyManager: StoryManagerCoordinator {
+    var storyManager: any StoryManagerPort {
         game.storyManager
     }
 

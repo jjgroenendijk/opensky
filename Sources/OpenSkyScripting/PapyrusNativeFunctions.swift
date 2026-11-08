@@ -1,7 +1,7 @@
 // One install entry point for the headless native families.
 
 import Foundation
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 public enum PapyrusNativeFunctions {
     public static func install(into registry: inout PapyrusNativeRegistry) {

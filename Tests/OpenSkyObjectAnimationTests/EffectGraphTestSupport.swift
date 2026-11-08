@@ -5,6 +5,7 @@ import OpenSkyEngineTesting
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 @testable import OpenSkyObjectAnimation
+import OpenSkyWorldInterface
 
 @MainActor
 final class FakeEffectWorld: EffectGraphWorld {

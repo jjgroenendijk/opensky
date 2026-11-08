@@ -5,6 +5,7 @@ import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 
 extension MessageWorldAdapter: SystemMenuTopicSource {
     func systemMenuTopics(_ page: SystemMenuPage) -> [SystemMenuTopic] {

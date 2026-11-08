@@ -10,34 +10,37 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyQuests
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `MessageWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MessageWorldHost: MenuInputConsumer {
-    var audio: AudioCoordinator { get }
-    var cinematicCamera: CinematicCameraCoordinator { get }
-    var cinematicWorld: CinematicCameraWorldAdapter { get }
-    var hud: HUDCoordinator { get }
-    var journal: JournalCoordinator { get }
-    var journalMenu: JournalMenuController { get }
-    var mapWorld: MapWorldAdapter { get }
-    var messages: MessageCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var subtitles: SubtitleCoordinator { get }
+    var audio: any AudioPort { get }
+    var cinematicCamera: any CinematicCameraPort { get }
+    var cinematicWorld: any CinematicCameraWorldPort { get }
+    var hud: any HUDPort { get }
+    var journal: any JournalPort { get }
+    var journalMenu: any JournalMenuPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var scripts: any ScriptPort { get }
+    var subtitles: any SubtitlePort { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class MessageWorldAdapter {
@@ -79,7 +82,7 @@ final class MessageWorldAdapter {
 
     /// A message's text IDs point into the tables of the plugin whose record won.
     private func builder(plugin: String) -> MessageTextBuilder {
-        let naming = game.journalMenu.questRuntime.map { game.journalMenu.aliasNaming(runtime: $0) }
+        let naming = game.journalMenu.currentAliasNaming
         return MessageTextBuilder(
             strings: game.journal.strings?.scoped(to: plugin),
             naming: naming ?? .none
@@ -88,7 +91,7 @@ final class MessageWorldAdapter {
 }
 
 extension MessageWorldAdapter: MessageWorld {
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         game.renderer
     }
 

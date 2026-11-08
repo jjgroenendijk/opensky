@@ -2,24 +2,11 @@
 // graphs of the art objects and armour addons on an actor as the actor's sub-graphs
 // (docs/engine/effect-graphs.md).
 
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 public import OpenSkyBehavior
 public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 import simd
-
-/// Which model a running sub-graph belongs to. Graphs step in this order.
-nonisolated public enum SubGraphID: Hashable, Comparable, Sendable {
-    /// A visual effect, by its instance id.
-    case effect(Int)
-    /// An armour addon model an actor wears, by the addon's form ID.
-    case armorAddon(ReferenceKey, armature: UInt32)
-}
-
-nonisolated public enum SubGraphAnchor: Equatable, Sendable {
-    case actor(ReferenceKey)
-    /// An effect at a point, such as an explosion. No actor's events reach it.
-    case point(SIMD3<Float>)
-}
 
 /// One live model whose graph may run as a sub-graph.
 nonisolated public struct AttachedSubGraph: Equatable, Sendable {

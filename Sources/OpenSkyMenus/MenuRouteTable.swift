@@ -2,6 +2,7 @@
 // own route, so a new menu adds an entry instead of editing a central switch.
 
 import Foundation
+public import OpenSkyMenusInterface
 
 public final class MenuRouteTable {
     public typealias Route = (MenuInputEvent) -> Void

@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyBehavior
+public import OpenSkyWorldInterface
 public import simd
 
 /// How far from the camera an actor's graph steps every frame, at a reduced rate, or
@@ -32,27 +33,6 @@ nonisolated public struct ActorGraphCutoff: Equatable, Sendable {
             return Self.nearStepInterval
         }
         return distance <= maximumDistance ? Self.reducedStepInterval : nil
-    }
-}
-
-/// What an actor's movement drive does, as the graph's locomotion inputs see it.
-nonisolated public struct ActorGraphMotion: Equatable, Sendable {
-    public var isMoving: Bool
-    public var isSprinting: Bool
-    public var isSneaking: Bool
-    /// The horse graphs' `iCombatStance`: the actor, or its rider, has a weapon out.
-    public var isInCombatStance: Bool
-
-    public static let still = ActorGraphMotion()
-
-    public init(
-        isMoving: Bool = false,
-        isSprinting: Bool = false, isSneaking: Bool = false, isInCombatStance: Bool = false
-    ) {
-        self.isMoving = isMoving
-        self.isSprinting = isSprinting
-        self.isSneaking = isSneaking
-        self.isInCombatStance = isInCombatStance
     }
 }
 

@@ -10,6 +10,8 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyMenusInterface
+import OpenSkySessionInterface
 
 extension MenuScreensWorldAdapter: MagicMenuWorld {
     /// "All" first, then one tab per spell kind in the order the kinds first appear.

@@ -7,7 +7,9 @@ import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 extension AgentWorldAdapter {
     func playPaired(

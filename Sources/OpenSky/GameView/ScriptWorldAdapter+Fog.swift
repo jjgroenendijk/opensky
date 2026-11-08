@@ -7,6 +7,8 @@ import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 extension ScriptWorldAdapter {

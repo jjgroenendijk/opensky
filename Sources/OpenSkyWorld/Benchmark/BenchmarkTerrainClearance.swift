@@ -2,6 +2,7 @@
 // are written as heights above one origin, and the world along a path rises past them.
 
 import Foundation
+import OpenSkyWorldInterface
 import simd
 
 /// What the clearance reads from the world: the ground height under a point, whether

@@ -2,12 +2,8 @@
 // Accept to A (0x1000), Cancel to B (0x2000), the D-pad to Up, Down, Left, and Right, and
 // the left stick (0x000b) to move; "Item Menus" binds XButton to X and YButton to Y.
 
+public import OpenSkyMenusInterface
 import simd
-
-/// The gamepad buttons a menu reads.
-nonisolated public enum GamepadButton: Hashable, Sendable, CaseIterable {
-    case a, b, x, y, dpadUp, dpadDown, dpadLeft, dpadRight
-}
 
 /// One frame of every connected gamepad together, read by the app.
 nonisolated public struct GamepadSnapshot: Equatable, Sendable {

@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyPhysics

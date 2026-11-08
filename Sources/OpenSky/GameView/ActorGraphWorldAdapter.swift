@@ -9,6 +9,7 @@ import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -16,32 +17,34 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
 /// What `ActorGraphWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol ActorGraphWorldHost: AnyObject {
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
-    var actorGraphs: ActorGraphCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
+    var actorGraphs: any ActorGraphPort { get }
+    var actorWorld: any ActorWorldPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    var dragonFlight: DragonFlightCoordinator { get }
-    var gameSession: GameSession? { get }
-    var idleWorld: IdleWorldAdapter { get }
-    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
+    var dragonFlight: any DragonFlightPort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var idleWorld: any IdleWorldPort { get }
+    var objectAnimationWorld: any ObjectAnimationWorldPort { get }
     var playerSettingsStore: PlayerSettingsStore { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var vehicleWorld: VehicleWorldAdapter { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var vehicleWorld: any VehicleWorldPort { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class ActorGraphWorldAdapter {
     unowned let game: any ActorGraphWorldHost
-    var graphs: ActorGraphCoordinator {
+    var graphs: any ActorGraphPort {
         game.actorGraphs
     }
 
@@ -175,10 +178,6 @@ extension ActorGraphWorldAdapter: ActorGraphWorld {
 
     var actorGraphViewer: SIMD3<Float>? {
         game.gameSession?.freeFlyCamera.position
-    }
-
-    func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback? {
-        game.actorPlayback(for: actor)
     }
 
     /// A seat, a furniture clip, a paired clip, or a flight already places the actor.

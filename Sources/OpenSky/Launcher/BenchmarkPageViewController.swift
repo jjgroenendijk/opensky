@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 final class BenchmarkPageViewController: NSViewController {
     let layout = LauncherPageLayout()

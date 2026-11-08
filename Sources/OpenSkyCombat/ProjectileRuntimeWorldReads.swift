@@ -2,6 +2,7 @@
 // plays, and the eviction of stuck arrows whose cell is gone. A satellite of
 // `ProjectileRuntime`, which is at its body-length cap.
 
+public import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import simd

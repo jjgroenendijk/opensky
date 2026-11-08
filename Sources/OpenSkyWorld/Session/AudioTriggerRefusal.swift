@@ -2,6 +2,7 @@
 // when the sound started or waits for its file.
 
 public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 
 nonisolated public enum AudioTriggerRefusal: Equatable, Sendable {
     case engineNotRunning

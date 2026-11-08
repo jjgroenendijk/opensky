@@ -4,6 +4,7 @@
 public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 public import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 /// One lock in the loaded cells.
 nonisolated public struct LockReadoutRow: Equatable, Sendable {

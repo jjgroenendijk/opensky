@@ -13,6 +13,7 @@ import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrime
 import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyFormatsCore
@@ -29,49 +30,51 @@ import OpenSkyProgression
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `CombatWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol CombatWorldHost: AnyObject {
-    var aiWorld: AIWorldAdapter { get }
-    var actorGraphs: ActorGraphCoordinator { get }
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var audio: AudioCoordinator { get }
-    var cinematicCamera: CinematicCameraCoordinator { get }
-    var combat: CombatCoordinator { get }
-    var controllerRumble: ControllerRumble { get }
-    var crime: CrimeCoordinator { get }
-    var dialogue: DialogueCoordinator { get }
-    var effects: EffectsCoordinator { get }
-    var effectsWorld: EffectsWorldAdapter { get }
-    var factions: FactionCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var idleWorld: IdleWorldAdapter { get }
-    var inventory: InventoryCoordinator { get }
-    var magic: MagicCoordinator { get }
-    var magicWorld: MagicWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var packages: PackageCoordinator { get }
-    var perception: PerceptionCoordinator { get }
-    var perks: PerkCoordinator { get }
-    var player: PlayerCoordinator { get }
+    var aiWorld: any AIWorldPort { get }
+    var actorGraphs: any ActorGraphPort { get }
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var audio: any AudioPort { get }
+    var cinematicCamera: any CinematicCameraPort { get }
+    var combat: any CombatPort { get }
+    var controllerRumble: any ControllerRumblePort { get }
+    var crime: any CrimePort { get }
+    var dialogue: any DialoguePort { get }
+    var effects: any EffectsPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
+    var factions: any FactionPort { get }
+    var hud: any HUDPort { get }
+    var idleWorld: any IdleWorldPort { get }
+    var inventory: any InventoryPort { get }
+    var magic: any MagicPort { get }
+    var magicWorld: any MagicWorldPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var packages: any PackagePort { get }
+    var perception: any PerceptionPort { get }
+    var perks: any PerkPort { get }
+    var player: any PlayerPort { get }
     var playerSettingsStore: PlayerSettingsStore { get }
-    var progression: ProgressionCoordinator { get }
-    var ragdoll: RagdollCoordinator { get }
-    var ragdollWorld: RagdollWorldAdapter { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var scripts: ScriptCoordinator { get }
+    var progression: any ProgressionPort { get }
+    var ragdoll: any RagdollPort { get }
+    var ragdollWorld: any RagdollWorldPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var scripts: any ScriptPort { get }
     var sessionWiring: WorldSessionWiring { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var streamer: CellStreamer? { get }
+    var storyWorld: any StoryWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 /// Answers `CombatWorld` from the session systems `game` owns.

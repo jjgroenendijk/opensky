@@ -4,14 +4,16 @@
 import OpenSkyActors
 import OpenSkyEffects
 import OpenSkyGameData
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 extension EffectsWorldAdapter {
     /// A load stops the heartbeat at once and forgets the last health, as the game does.
     func resetHealthCues() {
         game.audio.soundDirector?.stopScriptSound(heartbeatSound)
         heartbeatSound = 0
-        game.effects.healthCues.reset()
+        game.effects.resetHealthCues()
     }
 
     /// A new game fades the heartbeat out, as the game does on a start.
@@ -20,7 +22,7 @@ extension EffectsWorldAdapter {
             heartbeatSound, seconds: PlayerHealthCues.heartbeatFadeSeconds
         )
         heartbeatSound = 0
-        game.effects.healthCues.reset()
+        game.effects.resetHealthCues()
     }
 
     func stepHealthCues(_ seconds: Float, gameSession: GameSession) {

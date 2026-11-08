@@ -9,7 +9,9 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 extension ProgressionWorldAdapter {

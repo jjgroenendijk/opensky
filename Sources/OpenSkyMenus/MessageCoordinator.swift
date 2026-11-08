@@ -7,6 +7,7 @@ import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 import OpenSkyRenderCore
 public import OpenSkyScriptingInterface
 
@@ -56,13 +57,13 @@ public final class MessageCoordinator {
         movies: movies, hud: hud, label: "message box movie"
     ) { [weak self] in self?.world?.renderer }
 
-    private let movies: SWFMovieSource?
+    private let movies: (any MenuMovieLoading)?
     private let hud: HUDCoordinator?
 
     /// Call `reloadHelpRecords()` once the world's records are loaded.
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
+        movies: (any MenuMovieLoading)? = nil,
         hud: HUDCoordinator? = nil,
         world: (any MessageWorld)? = nil
     ) {

@@ -3,6 +3,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
+import OpenSkyMenusInterface
 public import OpenSkyWorldInterface
 
 /// A worldspace that has map markers, for the inspector's picker.

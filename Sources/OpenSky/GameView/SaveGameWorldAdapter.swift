@@ -7,26 +7,29 @@ import OpenSkyCells
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyProgression
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkySave
+import OpenSkySaveInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 /// What `SaveGameWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol SaveGameWorldHost: SkyrimSaveExportHost, SkyrimSaveImportHost {
-    var scripts: ScriptCoordinator { get }
-    var effectsWorld: EffectsWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var playerSettings: PlayerSettingsCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var renderer: Renderer? { get }
-    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
-    var streamer: CellStreamer? { get }
+    var scripts: any ScriptPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var playerSettings: any PlayerSettingsPort { get }
+    var progression: any ProgressionPort { get }
+    var renderer: (any RendererPort)? { get }
+    var runtimeStateWorld: any RuntimeStateWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
 }
 

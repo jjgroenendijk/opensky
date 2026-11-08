@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkySessionInterface
 
 extension CombatWorldAdapter {
     /// Vanilla NPCs cast from either hand. OpenSky picks the right one, which
@@ -82,7 +83,10 @@ extension CombatWorldAdapter {
         runtime.cancel(Self.castHand, on: holder)
     }
 
-    private func candidate(_ spell: ResolvedSpell, runtime: CasterRuntime) -> CombatSpellCandidate {
+    private func candidate(
+        _ spell: ResolvedSpell,
+        runtime: any CasterRuntimePort
+    ) -> CombatSpellCandidate {
         let delivery = spell.data?.delivery ?? .selfTarget
         return CombatSpellCandidate(
             option: CombatSpellOption(

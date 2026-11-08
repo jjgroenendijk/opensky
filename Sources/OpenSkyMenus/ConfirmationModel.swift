@@ -1,6 +1,7 @@
 // A yes or no question shown over a menu page, such as "Delete this save?".
 
 import Foundation
+public import OpenSkyMenusInterface
 
 nonisolated public enum ConfirmationChoice: Equatable, Sendable {
     case chose(Int)

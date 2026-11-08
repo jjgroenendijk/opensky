@@ -11,6 +11,7 @@ import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyTerrain
+import OpenSkyWorldInterface
 import simd
 
 enum InteriorCommand {

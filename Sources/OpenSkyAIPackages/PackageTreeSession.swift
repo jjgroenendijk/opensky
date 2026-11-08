@@ -4,6 +4,7 @@
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

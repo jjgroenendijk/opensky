@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 import OpenSkyRendering
 
 /// What the system menu reads from the app. The world is also the one menu
@@ -94,13 +95,13 @@ public final class SystemMenuCoordinator {
     private var dataRootResolved = false
 
     private let menuMode: MenuModeController
-    private let movies: SWFMovieSource
+    private let movies: any MenuMovieLoading
     let hud: HUDCoordinator
     weak let world: any SystemMenuWorld?
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource,
+        movies: any MenuMovieLoading,
         hud: HUDCoordinator,
         settings: PlayerSettingsCoordinator,
         saves: any SaveGameService?,
@@ -127,7 +128,7 @@ public final class SystemMenuCoordinator {
         movie.error
     }
 
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         world?.renderer
     }
 

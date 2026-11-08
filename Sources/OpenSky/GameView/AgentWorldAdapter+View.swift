@@ -11,8 +11,10 @@ import OpenSkyReference
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
+import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 extension AgentWorldAdapter {
     func referenceView() throws(AgentFailure) -> ReferenceView {

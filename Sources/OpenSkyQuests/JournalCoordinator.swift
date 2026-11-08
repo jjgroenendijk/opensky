@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyQuestsInterface
+public import OpenSkyQuestsInterface
 
 /// Reads and changes quest state for the journal through `JournalWorld`.
 /// Without a quest runtime every control refuses with a stated reason.

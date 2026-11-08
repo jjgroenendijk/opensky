@@ -4,6 +4,7 @@
 public import Foundation
 public import OpenSkyGameData
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
 
 /// A per-frame CPU cost the tour reports, each read from the frame before.

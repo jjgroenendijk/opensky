@@ -2,6 +2,7 @@
 // through the same `RagdollRuntime.trigger(_:)` a death reaches, so a forced
 // verifies that route rather than adding a second one.
 
+public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyPhysics
 import simd

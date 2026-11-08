@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
+import OpenSkyMenusInterface
 import OpenSkyRendering
 
 extension TitleMenuCoordinator {
@@ -38,7 +39,7 @@ extension TitleMenuCoordinator {
         }
     }
 
-    func answerLoadCalls(renderer: Renderer) {
+    func answerLoadCalls(renderer: any RendererPort) {
         for _ in 0 ..< Self.loadCallRounds where !pendingLoadCalls.isEmpty {
             let calls = pendingLoadCalls
             pendingLoadCalls = []
@@ -48,7 +49,7 @@ extension TitleMenuCoordinator {
         }
     }
 
-    private func answer(_ call: TitleMenuLoadBridge.Call, renderer: Renderer) {
+    private func answer(_ call: TitleMenuLoadBridge.Call, renderer: any RendererPort) {
         let rows = saves?.saveRows ?? []
         let index = call.index
         switch call.request {

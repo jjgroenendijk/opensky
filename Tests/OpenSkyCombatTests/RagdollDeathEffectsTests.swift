@@ -3,6 +3,7 @@
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEngineTesting
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

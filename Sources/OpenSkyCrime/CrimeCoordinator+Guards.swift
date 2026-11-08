@@ -4,7 +4,7 @@
 // and `CrimeResponsePolicy`; this file gathers what they read and runs what
 // they return. See docs/engine/guard-response.md.
 
-import OpenSkyCrimeInterface
+public import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData

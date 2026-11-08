@@ -3,22 +3,7 @@
 import Foundation
 public import OpenSkyConditions
 import OpenSkyFormatsCore
-
-nonisolated public struct PapyrusNativeKey: Equatable, Hashable, Sendable {
-    public let scriptName: String
-    public let functionName: String
-
-    public init(scriptName: String, functionName: String) {
-        self.scriptName = PapyrusRuntime.key(scriptName)
-        self.functionName = PapyrusRuntime.key(functionName)
-    }
-
-    /// A key from names the caller already folded with `PapyrusName.key`.
-    public init(foldedScriptName: String, foldedFunctionName: String) {
-        scriptName = foldedScriptName
-        functionName = foldedFunctionName
-    }
-}
+public import OpenSkyScriptingInterface
 
 nonisolated public struct PapyrusNativeFunction: Sendable {
     public typealias Body = @MainActor @Sendable (

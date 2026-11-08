@@ -3,6 +3,7 @@
 // nearest-first order is OpenSky's. See docs/engine/dragon-flight.md#perches.
 
 import Foundation
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public enum DragonPerchRules {

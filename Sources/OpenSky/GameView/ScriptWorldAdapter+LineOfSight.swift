@@ -8,6 +8,8 @@ import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd

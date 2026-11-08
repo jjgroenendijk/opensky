@@ -15,6 +15,7 @@ import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -22,18 +23,18 @@ import OpenSkyWorldState
 /// What `ActivationRefusalWorldAdapter` reads from the session.
 @MainActor
 protocol ActivationRefusalWorldHost: AnyObject {
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var combat: CombatCoordinator { get }
-    var furniture: FurnitureCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var magic: MagicCoordinator { get }
-    var magicWorld: MagicWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
-    var ragdollWorld: RagdollWorldAdapter { get }
-    var scenes: SceneCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var combat: any CombatPort { get }
+    var furniture: any FurniturePort { get }
+    var hud: any HUDPort { get }
+    var magic: any MagicPort { get }
+    var magicWorld: any MagicWorldPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var ragdollWorld: any RagdollWorldPort { get }
+    var scenes: any ScenePort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
 }
 
 final class ActivationRefusalWorldAdapter {

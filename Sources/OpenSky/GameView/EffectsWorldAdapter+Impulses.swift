@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -13,6 +14,7 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd
@@ -168,7 +170,7 @@ extension EffectsWorldAdapter: ImpulseWorld {
         guard actor == .player else {
             return game.streamer?.knockActor(actor, velocity: velocity) ?? false
         }
-        game.gameSession?.walkController.knock(velocity)
+        game.gameSession?.knockPlayer(velocity)
         return true
     }
 

@@ -11,6 +11,7 @@ public import OpenSkyGameData
 public import OpenSkyPhysics
 public import OpenSkyPlayer
 import OpenSkyWeather
+public import OpenSkyWorldInterface
 import simd
 
 /// What the audio coordinator reads from the running session.

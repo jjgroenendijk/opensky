@@ -3,6 +3,7 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyPhysics
+import OpenSkyWorldInterface
 import simd
 
 /// One act of a procedure. The world answers each with a `PackageActionResult`.
@@ -32,16 +33,6 @@ nonisolated public enum PackageAction: Equatable, Sendable {
     case warn(ReferenceKey, level: Int)
     /// Guard: the intruder left, so put the weapon away.
     case standDown
-}
-
-nonisolated public enum PackageActionResult: Equatable, Sendable {
-    case done
-    /// The world cannot do it, or it went wrong; the procedure fails.
-    case failed
-    /// It takes this many real seconds, such as a spoken line.
-    case lasts(seconds: Float)
-    /// What a find found, nearest first.
-    case found([ReferenceKey])
 }
 
 /// Where the actor and the reference its procedure watches stand this tick.

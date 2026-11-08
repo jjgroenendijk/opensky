@@ -3,6 +3,7 @@
 import Foundation
 import OpenSkyActorPresentation
 public import OpenSkyBehavior
+import OpenSkyWorldInterface
 
 /// Readout rows built from plain values.
 nonisolated public enum PlayerCore {

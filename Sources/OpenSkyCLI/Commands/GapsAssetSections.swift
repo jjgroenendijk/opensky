@@ -6,6 +6,7 @@ import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -16,6 +17,7 @@ import OpenSkyMagic
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyScripting
+import OpenSkyWorldInterface
 
 extension GapsGatherer {
     func meshes() -> [GapSection] {

@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
 
 @MainActor

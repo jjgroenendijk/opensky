@@ -5,6 +5,7 @@
 // from the eye". Iron gauntlets lose their glove as a result; the readout reports it.
 
 import Foundation
+public import OpenSkyWorldInterface
 
 nonisolated extension ResolvedActorVisual {
     /// This visual as the first-person rig wears it.

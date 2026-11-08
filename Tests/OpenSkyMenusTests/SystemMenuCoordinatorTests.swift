@@ -3,13 +3,14 @@
 import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 @testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import Testing
 
 @MainActor
 private final class FakeSystemMenuWorld: @MainActor SystemMenuWorld {
-    var renderer: Renderer?
+    var renderer: (any RendererPort)?
     var viewCamera: FreeFlyCamera?
     var uiScene = UIScene.empty
     var audioEnabled = true

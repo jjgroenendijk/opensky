@@ -5,29 +5,6 @@ public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 import OpenSkyWorldState
 
-/// What a favourite or hotkey action did, for the readout.
-nonisolated public enum FavouriteOutcome: Error, Equatable, Sendable {
-    case unavailable
-    case marked(String)
-    case unmarked(String)
-    case bound(String, slot: Int)
-    case badSlot(Int)
-    case emptySlot(Int)
-    case notCarried(String)
-
-    public var text: String {
-        switch self {
-        case .unavailable: InventoryCore.noRuntimeText
-        case let .marked(name): "\(name) is a favourite."
-        case let .unmarked(name): "\(name) is no longer a favourite."
-        case let .bound(name, slot): "Hotkey \(slot) uses \(name)."
-        case let .badSlot(slot): "Hotkey \(slot) does not exist; use 1 to 8."
-        case let .emptySlot(slot): "Hotkey \(slot) has no favourite."
-        case let .notCarried(name): "The player carries no \(name)."
-        }
-    }
-}
-
 extension InventoryCoordinator {
     public var playerFavourites: FavouritesState {
         runtime?.store.component(FavouritesState.self, for: .player) ?? FavouritesState()
@@ -59,5 +36,19 @@ extension InventoryCoordinator {
             return .failure(.notCarried(name(of: item)))
         }
         return .success(item)
+    }
+}
+
+nonisolated extension FavouriteOutcome {
+    public var text: String {
+        switch self {
+        case .unavailable: InventoryCore.noRuntimeText
+        case let .marked(name): "\(name) is a favourite."
+        case let .unmarked(name): "\(name) is no longer a favourite."
+        case let .bound(name, slot): "Hotkey \(slot) uses \(name)."
+        case let .badSlot(slot): "Hotkey \(slot) does not exist; use 1 to 8."
+        case let .emptySlot(slot): "Hotkey \(slot) has no favourite."
+        case let .notCarried(name): "The player carries no \(name)."
+        }
     }
 }

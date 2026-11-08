@@ -17,7 +17,8 @@ extension WorldSessionWiring {
         guard let fileSystem = provider.scriptFileSystem else { return }
         let world = game.scriptWorld
         let bridge = world.makeBridge(
-            provider: provider, gameSession: gameSession, streamer: streamer
+            provider: provider, gameSession: gameSession, streamer: streamer,
+            worldState: game.worldState
         )
         let scripts = ScriptCoordinator(world: world, bridge: bridge, fileSystem: fileSystem)
         game.scripts = scripts
@@ -33,7 +34,11 @@ extension WorldSessionWiring {
     /// whether or not the take succeeds. The crime reporter joins the take path.
     func buildWorldItems(provider: WorldDataStores, streamer: CellStreamer) {
         let world = game.inventoryWorld
-        guard var data = world.sessionData(provider: provider, streamer: streamer) else { return }
+        guard var data = world.sessionData(
+            provider: provider,
+            streamer: streamer,
+            store: game.worldState
+        ) else { return }
         data.vendors = InventoryWorldAdapter.vendorCore(provider: provider).map { core in
             VendorCoordinator(
                 core: core,
@@ -57,7 +62,8 @@ extension WorldSessionWiring {
     func buildMagic(provider: WorldDataStores, gameSession: GameSession) {
         let world = game.magicWorld
         game.magic = MagicCoordinator(
-            world: world, data: world.sessionData(provider: provider), storyEvents: game.storyWorld
+            world: world, data: world.sessionData(provider: provider, store: game.worldState),
+            storyEvents: game.storyWorld
         )
         world.wireMagic(gameSession: gameSession)
     }

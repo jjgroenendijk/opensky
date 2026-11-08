@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 
 nonisolated public enum SettingsPageAction: Equatable, Sendable {
     case adjust(PlayerSettingID, direction: Int)

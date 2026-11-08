@@ -4,6 +4,7 @@
 
 import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyWorldState
 
 /// Tuning for one lockpicking session, resolved once per session start.
 nonisolated public struct LockpickingSettings: Equatable, Sendable {

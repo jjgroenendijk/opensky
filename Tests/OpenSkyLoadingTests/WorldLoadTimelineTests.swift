@@ -2,6 +2,7 @@
 
 @testable import OpenSkyCells
 @testable import OpenSkyLoading
+import OpenSkyWorldInterface
 import Testing
 
 struct WorldLoadTimelineTests {

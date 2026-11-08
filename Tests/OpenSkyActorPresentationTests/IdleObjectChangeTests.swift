@@ -2,6 +2,7 @@
 
 import Foundation
 @testable import OpenSkyActorPresentation
+import OpenSkyWorldInterface
 import Testing
 
 struct IdleObjectChangeTests {

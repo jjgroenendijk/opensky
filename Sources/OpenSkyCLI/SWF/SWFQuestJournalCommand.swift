@@ -11,6 +11,7 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyQuests
 import OpenSkyWorldState
 

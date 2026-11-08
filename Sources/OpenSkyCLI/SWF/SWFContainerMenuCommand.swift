@@ -10,6 +10,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyWorldState
 
 enum SWFContainerMenuCommand {

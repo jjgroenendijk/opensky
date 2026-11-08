@@ -4,7 +4,9 @@
 import OpenSkyAgentControl
 import OpenSkyCells
 import OpenSkyFormatsESM
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension AgentWorldAdapter {

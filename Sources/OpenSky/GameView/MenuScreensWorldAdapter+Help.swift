@@ -3,6 +3,8 @@
 
 import Foundation
 import OpenSkyMenus
+import OpenSkyMenusInterface
+import OpenSkySessionInterface
 
 extension MenuScreensWorldAdapter: TutorialMenuWorld {
     func helpTopic(_ editorID: String) -> HelpTopic? {

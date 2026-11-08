@@ -9,7 +9,9 @@ import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyPlayer
 import OpenSkyRenderCore
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 extension RagdollWorldAdapter {

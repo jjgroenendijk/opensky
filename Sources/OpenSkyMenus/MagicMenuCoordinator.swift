@@ -2,6 +2,7 @@
 // selected spell in the right hand, R in the left. See docs/engine/magic.md#magic-menu.
 
 import Foundation
+public import OpenSkyMenusInterface
 
 /// What the magic menu needs from the app.
 public protocol MagicMenuWorld: MenuScreenWorld {
@@ -18,8 +19,8 @@ public final class MagicMenuCoordinator: ItemListMenuScreen {
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any MagicMenuWorld)? = nil
     ) {
         self.world = world

@@ -2,6 +2,7 @@
 // again when the reaction ends (docs/engine/bump-reactions.md).
 
 import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 
 extension PackageCoordinator {
     /// Starts reactions for this frame's contacts and moves the running ones on. A

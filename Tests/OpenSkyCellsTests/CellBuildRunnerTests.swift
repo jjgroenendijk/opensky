@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
 @testable import OpenSkyRendering
+import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
 import Synchronization

@@ -8,7 +8,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 public import OpenSkyProgressionInterface
 public import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 
 /// What the lock coordinator reads from the rest of the game.
 @MainActor
@@ -48,38 +48,6 @@ extension LockWorld {
     public func countLockPicked() {}
 }
 
-/// Why a lockpicking session did not start.
-nonisolated public enum LockpickingRefusal: Error, Equatable, Sendable {
-    case noRuntime
-    case unknownReference(FormID)
-    case notLocked
-    case requiresKey
-    case noLockpicks
-}
-
-/// How the last lockpicking session ended.
-nonisolated public struct LockpickingOutcome: Equatable, Sendable {
-    public let difficulty: LockDifficulty
-    public let opened: Bool
-    public let picksBroken: Int
-    public let experience: Float
-    public let keyRewarded: Bool
-
-    public init(
-        difficulty: LockDifficulty,
-        opened: Bool,
-        picksBroken: Int,
-        experience: Float,
-        keyRewarded: Bool
-    ) {
-        self.difficulty = difficulty
-        self.opened = opened
-        self.picksBroken = picksBroken
-        self.experience = experience
-        self.keyRewarded = keyRewarded
-    }
-}
-
 /// The perk entry points lockpicking reads, by their xEdit index.
 nonisolated public enum LockpickingEntryPoint {
     public static let sweetSpot = PerkEntryPoint.modLockpickSweetSpot
@@ -96,22 +64,6 @@ nonisolated struct LockpickingTarget: Sendable {
     let state: ReferenceLockState
     let difficulty: LockDifficulty
     let perks: LockpickingPerkValues
-}
-
-/// A reference's lock as stored, and the level it shows now.
-nonisolated public struct ResolvedLock: Sendable {
-    public let key: ReferenceKey
-    public let state: ReferenceLockState
-    /// Differs from `state.level` only on a leveled lock the player has outgrown.
-    public let shownLevel: UInt8
-    public let isLeveled: Bool
-
-    /// `state` with the shown level, for every rule that picks a band.
-    public var shown: ReferenceLockState {
-        var shown = state
-        shown.level = shownLevel
-        return shown
-    }
 }
 
 @MainActor

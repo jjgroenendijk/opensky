@@ -11,6 +11,7 @@ import OpenSkyLoading
 import OpenSkyReference
 import OpenSkySave
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import Testing
 
 @MainActor

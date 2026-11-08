@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyRuntimeState
 import OpenSkyTagsTesting
 @testable import OpenSkyWeather
+import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing
 

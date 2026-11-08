@@ -1,0 +1,13 @@
+public import OpenSkyCombatInterface
+public import OpenSkyFormatsESM
+public import OpenSkyPhysics
+
+/// What the world adapters use of `CombatWorldAdapter`.
+public protocol CombatWorldPort: AnyObject {
+    func actorFlies(_ actor: ReferenceKey) -> Bool
+    func health(of key: ReferenceKey) -> (current: Float, maximum: Float)?
+    func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
+    func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>, gain: Float)
+    func run(_ commands: [CombatCommand])
+    func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit?
+}

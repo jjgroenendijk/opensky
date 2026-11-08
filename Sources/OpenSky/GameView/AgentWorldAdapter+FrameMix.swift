@@ -9,6 +9,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 extension AgentWorldAdapter {

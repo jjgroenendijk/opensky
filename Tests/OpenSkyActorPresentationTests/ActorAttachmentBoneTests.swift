@@ -6,6 +6,7 @@
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 import OpenSkyWorldTesting
 import simd
 import Testing

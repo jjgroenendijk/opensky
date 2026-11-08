@@ -57,11 +57,9 @@ RENDERER_DEPS = {
 # Products of external packages. They sit below every layer.
 EXTERNAL = {"HeapModule", "DequeModule", "ArgumentParser"}
 # Rule 8. Shared by the app and OpenSkyCLI; may depend on anything.
-COMPOSITION = {"OpenSkyPreview"}
+COMPOSITION = {"OpenSkyPreview", "OpenSkySession"}
 # Rule 6. A feature without one of its targets, and why.
 MISSING = {
-    ("OpenSkyMenus", "Interface"): "nothing depends on menus",
-    ("OpenSkySave", "Interface"): "nothing depends on saves",
 }
 
 layer = {name: index for index, names in enumerate(LAYERS) for name in names}
@@ -104,7 +102,7 @@ def kind(name):
 
 
 for name in sorted(n for n in names if n not in layer and n.endswith("Interface")):
-    if name[:-len("Interface")] not in features:
+    if name[:-len("Interface")] not in features | COMPOSITION:
         failures.append(f"interface {name} has no feature implementation")
 
 for name in sorted(names):

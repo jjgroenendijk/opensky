@@ -5,13 +5,14 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import Testing
 
 @MainActor
 final class FakeSleepWaitWorld: SleepWaitWorld, MenuInputConsumer {
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         nil
     }
 

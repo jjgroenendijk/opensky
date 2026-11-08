@@ -6,13 +6,17 @@ import Foundation
 import OpenSkyAgentControl
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkySave
+import OpenSkySaveInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -282,8 +286,8 @@ final class AgentTeleportJob {
     /// coordinates are local to their cell. A grid teleport leaves the interior.
     private func place(
         at feet: SIMD3<Float>,
-        gameSession: GameSession,
-        streamer: CellStreamer,
+        gameSession: any GameSessionPort,
+        streamer: any CellStreamerPort,
         leavingInterior: Bool = true
     ) {
         let renderer = gameSession.renderer

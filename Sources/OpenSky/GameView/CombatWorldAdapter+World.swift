@@ -13,6 +13,7 @@ import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -30,7 +31,9 @@ import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -342,7 +345,7 @@ extension CombatWorldAdapter: CombatWorld {
 
     @discardableResult
     func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>, gait: LocomotionGait?) -> Bool {
-        game.streamer?.moveActor(key, to: point, gait: gait) == .started
+        game.streamer?.moveActor(key, to: point, direct: false, gait: gait) == .started
     }
 
     func faceActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {

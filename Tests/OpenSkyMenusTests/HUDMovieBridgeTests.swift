@@ -5,6 +5,7 @@
 @testable import OpenSkyFormatsSWF
 import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import simd
 import Testing
 

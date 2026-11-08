@@ -1,6 +1,7 @@
 // Animated object state.
 
 import Foundation
+public import OpenSkyWorldInterface
 
 /// The readout text of the Animated Objects section.
 nonisolated public enum ObjectAnimationReadout {

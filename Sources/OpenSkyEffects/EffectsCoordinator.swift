@@ -10,6 +10,7 @@ public import OpenSkyGameData
 public import OpenSkyMagicInterface
 public import OpenSkyRenderCore
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 public import simd
 
 /// What the effects need from the session around them.
@@ -33,8 +34,7 @@ extension EffectsWorld {
 }
 
 public final class EffectsCoordinator {
-    /// Seconds a hit-effect art model stays when its spell is instant.
-    public static let instantArtDuration: Float = 2
+    public static let instantArtDuration = EffectArtTiming.instantSeconds
     /// `fMagicAbsorbVisualTimer`: seconds an instant Absorb hit keeps its visual.
     public var absorbVisualSeconds: Float = 2.5
 
@@ -135,7 +135,7 @@ public final class EffectsCoordinator {
         _ path: String,
         at anchor: EffectAnchor,
         cause: VisualEffectCause,
-        duration: Float = instantArtDuration
+        duration: Float = EffectArtTiming.instantSeconds
     ) {
         let spec = VisualEffectSpec(name: path, artModel: path, membrane: nil)
         visualEffects.attach(spec, to: anchor, cause: cause, duration: duration)
@@ -313,5 +313,11 @@ public final class EffectsCoordinator {
         var matrix = matrix_identity_float4x4
         matrix.columns.3 = SIMD4(position, 1)
         return matrix
+    }
+}
+
+extension EffectsCoordinator {
+    public func resetHealthCues() {
+        healthCues.reset()
     }
 }

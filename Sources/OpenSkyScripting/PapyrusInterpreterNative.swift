@@ -3,7 +3,7 @@
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsPEX
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
     public func suspend(

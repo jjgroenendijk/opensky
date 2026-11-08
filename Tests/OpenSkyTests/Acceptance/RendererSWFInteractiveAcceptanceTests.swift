@@ -9,9 +9,11 @@ import OpenSkyEngineTesting
 @testable import OpenSkyFormatsSWF
 import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 import simd
 import Testing
 

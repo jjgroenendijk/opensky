@@ -2,6 +2,7 @@
 // reload stands it up again.
 
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics

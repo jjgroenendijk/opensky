@@ -8,6 +8,7 @@
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore

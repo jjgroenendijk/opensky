@@ -3,6 +3,7 @@
 // "Skyrim:Weapons" (skill and perk multipliers).
 
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 import Testing
 
 struct ArcheryDamageTests {

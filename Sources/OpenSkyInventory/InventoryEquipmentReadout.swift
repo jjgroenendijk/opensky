@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyCrimeInterface
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 
 nonisolated public enum InventoryEquipmentReadout: Sendable {

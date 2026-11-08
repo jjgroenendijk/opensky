@@ -3,6 +3,7 @@
 
 @testable import OpenSky
 import OpenSkyCells
+import OpenSkyWorldInterface
 import Testing
 
 @MainActor

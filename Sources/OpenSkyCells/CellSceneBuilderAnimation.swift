@@ -7,6 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 
 nonisolated extension CellSceneBuilder {
     /// `severedHead` marks the cut head of a decapitated actor, posed apart from its body.

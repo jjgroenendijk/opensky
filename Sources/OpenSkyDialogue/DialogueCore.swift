@@ -15,17 +15,6 @@ nonisolated public enum DialogueFocusEffect: Equatable, Sendable {
     case release(ReferenceKey)
 }
 
-/// What the conversation does after a response is said to its end.
-nonisolated public enum DialogueResponseEnd: Equatable, Sendable {
-    case close
-    /// Invisible Continue: say this linked response now, with no prompt.
-    case continueWith(FormID)
-    /// Show these topics. The coordinator already stored them as the selection.
-    case topics(DialogueSelection)
-    /// No runtime, so the list stays as it was.
-    case unchanged
-}
-
 public enum DialogueCore {
     /// Moves the focus from `held` to `speaker`. A nil speaker releases.
     public static func focus(

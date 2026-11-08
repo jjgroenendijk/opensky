@@ -10,6 +10,7 @@ import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -19,7 +20,7 @@ extension AgentWorldAdapter {
     func packagesState(reference: String) throws(AgentFailure) -> AgentJSON {
         let key = try resolveReference(reference).key
         let readout = game.packages.readout(for: key)
-        let machine = game.packages.executions[key]?.machine
+        let execution = game.packages.executions[key]?.readout
         let mover = game.streamer?.npcMovementReadouts().first { $0.actor == key }
         let links = game.vehicleWorld.vehicles.core.links
         return [
@@ -28,11 +29,10 @@ extension AgentWorldAdapter {
             "evaluatedAt": readout?.lastEvaluationGameSeconds
                 .map { unsafe .string(String(format: "%.1f", $0)) } ?? .null,
             "override": readout?.override.map { .string("\($0)") } ?? .null,
-            "state": machine.map { .string("\($0.state)") } ?? .null,
-            "pathIndex": machine.map { .init($0.pathIndex) } ?? .null,
-            "pathCount": machine.map { .init($0.path.count) } ?? .null,
-            "running": .array((game.packages.executions[key]?.runner.runningMachines ?? [])
-                .map { .string("\($0.kind.name) \($0.state)") }),
+            "state": execution?.state.map(AgentJSON.string) ?? .null,
+            "pathIndex": execution?.pathIndex.map { .init($0) } ?? .null,
+            "pathCount": execution?.pathCount.map { .init($0) } ?? .null,
+            "running": .array((execution?.running ?? []).map(AgentJSON.string)),
             "carrier": game.vehicleWorld.vehicles.core.links[key]
                 .map { .string("\($0.carrier)") } ?? .null,
             "mover": mover.map {

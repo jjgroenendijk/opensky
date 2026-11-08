@@ -9,6 +9,7 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyNavigation
 import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 import OpenSkyWorldTesting
 import simd
 import Testing

@@ -4,7 +4,9 @@
 
 import Foundation
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyProgressionInterface
+import OpenSkyWorldInterface
 
 nonisolated public struct SkillsMenuModel: Equatable, Sendable {
     public enum Page: Equatable, Sendable {

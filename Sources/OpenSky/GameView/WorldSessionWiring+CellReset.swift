@@ -10,6 +10,7 @@ import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension WorldSessionWiring {

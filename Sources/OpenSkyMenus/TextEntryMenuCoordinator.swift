@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 public final class TextEntryMenuCoordinator: MenuScreen<Bool> {
     public static let identifier: MenuIdentifier = "TextEntry Menu"
@@ -15,8 +16,8 @@ public final class TextEntryMenuCoordinator: MenuScreen<Bool> {
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any MenuScreenWorld)? = nil
     ) {
         super.init(

@@ -7,6 +7,7 @@ import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyReference
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 /// What a launcher page may ask of the app.
 protocol LauncherActions: AnyObject {

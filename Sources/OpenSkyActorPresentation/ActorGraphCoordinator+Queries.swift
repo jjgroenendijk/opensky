@@ -3,6 +3,7 @@
 public import OpenSkyBehavior
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 
 extension ActorGraphCoordinator {
     /// The drive's locomotion state. A change raises its events on the next step.

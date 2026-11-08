@@ -16,6 +16,7 @@ import MetalKit
 @testable import OpenSkyRenderResources
 import OpenSkyTagsTesting
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 import Testing

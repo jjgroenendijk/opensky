@@ -4,6 +4,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 /// What the sleep and wait menu needs from the app.
 public protocol SleepWaitWorld: MenuScreenWorld {
@@ -28,8 +29,8 @@ public final class SleepWaitMenuCoordinator: MenuScreen<SleepWaitMovieEvent> {
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any SleepWaitWorld)? = nil
     ) {
         self.world = world

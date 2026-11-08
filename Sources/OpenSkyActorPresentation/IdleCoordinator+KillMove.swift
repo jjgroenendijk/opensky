@@ -4,6 +4,7 @@
 import OpenSkyConditions
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 
 extension IdleCoordinator {
     /// Plays the paired idle the tree under `action` picks, with `ShouldAttackKill` read

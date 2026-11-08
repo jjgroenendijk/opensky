@@ -1,5 +1,6 @@
 import Foundation
 import OpenSkyFormatsSWF
+import OpenSkyMenusInterface
 
 /// Reads and writes the `EntriesA` row array that a vanilla list clip draws from.
 /// Every step degrades: a missing list or a malformed row is skipped, never thrown.

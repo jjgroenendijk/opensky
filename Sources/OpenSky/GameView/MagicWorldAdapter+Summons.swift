@@ -5,14 +5,18 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

@@ -2,6 +2,7 @@
 // row waits for the next key, and that key becomes the binding.
 
 import Foundation
+public import OpenSkyMenusInterface
 
 nonisolated public enum ControlsPageAction: Equatable, Sendable {
     case rebind(GameInputAction, scanCode: UInt32)

@@ -15,29 +15,32 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyTerrain
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
 /// What `VehicleWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol VehicleWorldHost: AnyObject {
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
-    var idleWorld: IdleWorldAdapter { get }
-    var packages: PackageCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var vehicles: VehicleCoordinator { get }
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
+    var idleWorld: any IdleWorldPort { get }
+    var packages: any PackagePort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var vehicles: any VehiclePort { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class VehicleWorldAdapter {
     unowned let game: any VehicleWorldHost
-    var vehicles: VehicleCoordinator {
+    var vehicles: any VehiclePort {
         game.vehicles
     }
 
@@ -124,9 +127,9 @@ extension VehicleWorldAdapter: VehicleWorld {
             switch command {
             case let .publishVehiclePoses(poses): game.gameSession?.instancePoses
                 .vehiclePoses = poses
-            case let .publishCarriedPoses(poses): game.streamer?.npcMovementState.carried = poses
+            case let .publishCarriedPoses(poses): game.streamer?.publishCarriedPoses(poses)
             case let .publishLinks(linked):
-                game.streamer?.npcMovementState.vehicleLinkedActors = linked
+                game.streamer?.publishVehicleLinks(linked)
             case let .placePlayer(pose): placePlayer(at: pose)
             case let .followerMoved(key, pose): vehicleFollowerMoved(key, to: pose)
             case let .followerRests(key, pose): vehicleFollowerRests(key, at: pose)
@@ -154,7 +157,7 @@ extension VehicleWorldAdapter: VehicleWorld {
 
     /// A new seat idle turns the view the way the seat's head faces, once; the player
     /// may look around after.
-    private func faceSeat(root: float4x4, gameSession: GameSession) {
+    private func faceSeat(root: float4x4, gameSession: any GameSessionPort) {
         let idles = game.idleWorld.idles
         guard
             let start = idles.idleStart(of: .player), start != facedIdleStart,
@@ -191,7 +194,7 @@ extension VehicleWorldAdapter: VehicleWorld {
     /// not vanish when the old cell unloads. The old cell drops it.
     func vehicleFollowerMoved(_ key: ReferenceKey, to pose: ReferenceTransformOverride) {
         if let formID = game.streamer?.referenceEntry(key: key)?.formID {
-            game.streamer?.npcMovementState.vehiclePoses[formID] = VehicleCore.matrix(pose)
+            game.streamer?.setVehiclePose(VehicleCore.matrix(pose), for: formID)
         }
         guard
             let streamer = game.streamer,

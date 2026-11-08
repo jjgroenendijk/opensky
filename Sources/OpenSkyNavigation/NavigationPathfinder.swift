@@ -7,6 +7,7 @@
 public import HeapModule
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public enum NavigationPortal: Equatable, Sendable {

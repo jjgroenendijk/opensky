@@ -4,6 +4,7 @@
 @testable import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import simd
 import Testing
 

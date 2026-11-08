@@ -9,7 +9,9 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -78,10 +80,10 @@ extension AIWorldAdapter {
             return bridge.startActorCombat(actor, target: target) ? .done : .failed
         case let .cast(selector, target):
             guard let spell = selector.flatMap(selectedForm) else { return .failed }
-            return bridge.castSpell(spell, from: actor, at: target) ? .done : .failed
+            return bridge.castSpell(spell, from: actor, at: target, blame: nil) ? .done : .failed
         case let .shout(selector, target):
             guard let spell = selector.flatMap(shoutSpell) else { return .failed }
-            return bridge.castSpell(spell, from: actor, at: target) ? .done : .failed
+            return bridge.castSpell(spell, from: actor, at: target, blame: nil) ? .done : .failed
         default:
             return .failed
         }

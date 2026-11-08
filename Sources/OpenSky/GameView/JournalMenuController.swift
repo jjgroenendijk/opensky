@@ -10,28 +10,32 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `JournalMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol JournalMenuHost: MenuInputConsumer {
-    var hud: HUDCoordinator { get }
-    var journal: JournalCoordinator { get }
+    var hud: any HUDPort { get }
+    var journal: any JournalPort { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
-    var mapMenu: MapMenuCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var menuMode: MenuModeController { get }
-    var renderer: Renderer? { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var swfMovies: SWFMovieSource { get }
-    var worldState: WorldStateStore { get }
+    var mapMenu: any MapMenuPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var menuMode: any MenuModePort { get }
+    var renderer: (any RendererPort)? { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var swfMovies: any SWFMovieSourcePort { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 /// Holds the journal's page model and movie state for `game`.
@@ -55,7 +59,7 @@ final class JournalMenuController {
         ) { [unowned game] in game.renderer }
     }
 
-    var journal: JournalCoordinator {
+    var journal: any JournalPort {
         game.journal
     }
 
@@ -102,7 +106,12 @@ final class JournalMenuController {
 
     /// Names an alias by its fill, but only while that reference is in a loaded
     /// cell. Otherwise the page shows the tag as written.
-    func aliasNaming(runtime: QuestRuntime) -> QuestAliasNaming {
+    /// The alias names of the running quests, once the quest runtime is up.
+    var currentAliasNaming: QuestAliasNaming? {
+        questRuntime.map(aliasNaming(runtime:))
+    }
+
+    func aliasNaming(runtime: any QuestRuntimePort) -> QuestAliasNaming {
         let aliases = runtime.aliasResolution()
         let playerName = game.menuWorld.playerNameAndRace.name
         var naming = QuestAliasNaming(

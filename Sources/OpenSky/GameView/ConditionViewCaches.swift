@@ -3,6 +3,7 @@
 
 import OpenSkyActorsInterface
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface

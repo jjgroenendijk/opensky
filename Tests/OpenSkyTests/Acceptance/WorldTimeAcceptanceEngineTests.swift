@@ -13,6 +13,7 @@ import OpenSkyFormatsTesting
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 import OpenSkyTagsTesting
+import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing

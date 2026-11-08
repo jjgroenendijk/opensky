@@ -12,6 +12,7 @@ import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyRenderResources
+import OpenSkyWorldInterface
 
 final class GameLaunchContext {
     /// What one world load produced. Opening the archives is a load stage too.

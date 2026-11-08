@@ -21,6 +21,7 @@ import OpenSkyPlayer
 import OpenSkyQuestsInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldConditions
@@ -120,7 +121,7 @@ extension RuntimeStateWorldAdapter {
     }
 
     private func freshInventoryResolution(
-        context: ConditionContext, runtime: WorldItemRuntime
+        context: ConditionContext, runtime: any WorldItemRuntimePort
     ) -> InventoryConditionResolution {
         let stacks = runtime.inventory.inventory(of: runtime.player).stacks
         let equipped = game.inventory.equipment?.equipped(on: runtime.player) ?? []

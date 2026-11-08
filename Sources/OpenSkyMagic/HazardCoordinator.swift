@@ -17,19 +17,6 @@ public protocol HazardWorld: AnyObject, SpellHitApplying {
     func hazardPayload(spell: ReferenceKey, hazard: ReferenceKey) -> SpellPayload?
 }
 
-/// A placed hazard as a cell build hands it over.
-nonisolated public struct HazardPlacement: Equatable, Sendable {
-    public let id: ReferenceKey
-    public let spec: HazardSpec
-    public let position: SIMD3<Float>
-
-    public init(id: ReferenceKey, spec: HazardSpec, position: SIMD3<Float>) {
-        self.id = id
-        self.spec = spec
-        self.position = position
-    }
-}
-
 /// The last hit one hazard landed.
 nonisolated public struct HazardHitRecord: Equatable, Sendable {
     public let targets: [ReferenceKey]

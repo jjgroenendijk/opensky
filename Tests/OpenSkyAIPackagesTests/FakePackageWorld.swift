@@ -5,6 +5,7 @@
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 import OpenSkyPhysics
+import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
 

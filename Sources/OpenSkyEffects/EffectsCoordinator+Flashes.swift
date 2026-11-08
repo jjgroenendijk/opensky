@@ -5,20 +5,8 @@ import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
-
-/// One `LIGH` shown at a point for a while; it fades out over its time.
-nonisolated public struct FlashLight: Equatable, Sendable {
-    public let light: ReferenceKey
-    public let position: SIMD3<Float>
-    public let duration: Float
-    public var elapsed: Float = 0
-
-    /// 1 at the start, 0 at the end; OpenSky's fade.
-    public var strength: Float {
-        duration > 0 ? max(0, 1 - elapsed / duration) : 0
-    }
-}
 
 extension EffectsCoordinator {
     /// At most this many flash lights live; the oldest goes first. OpenSky's limit.

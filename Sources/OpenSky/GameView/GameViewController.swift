@@ -18,6 +18,7 @@ import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyScriptingInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 final class GameViewController: NSViewController {

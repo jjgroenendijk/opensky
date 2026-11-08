@@ -477,3 +477,26 @@ extension MagicCoordinator {
         return refused
     }
 }
+
+extension MagicCoordinator {
+    /// - Returns: how many effects were removed.
+    public func dispelEffects(
+        on holder: ActorValueHolder, where predicate: (ActiveEffect) -> Bool
+    ) -> Int {
+        withEffects { $0.dispel(on: holder, where: predicate) } ?? 0
+    }
+}
+
+extension MagicCoordinator {
+    /// Adds and removes the abilities the actor's perks grant. False when no caster or
+    /// effect runtime is wired.
+    @discardableResult
+    public func reconcilePerkAbilities(on holder: ActorValueHolder, perks: any PerkAccess) -> Bool {
+        guard let spells = caster?.spellbook.spells else { return false }
+        return withEffects { effects in
+            _ = PerkAbilityApplication.reconcile(
+                on: holder, perks: perks, spells: spells, using: &effects
+            )
+        } != nil
+    }
+}

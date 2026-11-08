@@ -12,6 +12,7 @@ import OpenSkyEngineTesting
 import OpenSkyShaderTypes
 import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 import simd
 import Testing
 

@@ -8,6 +8,7 @@ import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkyWorldInterface
 
 extension GameSessionScope {
     var playerControlLocks: PlayerControlLocks {

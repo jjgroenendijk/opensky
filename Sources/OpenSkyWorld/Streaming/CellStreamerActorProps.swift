@@ -7,8 +7,9 @@ import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyRendering
-public import OpenSkyRuntimeState
+import OpenSkyRuntimeState
 public import OpenSkyTerrain
+public import OpenSkyWorldInterface
 
 /// The prop one actor shows. `model` is nil while the build queue loads it.
 nonisolated public struct ActorPropDraw {

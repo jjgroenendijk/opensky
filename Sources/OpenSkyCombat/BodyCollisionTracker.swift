@@ -1,38 +1,10 @@
 // Finds loose bodies that hit something: a sudden loss of speed between two steps. The
 // sound comes from both materials (docs/engine/impulses.md#collision-sounds).
 
+public import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import simd
-
-nonisolated public struct BodyCollision: Equatable, Sendable {
-    public let body: ReferenceKey
-    public let position: SIMD3<Float>
-    /// Units per second the hit took off the body's velocity.
-    public let speedLoss: Float
-    public let material: FormID?
-    /// What the body hit. Nil when unknown.
-    public let surface: FormID?
-
-    public init(
-        body: ReferenceKey, position: SIMD3<Float>, speedLoss: Float, material: FormID?,
-        surface: FormID? = nil
-    ) {
-        self.body = body
-        self.position = position
-        self.speedLoss = speedLoss
-        self.material = material
-        self.surface = surface
-    }
-
-    /// Louder for a harder hit: a quiet floor at the threshold, full level at `loudSpeedLoss`.
-    public var gain: Float {
-        let span = BodyCollisionTracker.loudSpeedLoss - BodyCollisionTracker.minimumSpeedLoss
-        let share = (speedLoss - BodyCollisionTracker.minimumSpeedLoss) / span
-        return BodyCollisionTracker.quietestGain
-            + (1 - BodyCollisionTracker.quietestGain) * min(max(share, 0), 1)
-    }
-}
 
 nonisolated public struct BodyCollisionTracker: Sendable {
     /// A smaller change is gravity, friction, or a soft roll, and stays silent.
@@ -69,5 +41,15 @@ nonisolated public struct BodyCollisionTracker: Sendable {
         velocities = next
         quiet = quiet.filter { next[$0.key] != nil }
         return hits
+    }
+}
+
+nonisolated extension BodyCollision {
+    /// Louder for a harder hit: a quiet floor at the threshold, full level at `loudSpeedLoss`.
+    public var gain: Float {
+        let span = BodyCollisionTracker.loudSpeedLoss - BodyCollisionTracker.minimumSpeedLoss
+        let share = (speedLoss - BodyCollisionTracker.minimumSpeedLoss) / span
+        return BodyCollisionTracker.quietestGain
+            + (1 - BodyCollisionTracker.quietestGain) * min(max(share, 0), 1)
     }
 }

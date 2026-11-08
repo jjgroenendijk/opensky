@@ -6,12 +6,14 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 extension ScriptWorldAdapter: PapyrusWeatherControlling {
     private var weatherSystem: WeatherSystem? {
-        game.gameSession?.weather
+        weather()
     }
 
     private var resolver: FormIDResolver? {

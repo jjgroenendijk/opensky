@@ -6,6 +6,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 import Testing

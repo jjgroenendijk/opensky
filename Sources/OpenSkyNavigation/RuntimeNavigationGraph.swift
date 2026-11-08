@@ -6,6 +6,7 @@ public import OpenSkyDiagnostics
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public struct RuntimeNavigationTriangle: Sendable {

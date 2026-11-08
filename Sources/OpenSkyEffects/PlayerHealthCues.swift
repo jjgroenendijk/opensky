@@ -1,19 +1,7 @@
+public import OpenSkyWorldInterface
+
 // The cues the game gives while the player's health is low: a heartbeat sound and a
 // pulsing image space modifier (`IMLH`). Pure. See docs/rendering/image-space.md#low-health.
-
-/// Which heartbeat the player's health asks for.
-nonisolated public enum Heartbeat: Equatable, Sendable {
-    case slow
-    case fast
-}
-
-/// What the frame must do with the heartbeat sound.
-nonisolated public enum HeartbeatChange: Equatable, Sendable {
-    /// Stop the one playing at once, then start this one at full volume.
-    case start(Heartbeat)
-    /// Fade the one playing out over `PlayerHealthCues.heartbeatFadeSeconds`.
-    case fadeOut
-}
 
 nonisolated public struct PlayerHealthCues: Equatable, Sendable {
     /// `fPlayerHealthHeartbeatSlow`: the slow heartbeat and the pulse start at or below it.

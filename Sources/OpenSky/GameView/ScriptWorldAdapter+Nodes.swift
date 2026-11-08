@@ -15,7 +15,9 @@ import OpenSkyObjectAnimation
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

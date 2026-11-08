@@ -3,6 +3,7 @@
 
 import Foundation
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 import OpenSkyWorldInterface
 import simd
 

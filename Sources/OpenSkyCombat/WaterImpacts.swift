@@ -3,99 +3,11 @@
 // Values in, values out (docs/engine/impulses.md#water).
 
 import Foundation
+public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
 import simd
-
-nonisolated public struct WaterImpactSettings: Equatable, Sendable {
-    /// `sSplashParticles`: the model a splash shows.
-    public var splashModel = "Effects\\waterSplash.nif"
-    /// `sExplosionSplashParticles`: the model an explosion at the surface shows.
-    public var explosionSplashModel = "Effects\\ExplosionSplash.nif"
-    /// `fSplashSoundLight`, `...Medium`, `...Heavy`: the splash value each sound needs.
-    public var splashSoundLight: Float = 5
-    public var splashSoundMedium: Float = 20
-    public var splashSoundHeavy: Float = 35
-    /// `fSplashSoundVelocityMult`: the splash value per unit a second of vertical speed.
-    public var splashVelocityMult: Float = 0.05
-    /// `fSplashSoundOutMult`: a body leaving the water splashes this much.
-    public var splashOutMult: Float = 0.5
-    /// `fSplashSoundTimer`: seconds between two splashes anywhere.
-    public var splashTimer: Float = 0.25
-    /// `fSplashScale1` to `3`: the particle scale of a heavy, medium and light splash.
-    public var splashScales: [Float] = [1, 0.75, 0.4]
-    /// `fExplosionSplashRadius`: a blast this close to the surface splashes.
-    public var explosionSplashRadius: Float = 250
-    /// `fExplosionWaterRadiusRatio`: what a blast under water keeps of its radius.
-    public var explosionWaterRadiusRatio: Float = 0.1
-    /// `fWaterKnockdownVelocity`: the flow speed that knocks a normal actor down, times
-    /// the size factor.
-    public var knockdownVelocity: Float = 5
-    /// `fWaterKnockdownSizeSmall`, `...Normal`, `...Large`, `...VeryLarge`, by RACE size.
-    public var knockdownSizeFactors: [Float] = [0.6, 0.75, 1.25, 1.5]
-
-    public static let vanilla = Self()
-
-    public init() {}
-
-    public static func resolve(store: GameSettingStore, text: GameTextResolver) -> Self {
-        var settings = vanilla
-        store.read("sSplashParticles", into: &settings, \.splashModel, text: text)
-        store.read("sExplosionSplashParticles", into: &settings, \.explosionSplashModel, text: text)
-        let fields: [(String, WritableKeyPath<Self, Float>)] = [
-            ("fSplashSoundLight", \.splashSoundLight),
-            ("fSplashSoundMedium", \.splashSoundMedium),
-            ("fSplashSoundHeavy", \.splashSoundHeavy),
-            ("fSplashSoundVelocityMult", \.splashVelocityMult),
-            ("fSplashSoundOutMult", \.splashOutMult),
-            ("fSplashSoundTimer", \.splashTimer),
-            ("fSplashScale1", \.splashScales[0]),
-            ("fSplashScale2", \.splashScales[1]),
-            ("fSplashScale3", \.splashScales[2]),
-            ("fExplosionSplashRadius", \.explosionSplashRadius),
-            ("fExplosionWaterRadiusRatio", \.explosionWaterRadiusRatio),
-            ("fWaterKnockdownVelocity", \.knockdownVelocity),
-            ("fWaterKnockdownSizeSmall", \.knockdownSizeFactors[0]),
-            ("fWaterKnockdownSizeNormal", \.knockdownSizeFactors[1]),
-            ("fWaterKnockdownSizeLarge", \.knockdownSizeFactors[2]),
-            ("fWaterKnockdownSizeVeryLarge", \.knockdownSizeFactors[3])
-        ]
-        for (editorID, keyPath) in fields {
-            store.read(editorID, into: &settings, keyPath)
-        }
-        return settings
-    }
-}
-
-/// How loud a splash is.
-nonisolated public enum SplashWeight: String, Equatable, Sendable {
-    /// Too light for any splash sound; the model still shows.
-    case silent
-    case light, medium, heavy
-
-    /// The `SNDR` the splash plays.
-    public var sound: String? {
-        switch self {
-        case .silent: nil
-        case .light: "CWaterSmall"
-        case .medium: "CWaterMedium"
-        case .heavy: "CWaterLarge"
-        }
-    }
-}
-
-/// One splash to show and play.
-nonisolated public struct SplashEvent: Equatable, Sendable {
-    /// What went in, or nil for an explosion.
-    public let source: ReferenceKey?
-    /// On the water surface.
-    public let position: SIMD3<Float>
-    public let model: String
-    public let weight: SplashWeight
-    /// The particle scale.
-    public var scale: Float = 1
-}
 
 /// One actor or body, as the splash test sees it this frame.
 nonisolated public struct WaterSample: Equatable, Sendable {
@@ -250,5 +162,35 @@ nonisolated public struct SplashTracker: Equatable, Sendable {
         underwater = nowUnder
         seen = Set(samples.map(\.key))
         return events
+    }
+}
+
+nonisolated extension WaterImpactSettings {
+    public static func resolve(store: GameSettingStore, text: GameTextResolver) -> Self {
+        var settings = vanilla
+        store.read("sSplashParticles", into: &settings, \.splashModel, text: text)
+        store.read("sExplosionSplashParticles", into: &settings, \.explosionSplashModel, text: text)
+        let fields: [(String, WritableKeyPath<Self, Float>)] = [
+            ("fSplashSoundLight", \.splashSoundLight),
+            ("fSplashSoundMedium", \.splashSoundMedium),
+            ("fSplashSoundHeavy", \.splashSoundHeavy),
+            ("fSplashSoundVelocityMult", \.splashVelocityMult),
+            ("fSplashSoundOutMult", \.splashOutMult),
+            ("fSplashSoundTimer", \.splashTimer),
+            ("fSplashScale1", \.splashScales[0]),
+            ("fSplashScale2", \.splashScales[1]),
+            ("fSplashScale3", \.splashScales[2]),
+            ("fExplosionSplashRadius", \.explosionSplashRadius),
+            ("fExplosionWaterRadiusRatio", \.explosionWaterRadiusRatio),
+            ("fWaterKnockdownVelocity", \.knockdownVelocity),
+            ("fWaterKnockdownSizeSmall", \.knockdownSizeFactors[0]),
+            ("fWaterKnockdownSizeNormal", \.knockdownSizeFactors[1]),
+            ("fWaterKnockdownSizeLarge", \.knockdownSizeFactors[2]),
+            ("fWaterKnockdownSizeVeryLarge", \.knockdownSizeFactors[3])
+        ]
+        for (editorID, keyPath) in fields {
+            store.read(editorID, into: &settings, keyPath)
+        }
+        return settings
     }
 }

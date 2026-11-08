@@ -15,6 +15,7 @@ import OpenSkyTagsTesting
 @testable import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing
 

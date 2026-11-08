@@ -4,7 +4,9 @@
 import OpenSkyActorPresentation
 import OpenSkyCamera
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkySessionInterface
 
 extension CombatWorldAdapter {
     func canBeKilled(_ target: ReferenceKey, by attacker: ReferenceKey) -> Bool {

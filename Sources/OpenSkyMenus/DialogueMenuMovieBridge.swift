@@ -5,6 +5,7 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 /// The three tallies a dialogue bring-up is gated on. Zero of each is the gate
 /// passing; the readout and the CLI probe print all three even at zero, so a

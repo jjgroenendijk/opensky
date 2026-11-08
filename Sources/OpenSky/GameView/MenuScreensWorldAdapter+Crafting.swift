@@ -4,7 +4,9 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkySessionInterface
 
 extension MenuScreensWorldAdapter: CraftingMenuWorld {
     var craftingStationName: String? {

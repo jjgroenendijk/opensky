@@ -6,6 +6,7 @@ import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 
 extension MagicWorldAdapter {
     var shoutKnowledge: ShoutKnowledge {

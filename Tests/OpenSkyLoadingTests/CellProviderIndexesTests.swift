@@ -8,6 +8,7 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyTagsTesting
+import OpenSkyWorldInterface
 import Synchronization
 import Testing
 

@@ -3,27 +3,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
-
-/// The arguments of `Actor.ShowGiftMenu` (CK wiki "ShowGiftMenu - Actor").
-nonisolated public struct GiftMenuRequest: Equatable, Sendable {
-    /// True: the player gives. False: the actor gives.
-    public var giving: Bool
-    /// Items and keywords a shown item must match; nil shows every item.
-    public var filter: Set<ReferenceKey>?
-    public var showsStolenItems: Bool
-
-    public init(giving: Bool, filter: Set<ReferenceKey>? = nil, showsStolenItems: Bool = false) {
-        self.giving = giving
-        self.filter = filter
-        self.showsStolenItems = showsStolenItems
-    }
-
-    /// `identities` are the item itself and its keywords.
-    public func shows(stolen: Bool, identities: Set<ReferenceKey>) -> Bool {
-        guard showsStolenItems || !stolen else { return false }
-        return filter.map { !$0.isDisjoint(with: identities) } ?? true
-    }
-}
+public import OpenSkyMenusInterface
 
 /// What the gift menu needs from the app.
 public protocol GiftMenuWorld: MenuScreenWorld {
@@ -45,8 +25,8 @@ public final class GiftMenuCoordinator: ItemListMenuScreen {
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any GiftMenuWorld)? = nil
     ) {
         self.world = world

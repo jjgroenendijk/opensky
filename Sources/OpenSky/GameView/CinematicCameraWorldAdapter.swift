@@ -7,6 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyCamera
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
 import OpenSkyFactions
@@ -18,19 +19,21 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 /// What `CinematicCameraWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol CinematicCameraWorldHost: AnyObject {
-    var actorWorld: ActorWorldAdapter { get }
-    var cinematicCamera: CinematicCameraCoordinator { get }
-    var combat: CombatCoordinator { get }
-    var effects: EffectsCoordinator { get }
-    var factions: FactionCoordinator { get }
-    var gameSession: GameSession? { get }
-    var runtimeState: RuntimeStateCoordinator { get }
+    var actorWorld: any ActorWorldPort { get }
+    var cinematicCamera: any CinematicCameraPort { get }
+    var combat: any CombatPort { get }
+    var effects: any EffectsPort { get }
+    var factions: any FactionPort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var runtimeState: any RuntimeStatePort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -158,7 +161,7 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
     func cinematicAnchor(of key: ReferenceKey) -> CinematicAnchor? {
         guard let gameSession = game.gameSession else { return nil }
         if key == .player {
-            let view = gameSession.dialogueCameraState.restorePose ?? gameSession.freeFlyCamera
+            let view = gameSession.dialogueRestorePose ?? gameSession.freeFlyCamera
             return CinematicAnchor(
                 position: gameSession.locomotion.status.feetPosition,
                 yaw: view.yaw

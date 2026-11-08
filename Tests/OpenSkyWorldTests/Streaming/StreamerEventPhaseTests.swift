@@ -35,14 +35,14 @@ struct StreamerEventPhaseTests {
     }
 
     @Test func theMountCheckAnswersBeforeTheLockCheck() {
-        var gate = ActivationGateSeam()
+        let gate = ActivationGateSeam()
         gate.register(.lock) { _ in .locked(level: 25, key: nil) }
         gate.register(.mount) { _ in .mounted }
         #expect(gate.refusal(for: Self.target) == .mounted)
     }
 
     @Test func aNilAnswerPassesThePressToTheNextCheck() {
-        var gate = ActivationGateSeam()
+        let gate = ActivationGateSeam()
         gate.register(.lock) { _ in .locked(level: 25, key: nil) }
         gate.register(.mount) { _ in nil }
         #expect(gate.refusal(for: Self.target) == .locked(level: 25, key: nil))

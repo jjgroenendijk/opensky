@@ -3,6 +3,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import Testing
 
 struct WornArmorAddonFootstepTests {

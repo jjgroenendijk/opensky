@@ -3,6 +3,7 @@
 
 import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyProgressionInterface
 import Testing
 

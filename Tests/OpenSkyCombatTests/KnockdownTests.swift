@@ -2,6 +2,7 @@
 // ragdoll coordinator's knockdown path against a fake world (docs/engine/ragdoll.md#knockdown).
 
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics

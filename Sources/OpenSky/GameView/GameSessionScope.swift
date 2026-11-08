@@ -13,6 +13,7 @@ import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyFormatsCore
@@ -31,6 +32,7 @@ import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -65,7 +67,7 @@ final class GameSessionScope {
     }
 
     /// The benchmark tour through the live window (docs/tools/benchmark.md).
-    lazy var benchmarkWorld = BenchmarkWorldAdapter(game: self)
+    lazy var benchmarkWorld = BenchmarkWorldAdapter(game: ports)
     lazy var benchmarkTour = BenchmarkTourCoordinator(world: benchmarkWorld)
 
     /// Holds the build runner and the provider for the window's lifetime.
@@ -80,23 +82,27 @@ final class GameSessionScope {
         } ?? .vanilla
     )
 
-    lazy var runtimeStateWorld = RuntimeStateWorldAdapter(game: self)
+    lazy var runtimeStateWorld = RuntimeStateWorldAdapter(game: ports)
     /// The Papyrus VM and its world bridge. Both stay nil without game data;
     /// session start replaces it with one built over the loaded world.
     lazy var scripts = ScriptCoordinator(world: scriptWorld)
 
-    lazy var scriptWorld = ScriptWorldAdapter(game: self)
+    lazy var scriptWorld = makeScriptWorld()
+
     /// The renderer and streamer controls of agent control.
     lazy var renderControls = WorldRenderControls(runtimeState: runtimeState, world: self)
+
+    /// Every adapter's view of this scope.
+    lazy var ports = SessionPorts(scope: self)
 
     lazy var sessionWiring = WorldSessionWiring(game: self)
 
     /// The audio engine, the world directors and the audio picker state.
     lazy var audio = AudioCoordinator(world: audioWorld)
 
-    lazy var audioWorld = AudioWorldAdapter(game: self)
+    lazy var audioWorld = AudioWorldAdapter(game: ports)
 
-    lazy var hud = HUDCoordinator(movies: swfMovies, world: self)
+    lazy var hud = HUDCoordinator(movies: swfMovies, world: ports)
     lazy var questNotices = QuestNoticeCoordinator(hud: hud) { [unowned self] in
         mapWorld.settingTexts(QuestNoticeText.self)
     }
@@ -111,11 +117,11 @@ final class GameSessionScope {
     )
     lazy var survivalModeWorld = SurvivalModeWorldAdapter(runtimeState: runtimeState)
 
-    lazy var saveGames = SaveGameWorldAdapter(game: self)
-    lazy var menuWorld = MenuWorldAdapter(game: self)
-    lazy var mapWorld = MapWorldAdapter(game: self)
+    lazy var saveGames = SaveGameWorldAdapter(game: ports)
+    lazy var menuWorld = MenuWorldAdapter(game: ports)
+    lazy var mapWorld = MapWorldAdapter(game: ports)
     /// Builds and routes the menu coordinators below.
-    lazy var menuRouter = MenuRouter(game: self)
+    lazy var menuRouter = MenuRouter(game: ports)
     lazy var titleMenu = TitleMenuCoordinator(
         menuMode: menuMode, movies: swfMovies, hud: hud, saves: saveGames, world: menuWorld
     )
@@ -126,18 +132,18 @@ final class GameSessionScope {
     lazy var mapMenu = MapMenuCoordinator(menuMode: menuMode, world: mapWorld)
     /// Bink movies: the startup logo and `Game.PlayBink`.
     lazy var movies = MoviePlayerCoordinator(menuMode: menuMode, world: movieWorld)
-    lazy var movieWorld = MovieWorldAdapter(game: self)
+    lazy var movieWorld = MovieWorldAdapter(game: ports)
     /// The opening titles of a new game, over the world.
     lazy var titleSequence = TitleSequenceCoordinator(movies: swfMovies) { [weak self] in
         self?.renderer
     }
 
     /// Inventory menu row list + presentation state.
-    lazy var inventoryMenu = InventoryMenuController(game: self)
+    lazy var inventoryMenu = InventoryMenuController(game: ports)
     /// The quest the journal readout names and the quest changes it runs.
     lazy var journal = JournalCoordinator(world: journalMenu)
 
-    lazy var journalMenu = JournalMenuController(game: self)
+    lazy var journalMenu = JournalMenuController(game: ports)
     /// The dialogue index, the open conversation, and the speaker focus.
     lazy var dialogue = DialogueCoordinator(
         store: worldState,
@@ -147,9 +153,9 @@ final class GameSessionScope {
             ?? .vanilla
     )
 
-    lazy var dialogueWorld = DialogueWorldAdapter(game: self)
+    lazy var dialogueWorld = DialogueWorldAdapter(game: ports)
     /// Scenes, story-manager events, and their voice lines.
-    lazy var storyWorld = StoryWorldAdapter(game: self)
+    lazy var storyWorld = StoryWorldAdapter(game: ports)
     /// The quest store's space, so a DLC scene names its quest as the runtime does.
     lazy var scenes = SceneCoordinator(
         dialogue: dialogue,
@@ -169,40 +175,40 @@ final class GameSessionScope {
         ),
         story: worldData?.storyData.storyManager
     )
-    lazy var dialogueMenu = DialogueMenuController(game: self)
-    lazy var dialogueCamera = DialogueCameraController(game: self)
+    lazy var dialogueMenu = DialogueMenuController(game: ports)
+    lazy var dialogueCamera = DialogueCameraController(game: ports)
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
-    lazy var containerMenu = ContainerMenuController(game: self)
-    lazy var lockpickingMenu = LockpickingMenuController(game: self)
+    lazy var containerMenu = ContainerMenuController(game: ports)
+    lazy var lockpickingMenu = LockpickingMenuController(game: ports)
     /// Notifications, help messages, and message boxes for scripts and agent control.
     lazy var messages = MessageCoordinator(
         menuMode: menuMode, movies: swfMovies, hud: hud, world: messageWorld
     )
     lazy var subtitles = SubtitleCoordinator(presenter: hud)
 
-    lazy var messageWorld = MessageWorldAdapter(game: self)
+    lazy var messageWorld = MessageWorldAdapter(game: ports)
     /// Wait, training, books, help, magic, gifts, crafting, and text entry.
-    lazy var menuScreens = MenuScreens(game: self, screens: makeMenuScreenCoordinators())
-    lazy var menuScreensWorld = MenuScreensWorldAdapter(game: self)
+    lazy var menuScreens = MenuScreens(game: ports, screens: makeMenuScreenCoordinators())
+    lazy var menuScreensWorld = MenuScreensWorldAdapter(game: ports)
     /// Kill cams and camera shake.
     lazy var cinematicCamera = CinematicCameraCoordinator(
         world: cinematicWorld, settings: CinematicCameraWorldAdapter.killCamSettings(worldData)
     )
-    lazy var cinematicWorld = CinematicCameraWorldAdapter(game: self)
+    lazy var cinematicWorld = CinematicCameraWorldAdapter(game: ports)
     lazy var loadingScreens = LoadingScreenCoordinator(world: loadingWorld)
-    lazy var loadingWorld = LoadingScreenWorldAdapter(game: self)
+    lazy var loadingWorld = LoadingScreenWorldAdapter(game: ports)
     /// World items, equipment, vendors and trades. Its runtimes stay nil without game data;
     /// session start replaces it with one built over the loaded world.
     lazy var inventory = InventoryCoordinator(
         world: inventoryWorld, lockWorld: lockWorld, data: nil
     )
-    lazy var inventoryWorld = InventoryWorldAdapter(game: self)
-    lazy var lockWorld = LockWorldAdapter(game: self)
+    lazy var inventoryWorld = InventoryWorldAdapter(game: ports)
+    lazy var lockWorld = LockWorldAdapter(game: ports)
     /// The player's Activate perk choices on a use-key press.
     lazy var perkActivation = PerkActivationCoordinator(
         messages: messages, world: perkActivationWorld
     )
-    lazy var perkActivationWorld = PerkActivationWorldAdapter(game: self)
+    lazy var perkActivationWorld = PerkActivationWorldAdapter(game: ports)
     lazy var hazards: HazardCoordinator = .init(world: hazardWorld)
     lazy var hazardWorld: HazardWorldAdapter = .init(HazardWorldDependencies(
         hazards: { [unowned self] in hazards },
@@ -213,7 +219,7 @@ final class GameSessionScope {
     ))
     /// Session start replaces it with one built over the loaded effect records.
     lazy var effects = EffectsCoordinator()
-    lazy var effectsWorld = EffectsWorldAdapter(game: self)
+    lazy var effectsWorld = EffectsWorldAdapter(game: ports)
     lazy var trapControl = TrapControlAdapter(TrapControlDependencies(
         streamer: { [unowned self] in streamer }
     ))
@@ -222,7 +228,8 @@ final class GameSessionScope {
         input: cameraInput, world: playerWorld, source: playerWorld.rigSource()
     )
 
-    lazy var playerWorld = PlayerWorldAdapter(game: self)
+    lazy var playerWorld = makePlayerWorld()
+
     /// The Face Morphs readout, over the actor in conversation.
     lazy var faceMorphs = FaceMorphCoordinator(
         world: playerWorld,
@@ -248,17 +255,17 @@ final class GameSessionScope {
         stamina: worldData.map { StaminaSettings.resolve(store: $0.gameSettings) } ?? .vanilla
     )
 
-    lazy var actorWorld = ActorWorldAdapter(game: self)
+    lazy var actorWorld = ActorWorldAdapter(game: ports)
 
     /// Active effects, spellcasting and item enchantments. Its runtimes stay nil without game
     /// data.
     lazy var magic = MagicCoordinator(world: magicWorld)
-    lazy var magicWorld = MagicWorldAdapter(game: self)
+    lazy var magicWorld = MagicWorldAdapter(game: ports)
 
     /// Perk ownership and the entry points every combat and magic seam folds in.
     lazy var perks = PerkCoordinator(
         world: progressionWorld,
-        runtime: progressionWorld.perkRuntime(),
+        runtime: progressionWorld.perkRuntime(store: worldState),
         baselines: worldData?.actorValueBaselines?.resolver
             .map(ActorPerkBaselineResolver.init(actorValues:)),
         pluginName: worldData?.magicItemPluginName
@@ -277,11 +284,11 @@ final class GameSessionScope {
     /// Bounties, ownership, guard response and the Crime & Factions readout.
     lazy var crime = CrimeCoordinator(
         world: crimeWorld,
-        data: worldData.flatMap { crimeWorld.sessionData($0) },
+        data: worldData.flatMap { crimeWorld.sessionData($0, store: worldState) },
         witnesses: crimeWorld.witnesses(),
         storyEvents: storyWorld
     )
-    lazy var crimeWorld = CrimeWorldAdapter(game: self)
+    lazy var crimeWorld = CrimeWorldAdapter(game: ports)
 
     /// Skill advancement, character leveling, and the Progression readout.
     lazy var progression = ProgressionCoordinator(
@@ -291,14 +298,14 @@ final class GameSessionScope {
         storyEvents: storyWorld
     )
 
-    lazy var progressionWorld = ProgressionWorldAdapter(game: self)
+    lazy var progressionWorld = ProgressionWorldAdapter(game: ports)
 
     /// Death and ragdoll. Its runtime stays nil without game data.
     lazy var ragdoll = RagdollCoordinator(
         store: worldState, world: ragdollWorld, data: ragdollWorld.sessionData()
     )
 
-    lazy var ragdollWorld = RagdollWorldAdapter(game: self)
+    lazy var ragdollWorld = RagdollWorldAdapter(game: ports)
 
     /// Melee, archery and the combat loop. Its runtimes stay nil without game data.
     lazy var combat = CombatCoordinator(
@@ -306,7 +313,7 @@ final class GameSessionScope {
         data: combatWorld.sessionData(),
         explosions: effectsWorld.makeExplosions()
     )
-    lazy var combatWorld = CombatWorldAdapter(game: self)
+    lazy var combatWorld = CombatWorldAdapter(game: ports)
     /// Live resident-actor package selection.
     lazy var packages = PackageCoordinator(world: aiWorld, data: aiWorld.packageData())
     /// The furniture seats the player and the packages share.
@@ -321,36 +328,38 @@ final class GameSessionScope {
     )
 
     /// The gait clip each NPC mover plays.
-    lazy var npcAnimation = NPCAnimationCoordinator(world: aiWorld)
+    lazy var npcAnimation = makeNPCAnimation()
 
-    lazy var aiWorld = AIWorldAdapter(game: self)
+    lazy var aiWorld = AIWorldAdapter(game: ports)
     /// What `openskycli game` drives. The app's `AgentControlHost` owns the server.
-    lazy var agentWorld = AgentWorldAdapter(game: self)
+    lazy var agentWorld = AgentWorldAdapter(game: ports)
 
     /// Ambient idles and the head switch, with the coordinators they drive.
-    lazy var idleWorld = IdleWorldAdapter(game: self)
+    lazy var idleWorld = IdleWorldAdapter(game: ports)
     /// Ambient idles at idle markers, with their props.
-    lazy var idles = IdleCoordinator(world: idleWorld, data: idleWorld.sessionData())
+    lazy var idles = makeIdles()
+
     /// Carts, riders, and the actor AI natives.
-    lazy var vehicleWorld = VehicleWorldAdapter(game: self)
+    lazy var vehicleWorld = VehicleWorldAdapter(game: ports)
     lazy var vehicles = VehicleCoordinator(world: vehicleWorld)
     /// The player's horse or dragon.
-    lazy var mountWorld = MountWorldAdapter(game: self)
+    lazy var mountWorld = MountWorldAdapter(game: ports)
     lazy var mounts = MountCoordinator(
         world: mountWorld, settings: mountSettings, flightSettings: dragonFlightSettings
     )
     /// The werewolf and vampire lord forms.
-    lazy var beastForms = BeastFormWorldAdapter(game: self)
-    lazy var activationRefusals = ActivationRefusalWorldAdapter(game: self)
+    lazy var beastForms = BeastFormWorldAdapter(game: ports)
+    lazy var activationRefusals = ActivationRefusalWorldAdapter(game: ports)
     /// Follower command mode: the follower uses the target the player picks.
-    lazy var followerCommandWorld = FollowerCommandWorldAdapter(game: self)
+    lazy var followerCommandWorld = FollowerCommandWorldAdapter(game: ports)
     lazy var followerCommands = FollowerCommandCoordinator(world: followerCommandWorld)
 
     /// Dragons nobody rides: take-off, flight, and landing.
-    lazy var dragonFlightWorld = DragonFlightWorldAdapter(game: self)
+    lazy var dragonFlightWorld = DragonFlightWorldAdapter(game: ports)
     lazy var dragonFlight = DragonFlightCoordinator(world: dragonFlightWorld)
     /// Traps, doors, and levers that a behaviour graph runs.
-    lazy var objectAnimationWorld = ObjectAnimationWorldAdapter(game: self)
+    lazy var objectAnimationWorld = makeObjectAnimationWorld()
+
     lazy var objectBehaviors = ObjectBehaviorCoordinator(
         settings: playerSettings.store, world: objectAnimationWorld,
         files: { [unowned self] in audioFileSystem },
@@ -360,25 +369,14 @@ final class GameSessionScope {
     lazy var nodeControllers = makeNodeControllers()
 
     /// The behaviour graphs of the effects on actors, which hear the actors' events.
-    lazy var effectGraphWorld = EffectGraphWorldAdapter(game: self)
+    lazy var effectGraphWorld = EffectGraphWorldAdapter(game: ports)
     lazy var effectGraphs = EffectGraphCoordinator(
         world: effectGraphWorld, files: { [unowned self] in audioFileSystem }
     )
     /// Poses the effect models whose nodes move; the "Animated objects" setting turns it off.
-    lazy var effectModelPoser: EffectModelPoser = {
-        let poser = EffectModelPoser(
-            files: { [unowned self] in audioFileSystem },
-            meshes: { [unowned self] in effects.meshes },
-            graphs: effectGraphs,
-            viewer: { [unowned self] in billboardViewer }
-        )
-        poser.isEnabled = objectBehaviors.isEnabled
-        return poser
-    }()
+    lazy var effectModelPoser = makeEffectModelPoser()
 
     /// The behaviour graph each loaded NPC and creature runs.
-    lazy var actorGraphWorld = ActorGraphWorldAdapter(game: self)
-    lazy var actorGraphs = ActorGraphCoordinator(
-        world: actorGraphWorld, files: { [unowned self] in audioFileSystem }
-    )
+    lazy var actorGraphWorld = ActorGraphWorldAdapter(game: ports)
+    lazy var actorGraphs = makeActorGraphs()
 }

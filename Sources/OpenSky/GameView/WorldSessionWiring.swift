@@ -20,6 +20,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyTerrain
 import OpenSkyWeather
 import OpenSkyWorld
@@ -27,65 +28,14 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
-/// What `WorldSessionWiring` reads from the session. `GameViewController` conforms.
-@MainActor
-protocol WorldSessionWiringHost: AnimationEventWorldHost {
-    var actorWorld: ActorWorldAdapter { get }
-    var terrainLODConfigurationStore: TerrainLODConfigurationStore { get }
-    var aiWorld: AIWorldAdapter { get }
-    var audio: AudioCoordinator { get }
-    var audioFileSystem: (any GameFileSource)? { get }
-    var audioWorld: AudioWorldAdapter { get }
-    var beastForms: BeastFormWorldAdapter { get }
-    var activationRefusals: ActivationRefusalWorldAdapter { get }
-    var cameraInput: CameraInputState { get }
-    var cinematicWorld: CinematicCameraWorldAdapter { get }
-    var combatWorld: CombatWorldAdapter { get }
-    var dialogueWorld: DialogueWorldAdapter { get }
-    var effects: EffectsCoordinator { get set }
-    var effectModelPoser: EffectModelPoser { get }
-    var effectsWorld: EffectsWorldAdapter { get }
-    var hazardWorld: HazardWorldAdapter { get }
-    var hud: HUDCoordinator { get }
-    var idleWorld: IdleWorldAdapter { get }
-    var inventory: InventoryCoordinator { get set }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var mountWorld: MountWorldAdapter { get }
-    var followerCommandWorld: FollowerCommandWorldAdapter { get }
-    var dragonFlightWorld: DragonFlightWorldAdapter { get }
-    var loadingWorld: LoadingScreenWorldAdapter { get }
-    var lockWorld: LockWorldAdapter { get }
-    var perkActivationWorld: PerkActivationWorldAdapter { get }
-    var magic: MagicCoordinator { get set }
-    var magicWorld: MagicWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
-    var messageWorld: MessageWorldAdapter { get }
-    var npcAnimation: NPCAnimationCoordinator { get }
-    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
-    var effectGraphWorld: EffectGraphWorldAdapter { get }
-    var actorGraphWorld: ActorGraphWorldAdapter { get }
-    var playerWorld: PlayerWorldAdapter { get }
-    var progression: ProgressionCoordinator { get }
-    var ragdollWorld: RagdollWorldAdapter { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var scriptWorld: ScriptWorldAdapter { get }
-    var scripts: ScriptCoordinator { get set }
-    var storyWorld: StoryWorldAdapter { get }
-    var streamer: CellStreamer? { get set }
-    var swfMovies: SWFMovieSource { get }
-    var trapControl: TrapControlAdapter { get }
-    var vehicleWorld: VehicleWorldAdapter { get }
-    var worldState: WorldStateStore { get }
-}
-
 final class WorldSessionWiring {
-    unowned let game: any WorldSessionWiringHost
+    unowned let game: GameSessionScope
     /// Actor clips for idles, gaits, and combat reactions, loaded off the main actor.
     private(set) lazy var animationClips: ActorClipLoader? = game.audioFileSystem
         .map { ActorClipLoader.clips(files: $0) }
-    private(set) lazy var animationEvents = AnimationEventWorldAdapter(game: game)
+    private(set) lazy var animationEvents = AnimationEventWorldAdapter(game: game.ports)
 
-    init(game: any WorldSessionWiringHost) {
+    init(game: GameSessionScope) {
         self.game = game
     }
 

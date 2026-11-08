@@ -4,6 +4,7 @@
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyRenderCore
+public import OpenSkyWorldInterface
 
 extension EffectsCoordinator {
     /// Reads the player's health share this frame and starts a pulse when one is due.

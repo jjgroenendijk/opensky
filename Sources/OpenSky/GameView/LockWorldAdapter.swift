@@ -16,6 +16,7 @@ import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -23,15 +24,15 @@ import OpenSkyWorldState
 /// What `LockWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol LockWorldHost: AnyObject {
-    var actorValues: ActorValueCoordinator { get }
-    var crime: CrimeCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var lockpickingMenu: LockpickingMenuController { get }
-    var perks: PerkCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var worldState: WorldStateStore { get }
+    var actorValues: any ActorValuePort { get }
+    var crime: any CrimePort { get }
+    var inventory: any InventoryPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var lockpickingMenu: any LockpickingMenuPort { get }
+    var perks: any PerkPort { get }
+    var progression: any ProgressionPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 /// Answers `LockWorld` from the session systems `game` owns.

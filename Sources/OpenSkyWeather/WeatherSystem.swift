@@ -7,19 +7,12 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyRenderCore
 import OpenSkyShaderTypes
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
 
 nonisolated public final class WeatherSystem {
-    /// How a forced weather change arrives.
-    public enum Transition: Sendable {
-        /// Snap instantly (no blend) — tests + the UI "apply now" path.
-        case instant
-        /// Cross-fade over the target weather's derived transition duration.
-        case timed
-        /// A timed fade that runs `transitionAcceleration` times faster.
-        case accelerated
-    }
+    public typealias Transition = WeatherTransition
 
     public let store: WeatherStore
     /// `fWeatherTransAccel`: how many times faster an accelerated change fades.

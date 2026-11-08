@@ -5,6 +5,7 @@ import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import Testing
 

@@ -1,3 +1,5 @@
+public import OpenSkyCrimeInterface
+
 // What the last crime or faction action did, as a value. Only `text`
 // builds the line.
 

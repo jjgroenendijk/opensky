@@ -5,12 +5,15 @@
 import Foundation
 import OpenSkyAgentControl
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 extension AgentWorldAdapter {
     func postEffectState() -> AgentJSON {

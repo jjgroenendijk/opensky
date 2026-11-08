@@ -6,6 +6,7 @@ public import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESS
 public import OpenSkyGameData
+public import OpenSkySaveInterface
 
 /// One `.ess` file in the folder. `summary` is nil when the header cannot be read.
 nonisolated public struct ESSSaveListing: Equatable, Sendable {

@@ -7,6 +7,7 @@ import OpenSkyFormatsCore
 public import OpenSkyPhysics
 import OpenSkyRenderCore
 import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
 
 extension PlayerCoordinator {

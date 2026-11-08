@@ -2,6 +2,7 @@
 // (docs/engine/water-physics.md#actors-in-a-current).
 
 public import OpenSkyPhysics
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated extension LocomotionStepPlan {

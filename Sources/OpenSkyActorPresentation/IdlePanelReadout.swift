@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 
 nonisolated public enum IdleReadout {
     public static func markersText(for snapshot: IdleControlSnapshot) -> String {

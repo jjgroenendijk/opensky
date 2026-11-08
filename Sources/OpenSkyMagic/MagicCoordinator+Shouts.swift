@@ -7,7 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyMagicInterface
+public import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldState
 

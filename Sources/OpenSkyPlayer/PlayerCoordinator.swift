@@ -11,6 +11,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 
 /// Owns the player graphs and body state, and reads the world through `PlayerWorld`.
 public final class PlayerCoordinator {

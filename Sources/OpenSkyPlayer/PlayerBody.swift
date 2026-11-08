@@ -9,6 +9,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyRendering
 public import OpenSkyRenderResources
+public import OpenSkyWorldInterface
 public import simd
 
 nonisolated public final class PlayerBody {

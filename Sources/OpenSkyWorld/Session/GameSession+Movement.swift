@@ -4,6 +4,7 @@ import OpenSkyPhysics
 public import OpenSkyPlayer
 public import OpenSkyRenderCore
 public import OpenSkyRendering
+import OpenSkyWorldInterface
 public import simd
 
 extension GameSession {

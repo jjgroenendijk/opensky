@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 import OpenSkyWorldInterface
 
 /// What the map movie needs from the app.
@@ -27,8 +28,8 @@ public final class MapMenuMovieScreen {
 
     public init(
         map: MapMenuCoordinator,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any MapMovieWorld)? = nil
     ) {
         self.map = map

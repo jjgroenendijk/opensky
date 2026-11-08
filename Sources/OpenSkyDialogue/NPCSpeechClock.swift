@@ -2,6 +2,7 @@
 // (docs/engine/dialogue.md#speech-timers).
 
 import Foundation
+public import OpenSkyDialogueInterface
 public import OpenSkyFormatsESM
 
 /// When each speaker may next say each kind of line, in seconds of the caller's clock.

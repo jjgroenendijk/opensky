@@ -1,6 +1,7 @@
 // Camera paths of the benchmark shots, checked at their ends and middles.
 
 @testable import OpenSkyWorld
+@testable import OpenSkyWorldInterface
 import simd
 import Testing
 

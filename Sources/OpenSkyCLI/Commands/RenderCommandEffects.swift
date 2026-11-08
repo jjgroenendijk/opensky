@@ -12,6 +12,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWeather
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 struct EffectCaptureOptions {

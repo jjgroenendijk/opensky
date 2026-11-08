@@ -6,24 +6,27 @@
 import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyObjectAnimation
 import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 /// What `EffectGraphWorldAdapter` reads from the session. `GameSessionScope` conforms.
 @MainActor
 protocol EffectGraphWorldHost: AnyObject {
-    var actorGraphs: ActorGraphCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var effects: EffectsCoordinator { get set }
-    var effectGraphs: EffectGraphCoordinator { get }
-    var gameSession: GameSession? { get }
+    var actorGraphs: any ActorGraphPort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var effects: any EffectsPort { get }
+    var effectGraphs: any EffectGraphPort { get }
+    var gameSession: (any GameSessionPort)? { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
 }
 
 final class EffectGraphWorldAdapter {

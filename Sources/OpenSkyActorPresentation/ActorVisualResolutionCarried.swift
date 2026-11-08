@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+import OpenSkyWorldInterface
 
 /// What an NPC carries: its `CNTO` entries, and the combat style (`ZNAM`) that
 /// weighs a melee weapon against a bow.

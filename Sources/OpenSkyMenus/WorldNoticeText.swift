@@ -3,6 +3,7 @@
 // See docs/engine/journal.md#hud-notices.
 
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyScriptingInterface
 
 nonisolated public enum WorldNoticeText: String, GameSettingTextKey {

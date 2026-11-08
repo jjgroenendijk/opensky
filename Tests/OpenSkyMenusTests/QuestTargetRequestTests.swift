@@ -3,6 +3,7 @@
 import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyQuestsInterface
 import Testing
 

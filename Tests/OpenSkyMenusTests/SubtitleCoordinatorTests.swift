@@ -2,6 +2,7 @@
 
 import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 @MainActor

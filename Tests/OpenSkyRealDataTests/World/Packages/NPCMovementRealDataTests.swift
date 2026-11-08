@@ -12,6 +12,7 @@ import Foundation
 @testable import OpenSkyPlayer
 @testable import OpenSkyRenderCore
 import OpenSkyTagsTesting
+import OpenSkyWorldInterface
 import simd
 import Testing
 

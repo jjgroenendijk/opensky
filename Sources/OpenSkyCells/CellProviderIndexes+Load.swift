@@ -12,6 +12,7 @@ import OpenSkyPhysics
 import OpenSkyRendering
 public import OpenSkyRenderResources
 import OpenSkyTerrain
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
 nonisolated extension CellProviderIndexes {

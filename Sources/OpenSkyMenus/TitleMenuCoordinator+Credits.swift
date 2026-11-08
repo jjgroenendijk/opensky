@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenusInterface
 import OpenSkyRendering
 
 extension TitleMenuCoordinator {

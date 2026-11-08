@@ -5,6 +5,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyPhysics
 public import OpenSkyPlayer
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension NPCMovementRuntime {

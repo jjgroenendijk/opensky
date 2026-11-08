@@ -7,19 +7,21 @@ import OpenSkyAudio
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 /// What `MovieWorldAdapter` reads from the session. `GameSessionScope` conforms.
 @MainActor
 protocol MovieWorldHost: AnyObject {
-    var audio: AudioCoordinator { get }
+    var audio: any AudioPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    var movies: MoviePlayerCoordinator { get }
-    var renderer: Renderer? { get }
-    var scripts: ScriptCoordinator { get set }
+    var movies: any MoviePlayerPort { get }
+    var renderer: (any RendererPort)? { get }
+    var scripts: any ScriptPort { get }
 }
 
 final class MovieWorldAdapter: MoviePlayerWorld {
@@ -92,17 +94,14 @@ final class MovieWorldAdapter: MoviePlayerWorld {
     }
 
     /// `Game.PlayBink` waits on the movie; the call returns once it ends.
-    func wire(_ hooks: inout PapyrusGameNatives) {
-        hooks.playBink = { [weak self] request, token in
-            guard let self else { return false }
-            let movie = MovieRequest(
-                fileName: request.fileName, interruptible: request.interruptible,
-                muteAudio: request.muteAudio, muteMusic: request.muteMusic,
-                letterbox: request.letterbox
-            )
-            return game.movies.play(movie) { [weak self] _ in
-                self?.game.scripts.runtime?.scheduler.answer(token, returning: .none)
-            }
+    func playBink(_ request: PapyrusBinkRequest, waitToken token: UInt64) -> Bool {
+        let movie = MovieRequest(
+            fileName: request.fileName, interruptible: request.interruptible,
+            muteAudio: request.muteAudio, muteMusic: request.muteMusic,
+            letterbox: request.letterbox
+        )
+        return game.movies.play(movie) { [weak self] _ in
+            self?.game.scripts.runtime?.scheduler.answer(token, returning: .none)
         }
     }
 }

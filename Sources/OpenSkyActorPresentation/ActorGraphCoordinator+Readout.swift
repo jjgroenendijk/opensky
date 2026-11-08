@@ -3,33 +3,7 @@
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 public import OpenSkyFormatsESM
-
-/// One actor's graph, or why it runs none.
-nonisolated public struct ActorGraphReadout: Equatable, Sendable {
-    /// `running`, `loading`, `failed: <reason>`, or `waiting for playback`.
-    public let status: String
-    public let project: String
-    public let activeStates: [String]
-    public let isWaitingForClip: Bool
-    /// False while the graph has published no pose, so the actor draws its clip.
-    public let hasPose: Bool
-    public let steps: Int
-    public let rate: String
-    public let recentEvents: [String]
-    public let unresolvedClips: [String]
-    public let clipsLoaded: Int
-    public let clipsMissed: Int
-    /// The first rig bone that bone LOD holds, and every bone after it; nil moves all.
-    public var heldFromBone: String?
-    /// The graph tags the drunk state.
-    public var isDrunk = false
-    /// The graph's `iState`, and the value its state tagging generators publish.
-    public var state: Int32?
-    public var stateTag: Int32?
-    /// `weapAdj` and the body-weight layer weights the graph derives from it; empty when the
-    /// graph declares none of them.
-    public var bodyWeight: [String: Float] = [:]
-}
+public import OpenSkyWorldInterface
 
 extension ActorGraphCoordinator {
     /// The readout of `actor`'s graph, or nil when its race names no graph project.

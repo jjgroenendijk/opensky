@@ -3,6 +3,7 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 nonisolated extension InventoryMenuMovieBridge {
     // MARK: - Writing

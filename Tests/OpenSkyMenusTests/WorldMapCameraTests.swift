@@ -1,6 +1,7 @@
 // The world map camera stays inside the worldspace's map limits.
 
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct WorldMapCameraTests {

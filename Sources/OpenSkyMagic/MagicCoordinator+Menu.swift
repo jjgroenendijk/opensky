@@ -6,14 +6,6 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyMagicInterface
 
-/// One known spell as the magic menu lists it.
-nonisolated public struct MagicMenuSpell: Equatable, Sendable {
-    public let name: String
-    /// "spell", "power", or "ability", from the load order's texts.
-    public let typeName: String
-    public let isReadied: Bool
-}
-
 extension MagicCoordinator {
     public var magicMenuSpells: [MagicMenuSpell] {
         guard let caster else { return [] }

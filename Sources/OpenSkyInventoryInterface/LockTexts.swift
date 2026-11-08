@@ -2,6 +2,7 @@
 // See docs/engine/locks.md.
 
 public import OpenSkyGameData
+public import OpenSkyWorldState
 
 nonisolated public struct LockTexts: Equatable, Sendable {
     /// `sLockLevelName<suffix>`, by band.

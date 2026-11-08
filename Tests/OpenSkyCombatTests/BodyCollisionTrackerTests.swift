@@ -1,6 +1,7 @@
 // A loose body that loses speed suddenly has hit something (docs/engine/impulses.md).
 
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import simd

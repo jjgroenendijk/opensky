@@ -8,6 +8,7 @@ import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -15,31 +16,34 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyQuests
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
 /// What `ActorWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol ActorWorldHost: AnyObject {
-    var actorValues: ActorValueCoordinator { get }
-    var combat: CombatCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var journal: JournalCoordinator { get }
-    var magic: MagicCoordinator { get }
-    var gameSession: GameSession? { get }
-    var streamer: CellStreamer? { get }
+    var actorValues: any ActorValuePort { get }
+    var combat: any CombatPort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var journal: any JournalPort { get }
+    var magic: any MagicPort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
-    var mapWorld: MapWorldAdapter { get }
-    var mounts: MountCoordinator { get }
+    var worldState: any WorldStateStorePort { get }
+    var mapWorld: any MapWorldPort { get }
+    var mounts: any MountPort { get }
 }
 
 /// Answers `ActorValueWorld` and the resident-actor reads from the streamer.
@@ -148,7 +152,7 @@ final class ActorWorldAdapter {
     }
 
     private func observation(
-        of entry: RuntimeReferenceEntry, in streamer: CellStreamer
+        of entry: RuntimeReferenceEntry, in streamer: any CellStreamerPort
     ) -> CombatActorObservation? {
         guard let actor = entry.placedActor else { return nil }
         let worldState = game.worldState
@@ -233,7 +237,7 @@ final class ActorWorldAdapter {
     }
 
     private func engagedEnemyHealth(
-        runtime: ActorValueRuntime, gameSession: GameSession
+        runtime: any ActorValueRuntimePort, gameSession: GameSession
     ) -> HUDEnemyHealth? {
         guard
             let actor = game.combat.engagedEnemy(playerFeet: gameSession.freeFlyCamera.position),

@@ -1,6 +1,7 @@
 // Messages: the snapshot and the readout lines.
 
 import Foundation
+import OpenSkyMenusInterface
 import OpenSkyScriptingInterface
 
 nonisolated public struct MessageControlSnapshot: Equatable, Sendable {

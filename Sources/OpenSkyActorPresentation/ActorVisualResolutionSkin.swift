@@ -7,6 +7,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
+import OpenSkyWorldInterface
 
 nonisolated extension ActorVisualResolver {
     private struct SkinArmature {

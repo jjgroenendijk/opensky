@@ -4,6 +4,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 /// One book's text, ready for the movie.
 nonisolated public struct BookContent: Equatable, Sendable {
@@ -16,20 +17,6 @@ nonisolated public struct BookContent: Equatable, Sendable {
         self.title = title
         self.text = text
         self.isNote = isNote
-    }
-}
-
-/// A book read where it lies: the bar offers to take it.
-public struct BookTakeOffer {
-    public var isTheft: Bool
-    /// The placed book, so its scripts get `OnRead`.
-    public var reference: FormID?
-    public var take: () -> Void
-
-    public init(isTheft: Bool, reference: FormID? = nil, take: @escaping () -> Void) {
-        self.isTheft = isTheft
-        self.reference = reference
-        self.take = take
     }
 }
 
@@ -62,8 +49,8 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any BookMenuWorld)? = nil
     ) {
         self.world = world

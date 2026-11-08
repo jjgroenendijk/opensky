@@ -12,6 +12,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyLoading
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
 import OpenSkyProgression
 import OpenSkyProgressionInterface
@@ -19,9 +20,13 @@ import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
+import OpenSkySaveInterface
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension AgentWorldAdapter {
@@ -235,7 +240,7 @@ extension AgentWorldAdapter {
     private func writeActorValue(
         _ text: String,
         name: String,
-        _ write: (ActorValueRuntime, Int32, ActorValueHolder, Float) -> Bool
+        _ write: (any ActorValueRuntimePort, Int32, ActorValueHolder, Float) -> Bool
     ) throws(AgentFailure) -> AgentJSON {
         guard let values = game.actorValues.runtime else {
             throw AgentFailure(.notReady, "actor values are not loaded")
@@ -460,5 +465,15 @@ extension AgentWorldAdapter {
 
     private static func layer(named name: String) -> RenderLayer? {
         RenderLayer.ordered.first { $0.identifierFragment.lowercased() == name }
+    }
+}
+
+extension AgentWorldAdapter {
+    func teleportJob(to target: AgentTeleportTarget) throws(AgentFailure) -> AgentTeleportJob {
+        try AgentTeleportJob(adapter: self, target: target)
+    }
+
+    func teleportJob(to place: SavePlayerPlace) throws(AgentFailure) -> AgentTeleportJob {
+        try AgentTeleportJob(adapter: self, place: place)
     }
 }

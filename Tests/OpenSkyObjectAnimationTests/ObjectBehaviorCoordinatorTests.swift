@@ -2,6 +2,7 @@
 
 import OpenSkyBehavior
 @testable import OpenSkyObjectAnimation
+import OpenSkyWorldInterface
 import Testing
 
 private final class EmptyObjectWorld: ObjectBehaviorWorld {

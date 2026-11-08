@@ -7,8 +7,10 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyRuntimeState
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

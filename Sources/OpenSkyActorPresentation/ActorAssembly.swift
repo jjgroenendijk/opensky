@@ -11,6 +11,7 @@ import OpenSkyGameData
 public import OpenSkyRendering
 public import OpenSkyRenderResources
 import OpenSkyRuntimeState
+public import OpenSkyWorldInterface
 public import simd
 
 nonisolated public protocol ActorAssetProvider {
@@ -89,56 +90,6 @@ nonisolated extension ActorAssetProvider {
         loadActorModel(path: path, skeleton: skeleton)
     }
 }
-
-nonisolated public enum ActorModelRole: Equatable, Sendable {
-    case body(ResolvedBodyPart)
-    case faceGenHead(tintPath: String?)
-    /// A drawn weapon or an idle prop riding a bone.
-    case attachment(ResolvedAttachment)
-    /// One part of an assembled head.
-    case headPart(ResolvedHeadPart)
-}
-
-nonisolated public struct ActorAssemblySkip: Equatable, Sendable {
-    nonisolated public enum Subject: Equatable, Sendable {
-        case appearance(AppearanceSkip)
-        case skeleton(path: String)
-        case model(role: ActorModelRole, path: String)
-        case actor(FormID)
-    }
-
-    nonisolated public enum Reason: Equatable, Sendable {
-        case appearance
-        case missingAsset
-        case invalidAsset
-        case noCoreGeometry
-    }
-
-    public let subject: Subject
-    public let reason: Reason
-}
-
-nonisolated public struct AssembledActorModel<Asset> {
-    public let role: ActorModelRole
-    public let path: String
-    public let asset: Asset
-}
-
-nonisolated public struct ActorAssembly<Asset> {
-    public let actor: FormID
-    public let visual: ResolvedActorVisual
-    public let transform: float4x4
-    public let models: [AssembledActorModel<Asset>]
-    public let skips: [ActorAssemblySkip]
-
-    public var isRenderable: Bool {
-        !models.isEmpty
-    }
-}
-
-nonisolated extension AssembledActorModel: Sendable where Asset: Sendable {}
-
-nonisolated extension ActorAssembly: Sendable where Asset: Sendable {}
 
 nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
     public let provider: Provider

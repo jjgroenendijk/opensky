@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 public import OpenSkyRendering
 
 @MainActor
@@ -13,7 +14,7 @@ extension DialogueMenuMovieBridge {
     ///
     /// - Returns: whether the movie consumed the event.
     @discardableResult
-    public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
+    public static func send(_ event: MenuInputEvent, renderer: any RendererPort) throws -> Bool {
         guard let key = key(for: event) else { return false }
         let down = try renderer.sendSWFInput(.keyDown(code: key.code, ascii: key.ascii))
         let up = try renderer.sendSWFInput(.keyUp(code: key.code))

@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyFeaturesTesting
 import OpenSkyFormatsESM
 @testable import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import Testing
 
 struct ConditionMotionFunctionTests {

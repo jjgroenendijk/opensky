@@ -18,6 +18,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -26,21 +27,21 @@ import simd
 /// What `FollowerCommandWorldAdapter` reads from the session. `GameSessionScope` conforms.
 @MainActor
 protocol FollowerCommandWorldHost: AnyObject {
-    var worldState: WorldStateStore { get }
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var aiWorld: AIWorldAdapter { get }
-    var crime: CrimeCoordinator { get }
-    var dialogue: DialogueCoordinator { get }
-    var followerCommands: FollowerCommandCoordinator { get }
-    var furniture: FurnitureCoordinator { get }
-    var gameSession: GameSession? { get }
-    var inventory: InventoryCoordinator { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var packages: PackageCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var streamer: CellStreamer? { get }
+    var worldState: any WorldStateStorePort { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var aiWorld: any AIWorldPort { get }
+    var crime: any CrimePort { get }
+    var dialogue: any DialoguePort { get }
+    var followerCommands: any FollowerCommandPort { get }
+    var furniture: any FurniturePort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var inventory: any InventoryPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var packages: any PackagePort { get }
+    var scripts: any ScriptPort { get }
+    var storyWorld: any StoryWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
 }
 

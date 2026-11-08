@@ -3,6 +3,7 @@
 
 import Foundation
 @testable import OpenSkyDialogue
+import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData

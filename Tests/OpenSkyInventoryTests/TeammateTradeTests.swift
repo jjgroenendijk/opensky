@@ -1,6 +1,7 @@
 // A follower's trade keeps its starting outfit and its carry weight (UESP "Skyrim:Followers").
 
 import OpenSkyInventory
+import OpenSkyInventoryInterface
 import Testing
 
 struct TeammateTradeTests {

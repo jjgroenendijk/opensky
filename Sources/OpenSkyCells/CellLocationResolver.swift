@@ -16,6 +16,10 @@ nonisolated public struct CellLocationResolver: Sendable {
     }
 
     public func location(of scene: CellScene) -> ResolvedFormID? {
+        location(of: scene.locationKey)
+    }
+
+    public func location(of scene: CellLocationKey) -> ResolvedFormID? {
         if
             let link = scene.locationLink,
             let plugin = scene.ownerPluginName,
@@ -33,19 +37,7 @@ nonisolated public struct CellLocationResolver: Sendable {
     }
 
     /// The `NAM1` music type of the cell's location, in the load-order FormID space.
-    public func musicType(of scene: CellScene) -> FormID? {
+    public func musicType(of scene: CellLocationKey) -> FormID? {
         location(of: scene).flatMap(store.musicType(of:))
-    }
-
-    /// Where each reference in `scenes` is, by the cell that holds it.
-    public func referenceLocations(in scenes: [CellScene]) -> [ReferenceKey: ResolvedFormID] {
-        var result: [ReferenceKey: ResolvedFormID] = [:]
-        for scene in scenes {
-            guard let location = location(of: scene) else { continue }
-            for entry in scene.references.sortedEntries() {
-                result[entry.key] = location
-            }
-        }
-        return result
     }
 }

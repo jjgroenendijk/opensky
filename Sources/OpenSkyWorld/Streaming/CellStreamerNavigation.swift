@@ -7,6 +7,7 @@ import OpenSkyCells
 import OpenSkyGameData
 public import OpenSkyNavigation
 public import OpenSkyPlayer
+public import OpenSkyWorldInterface
 import simd
 
 public struct CellStreamerNavigationState {

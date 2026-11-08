@@ -3,6 +3,7 @@
 
 import OpenSkyFormatsAnimation
 public import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 /// One clip retargeted to one skeleton. The clip is the first of `animationPaths` that
 /// exists, because creatures name the same clip differently.

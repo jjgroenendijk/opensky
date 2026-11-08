@@ -14,28 +14,31 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `DialogueMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol DialogueMenuHost: MenuInputConsumer {
-    var audio: AudioCoordinator { get }
-    var dialogue: DialogueCoordinator { get }
-    var dialogueCamera: DialogueCameraController { get }
-    var dialogueWorld: DialogueWorldAdapter { get }
-    var faceMorphs: FaceMorphCoordinator { get }
-    var furniture: FurnitureCoordinator { get }
-    var headTracking: HeadTrackingCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var menuMode: MenuModeController { get }
-    var renderer: Renderer? { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var streamer: CellStreamer? { get }
-    var subtitles: SubtitleCoordinator { get }
-    var swfMovies: SWFMovieSource { get }
+    var audio: any AudioPort { get }
+    var dialogue: any DialoguePort { get }
+    var dialogueCamera: any DialogueCameraPort { get }
+    var dialogueWorld: any DialogueWorldPort { get }
+    var faceMorphs: any FaceMorphPort { get }
+    var furniture: any FurniturePort { get }
+    var headTracking: any HeadTrackingPort { get }
+    var hud: any HUDPort { get }
+    var menuMode: any MenuModePort { get }
+    var renderer: (any RendererPort)? { get }
+    var storyWorld: any StoryWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var subtitles: any SubtitlePort { get }
+    var swfMovies: any SWFMovieSourcePort { get }
 }
 
 /// Holds the conversation's menu model and movie state for `game`.
@@ -51,7 +54,7 @@ final class DialogueMenuController {
     )
 
     unowned let game: any DialogueMenuHost
-    private(set) var model = DialogueMenuModel.empty
+    private(set) var model: OpenSkyMenus.DialogueMenuModel = .empty
     private(set) var isOpen = false
     let movie: MenuMovieSession
 
@@ -66,7 +69,7 @@ final class DialogueMenuController {
         movie.isLoaded
     }
 
-    var dialogue: DialogueCoordinator {
+    var dialogue: any DialoguePort {
         game.dialogue
     }
 

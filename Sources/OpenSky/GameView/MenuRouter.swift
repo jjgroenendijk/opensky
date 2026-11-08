@@ -6,43 +6,49 @@ import OpenSkyAIPackages
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 /// What `MenuRouter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MenuRouterHost: MenuSoundHost, SystemMenuWorld {
-    var containerMenu: ContainerMenuController { get }
+    var containerMenu: any ContainerMenuPort { get }
     var controlMapLoader: (() throws -> ControlMapFile)? { get }
-    var dialogueMenu: DialogueMenuController { get }
-    var followerCommands: FollowerCommandCoordinator { get }
-    var inventoryMenu: InventoryMenuController { get }
-    var journalMenu: JournalMenuController { get }
-    var loadingWorld: LoadingScreenWorldAdapter { get }
-    var lockpickingMenu: LockpickingMenuController { get }
-    var mapMenu: MapMenuCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
-    var menuMode: MenuModeController { get }
-    var menuTextLoader: (() -> LocalizedLabels)? { get }
-    var menuScreens: MenuScreens { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var messages: MessageCoordinator { get }
-    var movies: MoviePlayerCoordinator { get }
-    var titleSequence: TitleSequenceCoordinator { get }
-    var mounts: MountCoordinator { get }
-    var playerSettings: PlayerSettingsCoordinator { get }
-    var raceMenu: RaceMenuCoordinator { get }
-    var saveGames: SaveGameWorldAdapter { get }
-    var skillsMenu: SkillsMenuCoordinator { get }
-    var systemMenu: SystemMenuCoordinator { get }
-    var titleMenu: TitleMenuCoordinator { get }
+    var dialogueMenu: any DialogueMenuPort { get }
+    var followerCommands: any FollowerCommandPort { get }
+    var inventoryMenu: any InventoryMenuPort { get }
+    var journalMenu: any JournalMenuPort { get }
+    var loadingWorld: any LoadingScreenWorldPort { get }
+    var lockpickingMenu: any LockpickingMenuPort { get }
+    var mapMenu: any MapMenuPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var menuMode: any MenuModePort { get }
+    var menuTextLoader: (() -> any LocalizedLabelsPort)? { get }
+    var menuScreens: any MenuScreensPort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var movies: any MoviePlayerPort { get }
+    var titleSequence: any TitleSequencePort { get }
+    var mounts: any MountPort { get }
+    var playerSettings: any PlayerSettingsPort { get }
+    var raceMenu: any RaceMenuPort { get }
+    var saveGames: any SaveGameWorldPort { get }
+    var skillsMenu: any SkillsMenuPort { get }
+    var systemMenu: any SystemMenuPort { get }
+    var titleMenu: any TitleMenuPort { get }
     var hostView: NSView { get }
 }
 
 final class MenuRouter {
     unowned let game: any MenuRouterHost
-    let gamepads = GamepadMonitor()
+    private let monitor = GamepadMonitor()
+    var gamepads: any GamepadMonitorPort {
+        monitor
+    }
 
     init(game: any MenuRouterHost) {
         self.game = game
@@ -91,7 +97,7 @@ final class MenuRouter {
         if let labels = game.menuTextLoader?() {
             renderer.swfTextTranslator = { labels.label(for: $0) }
         }
-        gamepads.onDisconnect = { [weak game] in
+        monitor.onDisconnect = { [weak game] in
             guard let game else { return }
             let texts = game.mapWorld.settingTexts(GamepadNoticeText.self)
             game.messages.presentChoices(
@@ -100,11 +106,11 @@ final class MenuRouter {
         }
         let sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
         renderer.swfSoundPlayer = { sounds.play(editorID: $0 ?? MenuSoundPlayer.okSound) }
-        gameSession.frameSteps.register(.menuRouting) { [weak game, weak renderer, gamepads] _ in
+        gameSession.frameSteps.register(.menuRouting) { [weak game, weak renderer, monitor] _ in
             game?.mapMenu.tick()
             let now = Date().timeIntervalSinceReferenceDate
             if let game, let renderer {
-                gamepads.poll(now: now, renderer: renderer, menuMode: game.menuMode)
+                monitor.poll(now: now, renderer: renderer, menuMode: game.menuMode)
             }
             game?.movies.tick(now: now)
             game?.titleSequence.tick()
@@ -157,7 +163,9 @@ final class MenuRouter {
         table.register(SkillsMenuCoordinator.identifier) { [unowned game] in
             game.skillsMenu.route($0)
         }
-        game.menuScreens.register(in: table)
+        for (identifier, route) in game.menuScreens.keyRoutes {
+            table.register(identifier, route: route)
+        }
         return table
     }()
 

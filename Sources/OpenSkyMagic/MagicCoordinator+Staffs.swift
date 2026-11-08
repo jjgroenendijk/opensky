@@ -9,12 +9,6 @@ public import OpenSkyGameData
 import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 
-/// A held staff: the item's enchantment and the spell it casts.
-public struct HeldStaff {
-    public let profile: ItemEnchantmentProfile
-    public let spell: ResolvedSpell
-}
-
 extension MagicCoordinator: StaffCharging {
     public func staffSpell(in hand: SpellHand, of holder: ActorValueHolder) -> ResolvedSpell? {
         heldStaff(of: holder, in: hand)?.spell

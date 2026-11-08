@@ -3,9 +3,10 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyNavigation
+import OpenSkyNavigation
 public import OpenSkyPhysics
 public import OpenSkyPlayer
+public import OpenSkyWorldInterface
 import simd
 
 public struct NPCMover {

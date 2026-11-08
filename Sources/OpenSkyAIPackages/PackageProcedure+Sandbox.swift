@@ -3,7 +3,7 @@
 // docs/engine/sandbox.md.
 
 import OpenSkyConditions
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 /// What a sandbox reads from its parameters and from the game settings.

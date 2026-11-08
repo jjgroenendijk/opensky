@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyNavigation
 @testable import OpenSkyRenderCore
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 import simd
 import Testing
 

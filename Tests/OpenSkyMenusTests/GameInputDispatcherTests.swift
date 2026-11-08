@@ -2,6 +2,7 @@
 // camera input, and a menu turns movement into menu events.
 
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
 import OpenSkyScriptingInterface
 import Testing

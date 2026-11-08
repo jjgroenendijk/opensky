@@ -5,40 +5,49 @@ import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyRuntimeState
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
 /// What `AudioWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol AudioWorldHost: AnyObject {
-    var audio: AudioCoordinator { get }
+    var audio: any AudioPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    var combat: CombatCoordinator { get }
-    var dialogueMenu: DialogueMenuController { get }
-    var dialogueWorld: DialogueWorldAdapter { get }
-    var loadingScreens: LoadingScreenCoordinator { get }
-    var menuMode: MenuModeController { get }
+    var combat: any CombatPort { get }
+    var dialogueMenu: any DialogueMenuPort { get }
+    var dialogueWorld: any DialogueWorldPort { get }
+    var loadingScreens: any LoadingScreenPort { get }
+    var menuMode: any MenuModePort { get }
     var soundMixTimings: SoundMixTimings { get }
-    var controllerRumble: ControllerRumble { get }
-    var effects: EffectsCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
-    var streamer: CellStreamer? { get }
+    var controllerRumble: any ControllerRumblePort { get }
+    var effects: any EffectsPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var runtimeStateWorld: any RuntimeStateWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
+    /// Hands the started engine and directors to the session, which owns them.
+    func installAudio(
+        engine: WorldAudioEngine, sounds: WorldAudioSoundDirector,
+        music: WorldMusicDirector, footsteps: WorldAudioFootstepDirector
+    )
 }
 
 /// Answers `AudioWorld` from the session systems `game` owns.
@@ -66,7 +75,7 @@ final class AudioWorldAdapter {
             audio?.musicDirector?.handleMusicContext(context)
         }
         streamer.musicFeed.locationMusicType = { [unowned game] scene in
-            game.runtimeStateWorld.locationMusicType(of: scene)
+            game.runtimeStateWorld.locationMusicType(of: scene.locationKey)
         }
     }
 }
@@ -147,14 +156,13 @@ extension AudioWorldAdapter: AudioWorld {
         music: WorldMusicDirector,
         footsteps: WorldAudioFootstepDirector
     ) {
-        game.gameSession?.worldAudio = engine
+        game.installAudio(engine: engine, sounds: sounds, music: music, footsteps: footsteps)
         if let store = game.worldData?.soundStore {
             engine.soundMix = SoundCategoryMix(
                 categories: store.categories, roles: store.categoryRoles,
                 timings: game.soundMixTimings
             )
         }
-        game.gameSession?.soundDirector = sounds
         game.gameSession?.soundRumble = { [weak self] levels in
             guard let self else { return }
             let melee = game.combat.melee
@@ -165,8 +173,6 @@ extension AudioWorldAdapter: AudioWorld {
         }
         game.gameSession?
             .soundMixInputs = { [weak self] in self?.soundMixInputs() ?? SoundMixInputs() }
-        game.gameSession?.musicDirector = music
-        game.gameSession?.footstepDirector = footsteps
         let store = game.worldData?.footstepStore
         footsteps.onImpact = { [weak game] impact, position in
             game?.effects.showImpact(

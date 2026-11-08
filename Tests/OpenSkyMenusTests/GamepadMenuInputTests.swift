@@ -1,6 +1,7 @@
 // Gamepad snapshots to menu events: button edges, the D-pad and stick, and the repeat.
 
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct GamepadMenuInputTests {

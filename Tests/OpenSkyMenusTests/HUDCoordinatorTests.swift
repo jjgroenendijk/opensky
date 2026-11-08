@@ -3,6 +3,7 @@
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 @testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
@@ -11,7 +12,7 @@ import Testing
 
 @MainActor
 final class FakeSWFLayerWorld: SWFLayerWorld {
-    var renderer: Renderer?
+    var renderer: (any RendererPort)?
 
     /// A renderer without a session draws what its frame input holds.
     var viewCamera: FreeFlyCamera? {

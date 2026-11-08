@@ -9,7 +9,9 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyObjectAnimation
 import OpenSkyPlayer
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

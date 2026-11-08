@@ -7,6 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+public import OpenSkyMenusInterface
 import OpenSkyRendering
 
 extension RaceMenuCoordinator {
@@ -37,7 +38,7 @@ extension RaceMenuCoordinator {
         pendingMovieRequests = []
     }
 
-    func routeMovie(_ event: MenuInputEvent, renderer: Renderer) {
+    func routeMovie(_ event: MenuInputEvent, renderer: any RendererPort) {
         do {
             try renderer.updateSWFRuntime { RaceMenuMovieBridge.handle(event, runtime: $0) }
         } catch {
@@ -82,7 +83,7 @@ extension RaceMenuCoordinator {
     /// The movie's slider, race, and name changes reach the head at once. A race or
     /// sex change brings new options, and a new preset or mask moves other sliders, so
     /// those send the sliders again.
-    func applyMovieRequests(renderer: Renderer?) {
+    func applyMovieRequests(renderer: (any RendererPort)?) {
         guard var model, !pendingMovieRequests.isEmpty else { return }
         let requests = pendingMovieRequests
         pendingMovieRequests = []

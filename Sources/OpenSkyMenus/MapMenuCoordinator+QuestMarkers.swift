@@ -3,6 +3,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
+import OpenSkyMenusInterface
 import OpenSkyWorldInterface
 import simd
 

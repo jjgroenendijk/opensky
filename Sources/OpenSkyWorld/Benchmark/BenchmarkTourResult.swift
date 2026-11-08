@@ -5,7 +5,8 @@ import Darwin
 public import Foundation
 import OpenSkyCells
 public import OpenSkyGameData
-public import OpenSkyLoading
+import OpenSkyLoading
+public import OpenSkyWorldInterface
 
 nonisolated public enum BenchmarkSceneStatus: String, Codable, Sendable {
     case measured
@@ -58,44 +59,6 @@ nonisolated public struct BenchmarkSceneResult: Codable, Equatable, Sendable {
     public var slowestPass: (name: String, averageMS: Double)? {
         passes.max { $0.value.averageMS < $1.value.averageMS }
             .map { (name: $0.key, averageMS: $0.value.averageMS) }
-    }
-}
-
-/// The app's own start, from the process start until the tour starts.
-nonisolated public struct BenchmarkAppStart: Codable, Equatable, Sendable {
-    /// From the kernel's process start until the world is ready and the tour starts.
-    public var processToWorldReadyMS: Double?
-    public var worldLoadMS: Double
-    /// Each world load stage; they overlap, so they sum to more than `worldLoadMS`.
-    public var stages: [String: Double]
-    /// Renderer setup, game systems, and the first frame, after the load.
-    public var sessionStart: [String: Double]
-
-    public init(
-        report: WorldLoadReport,
-        session: SessionStartTiming,
-        processToWorldReadyMS: Double?
-    ) {
-        worldLoadMS = report.total.milliseconds
-        stages = Dictionary(
-            report.timeline.slowestFirst.map { ($0.stage.rawValue, $0.duration.milliseconds) },
-            uniquingKeysWith: +
-        )
-        sessionStart = Dictionary(
-            session.measured.map { ($0.phase.rawValue, $0.duration.milliseconds) },
-            uniquingKeysWith: +
-        )
-        self.processToWorldReadyMS = processToWorldReadyMS
-    }
-
-    /// When the kernel started this process.
-    public static func processStart() -> Date? {
-        var info = unsafe kinfo_proc()
-        var size = unsafe MemoryLayout<kinfo_proc>.stride
-        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
-        guard unsafe sysctl(&mib, UInt32(mib.count), &info, &size, nil, 0) == 0 else { return nil }
-        let started = unsafe info.kp_proc.p_starttime
-        return Date(timeIntervalSince1970: Double(started.tv_sec) + Double(started.tv_usec) / 1e6)
     }
 }
 
@@ -167,5 +130,26 @@ extension Duration {
     nonisolated var milliseconds: Double {
         let parts = components
         return Double(parts.seconds) * 1000 + Double(parts.attoseconds) / 1e15
+    }
+}
+
+extension BenchmarkAppStart {
+    public init(
+        report: WorldLoadReport,
+        session: SessionStartTiming,
+        processToWorldReadyMS: Double?
+    ) {
+        self.init(
+            processToWorldReadyMS: processToWorldReadyMS,
+            worldLoadMS: report.total.milliseconds,
+            stages: Dictionary(
+                report.timeline.slowestFirst.map { ($0.stage.rawValue, $0.duration.milliseconds) },
+                uniquingKeysWith: +
+            ),
+            sessionStart: Dictionary(
+                session.measured.map { ($0.phase.rawValue, $0.duration.milliseconds) },
+                uniquingKeysWith: +
+            )
+        )
     }
 }

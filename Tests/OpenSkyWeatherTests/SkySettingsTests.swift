@@ -7,6 +7,7 @@ import OpenSkyFormatsTesting
 import OpenSkyGameData
 import OpenSkyRenderCore
 @testable import OpenSkyWeather
+import OpenSkyWorldInterface
 import Testing
 
 struct SkySettingsTests {

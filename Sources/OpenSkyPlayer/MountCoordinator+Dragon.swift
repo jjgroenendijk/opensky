@@ -3,8 +3,9 @@
 // flight in the mount drive. See docs/engine/dragon-flight.md#riding.
 
 import Foundation
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
 
 extension MountCoordinator {

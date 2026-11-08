@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
 

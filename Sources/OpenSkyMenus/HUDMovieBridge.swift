@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 nonisolated public struct HUDMeterValues: Equatable, Sendable {
     public var health: Float

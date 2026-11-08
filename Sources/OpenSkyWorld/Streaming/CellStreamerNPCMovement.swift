@@ -8,6 +8,7 @@ public import OpenSkyGameData
 public import OpenSkyNavigation
 public import OpenSkyPhysics
 public import OpenSkyPlayer
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 public import simd
 

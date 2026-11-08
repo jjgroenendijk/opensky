@@ -8,6 +8,8 @@ import OpenSkyAgentControl
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
+import OpenSkySessionInterface
+import OpenSkyWorldInterface
 
 extension AgentWorldAdapter {
     func orderFlight(_ reference: String, order: AgentFlightOrder) throws(AgentFailure)
@@ -112,7 +114,7 @@ extension AgentWorldAdapter {
         return json
     }
 
-    private static func flightJSON(_ state: DragonFlightState) -> [String: AgentJSON] {
+    private static func flightJSON(_ state: any DragonFlightStatePort) -> [String: AgentJSON] {
         [
             "phase": .string("\(state.phase)"),
             "state": .init(Int(state.phase.rawValue)),

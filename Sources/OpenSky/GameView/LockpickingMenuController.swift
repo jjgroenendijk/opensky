@@ -9,26 +9,28 @@ import OpenSkyFormatsESM
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 
 /// What `LockpickingMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
-    var crime: CrimeCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var swfMovies: SWFMovieSource { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var menuMode: MenuModeController { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var streamer: CellStreamer? { get }
+    var crime: any CrimePort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var progression: any ProgressionPort { get }
+    var swfMovies: any SWFMovieSourcePort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var menuMode: any MenuModePort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -60,7 +62,7 @@ final class LockpickingMenuController {
         sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
     }
 
-    private var locks: LockCoordinator {
+    private var locks: any LockPort {
         game.inventory.locks
     }
 

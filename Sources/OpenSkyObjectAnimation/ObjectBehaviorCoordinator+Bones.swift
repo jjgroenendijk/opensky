@@ -5,6 +5,7 @@ import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 public import OpenSkyFormatsCore
+import OpenSkyWorldInterface
 public import simd
 
 extension ObjectBehaviorCoordinator {

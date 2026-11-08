@@ -15,6 +15,7 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -23,18 +24,18 @@ import simd
 /// What `DragonFlightWorldAdapter` reads from the session.
 @MainActor
 protocol DragonFlightWorldHost: AnyObject {
-    var actorGraphs: ActorGraphCoordinator { get }
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var combat: CombatCoordinator { get }
-    var combatWorld: CombatWorldAdapter { get }
-    var dragonFlight: DragonFlightCoordinator { get }
-    var gameSession: GameSession? { get }
-    var idleWorld: IdleWorldAdapter { get }
-    var mounts: MountCoordinator { get }
-    var packages: PackageCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
+    var actorGraphs: any ActorGraphPort { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var combat: any CombatPort { get }
+    var combatWorld: any CombatWorldPort { get }
+    var dragonFlight: any DragonFlightPort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var idleWorld: any IdleWorldPort { get }
+    var mounts: any MountPort { get }
+    var packages: any PackagePort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
 }
 

@@ -2,6 +2,7 @@
 // See docs/engine/papyrus-vm.md#native-timing.
 
 import Foundation
+public import OpenSkyScriptingInterface
 
 /// How long a native call takes before the script goes on.
 nonisolated public enum PapyrusNativeTiming: String, Equatable, Sendable, CaseIterable {

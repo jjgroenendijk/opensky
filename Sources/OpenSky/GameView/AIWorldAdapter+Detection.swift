@@ -5,6 +5,7 @@
 
 import OpenSkyActors
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -19,6 +20,7 @@ import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
 import simd
 
@@ -98,7 +100,10 @@ extension AIWorldAdapter {
     }
 
     /// Quiet Casting sets Mod Spell Casting Sound Event to 0, which silences the cast.
-    private func castingSoundFactor(_ spell: ReferenceKey?, caster: CasterRuntime) -> Float {
+    private func castingSoundFactor(
+        _ spell: ReferenceKey?,
+        caster: any CasterRuntimePort
+    ) -> Float {
         let spells = caster.spellbook.spells
         let resolved = spell.flatMap { spells.spell(key: $0) }
         var seams = ConditionContext()
@@ -117,7 +122,7 @@ extension AIWorldAdapter {
     }
 
     private func castingSoundLevel(
-        _ spell: ReferenceKey?, caster: CasterRuntime
+        _ spell: ReferenceKey?, caster: any CasterRuntimePort
     ) -> DetectionSoundLevel {
         guard
             let spell,

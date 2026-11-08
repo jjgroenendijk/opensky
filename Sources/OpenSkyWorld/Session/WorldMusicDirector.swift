@@ -9,6 +9,7 @@ public import OpenSkyAudio
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 @MainActor
 public final class WorldMusicDirector {

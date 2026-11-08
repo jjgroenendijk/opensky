@@ -6,11 +6,11 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyPhysics
 import OpenSkyPlayer
+public import OpenSkyWorldInterface
 
 /// What the NPC animation coordinator reads from the session.
 @MainActor
 public protocol NPCAnimationWorld: AnyObject {
-    func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback?
     /// Nil without game data.
     var animationClips: ActorClipLoader? { get }
 }
@@ -19,6 +19,8 @@ public protocol NPCAnimationWorld: AnyObject {
 /// the actor keeps the clip it plays.
 @MainActor
 public final class NPCAnimationCoordinator {
+    /// Each actor's animation playback; the composition root answers it from the streamer.
+    public var actorPlayback: (ReferenceKey) -> ActorAnimationPlayback? = { _ in nil }
     /// Skeleton and path of each gait clip that failed to load, as `skeleton#path`.
     public private(set) var unresolvableClips: Set<String> = []
     /// Movers whose gait clip is still loading.
@@ -36,7 +38,7 @@ public final class NPCAnimationCoordinator {
         if let rider = riders[update.actor] {
             playRiderClip(rider, gait: update.intent == .still ? nil : update.gait)
         }
-        guard let playback = world?.actorPlayback(for: update.actor) else { return }
+        guard let playback = actorPlayback(update.actor) else { return }
         waiting[update.actor] = nil
         // The actor's own graph plays its gait.
         guard !playback.isGraphDriven else { return }
@@ -61,7 +63,7 @@ public final class NPCAnimationCoordinator {
     }
 
     private func playRiderClip(_ rider: ReferenceKey, gait: LocomotionGait?) {
-        guard let playback = world?.actorPlayback(for: rider) else { return }
+        guard let playback = actorPlayback(rider) else { return }
         waiting[rider] = nil
         let key = ActorClipKey(
             skeletonMeshPath: playback.clip.skeletonMeshPath,
@@ -74,7 +76,7 @@ public final class NPCAnimationCoordinator {
     public func dismount(_ rider: ReferenceKey) {
         riders = riders.filter { $0.value != rider }
         waiting[rider] = nil
-        world?.actorPlayback(for: rider)?.setLocomotionClip(nil)
+        actorPlayback(rider)?.setLocomotionClip(nil)
     }
 
     /// Sets the clip of each mover whose clip arrived. Runs after the loader drains.
@@ -82,7 +84,7 @@ public final class NPCAnimationCoordinator {
         for actor in waiting.keys.sorted() {
             guard let key = waiting[actor] else { continue }
             waiting[actor] = nil
-            guard let playback = world?.actorPlayback(for: actor) else { continue }
+            guard let playback = actorPlayback(actor) else { continue }
             apply(key, to: actor, playback: playback)
         }
     }

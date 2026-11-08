@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyActors
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyCrime
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
@@ -13,6 +14,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyRenderCore
@@ -20,31 +22,33 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `MenuScreensWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MenuScreensWorldHost: MenuInputConsumer {
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var combat: CombatCoordinator { get }
-    var crime: CrimeCoordinator { get }
-    var gameSession: GameSession? { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var magic: MagicCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
-    var messageWorld: MessageWorldAdapter { get }
-    var playerSettings: PlayerSettingsCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var progressionWorld: ProgressionWorldAdapter { get }
-    var renderer: Renderer? { get }
-    var saveGames: SaveGameWorldAdapter { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var combat: any CombatPort { get }
+    var crime: any CrimePort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var magic: any MagicPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var messageWorld: any MessageWorldPort { get }
+    var playerSettings: any PlayerSettingsPort { get }
+    var progression: any ProgressionPort { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var progressionWorld: any ProgressionWorldPort { get }
+    var renderer: (any RendererPort)? { get }
+    var saveGames: any SaveGameWorldPort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -55,7 +59,7 @@ final class MenuScreensWorldAdapter {
         self.game = game
     }
 
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         game.renderer
     }
 
@@ -98,7 +102,7 @@ extension MenuScreensWorldAdapter: SleepWaitWorld {
         context.takingHealthDamage = game.magic.isPlayerTakingHealthDamage
         context.waitingDisabled = game.scripts.bridge?.playerControlLocks.waitingDisabled ?? false
         context.cellForbidsWaiting = game.streamer?.currentCellLocation
-            .flatMap { game.streamer?.residentScene(at: $0) }?.forbidsWaiting ?? false
+            .flatMap { game.streamer?.residentScene(at: $0)?.forbidsWaiting } ?? false
         guard let refusal = RestRule.refusal(context) else { return nil }
         return game.mapWorld.settingTexts(RestText.self)[refusal.text(sleeping: sleeping)]
     }

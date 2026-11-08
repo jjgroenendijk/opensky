@@ -9,19 +9,21 @@ import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
 /// What `DialogueCameraController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol DialogueCameraHost: AnyObject {
-    var dialogue: DialogueCoordinator { get }
-    var dialogueMenu: DialogueMenuController { get }
-    var dialogueWorld: DialogueWorldAdapter { get }
-    var raceMenu: RaceMenuCoordinator { get }
-    var gameSession: GameSession? { get }
-    var streamer: CellStreamer? { get }
+    var dialogue: any DialoguePort { get }
+    var dialogueMenu: any DialogueMenuPort { get }
+    var dialogueWorld: any DialogueWorldPort { get }
+    var raceMenu: any RaceMenuPort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var streamer: (any CellStreamerPort)? { get }
 }
 
 /// Holds the readout's force toggle and target for `game`.
@@ -76,7 +78,7 @@ final class DialogueCameraController {
     /// [WARNING] The game's race menu camera is not documented; this reuses the framing.
     /// Zoomed out, the shot aims at the middle of the body from far enough to fit it.
     static func portrait(
-        of gameSession: GameSession,
+        of gameSession: any GameSessionPort,
         yaw: Float,
         zoom: Float
     ) -> DialogueCameraFocus {
@@ -108,8 +110,8 @@ final class DialogueCameraController {
     }
 
     /// The player's own view yaw, not the framed pose that stands in for it.
-    static func playerYaw(of gameSession: GameSession) -> Float {
-        gameSession.dialogueCameraState.restorePose?.yaw ?? gameSession.freeFlyCamera.yaw
+    static func playerYaw(of gameSession: any GameSessionPort) -> Float {
+        gameSession.dialogueRestorePose?.yaw ?? gameSession.freeFlyCamera.yaw
     }
 
     /// The conversation outranks the force toggle, so forcing the camera and

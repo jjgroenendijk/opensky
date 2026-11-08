@@ -9,21 +9,23 @@ import OpenSkyObjectAnimation
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
 /// What `AnimationEventWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol AnimationEventWorldHost: AnyObject {
-    var cinematicCamera: CinematicCameraCoordinator { get }
-    var headTracking: HeadTrackingCoordinator { get }
-    var effectGraphs: EffectGraphCoordinator { get }
-    var gameSession: GameSession? { get }
-    var idleWorld: IdleWorldAdapter { get }
-    var objectBehaviors: ObjectBehaviorCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
+    var cinematicCamera: any CinematicCameraPort { get }
+    var headTracking: any HeadTrackingPort { get }
+    var effectGraphs: any EffectGraphPort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var idleWorld: any IdleWorldPort { get }
+    var objectBehaviors: any ObjectBehaviorPort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
 }
 

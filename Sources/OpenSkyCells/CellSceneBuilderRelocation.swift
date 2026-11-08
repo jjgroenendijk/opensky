@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 nonisolated extension CellSceneBuilder {

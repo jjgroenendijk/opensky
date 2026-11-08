@@ -7,14 +7,6 @@ public import OpenSkyPhysics
 public import OpenSkyWorldInterface
 import simd
 
-nonisolated public enum PackageOverrideProgress: Equatable, Sendable {
-    case running
-    /// The procedure finished, or failed because OpenSky cannot run it yet.
-    case done
-    /// The actor is not simulated, for example because its cell is not loaded.
-    case notSimulated
-}
-
 /// The procedure tree of one actor's current package.
 nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     public let package: FormID
@@ -108,26 +100,6 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     }
 }
 
-/// Whether a package walk started. `busy` means every mover slot is taken.
-nonisolated public enum PackageMoveResult: Equatable, Sendable {
-    case started
-    case busy
-    case failed
-}
-
-/// The furniture seat a sit package uses: the reference and its marker.
-nonisolated public struct PackageSeat: Equatable, Sendable {
-    public let furniture: ReferenceKey
-    public let index: Int
-    public let seat: FurnitureSeat
-
-    public init(furniture: ReferenceKey, index: Int, seat: FurnitureSeat) {
-        self.furniture = furniture
-        self.index = index
-        self.seat = seat
-    }
-}
-
 /// A package location resolved to a world point.
 nonisolated public struct PackagePlace: Equatable, Sendable {
     public let point: SIMD3<Float>
@@ -136,5 +108,16 @@ nonisolated public struct PackagePlace: Equatable, Sendable {
     public init(point: SIMD3<Float>, radius: Int32) {
         self.point = point
         self.radius = radius
+    }
+}
+
+nonisolated extension PackageOverrideExecution {
+    public var readout: PackageExecutionReadout {
+        PackageExecutionReadout(
+            state: machine.map { "\($0.state)" },
+            pathIndex: machine?.pathIndex,
+            pathCount: machine?.path.count,
+            running: runner.runningMachines.map { "\($0.kind.name) \($0.state)" }
+        )
     }
 }
