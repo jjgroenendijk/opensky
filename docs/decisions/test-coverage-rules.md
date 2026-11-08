@@ -61,4 +61,7 @@ side of the merge commit it checks out.
    inside a tested function is an untaken branch, and rule 1 counts its lines.
 
 The app and the CLI targets are outside both rules: they are not package modules, and the UI
-tests cover them.
+tests cover them. The modules declared with `composition()` and their interfaces, such as
+`OpenSkyMagicAdapters` and `OpenSkySessionInterface`, are outside too, for the reason the
+rule floor leaves them out: they hold ports and wiring, not game rules. A game rule found in
+an adapter moves into its feature module, where both rules apply.
