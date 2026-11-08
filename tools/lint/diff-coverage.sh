@@ -105,8 +105,7 @@ if len(sys.argv) != 4:
 floor, base, derived_data = float(sys.argv[1]), sys.argv[2], sys.argv[3]
 diff = subprocess.run(
     ["git", *COLOURS, "diff", "--color=always", "--color-moved=zebra",
-     "--color-moved-ws=allow-indentation-change", "-U0", "--diff-filter=AMR", base, "--",
-     "src/Sources/*.swift"],
+     "--color-moved-ws=allow-indentation-change", "-U0", "-M", "--diff-filter=AMR", base],
     capture_output=True, text=True, check=True,
 ).stdout
 changed = changed_lines(diff)
