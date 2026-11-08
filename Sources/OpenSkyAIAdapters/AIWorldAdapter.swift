@@ -26,12 +26,12 @@ import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
-public import OpenSkyRendering
+import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -123,57 +123,6 @@ public final class AIWorldAdapter {
         self.game = game
     }
 
-    public func wireAIOverlay(renderer: Renderer, streamer: CellStreamer) {
-        renderer.worldOverlaySources
-            .register(identifier: "navigation") { [weak streamer] context, list in
-                streamer?.appendNavigationWorldOverlay(context: context, to: &list)
-            }
-    }
-
-    public func wireNPCMovement(gameSession: GameSession, streamer: CellStreamer) {
-        streamer.npcMovementConfiguration = gameSession.locomotion.configuration.forActors
-        let worldState = game.worldState
-        let packages = game.packages
-        let commands = game.followerCommands
-        streamer.onNPCMovementPersist = { [weak packages, weak commands] persistence in
-            worldState.set(persistence.transform, for: persistence.actor, in: persistence.cell)
-            packages?.movementSettled(actor: persistence.actor, reason: persistence.reason)
-            commands?.movementSettled(actor: persistence.actor, reason: persistence.reason)
-        }
-        gameSession.onPlayerWalkArrived = { [weak packages] in
-            packages?.movementSettled(actor: .player, reason: .arrival)
-        }
-        streamer.onNPCPosesChanged = { [weak gameSession] deltas in
-            gameSession?.instancePoses.npcDeltas = deltas
-        }
-        streamer.npcStandingActors = { [weak self] in self?.bumps.standingActors() ?? [] }
-        wireBodyShapes(streamer: streamer)
-        wireMovementTypes(streamer: streamer)
-        streamer.npcWaterPushRace = { [weak game] actor in
-            game?.effectsWorld.waterPushRace(of: actor) ?? .normal
-        }
-        gameSession.locomotion.waterPushRace = game.effectsWorld.waterPushRace(of: .player)
-        // A walker drawn by the cell it left would vanish when that cell unloads, so
-        // it moves into the cell it entered, and the cell it left drops it.
-        streamer.onNPCCellHandoff = { [weak game, weak streamer] persistence in
-            guard let cell = persistence.cell, let streamer else { return }
-            let drawing = streamer.cellLocation(of: persistence.actor)
-            game?.scripts.bridge?.relocate(persistence.actor, to: cell)
-            if let drawing, drawing != cell {
-                streamer.requestRebuild(of: drawing)
-            }
-        }
-        let animation = game.npcAnimation
-        let graphs = game.actorGraphWorld
-        streamer.onNPCLocomotionDrive = { [weak animation, weak graphs] update in
-            graphs?.drive(update)
-            animation?.drive(update)
-        }
-        streamer.onNPCLanding = { [weak combat = game.combat] actor, landing in
-            combat?.applyFall(height: landing.height, speed: landing.speed, to: actor)
-        }
-    }
-
     public func packageData() -> PackageSessionData? {
         guard let provider = game.worldData, let store = provider.packageStore else {
             return nil
@@ -185,15 +134,6 @@ public final class AIWorldAdapter {
         data.bumpSettings = BumpReactionSettings.resolve(store: settings)
         data.followSettings = FollowSettings.resolve(store: settings)
         return data
-    }
-
-    public func wirePackages(gameSession: GameSession) {
-        let packages = game.packages
-        guard packages.runtime != nil else { return }
-        gameSession.worldTick.register(.packages) { [weak self, weak packages] delta in
-            packages?.advance(by: Float(delta))
-            self?.bumps.advanceBumps()
-        }
     }
 }
 

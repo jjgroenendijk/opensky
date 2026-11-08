@@ -18,7 +18,7 @@ import OpenSkyRuntimeState
 import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -41,7 +41,7 @@ public protocol MessageWorldHost: MenuInputConsumer {
 
 public final class MessageWorldAdapter {
     public unowned let game: any MessageWorldHost
-    private var cachedEditorIDs: [String]?
+    var cachedEditorIDs: [String]?
 
     public let cameraEffectsHost: any MessageCameraEffectsHost
 
@@ -55,20 +55,6 @@ public final class MessageWorldAdapter {
     public init(game: some MessageWorldHost & MessageCameraEffectsHost) {
         cameraEffectsHost = game
         self.game = game
-    }
-
-    /// Notifications and help records for the new session.
-    public func wire(gameSession: GameSession) {
-        cachedEditorIDs = nil
-        game.messages.reloadHelpRecords()
-        // Frame steps run under a menu too, so notifications keep real time.
-        let messages = game.messages
-        let subtitles = game.subtitles
-        gameSession.frameSteps.register(.messages) { [weak messages, weak subtitles] _ in
-            let now = Date().timeIntervalSinceReferenceDate
-            messages?.tick(time: now)
-            subtitles?.advance(to: now)
-        }
     }
 
     private var presentation: PresentationRecordStore? {

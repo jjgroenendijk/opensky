@@ -21,7 +21,7 @@ import OpenSkyProgressionInterface
 public import OpenSkyRendering
 import OpenSkyScripting
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -61,19 +61,6 @@ public final class MountWorldAdapter {
     public init(game: some MountWorldHost & MountDragonRidingHost) {
         dragonRidingHost = game
         self.game = game
-    }
-
-    /// After the locks, whose activation gate this one wraps.
-    public func wireMounts(gameSession: GameSession) {
-        gameSession.playerMount = self
-        guard let streamer = game.streamer else { return }
-        streamer.activationGate.register(.mount) { [weak self] target in
-            self?.mounts.isActive == true && target.interaction.action == .open ? .mounted : nil
-        }
-        streamer.activationGate.refusals.register(.mount) { [weak self] event in
-            guard let self, event.refusal == .mounted else { return }
-            _ = game.messages.postNotification(mounts.settings.doorRefusal)
-        }
     }
 
     /// The use key while a mount is under the player: a seated rider dismounts. True

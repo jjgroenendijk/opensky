@@ -10,7 +10,7 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyScripting
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 public import simd
@@ -34,23 +34,6 @@ public final class AnimationEventWorldAdapter {
 
     public init(game: any AnimationEventWorldHost) {
         self.game = game
-    }
-
-    /// The player graph's events, read once per frame. The idle and object graph
-    /// callbacks send theirs to the coordinator directly.
-    public func wire(gameSession: GameSession) {
-        let idles = game.idleWorld.idles
-        gameSession.frameSteps.register(.animationEvents) { [weak gameSession, weak idles] _ in
-            guard let gameSession else { return }
-            let events = gameSession.animationEvents
-            let locomotion = gameSession.locomotion
-            let names = locomotion.graphEvents.drain(locomotion.animationEventConsumer)
-                .map { idles?.ownGraphEvent($0, from: .player) ?? $0 }
-            guard gameSession.movementMode.isPlayerControlled else { return }
-            for name in names {
-                events?.handle(name, from: .player)
-            }
-        }
     }
 }
 

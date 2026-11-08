@@ -18,7 +18,7 @@ import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyTerrain
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
@@ -49,32 +49,17 @@ public final class VehicleWorldAdapter {
     /// The cell each follower is moving into while its old cell still draws it.
     private var crossings: [ReferenceKey: CellCoordinate] = [:]
     /// The vehicle seated the player on the last step.
-    private var ridesPlayer = false
+    var ridesPlayer = false
     /// The start of the seat idle the player's view was last turned for.
     private var facedIdleStart: Float?
     /// The way the player's seat faces, and the `SetSittingRotation` turn from it.
     private var seatYaw: Float?
     private var sittingRotation: Float = 0
     /// Wheel contacts by model path, read off the main actor.
-    private var wheels: AssetLoader<String, [SIMD2<Float>]>?
+    var wheels: AssetLoader<String, [SIMD2<Float>]>?
 
     public init(game: any VehicleWorldHost) {
         self.game = game
-    }
-
-    /// After the idles and packages, so a follower reads where its carrier ended up.
-    public func wireVehicles(gameSession: GameSession) {
-        wireWheels(gameSession: gameSession)
-        gameSession.worldTick.register(.vehicles) { [weak self, weak gameSession] _ in
-            guard let self else { return }
-            run(vehicles.advance())
-            // Only the end of a ride frees the seat; a chair holds the player too.
-            let rides = vehicles.lastPoses[.player] != nil
-            if ridesPlayer, !rides {
-                gameSession?.playerSeat = nil
-            }
-            ridesPlayer = rides
-        }
     }
 
     /// Each clip annotation an idle passes.
@@ -94,17 +79,6 @@ public final class VehicleWorldAdapter {
         if name.caseInsensitiveCompare(IdleCore.killEvent) == .orderedSame {
             game.scripts.bridge?.killActor(actor, killer: nil)
         }
-    }
-
-    private func wireWheels(gameSession: GameSession) {
-        guard let files = game.worldData?.scriptFileSystem else {
-            return
-        }
-        let wheels = AssetLoader<String, [SIMD2<Float>]> { path in
-            try VehicleWheels.contacts(in: NIFFile(data: files.contents(forPath: path)))
-        }
-        self.wheels = wheels
-        gameSession.assetDrains.register(.vehicleWheels) { _ in wheels.drain() }
     }
 }
 

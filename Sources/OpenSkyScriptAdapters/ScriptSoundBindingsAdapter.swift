@@ -45,35 +45,6 @@ public final class ScriptSoundBindingsAdapter {
 }
 
 extension ScriptSoundBindingsAdapter {
-    public func wireSounds(_ hooks: inout PapyrusGameNatives) {
-        hooks.playSound = { [weak game] sound, source, token in
-            guard
-                let game, let director = game.gameSession?.soundDirector,
-                let id = game.scripts.bridge?.localFormID(of: sound),
-                let position = game.scripts.bridge?.referenceState(for: source)?.transform.position
-            else { return 0 }
-            return director.playScriptSound(formID: id, at: position, waitToken: token)
-        }
-        hooks
-            .stopSound = { [weak game] id in game?.gameSession?.soundDirector?.stopScriptSound(id) }
-        hooks.setSoundVolume = { [weak game] id, volume in
-            game?.gameSession?.soundDirector?.setScriptSoundVolume(id, volume)
-        }
-        hooks.setParticleGeometry = { [weak game] geometry, seconds in
-            guard let session = game?.gameSession else { return }
-            guard let geometry else {
-                session.scriptParticles.remove(fadeOut: seconds)
-                return
-            }
-            guard
-                case let .plugin(plugin, objectID) = geometry,
-                let record = session.imageSpaceLinks?.records.shaderParticles
-                    .record(ResolvedFormID(plugin: plugin, objectID: objectID))?.record
-            else { return }
-            session.scriptParticles.apply(record, fadeIn: seconds)
-        }
-    }
-
     /// Answers each `Sound.PlayAndWait` whose sound ended. An answer the scheduler
     /// cannot take yet waits for the next frame.
     public func answerSoundWaits() {

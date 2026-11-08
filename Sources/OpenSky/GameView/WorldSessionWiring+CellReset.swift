@@ -15,7 +15,7 @@ import OpenSkyWorldState
 
 extension WorldSessionWiring {
     /// After `buildScripts`, so the reset wraps the scripts' attach and detach.
-    func wireCellReset(
+    func buildCellReset(
         provider: WorldDataStores,
         gameSession: GameSession,
         streamer: CellStreamer

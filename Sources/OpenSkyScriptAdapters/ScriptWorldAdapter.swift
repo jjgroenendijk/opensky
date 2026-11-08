@@ -185,12 +185,12 @@ public final class ScriptWorldAdapter {
         bridge.sessionNatives.realTimeSource = { [weak gameSession] in
             beforeSession + (gameSession?.gameTime.realSecondsRun ?? 0)
         }
-        actorBindings.wireActorNatives(bridge: bridge)
-        nodeBindings.wireLineOfSight(bridge: bridge)
-        perkBindings.wireSpellNatives(bridge: bridge, provider: provider)
-        skyBindings.wireSky(bridge: bridge)
-        nodeBindings.wireModelNodes(provider: provider, gameSession: gameSession)
-        sessionBindings.wireGameNatives(bridge: bridge, provider: provider)
+        _ = ScriptActorNativesWiring(actorBindings, bridge: bridge)
+        _ = ScriptLineOfSightWiring(nodeBindings, bridge: bridge)
+        _ = ScriptSpellNativesWiring(perkBindings, bridge: bridge, provider: provider)
+        _ = ScriptSkyWiring(skyBindings, bridge: bridge)
+        _ = ScriptModelNodesWiring(nodeBindings, provider: provider, gameSession: gameSession)
+        _ = ScriptGameNativesWiring(sessionBindings, bridge: bridge, provider: provider)
         bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
         bridge.formIDResolver = provider.scriptFormIDResolver
         bridge.leveledEdits = { [weak game] in
@@ -208,51 +208,8 @@ public final class ScriptWorldAdapter {
         return bridge
     }
 
-    /// The VM's cell, trigger, and frame events.
-    public func wireScripts(
-        _ scripts: ScriptCoordinator,
-        resolver: FormIDResolver,
-        gameSession: GameSession,
-        streamer: CellStreamer
-    ) {
-        let bridge = scripts.bridge
-        let world = scripts.runtime
-        streamer.onInteraction.register(.scripts) { [weak self, weak bridge] event in
-            guard let bridge else { return }
-            bridge.handleInteraction(event)
-            self?.searchAshPileOwner(of: event, bridge: bridge)
-        }
-        // The streamer tests trigger volumes once per walk-mode frame; each edge
-        // queues one event per script on the volume's reference.
-        streamer.onTriggerTransition.register(.scripts) { [weak bridge] event in
-            bridge?.handleTriggerTransition(event)
-        }
-        scripts.startQuestScripts()
-        streamer.onCellAttached.register(.scripts) { [weak world] attachment in
-            guard let world, let location = attachment.scene.location else { return }
-            world.attach(
-                cell: location,
-                references: attachment.scene.references,
-                formIDResolver: resolver,
-                firstIntegration: attachment.isFirstIntegration
-            )
-        }
-        streamer.onCellDetached.register(.scripts) { [weak world] location in
-            world?.detach(cell: location)
-        }
-        gameSession.worldTick.register(.scripts) { [weak self, weak gameSession] delta in
-            self?.soundBindings.answerSoundWaits()
-            self?.nodeBindings.answerPathWaits()
-            self?.game.scripts.advance(delta: delta)
-            let menuTime = gameSession?.consumeMenuTime() ?? 0
-            if menuTime > 0 {
-                self?.game.scripts.advanceMenuTime(delta: menuTime)
-            }
-        }
-    }
-
     /// An `AttachAshPile` pile opens its actor's inventory, as activating the body would.
-    private func searchAshPileOwner(of event: InteractionEvent, bridge: PapyrusWorldStateBridge) {
+    func searchAshPileOwner(of event: InteractionEvent, bridge: PapyrusWorldStateBridge) {
         guard
             let entry = game.streamer?.referenceEntry(formID: event.target.interaction.reference),
             let actor = bridge.ashPileOwner(of: entry.key),

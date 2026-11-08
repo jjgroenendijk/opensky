@@ -18,7 +18,7 @@ import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyScripting
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -61,7 +61,7 @@ public final class ActorGraphWorldAdapter {
         let weight: Float
     }
 
-    private static let settings: Set<PlayerSettingID> = [
+    static let settings: Set<PlayerSettingID> = [
         .actorGraphs, .actorGraphFullRateDistance, .actorGraphDistance
     ]
 
@@ -77,23 +77,6 @@ public final class ActorGraphWorldAdapter {
     public init(game: some ActorGraphWorldHost & ActorGraphGraphEventsHost) {
         graphEventsHost = game
         self.game = game
-    }
-
-    /// After the idles, so an idle event raised this frame reaches the graph's step.
-    public func wire(gameSession: GameSession) {
-        guard game.audioFileSystem != nil else { return }
-        let store = game.playerSettingsStore
-        graphs.load(settings: store)
-        // The launcher page writes the same settings while a session runs.
-        store.observe { [weak self, weak store] id in
-            guard let store, Self.settings.contains(id) else { return }
-            self?.graphs.load(settings: store)
-        }
-        gameSession
-            .actorSoundSources = { [weak self] in self?.graphEvents.actorSoundSources() ?? [] }
-        gameSession.worldTick.register(.actorGraphs) { [weak self] delta in
-            self?.graphs.tick(deltaTime: delta)
-        }
     }
 
     /// One NPC mover's drive, as its graph's locomotion inputs.

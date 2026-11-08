@@ -7,7 +7,7 @@ import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombat
 public import OpenSkyConditions
 import OpenSkyCrime
@@ -27,7 +27,7 @@ import OpenSkyRuntimeState
 import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -51,7 +51,7 @@ public final class StoryWorldAdapter {
     public unowned let game: any StoryWorldHost
     /// Quests the session-start pass started, whose stages wait for one script attach.
     private var deferredStarts: [FormID]?
-    private var sessionStartLists: [PluginQuestList] = []
+    var sessionStartLists: [PluginQuestList] = []
     /// Nil until the first check; then the player's last known location, or none.
     private var lastPlayerLocation: ResolvedFormID??
     private var framesSinceLocationCheck = 0
@@ -114,51 +114,6 @@ public final class StoryWorldAdapter {
         self.game = game
     }
 
-    /// After `wireDialogue`, because scenes speak through the dialogue index.
-    public func wireStory(provider: WorldDataStores, gameSession: GameSession) {
-        let data = provider.storyData
-        // The quest store's space, so a DLC scene names its quest as the runtime does.
-        let questStore = provider.questStore
-        if
-            let dialogue = provider.dialogueStore,
-            let files = game.audioFileSystem
-        {
-            let locator = VoiceLineLocator(dialogue: dialogue, quests: questStore)
-            voiceLocator = locator
-            voiceTimer = SceneVoiceTimer(
-                locator: locator, read: { try files.contents(forPath: $0) }
-            )
-        }
-        game.scripts.bridge?.storyNatives.questStarted = { [weak self] quest in
-            self?.scenes.questDidStart(quest)
-        }
-        game.scripts.bridge?.storyNatives.questFailed = { [weak self] quest in
-            self?.questFailed(quest)
-        }
-        let commands = game.followerCommandWorld
-        game.scripts.bridge?.storyNatives.favorStateChanged = { [weak commands] actor, isSet in
-            commands?.favorStateChanged(actor, isDoingFavor: isSet)
-        }
-        game.scripts.bridge?.sessionNatives.conditionEvaluator = { [weak self] in
-            ConditionEvaluator(
-                context: self?.conditionContext() ?? ConditionContext(), registry: .standard
-            )
-        }
-        if let files = provider.scriptFileSystem {
-            sessionStartLists = data.plugins.map {
-                PluginQuestList.load(plugin: $0.name, masters: $0.masters, files: files)
-            }
-            runSessionStart(lists: sessionStartLists)
-        }
-        gameSession.worldTick.register(.story) { [weak self] _ in
-            self?.voiceTimer?.drain()
-            self?.ambientTalk.tickAmbientSpeech()
-            self?.sceneLines.run(self?.scenes.tick() ?? [])
-            self?.socialSearch.run(self?.storyManager.social.tick() ?? [])
-            self?.checkPlayerLocation()
-        }
-    }
-
     /// A new game starts the same listed quests again over the cleared state.
     public func rerunSessionStart() {
         storyManager.social.reset()
@@ -217,7 +172,7 @@ public final class StoryWorldAdapter {
     }
 
     /// `CLOC` when the player's location changes: actor, old location, new location.
-    private func checkPlayerLocation() {
+    func checkPlayerLocation() {
         framesSinceLocationCheck += 1
         guard framesSinceLocationCheck >= Self.locationCheckInterval else { return }
         framesSinceLocationCheck = 0

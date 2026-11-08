@@ -34,7 +34,7 @@ import OpenSkyRuntimeState
 import OpenSkyScripting
 public import OpenSkyScriptingInterface
 import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldConditions
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
@@ -318,13 +318,5 @@ extension AIWorldAdapter {
 
     public func packageSituations(of actors: [ReferenceKey]) -> [ReferenceKey: PackageSituation] {
         packageActs.packageSituations(of: actors)
-    }
-
-    public func wirePerception(gameSession: GameSession) {
-        perceptionSense.wirePerception(gameSession: gameSession)
-    }
-
-    public func wireFurniture(gameSession: GameSession) {
-        seating.wireFurniture(gameSession: gameSession)
     }
 }

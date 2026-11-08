@@ -31,7 +31,7 @@ import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyScripting
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -139,70 +139,8 @@ public final class CombatWorldAdapter {
         return data
     }
 
-    public func wireMelee(gameSession: GameSession) {
-        let combat = game.combat
-        // A frame step, not the audio tick: a swing must resolve with audio off.
-        let frameSteps = gameSession.frameSteps
-        frameSteps.register(.melee) { [weak self, weak combat, weak gameSession] _ in
-            guard let combat, let gameSession else { return }
-            let locomotion = gameSession.locomotion
-            if gameSession.movementMode.isPlayerControlled, let self {
-                combat.notePlayerSneaking(game.player.isSneaking)
-            }
-            if let landing = gameSession.walkController.takeLanding() {
-                combat.applyFall(height: landing.height, speed: landing.speed, to: .player)
-            }
-            for (name, value) in combat.perkGraphFlagChanges() {
-                locomotion.write(.bool(value), to: name)
-            }
-            let commands = combat.advanceMelee(
-                events: locomotion.graphEvents.drain(locomotion.meleeEventConsumer),
-                intent: locomotion.meleeIntent,
-                isPlayerControlled: gameSession.movementMode.isPlayerControlled
-            )
-            self?.run(commands)
-        }
-    }
-
-    public func wireArchery(gameSession: GameSession) {
-        let combat = game.combat
-        // The world tick delivers a zero delta on a menu-paused frame, so an
-        // arrow hangs in the air behind an open menu.
-        let worldTick = gameSession.worldTick
-        worldTick.register(.archery) { [weak self, weak combat, weak gameSession] delta in
-            guard let combat, let gameSession else { return }
-            let locomotion = gameSession.locomotion
-            combat.isTimeSlowed = gameSession.magicTimeScale < 1
-            let commands = combat.advanceArchery(
-                events: locomotion.graphEvents.drain(locomotion.archeryEventConsumer),
-                intent: locomotion.archeryIntent,
-                isPlayerControlled: gameSession.movementMode.isPlayerControlled,
-                delta: delta
-            )
-            gameSession.bowZoomTimeScale = combat.bowZoomTimeScale
-            gameSession.bowZoomViewShare = combat.archery?.zoom.viewShare ?? 1
-            self?.run(commands)
-        }
-    }
-
-    /// Wired after melee, archery and the ragdolls, so the loop steps last.
-    public func wireLoop(gameSession: GameSession) {
-        let combat = game.combat
-        let store = game.playerSettingsStore
-        combat.load(settings: store)
-        // The launcher page writes the switch while a session runs.
-        store.observe { [weak combat, weak store] id in
-            guard id == .combatTemperament || id == .combatGameSettings, let store else { return }
-            combat?.load(settings: store)
-        }
-        gameSession.worldTick.register(.combatLoop) { [weak combat, weak self] delta in
-            self?.run(combat?.advanceLoop(by: delta) ?? [])
-            self?.updateNPCDrawStates()
-        }
-    }
-
     /// Only the player has a graph with a draw state, so an NPC draws while it fights.
-    private func updateNPCDrawStates() {
+    func updateNPCDrawStates() {
         guard let loop = game.combat.loop else { return }
         for actor in game.actorWorld.combatActors() {
             game.actorPlayback(for: actor.key)?.weaponsDrawn = loop

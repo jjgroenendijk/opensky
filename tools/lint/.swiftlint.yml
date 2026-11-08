@@ -137,16 +137,14 @@ custom_rules:
   late_attached_world:
     name: "Late-attached world"
     regex: '\bfunc\s+(attach|wire|connect|bind|set|install)\w*\s*(<[^>]*>)?\(\s*(_\s+)?(\w+World|world|host|\w+Host|port|\w+Port|seam|\w+Seam|globals|game|session)(\s+\w+)?\s*:'
-    included: 'Sources/OpenSky[A-Z][A-Za-z]*/.*\.swift$'
+    included: 'Sources/OpenSky([A-Z][A-Za-z]*)?/.*\.swift$'
     message: "Take the world port in the initializer and return commands (docs/engine/coordinators.md)"
     severity: error
   # docs/decisions/session-scope.md: a static installer fills a registry, so it may keep the name.
   late_setter_method:
     name: "Late setter method"
     regex: '^[ \t]*(@\w+(\([^)]*\))?\s+)*((public|open|package|internal|final|override|nonisolated|mutating)\s+)*func\s+(wire|install)\w*\s*[<(]'
-    included: 'Sources/OpenSky[A-Z][A-Za-z]*/.*\.swift$'
-    # The adapter modules are part of the composition root: they connect a started session.
-    excluded: 'Sources/OpenSky[A-Za-z]*Adapters/.*\.swift$'
+    included: 'Sources/OpenSky([A-Z][A-Za-z]*)?/.*\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Take the dependency in the initializer; no wire or install method (docs/decisions/session-scope.md)"
     severity: error
@@ -154,7 +152,7 @@ custom_rules:
   late_setter_property:
     name: "Late setter property"
     regex: '^[ \t]*(@\w+(\([^)]*\))?\s+)*(public|open|package)\s+((final|nonisolated|weak|unowned|lazy)\s+)*var\s+(on[A-Z]\w*\b|\w+\s*:\s*[^=\n{]*\b\w*(Store|Settings|Texts|Runtime|Catalog|Resolver|World|Seam|Reporting|Presenting)\b[^={\n]*(=[^{\n]*)?(\{\s*(didSet|willSet)[^\n]*)?$|\w+\s*=\s*\w*(Store|Settings|Texts|Runtime|Catalog|Resolver|World|Seam|Reporting|Presenting)\b)'
-    included: 'Sources/OpenSky[A-Z][A-Za-z]*/(.*/)?[A-Za-z]*Coordinator(\+[A-Za-z]+)?\.swift$'
+    included: 'Sources/OpenSky([A-Z][A-Za-z]*)?/(.*/)?[A-Za-z]*Coordinator(\+[A-Za-z]+)?\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Take the dependency in the initializer, or make the property private(set) (docs/decisions/session-scope.md)"
     severity: error
@@ -184,7 +182,7 @@ custom_rules:
   pure_core_side_effect:
     name: "Pure core side effect"
     regex: '^\s*(@\w+\s+)*import\s+(AppKit|Cocoa|SwiftUI|Metal|MetalKit|MetalFX|QuartzCore|AVFoundation|AVFAudio|AudioToolbox|CoreAudio|GameController|Dispatch|OpenSkyRendering)\b|\b(Date\(\)|Date\.now\b|CACurrentMediaTime\b|DispatchTime\b|ContinuousClock\b|SuspendingClock\b|mach_absolute_time\b|CFAbsoluteTimeGetCurrent\b|systemUptime\b)'
-    included: 'Sources/OpenSky[A-Z][A-Za-z]*/(.*/)?[A-Za-z]+Core(\+[A-Za-z]+)?\.swift$'
+    included: 'Sources/OpenSky([A-Z][A-Za-z]*)?/(.*/)?[A-Za-z]+Core(\+[A-Za-z]+)?\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "A core is pure: no AppKit, Metal, audio, or clock; the shell passes the time in (docs/engine/coordinators.md)"
     severity: error

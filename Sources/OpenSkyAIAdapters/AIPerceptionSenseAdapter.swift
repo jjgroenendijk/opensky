@@ -27,7 +27,7 @@ import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -56,28 +56,6 @@ public struct AIPerceptionSenseAdapter {
 }
 
 extension AIPerceptionSenseAdapter {
-    /// Runs after NPC movement and the combat loop, because the pass reads
-    /// where actors ended up this frame and which of them are hostile.
-    public func wirePerception(gameSession: GameSession) {
-        let renderer = gameSession.renderer
-        let perception = game.perception
-        gameSession.worldTick.register(.perception) { [weak owner] delta in
-            guard owner != nil else { return }
-            run(game.perception.advance(by: delta))
-            // After the pass, so a trespass is judged against this frame's detection.
-            game.crime.advanceTrespass(by: Double(delta))
-            game.crime.advanceFavour()
-            game.crime.advanceReports()
-            game.crime.advanceJail()
-            // After the trespass, so the guards see a bounty charged this frame.
-            game.crimeWorld.run(game.crime.advanceGuardResponse())
-        }
-        renderer.worldOverlaySources
-            .register(identifier: "detection") { [weak perception] context, list in
-                perception?.appendWorldOverlay(context: context, to: &list)
-            }
-    }
-
     public func perceptionCandidates() -> [PerceptionCandidate] {
         let readouts = game.packages.readouts().filter { $0.currentPackage != nil }
         let packaged = Set(readouts.map(\.actor))

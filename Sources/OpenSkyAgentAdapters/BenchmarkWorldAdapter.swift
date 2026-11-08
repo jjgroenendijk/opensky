@@ -132,12 +132,6 @@ public final class BenchmarkWorldAdapter {
         self.game = game
     }
 
-    public func wire(gameSession: GameSession) {
-        gameSession.frameSteps.register(.benchmark) { [weak self] _ in
-            self?.frame()
-        }
-    }
-
     public var isRunning: Bool {
         tour.isRunning
     }
@@ -155,7 +149,7 @@ public final class BenchmarkWorldAdapter {
         tour.stop()
     }
 
-    private func frame() {
+    func frame() {
         frameSteps += 1
         if let request = pendingRequest, game.agentWorld.isWorldReady {
             pendingRequest = nil

@@ -31,6 +31,7 @@ runs its rules on a small synthetic violation, which must fail.
 | 3 | A host has at most 12 members, its inherited hosts included | A wide host hides what the adapter depends on |
 | 4 | An app or adapter type has at most 4 extension files and 600 lines | Matches the file length warning, so one type stays readable in one sitting |
 | 5 | An adapter has no magic number and no function over complexity 6 | A game rule in an adapter has no unit test; in its feature module it has one |
+| 6 | The late-setter, late-attached-world, and pure-core lints cover the app and the adapters | A dependency set after the initializer can be missing when the object is first used |
 
 A port is a protocol from an interface module or a foundation module, or a class from a data
 layer, such as `WorldDataStores`. A value type is a struct, an enum, a type alias, or a type of
@@ -67,10 +68,14 @@ The adapters live in eleven modules, one per feature group, such as `OpenSkyMagi
 - No other package module may import them. Only the app and `openskycli` link them.
 - `module-graph.sh` treats every module whose name ends in `Adapters` as composition.
 
-An adapter module is part of the composition root. So the `late_setter_method` SwiftLint rule
-does not apply to it: an adapter's `wire...(gameSession:)` method connects it to a session that
-starts after the adapter is built. Coordinators in feature modules still take every dependency
-in their initializer.
+## Connecting a started session
+
+The session starts after its adapters are built, so an adapter is connected to it later. The
+connection is a step, not a method: a `<Name>Wiring` struct whose initializer does the work, such
+as `CombatMeleeWiring(combatWorld, gameSession: gameSession)`. The composition root builds the
+steps in order. An adapter, a coordinator, and the app keep no `wire...` or `install...` method,
+and no `attach(world:)`-style setter, so the `late_setter_method` and `late_attached_world`
+SwiftLint rules hold everywhere, the app included.
 
 ## The game view
 

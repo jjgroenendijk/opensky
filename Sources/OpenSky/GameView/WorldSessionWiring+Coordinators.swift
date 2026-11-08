@@ -27,7 +27,8 @@ extension WorldSessionWiring {
         )
         let scripts = ScriptCoordinator(world: world, bridge: bridge, fileSystem: fileSystem)
         game.scripts = scripts
-        world.wireScripts(
+        _ = ScriptsWiring(
+            world,
             scripts,
             resolver: provider.scriptFormIDResolver,
             gameSession: gameSession,
@@ -59,7 +60,7 @@ extension WorldSessionWiring {
                 recipeConditions: world, skillUses: game.progression, storyEvents: game.storyWorld
             )
         )
-        world.wireWorldItems(streamer: streamer)
+        _ = InventoryWorldItemsWiring(world, streamer: streamer)
     }
 
     /// After the actor values, because every effect writes an actor value, and after
@@ -70,7 +71,7 @@ extension WorldSessionWiring {
             world: world, data: world.sessionData(provider: provider, store: game.worldState),
             storyEvents: game.storyWorld
         )
-        world.wireMagic(gameSession: gameSession)
+        _ = MagicWiring(world, gameSession: gameSession)
     }
 
     func buildEffects(provider: WorldDataStores, streamer: CellStreamer, gameSession: GameSession) {
@@ -92,11 +93,11 @@ extension WorldSessionWiring {
             0, MagicWorldSettings.resolve(store: provider.gameSettings).absorbVisualSeconds
         )
         game.effects.posing = game.effectModelPoser
-        world.wireEffects(provider: provider, streamer: streamer, gameSession: gameSession)
+        _ = EffectsWiring(world, provider: provider, streamer: streamer, gameSession: gameSession)
     }
 
     func buildAnimationEvents(gameSession: GameSession) {
-        gameSession.animationEvents = AnimationEventCoordinator(world: animationEvents)
-        animationEvents.wire(gameSession: gameSession)
+        gameSession.animationEvents = AnimationEventCoordinator(world: game.animationEvents)
+        _ = AnimationEventWiring(game.animationEvents, gameSession: gameSession)
     }
 }

@@ -16,7 +16,7 @@ import OpenSkyRenderCore
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -54,12 +54,6 @@ public final class DragonFlightWorldAdapter {
     public init(game: some DragonFlightWorldHost & DragonFlightCandidatesHost) {
         candidatesHost = game
         self.game = game
-    }
-
-    public func wire(gameSession: GameSession) {
-        gameSession.worldTick.register(.dragonFlight) { [weak self] delta in
-            self?.game.dragonFlight.tick(deltaTime: delta)
-        }
     }
 
     /// `GetFlyingState` of each actor in the air, the player's dragon included.

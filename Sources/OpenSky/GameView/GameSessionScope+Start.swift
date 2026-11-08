@@ -39,11 +39,13 @@ extension GameSessionScope {
         hud.start()
         controllerRumble.settings = ShoutRumbleSettings.resolve(store: worldData.gameSettings)
         controllerRumble.isEnabled = { [store = playerSettings.store] in store.bool(.vibration) }
-        menuRouter.wire(gameSession: gameSession)
-        benchmarkWorld.wire(gameSession: gameSession)
+        _ = MenuRouterWiring(menuRouter, gameSession: gameSession)
+        _ = BenchmarkWiring(benchmarkWorld, gameSession: gameSession)
         wireMenuMode(gameSession: gameSession)
-        sessionWiring.wireStreaming(
-            session: CellSession(runner: cellRunner, data: worldData), gameSession: gameSession
+        _ = WorldSessionWiring(
+            game: self,
+            session: CellSession(runner: cellRunner, data: worldData),
+            gameSession: gameSession
         )
         gameSession.worldTick.register(.survivalMode) { [weak self] _ in
             self?.survivalMode.tick()

@@ -19,7 +19,7 @@ import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -57,13 +57,6 @@ public final class FollowerCommandWorldAdapter {
     public init(game: some FollowerCommandWorldHost & FollowerCommandTasksHost) {
         tasksHost = game
         self.game = game
-    }
-
-    public func wire(gameSession: GameSession) {
-        let commands = game.followerCommands
-        gameSession.worldTick.register(.followerCommands) { [weak commands] delta in
-            commands?.tick(delta)
-        }
     }
 
     /// `SetDoingFavor` changed the flag: the follower says Show or Exit, and command

@@ -1,7 +1,7 @@
 import Foundation
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyFormatsAnimation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -13,10 +13,10 @@ import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 public import OpenSkyRendering
-public import OpenSkyScripting
+import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 public import simd
@@ -54,18 +54,6 @@ public struct ScriptNodeBindingsAdapter {
 }
 
 extension ScriptNodeBindingsAdapter {
-    public func wireModelNodes(provider: WorldDataStores, gameSession: GameSession) {
-        guard let files = provider.scriptFileSystem else { return }
-        let nodes = AssetLoader<String, [String: PosedBone]> { path in
-            try Self.nodeTransforms(in: NIFFile(data: files.contents(forPath: path)))
-        }
-        owner.modelNodes = nodes
-        gameSession.assetDrains.register(.modelNodes) { [weak owner] _ in
-            nodes.drain()
-            owner?.nodeBindings.answerNodeWaits()
-        }
-    }
-
     public func nodeTransform(
         of key: ReferenceKey, named name: String,
         nodes: AssetLoader<String, [String: PosedBone]>,
@@ -138,7 +126,7 @@ extension ScriptNodeBindingsAdapter {
 
     /// Runs each waiting lookup whose model is in, then hands its answer to the
     /// scheduler, which takes it once the waiting call is queued.
-    private func answerNodeWaits() {
+    func answerNodeWaits() {
         guard let nodes = owner.modelNodes, !owner.nodeWaits.isEmpty else { return }
         for index in owner.nodeWaits.indices where owner.nodeWaits[index].answer == nil {
             let wait = owner.nodeWaits[index]
@@ -160,7 +148,7 @@ extension ScriptNodeBindingsAdapter {
         }
     }
 
-    nonisolated private static func nodeTransforms(
+    nonisolated static func nodeTransforms(
         in file: NIFFile
     ) throws -> [String: PosedBone] {
         let scene = try NIFEffectScene(file: file)
@@ -173,22 +161,6 @@ extension ScriptNodeBindingsAdapter {
             )
         }
         return transforms
-    }
-
-    public func wirePaths(_ hooks: inout PapyrusGameNatives) {
-        hooks.pathToReference = { [weak owner] actor, target, speed, token in
-            guard
-                let owner, let streamer = game.streamer,
-                let point = game.scripts.bridge?.referenceState(for: target)?.transform.position
-            else { return false }
-            let started = streamer.moveActor(
-                actor, to: point, direct: false, gait: ScriptPathWaits.gait(forSpeed: speed),
-                runSlowdown: nil, walkRunBlend: speed
-            )
-            guard started == .started else { return false }
-            owner.pathWaits.wait(token, for: actor)
-            return true
-        }
     }
 
     public func answerPathWaits() {
@@ -208,13 +180,7 @@ extension ScriptNodeBindingsAdapter {
     /// does not hide it. About half a metre.
     private static let traceMargin: Float = 32
 
-    public func wireLineOfSight(bridge: PapyrusWorldStateBridge) {
-        bridge.perceptionNatives.seesTarget = { [weak owner] viewer, target in
-            owner?.nodeBindings.sees(viewer: viewer, target: target, bridge: bridge)
-        }
-    }
-
-    private func sees(
+    func sees(
         viewer: ReferenceKey, target: ReferenceKey, bridge: PapyrusWorldStateBridge
     ) -> Bool? {
         guard viewer == .player else {

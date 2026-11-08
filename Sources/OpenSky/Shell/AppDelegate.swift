@@ -37,7 +37,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // appearance keeps every system control on the charcoal palette.
         NSApplication.shared.appearance = NSAppearance(named: .darkAqua)
         NSApplication.shared.mainMenu = MainMenu.make(target: self)
-        agentControl = AgentControlHost()
+        agentControl = AgentControlHost(currentGame: { [weak self] in
+            self?.gameWindow?.contentViewController as? GameViewController
+        })
         benchmarkHost.onLauncherRunFinished = { [weak self] in
             self?.launcher?.showPage(id: "benchmark")
         }
@@ -95,7 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makeGame() -> GameViewController {
         let game = gameContext.makeGameViewController()
-        agentControl?.attach(game: game, root: gameContext.gameDataRoot)
+        game.dataRoot = gameContext.gameDataRoot
         return game
     }
 
@@ -140,7 +142,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pauseRendering(gameWindow?.contentViewController as? GameViewController)
         gameWindow?.contentViewController = game
         if let gameWindow {
-            benchmarkHost.attach(game: game, window: gameWindow)
+            _ = BenchmarkGameWiring(benchmarkHost, game: game, window: gameWindow)
         }
     }
 }
@@ -252,7 +254,7 @@ extension AppDelegate: LauncherActions {
         let hidden = benchmarkHost.hidesNextWindow
         let tourOwnsWindow = benchmarkHost.ownsNextWindow
         if let game = window.contentViewController as? GameViewController {
-            benchmarkHost.attach(game: game, window: window)
+            _ = BenchmarkGameWiring(benchmarkHost, game: game, window: window)
         }
         launcherWindow?.orderOut(nil)
         guard !hidden else { return }

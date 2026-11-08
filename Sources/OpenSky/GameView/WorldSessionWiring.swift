@@ -38,13 +38,10 @@ import simd
 
 final class WorldSessionWiring {
     unowned let game: GameSessionScope
-    /// Actor clips for idles, gaits, and combat reactions, loaded off the main actor.
-    private(set) lazy var animationClips: ActorClipLoader? = game.audioFileSystem
-        .map { ActorClipLoader.clips(files: $0) }
-    private(set) lazy var animationEvents = AnimationEventWorldAdapter(game: game.ports)
 
-    init(game: GameSessionScope) {
+    init(game: GameSessionScope, session: CellSession, gameSession: GameSession) {
         self.game = game
+        buildStreaming(session: session, gameSession: gameSession)
     }
 
     /// Builds run off the main thread on the session's runner; the finished scene
@@ -58,7 +55,7 @@ final class WorldSessionWiring {
         gameSession.assetDrains.register(.audio) { [weak audio] _ in audio?.drainLoads() }
     }
 
-    func wireStreaming(session: CellSession, gameSession: GameSession) {
+    private func buildStreaming(session: CellSession, gameSession: GameSession) {
         let renderer = gameSession.renderer
         let provider = session.data
         let streamer = CellStreamer(
@@ -81,36 +78,37 @@ final class WorldSessionWiring {
         renderer.attachTextureStreaming(to: session.runner)
         wireAnimationAssets(gameSession: gameSession)
         wireMenuMovies(gameSession: gameSession)
-        game.aiWorld.wireAIOverlay(renderer: renderer, streamer: streamer)
+        _ = AIOverlayWiring(game.aiWorld, renderer: renderer, streamer: streamer)
         game.runtimeState.reloadGlobals()
-        game.aiWorld.wireNPCMovement(gameSession: gameSession, streamer: streamer)
+        _ = AINPCMovementWiring(game.aiWorld, gameSession: gameSession, streamer: streamer)
         streamer.bind(to: game.worldState)
         wireFrame(gameSession: gameSession, streamer: streamer)
-        game.audioWorld.wireAudioCallbacks(streamer)
+        _ = AudioCallbacksWiring(game.audioWorld, streamer)
         // After the audio callbacks, so the engine's own interaction handling
         // stays first in the multicast order.
         buildScripts(provider: provider, gameSession: gameSession, streamer: streamer)
         wireAssetDrains(gameSession: gameSession)
-        game.messageWorld.wire(gameSession: gameSession)
+        _ = MessageWiring(game.messageWorld, gameSession: gameSession)
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
         buildWorldItems(provider: provider, streamer: streamer)
-        game.lockWorld.wireLocks(streamer: streamer, gameSession: gameSession)
-        game.perkActivationWorld.wire(streamer: streamer)
+        _ = LocksWiring(game.lockWorld, streamer: streamer, gameSession: gameSession)
+        _ = PerkActivationWiring(game.perkActivationWorld, streamer: streamer)
         // After the item runtime, which owns the equipped set of the body.
-        game.playerWorld.wirePlayerBody(gameSession: gameSession)
+        _ = PlayerBodyWiring(game.playerWorld, gameSession: gameSession)
         wireActorSystems(provider: provider, gameSession: gameSession)
-        game.hazardWorld.wireHazards(
+        _ = HazardsWiring(
+            game.hazardWorld,
             provider: provider,
             streamer: streamer,
             gameSession: gameSession
         )
         buildEffects(provider: provider, streamer: streamer, gameSession: gameSession)
-        game.trapControl.wire(renderer: gameSession.renderer)
-        game.combatWorld.wireMelee(gameSession: gameSession)
-        game.combatWorld.wireArchery(gameSession: gameSession)
-        game.ragdollWorld.wireRagdoll(gameSession: gameSession)
-        game.playerWorld.wireActorState(gameSession: gameSession)
+        _ = TrapControlWiring(game.trapControl, renderer: gameSession.renderer)
+        _ = CombatMeleeWiring(game.combatWorld, gameSession: gameSession)
+        _ = CombatArcheryWiring(game.combatWorld, gameSession: gameSession)
+        _ = RagdollWiring(game.ragdollWorld, gameSession: gameSession)
+        _ = PlayerActorStateWiring(game.playerWorld, gameSession: gameSession)
         wireLateWorldSystems(provider: provider, gameSession: gameSession, streamer: streamer)
         wireWorldQueries(gameSession: gameSession, streamer: streamer)
         game.streamer = streamer
@@ -136,7 +134,7 @@ final class WorldSessionWiring {
     }
 
     /// Menu movies decode off the main actor, so a menu opens without a stall.
-    func wireMenuMovies(gameSession: GameSession) {
+    private func wireMenuMovies(gameSession: GameSession) {
         let movies = game.swfMovies
         movies.prefetch(SWFMovieSource.menuMoviePaths)
         gameSession.assetDrains.register(.menuMovies) { _ in movies.drain() }
@@ -145,7 +143,7 @@ final class WorldSessionWiring {
     /// One clip loader for idles, gaits, and combat reactions. Its results enter
     /// before the world tick, and the coordinators that wait on it go right after.
     private func wireAnimationAssets(gameSession: GameSession) {
-        guard let clips = animationClips else { return }
+        guard let clips = game.animationClips else { return }
         let idles = game.idleWorld.idles
         let npcAnimation = game.npcAnimation
         let assetDrains = gameSession.assetDrains
@@ -209,7 +207,7 @@ final class WorldSessionWiring {
 
     /// Magic effects write through the actor-value runtime, so it comes first.
     private func wireActorSystems(provider: WorldDataStores, gameSession: GameSession) {
-        game.actorWorld.wireActorValues(provider: provider, gameSession: gameSession)
+        _ = ActorValuesWiring(game.actorWorld, provider: provider, gameSession: gameSession)
         buildMagic(provider: provider, gameSession: gameSession)
     }
 
@@ -218,31 +216,31 @@ final class WorldSessionWiring {
         gameSession: GameSession,
         streamer: CellStreamer
     ) {
-        game.combatWorld.wireLoop(gameSession: gameSession)
-        game.aiWorld.wirePackages(gameSession: gameSession)
-        game.aiWorld.wirePerception(gameSession: gameSession)
-        game.idleWorld.wireIdles(gameSession: gameSession)
-        game.actorGraphWorld.wire(gameSession: gameSession)
-        game.vehicleWorld.wireVehicles(gameSession: gameSession)
-        game.aiWorld.wireFurniture(gameSession: gameSession)
+        _ = CombatLoopWiring(game.combatWorld, gameSession: gameSession)
+        _ = AIPackagesWiring(game.aiWorld, gameSession: gameSession)
+        _ = AIPerceptionWiring(game.aiWorld.perceptionSense, gameSession: gameSession)
+        _ = IdlesWiring(game.idleWorld, gameSession: gameSession)
+        _ = ActorGraphWiring(game.actorGraphWorld, gameSession: gameSession)
+        _ = VehiclesWiring(game.vehicleWorld, gameSession: gameSession)
+        _ = AIFurnitureWiring(game.aiWorld.seating, gameSession: gameSession)
         // After the locks, whose activation gate it wraps.
-        game.mountWorld.wireMounts(gameSession: gameSession)
-        game.beastForms.wire()
-        game.activationRefusals.wire()
-        game.dragonFlightWorld.wire(gameSession: gameSession)
-        game.objectAnimationWorld.wire(gameSession: gameSession)
-        game.effectGraphWorld.wire(gameSession: gameSession)
+        _ = MountsWiring(game.mountWorld, gameSession: gameSession)
+        _ = BeastFormWiring(game.beastForms)
+        _ = ActivationRefusalWiring(game.activationRefusals)
+        _ = DragonFlightWiring(game.dragonFlightWorld, gameSession: gameSession)
+        _ = ObjectAnimationWiring(game.objectAnimationWorld, gameSession: gameSession)
+        _ = EffectGraphWiring(game.effectGraphWorld, gameSession: gameSession)
         buildAnimationEvents(gameSession: gameSession)
         // The Talk filter reads the death and hostility state the systems above keep.
-        game.dialogueWorld.wireDialogue(streamer: streamer)
-        game.dialogueWorld.cameraWiring.wireDialogueCamera(gameSession: gameSession)
+        _ = DialogueWiring(game.dialogueWorld, streamer: streamer)
+        _ = DialogueCameraWiring(game.dialogueWorld.cameraWiring, gameSession: gameSession)
         // Scenes speak through the dialogue index, so they come after it.
-        game.storyWorld.wireStory(provider: provider, gameSession: gameSession)
-        game.followerCommandWorld.wire(gameSession: gameSession)
-        game.cinematicWorld.wire(gameSession: gameSession)
-        game.loadingWorld.wire(streamer: streamer, gameSession: gameSession)
+        _ = StoryWiring(game.storyWorld, provider: provider, gameSession: gameSession)
+        _ = FollowerCommandWiring(game.followerCommandWorld, gameSession: gameSession)
+        _ = CinematicCameraWiring(game.cinematicWorld, gameSession: gameSession)
+        _ = LoadingScreenWiring(game.loadingWorld, streamer: streamer, gameSession: gameSession)
         // It wraps the scripts' cell attach, so it comes after `buildScripts`.
-        wireCellReset(provider: provider, gameSession: gameSession, streamer: streamer)
+        buildCellReset(provider: provider, gameSession: gameSession, streamer: streamer)
     }
 
     /// Player-controlled modes only: the fly camera never picks up a target.

@@ -37,7 +37,7 @@ public protocol AudioWorldHost: AnyObject {
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
     var worldData: WorldDataStores? { get }
     /// Hands the started engine and directors to the session, which owns them.
-    func installAudio(
+    func takeStartedAudio(
         engine: WorldAudioEngine, sounds: WorldAudioSoundDirector,
         music: WorldMusicDirector, footsteps: WorldAudioFootstepDirector
     )
@@ -63,27 +63,6 @@ public final class AudioWorldAdapter {
         mixHost = game
         self.game = game
     }
-
-    /// Each callback does nothing until audio is enabled. The activation sound
-    /// plays in the first interaction step, before Papyrus `OnActivate`.
-    public func wireAudioCallbacks(_ streamer: CellStreamer) {
-        let audio = game.audio
-        streamer.onInteraction.register(.audio) { [weak audio] event in
-            audio?.soundDirector?.handleInteraction(event)
-        }
-        streamer.onInteractionAnimation = { [weak audio] event in
-            audio?.soundDirector?.handleInteractionAnimation(event)
-        }
-        streamer.onAmbienceContextChanged = { [weak audio] context in
-            audio?.soundDirector?.handleAmbienceContext(context)
-        }
-        streamer.onMusicContextChanged = { [weak audio] context in
-            audio?.musicDirector?.handleMusicContext(context)
-        }
-        streamer.musicFeed.locationMusicType = { [unowned game] scene in
-            game.runtimeStateWorld.locationMusicType(of: scene.locationKey)
-        }
-    }
 }
 
 extension AudioWorldAdapter: AudioWorld {
@@ -101,7 +80,7 @@ extension AudioWorldAdapter: AudioWorld {
         music: WorldMusicDirector,
         footsteps: WorldAudioFootstepDirector
     ) {
-        game.installAudio(engine: engine, sounds: sounds, music: music, footsteps: footsteps)
+        game.takeStartedAudio(engine: engine, sounds: sounds, music: music, footsteps: footsteps)
         if let store = game.worldData?.soundStore {
             engine.soundMix = SoundCategoryMix(
                 categories: store.categories, roles: store.categoryRoles,

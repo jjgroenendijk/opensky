@@ -4,7 +4,7 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRenderCore
 public import OpenSkyRendering
-public import OpenSkyScripting
+import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -34,28 +34,9 @@ public final class ScriptSkyBindingsAdapter {
 
 extension ScriptSkyBindingsAdapter {
     /// `GetSkyMode` values (<https://ck.uesp.net/wiki/GetSkyMode_-_Weather>).
-    private enum SkyMode {
+    enum SkyMode {
         static let interior: Int32 = 1
         static let full: Int32 = 3
-    }
-
-    public func wireSky(bridge: PapyrusWorldStateBridge) {
-        bridge.sessionNatives.towardSun = { [weak game] in
-            guard
-                let game, game.streamer?.isInterior != true,
-                let session = game.gameSession, let renderer = game.renderer,
-                let weather = session.weather,
-                weather.timeOfDayWeights(hour: session.gameClock.hourOfDay).night < 1
-            else { return nil }
-            return renderer.frameInput.celestial?.sunDirection ?? -renderer.camera.sunDirection
-        }
-        bridge.sessionNatives.playerView = { [weak game] in
-            guard let camera = game?.gameSession?.freeFlyCamera else { return nil }
-            return PapyrusPlayerView(eye: camera.position, forward: camera.forward)
-        }
-        bridge.sessionNatives.skyMode = { [weak game] in
-            game?.streamer?.isInterior == true ? SkyMode.interior : SkyMode.full
-        }
     }
 
     public func changeFog(_ change: PapyrusFogChange, in cell: FormID) -> Bool {

@@ -8,7 +8,7 @@ public import OpenSkyFormatsESM
 import OpenSkyMagic
 import OpenSkyPhysics
 import OpenSkyPlayer
-public import OpenSkyRendering
+import OpenSkyRendering
 public import OpenSkySessionInterface
 public import OpenSkyWorld
 import OpenSkyWorldState
@@ -35,20 +35,7 @@ public final class TrapControlAdapter {
         self.dependencies = dependencies
     }
 
-    public func wire(renderer: Renderer) {
-        renderer.worldOverlaySources.register(identifier: "trap-selection") { [weak self] _, list in
-            guard let position = self?.selectedEntry?.placedReference?.placement.position else {
-                return
-            }
-            list.addMarker(
-                at: position,
-                size: Self.markerSize,
-                color: WorldOverlayMarkerColour.trap
-            )
-        }
-    }
-
-    private var selectedEntry: RuntimeReferenceEntry? {
+    var selectedEntry: RuntimeReferenceEntry? {
         selected.flatMap { dependencies.streamer()?.referenceEntry(key: $0) }
     }
 }

@@ -13,7 +13,7 @@ public import OpenSkyProgressionInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -33,13 +33,6 @@ public final class PerkActivationWorldAdapter {
 
     public init(game: any PerkActivationWorldHost) {
         self.game = game
-    }
-
-    public func wire(streamer: CellStreamer) {
-        let coordinator = game.perkActivation
-        streamer.activationGate.perkChoices = { [weak coordinator] target in
-            coordinator?.activate(target) ?? false
-        }
     }
 }
 

@@ -23,7 +23,7 @@ import OpenSkyRuntimeState
 import OpenSkySession
 public import OpenSkySessionInterface
 import OpenSkyTerrain
-public import OpenSkyWorld
+import OpenSkyWorld
 import OpenSkyWorldInterface
 import simd
 
@@ -56,7 +56,7 @@ public final class LoadingScreenWorldAdapter {
     /// The tip the movie shows; nil while no movie was asked for.
     public var movieText: String?
     public var movieFadedOut = false
-    private var cameraPaths: AssetLoader<String, NIFCameraTrack>?
+    var cameraPaths: AssetLoader<String, NIFCameraTrack>?
     /// A stuck build must not trap the player behind the cover.
     public static let startCoverLimitSeconds = 60.0
 
@@ -76,43 +76,6 @@ public final class LoadingScreenWorldAdapter {
 
     public var now: Double {
         Date().timeIntervalSinceReferenceDate
-    }
-
-    public func wire(streamer: CellStreamer, gameSession: GameSession) {
-        streamer.onDoorTransitionStarted = { [weak self] in
-            guard let self else { return }
-            game.loadingScreens.begin(at: now)
-        }
-        streamer.onDoorTransitionFinished = { [weak self] scene in
-            guard let self else { return }
-            guard let scene else {
-                game.loadingScreens.cancel()
-                return
-            }
-            game.loadingScreens.destinationReady(location: location(of: scene), at: now)
-            game.followerCommandWorld.bringFollowers(into: scene)
-        }
-        gameSession.frameSteps.register(.loadingScreen) { [weak self] _ in
-            guard let self else { return }
-            liftStartCoverIfReady()
-            game.loadingScreens.tick(time: now)
-            movie.tick()
-        }
-        wireCameraPaths(gameSession: gameSession)
-    }
-
-    /// The MOD2 camera meshes are small, and five serve every screen, so all are warmed.
-    private func wireCameraPaths(gameSession: GameSession) {
-        guard let files = game.worldData?.scriptFileSystem else { return }
-        let paths = AssetLoader<String, NIFCameraTrack> { path in
-            try NIFCameraTrack(file: NIFFile(data: files.contents(forPath: "meshes\\" + path)))
-        }
-        let screens = presentationRecords?.loadScreens.records ?? []
-        for path in Set(screens.compactMap(\.record.cameraPath)) {
-            paths.prefetch(path)
-        }
-        cameraPaths = paths
-        gameSession.assetDrains.register(.loadingCameraPaths) { _ in paths.drain() }
     }
 
     /// The path's camera position at `seconds`, looping over the controller's window.
@@ -143,7 +106,7 @@ public final class LoadingScreenWorldAdapter {
         game.loadingScreens.begin(at: now)
     }
 
-    private func liftStartCoverIfReady() {
+    func liftStartCoverIfReady() {
         guard let since = startCoverSince, let streamer = game.streamer else { return }
         let timedOut = now - since > Self.startCoverLimitSeconds
         if let target = moveTarget, game.loadingScreens.isWaitingForDestination {
@@ -171,7 +134,7 @@ public final class LoadingScreenWorldAdapter {
     }
 
     /// The destination cell's location, which is where the player stands when the screen is chosen.
-    private func location(of scene: any CellScenePort) -> ResolvedFormID? {
+    func location(of scene: any CellScenePort) -> ResolvedFormID? {
         game.runtimeStateWorld.location(of: scene.locationKey)
     }
 

@@ -18,7 +18,7 @@ public import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 public import OpenSkySessionInterface
-public import OpenSkyWorld
+import OpenSkyWorld
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -42,33 +42,6 @@ public final class LockWorldAdapter {
 
     public init(game: any LockWorldHost) {
         self.game = game
-    }
-
-    /// After `wireWorldItems`, which builds the lock coordinator.
-    public func wireLocks(streamer: CellStreamer, gameSession: GameSession) {
-        let renderer = gameSession.renderer
-        let locks = game.inventory.locks
-        let inventoryWorld = game.inventoryWorld
-        streamer.activationGate.register(.lock) { [weak locks, weak inventoryWorld] target in
-            locks.flatMap { inventoryWorld?.run($0.gate(target)) }
-        }
-        let menu = game.lockpickingMenu
-        streamer.activationGate.refusals.register(.lockpicking) { [weak menu] refusal in
-            menu?.handle(refusal)
-        }
-        // Frame steps run while the menu pauses the world; the menu keeps its own clock.
-        gameSession.frameSteps.register(.lockpicking) { [weak menu] _ in
-            menu?.tick(now: Date())
-        }
-        renderer.worldOverlaySources
-            .register(identifier: "lock-selection") { [weak locks] _, list in
-                guard let position = locks?.selectedInteraction?.position else { return }
-                list.addMarker(
-                    at: position,
-                    size: Self.markerSize,
-                    color: WorldOverlayMarkerColour.lock
-                )
-            }
     }
 
     /// The selected lock's marker: yellow, about a door's half width.
