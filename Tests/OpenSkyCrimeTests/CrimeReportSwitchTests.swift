@@ -20,4 +20,13 @@ struct CrimeReportSwitchTests {
         let reported = runtime.report(CrimeFixture.event(.murder))
         #expect(reported.gold == 1000)
     }
+
+    @Test
+    func theReporterSwitchesTheRuntimeItReportsThrough() throws {
+        let reporter = try CrimeReporter(runtime: CrimeFixture.runtime())
+        reporter.setReportsPlayerCrimes(false)
+        #expect(!reporter.runtime.reportsPlayerCrimes)
+        reporter.setReportsPlayerCrimes(true)
+        #expect(reporter.runtime.reportsPlayerCrimes)
+    }
 }

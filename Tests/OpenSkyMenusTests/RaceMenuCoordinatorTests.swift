@@ -1,7 +1,9 @@
 // The race menu rules and its shell over the real menu stack and a fake world.
 
 import OpenSkyActorsInterface
+import OpenSkyEngineTesting
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyRendering
@@ -94,6 +96,16 @@ struct RaceMenuCoordinatorTests {
         #expect(!model.rows.contains(.race))
         model.setName("Other")
         #expect(model.identity.name == "Prisoner")
+    }
+
+    @Test @MainActor
+    func aMovieEventRunsInTheRunningMovieThroughThePort() throws {
+        let port = try #require(FakeRendererPort())
+        port.swfRuntime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        let world = FakeRaceMenuWorld()
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController(), world: world)
+        menu.routeMovie(.button(.accept), renderer: port)
+        #expect(menu.pendingMovieRequests.isEmpty)
     }
 
     @Test @MainActor

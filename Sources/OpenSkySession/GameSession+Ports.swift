@@ -19,4 +19,8 @@ extension GameSession {
     public func setPlayerFirstPersonRig(_ rig: (any PlayerFirstPersonRigPort)?) throws {
         try setPlayerFirstPersonRig(rig as? PlayerFirstPersonRig)
     }
+
+    public func knockPlayer(_ velocity: SIMD3<Float>) {
+        walkController.knock(velocity)
+    }
 }

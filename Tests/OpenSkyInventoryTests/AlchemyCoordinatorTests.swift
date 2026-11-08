@@ -62,6 +62,15 @@ struct AlchemyCoordinatorTests {
         }
     }
 
+    @Test func isCraftingFollowsTheOpenSession() throws {
+        let coordinator = try Self.harness().coordinator
+        #expect(!coordinator.isCrafting)
+        coordinator.crafting = try CraftingSessionTests.harness().session
+        #expect(coordinator.isCrafting)
+        coordinator.closeCraftingSession()
+        #expect(!coordinator.isCrafting)
+    }
+
     @Test func aBrewUsesOneOfEachAndRegistersThePotion() throws {
         let harness = try Self.harness()
         try Self.carry([Fixture.wheat, Fixture.flower], harness, count: 2)

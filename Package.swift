@@ -415,7 +415,7 @@ targets += foundation(
     tests: [
         "OpenSkyTagsTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
         "OpenSkyGameData", "OpenSkyShaderTypes", "OpenSkyFormatsTesting",
-        "OpenSkyEngineTesting", "OpenSkyRenderCore", "OpenSkyRenderResources"
+        "OpenSkyEngineTesting", "OpenSkyRenderCore", "OpenSkyRenderResources", "OpenSkyFormatsSWF"
     ]
 )
 
@@ -445,7 +445,7 @@ targets += testing(
         "OpenSkyFormatsTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyFormatsAnimation",
         "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyPhysics",
-        "OpenSkyRendering", "OpenSkyWorldState", "OpenSkyRenderCore"
+        "OpenSkyRendering", "OpenSkyWorldState", "OpenSkyRenderCore", "OpenSkyFormatsSWF"
     ]
 )
 

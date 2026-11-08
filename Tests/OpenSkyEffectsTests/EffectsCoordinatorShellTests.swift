@@ -79,6 +79,21 @@ struct EffectsCoordinatorShellTests {
         #expect(BloodEffectSettings.resolve(store: GameSettingStore(plugins: [])) == .vanilla)
     }
 
+    /// A reset forgets the last health share, so the same share starts the heartbeat again.
+    @Test func resetHealthCuesStartsTheHeartbeatAgain() {
+        let effects = EffectsCoordinator()
+        var imageSpace = ImageSpaceState()
+        func step() -> HeartbeatChange? {
+            effects.stepHealthCues(
+                share: 0.15, seconds: 0.1, heartbeatPlaying: true, imageSpace: &imageSpace
+            )
+        }
+        #expect(step() == .start(.slow))
+        #expect(step() == nil)
+        effects.resetHealthCues()
+        #expect(step() == .start(.slow))
+    }
+
     @Test func healthCuesWaitWhileTheWorldIsPaused() {
         let effects = EffectsCoordinator()
         var imageSpace = ImageSpaceState()

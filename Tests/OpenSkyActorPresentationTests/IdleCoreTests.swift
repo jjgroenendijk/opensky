@@ -127,6 +127,15 @@ struct IdleCoreTests {
         #expect(!IdleCore.holds(looping, properties: counted.properties))
     }
 
+    @Test func aPlanPlaysItsFollowUpClipsAfterItsFirst() {
+        let plan = IdlePlaybackPlan(
+            event: "IdleChairSitting", path: .namedClip, clipPath: "a.hkx", prop: .none,
+            followUps: [IdlePlanSegment(clipPath: "b.hkx", loops: true, triggers: [])]
+        )
+        #expect(plan.clipPaths == ["a.hkx", "b.hkx"])
+        #expect(plan.followUps.last?.loops == true)
+    }
+
     @Test func clipPathsFoldParentSegmentsAndFollowTheProject() {
         #expect(IdlePlaybackResolver.normalized(
             "meshes\\actors\\character\\..\\SharedKillMoves\\A.hkx"

@@ -352,9 +352,3 @@ extension PlayerFirstPersonRig: RenderRig {
         enabled ? animation.update(at: 0) : animation.resetToBindPose()
     }
 }
-
-extension GameSession {
-    public func knockPlayer(_ velocity: SIMD3<Float>) {
-        walkController.knock(velocity)
-    }
-}

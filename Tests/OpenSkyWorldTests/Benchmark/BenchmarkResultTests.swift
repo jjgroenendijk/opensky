@@ -23,6 +23,17 @@ struct BenchmarkResultTests {
         #expect(BenchmarkDistribution(milliseconds: []) == nil)
     }
 
+    @Test func theAppStartSurvivesItsJSONAndStartedInThePast() throws {
+        let start = BenchmarkAppStart(
+            processToWorldReadyMS: 900, worldLoadMS: 600,
+            stages: ["terrain": 200], sessionStart: ["firstFrame": 50]
+        )
+        let data = try JSONEncoder().encode(start)
+        #expect(try JSONDecoder().decode(BenchmarkAppStart.self, from: data) == start)
+        let started = try #require(BenchmarkAppStart.processStart())
+        #expect(started <= Date())
+    }
+
     @Test func aResultSurvivesItsJSON() throws {
         let scene = try #require(BenchmarkTour.scene(id: "whiterun"))
         var measured = BenchmarkSceneResult(scene: scene, status: .measured)

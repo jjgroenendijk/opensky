@@ -9,7 +9,7 @@ import OpenSkyMenusInterface
 import simd
 import Testing
 
-private final class HUDCallLog: @unchecked Sendable {
+final class HUDCallLog: @unchecked Sendable {
     private(set) var calls: [String: [[AS2Value]]] = [:]
 
     func append(_ name: String, arguments: [AS2Value]) {
@@ -17,7 +17,7 @@ private final class HUDCallLog: @unchecked Sendable {
     }
 }
 
-private struct HUDHarness {
+struct HUDHarness {
     let runtime: SWFMovieRuntime
     let target: SWFDisplayObject
     let log: HUDCallLog
@@ -35,7 +35,7 @@ struct HUDMovieBridgeTests {
         "ShowElements"
     ]
 
-    private func makeRuntime() throws -> HUDHarness {
+    static func makeRuntime() throws -> HUDHarness {
         let runtime = try SWFRuntimeFixture.started(tags: [
             SWFDisplayFixture.showFrameTag
         ])
@@ -44,7 +44,7 @@ struct HUDMovieBridgeTests {
         runtime.root.addChild(target, atDepth: 1)
         target.object.define(.integer(11), for: "CompassMarkerLocations")
         let log = HUDCallLog()
-        for name in Self.entryPoints {
+        for name in entryPoints {
             AS2Natives.method(runtime.runtime, on: target.object, name: name) { context in
                 log.append(name, arguments: context.arguments)
                 return .undefined
@@ -54,7 +54,7 @@ struct HUDMovieBridgeTests {
     }
 
     @Test func initializationPublishesCrosshairMetersCompassAndEmptyPrompt() throws {
-        let harness = try makeRuntime()
+        let harness = try Self.makeRuntime()
         try HUDMovieBridge.validate(runtime: harness.runtime)
         HUDMovieBridge.initialize(
             runtime: harness.runtime,
@@ -79,7 +79,7 @@ struct HUDMovieBridgeTests {
     }
 
     @Test func aModeIsPushedAndPoppedByItsMovieName() throws {
-        let harness = try makeRuntime()
+        let harness = try Self.makeRuntime()
         HUDMovieBridge.showElements(.cart, true, runtime: harness.runtime)
         HUDMovieBridge.showElements(.warHorse, false, runtime: harness.runtime)
         #expect(harness.log.calls["ShowElements"] == [
@@ -97,7 +97,7 @@ struct HUDMovieBridgeTests {
     }
 
     @Test func compassMarkersUseTheObservedFlatFourValueContract() throws {
-        let harness = try makeRuntime()
+        let harness = try Self.makeRuntime()
         HUDMovieBridge.setCompassMarkers(
             [
                 HUDCompassMarker(
@@ -126,7 +126,7 @@ struct HUDMovieBridgeTests {
     }
 
     @Test func elementVisibilityUsesObservedEntryPointsAndMeterClips() throws {
-        let harness = try makeRuntime()
+        let harness = try Self.makeRuntime()
         for name in ["Health", "Magica", "Stamina"] {
             let meter = SWFDisplayObject(content: .clip(nil))
             meter.name = name
@@ -170,7 +170,7 @@ struct HUDMovieBridgeTests {
     }
 
     @Test func activationPromptMapsToTheVanillaTenArgumentCall() throws {
-        let harness = try makeRuntime()
+        let harness = try Self.makeRuntime()
         HUDMovieBridge.setActivationPrompt("Open Test Door", runtime: harness.runtime)
         let arguments = try #require(harness.log.calls["SetCrosshairTarget"]?.first)
 
@@ -197,7 +197,7 @@ struct HUDMovieBridgeTests {
 
     @Test @MainActor
     func showingASubtitleWritesTheFieldAndRevealsTheHolder() throws {
-        let harness = try makeRuntime()
+        let harness = try Self.makeRuntime()
         _ = addSubtitleField(to: harness)
         HUDMovieBridge.setSubtitleText(
             "Some may call this junk.", runtime: harness.runtime
@@ -213,7 +213,7 @@ struct HUDMovieBridgeTests {
 
     @Test @MainActor
     func clearingASubtitleHidesTheHolder() throws {
-        let harness = try makeRuntime()
+        let harness = try Self.makeRuntime()
         _ = addSubtitleField(to: harness)
         HUDMovieBridge.setSubtitleText("A line.", runtime: harness.runtime)
         HUDMovieBridge.clearSubtitleText(runtime: harness.runtime)
@@ -223,7 +223,7 @@ struct HUDMovieBridgeTests {
 
     @Test @MainActor
     func anEmptyLineIsTheSameAsNoLine() throws {
-        let harness = try makeRuntime()
+        let harness = try Self.makeRuntime()
         _ = addSubtitleField(to: harness)
         HUDMovieBridge.setSubtitleText("", runtime: harness.runtime)
         #expect(!HUDMovieBridge.isSubtitleVisible(runtime: harness.runtime))
@@ -231,7 +231,7 @@ struct HUDMovieBridgeTests {
 
     @Test @MainActor
     func aMovieWithNoSubtitleFieldRecordsItRatherThanCrashing() throws {
-        let harness = try makeRuntime()
+        let harness = try Self.makeRuntime()
         HUDMovieBridge.setSubtitleText("A line.", runtime: harness.runtime)
         #expect(HUDMovieBridge.subtitleText(runtime: harness.runtime) == nil)
         #expect(!HUDMovieBridge.isSubtitleVisible(runtime: harness.runtime))
