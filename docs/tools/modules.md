@@ -202,10 +202,16 @@ OpenSkyWorld              cell streaming, the game session, audio directors, ben
   ^
 OpenSkyPreview            asset catalog, record text dumps, reference inspector (composition)
   ^
+OpenSky...Adapters        the world adapters, one module per feature group (composition)
+  ^
 OpenSky app, OpenSkyCLI   composition roots
 
 OpenSkyCLIArguments       the openskycli command line; only the CLI links it
 ```
+
+The eleven adapter modules, such as `OpenSkyMagicAdapters`, answer each feature's world port
+from the session. They are composition modules: they may import feature implementations, and no
+package module imports them ([Ports and adapters](/decisions/ports-and-adapters.md)).
 
 The format families depend only on `OpenSkyFormatsCore`, never on each other. A parser change
 rebuilds its family and the modules that import it, not every format. `OpenSkyFormatsMesh` also

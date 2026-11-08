@@ -25,11 +25,9 @@ import OpenSkyWorldState
 /// What `DialogueMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol DialogueMenuHost: MenuInputConsumer {
-    var audio: any AudioPort { get }
     var dialogue: any DialoguePort { get }
     var dialogueCamera: any DialogueCameraPort { get }
     var dialogueWorld: any DialogueWorldPort { get }
-    var faceMorphs: any FaceMorphPort { get }
     var furniture: any FurniturePort { get }
     var headTracking: any HeadTrackingPort { get }
     var hud: any HUDPort { get }
@@ -37,28 +35,34 @@ protocol DialogueMenuHost: MenuInputConsumer {
     var renderer: (any RendererPort)? { get }
     var storyWorld: any StoryWorldPort { get }
     var streamer: (any CellStreamerPort)? { get }
-    var subtitles: any SubtitlePort { get }
     var swfMovies: any SWFMovieSourcePort { get }
 }
 
 /// Holds the conversation's menu model and movie state for `game`.
 final class DialogueMenuController {
-    static let identifier: MenuIdentifier = "Dialogue Menu"
+    static let identifier = MenuIdentifier.dialogueMenu
     /// Measured with `openskycli menu dialogue`: the list's slide-in ends
     /// before `eMenuState` reaches `TOPIC_LIST_SHOWN`.
     static let activationTicks = 30
 
-    private static let logger = EngineLogger(
+    static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Dialogue"
     )
 
     unowned let game: any DialogueMenuHost
-    private(set) var model: OpenSkyMenus.DialogueMenuModel = .empty
-    private(set) var isOpen = false
+    var model: OpenSkyMenus.DialogueMenuModel = .empty
+    var isOpen = false
     let movie: MenuMovieSession
 
-    init(game: any DialogueMenuHost) {
+    let speechHost: any DialogueMenuSpeechHost
+
+    var speech: DialogueMenuSpeechAdapter {
+        DialogueMenuSpeechAdapter(owner: self, game: speechHost)
+    }
+
+    init(game: some DialogueMenuHost & DialogueMenuSpeechHost) {
+        speechHost = game
         self.game = game
         movie = MenuMovieSession(
             movies: game.swfMovies, hud: game.hud, label: "dialogue movie", logger: Self.logger
@@ -99,7 +103,7 @@ final class DialogueMenuController {
         isOpen = true
         if model.state == .greeting, let info = model.line?.info {
             game.dialogueWorld.run(dialogue.recordGreeting(info, speaker: speaker))
-            speakCurrentRun()
+            speech.speakCurrentRun()
         }
         game.headTracking.setLookTarget(.player, for: speaker, dialogue: true)
         dialogue.lastOutcome = DialogueCore.openedText(
@@ -112,7 +116,7 @@ final class DialogueMenuController {
         game.menuMode.present(Self.identifier, policy: .leavesWorldRunning)
         // The first frame under the menu is already the conversation's shot.
         game.dialogueCamera.refreshFocus()
-        startMovie()
+        speech.startMovie()
     }
 
     func openFromCrosshair() {
@@ -122,25 +126,6 @@ final class DialogueMenuController {
             return
         }
         begin(with: speaker)
-    }
-
-    func close() {
-        guard isOpen else { return }
-        isOpen = false
-        if let speaker = model.speakerKey {
-            game.audio.stopSpeaking(speaker)
-            game.headTracking.setLookTarget(nil, for: speaker)
-        }
-        if let face = speakerFace {
-            game.faceMorphs.clearEmotion(on: face)
-        }
-        dialogue.endConversation()
-        model.showTopicList()
-        game.menuMode.dismiss(Self.identifier)
-        // Hands the view and the speaker back, unless the readout forces the camera.
-        game.dialogueCamera.refreshFocus()
-        movie.stop()
-        publishSubtitle()
     }
 
     // MARK: - Input
@@ -170,8 +155,8 @@ final class DialogueMenuController {
             }
         }
         apply(event)
-        publishModel()
-        publishSubtitle()
+        speech.publishModel()
+        speech.publishSubtitle()
     }
 
     private func apply(_ event: MenuInputEvent) {
@@ -185,12 +170,12 @@ final class DialogueMenuController {
 
     /// Enter on a line steps to its next run, then hands the list back. The end
     /// of a run's voice file does the same.
-    private func advance() {
+    func advance() {
         guard model.state == .topicList else {
             if model.advanceResponse() {
-                speakCurrentRun()
+                speech.speakCurrentRun()
             } else {
-                finishResponse()
+                speech.finishResponse()
             }
             return
         }
@@ -202,139 +187,9 @@ final class DialogueMenuController {
             dialogue.lastOutcome = "no topic selected"
             return
         }
-        say(entry.info)
-    }
-
-    private func say(_ id: FormID) {
-        guard let speaker = model.speakerKey else {
-            dialogue.lastOutcome = "no dialogue index loaded"
-            return
-        }
-        let chosen = dialogue.choose(id, speaker: speaker)
-        game.dialogueWorld.run(chosen.commands)
-        guard let info = chosen.value else { return }
-        model.beginResponse(
-            info: id,
-            runs: DialogueMenuModel.responseRuns(
-                dialogue.index?.responseSource(ofInfo: id) ?? info,
-                strings: dialogue.strings
-            )
-        )
-        speakCurrentRun()
-    }
-
-    /// Skipping the last run cuts its voice off, as skipping the text does.
-    private func finishResponse() {
-        if let speaker = model.speakerKey {
-            game.audio.stopSpeaking(speaker)
-        }
-        switch dialogue.finishResponse(speaker: model.speakerKey) {
-        case .close:
-            close()
-            return
-        case let .continueWith(info):
-            say(info)
-            return
-        case let .topics(selection):
-            if let runtime = dialogue.runtime {
-                model.setTopics(
-                    DialogueMenuModel.rows(selection, runtime: runtime, strings: dialogue.strings)
-                )
-            }
-        case .unchanged:
-            break
-        }
-        model.showTopicList()
-    }
-
-    // MARK: - Movie
-
-    /// A missing install or a failed movie degrades to a readout, never to a
-    /// conversation that cannot be left.
-    private func startMovie() {
-        movie.start(MenuMovie(
-            path: DialogueMenuMovieBridge.moviePath,
-            activationTicks: Self.activationTicks,
-            prepare: DialogueMenuMovieBridge.prepare(runtime:),
-            activate: { [weak self] runtime in
-                DialogueMenuMovieBridge.activate(runtime: runtime) { [weak self] in
-                    self?.close()
-                }
-            },
-            didLoad: { [weak self] in self?.publishModel() }
-        ))
-    }
-
-    private func publishModel() {
-        guard movieLoaded else {
-            publishSubtitle()
-            return
-        }
-        let model = model
-        let showsSubtitle = game.subtitles.settings.dialogue
-        movie.publish { runtime in
-            DialogueMenuMovieBridge.publish(model, runtime: runtime, showsSubtitle: showsSubtitle)
-        }
-    }
-
-    /// Reaches the HUD only after the menu closed; this clears a line so it
-    /// does not outlive its menu. While the menu is up, its own
-    /// `SubtitleText` carries the line.
-    private func publishSubtitle() {
-        guard game.hud.isLoaded, let renderer = game.renderer else { return }
-        let subtitle = isOpen && game.subtitles.settings.dialogue ? model.subtitle : nil
-        do {
-            try renderer.updateSWFRuntime { runtime in
-                HUDMovieBridge.setSubtitleText(subtitle, runtime: runtime)
-            }
-        } catch {
-            Self.logger.error(
-                "[ERROR] dialogue subtitle: \(String(describing: error), privacy: .public)"
-            )
-        }
+        speech.say(entry.info)
     }
 }
 
 /// Speech and the speaker's face, outside the class body for its length cap.
-extension DialogueMenuController {
-    /// Says the run on screen in the speaker's voice. A run with no voice file
-    /// waits for Enter.
-    private func speakCurrentRun() {
-        guard let speaker = model.speakerKey, let line = model.line else { return }
-        showEmotion(of: line)
-        let paths = game.storyWorld.voicePaths(of: line.info, speaker: speaker)
-        guard paths.indices.contains(line.index) else {
-            game.audio.stopSpeaking(speaker)
-            return
-        }
-        game.audio.speak([paths[line.index]], speaker: speaker) { [weak self] in
-            self?.voiceEnded(line)
-        }
-    }
-
-    private func voiceEnded(_ line: DialogueResponseLine) {
-        guard isOpen, model.line == line else { return }
-        advance()
-        publishModel()
-        publishSubtitle()
-    }
-
-    /// The placed actor whose face the speaker's expression goes on.
-    private var speakerFace: FormID? {
-        model.speakerKey.flatMap { game.streamer?.referenceEntry(key: $0)?.placedActor?.formID }
-    }
-
-    /// Puts the emotion of the run on screen (INFO `TRDT`) on the speaker's face.
-    private func showEmotion(of line: DialogueResponseLine) {
-        guard
-            let face = speakerFace,
-            let info = dialogue.runtime?.dialogue.info(line.info),
-            info.responses.indices.contains(line.index)
-        else { return }
-        let response = info.responses[line.index]
-        game.faceMorphs.showEmotion(
-            response.emotion, value: response.emotionValue, on: face,
-            now: game.renderer?.animationTime ?? 0
-        )
-    }
-}
+extension DialogueMenuController {}

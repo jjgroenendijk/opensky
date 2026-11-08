@@ -40,7 +40,7 @@ protocol JournalMenuHost: MenuInputConsumer {
 
 /// Holds the journal's page model and movie state for `game`.
 final class JournalMenuController {
-    static let identifier: MenuIdentifier = "Journal"
+    static let identifier = MenuIdentifier.journalMenu
 
     private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",

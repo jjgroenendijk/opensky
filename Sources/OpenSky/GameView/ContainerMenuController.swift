@@ -22,23 +22,23 @@ import OpenSkyWorldInterface
 @MainActor
 protocol ContainerMenuHost: MenuInputConsumer {
     var worldState: any WorldStateStorePort { get }
-    var dialogueMenu: any DialogueMenuPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var mapWorld: any MapWorldPort { get }
     var dialogueWorld: any DialogueWorldPort { get }
+    var dialogueMenu: any DialogueMenuPort { get }
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }
     var inventoryWorld: any InventoryWorldPort { get }
-    var mapWorld: any MapWorldPort { get }
     var menuMode: any MenuModePort { get }
     var ragdoll: any RagdollPort { get }
     var renderer: (any RendererPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
     var swfMovies: any SWFMovieSourcePort { get }
 }
 
 /// Holds the container menu's target, list and movie state for `game`.
 final class ContainerMenuController {
-    static let containerIdentifier: MenuIdentifier = "ContainerMenu"
-    static let barterIdentifier: MenuIdentifier = "BarterMenu"
+    static let containerIdentifier = MenuIdentifier.containerMenu
+    static let barterIdentifier = MenuIdentifier.barterMenu
     /// Frames the movie's fade needs to settle, the same as `inventorymenu.swf`.
     static let activationTicks = 20
 

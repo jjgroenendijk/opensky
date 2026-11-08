@@ -128,7 +128,7 @@ final class GameMetalView: MTKView {
             }
             return
         }
-        if !inMenu, let name = Self.helpEvents[action] {
+        if !inMenu, let name = action.helpEvent {
             onInputEvent?(name)
         }
         dispatcher.apply(action, .press)
@@ -145,13 +145,6 @@ final class GameMetalView: MTKView {
         else { return false }
         return onTypedText?(text) == true
     }
-
-    /// The input event names a help message can wait for.
-    static let helpEvents: [GameInputAction: String] = [
-        .activate: "Activate", .jump: "Jump", .sneak: "Sneak"
-    ]
-    /// Looking around with the pointer ends a "Look" help message, as in the game.
-    static let lookEvent = "Look"
 
     override func keyUp(with event: NSEvent) {
         // Menus act on key-down; a held direction's key-up reaches a menu that
@@ -261,7 +254,7 @@ final class GameMetalView: MTKView {
         // origin); negate so pointer-up -> look up.
         input?.addLook(right: Float(event.deltaX), up: Float(-event.deltaY))
         if event.deltaX != 0 || event.deltaY != 0 {
-            onInputEvent?(Self.lookEvent)
+            onInputEvent?(GameInputAction.lookHelpEvent)
         }
     }
 

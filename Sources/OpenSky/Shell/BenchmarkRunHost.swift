@@ -3,6 +3,7 @@
 // result. `openskycli benchmark` launches the app with `--benchmark-request`.
 
 import AppKit
+import OpenSkyAgentAdapters
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyWorld

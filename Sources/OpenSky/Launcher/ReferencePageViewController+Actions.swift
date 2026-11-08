@@ -6,6 +6,7 @@ import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyReference
 import OpenSkySave
+import OpenSkySessionAdapters
 
 extension ReferencePageViewController {
     /// Splits the main screen: OpenSky on the left, the Windows game on the right.

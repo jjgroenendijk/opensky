@@ -22,23 +22,23 @@ import OpenSkyWorld
 /// What `InventoryMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol InventoryMenuHost: MenuInputConsumer {
-    var combat: any CombatPort { get }
     var gameSession: (any GameSessionPort)? { get }
+    var worldData: WorldDataStores? { get }
+    var mapWorld: any MapWorldPort { get }
+    var magic: any MagicPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var combat: any CombatPort { get }
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }
-    var inventoryWorld: any InventoryWorldPort { get }
-    var magic: any MagicPort { get }
-    var mapWorld: any MapWorldPort { get }
     var menuMode: any MenuModePort { get }
     var menuScreens: any MenuScreensPort { get }
     var renderer: (any RendererPort)? { get }
     var swfMovies: any SWFMovieSourcePort { get }
-    var worldData: WorldDataStores? { get }
 }
 
 /// Holds the inventory menu's row list and movie state for `game`.
 final class InventoryMenuController {
-    static let identifier: MenuIdentifier = "InventoryMenu"
+    static let identifier = MenuIdentifier.inventoryMenu
     /// Frames the movie's own fade needs to settle, measured on the install.
     static let activationTicks = 20
 

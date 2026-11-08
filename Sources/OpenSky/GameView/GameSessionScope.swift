@@ -5,12 +5,15 @@
 
 import AppKit
 import MetalKit
+import OpenSkyActorAdapters
 import OpenSkyActorPresentation
 import OpenSkyActors
+import OpenSkyAIAdapters
 import OpenSkyAIPackages
 import OpenSkyCamera
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatAdapters
 import OpenSkyCrime
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
@@ -20,19 +23,25 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyInventoryAdapters
 import OpenSkyLoading
 import OpenSkyMagic
+import OpenSkyMagicAdapters
+import OpenSkyMenuAdapters
 import OpenSkyMenus
 import OpenSkyObjectAnimation
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyProgression
+import OpenSkyProgressionAdapters
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
+import OpenSkySessionAdapters
 import OpenSkySessionInterface
+import OpenSkyStoryAdapters
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -67,7 +76,7 @@ final class GameSessionScope {
     }
 
     /// The benchmark tour through the live window (docs/tools/benchmark.md).
-    lazy var benchmarkWorld = BenchmarkWorldAdapter(game: ports)
+    lazy var benchmarkWorld = factories.makeBenchmarkWorld()
     lazy var benchmarkTour = BenchmarkTourCoordinator(world: benchmarkWorld)
 
     /// Holds the build runner and the provider for the window's lifetime.
@@ -87,13 +96,16 @@ final class GameSessionScope {
     /// session start replaces it with one built over the loaded world.
     lazy var scripts = ScriptCoordinator(world: scriptWorld)
 
-    lazy var scriptWorld = makeScriptWorld()
+    lazy var scriptWorld = factories.makeScriptWorld()
 
     /// The renderer and streamer controls of agent control.
     lazy var renderControls = WorldRenderControls(runtimeState: runtimeState, world: self)
 
     /// Every adapter's view of this scope.
     lazy var ports = SessionPorts(scope: self)
+    var factories: GameSessionScopeFactories {
+        GameSessionScopeFactories(scope: self)
+    }
 
     lazy var sessionWiring = WorldSessionWiring(game: self)
 
@@ -109,7 +121,7 @@ final class GameSessionScope {
 
     lazy var controllerRumble = ControllerRumble()
 
-    lazy var systemMenu = makeSystemMenu()
+    lazy var systemMenu = factories.makeSystemMenu()
 
     /// Answers the Survival Mode plugin's prompt from the settings.
     lazy var survivalMode = SurvivalModeCoordinator(
@@ -118,14 +130,14 @@ final class GameSessionScope {
     lazy var survivalModeWorld = SurvivalModeWorldAdapter(runtimeState: runtimeState)
 
     lazy var saveGames = SaveGameWorldAdapter(game: ports)
-    lazy var menuWorld = MenuWorldAdapter(game: ports)
+    lazy var menuWorld = factories.makeMenuWorld()
     lazy var mapWorld = MapWorldAdapter(game: ports)
     /// Builds and routes the menu coordinators below.
     lazy var menuRouter = MenuRouter(game: ports)
     lazy var titleMenu = TitleMenuCoordinator(
         menuMode: menuMode, movies: swfMovies, hud: hud, saves: saveGames, world: menuWorld
     )
-    lazy var raceMenu = makeRaceMenu()
+    lazy var raceMenu = factories.makeRaceMenu()
     lazy var skillsMenu = SkillsMenuCoordinator(
         menuMode: menuMode, movies: swfMovies, hud: hud, world: menuWorld
     )
@@ -157,24 +169,8 @@ final class GameSessionScope {
     /// Scenes, story-manager events, and their voice lines.
     lazy var storyWorld = StoryWorldAdapter(game: ports)
     /// The quest store's space, so a DLC scene names its quest as the runtime does.
-    lazy var scenes = SceneCoordinator(
-        dialogue: dialogue,
-        world: storyWorld,
-        catalog: worldData.flatMap { data in
-            data.storyData.scenes.flatMap { store in
-                data.questStore.map { SceneCatalog(store: store, resolver: $0.resolver) }
-            }
-        } ?? .empty,
-        repeatPause: dialogue.speechTimers.sceneRepeatPause
-    )
-    lazy var storyManager = StoryManagerCoordinator(
-        world: storyWorld,
-        social: SocialEventCoordinator(
-            world: storyWorld,
-            settings: worldData?.storyData.social ?? .documentedDefaults
-        ),
-        story: worldData?.storyData.storyManager
-    )
+    lazy var scenes = factories.makeScenes()
+    lazy var storyManager = factories.makeStoryManager()
     lazy var dialogueMenu = DialogueMenuController(game: ports)
     lazy var dialogueCamera = DialogueCameraController(game: ports)
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
@@ -188,7 +184,7 @@ final class GameSessionScope {
 
     lazy var messageWorld = MessageWorldAdapter(game: ports)
     /// Wait, training, books, help, magic, gifts, crafting, and text entry.
-    lazy var menuScreens = MenuScreens(game: ports, screens: makeMenuScreenCoordinators())
+    lazy var menuScreens = MenuScreens(game: ports, screens: factories.makeMenuScreenCoordinators())
     lazy var menuScreensWorld = MenuScreensWorldAdapter(game: ports)
     /// Kill cams and camera shake.
     lazy var cinematicCamera = CinematicCameraCoordinator(
@@ -210,25 +206,17 @@ final class GameSessionScope {
     )
     lazy var perkActivationWorld = PerkActivationWorldAdapter(game: ports)
     lazy var hazards: HazardCoordinator = .init(world: hazardWorld)
-    lazy var hazardWorld: HazardWorldAdapter = .init(HazardWorldDependencies(
-        hazards: { [unowned self] in hazards },
-        combat: combat,
-        magic: { [unowned self] in magic },
-        magicWorld: { [unowned self] in magicWorld },
-        gameSession: { [unowned self] in gameSession }
-    ))
+    lazy var hazardWorld = factories.makeHazardWorld()
     /// Session start replaces it with one built over the loaded effect records.
     lazy var effects = EffectsCoordinator()
     lazy var effectsWorld = EffectsWorldAdapter(game: ports)
-    lazy var trapControl = TrapControlAdapter(TrapControlDependencies(
-        streamer: { [unowned self] in streamer }
-    ))
+    lazy var trapControl = factories.makeTrapControl()
     /// The player graphs, the body, and the locomotion and first-person readouts.
     lazy var player = PlayerCoordinator(
         input: cameraInput, world: playerWorld, source: playerWorld.rigSource()
     )
 
-    lazy var playerWorld = makePlayerWorld()
+    lazy var playerWorld = factories.makePlayerWorld()
 
     /// The Face Morphs readout, over the actor in conversation.
     lazy var faceMorphs = FaceMorphCoordinator(
@@ -276,11 +264,7 @@ final class GameSessionScope {
     lazy var factions: FactionCoordinator = .init(
         store: worldState, world: factionWorld, data: FactionWorldAdapter.sessionData(worldData)
     )
-    lazy var factionWorld: FactionWorldAdapter = .init(FactionWorldDependencies(
-        factions: { [unowned self] in factions },
-        actors: actorWorld,
-        streamer: { [unowned self] in streamer }
-    ))
+    lazy var factionWorld = factories.makeFactionWorld()
     /// Bounties, ownership, guard response and the Crime & Factions readout.
     lazy var crime = CrimeCoordinator(
         world: crimeWorld,
@@ -328,16 +312,16 @@ final class GameSessionScope {
     )
 
     /// The gait clip each NPC mover plays.
-    lazy var npcAnimation = makeNPCAnimation()
+    lazy var npcAnimation = factories.makeNPCAnimation()
 
     lazy var aiWorld = AIWorldAdapter(game: ports)
     /// What `openskycli game` drives. The app's `AgentControlHost` owns the server.
-    lazy var agentWorld = AgentWorldAdapter(game: ports)
+    lazy var agentWorld = factories.makeAgentWorld()
 
     /// Ambient idles and the head switch, with the coordinators they drive.
     lazy var idleWorld = IdleWorldAdapter(game: ports)
     /// Ambient idles at idle markers, with their props.
-    lazy var idles = makeIdles()
+    lazy var idles = factories.makeIdles()
 
     /// Carts, riders, and the actor AI natives.
     lazy var vehicleWorld = VehicleWorldAdapter(game: ports)
@@ -358,15 +342,15 @@ final class GameSessionScope {
     lazy var dragonFlightWorld = DragonFlightWorldAdapter(game: ports)
     lazy var dragonFlight = DragonFlightCoordinator(world: dragonFlightWorld)
     /// Traps, doors, and levers that a behaviour graph runs.
-    lazy var objectAnimationWorld = makeObjectAnimationWorld()
+    lazy var objectAnimationWorld = factories.makeObjectAnimationWorld()
 
     lazy var objectBehaviors = ObjectBehaviorCoordinator(
         settings: playerSettings.store, world: objectAnimationWorld,
         files: { [unowned self] in audioFileSystem },
         viewer: { [unowned self] in billboardViewer }
     )
-    lazy var sequenceDoors = makeSequenceDoors()
-    lazy var nodeControllers = makeNodeControllers()
+    lazy var sequenceDoors = factories.makeSequenceDoors()
+    lazy var nodeControllers = factories.makeNodeControllers()
 
     /// The behaviour graphs of the effects on actors, which hear the actors' events.
     lazy var effectGraphWorld = EffectGraphWorldAdapter(game: ports)
@@ -374,9 +358,9 @@ final class GameSessionScope {
         world: effectGraphWorld, files: { [unowned self] in audioFileSystem }
     )
     /// Poses the effect models whose nodes move; the "Animated objects" setting turns it off.
-    lazy var effectModelPoser = makeEffectModelPoser()
+    lazy var effectModelPoser = factories.makeEffectModelPoser()
 
     /// The behaviour graph each loaded NPC and creature runs.
     lazy var actorGraphWorld = ActorGraphWorldAdapter(game: ports)
-    lazy var actorGraphs = makeActorGraphs()
+    lazy var actorGraphs = factories.makeActorGraphs()
 }

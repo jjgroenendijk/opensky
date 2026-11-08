@@ -2,6 +2,8 @@
 // a port or a value (docs/decisions/ports-and-adapters.md).
 
 import AppKit
+import MetalKit
+import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAudio
 import OpenSkyCells
@@ -38,10 +40,6 @@ final class SessionPorts {
 }
 
 extension SessionPorts {
-    var activationRefusals: any ActivationRefusalWorldPort {
-        scope.activationRefusals
-    }
-
     var actorGraphWorld: any ActorGraphWorldPort {
         scope.actorGraphWorld
     }
@@ -81,10 +79,6 @@ extension SessionPorts {
 
     var audioFileSystem: (any GameFileSource)? {
         scope.audioFileSystem
-    }
-
-    var audioWorld: any AudioWorldPort {
-        scope.audioWorld
     }
 
     var beastForms: any BeastFormWorldPort {
@@ -175,10 +169,6 @@ extension SessionPorts {
         scope.dragonFlightWorld
     }
 
-    var effectGraphWorld: any EffectGraphWorldPort {
-        scope.effectGraphWorld
-    }
-
     var effectGraphs: any EffectGraphPort {
         scope.effectGraphs
     }
@@ -235,8 +225,12 @@ extension SessionPorts {
         scope.headTracking
     }
 
-    var hostView: NSView {
-        scope.hostView
+    var drawableSize: CGSize {
+        (scope.hostView as? MTKView)?.drawableSize ?? .zero
+    }
+
+    var viewBounds: CGRect {
+        scope.hostView.bounds
     }
 
     var hud: any HUDPort {
@@ -281,10 +275,6 @@ extension SessionPorts {
 
     var localizedStringsLoader: (() -> LocalizedStrings)? {
         scope.localizedStringsLoader
-    }
-
-    var lockWorld: any LockWorldPort {
-        scope.lockWorld
     }
 
     var lockpickingMenu: any LockpickingMenuPort {
@@ -383,10 +373,6 @@ extension SessionPorts {
         scope.perkActivation
     }
 
-    var perkActivationWorld: any PerkActivationWorldPort {
-        scope.perkActivationWorld
-    }
-
     var perks: any PerkPort {
         scope.perks
     }
@@ -409,10 +395,6 @@ extension SessionPorts {
 
     var playerSettingsStore: PlayerSettingsStore {
         scope.playerSettingsStore
-    }
-
-    var playerWorld: any PlayerWorldPort {
-        scope.playerWorld
     }
 
     var progression: any ProgressionPort {
@@ -475,10 +457,6 @@ extension SessionPorts {
         scope.scenes
     }
 
-    var scriptWorld: any ScriptWorldPort {
-        scope.scriptWorld
-    }
-
     var scripts: any ScriptPort {
         scope.scripts
     }
@@ -491,8 +469,8 @@ extension SessionPorts {
         scope.sessionStartTiming
     }
 
-    var sessionWiring: WorldSessionWiring {
-        scope.sessionWiring
+    var animationClips: ActorClipLoader? {
+        scope.sessionWiring.animationClips
     }
 
     func showControlRefusal(_ refusal: PlayerControlRefusal) {
@@ -545,10 +523,6 @@ extension SessionPorts {
 
     var titleSequence: any TitleSequencePort {
         scope.titleSequence
-    }
-
-    var trapControl: any TrapControlPort {
-        scope.trapControl
     }
 
     var vehicleWorld: any VehicleWorldPort {

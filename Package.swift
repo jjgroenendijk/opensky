@@ -1226,6 +1226,201 @@ targets += composition(
     ]
 )
 
+// The world adapters (docs/decisions/ports-and-adapters.md): each answers one feature's
+// world port from the session. Only the app and openskycli link them.
+targets += composition(
+    "OpenSkyAIAdapters",
+    dependencies: [
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors",
+        "OpenSkyActorsInterface", "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface",
+        "OpenSkyConditions", "OpenSkyCrime", "OpenSkyCrimeInterface", "OpenSkyDiagnostics",
+        "OpenSkyDialogue", "OpenSkyDialogueInterface", "OpenSkyFactions",
+        "OpenSkyFormatsAnimation", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyInventory",
+        "OpenSkyInventoryInterface", "OpenSkyMagic", "OpenSkyMagicInterface",
+        "OpenSkyNavigation", "OpenSkyPerception", "OpenSkyPerceptionInterface",
+        "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression", "OpenSkyProgressionInterface",
+        "OpenSkyQuestsInterface", "OpenSkyRenderCore", "OpenSkyRendering",
+        "OpenSkyRuntimeState", "OpenSkyScripting", "OpenSkyScriptingInterface",
+        "OpenSkySessionInterface", "OpenSkyWorld", "OpenSkyWorldConditions",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkyActorAdapters",
+    dependencies: [
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors",
+        "OpenSkyActorsInterface", "OpenSkyAudio", "OpenSkyBehavior", "OpenSkyCamera",
+        "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyConditions",
+        "OpenSkyCrime", "OpenSkyCrimeInterface", "OpenSkyEffects", "OpenSkyFactions",
+        "OpenSkyFactionsInterface", "OpenSkyFormatsAnimation", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyInventory",
+        "OpenSkyInventoryInterface", "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyMenus",
+        "OpenSkyMenusInterface", "OpenSkyNavigation", "OpenSkyObjectAnimation",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression",
+        "OpenSkyProgressionInterface", "OpenSkyQuests", "OpenSkyQuestsInterface",
+        "OpenSkyRenderCore", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
+        "OpenSkyScriptingInterface", "OpenSkySession", "OpenSkySessionInterface",
+        "OpenSkyTerrain", "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkyAgentAdapters",
+    dependencies: [
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors",
+        "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio", "OpenSkyBehavior",
+        "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyConditions",
+        "OpenSkyCrimeInterface", "OpenSkyDiagnostics", "OpenSkyDialogue",
+        "OpenSkyDialogueInterface", "OpenSkyEffects", "OpenSkyFactions",
+        "OpenSkyFactionsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyInventory", "OpenSkyInventoryInterface",
+        "OpenSkyLoading", "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyMenus",
+        "OpenSkyMenusInterface", "OpenSkyObjectAnimation", "OpenSkyPerception",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression",
+        "OpenSkyProgressionInterface", "OpenSkyQuests", "OpenSkyQuestsInterface",
+        "OpenSkyReference", "OpenSkyRenderCore", "OpenSkyRenderResources", "OpenSkyRendering",
+        "OpenSkyRuntimeState", "OpenSkySave", "OpenSkySaveInterface", "OpenSkyScripting",
+        "OpenSkyScriptingInterface", "OpenSkySession", "OpenSkySessionInterface",
+        "OpenSkyWeather", "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkyCombatAdapters",
+    dependencies: [
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors",
+        "OpenSkyActorsInterface", "OpenSkyAudio", "OpenSkyBehavior", "OpenSkyCamera",
+        "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyConditions",
+        "OpenSkyCrime", "OpenSkyDiagnostics", "OpenSkyDialogue", "OpenSkyDialogueInterface",
+        "OpenSkyEffects", "OpenSkyFactions", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyInventory",
+        "OpenSkyInventoryInterface", "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyMenus",
+        "OpenSkyNavigation", "OpenSkyPerception", "OpenSkyPerceptionInterface",
+        "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression", "OpenSkyProgressionInterface",
+        "OpenSkyQuestsInterface", "OpenSkyRenderCore", "OpenSkyRendering",
+        "OpenSkyRuntimeState", "OpenSkyScripting", "OpenSkyScriptingInterface",
+        "OpenSkySessionInterface", "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkyInventoryAdapters",
+    dependencies: [
+        "OpenSkyAIPackages", "OpenSkyActors", "OpenSkyCells", "OpenSkyConditions",
+        "OpenSkyCrime", "OpenSkyCrimeInterface", "OpenSkyFactions", "OpenSkyFactionsInterface",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventory", "OpenSkyInventoryInterface",
+        "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyMenus", "OpenSkyMenusInterface",
+        "OpenSkyPerception", "OpenSkyPerceptionInterface", "OpenSkyPlayer",
+        "OpenSkyProgression", "OpenSkyProgressionInterface", "OpenSkyQuests",
+        "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
+        "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkyWorld",
+        "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkyMagicAdapters",
+    dependencies: [
+        "OpenSkyActorPresentation", "OpenSkyActors", "OpenSkyActorsInterface", "OpenSkyAudio",
+        "OpenSkyBehavior", "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface",
+        "OpenSkyConditions", "OpenSkyDialogue", "OpenSkyDialogueInterface", "OpenSkyEffects",
+        "OpenSkyFactions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
+        "OpenSkyGameData", "OpenSkyInventory", "OpenSkyInventoryInterface", "OpenSkyMagic",
+        "OpenSkyMagicInterface", "OpenSkyMenus", "OpenSkyMenusInterface", "OpenSkyNavigation",
+        "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression", "OpenSkyProgressionInterface",
+        "OpenSkyRenderCore", "OpenSkyRenderResources", "OpenSkyRendering",
+        "OpenSkyRuntimeState", "OpenSkyScripting", "OpenSkyScriptingInterface",
+        "OpenSkySessionInterface", "OpenSkyWorld", "OpenSkyWorldConditions",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkyMenuAdapters",
+    dependencies: [
+        "OpenSkyActors", "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio",
+        "OpenSkyCamera", "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface",
+        "OpenSkyConditions", "OpenSkyCrime", "OpenSkyCrimeInterface", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyInventory",
+        "OpenSkyInventoryInterface", "OpenSkyLaunch", "OpenSkyLoading", "OpenSkyMagic",
+        "OpenSkyMagicInterface", "OpenSkyMenus", "OpenSkyMenusInterface", "OpenSkyPhysics",
+        "OpenSkyPlayer", "OpenSkyProgression", "OpenSkyProgressionInterface", "OpenSkyQuests",
+        "OpenSkyQuestsInterface", "OpenSkyRenderCore", "OpenSkyRenderResources",
+        "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkySave", "OpenSkySaveInterface",
+        "OpenSkyScripting", "OpenSkyScriptingInterface", "OpenSkySession",
+        "OpenSkySessionInterface", "OpenSkyTerrain", "OpenSkyWorld", "OpenSkyWorldConditions",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkyProgressionAdapters",
+    dependencies: [
+        "OpenSkyActors", "OpenSkyAudio", "OpenSkyCells", "OpenSkyCombat", "OpenSkyConditions",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventory", "OpenSkyInventoryInterface",
+        "OpenSkyMagic", "OpenSkyMenus", "OpenSkyPlayer", "OpenSkyProgression",
+        "OpenSkyProgressionInterface", "OpenSkyQuests", "OpenSkyQuestsInterface",
+        "OpenSkyRuntimeState", "OpenSkyScripting", "OpenSkySessionInterface", "OpenSkyWorld",
+        "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkyScriptAdapters",
+    dependencies: [
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors", "OpenSkyAgentControl",
+        "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyConditions",
+        "OpenSkyCrime", "OpenSkyEffects", "OpenSkyFormatsAnimation", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyInventory",
+        "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyMenus", "OpenSkyMenusInterface",
+        "OpenSkyNavigation", "OpenSkyObjectAnimation", "OpenSkyPerception",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression",
+        "OpenSkyQuests", "OpenSkyQuestsInterface", "OpenSkyRenderCore",
+        "OpenSkyRenderResources", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
+        "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkyWeather",
+        "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkySessionAdapters",
+    dependencies: [
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors",
+        "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio", "OpenSkyCells",
+        "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrime",
+        "OpenSkyCrimeInterface", "OpenSkyDialogue", "OpenSkyDialogueInterface",
+        "OpenSkyEffects", "OpenSkyFactions", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsESS", "OpenSkyGameData", "OpenSkyInventory", "OpenSkyInventoryInterface",
+        "OpenSkyLoading", "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyMenus",
+        "OpenSkyMenusInterface", "OpenSkyPerception", "OpenSkyPhysics", "OpenSkyPlayer",
+        "OpenSkyProgression", "OpenSkyQuestsInterface", "OpenSkyRenderCore",
+        "OpenSkyRenderResources", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkySave",
+        "OpenSkySaveInterface", "OpenSkyScripting", "OpenSkyScriptingInterface",
+        "OpenSkySessionInterface", "OpenSkyWeather", "OpenSkyWorld", "OpenSkyWorldConditions",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
+targets += composition(
+    "OpenSkyStoryAdapters",
+    dependencies: [
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActorsInterface",
+        "OpenSkyAudio", "OpenSkyCamera", "OpenSkyCells", "OpenSkyCombat",
+        "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrime", "OpenSkyCrimeInterface",
+        "OpenSkyDiagnostics", "OpenSkyDialogue", "OpenSkyDialogueInterface", "OpenSkyFactions",
+        "OpenSkyFactionsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyGameData", "OpenSkyInventory", "OpenSkyInventoryInterface", "OpenSkyMagic",
+        "OpenSkyMenus", "OpenSkyMenusInterface", "OpenSkyPerception",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression",
+        "OpenSkyProgressionInterface", "OpenSkyQuests", "OpenSkyQuestsInterface",
+        "OpenSkyRenderCore", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
+        "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkyWorld",
+        "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
+
 // The openskycli command line (docs/tools/modules.md): nonisolated, linked by the CLI only.
 targets.append(.target(
     name: "OpenSkyCLIArguments", dependencies: checked("OpenSkyCLIArguments", ["ArgumentParser"]),

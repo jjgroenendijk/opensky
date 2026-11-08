@@ -18,6 +18,7 @@ import OpenSkyMenusInterface
 import OpenSkySaveFixtures
 import OpenSkyScripting
 import OpenSkyScriptingFixtures
+import OpenSkyStoryAdapters
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface

@@ -1,55 +1,57 @@
 // The session ports answer every adapter's host protocol, so each adapter sees
 // only the part of the session it reads.
 
+import OpenSkyActorAdapters
+import OpenSkyAgentAdapters
+import OpenSkyAIAdapters
+import OpenSkyCombatAdapters
+import OpenSkyInventoryAdapters
+import OpenSkyMagicAdapters
+import OpenSkyMenuAdapters
 import OpenSkyMenus
+import OpenSkyProgressionAdapters
+import OpenSkyScriptAdapters
+import OpenSkySessionAdapters
+import OpenSkyStoryAdapters
 
-extension SessionPorts: AIWorldHost {}
-extension SessionPorts: ActivationRefusalWorldHost {}
-extension SessionPorts: ActorGraphWorldHost {}
-extension SessionPorts: ActorWorldHost {}
-extension SessionPorts: AgentWorldHost {}
-extension SessionPorts: AnimationEventWorldHost {}
-extension SessionPorts: AudioWorldHost {}
-extension SessionPorts: BeastFormWorldHost {}
-extension SessionPorts: BenchmarkWorldHost {}
-extension SessionPorts: CinematicCameraWorldHost {}
-extension SessionPorts: CombatWorldHost {}
-extension SessionPorts: ContainerMenuHost {}
-extension SessionPorts: CrimeWorldHost {}
-extension SessionPorts: DialogueCameraHost {}
-extension SessionPorts: DialogueMenuHost {}
-extension SessionPorts: DialogueWorldHost {}
-extension SessionPorts: DragonFlightWorldHost {}
-extension SessionPorts: EffectGraphWorldHost {}
-extension SessionPorts: EffectsWorldHost {}
-extension SessionPorts: FollowerCommandWorldHost {}
-extension SessionPorts: IdleWorldHost {}
-extension SessionPorts: InventoryMenuHost {}
-extension SessionPorts: InventoryWorldHost {}
-extension SessionPorts: JournalMenuHost {}
-extension SessionPorts: LoadingScreenWorldHost {}
-extension SessionPorts: LockWorldHost {}
-extension SessionPorts: LockpickingMenuHost {}
-extension SessionPorts: MagicWorldHost {}
-extension SessionPorts: MapWorldHost {}
-extension SessionPorts: MenuRouterHost {}
-extension SessionPorts: MenuScreensHost {}
-extension SessionPorts: MenuScreensWorldHost {}
-extension SessionPorts: MenuSoundHost {}
-extension SessionPorts: MenuWorldHost {}
-extension SessionPorts: MessageWorldHost {}
-extension SessionPorts: MountWorldHost {}
-extension SessionPorts: MovieWorldHost {}
-extension SessionPorts: ObjectAnimationWorldHost {}
-extension SessionPorts: PerkActivationWorldHost {}
-extension SessionPorts: PlayerWorldHost {}
-extension SessionPorts: ProgressionWorldHost {}
-extension SessionPorts: RagdollWorldHost {}
-extension SessionPorts: RuntimeStateWorldHost {}
-extension SessionPorts: SaveGameWorldHost {}
-extension SessionPorts: ScriptWorldHost {}
-extension SessionPorts: SkyrimSaveExportHost {}
-extension SessionPorts: SkyrimSaveImportHost {}
-extension SessionPorts: StoryWorldHost {}
-extension SessionPorts: VehicleWorldHost {}
-extension SessionPorts: SystemMenuWorld {}
+extension SessionPorts:
+    AIWorldHost, ActivationRefusalWorldHost, ActorGraphWorldHost, ActorWorldHost, AgentWorldHost,
+    AnimationEventWorldHost, AudioWorldHost, BeastFormWorldHost, BenchmarkWorldHost,
+    CinematicCameraWorldHost, CombatWorldHost, ContainerMenuHost, CrimeWorldHost,
+    DialogueCameraHost, DialogueMenuHost, DialogueWorldHost, DragonFlightWorldHost,
+    EffectGraphWorldHost, EffectsWorldHost, FollowerCommandWorldHost, IdleWorldHost,
+    InventoryMenuHost, InventoryWorldHost, JournalMenuHost, LoadingScreenWorldHost, LockWorldHost,
+    LockpickingMenuHost, MagicWorldHost, MapWorldHost, MenuRouterHost, MenuHotkeyHost,
+    MenuTickHost, MenuPlayRoutesHost, MenuFrontRoutesHost, MenuScreensHost, MenuScreensWorldHost,
+    MenuSoundHost, MenuWorldHost, MessageWorldHost, MountWorldHost, MovieWorldHost,
+    ObjectAnimationWorldHost, PerkActivationWorldHost, PlayerWorldHost, ProgressionWorldHost,
+    RagdollWorldHost, RuntimeStateWorldHost, SaveGameWorldHost, ScriptWorldHost,
+    SkyrimSaveExportHost, SkyrimSaveImportHost, StoryWorldHost, VehicleWorldHost, SystemMenuWorld,
+    AgentRenderHost, AgentActorsHost, AgentMotionHost, AgentBehaviourHost, AgentObjectsHost,
+    AgentMenuReadoutHost, AgentScreensHost, AgentEventsHost, AgentPlayerReadoutHost,
+    AgentFrameReadoutHost, AgentActorReadoutHost, AgentItemsHost, AgentViewHost, AgentInputHost,
+    AgentCaptureHost, ScriptActorBindingsHost, ScriptPerkBindingsHost, ScriptSessionBindingsHost,
+    ScriptPlayerBindingsHost, ScriptReferenceBindingsHost, ScriptSoundBindingsHost,
+    ScriptPhysicsBindingsHost, ScriptNodeBindingsHost, ScriptSkyBindingsHost,
+    ScriptFeatureBindingsHost, AISeatingHost, AIDetectionSenseHost, AIPerceptionSenseHost,
+    AINavigationHost, AIPackageMovesHost, AIPackageStateHost, AIPackageActsHost, AIBumpsHost,
+    CombatSpellCastsHost, CombatImpactEffectsHost, CombatReportsHost, CombatActorFactsHost,
+    CombatGearHost, CombatMotionHost, CombatOutcomesHost, MagicArchetypeEffectsHost,
+    MagicSpellDeliveryHost, MagicHeldMagicHost, MagicSummonedActorsHost, MagicWorldFactsHost,
+    EffectsBodyImpulsesHost, EffectsTrapControlHost, EffectsBlastsHost, EffectsEffectPlacementHost,
+    RagdollRecoveryHost, RagdollRemainsHost, RagdollPlayerFallHost, RagdollPoseReadsHost,
+    RagdollDeathsHost, RuntimeStateSessionClockHost, RuntimeStateConditionReadsHost,
+    RuntimeStateSaveContentsHost, RuntimeStateSessionLoadHost, RuntimeStateLiveSeamsHost,
+    RuntimeStateReferenceMotionHost, RuntimeStateInventoryFactsHost, StoryAmbientTalkHost,
+    StorySocialSearchHost, StorySceneLinesHost, StorySceneCastHost, MenuWorldSettingsApplyHost,
+    MenuWorldSkillsRaceHost, MenuWorldNewGameHost, MenuWorldScriptMenusHost,
+    MenuWorldTeleportsHost, MenuScreensCraftingDeskHost, MenuScreensGuidesHost,
+    MenuScreensGiftListsHost, DragonFlightCandidatesHost, LoadingScreenPresentationHost,
+    ActorGraphGraphEventsHost, BenchmarkTourSettingsHost, DialogueMenuSpeechHost,
+    LockpickingBoardHost, MountDragonRidingHost, MessageCameraEffectsHost,
+    FollowerCommandTasksHost, IdlePlacementHost, PlayerFirstPersonHost, PlayerFaceHost,
+    AudioListenerHost, AudioMixHost, CrimeFactionsHost, CrimeJailHost, CrimeActorsHost,
+    ProgressionTrainingHost, ProgressionEffectsHost, MapTravelHost, MapQuestsHost,
+    DialogueCameraWiringHost, DialogueSpeakersHost, DialogueOutcomesHost, InventoryReadoutsHost,
+    InventoryPickpocketHost, InventoryPerksHost, InventoryRecipesHost, InventoryVendorHost,
+    InventoryPapyrusHost {}

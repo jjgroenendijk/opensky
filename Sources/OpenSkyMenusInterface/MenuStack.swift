@@ -76,3 +76,13 @@ nonisolated public struct MenuStack: Equatable, Sendable {
         self.identifiers = identifiers
     }
 }
+
+nonisolated extension MenuIdentifier {
+    /// The loading screen, which the menu stack shows over a cell load.
+    public static let loadingMenu = MenuIdentifier("LoadingMenu")
+    public static let inventoryMenu = MenuIdentifier("InventoryMenu")
+    public static let containerMenu = MenuIdentifier("ContainerMenu")
+    public static let barterMenu = MenuIdentifier("BarterMenu")
+    public static let journalMenu = MenuIdentifier("Journal")
+    public static let dialogueMenu = MenuIdentifier("Dialogue Menu")
+}
