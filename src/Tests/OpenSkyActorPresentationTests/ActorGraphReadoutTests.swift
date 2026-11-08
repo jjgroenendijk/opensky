@@ -47,4 +47,14 @@ struct ActorGraphReadoutTests {
         let other = ReferenceKey.plugin(name: "test.esm", objectID: 0x501)
         #expect(graphs.readout(for: other) == nil)
     }
+
+    @Test func aTickStartsNoGraphForAnActorWithoutAPlayback() {
+        let world = OneActorGraphWorld(ActorGraphCandidate(
+            key: Self.actor, projectPath: Self.project, feet: .zero, rotationZ: 0
+        ))
+        let graphs = ActorGraphCoordinator(world: world) { nil }
+        graphs.tick(deltaTime: 0)
+        #expect(graphs.readout(for: Self.actor)?.hasPose == false)
+        #expect(graphs.readout(for: Self.actor)?.status == "loading")
+    }
 }
