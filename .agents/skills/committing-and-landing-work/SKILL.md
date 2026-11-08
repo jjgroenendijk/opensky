@@ -66,7 +66,7 @@ or `Model:`. Allowed trailers:
    the format defined by `docs/tools/acceptance-record.md`. Nothing enforces this, so it
    is checked here.
 6. When the work is done and verified, `gh pr ready <pr>`, and read the last CI run with
-   `gh pr checks <pr> --watch`.
+   `gh pr checks <pr> --watch`. Marking ready starts no new run; the last push's run counts.
 7. Merge after review with `gh pr merge <pr> --rebase`. A rebase merge puts every atomic
    commit on `main` with no merge commit; the repo disables merge commits and squash
    merging. When the branch no longer rebases cleanly, run `git rebase origin/main`, then

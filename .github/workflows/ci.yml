@@ -5,10 +5,11 @@ name: CI
 # run uses at most 3 macOS runners at a time; the Free plan allows 5 per account.
 # The Changes and Lint jobs only read results, so they run on Linux.
 # A draft pull request runs too, so the full unit plan runs on a runner while the
-# author keeps working; a newer push cancels the older run.
+# author keeps working; a newer push cancels the older run. Marking a draft ready
+# starts no run, because the last push already tested the same commit.
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
   workflow_dispatch:

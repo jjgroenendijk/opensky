@@ -9,8 +9,9 @@ tags: [tool, ci, lint, github-actions]
 
 # Continuous integration
 
-`.github/workflows/ci.yml` runs on every pull request, draft or ready for review, and on every push
-to `main`. Every check
+`.github/workflows/ci.yml` runs on every push to a pull request, draft or not, and on every push
+to `main`. Marking a draft ready starts no run: the run of its last push tested the same commit,
+and a second run took 7 to 17 minutes with no new result. Every check
 runs on an `xcode-27` runner (macOS 27), so CI uses the same platform, Xcode, and tools as a
 developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 
