@@ -4,6 +4,7 @@
 import Foundation
 @testable import OpenSkyDialogue
 import OpenSkyDialogueFixtures
+import OpenSkyDialogueInterface
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting

@@ -3,6 +3,7 @@
 
 public import Foundation
 import OpenSkyFormatsCore
+public import OpenSkySaveInterface
 
 nonisolated public struct ContinueOffer: Equatable, Sendable {
     /// The slot Continue loads; nil when the button is disabled.

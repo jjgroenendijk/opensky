@@ -5,6 +5,7 @@ import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 
 /// The sub-graph bones that move actor bones: a bone matches when its name and its
 /// parent's name both match, so the local pose means the same in both rigs.

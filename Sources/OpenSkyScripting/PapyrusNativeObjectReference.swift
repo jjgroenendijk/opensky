@@ -7,7 +7,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension PapyrusNativeFunctions {

@@ -17,6 +17,8 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -118,7 +120,7 @@ extension AIWorldAdapter {
     }
 
     /// The body's root goes on the pose and the eye on the idle's head bone.
-    private func seatPlayer(at pose: FurniturePose, gameSession: GameSession) {
+    private func seatPlayer(at pose: FurniturePose, gameSession: any GameSessionPort) {
         let root = MatrixMath.placement(
             position: pose.root, rotation: SIMD3(0, 0, pose.heading), scale: 1
         )

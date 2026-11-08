@@ -7,6 +7,7 @@ import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyFormatsESS
 import OpenSkyGameData
+public import OpenSkySaveInterface
 public import OpenSkyScriptingInterface
 public import OpenSkyWorldState
 

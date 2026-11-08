@@ -2,6 +2,7 @@
 // the perch of a sit package. See docs/engine/dragon-flight.md.
 
 public import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import simd
 
 /// Where the dragon's package sends it.

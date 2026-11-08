@@ -2,6 +2,7 @@
 
 import Foundation
 @testable import OpenSkyDialogue
+import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import Testing

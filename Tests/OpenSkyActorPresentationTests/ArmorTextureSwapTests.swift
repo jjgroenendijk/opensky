@@ -7,6 +7,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
+import OpenSkyWorldInterface
 import OpenSkyWorldTesting
 import Testing
 

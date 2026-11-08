@@ -6,6 +6,7 @@ import Foundation
 public import OpenSkyActorsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 
 /// One playable race the menu offers.
 nonisolated public struct RaceChoice: Equatable, Sendable {

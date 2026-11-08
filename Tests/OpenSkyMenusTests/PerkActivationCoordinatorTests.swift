@@ -5,6 +5,7 @@ import OpenSkyEngineTesting
 import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
 import Testing

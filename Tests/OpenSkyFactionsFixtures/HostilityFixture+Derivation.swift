@@ -1,6 +1,7 @@
 // The one fixture builder that needs the Factions implementation.
 
-@testable public import OpenSkyFactions
+@testable import OpenSkyFactions
+public import OpenSkyFactionsInterface
 public import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
 

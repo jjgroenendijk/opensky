@@ -10,6 +10,7 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyRenderResources
+import OpenSkyWorldInterface
 
 nonisolated struct AssembledHeadMorphs {
     var bindings: [ObjectIdentifier: FaceMorphBuffer] = [:]

@@ -8,6 +8,7 @@ public import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyScriptingInterface
 
 /// Guard and arrest operations a Papyrus native may perform.
 @MainActor

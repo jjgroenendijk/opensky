@@ -262,3 +262,9 @@ public final class InventoryCoordinator {
         return outcome
     }
 }
+
+extension InventoryCoordinator {
+    public var isCrafting: Bool {
+        crafting != nil
+    }
+}

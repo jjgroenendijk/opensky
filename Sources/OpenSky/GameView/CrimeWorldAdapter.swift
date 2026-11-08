@@ -6,6 +6,7 @@ import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyCrime
 import OpenSkyCrimeInterface
 import OpenSkyDialogue
@@ -23,6 +24,7 @@ import OpenSkyProgression
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -31,24 +33,24 @@ import simd
 /// What `CrimeWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol CrimeWorldHost: AnyObject {
-    var actorWorld: ActorWorldAdapter { get }
-    var dialogue: DialogueCoordinator { get }
-    var dialogueMenu: DialogueMenuController { get }
-    var dialogueWorld: DialogueWorldAdapter { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var factions: FactionCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var progression: ProgressionCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
-    var packages: PackageCoordinator { get }
-    var perception: PerceptionCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var worldState: WorldStateStore { get }
+    var actorWorld: any ActorWorldPort { get }
+    var dialogue: any DialoguePort { get }
+    var dialogueMenu: any DialogueMenuPort { get }
+    var dialogueWorld: any DialogueWorldPort { get }
+    var storyWorld: any StoryWorldPort { get }
+    var factions: any FactionPort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var progression: any ProgressionPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var packages: any PackagePort { get }
+    var perception: any PerceptionPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 /// Answers `CrimeSessionWorld` from the session systems `game` owns.
@@ -71,14 +73,14 @@ final class CrimeWorldAdapter {
     }
 
     /// Ownership reads the same FACT store as the hostility derivation.
-    func sessionData(_ provider: WorldDataStores) -> CrimeSessionData? {
+    func sessionData(_ provider: WorldDataStores, store: WorldStateStore) -> CrimeSessionData? {
         guard
             let factionStore = provider.factionStore,
             let pluginName = provider.magicItemPluginName
         else { return nil }
         return CrimeSessionData(
             runtime: CrimeRuntime(
-                store: game.worldState, factions: factionStore,
+                store: store, factions: factionStore,
                 settings: CrimeSettings.resolve(store: provider.gameSettings)
             ),
             locations: provider.locationStore,

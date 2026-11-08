@@ -9,6 +9,7 @@ import Foundation
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsAnimation
 public import OpenSkyPhysics
+public import OpenSkyWorldInterface
 
 nonisolated public enum ActorAnimationClipLoader: Sendable {
     /// Where every character animation and skeleton lives.

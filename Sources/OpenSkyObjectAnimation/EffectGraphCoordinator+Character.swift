@@ -2,6 +2,7 @@
 // shares with the actor's own graph. See docs/engine/effect-graphs.md.
 
 import OpenSkyBehavior
+import OpenSkyWorldInterface
 
 extension EffectGraphCoordinator {
     func prepare(_ entry: Running, world: any EffectGraphWorld) {

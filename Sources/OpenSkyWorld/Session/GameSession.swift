@@ -16,6 +16,7 @@ public import OpenSkyRendering
 public import OpenSkyRenderResources
 import OpenSkyTerrain
 public import OpenSkyWeather
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 public import simd
 
@@ -347,5 +348,11 @@ extension PlayerFirstPersonRig: RenderRig {
     /// `PlayerBody.publishAnimation`.
     public func publishAnimation(enabled: Bool) -> Int {
         enabled ? animation.update(at: 0) : animation.resetToBindPose()
+    }
+}
+
+extension GameSession {
+    public func knockPlayer(_ velocity: SIMD3<Float>) {
+        walkController.knock(velocity)
     }
 }

@@ -2,6 +2,7 @@
 // shrink by the capsule radius before the standard funnel runs. Door and ledge
 // points split the funnel so the result cannot smooth past an authored traversal.
 
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public struct NavigationPulledPath: Sendable {

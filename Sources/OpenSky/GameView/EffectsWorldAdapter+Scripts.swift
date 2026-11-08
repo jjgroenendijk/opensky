@@ -6,6 +6,7 @@ import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyRendering
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 extension EffectsWorldAdapter: PapyrusEffectPresenting {

@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyWorldInterface
+import OpenSkyWorldState
 import Testing
 
 @MainActor

@@ -12,6 +12,7 @@ public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyWeather
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 /// One rendered view and what it drew.

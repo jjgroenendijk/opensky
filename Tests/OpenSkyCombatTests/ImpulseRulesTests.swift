@@ -2,6 +2,7 @@
 // install's setting values (docs/engine/impulses.md).
 
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import simd
 import Testing

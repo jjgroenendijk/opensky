@@ -10,6 +10,7 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
+import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import Testing
 

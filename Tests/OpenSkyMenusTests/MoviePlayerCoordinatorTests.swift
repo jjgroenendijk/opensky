@@ -6,6 +6,7 @@ import OpenSkyAudio
 import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 private final class FakeMovieWorld: MoviePlayerWorld {

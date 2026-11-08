@@ -4,12 +4,13 @@
 import Foundation
 import OpenSkyFormatsESM
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 
 @MainActor
 final class FakeMenuScreenWorld: MenuScreenWorld, MenuInputConsumer {
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         nil
     }
 

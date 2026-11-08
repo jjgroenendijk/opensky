@@ -4,6 +4,7 @@
 import OpenSkyBehavior
 public import OpenSkyFormatsAnimation
 public import OpenSkyFormatsMesh
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public struct VehicleWheelRig: Sendable {

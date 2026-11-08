@@ -5,6 +5,7 @@
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
 extension RuntimeStateCoordinator {

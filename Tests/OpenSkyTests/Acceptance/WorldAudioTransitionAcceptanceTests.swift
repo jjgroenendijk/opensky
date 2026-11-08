@@ -14,6 +14,7 @@ import OpenSkyPlayer
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 import OpenSkyWorldTesting
 import simd
 import Testing

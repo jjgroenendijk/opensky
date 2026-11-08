@@ -1,5 +1,6 @@
 // Instruments intervals for the tour and each scene, so a trace lines up with the result.
 
+import OpenSkyWorldInterface
 public import OSLog
 
 struct BenchmarkSignposts {
@@ -37,19 +38,4 @@ struct BenchmarkSignposts {
     func mark(_ step: StaticString) {
         Self.signposter.emitEvent(step)
     }
-}
-
-/// What the overlay shows about the running tour.
-nonisolated public struct BenchmarkTourSnapshot: Equatable, Sendable {
-    public enum Step: String, Sendable {
-        case loading, arriving, settling, measuring
-    }
-
-    public var sceneNumber: Int
-    public var sceneCount: Int
-    public var title: String
-    public var step: Step
-    /// Of the current step, from 0 to 1.
-    public var progress: Double
-    public var fps: Double?
 }

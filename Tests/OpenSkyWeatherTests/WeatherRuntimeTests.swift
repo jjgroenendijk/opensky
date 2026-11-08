@@ -9,6 +9,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyRenderCore
 @testable import OpenSkyWeather
+import OpenSkyWorldInterface
 import simd
 import Testing
 

@@ -5,7 +5,7 @@ import OpenSkyFeaturesTesting
 import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import OpenSkyGameData
-@testable public import OpenSkyScripting
+@testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
 import OpenSkyWorldInterface

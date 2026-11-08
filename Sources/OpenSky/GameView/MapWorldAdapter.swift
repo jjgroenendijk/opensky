@@ -6,6 +6,7 @@ import OpenSkyActors
 import OpenSkyCamera
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyFormatsCore
@@ -14,6 +15,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyQuests
@@ -22,6 +24,7 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
@@ -31,25 +34,25 @@ import simd
 /// What `MapWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MapWorldHost: MenuInputConsumer {
-    var audio: AudioCoordinator { get }
-    var actorValues: ActorValueCoordinator { get }
-    var combat: CombatCoordinator { get }
-    var crime: CrimeCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var journal: JournalCoordinator { get }
-    var loadingWorld: LoadingScreenWorldAdapter { get }
-    var magic: MagicCoordinator { get }
-    var messages: MessageCoordinator { get }
+    var audio: any AudioPort { get }
+    var actorValues: any ActorValuePort { get }
+    var combat: any CombatPort { get }
+    var crime: any CrimePort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var journal: any JournalPort { get }
+    var loadingWorld: any LoadingScreenWorldPort { get }
+    var magic: any MagicPort { get }
+    var messages: any MessageCoordinatorPort { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var saveGames: SaveGameWorldAdapter { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var saveGames: any SaveGameWorldPort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class MapWorldAdapter {
@@ -344,7 +347,7 @@ extension MapWorldAdapter: MapMenuWorld {
 
 extension MapWorldAdapter {
     private func questTargetCheck(
-        quest: FormID, runtime: QuestRuntime
+        quest: FormID, runtime: any QuestRuntimePort
     ) -> (Quest.Target) -> Bool {
         var context = game.runtimeState.conditionContext()
         context.formIDTranslation = runtime.quests.translation(of: quest)

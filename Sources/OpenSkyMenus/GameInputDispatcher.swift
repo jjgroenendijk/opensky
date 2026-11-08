@@ -2,7 +2,8 @@
 // keyboard and the agent control server both call it, so the game cannot tell
 // a key press from an injected one (docs/tools/agent-control.md).
 
-public import OpenSkyRendering
+public import OpenSkyMenusInterface
+import OpenSkyRendering
 public import OpenSkyScriptingInterface
 
 /// One logical action. The raw value is the name `openskycli game input` takes.
@@ -113,8 +114,8 @@ public struct GameInputDispatcher {
         case noMenu
     }
 
-    public let input: CameraInputState?
-    public let menuMode: MenuModeController?
+    public let input: (any CameraInputReceiving)?
+    public let menuMode: (any MenuInputRouting)?
     public let openJournal: (() -> Void)?
     public let openInventory: (() -> Void)?
     /// Map, magic, wait, saves, pause, and skills: commands the app carries out.
@@ -125,8 +126,8 @@ public struct GameInputDispatcher {
     public let onRefused: ((PlayerControlRefusal) -> Void)?
 
     public init(
-        input: CameraInputState?,
-        menuMode: MenuModeController?,
+        input: (any CameraInputReceiving)?,
+        menuMode: (any MenuInputRouting)?,
         openJournal: (() -> Void)? = nil,
         openInventory: (() -> Void)? = nil,
         onCommand: ((GameInputAction) -> Void)? = nil,

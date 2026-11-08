@@ -3,24 +3,7 @@
 // with the chosen button's MESG index. See docs/engine/messages.md#message-boxes.
 
 import Foundation
-
-nonisolated public struct MessageBoxRequest: Equatable, Sendable {
-    public let title: String?
-    public let text: String
-    /// Never empty: `MessageTextBuilder` adds an OK button.
-    public let buttons: [MessageBoxButton]
-    /// The suspended `Message.Show` call, or nil for `Debug.MessageBox`.
-    public let token: UInt64?
-
-    public init(title: String?, text: String, buttons: [MessageBoxButton], token: UInt64?) {
-        self.title = title
-        self.text = text
-        self.buttons = buttons.isEmpty
-            ? [MessageBoxButton(index: 0, text: MessageTextBuilder.defaultButtonText)]
-            : buttons
-        self.token = token
-    }
-}
+public import OpenSkyMenusInterface
 
 /// The answer a closed box gives its caller.
 nonisolated public struct MessageBoxAnswer: Equatable, Sendable {

@@ -6,6 +6,7 @@
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 /// The two pieces a cut makes of one actor.
 nonisolated public struct DecapitatedVisual: Equatable, Sendable {

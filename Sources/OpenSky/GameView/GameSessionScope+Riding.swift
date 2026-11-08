@@ -3,6 +3,7 @@
 import OpenSkyActorPresentation
 import OpenSkyCells
 import OpenSkyPlayer
+import OpenSkyWorldInterface
 
 extension GameSessionScope {
     var mountSettings: MountSettings {

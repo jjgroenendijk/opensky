@@ -3,12 +3,13 @@
 
 import Foundation
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyRendering
 
 /// What the title menu does in the running game.
 public protocol TitleMenuWorld: AnyObject {
     var menuInputConsumer: (any MenuInputConsumer)? { get }
-    var renderer: Renderer? { get }
+    var renderer: (any RendererPort)? { get }
     /// Shows the logo scene in place of the world, as the game does.
     func showTitleBackdrop(_ shown: Bool)
     /// Loads no world until the player picks a start, because a save can be in another world.
@@ -39,50 +40,6 @@ nonisolated public enum TitleMenuEntry: String, CaseIterable, Sendable {
     case quit = "Quit"
 }
 
-nonisolated public struct TitleMenuSnapshot: Equatable, Sendable {
-    public let rows: [String]
-    public let selectedIndex: Int
-    public let isLoadPageOpen: Bool
-    public let lastResult: String?
-    public let movie: TitleMenuMovieSnapshot
-
-    public init(
-        rows: [String],
-        selectedIndex: Int,
-        isLoadPageOpen: Bool,
-        lastResult: String?,
-        movie: TitleMenuMovieSnapshot = TitleMenuMovieSnapshot()
-    ) {
-        self.rows = rows
-        self.selectedIndex = selectedIndex
-        self.isLoadPageOpen = isLoadPageOpen
-        self.lastResult = lastResult
-        self.movie = movie
-    }
-}
-
-nonisolated public struct TitleMenuMovieSnapshot: Equatable, Sendable {
-    public let isLoaded: Bool
-    public let error: String?
-    public let rows: [String]
-    public let selectedIndex: Int?
-    public let state: String?
-
-    public init(
-        isLoaded: Bool = false,
-        error: String? = nil,
-        rows: [String] = [],
-        selectedIndex: Int? = nil,
-        state: String? = nil
-    ) {
-        self.isLoaded = isLoaded
-        self.error = error
-        self.rows = rows
-        self.selectedIndex = selectedIndex
-        self.state = state
-    }
-}
-
 public final class TitleMenuCoordinator {
     public static let identifier: MenuIdentifier = "Main Menu"
 
@@ -109,12 +66,13 @@ public final class TitleMenuCoordinator {
     /// Reads the save list, then starts the movie.
     private(set) var openWork: Task<Void, Never>?
     private let menuMode: MenuModeController
-    let movies: SWFMovieSource?
+    let movies: (any MenuMovieLoading)?
     let hud: HUDCoordinator?
     weak let world: (any TitleMenuWorld)?
 
     public init(
-        menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil,
+        menuMode: MenuModeController, movies: (any MenuMovieLoading)? = nil,
+        hud: HUDCoordinator? = nil,
         saves: any SaveGameService?, world: (any TitleMenuWorld)? = nil
     ) {
         self.menuMode = menuMode

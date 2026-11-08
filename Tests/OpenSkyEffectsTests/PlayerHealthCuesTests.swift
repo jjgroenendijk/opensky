@@ -1,6 +1,7 @@
 // The heartbeat and pulse the game gives while the player's health is low.
 
 @testable import OpenSkyEffects
+import OpenSkyWorldInterface
 import Testing
 
 struct PlayerHealthCuesTests {

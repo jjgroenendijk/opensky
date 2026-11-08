@@ -9,6 +9,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyPlayer
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 extension InventoryMenuController {

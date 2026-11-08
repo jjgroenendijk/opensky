@@ -4,6 +4,7 @@
 import OpenSkyConditions
 public import OpenSkyFormatsESM
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension PackageCoordinator {

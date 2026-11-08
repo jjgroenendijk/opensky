@@ -2,6 +2,7 @@
 
 @testable import OpenSkyAIPackages
 import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import Testing
 
 struct AINavigationCoreTests {

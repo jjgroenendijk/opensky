@@ -3,6 +3,7 @@
 // `Direction` (radians from facing, positive left).
 
 public import OpenSkyPhysics
+import OpenSkyWorldInterface
 import simd
 
 nonisolated extension LocomotionBridge {

@@ -3,6 +3,7 @@
 // waits for the voice file to end (<https://ck.uesp.net/wiki/Category:Scenes>).
 
 public import Foundation
+public import OpenSkyDialogueInterface
 import OpenSkyFormatsAudio
 public import OpenSkyFormatsESM
 public import OpenSkyGameData

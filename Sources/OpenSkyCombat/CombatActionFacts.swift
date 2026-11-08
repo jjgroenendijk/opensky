@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
 
 nonisolated extension MeleeCombatState {
     public var actionFacts: ActorActionFacts {

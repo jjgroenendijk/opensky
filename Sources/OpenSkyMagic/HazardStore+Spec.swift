@@ -2,6 +2,7 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMagicInterface
 
 nonisolated extension HazardStore {
     /// The runtime numbers for `key`, or nil when the record is missing or has no `DATA`.

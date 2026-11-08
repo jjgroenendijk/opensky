@@ -16,6 +16,7 @@ import OpenSkyNavigation
 @testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import simd
 
 extension NPCAIAcceptanceChain: PerceptionWorld {

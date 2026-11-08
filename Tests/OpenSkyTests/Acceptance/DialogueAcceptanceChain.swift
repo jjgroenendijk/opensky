@@ -11,6 +11,7 @@ import AppKit
 @testable import OpenSkyFormatsESM
 import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 @testable import OpenSkyPlayer
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave

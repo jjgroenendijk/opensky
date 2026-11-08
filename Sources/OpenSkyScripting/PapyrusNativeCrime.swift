@@ -7,7 +7,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
     public static func installCrime(into registry: inout PapyrusNativeRegistry) {

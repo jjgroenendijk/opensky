@@ -7,6 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
 @testable import OpenSkyObjectAnimation
+import OpenSkyWorldInterface
 import simd
 import Testing
 

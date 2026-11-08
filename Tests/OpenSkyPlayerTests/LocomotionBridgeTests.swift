@@ -6,6 +6,7 @@
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
 @testable import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 import Testing
 

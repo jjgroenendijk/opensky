@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyGameData
 import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 import Testing
 

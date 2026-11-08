@@ -4,6 +4,8 @@
 import OpenSkyAgentControl
 import OpenSkyFormatsESM
 import OpenSkyObjectAnimation
+import OpenSkySessionInterface
+import OpenSkyWorldInterface
 import simd
 
 extension AgentWorldAdapter {

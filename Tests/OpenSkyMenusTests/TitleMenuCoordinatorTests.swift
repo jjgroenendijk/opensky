@@ -4,6 +4,7 @@ import Foundation
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
 import Testing
 
@@ -21,7 +22,7 @@ private final class FakeTitleWorld: TitleMenuWorld, MenuInputConsumer, SaveGameS
         self
     }
 
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         nil
     }
 

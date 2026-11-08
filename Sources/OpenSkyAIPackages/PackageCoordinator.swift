@@ -6,9 +6,10 @@ public import OpenSkyConditions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyNavigation
+import OpenSkyNavigation
 public import OpenSkyPhysics
 import OpenSkyWorldConditions
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
 
@@ -82,15 +83,6 @@ public protocol PackageWorld: AnyObject {
     func packageActorFlies(_ actor: ReferenceKey) -> Bool
     /// A sandbox activity's time ran out, so the actor lets go of its idle marker.
     func packageSandboxActivityEnded(_ activity: SandboxActivity, actor: ReferenceKey)
-}
-
-/// Whether an actor is free to run the package its schedule picked.
-nonisolated public enum PackageActorActivity: Equatable, Sendable {
-    case free
-    case fighting
-    case dead
-    /// A script's `EnableAI(false)`: the actor runs no package and stands still.
-    case aiDisabled
 }
 
 extension PackageWorld {

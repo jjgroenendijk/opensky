@@ -6,21 +6,22 @@ import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 /// What `MenuSoundPlayer` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MenuSoundHost: AnyObject {
-    var audio: AudioCoordinator { get }
-    var gameSession: GameSession? { get }
+    var audio: any AudioPort { get }
+    var gameSession: (any GameSessionPort)? { get }
     var worldData: WorldDataStores? { get }
 }
 
 /// What a menu sound needs. Closures, because a reload replaces the session and
 /// the data.
 struct MenuSoundDependencies {
-    let audio: AudioCoordinator
-    let gameSession: () -> GameSession?
+    let audio: any AudioPort
+    let gameSession: () -> (any GameSessionPort)?
     let worldData: () -> WorldDataStores?
 }
 

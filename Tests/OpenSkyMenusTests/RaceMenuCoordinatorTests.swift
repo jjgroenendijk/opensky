@@ -3,6 +3,7 @@
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
 import Testing
 
@@ -45,7 +46,7 @@ private final class FakeRaceMenuWorld: RaceMenuWorld, MenuInputConsumer {
         self
     }
 
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         nil
     }
 

@@ -6,6 +6,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyScriptingInterface
 public import OpenSkyWorldInterface
 import simd
@@ -50,10 +51,6 @@ public protocol MapMenuWorld: AnyObject {
     func ask(_ text: String, buttons: [String], answer: @escaping (Int) -> Void)
     /// Puts the custom marker on the HUD compass; nil takes it off.
     func showPlayerSetMarker(_ position: SIMD3<Float>?)
-}
-
-public enum MapMenuMode: String, Sendable {
-    case world, local
 }
 
 public final class MapMenuCoordinator {

@@ -3,6 +3,7 @@
 
 @testable import OpenSkyActorPresentation
 import OpenSkyBehavior
+import OpenSkyWorldInterface
 import Testing
 
 struct ActorGraphCoreTests {

@@ -4,6 +4,7 @@
 import Foundation
 public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 
 nonisolated public struct PackageProcedureCensus: Sendable {
     /// Procedure name, lowercased -> packages whose resolved tree holds it.

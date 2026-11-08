@@ -15,6 +15,7 @@ public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyTerrain
+import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
 

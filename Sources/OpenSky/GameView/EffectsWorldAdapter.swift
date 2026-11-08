@@ -8,6 +8,7 @@ import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -21,33 +22,35 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
 /// What `EffectsWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol EffectsWorldHost: AnyObject {
-    var actorWorld: ActorWorldAdapter { get }
-    var actorValues: ActorValueCoordinator { get }
-    var audio: AudioCoordinator { get }
-    var combat: CombatCoordinator { get }
-    var combatWorld: CombatWorldAdapter { get }
-    var effects: EffectsCoordinator { get set }
-    var playerSettings: PlayerSettingsCoordinator { get }
+    var actorWorld: any ActorWorldPort { get }
+    var actorValues: any ActorValuePort { get }
+    var audio: any AudioPort { get }
+    var combat: any CombatPort { get }
+    var combatWorld: any CombatWorldPort { get }
+    var effects: any EffectsPort { get }
+    var playerSettings: any PlayerSettingsPort { get }
     var worldData: WorldDataStores? { get }
-    var hazardWorld: HazardWorldAdapter { get }
-    var hazards: HazardCoordinator { get }
-    var magic: MagicCoordinator { get }
-    var magicWorld: MagicWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
-    var ragdoll: RagdollCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var worldState: WorldStateStore { get }
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
+    var hazardWorld: any HazardWorldPort { get }
+    var hazards: any HazardPort { get }
+    var magic: any MagicPort { get }
+    var magicWorld: any MagicWorldPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var ragdoll: any RagdollPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var worldState: any WorldStateStorePort { get }
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
 }
 
 final class EffectsWorldAdapter {
@@ -71,11 +74,11 @@ final class EffectsWorldAdapter {
         self.game = game
     }
 
-    var effects: EffectsCoordinator {
+    var effects: any EffectsPort {
         game.effects
     }
 
-    var explosions: ExplosionRuntime {
+    var explosions: any ExplosionRuntimePort {
         game.combat.explosions
     }
 
@@ -137,7 +140,10 @@ final class EffectsWorldAdapter {
     }
 
     /// Each effect's On Hit sound, at each struck actor.
-    private func playHitSounds(of event: SpellHitEvent, director: WorldAudioSoundDirector?) {
+    private func playHitSounds(
+        of event: SpellHitEvent,
+        director: (any WorldAudioSoundDirectorPort)?
+    ) {
         guard let director else { return }
         for sound in event.links.compactMap(\.hitSound) {
             for target in event.hit.targets {

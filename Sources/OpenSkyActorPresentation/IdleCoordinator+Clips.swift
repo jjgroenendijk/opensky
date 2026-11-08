@@ -8,6 +8,7 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRuntimeState
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import simd
 
 extension IdleCoordinator.Playing {
@@ -85,7 +86,7 @@ extension IdleCoordinator {
     /// The project folder of the actor's graph, read from its skeleton path:
     /// `meshes\actors\character\` for a human.
     func graphProject(of actor: ReferenceKey) -> String? {
-        let skeleton = world?.actorPlayback(for: actor)?.clip.skeletonMeshPath
+        let skeleton = actorPlayback(actor)?.clip.skeletonMeshPath
             ?? (actor == .player ? Self.playerSkeletonPath : nil)
         return skeleton.flatMap(IdleCore.graphProject(skeletonMeshPath:))
     }
@@ -125,7 +126,7 @@ extension IdleCoordinator {
         if !playing.end.isFinite, playing.throughGraph {
             _ = world?.raiseIdleEvent(Self.defaultStateEvent, state: nil, on: actor)
         } else if !playing.end.isFinite {
-            world?.actorPlayback(for: actor)?.endOverride()
+            actorPlayback(actor)?.endOverride()
         }
         if playing.hasProp {
             world?.setProp(nil, on: actor)

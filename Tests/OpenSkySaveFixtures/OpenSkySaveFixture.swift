@@ -7,6 +7,7 @@ public import Foundation
 @testable public import OpenSkyFormatsESM
 @testable public import OpenSkyGameData
 @testable public import OpenSkySave
+public import OpenSkySaveInterface
 @testable public import OpenSkyWorldState
 import simd
 

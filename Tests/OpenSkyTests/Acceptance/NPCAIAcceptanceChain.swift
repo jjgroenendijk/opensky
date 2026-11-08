@@ -21,6 +21,7 @@ import OpenSkyPlayer
 @testable import OpenSkyRenderCore
 import OpenSkyWorldConditions
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
 

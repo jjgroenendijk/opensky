@@ -20,16 +20,6 @@ nonisolated public enum PapyrusResumeTarget: Sendable {
     case assign(PexValue)
 }
 
-nonisolated public struct SuspendedCall {
-    public let id: UInt64
-    public let nativeCall: PapyrusNativeCall
-    public let request: PapyrusNativeSuspension
-    public let continuation: PapyrusContinuation
-    /// True for a used-up instruction slice. A latent call releases its instance, so
-    /// other events on it run meanwhile (CK wiki "Threading Notes (Papyrus)").
-    public let holdsInstance: Bool
-}
-
 public final class PapyrusContinuation {
     private let interpreter: PapyrusInterpreter
     private var consumed = false
@@ -295,4 +285,14 @@ public final class PapyrusInterpreter {
         runtime.tally.noteFault(fault, in: place)
         return .faulted(fault)
     }
+}
+
+nonisolated public struct SuspendedCall {
+    public let id: UInt64
+    public let nativeCall: PapyrusNativeCall
+    public let request: PapyrusNativeSuspension
+    public let continuation: PapyrusContinuation
+    /// True for a used-up instruction slice. A latent call releases its instance, so
+    /// other events on it run meanwhile (CK wiki "Threading Notes (Papyrus)").
+    public let holdsInstance: Bool
 }

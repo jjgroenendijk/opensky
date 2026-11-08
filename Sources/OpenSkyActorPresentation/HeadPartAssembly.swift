@@ -5,54 +5,7 @@
 import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-
-nonisolated public enum HeadPartOrigin: Equatable, Sendable {
-    case raceDefault
-    case npcOverride
-    /// Came along through another part's HNAM list.
-    case extraPart
-}
-
-nonisolated public struct ResolvedHeadPart: Equatable, Sendable {
-    public let formID: FormID
-    public let editorID: String?
-    public let partType: HeadPart.PartType?
-    public let origin: HeadPartOrigin
-    /// Relative to `Data/meshes`.
-    public let modelPath: String
-    /// TNAM texture set paths, relative to `Data/textures`; nil keeps the mesh's own.
-    public let diffuseTexture: String?
-    public let normalTexture: String?
-    /// HCLF for hair, facial hair, and brows, else the part's CNAM; 0...1.
-    public let tint: SIMD3<Float>?
-    /// TX04, the FaceGen detail map; a complexion changes it on the face part.
-    public var detailTexture: String?
-    /// The face tint built from the player's tint layers; the face part only.
-    public var faceTintTexture: String?
-}
-
-nonisolated public struct HeadPartMiss: Equatable, Sendable {
-    nonisolated public enum Reason: Equatable, Sendable {
-        case missingRecord
-        /// RNAM names a race list without the actor's race.
-        case wrongRace
-        case noModel
-        /// An HNAM list leads back to a part already taken.
-        case cycle
-    }
-
-    public let reason: Reason
-}
-
-nonisolated public struct HeadPartSet: Equatable, Sendable {
-    public let parts: [ResolvedHeadPart]
-    public let misses: [HeadPartMiss]
-
-    public init(parts: [ResolvedHeadPart], misses: [HeadPartMiss]) {
-        self.parts = parts
-        self.misses = misses
-    }
-}
+public import OpenSkyWorldInterface
 
 /// Pure over raw-FormID tables of one plugin, like `ActorVisualResolver`.
 nonisolated public struct HeadPartResolver: Sendable {

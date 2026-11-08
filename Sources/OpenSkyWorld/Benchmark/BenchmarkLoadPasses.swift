@@ -13,6 +13,7 @@ import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyTerrain
+public import OpenSkyWorldInterface
 
 nonisolated public struct BenchmarkLoadInputs: Sendable {
     public let root: GameDataRoot

@@ -1,0 +1,83 @@
+import Foundation
+
+nonisolated public enum PapyrusNativeResult: Equatable, Sendable {
+    case returned(PapyrusValue)
+    case failed(PapyrusNativeFailure)
+    case suspended(PapyrusNativeSuspension)
+    case deviated(PapyrusValue, PapyrusNativeDeviation)
+}
+
+nonisolated public enum PapyrusNativeFailure: Equatable, Sendable {
+    case unimplemented(String)
+    case invalidArguments(function: String, detail: String)
+}
+
+nonisolated public enum PapyrusNativeSuspension: Equatable, Sendable {
+    case realSeconds(Double)
+    /// Waits like `realSeconds`, then returns the value instead of the type's default.
+    case realSecondsAnswering(Double, PapyrusValue)
+    case gameHours(Double)
+    /// Waits like `realSeconds`, but time spent in a menu counts too (`WaitMenuMode`).
+    case realSecondsWithMenus(Double)
+    /// Waits until the engine answers `token` through
+    /// `PapyrusScheduler.answer(_:returning:)`, such as a message box closing.
+    case external(UInt64)
+}
+
+nonisolated public enum PapyrusNativeDeviation: Equatable, Sendable {
+    case deferredAnimation
+    /// A registered stub: physics, camera shake, or sound the engine does not run.
+    case stubbed
+}
+
+nonisolated public struct PapyrusNativeCall: Equatable, Sendable {
+    public let kind: PapyrusNativeCallKind
+    public let scriptName: String
+    public let functionName: String
+    public let receiver: PapyrusObjectHandle?
+    public let arguments: [PapyrusValue]
+    public let returnType: PapyrusType
+    /// The registry key. A caller that folded the names at load passes it, so the call
+    /// folds nothing.
+    public let key: PapyrusNativeKey
+
+    public init(
+        kind: PapyrusNativeCallKind,
+        scriptName: String,
+        functionName: String,
+        receiver: PapyrusObjectHandle?,
+        arguments: [PapyrusValue],
+        returnType: PapyrusType = .none,
+        key: PapyrusNativeKey? = nil
+    ) {
+        self.kind = kind
+        self.scriptName = scriptName
+        self.functionName = functionName
+        self.receiver = receiver
+        self.arguments = arguments
+        self.returnType = returnType
+        self.key = key ?? PapyrusNativeKey(scriptName: scriptName, functionName: functionName)
+    }
+
+    public var qualifiedName: String {
+        "\(scriptName).\(functionName)"
+    }
+
+    public func returning(_ type: PapyrusType) -> PapyrusNativeCall {
+        PapyrusNativeCall(
+            kind: kind,
+            scriptName: scriptName,
+            functionName: functionName,
+            receiver: receiver,
+            arguments: arguments,
+            returnType: type,
+            key: key
+        )
+    }
+}
+
+nonisolated public enum PapyrusNativeCallKind: Equatable, Sendable {
+    case method
+    case parent
+    case staticFunction
+}

@@ -4,6 +4,7 @@
 import AppKit
 import OpenSkyCells
 import OpenSkyLoading
+import OpenSkyWorldInterface
 
 final class WorldLoadPanel: NSStackView {
     var onCancel: (() -> Void)?

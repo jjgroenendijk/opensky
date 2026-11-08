@@ -4,15 +4,7 @@
 
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
-
-/// The action a use of one carried item runs.
-nonisolated public enum ItemUse: Equatable, Sendable {
-    case applyPoison
-    case consume
-    case equip
-    case unequip
-}
+public import OpenSkyInventoryInterface
 
 extension InventoryCoordinator {
     public func use(of item: FormID) -> ItemUse {

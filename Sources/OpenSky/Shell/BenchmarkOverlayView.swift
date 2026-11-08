@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 @MainActor
 final class BenchmarkOverlayView: NSView {

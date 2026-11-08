@@ -4,7 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// Instantiates the perk's fragment script if needed and enqueues fragment `index`.
@@ -45,17 +45,6 @@ extension PapyrusWorldRuntime {
             ]
         ))
         return true
-    }
-}
-
-/// Who pressed the use key on what, for one perk fragment.
-nonisolated public struct PerkFragmentActivation: Equatable, Sendable {
-    public let actor: ReferenceKey
-    public let target: ReferenceKey
-
-    public init(actor: ReferenceKey, target: ReferenceKey) {
-        self.actor = actor
-        self.target = target
     }
 }
 

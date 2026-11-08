@@ -7,6 +7,7 @@ import Foundation
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
 import OpenSkyTagsTesting

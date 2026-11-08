@@ -24,38 +24,40 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `MagicWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MagicWorldHost: AnyObject {
-    var controllerRumble: ControllerRumble { get }
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var combat: CombatCoordinator { get }
-    var effectsWorld: EffectsWorldAdapter { get }
-    var factions: FactionCoordinator { get }
-    var hazards: HazardCoordinator { get }
-    var hazardWorld: HazardWorldAdapter { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var magic: MagicCoordinator { get set }
-    var mapWorld: MapWorldAdapter { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var messages: MessageCoordinator { get }
-    var mountWorld: MountWorldAdapter { get }
-    var perks: PerkCoordinator { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var progression: ProgressionCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
+    var controllerRumble: any ControllerRumblePort { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var combat: any CombatPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
+    var factions: any FactionPort { get }
+    var hazards: any HazardPort { get }
+    var hazardWorld: any HazardWorldPort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var magic: any MagicPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var mountWorld: any MountWorldPort { get }
+    var perks: any PerkPort { get }
+    var storyWorld: any StoryWorldPort { get }
+    var progression: any ProgressionPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 /// Answers `MagicWorld` from the session systems `game` owns.
@@ -86,7 +88,10 @@ final class MagicWorldAdapter {
         }
     }
 
-    func sessionData(provider: WorldDataStores) -> MagicSessionData {
+    func sessionData(
+        provider: WorldDataStores,
+        store worldState: WorldStateStore
+    ) -> MagicSessionData {
         let settings = provider.gameSettings
         var data = MagicSessionData()
         if
@@ -105,7 +110,7 @@ final class MagicWorldAdapter {
         {
             data.casting = MagicCastingData(
                 spellbook: SpellbookRuntime(
-                    store: game.worldState,
+                    store: worldState,
                     spells: spells,
                     equipSlots: equipSlots,
                     equipment: game.inventory.equipment
@@ -133,7 +138,7 @@ final class MagicWorldAdapter {
     }
 
     /// Chained after regeneration and the Papyrus VM, on the same delta.
-    private func registerEffects(_ coordinator: MagicCoordinator, gameSession: GameSession) {
+    private func registerEffects(_ coordinator: any MagicPort, gameSession: GameSession) {
         let worldTick = gameSession.worldTick
         worldTick.register(.magicEffects) { [weak self, weak coordinator, weak gameSession] delta in
             self?.run(coordinator?.advanceEffects(delta: delta) ?? [])
@@ -148,7 +153,7 @@ final class MagicWorldAdapter {
     }
 
     /// A frame step, beside melee: a cast is timed against the rendered frame.
-    private func registerCasting(_ coordinator: MagicCoordinator, gameSession: GameSession) {
+    private func registerCasting(_ coordinator: any MagicPort, gameSession: GameSession) {
         let frameSteps = gameSession.frameSteps
         frameSteps.register(.spellCasting) { [weak self, weak coordinator, weak gameSession] _ in
             guard let coordinator, let gameSession else { return }

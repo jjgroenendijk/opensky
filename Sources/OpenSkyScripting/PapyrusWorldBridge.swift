@@ -8,23 +8,6 @@ public import OpenSkyInventoryInterface
 public import OpenSkyScriptingInterface
 public import OpenSkyWorldState
 
-/// What one activation did, returned by both
-/// `PapyrusWorldBridge.activate(_:by:togglesOpen:)` and
-/// `PapyrusWorldRuntime.queueOnActivate(target:activator:)`. The queue-only
-/// caller always reports `recorded == false`, because it writes no state.
-nonisolated public struct PapyrusActivationOutcome: Equatable, Sendable {
-    /// True when the `ReferenceActivationState` write changed stored state.
-    public let recorded: Bool
-    /// `OnActivate` events enqueued on the target's script instances.
-    public let queuedEvents: Int
-    /// True when the recursion cap refused to queue anything.
-    public let cappedByRecursion: Bool
-
-    public static let none = PapyrusActivationOutcome(
-        recorded: false, queuedEvents: 0, cappedByRecursion: false
-    )
-}
-
 /// Every world operation a Papyrus native may perform. Every write is one
 /// `set(_:for:in:)` or `setGlobal(_:formID:defaults:)` call. It refines the quest,
 /// actor, magic, crime, faction, and guard bridges, and the barter operation, so

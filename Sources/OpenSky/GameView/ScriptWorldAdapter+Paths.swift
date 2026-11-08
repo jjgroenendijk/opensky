@@ -7,7 +7,9 @@ import OpenSkyFormatsESM
 import OpenSkyNavigation
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension ScriptWorldAdapter {
@@ -18,8 +20,8 @@ extension ScriptWorldAdapter {
                 let point = game.scripts.bridge?.referenceState(for: target)?.transform.position
             else { return false }
             let started = streamer.moveActor(
-                actor, to: point, gait: ScriptPathWaits.gait(forSpeed: speed),
-                walkRunBlend: speed
+                actor, to: point, direct: false, gait: ScriptPathWaits.gait(forSpeed: speed),
+                runSlowdown: nil, walkRunBlend: speed
             )
             guard started == .started else { return false }
             pathWaits.wait(token, for: actor)

@@ -3,11 +3,14 @@
 // paint, and spell lights (docs/engine/magic-archetypes.md).
 
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -15,7 +18,9 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -113,7 +118,7 @@ extension MagicWorldAdapter {
             )
             return
         }
-        game.gameSession?.walkController.knock(
+        game.gameSession?.knockPlayer(
             simd_normalize(flat) * force * Self.throwSpeedPerForce
         )
     }

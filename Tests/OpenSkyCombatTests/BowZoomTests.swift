@@ -2,6 +2,7 @@
 // and `bowZoomStop` holds it off until block comes up.
 
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 import Testing
 
 struct BowZoomTests {

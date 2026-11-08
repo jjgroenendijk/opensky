@@ -13,6 +13,7 @@ import OpenSkyObjectAnimation
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -21,27 +22,27 @@ import simd
 /// What `ObjectAnimationWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol ObjectAnimationWorldHost: AnyObject {
-    var actorGraphWorld: ActorGraphWorldAdapter { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var containerMenu: ContainerMenuController { get }
-    var effectGraphs: EffectGraphCoordinator { get }
-    var objectBehaviors: ObjectBehaviorCoordinator { get }
-    var sequenceDoors: SequenceDoorCoordinator { get }
-    var nodeControllers: NodeControllerCoordinator { get }
+    var actorGraphWorld: any ActorGraphWorldPort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var containerMenu: any ContainerMenuPort { get }
+    var effectGraphs: any EffectGraphPort { get }
+    var objectBehaviors: any ObjectBehaviorPort { get }
+    var sequenceDoors: any SequenceDoorPort { get }
+    var nodeControllers: any NodeControllerPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    var gameSession: GameSession? { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var worldState: WorldStateStore { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class ObjectAnimationWorldAdapter {
     unowned let game: any ObjectAnimationWorldHost
-    var objects: ObjectBehaviorCoordinator {
+    var objects: any ObjectBehaviorPort {
         game.objectBehaviors
     }
 
-    var doors: SequenceDoorCoordinator {
+    var doors: any SequenceDoorPort {
         game.sequenceDoors
     }
 
@@ -50,6 +51,11 @@ final class ObjectAnimationWorldAdapter {
     private var pendingAnswers: [UInt64: Bool] = [:]
     /// Which scripted traps touch which actors.
     var trapContact = TrapContactTracker()
+
+    /// The streamer's animated parts. The composition root sets these, so the host stays port-only.
+    var animatedObjects: () -> [CellAnimatedObject] = { [] }
+    var sequenceDoors: () -> [CellSequenceDoor] = { [] }
+    var nodeAnimations: () -> [CellNodeAnimation] = { [] }
 
     init(game: any ObjectAnimationWorldHost) {
         self.game = game
@@ -92,7 +98,7 @@ final class ObjectAnimationWorldAdapter {
 
 extension ObjectAnimationWorldAdapter: ObjectBehaviorWorld {
     func residentAnimatedObjects() -> [CellAnimatedObject] {
-        game.streamer?.residentAnimatedObjects() ?? []
+        animatedObjects()
     }
 
     func objectGraphFired(_ name: String, from reference: UInt32) {
@@ -110,7 +116,7 @@ extension ObjectAnimationWorldAdapter: ObjectBehaviorWorld {
 
 /// An object's own graph answers first; an actor's behaviour graph answers otherwise.
 extension ObjectAnimationWorldAdapter: PapyrusObjectAnimationBridge {
-    private var actorGraphs: ActorGraphCoordinator {
+    private var actorGraphs: any ActorGraphPort {
         game.actorGraphWorld.graphs
     }
 
@@ -185,7 +191,7 @@ extension ObjectAnimationWorldAdapter: PapyrusObjectAnimationBridge {
 
 extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
     func residentSequenceDoors() -> [CellSequenceDoor] {
-        game.streamer?.residentSequenceDoors() ?? []
+        sequenceDoors()
     }
 
     func sequenceDoorWantsOpen(_ door: CellSequenceDoor) -> Bool {
@@ -219,7 +225,7 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
 
 extension ObjectAnimationWorldAdapter: NodeControllerWorld {
     func residentNodeAnimations() -> [CellNodeAnimation] {
-        game.streamer?.residentNodeAnimations() ?? []
+        nodeAnimations()
     }
 
     var nodeControllerViewer: NIFBillboard.Viewer? {

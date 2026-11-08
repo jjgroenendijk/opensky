@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyActorPresentation
 public import OpenSkyBehavior
 public import OpenSkyPhysics
+public import OpenSkyWorldInterface
 import simd
 
 /// What the other game systems report about the player for one step.

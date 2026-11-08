@@ -24,7 +24,9 @@ import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension ScriptWorldAdapter {
@@ -35,7 +37,9 @@ extension ScriptWorldAdapter {
         wireReferenceRules(&hooks, provider: provider)
         wireSounds(&hooks)
         wirePaths(&hooks)
-        game.movieWorld.wire(&hooks)
+        hooks.playBink = { [weak movies = game.movieWorld] request, token in
+            movies?.playBink(request, waitToken: token) ?? false
+        }
         hooks.nodeTransform = modelNodes.flatMap { nodes in
             { [weak self] key, name, then in
                 self?.nodeTransform(of: key, named: name, nodes: nodes, then: then) ?? .missing
@@ -79,14 +83,14 @@ extension ScriptWorldAdapter {
     }
 
     private func wirePlayerRules(_ hooks: inout PapyrusGameNatives) {
-        hooks.setGodMode = { [weak game] isOn in game?.actorValues.runtime?.godMode = isOn }
+        hooks.setGodMode = { [weak game] isOn in game?.actorValues.runtime?.setGodMode(isOn) }
         hooks.setFootIK = { [weak game] isOn in
             game?.actorGraphs.footIk = isOn
             game?.gameSession?.locomotion.footIk = isOn
         }
         hooks.clearPrison = { [weak game] in game?.crime.clearPrison() }
         hooks.setPlayerReportsCrime = { [weak game] reports in
-            game?.crime.reporter?.runtime.reportsPlayerCrimes = reports
+            game?.crime.reporter?.setReportsPlayerCrimes(reports)
         }
         hooks.playerGrabbedReference = { [weak game] in game?.magic.playerGrabbedReference }
         hooks.packageLocation = { [weak game] actor in game?.packages.packageLocation(of: actor) }
@@ -218,7 +222,7 @@ extension ScriptWorldAdapter {
     /// The game writes into its install folder, which OpenSky keeps read-only, so the
     /// capture goes to the user's pictures instead.
     private static func writeScreenshot(
-        named name: String, renderer: Renderer, size: CGSize
+        named name: String, renderer: any RendererPort, size: CGSize
     ) -> Bool {
         let width = Int(size.width.rounded())
         let height = Int(size.height.rounded())

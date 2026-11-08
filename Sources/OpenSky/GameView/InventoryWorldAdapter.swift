@@ -18,6 +18,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
@@ -28,6 +29,7 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
@@ -36,27 +38,27 @@ import OpenSkyWorldState
 /// What `InventoryWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol InventoryWorldHost: AnyObject {
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var crime: CrimeCoordinator { get }
-    var factions: FactionCoordinator { get }
-    var furniture: FurnitureCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get set }
-    var journal: JournalCoordinator { get }
-    var magic: MagicCoordinator { get }
-    var menuScreens: MenuScreens { get }
-    var mapWorld: MapWorldAdapter { get }
-    var messages: MessageCoordinator { get }
-    var perception: PerceptionCoordinator { get }
-    var perkActivation: PerkActivationCoordinator { get }
-    var perks: PerkCoordinator { get }
-    var player: PlayerCoordinator { get }
-    var gameSession: GameSession? { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var worldState: WorldStateStore { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var crime: any CrimePort { get }
+    var factions: any FactionPort { get }
+    var furniture: any FurniturePort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var journal: any JournalPort { get }
+    var magic: any MagicPort { get }
+    var menuScreens: any MenuScreensPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var perception: any PerceptionPort { get }
+    var perkActivation: any PerkActivationPort { get }
+    var perks: any PerkPort { get }
+    var player: any PlayerPort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var worldState: any WorldStateStorePort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -92,7 +94,7 @@ final class InventoryWorldAdapter {
                 return
             }
             run(game.inventory.handleInteraction(action))
-            if action == .use, game.inventory.crafting != nil {
+            if action == .use, game.inventory.isCrafting {
                 game.menuScreens.crafting.open()
             }
         }
@@ -111,13 +113,13 @@ final class InventoryWorldAdapter {
 
     /// Nil without inventory baselines: then there is no item runtime.
     func sessionData(
-        provider: WorldDataStores, streamer: CellStreamer
+        provider: WorldDataStores, streamer: CellStreamer, store: WorldStateStore
     ) -> InventorySessionData? {
         guard let baselines = provider.inventoryBaselines else { return nil }
         let settings = provider.gameSettings
         baselines.items.enchantedValueSettings = EnchantedValueSettings.resolve(store: settings)
         var data = InventorySessionData(items: WorldItemRuntime(
-            inventory: InventoryRuntime(store: game.worldState, baselines: baselines),
+            inventory: InventoryRuntime(store: store, baselines: baselines),
             references: streamer,
             crime: game.crime.reporter
         ))

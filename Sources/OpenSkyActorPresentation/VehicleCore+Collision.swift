@@ -2,6 +2,7 @@
 // docs/engine/vehicles.md.
 
 public import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 nonisolated extension VehicleCore {

@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyCells
 import OpenSkyLoading
+import OpenSkyWorldInterface
 
 final class WorldLoader {
     /// The stages of the newest load, kept after it ends for the timing inspector.

@@ -10,6 +10,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyRenderCore
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 public import simd
 
 nonisolated public final class PlayerFirstPersonRig {

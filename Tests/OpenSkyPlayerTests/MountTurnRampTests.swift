@@ -1,6 +1,7 @@
 // A held turn on a ridden horse starts slow, ramps to the maximum, and resets on release.
 
 import OpenSkyPlayer
+import OpenSkyWorldInterface
 import Testing
 
 struct MountTurnRampTests {

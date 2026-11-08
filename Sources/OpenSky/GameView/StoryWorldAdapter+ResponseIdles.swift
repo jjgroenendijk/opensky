@@ -5,6 +5,7 @@ import OpenSkyActorPresentation
 import OpenSkyDialogue
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkySessionInterface
 
 extension StoryWorldAdapter {
     /// The author named these idles, so they play without their own conditions.

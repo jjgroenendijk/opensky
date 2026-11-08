@@ -7,6 +7,7 @@ import GameController
 import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyMagic
+import OpenSkyMagicInterface
 
 final class ControllerRumble {
     var settings = ShoutRumbleSettings.vanilla

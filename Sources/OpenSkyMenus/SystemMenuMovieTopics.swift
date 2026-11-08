@@ -3,6 +3,7 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 nonisolated extension SystemMenuMovieBridge {
     /// The calls each topic page makes, measured from `SystemPage.onCategoryButtonPress`.

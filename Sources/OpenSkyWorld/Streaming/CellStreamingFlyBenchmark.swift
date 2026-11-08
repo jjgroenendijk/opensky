@@ -11,6 +11,7 @@ import OpenSkyGameData
 public import OpenSkyRendering
 public import OpenSkyTerrain
 public import OpenSkyWeather
+import OpenSkyWorldInterface
 import simd
 
 /// Deterministic path: launch center -> one cell east -> one cell north.

@@ -5,6 +5,8 @@
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
+import OpenSkyWorldInterface
+import OpenSkyWorldState
 import simd
 import Testing
 

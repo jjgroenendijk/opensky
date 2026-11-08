@@ -5,6 +5,7 @@
 import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyGameData
+import OpenSkyMenusInterface
 
 /// What the settings change in the running game. The app answers it.
 public protocol PlayerSettingsWorld: AnyObject {

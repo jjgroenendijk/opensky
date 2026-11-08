@@ -3,8 +3,9 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyRendering
-public import OpenSkyRuntimeState
+import OpenSkyRuntimeState
 public import OpenSkyTerrain
+public import OpenSkyWorldInterface
 
 /// One idle prop to load for one actor, on the actor's own rig.
 nonisolated public struct ActorPropRequest: Equatable, Sendable {

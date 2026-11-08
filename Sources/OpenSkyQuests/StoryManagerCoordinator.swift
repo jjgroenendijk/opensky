@@ -5,6 +5,7 @@
 public import OpenSkyConditions
 public import OpenSkyFormatsCore
 public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 /// What `StoryManagerCoordinator` reads from the running session.

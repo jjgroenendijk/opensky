@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
 

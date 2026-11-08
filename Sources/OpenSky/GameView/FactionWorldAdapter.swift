@@ -4,12 +4,15 @@
 
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 /// What the faction adapter reads. The streamer is a closure, because a reload
 /// replaces it; the coordinator is one, because it is built with this adapter.
@@ -50,9 +53,9 @@ final class FactionWorldAdapter {
     }
 
     /// One family value for the Papyrus bridge.
-    func wireNatives(bridge: PapyrusWorldStateBridge) {
+    func papyrusNatives() -> PapyrusFactionNatives {
         let factions = factions
-        bridge.factionNatives = PapyrusFactionNatives(
+        return PapyrusFactionNatives(
             runtime: { [weak factions] key in factions?.seededRuntime(for: key) },
             relationships: { [weak factions] in factions?.relationships },
             socialDecision: { [weak factions] observer, target in
@@ -67,7 +70,6 @@ final class FactionWorldAdapter {
             reactionsChanged: { [weak factions] in factions?.setScriptedReactions($0) },
             socialProfile: { [weak factions] key in factions?.profile(of: key) }
         )
-        bridge.publishFactionReactions()
     }
 }
 

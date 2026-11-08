@@ -2,6 +2,7 @@
 // one-button box closes on cancel.
 
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct MessageBoxMenuModelTests {

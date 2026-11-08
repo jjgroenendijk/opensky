@@ -1,7 +1,7 @@
 @testable public import OpenSkyActorsInterface
 @testable public import OpenSkyBehavior
 @testable public import OpenSkyCombat
-@testable import OpenSkyCombatInterface
+@testable public import OpenSkyCombatInterface
 @testable public import OpenSkyFormatsESM
 @testable public import OpenSkyMagicInterface
 @testable public import OpenSkyPhysics

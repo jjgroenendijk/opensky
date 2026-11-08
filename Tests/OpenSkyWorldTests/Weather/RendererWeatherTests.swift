@@ -13,6 +13,7 @@ import OpenSkyTagsTesting
 @testable import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 import simd
 import Testing
 

@@ -6,6 +6,7 @@
 // argument as an immutable value, which forbids a mutating member inside it.
 
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct MenuStackTests {

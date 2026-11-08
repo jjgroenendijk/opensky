@@ -8,6 +8,7 @@ public import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 public import OpenSkyGameData
 import OpenSkyQuestsInterface
+public import OpenSkySaveInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 

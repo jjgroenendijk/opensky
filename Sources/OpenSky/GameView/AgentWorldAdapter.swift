@@ -29,84 +29,87 @@ import OpenSkyRenderResources
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `AgentWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol AgentWorldHost: AnyObject {
-    var beastForms: BeastFormWorldAdapter { get }
+    var nodeControllers: any NodeControllerPort { get }
+    var beastForms: any BeastFormWorldPort { get }
     var playerBeastForm: PlayerBeastForm { get }
     var playerControlLocks: PlayerControlLocks { get }
-    var playerSettings: PlayerSettingsCoordinator { get }
+    var playerSettings: any PlayerSettingsPort { get }
     func showControlRefusal(_ refusal: PlayerControlRefusal)
-    var combatWorld: CombatWorldAdapter { get }
-    var effects: EffectsCoordinator { get }
-    var dragonFlight: DragonFlightCoordinator { get }
-    var dragonFlightWorld: DragonFlightWorldAdapter { get }
-    var mounts: MountCoordinator { get }
-    var mountWorld: MountWorldAdapter { get }
-    var followerCommands: FollowerCommandCoordinator { get }
-    var followerCommandWorld: FollowerCommandWorldAdapter { get }
-    var actorGraphs: ActorGraphCoordinator { get }
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var audio: AudioCoordinator { get }
-    var benchmarkWorld: BenchmarkWorldAdapter { get }
-    var cameraInput: CameraInputState { get }
-    var combat: CombatCoordinator { get }
-    var ragdoll: RagdollCoordinator { get }
-    var controllerRumble: ControllerRumble { get }
-    var containerMenu: ContainerMenuController { get }
-    var dialogueMenu: DialogueMenuController { get }
-    var dialogueWorld: DialogueWorldAdapter { get }
-    var effectsWorld: EffectsWorldAdapter { get }
-    var effectGraphs: EffectGraphCoordinator { get }
-    var effectModelPoser: EffectModelPoser { get }
-    var factions: FactionCoordinator { get }
-    var aiWorld: AIWorldAdapter { get }
-    var furniture: FurnitureCoordinator { get }
-    var hud: HUDCoordinator { get }
-    var menuScreensWorld: MenuScreensWorldAdapter { get }
-    var idleWorld: IdleWorldAdapter { get }
-    var inventory: InventoryCoordinator { get }
-    var inventoryMenu: InventoryMenuController { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var journalMenu: JournalMenuController { get }
-    var loadingScreens: LoadingScreenCoordinator { get }
-    var loadingWorld: LoadingScreenWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
-    var mapMenu: MapMenuCoordinator { get }
-    var magic: MagicCoordinator { get }
-    var menuMode: MenuModeController { get }
-    var menuRouter: MenuRouter { get }
-    var messages: MessageCoordinator { get }
-    var movies: MoviePlayerCoordinator { get }
-    var titleSequence: TitleSequenceCoordinator { get }
-    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
-    var packages: PackageCoordinator { get }
-    var perception: PerceptionCoordinator { get }
-    var perks: PerkCoordinator { get }
-    var player: PlayerCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var raceMenu: RaceMenuCoordinator { get }
-    var renderControls: WorldRenderControls { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
+    var combatWorld: any CombatWorldPort { get }
+    var effects: any EffectsPort { get }
+    var dragonFlight: any DragonFlightPort { get }
+    var dragonFlightWorld: any DragonFlightWorldPort { get }
+    var mounts: any MountPort { get }
+    var mountWorld: any MountWorldPort { get }
+    var followerCommands: any FollowerCommandPort { get }
+    var followerCommandWorld: any FollowerCommandWorldPort { get }
+    var actorGraphs: any ActorGraphPort { get }
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var audio: any AudioPort { get }
+    var benchmarkWorld: any BenchmarkWorldPort { get }
+    var cameraInput: any CameraInputStatePort { get }
+    var combat: any CombatPort { get }
+    var ragdoll: any RagdollPort { get }
+    var controllerRumble: any ControllerRumblePort { get }
+    var containerMenu: any ContainerMenuPort { get }
+    var dialogueMenu: any DialogueMenuPort { get }
+    var dialogueWorld: any DialogueWorldPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
+    var effectGraphs: any EffectGraphPort { get }
+    var effectModelPoser: any EffectModelPoserPort { get }
+    var factions: any FactionPort { get }
+    var aiWorld: any AIWorldPort { get }
+    var furniture: any FurniturePort { get }
+    var hud: any HUDPort { get }
+    var menuScreensWorld: any MenuScreensWorldPort { get }
+    var idleWorld: any IdleWorldPort { get }
+    var inventory: any InventoryPort { get }
+    var inventoryMenu: any InventoryMenuPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var journalMenu: any JournalMenuPort { get }
+    var loadingScreens: any LoadingScreenPort { get }
+    var loadingWorld: any LoadingScreenWorldPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var mapMenu: any MapMenuPort { get }
+    var magic: any MagicPort { get }
+    var menuMode: any MenuModePort { get }
+    var menuRouter: any MenuRouterPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var movies: any MoviePlayerPort { get }
+    var titleSequence: any TitleSequencePort { get }
+    var objectAnimationWorld: any ObjectAnimationWorldPort { get }
+    var packages: any PackagePort { get }
+    var perception: any PerceptionPort { get }
+    var perks: any PerkPort { get }
+    var player: any PlayerPort { get }
+    var progression: any ProgressionPort { get }
+    var raceMenu: any RaceMenuPort { get }
+    var renderControls: any WorldRenderControlsPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
     func runCommand(_ action: GameInputAction)
-    var runtimeState: RuntimeStateCoordinator { get }
-    var scenes: SceneCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var simulationClock: SteppedWallClock { get }
-    var skillsMenu: SkillsMenuCoordinator { get }
-    var streamer: CellStreamer? { get }
-    var systemMenu: SystemMenuCoordinator { get }
-    var titleMenu: TitleMenuCoordinator { get }
-    var vehicleWorld: VehicleWorldAdapter { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var scenes: any ScenePort { get }
+    var scripts: any ScriptPort { get }
+    var simulationClock: any SteppedWallClockPort { get }
+    var skillsMenu: any SkillsMenuPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var systemMenu: any SystemMenuPort { get }
+    var titleMenu: any TitleMenuPort { get }
+    var vehicleWorld: any VehicleWorldPort { get }
     var hostView: NSView { get }
     var dataRoot: GameDataRoot? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class AgentWorldAdapter {
@@ -272,7 +275,7 @@ extension AgentWorldAdapter: AgentControlWorld {
     /// A second render at any size. A paused offscreen frame advances no clock, so
     /// a capture does not move the simulation that a deterministic run depends on.
     private func captureOffscreen(
-        _ request: AgentScreenshotRequest, gameSession: GameSession, view: MTKView
+        _ request: AgentScreenshotRequest, gameSession: any GameSessionPort, view: MTKView
     ) throws(AgentFailure) -> AgentJSON {
         let renderer = gameSession.renderer
         let width = request.width ?? Int(view.drawableSize.width.rounded())

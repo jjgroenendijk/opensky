@@ -7,7 +7,9 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyQuestsInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -116,7 +118,7 @@ extension ContainerMenuController {
                 entry.item, count: count, named: entry.name, into: target, roll: roll
             )
         note(outcome.text)
-        let worldState = game.inventoryWorld.game.worldState
+        let worldState = game.worldState
         if case .took = outcome {
             worldState.incrementMiscStat("Items Pickpocketed")
             if !pickedOpenPockets {

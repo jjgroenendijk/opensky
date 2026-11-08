@@ -12,6 +12,7 @@ import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 /// What the hazard adapter reads. The session is a closure, because a reload
 /// replaces it.

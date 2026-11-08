@@ -2,7 +2,7 @@
 
 import Foundation
 public import OpenSkyFormatsPEX
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 
 nonisolated public struct PexNativeTarget: Equatable, Hashable, Sendable {
     public let scriptName: String

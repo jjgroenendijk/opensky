@@ -10,6 +10,7 @@ import OpenSkyGameData
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 import Testing
 

@@ -10,6 +10,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 public import OpenSkyQuestsInterface
+public import OpenSkySaveInterface
 public import OpenSkyScriptingInterface
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState

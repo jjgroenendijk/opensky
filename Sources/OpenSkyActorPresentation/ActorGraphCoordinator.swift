@@ -10,6 +10,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
+import OpenSkyWorldInterface
 import simd
 
 /// One loaded actor that can run a graph.
@@ -57,7 +58,6 @@ public protocol ActorGraphWorld: AnyObject {
     func actorGraphCandidates() -> [ActorGraphCandidate]
     /// Where the cutoff distance is measured from. Nil steps every graph at full rate.
     var actorGraphViewer: SIMD3<Float>? { get }
-    func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback?
     /// Each event a graph fires, by actor, in fire order.
     func actorGraphFired(_ event: String, from actor: ReferenceKey)
     /// A wait that finished, by its token; true when its event fired.
@@ -106,6 +106,8 @@ nonisolated struct LoadedActorGraphProject: Sendable {
 
 @MainActor
 public final class ActorGraphCoordinator {
+    /// Each actor's animation playback; the composition root answers it from the streamer.
+    public var actorPlayback: (ReferenceKey) -> ActorAnimationPlayback? = { _ in nil }
     enum ProjectState {
         case loading
         case ready(Project)
@@ -242,7 +244,7 @@ public final class ActorGraphCoordinator {
         var seen = Set<ReferenceKey>()
         for candidate in candidates {
             seen.insert(candidate.key)
-            let playback = world.actorPlayback(for: candidate.key)
+            let playback = actorPlayback(candidate.key)
             if playback?.lagBones != nil {
                 playback?.placement = candidate.placement
             }

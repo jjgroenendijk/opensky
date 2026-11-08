@@ -1,5 +1,6 @@
 import Foundation
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 import Testing
 

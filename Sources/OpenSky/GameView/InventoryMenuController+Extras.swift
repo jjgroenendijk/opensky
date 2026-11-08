@@ -10,7 +10,9 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
+import OpenSkySessionInterface
 
 extension InventoryMenuController {
     // MARK: - Favourites and hotkeys

@@ -3,12 +3,15 @@
 
 import OpenSkyAudio
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRenderCore
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 extension RagdollWorldAdapter {
@@ -22,7 +25,7 @@ extension RagdollWorldAdapter {
             let regen = game.ragdoll.deathSettings.bleedoutRegenPercent / 100 * max(delta, 0)
             restoreHealthShare(regen, of: .player)
         }
-        for command in game.ragdoll.playerDeath.advance(by: delta, health: sample) {
+        for command in game.ragdoll.advancePlayerDeath(by: delta, health: sample) {
             run(command)
         }
     }

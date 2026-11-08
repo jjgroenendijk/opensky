@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyGameData
+import OpenSkyMenusInterface
 public import OpenSkyWorldInterface
 
 extension MapMenuCoordinator {

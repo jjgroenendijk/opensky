@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+import OpenSkyMenusInterface
 
 public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
     public private(set) var model = ItemListMenuModel(categories: [])
@@ -18,7 +19,7 @@ public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
         identifier: MenuIdentifier,
         movie: ItemListScreenMovie,
         menuMode: MenuModeController,
-        layer: (movies: SWFMovieSource?, hud: HUDCoordinator?),
+        layer: (movies: (any MenuMovieLoading)?, hud: (any MenuLayerOwner)?),
         world: (any MenuScreenWorld)?
     ) {
         moviePath = movie.path

@@ -14,6 +14,7 @@ import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 @testable import OpenSkySave
+import OpenSkySaveInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import Testing

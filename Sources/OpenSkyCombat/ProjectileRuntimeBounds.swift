@@ -3,6 +3,7 @@
 // registries (docs/engine/combat.md).
 
 import Foundation
+import OpenSkyCombatInterface
 
 extension ProjectileRuntime {
     /// Cancels the oldest projectiles until at most `limit` fly. Each is traced as

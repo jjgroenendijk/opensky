@@ -4,12 +4,14 @@
 import OpenSkyAgentControl
 import OpenSkyFormatsESM
 import OpenSkyObjectAnimation
+import OpenSkySessionInterface
+import OpenSkyWorldInterface
 import simd
 
 extension AgentWorldAdapter {
     /// Every mesh that plays node controllers, or one mesh's driven nodes.
     func nodesState(reference: String?) throws(AgentFailure) -> AgentJSON {
-        let nodes = game.objectAnimationWorld.game.nodeControllers
+        let nodes = game.nodeControllers
         guard let reference else {
             return ["nodes": .array(nodes.references.map { ["ref": .formID($0)] })]
         }

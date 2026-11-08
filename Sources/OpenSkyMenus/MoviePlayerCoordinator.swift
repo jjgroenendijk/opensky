@@ -6,6 +6,7 @@ import Foundation
 public import OpenSkyAudio
 public import OpenSkyFormatsCore
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 
 /// What the movie player reaches outside itself. The app conforms.
 public protocol MoviePlayerWorld: AnyObject {
@@ -13,22 +14,6 @@ public protocol MoviePlayerWorld: AnyObject {
     func showMoviePicture(_ picture: MoviePicture?, letterbox: Bool)
     func startMovieSound(_ sound: DecodedAudio?, request: MovieRequest)
     func endMovieSound()
-}
-
-nonisolated public enum MovieOutcome: Equatable, Sendable {
-    case finished
-    case skipped
-    case failed(String)
-}
-
-nonisolated public struct MoviePlaybackReadout: Equatable, Sendable {
-    public var fileName: String?
-    public var loading: Bool
-    /// The frame on screen, nil before the first one.
-    public var frame: Int?
-    public var frameCount: Int?
-    public var interruptible: Bool
-    public var lastOutcome: MovieOutcome?
 }
 
 public final class MoviePlayerCoordinator {

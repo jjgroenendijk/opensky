@@ -4,6 +4,7 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyQuestsInterface
 
 /// The status line under a quest title.

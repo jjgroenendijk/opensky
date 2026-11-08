@@ -7,6 +7,7 @@
 @testable import OpenSkyFormatsMesh
 import OpenSkyNavigation
 @testable import OpenSkyPhysics
+import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing

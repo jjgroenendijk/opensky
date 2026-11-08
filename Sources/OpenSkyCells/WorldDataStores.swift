@@ -11,6 +11,7 @@ public import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
 public import OpenSkyPlayer
 public import OpenSkyWeather
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
 /// The data half of a streaming session, split from `BuilderCellSceneProvider`

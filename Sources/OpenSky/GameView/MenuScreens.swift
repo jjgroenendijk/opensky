@@ -3,15 +3,13 @@
 
 import Foundation
 import OpenSkyMenus
+import OpenSkyMenusInterface
+import OpenSkySessionInterface
 
 /// What `MenuScreens` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MenuScreensHost: AnyObject {
-    var hud: HUDCoordinator { get }
-    var journalMenu: JournalMenuController { get }
-    var mapMenu: MapMenuCoordinator { get }
-    var menuScreensWorld: MenuScreensWorldAdapter { get }
-    var swfMovies: SWFMovieSource { get }
+    var journalMenu: any JournalMenuPort { get }
 }
 
 /// One screen's routes, so the tables below list each screen once.
@@ -33,23 +31,23 @@ struct MenuScreenCoordinators {
     let crafting: CraftingMenuCoordinator
     let textEntry: TextEntryMenuCoordinator
     let creationClub: CreationClubMenuCoordinator
+    let mapMovie: MapMenuMovieScreen
 }
 
 final class MenuScreens {
-    let sleepWait: SleepWaitMenuCoordinator
-    let training: TrainingMenuCoordinator
-    let book: BookMenuCoordinator
+    let sleepWait: any SleepWaitMenuPort
+    let training: any TrainingMenuPort
+    let book: any BookMenuPort
     let tutorial: TutorialMenuCoordinator
-    let magic: MagicMenuCoordinator
-    let gift: GiftMenuCoordinator
-    let crafting: CraftingMenuCoordinator
+    let magic: any MagicMenuPort
+    let gift: any GiftMenuPort
+    let crafting: any CraftingMenuPort
     let textEntry: TextEntryMenuCoordinator
     let creationClub: CreationClubMenuCoordinator
     let mapMovie: MapMenuMovieScreen
+    private let routes: [MenuScreenRoute]
 
     init(game: any MenuScreensHost, screens: MenuScreenCoordinators) {
-        let world = game.menuScreensWorld
-        let (movies, hud) = (game.swfMovies, game.hud)
         sleepWait = screens.sleepWait
         training = screens.training
         book = screens.book
@@ -59,16 +57,14 @@ final class MenuScreens {
         crafting = screens.crafting
         textEntry = screens.textEntry
         creationClub = screens.creationClub
-        mapMovie = MapMenuMovieScreen(map: game.mapMenu, movies: movies, hud: hud, world: world)
-        mapMovie.onJournal = { [unowned game] in game.journalMenu.open() }
-    }
-
-    private var routes: [MenuScreenRoute] {
-        [
-            Self.route(sleepWait), Self.route(training), Self.route(book),
-            Self.route(tutorial), Self.route(magic), Self.route(gift), Self.route(crafting),
-            Self.route(textEntry), Self.route(creationClub)
+        mapMovie = screens.mapMovie
+        routes = [
+            Self.route(screens.sleepWait), Self.route(screens.training), Self.route(screens.book),
+            Self.route(screens.tutorial), Self.route(screens.magic), Self.route(screens.gift),
+            Self.route(screens.crafting), Self.route(screens.textEntry),
+            Self.route(screens.creationClub)
         ]
+        mapMovie.onJournal = { [unowned game] in game.journalMenu.open() }
     }
 
     private static func route(_ screen: MenuScreen<some Any>) -> MenuScreenRoute {
@@ -88,10 +84,8 @@ final class MenuScreens {
     }
 
     /// Each screen takes the keys while it is on top.
-    func register(in table: MenuRouteTable) {
-        for route in routes {
-            table.register(route.identifier, route: route.key)
-        }
+    var keyRoutes: [MenuIdentifier: (MenuInputEvent) -> Void] {
+        Dictionary(uniqueKeysWithValues: routes.map { ($0.identifier, $0.key) })
     }
 
     /// The screens whose movie takes the cursor.

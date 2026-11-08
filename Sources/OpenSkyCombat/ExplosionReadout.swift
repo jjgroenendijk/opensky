@@ -2,6 +2,7 @@
 // unit test can pin it.
 
 import Foundation
+public import OpenSkyCombatInterface
 public import OpenSkyPhysics
 
 nonisolated public enum ExplosionReadout {

@@ -8,13 +8,17 @@ import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -68,7 +72,7 @@ extension AgentWorldAdapter {
     private func wireEventCallbacks() {
         guard !tap.wired, let streamer = game.streamer else { return }
         tap.wired = true
-        streamer.onCellAttached.register(.agentEvents) { [weak self] attachment in
+        streamer.registerCellAttached(.agentEvents) { [weak self] attachment in
             // A rebuild of the same cell after a state change is not a new load.
             guard attachment.isFirstIntegration else { return }
             self?.tap.append(AgentEventKind.cellLoaded, Self.cellData(attachment.scene))
@@ -96,7 +100,7 @@ extension AgentWorldAdapter {
         }
     }
 
-    private static func cellData(_ scene: CellScene) -> [String: AgentJSON] {
+    private static func cellData(_ scene: any CellScenePort) -> [String: AgentJSON] {
         var data = scene.location.map(locationData) ?? [:]
         data["name"] = .string(scene.summary.cellName)
         return data

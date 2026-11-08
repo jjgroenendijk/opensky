@@ -4,15 +4,8 @@
 // Sources: UESP "Skyrim:Essential NPCs" and "Skyrim:Protected NPCs", and the Creation
 // Kit wiki "Class". See docs/engine/ragdoll.md#bleedout.
 
+public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
-
-/// What zero health does to one actor.
-nonisolated public enum ZeroHealthOutcome: Equatable, Sendable {
-    case dies
-    /// `StartDeferredKill` holds the death until `EndDeferredKill`.
-    case deferred
-    case bleedsOut
-}
 
 /// The actors in bleedout and how long each has knelt.
 nonisolated public struct BleedoutTracker: Equatable, Sendable {

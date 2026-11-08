@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 import OpenSkyRenderCore
 
 /// What every menu screen needs from the app.
@@ -29,7 +30,7 @@ public class MenuScreen<Event> {
         identifier: MenuIdentifier,
         movieReadsKeys: Bool,
         menuMode: MenuModeController,
-        layer: (movies: SWFMovieSource?, hud: HUDCoordinator?),
+        layer: (movies: (any MenuMovieLoading)?, hud: (any MenuLayerOwner)?),
         world: (any MenuScreenWorld)?
     ) {
         self.identifier = identifier

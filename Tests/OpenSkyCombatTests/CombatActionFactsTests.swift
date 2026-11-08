@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyActorsInterface
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 import Testing
 
 struct CombatActionFactsTests {

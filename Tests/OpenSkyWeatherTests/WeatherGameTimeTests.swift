@@ -3,6 +3,7 @@
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWeather
+import OpenSkyWorldInterface
 import Testing
 
 struct WeatherGameTimeTests {

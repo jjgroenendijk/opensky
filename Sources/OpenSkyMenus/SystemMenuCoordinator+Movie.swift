@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+public import OpenSkyMenusInterface
 import OpenSkyRendering
 
 extension SystemMenuCoordinator {
@@ -274,12 +275,4 @@ extension SystemMenuCoordinator {
         guard movieLoaded, let renderer else { return }
         attempt { try renderer.updateSWFRuntime(body) }
     }
-}
-
-nonisolated public struct SystemMenuMovieDiagnostics: Equatable, Sendable {
-    /// `SystemPage.iCurrentState`.
-    public let state: Int?
-    public let faults: Int
-    /// Names the movie looked up and did not find.
-    public let missingNames: [String]
 }

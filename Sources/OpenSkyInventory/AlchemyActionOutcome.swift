@@ -2,6 +2,7 @@
 // `AlchemyTexts`, read from the load order's strings.
 
 import Foundation
+public import OpenSkyInventoryInterface
 
 /// The game strings alchemy shows. The fallbacks are OpenSky's wording.
 nonisolated public struct AlchemyTexts: Equatable, Sendable {
@@ -31,27 +32,7 @@ nonisolated public struct AlchemyTexts: Equatable, Sendable {
     }
 }
 
-nonisolated public enum AlchemyActionOutcome: Equatable, Sendable {
-    case idle
-    case unavailable
-    case noLab
-    case notAnIngredient(String)
-    case noneCarried(String)
-    case tooMany(limit: Int)
-    case picked(String, preview: String)
-    case dropped(String, preview: String)
-    case cleared
-    case needsTwo
-    case brewed(count: Int32, item: String, value: Int32)
-    case failed(String)
-    case learned(ingredient: String, effects: [String])
-    case poisoned(weapon: String, poison: String, doses: Int32)
-    case noWeapon
-    case alreadyPoisoned
-    case cannotPoison
-    case notAPoison(String)
-    case brewFailed(reason: String)
-
+nonisolated extension AlchemyActionOutcome {
     public var text: String {
         switch self {
         case .idle: "No alchemy action yet."

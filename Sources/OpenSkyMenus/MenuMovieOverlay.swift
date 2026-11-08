@@ -6,15 +6,16 @@ import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsSWF
 import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyRendering
 
 public final class MenuMovieOverlay {
     public private(set) var isLoaded = false
     private var request = 0
-    private let movies: SWFMovieSource?
-    private let renderer: () -> Renderer?
+    private let movies: (any MenuMovieLoading)?
+    private let renderer: () -> (any RendererPort)?
 
-    public init(movies: SWFMovieSource?, renderer: @escaping () -> Renderer?) {
+    public init(movies: (any MenuMovieLoading)?, renderer: @escaping () -> (any RendererPort)?) {
         self.movies = movies
         self.renderer = renderer
     }
@@ -65,7 +66,7 @@ public final class MenuMovieOverlay {
         }
     }
 
-    private func record(_ body: (Renderer) throws -> Void) {
+    private func record(_ body: (any RendererPort) throws -> Void) {
         guard let renderer = renderer() else { return }
         do {
             try body(renderer)

@@ -283,7 +283,7 @@ extension SkillsMenuCoordinator {
     /// Sends the selected tree's names where their stars land, when they moved.
     private func updateNames(
         _ model: SkillsMenuModel, scene: MenuScene, selectedStars: [PerkSkyStar],
-        renderer: Renderer
+        renderer: any RendererPort
     ) {
         var points: [UInt32: SIMD2<Float>] = [:]
         for star in selectedStars {

@@ -6,11 +6,12 @@ import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyPhysics
-public import OpenSkyPlayer
+import OpenSkyPlayer
 public import OpenSkyRendering
 public import OpenSkyRenderResources
 import OpenSkyRuntimeState
 public import OpenSkyTerrain
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import Synchronization
 

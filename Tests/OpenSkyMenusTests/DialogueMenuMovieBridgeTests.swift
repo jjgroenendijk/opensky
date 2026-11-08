@@ -8,6 +8,7 @@ import AppKit
 @testable import OpenSkyFormatsSWF
 import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 private final class DialogueCallLog: @unchecked Sendable {

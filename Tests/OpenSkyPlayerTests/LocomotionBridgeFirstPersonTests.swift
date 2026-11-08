@@ -7,6 +7,7 @@ import OpenSkyActorPresentation
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyPlayer
+import OpenSkyWorldInterface
 import simd
 import Testing
 

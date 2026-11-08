@@ -4,6 +4,7 @@
 // See docs/engine/spell-delivery.md.
 
 import Foundation
+import OpenSkyCombatInterface
 import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyPhysics

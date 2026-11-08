@@ -6,7 +6,7 @@
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 public import OpenSkyProgressionInterface
 public import OpenSkyWorldInterface
@@ -132,16 +132,4 @@ extension InventoryWorld {
     ) -> Float {
         value
     }
-}
-
-/// One container-menu transaction, named by its direction.
-nonisolated public enum ContainerTransfer: Equatable, Sendable {
-    /// Container to player, marked as theft when the container is owned.
-    case take
-    /// Player to container.
-    case store
-    /// Merchant to player, for gold.
-    case buy
-    /// Player to merchant, for gold.
-    case sell
 }

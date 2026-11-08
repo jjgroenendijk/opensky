@@ -4,12 +4,16 @@
 
 import OpenSkyAIPackages
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyQuests
+import OpenSkyQuestsInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 extension StoryWorldAdapter: SocialEventWorld {

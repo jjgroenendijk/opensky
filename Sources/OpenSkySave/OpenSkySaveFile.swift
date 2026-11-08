@@ -3,6 +3,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
+public import OpenSkySaveInterface
 public import OpenSkyScriptingInterface
 public import OpenSkyWorldState
 

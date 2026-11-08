@@ -2,6 +2,7 @@
 // See docs/engine/journal.md#hud-notices.
 
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 import OpenSkyRendering
 
 extension HUDCoordinator {

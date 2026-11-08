@@ -12,6 +12,7 @@ import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 
 /// Where Play starts, as the launcher chose it.

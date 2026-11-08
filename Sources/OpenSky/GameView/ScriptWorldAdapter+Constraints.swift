@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import simd
 
@@ -50,7 +51,7 @@ extension ScriptWorldAdapter {
 
     /// A loose body held to a ragdoll bone. The bone must have a body.
     private func linkLoose(
-        _ first: PhysicsLinkEnd, _ second: PhysicsLinkEnd, _ runtime: RagdollRuntime
+        _ first: PhysicsLinkEnd, _ second: PhysicsLinkEnd, _ runtime: any RagdollRuntimePort
     ) -> PapyrusNativeResult {
         let looseFirst = game.streamer?.dynamicBodies.body(for: first.reference) != nil
         let link = looseFirst
@@ -60,7 +61,7 @@ extension ScriptWorldAdapter {
         return .returned(.boolean(linked))
     }
 
-    private func body(of end: PhysicsLinkEnd, _ runtime: RagdollRuntime) -> ConstraintBody {
+    private func body(of end: PhysicsLinkEnd, _ runtime: any RagdollRuntimePort) -> ConstraintBody {
         if game.streamer?.dynamicBodies.body(for: end.reference) != nil {
             return .loose
         }

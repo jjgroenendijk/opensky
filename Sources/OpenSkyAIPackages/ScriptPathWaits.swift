@@ -4,6 +4,7 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyPhysics
+public import OpenSkyWorldInterface
 
 nonisolated public struct ScriptPathWaits: Equatable, Sendable {
     private var actors: [UInt64: ReferenceKey] = [:]

@@ -34,40 +34,6 @@ nonisolated public enum PickpocketCooldown {
     }
 }
 
-/// What one pickpocket take did.
-nonisolated public enum PickpocketOutcome: Equatable, Sendable {
-    case took(item: String, chance: Int)
-    case placed(item: String, chance: Int)
-    /// The Poisoned perk: a placed poison lands on the target instead.
-    case poisoned(item: String, chance: Int)
-    /// The roll failed: the target noticed and the crime was reported.
-    case caught(item: String, chance: Int, bounty: Int32)
-    /// An equipped item needs a Can Pickpocket Equipped Item perk.
-    case equipped(String)
-    case failed(String)
-    case unavailable
-
-    public var text: String {
-        switch self {
-        case let .took(item, chance): "Pickpocketed \(item) (\(chance)% chance)."
-        case let .placed(item, chance): "Placed \(item) (\(chance)% chance)."
-        case let .poisoned(item, chance): "Poisoned the target with \(item) (\(chance)% chance)."
-        case let .caught(item, chance, bounty):
-            "Caught taking \(item) (\(chance)% chance); bounty \(bounty)."
-        case let .equipped(item): "\(item) is equipped and cannot be taken."
-        case let .failed(reason): "Pickpocket refused: \(reason)"
-        case .unavailable: InventoryCore.noRuntimeText
-        }
-    }
-
-    public var wasCaught: Bool {
-        if case .caught = self {
-            return true
-        }
-        return false
-    }
-}
-
 extension InventoryCoordinator {
     /// Whether `target` refuses a pickpocket now, because it caught the player lately.
     public func pickpocketRefused(by target: ReferenceKey) -> Bool {
@@ -200,5 +166,20 @@ extension InventoryCoordinator {
             item, from: target.key, owner: target.key, how: .pickpocket
         ))
         return .took(item: name, chance: Int(chance))
+    }
+}
+
+nonisolated extension PickpocketOutcome {
+    public var text: String {
+        switch self {
+        case let .took(item, chance): "Pickpocketed \(item) (\(chance)% chance)."
+        case let .placed(item, chance): "Placed \(item) (\(chance)% chance)."
+        case let .poisoned(item, chance): "Poisoned the target with \(item) (\(chance)% chance)."
+        case let .caught(item, chance, bounty):
+            "Caught taking \(item) (\(chance)% chance); bounty \(bounty)."
+        case let .equipped(item): "\(item) is equipped and cannot be taken."
+        case let .failed(reason): "Pickpocket refused: \(reason)"
+        case .unavailable: InventoryCore.noRuntimeText
+        }
     }
 }

@@ -4,6 +4,7 @@
 
 public import OpenSkyActorsInterface
 import OpenSkyBehavior
+public import OpenSkyCombatInterface
 import OpenSkyConditions
 public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
@@ -334,5 +335,13 @@ public struct RagdollSessionData {
     ) {
         self.loadDefinition = loadDefinition
         self.deathSettings = deathSettings
+    }
+}
+
+extension RagdollCoordinator {
+    public func advancePlayerDeath(
+        by delta: Float, health: PlayerHealthSample
+    ) -> [PlayerDeathCommand] {
+        playerDeath.advance(by: delta, health: health)
     }
 }

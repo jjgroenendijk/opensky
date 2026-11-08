@@ -5,7 +5,10 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyQuests
+import OpenSkyQuestsInterface
+import OpenSkySessionInterface
 
 extension JournalMenuController {
     /// One sample per refresh, so two sections never show a half-updated session.

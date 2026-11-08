@@ -4,9 +4,12 @@
 import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkySessionInterface
+import OpenSkyWorldInterface
 import simd
 
 extension CombatWorldAdapter {

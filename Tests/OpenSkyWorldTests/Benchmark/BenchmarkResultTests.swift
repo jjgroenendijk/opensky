@@ -2,6 +2,7 @@
 
 import Foundation
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import Testing
 
 struct BenchmarkResultTests {

@@ -5,7 +5,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 public import OpenSkyWorldState
 
 @MainActor

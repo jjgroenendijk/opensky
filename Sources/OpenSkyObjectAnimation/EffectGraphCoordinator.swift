@@ -8,6 +8,7 @@ import OpenSkyBehavior
 public import OpenSkyFormatsAnimation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 /// What the effect graph coordinator reads from the session.
 @MainActor
@@ -18,25 +19,6 @@ public protocol EffectGraphWorld: AnyObject {
     func character(of actor: ReferenceKey) -> SubGraphCharacter?
     /// Each event a sub-graph fires, with the actor it is on.
     func effectGraphFired(_ event: String, from actor: ReferenceKey)
-}
-
-/// One line of the effect graph readout.
-nonisolated public struct EffectGraphRow: Equatable, Sendable {
-    public let id: SubGraphID
-    public let anchor: SubGraphAnchor
-    public let name: String
-    public let project: String
-    public let activeState: String?
-    /// The last actor event the graph declares and so took; nil before the first.
-    public let lastEvent: String?
-    public let takenCount: Int
-    /// The NIF sequences the graph's last step played, in walk order.
-    public let sequences: [String]
-
-    public var actor: ReferenceKey? {
-        guard case let .actor(key) = anchor else { return nil }
-        return key
-    }
 }
 
 @MainActor

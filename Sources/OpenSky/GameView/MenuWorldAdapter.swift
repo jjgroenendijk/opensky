@@ -16,48 +16,53 @@ import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkySave
+import OpenSkySaveInterface
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// What `MenuWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol MenuWorldHost: MenuInputConsumer {
-    var magic: MagicCoordinator { get }
-    var agentWorld: AgentWorldAdapter { get }
-    var audio: AudioCoordinator { get }
-    var cameraInput: CameraInputState { get }
-    var combat: CombatCoordinator { get }
-    var effectsWorld: EffectsWorldAdapter { get }
-    var containerMenu: ContainerMenuController { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var loadingScreens: LoadingScreenCoordinator { get }
-    var mapMenu: MapMenuCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
-    var menuScreens: MenuScreens { get }
-    var messages: MessageCoordinator { get }
-    var player: PlayerCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var raceMenu: RaceMenuCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var saveGames: SaveGameWorldAdapter { get }
-    var scripts: ScriptCoordinator { get }
-    var simulationClock: SteppedWallClock { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var streamer: CellStreamer? { get }
-    var subtitles: SubtitleCoordinator { get }
-    var swfMovies: SWFMovieSource { get }
+    var magic: any MagicPort { get }
+    var agentWorld: any AgentWorldPort { get }
+    var audio: any AudioPort { get }
+    var cameraInput: any CameraInputStatePort { get }
+    var combat: any CombatPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
+    var containerMenu: any ContainerMenuPort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var loadingScreens: any LoadingScreenPort { get }
+    var mapMenu: any MapMenuPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var menuScreens: any MenuScreensPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var player: any PlayerPort { get }
+    var progression: any ProgressionPort { get }
+    var raceMenu: any RaceMenuPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var saveGames: any SaveGameWorldPort { get }
+    var scripts: any ScriptPort { get }
+    var simulationClock: any SteppedWallClockPort { get }
+    var storyWorld: any StoryWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var subtitles: any SubtitlePort { get }
+    var swfMovies: any SWFMovieSourcePort { get }
     var hostView: NSView { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
     var playerBeastForm: PlayerBeastForm { get }
 }
 
@@ -187,7 +192,7 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
         return PerkSkySettings { values[$0] }
     }
 
-    var renderer: Renderer? {
+    var renderer: (any RendererPort)? {
         game.renderer
     }
 
@@ -456,7 +461,7 @@ extension MenuWorldAdapter {
     /// Moves the player the way `debug.teleport` does.
     func teleportPlayer(_ target: AgentTeleportTarget, openingRaceMenu: Bool) {
         movePlayer(openingRaceMenu: openingRaceMenu) { [game] () throws(AgentFailure) in
-            try AgentTeleportJob(adapter: game.agentWorld, target: target)
+            try game.agentWorld.teleportJob(to: target)
         }
     }
 
@@ -477,7 +482,7 @@ extension MenuWorldAdapter {
     func restorePlayerPlace(_ place: SavePlayerPlace) {
         coverNextTeleport = true
         movePlayer(openingRaceMenu: false) { [game] () throws(AgentFailure) in
-            try AgentTeleportJob(adapter: game.agentWorld, place: place)
+            try game.agentWorld.teleportJob(to: place)
         }
     }
 
@@ -491,7 +496,7 @@ extension MenuWorldAdapter {
 
     private func movePlayer(
         openingRaceMenu: Bool,
-        job: () throws(AgentFailure) -> AgentTeleportJob
+        job: () throws(AgentFailure) -> any AgentTeleportJobPort
     ) {
         raceMenuAfterTeleport = openingRaceMenu
         // In the same frame, so no world shows between the two covers.

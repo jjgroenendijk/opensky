@@ -4,6 +4,7 @@
 
 public import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 nonisolated public enum TitleMenuLoadBridge: Sendable {
     /// The `img://` name the save list loads its picture from.

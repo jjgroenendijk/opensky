@@ -4,7 +4,9 @@
 
 import GameController
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
+import OpenSkySessionInterface
 
 final class GamepadMonitor {
     private var input = GamepadMenuInput()
@@ -17,7 +19,7 @@ final class GamepadMonitor {
     /// Buttons `debug gamepad --press` holds for one frame.
     var simulatedPress: Set<GamepadButton> = []
 
-    func poll(now: Double, renderer: Renderer, menuMode: MenuModeController) {
+    func poll(now: Double, renderer: any RendererPort, menuMode: any MenuModePort) {
         let pads = GCController.controllers().compactMap(\.extendedGamepad)
         if pads.count < realCount, pads.isEmpty {
             onDisconnect?()

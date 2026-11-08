@@ -8,6 +8,7 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
@@ -17,7 +18,9 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension AgentWorldAdapter {

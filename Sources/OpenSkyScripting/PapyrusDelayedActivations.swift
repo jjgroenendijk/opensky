@@ -2,6 +2,7 @@
 // wait after the parent's activation before activating this reference".
 
 public import OpenSkyFormatsESM
+import OpenSkyScriptingInterface
 
 /// One activate child waiting for its parent's delay to run out.
 nonisolated public struct DelayedActivation: Equatable, Sendable {

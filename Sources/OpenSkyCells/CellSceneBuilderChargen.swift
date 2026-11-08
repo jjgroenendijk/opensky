@@ -12,6 +12,7 @@ import OpenSkyImageKernels
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
+import OpenSkyWorldInterface
 
 nonisolated extension CellSceneBuilder {
     /// Assembles the head from parts and gives the face part a face tint built from

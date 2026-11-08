@@ -3,6 +3,7 @@
 
 @testable import OpenSkyAIPackages
 import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import simd
 import Testing
 

@@ -4,6 +4,7 @@
 public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 public import OpenSkyWorldInterface
+public import OpenSkyWorldState
 
 /// What the activation gate does with one press.
 nonisolated public enum LockGateDecision: Equatable, Sendable {

@@ -8,6 +8,7 @@ import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyQuestsInterface
 
 nonisolated extension JournalMenuModel {

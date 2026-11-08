@@ -5,7 +5,7 @@
 import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

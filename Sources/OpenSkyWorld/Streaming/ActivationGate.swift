@@ -6,7 +6,7 @@ public import OpenSkyGameData
 public import OpenSkyWorldInterface
 
 @MainActor
-public struct ActivationGateSeam {
+public final class ActivationGateSeam {
     /// One check per step, asked in step order. The first refusal wins.
     private var checks: [(
         step: ActivationGateStep,
@@ -21,7 +21,7 @@ public struct ActivationGateSeam {
     public init() {}
 
     /// A second check in one step is a wiring bug and traps.
-    public mutating func register(
+    public func register(
         _ step: ActivationGateStep,
         _ check: @escaping (InteractionTarget) -> ActivationRefusal?
     ) {

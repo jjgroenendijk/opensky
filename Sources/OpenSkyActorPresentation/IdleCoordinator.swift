@@ -8,9 +8,10 @@ public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyNavigation
-public import OpenSkyRuntimeState
+import OpenSkyNavigation
+import OpenSkyRuntimeState
 import OpenSkyWorldConditions
+public import OpenSkyWorldInterface
 import simd
 
 /// What the idle coordinator reads from the session.
@@ -23,7 +24,6 @@ public protocol IdleWorld: AnyObject {
     func idleConditionContext() -> ConditionContext
     /// Advances on every state write, so a shared context is rebuilt after one.
     var idleStateSequence: UInt64 { get }
-    func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback?
     /// The clock actor clips play on; nil without a renderer.
     var idleAnimationTime: Float? { get }
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
@@ -68,6 +68,8 @@ public struct IdleSessionData {
 
 @MainActor
 public final class IdleCoordinator {
+    /// Each actor's animation playback; the composition root answers it from the streamer.
+    public var actorPlayback: (ReferenceKey) -> ActorAnimationPlayback? = { _ in nil }
     struct Session {
         var marker: IdleMarkerPlacement?
         var arrived = false
@@ -294,7 +296,7 @@ public final class IdleCoordinator {
                 session.playing = nil
             } else if
                 !playing.throughGraph,
-                let playback = world?.actorPlayback(for: actor.key),
+                let playback = actorPlayback(actor.key),
                 ObjectIdentifier(playback) != playing.playback
             {
                 playback.play(playing.clip, startingAt: now, forSeconds: playing.end - now)
@@ -387,7 +389,7 @@ extension IdleCoordinator {
                 chosen: chosen.record.editorID, plan: nil, seconds: 0, failure: failure.reason
             ), timer: timer, now: now)
         }
-        let skeleton = world?.actorPlayback(for: actor)?.clip.skeletonMeshPath
+        let skeleton = actorPlayback(actor)?.clip.skeletonMeshPath
             ?? (actor == .player ? Self.playerSkeletonPath : nil)
         let clipStates = skeleton.map { skeleton in
             plan.clipPaths.map { clip($0, skeleton: skeleton) }
@@ -480,7 +482,7 @@ extension IdleCoordinator {
         let segment = chain.first
         let clip = segment.clip
         leaveState(of: actor, now: now)
-        let playback = world?.actorPlayback(for: actor)
+        let playback = actorPlayback(actor)
         let toGraph = playback == nil || playback?.isGraphDriven == true
         let raised = toGraph && plan.event.map {
             world?.raiseIdleEvent($0, state: plan.state, on: actor) ?? false

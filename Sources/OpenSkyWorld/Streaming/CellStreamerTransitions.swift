@@ -8,7 +8,7 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyRendering
 import OpenSkyTerrain
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 extension CellStreamer {

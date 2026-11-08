@@ -3,6 +3,7 @@
 
 import Foundation
 public import OpenSkyBehavior
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated public enum DragonFlightGraphNames {

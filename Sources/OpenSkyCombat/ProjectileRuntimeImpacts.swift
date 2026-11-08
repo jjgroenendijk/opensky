@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyGameData
 public import OpenSkyMagicInterface
 import OpenSkyProgressionInterface

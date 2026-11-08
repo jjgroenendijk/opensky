@@ -1,6 +1,7 @@
 // MenuRouteTable: one route per menu, and the fallback for the rest.
 
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 @MainActor

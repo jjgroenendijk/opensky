@@ -3,11 +3,15 @@
 
 import OpenSkyAIPackages
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 extension AIWorldAdapter {

@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 nonisolated public enum SystemMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\quest_journal.swf"

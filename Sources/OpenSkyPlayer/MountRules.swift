@@ -3,17 +3,8 @@
 
 import Foundation
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 import simd
-
-/// What kind of actor a mount is. It picks the graph events of the mount and dismount.
-nonisolated public enum MountKind: String, Equatable, Sendable {
-    case horse
-    case dragon
-
-    public var events: MountGraphEvents {
-        self == .horse ? .horse : .dragon
-    }
-}
 
 /// Who owns a mount, as the crime rules see it.
 nonisolated public enum MountOwnership: Equatable, Sendable {
@@ -38,15 +29,6 @@ nonisolated public struct MountCandidate: Equatable, Sendable {
     public var ownership = MountOwnership.free
 
     public init() {}
-}
-
-nonisolated public enum MountRefusal: String, Equatable, Sendable {
-    case alreadyRiding = "the player already rides"
-    case dead = "it is dead"
-    case noSaddle = "its skeleton has no saddle bone"
-    case needsPerk = "Allow Mount Actor does not pass for it"
-    case ridden = "somebody rides it"
-    case notLoaded = "it is not loaded"
 }
 
 nonisolated public enum MountDecision: Equatable, Sendable {
@@ -153,5 +135,11 @@ nonisolated public enum MountRules: Sendable {
     /// `iRightHandType` encoding (docs/engine/combat-graph-names.md).
     public static func isMountedWeapon(_ rightHandType: Int32) -> Bool {
         (1 ... 7).contains(rightHandType) || rightHandType == 12
+    }
+}
+
+nonisolated extension MountKind {
+    public var events: MountGraphEvents {
+        self == .horse ? .horse : .dragon
     }
 }

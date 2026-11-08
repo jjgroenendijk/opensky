@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyFormatsESS
 import OpenSkyFormatsTesting
 @testable import OpenSkySave
+import OpenSkySaveInterface
 import Testing
 
 struct ESSSaveFolderTests {

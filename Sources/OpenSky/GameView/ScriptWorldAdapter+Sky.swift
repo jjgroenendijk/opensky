@@ -5,6 +5,8 @@
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldState

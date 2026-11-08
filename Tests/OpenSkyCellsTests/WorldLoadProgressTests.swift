@@ -1,6 +1,7 @@
 // Stage reporting: a start and a finish per stage, and no stage after a cancel.
 
 @testable import OpenSkyCells
+import OpenSkyWorldInterface
 import Synchronization
 import Testing
 

@@ -10,6 +10,7 @@ import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
 import OpenSkyDiagnostics
 import OpenSkyFactions
@@ -30,6 +31,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -198,7 +200,7 @@ extension AgentWorldAdapter {
     }
 
     /// The held staff and the bow zoom.
-    private func playerWeaponState(gameSession: GameSession) -> [String: AgentJSON] {
+    private func playerWeaponState(gameSession: any GameSessionPort) -> [String: AgentJSON] {
         var result: [String: AgentJSON] = [:]
         result["staff"] = game.magic.playerStaff().map { held in
             [
@@ -265,7 +267,7 @@ extension AgentWorldAdapter {
         ]
     }
 
-    private func firstPersonState(gameSession: GameSession) -> AgentJSON {
+    private func firstPersonState(gameSession: any GameSessionPort) -> AgentJSON {
         let snapshot = game.player.firstPersonSnapshot
         let rig = gameSession.playerFirstPersonRig
         return [
@@ -415,7 +417,7 @@ extension AgentWorldAdapter {
     }
 
     /// Each reference alias by name, with the reference that fills it or null.
-    private func aliasFills(_ editorID: String, in quests: QuestRuntime) -> AgentJSON {
+    private func aliasFills(_ editorID: String, in quests: any QuestRuntimePort) -> AgentJSON {
         guard let quest = quests.quests.quest(editorID: editorID) else { return .null }
         let table = try? quests.aliasState(of: quest.formID)
         var fills: [String: AgentJSON] = [:]
@@ -522,7 +524,7 @@ extension AgentWorldAdapter {
     private func gpuMemoryState() -> AgentJSON {
         guard let renderer = game.gameSession?.renderer else { return .null }
         let usage = renderer.gpuMemoryUsage()
-        let cached = (game.streamer?.runner as? SerialCellBuildRunner)?.cachedAssetCounts
+        let cached = game.streamer?.cachedAssetCounts
         let mebibyte = Double(1 << 20)
         return [
             "totalMB": .number(Double(usage.totalBytes) / mebibyte),
@@ -575,7 +577,7 @@ extension AgentWorldAdapter {
 extension AgentWorldAdapter {
     /// The weathers the frame draws, with their weights, so a fade that has not
     /// finished shows next to the reported weather.
-    func weatherReport(_ weather: WeatherSystem?) -> [String: AgentJSON] {
+    func weatherReport(_ weather: (any WeatherSystemPort)?) -> [String: AgentJSON] {
         guard let weather else { return ["weather": .null, "weatherBlend": .null] }
         let blend = AgentJSON.array(weather.blendedWeathers.map { entry in
             [

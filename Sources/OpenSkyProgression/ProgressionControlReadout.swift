@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+public import OpenSkyProgressionInterface
 
 nonisolated public enum ProgressionControlReadout: Sendable {
     /// Column width the skill lines pad their names to. Wide enough for

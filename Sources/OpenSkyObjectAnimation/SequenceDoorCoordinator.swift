@@ -7,6 +7,7 @@ import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 public import OpenSkyFormatsMesh
+public import OpenSkyWorldInterface
 import simd
 
 /// What the door coordinator reads from the session.

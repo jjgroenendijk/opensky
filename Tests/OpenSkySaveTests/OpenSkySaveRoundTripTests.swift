@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+import OpenSkySaveInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing

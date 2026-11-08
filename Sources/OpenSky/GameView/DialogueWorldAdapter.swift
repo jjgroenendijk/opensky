@@ -7,6 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDiagnostics
 import OpenSkyDialogue
@@ -26,6 +27,7 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
@@ -35,29 +37,29 @@ import simd
 /// What `DialogueWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol DialogueWorldHost: AnyObject {
-    var actorWorld: ActorWorldAdapter { get }
-    var containerMenu: ContainerMenuController { get }
+    var actorWorld: any ActorWorldPort { get }
+    var containerMenu: any ContainerMenuPort { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
-    var dialogue: DialogueCoordinator { get }
-    var dialogueCamera: DialogueCameraController { get }
-    var dialogueMenu: DialogueMenuController { get }
-    var faceMorphs: FaceMorphCoordinator { get }
-    var factions: FactionCoordinator { get }
-    var headTracking: HeadTrackingCoordinator { get }
-    var inventory: InventoryCoordinator { get }
+    var dialogue: any DialoguePort { get }
+    var dialogueCamera: any DialogueCameraPort { get }
+    var dialogueMenu: any DialogueMenuPort { get }
+    var faceMorphs: any FaceMorphPort { get }
+    var factions: any FactionPort { get }
+    var headTracking: any HeadTrackingPort { get }
+    var inventory: any InventoryPort { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
-    var mountWorld: MountWorldAdapter { get }
-    var packages: PackageCoordinator { get }
-    var perks: PerkCoordinator { get }
-    var player: PlayerCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var renderer: Renderer? { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var streamer: CellStreamer? { get }
+    var mountWorld: any MountWorldPort { get }
+    var packages: any PackagePort { get }
+    var perks: any PerkPort { get }
+    var player: any PlayerPort { get }
+    var progression: any ProgressionPort { get }
+    var renderer: (any RendererPort)? { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var scripts: any ScriptPort { get }
+    var storyWorld: any StoryWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 /// Answers `DialogueWorld` from the session systems `game` owns.

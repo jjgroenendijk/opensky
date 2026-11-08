@@ -5,6 +5,7 @@
 import AppKit
 import MetalKit
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
 import OpenSkyScriptingInterface
 

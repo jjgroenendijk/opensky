@@ -4,6 +4,7 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyWorldInterface
 import Testing
 

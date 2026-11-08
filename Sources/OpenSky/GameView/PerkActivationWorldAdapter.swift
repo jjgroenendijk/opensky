@@ -11,6 +11,8 @@ import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyScripting
+import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -18,12 +20,12 @@ import OpenSkyWorldState
 /// What `PerkActivationWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol PerkActivationWorldHost: AnyObject {
-    var magicWorld: MagicWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
-    var perkActivation: PerkActivationCoordinator { get }
-    var perks: PerkCoordinator { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
+    var magicWorld: any MagicWorldPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var perkActivation: any PerkActivationPort { get }
+    var perks: any PerkPort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
 }
 
 final class PerkActivationWorldAdapter {

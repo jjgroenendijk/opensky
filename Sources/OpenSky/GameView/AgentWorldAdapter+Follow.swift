@@ -8,8 +8,11 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRuntimeState
 import OpenSkySave
+import OpenSkySaveInterface
+import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 extension AgentWorldAdapter {
     /// Sets the hour and weather now; the returned job moves the player and turns the camera.

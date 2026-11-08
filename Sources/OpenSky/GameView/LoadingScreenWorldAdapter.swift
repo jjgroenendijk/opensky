@@ -12,6 +12,7 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuests
@@ -19,25 +20,28 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
+import OpenSkySession
+import OpenSkySessionInterface
 import OpenSkyTerrain
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 /// What `LoadingScreenWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol LoadingScreenWorldHost: MenuInputConsumer {
-    var followerCommandWorld: FollowerCommandWorldAdapter { get }
-    var hud: HUDCoordinator { get }
-    var journal: JournalCoordinator { get }
-    var loadingScreens: LoadingScreenCoordinator { get }
-    var menuMode: MenuModeController { get }
-    var progression: ProgressionCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
-    var streamer: CellStreamer? { get }
-    var swfMovies: SWFMovieSource { get }
+    var followerCommandWorld: any FollowerCommandWorldPort { get }
+    var hud: any HUDPort { get }
+    var journal: any JournalPort { get }
+    var loadingScreens: any LoadingScreenPort { get }
+    var menuMode: any MenuModePort { get }
+    var progression: any ProgressionPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var runtimeStateWorld: any RuntimeStateWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var swfMovies: any SWFMovieSourcePort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -142,7 +146,10 @@ final class LoadingScreenWorldAdapter {
             let scene = streamer.interiorScene
                 ?? streamer.composition.cells[CellCoordinate(containing: target)]
             guard scene != nil || timedOut else { return }
-            game.loadingScreens.destinationKnown(location: scene.flatMap(location(of:)), at: now)
+            game.loadingScreens.destinationKnown(
+                location: scene.flatMap { location(of: $0) },
+                at: now
+            )
         }
         let arrived = moveTarget.map {
             streamer.interiorScene != nil
@@ -160,13 +167,13 @@ final class LoadingScreenWorldAdapter {
     }
 
     /// The destination cell's location, which is where the player stands when the screen is chosen.
-    private func location(of scene: CellScene) -> ResolvedFormID? {
-        game.runtimeStateWorld.location(of: scene)
+    private func location(of scene: any CellScenePort) -> ResolvedFormID? {
+        game.runtimeStateWorld.location(of: scene.locationKey)
     }
 
     private func placement(
         _ frame: LoadingCoverFrame,
-        gameSession: GameSession
+        gameSession: any GameSessionPort
     ) -> [RenderPlacement] {
         let renderer = gameSession.renderer
         guard
@@ -201,8 +208,8 @@ final class LoadingScreenWorldAdapter {
         }
     }
 
-    private func coverView(_ gameSession: GameSession) -> FreeFlyCamera {
-        gameSession.dialogueCameraState.restorePose ?? gameSession.freeFlyCamera
+    private func coverView(_ gameSession: any GameSessionPort) -> FreeFlyCamera {
+        gameSession.dialogueRestorePose ?? gameSession.freeFlyCamera
     }
 
     // MARK: - The loading movie

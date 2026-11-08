@@ -10,6 +10,7 @@ import OpenSkyMenus
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
+import OpenSkySessionInterface
 import OpenSkyWorld
 import simd
 
@@ -37,7 +38,7 @@ extension MenuWorldAdapter {
     }
 
     /// A logo that fails to load still hides the world behind a dark screen.
-    private func backdrop(gameSession: GameSession) -> TitleBackdropScene {
+    private func backdrop(gameSession: any GameSessionPort) -> TitleBackdropScene {
         do {
             return try backdropScene(gameSession: gameSession)
         } catch {
@@ -46,7 +47,7 @@ extension MenuWorldAdapter {
         }
     }
 
-    private func place(_ backdrop: TitleBackdropScene?, gameSession: GameSession) {
+    private func place(_ backdrop: TitleBackdropScene?, gameSession: any GameSessionPort) {
         do {
             try gameSession.renderer.setLoadingCover(
                 backdrop?.placements,
@@ -65,7 +66,7 @@ extension MenuWorldAdapter {
         }
     }
 
-    private func backdropScene(gameSession: GameSession) throws -> TitleBackdropScene {
+    private func backdropScene(gameSession: any GameSessionPort) throws -> TitleBackdropScene {
         let renderer = gameSession.renderer
         if
             titleMeshes == nil,

@@ -10,6 +10,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyWorldConditions
 @testable import OpenSkyWorldState
 import Testing

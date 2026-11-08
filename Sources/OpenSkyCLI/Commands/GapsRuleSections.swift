@@ -9,6 +9,7 @@ import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
 import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -18,6 +19,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyRenderCore

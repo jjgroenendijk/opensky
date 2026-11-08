@@ -8,6 +8,7 @@ import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyEffects
@@ -18,16 +19,20 @@ import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
+import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -37,51 +42,51 @@ import simd
 @MainActor
 protocol ScriptWorldHost: AnyObject {
     var worldData: WorldDataStores? { get }
-    var actorGraphs: ActorGraphCoordinator { get }
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var aiWorld: AIWorldAdapter { get }
-    var audio: AudioCoordinator { get }
-    var combat: CombatCoordinator { get }
-    var containerMenu: ContainerMenuController { get }
-    var crime: CrimeCoordinator { get }
-    var effectsWorld: EffectsWorldAdapter { get }
-    var factionWorld: FactionWorldAdapter { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var magic: MagicCoordinator { get }
-    var magicWorld: MagicWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
-    var messages: MessageCoordinator { get }
-    var objectAnimationWorld: ObjectAnimationWorldAdapter { get }
+    var actorGraphs: any ActorGraphPort { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var aiWorld: any AIWorldPort { get }
+    var audio: any AudioPort { get }
+    var combat: any CombatPort { get }
+    var containerMenu: any ContainerMenuPort { get }
+    var crime: any CrimePort { get }
+    var effectsWorld: any EffectsWorldPort { get }
+    var factionWorld: any FactionWorldPort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var magic: any MagicPort { get }
+    var magicWorld: any MagicWorldPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var messages: any MessageCoordinatorPort { get }
+    var objectAnimationWorld: any ObjectAnimationWorldPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
-    var packages: PackageCoordinator { get }
-    var perception: PerceptionCoordinator { get }
-    var perks: PerkCoordinator { get }
-    var player: PlayerCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var ragdoll: RagdollCoordinator { get }
-    var renderer: Renderer? { get }
-    var titleSequence: TitleSequenceCoordinator { get }
+    var packages: any PackagePort { get }
+    var perception: any PerceptionPort { get }
+    var perks: any PerkPort { get }
+    var player: any PlayerPort { get }
+    var progression: any ProgressionPort { get }
+    var ragdoll: any RagdollPort { get }
+    var renderer: (any RendererPort)? { get }
+    var titleSequence: any TitleSequencePort { get }
     var hostView: NSView { get }
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
-    var gameSession: GameSession? { get }
-    var combatWorld: CombatWorldAdapter { get }
-    var effects: EffectsCoordinator { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var movieWorld: MovieWorldAdapter { get }
-    var saveGames: SaveGameWorldAdapter { get }
+    func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
+    var gameSession: (any GameSessionPort)? { get }
+    var combatWorld: any CombatWorldPort { get }
+    var effects: any EffectsPort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var movieWorld: any MovieWorldPort { get }
+    var saveGames: any SaveGameWorldPort { get }
     func quitToMainMenu()
     func quitApplication()
-    var runtimeState: RuntimeStateCoordinator { get }
-    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
-    var scripts: ScriptCoordinator { get set }
-    var storyWorld: StoryWorldAdapter { get }
-    var streamer: CellStreamer? { get }
-    var vehicleWorld: VehicleWorldAdapter { get }
-    var mountWorld: MountWorldAdapter { get }
-    var worldState: WorldStateStore { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var runtimeStateWorld: any RuntimeStateWorldPort { get }
+    var scripts: any ScriptPort { get }
+    var storyWorld: any StoryWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var vehicleWorld: any VehicleWorldPort { get }
+    var mountWorld: any MountWorldPort { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class ScriptWorldAdapter {
@@ -97,6 +102,9 @@ final class ScriptWorldAdapter {
     /// `PathToReference` answers the scheduler has not taken yet.
     var pathWaitAnswers: [UInt64: Bool] = [:]
 
+    /// The session's weather. The composition root sets it, so the host stays port-only.
+    var weather: () -> WeatherSystem? = { nil }
+
     init(game: any ScriptWorldHost) {
         self.game = game
     }
@@ -107,12 +115,13 @@ final class ScriptWorldAdapter {
     func makeBridge(
         provider: WorldDataStores,
         gameSession: GameSession,
-        streamer: CellStreamer
+        streamer: CellStreamer,
+        worldState: WorldStateStore
     ) -> PapyrusWorldStateBridge {
         let bridge = PapyrusWorldStateBridge(
-            worldState: game.worldState, references: streamer,
+            worldState: worldState, references: streamer,
             globals: game.runtimeState.globalStore,
-            seams: seams(provider: provider)
+            seams: seams(provider: provider, worldState: worldState)
         )
         bridge.sessionNatives.clockSource = { [weak gameSession] in gameSession?.gameClock }
         // The game counts real time from its launch, without frozen time (CK wiki
@@ -198,9 +207,12 @@ final class ScriptWorldAdapter {
     }
 
     /// The features the natives reach, each answered by its world adapter.
-    private func seams(provider: WorldDataStores) -> PapyrusBridgeSeams {
+    private func seams(
+        provider: WorldDataStores,
+        worldState: WorldStateStore
+    ) -> PapyrusBridgeSeams {
         var seams = PapyrusBridgeSeams()
-        seams.quests = quests(provider: provider)
+        seams.quests = quests(provider: provider, worldState: worldState)
         seams.inventory = game.inventoryWorld
         seams.alchemy = game.inventoryWorld
         seams.actorAI = game.vehicleWorld
@@ -220,10 +232,10 @@ final class ScriptWorldAdapter {
 
     /// Without a QUST index every `Quest` native fails with
     /// `PapyrusQuestBridgeError.noQuestData`.
-    private func quests(provider: WorldDataStores) -> QuestRuntime? {
+    private func quests(provider: WorldDataStores, worldState: WorldStateStore) -> QuestRuntime? {
         guard let store = provider.questStore else { return nil }
         var runtime = QuestRuntime(
-            store: game.worldState,
+            store: worldState,
             quests: store,
             locations: provider.locationStore
         )
@@ -307,7 +319,7 @@ final class ScriptWorldAdapter {
         bridge.formListStore = provider.formListStore
         bridge.keywordStore = provider.locationStore?.keywords
         bridge.magicNatives.dispelEffects = { [weak game] holder, predicate in
-            game?.magic.withEffects { $0.dispel(on: holder, where: predicate) } ?? 0
+            game?.magic.dispelEffects(on: holder, where: predicate) ?? 0
         }
         bridge.magicNatives.applySpellHit = { [weak game] hit in
             game?.magicWorld.applySpellHit(hit) ?? .none
@@ -356,7 +368,8 @@ final class ScriptWorldAdapter {
             let text = game.containerMenu.openBarter(with: actor)
             return (game.containerMenu.isOpen && game.containerMenu.vendor != nil, text)
         }
-        game.factionWorld.wireNatives(bridge: bridge)
+        bridge.factionNatives = game.factionWorld.papyrusNatives()
+        bridge.publishFactionReactions()
     }
 }
 
@@ -379,6 +392,6 @@ extension ScriptWorldAdapter: ScriptWorld {
             let current = streamer.currentCellLocation,
             let scene = streamer.residentScene(at: current)
         else { return nil }
-        return .some(game.runtimeStateWorld.location(of: scene))
+        return .some(game.runtimeStateWorld.location(of: scene.locationKey))
     }
 }

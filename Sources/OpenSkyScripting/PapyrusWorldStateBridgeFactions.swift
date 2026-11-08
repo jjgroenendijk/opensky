@@ -7,7 +7,8 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {
@@ -121,18 +122,5 @@ extension PapyrusWorldStateBridge {
     /// player and for any actor no plugin describes.
     private var actorBaseIdentity: (ReferenceKey) -> ResolvedFormID? {
         { [weak self] key in self?.factionNatives.socialBase(key) }
-    }
-}
-
-/// One pair's social answer for the natives: whether the observer is hostile, and
-/// what the two factions alone make of each other. `GetFactionReaction` is the
-/// faction term only (<https://ck.uesp.net/wiki/GetFactionReaction_-_Actor>).
-nonisolated public struct PapyrusSocialDecision: Equatable, Sendable {
-    public let isHostile: Bool
-    public let factionReaction: ActorReaction
-
-    public init(isHostile: Bool, factionReaction: ActorReaction) {
-        self.isHostile = isHostile
-        self.factionReaction = factionReaction
     }
 }

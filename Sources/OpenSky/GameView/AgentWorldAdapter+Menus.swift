@@ -8,7 +8,9 @@ import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
+import OpenSkySessionInterface
 
 struct AgentMenuRows: Equatable {
     let menu: String

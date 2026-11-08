@@ -3,16 +3,9 @@
 // docs/engine/dragon-flight.md.
 
 public import OpenSkyFormatsESM
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
-
-/// Where a flying actor's package sends it.
-nonisolated public enum PackageFlightTarget: Equatable, Sendable {
-    case point(SIMD3<Float>)
-    /// The furniture of a sit procedure, which for a dragon is a perch.
-    case perch(ReferenceKey)
-}
 
 /// The last place a flying actor's package sent it. It stays after arrival, so a
 /// perched dragon stays on its perch when the package ends.

@@ -8,6 +8,7 @@ import OpenSkyFormatsESS
 import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkySave
+import OpenSkySaveInterface
 import OpenSkyWorldState
 import Testing
 

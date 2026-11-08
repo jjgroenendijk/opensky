@@ -8,6 +8,7 @@ import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDiagnostics
@@ -29,6 +30,7 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
@@ -38,42 +40,41 @@ import simd
 /// What `AIWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol AIWorldHost: AnyObject {
-    var followerCommands: FollowerCommandCoordinator { get }
-    var dragonFlightWorld: DragonFlightWorldAdapter { get }
-    var effectsWorld: EffectsWorldAdapter { get }
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback?
-    var actorGraphWorld: ActorGraphWorldAdapter { get }
-    var actorValues: ActorValueCoordinator { get }
-    var actorWorld: ActorWorldAdapter { get }
-    var combat: CombatCoordinator { get }
-    var crime: CrimeCoordinator { get }
-    var crimeWorld: CrimeWorldAdapter { get }
-    var dialogue: DialogueCoordinator { get }
-    var dialogueMenu: DialogueMenuController { get }
-    var factions: FactionCoordinator { get }
-    var furniture: FurnitureCoordinator { get }
-    var headTracking: HeadTrackingCoordinator { get }
-    var idleWorld: IdleWorldAdapter { get }
-    var inventory: InventoryCoordinator { get }
-    var magic: MagicCoordinator { get }
-    var magicWorld: MagicWorldAdapter { get }
-    var npcAnimation: NPCAnimationCoordinator { get }
-    var packages: PackageCoordinator { get }
-    var perception: PerceptionCoordinator { get }
-    var perks: PerkCoordinator { get }
+    var followerCommands: any FollowerCommandPort { get }
+    var dragonFlightWorld: any DragonFlightWorldPort { get }
+    var effectsWorld: any EffectsWorldPort { get }
+    var actorGraphWorld: any ActorGraphWorldPort { get }
+    var actorValues: any ActorValuePort { get }
+    var actorWorld: any ActorWorldPort { get }
+    var combat: any CombatPort { get }
+    var crime: any CrimePort { get }
+    var crimeWorld: any CrimeWorldPort { get }
+    var dialogue: any DialoguePort { get }
+    var dialogueMenu: any DialogueMenuPort { get }
+    var factions: any FactionPort { get }
+    var furniture: any FurniturePort { get }
+    var headTracking: any HeadTrackingPort { get }
+    var idleWorld: any IdleWorldPort { get }
+    var inventory: any InventoryPort { get }
+    var magic: any MagicPort { get }
+    var magicWorld: any MagicWorldPort { get }
+    var npcAnimation: any NPCAnimationPort { get }
+    var packages: any PackagePort { get }
+    var perception: any PerceptionPort { get }
+    var perks: any PerkPort { get }
     var playerSettingsStore: PlayerSettingsStore { get }
-    var progression: ProgressionCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var runtimeState: RuntimeStateCoordinator { get }
-    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
-    var scripts: ScriptCoordinator { get }
+    var progression: any ProgressionPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var runtimeState: any RuntimeStatePort { get }
+    var runtimeStateWorld: any RuntimeStateWorldPort { get }
+    var scripts: any ScriptPort { get }
     var sessionWiring: WorldSessionWiring { get }
-    var storyWorld: StoryWorldAdapter { get }
-    var streamer: CellStreamer? { get }
-    var vehicleWorld: VehicleWorldAdapter { get }
+    var storyWorld: any StoryWorldPort { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var vehicleWorld: any VehicleWorldPort { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class AIWorldAdapter {
@@ -515,10 +516,6 @@ extension AIWorldAdapter: AINavigationWorld {
 }
 
 extension AIWorldAdapter: NPCAnimationWorld {
-    func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback? {
-        game.actorPlayback(for: actor)
-    }
-
     var animationClips: ActorClipLoader? {
         game.sessionWiring.animationClips
     }

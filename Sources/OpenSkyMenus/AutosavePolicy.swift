@@ -4,10 +4,7 @@
 
 public import Foundation
 public import OpenSkyGameData
-
-nonisolated public enum AutosaveTrigger: String, Equatable, Sendable {
-    case rest, wait, travel, pause
-}
+public import OpenSkyMenusInterface
 
 public struct AutosavePolicy: Equatable {
     public static let slotPrefix = "Autosave"

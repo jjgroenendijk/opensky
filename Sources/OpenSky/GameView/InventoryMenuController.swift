@@ -14,23 +14,25 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
 
 /// What `InventoryMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol InventoryMenuHost: MenuInputConsumer {
-    var combat: CombatCoordinator { get }
-    var gameSession: GameSession? { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var magic: MagicCoordinator { get }
-    var mapWorld: MapWorldAdapter { get }
-    var menuMode: MenuModeController { get }
-    var menuScreens: MenuScreens { get }
-    var renderer: Renderer? { get }
-    var swfMovies: SWFMovieSource { get }
+    var combat: any CombatPort { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var magic: any MagicPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var menuMode: any MenuModePort { get }
+    var menuScreens: any MenuScreensPort { get }
+    var renderer: (any RendererPort)? { get }
+    var swfMovies: any SWFMovieSourcePort { get }
     var worldData: WorldDataStores? { get }
 }
 

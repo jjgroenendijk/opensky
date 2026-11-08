@@ -2,6 +2,7 @@
 // actor the selection resolves to, and the names the readout prints.
 
 public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 import simd
 
 /// One resident actor as the session reports it, before the camera distance.

@@ -4,11 +4,12 @@
 import Foundation
 import OpenSkyAgentControl
 import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 
 extension AgentWorldAdapter {
     func scenesState() -> AgentJSON {
@@ -64,40 +65,23 @@ extension AgentWorldAdapter {
         guard let world = game.scripts.runtime else {
             return .array([])
         }
-        return .array(world.scheduler.pendingCalls.compactMap { call -> AgentJSON? in
-            guard
-                let instance = world.suspensionTracker.instance(waiting: call.id),
-                instance.reference == key
-            else { return nil }
-            return [
-                "script": .string(instance.scriptName),
-                "native": .string("\(call.nativeCall.scriptName).\(call.nativeCall.functionName)"),
-                "request": .string(String(describing: call.request))
+        return .array(world.waits(on: key).map { wait in
+            [
+                "script": .string(wait.script),
+                "native": .string(wait.native),
+                "request": .string(wait.request)
             ]
         })
     }
 
-    /// Live variables, so an object shows the reference it holds; a save keeps none.
     private func instancesState(on key: ReferenceKey) -> AgentJSON {
         guard let world = game.scripts.runtime else { return .array([]) }
-        let keys = world.instancesByKey.keys.filter { $0.reference == key }.sorted()
-        return .array(keys.compactMap { instanceKey -> AgentJSON? in
-            guard
-                let handle = world.instancesByKey[instanceKey],
-                let instance = world.runtime.instance(for: handle)
-            else { return nil }
-            return [
-                "script": .string(instanceKey.scriptName),
-                "state": .string(instance.activeState),
-                "variables": .array(instance.sortedVariableStates().map {
-                    .string("\($0.name) = \(variableText($0.value, in: world))")
-                })
+        return .array(world.instances(on: key).map { instance in
+            [
+                "script": .string(instance.script),
+                "state": .string(instance.state),
+                "variables": .array(instance.variables.map(AgentJSON.string))
             ]
         })
-    }
-
-    private func variableText(_ value: PapyrusValue, in world: PapyrusWorldRuntime) -> String {
-        guard case let .object(handle) = value else { return "\(value)" }
-        return world.referenceKey(for: handle).map { "object(\($0))" } ?? "\(value)"
     }
 }

@@ -9,6 +9,7 @@ import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyReference
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let gameContext = GameLaunchContext()

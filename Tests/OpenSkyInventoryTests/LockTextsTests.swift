@@ -8,6 +8,7 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 import Testing
 
 @MainActor

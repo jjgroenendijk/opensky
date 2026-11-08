@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface

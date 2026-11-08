@@ -9,6 +9,8 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
+import OpenSkyWorldInterface
 
 extension AgentWorldAdapter {
     func favorState() -> AgentJSON {

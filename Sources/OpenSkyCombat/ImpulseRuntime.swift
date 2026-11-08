@@ -3,6 +3,7 @@
 // the readout. The rules are in `ImpulseRules` and `WaterImpacts` (docs/engine/impulses.md).
 
 import Foundation
+public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyPhysics
 import simd
@@ -47,20 +48,6 @@ public protocol ImpulseWorld: ImpulseBodyWorld {
 extension ImpulseWorld {
     public func waterContacts(_: [WaterSample]) {}
     public func playCollision(_: BodyCollision) {}
-}
-
-/// What set a push off, for the readout.
-nonisolated public enum ImpulseCause: String, Equatable, Sendable {
-    case melee, ranged, explosion, projectile, water, debug
-}
-
-/// One push, splash, or physics hit, kept for the readout.
-nonisolated public enum ImpulseEvent: Equatable, Sendable {
-    case knock(ReferenceKey, speed: Float, knockdown: Bool, cause: ImpulseCause)
-    case push(ReferenceKey, impulse: Float, cause: ImpulseCause)
-    case splash(SplashEvent)
-    case physicsDamage(body: ReferenceKey, actor: ReferenceKey, damage: Float)
-    case collision(BodyCollision)
 }
 
 @MainActor

@@ -6,6 +6,7 @@
 import Foundation
 public import OpenSkyActorPresentation
 public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 import simd
 
 /// What the ridden dragon's breath asks of its graph this step.
@@ -34,11 +35,7 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
     /// Ours: the breath casts after this long in the exhale when no graph fires the event.
     public static let exhaleFallbackSeconds: Float = 1
 
-    nonisolated public enum BreathPhase: Equatable, Sendable {
-        case ready
-        case inhaling(seconds: Float)
-        case exhaling(seconds: Float)
-    }
+    public typealias BreathPhase = DragonBreathPhase
 
     public var landingRequested = false
     public var lockedTarget: ReferenceKey?

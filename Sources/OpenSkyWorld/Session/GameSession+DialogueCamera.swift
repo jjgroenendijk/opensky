@@ -13,37 +13,6 @@ public import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd
 
-/// What the app publishes each frame while a conversation is open. Sampled by
-/// the session — the renderer knows nothing about speakers, rigs or menus.
-nonisolated public struct DialogueCameraFocus: Equatable, Sendable {
-    /// The speaker's head, world space.
-    public let headPosition: SIMD3<Float>
-    /// The side the shot is taken from; nil is the player's eye.
-    public let viewpoint: SIMD3<Float>?
-    /// The subject is the player, as in the race menu, so the body is drawn.
-    public let framesPlayer: Bool
-
-    public init(
-        headPosition: SIMD3<Float>, viewpoint: SIMD3<Float>? = nil, framesPlayer: Bool = false
-    ) {
-        self.headPosition = headPosition
-        self.viewpoint = viewpoint
-        self.framesPlayer = framesPlayer
-    }
-}
-
-/// Everything the override owns, in one value: extensions cannot add stored
-/// properties, and these three are one thing.
-public struct RendererDialogueCameraState {
-    /// The live focus, or nil when no conversation is framing anybody.
-    public var focus: DialogueCameraFocus?
-    /// The framing math and its collision readout.
-    public var camera = DialogueCamera()
-    /// The player's own view pose, held while the override stands in for it.
-    /// Non-nil exactly while the swap is applied.
-    public var restorePose: FreeFlyCamera?
-}
-
 extension GameSession {
     /// True while a conversation owns the view.
     public var isDialogueCameraEngaged: Bool {
@@ -166,4 +135,16 @@ extension GameSession {
     private static let dialogueCameraPivotColor = SIMD4<Float>(1, 0.85, 0.2, 1)
     private static let dialogueCameraSightlineColor = SIMD4<Float>(0.2, 0.9, 1, 1)
     private static let dialogueCameraEyeColor = SIMD4<Float>(1, 0.3, 0.9, 1)
+}
+
+/// Everything the override owns, in one value: extensions cannot add stored
+/// properties, and these three are one thing.
+public struct RendererDialogueCameraState {
+    /// The live focus, or nil when no conversation is framing anybody.
+    public var focus: DialogueCameraFocus?
+    /// The framing math and its collision readout.
+    public var camera = DialogueCamera()
+    /// The player's own view pose, held while the override stands in for it.
+    /// Non-nil exactly while the swap is applied.
+    public var restorePose: FreeFlyCamera?
 }

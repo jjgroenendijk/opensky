@@ -3,11 +3,11 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyNavigation
+import OpenSkyNavigation
 public import OpenSkyPhysics
 public import OpenSkyPlayer
-public import OpenSkyWorldConditions
-import OpenSkyWorldInterface
+import OpenSkyWorldConditions
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 public import simd
 

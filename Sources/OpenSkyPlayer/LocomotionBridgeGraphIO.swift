@@ -5,6 +5,7 @@
 import Foundation
 public import OpenSkyBehavior
 public import OpenSkyPhysics
+import OpenSkyWorldInterface
 import simd
 
 nonisolated extension LocomotionBridge {

@@ -12,24 +12,27 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 
 /// What `ContainerMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol ContainerMenuHost: MenuInputConsumer {
-    var dialogueMenu: DialogueMenuController { get }
-    var dialogueWorld: DialogueWorldAdapter { get }
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var inventoryWorld: InventoryWorldAdapter { get }
-    var mapWorld: MapWorldAdapter { get }
-    var menuMode: MenuModeController { get }
-    var ragdoll: RagdollCoordinator { get }
-    var renderer: Renderer? { get }
-    var streamer: CellStreamer? { get }
-    var swfMovies: SWFMovieSource { get }
+    var worldState: any WorldStateStorePort { get }
+    var dialogueMenu: any DialogueMenuPort { get }
+    var dialogueWorld: any DialogueWorldPort { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var inventoryWorld: any InventoryWorldPort { get }
+    var mapWorld: any MapWorldPort { get }
+    var menuMode: any MenuModePort { get }
+    var ragdoll: any RagdollPort { get }
+    var renderer: (any RendererPort)? { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var swfMovies: any SWFMovieSourcePort { get }
 }
 
 /// Holds the container menu's target, list and movie state for `game`.

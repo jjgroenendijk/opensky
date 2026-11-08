@@ -7,6 +7,7 @@ import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -17,34 +18,41 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
+import OpenSkySession
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
 /// What `PlayerWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol PlayerWorldHost: AnyObject {
-    var actorWorld: ActorWorldAdapter { get }
-    var actorValues: ActorValueCoordinator { get }
-    var audio: AudioCoordinator { get }
-    var combat: CombatCoordinator { get }
-    var dialogueMenu: DialogueMenuController { get }
-    var headTracking: HeadTrackingCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var magicWorld: MagicWorldAdapter { get }
-    var magic: MagicCoordinator { get }
-    var player: PlayerCoordinator { get }
-    var renderer: Renderer? { get }
-    var gameSession: GameSession? { get }
-    var streamer: CellStreamer? { get }
-    var worldState: WorldStateStore { get }
+    var actorWorld: any ActorWorldPort { get }
+    var actorValues: any ActorValuePort { get }
+    var audio: any AudioPort { get }
+    var combat: any CombatPort { get }
+    var dialogueMenu: any DialogueMenuPort { get }
+    var headTracking: any HeadTrackingPort { get }
+    var inventory: any InventoryPort { get }
+    var magicWorld: any MagicWorldPort { get }
+    var magic: any MagicPort { get }
+    var player: any PlayerPort { get }
+    var renderer: (any RendererPort)? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var streamer: (any CellStreamerPort)? { get }
+    var worldState: any WorldStateStorePort { get }
     var worldData: WorldDataStores? { get }
-    var cellRunner: SerialCellBuildRunner? { get }
+    var cellRunner: (any SerialCellBuildRunnerPort)? { get }
 }
 
 /// Answers `PlayerWorld` and `FaceMorphWorld` from the session systems `game` owns.
 final class PlayerWorldAdapter {
     unowned let game: any PlayerWorldHost
+    /// The session's player parts. The composition root sets these, so the host stays port-only.
+    var locomotion: () -> LocomotionBridge? = { nil }
+    var firstPersonRig: () -> PlayerFirstPersonRig? = { nil }
+    var playerFace: () -> FaceMorphPlayback? = { nil }
 
     init(game: any PlayerWorldHost) {
         self.game = game
@@ -103,9 +111,9 @@ final class PlayerWorldAdapter {
 /// The player's rigs assemble on the session's build queue, beside the cells.
 final class PlayerRigQueue: PlayerRigSource {
     let playerAssetFileSystem: (any GameFileSource)?
-    private let runner: SerialCellBuildRunner
+    private let runner: any SerialCellBuildRunnerPort
 
-    init(runner: SerialCellBuildRunner, fileSystem: (any GameFileSource)?) {
+    init(runner: any SerialCellBuildRunnerPort, fileSystem: (any GameFileSource)?) {
         self.runner = runner
         playerAssetFileSystem = fileSystem
     }
@@ -121,7 +129,7 @@ final class PlayerRigQueue: PlayerRigSource {
 
 extension PlayerWorldAdapter: PlayerWorld {
     var playerLocomotion: LocomotionBridge? {
-        game.gameSession?.locomotion
+        locomotion()
     }
 
     var isPlayerGrounded: Bool {
@@ -186,7 +194,7 @@ extension PlayerWorldAdapter: PlayerWorld {
     }
 
     var playerFirstPersonRig: PlayerFirstPersonRig? {
-        game.gameSession?.playerFirstPersonRig
+        firstPersonRig()
     }
 
     var areFirstPersonArmsVisible: Bool {
@@ -218,14 +226,14 @@ extension PlayerWorldAdapter: FaceMorphWorld {
 
     func faceMorphPlayback(for actor: FormID) -> FaceMorphPlayback? {
         if actor == PlayerBody.actorFormID {
-            return game.gameSession?.playerBody?.face
+            return playerFace()
         }
         return game.renderer?.scene.faceMorphPlayback(for: actor)
     }
 
     var faceMorphPlaybacks: [FaceMorphPlayback] {
         let scene = game.renderer?.scene.animations.compactMap { $0 as? FaceMorphPlayback }
-        return (scene ?? []) + [game.gameSession?.playerBody?.face].compactMap(\.self)
+        return (scene ?? []) + [playerFace()].compactMap(\.self)
     }
 
     func faceMood(of actor: FormID) -> FaceMoodInput {

@@ -7,6 +7,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyPhysics
 import OpenSkyPlayer
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 public import simd
 

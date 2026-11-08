@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyPhysics
+import OpenSkyWorldInterface
 
 nonisolated extension LocomotionBridge {
     /// Raises one event by name on every graph through the same `raise` the edges use,

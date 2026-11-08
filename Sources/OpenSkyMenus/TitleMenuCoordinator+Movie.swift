@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+public import OpenSkyMenusInterface
 import OpenSkyRendering
 
 extension TitleMenuCoordinator {
@@ -50,7 +51,7 @@ extension TitleMenuCoordinator {
         world?.showTitleBackdrop(false)
     }
 
-    func routeMovie(_ event: MenuInputEvent, renderer: Renderer) {
+    func routeMovie(_ event: MenuInputEvent, renderer: any RendererPort) {
         routeMovie(renderer: renderer) { TitleMenuMovieBridge.handle(event, runtime: $0) }
     }
 
@@ -61,7 +62,7 @@ extension TitleMenuCoordinator {
         routeMovie(renderer: renderer) { TitleMenuMovieBridge.handle(event, runtime: $0) }
     }
 
-    private func routeMovie(renderer: Renderer, _ inject: (SWFMovieRuntime) -> Void) {
+    private func routeMovie(renderer: any RendererPort, _ inject: (SWFMovieRuntime) -> Void) {
         do {
             try renderer.updateSWFRuntime(inject)
         } catch {

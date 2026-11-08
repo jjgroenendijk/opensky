@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsESS
+import OpenSkySaveInterface
 import OpenSkyScriptingInterface
 
 nonisolated extension ESSExporter {

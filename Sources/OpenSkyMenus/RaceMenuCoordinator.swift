@@ -6,6 +6,7 @@ import Foundation
 public import OpenSkyActorsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyRendering
 
 /// What the race menu reads from and writes to the running game.
@@ -26,7 +27,7 @@ public protocol RaceMenuWorld: AnyObject {
     /// The race's preset faces (`RPRM` or `RPRF`), each read from its NPC_ record.
     func racePresets(race: FormID, isFemale: Bool) -> [RacePreset]
     var menuInputConsumer: (any MenuInputConsumer)? { get }
-    var renderer: Renderer? { get }
+    var renderer: (any RendererPort)? { get }
 }
 
 /// One preset face a race offers in the race menu.
@@ -37,32 +38,6 @@ nonisolated public struct RacePreset: Equatable, Sendable {
     public init(name: String, face: PlayerFace) {
         self.name = name
         self.face = face
-    }
-}
-
-nonisolated public struct RaceMenuSnapshot: Equatable, Sendable {
-    public let isLimited: Bool
-    public let rows: [String]
-    public let selectedIndex: Int
-    public let lastResult: String?
-    /// The player's face now: weight, the slider values that are not 0, parts, and tints.
-    public let face: [String]
-    public let movie: TitleMenuMovieSnapshot
-
-    public init(
-        isLimited: Bool,
-        rows: [String],
-        selectedIndex: Int,
-        lastResult: String?,
-        face: [String] = [],
-        movie: TitleMenuMovieSnapshot = .init()
-    ) {
-        self.face = face
-        self.movie = movie
-        self.isLimited = isLimited
-        self.rows = rows
-        self.selectedIndex = selectedIndex
-        self.lastResult = lastResult
     }
 }
 
@@ -81,8 +56,8 @@ public final class RaceMenuCoordinator {
     /// Movie calls made during input, applied once the movie returns.
     var pendingMovieRequests: [RaceMenuMovieBridge.Request] = []
     var framePacer = MenuMovieFramePacer()
-    let movies: SWFMovieSource?
-    let hud: HUDCoordinator?
+    let movies: (any MenuMovieLoading)?
+    let hud: (any MenuLayerOwner)?
     private var typedName = ""
     /// The preset applied last, so the next press moves on from it.
     private var presetIndex: Int?
@@ -90,7 +65,8 @@ public final class RaceMenuCoordinator {
     weak let world: (any RaceMenuWorld)?
 
     public init(
-        menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil,
+        menuMode: MenuModeController, movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any RaceMenuWorld)? = nil, morphCounts: FaceMorphCounts = .vanilla
     ) {
         self.menuMode = menuMode

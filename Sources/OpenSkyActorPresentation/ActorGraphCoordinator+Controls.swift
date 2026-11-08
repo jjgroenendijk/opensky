@@ -3,6 +3,7 @@
 
 import OpenSkyBehavior
 public import OpenSkyGameData
+import OpenSkyWorldInterface
 
 extension ActorGraphCoordinator {
     /// Reads the switch and the cutoff from `store`.

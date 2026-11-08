@@ -7,6 +7,7 @@ import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct RaceMenuMovieRealDataTests {

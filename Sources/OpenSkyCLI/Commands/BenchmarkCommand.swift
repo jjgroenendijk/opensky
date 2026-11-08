@@ -6,6 +6,7 @@ import OpenSkyAssetCache
 import OpenSkyCLIArguments
 import OpenSkyGameData
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 enum BenchmarkCommand {
     static func run(context: CLIContext, arguments: BenchmarkArguments) throws {

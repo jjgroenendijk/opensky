@@ -7,7 +7,9 @@ import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyEffects
 import OpenSkyFactions
 import OpenSkyFormatsCore
@@ -19,6 +21,7 @@ import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPlayer
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
 import simd
 

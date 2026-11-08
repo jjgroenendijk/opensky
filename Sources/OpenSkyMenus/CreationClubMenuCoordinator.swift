@@ -3,14 +3,15 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 public final class CreationClubMenuCoordinator: MenuScreen<CreationClubMovieEvent> {
     public static let identifier: MenuIdentifier = "Creation Club Menu"
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any MenuScreenWorld)? = nil
     ) {
         super.init(

@@ -6,6 +6,7 @@ import OpenSkyBehavior
 import OpenSkyEngineTesting
 import OpenSkyFormatsAnimation
 @testable import OpenSkyObjectAnimation
+import OpenSkyWorldInterface
 import simd
 import Testing
 

@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyFormatsSWF
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 @MainActor

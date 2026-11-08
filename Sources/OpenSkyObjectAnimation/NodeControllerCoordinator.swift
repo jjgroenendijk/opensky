@@ -5,7 +5,8 @@
 import OpenSkyActorPresentation
 public import OpenSkyFormatsMesh
 import OpenSkyRendering
-public import simd
+public import OpenSkyWorldInterface
+import simd
 
 /// What the node controller coordinator reads from the session.
 @MainActor
@@ -14,17 +15,6 @@ public protocol NodeControllerWorld: AnyObject {
     /// Billboards turn to it and bone LOD distances are measured from it. Nil plays every
     /// bone and leaves billboards at rest.
     var nodeControllerViewer: NIFBillboard.Viewer? { get }
-}
-
-/// One node of a running mesh, for `game state nodes`.
-nonisolated public struct NodeControllerNodeRow: Equatable, Sendable {
-    public let name: String
-    /// Translation in the mesh's own space.
-    public let translation: SIMD3<Float>
-    public let rotation: simd_quatf
-    public let controllers: [String]
-    public let isActive: Bool
-    public let isFrozen: Bool
 }
 
 @MainActor

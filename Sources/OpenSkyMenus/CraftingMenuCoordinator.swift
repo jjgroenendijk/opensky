@@ -6,6 +6,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 /// One recipe of the open station.
 nonisolated public struct CraftingMenuRecipe: Equatable, Sendable {
@@ -60,8 +61,8 @@ public final class CraftingMenuCoordinator: ItemListMenuScreen {
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any CraftingMenuWorld)? = nil
     ) {
         self.world = world

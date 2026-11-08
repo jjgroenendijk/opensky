@@ -4,6 +4,7 @@ import OpenSkyFormatsMesh
 import OpenSkyInventoryInterface
 @testable import OpenSkyMenus
 import OpenSkyRenderCore
+import OpenSkyWorldState
 import simd
 import Testing
 

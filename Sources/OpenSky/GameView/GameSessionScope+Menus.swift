@@ -13,7 +13,7 @@ extension GameSessionScope {
             hud: hud,
             settings: playerSettings,
             saves: saveGames,
-            world: self
+            world: ports
         )
         menu.topicSource = messageWorld
         return menu
@@ -58,6 +58,9 @@ extension GameSessionScope {
             ),
             creationClub: CreationClubMenuCoordinator(
                 menuMode: menuMode, movies: swfMovies, hud: hud, world: menuScreensWorld
+            ),
+            mapMovie: MapMenuMovieScreen(
+                map: mapMenu, movies: swfMovies, hud: hud, world: menuScreensWorld
             )
         )
     }

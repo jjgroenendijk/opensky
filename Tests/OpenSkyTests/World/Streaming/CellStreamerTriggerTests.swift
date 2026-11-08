@@ -12,6 +12,7 @@ import OpenSkyPlayer
 @testable import OpenSkyTerrain
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 import OpenSkyWorldTesting
 import simd
 import Testing

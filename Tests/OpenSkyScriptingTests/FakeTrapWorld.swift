@@ -3,6 +3,7 @@
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 final class FakeTrapWorld: PapyrusTrapWorldBridge {

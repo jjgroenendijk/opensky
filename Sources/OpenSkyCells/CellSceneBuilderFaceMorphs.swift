@@ -10,6 +10,7 @@ import OpenSkyGameData
 public import OpenSkyRendering
 public import OpenSkyRenderResources
 import OpenSkyRuntimeState
+public import OpenSkyWorldInterface
 
 nonisolated private struct FaceMorphAssociationState {
     var bindings: [ObjectIdentifier: FaceMorphBuffer] = [:]

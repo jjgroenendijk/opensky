@@ -15,6 +15,7 @@ import MetalKit
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 import Testing
 

@@ -2,6 +2,7 @@
 // strong one knocks it down (docs/engine/impulses.md#hits).
 
 import Foundation
+public import OpenSkyCombatInterface
 import OpenSkyConditions
 public import OpenSkyFormatsESM
 import simd

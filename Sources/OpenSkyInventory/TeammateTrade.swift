@@ -2,21 +2,8 @@
 // its `CarryWeight`. UESP "Skyrim:Followers". See docs/engine/barter.md#a-followers-trade.
 
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkyInventoryInterface
-
-nonisolated public enum TeammateTradeText: String, GameSettingTextKey {
-    case cannotTakeOutfit = "sTeammateCantTakeOutfit"
-    /// Follows the follower's name.
-    case overencumbered = "sTeammateOverencumbered"
-
-    public var fallback: String {
-        switch self {
-        case .cannotTakeOutfit: "You can't take your teammate's starting armor."
-        case .overencumbered: "can't carry any more."
-        }
-    }
-}
 
 /// What the rule knows about one item moving to or from a follower.
 nonisolated public struct TeammateTradeFacts: Equatable, Sendable {

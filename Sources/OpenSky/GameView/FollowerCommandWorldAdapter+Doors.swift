@@ -9,13 +9,15 @@ import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension FollowerCommandWorldAdapter {
     /// Puts each living teammate beside the player in the cell the door led to. A
     /// follower the player told to wait stays where it waits.
-    func bringFollowers(into scene: CellScene) {
+    func bringFollowers(into scene: any CellScenePort) {
         guard
             let bridge = game.scripts.bridge,
             let destination = scene.location,

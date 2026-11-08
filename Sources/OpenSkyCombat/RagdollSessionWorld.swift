@@ -2,6 +2,7 @@
 // does to the running session. The app answers it; a test passes a fake.
 // See docs/engine/ragdoll.md and docs/engine/coordinators.md.
 
+public import OpenSkyCombatInterface
 public import OpenSkyFormatsAnimation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData

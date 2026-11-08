@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyGameData
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import Testing
 
 @MainActor

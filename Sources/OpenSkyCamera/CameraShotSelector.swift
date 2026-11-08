@@ -7,6 +7,7 @@ public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyWorldConditions
+import OpenSkyWorldInterface
 
 /// One path the selector looked at, and what happened to it.
 nonisolated public struct CameraPathTrace: Equatable, Sendable {

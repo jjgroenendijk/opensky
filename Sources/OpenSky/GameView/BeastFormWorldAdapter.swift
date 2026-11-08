@@ -10,6 +10,7 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -17,12 +18,12 @@ import OpenSkyWorldState
 /// What `BeastFormWorldAdapter` reads from the session.
 @MainActor
 protocol BeastFormWorldHost: AnyObject {
-    var gameSession: GameSession? { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var scripts: ScriptCoordinator { get }
-    var streamer: CellStreamer? { get }
+    var gameSession: (any GameSessionPort)? { get }
+    var menuWorld: any MenuWorldPort { get }
+    var scripts: any ScriptPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
-    var worldState: WorldStateStore { get }
+    var worldState: any WorldStateStorePort { get }
 }
 
 final class BeastFormWorldAdapter {

@@ -8,6 +8,7 @@ import OpenSkyFormatsESM
 import OpenSkyMagic
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionInterface
 
 extension RuntimeStateWorldAdapter {
     private enum Extra {

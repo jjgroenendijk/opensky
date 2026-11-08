@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyPhysics
+public import OpenSkyWorldInterface
 
 nonisolated extension LocomotionBridge {
     func writeActorState(gait: LocomotionGait) {

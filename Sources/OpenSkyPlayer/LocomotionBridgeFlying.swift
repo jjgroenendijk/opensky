@@ -2,6 +2,7 @@
 // it moves. See docs/engine/dragon-flight.md.
 
 public import OpenSkyBehavior
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated extension LocomotionBridge {

@@ -4,17 +4,6 @@
 public import OpenSkyFormatsESM
 public import OpenSkyQuestsInterface
 
-/// One journal quest with its effective state.
-nonisolated public struct JournalQuestStatus: Sendable {
-    public let quest: Quest
-    public let state: QuestRuntimeState
-
-    public init(quest: Quest, state: QuestRuntimeState) {
-        self.quest = quest
-        self.state = state
-    }
-}
-
 public enum JournalCore {
     /// The readout lists the quests that run or ran.
     public static func listed(_ entries: [JournalQuestStatus]) -> [JournalQuestStatus] {

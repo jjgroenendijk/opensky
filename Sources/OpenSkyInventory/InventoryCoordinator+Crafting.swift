@@ -4,7 +4,7 @@
 import OpenSkyConditions
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventoryInterface
+public import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 public import OpenSkyWorldInterface
 import OpenSkyWorldState

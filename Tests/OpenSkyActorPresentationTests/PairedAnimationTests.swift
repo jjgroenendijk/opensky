@@ -8,6 +8,7 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyNavigation
 import OpenSkyRuntimeState
+import OpenSkyWorldInterface
 import simd
 import Testing
 

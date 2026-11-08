@@ -3,6 +3,7 @@
 // the uses are OpenSky's reading (docs/engine/ragdoll.md#death-effects).
 
 import OpenSkyActorsInterface
+public import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore

@@ -6,6 +6,7 @@ import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 
 extension IdleCoordinator {
     /// An idle's clips in order, and whether the last one holds.
@@ -45,7 +46,7 @@ extension IdleCoordinator {
         let duration = segment.clip.animation.duration
         let held = followUps.isEmpty && playing.holdsLast
         let seconds = held ? Float.infinity : duration
-        let playback = world?.actorPlayback(for: actor)
+        let playback = actorPlayback(actor)
         if !playing.throughGraph {
             playback?.play(segment.clip, startingAt: start, forSeconds: seconds)
         }

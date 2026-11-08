@@ -4,19 +4,20 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 public import OpenSkyRendering
 
 public final class MenuMovieDriver<Event> {
     public let session: MenuMovieSession
     private var pacer = MenuMovieFramePacer()
     private var pending: [Event] = []
-    private let renderer: () -> Renderer?
+    private let renderer: () -> (any RendererPort)?
 
     public init(
-        movies: SWFMovieSource?,
-        hud: HUDCoordinator?,
+        movies: (any MenuMovieLoading)?,
+        hud: (any MenuLayerOwner)?,
         label: String,
-        renderer: @escaping () -> Renderer?
+        renderer: @escaping () -> (any RendererPort)?
     ) {
         self.renderer = renderer
         session = MenuMovieSession(movies: movies, hud: hud, label: label, renderer: renderer)

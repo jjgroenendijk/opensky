@@ -5,6 +5,7 @@ import OpenSkyFormatsESM
 import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyWorldInterface
 import simd
 
 struct NPCMoverStepPlan {

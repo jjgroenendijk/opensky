@@ -3,27 +3,12 @@
 // over one decode, so a first-person graph can run beside it.
 // See docs/engine/behavior-runtime.md.
 
-public import Foundation
+import Foundation
 public import OpenSkyBehavior
 public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyGameData
-
-nonisolated public enum PlayerBehaviorGraphError: LocalizedError, Equatable, Sendable {
-    case missing(String)
-    case invalid(String)
-    case noGraph(String)
-    case noSkeleton(String)
-
-    public var errorDescription: String? {
-        switch self {
-        case let .missing(path): "behavior asset missing: \(path)"
-        case let .invalid(path): "unreadable Havok packfile: \(path)"
-        case let .noGraph(path): "no hkbBehaviorGraph in \(path)"
-        case let .noSkeleton(path): "no hkaSkeleton in \(path)"
-        }
-    }
-}
+public import OpenSkyWorldInterface
 
 /// The player's running graph and the rig it poses, loaded together because a
 /// pose is meaningless without the skeleton whose parent chain composes it.

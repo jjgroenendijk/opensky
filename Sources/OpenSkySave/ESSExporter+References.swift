@@ -13,6 +13,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
+import OpenSkySaveInterface
 import OpenSkyWorldState
 
 nonisolated extension ESSExporter {

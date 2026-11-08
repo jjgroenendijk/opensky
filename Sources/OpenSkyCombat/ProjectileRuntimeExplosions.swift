@@ -3,6 +3,7 @@
 // See docs/formats/explosions.md.
 
 import Foundation
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface

@@ -7,6 +7,7 @@ import Foundation
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyMenusInterface
 public import OpenSkyQuestsInterface
 
 /// One shown objective target, before its alias is resolved.
@@ -38,15 +39,6 @@ nonisolated public enum QuestTargetPlace: Equatable, Sendable {
     case placed(position: SIMD3<Float>, cell: CellSceneLocation?)
     /// Inside a container or carried: the marker follows the holder.
     case heldBy(ReferenceKey)
-}
-
-nonisolated public struct QuestTargetMarker: Equatable, Sendable {
-    public var quest = FormID(0)
-    public var objective: UInt16 = 0
-    public let text: String
-    /// The reference the marker stands on: the target, or what holds it.
-    public let anchor: ReferenceKey
-    public let position: SIMD3<Float>
 }
 
 nonisolated public enum QuestTargetResolver {

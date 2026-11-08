@@ -9,21 +9,6 @@ import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
 
-/// One landing and what it did, for `state` reads.
-nonisolated public struct FallOutcome: Equatable, Sendable {
-    public let actor: ReferenceKey
-    public let height: Float
-    public let speed: Float
-    public let damage: Float
-
-    public init(actor: ReferenceKey, height: Float, speed: Float, damage: Float) {
-        self.actor = actor
-        self.height = height
-        self.speed = speed
-        self.damage = damage
-    }
-}
-
 extension CombatCoordinator {
     /// Hurts `actor` for a fall of `height` units that landed at `speed`. Water ends a
     /// fall before it lands, so a caller never reports one. Returns the damage dealt.

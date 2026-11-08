@@ -47,6 +47,12 @@ public final class CellStreamer {
     public private(set) var actorPoseRevision: UInt64 = 0
     public var core = CellStreamCore()
     public let runner: any CellBuildRunning
+
+    /// The asset cache sizes, when the runner keeps a cache.
+    public var cachedAssetCounts: CachedAssetCounts? {
+        (runner as? SerialCellBuildRunner)?.cachedAssetCounts
+    }
+
     public let sink: SceneSink
     /// Fires with the center cell's REGN FormIDs when they change, for region weather.
     /// The app wires it to `GameSession.weather.setRegions`.

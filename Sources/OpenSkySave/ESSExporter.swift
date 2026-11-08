@@ -6,6 +6,7 @@
 public import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyFormatsESS
+public import OpenSkySaveInterface
 import OpenSkyWorldState
 
 nonisolated public struct ESSExportResult: Sendable {

@@ -3,6 +3,7 @@
 // command stream before the next draw.
 
 import Foundation
+public import OpenSkyMenusInterface
 public import OpenSkyRendering
 
 @MainActor
@@ -12,7 +13,7 @@ extension SystemMenuMovieBridge {
     ///
     /// - Returns: whether the movie consumed the event.
     @discardableResult
-    public static func send(_ event: MenuInputEvent, renderer: Renderer) throws -> Bool {
+    public static func send(_ event: MenuInputEvent, renderer: any RendererPort) throws -> Bool {
         var consumed = false
         try renderer.updateSWFRuntime { runtime in
             consumed = handle(event, runtime: runtime)

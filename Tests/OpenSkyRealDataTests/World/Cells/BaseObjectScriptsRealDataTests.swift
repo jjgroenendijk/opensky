@@ -2,6 +2,7 @@ import Foundation
 import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import Testing
 

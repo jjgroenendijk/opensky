@@ -2,6 +2,7 @@
 // trace. Agent control reads it; tests assert on it. See docs/engine/scenes.md.
 
 import Foundation
+public import OpenSkyDialogueInterface
 public import OpenSkyFormatsESM
 
 nonisolated public enum SceneEndReason: Equatable, Sendable {
@@ -14,20 +15,6 @@ nonisolated public enum SceneEndReason: Equatable, Sendable {
     case interrupted
     /// An actor's behaviour flags end the scene, for example on death.
     case actorBehavior
-}
-
-/// A line a dialogue action selected and marked said.
-nonisolated public struct SceneLine: Equatable, Sendable {
-    public let speaker: ReferenceKey
-    public let topic: FormID
-    public let info: FormID
-    /// From the voice file when there is one, else from the text.
-    public var seconds: Float = Self.defaultSeconds
-    /// The actor the speaker looks at, from the action's `HTID` alias.
-    public var lookAt: ReferenceKey?
-
-    /// A line with no host to time it.
-    public static let defaultSeconds: Float = 3
 }
 
 nonisolated public enum SceneStep: Equatable, Sendable {

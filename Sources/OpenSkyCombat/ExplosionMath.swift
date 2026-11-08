@@ -3,10 +3,11 @@
 // docs/formats/explosions.md, section "Runtime".
 
 import Foundation
+public import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-public import simd
+import simd
 
 nonisolated public enum ExplosionFalloff {
     /// Full damage at the center, falling as `1 - (d / R)^2` to zero at the edge. A zero
@@ -30,32 +31,6 @@ nonisolated public enum ExplosionFalloff {
         guard radius.isFinite, radius > 0 else { return 1 }
         guard distance.isFinite else { return 0 }
         return min(max(1 - max(distance, 0) / radius, 0), 1)
-    }
-}
-
-/// One thrown debris model, flying ballistically until its time runs out.
-nonisolated public struct DebrisPiece: Equatable, Sendable {
-    public let path: String
-    public var position: SIMD3<Float>
-    public var velocity: SIMD3<Float>
-    /// Rotation axis times radians per second.
-    public let spin: SIMD3<Float>
-    public var age: Float = 0
-    public let lifetime: Float
-
-    public var isExpired: Bool {
-        age >= lifetime
-    }
-
-    /// The model matrix at the current age: spun about its axis, then placed.
-    public var transform: float4x4 {
-        let rate = simd_length(spin)
-        var matrix = matrix_identity_float4x4
-        if rate > 0 {
-            matrix = float4x4(simd_quatf(angle: rate * age, axis: spin / rate))
-        }
-        matrix.columns.3 = SIMD4(position, 1)
-        return matrix
     }
 }
 

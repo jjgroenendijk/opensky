@@ -5,6 +5,7 @@
 
 import Foundation
 public import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 /// What the movie asked the engine to do, as reported through its outbound
 /// `GameDelegate` calls.

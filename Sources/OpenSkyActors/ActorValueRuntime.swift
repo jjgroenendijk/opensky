@@ -26,6 +26,11 @@ public struct ActorValueRuntime: ActorValueAccess {
         nonmutating set { store.playerRules.godMode = newValue }
     }
 
+    /// The runtime shares its storage, so this writes through a copy too.
+    public func setGodMode(_ isOn: Bool) {
+        godMode = isOn
+    }
+
     /// Regeneration reads every actor's baseline each step. A `PC Level Mult` actor
     /// scales with the player and a leveled one with its roll, so the key holds both.
     private let actorBaselines = BaselineMemo<LeveledActorRollKey, ActorValueBaseline>()

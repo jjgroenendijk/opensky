@@ -4,7 +4,7 @@
 
 public import OpenSkyFormatsESM
 import OpenSkyWorldConditions
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 /// The world lookups a procedure's parameters need.

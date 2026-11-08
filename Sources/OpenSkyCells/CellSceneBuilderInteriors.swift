@@ -9,6 +9,7 @@ public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyTerrain
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
 nonisolated public struct DoorTransition: Sendable {

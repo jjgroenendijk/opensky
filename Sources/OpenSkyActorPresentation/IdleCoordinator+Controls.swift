@@ -2,6 +2,7 @@
 
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 extension IdleCoordinator {
     public func idleSnapshot(for actor: ReferenceKey?) -> IdleControlSnapshot {

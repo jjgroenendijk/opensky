@@ -2,8 +2,10 @@
 // the cue that stops it. See docs/engine/spellcasting.md.
 
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyMagic
+import OpenSkySessionInterface
 import OpenSkyWorld
 import simd
 

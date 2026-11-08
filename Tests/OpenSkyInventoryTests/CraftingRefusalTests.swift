@@ -3,6 +3,7 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 @testable import OpenSkyInventory
+import OpenSkyInventoryInterface
 import Testing
 
 struct CraftingRefusalTests {

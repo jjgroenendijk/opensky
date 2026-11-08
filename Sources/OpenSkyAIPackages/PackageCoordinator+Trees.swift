@@ -4,6 +4,7 @@
 
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import simd
 
 /// A walk that found every mover slot taken, and its place in the queue.

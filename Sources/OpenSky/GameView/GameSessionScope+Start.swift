@@ -15,6 +15,7 @@ import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyRenderCore
@@ -22,6 +23,7 @@ import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
@@ -188,7 +190,7 @@ extension GameSessionScope {
     }
 }
 
-extension GameSessionScope: @MainActor SystemMenuWorld {
+extension GameSessionScope {
     var viewCamera: FreeFlyCamera? {
         gameSession?.freeFlyCamera
     }

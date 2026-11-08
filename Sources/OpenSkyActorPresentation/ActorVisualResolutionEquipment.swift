@@ -9,6 +9,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 /// Skeleton nodes a rigid attachment can hang from, observed with
 /// `openskycli skeleton`. See docs/engine/actor-resolution.md.

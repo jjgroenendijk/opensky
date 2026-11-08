@@ -2,6 +2,7 @@
 
 public import Foundation
 import OpenSkyFormatsCore
+import OpenSkyWorldInterface
 
 nonisolated public enum BenchmarkReport {
     public static let resultFile = "result.json"

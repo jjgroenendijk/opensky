@@ -4,7 +4,9 @@ import Foundation
 import OpenSkyCamera
 import OpenSkyMenus
 import OpenSkyRendering
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 extension MenuScreensWorldAdapter: MapMovieWorld {
     func mapScreenPoint(_ point: SIMD3<Float>) -> SIMD2<Float>? {

@@ -11,6 +11,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyTerrain
+import OpenSkyWorldInterface
 
 enum ActorCommand {
     static func run(context: CLIContext, arguments: ActorArguments.Appearance) throws {

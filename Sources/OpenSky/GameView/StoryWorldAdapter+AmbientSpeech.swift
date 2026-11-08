@@ -4,6 +4,7 @@
 
 import OpenSkyAIPackages
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
@@ -13,7 +14,9 @@ import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 /// A line waiting out `fSpeechDelay` before it starts.

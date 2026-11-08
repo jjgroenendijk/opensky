@@ -19,6 +19,8 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
+import OpenSkySession
+import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -28,18 +30,18 @@ import simd
 /// What `BenchmarkWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol BenchmarkWorldHost: AnyObject {
-    var agentWorld: AgentWorldAdapter { get }
-    var audio: AudioCoordinator { get }
-    var benchmarkLoadPhases: LoadPhaseRecorder? { get }
-    var benchmarkTour: BenchmarkTourCoordinator { get }
-    var effects: EffectsCoordinator { get }
-    var gameSession: GameSession? { get }
+    var agentWorld: any AgentWorldPort { get }
+    var audio: any AudioPort { get }
+    var benchmarkLoadPhases: (any LoadPhaseRecorderPort)? { get }
+    var benchmarkTour: any BenchmarkTourPort { get }
+    var effects: any EffectsPort { get }
+    var gameSession: (any GameSessionPort)? { get }
     var hostView: NSView { get }
     var playerSettingsStore: PlayerSettingsStore { get }
-    var runtimeState: RuntimeStateCoordinator { get }
+    var runtimeState: any RuntimeStatePort { get }
     var sessionStartTiming: SessionStartTiming { get }
-    var simulationClock: SteppedWallClock { get }
-    var streamer: CellStreamer? { get }
+    var simulationClock: any SteppedWallClockPort { get }
+    var streamer: (any CellStreamerPort)? { get }
     var terrainLODConfigurationStore: TerrainLODConfigurationStore { get }
     var worldLoadReport: WorldLoadReport? { get }
 }
@@ -57,7 +59,7 @@ final class BenchmarkWorldAdapter {
         category: "Benchmark"
     )
     unowned let game: any BenchmarkWorldHost
-    var tour: BenchmarkTourCoordinator {
+    var tour: any BenchmarkTourPort {
         game.benchmarkTour
     }
 
@@ -75,7 +77,7 @@ final class BenchmarkWorldAdapter {
 
     /// The tour measures the engine, not the display, so it draws with no frame cap.
     private let frameLoop = UnlimitedFrameLoop()
-    private var arrival: AgentTeleportJob?
+    private var arrival: (any AgentTeleportJobPort)?
     private var arrivalStep: AgentWaitStep?
     private var saved: SavedState?
     private var request = BenchmarkRequest()
@@ -318,7 +320,7 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
         }
         arrivalStep = nil
         do {
-            arrival = try AgentTeleportJob(adapter: game.agentWorld, target: target)
+            arrival = try game.agentWorld.teleportJob(to: target)
         } catch {
             arrival = nil
             arrivalStep = .done(.failure(error))
@@ -430,7 +432,7 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     func gpuMemory() -> GPUMemoryUsage {
         var usage = game.gameSession?.renderer.gpuMemoryUsage() ?? GPUMemoryUsage()
         usage.processBytes = MemoryFootprint.physFootprintBytes().map { Int($0) } ?? 0
-        if let cached = (game.streamer?.runner as? SerialCellBuildRunner)?.cachedAssetCounts {
+        if let cached = game.streamer?.cachedAssetCounts {
             usage.cachedTextures = cached.textures
             usage.cachedModels = cached.models
         }

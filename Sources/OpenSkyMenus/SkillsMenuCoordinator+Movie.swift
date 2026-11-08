@@ -73,7 +73,7 @@ extension SkillsMenuCoordinator {
         pendingChoices = []
     }
 
-    func publish(renderer: Renderer) {
+    func publish(renderer: any RendererPort) {
         guard let model else { return }
         do {
             try renderer.updateSWFRuntime { runtime in

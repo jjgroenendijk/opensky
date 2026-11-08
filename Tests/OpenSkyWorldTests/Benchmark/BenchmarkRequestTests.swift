@@ -2,6 +2,7 @@
 
 import OpenSkyGameData
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import Testing
 
 struct BenchmarkRequestTests {

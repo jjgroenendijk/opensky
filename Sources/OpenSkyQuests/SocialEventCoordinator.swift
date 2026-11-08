@@ -6,6 +6,7 @@ public import OpenSkyConditions
 public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyQuestsInterface
 
 /// What `SocialEventCoordinator` reads from the running session.
 @MainActor

@@ -3,6 +3,7 @@
 // Numbers are exact in binary: speed 1000 units/s, acceleration 1400 units/s^2.
 
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 import simd

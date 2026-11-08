@@ -16,6 +16,7 @@ public import OpenSkyPhysics
 public import OpenSkyPlayer
 import OpenSkyRendering
 public import OpenSkyWeather
+public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
 nonisolated public struct CellProviderIndexes {

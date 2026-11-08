@@ -9,15 +9,18 @@ import OpenSkyFormatsESS
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkySave
+import OpenSkySaveInterface
+import OpenSkySessionInterface
 
 /// What `SkyrimSaveImportAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol SkyrimSaveImportHost: AnyObject {
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var menuWorld: MenuWorldAdapter { get }
-    var runtimeStateWorld: RuntimeStateWorldAdapter { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var menuWorld: any MenuWorldPort { get }
+    var runtimeStateWorld: any RuntimeStateWorldPort { get }
 }
 
 @MainActor

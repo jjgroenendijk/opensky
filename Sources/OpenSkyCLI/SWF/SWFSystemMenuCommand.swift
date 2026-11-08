@@ -8,6 +8,7 @@ import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyMenusInterface
 
 enum SWFSystemMenuCommand {
     static func run(context: CLIContext, arguments: MenuArguments.System) throws {

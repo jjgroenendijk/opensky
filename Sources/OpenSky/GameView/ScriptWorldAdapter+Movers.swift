@@ -8,7 +8,9 @@ import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

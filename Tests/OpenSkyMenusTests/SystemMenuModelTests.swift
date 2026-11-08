@@ -1,6 +1,7 @@
 // System menu selector transitions, without AppKit, a renderer, or the install.
 
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct SystemMenuModelTests {

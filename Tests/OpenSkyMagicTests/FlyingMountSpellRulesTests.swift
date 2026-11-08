@@ -7,6 +7,7 @@ import OpenSkyFeaturesTesting
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
+import OpenSkyMagicInterface
 import Testing
 
 @MainActor

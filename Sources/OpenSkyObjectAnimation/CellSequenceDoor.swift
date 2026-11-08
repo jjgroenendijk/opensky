@@ -1,4 +1,5 @@
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
+public import OpenSkyWorldInterface
 public import simd
 
 /// One sequence door a cell drew, posed through its buffer.

@@ -2,6 +2,7 @@
 // a transition on an event the actor raised, and a graph that does not declare it does not.
 
 @testable import OpenSkyObjectAnimation
+import OpenSkyWorldInterface
 import Testing
 
 @MainActor

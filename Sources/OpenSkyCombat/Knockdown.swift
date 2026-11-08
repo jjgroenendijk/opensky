@@ -3,15 +3,9 @@
 // get-up clip. Values in, values out (docs/engine/ragdoll.md#knockdown).
 
 import Foundation
+public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import simd
-
-nonisolated public enum KnockdownPhase: Equatable, Sendable {
-    /// On the ground, with the seconds left before it gets up anyway.
-    case down(remaining: Float)
-    /// Getting up: the ragdoll pose fades out over `duration` seconds.
-    case gettingUp(elapsed: Float, duration: Float)
-}
 
 /// What one step of the knockdowns changed.
 nonisolated public struct KnockdownStep: Equatable, Sendable {

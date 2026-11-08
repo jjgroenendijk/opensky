@@ -6,6 +6,7 @@ import AppKit
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyWorld
+import OpenSkyWorldInterface
 
 @MainActor
 final class BenchmarkRunHost {

@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct SystemMenuTopicPageTests {

@@ -2,6 +2,7 @@
 // world (docs/engine/impulses.md).
 
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 import simd

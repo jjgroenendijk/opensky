@@ -2,6 +2,7 @@
 // settings. See docs/engine/alchemy.md#poison-on-a-weapon.
 
 public import OpenSkyGameData
+public import OpenSkyInventoryInterface
 
 nonisolated public enum PoisonText: String, GameSettingTextKey {
     case noWeapon = "sPoisonNoWeaponMessage"

@@ -2,6 +2,7 @@
 // (see `ArcheryGraphNames`). Strings in, a state out.
 
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 import Testing
 
 struct ArcheryStateTests {

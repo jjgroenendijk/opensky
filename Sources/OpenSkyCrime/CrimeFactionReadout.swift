@@ -3,7 +3,7 @@
 
 import Foundation
 public import OpenSkyActorsInterface
-import OpenSkyCrimeInterface
+public import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 public import OpenSkyGameData

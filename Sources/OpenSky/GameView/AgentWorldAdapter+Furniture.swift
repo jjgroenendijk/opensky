@@ -6,6 +6,7 @@ import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState

@@ -7,6 +7,7 @@ import Foundation
 import OpenSkyFormatsTesting
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
+import OpenSkySaveInterface
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface

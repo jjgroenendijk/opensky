@@ -9,6 +9,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyQuestsInterface
+import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

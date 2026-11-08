@@ -4,6 +4,7 @@
 
 import AppKit
 import OpenSkyLoading
+import OpenSkyWorldInterface
 
 final class LauncherViewController: NSSplitViewController {
     private let sidebar = LauncherSidebarViewController()

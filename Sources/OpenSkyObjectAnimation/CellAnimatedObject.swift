@@ -1,5 +1,6 @@
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 public import OpenSkyBehavior
+public import OpenSkyWorldInterface
 public import simd
 
 /// One animated object a cell drew, handed to `ObjectBehaviorCoordinator`.

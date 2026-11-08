@@ -5,6 +5,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct MessageTextBuilderTests {

@@ -7,6 +7,7 @@ import OpenSkyRuntimeState
 import OpenSkyTerrain
 import OpenSkyWorld
 import OpenSkyWorldFixtures
+import OpenSkyWorldInterface
 import OpenSkyWorldTesting
 import Testing
 

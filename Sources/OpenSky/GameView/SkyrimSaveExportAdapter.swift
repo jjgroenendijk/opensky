@@ -9,6 +9,8 @@ import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyRuntimeState
 import OpenSkySave
+import OpenSkySaveInterface
+import OpenSkySessionInterface
 import OpenSkyWorldState
 
 nonisolated enum SkyrimSaveExportError: Error, LocalizedError {
@@ -24,10 +26,10 @@ nonisolated enum SkyrimSaveExportError: Error, LocalizedError {
 /// What `SkyrimSaveExportAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 protocol SkyrimSaveExportHost: AnyObject {
-    var hud: HUDCoordinator { get }
-    var inventory: InventoryCoordinator { get }
-    var progression: ProgressionCoordinator { get }
-    var runtimeState: RuntimeStateCoordinator { get }
+    var hud: any HUDPort { get }
+    var inventory: any InventoryPort { get }
+    var progression: any ProgressionPort { get }
+    var runtimeState: any RuntimeStatePort { get }
 }
 
 @MainActor

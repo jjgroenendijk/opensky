@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
+public import OpenSkyMenusInterface
 
 /// One help topic's text.
 nonisolated public struct HelpTopic: Equatable, Sendable {
@@ -40,8 +41,8 @@ public final class TutorialMenuCoordinator: MenuScreen<Never> {
 
     public init(
         menuMode: MenuModeController,
-        movies: SWFMovieSource? = nil,
-        hud: HUDCoordinator? = nil,
+        movies: (any MenuMovieLoading)? = nil,
+        hud: (any MenuLayerOwner)? = nil,
         world: (any TutorialMenuWorld)? = nil
     ) {
         self.world = world

@@ -6,6 +6,7 @@ public import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkySaveInterface
 public import OpenSkyScriptingInterface
 public import OpenSkyWorldState
 
@@ -177,15 +178,6 @@ nonisolated public struct OpenSkySaveStore: Sendable {
 }
 
 // MARK: - The save list
-
-/// One file in the save list. `summary` is nil when the file cannot be read, so the
-/// list still shows it and says why.
-nonisolated public struct OpenSkySaveSlotListing: Equatable, Sendable {
-    public let slot: String
-    public let modified: Date
-    public let summary: OpenSkySaveSummaryFile?
-    public let error: String?
-}
 
 nonisolated extension OpenSkySaveStore {
     /// Every slot, newest first by file date, with its list chunks read.

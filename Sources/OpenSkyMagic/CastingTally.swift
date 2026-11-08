@@ -3,6 +3,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
+public import OpenSkyMagicInterface
 
 /// Everything the cast loop declined to do, so unimplemented ground is measured
 /// rather than silent.

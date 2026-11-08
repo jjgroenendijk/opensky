@@ -6,6 +6,7 @@
 import Foundation
 public import OpenSkyBehavior
 public import OpenSkyFormatsESM
+public import OpenSkyWorldInterface
 import simd
 
 /// The stage of a flying actor's fight, as the combat loop picked it.
@@ -74,21 +75,6 @@ public protocol DragonFlightWorld: AnyObject {
     func raiseFlightEvent(_ name: String, on actor: ReferenceKey)
     /// The wing dust of a landing approach, on the ground at `point`.
     func playLandingDust(_ actor: ReferenceKey, at point: SIMD3<Float>)
-}
-
-/// A forced flight from agent control, which wins over the fight.
-nonisolated public enum DragonFlightOrder: String, Equatable, Sendable {
-    case takeOff
-    case land
-    /// Land on the nearest perch in reach, or hover where none is.
-    case perch
-    case hastyLand
-    case crashLand
-
-    /// Orders that end once the dragon is on the ground or its perch.
-    var endsOnLanding: Bool {
-        self != .takeOff
-    }
 }
 
 @MainActor

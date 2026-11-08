@@ -1,6 +1,7 @@
 // Which HUD modes the player and the scripts put on the movie's stack.
 
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 struct HUDModeRulesTests {

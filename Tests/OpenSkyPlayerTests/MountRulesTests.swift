@@ -2,6 +2,7 @@
 
 @testable import OpenSkyPlayer
 import OpenSkyRendering
+import OpenSkyWorldInterface
 import simd
 import Testing
 

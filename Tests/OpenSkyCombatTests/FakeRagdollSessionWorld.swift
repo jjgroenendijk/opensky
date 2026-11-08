@@ -1,6 +1,7 @@
 // A `RagdollSessionWorld` built from plain values, for `RagdollCoordinatorTests`.
 
 @testable import OpenSkyCombat
+import OpenSkyCombatInterface
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

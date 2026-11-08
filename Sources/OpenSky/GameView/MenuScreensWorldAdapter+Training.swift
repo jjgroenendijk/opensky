@@ -7,6 +7,7 @@ import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyProgressionInterface
+import OpenSkySessionInterface
 
 extension MenuScreensWorldAdapter: TrainingMenuWorld {
     var nearestTrainer: ReferenceKey? {

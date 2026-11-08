@@ -4,7 +4,7 @@
 // character controller. It builds no cell, and its result outlives scene swaps.
 
 import Foundation
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -12,6 +12,7 @@ public import OpenSkyGameData
 public import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyRuntimeState
+public import OpenSkyWorldInterface
 import simd
 
 nonisolated extension CellSceneBuilder {
