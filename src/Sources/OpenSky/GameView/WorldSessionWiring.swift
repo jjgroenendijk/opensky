@@ -78,7 +78,7 @@ final class WorldSessionWiring {
         renderer.attachTextureStreaming(to: session.runner)
         wireAnimationAssets(gameSession: gameSession)
         wireMenuMovies(gameSession: gameSession)
-        _ = AIOverlayWiring(game.aiWorld, renderer: renderer, streamer: streamer)
+        _ = AIOverlayWiring(renderer: renderer, streamer: streamer)
         game.runtimeState.reloadGlobals()
         _ = AINPCMovementWiring(game.aiWorld, gameSession: gameSession, streamer: streamer)
         streamer.bind(to: game.worldState)

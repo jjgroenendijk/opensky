@@ -19,8 +19,4 @@ public protocol WeatherSystemPort: AnyObject {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension WeatherSystemPort {
-    public func setGlobalResolution(_ resolution: GlobalResolution?) {
-        setGlobalResolution(resolution, reroll: true)
-    }
-}
+extension WeatherSystemPort {}

@@ -46,9 +46,7 @@ public final class MessageWorldAdapter {
     public let cameraEffectsHost: any MessageCameraEffectsHost
 
     public var cameraEffects: MessageCameraEffectsAdapter {
-        MessageCameraEffectsAdapter(
-            owner: self,
-            game: cameraEffectsHost
+        MessageCameraEffectsAdapter(game: cameraEffectsHost
         )
     }
 

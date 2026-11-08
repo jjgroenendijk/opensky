@@ -19,8 +19,6 @@ nonisolated public enum RagdollGraphNames: Sendable {
 
     /// The get-up out of a knockdown ragdoll, into `GetUpFromRagdoll`.
     public static let getUpStart = "GetUpStart"
-    /// The pose matcher the get-up starts from: 1 get up, 2 swimming.
-    public static let getUpType = "iGetUpType"
 
     /// Every event the ragdoll runtime raises when an actor dies, in the order
     /// it raises them. Bleedout first, then the death clip: an actor that

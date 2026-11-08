@@ -43,7 +43,6 @@ public protocol InventoryPickpocketHost: AnyObject {
 
 /// Part of `InventoryWorldAdapter`, over its own narrow host.
 public struct InventoryPickpocketAdapter {
-    public unowned let owner: InventoryWorldAdapter
     public unowned let game: any InventoryPickpocketHost
 }
 

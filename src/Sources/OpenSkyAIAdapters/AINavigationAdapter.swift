@@ -48,7 +48,6 @@ public protocol AINavigationHost: AnyObject {
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
 public struct AINavigationAdapter {
-    public unowned let owner: AIWorldAdapter
     public unowned let game: any AINavigationHost
 }
 

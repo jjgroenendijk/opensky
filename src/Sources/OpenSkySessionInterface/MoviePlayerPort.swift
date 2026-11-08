@@ -14,8 +14,4 @@ public protocol MoviePlayerPort: AnyObject {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension MoviePlayerPort {
-    @discardableResult public func skip() -> Bool {
-        skip(force: false)
-    }
-}
+extension MoviePlayerPort {}

@@ -35,10 +35,6 @@ private final class PairedIdleWorld: IdleWorld {
         0
     }
 
-    func actorPlayback(for _: ReferenceKey) -> ActorAnimationPlayback? {
-        nil
-    }
-
     var idleAnimationTime: Float? {
         0
     }

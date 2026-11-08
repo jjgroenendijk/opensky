@@ -12,7 +12,6 @@ public protocol HUDPort: AnyObject, MenuLayerOwner {
     func setCartMode(_ enabled: Bool)
     func setCovered(_ covered: Bool)
     func setHelpMessage(_ text: String?)
-    func showNotification(_ text: String, sound: String)
     func showNotification(_ text: String)
     var shownBigNotices: [HUDBigNotice] { get }
     var shownModes: [HUDMode] { get }

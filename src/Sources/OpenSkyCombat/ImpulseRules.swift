@@ -141,10 +141,6 @@ nonisolated public struct ImpulseBlast: Equatable, Sendable {
         self.radius = radius
         self.center = center
     }
-
-    func strength(at distance: Float) -> Float {
-        ExplosionFalloff.damage(force, radius: radius, distance: distance)
-    }
 }
 
 nonisolated public enum GameplayImpulse {

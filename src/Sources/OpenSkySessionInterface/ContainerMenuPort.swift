@@ -27,14 +27,6 @@ extension ContainerMenuPort {
         openBarter(with: actor, vendorFaction: nil)
     }
 
-    public func target(_ holder: InventoryHolder, name: String, merchant: ReferenceKey?) {
-        target(holder, name: name, vendor: nil, merchant: merchant)
-    }
-
-    public func target(_ holder: InventoryHolder, name: String, vendor: Vendor?) {
-        target(holder, name: name, vendor: vendor, merchant: nil)
-    }
-
     public func target(_ holder: InventoryHolder, name: String) {
         target(holder, name: name, vendor: nil, merchant: nil)
     }

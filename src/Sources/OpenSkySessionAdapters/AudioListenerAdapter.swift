@@ -34,7 +34,6 @@ public protocol AudioListenerHost: AnyObject {
 
 /// Part of `AudioWorldAdapter`, over its own narrow host.
 public struct AudioListenerAdapter {
-    public unowned let owner: AudioWorldAdapter
     public unowned let game: any AudioListenerHost
 }
 

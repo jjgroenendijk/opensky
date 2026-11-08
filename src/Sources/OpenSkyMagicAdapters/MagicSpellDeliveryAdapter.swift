@@ -30,7 +30,6 @@ public protocol MagicSpellDeliveryHost: AnyObject {
 
 /// Part of `MagicWorldAdapter`, over its own narrow host.
 public struct MagicSpellDeliveryAdapter {
-    public unowned let owner: MagicWorldAdapter
     public unowned let game: any MagicSpellDeliveryHost
 }
 

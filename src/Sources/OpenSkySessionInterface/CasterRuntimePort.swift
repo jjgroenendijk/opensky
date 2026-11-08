@@ -32,8 +32,4 @@ extension CasterRuntimePort {
     @discardableResult public func phase(of hand: SpellHand) -> SpellCastPhase {
         phase(of: hand, on: .player)
     }
-
-    @discardableResult public func isCasting() -> Bool {
-        isCasting(.player)
-    }
 }

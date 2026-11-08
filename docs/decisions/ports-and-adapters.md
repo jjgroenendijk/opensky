@@ -18,8 +18,8 @@ protocol that lists only the parts it reads. `SessionPorts` in the app answers e
 the session scope builds each adapter with it (`/decisions/session-scope.md`).
 
 `tools/lint/module-graph.sh` checks rule 7 as its rule 13 (`/decisions/modular-architecture.md`).
-`tools/lint/adapter-references.py` checks rule 8 in `make health` and the weekly workflow,
-because it reads the index store that a build writes.
+`tools/lint/adapter-references.py` checks rule 8 in `make health` and the `Index checks` CI job
+on each pull request, because it reads the index store that a build writes.
 `tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks
 rule 5 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI
 run both. Each reads every adapter or app file, so `ALL=1` changes nothing for them. Each first
@@ -46,8 +46,8 @@ Rule 8 reads real symbols, not text: a use is a reference in the index store, an
 that holds it belongs to the adapter whose symbol contains it. An adapter is a type whose name
 ends in `Adapter` in an adapter module or the app's `GameView/`. A family is an owner and the
 parts it was split into ([Splitting a large adapter](#splitting-a-large-adapter)): a part is an
-adapter with an `owner` property whose type is another adapter. Inside one family, every use
-is allowed. A helper that answers no port, such as `SkyrimSaveImport`, is not named `Adapter`.
+adapter that another adapter of the same module stores in a property. Inside one family, every
+use is allowed. A helper that answers no port, such as `SkyrimSaveImport`, is not named `Adapter`.
 
 Rule 3 counts members of inherited hosts, because the adapter can reach them all. Example:
 `MenuRouterHost` refines `MenuSoundHost`, so its 5 members and the 3 of `MenuSoundHost` count
@@ -62,7 +62,8 @@ row in `/engine/unverified-values.md`.
 ## Splitting a large adapter
 
 An adapter whose host passes 12 members is split into smaller adapters. Each smaller adapter
-is a struct with its own host and an `unowned` reference to the owner. Example:
+is a struct with its own host. It holds an `unowned` reference to the owner only when it calls
+back into it. Example:
 `CombatWorldAdapter` keeps its frame wiring and owns `CombatGearAdapter`,
 `CombatOutcomesAdapter`, and `CombatReportsAdapter`.
 

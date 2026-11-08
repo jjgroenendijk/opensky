@@ -80,6 +80,12 @@ struct RecordDetailTests {
         #expect(details.attackRace == FormID(0x74))
         #expect(details.voices == GenderPair(male: FormID(0x75), female: nil))
         #expect(details.hairs == [FormID(0x76), FormID(0x77)])
+        #expect(details.defaultHairColors == GenderPair(male: FormID(0x78), female: FormID(0x79)))
+        #expect(details.eyes == [FormID(0x7A)])
+        #expect(details.impactDataSet == FormID(0x7B))
+        #expect(details.openLootSound == FormID(0x7C))
+        #expect(details.closeLootSound == FormID(0x7D))
+        #expect(details.unarmedEquipSlot == FormID(0x7E))
         #expect(race.skipped.isEmpty, "\(race.skipped.ranked)")
     }
 
@@ -186,7 +192,10 @@ struct RecordDetailTests {
             ("TINP", Fixture.u16(6)),
             ("TINC", Fixture.u32(0x73)), ("TINV", Fixture.f32(0.5)), ("TIRS", Fixture.u16(2)),
             ("RNAM", Fixture.u32(0x72)), ("ATKR", Fixture.u32(0x74)),
-            ("VTCK", Fixture.u32(0x75, 0)), ("HNAM", Fixture.u32(0x76, 0x77))
+            ("VTCK", Fixture.u32(0x75, 0)), ("HNAM", Fixture.u32(0x76, 0x77)),
+            ("HCLF", Fixture.u32(0x78, 0x79)), ("ENAM", Fixture.u32(0x7A)),
+            ("NAM5", Fixture.u32(0x7B)), ("ONAM", Fixture.u32(0x7C)), ("LNAM", Fixture.u32(0x7D)),
+            ("UNES", Fixture.u32(0x7E))
         ]
     }()
 }

@@ -9,7 +9,7 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-public import OpenSkySessionInterface
+import OpenSkySessionInterface
 public import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -39,5 +39,3 @@ public final class TrapControlAdapter {
         selected.flatMap { dependencies.streamer()?.referenceEntry(key: $0) }
     }
 }
-
-extension TrapControlAdapter: TrapControlPort {}

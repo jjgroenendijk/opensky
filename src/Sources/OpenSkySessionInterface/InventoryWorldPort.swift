@@ -8,7 +8,6 @@ public protocol InventoryWorldPort: AnyObject, PapyrusAlchemyBridge, PapyrusInve
     func forgetPickpocketCatch(of key: ReferenceKey)
     func itemKeywords(of item: FormID) -> [FormID]?
     @discardableResult func run<Value>(_ result: InventoryResult<Value>) -> Value
-    func run(_ commands: [InventoryCommand])
     func setOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool
     func settlePickpocketCatches(chargedTo faction: ReferenceKey, forgotten: Bool)
 }

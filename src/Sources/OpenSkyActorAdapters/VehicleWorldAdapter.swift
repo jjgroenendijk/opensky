@@ -130,13 +130,13 @@ extension VehicleWorldAdapter: VehicleWorld {
         let root = MatrixMath.placement(position: pose.position, rotation: pose.rotation, scale: 1)
         gameSession.seatPlayer(at: root, head: head)
         if head != nil {
-            faceSeat(root: root, gameSession: gameSession)
+            faceSeat(root: root)
         }
     }
 
     /// A new seat idle turns the view the way the seat's head faces, once; the player
     /// may look around after.
-    private func faceSeat(root: float4x4, gameSession: any GameSessionPort) {
+    private func faceSeat(root: float4x4) {
         let idles = game.idleWorld.idles
         guard
             let start = idles.idleStart(of: .player), start != facedIdleStart,

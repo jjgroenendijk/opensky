@@ -47,7 +47,6 @@ public protocol RuntimeStateSessionClockHost: AnyObject {
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
 public struct RuntimeStateSessionClockAdapter {
-    public unowned let owner: RuntimeStateWorldAdapter
     public unowned let game: any RuntimeStateSessionClockHost
 }
 

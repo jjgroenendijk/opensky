@@ -12,8 +12,4 @@ public protocol WorldRenderControlsPort: AnyObject {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension WorldRenderControlsPort {
-    public func forceWeather(named name: String?) {
-        forceWeather(named: name, transition: .timed)
-    }
-}
+extension WorldRenderControlsPort {}

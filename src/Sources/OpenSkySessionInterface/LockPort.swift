@@ -31,8 +31,4 @@ public protocol LockPort: AnyObject, Sendable {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension LockPort {
-    @discardableResult public func refusalNotice(level: UInt8) -> LockNotice? {
-        refusalNotice(level: level, pursued: false)
-    }
-}
+extension LockPort {}

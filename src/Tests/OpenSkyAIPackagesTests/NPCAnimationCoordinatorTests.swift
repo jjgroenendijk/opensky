@@ -18,10 +18,6 @@ private final class FakeNPCAnimationWorld: NPCAnimationWorld {
             worker: ImmediateAssetLoadWorker(load: ActorClipLoader.load(files: files))
         )
     }
-
-    func actorPlayback(for _: ReferenceKey) -> ActorAnimationPlayback? {
-        nil
-    }
 }
 
 @MainActor

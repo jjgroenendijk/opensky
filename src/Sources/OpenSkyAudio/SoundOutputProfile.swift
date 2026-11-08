@@ -94,11 +94,6 @@ nonisolated public struct SpeakerFold: Equatable, Sendable {
     /// -1 is all left, 1 all right.
     public let pan: Float
 
-    public init(gain: Float, pan: Float) {
-        self.gain = gain
-        self.pan = pan
-    }
-
     /// Nil for a matrix that is not 3 rows of 8 levels. The rows are mono, stereo left,
     /// and stereo right. A mono file reads the first row, a stereo file the other two.
     public init?(matrix: [[UInt8]], channelCount: Int = 1) {

@@ -21,7 +21,6 @@ nonisolated public struct ParticleLightning: Equatable, Sendable {
     public var arcOffset: Float
     public var fadesMainBolt: Bool
     public var fadesChildBolts: Bool
-    public var animatesArcOffset: Bool
 
     public init(_ controller: NIFLightningController) {
         subdivisions = Int(min(controller.subdivisions, 12))
@@ -35,7 +34,6 @@ nonisolated public struct ParticleLightning: Equatable, Sendable {
         arcOffset = controller.arcOffset.isFinite ? controller.arcOffset : 0
         fadesMainBolt = controller.fadesMainBolt
         fadesChildBolts = controller.fadesChildBolts
-        animatesArcOffset = controller.animatesArcOffset
     }
 }
 

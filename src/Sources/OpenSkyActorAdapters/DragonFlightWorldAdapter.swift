@@ -45,9 +45,7 @@ public final class DragonFlightWorldAdapter {
     public let candidatesHost: any DragonFlightCandidatesHost
 
     public var candidates: DragonFlightCandidatesAdapter {
-        DragonFlightCandidatesAdapter(
-            owner: self,
-            game: candidatesHost
+        DragonFlightCandidatesAdapter(game: candidatesHost
         )
     }
 

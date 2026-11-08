@@ -4,7 +4,6 @@ public import OpenSkyFormatsESM
 /// What the world adapters use of `ProjectileRuntime`.
 public protocol ProjectileRuntimePort: AnyObject {
     associatedtype MeleeImpactResolver: MeleeImpactResolverPort
-    @discardableResult func fire(_ shot: ProjectileShot) -> LiveProjectile?
     @discardableResult func fire(
         _ shot: ProjectileShot,
         from shooter: ProjectileShooter

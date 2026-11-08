@@ -14,11 +14,4 @@ public protocol BenchmarkTourPort: AnyObject {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension BenchmarkTourPort {
-    public func start(
-        _ request: BenchmarkRequest,
-        machine: BenchmarkMachine
-    ) throws(BenchmarkRequestError) {
-        try start(request, machine: machine, appStart: nil)
-    }
-}
+extension BenchmarkTourPort {}

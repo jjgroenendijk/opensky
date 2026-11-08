@@ -30,9 +30,7 @@ protocol DialogueMenuHost: MenuInputConsumer {
     var dialogueWorld: any DialogueWorldPort { get }
     var furniture: any FurniturePort { get }
     var headTracking: any HeadTrackingPort { get }
-    var hud: any HUDPort { get }
     var menuMode: any MenuModePort { get }
-    var renderer: (any RendererPort)? { get }
     var storyWorld: any StoryWorldPort { get }
     var streamer: (any CellStreamerPort)? { get }
     var swfMovies: any SWFMovieSourcePort { get }

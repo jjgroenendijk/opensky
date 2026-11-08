@@ -78,7 +78,6 @@ nonisolated public struct ActorGraphGait: Equatable, Sendable {
 /// a creature graph declares a subset, and a missing name is skipped.
 nonisolated public enum ActorGraphNames {
     public static let speed = "Speed"
-    public static let speedSampled = "SpeedSampled"
     public static let direction = "Direction"
     public static let turnDelta = "TurnDelta"
     public static let isSprinting = "IsSprinting"

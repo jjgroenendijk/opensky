@@ -47,7 +47,6 @@ public protocol InventoryReadoutsHost: AnyObject {
 
 /// Part of `InventoryWorldAdapter`, over its own narrow host.
 public struct InventoryReadoutsAdapter {
-    public unowned let owner: InventoryWorldAdapter
     public unowned let game: any InventoryReadoutsHost
 }
 

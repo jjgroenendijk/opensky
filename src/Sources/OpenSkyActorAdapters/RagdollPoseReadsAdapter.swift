@@ -36,7 +36,6 @@ public protocol RagdollPoseReadsHost: AnyObject {
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
 public struct RagdollPoseReadsAdapter {
-    public unowned let owner: RagdollWorldAdapter
     public unowned let game: any RagdollPoseReadsHost
 }
 

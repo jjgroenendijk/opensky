@@ -36,7 +36,6 @@ public protocol ProgressionEffectsHost: AnyObject {
 
 /// Part of `ProgressionWorldAdapter`, over its own narrow host.
 public struct ProgressionEffectsAdapter {
-    public unowned let owner: ProgressionWorldAdapter
     public unowned let game: any ProgressionEffectsHost
 }
 

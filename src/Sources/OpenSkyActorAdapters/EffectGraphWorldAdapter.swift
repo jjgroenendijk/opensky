@@ -99,5 +99,3 @@ extension EffectGraphWorldAdapter: EffectGraphWorld {
         }
     }
 }
-
-extension EffectGraphWorldAdapter: EffectGraphWorldPort {}

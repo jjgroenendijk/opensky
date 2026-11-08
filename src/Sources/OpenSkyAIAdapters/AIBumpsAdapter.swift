@@ -49,7 +49,6 @@ public protocol AIBumpsHost: AnyObject {
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
 public struct AIBumpsAdapter {
-    public unowned let owner: AIWorldAdapter
     public unowned let game: any AIBumpsHost
 }
 

@@ -19,10 +19,11 @@ struct WaterCurrentTests {
 
     @Test func aRiverListIsOneCurrentOverTheWholeBoxInGameUnits() {
         let currents = WaterCurrentList.decode([
-            vector(SIMD3(2.54, 1.35, 0)), vector(.zero), vector(.zero, kind(0))
+            vector(SIMD3(2.54, 1.35, 0)), vector(SIMD3(0, 0, 0.5)), vector(.zero, kind(0))
         ])
         #expect(currents.count == 1)
         #expect(currents.first?.shape == .everywhere)
+        #expect(currents.first?.angular == SIMD3(0, 0, 0.5))
         #expect(simd_distance(currents[0].linear, SIMD3(2.54, 1.35, 0) * havok) < 0.001)
     }
 

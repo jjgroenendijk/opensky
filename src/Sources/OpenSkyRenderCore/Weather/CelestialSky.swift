@@ -240,11 +240,6 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
         let wrapped = hour.truncatingRemainder(dividingBy: 24)
         return wrapped < 0 ? wrapped + 24 : wrapped
     }
-
-    private static func smoothstep(_ lower: Float, _ upper: Float, _ value: Float) -> Float {
-        let time = simd_clamp((value - lower) / (upper - lower), 0, 1)
-        return time * time * (3 - 2 * time)
-    }
 }
 
 /// The sun's path: a triangle from the east horizon (+X) up to `fSunXExtreme` overhead

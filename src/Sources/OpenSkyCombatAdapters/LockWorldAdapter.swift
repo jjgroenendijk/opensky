@@ -94,5 +94,3 @@ extension LockWorldAdapter: LockWorld {
         game.inventory.name(of: item)
     }
 }
-
-extension LockWorldAdapter: LockWorldPort {}

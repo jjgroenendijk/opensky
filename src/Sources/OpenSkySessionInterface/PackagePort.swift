@@ -33,8 +33,4 @@ public protocol PackagePort: AnyObject {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension PackagePort {
-    public func advance() {
-        advance(by: 0)
-    }
-}
+extension PackagePort {}

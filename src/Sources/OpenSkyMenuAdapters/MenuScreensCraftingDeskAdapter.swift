@@ -20,7 +20,6 @@ public protocol MenuScreensCraftingDeskHost: AnyObject {
 
 /// Part of `MenuScreensWorldAdapter`, over its own narrow host.
 public struct MenuScreensCraftingDeskAdapter {
-    public unowned let owner: MenuScreensWorldAdapter
     public unowned let game: any MenuScreensCraftingDeskHost
 }
 

@@ -61,21 +61,17 @@ public final class InventoryWorldAdapter {
     public let papyrusHost: any InventoryPapyrusHost
 
     public var readouts: InventoryReadoutsAdapter {
-        InventoryReadoutsAdapter(
-            owner: self,
-            game: readoutsHost
+        InventoryReadoutsAdapter(game: readoutsHost
         )
     }
 
     public var pickpocket: InventoryPickpocketAdapter {
-        InventoryPickpocketAdapter(
-            owner: self,
-            game: pickpocketHost
+        InventoryPickpocketAdapter(game: pickpocketHost
         )
     }
 
     public var perks: InventoryPerksAdapter {
-        InventoryPerksAdapter(owner: self, game: perksHost)
+        InventoryPerksAdapter(game: perksHost)
     }
 
     public var recipes: InventoryRecipesAdapter {
@@ -83,7 +79,7 @@ public final class InventoryWorldAdapter {
     }
 
     public var vendor: InventoryVendorAdapter {
-        InventoryVendorAdapter(owner: self, game: vendorHost)
+        InventoryVendorAdapter(game: vendorHost)
     }
 
     public var papyrus: InventoryPapyrusAdapter {

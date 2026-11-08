@@ -21,26 +21,6 @@ public protocol MapMenuPort: AnyObject {
 
 /// The default arguments a protocol requirement cannot carry.
 extension MapMenuPort {
-    @discardableResult public func showQuestTarget(objective: UInt16?) -> Bool {
-        showQuestTarget(quest: nil, objective: objective)
-    }
-
-    @discardableResult public func showQuestTarget(quest: FormID?) -> Bool {
-        showQuestTarget(quest: quest, objective: nil)
-    }
-
-    @discardableResult public func showQuestTarget() -> Bool {
-        showQuestTarget(quest: nil, objective: nil)
-    }
-
-    @discardableResult public func open(focus: SIMD3<Float>?) -> Bool {
-        open(.world, focus: focus)
-    }
-
-    @discardableResult public func open(_ requested: MapMenuMode) -> Bool {
-        open(requested, focus: nil)
-    }
-
     @discardableResult public func open() -> Bool {
         open(.world, focus: nil)
     }

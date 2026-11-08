@@ -22,7 +22,7 @@ import OpenSkySave
 public import OpenSkySaveInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
-public import OpenSkySessionInterface
+import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -248,12 +248,5 @@ extension MenuWorldAdapter {
 
     public func followView(_ target: AgentViewTarget) {
         teleports.followView(target)
-    }
-
-    public func movePlayer(
-        openingRaceMenu: Bool,
-        job: () throws(AgentFailure) -> any AgentTeleportJobPort
-    ) {
-        teleports.movePlayer(openingRaceMenu: openingRaceMenu, job: job)
     }
 }

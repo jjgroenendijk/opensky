@@ -52,7 +52,6 @@ public protocol CombatActorFactsHost: AnyObject {
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
 public struct CombatActorFactsAdapter {
-    public unowned let owner: CombatWorldAdapter
     public unowned let game: any CombatActorFactsHost
 }
 

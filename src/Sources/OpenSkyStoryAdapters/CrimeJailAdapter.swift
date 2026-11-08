@@ -40,7 +40,6 @@ public protocol CrimeJailHost: AnyObject {
 
 /// Part of `CrimeWorldAdapter`, over its own narrow host.
 public struct CrimeJailAdapter {
-    public unowned let owner: CrimeWorldAdapter
     public unowned let game: any CrimeJailHost
 }
 

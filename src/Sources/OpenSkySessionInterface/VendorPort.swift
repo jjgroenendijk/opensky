@@ -11,10 +11,4 @@ public protocol VendorPort: AnyObject {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension VendorPort {
-    @discardableResult public func counterparty(for actor: ReferenceKey)
-        -> Result<BarterCounterparty, BarterOpenRefusal>
-    {
-        counterparty(for: actor, vendorFaction: nil)
-    }
-}
+extension VendorPort {}

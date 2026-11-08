@@ -8,10 +8,13 @@ See docs/decisions/ports-and-adapters.md.
 import ctypes
 import pathlib
 import re
+import subprocess
 import sys
 
-LIBRARY = ("/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain"
-           "/usr/lib/libIndexStore.dylib")
+# The active Xcode's, so CI's DEVELOPER_DIR picks the same one the build used.
+DEVELOPER_DIR = subprocess.run(["xcode-select", "-p"], capture_output=True, text=True,
+                               check=True).stdout.strip()
+LIBRARY = f"{DEVELOPER_DIR}/Toolchains/XcodeDefault.xctoolchain/usr/lib/libIndexStore.dylib"
 # indexstore.h: symbol roles and kinds this check reads.
 ROLE_DEFINITION = 1 << 1
 ROLE_REFERENCE = 1 << 2
@@ -134,29 +137,38 @@ def occurrences(lib, store, record):
     return found
 
 
-def families(definitions, owner_properties, references):
-    """Maps each part of a split adapter to its owner: the adapter its `owner` names."""
-    parent = {}
-    for _, containers, usr in references:
+def module_of(path):
+    return path.split("/")[2]
+
+
+def families(definitions, properties, references):
+    """Maps each adapter to one member of its family: an adapter and the parts it stores in
+    a property, joined both ways. Both live in one module, so an adapter of another
+    feature is never in the family."""
+    group = {}
+
+    def find(usr):
+        while group.get(usr, usr) != usr:
+            usr = group[usr]
+        return usr
+
+    for path, containers, usr in references:
         if usr not in definitions:
             continue
         for container in containers:
-            if container in owner_properties:
-                part = next((d for d in definitions if container.startswith(d)), None)
-                if part and part != usr:
-                    parent[part] = usr
-    return parent
+            holder = next((d for d in definitions if container.startswith(d)), None)
+            if container in properties and holder and holder != usr \
+                    and module_of(definitions[usr][1]) == module_of(path):
+                group[find(usr)] = find(holder)
+    return {usr: find(usr) for usr in definitions}
 
 
-def violations(definitions, owner_properties, references):
-    """definitions: adapter usr -> name. references: (file, container usrs, usr) uses.
+def violations(definitions, properties, references):
+    """definitions: adapter usr -> (name, file). references: (file, container usrs, usr) uses.
 
     A use breaks the rule when code inside one adapter names another adapter outside its
     family. A family is an owner and the parts it was split into."""
-    parent = families(definitions, owner_properties, references)
-
-    def root(usr):
-        return parent.get(usr, usr)
+    root = families(definitions, properties, references).__getitem__
 
     found = set()
     for path, containers, usr in references:
@@ -165,20 +177,23 @@ def violations(definitions, owner_properties, references):
         users = {d for d in definitions for c in containers if c.startswith(d)}
         for user in users:
             if root(user) != root(usr):
-                found.add(f"rule 8: {path}: {definitions[user]} uses the adapter "
-                          f"{definitions[usr]}")
+                found.add(f"rule 8: {path}: {definitions[user][0]} uses the adapter "
+                          f"{definitions[usr][0]}")
     return sorted(found)
 
 
 def self_check():
-    """A part may use its owner; an adapter may not use an unrelated one."""
-    definitions = {"s:A9MagicAdapterC": "MagicAdapter", "s:A10CombatAdapterC": "CombatAdapter",
-                   "s:A8WardPartV": "WardPart"}
-    owner = "s:A8WardPartV5ownerAA9MagicAdapterCvp"
-    references = [("probe.swift", [owner], "s:A9MagicAdapterC"),
-                  ("probe.swift", ["s:A9MagicAdapterC4tickyyF"], "s:A8WardPartV"),
-                  ("probe.swift", ["s:A9MagicAdapterC4tickyyF"], "s:A10CombatAdapterC")]
-    return len(violations(definitions, {owner}, references)) == 1
+    """An owner may use the part it stores; an adapter may not use an unrelated one, even
+    one it stores, when the other adapter is in another module."""
+    magic, ward, combat = "s:A9MagicAdapterC", "s:A8WardPartV", "s:A10CombatAdapterC"
+    definitions = {magic: ("MagicAdapter", "src/Sources/Magic/MagicAdapter.swift"),
+                   ward: ("WardPart", "src/Sources/Magic/WardPart.swift"),
+                   combat: ("CombatAdapter", "src/Sources/Combat/CombatAdapter.swift")}
+    ward_property, combat_property = magic + "4wardvp", magic + "6combatvp"
+    file = "src/Sources/Magic/MagicAdapter.swift"
+    references = [(file, [ward_property], ward), (file, [magic + "4tickyyF"], ward),
+                  (file, [combat_property], combat)]
+    return len(violations(definitions, {ward_property, combat_property}, references)) == 1
 
 
 def main():
@@ -192,7 +207,7 @@ def main():
     if not store:
         print(f"[FAIL] cannot open the index store at {store_path}", file=sys.stderr)
         return 1
-    definitions, owner_properties, references = {}, set(), []
+    definitions, properties, references = {}, set(), []
     for path, record in record_files(lib, store).items():
         prefixes = ((repo + "/", ""), (CACHE_PREFIX, "src/"))
         relative = next((base + path[len(root):] for root, base in prefixes
@@ -202,12 +217,12 @@ def main():
             continue
         for roles, kind, usr, name, containers in occurrences(lib, store, record):
             if roles & ROLE_DEFINITION and kind in TYPE_KINDS and name.endswith("Adapter"):
-                definitions[usr] = name
-            elif roles & ROLE_DEFINITION and kind == INSTANCE_PROPERTY and name == "owner":
-                owner_properties.add(usr)
+                definitions[usr] = (name, relative)
+            elif roles & ROLE_DEFINITION and kind == INSTANCE_PROPERTY:
+                properties.add(usr)
             elif roles & ROLE_REFERENCE:
                 references.append((relative, containers, usr))
-    found = violations(definitions, owner_properties, references)
+    found = violations(definitions, properties, references)
     if found:
         print("[FAIL] an adapter uses another adapter:", file=sys.stderr)
         for line in found:

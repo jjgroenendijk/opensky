@@ -45,7 +45,6 @@ public protocol InventoryVendorHost: AnyObject {
 
 /// Part of `InventoryWorldAdapter`, over its own narrow host.
 public struct InventoryVendorAdapter {
-    public unowned let owner: InventoryWorldAdapter
     public unowned let game: any InventoryVendorHost
 }
 

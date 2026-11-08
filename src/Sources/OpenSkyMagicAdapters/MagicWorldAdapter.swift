@@ -68,9 +68,7 @@ public final class MagicWorldAdapter {
     }
 
     public var spellDelivery: MagicSpellDeliveryAdapter {
-        MagicSpellDeliveryAdapter(
-            owner: self,
-            game: spellDeliveryHost
+        MagicSpellDeliveryAdapter(game: spellDeliveryHost
         )
     }
 
@@ -79,16 +77,12 @@ public final class MagicWorldAdapter {
     }
 
     public var summonedActors: MagicSummonedActorsAdapter {
-        MagicSummonedActorsAdapter(
-            owner: self,
-            game: summonedActorsHost
+        MagicSummonedActorsAdapter(game: summonedActorsHost
         )
     }
 
     public var worldFacts: MagicWorldFactsAdapter {
-        MagicWorldFactsAdapter(
-            owner: self,
-            game: worldFactsHost
+        MagicWorldFactsAdapter(game: worldFactsHost
         )
     }
 

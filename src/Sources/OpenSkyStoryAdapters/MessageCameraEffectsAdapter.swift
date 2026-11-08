@@ -30,7 +30,6 @@ public protocol MessageCameraEffectsHost: AnyObject {
 
 /// Part of `MessageWorldAdapter`, over its own narrow host.
 public struct MessageCameraEffectsAdapter {
-    public unowned let owner: MessageWorldAdapter
     public unowned let game: any MessageCameraEffectsHost
 }
 

@@ -45,24 +45,6 @@ extension InventoryRuntimePort {
     @discardableResult public func add(
         _ item: FormID,
         count: Int32,
-        to holder: InventoryHolder,
-        copies: [ItemCopy]
-    ) throws -> ReferenceInventoryState {
-        try add(item, count: count, to: holder, stolen: false, copies: copies)
-    }
-
-    @discardableResult public func add(
-        _ item: FormID,
-        count: Int32,
-        to holder: InventoryHolder,
-        stolen: Bool
-    ) throws -> ReferenceInventoryState {
-        try add(item, count: count, to: holder, stolen: stolen, copies: [])
-    }
-
-    @discardableResult public func add(
-        _ item: FormID,
-        count: Int32,
         to holder: InventoryHolder
     ) throws -> ReferenceInventoryState {
         try add(item, count: count, to: holder, stolen: false, copies: [])

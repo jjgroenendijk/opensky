@@ -16,7 +16,6 @@ import Testing
 struct WaterVolumeRealDataTests {
     /// Tamriel (19, -8) holds `Water1024RiverFlowNE` references.
     private static let riverCell = (x: Int32(19), y: Int32(-8))
-    private static let riverWater = FormID(0x000E_717D)
 
     @Test(.enabled(if: RealDataEnvironment.canRender))
     func aRiverCellCarriesItsCurrentAndALooseBodyDrifts() throws {

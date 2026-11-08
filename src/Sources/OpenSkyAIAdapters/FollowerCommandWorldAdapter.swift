@@ -48,9 +48,7 @@ public final class FollowerCommandWorldAdapter {
     public let tasksHost: any FollowerCommandTasksHost
 
     public var tasks: FollowerCommandTasksAdapter {
-        FollowerCommandTasksAdapter(
-            owner: self,
-            game: tasksHost
+        FollowerCommandTasksAdapter(game: tasksHost
         )
     }
 
