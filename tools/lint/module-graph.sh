@@ -174,14 +174,19 @@ for target in targets:
     root = "Tests" if name in tests else "Sources"
     folder = pathlib.Path(target.get("path") or f"{root}/{name}")
     allowed = set(deps[name]) | {name}
+    used = set()
     for path in sorted(folder.rglob("*.swift")):
         text = path.read_text()
         failures += public_import_failures(name, path, text)
         for module in IMPORT.findall(text):
             imports += module in names
+            used.add(module)
             if module in names and module not in allowed:
                 failures.append(
                     f"rule 7: {path} imports {module}, which {name} does not declare")
+    # Rule 12. A declared edge no file imports would distort the stability metric.
+    for module in sorted(set(deps[name]) - used):
+        failures.append(f"rule 12: {name} declares {module}, which no file of it imports")
 
 if failures:
     print("[FAIL] module graph breaks The Modular Architecture:", file=sys.stderr)
