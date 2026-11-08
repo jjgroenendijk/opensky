@@ -15,7 +15,7 @@ public import OpenSkySave
 import OpenSkySaveInterface
 public import OpenSkySessionInterface
 
-/// What `SkyrimSaveImportAdapter` reads from the session. `GameViewController` conforms.
+/// What `SkyrimSaveImport` reads from the session. `GameViewController` conforms.
 @MainActor
 public protocol SkyrimSaveImportHost: AnyObject {
     var hud: any HUDPort { get }
@@ -25,7 +25,7 @@ public protocol SkyrimSaveImportHost: AnyObject {
 }
 
 @MainActor
-public enum SkyrimSaveImportAdapter {
+public enum SkyrimSaveImport {
     nonisolated public static let slotPrefix = "ess:"
     nonisolated public static let titlePrefix = "Skyrim import: "
 
@@ -76,7 +76,7 @@ public enum SkyrimSaveImportAdapter {
             index: index, baselines: game.inventory.runtime?.inventory.baselines
         )
         let result = ESSImporter.run(
-            file, records: records, appVersion: RuntimeStateWorldAdapter.saveAppVersion
+            file, records: records, appVersion: SaveAppVersion.current
         )
         let written = "Imported " + url.deletingPathExtension().lastPathComponent
         try await game.runtimeStateWorld.writeImported(result.contents, slot: written)

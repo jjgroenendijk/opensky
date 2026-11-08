@@ -24,7 +24,7 @@ nonisolated public enum SkyrimSaveExportError: Error, LocalizedError {
     }
 }
 
-/// What `SkyrimSaveExportAdapter` reads from the session. `GameViewController` conforms.
+/// What `SkyrimSaveExport` reads from the session. `GameViewController` conforms.
 @MainActor
 public protocol SkyrimSaveExportHost: AnyObject {
     var hud: any HUDPort { get }
@@ -34,7 +34,7 @@ public protocol SkyrimSaveExportHost: AnyObject {
 }
 
 @MainActor
-public enum SkyrimSaveExportAdapter {
+public enum SkyrimSaveExport {
     /// Reads the plugins off the main actor, then encodes and writes the file.
     public static func export(
         _ contents: OpenSkySaveContents, game: any SkyrimSaveExportHost

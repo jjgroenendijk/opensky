@@ -18,6 +18,8 @@ protocol that lists only the parts it reads. `SessionPorts` in the app answers e
 the session scope builds each adapter with it (`/decisions/session-scope.md`).
 
 `tools/lint/module-graph.sh` checks rule 7 as its rule 13 (`/decisions/modular-architecture.md`).
+`tools/lint/adapter-references.py` checks rule 8 in `make health` and the weekly workflow,
+because it reads the index store that a build writes.
 `tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks
 rule 5 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI
 run both. Each reads every adapter or app file, so `ALL=1` changes nothing for them. Each first
@@ -34,10 +36,18 @@ runs its rules on a small synthetic violation, which must fail.
 | 5 | An adapter has no magic number and no function over complexity 6 | A game rule in an adapter has no unit test; in its feature module it has one |
 | 6 | The late-setter, late-attached-world, and pure-core lints cover the app and the adapters | A dependency set after the initializer can be missing when the object is first used |
 | 7 | A module depends only on a module at least as stable, or on an interface | A change in an unstable module then cannot force changes in the stable modules below it |
+| 8 | No adapter uses the type of an adapter outside its own family | Two adapters that know each other change together, and neither can be built in a test alone |
 
 A port is a protocol from an interface module or a foundation module, or a class from a data
 layer, such as `WorldDataStores`. A value type is a struct, an enum, a type alias, or a type of
 the standard library, Foundation, or `simd`.
+
+Rule 8 reads real symbols, not text: a use is a reference in the index store, and the code
+that holds it belongs to the adapter whose symbol contains it. An adapter is a type whose name
+ends in `Adapter` in an adapter module or the app's `GameView/`. A family is an owner and the
+parts it was split into ([Splitting a large adapter](#splitting-a-large-adapter)): a part is an
+adapter with an `owner` property whose type is another adapter. Inside one family, every use
+is allowed. A helper that answers no port, such as `SkyrimSaveImport`, is not named `Adapter`.
 
 Rule 3 counts members of inherited hosts, because the adapter can reach them all. Example:
 `MenuRouterHost` refines `MenuSoundHost`, so its 5 members and the 3 of `MenuSoundHost` count
