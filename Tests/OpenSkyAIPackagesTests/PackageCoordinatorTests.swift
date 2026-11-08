@@ -128,6 +128,10 @@ struct PackageCoordinatorTests {
         coordinator.advance(by: 0.1)
         #expect(world.moves == Array(repeating: FakePackageWorld.place, count: 3))
         #expect(coordinator.executions[Self.guardKey]?.machine?.state == .moving)
+        let readout = try #require(coordinator.executions[Self.guardKey]?.readout)
+        #expect(readout.state == "moving")
+        #expect(readout.pathCount != nil)
+        #expect(!readout.running.isEmpty)
     }
 
     /// A patrol that rides the actor's horse walks the horse, and the horse's arrival

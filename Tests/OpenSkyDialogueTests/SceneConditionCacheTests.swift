@@ -42,12 +42,14 @@ struct SceneConditionCacheTests {
         store.set(SceneRuntimeState(phase: 1, completed: [0]), for: scene.key)
         let playing = coordinator.conditionResolution(aliases: filled)
         #expect(playing.isPlaying(scene.formID))
+        #expect(coordinator.sceneSnapshot.playing.count == 1)
         #expect(playing.isInScene(speaker))
         #expect(try !coordinator.conditionResolution(aliases: aliases(filled: false))
             .isInScene(speaker))
 
         store.reset(.scene, for: scene.key)
         #expect(!coordinator.conditionResolution(aliases: filled).isPlaying(scene.formID))
+        #expect(coordinator.sceneSnapshot.playing.isEmpty)
 
         let empty = SceneCoordinator(
             dialogue: dialogue, world: FakeSceneHost(), catalog: SceneCatalog(scenes: [])

@@ -116,7 +116,7 @@ struct KnockdownTests {
         )
         #expect(coordinator.knockDown(.player, from: .zero, magnitude: 5, downTime: 15))
         #expect(coordinator.knockdowns.isKnockedDown(.player))
-        _ = coordinator.playerDeath.advance(
+        _ = coordinator.advancePlayerDeath(
             by: 1, health: PlayerHealthSample(share: 0, isEssential: false, bleedoutRatio: nil)
         )
         _ = coordinator.advance(events: [], controls: RagdollGraphControls(), delta: 1 / 60)

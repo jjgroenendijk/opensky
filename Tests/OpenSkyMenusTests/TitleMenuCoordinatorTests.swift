@@ -1,6 +1,7 @@
 // The title menu over the real menu stack, a fake world, and fake saves.
 
 import Foundation
+import OpenSkyEngineTesting
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 @testable import OpenSkyMenus
@@ -69,6 +70,22 @@ struct TitleMenuCoordinatorTests {
         let menuMode = world.menuMode
         let menu = TitleMenuCoordinator(menuMode: menuMode, saves: world, world: world)
         return (menu, world)
+    }
+
+    /// The movie asks for the Load list after an event; each call is answered once.
+    @Test @MainActor
+    func loadCallsAreAnsweredThroughThePort() throws {
+        let port = try #require(FakeRendererPort())
+        let (menu, _) = Self.make()
+        let requests: [TitleMenuLoadBridge.Request] = [
+            .characters, .characterSelected, .screenshot, .confirmLoad, .load, .delete, .back
+        ]
+        menu.pendingLoadCalls = requests.map { TitleMenuLoadBridge.Call(request: $0, index: 0) }
+        menu.routeMovie(.move(.up), renderer: port)
+        #expect(menu.pendingLoadCalls.isEmpty)
+        #expect(menu.loadListRows.isEmpty)
+        #expect(port.replacedImages == [TitleMenuLoadBridge.screenshotSlot])
+        #expect(menu.lastResult == "Delete: use the System menu")
     }
 
     @Test @MainActor

@@ -1,6 +1,8 @@
 // The system menu shell over the real MenuModeController and a fake world.
 
 import Foundation
+import OpenSkyEngineTesting
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
@@ -105,6 +107,36 @@ extension SystemMenuCoordinator {
 }
 
 struct SystemMenuCoordinatorTests {
+    @Test @MainActor
+    func aLoadedMovieReportsItsDiagnostics() throws {
+        let port = try #require(FakeRendererPort())
+        port.startsMenuMovies = true
+        port.swfRuntime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        let world = FakeSystemMenuWorld()
+        world.renderer = port
+        let movies = try ImmediateMovies()
+        let menu = SystemMenuCoordinator(
+            menuMode: MenuModeController(), movies: movies, hud: HUDCoordinator(movies: movies),
+            settings: PlayerSettingsCoordinator(store: PlayerSettingsStore(persistence: nil)),
+            saves: FakeSaves(), world: world
+        )
+        #expect(menu.movieDiagnostics == nil)
+        menu.open()
+        #expect(menu.movieLoaded)
+        let diagnostics = try #require(menu.movieDiagnostics)
+        #expect(diagnostics.missingNames == diagnostics.missingNames.sorted())
+        #expect(port.menuMovieStarts == 1)
+    }
+
+    @Test @MainActor
+    func theMenuDrawsWithTheWorldsRenderer() throws {
+        let harness = Harness()
+        #expect(harness.menu.renderer == nil)
+        let port = try #require(FakeRendererPort())
+        harness.world.renderer = port
+        #expect(harness.menu.renderer === port)
+    }
+
     @Test @MainActor
     func openPushesTheStackAndRoutesInputToTheWorld() {
         let harness = Harness()

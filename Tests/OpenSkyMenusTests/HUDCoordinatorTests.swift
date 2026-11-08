@@ -24,7 +24,7 @@ final class FakeSWFLayerWorld: SWFLayerWorld {
         set { renderer?.frameInput.ui = newValue }
     }
 
-    init(renderer: Renderer? = nil) {
+    init(renderer: (any RendererPort)? = nil) {
         self.renderer = renderer
     }
 }

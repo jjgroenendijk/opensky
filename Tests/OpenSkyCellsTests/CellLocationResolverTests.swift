@@ -28,6 +28,15 @@ struct CellLocationResolverTests {
         #expect(resolver.location(of: Self.scene(.interior(FormID(0x40)))) == nil)
     }
 
+    @Test
+    func musicFollowsTheResolvedLocation() throws {
+        let resolver = try Self.resolver()
+        let linked = Self.scene(.exterior(CellCoordinate(x: 4, y: -20)), link: 0x30)
+        #expect(resolver.musicType(of: linked.locationKey) == FormID(0x50))
+        let town = Self.scene(.exterior(CellCoordinate(x: 4, y: -20)))
+        #expect(resolver.musicType(of: town.locationKey) == nil)
+    }
+
     // MARK: - Fixtures
 
     private static let world: UInt32 = 0x3C
@@ -39,7 +48,7 @@ struct CellLocationResolverTests {
             LocationFixture.recordBytes(0x20, "Town", cellLists: [
                 .init("LCEC", worldspace: world, cells: [CellCoordinate(x: 4, y: -20)])
             ]),
-            LocationFixture.recordBytes(0x30, "Fort")
+            LocationFixture.recordBytes(0x30, "Fort", music: 0x50)
         ].reduce(Data(), +))
         let file = try ESMFile(data: data)
         return CellLocationResolver(store: LocationStore(plugins: [("Base.esm", file)]))

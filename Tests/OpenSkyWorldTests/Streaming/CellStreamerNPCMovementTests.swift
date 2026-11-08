@@ -20,7 +20,7 @@ import Testing
 
 @MainActor
 struct CellStreamerNPCMovementTests {
-    private static let actor = ReferenceKey.plugin(name: "test.esm", objectID: 0x9000)
+    static let actor = ReferenceKey.plugin(name: "test.esm", objectID: 0x9000)
 
     @Test
     func aMoveStartedOnArrivalKeepsWalking() throws {
@@ -82,9 +82,13 @@ struct CellStreamerNPCMovementTests {
         #expect(streamer.isActorWalking(Self.actor))
     }
 
-    private static func streamerWithWalker() throws -> CellStreamer {
+    /// `beforeAttach` runs on the streamer before its one cell attaches.
+    static func streamerWithWalker(
+        beforeAttach: (CellStreamer) -> Void = { _ in }
+    ) throws -> CellStreamer {
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: 0)
+        beforeAttach(streamer)
         let cell = CellStreamerFixture.coordinate(0, 0)
         let camera = CellGridManager.cellCenter(of: cell)
         let walker = try RuntimeReferenceEntry(

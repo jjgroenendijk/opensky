@@ -17,7 +17,7 @@ import Testing
 
 @MainActor
 struct MagicCoordinatorTests {
-    private static func effectsWired(_ world: FakeMagicWorld) throws -> MagicCoordinator {
+    static func effectsWired(_ world: FakeMagicWorld) throws -> MagicCoordinator {
         let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords)
         var data = MagicSessionData()
         data.effects = MagicEffectsData(
@@ -29,7 +29,7 @@ struct MagicCoordinatorTests {
         return MagicCoordinator(world: world, data: data)
     }
 
-    private static func castingWired(
+    static func castingWired(
         _ world: FakeMagicWorld, storyEvents: StoryEventRecorder? = nil
     ) throws -> MagicCoordinator {
         var data = MagicSessionData()
@@ -111,6 +111,19 @@ struct MagicCoordinatorTests {
         #expect(cast.map(\.actor1) == [.player])
         #expect(cast.first?.actor2 == target)
         #expect(cast.first?.form == StoryEventData.form(of: flames))
+    }
+
+    @Test func theMagicMenuListsTheKnownSpellsAndWhichIsReadied() throws {
+        let coordinator = try Self.castingWired(FakeMagicWorld())
+        #expect(coordinator.magicMenuSpells.isEmpty)
+        let caster = try #require(coordinator.caster)
+        caster.spellbook.grant([SpellbookFixture.key(SpellbookFixture.Spell.healing)], to: .player)
+        let spells = coordinator.magicMenuSpells
+        #expect(spells.map(\.name) == coordinator.playerKnownSpells().map(\.displayName))
+        #expect(spells.map(\.isReadied) == [false])
+        coordinator.readyKnownSpell(at: 0, in: .right)
+        #expect(coordinator.magicMenuSpells.map(\.isReadied) == [true])
+        #expect(MagicCoordinator(world: FakeMagicWorld()).magicMenuSpells.isEmpty)
     }
 
     @Test func selectionCyclesOverTheKnownSpells() throws {
