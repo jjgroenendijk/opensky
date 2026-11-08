@@ -5,6 +5,7 @@ import Foundation
 public import Metal
 public import MetalKit
 @testable import OpenSkyFormatsCore
+public import OpenSkyRenderCore
 @testable public import OpenSkyRendering
 import simd
 import Testing

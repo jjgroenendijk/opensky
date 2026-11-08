@@ -40,7 +40,7 @@ final class FakePlayerWorld: PlayerWorld {
 final class FakePlayerRigSource: PlayerRigSource {
     let playerAssetFileSystem: (any GameFileSource)?
     private(set) var requests: [PlayerRigRequest] = []
-    private var pending: [PlayerRigLoadResult] = []
+    private var pending: [PlayerRenderRigResult] = []
 
     init(fileSystem: (any GameFileSource)? = nil) {
         playerAssetFileSystem = fileSystem
@@ -62,7 +62,7 @@ final class FakePlayerRigSource: PlayerRigSource {
         ))
     }
 
-    func drainPlayerRigs() -> [PlayerRigLoadResult] {
+    func drainPlayerRigs() -> [PlayerRenderRigResult] {
         defer { pending = [] }
         return pending
     }

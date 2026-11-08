@@ -9,6 +9,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsMesh
 public import OpenSkyGameData
+import OpenSkyPlayer
 import OpenSkyRenderCore
 public import OpenSkyRendering
 public import OpenSkyWorldInterface

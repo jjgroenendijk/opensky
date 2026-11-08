@@ -4,6 +4,7 @@
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyWorldInterface
 
 /// What `FaceMorphCoordinator` reads from the running world.
 public protocol FaceMorphWorld: AnyObject {

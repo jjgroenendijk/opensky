@@ -91,7 +91,7 @@ public final class PlayerRigQueue: PlayerRigSource {
         runner.enqueuePlayerRig(request)
     }
 
-    public func drainPlayerRigs() -> [PlayerRigLoadResult] {
+    public func drainPlayerRigs() -> [PlayerRenderRigResult] {
         runner.drainCompletedPlayerRigs()
     }
 }

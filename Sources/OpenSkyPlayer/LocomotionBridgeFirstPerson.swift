@@ -3,7 +3,6 @@
 // (`LocomotionBridgeFirstPersonTests`). Only the perspective variables differ, seeded at attach
 // and reset (docs/engine/behavior-state-machines.md, "Transition conditions").
 
-import OpenSkyActorPresentation
 public import OpenSkyBehavior
 import OpenSkyWorldInterface
 import simd

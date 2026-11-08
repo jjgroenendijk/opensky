@@ -6,7 +6,6 @@ import Foundation
 import OpenSkyActors
 import OpenSkyConditions
 import OpenSkyCrime
-import OpenSkyDiagnostics
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventory
@@ -16,6 +15,7 @@ import OpenSkyPlayer
 import OpenSkyProgression
 public import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkySessionInterface
 import OpenSkyWorld

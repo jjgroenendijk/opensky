@@ -18,6 +18,7 @@ import OpenSkyRuntimeState
 import OpenSkyScripting
 public import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldConditions
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -61,7 +62,9 @@ public final class IdleWorldAdapter {
             let files = game.audioFileSystem,
             let clips = game.animationClips
         else { return nil }
-        return IdleSessionData(store: store, files: files, clips: clips)
+        return IdleSessionData(
+            store: store, files: files, clips: clips, conditionFunctions: .standard
+        )
     }
 }
 

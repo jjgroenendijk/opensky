@@ -5,7 +5,6 @@ public import OpenSkyActorPresentation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyPhysics
-import OpenSkyPlayer
 public import OpenSkyWorldInterface
 
 /// What the NPC animation coordinator reads from the session.

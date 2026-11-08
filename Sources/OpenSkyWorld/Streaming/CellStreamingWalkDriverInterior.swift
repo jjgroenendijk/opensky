@@ -4,6 +4,7 @@ import OpenSkyCells
 import OpenSkyGameData
 import OpenSkyNavigation
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import simd

@@ -1,7 +1,6 @@
 // The Player & Locomotion and First person readouts. Without a renderer both
 // report an "unavailable" snapshot.
 
-import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsCore
 public import OpenSkyPhysics

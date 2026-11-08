@@ -5,7 +5,6 @@
 import Foundation
 public import OpenSkyConditions
 import OpenSkyFormatsESM
-public import OpenSkyWorldConditions
 
 nonisolated public enum ConditionProbe: Sendable {
     /// Runs one function against `context` and answers with its value.
@@ -17,7 +16,7 @@ nonisolated public enum ConditionProbe: Sendable {
         parameter1: UInt32 = 0,
         parameter2: UInt32 = 0,
         in context: ConditionContext,
-        registry: ConditionFunctionRegistry = .standard
+        registry: ConditionFunctionRegistry
     ) -> Result<Float, ConditionFailure> {
         guard let function = registry[functionIndex] else {
             return .failure(.unknownFunction(functionIndex))
@@ -40,7 +39,7 @@ nonisolated public enum ConditionProbe: Sendable {
         parameter1: UInt32 = 0,
         parameter2: UInt32 = 0,
         in context: ConditionContext,
-        registry: ConditionFunctionRegistry = .standard
+        registry: ConditionFunctionRegistry
     ) -> String {
         switch value(
             of: functionIndex,

@@ -2,13 +2,16 @@
 // its mesh caches live there. The main actor binds the meshes to the live pose.
 // See docs/engine/player-camera.md, "The player body".
 
-import OpenSkyActorPresentation
 public import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyRendering
+public import OpenSkyRendering
 import OpenSkyRenderResources
 public import OpenSkyWorldInterface
+
+/// The player rig the renderer draws.
+public typealias PlayerRenderRig = PlayerRigAssembly<ActorRenderAsset>
+public typealias PlayerRenderRigResult = PlayerRigLoadResult<ActorRenderAsset>
 
 /// Where the player coordinator gets its rigs: the build queue, or a fake in tests.
 public protocol PlayerRigSource: AnyObject {
@@ -16,12 +19,12 @@ public protocol PlayerRigSource: AnyObject {
     var playerAssetFileSystem: (any GameFileSource)? { get }
     func requestPlayerRig(_ request: PlayerRigRequest)
     /// Returns and clears every rig finished since the last drain.
-    func drainPlayerRigs() -> [PlayerRigLoadResult]
+    func drainPlayerRigs() -> [PlayerRenderRigResult]
 }
 
 nonisolated extension PlayerBody {
     public convenience init(
-        rig: PlayerRigAssembly, skeleton: HKASkeleton, pose: PlayerPoseBuffer
+        rig: PlayerRenderRig, skeleton: HKASkeleton, pose: PlayerPoseBuffer
     ) {
         self.init(
             assembly: rig.assembly,
@@ -36,7 +39,7 @@ nonisolated extension PlayerBody {
 
 nonisolated extension PlayerFirstPersonRig {
     public convenience init(
-        rig: PlayerRigAssembly, skeleton: HKASkeleton, pose: PlayerPoseBuffer
+        rig: PlayerRenderRig, skeleton: HKASkeleton, pose: PlayerPoseBuffer
     ) {
         self.init(
             assembly: rig.assembly,

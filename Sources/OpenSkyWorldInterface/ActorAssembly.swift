@@ -2,7 +2,6 @@ import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRendering
 import OpenSkyRenderResources
 public import simd
 

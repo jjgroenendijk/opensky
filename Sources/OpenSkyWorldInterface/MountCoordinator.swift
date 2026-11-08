@@ -1,6 +1,5 @@
 import Foundation
 public import OpenSkyFormatsESM
-import OpenSkyRendering
 import simd
 
 nonisolated public enum MountCommand: Equatable, Sendable {

@@ -6,6 +6,7 @@
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
@@ -252,7 +253,7 @@ struct PackageCoordinatorTests {
                 actorTemplates: ActorTemplateResolver(
                     actors: [0x600: actor, 0x7: player], leveledActors: [:]
                 )
-            ))
+            ), conditionFunctions: .standard)
         )
         return (coordinator, world)
     }

@@ -8,6 +8,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyFormatsESS
 import OpenSkyFormatsPEX
 public import OpenSkyGameData
+public import OpenSkyScriptingInterface
 
 nonisolated extension ESSPluginIndex {
     /// The record types the import checks a form against.

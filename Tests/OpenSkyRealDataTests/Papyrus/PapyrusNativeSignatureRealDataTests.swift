@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting
+import OpenSkyScriptingInterface
 import Testing
 
 @MainActor

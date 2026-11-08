@@ -1,10 +1,10 @@
 // A ridden dragon: the rider's orders, the breath through the graph, Switch Target, the
 // flight in the mount drive, and what a rider keeps of the input.
 
-import OpenSkyActorPresentation
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 @testable import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import simd

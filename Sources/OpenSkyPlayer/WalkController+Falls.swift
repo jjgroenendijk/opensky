@@ -1,6 +1,7 @@
 // Falls: the highest point of a fall, and the drop reported once the feet land.
 // See docs/engine/combat.md#fall-damage.
 
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 nonisolated extension WalkController {

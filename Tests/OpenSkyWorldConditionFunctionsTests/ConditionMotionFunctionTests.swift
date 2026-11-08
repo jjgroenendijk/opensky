@@ -5,11 +5,19 @@ import Foundation
 @testable import OpenSkyConditions
 import OpenSkyFeaturesTesting
 import OpenSkyFormatsESM
-@testable import OpenSkyWorldConditions
+@testable import OpenSkyWorldConditionFunctions
 import OpenSkyWorldInterface
 import Testing
 
 struct ConditionMotionFunctionTests {
+    /// The core functions and this family's, the set these tests run on.
+    static let registry: ConditionFunctionRegistry = {
+        var registry = ConditionFunctionRegistry()
+        ConditionFunctions.installCore(into: &registry)
+        ConditionFunctions.installMotion(&registry)
+        return registry
+    }()
+
     private static let subject = ConditionEvaluatorFixture
         .key(ConditionEvaluatorFixture.subjectFormID)
     private static let target = ConditionEvaluatorFixture
@@ -36,7 +44,7 @@ struct ConditionMotionFunctionTests {
         var table = [target: other]
         table[subject] = facts
         context.motion = MotionConditionResolution(facts: table)
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context, registry: Self.registry)
         return try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             operatorBits: comparison, comparisonValue: value.bitPattern, functionIndex: function,
             parameter1: parameter1, parameter2: parameter2

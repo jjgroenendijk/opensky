@@ -3,7 +3,6 @@
 
 public import Metal
 import OpenSkyFormatsMesh
-public import OpenSkyPhysics
 public import OpenSkyRenderCore
 import OpenSkyRenderResources
 import simd
@@ -27,6 +26,9 @@ nonisolated public struct PrecipitationRuntimeSnapshot: Equatable, Sendable {
     }
 }
 
+/// True when something solid is above the point, so no rain falls there.
+public typealias PrecipitationRoofCheck = (SIMD3<Float>) -> Bool
+
 nonisolated public struct PrecipitationUpdate {
     public let cameraPosition: SIMD3<Float>
     public let state: PrecipitationState
@@ -35,7 +37,7 @@ nonisolated public struct PrecipitationUpdate {
     public let exterior: Bool
     public let enabled: Bool
     /// Nil when nothing hides rain under a roof, or when the occlusion map does it per drop.
-    public let collisionQuery: CapsuleWorldCollider.CandidateQuery?
+    public let roofAbove: PrecipitationRoofCheck?
 }
 
 nonisolated public final class PrecipitationVolume {
@@ -125,9 +127,8 @@ nonisolated public final class PrecipitationVolume {
         }
 
         recenter(around: update.cameraPosition)
-        let roofOccluded = update.state.intensity > 0 && update.collisionQuery.map {
-            PrecipitationRoofOcclusion.isOccluded(above: update.cameraPosition, query: $0)
-        } == true
+        let roofOccluded = update.state.intensity > 0 && update
+            .roofAbove?(update.cameraPosition) == true
         guard !roofOccluded else {
             rain.reset()
             snow.reset()

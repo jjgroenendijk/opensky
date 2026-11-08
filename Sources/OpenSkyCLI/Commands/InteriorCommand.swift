@@ -8,6 +8,7 @@ import OpenSkyCells
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyGameData
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyTerrain

@@ -1,6 +1,7 @@
 // Who the player may mount, how a ridden mount steers, and what a rider may not do.
 
 @testable import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import simd

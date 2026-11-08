@@ -3,11 +3,11 @@
 import Metal
 import MetalKit
 import OpenSkyCells
-@testable import OpenSkyDiagnostics
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyNavigation
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyShaderTypes
 import OpenSkyTagsTesting

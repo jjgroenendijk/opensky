@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyCells
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyTerrain
 import OpenSkyWorld

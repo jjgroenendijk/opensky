@@ -4,7 +4,6 @@
 
 import Metal
 import MetalKit
-import OpenSkyDiagnostics
 import OpenSkyNavigation
 import OpenSkyPerception
 import OpenSkyRenderCore

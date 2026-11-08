@@ -3,6 +3,7 @@
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
+import OpenSkyWorldInterface
 import Synchronization
 import Testing
 

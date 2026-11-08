@@ -4,6 +4,7 @@
 // An offscreen frame does the same on a fixed step.
 
 import Metal
+public import OpenSkyRenderCore
 
 @MainActor
 public protocol RenderFrameDriver: AnyObject {

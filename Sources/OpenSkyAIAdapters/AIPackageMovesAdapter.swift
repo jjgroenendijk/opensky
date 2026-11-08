@@ -7,7 +7,6 @@ import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
-import OpenSkyDiagnostics
 import OpenSkyDialogue
 import OpenSkyFactions
 import OpenSkyFormatsCore
@@ -23,6 +22,7 @@ import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting

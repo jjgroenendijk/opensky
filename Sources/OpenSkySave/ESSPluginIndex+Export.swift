@@ -9,7 +9,7 @@ import OpenSkyFormatsPEX
 public import OpenSkyGameData
 import OpenSkyQuestsInterface
 public import OpenSkySaveInterface
-import OpenSkyScriptingInterface
+public import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 nonisolated extension ESSPluginIndex {

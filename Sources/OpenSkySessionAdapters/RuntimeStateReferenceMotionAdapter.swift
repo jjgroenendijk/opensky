@@ -21,7 +21,8 @@ import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
 import OpenSkyWorld
-public import OpenSkyWorldConditions
+public import OpenSkyWorldConditionFunctions
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 public import OpenSkyWorldState
 

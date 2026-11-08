@@ -8,6 +8,7 @@ import OpenSkyDiagnostics
 public import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyRenderCore
 public import OpenSkyRendering
 public import OpenSkyTerrain
 public import OpenSkyWeather

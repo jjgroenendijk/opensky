@@ -2,6 +2,7 @@
 // the framing camera targets the bounds center, keeps the eye outside the
 // box (south-west, above), and scales its distance with the bounds diagonal.
 
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import simd
 import Testing

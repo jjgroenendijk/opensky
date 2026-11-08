@@ -2,7 +2,6 @@
 // simulation fills it once per frame, after every system has run, and the renderer
 // reads only it, so no game value can change half way through an encode.
 
-public import OpenSkyPhysics
 public import OpenSkyRenderCore
 public import simd
 
@@ -36,8 +35,8 @@ public struct RenderFrameInput {
     public var isPaused = false
     /// Slows animation, particles, and the world sim, not the camera. A kill cam sets it below 1.
     public var timeScale: Float = 1
-    /// Static collision near the camera, for precipitation under roofs. nil outside a world.
-    public var collisionQuery: CapsuleWorldCollider.CandidateQuery?
+    /// Whether a roof covers a point, for precipitation under roofs. nil outside a world.
+    public var roofAbove: PrecipitationRoofCheck?
 
     /// The hour of day a frame without a game session is lit at.
     public static let defaultTimeOfDay: Float = 13

@@ -3,16 +3,19 @@
 // file, and the old one stays unused (docs/engine/asset-cache.md#saved-formid-indexes).
 
 public import Foundation
+import OpenSkyAssetCache
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 nonisolated public struct RecordIndexCacheFolder: FormIDIndexStore {
-    static let folderName = "records"
     public let folder: URL
 
     /// `cacheRoot` is the asset cache folder.
     public init(cacheRoot: URL) {
-        folder = cacheRoot.appending(path: Self.folderName, directoryHint: .isDirectory)
+        folder = cacheRoot.appending(
+            path: AssetCacheStore.recordIndexFolderName,
+            directoryHint: .isDirectory
+        )
     }
 
     public func savedIndex(for stamp: ESMFileStamp) -> Data? {

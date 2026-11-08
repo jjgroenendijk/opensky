@@ -3,7 +3,6 @@
 // grid, and the heaviest texture at a vertex wins.
 
 public import OpenSkyFormatsESM
-public import OpenSkyPhysics
 import simd
 
 nonisolated public struct TerrainSurfaceMaterials: Equatable, Sendable {

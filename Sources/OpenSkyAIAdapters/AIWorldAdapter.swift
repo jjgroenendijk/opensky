@@ -11,7 +11,6 @@ import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
-import OpenSkyDiagnostics
 import OpenSkyDialogue
 import OpenSkyFactions
 import OpenSkyFormatsESM
@@ -26,6 +25,7 @@ import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting
@@ -128,7 +128,7 @@ public final class AIWorldAdapter {
             return nil
         }
         let settings = provider.gameSettings
-        var data = PackageSessionData(store: store)
+        var data = PackageSessionData(store: store, conditionFunctions: .standard)
         data.guardWarnings = GuardWarningSettings.resolve(store: settings)
         data.sandboxSettings = SandboxSettings.resolve(store: settings)
         data.bumpSettings = BumpReactionSettings.resolve(store: settings)

@@ -83,7 +83,7 @@ final class NPCAIAcceptanceChain {
 
     init() throws {
         let store = try NPCAIAcceptanceFixture.packageStore()
-        packages = ActorPackageRuntime(store: store)
+        packages = ActorPackageRuntime(store: store, conditionFunctions: .standard)
 
         try installNavigation()
         try packages.register(actor: Self.guardKey, base: Self.guardBase)

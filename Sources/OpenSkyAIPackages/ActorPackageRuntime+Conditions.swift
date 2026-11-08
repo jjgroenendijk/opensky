@@ -2,7 +2,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface
 
 nonisolated extension ActorPackageRuntime {

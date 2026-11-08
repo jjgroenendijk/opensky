@@ -14,6 +14,7 @@ public import OpenSkyPerceptionInterface
 public import OpenSkyProgressionInterface
 public import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
+import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldState
 
 nonisolated extension ConditionContext {
@@ -85,7 +86,7 @@ nonisolated extension ConditionFunctionRegistry {
         ConditionFunctions.installScriptState(&registry)
         ConditionFunctions.installPackage(&registry)
         ConditionFunctions.installMotion(&registry)
-        ConditionFunctions.installPlaces(&registry)
+        ConditionFunctions.installWorldPlaces(&registry)
         ConditionFunctions.installMounts(&registry)
         return registry
     }()

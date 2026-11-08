@@ -3,7 +3,6 @@
 // combat, magic, and the camera; the locomotion bridge writes the result.
 
 import Foundation
-import OpenSkyActorPresentation
 public import OpenSkyBehavior
 public import OpenSkyPhysics
 public import OpenSkyWorldInterface

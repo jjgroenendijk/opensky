@@ -8,6 +8,7 @@ public import OpenSkyAudio
 public import OpenSkyFormatsAnimation
 public import OpenSkyFormatsESM
 public import OpenSkyRenderCore
+public import OpenSkyWorldInterface
 import Synchronization
 
 /// A skeleton whose head a lip track turns, on top of its clip and head tracking.

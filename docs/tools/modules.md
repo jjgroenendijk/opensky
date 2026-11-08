@@ -91,10 +91,10 @@ A fifth helper, `domain`, declares one domain of the world feature: a module bel
 ## World domains
 
 The world feature is one feature in many modules. `OpenSkyWorld` holds cell streaming and the
-game session, and each other domain is its own module below it: conditions, weather,
-navigation, terrain, effects, camera, runtime state, actor presentation, object animation,
-player, AI packages, cells, and loading. A domain module is like a lower module that sits above
-the feature interfaces:
+game session, and each other domain is its own module below it: condition functions, weather,
+navigation, terrain, effects, camera, runtime state, actor presentation, player, object
+animation, AI packages, cells, world conditions, and loading. A domain module is like a lower
+module that sits above the feature interfaces:
 
 - It may import lower modules, interfaces, and the domains listed before it.
 - Of the features, only `OpenSkyWorld` may import a domain. Another feature still reaches the
@@ -107,7 +107,7 @@ them directly, and no domain has a second implementation that a protocol would h
 type that a domain and another feature both need goes in `OpenSkyWorldInterface`, for example
 `PackageProcedureKind`.
 
-`DOMAINS` in `tools/lint/module-graph.sh` holds the order, and the order of the `domain` calls
+`DOMAINS` in `tools/lint/module_layers.py` holds the order, and the order of the `domain` calls
 in `Package.swift` follows it. A domain that needs a later one is a cycle: move the shared type
 down, or invert the call through a protocol.
 
@@ -139,12 +139,13 @@ OpenSkyAssetCache         the asset cache folder: entries, staleness, size limit
                           FormID indexes
   ^
 OpenSkyPhysics            static and trigger collision, dynamic bodies, ragdolls, melee hit sweeps
-OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkyShaderTypes
+OpenSkyDiagnostics        memory footprint; needs nothing
 OpenSkyAgentControl       agent control protocol, socket server and client, command router;
                           needs nothing, the app adapts the game to its port
   ^
 OpenSkyRenderCore         Metal-free render values: weather and image space, terrain and grass
-                          meshes, UI text layout, lights, clocks, culling and shadow math
+                          meshes, UI text layout, lights, clocks, culling and shadow math,
+                          the free-fly and scene cameras, the debug world overlay
 OpenSkyRenderResources    GPU resources: textures and their streaming, meshes, materials,
                           pipeline cache, ASTC conversion, Metal allocation helpers
   ^
@@ -184,7 +185,7 @@ OpenSkyFactions           faction and relationship runtimes, hostility derivatio
 OpenSkyPerception         perception runtime, detection formula, sight, overlay
 OpenSkyProgression        perk, skill, and level runtimes, perk entry-point evaluator
   ^
-OpenSkyWorldConditions    world condition functions, the whole-game condition registry
+OpenSkyWorldConditionFunctions  motion, mount, package, and place condition functions
 OpenSkyWeather            weather selection, transitions, precipitation
 OpenSkyNavigation         navmesh graph, pathfinder, walk routes
 OpenSkyTerrain            the exterior cell grid, distant LOD, LOD water
@@ -192,10 +193,11 @@ OpenSkyEffects            visual effect catalog, impact effects
 OpenSkyCamera             cinematic shots, kill cams, camera shake
 OpenSkyRuntimeState       runtime state coordinator, condition probes, actor presentation state
 OpenSkyActorPresentation  actor assembly, heads, face morphs, idles, actor animation, vehicles
+OpenSkyPlayer             player body and animation, locomotion, walk controller, talk target
 OpenSkyObjectAnimation    animated objects, sequence doors
-OpenSkyPlayer             player body, locomotion bridge, walk controller, cameras, talk target
 OpenSkyAIPackages         package runtime and procedures, NPC movement, AI navigation
 OpenSkyCells              cell scene builder, cell indexes, cell build runner
+OpenSkyWorldConditions    world place conditions, the whole-game condition registry
 OpenSkyLoading            asset cache coordinator, loading screens, load timeline
   ^
 OpenSkyWorld              cell streaming, the game session, audio directors, benchmark

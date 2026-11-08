@@ -5,6 +5,7 @@
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
+import OpenSkyWorldInterface
 import Testing
 
 @MainActor

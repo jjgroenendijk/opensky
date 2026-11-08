@@ -18,6 +18,7 @@ import OpenSkyPerception
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyQuestsInterface
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyScripting
 public import OpenSkySessionInterface

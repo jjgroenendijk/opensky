@@ -8,9 +8,8 @@ public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyNavigation
 import OpenSkyRuntimeState
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface
 import simd
 
@@ -50,6 +49,8 @@ public struct IdleSessionData {
     public let store: IdleStore
     public let files: any GameFileSource
     public let clips: ActorClipLoader
+    /// The condition functions idle conditions run on.
+    public let conditionFunctions: ConditionFunctionRegistry
     /// Where plans load; nil runs them on the shared queue.
     public let planWorker: (any AssetLoadWorking<IdlePlanKey, IdlePlaybackPlan>)?
 
@@ -57,9 +58,11 @@ public struct IdleSessionData {
         store: IdleStore,
         files: any GameFileSource,
         clips: ActorClipLoader,
+        conditionFunctions: ConditionFunctionRegistry,
         planWorker: (any AssetLoadWorking<IdlePlanKey, IdlePlaybackPlan>)? = nil
     ) {
         self.store = store
+        self.conditionFunctions = conditionFunctions
         self.files = files
         self.clips = clips
         self.planWorker = planWorker
@@ -160,6 +163,7 @@ public final class IdleCoordinator {
     let random: (Int) -> Int
 
     weak let world: (any IdleWorld)?
+    let conditionFunctions: ConditionFunctionRegistry
 
     public init(
         random: ((Int) -> Int)? = nil,
@@ -171,6 +175,7 @@ public final class IdleCoordinator {
         self.world = world
         store = data?.store
         clips = data?.clips
+        conditionFunctions = data?.conditionFunctions ?? ConditionFunctionRegistry()
         plans = data.map { data in
             let load = IdlePlaybackResolver.planLoad(
                 files: data.files, animatedObjects: data.store.animatedObjects

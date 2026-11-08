@@ -2,6 +2,7 @@
 
 public import Metal
 public import OpenSkyEngineTesting
+public import OpenSkyRenderCore
 @testable public import OpenSkyRendering
 @testable public import OpenSkyWorld
 

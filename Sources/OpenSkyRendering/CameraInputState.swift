@@ -2,6 +2,7 @@
 // drains them once per frame into a `CameraInput`. Logical keys, not NSEvent, so the axis
 // logic is unit-testable. Both sides run on the main thread.
 
+public import OpenSkyRenderCore
 import simd
 
 public final class CameraInputState {

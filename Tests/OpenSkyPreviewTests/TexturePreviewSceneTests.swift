@@ -3,6 +3,7 @@
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyPreview
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import simd
 import Testing

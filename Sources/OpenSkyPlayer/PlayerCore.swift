@@ -1,7 +1,6 @@
 // The pure rules behind the Player & Locomotion and First person readouts.
 
 import Foundation
-import OpenSkyActorPresentation
 public import OpenSkyBehavior
 import OpenSkyWorldInterface
 

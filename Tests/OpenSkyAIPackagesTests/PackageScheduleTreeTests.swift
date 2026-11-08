@@ -7,6 +7,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
@@ -188,7 +189,7 @@ struct PackageScheduleTreeTests {
             data: PackageSessionData(store: PackageStore(
                 packages: packages,
                 actorTemplates: ActorTemplateResolver(actors: actors, leveledActors: [:])
-            ))
+            ), conditionFunctions: .standard)
         )
         return (coordinator, world)
     }

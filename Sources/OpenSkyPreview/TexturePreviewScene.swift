@@ -5,7 +5,8 @@
 // are pure values, unit-tested; rendering reuses Renderer.renderOffscreen.
 
 public import OpenSkyFormatsCore
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 import simd
 
 nonisolated public enum TexturePreviewScene: Sendable {

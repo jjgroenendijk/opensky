@@ -4,6 +4,7 @@
 public import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsPEX
+public import OpenSkyGameData
 
 nonisolated public final class PexScriptLoader {
     public static let scriptPrefix = "scripts\\"

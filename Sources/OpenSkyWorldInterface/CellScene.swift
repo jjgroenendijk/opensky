@@ -4,7 +4,6 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRenderCore
-import OpenSkyRendering
 import OpenSkyShaderTypes
 import OpenSkyWorldState
 import simd

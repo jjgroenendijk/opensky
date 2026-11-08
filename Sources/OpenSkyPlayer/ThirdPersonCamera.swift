@@ -5,6 +5,7 @@
 
 import OpenSkyFormatsCore
 public import OpenSkyPhysics
+import OpenSkyRenderCore
 import OpenSkyRendering
 import simd
 

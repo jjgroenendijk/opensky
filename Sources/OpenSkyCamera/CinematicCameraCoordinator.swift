@@ -7,7 +7,6 @@ public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyFormatsMesh
 public import OpenSkyGameData
-import OpenSkyWorldConditions
 public import OpenSkyWorldInterface
 import simd
 
@@ -15,6 +14,8 @@ import simd
 public protocol CinematicCameraWorld: AnyObject {
     var cameraPaths: CameraPathStore? { get }
     func cameraConditionContext() -> ConditionContext
+    /// The condition functions camera paths run on.
+    var conditionFunctions: ConditionFunctionRegistry { get }
     /// The weapon and free-space facts the path conditions read for this pair.
     func cameraShotFacts(attacker: ReferenceKey, target: ReferenceKey?) -> CameraConditionResolution
     /// The camera track in a CAMS model, or nil when the model has none.
@@ -96,6 +97,7 @@ public final class CinematicCameraCoordinator {
         context.camera = world.cameraShotFacts(attacker: attacker, target: target)
         return CameraShotSelector.conditionCheck(
             context: context,
+            registry: world.conditionFunctions,
             attacker: attacker,
             target: target
         )

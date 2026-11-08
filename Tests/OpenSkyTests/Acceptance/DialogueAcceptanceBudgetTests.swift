@@ -13,6 +13,7 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld
+import OpenSkyWorldInterface
 import Synchronization
 import Testing
 

@@ -3,7 +3,7 @@
 import OpenSkyFormatsESM
 import OpenSkyNavigation
 import OpenSkyPlayer
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 public import simd

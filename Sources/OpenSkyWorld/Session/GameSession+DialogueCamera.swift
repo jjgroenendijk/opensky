@@ -5,11 +5,10 @@
 // `WalkController` never turns the player to the dialogue pose.
 // `movementMode` never changes.
 
-public import OpenSkyDiagnostics
 import OpenSkyPhysics
 public import OpenSkyPlayer
-import OpenSkyRenderCore
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd
 

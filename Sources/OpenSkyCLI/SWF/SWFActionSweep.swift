@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenus
 
 enum SWFActionSweep {
     /// `SWFClipEventFlags` case names in bit order, so the report is

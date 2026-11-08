@@ -7,10 +7,19 @@ import OpenSkyFeaturesTesting
 import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import OpenSkyGameData
+import OpenSkyWorldConditionFunctions
 @testable import OpenSkyWorldConditions
 import Testing
 
 struct ConditionPlaceFunctionTests {
+    /// The core functions and this family's, the set these tests run on.
+    static let registry: ConditionFunctionRegistry = {
+        var registry = ConditionFunctionRegistry()
+        ConditionFunctions.installCore(into: &registry)
+        ConditionFunctions.installWorldPlaces(&registry)
+        return registry
+    }()
+
     private static let subject = ConditionEvaluatorFixture
         .key(ConditionEvaluatorFixture.subjectFormID)
     private static let plugin = "Test.esm"
@@ -46,7 +55,7 @@ struct ConditionPlaceFunctionTests {
             currentLocations: [subject: townID, .player: townID]
         )
         context.places = places
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context, registry: Self.registry)
         return try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             comparisonValue: value.bitPattern, functionIndex: function,
             parameter1: parameter1, parameter2: parameter2

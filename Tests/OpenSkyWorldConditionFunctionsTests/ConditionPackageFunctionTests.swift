@@ -5,11 +5,19 @@ import Foundation
 @testable import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyWorldConditions
+@testable import OpenSkyWorldConditionFunctions
 import OpenSkyWorldInterface
 import Testing
 
 struct ConditionPackageFunctionTests {
+    /// The core functions and this family's, the set these tests run on.
+    static let registry: ConditionFunctionRegistry = {
+        var registry = ConditionFunctionRegistry()
+        ConditionFunctions.installCore(into: &registry)
+        ConditionFunctions.installPackage(&registry)
+        return registry
+    }()
+
     private static let subject = ConditionEvaluatorFixture
         .key(ConditionEvaluatorFixture.subjectFormID)
     private static let package = FormID(0x0001_2345)
@@ -20,7 +28,7 @@ struct ConditionPackageFunctionTests {
     ) throws -> ConditionOutcome {
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.packages = PackageConditionResolution(facts: facts)
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context, registry: Self.registry)
         return try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: function, 0, value, parameter1: parameter1
         ))

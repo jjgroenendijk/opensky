@@ -1,7 +1,8 @@
 // The camera that world billboards turn to.
 
 public import OpenSkyFormatsMesh
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 import simd
 
 nonisolated extension NIFBillboard.Viewer {

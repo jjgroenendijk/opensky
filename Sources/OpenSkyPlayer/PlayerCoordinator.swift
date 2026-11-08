@@ -5,7 +5,6 @@
 // docs/engine/coordinators.md and docs/engine/beast-forms.md.
 
 import Foundation
-import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -265,7 +264,7 @@ public final class PlayerCoordinator {
         }
     }
 
-    private func showBody(_ result: Result<PlayerRigAssembly, PlayerBodyError>) {
+    private func showBody(_ result: Result<PlayerRenderRig, PlayerBodyError>) {
         guard let graph, let world, let locomotion = world.playerLocomotion else { return }
         switch result {
         case let .success(rig):
@@ -286,7 +285,7 @@ public final class PlayerCoordinator {
         }
     }
 
-    private func showFirstPersonRig(_ result: Result<PlayerRigAssembly, PlayerBodyError>) {
+    private func showFirstPersonRig(_ result: Result<PlayerRenderRig, PlayerBodyError>) {
         guard let firstPersonGraph, let world, let locomotion = world.playerLocomotion else {
             return
         }

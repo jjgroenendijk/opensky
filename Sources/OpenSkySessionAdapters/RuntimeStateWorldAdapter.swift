@@ -264,7 +264,11 @@ public final class RuntimeStateWorldAdapter {
     }
 }
 
-extension RuntimeStateWorldAdapter: RuntimeStateWorld {}
+extension RuntimeStateWorldAdapter: RuntimeStateWorld {
+    public var conditionFunctions: ConditionFunctionRegistry {
+        .standard
+    }
+}
 
 /// Where resident references are, for one set of resident cells and reference count.
 private struct ResidentReferencePlaces {

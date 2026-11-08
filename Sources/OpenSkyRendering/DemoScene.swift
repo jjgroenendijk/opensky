@@ -6,9 +6,10 @@
 import Foundation
 public import Metal
 public import OpenSkyFormatsCore
+import OpenSkyRenderCore
 import OpenSkyRenderResources
-import OpenSkyShaderTypes
-public import simd
+public import OpenSkyShaderTypes
+import simd
 
 nonisolated public enum DemoScene: Sendable {
     // MARK: - Camera + light (consumed by the renderer's FrameUniforms)
@@ -18,9 +19,9 @@ nonisolated public enum DemoScene: Sendable {
     public static let cameraTarget = SIMD3<Float>(0, 0, 48)
 
     /// Direction sunlight travels (sun in the south-west sky).
-    public static let sunDirection = simd_normalize(SIMD3<Float>(0.4, 0.35, -0.85))
-    public static let sunColor = SIMD3<Float>(1.0, 0.97, 0.88)
-    public static let ambientColor = SIMD3<Float>(0.22, 0.24, 0.28)
+    public static let sunDirection = SceneCamera.defaultSunDirection
+    public static let sunColor = SceneCamera.defaultSunColor
+    public static let ambientColor = SceneCamera.defaultAmbientColor
 
     // MARK: - Scene build
 

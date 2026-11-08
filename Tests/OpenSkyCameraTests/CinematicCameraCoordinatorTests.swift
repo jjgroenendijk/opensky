@@ -8,11 +8,16 @@ import OpenSkyConditions
 import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import simd
 import Testing
 
 final class FakeCinematicWorld: CinematicCameraWorld {
+    var conditionFunctions: ConditionFunctionRegistry {
+        .standard
+    }
+
     var cameraPaths: CameraPathStore?
     var anchors: [ReferenceKey: CinematicAnchor] = [:]
     var playerPosition: SIMD3<Float>? = .zero

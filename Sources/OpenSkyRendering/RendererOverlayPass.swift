@@ -3,7 +3,7 @@
 
 public import Metal
 public import MetalKit
-import OpenSkyDiagnostics
+import OpenSkyRenderCore
 public import OpenSkyRenderResources
 import OpenSkyShaderTypes
 

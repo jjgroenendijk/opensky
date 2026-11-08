@@ -1,5 +1,6 @@
 // NPC entry point over WalkController's player update path, kept apart for the size cap.
 
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 extension WalkController {

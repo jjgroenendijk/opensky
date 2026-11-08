@@ -21,6 +21,7 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 public import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldConditions
 public import OpenSkyWorldInterface
 import simd
 
@@ -79,6 +80,10 @@ public final class CinematicCameraWorldAdapter {
 }
 
 extension CinematicCameraWorldAdapter: CinematicCameraWorld {
+    public var conditionFunctions: ConditionFunctionRegistry {
+        .standard
+    }
+
     public var cameraPaths: CameraPathStore? {
         game.worldData?.presentationRecords?.cameras
     }

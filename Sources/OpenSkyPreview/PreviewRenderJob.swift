@@ -8,6 +8,7 @@ import MetalKit
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyWeather

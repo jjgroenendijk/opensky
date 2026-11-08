@@ -15,6 +15,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScripting
 public import OpenSkySessionInterface

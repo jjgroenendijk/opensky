@@ -5,7 +5,6 @@
 import OpenSkyAudio
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
-import OpenSkyWorldConditions
 
 extension RuntimeStateCoordinator {
     public var runtimeStateConditionSources: [String] {
@@ -30,6 +29,7 @@ extension RuntimeStateCoordinator {
             source: source,
             conditions: track.conditions,
             context: conditionContext(),
+            registry: world?.conditionFunctions ?? ConditionFunctionRegistry(),
             tally: &tally
         )
         conditionTally = tally
@@ -41,7 +41,11 @@ extension RuntimeStateCoordinator {
     /// references a perk's condition tabs run on.
     public func conditionContext(indexing keys: [ReferenceKey] = []) -> ConditionContext {
         let globals = globalResolution()
-        guard let world else { return ConditionContext(globals: globals) }
+        guard let world else {
+            var context = ConditionContext()
+            context.globals = globals
+            return context
+        }
         return world.conditionContext(
             crosshair: entry(for: .currentTarget), globals: globals, indexing: keys
         )

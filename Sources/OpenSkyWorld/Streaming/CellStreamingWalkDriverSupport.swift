@@ -3,6 +3,7 @@
 import OpenSkyNavigation
 public import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd

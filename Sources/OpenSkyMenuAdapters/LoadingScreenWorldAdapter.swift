@@ -16,7 +16,7 @@ public import OpenSkyMenusInterface
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuests
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState

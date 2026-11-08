@@ -6,6 +6,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkyWorldInterface

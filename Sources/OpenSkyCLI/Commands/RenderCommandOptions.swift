@@ -2,6 +2,7 @@
 
 import OpenSkyCells
 import OpenSkyCLIArguments
+import OpenSkyRenderCore
 import OpenSkyRendering
 
 extension RenderCommand {

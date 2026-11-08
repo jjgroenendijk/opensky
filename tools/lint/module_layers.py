@@ -20,10 +20,10 @@ LAYERS = [
 # modules, interfaces, and earlier domains. Of the features, only the world feature
 # may depend on a domain; other features use OpenSkyWorldInterface.
 DOMAINS = [
-    "OpenSkyWorldConditions", "OpenSkyWeather", "OpenSkyNavigation", "OpenSkyTerrain",
+    "OpenSkyWorldConditionFunctions", "OpenSkyWeather", "OpenSkyNavigation", "OpenSkyTerrain",
     "OpenSkyEffects", "OpenSkyCamera", "OpenSkyRuntimeState", "OpenSkyActorPresentation",
-    "OpenSkyObjectAnimation", "OpenSkyPlayer", "OpenSkyAIPackages", "OpenSkyCells",
-    "OpenSkyLoading",
+    "OpenSkyPlayer", "OpenSkyObjectAnimation", "OpenSkyAIPackages", "OpenSkyCells",
+    "OpenSkyWorldConditions", "OpenSkyLoading",
 ]
 
 FOUNDATION = {name for names in LAYERS for name in names}

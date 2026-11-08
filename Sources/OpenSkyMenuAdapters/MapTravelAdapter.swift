@@ -17,6 +17,7 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyQuests
 import OpenSkyQuestsInterface
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting

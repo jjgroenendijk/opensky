@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenus
 import simd
 
 /// Accumulates display-list decode + scene-flattening results across a sweep.

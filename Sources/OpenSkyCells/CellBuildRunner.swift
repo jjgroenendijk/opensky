@@ -6,7 +6,7 @@ import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyPhysics
-import OpenSkyPlayer
+public import OpenSkyPlayer
 public import OpenSkyRendering
 public import OpenSkyRenderResources
 import OpenSkyRuntimeState
@@ -56,7 +56,7 @@ nonisolated public protocol CellSceneProvider {
 
     /// Assembles one of the player's rigs from the same libraries the cells use.
     func assemblePlayerRig(_ request: PlayerRigRequest)
-        -> Result<PlayerRigAssembly, PlayerBodyError>
+        -> Result<PlayerRenderRig, PlayerBodyError>
 
     /// Lets the texture library create streamed textures that post to `mailbox`.
     func attachTextureStreaming(_ mailbox: TextureStreamMailbox)
@@ -98,7 +98,7 @@ nonisolated extension CellSceneProvider {
 
     public func assemblePlayerRig(
         _: PlayerRigRequest
-    ) -> Result<PlayerRigAssembly, PlayerBodyError> {
+    ) -> Result<PlayerRenderRig, PlayerBodyError> {
         .failure(.noFileSystem)
     }
 
@@ -214,7 +214,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
 
     public func assemblePlayerRig(
         _ request: PlayerRigRequest
-    ) -> Result<PlayerRigAssembly, PlayerBodyError> {
+    ) -> Result<PlayerRenderRig, PlayerBodyError> {
         builder.assemblePlayerRig(request)
     }
 }
@@ -372,7 +372,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         var distantLOD: [DistantLODBuildResult] = []
         var doorTransitions: [DoorTransitionBuildResult] = []
         var actorProps: [ActorPropLoadResult] = []
-        var playerRigs: [PlayerRigLoadResult] = []
+        var playerRigs: [PlayerRenderRigResult] = []
     }
 
     let provider: Mutex<any CellSceneProvider>
@@ -569,7 +569,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         }
     }
 
-    public func drainCompletedPlayerRigs() -> [PlayerRigLoadResult] {
+    public func drainCompletedPlayerRigs() -> [PlayerRenderRigResult] {
         results.withLock { state in
             defer { state.playerRigs.removeAll(keepingCapacity: true) }
             return state.playerRigs

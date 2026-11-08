@@ -2,6 +2,7 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyRenderResources
+import OpenSkyWorldInterface
 import simd
 import Testing
 

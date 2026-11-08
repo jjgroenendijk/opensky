@@ -1,6 +1,6 @@
 // The overlay marker the lock and trap sections draw on their selection.
 
-@testable import OpenSkyDiagnostics
+@testable import OpenSkyRenderCore
 import OpenSkyShaderTypes
 import Testing
 

@@ -5,7 +5,6 @@ import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyDiagnostics
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFactions
@@ -19,6 +18,7 @@ import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting

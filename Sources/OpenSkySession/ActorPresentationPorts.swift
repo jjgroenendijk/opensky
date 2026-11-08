@@ -1,5 +1,7 @@
 public import OpenSkyActorPresentation
+import OpenSkyPlayer
 public import OpenSkySessionInterface
+import OpenSkyWorldInterface
 
 extension ActorAnimationPlayback: ActorAnimationPlaybackPort {}
 extension ActorGraphCoordinator: ActorGraphPort {}

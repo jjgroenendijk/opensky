@@ -10,6 +10,7 @@ import MetalKit
 import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyRenderResources
 

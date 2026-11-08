@@ -6,12 +6,12 @@
 import Foundation
 public import OpenSkyAudio
 public import OpenSkyCells
-import OpenSkyDiagnostics
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyPhysics
 public import OpenSkyPlayer
+public import OpenSkyRenderCore
 public import OpenSkyRendering
 public import OpenSkyTerrain
 public import OpenSkyWorldInterface

@@ -96,7 +96,8 @@ nonisolated public enum ModelCacheCodec {
         )
     }
 
-    static func count(_ value: Int, in data: Data) throws -> Int {
+    /// A count read from a payload, checked against the payload size.
+    public static func count(_ value: Int, in data: Data) throws -> Int {
         guard value >= 0, value <= data.count else { throw CachePayloadError.badCount(value) }
         return value
     }

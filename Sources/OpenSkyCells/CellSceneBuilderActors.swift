@@ -11,6 +11,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventoryInterface
 public import OpenSkyPhysics
+import OpenSkyPlayer
 public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState

@@ -4,7 +4,6 @@
 // through `RenderScene(instances:)` when the transform changes.
 
 public import Metal
-public import OpenSkyActorPresentation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyRendering

@@ -2,7 +2,6 @@
 // exact bone palettes. The skinned mesh needs Metal 4 and skips without it.
 
 import Metal
-@testable import OpenSkyActorPresentation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore

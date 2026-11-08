@@ -19,7 +19,7 @@ nonisolated extension CellSceneBuilder {
     /// Runs on the build queue; the main actor binds the result to the live pose.
     public func assemblePlayerRig(
         _ request: PlayerRigRequest
-    ) -> Result<PlayerRigAssembly, PlayerBodyError> {
+    ) -> Result<PlayerRenderRig, PlayerBodyError> {
         assemblePlayer(
             equipped: request.equipped,
             appearance: request.appearance,

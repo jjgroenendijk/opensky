@@ -10,6 +10,7 @@ import OpenSkyCLIArguments
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyRenderResources
+import OpenSkySession
 
 enum AssetCacheCommand {
     private struct Options {

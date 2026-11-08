@@ -4,7 +4,6 @@
 // character graphs, not memory (docs/engine/actor-state-graph.md).
 
 import Foundation
-import OpenSkyActorPresentation
 import OpenSkyWorldInterface
 
 nonisolated public enum ActorStateGraphNames: Sendable {

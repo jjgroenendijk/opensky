@@ -11,6 +11,7 @@ import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorldConditions
 
 extension GapsGatherer {

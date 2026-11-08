@@ -3,7 +3,6 @@
 // MATT. Both lookups return the same MATT FormID.
 
 public import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
 
 nonisolated public struct MaterialTypeIndex: Sendable {
     public static let logger = EngineLogger(

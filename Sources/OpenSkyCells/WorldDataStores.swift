@@ -1,6 +1,6 @@
 // The session stores the main actor reads. The build queue never touches them.
 
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 public import OpenSkyAIPackages
 public import OpenSkyAudio
 public import OpenSkyCombatInterface
@@ -8,7 +8,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 public import OpenSkyPerceptionInterface
-public import OpenSkyPhysics
+import OpenSkyPhysics
 public import OpenSkyPlayer
 public import OpenSkyWeather
 public import OpenSkyWorldInterface

@@ -4,7 +4,6 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRenderCore
-import OpenSkyRendering
 import simd
 
 /// One effect model the poser draws, for `game state effects`.
