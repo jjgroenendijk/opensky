@@ -20,7 +20,6 @@ public protocol ActorValueRuntimePort: ActorValueAccess {
     ) -> Bool
     func fraction(at index: Int32, on holder: ActorValueHolder) -> Float?
     func fractions(of holder: ActorValueHolder) -> ActorValues
-    var godMode: Bool { get set }
     func hasZeroHealth(_ holder: ActorValueHolder) -> Bool
     func maximums(of holder: ActorValueHolder) -> ActorValues
     func pauseRegeneration(_ kind: ActorValueKind, on holder: ActorValueHolder, for seconds: Float)

@@ -19,7 +19,6 @@ public protocol GameSessionPort: AnyObject {
     associatedtype WeatherSystem: WeatherSystemPort
     associatedtype WorldAudioFootstepDirector: WorldAudioFootstepDirectorPort
     associatedtype WorldAudioSoundDirector: WorldAudioSoundDirectorPort
-    associatedtype WorldMusicDirector: WorldMusicDirectorPort
     var animationEvents: AnimationEventCoordinator? { get }
     func applyGraphicsSettings(_ store: PlayerSettingsStore)
     var celestialSky: CelestialSky? { get }
@@ -47,7 +46,6 @@ public protocol GameSessionPort: AnyObject {
     var lastSimulationMS: Double { get set }
     var locomotion: LocomotionBridge { get }
     var movementMode: CameraMovementMode { get set }
-    var musicDirector: WorldMusicDirector? { get set }
     func placePlayerFeet(at feet: SIMD3<Float>)
     var playerBody: PlayerBody? { get }
     var playerEyePosition: SIMD3<Float> { get }

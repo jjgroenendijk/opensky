@@ -156,10 +156,6 @@ extension AIWorldAdapter {
         perceptionSense.perceptionHasLineOfSight(from: origin, to: destination)
     }
 
-    public func run(_ commands: [PerceptionCommand]) {
-        perceptionSense.run(commands)
-    }
-
     public func mountPackageActor(_ rider: ReferenceKey) -> ReferenceKey? {
         navigation.mountPackageActor(rider)
     }

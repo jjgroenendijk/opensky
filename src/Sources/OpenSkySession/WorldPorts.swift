@@ -1,6 +1,6 @@
 // The world types and the lower modules answer their session ports.
 
-public import OpenSkyFormatsSWF
+import OpenSkyFormatsSWF
 public import OpenSkyGameData
 public import OpenSkyMenus
 import OpenSkyQuestsInterface
@@ -11,7 +11,6 @@ public import OpenSkySessionInterface
 public import OpenSkyWorld
 public import OpenSkyWorldState
 
-extension AS2Object: AS2ObjectPort {}
 extension ActivationGateSeam: ActivationGateSeamPort {}
 extension AudioCoordinator: AudioPort {}
 extension BenchmarkTourCoordinator: BenchmarkTourPort {}
@@ -19,7 +18,6 @@ extension CameraInputState: CameraInputStatePort {}
 extension CellAttachment: CellAttachmentPort {}
 extension CellResetCoordinator: CellResetPort {}
 extension CellStreamer: @MainActor CellStreamerPort {}
-extension CellStreamerNPCMovementState: CellStreamerNPCMovementStatePort {}
 extension GameSession: GameSessionPort {}
 extension LoadPhaseRecorder: LoadPhaseRecorderPort {}
 extension LocalizedLabels: LocalizedLabelsPort {}

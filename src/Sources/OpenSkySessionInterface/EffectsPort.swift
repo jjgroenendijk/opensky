@@ -98,30 +98,8 @@ extension EffectsPort {
     @discardableResult public func startModifier(
         _ key: ReferenceKey,
         strength: Float,
-        fadeIn: Float,
-        on imageSpace: inout ImageSpaceState
-    ) -> Bool {
-        startModifier(key, strength: strength, looping: false, fadeIn: fadeIn, on: &imageSpace)
-    }
-
-    @discardableResult public func startModifier(
-        _ key: ReferenceKey,
-        strength: Float,
-        looping: Bool,
-        on imageSpace: inout ImageSpaceState
-    ) -> Bool {
-        startModifier(key, strength: strength, looping: looping, fadeIn: 0, on: &imageSpace)
-    }
-
-    @discardableResult public func startModifier(
-        _ key: ReferenceKey,
-        strength: Float,
         on imageSpace: inout ImageSpaceState
     ) -> Bool {
         startModifier(key, strength: strength, looping: false, fadeIn: 0, on: &imageSpace)
-    }
-
-    public func stopModifier(_ key: ReferenceKey, on imageSpace: inout ImageSpaceState) {
-        stopModifier(key, fadeOut: 0, on: &imageSpace)
     }
 }

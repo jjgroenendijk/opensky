@@ -67,9 +67,7 @@ public final class RagdollWorldAdapter {
     }
 
     public var poseReads: RagdollPoseReadsAdapter {
-        RagdollPoseReadsAdapter(
-            owner: self,
-            game: poseReadsHost
+        RagdollPoseReadsAdapter(game: poseReadsHost
         )
     }
 

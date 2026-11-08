@@ -51,11 +51,11 @@ public final class AudioWorldAdapter {
     public let mixHost: any AudioMixHost
 
     public var listener: AudioListenerAdapter {
-        AudioListenerAdapter(owner: self, game: listenerHost)
+        AudioListenerAdapter(game: listenerHost)
     }
 
     public var mix: AudioMixAdapter {
-        AudioMixAdapter(owner: self, game: mixHost)
+        AudioMixAdapter(game: mixHost)
     }
 
     public init(game: some AudioWorldHost & AudioListenerHost & AudioMixHost) {
@@ -105,5 +105,3 @@ extension AudioWorldAdapter: AudioWorld {
         }
     }
 }
-
-extension AudioWorldAdapter: AudioWorldPort {}

@@ -50,7 +50,6 @@ public protocol ScriptPerkBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptPerkBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
     public unowned let game: any ScriptPerkBindingsHost
 }
 

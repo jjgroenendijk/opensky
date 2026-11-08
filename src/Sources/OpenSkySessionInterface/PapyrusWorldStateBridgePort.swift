@@ -58,7 +58,6 @@ public protocol PapyrusWorldStateBridgePort: AnyObject, DialogueFragmentDispatch
     @discardableResult func queueStoryStartEvent(quest id: FormID, event: StoryEventData) -> Int
     func recordHit(_ hit: ScriptHitEvent, targetWasHostile: Bool)
     func recordKill(victim: ReferenceKey, killer: ReferenceKey?)
-    func referenceKey(for handle: PapyrusObjectHandle) -> ReferenceKey?
     func referenceKey(forFormID formID: FormID) -> ReferenceKey?
     func referenceState(for key: ReferenceKey) -> ReferenceState?
     func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8??

@@ -7,7 +7,6 @@ public import OpenSkyWorldInterface
 /// What the world adapters use of `MapWorldAdapter`.
 public protocol MapWorldPort: AnyObject {
     func mapMarkerSites() -> [MapMarkerSite]
-    func mapMarkerSites(in worldspace: ResolvedFormID) -> [MapMarkerSite]
     var mapViewPose: CinematicCameraPose? { get }
     var questTargets: [QuestTargetMarker] { get }
     var records: MenuRecordData? { get }

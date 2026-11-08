@@ -156,5 +156,3 @@ extension PlayerWorldAdapter: PlayerWorld {
 extension PlayerWorldAdapter: FaceMorphWorld {}
 
 extension PlayerWorldAdapter: HeadTrackingWorld {}
-
-extension PlayerWorldAdapter: PlayerWorldPort {}

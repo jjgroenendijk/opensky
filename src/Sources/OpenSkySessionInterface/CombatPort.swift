@@ -50,11 +50,6 @@ public protocol CombatPort: AnyObject {
     @discardableResult func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool
     func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit?
     func writeCombatVariable(_ value: BehaviorVariableValue, named name: String)
-    func writeCombatVariable(
-        _ value: BehaviorVariableValue,
-        named name: String,
-        on target: ReferenceKey?
-    )
     func advanceArchery(
         events: [String],
         intent: ArcheryIntent,
@@ -74,24 +69,6 @@ public protocol CombatPort: AnyObject {
 
 /// The default arguments a protocol requirement cannot carry.
 extension CombatPort {
-    @discardableResult public func applyHealthDamage(
-        _ amount: Float,
-        to target: ReferenceKey,
-        attacker: ReferenceKey?,
-        canSever: Bool
-    ) -> Bool {
-        applyHealthDamage(amount, to: target, attacker: attacker, kind: .other, canSever: canSever)
-    }
-
-    @discardableResult public func applyHealthDamage(
-        _ amount: Float,
-        to target: ReferenceKey,
-        attacker: ReferenceKey?,
-        kind: CombatHitKind
-    ) -> Bool {
-        applyHealthDamage(amount, to: target, attacker: attacker, kind: kind, canSever: false)
-    }
-
     @discardableResult public func applyHealthDamage(
         _ amount: Float,
         to target: ReferenceKey,

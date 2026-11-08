@@ -52,20 +52,16 @@ public final class MenuScreensWorldAdapter {
     public let giftListsHost: any MenuScreensGiftListsHost
 
     public var craftingDesk: MenuScreensCraftingDeskAdapter {
-        MenuScreensCraftingDeskAdapter(
-            owner: self,
-            game: craftingDeskHost
+        MenuScreensCraftingDeskAdapter(game: craftingDeskHost
         )
     }
 
     public var guides: MenuScreensGuidesAdapter {
-        MenuScreensGuidesAdapter(owner: self, game: guidesHost)
+        MenuScreensGuidesAdapter(game: guidesHost)
     }
 
     public var giftLists: MenuScreensGiftListsAdapter {
-        MenuScreensGiftListsAdapter(
-            owner: self,
-            game: giftListsHost
+        MenuScreensGiftListsAdapter(game: giftListsHost
         )
     }
 

@@ -90,9 +90,7 @@ public final class ScriptWorldAdapter {
     }
 
     public var perkBindings: ScriptPerkBindingsAdapter {
-        ScriptPerkBindingsAdapter(
-            owner: self,
-            game: perkBindingsHost
+        ScriptPerkBindingsAdapter(game: perkBindingsHost
         )
     }
 
@@ -256,5 +254,3 @@ extension ScriptWorldAdapter: ScriptWorld {
         return .some(game.runtimeStateWorld.location(of: scene.locationKey))
     }
 }
-
-extension ScriptWorldAdapter: ScriptWorldPort {}

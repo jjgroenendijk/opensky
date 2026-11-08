@@ -25,7 +25,6 @@ public protocol MenuScreensGuidesHost: AnyObject {
 
 /// Part of `MenuScreensWorldAdapter`, over its own narrow host.
 public struct MenuScreensGuidesAdapter {
-    public unowned let owner: MenuScreensWorldAdapter
     public unowned let game: any MenuScreensGuidesHost
 }
 

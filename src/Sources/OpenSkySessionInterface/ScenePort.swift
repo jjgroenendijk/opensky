@@ -17,8 +17,4 @@ public protocol ScenePort: AnyObject {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension ScenePort {
-    public func start(_ id: FormID) {
-        start(id, force: false)
-    }
-}
+extension ScenePort {}

@@ -34,7 +34,6 @@ public protocol FollowerCommandTasksHost: AnyObject {
 
 /// Part of `FollowerCommandWorldAdapter`, over its own narrow host.
 public struct FollowerCommandTasksAdapter {
-    public unowned let owner: FollowerCommandWorldAdapter
     public unowned let game: any FollowerCommandTasksHost
 }
 

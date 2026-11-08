@@ -25,8 +25,4 @@ public protocol FactionPort: AnyObject {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension FactionPort {
-    @discardableResult public func join(_ faction: ReferenceKey, actor key: ReferenceKey) -> Bool {
-        join(faction, actor: key, rank: 0)
-    }
-}
+extension FactionPort {}

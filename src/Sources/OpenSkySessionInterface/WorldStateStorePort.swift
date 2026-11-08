@@ -16,7 +16,6 @@ public protocol WorldStateStorePort: AnyObject {
     func frozenLeveledLevel(of key: ReferenceKey) -> Int?
     @discardableResult func incrementMiscStat(_ name: String, by amount: Int32) -> Bool
     var journalEntries: [WorldStateJournalEntry] { get }
-    func journalEntries(since sequence: UInt64) -> [WorldStateJournalEntry]
     func leveledRoll(
         of key: ReferenceKey,
         base: FormID,
@@ -37,7 +36,6 @@ public protocol WorldStateStorePort: AnyObject {
     func setEyeTexture(_ set: FormID, for actor: ReferenceKey, in cell: CellSceneLocation)
     func snapshot() -> WorldStateSnapshot
     func sortedDirtyKeys() -> [ReferenceKey]
-    func sortedDirtyKeys(in cell: CellSceneLocation) -> [ReferenceKey]
 }
 
 /// The default arguments a protocol requirement cannot carry.

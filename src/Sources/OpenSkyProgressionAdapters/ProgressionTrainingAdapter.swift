@@ -26,7 +26,6 @@ public protocol ProgressionTrainingHost: AnyObject {
 
 /// Part of `ProgressionWorldAdapter`, over its own narrow host.
 public struct ProgressionTrainingAdapter {
-    public unowned let owner: ProgressionWorldAdapter
     public unowned let game: any ProgressionTrainingHost
 }
 

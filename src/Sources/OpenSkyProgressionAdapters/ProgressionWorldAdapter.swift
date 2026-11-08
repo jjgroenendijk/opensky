@@ -48,16 +48,12 @@ public final class ProgressionWorldAdapter {
     public let effectsHost: any ProgressionEffectsHost
 
     public var training: ProgressionTrainingAdapter {
-        ProgressionTrainingAdapter(
-            owner: self,
-            game: trainingHost
+        ProgressionTrainingAdapter(game: trainingHost
         )
     }
 
     public var effects: ProgressionEffectsAdapter {
-        ProgressionEffectsAdapter(
-            owner: self,
-            game: effectsHost
+        ProgressionEffectsAdapter(game: effectsHost
         )
     }
 

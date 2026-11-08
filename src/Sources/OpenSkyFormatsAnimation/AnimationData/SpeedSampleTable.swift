@@ -57,10 +57,6 @@ nonisolated public struct SpeedSampleTable: Equatable, Sendable {
     /// `DefaultMaleData\DefaultMale.spd` is `defaultmale`.
     public let projects: [String: SpeedSampleProject]
 
-    public init(projects: [String: SpeedSampleProject]) {
-        self.projects = projects
-    }
-
     private static let countLimit: Int32 = 100_000
 
     public init(data: Data) throws {

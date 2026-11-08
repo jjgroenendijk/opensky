@@ -78,9 +78,7 @@ public final class RuntimeStateWorldAdapter {
     public let inventoryFactsHost: any RuntimeStateInventoryFactsHost
 
     public var sessionClock: RuntimeStateSessionClockAdapter {
-        RuntimeStateSessionClockAdapter(
-            owner: self,
-            game: sessionClockHost
+        RuntimeStateSessionClockAdapter(game: sessionClockHost
         )
     }
 

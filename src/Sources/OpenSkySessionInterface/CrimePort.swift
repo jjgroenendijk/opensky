@@ -38,15 +38,7 @@ public protocol CrimePort: CrimeArrestSession {
 
 /// The default arguments a protocol requirement cannot carry.
 extension CrimePort {
-    @discardableResult public func conditionResolution() -> CrimeConditionResolution {
-        conditionResolution(owning: [])
-    }
-
     public func reportAssault(on target: ReferenceKey, wasHostile: Bool) {
         reportAssault(on: target, wasHostile: wasHostile, aggressor: .player)
-    }
-
-    public func advanceTrespass() {
-        advanceTrespass(by: 0)
     }
 }

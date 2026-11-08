@@ -55,15 +55,15 @@ public final class CrimeWorldAdapter {
     public let actorsHost: any CrimeActorsHost
 
     public var factions: CrimeFactionsAdapter {
-        CrimeFactionsAdapter(owner: self, game: factionsHost)
+        CrimeFactionsAdapter(game: factionsHost)
     }
 
     public var jail: CrimeJailAdapter {
-        CrimeJailAdapter(owner: self, game: jailHost)
+        CrimeJailAdapter(game: jailHost)
     }
 
     public var actors: CrimeActorsAdapter {
-        CrimeActorsAdapter(owner: self, game: actorsHost)
+        CrimeActorsAdapter(game: actorsHost)
     }
 
     public init(game: some CrimeWorldHost & CrimeFactionsHost & CrimeJailHost & CrimeActorsHost) {

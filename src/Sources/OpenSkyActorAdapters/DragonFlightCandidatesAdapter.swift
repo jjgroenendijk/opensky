@@ -32,7 +32,6 @@ public protocol DragonFlightCandidatesHost: AnyObject {
 
 /// Part of `DragonFlightWorldAdapter`, over its own narrow host.
 public struct DragonFlightCandidatesAdapter {
-    public unowned let owner: DragonFlightWorldAdapter
     public unowned let game: any DragonFlightCandidatesHost
 }
 

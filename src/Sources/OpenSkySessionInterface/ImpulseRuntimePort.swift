@@ -11,8 +11,4 @@ public protocol ImpulseRuntimePort: AnyObject {
 }
 
 /// The default arguments a protocol requirement cannot carry.
-extension ImpulseRuntimePort {
-    public func advance() {
-        advance(deltaTime: 0)
-    }
-}
+extension ImpulseRuntimePort {}

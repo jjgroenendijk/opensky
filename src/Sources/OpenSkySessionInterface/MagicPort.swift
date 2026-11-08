@@ -96,46 +96,4 @@ extension MagicPort {
     @discardableResult public func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
         enchantmentProfile(of: item, on: nil)
     }
-
-    @discardableResult public func noteDeath(of victim: ReferenceKey) -> SoulTrapOutcome? {
-        noteDeath(of: victim, killer: nil)
-    }
-
-    @discardableResult public func advanceCasting(
-        _ intent: CastingIntent,
-        isPlayerControlled: Bool,
-        weaponsDrawn: Bool?
-    ) -> [MagicCommand] {
-        advanceCasting(
-            intent,
-            isPlayerControlled: isPlayerControlled,
-            events: [],
-            weaponsDrawn: weaponsDrawn
-        )
-    }
-
-    @discardableResult public func advanceCasting(
-        _ intent: CastingIntent,
-        isPlayerControlled: Bool,
-        events: [String]
-    ) -> [MagicCommand] {
-        advanceCasting(
-            intent,
-            isPlayerControlled: isPlayerControlled,
-            events: events,
-            weaponsDrawn: nil
-        )
-    }
-
-    @discardableResult public func advanceCasting(
-        _ intent: CastingIntent,
-        isPlayerControlled: Bool
-    ) -> [MagicCommand] {
-        advanceCasting(
-            intent,
-            isPlayerControlled: isPlayerControlled,
-            events: [],
-            weaponsDrawn: nil
-        )
-    }
 }

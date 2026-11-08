@@ -14,7 +14,6 @@ public protocol InventoryPort: AnyObject, Sendable {
     var alchemySelection: [FormID]? { get }
     @discardableResult func applyPoison(_ poison: FormID) -> AlchemyActionOutcome
     func barterPricing(with merchant: ReferenceKey?) -> BarterPricing
-    var barterPricing: BarterPricing { get }
     @discardableResult func brewChosenIngredients() -> AlchemyActionOutcome
     @discardableResult func closeCraftingSession() -> CraftingActionOutcome
     func conditionEquipment(of key: ReferenceKey) -> ActorEquipmentFacts?
@@ -127,31 +126,6 @@ public protocol InventoryPort: AnyObject, Sendable {
 
 /// The default arguments a protocol requirement cannot carry.
 extension InventoryPort {
-    @discardableResult public func plant(
-        _ item: FormID,
-        named name: String,
-        into target: InventoryHolder,
-        roll: Float
-    ) -> PickpocketOutcome {
-        plant(item, count: 1, named: name, into: target, roll: roll)
-    }
-
-    @discardableResult public func pickpocket(
-        _ item: FormID,
-        named name: String,
-        from target: InventoryHolder,
-        roll: Float
-    ) -> PickpocketOutcome {
-        pickpocket(item, count: 1, named: name, from: target, roll: roll)
-    }
-
-    @discardableResult public func scriptRemoveAllItems(
-        from key: ReferenceKey,
-        to other: ReferenceKey?
-    ) -> InventoryResult<Bool> {
-        scriptRemoveAllItems(from: key, to: other, removeQuestItems: false)
-    }
-
     public func transfer(
         _ transfer: ContainerTransfer,
         item: FormID,

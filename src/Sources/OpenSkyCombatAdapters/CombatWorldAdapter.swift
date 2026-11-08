@@ -64,16 +64,12 @@ public final class CombatWorldAdapter {
     public let outcomesHost: any CombatOutcomesHost
 
     public var spellCasts: CombatSpellCastsAdapter {
-        CombatSpellCastsAdapter(
-            owner: self,
-            game: spellCastsHost
+        CombatSpellCastsAdapter(game: spellCastsHost
         )
     }
 
     public var impactEffects: CombatImpactEffectsAdapter {
-        CombatImpactEffectsAdapter(
-            owner: self,
-            game: impactEffectsHost
+        CombatImpactEffectsAdapter(game: impactEffectsHost
         )
     }
 
@@ -82,14 +78,12 @@ public final class CombatWorldAdapter {
     }
 
     public var actorFacts: CombatActorFactsAdapter {
-        CombatActorFactsAdapter(
-            owner: self,
-            game: actorFactsHost
+        CombatActorFactsAdapter(game: actorFactsHost
         )
     }
 
     public var gear: CombatGearAdapter {
-        CombatGearAdapter(owner: self, game: gearHost)
+        CombatGearAdapter(game: gearHost)
     }
 
     public var motion: CombatMotionAdapter {

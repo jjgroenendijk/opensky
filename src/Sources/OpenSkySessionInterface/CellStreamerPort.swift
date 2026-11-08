@@ -12,15 +12,11 @@ public import simd
 /// What the world adapters use of `CellStreamer`.
 public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     associatedtype ActivationGateSeam: ActivationGateSeamPort
-    associatedtype CellAnimatedObject: CellAnimatedObjectPort
     associatedtype CellAnimatedVehicle: CellAnimatedVehiclePort
     associatedtype CellAttachment: CellAttachmentPort
     associatedtype CellGridManager: CellGridManagerPort
-    associatedtype CellNodeAnimation: CellNodeAnimationPort
     associatedtype CellScene: CellScenePort
     associatedtype CellSceneComposition: CellSceneCompositionPort
-    associatedtype CellSequenceDoor: CellSequenceDoorPort
-    associatedtype CellStreamerNPCMovementState: CellStreamerNPCMovementStatePort
     associatedtype NPCMovementRuntime: NPCMovementRuntimePort
     associatedtype TalkTargetingSeam: TalkTargetingSeamPort
     func activate(_ target: InteractionTarget, offeringPerkChoices: Bool)
@@ -62,12 +58,10 @@ public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     var npcMovement: NPCMovementRuntime { get }
     func npcMovementReadouts() -> [NPCMovementReadout]
     var npcMovementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)? { get }
-    var npcMovementState: CellStreamerNPCMovementState { get set }
     func publishCarriedPoses(_ poses: [ReferenceKey: ReferenceTransformOverride])
     func publishVehicleLinks(_ linked: Set<ReferenceKey>)
     func setVehiclePose(_ pose: float4x4, for formID: FormID)
     func npcTransform(for actor: ReferenceKey) -> ReferenceTransformOverride?
-    var onCellAttached: FrameSchedule<CellAttachStep, CellAttachment> { get }
     func registerCellAttached(_ phase: CellAttachStep, _ step: @escaping (CellAttachment) -> Void)
     var onCellDetached: FrameSchedule<CellDetachStep, CellSceneLocation> { get }
     var onInteraction: FrameSchedule<InteractionStep, InteractionEvent> { get }
@@ -80,23 +74,18 @@ public protocol CellStreamerPort: AnyObject, PapyrusWorldReferenceSource {
     var queuedRequestCount: Int { get }
     @discardableResult func releaseActorFacing(_ actor: ReferenceKey) -> Bool
     @discardableResult func releaseRiddenActor(_ actor: ReferenceKey) -> Bool
-    @discardableResult func requestDoorTransition(_ door: PlacedDoor?) -> Bool
     @discardableResult func requestDoorTransition(from sourceDoor: FormID) -> Bool
     func requestRebuild(of location: CellSceneLocation)
     func residentActorEntry(key: ReferenceKey) -> RuntimeReferenceEntry?
     func residentActorPlacement(key: ReferenceKey) -> ResidentActorPlacement?
-    func residentAnimatedObjects() -> [CellAnimatedObject]
     func residentAnimatedVehicles() -> [CellAnimatedVehicle]
     var residentCellLocations: Set<CellSceneLocation> { get }
     func residentInteraction(reference: FormID) -> PlacedInteraction?
     var residentInteractions: [PlacedInteraction] { get }
-    func residentNodeAnimations() -> [CellNodeAnimation]
     var residentReferenceCount: Int { get }
     func residentReferenceIndex() -> RuntimeReferenceIndex
     func residentScene(at location: CellSceneLocation) -> CellScene?
-    var residentScenes: [CellScene] { get }
     func residentReferencePlaces(location: (CellLocationKey) -> ResolvedFormID?) -> ReferencePlaces
-    func residentSequenceDoors() -> [CellSequenceDoor]
     func restActor(_ actor: ReferenceKey, at transform: ReferenceTransformOverride)
     func riddenHold(of actor: ReferenceKey) -> NPCRiddenHold?
     func sampleTerrain(at position: SIMD2<Float>) -> TerrainGroundSample?

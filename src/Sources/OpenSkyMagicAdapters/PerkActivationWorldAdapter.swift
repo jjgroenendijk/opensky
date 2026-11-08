@@ -86,5 +86,3 @@ extension PerkActivationWorldAdapter: PerkActivationWorld {
         game.streamer?.interactionTarget
     }
 }
-
-extension PerkActivationWorldAdapter: PerkActivationWorldPort {}

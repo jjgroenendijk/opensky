@@ -11,7 +11,6 @@ extension CellAnimatedVehicle: CellAnimatedVehiclePort {}
 extension DragonFlightCoordinator: DragonFlightPort {}
 extension DragonFlightState: DragonFlightStatePort {}
 extension FaceMorphCoordinator: FaceMorphPort {}
-extension FaceMorphPlayback: FaceMorphPlaybackPort {}
 extension HeadTrackingCoordinator: HeadTrackingPort {}
 extension IdleCoordinator: IdlePort {}
 extension PlayerAnimationPlayback: PlayerAnimationPlaybackPort {}

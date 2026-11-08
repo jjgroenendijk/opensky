@@ -37,7 +37,7 @@ import simd
 
 /// Connects `AIWorldAdapter` to the started session.
 public struct AIOverlayWiring {
-    public init(_ adapter: AIWorldAdapter, renderer: Renderer, streamer: CellStreamer) {
+    public init(renderer: Renderer, streamer: CellStreamer) {
         renderer.worldOverlaySources
             .register(identifier: "navigation") { [weak streamer] context, list in
                 streamer?.appendNavigationWorldOverlay(context: context, to: &list)

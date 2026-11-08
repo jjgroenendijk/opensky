@@ -83,5 +83,3 @@ public final class ActivationRefusalWorldAdapter {
         return state
     }
 }
-
-extension ActivationRefusalWorldAdapter: ActivationRefusalWorldPort {}

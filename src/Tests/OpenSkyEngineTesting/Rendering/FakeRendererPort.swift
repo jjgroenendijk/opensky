@@ -118,12 +118,6 @@ public final class FakeRendererPort: RendererPort {
         throw FakeError.noOffscreenFrames
     }
 
-    public func renderOffscreen(
-        width _: Int, height _: Int, animationTime _: Float
-    ) throws -> any MTLTexture {
-        throw FakeError.noOffscreenFrames
-    }
-
     public func setLoadingCover(
         _ placements: [RenderPlacement]?,
         particles: [ParticlePlayback],

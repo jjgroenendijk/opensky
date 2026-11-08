@@ -38,12 +38,10 @@ final class MenuScreens {
     let sleepWait: any SleepWaitMenuPort
     let training: any TrainingMenuPort
     let book: any BookMenuPort
-    let tutorial: TutorialMenuCoordinator
     let magic: any MagicMenuPort
     let gift: any GiftMenuPort
     let crafting: any CraftingMenuPort
     let textEntry: TextEntryMenuCoordinator
-    let creationClub: CreationClubMenuCoordinator
     let mapMovie: MapMenuMovieScreen
     private let routes: [MenuScreenRoute]
 
@@ -51,12 +49,10 @@ final class MenuScreens {
         sleepWait = screens.sleepWait
         training = screens.training
         book = screens.book
-        tutorial = screens.tutorial
         magic = screens.magic
         gift = screens.gift
         crafting = screens.crafting
         textEntry = screens.textEntry
-        creationClub = screens.creationClub
         mapMovie = screens.mapMovie
         routes = [
             Self.route(screens.sleepWait), Self.route(screens.training), Self.route(screens.book),

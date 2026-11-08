@@ -197,7 +197,7 @@ public final class ActorGraphCoordinator {
         reducedRateCount = 0
         guard isEnabled, let world else { return }
         let candidates = world.actorGraphCandidates().sorted { $0.key < $1.key }
-        sync(candidates, world: world)
+        sync(candidates)
         for case let .ready(project) in projects.values {
             project.clips.drain()
         }
@@ -240,7 +240,7 @@ public final class ActorGraphCoordinator {
 
     // MARK: - Starting and stopping
 
-    private func sync(_ candidates: [ActorGraphCandidate], world: any ActorGraphWorld) {
+    private func sync(_ candidates: [ActorGraphCandidate]) {
         var seen = Set<ReferenceKey>()
         for candidate in candidates {
             seen.insert(candidate.key)

@@ -23,7 +23,6 @@ public protocol MenuScreensGiftListsHost: AnyObject {
 
 /// Part of `MenuScreensWorldAdapter`, over its own narrow host.
 public struct MenuScreensGiftListsAdapter {
-    public unowned let owner: MenuScreensWorldAdapter
     public unowned let game: any MenuScreensGiftListsHost
 }
 

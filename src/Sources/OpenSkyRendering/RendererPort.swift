@@ -46,7 +46,6 @@ public protocol RendererPort: AnyObject {
     var projectionMatrix: float4x4 { get set }
     var renderDebug: RenderDebugState { get set }
     func renderOffscreen(width: Int, height: Int) throws -> any MTLTexture
-    func renderOffscreen(width: Int, height: Int, animationTime: Float) throws -> any MTLTexture
     var scene: RenderScene { get set }
     func setLoadingCover(
         _ placements: [RenderPlacement]?,

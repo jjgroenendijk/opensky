@@ -32,7 +32,6 @@ public protocol AudioMixHost: AnyObject {
 
 /// Part of `AudioWorldAdapter`, over its own narrow host.
 public struct AudioMixAdapter {
-    public unowned let owner: AudioWorldAdapter
     public unowned let game: any AudioMixHost
 }
 

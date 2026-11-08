@@ -4,7 +4,6 @@ import OpenSkyWorld
 
 extension ActorStateGraphInputs: ActorStateGraphInputsPort {}
 extension LocomotionBridge: LocomotionBridgePort {}
-extension LocomotionGraphEventQueue: LocomotionGraphEventQueuePort {}
 extension LocomotionStatus: LocomotionStatusPort {}
 extension MountCoordinator: MountPort {}
 extension PlayerBody: PlayerBodyPort {}

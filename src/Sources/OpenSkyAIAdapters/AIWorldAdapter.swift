@@ -68,9 +68,7 @@ public final class AIWorldAdapter {
     }
 
     public var detectionSense: AIDetectionSenseAdapter {
-        AIDetectionSenseAdapter(
-            owner: self,
-            game: detectionSenseHost
+        AIDetectionSenseAdapter(game: detectionSenseHost
         )
     }
 
@@ -82,7 +80,7 @@ public final class AIWorldAdapter {
     }
 
     public var navigation: AINavigationAdapter {
-        AINavigationAdapter(owner: self, game: navigationHost)
+        AINavigationAdapter(game: navigationHost)
     }
 
     public var packageMoves: AIPackageMovesAdapter {
@@ -104,7 +102,7 @@ public final class AIWorldAdapter {
     }
 
     public var bumps: AIBumpsAdapter {
-        AIBumpsAdapter(owner: self, game: bumpsHost)
+        AIBumpsAdapter(game: bumpsHost)
     }
 
     public init(game: some AIWorldHost & AISeatingHost & AIDetectionSenseHost &

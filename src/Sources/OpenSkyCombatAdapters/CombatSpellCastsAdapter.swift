@@ -18,7 +18,6 @@ public protocol CombatSpellCastsHost: AnyObject {
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
 public struct CombatSpellCastsAdapter {
-    public unowned let owner: CombatWorldAdapter
     public unowned let game: any CombatSpellCastsHost
 }
 
