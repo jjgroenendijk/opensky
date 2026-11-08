@@ -213,13 +213,9 @@ What it helps and what it does not:
 - An ordinary edit-and-build loop is unaffected. Apple describes the feature as being for rebuilding
   states compiled before.
 
-`COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS=YES` makes each task report its key and whether it hit.
-It is not checked in, because it adds lines to every transcript. Pass it when measuring:
-
-```sh
-make build-app XCODEBUILD_FLAGS='COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS=YES'
-grep -c 'Cache hit' .logs/build-app/latest/build-app.log
-```
+Each transcript ends its build with a `CompilationCacheMetrics` line: hits out of cacheable tasks.
+`COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS=YES` in `XCODEBUILD_FLAGS` also prints each task's key
+and each miss. It is not checked in, because it adds lines to every transcript.
 
 The store grows to tens of gigabytes. It prunes itself in generations: on 2026-10-18 a new
 `builtin/v1.2/` folder started next to the 91 GB `v1.1/`, and each hit copied its entry into the
@@ -234,12 +230,12 @@ tree makes every other worktree miss. Two inputs did that:
 
 - Absolute paths. `src/config/Build/Overrides.xcconfig` sets `SWIFT_ENABLE_PREFIX_MAPPING`,
   `SWIFT_ENABLE_PROJECT_PREFIX_MAPPING`, `CLANG_ENABLE_PREFIX_MAPPING`, and
-  `CLANG_ENABLE_PROJECT_PREFIX_MAPPING` for Debug. Xcode then rewrites the package folder `src/` to
+  `CLANG_ENABLE_PROJECT_PREFIX_MAPPING` for every local build, Debug and Release. Xcode then
+  rewrites the package folder `src/` to
   `/^src`, derived-data temporaries to `/^derived`, and products to `/^built`. The settings must
   be in that file: a project `.xcconfig` does not reach the package targets, which hold the engine.
-- The package name. SwiftPM names the root package after the checkout folder and passes it to
-  every compile as `-package-name`. `SWIFT_PACKAGE_NAME = opensky` fixes it. The two dependency
-  packages get the same name, which only widens `package` access.
+- The package name. SwiftPM passes the checkout folder's name to every compile as `-package-name`.
+  `SWIFT_PACKAGE_NAME = opensky` fixes it, and only widens `package` access in the dependencies.
 
 `llvm-cas --diff-graphs <key> <key>` on two keys of one task shows the input that differs.
 Measured on 2026-10-18 with both in place, a Debug `make build-app` from a second checkout into a
@@ -247,6 +243,17 @@ fresh tree hit 647 of 688 tasks; before, it hit 12. Every checkout passes the sa
 checkout's. `make link-shared`, run first by every
 building target, links a worktree's `src/.vendor` to the main checkout's. It lives inside the
 package folder so that prefix mapping covers its header paths too.
+
+### A live check after a one-file change
+
+Live checks run Release, because a Debug build plays too slowly. With the mapping on for Release
+too, a new checkout with an empty tree built the Release CLI in 59 s (87 of 93 hits) and the app in
+44 s (80 of 84); after a one-file change, 47 s and 33 s. Before, it hit 0 and took 5 to 11 minutes.
+The misses are the two dependency packages, whose checkouts sit inside each tree. Run directories,
+2026-11-09, in the main checkout: `.logs/build-cli/20261109T003935Z`,
+`.logs/build-app/20261109T004107Z`, `.logs/build-app/20261109T004151Z`,
+`.logs/build-cli/20261109T004224Z`. The build that ships passes `OPENSKY_PREFIX_MAPPING=NO`
+(`preview.yml`), so its dSYM names the real source paths.
 
 The mapping has three costs:
 

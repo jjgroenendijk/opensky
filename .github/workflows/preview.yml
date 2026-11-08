@@ -22,7 +22,7 @@ env:
   SDK_MODULES: ${{ github.workspace }}/.cache/DerivedData/SDKExplicitPrecompiledModules
   # Ad-hoc signing: the runner holds no certificate, so users press Open Anyway once.
   BUILD_FLAGS: >-
-    CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO
+    CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO OPENSKY_PREFIX_MAPPING=NO
     -skipPackagePluginValidation -skipMacroValidation
   GH_REPO: ${{ github.repository }}
 
