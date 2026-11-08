@@ -32,7 +32,7 @@ opensky_checkout="$(cd "$(dirname "$0")/.." && pwd)"
 export OPENSKY_CACHE_ROOT
 : "${OPENSKY_DERIVED_DATA:=$OPENSKY_CACHE_ROOT/$(basename "$opensky_checkout")}"
 export OPENSKY_DERIVED_DATA
-: "${XCODE_XCCONFIG_FILE:=$opensky_checkout/config/Build/Overrides.xcconfig}"
+: "${XCODE_XCCONFIG_FILE:=$opensky_checkout/src/config/Build/Overrides.xcconfig}"
 export XCODE_XCCONFIG_FILE
 
 # xcodebuild puts a macOS scheme's products at a fixed path under the derived
@@ -55,7 +55,7 @@ xcodebuild_summary() {
             line = $0
             while (length(root) > 1 && (i = index(line, root)) > 0)
                 line = substr(line, 1, i - 1) substr(line, i + length(root))
-            gsub(/\/\^src\//, "", line)
+            gsub(/\/\^src\//, "src/", line)
             sub(/ \(in target .* from project .*\)$/, "", line)
             sub(/ on \047[^\047]*\047 \([0-9.]+ seconds\)$/, "", line)
             if (seen[line]++) next

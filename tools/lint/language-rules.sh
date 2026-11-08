@@ -2,10 +2,10 @@
 # Swift language rules (docs/decisions/language-rules.md). Two checks:
 #
 #   1. The package and the Xcode build turn on the same language features.
-#      Package.swift lists them in `languageSettings`; config/Build/Base.xcconfig
+#      src/Package.swift lists them in `languageSettings`; src/config/Build/Base.xcconfig
 #      sets the matching build settings. Every required feature is in both.
 #   2. Self-check: each rule rejects a small violation. The script compiles one
-#      snippet per rule with the flags it read from Package.swift. A snippet that
+#      snippet per rule with the flags it read from src/Package.swift. A snippet that
 #      compiles means the rule no longer holds, so the check fails.
 set -eu
 
@@ -18,8 +18,8 @@ import subprocess
 import sys
 import tempfile
 
-PACKAGE = pathlib.Path("Package.swift")
-XCCONFIG = pathlib.Path("config/Build/Base.xcconfig")
+PACKAGE = pathlib.Path("src/Package.swift")
+XCCONFIG = pathlib.Path("src/config/Build/Base.xcconfig")
 
 # Package setting -> the Xcode build setting that turns on the same feature.
 UPCOMING = {

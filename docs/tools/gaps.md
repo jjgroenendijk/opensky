@@ -85,7 +85,7 @@ whose behaviour OpenSky has without a read goes in `lightingMatchedByDefault` or
 ### Perk entry points
 
 Engine code reads an entry point only through a constant in
-`Sources/OpenSkyProgressionInterface/PerkEntryPoint+Engine.swift`. A SwiftLint rule rejects a
+`src/Sources/OpenSkyProgressionInterface/PerkEntryPoint+Engine.swift`. A SwiftLint rule rejects a
 raw entry-point number anywhere else, so the list in that file stays complete. A new reader
 adds its entry point there and to `engineRead`.
 

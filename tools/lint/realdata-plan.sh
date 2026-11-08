@@ -1,11 +1,11 @@
 #!/bin/sh
 # RealData test-target lint (issues #381, #418). `make test-real` runs whatever
-# config/TestPlans/RealData.xctestplan selects, and since #418 that is one whole target:
+# src/config/TestPlans/RealData.xctestplan selects, and since #418 that is one whole target:
 # OpenSkyRealDataTests. So the check is no longer "is every suite named in the
 # plan" -- a 57-entry list nobody could keep spelled right -- but the two
 # structural facts that make target-level selection correct:
 #
-#   * Every env-gated suite lives in Tests/OpenSkyRealDataTests/. One in Tests/OpenSkyTests/,
+#   * Every env-gated suite lives in src/Tests/OpenSkyRealDataTests/. One in src/Tests/OpenSkyTests/,
 #     a package test folder, or a support folder is a suite `make test-real` never runs, and it
 #     would silently skip inside `make test-unit` instead, because a plain
 #     `xcodebuild test` does not forward OPENSKY_DATA_ROOT into the host.
@@ -19,7 +19,7 @@
 # runner deadlock.
 #
 # A suite counts as env-gated when its file reads `RealDataEnvironment` (the
-# gate Tests/OpenSkyRealDataTests/AGENTS.md prescribes) or declares its own
+# gate src/Tests/OpenSkyRealDataTests/AGENTS.md prescribes) or declares its own
 # `dataRoot: GameDataRoot?`, and the type carries at least one @Test.
 set -eu
 
@@ -31,14 +31,14 @@ import pathlib
 import re
 import sys
 
-PLANS = [pathlib.Path("config/TestPlans/RealData.xctestplan"),
-         pathlib.Path("config/TestPlans/RealDataAll.xctestplan")]
+PLANS = [pathlib.Path("src/config/TestPlans/RealData.xctestplan"),
+         pathlib.Path("src/config/TestPlans/RealDataAll.xctestplan")]
 TARGET = "OpenSkyRealDataTests"
-HOME = pathlib.Path("Tests/OpenSkyRealDataTests")
+HOME = pathlib.Path("src/Tests/OpenSkyRealDataTests")
 # Every other test folder: the app-hosted unit bundle, the package test and
 # testing targets, and the shared support folder.
 ELSEWHERE = sorted(
-    folder for folder in pathlib.Path("Tests").iterdir()
+    folder for folder in pathlib.Path("src/Tests").iterdir()
     if folder.is_dir() and folder != HOME
 )
 # A Swift Testing suite is a plain type declaration -- no @Suite attribute is
@@ -94,7 +94,7 @@ for PLAN in PLANS:
 
 # Issue #380: an app-hosted unit bundle and the UI runner deadlock in one session.
 HOSTED = {"OpenSkyTests", TARGET}
-for path in sorted(pathlib.Path("config/TestPlans").glob("*.xctestplan")):
+for path in sorted(pathlib.Path("src/config/TestPlans").glob("*.xctestplan")):
     with path.open("rb") as stream:
         listed = {
             entry.get("target", {}).get("name")

@@ -8,7 +8,7 @@ enum RepositoryLogs {
         let bundle: URL
 
         var description: String {
-            "no OpenSky.xcodeproj above the test bundle at \(bundle.path); "
+            "no src/OpenSky.xcodeproj above the test bundle at \(bundle.path); "
                 + "real-data runs need the derived data inside the checkout"
         }
     }
@@ -17,7 +17,7 @@ enum RepositoryLogs {
     static func directory(_ subpath: String = "") throws -> URL {
         if
             let checkout = ProcessInfo.processInfo.environment["OPENSKY_CHECKOUT"],
-            FileManager.default.fileExists(atPath: checkout + "/OpenSky.xcodeproj")
+            FileManager.default.fileExists(atPath: checkout + "/src/OpenSky.xcodeproj")
         {
             let logs = URL(filePath: checkout).appending(path: ".logs", directoryHint: .isDirectory)
             return subpath.isEmpty
@@ -26,7 +26,7 @@ enum RepositoryLogs {
         let bundle = Bundle(for: BundleToken.self).bundleURL
         var candidate = bundle.deletingLastPathComponent()
         while candidate.path != "/" {
-            let project = candidate.appending(path: "OpenSky.xcodeproj")
+            let project = candidate.appending(path: "src/OpenSky.xcodeproj")
             if FileManager.default.fileExists(atPath: project.path) {
                 let logs = candidate.appending(path: ".logs", directoryHint: .isDirectory)
                 return subpath.isEmpty

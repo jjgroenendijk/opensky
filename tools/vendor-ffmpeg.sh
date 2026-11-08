@@ -1,6 +1,6 @@
 #!/bin/sh
 # OpenSky vendored ffmpeg: a minimal, decode-only, LGPL-only build of libavutil,
-# libavcodec and libswresample, used by Sources/OpenSkyAudio to turn WMAv2 payloads into PCM
+# libavcodec and libswresample, used by src/Sources/OpenSkyAudio to turn WMAv2 payloads into PCM
 # and Bink movie packets into pictures and PCM.
 #
 # Homebrew's ffmpeg is deliberately not used: it is configured --enable-gpl
@@ -33,8 +33,8 @@ cd "$ROOT"
 # In the main checkout this is $ROOT; in a linked worktree it is the main checkout.
 SHARED=$(cd "$(dirname "$(git rev-parse --git-common-dir)")" && pwd)
 
-PREFIX="$SHARED/.vendor/ffmpeg"
-SRC_DIR="$SHARED/.vendor/src"
+PREFIX="$SHARED/src/.vendor/ffmpeg"
+SRC_DIR="$SHARED/src/.vendor/src"
 BUILD_DIR="$SRC_DIR/ffmpeg-$FFMPEG_VERSION"
 TARBALL="$SRC_DIR/ffmpeg-$FFMPEG_VERSION.tar.xz"
 STAMP="$PREFIX/opensky-build-stamp"

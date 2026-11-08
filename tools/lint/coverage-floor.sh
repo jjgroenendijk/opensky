@@ -32,7 +32,7 @@ def units(files, rules):
     for path, data in files.items():
         lines = data["lines"]
         covered = sum(1 for count in lines.values() if count > 0)
-        module = path.split("/")[1]
+        module = path.split("/")[2]
         totals = modules.setdefault(module, [0, 0])
         totals[0] += covered
         totals[1] += len(lines)
@@ -56,13 +56,13 @@ def below(found, floors):
 
 def self_check():
     files = {
-        "Sources/OpenSkyFormatsX/A.swift": {"lines": {1: 1, 2: 0}},
-        "Sources/OpenSkyMagic/MagicCore.swift": {"lines": {1: 1, 2: 1, 3: 0, 4: 0}},
-        "Sources/OpenSkyRendering/R.swift": {"lines": {1: 0}},
+        "src/Sources/OpenSkyFormatsX/A.swift": {"lines": {1: 1, 2: 0}},
+        "src/Sources/OpenSkyMagic/MagicCore.swift": {"lines": {1: 1, 2: 1, 3: 0, 4: 0}},
+        "src/Sources/OpenSkyRendering/R.swift": {"lines": {1: 0}},
     }
     floors = {"format": 80, "rule": 60, "core": 75}
     labels = sorted(label for label, _, _ in below(units(files, {"OpenSkyMagic"}), floors))
-    expected = ["OpenSkyFormatsX", "OpenSkyMagic", "Sources/OpenSkyMagic/MagicCore.swift"]
+    expected = ["OpenSkyFormatsX", "OpenSkyMagic", "src/Sources/OpenSkyMagic/MagicCore.swift"]
     if labels != expected:
         sys.exit(f"[ERROR] coverage-floor self-check: found {labels}, expected {expected}")
 

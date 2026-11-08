@@ -8,19 +8,19 @@ tags: [tool, build, swift, modules, swiftpm]
 
 # Swift modules
 
-The engine is a set of library modules in a Swift package. `Package.swift` at the repository
-root declares them. `OpenSky.xcworkspace` holds the Xcode project and the package side by side,
+The engine is a set of library modules in a Swift package. `src/Package.swift` at the repository
+root declares them. `src/OpenSky.xcworkspace` holds the Xcode project and the package side by side,
 and `make` builds through it.
 
 The app and `OpenSkyCLI` link one product, `OpenSkyModules`, which holds every library module.
 The Xcode test bundles link one product, `OpenSkyTestSupport`, which holds every shared test
-fixture library. `Package.swift` builds both lists itself, so a new module needs no edit to
-`OpenSky.xcodeproj`.
+fixture library. `src/Package.swift` builds both lists itself, so a new module needs no edit to
+`src/OpenSky.xcodeproj`.
 
 ## Why a module boundary
 
 A module boundary makes the architecture visible and lets the compiler enforce it.
-`Package.swift` lists what each module depends on, and the compiler rejects an `import` of a
+`src/Package.swift` lists what each module depends on, and the compiler rejects an `import` of a
 module that is not listed. So an upward dependency fails the build instead of slipping in.
 
 A module can also be tested alone: `make test-unit T='OpenSkyFormatsESMTests'` runs one test
@@ -52,9 +52,9 @@ framework.
 An `XInterface` holds protocols and value types only, with no runtime logic beyond small value
 helpers. A declaration goes there only when another module uses it.
 
-## How Package.swift enforces the rules
+## How src/Package.swift enforces the rules
 
-`Package.swift` declares modules bottom-up with two helpers:
+`src/Package.swift` declares modules bottom-up with two helpers:
 
 ```swift
 targets += foundation("OpenSkyGameData", dependencies: ["OpenSkyFormatsESM", ...], tests: [...])
@@ -108,13 +108,13 @@ type that a domain and another feature both need goes in `OpenSkyWorldInterface`
 `PackageProcedureKind`.
 
 `DOMAINS` in `tools/lint/module_layers.py` holds the order, and the order of the `domain` calls
-in `Package.swift` follows it. A domain that needs a later one is a cycle: move the shared type
+in `src/Package.swift` follows it. A domain that needs a later one is a cycle: move the shared type
 down, or invert the call through a protocol.
 
 The helpers also give every target the same settings: the language settings of
-`config/Build/Base.xcconfig`, `MainActor` default isolation for library code, and the header
+`src/config/Build/Base.xcconfig`, `MainActor` default isolation for library code, and the header
 path of the vendored ffmpeg. Test targets also link ffmpeg, because a package test executable
-has no `OTHER_LDFLAGS`. Change the settings in `Package.swift` and the xcconfig together.
+has no `OTHER_LDFLAGS`. Change the settings in `src/Package.swift` and the xcconfig together.
 
 ## Modules
 
@@ -219,13 +219,13 @@ The format families depend only on `OpenSkyFormatsCore`, never on each other. A 
 rebuilds its family and the modules that import it, not every format. `OpenSkyFormatsMesh` also
 uses `OpenSkyImageKernels` for its CPU DDS decode.
 
-`OpenSkyImageKernels` holds pixel loops only. `Package.swift` builds it with `-O` in Debug as
+`OpenSkyImageKernels` holds pixel loops only. `src/Package.swift` builds it with `-O` in Debug as
 well, because a Debug build of these loops is about 100 times slower: one 1024 x 1024 BC1 face
 took about 1.2 seconds, and a face with many tint layers held up a save load for minutes. A
 module that needs such a pixel loop moves it here instead of turning on optimization for itself.
 
 `OpenSkyScripting` and `OpenSkyScriptingInterface` are the one other case. They hold the Papyrus
-interpreter, which is too large to move into a kernel module, so `Package.swift` builds them with
+interpreter, which is too large to move into a kernel module, so `src/Package.swift` builds them with
 `-O` in Debug as well, for the same slowdown.
 
 The renderer is three modules. `OpenSkyRenderCore` holds what a frame works out on the CPU, and
@@ -245,16 +245,16 @@ Three more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared
 astcenc ([astcenc](/decisions/astcenc.md)). It holds code, so it is in the `OpenSkyModules`
 product.
 
-The `Sources/Shaders/*.metal` files are not in the package. The app and the CLI each compile
+The `src/Sources/Shaders/*.metal` files are not in the package. The app and the CLI each compile
 them into the `default.metallib` of their own bundle, and `Renderer` loads it with
 `device.makeDefaultLibrary()` unless the caller passes a `shaderLibrary`. A package test has no
 such bundle. `make shader-library` compiles the same files with `xcrun metal`,
-and `ShaderLibraryFixture` in `Tests/OpenSkyEngineTesting/Rendering/` loads it from
+and `ShaderLibraryFixture` in `src/Tests/OpenSkyEngineTesting/Rendering/` loads it from
 the path in `OPENSKY_SHADER_LIBRARY`. `make` sets that variable for `swift test`, and the
 `UnitTests` plan sets it for xcodebuild. A test that runs without it fails; it does not skip.
 
 SwiftPM can compile a `.metal` resource, but it ignores header search paths and the Metal settings
-in `config/Build/`, such as warnings as errors. So the shaders stay outside the package.
+in `src/config/Build/`, such as warnings as errors. So the shaders stay outside the package.
 
 ## Keeping the lines clean
 
@@ -304,8 +304,8 @@ A lower module never imports a higher one. These patterns keep it that way:
 ## Module size
 
 A module stays below a size limit. `make module-size` counts the Swift source lines of each
-folder under `Sources/`, without blank lines and comments, and prints every module sorted
-by size. The app target, `Sources/OpenSky/`, counts as a module. `make lint` and CI run it
+folder under `src/Sources/`, without blank lines and comments, and prints every module sorted
+by size. The app target, `src/Sources/OpenSky/`, counts as a module. `make lint` and CI run it
 on the whole tree, because a module grows with each change.
 
 - Over 20,000 lines, the check prints a `[WARNING]`. Plan the split then.
@@ -363,17 +363,17 @@ Shared test fixtures live in four testing libraries, one per layer: `OpenSkyForm
 the format modules, `OpenSkyEngineTesting` for the engine modules, `OpenSkyFeaturesTesting`
 for the feature interfaces, and `OpenSkyWorldTesting` for the world domains, such as
 `CellSceneBuilderFixture`. The first three have one subfolder per module, for example
-`Tests/OpenSkyEngineTesting/Physics/`. One library per layer instead of one per module keeps
+`src/Tests/OpenSkyEngineTesting/Physics/`. One library per layer instead of one per module keeps
 the target count down, because every target costs manifest and graph time on each build.
 Their declarations are `public`, and a library may `@testable import` the modules it builds
 fixtures for. One library, `OpenSkyTagsTesting`, holds no fixtures: it declares the shared
-Swift Testing tags, and the `testTarget` helper in `Package.swift` links it into every package
+Swift Testing tags, and the `testTarget` helper in `src/Package.swift` links it into every package
 test target ([test runs](/tools/test-runs.md#tags)).
 
 A testing library depends on interfaces, lower modules, and other testing libraries, never on
 a feature implementation. So any test target may link it without building another feature.
 A fixture that needs the real implementation goes in the feature's fixtures library,
-`Tests/<Name>Fixtures/`, declared with the `fixtures` helper. It may depend on its own feature's
+`src/Tests/<Name>Fixtures/`, declared with the `fixtures` helper. It may depend on its own feature's
 implementation and on testing libraries, and only `<Name>Tests` and the Xcode test bundles may
 link it. Example: `CellStreamerFixture` builds a real cell streamer, so it is in
 `OpenSkyWorldFixtures`. A module that ships in the app never depends on either kind
@@ -389,12 +389,12 @@ frameworks, so it is off for them
 The package test targets run in the `UnitTests` and `Sanitizers` plans next to `OpenSkyTests`. A
 test plan names a package test target with `"containerPath" : "container:."`, the package at the
 repository root. Only a workspace shows a scheme the test targets of a local package. Through
-`-project OpenSky.xcodeproj`, xcodebuild reports that the target "isn't a member of the specified
+`-project src/OpenSky.xcodeproj`, xcodebuild reports that the target "isn't a member of the specified
 test plan or scheme".
 
-`make test-unit T='<Target>Tests/...'` runs one package test target inside the unit plan.
+`make test-unit T='<Target>src/Tests/...'` runs one package test target inside the unit plan.
 
-A suite goes in the test target of the highest module it imports, in `Package.swift` order. A
+A suite goes in the test target of the highest module it imports, in `src/Package.swift` order. A
 suite that builds a `Renderer` passes `ShaderLibraryFixture.library(device:)` as its
 `shaderLibrary`. A suite that needs the app, an acceptance chain, or two feature
-implementations goes in `Tests/OpenSkyTests/`.
+implementations goes in `src/Tests/OpenSkyTests/`.

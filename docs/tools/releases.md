@@ -37,7 +37,7 @@ The macOS job then checks out that commit, runs `make build-app CONFIG=Release` 
 and publishes a pre-release. The notes are `.github/preview-release-notes.md` followed by
 GitHub's list of the pull requests merged since the last preview.
 
-To start a new version, change `MARKETING_VERSION` in `config/Build/Base.xcconfig`. The next
+To start a new version, change `MARKETING_VERSION` in `src/config/Build/Base.xcconfig`. The next
 preview is then `v<new version>-preview.1`.
 
 ## By hand
@@ -58,7 +58,7 @@ empty until a stable one exists.
 ## Signing and Gatekeeper
 
 A local build is signed with the "Apple Development" certificate in
-`config/Build/Signing.xcconfig`. The CI runner holds no certificate, so a nightly preview is
+`src/config/Build/Signing.xcconfig`. The CI runner holds no certificate, so a nightly preview is
 signed ad hoc (`CODE_SIGN_IDENTITY=-`). Neither is a "Developer ID" certificate, so neither app
 can be notarized. Notarization is Apple's malware check that Gatekeeper, the macOS launch
 check, asks for.

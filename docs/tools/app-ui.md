@@ -10,7 +10,7 @@ tags: [tool, gui, ui, launcher]
 
 This page covers the app's own interface: the launcher and the window the game runs in. It is
 not the in-game UI, which is vanilla SWF movies ([SWF layer](/rendering/swf-layer.md)). The
-code is in `Sources/OpenSky/Launcher/` and `Sources/OpenSky/Shell/`.
+code is in `src/Sources/OpenSky/Launcher/` and `src/Sources/OpenSky/Shell/`.
 
 A behaviour a user must check while the game runs is reached through `openskycli game`
 ([driving the game](/tools/cli.md)), not through app panels.
@@ -92,7 +92,7 @@ runs, without the load panel. The UI tests and `openskycli game launch` set it.
 ## Theme
 
 The app has a fixed dark design inspired by Skyrim. All tokens are in
-`Sources/OpenSky/Shell/Theme.swift`, and the app forces dark appearance, so system controls
+`src/Sources/OpenSky/Shell/Theme.swift`, and the app forces dark appearance, so system controls
 match. Take every color and heading font from `Theme`: surfaces, parchment ink, gold accent (also
 the asset catalog `AccentColor`), and dividers. Headings are uppercase and tracked in Futura
 Condensed Medium, which macOS ships, with a system fallback. Nothing is bundled, so the fallback

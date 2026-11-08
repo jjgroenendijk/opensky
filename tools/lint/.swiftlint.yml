@@ -100,51 +100,51 @@ opening_brace:
 
 # GameViewController keeps the view, input, and the render loop, in its own
 # files. Game logic goes in a coordinator in its feature module
-# (Sources/AGENTS.md), so no other file may extend it.
+# (src/Sources/AGENTS.md), so no other file may extend it.
 custom_rules:
   game_view_controller_extension:
     name: "GameViewController extension"
     regex: '\bextension\s+GameViewController\b'
-    excluded: 'Sources/OpenSky/GameView/GameViewController\.swift$'
+    excluded: 'src/Sources/OpenSky/GameView/GameViewController\.swift$'
     message: "Put game logic in a coordinator in its feature module, not a GameViewController extension"
     severity: error
   perk_entry_point_literal:
     name: "Perk entry point literal"
     regex: 'PerkEntryPoint\(rawValue:\s*[0-9]'
-    excluded: '(Sources/OpenSkyProgressionInterface/PerkEntryPoint\+Engine\.swift|Tests/.*)$'
+    excluded: '(src/Sources/OpenSkyProgressionInterface/PerkEntryPoint\+Engine\.swift|src/Tests/.*)$'
     message: "Name the entry point in PerkEntryPoint+Engine.swift and add it to engineRead, so openskycli gaps sees it"
     severity: error
   papyrus_event_literal:
     name: "Papyrus event literal"
     regex: '"On[A-Z][A-Za-z]+"'
-    included: 'Sources/OpenSkyScripting/.*\.swift$'
-    excluded: 'Sources/OpenSkyScripting/PapyrusEngineEvents\.swift$'
+    included: 'src/Sources/OpenSkyScripting/.*\.swift$'
+    excluded: 'src/Sources/OpenSkyScripting/PapyrusEngineEvents\.swift$'
     message: "Name the event in PapyrusEngineEvents and add it to sent, so openskycli gaps sees it"
     severity: error
   shader_flag_mask:
     name: "Shader flag mask"
     regex: 'shaderFlags[12]\s*&'
-    excluded: 'Tests/.*$'
+    excluded: 'src/Tests/.*$'
     message: "Read a shader flag through has(_:) and a NIFShaderFlag constant, and list it in lightingRead or effectRead"
     severity: error
   game_setting_reader:
     name: "Game setting reader"
     regex: '(\.setting\(editorID:|func resolve\(store: GameSettingStore\))'
-    excluded: '(Tests/.*|Sources/OpenSky(Combat/ImpulseSettings|Effects/BloodEffectSettings|AIPackages/(SandboxSettings|BumpReaction|FollowSettings)|CrimeInterface/(CrimeTexts|CrimeSettings)|CombatInterface/(Death|Impulse|Archery|Arrow|Combat|CombatAI|Difficulty|FallDamage|MeleeSkillUse|PowerAttack|Stagger|WeaponDamage)Settings|Camera/KillCamTrigger|AIPackages/GuardWarningSettings|Dialogue/SpeechTimerSettings|DialogueInterface/SpeechTimerSettings|WorldInterface/(DoorSettings|FollowSettings|FollowerCommandSettings|MountSettings)|GameData/(ActorValueDerivation|FaceMorphCounts|BarterPricing|CalendarTexts|CharacterLeveling|CraftingSkillUseSettings|InventoryMenuTexts|ItemDefinitionStore\+EnchantedValue|ItemNoticeTexts|LeveledListSettings|MagicTexts|MenuRecordData|PickpocketSettings|ProgressionTexts|RegenerationSettings|SaveTexts|SkillAdvancement|SocialSettings|SoulTexts|SpellCostSettings|SpeechCheckSettings|StaminaSettings|TopicSubtypeTexts|TradeTexts|TrainingSettings)|Inventory/AlchemyRules|ActorPresentation/(FaceAnimationSettings|HeadTrackingSettings)|Magic/(EnchantingSettings|MagicHoldCore|RuneCore|ShoutCore|ShoutRumbleSettings|SoulTrap)|MagicInterface/(MagicWorldSettings|MagicHoldSettings)|InventoryInterface/(LockpickingSettings|LockTexts|TemperingTexts|VendorRestock)|PerceptionInterface/(DetectionSettings|StealthPoints)|Player/(PlayerBreath|PlayerMovementConfiguration)|RenderCore/Weather/SkySettings|WorldState/CellResetLedger)\.swift)$'
+    excluded: '(src/Tests/.*|src/Sources/OpenSky(Combat/ImpulseSettings|Effects/BloodEffectSettings|AIPackages/(SandboxSettings|BumpReaction|FollowSettings)|CrimeInterface/(CrimeTexts|CrimeSettings)|CombatInterface/(Death|Impulse|Archery|Arrow|Combat|CombatAI|Difficulty|FallDamage|MeleeSkillUse|PowerAttack|Stagger|WeaponDamage)Settings|Camera/KillCamTrigger|AIPackages/GuardWarningSettings|Dialogue/SpeechTimerSettings|DialogueInterface/SpeechTimerSettings|WorldInterface/(DoorSettings|FollowSettings|FollowerCommandSettings|MountSettings)|GameData/(ActorValueDerivation|FaceMorphCounts|BarterPricing|CalendarTexts|CharacterLeveling|CraftingSkillUseSettings|InventoryMenuTexts|ItemDefinitionStore\+EnchantedValue|ItemNoticeTexts|LeveledListSettings|MagicTexts|MenuRecordData|PickpocketSettings|ProgressionTexts|RegenerationSettings|SaveTexts|SkillAdvancement|SocialSettings|SoulTexts|SpellCostSettings|SpeechCheckSettings|StaminaSettings|TopicSubtypeTexts|TradeTexts|TrainingSettings)|Inventory/AlchemyRules|ActorPresentation/(FaceAnimationSettings|HeadTrackingSettings)|Magic/(EnchantingSettings|MagicHoldCore|RuneCore|ShoutCore|ShoutRumbleSettings|SoulTrap)|MagicInterface/(MagicWorldSettings|MagicHoldSettings)|InventoryInterface/(LockpickingSettings|LockTexts|TemperingTexts|VendorRestock)|PerceptionInterface/(DetectionSettings|StealthPoints)|Player/(PlayerBreath|PlayerMovementConfiguration)|RenderCore/Weather/SkySettings|WorldState/CellResetLedger)\.swift)$'
     message: "A new settings reader: call it in GapsGatherer.settingsRead and add its file to this rule, so openskycli gaps sees what it reads"
     severity: error
   # attach(world:), wire(host:), attach(seam:), attach(globals store:), and the like.
   late_attached_world:
     name: "Late-attached world"
     regex: '\bfunc\s+(attach|wire|connect|bind|set|install)\w*\s*(<[^>]*>)?\(\s*(_\s+)?(\w+World|world|host|\w+Host|port|\w+Port|seam|\w+Seam|globals|game|session)(\s+\w+)?\s*:'
-    included: 'Sources/OpenSky([A-Z][A-Za-z]*)?/.*\.swift$'
+    included: 'src/Sources/OpenSky([A-Z][A-Za-z]*)?/.*\.swift$'
     message: "Take the world port in the initializer and return commands (docs/engine/coordinators.md)"
     severity: error
   # docs/decisions/session-scope.md: a static installer fills a registry, so it may keep the name.
   late_setter_method:
     name: "Late setter method"
     regex: '^[ \t]*(@\w+(\([^)]*\))?\s+)*((public|open|package|internal|final|override|nonisolated|mutating)\s+)*func\s+(wire|install)\w*\s*[<(]'
-    included: 'Sources/OpenSky([A-Z][A-Za-z]*)?/.*\.swift$'
+    included: 'src/Sources/OpenSky([A-Z][A-Za-z]*)?/.*\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Take the dependency in the initializer; no wire or install method (docs/decisions/session-scope.md)"
     severity: error
@@ -152,15 +152,15 @@ custom_rules:
   late_setter_property:
     name: "Late setter property"
     regex: '^[ \t]*(@\w+(\([^)]*\))?\s+)*(public|open|package)\s+((final|nonisolated|weak|unowned|lazy)\s+)*var\s+(on[A-Z]\w*\b|\w+\s*:\s*[^=\n{]*\b\w*(Store|Settings|Texts|Runtime|Catalog|Resolver|World|Seam|Reporting|Presenting)\b[^={\n]*(=[^{\n]*)?(\{\s*(didSet|willSet)[^\n]*)?$|\w+\s*=\s*\w*(Store|Settings|Texts|Runtime|Catalog|Resolver|World|Seam|Reporting|Presenting)\b)'
-    included: 'Sources/OpenSky([A-Z][A-Za-z]*)?/(.*/)?[A-Za-z]*Coordinator(\+[A-Za-z]+)?\.swift$'
+    included: 'src/Sources/OpenSky([A-Z][A-Za-z]*)?/(.*/)?[A-Za-z]*Coordinator(\+[A-Za-z]+)?\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Take the dependency in the initializer, or make the property private(set) (docs/decisions/session-scope.md)"
     severity: error
   coordinator_outside_session_scope:
     name: "Coordinator outside the session scope"
     regex: '\b[A-Z]\w*Coordinator\s*\('
-    included: 'Sources/OpenSky/.*\.swift$'
-    excluded: 'Sources/OpenSky/(Shell/.*|Launcher/.*|GameView/(GameSessionScope|WorldSessionWiring)[^/]*)\.swift$'
+    included: 'src/Sources/OpenSky/.*\.swift$'
+    excluded: 'src/Sources/OpenSky/(Shell/.*|Launcher/.*|GameView/(GameSessionScope|WorldSessionWiring)[^/]*)\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Only the session scope builds a game coordinator; the app shell builds app-scope ones (docs/decisions/session-scope.md)"
     severity: error
@@ -168,35 +168,35 @@ custom_rules:
   controller_outside_composition_root:
     name: "Controller outside the composition root"
     regex: '\bGameViewController\b'
-    included: 'Sources/.*\.swift$'
-    excluded: 'Sources/OpenSky/(Shell/.*|GameView/GameViewController[A-Za-z]*)\.swift$'
+    included: 'src/Sources/.*\.swift$'
+    excluded: 'src/Sources/OpenSky/(Shell/.*|GameView/GameViewController[A-Za-z]*)\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Only the composition root names GameViewController; reach the session through a host protocol (docs/engine/coordinators.md)"
     severity: error
   action_returns_text:
     name: "Action returns text"
     regex: '@discardableResult\s+(?:(?:public|internal|package)\s+)?func\s+\w+\((?:[^()]|\([^()]*\))*\)\s*->\s*String\b'
-    excluded: '(Sources/OpenSky/|Tests/).*$'
+    excluded: '(src/Sources/OpenSky/|src/Tests/).*$'
     message: "Return a typed outcome and build its line in a formatter (docs/engine/coordinators.md)"
     severity: error
   pure_core_side_effect:
     name: "Pure core side effect"
     regex: '^\s*(@\w+\s+)*import\s+(AppKit|Cocoa|SwiftUI|Metal|MetalKit|MetalFX|QuartzCore|AVFoundation|AVFAudio|AudioToolbox|CoreAudio|GameController|Dispatch|OpenSkyRendering)\b|\b(Date\(\)|Date\.now\b|CACurrentMediaTime\b|DispatchTime\b|ContinuousClock\b|SuspendingClock\b|mach_absolute_time\b|CFAbsoluteTimeGetCurrent\b|systemUptime\b)'
-    included: 'Sources/OpenSky([A-Z][A-Za-z]*)?/(.*/)?[A-Za-z]+Core(\+[A-Za-z]+)?\.swift$'
+    included: 'src/Sources/OpenSky([A-Z][A-Za-z]*)?/(.*/)?[A-Za-z]+Core(\+[A-Za-z]+)?\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "A core is pure: no AppKit, Metal, audio, or clock; the shell passes the time in (docs/engine/coordinators.md)"
     severity: error
   renderer_downcast:
     name: "Renderer downcast"
     regex: '\b(frameDriver|renderer)\s+(as[?!]|is)\s'
-    included: 'Sources/.*\.swift$'
+    included: 'src/Sources/.*\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Read game state from RenderFrameInput, never by casting the renderer or its driver (docs/engine/architecture.md)"
     severity: error
   papyrus_loose_closure:
     name: "Papyrus loose closure"
     regex: '\b(var|let)\s+\w+\s*:\s*[^=\n{]*->[^{\n]*$'
-    included: 'Sources/OpenSkyScripting/PapyrusWorld[A-Za-z]*Bridge[^/]*\.swift$'
+    included: 'src/Sources/OpenSkyScripting/PapyrusWorld[A-Za-z]*Bridge[^/]*\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Give the bridge a collaborator through a native family value, not a closure property (docs/engine/coordinators.md)"
     severity: error
@@ -204,8 +204,8 @@ custom_rules:
   frame_callback_property:
     name: "Frame callback property"
     regex: '\bvar\s+\w*(Frame|frame|Tick|tick|Update|update)\w*\s*:\s*[^=\n{]*->[^{\n]*$'
-    included: 'Sources/.*\.swift$'
-    excluded: 'Sources/OpenSky(GameData/FrameSchedule|/(Shell|Launcher)/.*)\.swift$'
+    included: 'src/Sources/.*\.swift$'
+    excluded: 'src/Sources/OpenSky(GameData/FrameSchedule|/(Shell|Launcher)/.*)\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Join the frame through a phase of a FrameSchedule, not a callback (docs/engine/architecture.md)"
     severity: error
@@ -213,21 +213,21 @@ custom_rules:
   unchecked_sendable:
     name: "Unchecked Sendable"
     regex: '@unchecked\s+Sendable\b'
-    included: 'Sources/.*\.swift$'
+    included: 'src/Sources/.*\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Keep shared state in a Mutex or make the type a Sendable value (docs/decisions/concurrency.md)"
     severity: error
   detached_task:
     name: "Detached task"
     regex: '\bTask\.detached\b'
-    included: 'Sources/.*\.swift$'
+    included: 'src/Sources/.*\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Load through a serial worker or a @concurrent function (docs/decisions/concurrency.md)"
     severity: error
   main_queue_or_semaphore:
     name: "Main queue or semaphore"
     regex: '\bDispatchQueue\.main\b|\bDispatchSemaphore\b'
-    included: 'Sources/.*\.swift$'
+    included: 'src/Sources/.*\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "The main actor never waits for a worker; drain a Mutex mailbox instead (docs/decisions/concurrency.md)"
     severity: error
@@ -235,8 +235,8 @@ custom_rules:
   new_dispatch_queue:
     name: "New dispatch queue"
     regex: '\bDispatchQueue\s*\(|\bDispatchQueue\.global\b'
-    included: 'Sources/.*\.swift$'
-    excluded: 'Sources/(OpenSkyGameData/AssetLoader|OpenSkyAudio/WorldAudioEngine|OpenSkyCells/CellBuildRunner)\.swift$'
+    included: 'src/Sources/.*\.swift$'
+    excluded: 'src/Sources/(OpenSkyGameData/AssetLoader|OpenSkyAudio/WorldAudioEngine|OpenSkyCells/CellBuildRunner)\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Use an existing worker; a new queue needs a row in docs/decisions/concurrency.md and its file in this rule"
     severity: error

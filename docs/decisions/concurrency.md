@@ -233,6 +233,6 @@ stream. Cancel cancels the task. A stage that already runs finishes, and no new 
   cache and times no load phase.
 
 The SwiftLint rules `unchecked_sendable`, `detached_task`, and `main_queue_or_semaphore` fail
-the first three in `Sources/`. The rule `new_dispatch_queue` fails a queue created outside the
+the first three in `src/Sources/`. The rule `new_dispatch_queue` fails a queue created outside the
 files that hold the queues in the table above. A new queue adds its row here and its file to
 that rule. Tests may still use a semaphore to hold a worker at a known point.

@@ -11,13 +11,14 @@
 # Configuration
 # ------------------------------------------------------------------------------
 
-WORKSPACE        := OpenSky.xcworkspace
+WORKSPACE        := src/OpenSky.xcworkspace
 SCHEME           := OpenSky
 CLI_SCHEME       := OpenSkyCLI
 CONFIG           ?= Debug
-DESTINATION      ?= platform=macOS
+# "My Mac" offers an arm64 and an x86_64 entry; naming the architecture picks one.
+DESTINATION      ?= platform=macOS,arch=arm64
 XCODEBUILD_FLAGS ?=
-SWIFT_PATHS      := Sources Tests
+SWIFT_PATHS      := src/Sources src/Tests
 # When this make started, so tools/xcodebuild-run.sh can report the time make spent
 # before xcodebuild. A nested make keeps the outer value.
 export OPENSKY_MAKE_STARTED ?= $(shell date +%s)
@@ -44,7 +45,7 @@ DERIVED_DATA     ?= $(or $(OPENSKY_DERIVED_DATA),$(CACHE_ROOT)/$(notdir $(CURDIR
 XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
 # The compilation cache store. Every worktree shares the main checkout's. Prefix
-# mapping and the fixed package name in config/Build/Overrides.xcconfig make the
+# mapping and the fixed package name in src/config/Build/Overrides.xcconfig make the
 # keys the same in every worktree and every tree.
 COMPILATION_CACHE ?= $(or $(OPENSKY_COMPILATION_CACHE),$(SHARED_ROOT)/.cache/CompilationCache.noindex)
 export OPENSKY_COMPILATION_CACHE := $(COMPILATION_CACHE)
@@ -52,9 +53,9 @@ export OPENSKY_COMPILATION_CACHE := $(COMPILATION_CACHE)
 SDK_MODULES      ?= $(SHARED_ROOT)/.cache/SDKModules.noindex
 # The unused-code scan's own build tree: uncached, so its index store is complete.
 INDEX_DATA       ?= $(DERIVED_DATA)-index
-# Settings that must also reach package targets (config/Build/Overrides.xcconfig).
+# Settings that must also reach package targets (src/config/Build/Overrides.xcconfig).
 # xcodebuild reads this variable, so every xcodebuild in make and tools/ gets it.
-export XCODE_XCCONFIG_FILE := $(CURDIR)/config/Build/Overrides.xcconfig
+export XCODE_XCCONFIG_FILE := $(CURDIR)/src/config/Build/Overrides.xcconfig
 # Test result bundles. They live under the build cache rather than build/: xcodebuild
 # watches the package root, and a result bundle growing there during `test` makes it
 # re-resolve the package mid-run, which crashes it once the package is large (#582).
@@ -113,12 +114,12 @@ PRODUCTS          = $(DERIVED_DATA)/Build/Products/$(CONFIG)
 # unit test plan points at the same path as $(BUILD_DIR)/OpenSkyShaders.metallib.
 SHADER_LIBRARY   := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
 export OPENSKY_SHADER_LIBRARY := $(SHADER_LIBRARY)
-SHADER_FILES     := $(sort $(wildcard Sources/Shaders/*.metal))
-SHADER_SOURCES   := $(SHADER_FILES) $(wildcard Sources/Shaders/*.h) \
-	$(wildcard Sources/OpenSkyShaderTypes/*.h)
-# Mirrors the Metal settings in config/Build/*.xcconfig; change both together.
+SHADER_FILES     := $(sort $(wildcard src/Sources/Shaders/*.metal))
+SHADER_SOURCES   := $(SHADER_FILES) $(wildcard src/Sources/Shaders/*.h) \
+	$(wildcard src/Sources/OpenSkyShaderTypes/*.h)
+# Mirrors the Metal settings in src/config/Build/*.xcconfig; change both together.
 METAL_FLAGS      := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
-	-I Sources/OpenSkyShaderTypes
+	-I src/Sources/OpenSkyShaderTypes
 
 # A docs page holds only what the code cannot show, so a long one usually repeats
 # the code or the history. Prose wraps at 100 columns, so 400 lines is about
@@ -134,10 +135,10 @@ CORE_COVERAGE_FLOOR := 75
 DIFF_COVERAGE_FLOOR := 80
 DIFF_BASE        ?= $(shell git merge-base HEAD origin/main 2>/dev/null || echo HEAD)
 
-ICON_SVG         := Sources/OpenSky/Resources/Branding/opensky-logo.svg
-ICON_DIR         := Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
+ICON_SVG         := src/Sources/OpenSky/Resources/Branding/opensky-logo.svg
+ICON_DIR         := src/Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
 
-# Test plans (config/TestPlans/*.xctestplan) choose which test bundles a run builds
+# Test plans (src/config/TestPlans/*.xctestplan) choose which test bundles a run builds
 # and runs, instead of -only-testing flags (issue #346). A plan builds only the
 # bundles it lists, so the layer plans are the quick runs. The UI bundle must never
 # share a plan with an app-hosted bundle (OpenSkyTests, OpenSkyRealDataTests): both
@@ -162,7 +163,7 @@ MD_GLOB          := **/*.md
 # The tool commands. Override one to try another build of the tool.
 SWIFTLINT        ?= swiftlint
 CLANG_FORMAT     ?= xcrun clang-format
-METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null) $(wildcard Sources/Shaders/*.h)
+METAL_FILES      := $(shell find src/Sources -name '*.metal' 2>/dev/null) $(wildcard src/Sources/Shaders/*.h)
 # The Python tools are one uv project; uv.lock pins ruff. The uv cache is on
 # the boot disk and the project on the data volume, so uv copies instead of hard-linking.
 PY_PROJECT       := tools/wiki-mirror
@@ -189,10 +190,10 @@ bootstrap: ## Install the toolchain with Homebrew
 hooks: #| Point git at the project hooks in tools/githooks
 	@git config core.hooksPath tools/githooks && echo "[ OK ] git hooks: tools/githooks"
 
-ffmpeg: #| Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
+ffmpeg: #| Build the vendored decode-only LGPL ffmpeg into src/.vendor/ffmpeg
 	@./tools/vendor-ffmpeg.sh
 
-astcenc: #| Build the vendored static astcenc into .vendor/astcenc
+astcenc: #| Build the vendored static astcenc into src/.vendor/astcenc
 	@./tools/vendor-astcenc.sh
 
 link-shared: seed-build-tree #| Point this worktree's ffmpeg and compile cache at the main checkout's
@@ -252,9 +253,9 @@ swift-format: #| Autoformat the changed Swift files [ALL=1 whole tree]
 	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to format"; exit 0; }; \
 		swiftformat --config $(SWIFTFORMAT_CFG) $$files
 
-# Package.swift stays out, as in CI: one manifest cannot split to the file-length cap.
+# src/Package.swift stays out, as in CI: one manifest cannot split to the file-length cap.
 swift-lint: #| Lint the changed Swift files strictly [ALL=1 whole tree]
-	@files="$(filter-out Package.swift,$(LINT_SWIFT))"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to lint"; exit 0; }; \
+	@files="$(filter-out src/Package.swift,$(LINT_SWIFT))"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to lint"; exit 0; }; \
 		$(SWIFTLINT) lint --strict --quiet --config $(SWIFTLINT_CFG) $$files
 
 metal-format: #| Autoformat Metal shaders
@@ -279,14 +280,14 @@ py-format-check: #| Fail if a Python tool file is unformatted
 py-lint: #| Lint the Python tools strictly with ruff
 	@$(UV_RUN) ruff check $(PY_PROJECT) && echo "[ OK ] Python tools clean"
 
-# Every Sources/ folder except OpenSky/ is built into or linked by OpenSkyCLI, so an
+# Every src/Sources/ folder except OpenSky/ is built into or linked by OpenSkyCLI, so an
 # app-only import there breaks the CLI build. This catches it without building.
 cli-boundary: #| Keep AppKit out of the engine and format sources the CLI also builds
 	@offenders=$$(grep -rlE '^[[:space:]]*import (AppKit|Cocoa|SwiftUI)' --include='*.swift' \
-		$$(find Sources -mindepth 1 -maxdepth 1 -type d ! -name OpenSky) | sort); \
+		$$(find src/Sources -mindepth 1 -maxdepth 1 -type d ! -name OpenSky) | sort); \
 	if [ -n "$$offenders" ]; then \
 		printf '[FAIL] app-only sources compiled into OpenSkyCLI:\n%s\n' "$$offenders" >&2; \
-		echo 'Fix: move the file to Sources/OpenSky/ with git mv, or drop the import.' >&2; \
+		echo 'Fix: move the file to src/Sources/OpenSky/ with git mv, or drop the import.' >&2; \
 		exit 1; \
 	fi; \
 	echo "[ OK ] CLI target boundary clean"
@@ -368,7 +369,7 @@ no-suppressions: #| Check no Swift file disables a SwiftLint rule
 	fi; \
 	echo "[ OK ] no SwiftLint suppressions"
 
-comment-blocks: #| Print long comment blocks to rewrite in bulk [PATHS='Sources/X'] [REFS=1]
+comment-blocks: #| Print long comment blocks to rewrite in bulk [PATHS='src/Sources/X'] [REFS=1]
 	@./tools/comment-blocks.sh dump $(if $(REFS),-r,) $(PATHS)
 
 comment-apply: #| Write rewritten blocks from a comment-blocks spec back [SPEC=file]
@@ -522,14 +523,14 @@ xctestrun = $(lastword $(sort $(wildcard $(DERIVED_DATA)/Build/Products/$(SCHEME
 test-rerun: ## Rerun the last built plan without the build system [PLAN=Quick|...] [T='Target/Suite/test(),...']
 	@$(check_plan)test -n "$(xctestrun)" || { \
 		echo "[ERROR] no built $(PLAN) plan under $(DERIVED_DATA): run make test-unit PLAN=$(PLAN) first" >&2; exit 2; }
-	@newer="$$(find Sources Tests config Package.swift -type f -newer "$(xctestrun)" 2>/dev/null | head -n 1)"; \
+	@newer="$$(find src/Sources src/Tests src/config src/Package.swift -type f -newer "$(xctestrun)" 2>/dev/null | head -n 1)"; \
 		[ -z "$$newer" ] || echo "[WARNING] $$newer changed after the last build of $(PLAN); run make test-unit PLAN=$(PLAN) to rebuild"
 	@$(XCB_RUN) test-rerun xcodebuild -xctestrun "$(xctestrun)" $(XCODEBUILD_DD) \
 		-destination '$(DESTINATION)' $(call test_bundle,rerun-$(PLAN)) \
 		$(call only_testing,OpenSkyTests) $(coverage_flag) test-without-building
 
 # Package test targets through `swift test`: no Xcode, no app, no other bundle.
-# The package keeps its own build tree in .build/.
+# The package keeps its own build tree in src/.build/.
 test-package: link-shared $(SHADER_LIBRARY) ## Run package test targets with swift test [T='OpenSkyFormatsESMTests[/Suite[/test()]],...']
 	@./tools/test-package.sh "$(T)"
 
@@ -585,7 +586,7 @@ prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=1] [DRY_RU
 # DEEP=1 removes it too, for timing a cold build; every worktree then starts cold.
 clean: ## Remove build output and caches [DEEP=1 also drops the shared compile cache]
 	@rm -rf build "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized" "$(INDEX_DATA)"
-	@rm -rf DerivedData DerivedData-optimized DerivedData-index .build
+	@rm -rf DerivedData DerivedData-optimized DerivedData-index src/.build
 	@[ -z "$(DEEP)" ] || rm -rf "$(COMPILATION_CACHE)" "$(SDK_MODULES)"
 	@if [ -d "$(XCODE_DERIVED_DATA)" ]; then \
 		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \

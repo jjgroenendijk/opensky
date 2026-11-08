@@ -412,7 +412,7 @@
 				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
 			);
 			inputPaths = (
-				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
+				"$(SRCROOT)/../tools/ffmpeg/xcode-phase.sh",
 				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
 			);
 			name = "Check vendored ffmpeg";
@@ -421,7 +421,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" check\ntouch \"$SCRIPT_OUTPUT_FILE_0\"\n";
+			shellScript = "\"$SRCROOT/../tools/ffmpeg/xcode-phase.sh\" check\ntouch \"$SCRIPT_OUTPUT_FILE_0\"\n";
 		};
 		5AFF000130001093001700B2 /* Embed vendored ffmpeg */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -432,7 +432,7 @@
 				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
 			);
 			inputPaths = (
-				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
+				"$(SRCROOT)/../tools/ffmpeg/xcode-phase.sh",
 				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
 			);
 			name = "Embed vendored ffmpeg";
@@ -444,7 +444,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" embed\n";
+			shellScript = "\"$SRCROOT/../tools/ffmpeg/xcode-phase.sh\" embed\n";
 		};
 		5AFF000130001093001700B3 /* Check vendored ffmpeg */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -455,7 +455,7 @@
 				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
 			);
 			inputPaths = (
-				"$(SRCROOT)/tools/ffmpeg/xcode-phase.sh",
+				"$(SRCROOT)/../tools/ffmpeg/xcode-phase.sh",
 				"$(SRCROOT)/.vendor/ffmpeg/embed-inputs.xcfilelist",
 			);
 			name = "Check vendored ffmpeg";
@@ -464,7 +464,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"$SRCROOT/tools/ffmpeg/xcode-phase.sh\" check\ntouch \"$SCRIPT_OUTPUT_FILE_0\"\n";
+			shellScript = "\"$SRCROOT/../tools/ffmpeg/xcode-phase.sh\" check\ntouch \"$SCRIPT_OUTPUT_FILE_0\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

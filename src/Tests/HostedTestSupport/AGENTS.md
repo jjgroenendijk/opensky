@@ -3,24 +3,24 @@
 Test support compiled into two unit-test bundles: `OpenSkyTests` and
 `OpenSkyRealDataTests`. The folder exists because the two targets are separate modules with
 no way to import each other, while a fixture like `FakeWorldProviders` is needed by both.
-Membership follows the folder, exactly as `Sources/OpenSky/` builds into the app alone.
+Membership follows the folder, exactly as `src/Sources/OpenSky/` builds into the app alone.
 
 Only fixtures that need the app or two feature implementations belong here: the fake world
 providers, the acceptance harnesses, and chains such as
-`CombatCastingChain`. A fixture that needs neither goes in a `Tests/OpenSky<Layer>Testing/` or
-`Tests/<Name>Fixtures/` library, so the package test targets can use it too
-(`Tests/AGENTS.md`).
+`CombatCastingChain`. A fixture that needs neither goes in a `src/Tests/OpenSky<Layer>Testing/` or
+`src/Tests/<Name>Fixtures/` library, so the package test targets can use it too
+(`src/Tests/AGENTS.md`).
 
 ## What belongs here
 
 Fixtures, fakes, and harnesses — anything with no `@Test` of its own — that at least one
-suite in each bundle uses. Support only the synthetic suites use stays in `Tests/OpenSkyTests/`;
-support only the real-data suites use stays in `Tests/OpenSkyRealDataTests/`. Keeping the split
+suite in each bundle uses. Support only the synthetic suites use stays in `src/Tests/OpenSkyTests/`;
+support only the real-data suites use stays in `src/Tests/OpenSkyRealDataTests/`. Keeping the split
 tight matters: a file here is compiled twice, once per bundle.
 
 Fixtures are synthetic and built in code, never an extracted game file (root `AGENTS.md`,
 Legal & IP boundary). The established byte builders, `BSAFixture`, `ESMFixture`, `NIFFixture`
-and `PexFixture`, live in the `Tests/OpenSkyFormatsTesting/` library.
+and `PexFixture`, live in the `src/Tests/OpenSkyFormatsTesting/` library.
 
 ## No tests here
 

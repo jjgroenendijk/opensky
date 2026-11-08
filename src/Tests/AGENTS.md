@@ -2,7 +2,7 @@
 
 Each folder here builds one target, named like the folder, except `HostedTestSupport/`: a
 source folder that `OpenSkyTests` and `OpenSkyRealDataTests` both compile. `docs/tools/modules.md` lists
-them and the rules `Package.swift` enforces.
+them and the rules `src/Package.swift` enforces.
 
 ## Testing libraries
 
@@ -23,8 +23,8 @@ test target that needs the fixtures links it: package test targets, `OpenSkyTest
   implementation declares, goes in that feature's `<Name>Fixtures/` library. Only
   `<Name>Tests` and the Xcode bundles may link it. Example: `FakeCombatWorld` in
   `OpenSkyCombatFixtures`. One used only by `<Name>Tests` stays in that target.
-- A fixture that needs two implementations goes in `Tests/HostedTestSupport/` when both Xcode
-  bundles use it, else in `Tests/OpenSkyTests/Support/`.
+- A fixture that needs two implementations goes in `src/Tests/HostedTestSupport/` when both Xcode
+  bundles use it, else in `src/Tests/OpenSkyTests/Support/`.
 - A fixture that a package test target and `OpenSkyTests` or `OpenSkyRealDataTests` both
   need goes in a library, never in two copies.
 - A byte builder goes in the lowest library that can build it. A helper that wraps the bytes
@@ -38,21 +38,21 @@ test target that needs the fixtures links it: package test targets, `OpenSkyTest
 ## Where a suite goes
 
 A suite goes in the package test target of the highest module it imports, in the order
-`Package.swift` declares them. Example: a record test that imports `OpenSkyFormatsESM` and
+`src/Package.swift` declares them. Example: a record test that imports `OpenSkyFormatsESM` and
 `OpenSkyGameData` goes in `OpenSkyGameDataTests`.
 
 A suite stays in `OpenSkyTests` when it needs something a package test target cannot
 have:
 
 - the app module (`@testable import OpenSky`),
-- an acceptance chain in `Tests/OpenSkyTests/Acceptance/`,
+- an acceptance chain in `src/Tests/OpenSkyTests/Acceptance/`,
 - two feature implementations, for example a Magic suite that spends real actor values.
-  It goes in `Tests/OpenSkyTests/<Feature>/`, named for the feature it tests, because a
+  It goes in `src/Tests/OpenSkyTests/<Feature>/`, named for the feature it tests, because a
   feature's tests may build no implementation but their own (`make module-graph`, rule 5).
 
 Inside a target, test folders use the subfolder names of the source they test: tests for
-`Sources/OpenSkyWorld/Streaming/CellStreamer.swift` live in `Tests/OpenSkyWorldTests/Streaming/`,
-and tests for app code live under `Tests/OpenSkyTests/App/`. Only cross-cutting folders are
+`src/Sources/OpenSkyWorld/Streaming/CellStreamer.swift` live in `src/Tests/OpenSkyWorldTests/Streaming/`,
+and tests for app code live under `src/Tests/OpenSkyTests/App/`. Only cross-cutting folders are
 test-only: `Acceptance/` (end-to-end gates), `Fakes/`, and `Support/`. An acceptance suite
 is named for the behavior it checks, such as `CombatAcceptanceTests`, never for a milestone
 number.
@@ -64,7 +64,7 @@ shaders first (`make shader-library`).
 
 ## Test plans
 
-`config/TestPlans/` holds the checked-in plans, so which bundles a run touches is
+`src/config/TestPlans/` holds the checked-in plans, so which bundles a run touches is
 reviewable configuration, not a flag. A plan builds only the bundles it lists, so the
 smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
 
@@ -85,13 +85,13 @@ unit test folder, and that the four layer plans list every `UnitTests` target ex
 
 Never list the UI bundle in a plan beside an app-hosted unit bundle: the app blocks as a
 test host while the UI runner waits for it, and the run deadlocks
-(`docs/tools/test-runs.md`). An env-gated suite outside `Tests/OpenSkyRealDataTests/` fails
+(`docs/tools/test-runs.md`). An env-gated suite outside `src/Tests/OpenSkyRealDataTests/` fails
 `make lint`, because no plan would ever run it.
 
 ## Tags
 
-`Tests/OpenSkyTagsTesting/Tags.swift` holds the shared Swift Testing tags. A test target that
-tags its tests lists `OpenSkyTagsTesting` in its `tests:` list in `Package.swift`, because rule
+`src/Tests/OpenSkyTagsTesting/Tags.swift` holds the shared Swift Testing tags. A test target that
+tags its tests lists `OpenSkyTagsTesting` in its `tests:` list in `src/Package.swift`, because rule
 12 of the module graph rejects a dependency no file imports. Put a tag on the suite,
 `@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))`, or on one test when only that test needs it.
 A `.gpu` or `.slow` tag outside `OpenSkyRealDataTests` always comes with `.unlessPlanSkips` of

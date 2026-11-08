@@ -23,7 +23,7 @@ cd "$root"
 run_dir="$("$root/tools/run-dir.sh" compile)"
 graph="$run_dir/graph.txt"
 # One "target dependency" line per edge, and "target -" for every target.
-swift package dump-package | jq -r '
+swift package --package-path src dump-package | jq -r '
     .targets[] | .name as $t
     | ("\($t) -"),
       (.dependencies[] | (.target // .byName // empty)[0] | "\($t) \(.)")
@@ -35,7 +35,7 @@ else
     base="$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
     wanted="$(
         { git diff --name-only "$base"; git ls-files --others --exclude-standard; } |
-            sed -En 's#^(Sources|Tests)/([^/]+)/.*#\2#p' | sort -u |
+            sed -En 's#^src/(Sources|Tests)/([^/]+)/.*#\2#p' | sort -u |
             while read -r dir; do
                 if grep -q "^$dir -$" "$graph"; then
                     printf '%s ' "$dir"
@@ -83,18 +83,18 @@ opensky_build_lock
 trap 'opensky_build_unlock' EXIT INT TERM
 if [ "$count" -gt "${OPENSKY_COMPILE_MAX:-12}" ]; then
     printf '[INFO] %s top targets depend on %s; building the whole package\n' "$count" "$wanted"
-    swift build --build-tests >"$log" 2>&1 || status=$?
+    swift build --package-path src --build-tests >"$log" 2>&1 || status=$?
 else
     for target in $tops; do
         printf '[INFO] swift build --target %s\n' "$target"
-        swift build --target "$target" >>"$log" 2>&1 || status=$?
+        swift build --package-path src --target "$target" >>"$log" 2>&1 || status=$?
     done
 fi
 # swift build adds a source excerpt under each error and a long compiler
 # command line per failed file; the error lines alone say the same.
 xcodebuild_summary "$root" <"$log" |
     grep -vE '^[[:space:]]*\||nonzero exit code|^error: Build failed' || true
-[ "$status" -eq 0 ] || opensky_drop_failed_records "$root" "$log" "$root/.build/out"
+[ "$status" -eq 0 ] || opensky_drop_failed_records "$root" "$log" "$root/src/.build/out"
 printf '[INFO] full transcript: %s\n' "$log"
 if [ "$status" -ne 0 ]; then
     echo "[ERROR] compile failed" >&2

@@ -36,17 +36,17 @@ The root `AGENTS.md` section "Legal & IP boundary" is the contract. This skill i
 
 Each format family is one module, and it imports only `OpenSkyFormatsCore`
 (`docs/tools/modules.md` lists the families; `make module-graph` fails on another import).
-The parser goes in `Sources/OpenSkyFormats<Family>/<Format>/`.
+The parser goes in `src/Sources/OpenSkyFormats<Family>/<Format>/`.
 
 Copy the shape of an existing format:
 
 | Kind | Parser | Fixture | Unit tests | Page |
 | --- | --- | --- | --- | --- |
-| Binary container | `Sources/OpenSkyFormatsCore/BSA/BSAArchive.swift` | `Tests/OpenSkyFormatsTesting/Core/BSA/BSAFixture.swift` | `Tests/OpenSkyFormatsCoreTests/BSA/BSAArchiveTests.swift` | `docs/formats/bsa.md` |
-| ESM record | `Sources/OpenSkyFormatsESM/Records/Footstep.swift` | `ESMFixture` in `Tests/OpenSkyFormatsTesting/ESM/` | `Tests/OpenSkyFormatsESMTests/Records/FootstepRecordTests.swift` | `docs/formats/footstep.md` |
+| Binary container | `src/Sources/OpenSkyFormatsCore/BSA/BSAArchive.swift` | `src/Tests/OpenSkyFormatsTesting/Core/BSA/BSAFixture.swift` | `src/Tests/OpenSkyFormatsCoreTests/BSA/BSAArchiveTests.swift` | `docs/formats/bsa.md` |
+| ESM record | `src/Sources/OpenSkyFormatsESM/Records/Footstep.swift` | `ESMFixture` in `src/Tests/OpenSkyFormatsTesting/ESM/` | `src/Tests/OpenSkyFormatsESMTests/Records/FootstepRecordTests.swift` | `docs/formats/footstep.md` |
 
 The real-data check of the record model is
-`Tests/OpenSkyRealDataTests/Formats/ESM/Records/FootstepRealDataTests.swift`.
+`src/Tests/OpenSkyRealDataTests/Formats/ESM/Records/FootstepRealDataTests.swift`.
 
 ## 3. Write a pure parser
 
@@ -65,7 +65,7 @@ Parsers are pure: bytes or a record in, values out. The model files show each ru
   reasons counts them in a `SkipTally` (`PerkSkipKind` in `Perk.swift` is the model), so a
   test can assert on what was skipped.
 - Types are `nonisolated public` and `Sendable`, with an explicit `public init(...)` where
-  another module builds them (`Sources/AGENTS.md`, Swift conventions).
+  another module builds them (`src/Sources/AGENTS.md`, Swift conventions).
 
 Comments stay short (root `AGENTS.md`, Writing style). The file header says what the format
 is in a line or two and links its page, like `Footstep.swift`. A non-obvious byte step gets
@@ -73,17 +73,17 @@ a one-line why. The spec links and the evidence go in the page, not in the code.
 
 ## 4. Test it
 
-- Build fixtures in code in the family's testing library, `Tests/Formats<Family>Testing/`.
+- Build fixtures in code in the family's testing library, `src/Tests/Formats<Family>Testing/`.
   An extracted game file is never a fixture, not even a tiny one, and not a cut-down copy
   of a mod file.
-- Put the suite in `Tests/OpenSkyFormats<Family>Tests/<Format>/` with
+- Put the suite in `src/Tests/OpenSkyFormats<Family>Tests/<Format>/` with
   `@Suite(.tags(.parser))`. `make lint-test-tags` checks the tag. A suite that also builds
-  engine state goes in the test target of the highest module it imports (`Tests/AGENTS.md`).
+  engine state goes in the test target of the highest module it imports (`src/Tests/AGENTS.md`).
 - A bug fix starts with a fixture that reproduces it and a test that fails.
 - Run `make test-package T='OpenSkyFormats<Family>Tests/<Suite>'` while working, then
   `make test-unit PLAN=Formats` before pushing.
 - Check the layout on the real install with `make run-cli ARGS=...` or a real-data suite
-  under `Tests/OpenSkyRealDataTests/Formats/`, run by `make test-real`. A new probe
+  under `src/Tests/OpenSkyRealDataTests/Formats/`, run by `make test-real`. A new probe
   becomes an `openskycli` option or subcommand, not throwaway code
   (`probing-real-game-data` skill).
 

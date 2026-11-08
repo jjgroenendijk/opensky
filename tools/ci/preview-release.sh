@@ -12,8 +12,8 @@
 set -eu
 : "${GH_REPO:?GH_REPO is unset: this script runs on a CI runner}"
 
-version=$(awk -F' = ' '/^MARKETING_VERSION/ { print $2 }' config/Build/Base.xcconfig)
-[ -n "$version" ] || { echo "[ERROR] no MARKETING_VERSION in config/Build/Base.xcconfig" >&2; exit 1; }
+version=$(awk -F' = ' '/^MARKETING_VERSION/ { print $2 }' src/config/Build/Base.xcconfig)
+[ -n "$version" ] || { echo "[ERROR] no MARKETING_VERSION in src/config/Build/Base.xcconfig" >&2; exit 1; }
 
 case "${1:-}" in
 plan)

@@ -4,7 +4,7 @@ import pathlib
 import re
 import subprocess
 
-# The app and the CLI are Xcode-only targets; every other Sources/ folder is a package module.
+# The app and the CLI are Xcode-only targets; every other src/Sources/ folder is a package module.
 XCODE_ONLY = {"OpenSky", "OpenSkyCLI"}
 
 
@@ -43,18 +43,18 @@ def line_of(text, offset):
 def package_files():
     """(module, path, code) for every tracked Swift file of a package module."""
     tracked = subprocess.run(
-        ["git", "ls-files", "Sources/*.swift"], capture_output=True, text=True, check=True
+        ["git", "ls-files", "src/Sources/*.swift"], capture_output=True, text=True, check=True
     ).stdout.split()
     for name in tracked:
         path = pathlib.Path(name)
-        if not path.exists() or path.name.startswith("._") or path.parts[1] in XCODE_ONLY:
+        if not path.exists() or path.name.startswith("._") or path.parts[2] in XCODE_ONLY:
             continue
-        yield path.parts[1], name, code_only(path.read_text())
+        yield path.parts[2], name, code_only(path.read_text())
 
 
 def wiring_modules():
     """Each module declared with composition(), and its interface: ports and wiring, no rule."""
-    text = pathlib.Path("Package.swift").read_text()
+    text = pathlib.Path("src/Package.swift").read_text()
     composed = set(re.findall(r'\bcomposition\(\s*"(\w+)"', text))
     return composed | {name + "Interface" for name in composed}
 
@@ -62,6 +62,6 @@ def wiring_modules():
 def rule_modules():
     """The game-rule modules: each feature, interface, and world-domain module, without the
     wiring modules."""
-    text = pathlib.Path("Package.swift").read_text()
+    text = pathlib.Path("src/Package.swift").read_text()
     names = set(re.findall(r'\b(?:feature|domain|interface)\(\s*"(\w+)"', text))
     return {module for name in names for module in (name, name + "Interface")} - wiring_modules()

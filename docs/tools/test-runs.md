@@ -19,7 +19,7 @@ Which bundles a run touches is a checked-in test plan, not a flag. Each `make te
 one plain `xcodebuild test` call on one plan, with no script between `make` and `xcodebuild`, so the
 plan decides what runs. `make lint-test-targets` fails a target that runs tests under another name.
 A plan builds only the bundles it lists, and the build is most of a run's time, so the plans are
-small. The `OpenSky` scheme has these plans, under `config/TestPlans/`:
+small. The `OpenSky` scheme has these plans, under `src/config/TestPlans/`:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
@@ -77,7 +77,8 @@ its allowance is a hang to find, not a limit to raise.
 ## Tags
 
 Swift Testing tags label suites and tests: `.gpu`, `.slow`, `.acceptance`, `.perf`, and `.parser`,
-from `Tests/OpenSkyTagsTesting/Tags.swift`. `Tests/AGENTS.md` says which suite carries which, and
+from `src/Tests/OpenSkyTagsTesting/Tags.swift`. `src/Tests/AGENTS.md` says which suite carries
+which, and
 `make lint-test-tags` checks the ones a machine can find.
 
 A plan's `selectedTests` matches no Swift Testing test, but its `selectedTags` does. Each test
@@ -110,7 +111,7 @@ failure a flaky hunt is looking for. `make lint-test-plans` fails a plan that se
 that the last `build-for-testing` of that plan wrote under `Build/Products/`. The `test` action
 writes no such file, so `make test-unit` runs `build-for-testing test-without-building` instead.
 It skips the build system, so one suite reruns in seconds instead of the start-up cost below. It
-tests the products as they were built: the target warns when a source under `Sources/` or `Tests/`
+tests the products as they were built: the target warns when a source under `src/Sources/` or `src/Tests/`
 is newer than the file, and the warning means the result is for the old code.
 
 `make test-package T='Target/Suite'` runs `swift test --filter` for package test targets. `T`
@@ -194,7 +195,7 @@ format family and subsystem, so a change gets a real-data check in minutes. `ALL
 
 ## The RealData plan
 
-`config/TestPlans/RealData.xctestplan` holds a literal install path. A plan value is not
+`src/config/TestPlans/RealData.xctestplan` holds a literal install path. A plan value is not
 macro-expanded, so `$(OPENSKY_DATA_ROOT)` would arrive as those characters. The `RealDataAll` and
 Perf plans hold the same path, and `make lint-test-plans` fails when they differ. An exported
 `OPENSKY_DATA_ROOT` does not change it. To use another install, edit all three plans.
@@ -204,7 +205,7 @@ plans select the whole target, or a tag, which do work. That is why the real-dat
 own bundle. The shared fixtures compile into both bundles.
 
 `make realdata-plan`, part of `make lint`, checks that every suite with a `@Test` that reads
-`RealDataEnvironment` or declares a `dataRoot: GameDataRoot?` is in `Tests/OpenSkyRealDataTests/`,
+`RealDataEnvironment` or declares a `dataRoot: GameDataRoot?` is in `src/Tests/OpenSkyRealDataTests/`,
 that the plan selects that target and nothing narrows it, and that no plan lists an app-hosted
 bundle beside `OpenSkyUITests`.
 
@@ -222,7 +223,7 @@ compiles without them, and both write the same package intermediates under `Buil
 Without a fix, `make build-cli` after `make test-unit` would recompile the whole engine, and the
 next test build would do it again. The `Makefile` therefore passes `CLANG_COVERAGE_MAPPING=YES`
 on every Debug command line (`COVERAGE_Debug`), and `tools/probe.sh` does the same. It has to be
-the command line: xcodebuild sets this setting per action above `config/Build/Overrides.xcconfig`,
+the command line: xcodebuild sets this setting per action above `src/config/Build/Overrides.xcconfig`,
 so an xcconfig value does not reach the compiler. A Release build stays without coverage. An
 instrumented program writes `default.profraw` into its working directory when it exits;
 `.gitignore` covers it.
@@ -233,7 +234,7 @@ framework under `PackageFrameworks/`, and the bundle lists none of them as a cov
 `xccov` reports only the app, with no files, and a plan's package targets change nothing. Each test
 run rewrites that profile, so `make test-unit COVERAGE=1` also keeps a copy as
 `Build/ProfileData/<PLAN>.profdata`. The checks merge the newest profile with every kept copy that
-is newer than the last change under `Sources/` or to `Package.swift`, with `llvm-profdata merge`.
+is newer than the last change under `src/Sources/` or to `src/Package.swift`, with `llvm-profdata merge`.
 So `PLAN=Quick` and then `PLAN=App` count the app-hosted suites as CI's whole plan does, and a copy
 from before a source edit drops out. A filtered run covers less and reads too low.
 

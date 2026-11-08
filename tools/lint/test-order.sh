@@ -54,10 +54,10 @@ def self_check():
 
 self_check()
 problems = []
-for path in sorted(pathlib.Path("config/TestPlans").glob("*.xctestplan")):
+for path in sorted(pathlib.Path("src/config/TestPlans").glob("*.xctestplan")):
     problems += unordered_targets(path.stem, json.loads(path.read_text()))
 tests = subprocess.run(
-    ["git", "ls-files", "Tests/*.swift"], capture_output=True, text=True, check=True
+    ["git", "ls-files", "src/Tests/*.swift"], capture_output=True, text=True, check=True
 ).stdout.split()
 for path in tests:
     problems += serialized_suites(path, pathlib.Path(path).read_text())

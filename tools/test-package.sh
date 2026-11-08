@@ -16,8 +16,8 @@ cd "$root"
 filters=""
 for selector in $(printf '%s' "$1" | tr ',' ' '); do
     target="${selector%%/*}"
-    [ -d "Tests/$target" ] || {
-        echo "[ERROR] no package test target $target (no Tests/$target/)" >&2
+    [ -d "src/Tests/$target" ] || {
+        echo "[ERROR] no package test target $target (no src/Tests/$target/)" >&2
         exit 2
     }
     rest="${selector#"$target"}"
@@ -37,9 +37,9 @@ trap 'opensky_build_unlock' EXIT INT TERM
 
 status=0
 echo "[INFO] swift test list"
-swift test list >"$list" 2>"$log" || status=$?
+swift test --package-path src list >"$list" 2>"$log" || status=$?
 if [ "$status" -ne 0 ]; then
-    opensky_drop_failed_records . "$log" .build/out
+    opensky_drop_failed_records . "$log" src/.build/out
     grep -E '(error|warning): ' "$log" || tail -n 40 "$log"
     echo "[INFO] full transcript: $log"
     exit "$status"
@@ -59,8 +59,8 @@ $filters
 EOF
 [ "$unmatched" -eq 0 ] || exit 1
 
-echo "[INFO] swift test --skip-build $*"
-swift test --skip-build "$@" >>"$log" 2>&1 || status=$?
+echo "[INFO] swift test --package-path src --skip-build $*"
+swift test --package-path src --skip-build "$@" >>"$log" 2>&1 || status=$?
 grep -E '(error|warning): |^✘|Test run with' "$log" || true
 echo "[INFO] full transcript: $log"
 exit "$status"

@@ -17,7 +17,7 @@ linked, and what happens when it is missing.
 ## Decision
 
 - Build ffmpeg 9.0.2 from source with `tools/vendor-ffmpeg.sh`, run by `make bootstrap` or alone as
-  `make ffmpeg`. The prefix is `.vendor/ffmpeg`, which is gitignored: the tarball, build tree, and
+  `make ffmpeg`. The prefix is `src/.vendor/ffmpeg`, which is gitignored: the tarball, build tree, and
   dylibs never enter the repository.
 - Configure it decode-only and LGPL-only. The result is three libraries, `libavutil`,
   `libavcodec`, and `libswresample`, with four decoders (`wmav2`, `bink`, `binkaudio_dct`, and
@@ -91,16 +91,16 @@ text and this notice, which is a packaging task for when binaries first ship.
 
 ## Linkage
 
-`CFFmpeg` is a C target in `Package.swift`. Its module map, `Sources/CFFmpeg/include/module.modulemap`,
+`CFFmpeg` is a C target in `src/Package.swift`. Its module map, `src/Sources/CFFmpeg/include/module.modulemap`,
 declares the module over `CFFmpeg.h`, which includes the few headers the decoder uses. The target has
 one empty source file, because SwiftPM builds a C target only when it has a source file.
 
-The target carries the header path into `.vendor/ffmpeg/include` and the link flags: `-L` into the
+The target carries the header path into `src/.vendor/ffmpeg/include` and the link flags: `-L` into the
 prefix and `-lavcodec -lavutil -lswresample`. So every binary that uses `OpenSkyAudio` links the
 dylibs. Their install names start with `@rpath`. The app finds them in its bundle. `openskycli`
 has a runpath into the prefix, and the package test targets add the same runpath in
-`Package.swift`.
-`SWIFT_INCLUDE_PATHS` also lists `.vendor/ffmpeg/include`, because a target that imports an engine
+`src/Package.swift`.
+`SWIFT_INCLUDE_PATHS` also lists `src/.vendor/ffmpeg/include`, because a target that imports an engine
 module loads `CFFmpeg` and must find the headers it wraps.
 
 `CFFmpeg` was first a system-library target. That broke when a testing library shared `OpenSkyAudio`
@@ -118,7 +118,8 @@ for a library that is not fetched from a registry.
 
 Two script phases run `tools/ffmpeg/xcode-phase.sh`:
 
-- `check` runs first in the app and the CLI, and fails with a clear message when `.vendor/ffmpeg` is
+- `check` runs first in the app and the CLI, and fails with a clear message when
+  `src/.vendor/ffmpeg` is
   missing, instead of a raw `library not found for -lavcodec`.
 - `embed` runs last in the app. It copies each dylib under its own install name into
   `Contents/Frameworks` and signs it. The app has `@executable_path/../Frameworks` in its runpath,
@@ -132,7 +133,7 @@ signing is denied.
 
 Xcode resolves every phase's declared inputs before it runs any phase, `check` included. So a
 missing `.xcfilelist` fails planning with a raw missing-input error before `check` can print its
-message. A fresh linked worktree has no `.vendor` at all, which is how this showed up. So
+message. A fresh linked worktree has no `src/.vendor` at all, which is how this showed up. So
 `tools/link-shared.sh` writes empty placeholder lists whenever the prefix has no `lib/`
 folder, and a real build's lists are never overwritten.
 
@@ -149,12 +150,13 @@ the list's time, so a removed prefix still re-runs `check` and prints the messag
 
 The prefix depends only on the pinned version and flags, so every worktree would build a byte-equal
 copy. Instead, `link-shared.sh` finds the main checkout with `git rev-parse --git-common-dir` and,
-when a linked worktree has no `.vendor` of its own, makes `.vendor` a symlink to the main checkout's.
-The project's `$(SRCROOT)/.vendor` then resolves to the shared prefix. An existing `.vendor` is left
+when a linked worktree has no `src/.vendor` of its own, makes `src/.vendor` a symlink to the main checkout's.
+The project's `$(SRCROOT)/.vendor` then resolves to the shared prefix. An existing `src/.vendor` is
+left
 alone, so a worktree built with `OPENSKY_FFMPEG_FORCE=1` keeps its copy.
 
 `make link-shared` runs the linker, and every building and testing target depends on it. To move
-a worktree onto the shared prefix, delete its own `.vendor` while nothing builds there, then run
+a worktree onto the shared prefix, delete its own `src/.vendor` while nothing builds there, then run
 `make link-shared`. A checkout opened straight in Xcode, with no `make` target ever run,
 still fails on the missing list, because `make` creates both the symlink and the placeholders.
 

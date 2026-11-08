@@ -11,7 +11,7 @@
 #      A single configuration slipping back to 5.0 disables strict concurrency
 #      checking for a whole target without failing any other gate.
 #
-# Build settings live in config/Build/*.xcconfig with only structural entries left
+# Build settings live in src/config/Build/*.xcconfig with only structural entries left
 # in the pbxproj, so the language-mode scan reads both: a setting reintroduced in
 # the project file would silently override the xcconfig layer.
 set -eu
@@ -25,7 +25,7 @@ required="6.4.2"
 # Language mode every SWIFT_VERSION build setting must carry.
 required_language_mode="6.0"
 
-pbxproj="OpenSky.xcodeproj/project.pbxproj"
+pbxproj="src/OpenSky.xcodeproj/project.pbxproj"
 
 if ! command -v swiftc >/dev/null 2>&1; then
   printf '[FAIL] swiftc not found. Install Xcode and run: make bootstrap\n' >&2
@@ -62,12 +62,12 @@ if [ ! -f "$pbxproj" ]; then
 fi
 
 # Every place a build setting can be declared. An optional gitignored
-# config/Build/Local.xcconfig only carries signing, so the glob covering it costs nothing.
-sources="$(ls config/Build/*.xcconfig 2>/dev/null || true)"
+# src/config/Build/Local.xcconfig only carries signing, so the glob covering it costs nothing.
+sources="$(ls src/config/Build/*.xcconfig 2>/dev/null || true)"
 # shellcheck disable=SC2086 # sources is a newline-separated file list, not one path.
 modes="$(awk '/SWIFT_VERSION = /{ n++ } END { print n + 0 }' "$pbxproj" $sources)"
 if [ "$modes" -eq 0 ]; then
-  printf '[FAIL] no SWIFT_VERSION build setting in %s or config/Build/*.xcconfig\n' \
+  printf '[FAIL] no SWIFT_VERSION build setting in %s or src/config/Build/*.xcconfig\n' \
     "$pbxproj" >&2
   exit 1
 fi
@@ -82,7 +82,7 @@ if [ -n "$stale" ]; then
     printf '[FAIL] build configurations not in Swift %s language mode:\n' \
       "$required_language_mode"
     printf '%s\n' "$stale" | sed 's/^/       /'
-    printf '       Every SWIFT_VERSION in %s and config/Build/*.xcconfig must read %s.\n' \
+    printf '       Every SWIFT_VERSION in %s and src/config/Build/*.xcconfig must read %s.\n' \
       "$pbxproj" "$required_language_mode"
   } >&2
   exit 1

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Sources/OpenSky/Resources/Branding/opensky-logo.svg" width="160" alt="OpenSky logo">
+  <img src="src/Sources/OpenSky/Resources/Branding/opensky-logo.svg" width="160" alt="OpenSky logo">
 </p>
 
 # OpenSky

@@ -1,6 +1,6 @@
 #!/bin/sh
 # OpenSky vendored astcenc: ARM's ASTC encoder (Apache-2.0) as a static NEON library,
-# used by Sources/CASTCEncoder to encode textures at every ASTC block size and effort
+# used by src/Sources/CASTCEncoder to encode textures at every ASTC block size and effort
 # level. See docs/decisions/astcenc.md.
 #
 # Invoked by `make bootstrap` and by `make astcenc`. Idempotent: a matching build stamp
@@ -21,8 +21,8 @@ cd "$ROOT"
 "$ROOT/tools/link-shared.sh"
 SHARED=$(cd "$(dirname "$(git rev-parse --git-common-dir)")" && pwd)
 
-PREFIX="$SHARED/.vendor/astcenc"
-SRC_DIR="$SHARED/.vendor/src"
+PREFIX="$SHARED/src/.vendor/astcenc"
+SRC_DIR="$SHARED/src/.vendor/src"
 BUILD_DIR="$SRC_DIR/astc-encoder-$ASTCENC_VERSION"
 TARBALL="$SRC_DIR/astc-encoder-$ASTCENC_VERSION.tar.gz"
 STAMP="$PREFIX/opensky-build-stamp"

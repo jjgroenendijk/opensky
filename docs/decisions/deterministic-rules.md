@@ -15,7 +15,7 @@ them over every tracked Swift file of a package module.
 
 | Rule | Where | What fails the check |
 | --- | --- | --- |
-| No hidden randomness or clock | Game-rule code: every module that `Package.swift` declares with `feature`, `domain`, or `interface`, its `Interface` module, and every pure core (`*Core.swift`) | A system random draw (`Float.random(in:)` without `using:`, `randomElement()`, `shuffled()`, `SystemRandomNumberGenerator`), `UUID()`, `Date()`, `Date.now`, and the system clocks (`DispatchTime.now`, `ContinuousClock`, `CACurrentMediaTime`, `systemUptime`, and the rest) |
+| No hidden randomness or clock | Game-rule code: every module that `src/Package.swift` declares with `feature`, `domain`, or `interface`, its `Interface` module, and every pure core (`*Core.swift`) | A system random draw (`Float.random(in:)` without `using:`, `randomElement()`, `shuffled()`, `SystemRandomNumberGenerator`), `UUID()`, `Date()`, `Date.now`, and the system clocks (`DispatchTime.now`, `ContinuousClock`, `CACurrentMediaTime`, `systemUptime`, and the rest) |
 | No global mutable state or singletons | Every package module | A stored `static var`, a file-scope `var`, `nonisolated(unsafe)` state, a `static let` that holds a lock, an atomic, a cache, or a queue, and a `static let shared` or `instance` |
 | No hidden event bus | Every package module | `NotificationCenter`, `DistributedNotificationCenter`, and `Notification.Name` |
 

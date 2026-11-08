@@ -10,6 +10,14 @@
 OPENSKY_DIAGNOSE_MISSING_TARGET_DEPENDENCIES_mh_dylib = NO
 DIAGNOSE_MISSING_TARGET_DEPENDENCIES = $(OPENSKY_DIAGNOSE_MISSING_TARGET_DEPENDENCIES_$(MACH_O_TYPE):default=YES)
 
+// The C targets bring their own module.modulemap, so their framework variants have no
+// module map to generate. With DEFINES_MODULE on, each variant warned that it found no
+// umbrella header.
+OPENSKY_DEFINES_MODULE_OpenSkyShaderTypes = NO
+OPENSKY_DEFINES_MODULE_CFFmpeg = NO
+OPENSKY_DEFINES_MODULE_CASTCEncoder = NO
+DEFINES_MODULE = $(OPENSKY_DEFINES_MODULE_$(PRODUCT_NAME):default=$(inherited))
+
 // Compilation-cache keys must not depend on where a checkout or its build tree
 // lives, or no other worktree can reuse an entry. Prefix mapping turns the checkout
 // into /^src, the tree into /^derived, and products into /^built; it has to reach

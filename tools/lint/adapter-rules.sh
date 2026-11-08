@@ -33,7 +33,7 @@ for rule in no_magic_numbers cyclomatic_complexity; do
   esac
 done
 
-modules=$(git ls-files 'Sources/*Adapters/*.swift' | cut -d/ -f1-2 | sort -u)
+modules=$(git ls-files 'src/Sources/*Adapters/*.swift' | cut -d/ -f1-3 | sort -u)
 [ -n "$modules" ] || { echo "[ OK ] no adapter module to lint"; exit 0; }
 if ! printf '%s\n' "$modules" | xargs "$swiftlint" lint --strict --quiet --config "$config"; then
   echo "[ERROR] an adapter holds a magic number or a complex function (docs/decisions/ports-and-adapters.md, rule 5)" >&2

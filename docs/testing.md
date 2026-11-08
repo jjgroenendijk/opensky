@@ -8,15 +8,16 @@ tags: [testing, tooling, process]
 
 # Testing setup
 
-Tests run through `make`. Fixture rules are in `Tests/OpenSkyTests/AGENTS.md`,
-`Tests/OpenSkyRealDataTests/AGENTS.md`, `Tests/HostedTestSupport/AGENTS.md`, and the legal section of
+Tests run through `make`. Fixture rules are in `src/Tests/OpenSkyTests/AGENTS.md`,
+`src/Tests/OpenSkyRealDataTests/AGENTS.md`, `src/Tests/HostedTestSupport/AGENTS.md`, and the legal
+section of
 `AGENTS.md`: synthetic data built in code only, never files taken from the game. How the test plans,
 the tag plans, coverage, and sanitizers work is on the [test runs](/tools/test-runs.md) page.
 
 ## Targets
 
 - `OpenSkyFormatsCoreTests`, `OpenSkyGameDataTests`, and the other `<Module>Tests`: package test
-  targets, one per library module in `Package.swift`. A change to engine code does not rebuild them
+  targets, one per library module in `src/Package.swift`. A change to engine code does not rebuild them
   ([Swift modules](/tools/modules.md)).
 - `OpenSkyTests`: unit tests with Swift Testing for what a package test target cannot hold: the
   app module and the acceptance chains. None of it needs game data.
@@ -26,10 +27,11 @@ the tag plans, coverage, and sanitizers work is on the [test runs](/tools/test-r
 - `OpenSkyUITests`: XCUITest smoke tests. The app launches, the main window appears, and there is no
   game data alert.
 
-`Tests/HostedTestSupport/` is not a target. Both `OpenSkyTests` and `OpenSkyRealDataTests` compile it,
+`src/Tests/HostedTestSupport/` is not a target. Both `OpenSkyTests` and `OpenSkyRealDataTests`
+compile it,
 the way the package modules are shared by the app and `OpenSkyCLI`. It has no `@Test`, because
 a test there would run in both bundles. It holds only fixtures that need the app. Each
-`Tests/OpenSky<Layer>Testing/` folder is a package library of shared fixtures, for example
+`src/Tests/OpenSky<Layer>Testing/` folder is a package library of shared fixtures, for example
 `OpenSkyFormatsTesting` with the plugin byte builders. Every unit test target that needs one links it.
 
 ## Entry points
@@ -94,7 +96,7 @@ condition, so a test knows which budget applies. Its products go in the `-optimi
 beside the Debug one, so switching between it and `make test-unit` does not rebuild the engine
 each time ([dynamic bodies](/engine/dynamic-bodies.md)).
 
-A gated suite written outside `Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would
+A gated suite written outside `src/Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would
 ever run it: `make test-real` would not reach it, and `make test-unit` would skip it.
 
 ## Memory watchdog

@@ -27,9 +27,9 @@ case "$group" in
 esac
 
 type="$(printf '%s\n' "$name" | awk -F- '{ for (i = 1; i <= NF; i++) printf "%s", toupper(substr($i, 1, 1)) substr($i, 2) }')"
-arguments="Sources/OpenSkyCLIArguments/${type}Arguments.swift"
-command="Sources/OpenSkyCLI/Commands/${type}Command.swift"
-tree=Sources/OpenSkyCLIArguments/OpenSkyCommandLine.swift
+arguments="src/Sources/OpenSkyCLIArguments/${type}Arguments.swift"
+command="src/Sources/OpenSkyCLI/Commands/${type}Command.swift"
+tree=src/Sources/OpenSkyCLIArguments/OpenSkyCommandLine.swift
 
 for file in "$arguments" "$command"; do
   [ ! -e "$file" ] || { echo "[ERROR] $file already exists" >&2; exit 1; }
@@ -63,7 +63,7 @@ enum ${type}Command {
 }
 EOF
 
-cat >>Sources/OpenSkyCLI/CommandRunners.swift <<EOF
+cat >>src/Sources/OpenSkyCLI/CommandRunners.swift <<EOF
 
 extension ${type}Arguments: CLIRunnable {
     func execute() throws {

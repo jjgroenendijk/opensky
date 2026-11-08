@@ -7,13 +7,13 @@
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
-registry=Sources/OpenSkyFormatsMesh/NIF/NIFBlockTypes.swift
+registry=src/Sources/OpenSkyFormatsMesh/NIF/NIFBlockTypes.swift
 pattern='"(Ni|BS|bhk|hk)[A-Z][A-Za-z0-9]*"'
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
-git ls-files -- 'Sources/*.swift' |
-  grep -vE '^Sources/(OpenSkyFormatsAnimation|OpenSkyBehavior|OpenSkyCLI)/' |
+git ls-files -- 'src/Sources/*.swift' |
+  grep -vE '^src/Sources/(OpenSkyFormatsAnimation|OpenSkyBehavior|OpenSkyCLI)/' |
   grep -vxF "$registry" |
   xargs grep -ohE "$pattern" | tr -d '"' | LC_ALL=C sort -u >"$work/used"
 grep -ohE "$pattern" "$registry" | tr -d '"' | LC_ALL=C sort -u >"$work/listed"

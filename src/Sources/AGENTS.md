@@ -1,6 +1,6 @@
 # AGENTS.md — Sources
 
-Rules for code under `Sources/`. The module list, the layers, and the import rules are in
+Rules for code under `src/Sources/`. The module list, the layers, and the import rules are in
 `docs/tools/modules.md`; `docs/tools/swift-toolchain.md` explains the isolation patterns.
 
 ## Folder layout
@@ -50,7 +50,7 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   stays internal. A public value type states `Sendable` itself, because Swift does not infer
   it across a module boundary.
 - Every file that uses a module writes its own `import`. New modules and their dependencies
-  go in `Package.swift`, never in the project file.
+  go in `src/Package.swift`, never in the project file.
 - Three compiler rules hold on every target (`docs/decisions/language-rules.md`). A protocol
   type is written `any X`. An import is `internal`: write `public import X` only when a public
   declaration of the file uses a type of `X`. An unsafe pointer or C call is marked `unsafe`.
@@ -68,6 +68,6 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
 - Make an edit that repeats across many files with a script, then review `git diff --stat`
   and a sample of the hunks. Do not read and edit each site in the conversation. Each file
   read stays in context for the rest of the session, so per-site edits cost far more.
-- Comments: `make comment-blocks PATHS='Sources/X' > .logs/comments.txt` prints only the long
+- Comments: `make comment-blocks PATHS='src/Sources/X' > .logs/comments.txt` prints only the long
   blocks, each under a `=== path:first-last` header. Rewrite the text under each header,
   leave a body empty to delete the block, then run `make comment-apply SPEC=.logs/comments.txt`.

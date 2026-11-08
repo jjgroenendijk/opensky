@@ -34,8 +34,8 @@ failed=0
 warned=0
 for file in $files; do
   case "$file" in
-  *.pbxproj | *Package.resolved) continue ;; # written by tools, not people
-  Package.swift) continue ;;                  # SwiftPM reads one manifest file only
+  *.pbxproj | src/Package.resolved) continue ;; # written by tools, not people
+  src/Package.swift) continue ;;                  # SwiftPM reads one manifest file only
   esac
   [ "$mode" = --staged ] || [ -f "$file" ] || continue
   content "$file" | grep -Iq . || continue # binary or empty

@@ -16,9 +16,9 @@ and `openskycli` can use it, because it imports no AppKit.
 `GameViewController` keeps only the view, the input, and the render loop. It holds the
 coordinators and forwards to them.
 
-The reference example is the vendor domain in `Sources/OpenSkyInventory/`: `VendorCore` and
+The reference example is the vendor domain in `src/Sources/OpenSkyInventory/`: `VendorCore` and
 `VendorCoordinator`. Their tests are `VendorCoreTests` and `VendorCoordinatorTests` in
-`Tests/OpenSkyInventoryTests/`. Copy its shape.
+`src/Tests/OpenSkyInventoryTests/`. Copy its shape.
 
 ## Why
 
@@ -42,52 +42,52 @@ When a domain's last `GameViewController+X` file goes, the adapter and the wire 
 into a small app class that holds the view controller, such as `CombatWorldAdapter`. The view
 controller keeps only the stored coordinator. The combat domain
 works this way: `CombatCore`, `CombatCoordinator`, and its port `CombatWorld` live in
-`Sources/OpenSkyCombat/`, and the coordinator is also the world of the melee, archery, and
+`src/Sources/OpenSkyCombat/`, and the coordinator is also the world of the melee, archery, and
 combat-loop runtimes it owns. The magic domain has the same shape: `MagicCore`,
-`MagicCoordinator`, and `MagicWorld` in `Sources/OpenSkyMagic/`, answered by
+`MagicCoordinator`, and `MagicWorld` in `src/Sources/OpenSkyMagic/`, answered by
 `MagicWorldAdapter`. The coordinator is the cast loop's `CasterWorld`. The inventory domain has
-`InventoryCore`, `InventoryCoordinator`, and `InventoryWorld` in `Sources/OpenSkyInventory/`,
+`InventoryCore`, `InventoryCoordinator`, and `InventoryWorld` in `src/Sources/OpenSkyInventory/`,
 answered by `InventoryWorldAdapter`. The coordinator also holds the `VendorCoordinator`.
-The faction domain has `FactionCoordinator` and `FactionWorld` in `Sources/OpenSkyFactions/`,
+The faction domain has `FactionCoordinator` and `FactionWorld` in `src/Sources/OpenSkyFactions/`,
 answered by `FactionWorldAdapter`. Its rules are `FactionRuntime` and `HostilityDerivation`.
 The crime domain has `CrimeCore`, `CrimeCoordinator`, and `CrimeSessionWorld` in
-`Sources/OpenSkyCrime/`, answered by `CrimeWorldAdapter`. The coordinator is the bounty
+`src/Sources/OpenSkyCrime/`, answered by `CrimeWorldAdapter`. The coordinator is the bounty
 reporter's `CrimeWorld`. It reaches factions only through its port, because `OpenSkyCrime`
 may not import `OpenSkyFactions`.
-The audio domain has `AudioLabCore` in `Sources/OpenSkyAudio/`, and `AudioCoordinator` with its
-port `AudioWorld` in `Sources/OpenSkyWorld/Session/`, answered by `AudioWorldAdapter`. The
+The audio domain has `AudioLabCore` in `src/Sources/OpenSkyAudio/`, and `AudioCoordinator` with its
+port `AudioWorld` in `src/Sources/OpenSkyWorld/Session/`, answered by `AudioWorldAdapter`. The
 coordinator sits in `OpenSkyWorld`, not `OpenSkyAudio`, because the directors it owns live
 there.
-The ragdoll domain has `RagdollCoordinator` and `RagdollSessionWorld` in `Sources/OpenSkyCombat/`,
+The ragdoll domain has `RagdollCoordinator` and `RagdollSessionWorld` in `src/Sources/OpenSkyCombat/`,
 answered by `RagdollWorldAdapter`. It lives beside `RagdollRuntime`, and it is the runtime's
 `RagdollWorldSeam`. The player has `PlayerCore`, `PlayerCoordinator`, and `PlayerWorld` in
-`Sources/OpenSkyPlayer/`, and face morphs have `FaceMorphCoordinator` and
+`src/Sources/OpenSkyPlayer/`, and face morphs have `FaceMorphCoordinator` and
 `FaceMorphWorld`. `PlayerWorldAdapter` answers both ports.
 The dialogue domain has `DialogueCore`, `DialogueCoordinator`, and `DialogueWorld` in
-`Sources/OpenSkyDialogue/`, answered by `DialogueWorldAdapter`. The core's speaker focus is a
+`src/Sources/OpenSkyDialogue/`, answered by `DialogueWorldAdapter`. The core's speaker focus is a
 state machine: it returns hold, face, and release effects, and the coordinator returns them
 as `DialogueCommand` values. The journal has `JournalCore`, `JournalCoordinator`, and
-`JournalWorld` in `Sources/OpenSkyQuests/`.
+`JournalWorld` in `src/Sources/OpenSkyQuests/`.
 The actor-value domain has `ActorValueCoordinator` and `ActorValueWorld` in
-`Sources/OpenSkyActors/`, answered by `ActorWorldAdapter`. That adapter also answers which
+`src/Sources/OpenSkyActors/`, answered by `ActorWorldAdapter`. That adapter also answers which
 actors are resident, through `actorValueHolder(for:)` and `combatActors()`, because every
 other adapter needs those reads. The perk and progression domain has `PerkCoordinator`,
 `ProgressionCoordinator`, and the ports `PerkWorld` and `ProgressionWorld` in
-`Sources/OpenSkyProgression/`, answered by `ProgressionWorldAdapter`. `OpenSkyProgression` may
+`src/Sources/OpenSkyProgression/`, answered by `ProgressionWorldAdapter`. `OpenSkyProgression` may
 not import `OpenSkyMagic`, so perk abilities are applied through `PerkWorld`.
 The AI domain has four coordinators, all answered by `AIWorldAdapter`. `PackageCoordinator`
 with `PackageCore` and `PackageWorld`, `AINavigationCoordinator` with `AINavigationCore` and
 `AINavigationWorld`, and `NPCAnimationCoordinator` with `NPCAnimationWorld` live in
-`Sources/OpenSkyAIPackages/`. `PerceptionCoordinator` with `PerceptionCore` and
-`PerceptionSessionWorld` lives in `Sources/OpenSkyPerception/`. The perception coordinator is
+`src/Sources/OpenSkyAIPackages/`. `PerceptionCoordinator` with `PerceptionCore` and
+`PerceptionSessionWorld` lives in `src/Sources/OpenSkyPerception/`. The perception coordinator is
 the pass's `PerceptionWorld`: it filters the session's actors down to the observers.
 Runtime state has `RuntimeStateCore`, `RuntimeStateCoordinator`, and
-`RuntimeStateWorld` in `Sources/OpenSkyRuntimeState/`, answered by `RuntimeStateWorldAdapter`.
+`RuntimeStateWorld` in `src/Sources/OpenSkyRuntimeState/`, answered by `RuntimeStateWorldAdapter`.
 The coordinator owns the `GlobalStore` and the clock scrubs. Save and load go through the port,
 because `OpenSkyRuntimeState` may not import `OpenSkySave`. The adapter also builds the live condition
 context, because it reads every feature's runtime. Papyrus has `ScriptCoordinator` and
-`ScriptWorld` in `Sources/OpenSkyScripting/`, answered by `ScriptWorldAdapter`, which also gives
-the natives their collaborators. `WorldRenderControls` in `Sources/OpenSkyWorld/Session/` holds
+`ScriptWorld` in `src/Sources/OpenSkyScripting/`, answered by `ScriptWorldAdapter`, which also gives
+the natives their collaborators. `WorldRenderControls` in `src/Sources/OpenSkyWorld/Session/` holds
 the renderer and streamer controls that agent control uses. It has no core, because it only reads
 and writes the renderer. `WorldSessionWiring` in the app builds the streamer and runs every wire
 function in order.
@@ -99,7 +99,7 @@ every transaction it runs is a coordinator call. `DialogueMenuController` and
 state and asks the dialogue coordinator to hold the speaker.
 
 The HUD and the system menu have `HUDCoordinator` and `SystemMenuCoordinator` in
-`Sources/OpenSkyMenus/`. They share one
+`src/Sources/OpenSkyMenus/`. They share one
 `SWFMovieSource`, and their port `SWFLayerWorld` gives them the renderer. The renderer has one
 SWF layer, so a menu that shows a movie calls `HUDCoordinator.suspend()` first and
 `HUDCoordinator.start()` when it closes. The HUD rules are in `HUDCore`. `SystemMenuWorld`

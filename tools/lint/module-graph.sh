@@ -10,7 +10,7 @@ cd "$(git rev-parse --show-toplevel)"
 # the graph is larger.
 MODULE_GRAPH="$(mktemp)"
 trap 'rm -f "$MODULE_GRAPH"' EXIT
-swift package dump-package >"$MODULE_GRAPH"
+swift package --package-path src dump-package >"$MODULE_GRAPH"
 export MODULE_GRAPH
 
 python3 - <<'PY'
@@ -63,7 +63,7 @@ COMPOSITION |= {n for n in names if n.endswith("Adapters")}
 features = names - set(layer) - set(domain) - COMPOSITION - tests - test_side - interfaces
 failures = []
 for name in sorted(test_side - testing - fixtures):
-    failures.append(f"library {name} under Tests/ is named neither ...Testing nor ...Fixtures")
+    failures.append(f"library {name} under src/Tests/ is named neither ...Testing nor ...Fixtures")
 for name in sorted(fixtures):
     if name[:-len("Fixtures")] not in features | set(domain):
         failures.append(f"fixtures library {name} names no feature or domain")
@@ -172,7 +172,7 @@ imports = 0
 for target in targets:
     name = target["name"]
     root = "Tests" if name in tests else "Sources"
-    folder = pathlib.Path(target.get("path") or f"{root}/{name}")
+    folder = pathlib.Path("src", target.get("path") or f"{root}/{name}")
     allowed = set(deps[name]) | {name}
     used = set()
     for path in sorted(folder.rglob("*.swift")):

@@ -15,7 +15,7 @@ tags: [decision, dependency, swiftpm, cli]
   license is Apache 2.0, which allows redistributing OpenSky's code with it.
 - The declarations live in the `OpenSkyCLIArguments` module. It has its own product, and only
   the `openskycli` target links it. The app and the engine modules do not import it.
-- The tracked `Package.resolved` pins the version, as for
+- The tracked `src/Package.resolved` pins the version, as for
   [swift-collections](/decisions/swift-collections.md).
 
 ## Why

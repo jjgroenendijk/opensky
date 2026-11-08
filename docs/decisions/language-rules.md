@@ -37,7 +37,7 @@ fails the build.
 
 ## How the settings stay the same
 
-`Package.swift` lists the features in `languageSettings`, and `config/Build/Base.xcconfig` sets
+`src/Package.swift` lists the features in `languageSettings`, and `src/config/Build/Base.xcconfig` sets
 the matching build settings for the app, the CLI, and the Xcode test bundles.
 `tools/lint/language-rules.sh` (`make language-rules`, in `make check` and CI) checks that:
 
@@ -45,7 +45,7 @@ the matching build settings for the app, the CLI, and the Xcode test bundles.
 - every feature in `languageSettings` has its build setting set to `YES` in the xcconfig, and the
   reverse;
 - each rule rejects a small violation. The script compiles one short snippet per rule with the
-  flags it read from `Package.swift`. A snippet that compiles means the rule is off, and the
+  flags it read from `src/Package.swift`. A snippet that compiles means the rule is off, and the
   check fails. A clean snippet must compile, so a broken flag cannot pass by rejecting
   everything.
 

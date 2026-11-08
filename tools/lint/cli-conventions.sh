@@ -7,7 +7,7 @@ set -eu
 
 cd "$(git rev-parse --show-toplevel)"
 
-arguments_dir=Sources/OpenSkyCLIArguments
+arguments_dir=src/Sources/OpenSkyCLIArguments
 exceptions=tools/lint/cli-probe-exceptions.txt
 failed=0
 
@@ -74,8 +74,8 @@ fi
 
 tab="$(printf '\t')"
 while IFS="$tab" read -r type path; do
-  if ! grep -rqF "extension $type: CLIRunnable" Sources/OpenSkyCLI; then
-    printf "[FAIL] %s (%s) has no CLIRunnable runner in Sources/OpenSkyCLI\n" "$path" "$type" >&2
+  if ! grep -rqF "extension $type: CLIRunnable" src/Sources/OpenSkyCLI; then
+    printf "[FAIL] %s (%s) has no CLIRunnable runner in src/Sources/OpenSkyCLI\n" "$path" "$type" >&2
     failed=1
   fi
   if ! grep -qF "\`$path" docs/tools/cli.md; then
