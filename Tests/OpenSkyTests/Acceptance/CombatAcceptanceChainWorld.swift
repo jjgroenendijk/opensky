@@ -19,6 +19,7 @@ import OpenSkyEngineTesting
 @testable import OpenSkyPhysics
 import OpenSkyPlayer
 @testable import OpenSkyProgressionInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyWorld
 @testable import OpenSkyWorldState

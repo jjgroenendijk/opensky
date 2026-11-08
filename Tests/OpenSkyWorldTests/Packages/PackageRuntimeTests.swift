@@ -41,7 +41,7 @@ struct PackageRuntimeTests {
             packages: [scheduled, fallback],
             actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
         )
-        var runtime = ActorPackageRuntime(store: store)
+        var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
         try runtime.register(actor: Self.actorKey, base: actor.formID)
 
         runtime.advance(clock: GameClock(hour: 9)) { _ in
@@ -74,7 +74,7 @@ struct PackageRuntimeTests {
             actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
         )
         var changes = 0
-        var runtime = ActorPackageRuntime(store: store)
+        var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
         runtime.onSelectionChanged = { _ in changes += 1 }
         try runtime.register(actor: Self.actorKey, base: actor.formID)
         runtime.advance(clock: GameClock(hour: 9)) { _ in ConditionContext() }
@@ -105,7 +105,7 @@ struct PackageRuntimeTests {
             packages: [morning, fallback],
             actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
         )
-        var runtime = ActorPackageRuntime(store: store)
+        var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
         try runtime.register(actor: Self.actorKey, base: actor.formID)
         runtime.advance(clock: GameClock(hour: 9)) { _ in ConditionContext() }
         #expect(runtime.currentPackage(for: Self.actorKey)?.package.formID == FormID(0x100))

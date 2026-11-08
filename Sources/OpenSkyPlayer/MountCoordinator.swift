@@ -3,9 +3,9 @@
 // app applies them to the vehicles, the streamer, and crime. See docs/engine/riding.md.
 
 import Foundation
-public import OpenSkyActorPresentation
 public import OpenSkyFormatsESM
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd
 

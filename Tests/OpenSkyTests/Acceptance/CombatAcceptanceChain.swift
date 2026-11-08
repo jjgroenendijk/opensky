@@ -22,6 +22,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState

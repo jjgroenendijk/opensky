@@ -63,6 +63,7 @@ runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI
 | 10. Renderer | `OpenSkyRendering` depends only on the formats, `OpenSkyGameData`, the asset cache, `OpenSkyRenderCore`, `OpenSkyRenderResources`, and its draw helpers. Game state reaches it in `RenderFrameInput` | Gate |
 | 11. Interface exports | An Interface publicly imports only lower modules and other Interfaces, and no file uses `@_exported import` | Gate |
 | 12. Used dependencies | Every declared dependency of a target is imported by at least one of its files | Gate |
+| 13. Stable dependencies | A module under `Sources/` depends only on a module whose instability is not higher than its own, or on an Interface | Gate |
 
 Rule 7 matters because Xcode builds all package modules into one product. A module can then
 compile with an `import` it never declared, and break later in `swift test` or on another
@@ -71,6 +72,25 @@ build order.
 Rule 12 keeps the declared graph equal to the used graph. The stability check reads the
 declared edges, so an edge no file uses would make a module look less stable than it is. A
 test target lists `OpenSkyTagsTesting` itself when it tags its tests.
+
+Rule 13 is the stable dependencies principle. Instability is `I = out / (in + out)`: `out` is
+the number of modules a module depends on, and `in` is the number of targets that depend on
+it. Example: `OpenSkyRendering` depends on 9 modules, and 36 targets depend on it, so its
+instability is 9 / 45 = 0.2. A module with `I` near 0 is depended on by many and changes
+rarely; a module with `I` near 1 depends on many and changes often. The count takes in every
+target, test targets included, because a test that imports a module also breaks when it
+changes. Two kinds of edge are left out:
+
+- An edge to an Interface. An Interface holds only ports and shared values, so a new user
+  makes it more abstract, not less stable.
+- An edge from a `Testing` or `Fixtures` library. Only tests use them, and they build what a
+  test needs, whatever its layer.
+
+There is no margin: a module at 0.481 may not depend on one at 0.486. When an edge fails, move
+the shared type down into the more stable module, pass the value in through a port, or make
+the type generic over the part that names the less stable module. `PlayerRigAssembly` is
+generic over its asset for this reason: the interface module holds the rig, and only the
+player module names the renderer's `ActorRenderAsset`.
 
 `Package.swift` checks rules 1 and 2 partly too, when the manifest loads. It rejects a
 dependency on a module declared later, and a dependency on a feature implementation. The

@@ -97,6 +97,8 @@ nonisolated public struct AssetCacheUsage: Equatable, Sendable {
 nonisolated public final class AssetCacheStore: Sendable {
     static let entryExtension = "osac"
     static let temporaryFolder = "tmp"
+    /// The saved FormID indexes beside the cache, which a clear removes too.
+    public static let recordIndexFolderName = "records"
 
     public let root: URL
     private let limit: Mutex<UInt64>
@@ -250,7 +252,7 @@ nonisolated public final class AssetCacheStore: Sendable {
 
     public func clear() throws {
         let folders = AssetCacheKind.allCases.map(\.folderName)
-            + [RecordIndexCacheFolder.folderName]
+            + [Self.recordIndexFolderName]
         for name in folders {
             let folder = root.appending(path: name, directoryHint: .isDirectory)
             if FileManager.default.fileExists(atPath: folder.path(percentEncoded: false)) {

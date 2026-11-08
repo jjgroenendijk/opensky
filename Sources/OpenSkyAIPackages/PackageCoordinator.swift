@@ -8,7 +8,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyNavigation
 public import OpenSkyPhysics
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
@@ -274,7 +274,9 @@ public final class PackageCoordinator {
     public init(world: (any PackageWorld)?, data: PackageSessionData?) {
         self.world = world
         store = data?.store
-        runtime = data.map { ActorPackageRuntime(store: $0.store) }
+        runtime = data.map {
+            ActorPackageRuntime(store: $0.store, conditionFunctions: $0.conditionFunctions)
+        }
         guardWarnings = data?.guardWarnings ?? .vanilla
         sandboxSettings = data?.sandboxSettings ?? .vanilla
         bumpSettings = data?.bumpSettings ?? .vanilla

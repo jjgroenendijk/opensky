@@ -1,9 +1,9 @@
 // Camera and light parameters the renderer folds into FrameUniforms. The app injects a
-// framing camera for a built cell; `demo` matches the synthetic DemoScene.
+// framing camera for a built cell.
 
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyShaderTypes
+public import OpenSkyShaderTypes
 import simd
 
 nonisolated public struct SceneCamera: Sendable {
@@ -33,15 +33,10 @@ nonisolated public struct SceneCamera: Sendable {
         self.walkFeetPosition = walkFeetPosition
     }
 
-    /// DemoScene's hand-tuned camera + light — used whenever no cell scene
-    /// is injected (existing tests, missing game data).
-    public static let demo = SceneCamera(
-        eye: DemoScene.cameraEye,
-        target: DemoScene.cameraTarget,
-        sunDirection: DemoScene.sunDirection,
-        sunColor: DemoScene.sunColor,
-        ambientColor: DemoScene.ambientColor
-    )
+    /// The light a framed cell or the demo scene uses when no weather lights it.
+    public static let defaultSunDirection = simd_normalize(SIMD3<Float>(0.4, 0.35, -0.85))
+    public static let defaultSunColor = SIMD3<Float>(1.0, 0.97, 0.88)
+    public static let defaultAmbientColor = SIMD3<Float>(0.22, 0.24, 0.28)
 
     /// Vertical fov the renderer projects with — framing distance derives
     /// from it so the framed box fits on screen at any aspect >= 1.
@@ -78,9 +73,9 @@ nonisolated public struct SceneCamera: Sendable {
         return SceneCamera(
             eye: center + simd_normalize(direction) * distance,
             target: center,
-            sunDirection: DemoScene.sunDirection,
-            sunColor: DemoScene.sunColor,
-            ambientColor: DemoScene.ambientColor
+            sunDirection: defaultSunDirection,
+            sunColor: defaultSunColor,
+            ambientColor: defaultAmbientColor
         )
     }
 
@@ -99,9 +94,9 @@ nonisolated public struct SceneCamera: Sendable {
         return SceneCamera(
             eye: placement.position,
             target: placement.position + forward,
-            sunDirection: demo.sunDirection,
-            sunColor: demo.sunColor,
-            ambientColor: demo.ambientColor,
+            sunDirection: defaultSunDirection,
+            sunColor: defaultSunColor,
+            ambientColor: defaultAmbientColor,
             walkFeetPosition: placement.position
         )
     }

@@ -5,6 +5,7 @@
 @testable import OpenSkyBehavior
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyWorldInterface
 import simd

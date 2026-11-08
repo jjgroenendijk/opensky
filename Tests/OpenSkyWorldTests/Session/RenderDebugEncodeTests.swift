@@ -7,6 +7,7 @@ import Metal
 import MetalKit
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyRenderResources
 import OpenSkyTagsTesting

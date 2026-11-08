@@ -15,6 +15,10 @@ public enum FakeSaveError: Error {
 }
 
 public final class FakeRuntimeStateWorld: RuntimeStateWorld {
+    public var conditionFunctions: ConditionFunctionRegistry {
+        .standard
+    }
+
     public var entries: [RuntimeReferenceEntry] = []
     public var crosshairReference: FormID?
     public var gameClock: GameClock?

@@ -18,7 +18,8 @@ import OpenSkyMenus
 public import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 import OpenSkyScripting
 public import OpenSkySessionInterface
 import OpenSkyWorld

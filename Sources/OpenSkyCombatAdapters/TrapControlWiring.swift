@@ -1,10 +1,10 @@
 // `TrapControlAdapter` joins the started session: what `wire` registered.
 
-import OpenSkyDiagnostics
 import OpenSkyFormatsESM
 import OpenSkyMagic
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkySessionInterface
 import OpenSkyWorld

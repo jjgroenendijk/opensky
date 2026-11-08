@@ -12,6 +12,7 @@ import AppKit
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyTerrain
 @testable import OpenSkyWorld

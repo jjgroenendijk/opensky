@@ -3,7 +3,8 @@
 import Foundation
 @testable import OpenSkyFormatsPEX
 import OpenSkyFormatsTesting
-@testable import OpenSkyGameData
+import OpenSkyGameData
+@testable import OpenSkyScriptingInterface
 import Testing
 
 @Suite("PEX script loader")

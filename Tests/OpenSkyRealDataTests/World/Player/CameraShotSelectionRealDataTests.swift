@@ -27,7 +27,7 @@ struct CameraShotSelectionRealDataTests {
 
         let target = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0001_A67C)
         let check = CameraShotSelector.conditionCheck(
-            context: ConditionContext(), attacker: .player, target: target
+            context: ConditionContext(), registry: .standard, attacker: .player, target: target
         )
         var random = ConditionRandom(seed: 27)
         let selection = CameraShotSelector(store: store, check: check).select(random: &random)
@@ -50,6 +50,7 @@ struct CameraShotSelectionRealDataTests {
             ) { _ in 1000 }
             let check = CameraShotSelector.conditionCheck(
                 context: context,
+                registry: .standard,
                 attacker: .player,
                 target: target
             )

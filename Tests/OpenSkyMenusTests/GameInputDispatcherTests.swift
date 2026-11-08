@@ -3,6 +3,7 @@
 
 @testable import OpenSkyMenus
 import OpenSkyMenusInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScriptingInterface
 import Testing

@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsSWF
-public import OpenSkyGameData
+import OpenSkyGameData
 
 nonisolated public struct MenuGapSweep {
     public static let ticks = 10

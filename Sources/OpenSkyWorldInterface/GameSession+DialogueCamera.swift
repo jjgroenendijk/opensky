@@ -1,7 +1,5 @@
-import OpenSkyDiagnostics
 import OpenSkyPhysics
 import OpenSkyRenderCore
-import OpenSkyRendering
 import simd
 
 /// What the app publishes each frame while a conversation is open. Sampled by

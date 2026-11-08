@@ -3,7 +3,7 @@
 // matches the `BNAM` input names of the vanilla templates.
 
 public import OpenSkyFormatsESM
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface
 import simd
 

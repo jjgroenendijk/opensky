@@ -1,6 +1,5 @@
 import OpenSkyBehavior
 import OpenSkyPhysics
-import OpenSkyRendering
 import simd
 
 /// One frame of player intent, in the form the bridge consumes. Filled from

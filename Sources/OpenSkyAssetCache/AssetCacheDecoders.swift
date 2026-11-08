@@ -4,7 +4,6 @@
 
 public import Foundation
 public import OpenSkyFormatsCore
-public import OpenSkyFormatsMesh
 
 nonisolated public enum AssetConverterVersion {
     public static let texture: UInt32 = 3
@@ -35,14 +34,6 @@ nonisolated extension AssetCacheDecoder where Value == ReadyModelLayout {
     public static var modelLayout: Self {
         Self(kind: .mesh, converterVersion: AssetConverterVersion.mesh) {
             try ModelCacheCodec.decodeLayout($0)
-        }
-    }
-}
-
-nonisolated extension AssetCacheDecoder where Value == NIFCollisionModel {
-    public static var collision: Self {
-        Self(kind: .collision, converterVersion: AssetConverterVersion.collision) {
-            try CollisionCacheCodec.decode($0)
         }
     }
 }

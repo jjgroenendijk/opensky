@@ -1,5 +1,6 @@
 public import OpenSkyFormatsESM
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 public import OpenSkyWorldInterface
 
 /// What the world adapters use of `MountCoordinator`.

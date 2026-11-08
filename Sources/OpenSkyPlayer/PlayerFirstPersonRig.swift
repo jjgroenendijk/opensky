@@ -4,7 +4,6 @@
 // moves, which saves work on paused frames.
 
 public import Metal
-public import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore

@@ -8,10 +8,10 @@ import Foundation
 import Metal
 import MetalKit
 @testable import OpenSkyCells
-@testable import OpenSkyDiagnostics
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyNavigation
+@testable import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyWorld

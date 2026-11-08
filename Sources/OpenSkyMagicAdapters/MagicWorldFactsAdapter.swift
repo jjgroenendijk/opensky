@@ -91,7 +91,9 @@ extension MagicWorldFactsAdapter {
         parameter: UInt32,
         in context: ConditionContext
     ) -> String {
-        ConditionProbe.text(of: function, parameter1: parameter, in: context)
+        ConditionProbe.text(
+            of: function, parameter1: parameter, in: context, registry: .standard
+        )
     }
 
     public func playerAteIngredient(_ item: FormID) {

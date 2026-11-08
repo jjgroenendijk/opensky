@@ -5,6 +5,7 @@
 import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
+import OpenSkyScriptingInterface
 import OpenSkyTagsTesting
 import Testing
 

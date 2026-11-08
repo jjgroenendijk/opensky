@@ -9,7 +9,6 @@ import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
-import OpenSkyDiagnostics
 import OpenSkyFactions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM

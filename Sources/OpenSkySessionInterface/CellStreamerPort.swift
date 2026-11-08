@@ -4,7 +4,7 @@ public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 public import OpenSkyPhysics
 public import OpenSkyRenderCore
-public import OpenSkyRendering
+import OpenSkyRendering
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 public import simd

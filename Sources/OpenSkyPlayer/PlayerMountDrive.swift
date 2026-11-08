@@ -2,12 +2,11 @@
 // locomotion bridge and capsule, so the horse plays its own gaits, and the rider's
 // graph only follows (LocomotionBridgeRiding.swift). See docs/engine/riding.md.
 
-public import OpenSkyActorPresentation
 public import OpenSkyBehavior
 public import OpenSkyFormatsESM
 import OpenSkyPhysics
-import OpenSkyRenderCore
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd
 

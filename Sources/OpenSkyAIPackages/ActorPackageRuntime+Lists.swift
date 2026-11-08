@@ -5,7 +5,7 @@
 public import OpenSkyConditions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 

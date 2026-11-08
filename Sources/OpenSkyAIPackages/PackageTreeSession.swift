@@ -3,7 +3,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -23,13 +23,16 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
     let makeContext: () -> ConditionContext
     /// Read once, on the first branch condition, because a context costs a world walk.
     private var context: ConditionContext?
+    private let conditionFunctions: ConditionFunctionRegistry
 
     init(
         world: any PackageWorld, actor: ReferenceKey, aliasQuest: FormID?,
         package: ResolvedPackage, values: [Int8: Package.DataValue], clock: GameClock,
-        translation: FormIDTranslation?, makeContext: (() -> ConditionContext)? = nil
+        translation: FormIDTranslation?, conditionFunctions: ConditionFunctionRegistry,
+        makeContext: (() -> ConditionContext)? = nil
     ) {
         self.world = world
+        self.conditionFunctions = conditionFunctions
         self.makeContext = makeContext ?? { world.packageConditionContext(clock: clock) }
         self.actor = actor
         self.aliasQuest = aliasQuest
@@ -44,7 +47,7 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
         live.subject = actor
         live.clock = clock
         context = live
-        var evaluator = ConditionEvaluator(context: live)
+        var evaluator = ConditionEvaluator(context: live, registry: conditionFunctions)
         evaluator.context.formIDTranslation = translation
         let outcome = evaluator.evaluate(conditions)
         evaluator.context.formIDTranslation = live.formIDTranslation

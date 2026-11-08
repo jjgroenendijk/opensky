@@ -1,5 +1,4 @@
 import OpenSkyFormatsMesh
-import OpenSkyRendering
 public import simd
 
 /// One node of a running mesh, for `game state nodes`.

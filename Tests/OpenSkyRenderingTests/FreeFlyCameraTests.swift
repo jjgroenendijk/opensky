@@ -2,6 +2,7 @@
 // pitch clamp, movement direction relative to yaw, speed + boost. Pure math,
 // synthetic inputs (AGENTS.md testing rule).
 
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import simd
 import Testing

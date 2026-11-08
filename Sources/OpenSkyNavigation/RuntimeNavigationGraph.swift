@@ -2,10 +2,10 @@
 // immutable NAVM geometry. Cross-navmesh edges and teleport doors resolve at
 // query time, so residency changes need no callback web or adjacency rebuild.
 
-public import OpenSkyDiagnostics
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
+public import OpenSkyRenderCore
 public import OpenSkyWorldInterface
 import simd
 

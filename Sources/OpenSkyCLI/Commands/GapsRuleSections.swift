@@ -24,6 +24,7 @@ import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 

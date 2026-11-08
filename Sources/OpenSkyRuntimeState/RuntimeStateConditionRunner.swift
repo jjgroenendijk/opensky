@@ -6,7 +6,6 @@
 import Foundation
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
-import OpenSkyWorldConditions
 
 nonisolated public enum RuntimeStateConditionRunner: Sendable {
     /// Evaluates `conditions` against `context`, accumulating into `tally` so a
@@ -15,9 +14,10 @@ nonisolated public enum RuntimeStateConditionRunner: Sendable {
         source: String,
         conditions: [Condition],
         context: ConditionContext,
+        registry: ConditionFunctionRegistry,
         tally: inout ConditionTally
     ) -> RuntimeStateConditionReport {
-        var evaluator = ConditionEvaluator(context: context, tally: tally)
+        var evaluator = ConditionEvaluator(context: context, registry: registry, tally: tally)
         var lines: [RuntimeStateConditionLine] = []
         var outcomes: [Bool] = []
         for (offset, condition) in conditions.enumerated() {
@@ -38,7 +38,7 @@ nonisolated public enum RuntimeStateConditionRunner: Sendable {
             source: source,
             isSatisfied: combine(conditions: conditions, outcomes: outcomes),
             lines: lines,
-            tallyLines: tallyLines(tally)
+            tallyLines: tallyLines(tally, registry: registry)
         )
     }
 
@@ -161,13 +161,18 @@ nonisolated public enum RuntimeStateConditionRunner: Sendable {
     /// The tally counters as readout lines. Buckets that never fired are
     /// omitted so a clean run reads as two lines rather than as a wall of
     /// zeroes.
-    public static func tallyLines(_ tally: ConditionTally) -> [String] {
+    public static func tallyLines(
+        _ tally: ConditionTally, registry: ConditionFunctionRegistry
+    ) -> [String] {
         var lines = [
             "Conditions evaluated: \(tally.conditionsEvaluated)"
                 + "  Lists: \(tally.listsEvaluated)",
             "Failures: \(tally.failureTotal)"
         ]
-        lines.append(contentsOf: ranked("Unimplemented", tally.rankedUnknownFunctions()))
+        lines.append(contentsOf: ranked(
+            "Unimplemented",
+            tally.rankedUnknownFunctions(in: registry)
+        ))
         lines.append(contentsOf: ranked("Unresolved globals", tally.rankedUnresolvedGlobals))
         lines.append(contentsOf: ranked("Unresolved quests", tally.rankedUnresolvedQuests))
         lines.append(contentsOf: ranked("Unsupported run-ons", tally.rankedUnsupportedRunOns))

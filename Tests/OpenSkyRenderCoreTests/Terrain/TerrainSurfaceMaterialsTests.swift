@@ -5,7 +5,6 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
-@testable import OpenSkyPhysics
 @testable import OpenSkyRenderCore
 import simd
 import Testing

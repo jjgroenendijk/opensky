@@ -1,5 +1,4 @@
 import OpenSkyPhysics
-import OpenSkyRendering
 import simd
 
 public struct RendererCinematicCameraState {

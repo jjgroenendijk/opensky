@@ -7,6 +7,11 @@ public import OpenSkyAssetCache
 import OpenSkyFormatsCore
 public import OpenSkyGameData
 
+/// Thrown by a converter set that needs a Metal device when none is there.
+nonisolated public enum AssetCacheConvertersError: Error, Equatable {
+    case metalUnavailable
+}
+
 public final class AssetCacheCoordinator {
     public enum Activity: Equatable, Sendable {
         case idle
@@ -27,15 +32,6 @@ public final class AssetCacheCoordinator {
             self.locate = locate
             self.makeConverters = makeConverters
         }
-
-        /// The located install and the converters on the system GPU.
-        public static let live = Self(
-            locate: {
-                let root = try GameDataLocator.locate()
-                return (VirtualFileSystem(root: root), root.installURL)
-            },
-            makeConverters: { try AssetCacheConverters.make(textureOutput: $0) }
-        )
     }
 
     public private(set) var settings: AssetCacheSettings
@@ -52,7 +48,7 @@ public final class AssetCacheCoordinator {
     private let environment: Environment
     private var control: AssetCacheBuildControl?
 
-    public init(store: PlayerSettingsStore, environment: Environment = .live) {
+    public init(store: PlayerSettingsStore, environment: Environment) {
         self.store = store
         self.environment = environment
         settings = AssetCacheSettings(store: store)

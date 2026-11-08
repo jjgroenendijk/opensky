@@ -31,7 +31,7 @@ DOMAIN_OWNER = "OpenSkyWorld"
 RENDERER = "OpenSkyRendering"
 RENDERER_DEPS = {
     "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
-    "OpenSkyGameData", "OpenSkyDiagnostics", "OpenSkyPhysics", "OpenSkyShaderTypes",
+    "OpenSkyGameData", "OpenSkyShaderTypes",
     "OpenSkyAssetCache", "CASTCEncoder", "OpenSkyImageKernels", "OpenSkyRenderCore",
     "OpenSkyRenderResources",
 }
@@ -187,6 +187,35 @@ for target in targets:
     # Rule 12. A declared edge no file imports would distort the stability metric.
     for module in sorted(set(deps[name]) - used):
         failures.append(f"rule 12: {name} declares {module}, which no file of it imports")
+
+
+# Rule 13. A module depends only on a module at least as stable. Instability is
+# out / (in + out), counted over every target, tests included. An interface may be
+# depended on at any instability, because it holds only ports.
+def instability(graph):
+    edges = {name: set(found) & graph.keys() for name, found in graph.items()}
+    fan_in = dict.fromkeys(graph, 0)
+    for found in edges.values():
+        for dep in found:
+            fan_in[dep] += 1
+    return {name: len(edges[name]) / max(len(edges[name]) + fan_in[name], 1) for name in graph}
+
+
+def stability_failures(graph, checked):
+    value = instability(graph)
+    return [
+        f"rule 13: {name} (instability {value[name]:.3f}) depends on the less stable "
+        f"{dep} ({value[dep]:.3f})"
+        for name in sorted(checked) for dep in sorted(set(graph[name]) & graph.keys())
+        if not dep.endswith("Interface") and value[dep] > value[name]
+    ]
+
+
+probe_graph = {"Stable": ["Loose"], "Loose": ["Low", "Base"], "Low": [], "Base": [],
+               "UserA": ["Stable"], "UserB": ["Stable"]}
+if len(stability_failures(probe_graph, probe_graph.keys())) != 1:
+    failures.append("rule 13 self-check: a dependency on a less stable module passed")
+failures += stability_failures(deps, names - tests - test_side)
 
 if failures:
     print("[FAIL] module graph breaks The Modular Architecture:", file=sys.stderr)

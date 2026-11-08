@@ -12,6 +12,7 @@ import OpenSkyObjectAnimation
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyScripting
 public import OpenSkyScriptingInterface

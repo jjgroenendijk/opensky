@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRuntimeState
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 import OpenSkyWorldInterface
 import simd
 
@@ -74,7 +74,9 @@ extension IdleCoordinator {
                 adjust?(&context)
             }
             base = context
-            var evaluator = ConditionEvaluator(context: context)
+            var evaluator = ConditionEvaluator(
+                context: context, registry: self?.conditionFunctions ?? ConditionFunctionRegistry()
+            )
             return evaluator.firstFailure(in: idle.conditions).map(evaluator.functionName(of:))
         }
         guard let store else {

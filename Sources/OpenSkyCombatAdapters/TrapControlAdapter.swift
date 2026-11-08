@@ -3,11 +3,11 @@
 // disarms through the same paths a walk or a use-key press takes. No trap rules
 // live here; the shipped scripts decide (docs/engine/traps.md).
 
-import OpenSkyDiagnostics
 public import OpenSkyFormatsESM
 import OpenSkyMagic
 import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkySessionInterface
 public import OpenSkyWorld

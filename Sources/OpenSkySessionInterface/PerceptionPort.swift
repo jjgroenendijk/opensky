@@ -1,5 +1,5 @@
-public import OpenSkyDiagnostics
 public import OpenSkyPerceptionInterface
+public import OpenSkyRenderCore
 
 /// What the world adapters use of `PerceptionCoordinator`.
 public protocol PerceptionPort: AnyObject {

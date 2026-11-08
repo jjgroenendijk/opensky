@@ -24,6 +24,8 @@ public protocol RuntimeStateWorld: AnyObject {
     func applyGlobalResolution(_ resolution: GlobalResolution, reroll: Bool)
 
     var musicStore: MusicRecordStore? { get }
+    /// The condition functions a readout's condition lists run on.
+    var conditionFunctions: ConditionFunctionRegistry { get }
     /// GLOB defaults of the loaded plugins, nil without game data.
     var globalStore: GlobalStore? { get }
     /// The live condition context, with the crosshair as subject and target. `indexing`

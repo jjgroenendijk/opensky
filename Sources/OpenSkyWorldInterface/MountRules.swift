@@ -1,5 +1,4 @@
 import Foundation
-import OpenSkyRendering
 import simd
 
 nonisolated public enum MountRefusal: String, Equatable, Sendable {

@@ -10,7 +10,7 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 /// One loaded actor that can run a graph.

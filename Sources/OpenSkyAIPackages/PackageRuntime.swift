@@ -6,7 +6,7 @@ public import OpenSkyConditions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 
@@ -34,10 +34,12 @@ nonisolated public struct ActorPackageRuntime {
     public var onSelectionChanged: ((PackageActorReadout) -> Void)?
 
     let store: PackageStore
+    let conditionFunctions: ConditionFunctionRegistry
     var actors: [ReferenceKey: ActorState] = [:]
 
-    public init(store: PackageStore) {
+    public init(store: PackageStore, conditionFunctions: ConditionFunctionRegistry) {
         self.store = store
+        self.conditionFunctions = conditionFunctions
     }
 
     /// The base of each resident actor. A repeated key keeps its first entry,
@@ -233,7 +235,7 @@ nonisolated public struct ActorPackageRuntime {
             guard
                 let package = attempt({ try store.resolve(id) }),
                 package.package.schedule.matches(clock) else { continue }
-            var evaluator = ConditionEvaluator(context: context)
+            var evaluator = ConditionEvaluator(context: context, registry: conditionFunctions)
             evaluator.context.formIDTranslation = store.translation(of: id)
             let outcome = evaluator.evaluate(package.package.conditions)
             evaluator.context.formIDTranslation = context.formIDTranslation

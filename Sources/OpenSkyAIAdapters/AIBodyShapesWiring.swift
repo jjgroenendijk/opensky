@@ -7,6 +7,7 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkySessionInterface
 public import OpenSkyWorld
+import OpenSkyWorldInterface
 import simd
 
 /// Connects `AIWorldAdapter` to the started session.

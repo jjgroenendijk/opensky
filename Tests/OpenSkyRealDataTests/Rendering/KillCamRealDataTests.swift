@@ -12,12 +12,17 @@ import Foundation
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 @testable import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import simd
 import Testing
 
 @MainActor
 private final class RealKillCamWorld: CinematicCameraWorld {
+    var conditionFunctions: ConditionFunctionRegistry {
+        .standard
+    }
+
     let gameSession: GameSession
     let fileSystem: VirtualFileSystem
     let cameraPaths: CameraPathStore?

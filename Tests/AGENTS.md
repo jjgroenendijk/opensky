@@ -90,11 +90,13 @@ test host while the UI runner waits for it, and the run deadlocks
 
 ## Tags
 
-`Tests/OpenSkyTagsTesting/Tags.swift` holds the shared Swift Testing tags, and every test target
-links it. Put a tag on the suite, `@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))`, or on one
-test when only that test needs it. A `.gpu` or `.slow` tag outside `OpenSkyRealDataTests`
-always comes with `.unlessPlanSkips` of the same tag: Xcode ignores a plan's `skippedTags`, so
-the `Quick` plan names the tags to skip in `OPENSKY_SKIPPED_TAGS` and this trait reads it.
+`Tests/OpenSkyTagsTesting/Tags.swift` holds the shared Swift Testing tags. A test target that
+tags its tests lists `OpenSkyTagsTesting` in its `tests:` list in `Package.swift`, because rule
+12 of the module graph rejects a dependency no file imports. Put a tag on the suite,
+`@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))`, or on one test when only that test needs it.
+A `.gpu` or `.slow` tag outside `OpenSkyRealDataTests` always comes with `.unlessPlanSkips` of
+the same tag: Xcode ignores a plan's `skippedTags`, so the `Quick` plan names the tags to skip
+in `OPENSKY_SKIPPED_TAGS` and this trait reads it.
 
 | Tag | Put it on |
 | --- | --- |

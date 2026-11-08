@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenus
 
 enum SWFCommand {
     static func runInfo(context: CLIContext, path: String) throws {

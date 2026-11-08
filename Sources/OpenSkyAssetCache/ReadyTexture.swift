@@ -4,25 +4,11 @@
 
 public import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsMesh
 
 nonisolated public enum ReadyTextureFormat: UInt8, Sendable, CaseIterable {
     case bc1 = 1, bc2, bc3, bc4, bc5, bc7
     case rgba8 = 10, bgra8
     case astc4x4 = 20, astc6x6, astc8x8, astc5x5
-
-    public init(_ format: DDSPixelFormat) {
-        switch format {
-        case .bc1: self = .bc1
-        case .bc2: self = .bc2
-        case .bc3: self = .bc3
-        case .bc4: self = .bc4
-        case .bc5: self = .bc5
-        case .bc7: self = .bc7
-        case .rgba8888: self = .rgba8
-        case .bgra8888, .xrgb8888: self = .bgra8
-        }
-    }
 
     /// Texels per block edge.
     public var blockDimension: Int {
@@ -140,28 +126,6 @@ nonisolated public struct ReadyTexture: Equatable, Sendable {
             format: format, width: width(level: first), height: height(level: first),
             mipCount: mipCount - first, bytes: bytes[start ..< bytes.endIndex]
         )
-    }
-
-    /// The shipped levels as they are. `xrgb8888` gets an opaque alpha byte,
-    /// as the direct upload does, because X is undefined.
-    public init(dds: DDSFile) {
-        var bytes = Data()
-        for level in 0 ..< dds.mipCount {
-            let level = dds.mipData(level: level)
-            bytes.append(dds.format == .xrgb8888 ? Self.withOpaqueAlpha(level) : level)
-        }
-        self.init(
-            format: ReadyTextureFormat(dds.format), width: dds.width, height: dds.height,
-            mipCount: dds.mipCount, bytes: bytes
-        )
-    }
-
-    static func withOpaqueAlpha(_ source: Data) -> Data {
-        var result = Data(source)
-        for offset in stride(from: 3, to: result.count, by: 4) {
-            result[offset] = 255
-        }
-        return result
     }
 }
 

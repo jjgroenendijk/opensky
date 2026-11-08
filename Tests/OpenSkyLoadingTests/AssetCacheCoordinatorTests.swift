@@ -29,6 +29,11 @@ private struct CopyConverter: AssetConverting {
 
 @MainActor
 struct AssetCacheCoordinatorTests {
+    /// For tests that only change settings: no install and no converters.
+    private static let settingsOnly = AssetCacheCoordinator.Environment(
+        locate: { throw CocoaError(.fileNoSuchFile) }, makeConverters: { _ in [] }
+    )
+
     private let install = FileManager.default.temporaryDirectory
         .appending(
             path: "AssetCacheCoordinatorInstall-\(UUID().uuidString)",
@@ -99,7 +104,9 @@ struct AssetCacheCoordinatorTests {
     }
 
     @Test func convertIsOffWhileOptimisationIsOff() {
-        let coordinator = AssetCacheCoordinator(store: PlayerSettingsStore(persistence: nil))
+        let coordinator = AssetCacheCoordinator(
+            store: PlayerSettingsStore(persistence: nil), environment: Self.settingsOnly
+        )
         coordinator.setEnabled(false)
         #expect(coordinator.convertDisabledReason == "Turn on asset optimisation first")
     }
@@ -131,7 +138,7 @@ struct AssetCacheCoordinatorTests {
 
     @Test func settingsAreSavedToTheStore() {
         let store = PlayerSettingsStore(persistence: nil)
-        let coordinator = AssetCacheCoordinator(store: store)
+        let coordinator = AssetCacheCoordinator(store: store, environment: Self.settingsOnly)
         coordinator.setEnabled(false)
         coordinator.setTextureQuality(.low)
         coordinator.setTextureFormat(.astc6x6, for: .normal)

@@ -1,7 +1,6 @@
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyRenderCore
-import OpenSkyRendering
 import OpenSkyWorldState
 
 nonisolated public struct ImageSpaceLinks: Sendable {

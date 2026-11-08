@@ -87,7 +87,7 @@ struct PackageRealDataTests {
         let references = try heimskrConditionReferences(file)
         for (offset, resident) in Self.residents.enumerated() {
             let actorKey = ReferenceKey.generated(UInt64(offset + 1))
-            var runtime = ActorPackageRuntime(store: store)
+            var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
             try runtime.register(actor: actorKey, base: FormID(resident.base))
             var observed: [UInt32] = []
             for hour in 0 ..< 24 {

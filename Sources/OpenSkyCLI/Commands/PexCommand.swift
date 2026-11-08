@@ -5,6 +5,7 @@ import Foundation
 import OpenSkyCLIArguments
 import OpenSkyFormatsPEX
 import OpenSkyGameData
+import OpenSkyScriptingInterface
 
 enum PexCommand {
     static func run(context: CLIContext, arguments: PexArguments) throws {

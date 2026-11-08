@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyMenus
 
 enum SWFActionListCommand {
     static func run(context: CLIContext, arguments: SWFArguments.ActionList) throws {

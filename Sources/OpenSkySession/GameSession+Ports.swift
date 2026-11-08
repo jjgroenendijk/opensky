@@ -1,7 +1,8 @@
 // The session members its port spells in interface types.
 
 import OpenSkyPlayer
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 public import OpenSkySessionInterface
 public import OpenSkyWorld
 

@@ -12,6 +12,7 @@ import OpenSkyEngineTesting
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTagsTesting
 import OpenSkyTerrain

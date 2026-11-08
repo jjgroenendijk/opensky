@@ -139,6 +139,7 @@ extension PackageCoordinator {
             values: execution?.values ?? PackageOverrideExecution.values(of: current),
             clock: clock,
             translation: store?.translation(of: current.definition.formID),
+            conditionFunctions: runtime.conditionFunctions,
             makeContext: { [weak self] in
                 self?.conditionContext(clock: clock) ?? world.packageConditionContext(clock: clock)
             }

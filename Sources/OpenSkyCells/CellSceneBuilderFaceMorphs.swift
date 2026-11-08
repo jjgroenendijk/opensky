@@ -3,7 +3,7 @@
 // Vertex count is the final guard before an actor-local buffer is attached.
 
 import Foundation
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData

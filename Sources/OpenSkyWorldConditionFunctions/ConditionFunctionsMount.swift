@@ -44,7 +44,7 @@ nonisolated extension ConditionContext {
 }
 
 nonisolated extension ConditionFunctions {
-    static func installMounts(_ registry: inout ConditionFunctionRegistry) {
+    public static func installMounts(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(index: 327, name: "IsRidingMount") { call in
             mount(call) { mounts, key, _ in Self.isTrue(mounts[key] != nil) }
         })

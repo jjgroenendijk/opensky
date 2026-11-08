@@ -2,7 +2,6 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyGameData
 public import OpenSkyRenderCore
-import OpenSkyRendering
 public import OpenSkyWorldState
 
 /// The renderer's game-time state, grouped so `Renderer` carries one stored

@@ -22,7 +22,7 @@ extension Renderer {
             deltaTime: deltaTime,
             exterior: scene.sky != nil && scene.lighting == nil,
             enabled: precipitationEnabled,
-            collisionQuery: precipitationCameraRoofCheck ? frameInput.collisionQuery : nil
+            roofAbove: precipitationCameraRoofCheck ? frameInput.roofAbove : nil
         ))
     }
 

@@ -8,6 +8,7 @@ import OpenSkyBehavior
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyObjectAnimation
+import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources

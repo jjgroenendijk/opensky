@@ -2,7 +2,6 @@
 // mount (PlayerMountDrive.swift); this one only tells the rider's graph how the mount
 // moves, so `0_master.hkx` picks the riding clips. See docs/engine/riding.md.
 
-import OpenSkyActorPresentation
 import OpenSkyBehavior
 import OpenSkyPhysics
 public import OpenSkyWorldInterface

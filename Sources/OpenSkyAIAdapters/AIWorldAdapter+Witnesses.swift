@@ -8,7 +8,6 @@ import OpenSkyCombatInterface
 public import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyDiagnostics
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFactions

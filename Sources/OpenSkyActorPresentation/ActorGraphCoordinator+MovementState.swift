@@ -4,6 +4,7 @@
 import OpenSkyBehavior
 public import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldInterface
 
 extension ActorGraphCoordinator {
     /// The name after `iState_` of the actor's current state, such as `HorseDefault`; nil

@@ -1,7 +1,6 @@
 import OpenSkyFormatsAnimation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyRendering
 public import OpenSkyRenderResources
 
 /// One rig to assemble. A result whose `generation` is not the newest is dropped.
@@ -25,25 +24,28 @@ nonisolated public struct PlayerRigRequest: Equatable, Sendable {
     }
 }
 
-nonisolated public struct PlayerRigLoadResult: Sendable {
+nonisolated public struct PlayerRigLoadResult<Asset: Sendable>: Sendable {
     public let request: PlayerRigRequest
-    public let result: Result<PlayerRigAssembly, PlayerBodyError>
+    public let result: Result<PlayerRigAssembly<Asset>, PlayerBodyError>
 
-    public init(request: PlayerRigRequest, result: Result<PlayerRigAssembly, PlayerBodyError>) {
+    public init(
+        request: PlayerRigRequest,
+        result: Result<PlayerRigAssembly<Asset>, PlayerBodyError>
+    ) {
         self.request = request
         self.result = result
     }
 }
 
 /// The meshes of one rig, before they are bound to a skeleton and a pose.
-nonisolated public struct PlayerRigAssembly: Sendable {
-    public let assembly: ActorAssembly<ActorRenderAsset>
+nonisolated public struct PlayerRigAssembly<Asset: Sendable>: Sendable {
+    public let assembly: ActorAssembly<Asset>
     /// Race, chargen, and expression morphs on the head parts; empty for the arms and a
     /// baked head.
     public let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
 
     public init(
-        assembly: ActorAssembly<ActorRenderAsset>,
+        assembly: ActorAssembly<Asset>,
         faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:]
     ) {
         self.assembly = assembly

@@ -9,6 +9,7 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyNavigation
 import OpenSkyPlayer
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkyScripting

@@ -1,7 +1,6 @@
 import Metal
 import OpenSkyAgentControl
 import OpenSkyCells
-import OpenSkyDiagnostics
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

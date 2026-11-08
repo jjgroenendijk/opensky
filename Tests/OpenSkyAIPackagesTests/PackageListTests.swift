@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
@@ -43,7 +44,7 @@ struct PackageListTests {
             actorTemplates: ActorTemplateResolver(actors: [0x600: base], leveledActors: [:]),
             formLists: [Self.defaultList: [FormID(0x102)], Self.combatList: [FormID(0x103)]]
         )
-        var runtime = ActorPackageRuntime(store: store)
+        var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
         try runtime.register(actor: Self.actor, base: base.formID)
         runtime.advance(clock: Self.clock) { _ in ConditionContext() }
         return runtime

@@ -2,7 +2,6 @@
 // perspective variable that differs, and two instances that cannot perturb
 // each other. Synthetic graphs only — no install.
 
-import OpenSkyActorPresentation
 @testable import OpenSkyBehavior
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation

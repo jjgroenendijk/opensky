@@ -17,6 +17,7 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyPlayer
 import OpenSkyTagsTesting
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import simd
@@ -58,7 +59,7 @@ struct NPCAIAcceptanceRealDataTests {
     ) throws -> PackageStore {
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let store = PackageStore(file: file)
-        var runtime = ActorPackageRuntime(store: store)
+        var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
         try runtime.register(actor: residentKey, base: residentBase)
 
         var selected: [FormID] = []

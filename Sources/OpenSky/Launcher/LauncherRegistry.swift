@@ -6,6 +6,7 @@ import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyReference
+import OpenSkySession
 import OpenSkyWorld
 import OpenSkyWorldInterface
 
@@ -54,7 +55,7 @@ final class LauncherContext {
     }
 
     lazy var assetOptimisation = AssetCacheCoordinator(
-        store: AssetOptimisationPageViewController.savedSettings()
+        store: AssetOptimisationPageViewController.savedSettings(), environment: .live
     )
 
     init(actions: (any LauncherActions)?) {

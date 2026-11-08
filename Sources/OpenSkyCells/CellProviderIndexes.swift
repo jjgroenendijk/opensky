@@ -3,7 +3,7 @@
 // `CellProviderIndexes+Load.swift` builds it off the main actor, in stages.
 
 import Metal
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 public import OpenSkyAIPackages
 public import OpenSkyAudio
 public import OpenSkyCombatInterface
@@ -12,7 +12,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 public import OpenSkyPerceptionInterface
-public import OpenSkyPhysics
+import OpenSkyPhysics
 public import OpenSkyPlayer
 import OpenSkyRendering
 public import OpenSkyWeather

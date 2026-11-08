@@ -6,6 +6,7 @@
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRuntimeState
+import OpenSkyWorldConditions
 import OpenSkyWorldTesting
 import Testing
 
@@ -29,6 +30,7 @@ struct RuntimeStateConditionRunnerTests {
             source: "MUSTest",
             conditions: conditions,
             context: ConditionEvaluatorFixture.populatedContext(),
+            registry: .standard,
             tally: &tally
         )
 
@@ -61,6 +63,7 @@ struct RuntimeStateConditionRunnerTests {
             source: "MUSTest",
             conditions: conditions,
             context: ConditionEvaluatorFixture.populatedContext(),
+            registry: .standard,
             tally: &tally
         )
         #expect(report.lines.map(\.reason) == ["false"])
@@ -85,6 +88,7 @@ struct RuntimeStateConditionRunnerTests {
                 source: "MUSTest",
                 conditions: conditions,
                 context: ConditionEvaluatorFixture.populatedContext(),
+                registry: .standard,
                 tally: &runnerTally
             )
             var evaluator = try ConditionEvaluatorFixture.evaluator()
@@ -101,6 +105,7 @@ struct RuntimeStateConditionRunnerTests {
             source: "MUSTEmpty",
             conditions: [],
             context: ConditionEvaluatorFixture.populatedContext(),
+            registry: .standard,
             tally: &tally
         )
         #expect(report.isSatisfied)
@@ -119,10 +124,12 @@ struct RuntimeStateConditionRunnerTests {
         var tally = ConditionTally()
         let context = try ConditionEvaluatorFixture.populatedContext()
         _ = RuntimeStateConditionRunner.report(
-            source: "MUSTest", conditions: conditions, context: context, tally: &tally
+            source: "MUSTest", conditions: conditions, context: context, registry: .standard,
+            tally: &tally
         )
         let second = RuntimeStateConditionRunner.report(
-            source: "MUSTest", conditions: conditions, context: context, tally: &tally
+            source: "MUSTest", conditions: conditions, context: context, registry: .standard,
+            tally: &tally
         )
         #expect(tally.conditionsEvaluated == 2)
         #expect(tally.listsEvaluated == 2)
@@ -139,7 +146,7 @@ struct RuntimeStateConditionRunnerTests {
         var tally = ConditionTally()
         tally.noteCondition()
         tally.noteList()
-        #expect(RuntimeStateConditionRunner.tallyLines(tally) == [
+        #expect(RuntimeStateConditionRunner.tallyLines(tally, registry: .standard) == [
             "Conditions evaluated: 1  Lists: 1",
             "Failures: 0"
         ])

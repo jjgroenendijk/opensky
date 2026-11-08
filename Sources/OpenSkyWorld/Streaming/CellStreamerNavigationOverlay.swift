@@ -1,8 +1,8 @@
 // Navigation overlay source. Here, because residency and the latest path live in the
 // streamer; the renderer owns only the source registry and toggles.
 
-public import OpenSkyDiagnostics
 import OpenSkyNavigation
+public import OpenSkyRenderCore
 
 extension CellStreamer {
     public func appendNavigationWorldOverlay(

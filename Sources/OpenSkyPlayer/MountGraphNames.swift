@@ -3,7 +3,6 @@
 // (docs/engine/riding.md).
 
 import Foundation
-import OpenSkyActorPresentation
 import OpenSkyWorldInterface
 
 nonisolated public enum MountGraphNames: Sendable {

@@ -2,6 +2,7 @@
 
 @testable import OpenSkyActorPresentation
 @testable import OpenSkyFormatsESM
+import OpenSkyWorldInterface
 import Testing
 
 @MainActor

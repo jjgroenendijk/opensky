@@ -3,6 +3,7 @@
 // their constraint data has no fixed layout; they load from the NIF.
 
 public import Foundation
+import OpenSkyAssetCache
 public import OpenSkyFormatsMesh
 import simd
 

@@ -6,7 +6,7 @@ public import OpenSkyGameData
 import OpenSkyNavigation
 public import OpenSkyPhysics
 public import OpenSkyPlayer
-import OpenSkyWorldConditions
+import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
 public import simd

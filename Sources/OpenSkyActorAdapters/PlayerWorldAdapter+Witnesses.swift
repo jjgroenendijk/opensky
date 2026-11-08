@@ -17,7 +17,7 @@ import OpenSkyRendering
 import OpenSkySession
 import OpenSkySessionInterface
 import OpenSkyWorld
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 

@@ -8,6 +8,7 @@ import OpenSkyGameData
 public import OpenSkyMagic
 public import OpenSkyMagicInterface
 public import OpenSkyPhysics
+import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkySessionInterface
 import OpenSkyWorld

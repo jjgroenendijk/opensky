@@ -6,7 +6,8 @@ public import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 import OpenSkyTerrain
 public import OpenSkyWorldInterface
 import simd

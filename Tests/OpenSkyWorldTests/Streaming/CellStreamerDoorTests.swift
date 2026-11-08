@@ -3,6 +3,7 @@
 @testable import OpenSkyCells
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 @testable import OpenSkyTerrain
 @testable import OpenSkyWorld

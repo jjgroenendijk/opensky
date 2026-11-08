@@ -17,6 +17,7 @@ The adapter needs parts of the session. It does not get the whole session. It ge
 protocol that lists only the parts it reads. `SessionPorts` in the app answers every host, and
 the session scope builds each adapter with it (`/decisions/session-scope.md`).
 
+`tools/lint/module-graph.sh` checks rule 7 as its rule 13 (`/decisions/modular-architecture.md`).
 `tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks
 rule 5 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI
 run both. Each reads every adapter or app file, so `ALL=1` changes nothing for them. Each first
@@ -32,6 +33,7 @@ runs its rules on a small synthetic violation, which must fail.
 | 4 | An app or adapter type has at most 4 extension files and 600 lines | Matches the file length warning, so one type stays readable in one sitting |
 | 5 | An adapter has no magic number and no function over complexity 6 | A game rule in an adapter has no unit test; in its feature module it has one |
 | 6 | The late-setter, late-attached-world, and pure-core lints cover the app and the adapters | A dependency set after the initializer can be missing when the object is first used |
+| 7 | A module depends only on a module at least as stable, or on an interface | A change in an unstable module then cannot force changes in the stable modules below it |
 
 A port is a protocol from an interface module or a foundation module, or a class from a data
 layer, such as `WorldDataStores`. A value type is a struct, an enum, a type alias, or a type of

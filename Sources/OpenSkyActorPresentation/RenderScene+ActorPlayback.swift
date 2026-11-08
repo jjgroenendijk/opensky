@@ -2,6 +2,7 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyRendering
+public import OpenSkyWorldInterface
 
 nonisolated extension RenderScene {
     /// Nil for a static actor the animation layer found no rig for.

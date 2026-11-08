@@ -6,6 +6,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 public import OpenSkyMenusInterface
+import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd

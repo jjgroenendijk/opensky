@@ -12,6 +12,7 @@ import OpenSkyMenus
 import OpenSkyMenusInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
 public import OpenSkySessionInterface

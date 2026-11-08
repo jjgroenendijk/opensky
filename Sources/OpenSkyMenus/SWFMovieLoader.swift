@@ -6,6 +6,7 @@
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsSWF
+public import OpenSkyGameData
 
 nonisolated public final class SWFMovieLoader {
     /// Archive path prefix + suffix of the movies the loader enumerates. VFS

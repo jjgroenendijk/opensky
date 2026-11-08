@@ -83,7 +83,11 @@ struct PrecipitationTests {
             deltaTime: roofed.deltaTime,
             exterior: true,
             enabled: true,
-            collisionQuery: { _ in [Self.roof(at: SIMD3(110, 220, 100))] }
+            roofAbove: {
+                PrecipitationRoofOcclusion.isOccluded(
+                    above: $0, query: { _ in [Self.roof(at: SIMD3(110, 220, 100))] }
+                )
+            }
         )
         volume.update(roofed)
         #expect(volume.snapshot.roofOccluded)
@@ -181,7 +185,7 @@ extension PrecipitationTests {
             deltaTime: 0.05,
             exterior: true,
             enabled: true,
-            collisionQuery: { _ in [] }
+            roofAbove: { _ in false }
         )
     }
 

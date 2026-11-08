@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyPhysics
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
@@ -27,7 +28,7 @@ struct PackageAliasStackTests {
             packages: [own, alias],
             actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
         )
-        var runtime = ActorPackageRuntime(store: store)
+        var runtime = ActorPackageRuntime(store: store, conditionFunctions: .standard)
         try runtime.register(actor: Self.actorKey, base: actor.formID)
         runtime.advance(clock: GameClock(hour: 9)) { _ in ConditionContext() }
         return runtime

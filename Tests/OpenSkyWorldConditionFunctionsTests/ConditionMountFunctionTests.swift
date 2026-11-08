@@ -4,10 +4,18 @@ import Foundation
 @testable import OpenSkyConditions
 import OpenSkyFeaturesTesting
 import OpenSkyFormatsESM
-@testable import OpenSkyWorldConditions
+@testable import OpenSkyWorldConditionFunctions
 import Testing
 
 struct ConditionMountFunctionTests {
+    /// The core functions and this family's, the set these tests run on.
+    static let registry: ConditionFunctionRegistry = {
+        var registry = ConditionFunctionRegistry()
+        ConditionFunctions.installCore(into: &registry)
+        ConditionFunctions.installMounts(&registry)
+        return registry
+    }()
+
     private static let subject = ConditionEvaluatorFixture
         .key(ConditionEvaluatorFixture.subjectFormID)
     private static let target = ConditionEvaluatorFixture
@@ -18,7 +26,7 @@ struct ConditionMountFunctionTests {
     ) throws -> ConditionOutcome {
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.mounts = mounts
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context, registry: Self.registry)
         return try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: function, 0, value
         ))

@@ -1,6 +1,7 @@
 // CameraInputState press/release -> axis logic + look-delta draining (todo
 // 2.8). AppKit-free, so fully unit-testable.
 
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import Testing
 

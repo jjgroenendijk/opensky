@@ -304,7 +304,9 @@ public final class GameSession: RenderFrameDriver {
         input.ui = uiScene
         input.isPaused = worldSimPaused
         input.timeScale = effectiveWorldTimeScale
-        input.collisionQuery = collisionQuery
+        input.roofAbove = collisionQuery.map { query in
+            { PrecipitationRoofOcclusion.isOccluded(above: $0, query: query) }
+        }
         return input
     }
 

@@ -2,7 +2,8 @@
 // rider may not do. `MountCoordinator` is the shell. See docs/engine/riding.md.
 
 import Foundation
-public import OpenSkyRendering
+public import OpenSkyRenderCore
+import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd
 

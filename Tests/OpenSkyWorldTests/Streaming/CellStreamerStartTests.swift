@@ -3,6 +3,7 @@
 
 import Foundation
 @testable import OpenSkyCells
+import OpenSkyRenderCore
 @testable import OpenSkyRendering
 import OpenSkyTerrain
 import OpenSkyWorld

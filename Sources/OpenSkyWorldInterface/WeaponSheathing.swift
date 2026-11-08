@@ -3,7 +3,6 @@
 // See docs/engine/actor-resolution.md.
 
 public import OpenSkyFormatsCore
-public import OpenSkyWorldInterface
 
 nonisolated public enum WeaponSheathing {
     /// `pose` with each hand node in `nodes` placed on its sheath node. A drawn

@@ -4,9 +4,10 @@ import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
-@testable import OpenSkyPhysics
+import OpenSkyTagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct MaterialTypeTests {
     @Test func indexCountsMalformedMaterialsAndLandTextures() throws {
         let plugin = ESMFixture.tes4()

@@ -5,9 +5,9 @@
 // pass is depth-tested so a wall hides it. See docs/engine/detection.md.
 
 import Foundation
-public import OpenSkyDiagnostics
 public import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+public import OpenSkyRenderCore
 import simd
 
 nonisolated public enum PerceptionOverlay: Sendable {

@@ -4,7 +4,7 @@ public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-public import OpenSkyPhysics
+import OpenSkyPhysics
 
 nonisolated public struct ExteriorBuildSource: Sendable {
     public let world: FoundWorld

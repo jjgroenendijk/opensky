@@ -1,14 +1,13 @@
-// The converters one conversion runs, picked by texture output. The app and openskycli
-// build with the same set, so their caches match.
+// The converters one conversion runs, picked by texture output, and the live asset
+// cache environment. The app and openskycli build with the same set, so their caches match.
 
 import Foundation
 public import Metal
 public import OpenSkyAssetCache
+import OpenSkyGameData
+public import OpenSkyLoading
+import OpenSkyPhysics
 import OpenSkyRenderResources
-
-nonisolated public enum AssetCacheConvertersError: Error, Equatable {
-    case metalUnavailable
-}
 
 nonisolated public enum AssetCacheConverters {
     /// An output that re-encodes textures needs a Metal device to decode the shipped blocks.
@@ -36,4 +35,15 @@ nonisolated public enum AssetCacheConverters {
             library: device?.makeDefaultLibrary()
         )
     }
+}
+
+extension AssetCacheCoordinator.Environment {
+    /// The located install and the converters on the system GPU.
+    public static let live = Self(
+        locate: {
+            let root = try GameDataLocator.locate()
+            return (VirtualFileSystem(root: root), root.installURL)
+        },
+        makeConverters: { try AssetCacheConverters.make(textureOutput: $0) }
+    )
 }

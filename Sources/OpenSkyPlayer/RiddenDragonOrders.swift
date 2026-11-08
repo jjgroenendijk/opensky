@@ -4,7 +4,6 @@
 // See docs/engine/dragon-flight.md#riding.
 
 import Foundation
-public import OpenSkyActorPresentation
 public import OpenSkyFormatsESM
 public import OpenSkyWorldInterface
 import simd
