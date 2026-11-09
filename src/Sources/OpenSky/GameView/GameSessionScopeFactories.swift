@@ -202,7 +202,8 @@ extension GameSessionScopeFactories {
             files: { [unowned scope] in scope.audioFileSystem },
             meshes: { [unowned scope] in scope.effects.meshes },
             graphs: scope.effectGraphs,
-            viewer: { [unowned scope] in scope.billboardViewer }
+            viewer: { [unowned scope] in scope.billboardViewer },
+            makePlayback: { SkinnedPosePlayback(skeleton: $0, pose: $1, models: [$2]) }
         )
         poser.isEnabled = scope.objectBehaviors.isEnabled
         return poser

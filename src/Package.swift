@@ -875,8 +875,7 @@ targets += domain(
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsAnimation", "OpenSkyFormatsESM",
         "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyActorPresentation",
-        "OpenSkyEffects", "OpenSkyRendering", "OpenSkyRenderCore", "OpenSkyWorldInterface",
-        "OpenSkyPlayer"
+        "OpenSkyEffects", "OpenSkyRendering", "OpenSkyRenderCore", "OpenSkyWorldInterface"
     ],
     tests: [
         "OpenSkyEngineTesting", "OpenSkyFormatsTesting", "OpenSkyBehavior",
