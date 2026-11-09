@@ -314,6 +314,12 @@ extension CombatWorldAdapter {
         motion.recordHealthHit(hit, on: key)
     }
 
+    public func impact(dataSet: FormID, material: FormID?) -> ResolvedMeleeImpact? {
+        game.worldData?.footstepStore.flatMap {
+            MeleeImpactResolver(footsteps: $0).resolve(dataSet: dataSet, material: material)
+        }
+    }
+
     public func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         motion.playImpact(impact, at: position)
     }

@@ -1,17 +1,13 @@
 import Foundation
 import MetalKit
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyCrime
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -37,8 +33,8 @@ public protocol ScriptReferenceBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptReferenceBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
-    public unowned let game: any ScriptReferenceBindingsHost
+    public let game: any ScriptReferenceBindingsHost
+    public let nodeBindings: ScriptNodeBindingsAdapter
 }
 
 extension ScriptReferenceBindingsAdapter {
@@ -49,7 +45,7 @@ extension ScriptReferenceBindingsAdapter {
             let streamer = game.streamer,
             let state = game.scripts.bridge?.referenceState(for: pick.source)
         else { return nil }
-        let node = pick.node.isEmpty ? nil : owner.nodeBindings.readyNode(
+        let node = pick.node.isEmpty ? nil : nodeBindings.readyNode(
             of: pick.source,
             named: pick.node
         )

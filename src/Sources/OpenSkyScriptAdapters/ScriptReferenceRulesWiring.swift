@@ -3,17 +3,13 @@
 import Foundation
 import MetalKit
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
-public import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyCrime
+import OpenSkyCells
+import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -31,8 +27,7 @@ import OpenSkyWorldState
 public struct ScriptReferenceRulesWiring {
     public init(
         _ adapter: ScriptReferenceBindingsAdapter,
-        _ hooks: inout PapyrusGameNatives,
-        provider: WorldDataStores
+        _ hooks: inout PapyrusGameNatives
     ) {
         hooks.clearExtraArrows = { [weak game = adapter.game] actor in
             guard let game, let host = game.streamer?.referenceEntry(key: actor)?.formID else {
@@ -40,13 +35,11 @@ public struct ScriptReferenceRulesWiring {
             }
             return game.combat.archery?.projectiles.removeArrows(stuckIn: host) ?? 0
         }
-        let impacts = provider.footstepStore.map(MeleeImpactResolver.init(footsteps:))
-        hooks.playImpact = { [weak owner = adapter.owner] dataSet, pick in
+        hooks.playImpact = { dataSet, pick in
             guard
-                owner != nil, let impacts,
                 let id = adapter.game.scripts.bridge?.localFormID(of: dataSet),
                 let hit = adapter.impactHit(of: pick),
-                let impact = impacts.resolve(dataSet: id, material: hit.material)
+                let impact = adapter.game.combatWorld.impact(dataSet: id, material: hit.material)
             else { return false }
             adapter.game.combatWorld.playImpact(impact, at: hit.position)
             return true

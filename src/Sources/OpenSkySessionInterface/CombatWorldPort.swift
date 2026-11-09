@@ -6,6 +6,8 @@ public import OpenSkyPhysics
 public protocol CombatWorldPort: AnyObject {
     func actorFlies(_ actor: ReferenceKey) -> Bool
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)?
+    /// The impact one IPDS plays on `material`, as Papyrus `PlayImpactEffect` asks.
+    func impact(dataSet: FormID, material: FormID?) -> ResolvedMeleeImpact?
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>, gain: Float)
     func run(_ commands: [CombatCommand])

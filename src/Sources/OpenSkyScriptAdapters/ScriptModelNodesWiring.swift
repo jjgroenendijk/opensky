@@ -11,7 +11,6 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyNavigation
 import OpenSkyObjectAnimation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
@@ -35,10 +34,10 @@ public struct ScriptModelNodesWiring {
             try ScriptNodeBindingsAdapter
                 .nodeTransforms(in: NIFFile(data: files.contents(forPath: path)))
         }
-        adapter.owner.modelNodes = nodes
-        gameSession.assetDrains.register(.modelNodes) { [weak owner = adapter.owner] _ in
+        adapter.state.modelNodes = nodes
+        gameSession.assetDrains.register(.modelNodes) { _ in
             nodes.drain()
-            owner?.nodeBindings.answerNodeWaits()
+            adapter.answerNodeWaits()
         }
     }
 }

@@ -2,18 +2,13 @@
 
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyCrime
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore

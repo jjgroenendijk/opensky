@@ -1,6 +1,6 @@
 // The `PlayImpactEffect` pick: the nearer of the static hit and the terrain.
 
-@testable import OpenSkyCombat
+@testable import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import Testing
 

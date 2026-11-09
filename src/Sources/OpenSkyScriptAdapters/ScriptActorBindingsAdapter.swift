@@ -1,26 +1,17 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
@@ -50,8 +41,9 @@ public protocol ScriptActorBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptActorBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
-    public unowned let game: any ScriptActorBindingsHost
+    public let game: any ScriptActorBindingsHost
+    public let skyBindings: ScriptSkyBindingsAdapter
+    public let physicsBindings: ScriptPhysicsBindingsAdapter
 }
 
 extension ScriptActorBindingsAdapter {}

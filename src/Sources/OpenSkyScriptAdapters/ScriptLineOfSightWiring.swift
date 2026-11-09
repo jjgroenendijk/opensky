@@ -11,7 +11,6 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyNavigation
 import OpenSkyObjectAnimation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
@@ -26,8 +25,8 @@ import simd
 /// Connects `ScriptNodeBindingsAdapter` to the started session.
 public struct ScriptLineOfSightWiring {
     public init(_ adapter: ScriptNodeBindingsAdapter, bridge: PapyrusWorldStateBridge) {
-        bridge.perceptionNatives.seesTarget = { [weak owner = adapter.owner] viewer, target in
-            owner?.nodeBindings.sees(viewer: viewer, target: target, bridge: bridge)
+        bridge.perceptionNatives.seesTarget = { viewer, target in
+            adapter.sees(viewer: viewer, target: target, bridge: bridge)
         }
     }
 }
