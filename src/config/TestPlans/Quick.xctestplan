@@ -138,6 +138,11 @@
     {
       "parallelizable": true,
       "randomExecutionOrdering": true,
+      "target": {"containerPath": "container:.", "identifier": "OpenSkySessionAdaptersTests", "name": "OpenSkySessionAdaptersTests"}
+    },
+    {
+      "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyAIAdaptersTests", "name": "OpenSkyAIAdaptersTests"}
     },
     {
