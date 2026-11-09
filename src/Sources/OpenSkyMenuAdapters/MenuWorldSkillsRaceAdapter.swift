@@ -2,25 +2,21 @@ public import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyAudio
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyLaunch
 import OpenSkyLoading
-import OpenSkyMagic
+import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 public import OpenSkyProgressionInterface
 public import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkySave
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -45,8 +41,8 @@ public protocol MenuWorldSkillsRaceHost: MenuInputConsumer {
 
 /// Part of `MenuWorldAdapter`, over its own narrow host.
 public struct MenuWorldSkillsRaceAdapter {
-    public unowned let owner: MenuWorldAdapter
-    public unowned let game: any MenuWorldSkillsRaceHost
+    public let game: any MenuWorldSkillsRaceHost
+    public let state: MenuPartState
 }
 
 extension MenuWorldSkillsRaceAdapter {
@@ -72,14 +68,14 @@ extension MenuWorldSkillsRaceAdapter {
     }
 
     public var perkSkySource: PerkSkySource? {
-        if owner.perkSky == nil, let files = game.worldData?.scriptFileSystem {
-            owner.perkSky = PerkSkySource(fileSystem: files)
+        if state.perkSky == nil, let files = game.worldData?.scriptFileSystem {
+            state.perkSky = PerkSkySource(fileSystem: files)
         }
-        return owner.perkSky
+        return state.perkSky
     }
 
     public var perkSkySettings: PerkSkySettings {
-        let values = owner.records?.statsSettings ?? [:]
+        let values = game.mapWorld.records?.statsSettings ?? [:]
         return PerkSkySettings { values[$0] }
     }
 
@@ -101,11 +97,11 @@ extension MenuWorldSkillsRaceAdapter {
     }
 
     public var playerIdentity: PlayerIdentityState? {
-        game.worldState.component(PlayerIdentityState.self, for: .player) ?? owner.recordIdentity
+        game.worldState.component(PlayerIdentityState.self, for: .player) ?? recordIdentity
     }
 
     public var playableRaces: [RaceChoice] {
-        (owner.records?.playableRaces ?? []).map {
+        (game.mapWorld.records?.playableRaces ?? []).map {
             RaceChoice(
                 formID: $0.formID,
                 name: game.mapWorld.text($0.name) ?? $0.editorID ?? "\($0.formID)",
@@ -117,14 +113,14 @@ extension MenuWorldSkillsRaceAdapter {
     public var raceMenuLabels: RaceMenuLabels {
         var texts: [String: String] = [:]
         for key in RaceMenuLabels.english.keys {
-            texts[key] = game.mapWorld.text(owner.records?.menuTexts[key])
+            texts[key] = game.mapWorld.text(game.mapWorld.records?.menuTexts[key])
         }
         return RaceMenuLabels(texts: texts, genders: game.mapWorld.settingTexts(GenderText.self))
     }
 
     public func raceMenuOptions(race: FormID, isFemale: Bool) -> RaceMenuOptions {
         guard
-            let records = owner.records,
+            let records = game.mapWorld.records,
             let record = records.playableRaces.first(where: { $0.formID == race })
         else { return .empty }
         let chargen = records.chargen
@@ -145,12 +141,13 @@ extension MenuWorldSkillsRaceAdapter {
     }
 
     public func racePresets(race: FormID, isFemale: Bool) -> [RacePreset] {
-        guard let record = owner.records?.playableRaces.first(where: { $0.formID == race }) else {
+        guard let record = game.mapWorld.records?.playableRaces.first(where: { $0.formID == race })
+        else {
             return []
         }
         let head = isFemale ? record.details.headData.female : record.details.headData.male
         return head.presets.compactMap { preset in
-            guard let npc = owner.scriptMenus.identityRecords?.templates.actors[preset.rawValue]
+            guard let npc = identityRecords?.templates.actors[preset.rawValue]
             else { return nil }
             let name = npc.editorID ?? "\(preset)"
             return RacePreset(
@@ -162,5 +159,21 @@ extension MenuWorldSkillsRaceAdapter {
 
     public func raceMenuClosed() {
         game.scripts.runtime?.queueRaceSwitchComplete(actor: .player)
+    }
+}
+
+extension MenuWorldSkillsRaceAdapter {
+    public var identityRecords: ActorIdentityRecords? {
+        game.worldData?.actorValueBaselines?.resolver
+            .map(ActorIdentityRecords.init(resolver:))
+    }
+
+    /// The `Player` record's own identity, before the race menu changed it.
+    public var recordIdentity: PlayerIdentityState? {
+        guard let player = game.mapWorld.records?.player else { return nil }
+        return PlayerIdentityState(
+            record: player, details: player.details,
+            name: game.mapWorld.text(player.name) ?? "Prisoner"
+        )
     }
 }

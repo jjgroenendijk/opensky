@@ -1,7 +1,7 @@
 // `LoadingScreenWorldAdapter` joins the started session: what `wire` registered.
 
 import Foundation
-import OpenSkyCells
+public import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -10,14 +10,12 @@ import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkySession
 import OpenSkySessionInterface
 import OpenSkyTerrain
 public import OpenSkyWorld
@@ -29,7 +27,8 @@ public struct LoadingScreenWiring {
     public init(
         _ adapter: LoadingScreenWorldAdapter,
         streamer: CellStreamer,
-        gameSession: GameSession
+        gameSession: GameSession,
+        bringFollowers: @escaping (CellScene) -> Void
     ) {
         streamer.onDoorTransitionStarted = { [weak adapter] in
             guard let adapter else { return }
@@ -42,10 +41,10 @@ public struct LoadingScreenWiring {
                 return
             }
             adapter.game.loadingScreens.destinationReady(
-                location: adapter.location(of: scene),
+                location: adapter.location(of: scene.locationKey),
                 at: adapter.now
             )
-            adapter.game.followerCommandWorld.bringFollowers(into: scene)
+            bringFollowers(scene)
         }
         gameSession.frameSteps.register(.loadingScreen) { [weak adapter] _ in
             guard let adapter else { return }

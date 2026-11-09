@@ -3,24 +3,21 @@
 // only reads and writes the session for them.
 
 import Foundation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyCrime
 import OpenSkyCrimeInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
+import OpenSkyProgressionInterface
 public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -45,7 +42,7 @@ public protocol MenuScreensWorldHost: MenuInputConsumer {
 }
 
 public final class MenuScreensWorldAdapter {
-    public unowned let game: any MenuScreensWorldHost
+    public let game: any MenuScreensWorldHost
 
     public let craftingDeskHost: any MenuScreensCraftingDeskHost
     public let guidesHost: any MenuScreensGuidesHost

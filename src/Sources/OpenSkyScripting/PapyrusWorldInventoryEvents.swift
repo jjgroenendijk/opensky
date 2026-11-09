@@ -34,6 +34,10 @@ extension PapyrusWorldStateBridge {
         return queued
     }
 
+    public func queueItemRead(base: ReferenceKey) {
+        queueItemScriptEvent(PapyrusEngineEvents.onRead, base: base, arguments: [])
+    }
+
     /// Queues `name` on the scripts of the item `base` itself. Returns the count.
     @discardableResult
     public func queueItemScriptEvent(

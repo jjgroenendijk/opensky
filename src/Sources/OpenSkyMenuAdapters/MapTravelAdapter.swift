@@ -1,26 +1,23 @@
 import Foundation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyCamera
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -48,8 +45,8 @@ public protocol MapTravelHost: AnyObject {
 
 /// Part of `MapWorldAdapter`, over its own narrow host.
 public struct MapTravelAdapter {
-    public unowned let owner: MapWorldAdapter
-    public unowned let game: any MapTravelHost
+    public let game: any MapTravelHost
+    public let mapRecords: MapRecordsAdapter
 }
 
 extension MapTravelAdapter {
@@ -83,7 +80,7 @@ extension MapTravelAdapter {
             .fallbackTravelSpeed
         let seconds = FastTravelRule.gameSeconds(
             distance: simd_distance(from, marker.position), walkSpeed: walk,
-            speedMultiplier: owner.mapSettings.fastTravelSpeedMultiplier,
+            speedMultiplier: mapRecords.mapSettings.fastTravelSpeedMultiplier,
             timeScale: gameSession.currentTimescale
         )
         gameSession
@@ -97,7 +94,7 @@ extension MapTravelAdapter {
             rotation: rotation
         ))
         // The markers belong to the map's worldspace, which can be the current one's parent.
-        if let world = owner.mapWorldspace?.editorID, world != streamer.worldspaceEditorID {
+        if let world = mapRecords.mapWorldspace?.editorID, world != streamer.worldspaceEditorID {
             streamer.enterWorldspace(world, camera: camera)
         } else if streamer.interiorScene != nil {
             streamer.leaveInterior(camera: camera)

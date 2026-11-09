@@ -2,11 +2,10 @@ import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
+import OpenSkyMagicInterface
 public import OpenSkyMenus
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 
 /// What `MenuScreensCraftingDeskAdapter` reads from the session.
@@ -20,7 +19,7 @@ public protocol MenuScreensCraftingDeskHost: AnyObject {
 
 /// Part of `MenuScreensWorldAdapter`, over its own narrow host.
 public struct MenuScreensCraftingDeskAdapter {
-    public unowned let game: any MenuScreensCraftingDeskHost
+    public let game: any MenuScreensCraftingDeskHost
 }
 
 extension MenuScreensCraftingDeskAdapter {
@@ -38,7 +37,7 @@ extension MenuScreensCraftingDeskAdapter {
     }
 
     public func readBook(_ item: FormID) -> String? {
-        game.magic.readBook(item)?.text
+        game.magic.readBookLine(item)
     }
 
     public func noteBookRead(_ item: FormID, reference: FormID?) {
@@ -46,7 +45,7 @@ extension MenuScreensCraftingDeskAdapter {
         if let reference, let key = bridge.referenceKey(forFormID: reference) {
             game.scripts.runtime?.queueRead(on: key)
         } else if let base = bridge.referenceKey(forFormID: item) {
-            bridge.queueItemScriptEvent(PapyrusEngineEvents.onRead, base: base, arguments: [])
+            bridge.queueItemRead(base: base)
         }
     }
 
@@ -71,7 +70,7 @@ extension MenuScreensCraftingDeskAdapter {
     }
 
     public func craft(_ recipe: ResolvedFormID) -> String {
-        game.inventory.craft(recipe).text(game.mapWorld.settingTexts())
+        game.inventory.craftLine(recipe, texts: game.mapWorld.settingTexts())
     }
 
     public func closeCraftingStation() {
@@ -90,10 +89,10 @@ extension MenuScreensCraftingDeskAdapter {
     }
 
     public func toggleIngredient(_ ingredient: FormID) -> String {
-        game.inventory.toggleAlchemyIngredient(ingredient).text
+        game.inventory.toggleAlchemyIngredientLine(ingredient)
     }
 
     public func brewChosenIngredients() -> String {
-        game.inventory.brewChosenIngredients().text
+        game.inventory.brewChosenIngredientsLine()
     }
 }

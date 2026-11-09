@@ -2,25 +2,21 @@ import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyLaunch
 import OpenSkyLoading
-import OpenSkyMagic
+import OpenSkyMagicInterface
 public import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkySave
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -40,8 +36,8 @@ public protocol MenuWorldSettingsApplyHost: AnyObject {
 
 /// Part of `MenuWorldAdapter`, over its own narrow host.
 public struct MenuWorldSettingsApplyAdapter {
-    public unowned let owner: MenuWorldAdapter
-    public unowned let game: any MenuWorldSettingsApplyHost
+    public let game: any MenuWorldSettingsApplyHost
+    public let state: MenuPartState
 }
 
 extension MenuWorldSettingsApplyAdapter {
@@ -81,6 +77,6 @@ extension MenuWorldSettingsApplyAdapter {
     }
 
     public func applyBindings(_ bindings: InputBindings) {
-        owner.applyViewBindings(bindings)
+        state.applyViewBindings(bindings)
     }
 }

@@ -4,16 +4,13 @@ import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
