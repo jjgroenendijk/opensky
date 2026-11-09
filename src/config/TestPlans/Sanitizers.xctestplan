@@ -93,6 +93,11 @@
     {
       "parallelizable" : true,
       "randomExecutionOrdering": true,
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyInventoryAdaptersTests", "name" : "OpenSkyInventoryAdaptersTests"}
+    },
+    {
+      "parallelizable" : true,
+      "randomExecutionOrdering": true,
       "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyLaunchTests", "name" : "OpenSkyLaunchTests"}
     },
     {
