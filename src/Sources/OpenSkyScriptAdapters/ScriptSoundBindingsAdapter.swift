@@ -1,17 +1,12 @@
 import Foundation
 import MetalKit
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyCrime
 import OpenSkyEffects
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -35,12 +30,12 @@ public protocol ScriptSoundBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public final class ScriptSoundBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
-    public unowned let game: any ScriptSoundBindingsHost
+    public let game: any ScriptSoundBindingsHost
+    public let state: ScriptPartState
 
-    public init(owner: ScriptWorldAdapter, game: any ScriptSoundBindingsHost) {
-        self.owner = owner
+    public init(game: any ScriptSoundBindingsHost, state: ScriptPartState) {
         self.game = game
+        self.state = state
     }
 }
 
@@ -49,10 +44,10 @@ extension ScriptSoundBindingsAdapter {
     /// cannot take yet waits for the next frame.
     public func answerSoundWaits() {
         if let director = game.gameSession?.soundDirector {
-            owner.soundWaitAnswers.merge(director.retireScriptSounds()) { first, _ in first }
+            state.soundWaitAnswers.merge(director.retireScriptSounds()) { first, _ in first }
         }
         guard let scheduler = game.scripts.runtime?.scheduler else { return }
-        owner.soundWaitAnswers = owner.soundWaitAnswers.filter { token, played in
+        state.soundWaitAnswers = state.soundWaitAnswers.filter { token, played in
             !scheduler.answer(token, returning: .boolean(played))
         }
     }

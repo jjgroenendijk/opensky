@@ -1301,17 +1301,15 @@ targets += composition(
 targets += composition(
     "OpenSkyScriptAdapters",
     dependencies: [
-        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors", "OpenSkyAgentControl",
-        "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyConditions",
-        "OpenSkyCrime", "OpenSkyEffects", "OpenSkyFormatsAnimation", "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyInventory",
-        "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyMenus", "OpenSkyMenusInterface",
-        "OpenSkyNavigation", "OpenSkyObjectAnimation", "OpenSkyPerception",
-        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression",
-        "OpenSkyQuests", "OpenSkyQuestsInterface", "OpenSkyRenderCore",
-        "OpenSkyRenderResources", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
-        "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkyWeather",
-        "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyAgentControl", "OpenSkyCells",
+        "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyEffects", "OpenSkyFormatsAnimation",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
+        "OpenSkyMagicInterface", "OpenSkyMenusInterface", "OpenSkyNavigation",
+        "OpenSkyObjectAnimation", "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer",
+        "OpenSkyQuestsInterface", "OpenSkyRenderCore", "OpenSkyRenderResources", "OpenSkyRendering",
+        "OpenSkyRuntimeState", "OpenSkyScripting", "OpenSkyScriptingInterface",
+        "OpenSkySessionInterface", "OpenSkyWeather", "OpenSkyWorld", "OpenSkyWorldInterface",
+        "OpenSkyWorldState"
     ]
 )
 

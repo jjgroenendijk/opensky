@@ -1,17 +1,12 @@
 import Foundation
 import MetalKit
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyCrime
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -43,8 +38,8 @@ public protocol ScriptPlayerBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptPlayerBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
-    public unowned let game: any ScriptPlayerBindingsHost
+    public let game: any ScriptPlayerBindingsHost
+    public let physicsBindings: ScriptPhysicsBindingsAdapter
 }
 
 extension ScriptPlayerBindingsAdapter {

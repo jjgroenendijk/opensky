@@ -3,17 +3,12 @@
 import Foundation
 import MetalKit
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyCrime
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -53,19 +48,17 @@ public struct ScriptPlayerRulesWiring {
         hooks.forceRagdoll = { [weak game = adapter.game] key in
             game?.ragdoll.runtime?.activate(key, instant: true) ?? false
         }
-        hooks.addBallAndSocket = { [weak owner = adapter.owner] first, second in
-            owner?.physicsBindings.addBallAndSocket(
+        hooks.addBallAndSocket = { [physics = adapter.physicsBindings] first, second in
+            physics.addBallAndSocket(
                 ScriptPlayerBindingsAdapter.linkEnd(first),
                 ScriptPlayerBindingsAdapter.linkEnd(second)
             )
-                ?? .returned(.boolean(false))
         }
-        hooks.removeConstraints = { [weak owner = adapter.owner] first, second in
-            owner?.physicsBindings
-                .removeConstraints(
-                    ScriptPlayerBindingsAdapter.linkEnd(first),
-                    ScriptPlayerBindingsAdapter.linkEnd(second)
-                ) ?? false
+        hooks.removeConstraints = { [physics = adapter.physicsBindings] first, second in
+            physics.removeConstraints(
+                ScriptPlayerBindingsAdapter.linkEnd(first),
+                ScriptPlayerBindingsAdapter.linkEnd(second)
+            )
         }
         hooks.setEyeTexture = { [weak game = adapter.game] actor, textureSet in
             guard let game, let set = game.scripts.bridge?.localFormID(of: textureSet) else {

@@ -11,7 +11,6 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyNavigation
 import OpenSkyObjectAnimation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
@@ -26,9 +25,9 @@ import simd
 /// Connects `ScriptNodeBindingsAdapter` to the started session.
 public struct ScriptPathsWiring {
     public init(_ adapter: ScriptNodeBindingsAdapter, _ hooks: inout PapyrusGameNatives) {
-        hooks.pathToReference = { [weak owner = adapter.owner] actor, target, speed, token in
+        hooks.pathToReference = { actor, target, speed, token in
             guard
-                let owner, let streamer = adapter.game.streamer,
+                let streamer = adapter.game.streamer,
                 let point = adapter.game.scripts.bridge?.referenceState(for: target)?.transform
                     .position
             else { return false }
@@ -37,7 +36,7 @@ public struct ScriptPathsWiring {
                 runSlowdown: nil, walkRunBlend: speed
             )
             guard started == .started else { return false }
-            owner.pathWaits.wait(token, for: actor)
+            adapter.state.pathWaits.wait(token, for: actor)
             return true
         }
     }

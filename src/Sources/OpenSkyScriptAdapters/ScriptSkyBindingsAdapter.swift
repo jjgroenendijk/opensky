@@ -23,12 +23,12 @@ public protocol ScriptSkyBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public final class ScriptSkyBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
-    public unowned let game: any ScriptSkyBindingsHost
+    public let game: any ScriptSkyBindingsHost
+    public let state: ScriptPartState
 
-    public init(owner: ScriptWorldAdapter, game: any ScriptSkyBindingsHost) {
-        self.owner = owner
+    public init(game: any ScriptSkyBindingsHost, state: ScriptPartState) {
         self.game = game
+        self.state = state
     }
 }
 
@@ -59,7 +59,7 @@ extension ScriptSkyBindingsAdapter {
 
 extension ScriptSkyBindingsAdapter: PapyrusWeatherControlling {
     private var weatherSystem: WeatherSystem? {
-        owner.weather()
+        state.weather()
     }
 
     private var resolver: FormIDResolver? {

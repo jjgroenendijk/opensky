@@ -159,7 +159,7 @@ extension GameSessionScopeFactories {
 
     func makeScriptWorld() -> ScriptWorldAdapter {
         let adapter = ScriptWorldAdapter(game: scope.ports)
-        adapter.weather = { [unowned scope] in scope.gameSession?.weather }
+        adapter.state.weather = { [unowned scope] in scope.gameSession?.weather }
         return adapter
     }
 

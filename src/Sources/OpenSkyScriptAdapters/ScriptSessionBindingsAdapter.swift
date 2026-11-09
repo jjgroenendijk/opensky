@@ -1,17 +1,12 @@
 public import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyCrime
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
@@ -42,8 +37,12 @@ public protocol ScriptSessionBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptSessionBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
-    public unowned let game: any ScriptSessionBindingsHost
+    public let game: any ScriptSessionBindingsHost
+    public let state: ScriptPartState
+    public let playerBindings: ScriptPlayerBindingsAdapter
+    public let referenceBindings: ScriptReferenceBindingsAdapter
+    public let soundBindings: ScriptSoundBindingsAdapter
+    public let nodeBindings: ScriptNodeBindingsAdapter
 }
 
 extension ScriptSessionBindingsAdapter {

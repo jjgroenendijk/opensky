@@ -11,7 +11,7 @@ public import OpenSkyDialogue
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyMenusInterface
@@ -30,7 +30,7 @@ import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 import simd
 
 extension StoryWorldAdapter: SocialEventWorld {}
@@ -52,6 +52,17 @@ extension StoryWorldAdapter {
         lookAt: ReferenceKey?
     ) -> Float? {
         ambientTalk.sayTopic(subtype, speaker: speaker, lookAt: lookAt)
+    }
+
+    public func questAccess(
+        store: WorldStateStore, quests: QuestStore, locations: LocationStore?
+    ) -> any QuestAccess {
+        var runtime = QuestRuntime(store: store, quests: quests, locations: locations)
+        runtime.referenceSearch = { [weak self] in self?.questReferenceSearch() }
+        runtime.referenceCreator = { [weak self] base, anchor in
+            self?.createQuestReference(base, at: anchor)
+        }
+        return runtime
     }
 
     public func questReferenceSearch() -> QuestReferenceSearch? {
