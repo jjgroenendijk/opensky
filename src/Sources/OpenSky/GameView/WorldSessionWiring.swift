@@ -218,11 +218,11 @@ final class WorldSessionWiring {
     ) {
         _ = CombatLoopWiring(game.combatWorld, gameSession: gameSession)
         _ = AIPackagesWiring(game.aiWorld, gameSession: gameSession)
-        _ = AIPerceptionWiring(game.aiWorld.perceptionSense, gameSession: gameSession)
+        _ = AIPerceptionWiring(game.aiWorld, gameSession: gameSession)
         _ = IdlesWiring(game.idleWorld, gameSession: gameSession)
         _ = ActorGraphWiring(game.actorGraphWorld, gameSession: gameSession)
         _ = VehiclesWiring(game.vehicleWorld, gameSession: gameSession)
-        _ = AIFurnitureWiring(game.aiWorld.seating, gameSession: gameSession)
+        _ = AIFurnitureWiring(game.aiWorld, gameSession: gameSession)
         // After the locks, whose activation gate it wraps.
         _ = MountsWiring(game.mountWorld, gameSession: gameSession)
         _ = BeastFormWiring(game.beastForms)

@@ -1,18 +1,15 @@
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -34,7 +31,7 @@ public protocol FollowerCommandTasksHost: AnyObject {
 
 /// Part of `FollowerCommandWorldAdapter`, over its own narrow host.
 public struct FollowerCommandTasksAdapter {
-    public unowned let game: any FollowerCommandTasksHost
+    public let game: any FollowerCommandTasksHost
 }
 
 extension FollowerCommandTasksAdapter {

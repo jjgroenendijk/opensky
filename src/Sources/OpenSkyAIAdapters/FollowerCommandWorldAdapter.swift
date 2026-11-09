@@ -2,21 +2,18 @@
 // key in command mode, and the follower's walk and act. The rules live in the
 // coordinator (docs/engine/follower-commands.md).
 
-import OpenSkyActors
+import OpenSkyActorsInterface
 public import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyDialogue
+import OpenSkyDialogueInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -42,7 +39,7 @@ public protocol FollowerCommandWorldHost: AnyObject {
 }
 
 public final class FollowerCommandWorldAdapter {
-    public unowned let game: any FollowerCommandWorldHost
+    public let game: any FollowerCommandWorldHost
     private var pressedTarget: InteractionTarget?
 
     public let tasksHost: any FollowerCommandTasksHost

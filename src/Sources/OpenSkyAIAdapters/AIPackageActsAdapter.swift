@@ -2,18 +2,15 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 public import OpenSkyWorldInterface
@@ -39,8 +36,9 @@ public protocol AIPackageActsHost: AnyObject {
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
 public struct AIPackageActsAdapter {
-    public unowned let owner: AIWorldAdapter
-    public unowned let game: any AIPackageActsHost
+    public let game: any AIPackageActsHost
+    public let packageMoves: AIPackageMovesAdapter
+    public let navigation: AINavigationAdapter
 }
 
 extension AIPackageActsAdapter {
@@ -52,7 +50,7 @@ extension AIPackageActsAdapter {
     public func packageReference(
         _ target: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
     ) -> ReferenceKey? {
-        if let key = owner.packageMoves.packageTargetKey(target, aliasQuest: aliasQuest) {
+        if let key = packageMoves.packageTargetKey(target, aliasQuest: aliasQuest) {
             return key
         }
         switch target.kind {
@@ -63,7 +61,7 @@ extension AIPackageActsAdapter {
             let keyword = FormID(target.value).nonNull
             return links.first { $0.keyword == keyword }.flatMap { resolveForm($0.ref) }
         case .objectID:
-            let position = owner.packageActorPosition(actor) ?? .zero
+            let position = packageMoves.packageActorPosition(actor) ?? .zero
             return nearest(to: position, within: .infinity) {
                 ConditionFunctions.baseForm(of: $0) == FormID(target.value)
             }
@@ -73,7 +71,7 @@ extension AIPackageActsAdapter {
     }
 
     public func stopPackageActor(_ actor: ReferenceKey) {
-        _ = owner.stopActor(actor)
+        _ = navigation.stopActor(actor)
     }
 
     public func packageAction(_ action: PackageAction, actor: ReferenceKey) -> PackageActionResult {

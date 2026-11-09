@@ -1,20 +1,17 @@
 // `FollowerCommandWorldAdapter` joins the started session: what `wire` registered.
 
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyDialogue
+import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld

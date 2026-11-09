@@ -1,30 +1,25 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyFactions
+import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 import OpenSkyNavigation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -50,8 +45,8 @@ public protocol AIPackageStateHost: AnyObject {
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
 public struct AIPackageStateAdapter {
-    public unowned let owner: AIWorldAdapter
-    public unowned let game: any AIPackageStateHost
+    public let game: any AIPackageStateHost
+    public let packageMoves: AIPackageMovesAdapter
 }
 
 extension AIPackageStateAdapter {
@@ -95,15 +90,6 @@ extension AIPackageStateAdapter {
         return context
     }
 
-    public func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
-        guard actor != .player else { return game.gameSession?.locomotion.status.feetPosition }
-        guard let streamer = game.streamer else { return nil }
-        if let live = streamer.npcTransform(for: actor) {
-            return live.position
-        }
-        return streamer.referenceEntry(key: actor).flatMap(Self.placedPosition)
-    }
-
     /// Only the player's gait is known; an NPC leader moves at its package's pace.
     public func packageActorGait(_ actor: ReferenceKey) -> LocomotionGait? {
         actor == .player ? game.gameSession?.locomotion.status.gait : nil
@@ -116,8 +102,8 @@ extension AIPackageStateAdapter {
             return game.streamer?.cellLocation(of: actor) == .interior(cell)
         }
         guard
-            let place = owner.packagePlace(of: location, actor: actor, aliasQuest: nil),
-            let position = packageActorPosition(actor)
+            let place = packageMoves.packagePlace(of: location, actor: actor, aliasQuest: nil),
+            let position = packageMoves.packageActorPosition(actor)
         else { return false }
         return simd_distance(place.point, position) <= Float(max(0, place.radius))
     }
@@ -138,9 +124,5 @@ extension AIPackageStateAdapter {
 
     public func packageMoverHasRoom(for actor: ReferenceKey) -> Bool {
         actor == .player || game.streamer?.npcMovement.hasRoom(for: actor) ?? true
-    }
-
-    public static func placedPosition(_ entry: RuntimeReferenceEntry) -> SIMD3<Float>? {
-        entry.placedActor?.placement.position ?? entry.placedReference?.placement.position
     }
 }

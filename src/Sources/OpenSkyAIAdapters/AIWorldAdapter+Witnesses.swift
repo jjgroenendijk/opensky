@@ -1,36 +1,28 @@
 public import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyDialogue
 import OpenSkyDialogueInterface
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyNavigation
 public import OpenSkyPerception
 public import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
 public import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld
@@ -270,7 +262,7 @@ extension AIWorldAdapter {
     }
 
     public func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
-        packageState.packageActorPosition(actor)
+        packageMoves.packageActorPosition(actor)
     }
 
     public func packageActorGait(_ actor: ReferenceKey) -> LocomotionGait? {
