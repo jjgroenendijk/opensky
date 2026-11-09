@@ -54,4 +54,4 @@ extension SessionPorts:
     ProgressionTrainingHost, ProgressionEffectsHost, MapTravelHost, MapQuestsHost,
     DialogueCameraWiringHost, DialogueSpeakersHost, DialogueOutcomesHost, InventoryReadoutsHost,
     InventoryPickpocketHost, InventoryPerksHost, InventoryRecipesHost, InventoryVendorHost,
-    InventoryPapyrusHost {}
+    InventoryCommandsHost {}

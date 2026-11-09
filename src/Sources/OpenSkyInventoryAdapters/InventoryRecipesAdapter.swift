@@ -1,31 +1,21 @@
-import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyFactions
 import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -36,13 +26,13 @@ public protocol InventoryRecipesHost: AnyObject {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var inventory: any InventoryPort { get }
+    var perks: any PerkPort { get }
     var runtimeState: any RuntimeStatePort { get }
 }
 
 /// Part of `InventoryWorldAdapter`, over its own narrow host.
 public struct InventoryRecipesAdapter {
-    public unowned let owner: InventoryWorldAdapter
-    public unowned let game: any InventoryRecipesHost
+    public let game: any InventoryRecipesHost
 }
 
 extension InventoryRecipesAdapter {
@@ -69,11 +59,9 @@ extension InventoryRecipesAdapter {
 
     public func temperingFactor(for item: FormID) -> Float {
         let subject = game.inventory.runtime?.inventory.baselines.items.conditionSubject(of: item)
-        return owner.perkModified(
-            1,
-            at: .modTemperingHealth,
-            on: .player,
-            subjects: PerkEvaluationSubjects(owner: .player).binding(.item, to: subject),
+        let subjects = PerkEvaluationSubjects(owner: .player).binding(.item, to: subject)
+        return game.perks.modified(
+            1, at: .modTemperingHealth, on: .player, subjects: { _ in subjects },
             seams: ConditionContext()
         )
     }

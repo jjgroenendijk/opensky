@@ -3,34 +3,24 @@
 // `VendorWorld` from the session systems. The rules live in the coordinators
 // (docs/engine/coordinators.md).
 
-import OpenSkyActors
 import OpenSkyAIPackages
 public import OpenSkyCells
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyFactions
 import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventory
 public import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWorld
 import OpenSkyWorldConditions
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
@@ -51,14 +41,14 @@ public protocol InventoryWorldHost: AnyObject {
 
 /// Answers `InventoryWorld` and `VendorWorld` from the session systems `game` owns.
 public final class InventoryWorldAdapter {
-    public unowned let game: any InventoryWorldHost
+    public let game: any InventoryWorldHost
 
     public let readoutsHost: any InventoryReadoutsHost
     public let pickpocketHost: any InventoryPickpocketHost
     public let perksHost: any InventoryPerksHost
     public let recipesHost: any InventoryRecipesHost
     public let vendorHost: any InventoryVendorHost
-    public let papyrusHost: any InventoryPapyrusHost
+    public let commandsHost: any InventoryCommandsHost
 
     public var readouts: InventoryReadoutsAdapter {
         InventoryReadoutsAdapter(game: readoutsHost
@@ -75,7 +65,7 @@ public final class InventoryWorldAdapter {
     }
 
     public var recipes: InventoryRecipesAdapter {
-        InventoryRecipesAdapter(owner: self, game: recipesHost)
+        InventoryRecipesAdapter(game: recipesHost)
     }
 
     public var vendor: InventoryVendorAdapter {
@@ -83,18 +73,18 @@ public final class InventoryWorldAdapter {
     }
 
     public var papyrus: InventoryPapyrusAdapter {
-        InventoryPapyrusAdapter(owner: self, game: papyrusHost)
+        InventoryPapyrusAdapter(game: commandsHost)
     }
 
     public init(game: some InventoryWorldHost & InventoryReadoutsHost & InventoryPickpocketHost &
-        InventoryPerksHost & InventoryRecipesHost & InventoryVendorHost & InventoryPapyrusHost)
+        InventoryPerksHost & InventoryRecipesHost & InventoryVendorHost & InventoryCommandsHost)
     {
         readoutsHost = game
         pickpocketHost = game
         perksHost = game
         recipesHost = game
         vendorHost = game
-        papyrusHost = game
+        commandsHost = game
         self.game = game
     }
 
@@ -111,7 +101,7 @@ public final class InventoryWorldAdapter {
 
     /// Nil without inventory baselines: then there is no item runtime.
     public func sessionData(
-        provider: WorldDataStores, streamer: CellStreamer, store: WorldStateStore
+        provider: WorldDataStores, streamer: any CellStreamerPort, store: WorldStateStore
     ) -> InventorySessionData? {
         guard let baselines = provider.inventoryBaselines else { return nil }
         let settings = provider.gameSettings
@@ -225,26 +215,18 @@ extension InventoryWorldAdapter: InventoryWorld {
 }
 
 extension InventoryWorldAdapter {
+    public var commands: InventoryCommandRunner {
+        InventoryCommandRunner(game: commandsHost)
+    }
+
     /// Runs the commands an inventory or lock action returned, then hands back its answer.
     @discardableResult
     public func run<Value>(_ result: InventoryResult<Value>) -> Value {
-        run(result.commands)
-        return result.value
+        commands.run(result)
     }
 
     public func run(_ commands: [InventoryCommand]) {
-        for command in commands {
-            switch command {
-            case let .equipmentChanged(holder):
-                game.magic.equipmentChanged(on: holder)
-            case .refreshInteractionTarget:
-                // The streamer's raw target: the HUD's copy is already labelled, and a
-                // lock label appends to the name, so labelling it twice repeats the band.
-                game.hud.updateTarget(perks.labelled(game.streamer?.interactionTarget))
-            case let .showNotice(text):
-                game.hud.showNotification(text)
-            }
-        }
+        self.commands.run(commands)
     }
 }
 

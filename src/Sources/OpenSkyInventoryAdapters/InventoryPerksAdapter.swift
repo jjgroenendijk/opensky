@@ -1,31 +1,21 @@
-import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyCells
 public import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyFactions
 import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 public import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-import OpenSkyWorld
 import OpenSkyWorldConditions
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -42,7 +32,7 @@ public protocol InventoryPerksHost: AnyObject {
 
 /// Part of `InventoryWorldAdapter`, over its own narrow host.
 public struct InventoryPerksAdapter {
-    public unowned let game: any InventoryPerksHost
+    public let game: any InventoryPerksHost
 }
 
 extension InventoryPerksAdapter {
