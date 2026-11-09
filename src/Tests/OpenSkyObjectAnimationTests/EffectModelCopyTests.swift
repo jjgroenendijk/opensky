@@ -33,4 +33,19 @@ struct EffectModelCopyTests {
         #expect(playback?.pose === first.pose)
         #expect(first.pose !== second.pose)
     }
+
+    @Test func aPoserWithNoModelsBuildsNoPlayback() {
+        let world = FakeEffectWorld()
+        var built = 0
+        let poser = EffectModelPoser(
+            files: { nil }, meshes: { nil },
+            graphs: EffectGraphCoordinator(world: world, files: { nil }),
+            makePlayback: { skeleton, pose, model in
+                built += 1
+                return SkinnedPosePlayback(skeleton: skeleton, pose: pose, models: [model])
+            }
+        )
+        #expect(poser.pose([], deltaTime: 0.1).isEmpty)
+        #expect(built == 0)
+    }
 }
