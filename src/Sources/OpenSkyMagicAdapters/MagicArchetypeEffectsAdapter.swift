@@ -1,6 +1,6 @@
 import OpenSkyActorsInterface
 import OpenSkyBehavior
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyDialogueInterface
 import OpenSkyEffects
@@ -28,7 +28,7 @@ public protocol MagicArchetypeEffectsHost: AnyObject {
     var hud: any HUDPort { get }
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
-    var worldData: WorldDataStores? { get }
+    var worldRecords: (any WorldRecordsPort)? { get }
 }
 
 /// Part of `MagicWorldAdapter`, over its own narrow host.
@@ -137,7 +137,8 @@ extension MagicArchetypeEffectsAdapter {
         else { return }
         let speed = CloakKnock.speed(
             impactForce: projectile.impactForce,
-            bipedMultiplier: game.worldData?.gameSettings.number("fProjectileKnockMultBiped") ?? 0,
+            bipedMultiplier: game.worldRecords?.gameSettings
+                .number("fProjectileKnockMultBiped") ?? 0,
             havokScale: NIFCollisionModel.havokToEngineScale
         )
         guard speed > 0 else { return }
@@ -150,7 +151,7 @@ extension MagicArchetypeEffectsAdapter {
 
     public func actorHasKeyword(_ editorID: String, on holder: ActorValueHolder) -> Bool {
         guard
-            let keywords = game.worldData?.locationStore?.keywords,
+            let keywords = game.worldRecords?.locationKeywords,
             let keyword = keywords.keyword(editorID: editorID)?.id,
             let baselines = game.actorValues.runtime
         else { return false }
@@ -173,7 +174,7 @@ extension MagicArchetypeEffectsAdapter {
 
     public func itemHasKeyword(_ editorID: String, on item: FormID) -> Bool {
         guard
-            let keywords = game.worldData?.locationStore?.keywords,
+            let keywords = game.worldRecords?.locationKeywords,
             let keyword = keywords.keyword(editorID: editorID)?.id,
             let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
         else { return false }
@@ -184,8 +185,8 @@ extension MagicArchetypeEffectsAdapter {
     public func enchantment(_ base: ResolvedEnchantment, fits item: FormID) -> Bool {
         guard
             let list = base.data?.wornRestrictions,
-            let lists = game.worldData?.formListStore,
-            let keywords = game.worldData?.locationStore?.keywords,
+            let lists = game.worldRecords?.formListStore,
+            let keywords = game.worldRecords?.locationKeywords,
             let listID = lists.resolvedID(list, fromPlugin: base.sourcePlugin),
             let id = keywords.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
         else { return true }
