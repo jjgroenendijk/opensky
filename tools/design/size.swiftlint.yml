@@ -1,0 +1,17 @@
+# The tighter size limits of design rule 1 (docs/decisions/design-metrics.md). The report
+# reads only these rules; the lint config takes the values when the count is zero.
+only_rules:
+  - function_parameter_count
+  - large_tuple
+  - nesting
+
+function_parameter_count:
+  warning: 4
+  error: 4
+
+large_tuple:
+  warning: 2
+  error: 2
+
+nesting:
+  type_level: 1
