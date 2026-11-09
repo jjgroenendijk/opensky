@@ -11,15 +11,10 @@ import Testing
 
 @Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct FaceMorphBufferWeightTargetTests {
-    private static let device: (any MTLDevice)? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
+    /// Buffers only, so any Metal device will do, as on the CI runners.
+    private static let device = MTLCreateSystemDefaultDevice()
 
-    private static var hasMetal4Device: Bool {
+    private static var hasDevice: Bool {
         device != nil
     }
 
@@ -40,13 +35,13 @@ struct FaceMorphBufferWeightTargetTests {
         return try FaceMorphBuffer(device: device, tri: tri, mesh: mesh)
     }
 
-    @Test(.enabled(if: Self.hasMetal4Device))
+    @Test(.enabled(if: Self.hasDevice))
     func weightTargetNamesTheMorphTargets() throws {
         let buffer = try Self.buffer(device: #require(Self.device))
         #expect(buffer.targetNames == ["Blink", "Smile"])
     }
 
-    @Test(.enabled(if: Self.hasMetal4Device))
+    @Test(.enabled(if: Self.hasDevice))
     func playbackHandsBackItsGPUBuffers() throws {
         let buffer = try Self.buffer(device: #require(Self.device))
         let key = ObjectIdentifier(buffer)
