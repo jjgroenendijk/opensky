@@ -11,7 +11,7 @@ public import OpenSkyConditions
 public import OpenSkyDialogue
 public import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
@@ -102,10 +102,6 @@ extension DialogueWorldAdapter: DialogueWorld {
 
     public func loadStrings() -> LocalizedStrings? {
         game.localizedStringsLoader?()
-    }
-
-    public func spokeToPlayer(_ speaker: ReferenceKey) {
-        outcomes.spokeToPlayer(speaker)
     }
 }
 

@@ -47,11 +47,6 @@ public protocol PapyrusWorldStateBridgePort: AnyObject, DialogueFragmentDispatch
     var questRuntime: (any QuestAccess)? { get }
     /// Sends `OnRead` to the scripts on base item `base`.
     func queueItemRead(base: ReferenceKey)
-    @discardableResult func queueItemScriptEvent(
-        _ name: String,
-        base: ReferenceKey,
-        arguments: [PapyrusValue]
-    ) -> Int
     @discardableResult func queuePackageEvent(
         slot: UInt32,
         package: FormID,

@@ -14,12 +14,10 @@ public protocol InventoryPort: AnyObject, Sendable {
     var alchemySelection: [FormID]? { get }
     @discardableResult func applyPoison(_ poison: FormID) -> AlchemyActionOutcome
     func barterPricing(with merchant: ReferenceKey?) -> BarterPricing
-    @discardableResult func brewChosenIngredients() -> AlchemyActionOutcome
     @discardableResult func closeCraftingSession() -> CraftingActionOutcome
     func conditionEquipment(of key: ReferenceKey) -> ActorEquipmentFacts?
     func conditionKeywordCounts(of key: ReferenceKey) -> [FormID: Int32]?
     func containerHolder(for interaction: PlacedInteraction) -> InventoryHolder?
-    @discardableResult func craft(_ recipe: ResolvedFormID) -> CraftingActionOutcome
     /// Crafts `recipe` and gives the line its outcome shows, a refusal in `texts`.
     func craftLine(_ recipe: ResolvedFormID, texts: GameSettingTexts<CraftingRefusalText>)
         -> String
@@ -116,7 +114,6 @@ public protocol InventoryPort: AnyObject, Sendable {
         count: Int32,
         teammate: InventoryHolder
     ) -> TeammateTradeText?
-    @discardableResult func toggleAlchemyIngredient(_ item: FormID) -> AlchemyActionOutcome
     @discardableResult func toggleFavourite(_ item: FormID) -> FavouriteOutcome
     var tradeTexts: TradeTexts { get }
     func transfer(_ request: ContainerTransferRequest) throws -> TradeOutcome

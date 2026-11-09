@@ -6,5 +6,4 @@ public protocol FollowerCommandWorldPort: AnyObject {
     func commandTarget(_ key: ReferenceKey) -> FollowerCommandTarget?
     func enterCommandMode(_ follower: ReferenceKey)
     func favorStateChanged(_ actor: ReferenceKey, isDoingFavor: Bool)
-    func bringFollowers(into scene: any CellScenePort)
 }
