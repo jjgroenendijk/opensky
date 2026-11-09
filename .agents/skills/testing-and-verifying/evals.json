@@ -133,5 +133,16 @@
       "Makes every edit first and runs one check",
       "Runs make test T='...' once, then fixes everything it reports"
     ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "Another session is building in the main checkout. Run the Quick plan for my change.",
+    "files": [],
+    "expected_behavior": [
+      "Runs the build in its own linked worktree, not in the checkout the other session builds in",
+      "Starts make test in a background shell"
+    ]
   }
 ]

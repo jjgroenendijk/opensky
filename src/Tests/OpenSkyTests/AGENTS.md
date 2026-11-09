@@ -1,56 +1,28 @@
 # AGENTS.md — OpenSkyTests
 
-Rules for writing tests in this target. Running engine code against the real install to
-check a hypothesis is a different job: load the `probe` skill for that.
-
-## Compile failures this target produces
-
-- A test touching `Renderer`, `MTKView`, or any AppKit or MetalKit API must be marked
-  `@MainActor`. Omitting it is the historical top compile error here (`error: main
-  actor`). Patterns to copy: `GameViewControllerScreenshotTests`, and
-  `RendererOffscreenTests` in `OpenSkyWorldTests`.
-- A test that renders gates on `OffscreenRendererFixture.hasMetal4Device`, so a machine
-  without a Metal 4 GPU, such as a CI runner, skips instead of failing. A test that only builds
-  a cell scene gates on `CellSceneBuilderFixture.hasDevice`, which accepts any Metal device.
-- Everything parsing external data throws, so use `try` with `#require` rather than a
-  force-unwrap, which is a hard lint error.
-
-## Real-data tests live in another target
-
-A suite that reads the user's own install belongs in `src/Tests/OpenSkyRealDataTests/`, not here, and
-`make lint` fails when one is written here instead: it would never run. `make test PLAN=RealData`
-runs that bundle and only that bundle, and inside `make test` an env-gated suite silently
-skips, because a plain `xcodebuild test` does not forward `OPENSKY_DATA_ROOT` into the host.
-`src/Tests/OpenSkyRealDataTests/AGENTS.md` has the shape to copy.
-
-Nothing here reads a real install: `GameDataLocator` withholds the persisted
-`OpenSkyDataRoot` default and the Steam fallback inside a test host, so a unit test cannot
-quietly reach one even by accident (issue #362).
+Rules for writing tests in this target. General test rules live in `src/Tests/AGENTS.md`.
 
 ## What stays in this target
 
-This target holds the suites that need the app module, an acceptance chain, or two feature
-implementations. The last kind lives in `<Feature>/`, for example `Magic/CasterRuntimeTests`.
-Every other suite goes in a package test target, including one that builds a `Renderer`;
-`src/Tests/AGENTS.md` has the rule.
+The suites that need the app module, an acceptance chain, or two feature implementations.
+The last kind lives in `<Feature>/`, for example `Magic/CasterRuntimeTests`. Every other suite
+goes in a package test target, including one that builds a `Renderer`.
 
-`src/Tests/HostedTestSupport/` is compiled into this bundle and `OpenSkyRealDataTests`. It holds the
-fixtures both bundles use that need the app or two implementations. `Support/` holds the
-ones only this bundle uses. Other fixtures are in the `src/Tests/OpenSky<Layer>Testing/` and
-`src/Tests/<Name>Fixtures/` libraries, which this bundle links through `OpenSkyTestSupport`.
+`src/Tests/HostedTestSupport/` holds the fixtures this bundle shares with
+`OpenSkyRealDataTests`; `Support/` holds the ones only this bundle uses. Other fixtures come
+from the testing and fixture libraries through `OpenSkyTestSupport`.
 
-## Fixtures and output
+## Compile and run failures this target produces
 
-- Fixtures are synthetic and built in code — never a real extracted file. The existing
-  helpers are `BSAFixture`, `ESMFixture`, `NIFFixture`, and `StringTableFixture`, in
-  `src/Tests/OpenSkyFormatsTesting/`.
-- `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
-  the run's summary and any backgrounded run lose it. To capture a result, assert on the
-  value or write an artifact to gitignored `.logs/`.
-- `make test PLAN=UnitTests T='Suite'` or `T='Suite/method()'` runs one suite or test in
-  `OpenSkyTests`, and `make test-rerun PLAN=UnitTests T=...` reruns it without the build system;
-  the `testing-and-verifying` skill covers what to run. A failed run prints each failure's
-  name and message from the result bundle.
-- Accessibility ids are pinned as literal assertions here (`LauncherTests`) *and* exercised
-  through `OpenSkyUITests`. The two catch different things: a unit assertion pins the id
-  string, and only a UI test proves the id is reachable in the built view hierarchy.
+- A test that touches `Renderer`, `MTKView`, AppKit, or MetalKit is `@MainActor`. Missing it
+  is the most common compile error here (`error: main actor`). Copy
+  `GameViewControllerScreenshotTests`.
+- A test that renders gates on `OffscreenRendererFixture.hasMetal4Device`, so a CI runner
+  without a Metal 4 GPU skips it. A test that only builds a cell scene gates on
+  `CellSceneBuilderFixture.hasDevice`.
+- A suite that reads the real install goes in `src/Tests/OpenSkyRealDataTests/` (gate:
+  `tools/lint/realdata-plan.sh`). Here `GameDataLocator` withholds every data root.
+- `print()` shows in the live console but not in the result bundle. To keep a result, assert
+  on the value or write an artifact to `.logs/`.
+- An accessibility ID is pinned twice: as a literal in a unit test (`LauncherTests`), and
+  through `OpenSkyUITests`, which proves the view hierarchy reaches it.

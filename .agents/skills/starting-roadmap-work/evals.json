@@ -128,5 +128,17 @@
       "Files a gap issue for the missing knockdown subsystem when none exists, with Refs to the item",
       "Asks the user whether to build the subsystem in this PR or leave it for later"
     ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "Add a lint that forbids force-unwraps in every module and turn it on in CI.",
+    "files": [],
+    "expected_behavior": [
+      "Plans separate PRs: the check as a report with its count first, then fixes per module, then the gate",
+      "Does not turn the gate on in the same PR that fixes the whole tree",
+      "Turns the gate on only when the count on main is zero"
+    ]
   }
 ]

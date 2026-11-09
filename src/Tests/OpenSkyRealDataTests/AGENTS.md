@@ -1,55 +1,42 @@
 # AGENTS.md — OpenSkyRealDataTests
 
 Every env-gated suite that runs against the user's own Skyrim SE install, and nothing else.
-This is the whole `RealData` test plan: the plan selects this target and does not narrow it
-further, so a file here runs under `make test PLAN=RealData` by virtue of being here (issue #418).
-General test rules live in `src/Tests/OpenSkyTests/AGENTS.md`; only what differs is below. Running
-engine code against the install to check a hypothesis is a different job — load the
-`probing-real-game-data` skill for that.
+The `RealData` plans select this target. General test rules live in `src/Tests/AGENTS.md`;
+only what differs is below. Checking a hypothesis against the install is a different job:
+load the `probing-real-game-data` skill for that.
 
 ## What belongs here
 
-A suite whose test bodies read the real install. `CellRenderRealDataTests.swift` is the
-canonical shape — copy it. Gate every test on `Support/RealDataEnvironment.swift`:
-`.enabled(if: RealDataEnvironment.hasDataRoot)`, or `canRender` when it also needs a Metal 4
-device, then `try #require(RealDataEnvironment.dataRoot)`. Do not declare a `dataRoot` or
-`device` of your own. The gate reads only `OPENSKY_DATA_ROOT`, so a machine without it
-skips. `GameDataLocator` also withholds the persisted `OpenSkyDataRoot` default and the
-Steam fallback inside a test host, so a suite that forgets its gate cannot reach an install.
+A suite whose test bodies read the real install. Copy the shape of
+`CellRenderRealDataTests.swift`: gate every test on `RealDataEnvironment`
+(`.enabled(if: RealDataEnvironment.hasDataRoot)`, or `canRender` when it also needs a Metal 4
+device), then `try #require(RealDataEnvironment.dataRoot)`. Do not declare a `dataRoot` or
+`device` of your own. Inside a test host, `GameDataLocator` withholds every other data root,
+so a suite that forgets its gate cannot reach an install.
 
 Shared loading goes in a fixture, not in each suite: `RealDataInstall` loads `Skyrim.esm`
-with texture and mesh libraries, `PlayerBodyFixture.stage()` stands the player in a cell,
-and `HeimskrFace` frames an actor's head.
+with its texture and mesh libraries, `PlayerBodyFixture.stage()` stands the player in a cell,
+and `HeimskrFace` frames an actor's head. Keep one gated suite per file, named after the file.
+A gated suite outside this folder would never run (gate: `tools/lint/realdata-plan.sh`).
 
-Keep one gated suite per file, named after the file. `tools/lint/realdata-plan.sh` (part of
-`make lint`) fails when a file that reads `RealDataEnvironment` or declares
-`dataRoot: GameDataRoot?` has a `@Test` outside this folder, because such a suite would
-never run: `make test PLAN=RealData` would not reach it, and a plain `xcodebuild test` does not
-forward `OPENSKY_DATA_ROOT` into the host.
-
-Support code only these suites use — a probe harness, a report writer, a real-terrain
-driver — belongs here too. Support shared with the synthetic suites goes in
-`src/Tests/HostedTestSupport/`, which both test targets compile.
+Support code only these suites use stays here. Support shared with the synthetic suites goes
+in `src/Tests/HostedTestSupport/`.
 
 ## Running them
 
 ```sh
 make test PLAN=RealData T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
-make test PLAN=RealData
+make test PLAN=RealDataAll
 make test PLAN=Perf
 ```
 
-A bare selector resolves under `OpenSkyRealDataTests/`. All three run under the RSS
-watchdog, which is mandatory: a heavy real-data test once reached ~30 GB resident and locked
-the machine. Never run one through a raw `xcodebuild` that bypasses it. `make test` never
-runs anything here, and this bundle is not compiled at all under the `UnitTests` plan.
+`make test` runs the real-data plans under a memory watchdog (`CAP=` in MB). A heavy real-data test
+once reached about 30 GB resident and locked the machine, so never run one through a raw
+`xcodebuild`.
 
 ## Legal boundary
 
-No game-derived bytes leave a run: assert on counts, editor IDs and shapes, and write any
-artifact — a render capture included — to gitignored `.logs/` through a run directory. A
-rendered frame embeds the user's assets, so it is game content (root `AGENTS.md`).
-
-Find `.logs/` with `RepositoryLogs.directory()`, never `#filePath`: the compilation cache's
-prefix mapping compiles source paths to `/^src/...`. Read back and compare offscreen frames
-with `RenderedPixels` rather than another local copy.
+No game-derived bytes leave a run: assert on counts, editor IDs, and shapes, and write any
+artifact, a render capture included, to `.logs/` through a run directory. Find `.logs/` with
+`RepositoryLogs.directory()`, never `#filePath`. Compare offscreen frames with
+`RenderedPixels`.

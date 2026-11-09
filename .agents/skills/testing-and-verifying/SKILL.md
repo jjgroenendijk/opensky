@@ -87,9 +87,13 @@ Rules that hold across all four:
 
 ## Long runs
 
-These commands build, so the background-shell and one-`xcodebuild` rules in the root
-`AGENTS.md` apply to them: every `make test*` and `make build-*`, `make lint-index`,
-and `make install`. `git push` builds nothing: the only git hook is `pre-commit`.
+These commands build, so the background-shell rule in the root `AGENTS.md` applies to them:
+every `make test*` and `make build-*`, `make lint-index`, and `make install`. `git push`
+builds nothing: the only git hook is `pre-commit`.
+
+- Build in your own linked worktree, one per issue (`git worktree add`). Each checkout has one
+  build tree, and two builds into one tree at the same time collide in xcodebuild's build
+  database. No lock stops a second build: `make` no longer waits for a slot.
 
 - Start the command itself in the background, not with `> file` redirection, and wait for
   the completion notification. Do not `cat` the task output, `sleep`, or loop on a log

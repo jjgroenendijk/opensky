@@ -21,25 +21,24 @@ Rules for code under `src/Sources/`. The module list, the layers, and the import
 - `OpenSkyWorld/`: `Benchmark/`, `Session/`, and `Streaming/`. Every other world domain is its
   own flat module, such as `OpenSkyPlayer/` or `OpenSkyCells/`
   (`docs/tools/modules.md#world-domains`).
-- A package module never imports a module above it. Behavior that needs a higher layer goes
-  in an extension file up there.
+- A package module never imports a module above it; behaviour that needs a higher layer goes
+  in an extension file up there (gate: `tools/lint/module-graph.sh`).
 - An extension file is named `Type+Feature.swift`, for example
   `Package+Schedule.swift`. File names stay unique inside a target, because Swift rejects
   two files with one name in the same module.
-- Do not add a new `GameViewController+X.swift` file. Game logic there cannot be reached by
-  the package tests or the CLI. Put it in a coordinator in the feature module instead;
-  `docs/engine/coordinators.md` has the pattern, and `VendorCore` with `VendorCoordinator` is
-  the example: a pure core and a thin shell.
-- Past 600 lines (the file-length warning), split into a satellite file (`Renderer.swift` ->
-  `RendererScenePass.swift`). Check first which members need same-file `private(set)`
-  access. Past the parameter or tuple cap, introduce a struct.
+- Game logic goes in a coordinator in its feature module, never a `GameViewController+X.swift`
+  file, which the package tests and the CLI cannot reach (gate: SwiftLint
+  `game_view_controller_extension`). `VendorCore` with `VendorCoordinator` is the example.
+- At the file-length warning, split into a satellite file (`Renderer.swift` ->
+  `RendererScenePass.swift`); check first which members need same-file `private(set)` access.
+  Past the parameter or tuple cap, introduce a struct (gate: SwiftLint).
 
 ## Swift conventions
 
 - Swift-to-Metal shared structs go in `OpenSkyShaderTypes/ShaderTypes.h` with explicit
   `simd`-aligned layout. There is no bridging header, so a Swift file that uses one writes
   `import OpenSkyShaderTypes`. Metal shaders keep writing `#import "ShaderTypes.h"`.
-- Do not build with a `SWIFT_VERSION` override; every target is in Swift 6 mode.
+- Every target is in Swift 6 mode (gate: `tools/lint/swift-baseline.sh`).
 - The default actor isolation is `MainActor`. An extension of a `nonisolated` type is
   declared `nonisolated extension` unless it deliberately names a global actor, because the
   type's isolation does not carry into a separate extension. Isolation is per declaration,
@@ -51,17 +50,13 @@ Rules for code under `src/Sources/`. The module list, the layers, and the import
   it across a module boundary.
 - Every file that uses a module writes its own `import`. New modules and their dependencies
   go in `src/Package.swift`, never in the project file.
-- Three compiler rules hold on every target (`docs/decisions/language-rules.md`). A protocol
-  type is written `any X`. An import is `internal`: write `public import X` only when a public
-  declaration of the file uses a type of `X`. An unsafe pointer or C call is marked `unsafe`.
-  A `@preconcurrency import`, needed for Metal, is written `@preconcurrency @unsafe import`.
-- No `try?` in a package module, except on `removeItem` and `close`. A failure the game
-  survives goes through `attempt { try call() }`, which logs it; any other failure throws a typed
-  error. The formats, game data, and save modules never trap (`docs/decisions/error-handling.md`).
-- Game-rule code reads no system random source or clock: own a seeded generator or capture a
-  `RandomStream`, take the time from the shell, and time work with `Stopwatch`. No package
-  module adds a mutable static, a singleton, or a notification-centre event
-  (`docs/decisions/deterministic-rules.md`).
+- `any X`, `internal` imports, and `unsafe` marks: the compiler enforces them (gate:
+  `tools/lint/language-rules.sh`, `docs/decisions/language-rules.md`). Metal needs
+  `@preconcurrency @unsafe import`.
+- No `try?` except on `removeItem` and `close`: a failure the game survives goes through
+  `attempt { try call() }`, any other throws a typed error (gate: `tools/lint/error-handling.sh`).
+- Game rules read no system random source or clock, and no module adds a mutable static or a
+  singleton: pass a seeded generator and the time in (gate: `tools/lint/deterministic-rules.sh`).
 
 ## Bulk edits
 

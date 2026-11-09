@@ -4,10 +4,9 @@ Tooling for the Windows reference game: the real Skyrim SE under Wine 11 with DX
 beside OpenSky to compare the two. `docs/tools/reference-game.md` has the workflow.
 Nothing here ships in a release.
 
-- The Wine prefix, Windows Steam, and the game copy live outside the repo, in the folder
-  `make setup-reference ARGS=<dir>` was given. Never put the prefix under the repo or
-  under the install OpenSky reads, because both rules in the root `AGENTS.md` (no game
-  content in git, the install is read-only) would break. `setup.sh` refuses both.
+- The Wine prefix, Windows Steam, and the game copy live outside the repo and outside the
+  install OpenSky reads, in the folder given to `make setup-reference ARGS=<dir>` (gate:
+  `setup.sh` refuses both).
 - Every write goes into that prefix or `.logs/`: the ini edit, the console batch file,
   and the Wine logs. The original install is only read, and the copy is an APFS clone.
 - The logic lives in Swift, where tests reach it: `OpenSkyReference` for the rules and

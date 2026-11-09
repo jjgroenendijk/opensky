@@ -22,7 +22,7 @@ the session scope builds each adapter with it (`/decisions/session-scope.md`).
 on each pull request, because it reads the index store that a build writes.
 `tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks
 rule 5 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI
-run both. Each reads every adapter or app file, so `ALL=1` changes nothing for them. Each first
+run both. Each reads every adapter or app file, so `OPENSKY_CHECK_ALL=1` changes nothing for them. Each first
 runs its rules on a small synthetic violation, which must fail.
 
 ## The rules
