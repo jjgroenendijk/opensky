@@ -28,6 +28,11 @@ fi
 # The reference lives in the main checkout, so every worktree checks against the same one.
 if [ "$mode" = record ]; then run_dir="$("$root/tools/run-dir.sh" -b "$main/.logs" tour-record)"
 else run_dir="$("$root/tools/run-dir.sh" tour-check)"; fi
+# A locked screen stops the display link, so the app draws no frame and the world never loads.
+if ioreg -n Root -d1 | grep -q '"CGSSessionScreenIsLocked"=Yes'; then
+    echo "[ERROR] the screen is locked, so the app draws no frames; unlock it and run again" >&2
+    exit 2
+fi
 socket="/tmp/opensky-tour-$$.sock"
 started="$(date +%s)"
 

@@ -15,7 +15,7 @@ import OpenSkyWorldState
 /// After the mount gate, so a rider hears the door refusal first.
 public struct BeastFormWiring {
     public init(_ adapter: BeastFormWorldAdapter) {
-        guard let streamer = adapter.game.streamer else { return }
+        let streamer = adapter.game.streamer
         streamer.activationGate.register(.beastForm) { [weak adapter] target in
             guard let adapter else { return nil }
             let canTake = adapter.playerRace?.flags.contains(.canPickUpItems) ?? true

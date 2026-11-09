@@ -26,7 +26,7 @@ public protocol RagdollRecoveryHost: AnyObject {
     var hud: any HUDPort { get }
     var mapWorld: any MapWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -66,7 +66,7 @@ extension RagdollRecoveryAdapter {
 
     public func bleedoutThreshold(of key: ReferenceKey) -> Float? {
         guard
-            let base = game.streamer?.referenceEntry(key: key)?.placedActor?.base,
+            let base = game.streamer.referenceEntry(key: key)?.placedActor?.base,
             let resolver = game.worldData?.actorValueBaselines?.resolver
         else { return nil }
         return resolver.characterClass(ofBase: base)?.bleedoutDefault
@@ -100,10 +100,10 @@ extension RagdollRecoveryAdapter {
 
     /// OpenSky's reading of `sEssentialCharacterDown`: a follower going down is named.
     private func announceWoundedTeammate(_ key: ReferenceKey) {
+        let streamer = game.streamer
         guard
             game.scripts.bridge?.scriptedState(of: key)
                 .flag(ScriptedStateName.playerTeammate) == true,
-            let streamer = game.streamer,
             let form = streamer.referenceEntry(key: key)?.formID,
             let name = streamer.interactionName(reference: form), !name.isEmpty
         else { return }
@@ -135,7 +135,7 @@ extension RagdollRecoveryAdapter {
             game.gameSession?.locomotion.raise(RagdollGraphNames.ragdollInstant)
             return
         }
-        _ = game.streamer?.takeRiddenActor(key)
+        _ = game.streamer.takeRiddenActor(key)
         _ = game.actorGraphWorld.graphs.raise(RagdollGraphNames.ragdollInstant, on: key)
     }
 
@@ -146,7 +146,8 @@ extension RagdollRecoveryAdapter {
             game.gameSession?.locomotion.raise(RagdollGraphNames.getUpStart)
             return
         }
-        if let streamer = game.streamer {
+        do {
+            let streamer = game.streamer
             let facing = yaw ?? streamer.riddenHold(of: key)?.yaw ?? 0
             streamer.steerRiddenActor(key, to: feet, yaw: facing)
         }
@@ -155,7 +156,7 @@ extension RagdollRecoveryAdapter {
 
     public func endKnockdown(_ key: ReferenceKey) {
         guard key != .player else { return }
-        _ = game.streamer?.releaseRiddenActor(key)
+        _ = game.streamer.releaseRiddenActor(key)
     }
 
     public func getUpDuration(of key: ReferenceKey) -> Float? {

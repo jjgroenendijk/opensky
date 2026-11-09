@@ -18,7 +18,7 @@ public protocol ScriptSkyBindingsHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var renderer: (any RendererPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
@@ -43,7 +43,7 @@ extension ScriptSkyBindingsAdapter {
         guard
             let renderer = game.renderer, let gameSession = game.gameSession,
             let lighting = renderer.scene.lighting,
-            case let .interior(loaded)? = game.streamer?.interiorScene?.location, loaded == cell
+            case let .interior(loaded)? = game.streamer.interiorScene?.location, loaded == cell
         else { return false }
         var fog = gameSession.interiorFogOverride.flatMap { $0.base == lighting ? $0 : nil }
             ?? InteriorFogOverride(base: lighting)

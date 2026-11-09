@@ -18,7 +18,7 @@ import OpenSkyWorldState
 /// Connects `ActivationRefusalWorldAdapter` to the started session.
 public struct ActivationRefusalWiring {
     public init(_ adapter: ActivationRefusalWorldAdapter) {
-        guard let streamer = adapter.game.streamer else { return }
+        let streamer = adapter.game.streamer
         streamer.activationGate.register(.notice) { [weak adapter] target in
             guard let adapter else { return nil }
             let texts = adapter.game.mapWorld.settingTexts(ActivationRefusalText.self)

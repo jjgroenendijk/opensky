@@ -26,7 +26,7 @@ public protocol AnimationEventWorldHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var idleWorld: any IdleWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 public final class AnimationEventWorldAdapter {
@@ -43,7 +43,7 @@ extension AnimationEventWorldAdapter: AnimationEventWorld {
         if source == .player {
             return gameSession.locomotion.status.feetPosition
         }
-        guard let streamer = game.streamer else { return nil }
+        let streamer = game.streamer
         if let moved = streamer.npcTransform(for: source) {
             return moved.placement.position
         }

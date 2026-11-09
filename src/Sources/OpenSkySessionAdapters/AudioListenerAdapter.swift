@@ -27,7 +27,7 @@ public protocol AudioListenerHost: AnyObject {
     var dialogueWorld: any DialogueWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var renderer: (any RendererPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `AudioWorldAdapter`, over its own narrow host.
@@ -64,7 +64,7 @@ extension AudioListenerAdapter {
     public func lipSyncTarget(for speaker: ReferenceKey) -> LipSyncPlayback? {
         guard
             let renderer = game.renderer,
-            let actor = game.streamer?.referenceEntry(key: speaker)?.placedActor?.formID
+            let actor = game.streamer.referenceEntry(key: speaker)?.placedActor?.formID
         else { return nil }
         return renderer.scene.animations.lazy
             .compactMap { $0 as? LipSyncPlayback }

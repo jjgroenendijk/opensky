@@ -35,7 +35,7 @@ public protocol MenuWorldNewGameHost: AnyObject {
     var saveGames: any SaveGameWorldPort { get }
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -73,7 +73,7 @@ extension MenuWorldNewGameAdapter {
     }
 
     public func holdWorldLoading() {
-        game.streamer?.isHeld = true
+        game.streamer.isHeld = true
     }
 
     public func quitApplication() {

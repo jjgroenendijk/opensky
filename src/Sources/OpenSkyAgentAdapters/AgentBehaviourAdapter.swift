@@ -27,7 +27,7 @@ public protocol AgentBehaviourHost: AnyObject {
     var menuScreensWorld: any MenuScreensWorldPort { get }
     var packages: any PackagePort { get }
     var renderer: (any RendererPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
 }
 
@@ -42,7 +42,7 @@ extension AgentBehaviourAdapter {
         let key = try hub.resolveReference(reference).key
         let readout = game.packages.readout(for: key)
         let execution = game.packages.executions[key]?.readout
-        let mover = game.streamer?.npcMovementReadouts().first { $0.actor == key }
+        let mover = game.streamer.npcMovementReadouts().first { $0.actor == key }
         let links = game.vehicleWorld.vehicles.core.links
         return [
             "package": readout?.editorID.map(AgentJSON.string) ?? .null,
@@ -81,9 +81,9 @@ extension AgentBehaviourAdapter {
     /// The movement type the actor's graph names, its speeds, and the shape it collides as.
     private func movementReadout(_ key: ReferenceKey) -> AgentJSON {
         let name = game.actorGraphs.movementStateName(of: key)
-        let speeds = game.streamer?.npcMovementSpeeds?(key)
-        let scale = game.streamer?.npcTransform(for: key)?.scale ?? 1
-        let bounds = game.streamer?.npcBodyHalfExtents?(key)
+        let speeds = game.streamer.npcMovementSpeeds?(key)
+        let scale = game.streamer.npcTransform(for: key)?.scale ?? 1
+        let bounds = game.streamer.npcBodyHalfExtents?(key)
         let capsule = bounds.flatMap { PlayerCapsule.upright(halfExtents: $0, scale: scale) }
         let long = bounds.flatMap { LongBodyShape(halfExtents: $0, scale: scale) }
         return [
@@ -114,7 +114,7 @@ extension AgentBehaviourAdapter {
             "head": head.map { .init($0) } ?? .null,
             "live": .init(live.position),
             "yaw": .init(live.rotation.z),
-            "cell": game.streamer?.cellLocation(of: key).map { .string("\($0)") } ?? .null,
+            "cell": game.streamer.cellLocation(of: key).map { .string("\($0)") } ?? .null,
             "built": built.map { .init(SIMD3($0.x, $0.y, $0.z)) } ?? .null
         ]
     }
@@ -270,6 +270,6 @@ extension AgentBehaviourAdapter {
     }
 
     public func formID(of key: ReferenceKey) -> AgentJSON? {
-        game.streamer?.referenceEntry(key: key).map { .formID($0.formID.rawValue) }
+        game.streamer.referenceEntry(key: key).map { .formID($0.formID.rawValue) }
     }
 }

@@ -17,7 +17,8 @@ import simd
 
 extension ObjectAnimationWorldAdapter {
     public func advanceTrapContact(_ delta: Float) {
-        guard let runtime = game.scripts.runtime, let streamer = game.streamer else { return }
+        let streamer = game.streamer
+        guard let runtime = game.scripts.runtime else { return }
         var resident: Set<ReferenceKey> = []
         let targets = trapTargets()
         for reference in objects.runningReferences {

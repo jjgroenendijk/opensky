@@ -24,7 +24,7 @@ public protocol MagicSummonedActorsHost: AnyObject {
     var magic: any MagicPort { get }
     var perks: any PerkPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -47,8 +47,8 @@ extension MagicSummonedActorsAdapter {
     public func summonActor(_ base: FormID, at point: SIMD3<Float>?, for caster: ReferenceKey)
         -> ReferenceKey?
     {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let origin = feet(of: caster),
             let location = caster == .player
             ? streamer.currentCellLocation : streamer.cellLocation(of: caster)
@@ -98,7 +98,7 @@ extension MagicSummonedActorsAdapter {
                 .location
             game.worldState.reset(actor.actor)
             if let location {
-                game.streamer?.requestRebuild(of: location)
+                game.streamer.requestRebuild(of: location)
             }
         case .reanimated:
             _ = game.scripts.bridge?.killActor(actor.actor, killer: nil)

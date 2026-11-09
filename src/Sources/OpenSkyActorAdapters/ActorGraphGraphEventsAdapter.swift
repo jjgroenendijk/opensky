@@ -27,7 +27,7 @@ public protocol ActorGraphGraphEventsHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var idleWorld: any IdleWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
@@ -80,7 +80,7 @@ extension ActorGraphGraphEventsAdapter {
     }
 
     public func actorSoundSources() -> [ActorSoundSource] {
-        guard let streamer = game.streamer else { return [] }
+        let streamer = game.streamer
         return game.actorWorld.combatActors().compactMap { actor in
             guard
                 let base = streamer.residentActorEntry(key: actor.key)?.placedActor?.base

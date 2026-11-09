@@ -29,7 +29,7 @@ protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
     var menuMode: any MenuModePort { get }
     var renderer: (any RendererPort)? { get }
     var gameSession: (any GameSessionPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Holds the open lockpicking session's input and overlay for `game`.
@@ -135,7 +135,7 @@ final class LockpickingMenuController {
         game.menuMode.dismiss(Self.identifier)
         // The press that met the lock goes through now that it is open.
         if opened, let target {
-            game.streamer?.activate(target)
+            game.streamer.activate(target)
         }
     }
 

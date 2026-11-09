@@ -32,7 +32,7 @@ public protocol ScriptPlayerBindingsHost: AnyObject {
     var player: any PlayerPort { get }
     var ragdoll: any RagdollPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 

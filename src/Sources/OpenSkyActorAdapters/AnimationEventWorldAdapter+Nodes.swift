@@ -38,13 +38,13 @@ extension AnimationEventWorldAdapter {
 
     /// A node of an object's running behaviour graph, such as a trap's swinging blade.
     private func objectNode(_ name: String, of object: ReferenceKey) -> float4x4? {
-        guard let formID = game.streamer?.referenceEntry(key: object)?.formID else { return nil }
+        guard let formID = game.streamer.referenceEntry(key: object)?.formID else { return nil }
         return game.objectBehaviors.worldBone(of: formID.rawValue, named: name)
     }
 
     private func actorBone(_ name: String, of actor: ReferenceKey) -> float4x4? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let placed = streamer.referenceEntry(key: actor)?.placedActor,
             let pose = game.animatedPose(for: actor),
             let bone = pose.first(where: { $0.key.caseInsensitiveCompare(name) == .orderedSame })

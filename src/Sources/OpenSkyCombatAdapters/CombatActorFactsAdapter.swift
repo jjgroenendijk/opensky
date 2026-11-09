@@ -39,7 +39,7 @@ public protocol CombatActorFactsHost: AnyObject {
     var perception: any PerceptionPort { get }
     var perks: any PerkPort { get }
     var ragdoll: any RagdollPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -67,7 +67,7 @@ extension CombatActorFactsAdapter {
             origin: gameSession.freeFlyCamera.position,
             aim: gameSession.freeFlyCamera.forward,
             isFirstPerson: gameSession.movementMode != .thirdPerson,
-            location: game.streamer?.currentCellLocation
+            location: game.streamer.currentCellLocation
         )
     }
 
@@ -140,7 +140,7 @@ extension CombatActorFactsAdapter {
     }
 
     public var isInInterior: Bool {
-        game.streamer?.interiorScene != nil
+        game.streamer.interiorScene != nil
     }
 
     /// ZNAM after template inheritance, read through the load-order CSTY store.

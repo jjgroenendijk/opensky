@@ -20,7 +20,7 @@ public protocol BeastFormWorldHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var menuWorld: any MenuWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }

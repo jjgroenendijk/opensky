@@ -45,7 +45,7 @@ public protocol RuntimeStateWorldHost: AnyObject {
     var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }

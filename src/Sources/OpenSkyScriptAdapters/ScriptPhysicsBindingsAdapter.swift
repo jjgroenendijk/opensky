@@ -18,7 +18,7 @@ public protocol ScriptPhysicsBindingsHost: AnyObject {
     var actorWorld: any ActorWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var ragdoll: any RagdollPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -46,8 +46,8 @@ extension ScriptPhysicsBindingsAdapter {
         case (.ragdoll, .ragdoll):
             return .returned(.boolean(runtime.addLink(PhysicsLink(first: first, second: second))))
         case (.loose, .loose):
-            let linked = game.streamer?.dynamicBodies
-                .addLink(PhysicsLink(first: first, second: second)) ?? false
+            let linked = game.streamer.dynamicBodies
+                .addLink(PhysicsLink(first: first, second: second))
             return .returned(.boolean(linked))
         case (.loose, .ragdoll), (.ragdoll, .loose):
             return linkLoose(first, second, runtime)
@@ -62,7 +62,7 @@ extension ScriptPhysicsBindingsAdapter {
 
     public func removeConstraints(_ first: PhysicsLinkEnd, _ second: PhysicsLinkEnd) -> Bool {
         let ragdolls = game.ragdoll.runtime?.removeConstraints(first, second) ?? false
-        let loose = game.streamer?.dynamicBodies.removePins(first, second) ?? false
+        let loose = game.streamer.dynamicBodies.removePins(first, second)
         return ragdolls || loose
     }
 
@@ -70,16 +70,16 @@ extension ScriptPhysicsBindingsAdapter {
     private func linkLoose(
         _ first: PhysicsLinkEnd, _ second: PhysicsLinkEnd, _ runtime: any RagdollRuntimePort
     ) -> PapyrusNativeResult {
-        let looseFirst = game.streamer?.dynamicBodies.body(for: first.reference) != nil
+        let looseFirst = game.streamer.dynamicBodies.body(for: first.reference) != nil
         let link = looseFirst
             ? PhysicsLink(first: first, second: second) : PhysicsLink(first: second, second: first)
         guard runtime.hasBody(link.second) else { return .returned(.boolean(false)) }
-        let linked = game.streamer?.dynamicBodies.addRagdollLink(link) ?? false
+        let linked = game.streamer.dynamicBodies.addRagdollLink(link)
         return .returned(.boolean(linked))
     }
 
     private func body(of end: PhysicsLinkEnd, _ runtime: any RagdollRuntimePort) -> ConstraintBody {
-        if game.streamer?.dynamicBodies.body(for: end.reference) != nil {
+        if game.streamer.dynamicBodies.body(for: end.reference) != nil {
             return .loose
         }
         if game.actorWorld.actorValueHolder(for: end.reference) != nil {
@@ -95,8 +95,8 @@ extension ScriptPhysicsBindingsAdapter {
             guard let node else { return .boolean(false) }
             let point = node * SIMD4(anchor.offset, 1)
             let pin = PhysicsPin(end: end, partner: anchor, point: SIMD3(point.x, point.y, point.z))
-            let pinned = game.streamer?.dynamicBodies.body(for: end.reference) != nil
-                ? game.streamer?.dynamicBodies.addPin(pin) ?? false
+            let pinned = game.streamer.dynamicBodies.body(for: end.reference) != nil
+                ? game.streamer.dynamicBodies.addPin(pin)
                 : game.ragdoll.runtime?.addPin(pin) ?? false
             return .boolean(pinned)
         }
@@ -120,7 +120,7 @@ extension ScriptPhysicsBindingsAdapter {
         pushLooseBodies(by: moves)
         game.gameSession?.instancePoses.scriptedPoses = poses
             .reduce(into: [:]) { matrices, entry in
-                guard let formID = game.streamer?.referenceEntry(key: entry.key)?.formID
+                guard let formID = game.streamer.referenceEntry(key: entry.key)?.formID
                 else { return }
                 matrices[formID.rawValue] = MatrixMath.placement(
                     position: entry.value.position, rotation: entry.value.rotation, scale: 1
@@ -129,8 +129,9 @@ extension ScriptPhysicsBindingsAdapter {
     }
 
     public func pushLooseBodies(by translations: [ReferenceKey: PapyrusTranslation]) {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer, streamer.dynamicBodies.bodyCount > 0,
+            streamer.dynamicBodies.bodyCount > 0,
             let keywords = game.worldData?.locationStore?.keywords
         else { return }
         for key in translations.keys.sorted() {

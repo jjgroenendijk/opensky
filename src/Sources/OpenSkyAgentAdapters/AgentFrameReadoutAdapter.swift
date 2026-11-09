@@ -37,7 +37,7 @@ public protocol AgentFrameReadoutHost: AnyObject {
     var renderControls: any WorldRenderControlsPort { get }
     var renderer: (any RendererPort)? { get }
     var runtimeState: any RuntimeStatePort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
@@ -102,14 +102,10 @@ extension AgentFrameReadoutAdapter {
             "memoryMB": MemoryFootprint.physFootprintMB().map(AgentJSON.number) ?? .null,
             "interpolation": interpolationState(),
             "terrainLOD": terrainLODState(),
-            "largeReferences": game.streamer.map { .init($0.largeReferenceCount) } ?? .null,
-            "fullLODReferences": game.streamer.map { .init($0.fullLODReferenceCount) } ?? .null,
-            "generatedTerrainBlocks": game.streamer.map {
-                .init($0.generatedTerrainBlockCount)
-            } ?? .null,
-            "hiddenLargeReferenceLOD": game.streamer.map {
-                .init($0.hiddenLargeReferenceSegments)
-            } ?? .null,
+            "largeReferences": .init(game.streamer.largeReferenceCount),
+            "fullLODReferences": .init(game.streamer.fullLODReferenceCount),
+            "generatedTerrainBlocks": .init(game.streamer.generatedTerrainBlockCount),
+            "hiddenLargeReferenceLOD": .init(game.streamer.hiddenLargeReferenceSegments),
             "screenFade": screenFadeState(),
             "postEffects": hub.render.postEffectState(),
             "lighting": hub.render.lightingState(),
@@ -126,7 +122,7 @@ extension AgentFrameReadoutAdapter {
     private func gpuMemoryState() -> AgentJSON {
         guard let renderer = game.gameSession?.renderer else { return .null }
         let usage = renderer.gpuMemoryUsage()
-        let cached = game.streamer?.cachedAssetCounts
+        let cached = game.streamer.cachedAssetCounts
         let mebibyte = Double(1 << 20)
         return [
             "totalMB": .number(Double(usage.totalBytes) / mebibyte),

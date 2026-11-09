@@ -35,7 +35,7 @@ public protocol MenuWorldScriptMenusHost: AnyObject {
     var menuScreens: any MenuScreensPort { get }
     var raceMenu: any RaceMenuPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -167,7 +167,7 @@ extension MenuWorldScriptMenusAdapter {
             return
         }
         // A move out of the loaded cells loads a new area, so the game shows a screen.
-        if game.streamer?.referenceEntry(key: target) == nil {
+        if game.streamer.referenceEntry(key: target) == nil {
             state.coverNextTeleport = true
         }
         unsafe teleports.teleportPlayer(

@@ -68,7 +68,7 @@ extension ContainerMenuController {
     func openInventory(of actor: ReferenceKey) {
         guard
             game.inventory.runtime != nil,
-            let entry = game.streamer?.referenceEntry(key: actor),
+            let entry = game.streamer.referenceEntry(key: actor),
             let placed = entry.placedActor
         else { return }
         game.dialogueMenu.close()
@@ -76,7 +76,7 @@ extension ContainerMenuController {
         target(
             InventoryHolder(
                 key: actor, owner: .actor(base: placed.base),
-                cell: game.streamer?.cellLocation(of: actor)
+                cell: game.streamer.cellLocation(of: actor)
             ),
             name: game.dialogueWorld.speakerLabel(for: actor)
         )

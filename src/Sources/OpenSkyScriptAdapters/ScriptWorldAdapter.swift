@@ -41,7 +41,7 @@ public protocol ScriptWorldHost: AnyObject {
     var runtimeState: any RuntimeStatePort { get }
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
     var mountWorld: any MountWorldPort { get }
 }
@@ -174,7 +174,7 @@ public final class ScriptWorldAdapter {
     /// An `AttachAshPile` pile opens its actor's inventory, as activating the body would.
     func searchAshPileOwner(of event: InteractionEvent, bridge: PapyrusWorldStateBridge) {
         guard
-            let entry = game.streamer?.referenceEntry(formID: event.target.interaction.reference),
+            let entry = game.streamer.referenceEntry(formID: event.target.interaction.reference),
             let actor = bridge.ashPileOwner(of: entry.key),
             game.ragdoll.searchCorpse(actor)
         else { return }
@@ -203,7 +203,7 @@ extension ScriptWorldAdapter: ScriptWorld {
     }
 
     public func referenceKey(formID: FormID) -> ReferenceKey? {
-        game.streamer?.referenceEntry(formID: formID)?.key
+        game.streamer.referenceEntry(formID: formID)?.key
     }
 
     public var gameClock: GameClock? {
@@ -211,8 +211,8 @@ extension ScriptWorldAdapter: ScriptWorld {
     }
 
     public var playerLocation: ResolvedFormID?? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let current = streamer.currentCellLocation,
             let scene = streamer.residentScene(at: current)
         else { return nil }

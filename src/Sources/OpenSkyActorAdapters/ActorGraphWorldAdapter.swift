@@ -34,7 +34,7 @@ public protocol ActorGraphWorldHost: AnyObject {
     var idleWorld: any IdleWorldPort { get }
     var objectAnimationWorld: any ObjectAnimationWorldPort { get }
     var playerSettingsStore: PlayerSettingsStore { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
 }
 
@@ -96,7 +96,7 @@ extension ActorGraphWorldAdapter: ActorGraphWorld {
     }
 
     public func actorGraphCandidates() -> [ActorGraphCandidate] {
-        guard let streamer = game.streamer else { return [] }
+        let streamer = game.streamer
         // A rider plays the rider clips of its mount's gait instead.
         let links = game.vehicleWorld.vehicles.core.links
         return game.actorWorld.combatActors().compactMap { actor in
@@ -125,7 +125,7 @@ extension ActorGraphWorldAdapter: ActorGraphWorld {
             !idles.pairs.contains(where: { $0.lead == actor || $0.partner == actor }),
             game.dragonFlight.phase(of: actor) == .grounded
         else { return }
-        game.streamer?.moveStandingActor(
+        game.streamer.moveStandingActor(
             actor, by: step.displacement, turning: step.headingTurn
         )
     }

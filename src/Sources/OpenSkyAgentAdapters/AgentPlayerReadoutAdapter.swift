@@ -43,7 +43,7 @@ public protocol AgentPlayerReadoutHost: AnyObject {
     var playerBeastForm: PlayerBeastForm { get }
     var playerControlLocks: PlayerControlLocks { get }
     var ragdoll: any RagdollPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
@@ -62,7 +62,7 @@ extension AgentPlayerReadoutAdapter {
             "pitch": .init(MatrixMath.degrees(fromRadians: camera.pitch)),
             "movementMode": .string(String(describing: gameSession.movementMode)),
             "cell": hub.actorReadout.cellState(at: camera.position),
-            "worldspace": game.streamer.map { .string($0.worldspaceEditorID) } ?? .null,
+            "worldspace": .string(game.streamer.worldspaceEditorID),
             "bodyFailure": .init(game.player.failureReason),
             "form": .string(game.playerBeastForm.rawValue),
             "behaviorProject": .init(game.player.graphProject),

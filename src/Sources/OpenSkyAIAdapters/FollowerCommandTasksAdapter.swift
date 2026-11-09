@@ -26,7 +26,7 @@ public protocol FollowerCommandTasksHost: AnyObject {
     var inventory: any InventoryPort { get }
     var inventoryWorld: any InventoryWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `FollowerCommandWorldAdapter`, over its own narrow host.
@@ -37,7 +37,7 @@ public struct FollowerCommandTasksAdapter {
 extension FollowerCommandTasksAdapter {
     /// What the rules know about `key`, or nil when it is nothing a follower can use.
     public func commandTarget(_ key: ReferenceKey) -> FollowerCommandTarget? {
-        guard let entry = game.streamer?.referenceEntry(key: key) else { return nil }
+        guard let entry = game.streamer.referenceEntry(key: key) else { return nil }
         var target: FollowerCommandTarget
         if entry.placedActor != nil {
             guard let position = game.aiWorld.packageActorPosition(key) else { return nil }
@@ -48,7 +48,7 @@ extension FollowerCommandTasksAdapter {
             target.isHostile = game.scripts.bridge?.isHostile(key, toward: .player) == true
         } else {
             guard
-                let interaction = game.streamer?.residentInteraction(reference: entry.formID)
+                let interaction = game.streamer.residentInteraction(reference: entry.formID)
             else { return nil }
             target = FollowerCommandTarget(
                 key: key, kind: Self.kind(of: interaction),
@@ -96,8 +96,8 @@ extension FollowerCommandTasksAdapter {
     /// the player's crime.
     private func unlock(_ key: ReferenceKey, isCrime: Bool) -> Bool {
         guard
-            let formID = game.streamer?.referenceEntry(key: key)?.formID,
-            let interaction = game.streamer?.residentInteraction(reference: formID)
+            let formID = game.streamer.referenceEntry(key: key)?.formID,
+            let interaction = game.streamer.residentInteraction(reference: formID)
         else { return false }
         _ = game.inventoryWorld.run(game.inventory.locks.setLocked(interaction, locked: false))
         if isCrime {

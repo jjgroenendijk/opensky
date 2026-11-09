@@ -39,7 +39,7 @@ public protocol EffectsWorldHost: AnyObject {
     var magic: any MagicPort { get }
     var ragdoll: any RagdollPort { get }
     var gameSession: (any GameSessionPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 public final class EffectsWorldAdapter {
@@ -219,7 +219,7 @@ public final class EffectsWorldAdapter {
     /// Lasting race-ability looks for actors that arrived, and their removal for
     /// actors that left.
     private func attachRaceEffects() {
-        let resident = game.streamer?.residentActorEntries() ?? []
+        let resident = game.streamer.residentActorEntries()
         let keys = Set(resident.map(\.key))
         for gone in raceChecked.subtracting(keys) {
             effects.detachAll(from: gone)

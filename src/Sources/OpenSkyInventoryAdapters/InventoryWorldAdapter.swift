@@ -35,7 +35,7 @@ public protocol InventoryWorldHost: AnyObject {
     var menuScreens: any MenuScreensPort { get }
     var mapWorld: any MapWorldPort { get }
     var messages: any MessageCoordinatorPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Answers `InventoryWorld` and `VendorWorld` from the session systems `game` owns.
@@ -145,7 +145,7 @@ public final class InventoryWorldAdapter {
         guard
             !interaction.seats.isEmpty,
             (interaction.station?.workbench.benchType ?? WorkbenchType.none) == WorkbenchType.none,
-            let key = game.streamer?.referenceEntry(formID: interaction.reference)?.key
+            let key = game.streamer.referenceEntry(formID: interaction.reference)?.key
         else { return false }
         if case .failure(.disabled) = game.furniture.use(key, by: .player) {
             return false

@@ -31,7 +31,7 @@ public protocol RagdollDeathsHost: AnyObject {
     var magic: any MagicPort { get }
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -63,13 +63,13 @@ extension RagdollDeathsAdapter {
         let streamer = game.streamer
         let enable = EnableParentResolver(
             delta: { world.delta(for: $0) },
-            parent: { streamer?.referenceEntry(formID: $0) }
+            parent: { streamer.referenceEntry(formID: $0) }
         )
         let cleared = store.locationsCleared(byDeathOf: victim) { boss in
             if world.component(ActorDeathState.self, for: boss)?.isDead == true {
                 return true
             }
-            if let entry = streamer?.referenceEntry(key: boss) {
+            if let entry = streamer.referenceEntry(key: boss) {
                 return !enable.isEnabled(entry)
             }
             return world.component(ReferenceEnableState.self, for: boss)?.isEnabled == false
@@ -91,7 +91,7 @@ extension RagdollDeathsAdapter {
     }
 
     public var selectedRagdollActor: ReferenceKey? {
-        guard let streamer = game.streamer else { return nil }
+        let streamer = game.streamer
         if
             let target = streamer.interactionTarget,
             let entry = streamer.referenceEntry(formID: target.interaction.reference),
@@ -109,9 +109,9 @@ extension RagdollDeathsAdapter {
     /// An ACHR's holder re-derives its baseline from the NPC_'s CNTO list, as
     /// a chest's does, so the corpse needs no new menu.
     public func searchCorpse(_ key: ReferenceKey) -> Bool {
+        let streamer = game.streamer
         guard
             game.inventory.runtime != nil,
-            let streamer = game.streamer,
             let actor = streamer.referenceEntry(key: key)?.placedActor
         else { return false }
         game.containerMenu.target(

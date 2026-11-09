@@ -31,7 +31,7 @@ public protocol LockWorldHost: AnyObject {
     var lockpickingMenu: any LockpickingMenuPort { get }
     var perks: any PerkPort { get }
     var progression: any ProgressionPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -86,7 +86,7 @@ extension LockWorldAdapter: LockWorld {
     }
 
     public func lockables() -> [PlacedInteraction] {
-        game.streamer?.residentInteractions.filter { $0.lock != nil } ?? []
+        game.streamer.residentInteractions.filter { $0.lock != nil }
     }
 
     public func itemName(_ item: FormID) -> String {

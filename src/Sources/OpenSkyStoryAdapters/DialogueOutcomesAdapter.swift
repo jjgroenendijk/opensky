@@ -34,7 +34,7 @@ public protocol DialogueOutcomesHost: AnyObject {
     var perks: any PerkPort { get }
     var progression: any ProgressionPort { get }
     var storyWorld: any StoryWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
     var scripts: any ScriptPort { get }
@@ -67,9 +67,9 @@ extension DialogueOutcomesAdapter {
             switch command {
             case let .suspendPackage(actor): game.packages.suspend(actor)
             case let .resumePackage(actor): game.packages.resume(actor)
-            case let .stopActor(actor): game.streamer?.stopActor(actor)
-            case let .faceActor(actor, point): game.streamer?.faceActor(actor, towards: point)
-            case let .releaseFacing(actor): game.streamer?.releaseActorFacing(actor)
+            case let .stopActor(actor): game.streamer.stopActor(actor)
+            case let .faceActor(actor, point): game.streamer.faceActor(actor, towards: point)
+            case let .releaseFacing(actor): game.streamer.releaseActorFacing(actor)
             case let .speechChallengeWon(challenge, speaker):
                 speechChallengeWon(challenge, speaker: speaker)
             case let .spokeToPlayer(speaker): spokeToPlayer(speaker)

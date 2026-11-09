@@ -31,7 +31,7 @@ public protocol ActivationRefusalWorldHost: AnyObject {
     var ragdollWorld: any RagdollWorldPort { get }
     var scenes: any ScenePort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 public final class ActivationRefusalWorldAdapter {
@@ -49,7 +49,7 @@ public final class ActivationRefusalWorldAdapter {
         facts.blocksInCombat = interaction.station != nil || interaction.isBed
         facts.playerInCombat = facts.blocksInCombat && game.actorWorld.isInCombat(.player)
         facts.playerIsChild = game.actorValues.runtime?.baseline(of: .player).isChild == true
-        guard let key = game.streamer?.referenceEntry(formID: interaction.reference)?.key else {
+        guard let key = game.streamer.referenceEntry(formID: interaction.reference)?.key else {
             return facts
         }
         if interaction.action == .talk {

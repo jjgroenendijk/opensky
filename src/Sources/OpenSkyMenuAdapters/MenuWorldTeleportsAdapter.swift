@@ -34,7 +34,7 @@ public protocol MenuWorldTeleportsHost: AnyObject {
     var raceMenu: any RaceMenuPort { get }
     var renderer: (any RendererPort)? { get }
     var simulationClock: any SteppedWallClockPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `MenuWorldAdapter`, over its own narrow host.
@@ -130,7 +130,7 @@ extension MenuWorldTeleportsAdapter {
     /// The opening quest did not move the player, so the world loads where it stands.
     public func abandonNewGameCover() {
         liftNewGameCover()
-        game.streamer?.isHeld = false
+        game.streamer.isHeld = false
     }
 
     private func pollNewGameTeleport(now: Double) {

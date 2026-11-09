@@ -93,7 +93,7 @@ extension AgentHub {
         case "player":
             return AgentReference(key: .player, formID: .playerReference)
         case "target":
-            guard let target = game.streamer?.interactionTarget else {
+            guard let target = game.streamer.interactionTarget else {
                 throw AgentFailure(.notFound, "nothing is under the crosshair")
             }
             return try resolveFormID(target.interaction.reference)
@@ -106,7 +106,7 @@ extension AgentHub {
     }
 
     private func resolveFormID(_ formID: FormID) throws(AgentFailure) -> AgentReference {
-        guard let entry = game.streamer?.referenceEntry(formID: formID) else {
+        guard let entry = game.streamer.referenceEntry(formID: formID) else {
             throw AgentFailure(
                 .notFound,
                 "no loaded reference \(AgentJSON.formID(formID.rawValue))"

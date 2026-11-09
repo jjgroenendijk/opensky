@@ -31,7 +31,7 @@ public protocol MapQuestsHost: AnyObject {
     var mapWorld: any MapWorldPort { get }
     var journal: any JournalPort { get }
     var runtimeState: any RuntimeStatePort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -68,7 +68,8 @@ extension MapQuestsAdapter {
 
     /// Where a loaded object or actor stands now: moved, or as the plugin placed it.
     private func currentPosition(of key: ReferenceKey) -> SIMD3<Float>? {
-        guard let streamer = game.streamer, let entry = streamer.referenceEntry(key: key) else {
+        let streamer = game.streamer
+        guard let entry = streamer.referenceEntry(key: key) else {
             return nil
         }
         let moved = streamer.npcTransform(for: key)

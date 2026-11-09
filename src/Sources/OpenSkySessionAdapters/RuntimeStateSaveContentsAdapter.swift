@@ -39,7 +39,7 @@ public protocol RuntimeStateSaveContentsHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var magic: any MagicPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -75,7 +75,7 @@ extension RuntimeStateSaveContentsAdapter {
         summary: SaveSummary?,
         thumbnail: SaveThumbnail?
     ) -> OpenSkySaveContents {
-        game.streamer?.persistNPCMovementForSave()
+        game.streamer.persistNPCMovementForSave()
         game.combatWorld.run(game.combat.prepareForPersistence())
         storeRuntimeExtras()
         return OpenSkySaveContents(

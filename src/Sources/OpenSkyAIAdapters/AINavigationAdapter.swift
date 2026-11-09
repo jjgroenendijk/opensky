@@ -37,7 +37,7 @@ public protocol AINavigationHost: AnyObject {
     var npcAnimation: any NPCAnimationPort { get }
     var scripts: any ScriptPort { get }
     var animationClips: ActorClipLoader? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
 }
 
@@ -53,13 +53,13 @@ extension AINavigationAdapter {
     /// The horse a placed actor starts on, `ACHR` `XHOR` (docs/formats/placed-references.md).
     public func mountPackageActor(_ rider: ReferenceKey) -> ReferenceKey? {
         guard
-            let raw = game.streamer?.placedRecords?.entry(for: rider)?.placedActor?
+            let raw = game.streamer.placedRecords?.entry(for: rider)?.placedActor?
                 .details.links["XHOR"],
             let resolver = game.scripts.bridge?.formIDResolver,
             let horse = ReferenceKey.resolve(raw, using: resolver),
             game.vehicleWorld.vehicles.seat(rider, on: horse, bone: Self.saddleBone)
         else { return nil }
-        _ = game.streamer?.stopActor(rider)
+        _ = game.streamer.stopActor(rider)
         game.npcAnimation.ride(rider, on: horse)
         return horse
     }
@@ -67,7 +67,7 @@ extension AINavigationAdapter {
     /// The horse walked the rider's package, so it stops with it.
     public func dismountPackageActor(_ rider: ReferenceKey) {
         if let horse = vehicleCarrier(of: rider) {
-            _ = game.streamer?.stopActor(horse)
+            _ = game.streamer.stopActor(horse)
         }
         game.vehicleWorld.detach(rider)
         game.npcAnimation.dismount(rider)
@@ -75,10 +75,6 @@ extension AINavigationAdapter {
 
     public func vehicleCarrier(of actor: ReferenceKey) -> ReferenceKey? {
         game.vehicleWorld.vehicles.core.links[actor]?.carrier
-    }
-
-    public var isStreaming: Bool {
-        game.streamer != nil
     }
 
     public var camera: AICameraPose? {
@@ -94,19 +90,19 @@ extension AINavigationAdapter {
     }
 
     public func nearestCollisionHit(ray: InteractionRay) -> InteractionRayHit? {
-        game.streamer?.nearestCollisionHit(ray: ray)
+        game.streamer.nearestCollisionHit(ray: ray)
     }
 
     public func residentActor(for reference: FormID) -> ReferenceKey? {
-        game.streamer?.residentActorEntries().first { $0.formID == reference }?.key
+        game.streamer.residentActorEntries().first { $0.formID == reference }?.key
     }
 
     public func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult {
-        game.streamer?.moveActor(actor, to: point) ?? .actorNotResident
+        game.streamer.moveActor(actor, to: point)
     }
 
     public func stopActor(_ actor: ReferenceKey) -> Bool {
-        game.streamer?.stopActor(actor) ?? false
+        game.streamer.stopActor(actor)
     }
 
     public func isHostile(_ actor: ReferenceKey) -> Bool {

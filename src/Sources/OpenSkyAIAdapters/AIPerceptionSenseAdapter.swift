@@ -42,7 +42,7 @@ public protocol AIPerceptionSenseHost: AnyObject {
     var packages: any PackagePort { get }
     var perception: any PerceptionPort { get }
     var progression: any ProgressionPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
@@ -56,7 +56,7 @@ extension AIPerceptionSenseAdapter {
         let readouts = game.packages.readouts().filter { $0.currentPackage != nil }
         let packaged = Set(readouts.map(\.actor))
         let sleepers = Set(readouts.filter { $0.procedure == .sleep }.map(\.actor))
-        let isExterior = game.streamer?.interiorScene == nil
+        let isExterior = game.streamer.interiorScene == nil
         return game.actorWorld.combatActors().map { actor in
             var observer = PerceptionObserver(
                 key: actor.key,
@@ -102,7 +102,7 @@ extension AIPerceptionSenseAdapter {
         from origin: SIMD3<Float>,
         to destination: SIMD3<Float>
     ) -> Bool {
-        guard let streamer = game.streamer else { return true }
+        let streamer = game.streamer
         let offset = destination - origin
         let distance = simd_length(offset)
         guard

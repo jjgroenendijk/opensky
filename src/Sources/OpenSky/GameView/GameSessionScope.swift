@@ -67,11 +67,13 @@ final class GameSessionScope {
         worldData: WorldDataStores?,
         cellRunner: SerialCellBuildRunner?,
         gameSession: GameSession?,
+        streamer: CellStreamer,
         services: GameAppServices
     ) {
         self.worldData = worldData
         self.cellRunner = cellRunner
         self.gameSession = gameSession
+        self.streamer = streamer
         self.services = services
     }
 
@@ -80,8 +82,7 @@ final class GameSessionScope {
     lazy var benchmarkTour = BenchmarkTourCoordinator(world: benchmarkWorld)
 
     /// Holds the build runner and the provider for the window's lifetime.
-    /// `WorldSessionWiring` assigns it.
-    var streamer: CellStreamer?
+    let streamer: CellStreamer
     /// Reference mutations, save slots, game time, globals, and condition lists.
     lazy var runtimeState = RuntimeStateCoordinator(
         store: worldState,

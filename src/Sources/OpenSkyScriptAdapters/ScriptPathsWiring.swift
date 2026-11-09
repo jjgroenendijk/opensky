@@ -26,8 +26,8 @@ import simd
 public struct ScriptPathsWiring {
     public init(_ adapter: ScriptNodeBindingsAdapter, _ hooks: inout PapyrusGameNatives) {
         hooks.pathToReference = { actor, target, speed, token in
+            let streamer = adapter.game.streamer
             guard
-                let streamer = adapter.game.streamer,
                 let point = adapter.game.scripts.bridge?.referenceState(for: target)?.transform
                     .position
             else { return false }

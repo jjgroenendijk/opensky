@@ -68,7 +68,7 @@ public struct ScriptPlayerRulesWiring {
                 game.player.eyeTextureSet = set
                 return true
             }
-            guard let cell = game.streamer?.cellLocation(of: actor) else { return false }
+            guard let cell = game.streamer.cellLocation(of: actor) else { return false }
             game.worldState.setEyeTexture(set, for: actor, in: cell)
             return true
         }

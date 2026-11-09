@@ -34,7 +34,7 @@ import simd
 public protocol CombatGearHost: AnyObject {
     var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
@@ -64,7 +64,7 @@ extension CombatGearAdapter {
         guard
             let runtime = game.inventory.runtime,
             let equipment = game.inventory.equipment,
-            let holder = key == .player ? runtime.player : game.streamer?.inventoryHolder(of: key)
+            let holder = key == .player ? runtime.player : game.streamer.inventoryHolder(of: key)
         else { return [] }
         return equipment.equipped(on: holder).map {
             ($0, runtime.inventory.temperLevel(of: $0, in: holder))
@@ -84,7 +84,7 @@ extension CombatGearAdapter {
     public func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool {
         guard
             let runtime = game.inventory.runtime,
-            let holder = game.streamer?.inventoryHolder(of: key)
+            let holder = game.streamer.inventoryHolder(of: key)
         else { return false }
         return attempt { try runtime.inventory.add(item, count: count, to: holder) } != nil
     }

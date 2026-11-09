@@ -28,7 +28,7 @@ public protocol InventoryVendorHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }
     var runtimeState: any RuntimeStatePort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -44,7 +44,7 @@ extension InventoryVendorAdapter {
     }
 
     public func residentOwner(of key: ReferenceKey) -> InventoryOwner? {
-        guard let entry = game.streamer?.referenceEntry(key: key) else { return nil }
+        guard let entry = game.streamer.referenceEntry(key: key) else { return nil }
         if let actor = entry.placedActor {
             return .actor(base: actor.base)
         }
@@ -52,7 +52,7 @@ extension InventoryVendorAdapter {
     }
 
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        game.streamer?.cellLocation(of: key)
+        game.streamer.cellLocation(of: key)
     }
 
     public func itemKeywords(of item: FormID) -> [FormID]? {
@@ -67,8 +67,8 @@ extension InventoryVendorAdapter {
         of actor: ReferenceKey,
         for place: VendorPlace
     ) -> VendorPlaceFacts? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let placed = streamer.referenceEntry(key: actor)?.placedActor,
             let position = currentPosition(of: actor)
         else { return nil }
@@ -126,7 +126,8 @@ extension InventoryVendorAdapter {
 
     /// Where a loaded reference stands now: moved, or as the plugin placed it.
     private func currentPosition(of key: ReferenceKey) -> SIMD3<Float>? {
-        guard let streamer = game.streamer, let entry = streamer.referenceEntry(key: key) else {
+        let streamer = game.streamer
+        guard let entry = streamer.referenceEntry(key: key) else {
             return nil
         }
         let moved = streamer.npcTransform(for: key)

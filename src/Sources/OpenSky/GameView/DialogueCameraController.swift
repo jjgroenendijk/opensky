@@ -24,7 +24,7 @@ protocol DialogueCameraHost: AnyObject {
     var dialogueWorld: any DialogueWorldPort { get }
     var raceMenu: any RaceMenuPort { get }
     var gameSession: (any GameSessionPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Holds the readout's force toggle and target for `game`.
@@ -124,11 +124,11 @@ final class DialogueCameraController {
         guard isForced else { return nil }
         switch target {
         case .crosshair:
-            return game.streamer?.talk.speaker
+            return game.streamer.talk.speaker
         case .nearestActor:
+            let streamer = game.streamer
             guard
-                let gameSession = game.gameSession,
-                let streamer = game.streamer else { return nil }
+                let gameSession = game.gameSession else { return nil }
             return streamer.nearestActorEntry(to: gameSession.playerEyePosition)?.key
         }
     }

@@ -55,23 +55,31 @@ final class WorldSessionWiring {
         gameSession.assetDrains.register(.audio) { [weak audio] _ in audio?.drainLoads() }
     }
 
-    private func buildStreaming(session: CellSession, gameSession: GameSession) {
-        let renderer = gameSession.renderer
-        let provider = session.data
-        let streamer = CellStreamer(
+    /// The first stage of a session: the streamer over the loaded world. The session scope
+    /// is built over it, so every adapter reads a streamer that exists.
+    static func makeStreamer(session: CellSession, renderer: Renderer, radius: Int32)
+        -> CellStreamer
+    {
+        CellStreamer(
             center: CellCoordinate(x: FirstRenderCell.gridX, y: FirstRenderCell.gridY),
-            radius: game.terrainLODConfigurationStore.snapshot().configuration.loadedGridRadius,
+            radius: radius,
             runner: session.runner,
             sink: { [weak renderer] scene, camera in
                 do {
                     try renderer?.setScene(scene, camera: camera)
                 } catch {
-                    Self.logger.error(
+                    logger.error(
                         "[ERROR] scene swap failed: \(String(describing: error), privacy: .public)"
                     )
                 }
             }
         )
+    }
+
+    private func buildStreaming(session: CellSession, gameSession: GameSession) {
+        let renderer = gameSession.renderer
+        let provider = session.data
+        let streamer = game.streamer
         streamer.placedRecords = provider.placedRecords
         gameSession.loadedGridRadius = streamer.grid.radius
         streamer.doors = DoorSettings.resolve(store: provider.gameSettings)
@@ -111,7 +119,6 @@ final class WorldSessionWiring {
         _ = PlayerActorStateWiring(game.playerWorld, gameSession: gameSession)
         wireLateWorldSystems(provider: provider, gameSession: gameSession, streamer: streamer)
         wireWorldQueries(gameSession: gameSession, streamer: streamer)
-        game.streamer = streamer
     }
 
     /// The ground, collision, water, and worldspace the session reads from the streamer.

@@ -28,7 +28,7 @@ public protocol EffectsTrapControlHost: AnyObject {
     var magic: any MagicPort { get }
     var magicWorld: any MagicWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -47,8 +47,8 @@ extension EffectsTrapControlAdapter {
         _ motionType: ReferenceMotionType,
         of reference: ReferenceKey
     ) -> Bool {
-        guard let cell = game.streamer?.cellLocation(of: reference) else { return false }
-        if motionType == .keyframed, let body = game.streamer?.dynamicBodies.body(for: reference) {
+        guard let cell = game.streamer.cellLocation(of: reference) else { return false }
+        if motionType == .keyframed, let body = game.streamer.dynamicBodies.body(for: reference) {
             let pose = PlacedReference.Placement(
                 position: body.originPosition,
                 rotation: MatrixMath.eulerAngles(of: body.orientation)
@@ -63,7 +63,7 @@ extension EffectsTrapControlAdapter {
                     for: reference, in: cell
                 )
             }
-            game.streamer?.dynamicBodies.remove(reference)
+            game.streamer.dynamicBodies.remove(reference)
         }
         game.worldState.set(motionType, for: reference, in: cell)
         return true
@@ -85,8 +85,8 @@ extension EffectsTrapControlAdapter {
     /// Clears the moves and the motion type, or moves the object to `target`. Its
     /// inventory and other state stay. An actor is not reset.
     public func resetReference(_ reference: ReferenceKey, to target: ReferenceKey?) -> Bool {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             streamer.referenceEntry(key: reference)?.placedActor == nil
         else { return false }
         streamer.dynamicBodies.remove(reference)
@@ -144,7 +144,7 @@ extension EffectsTrapControlAdapter {
             origin: transform.position,
             aim: ProjectileShooter.headingAim(zRotation: transform.rotation.z),
             isFirstPerson: false,
-            location: game.streamer?.cellLocation(of: source)
+            location: game.streamer.cellLocation(of: source)
         )
     }
 }
@@ -179,8 +179,8 @@ extension EffectsTrapControlAdapter {
 
     /// Papyrus impulses are in Havok units; the bodies simulate in game units.
     public func applyImpulse(_ impulse: SIMD3<Float>, to reference: ReferenceKey) -> Bool {
-        guard let body = game.streamer?.dynamicBodies.body(for: reference) else { return false }
-        game.streamer?.dynamicBodies.applyImpulse(
+        guard let body = game.streamer.dynamicBodies.body(for: reference) else { return false }
+        game.streamer.dynamicBodies.applyImpulse(
             impulse * NIFCollisionModel.havokToEngineScale, at: body.position, to: reference
         )
         return true

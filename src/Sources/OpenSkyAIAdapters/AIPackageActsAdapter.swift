@@ -30,7 +30,7 @@ public protocol AIPackageActsHost: AnyObject {
     var packages: any PackagePort { get }
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -55,7 +55,7 @@ extension AIPackageActsAdapter {
         }
         switch target.kind {
         case .linkedReference:
-            let entry = game.streamer?.referenceEntry(key: actor)
+            let entry = game.streamer.referenceEntry(key: actor)
             let links = entry?.placedReference?.linkedReferences
                 ?? entry?.placedActor?.details.linkedReferences ?? []
             let keyword = FormID(target.value).nonNull
@@ -165,7 +165,7 @@ extension AIPackageActsAdapter {
     private func residentPlacedUnsorted(
         near point: SIMD3<Float>, within reach: Float
     ) -> [(entry: RuntimeReferenceEntry, distance: Float)] {
-        let entries = game.streamer?.residentReferenceIndex().sortedEntries() ?? []
+        let entries = game.streamer.residentReferenceIndex().sortedEntries()
         return entries.compactMap { entry in
             let position = entry.placedReference?.placement.position
                 ?? entry.placedActor?.placement.position
@@ -187,7 +187,7 @@ extension AIPackageActsAdapter {
         _ locked: Bool, around center: SIMD3<Float>, radius: Float, owner actor: ReferenceKey
     ) -> PackageActionResult {
         guard let bridge = game.scripts.bridge else { return .failed }
-        let base = game.streamer?.referenceEntry(key: actor)?.placedActor?.base
+        let base = game.streamer.referenceEntry(key: actor)?.placedActor?.base
         let reach = radius > 0 ? radius : Self.doorReach
         for (entry, _) in residentPlaced(near: center, within: reach) {
             guard
@@ -245,7 +245,7 @@ extension AIPackageActsAdapter {
         case .food:
             return items?.ingestibles[base]?.flags.contains(.food) == true
         case .furniture, .bed, .chair:
-            let seats = game.streamer?.residentInteraction(reference: entry.formID)?.seats ?? []
+            let seats = game.streamer.residentInteraction(reference: entry.formID)?.seats ?? []
             let wanted: UInt16? = type == .bed ? NIFFurnitureMarker.sleepAnimation
                 : type == .chair ? NIFFurnitureMarker.sitAnimation : nil
             return seats.contains { wanted == nil || $0.animationType == wanted }
@@ -262,7 +262,7 @@ extension AIPackageActsAdapter {
     public func pickUp(_ item: ReferenceKey, by actor: ReferenceKey) -> PackageActionResult {
         guard
             let bridge = game.scripts.bridge,
-            let entry = game.streamer?.referenceEntry(key: item),
+            let entry = game.streamer.referenceEntry(key: item),
             let reference = entry.placedReference,
             game.inventory.scriptAddItem(
                 reference.base, count: max(1, reference.itemCount ?? 1), to: actor

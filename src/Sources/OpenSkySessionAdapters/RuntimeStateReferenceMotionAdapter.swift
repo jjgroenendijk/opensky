@@ -29,7 +29,7 @@ public protocol RuntimeStateReferenceMotionHost: AnyObject {
     var dragonFlightWorld: any DragonFlightWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var mountWorld: any MountWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -48,7 +48,7 @@ extension RuntimeStateReferenceMotionAdapter {
             flyingMounts: game.mountWorld.flyingMounts
         )
         context.mounts.flyingStates = game.dragonFlightWorld.flyingStates
-        context.mounts.canFlyHere = game.streamer?.interiorScene == nil
+        context.mounts.canFlyHere = game.streamer.interiorScene == nil
         let requests = game.dragonFlight.landingRequests
         context.mounts.crashLandRequests = Set(requests.filter { $0.value == .crash }.keys)
         context.mounts.hastyLandRequests = Set(requests.filter { $0.value == .hasty }.keys)
@@ -61,7 +61,7 @@ extension RuntimeStateReferenceMotionAdapter {
         var facts: [ReferenceKey: ReferenceConditionFacts] = [:]
         for entry in references.sortedEntries() {
             let state = game.worldState.resolvedState(for: entry)
-            let action = game.streamer?.residentInteraction(reference: entry.formID)?.action
+            let action = game.streamer.residentInteraction(reference: entry.formID)?.action
             facts[entry.key] = ReferenceConditionFacts(
                 lock: ReferenceLockState.resolve(
                     baseline: entry.placedReference?.lock,
@@ -77,10 +77,10 @@ extension RuntimeStateReferenceMotionAdapter {
     }
 
     public func motionResolution(references: RuntimeReferenceIndex) -> MotionConditionResolution {
-        var facts = game.streamer?.npcMovement.motionFacts() ?? [:]
+        var facts = game.streamer.npcMovement.motionFacts()
         for entry in references.sortedEntries() where facts[entry.key] == nil {
             let state = game.worldState.resolvedState(for: entry)
-            let moved = game.streamer?.npcTransform(for: entry.key)
+            let moved = game.streamer.npcTransform(for: entry.key)
             facts[entry.key] = ReferenceMotionFacts(
                 position: moved?.position ?? state.transform.position,
                 rotation: moved?.rotation ?? state.transform.rotation
@@ -105,7 +105,7 @@ extension RuntimeStateReferenceMotionAdapter {
         return PlaceConditionResolution(
             deadReferences: deaths.dead,
             deadCounts: deaths.counts,
-            playerRegions: game.streamer.map { Set($0.playerRegions) },
+            playerRegions: Set(game.streamer.playerRegions),
             visibleMarkers: visibleMarkers(in: references)
         )
     }
@@ -114,8 +114,8 @@ extension RuntimeStateReferenceMotionAdapter {
         let worldState = game.worldState
         let key = DeathViewKey(
             store: ObjectIdentifier(worldState),
-            streamer: game.streamer.map(ObjectIdentifier.init),
-            cells: game.streamer?.residentCellLocations,
+            streamer: ObjectIdentifier(game.streamer),
+            cells: game.streamer.residentCellLocations,
             deaths: worldState.revision(of: [.death])
         )
         return state.conditionCaches.deaths.value(for: key) {
@@ -125,8 +125,8 @@ extension RuntimeStateReferenceMotionAdapter {
                     continue
                 }
                 view.dead.insert(key)
-                let entry = game.streamer?.referenceEntry(key: key)
-                    ?? game.streamer?.pluginPlacement(of: key)?.entry
+                let entry = game.streamer.referenceEntry(key: key)
+                    ?? game.streamer.pluginPlacement(of: key)?.entry
                 if let base = entry?.placedActor?.base {
                     view.counts[base, default: 0] += 1
                 }

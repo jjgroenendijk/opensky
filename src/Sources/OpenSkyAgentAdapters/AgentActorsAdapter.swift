@@ -28,7 +28,7 @@ public protocol AgentActorsHost: AnyObject {
     var ragdoll: any RagdollPort { get }
     var renderer: (any RendererPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -98,7 +98,7 @@ extension AgentActorsAdapter {
             game.player.eyeTextureSet = FormID(raw)
             return ["ref": .formID(actor.formID.rawValue), "eyeTexture": eyeTexture(of: actor.key)]
         }
-        guard let cell = game.streamer?.cellLocation(of: actor.key) else {
+        guard let cell = game.streamer.cellLocation(of: actor.key) else {
             throw AgentFailure(.notFound, "\(reference) has no 3D")
         }
         game.worldState.setEyeTexture(FormID(raw), for: actor.key, in: cell)
@@ -123,7 +123,7 @@ extension AgentActorsAdapter {
             let node = game.worldState.component(ActorDeathState.self, for: key)?.severedNode
         else { return .null }
         let head = game.ragdoll.severedHeads[key]
-        let formID = game.streamer?.referenceEntry(key: key)?.formID
+        let formID = game.streamer.referenceEntry(key: key)?.formID
         let drawn = formID.flatMap { game.renderer?.scene.severedHeadPlayback(for: $0) } != nil
         return [
             "node": .string(node),
@@ -178,7 +178,7 @@ extension AgentActorsAdapter {
         let links = (world?.links ?? []).filter {
             $0.first.reference == key || $0.second.reference == key
         }.map { "\(line($0.first)) <-> \(line($0.second))" }
-        let pins = ((world?.pins ?? []) + (game.streamer?.dynamicBodies.pins ?? []))
+        let pins = ((world?.pins ?? []) + (game.streamer.dynamicBodies.pins))
             .filter { $0.end.reference == key || $0.partner.reference == key }
             .map { "\(line($0.end)) pinned to \(line($0.partner)) at \($0.point)" }
         return .array((links + pins).map(AgentJSON.string))

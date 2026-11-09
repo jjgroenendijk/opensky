@@ -28,7 +28,7 @@ public protocol CrimeJailHost: AnyObject {
     var inventoryWorld: any InventoryWorldPort { get }
     var progression: any ProgressionPort { get }
     var renderer: (any RendererPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `CrimeWorldAdapter`, over its own narrow host.
@@ -58,8 +58,8 @@ extension CrimeJailAdapter {
     }
 
     public func enterJail(through marker: ReferenceKey) -> Bool {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let door = streamer.pluginPlacement(of: marker)?.entry
             ?? streamer.referenceEntry(key: marker),
             door.placedReference?.teleportDestination != nil
@@ -69,8 +69,8 @@ extension CrimeJailAdapter {
 
     /// The cell's PrisonMarker is the `XTEL` target of the outside one.
     public func leaveJail(to marker: ReferenceKey) -> Bool {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let outside = streamer.pluginPlacement(of: marker)?.entry,
             let inside = outside.placedReference?.teleportDestination?.door
         else { return false }
@@ -99,7 +99,7 @@ extension CrimeJailAdapter {
     public func movePlayer(toMarker marker: ReferenceKey) -> Bool {
         guard
             let renderer = game.renderer, let gameSession = game.gameSession,
-            let placement = game.streamer?.referenceEntry(key: marker)?.placedReference?.placement
+            let placement = game.streamer.referenceEntry(key: marker)?.placedReference?.placement
         else { return false }
         let camera = SceneCamera.teleport(placement: placement)
         renderer.camera = camera

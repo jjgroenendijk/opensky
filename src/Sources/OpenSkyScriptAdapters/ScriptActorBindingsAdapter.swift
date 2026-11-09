@@ -36,7 +36,7 @@ public protocol ScriptActorBindingsHost: AnyObject {
     var perception: any PerceptionPort { get }
     var ragdoll: any RagdollPort { get }
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.

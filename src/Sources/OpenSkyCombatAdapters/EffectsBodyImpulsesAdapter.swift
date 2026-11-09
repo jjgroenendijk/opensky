@@ -28,7 +28,7 @@ public protocol EffectsBodyImpulsesHost: AnyObject {
     var mapWorld: any MapWorldPort { get }
     var ragdoll: any RagdollPort { get }
     var renderer: (any RendererPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -58,7 +58,7 @@ extension EffectsBodyImpulsesAdapter {
     }
 
     public func impulseBodies() -> [ImpulseBody] {
-        (game.streamer?.dynamicBodies.bodies ?? []).map { body in
+        (game.streamer.dynamicBodies.bodies).map { body in
             var impulseBody = ImpulseBody(
                 key: body.key, reference: body.reference, position: body.position,
                 velocity: body.linearVelocity, mass: body.definition.mass,
@@ -77,7 +77,7 @@ extension EffectsBodyImpulsesAdapter {
         if let material = touch.material {
             return material
         }
-        return game.streamer?.sampleTerrain(at: SIMD2(touch.point.x, touch.point.y))?.material
+        return game.streamer.sampleTerrain(at: SIMD2(touch.point.x, touch.point.y))?.material
     }
 
     /// The body's material names the impact data set; the surface it hit picks the entry,
@@ -95,7 +95,7 @@ extension EffectsBodyImpulsesAdapter {
     }
 
     public func applyBodyImpulse(_ impulse: BodyImpulse) {
-        game.streamer?.dynamicBodies.applyImpulse(
+        game.streamer.dynamicBodies.applyImpulse(
             impulse.linear, at: impulse.point, to: impulse.key, angularScale: impulse.angularScale,
             angular: impulse.angular
         )
@@ -117,15 +117,15 @@ extension EffectsBodyImpulsesAdapter {
     }
 
     public func waterHeight(at position: SIMD2<Float>) -> Float? {
-        game.streamer?.sampleWaterHeight(at: position)
+        game.streamer.sampleWaterHeight(at: position)
     }
 
     public func waterCurrent(at point: SIMD3<Float>) -> SIMD3<Float>? {
-        game.streamer?.water(at: point)?.current
+        game.streamer.water(at: point)?.current
     }
 
     public func isDangerousWater(at point: SIMD3<Float>) -> Bool {
-        game.streamer?.water(at: point)?.isDangerous ?? false
+        game.streamer.water(at: point)?.isDangerous ?? false
     }
 
     public func raceSize(of actor: ReferenceKey) -> Int {
@@ -154,7 +154,7 @@ extension EffectsBodyImpulsesAdapter {
 
     public func race(of actor: ReferenceKey) -> Race? {
         guard
-            let base = actor == .player ? nil : game.streamer?.residentActorEntry(key: actor)?
+            let base = actor == .player ? nil : game.streamer.residentActorEntry(key: actor)?
                 .placedActor?.base,
             let resolver = game.worldData?.actorValueBaselines?.resolver
         else { return nil }
@@ -199,7 +199,7 @@ extension EffectsBodyImpulsesAdapter {
             return false
         }
         guard actor == .player else {
-            return game.streamer?.knockActor(actor, velocity: velocity) ?? false
+            return game.streamer.knockActor(actor, velocity: velocity)
         }
         game.gameSession?.knockPlayer(velocity)
         return true

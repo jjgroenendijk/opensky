@@ -30,7 +30,7 @@ public struct ScriptReferenceRulesWiring {
         _ hooks: inout PapyrusGameNatives
     ) {
         hooks.clearExtraArrows = { [weak game = adapter.game] actor in
-            guard let game, let host = game.streamer?.referenceEntry(key: actor)?.formID else {
+            guard let game, let host = game.streamer.referenceEntry(key: actor)?.formID else {
                 return 0
             }
             return game.combat.archery?.projectiles.removeArrows(stuckIn: host) ?? 0
@@ -48,7 +48,7 @@ public struct ScriptReferenceRulesWiring {
             guard
                 let game, let reset = game.gameSession?.cellReset,
                 let id = game.scripts.bridge?.localFormID(of: cell),
-                let location = game.streamer?.placedRecords?.location(ofCell: id)
+                let location = game.streamer.placedRecords?.location(ofCell: id)
             else { return false }
             reset.flagForReset(location)
             return true

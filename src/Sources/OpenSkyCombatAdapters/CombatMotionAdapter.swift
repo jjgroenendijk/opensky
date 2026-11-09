@@ -38,7 +38,7 @@ public protocol CombatMotionHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var packages: any PackagePort { get }
     var ragdoll: any RagdollPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -61,7 +61,7 @@ extension CombatMotionAdapter {
 
     @discardableResult
     public func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> Bool {
-        game.streamer?.moveActor(key, to: point) == .started
+        game.streamer.moveActor(key, to: point) == .started
     }
 
     @discardableResult
@@ -70,15 +70,15 @@ extension CombatMotionAdapter {
         to point: SIMD3<Float>,
         gait: LocomotionGait?
     ) -> Bool {
-        game.streamer?.moveActor(key, to: point, direct: false, gait: gait) == .started
+        game.streamer.moveActor(key, to: point, direct: false, gait: gait) == .started
     }
 
     public func faceActor(_ key: ReferenceKey, toward point: SIMD3<Float>) {
-        _ = game.streamer?.faceActor(key, towards: point)
+        _ = game.streamer.faceActor(key, towards: point)
     }
 
     public func stopActor(_ key: ReferenceKey) {
-        game.streamer?.stopActor(key)
+        game.streamer.stopActor(key)
     }
 
     public func resumePackage(for key: ReferenceKey) {
@@ -138,7 +138,7 @@ extension CombatMotionAdapter {
     }
 
     public func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
-        guard let streamer = game.streamer else { return nil }
+        let streamer = game.streamer
         return ShapeSweeper.firstHit(
             query: query,
             shapes: streamer.staticCollisionCandidates(overlapping: query.bounds)
@@ -146,7 +146,7 @@ extension CombatMotionAdapter {
     }
 
     public func residentCells() -> Set<CellSceneLocation> {
-        guard let streamer = game.streamer else { return [] }
+        let streamer = game.streamer
         if let interior = streamer.interiorScene?.location {
             return [interior]
         }
@@ -167,15 +167,14 @@ extension CombatMotionAdapter {
     public var bodyTransients: CombatTransientCounts {
         CombatTransientCounts(
             activeRagdolls: game.ragdoll.runtime?.world.ragdollCount ?? 0,
-            awakeBodies: game.streamer?.dynamicBodies.activeBodyCount ?? 0
+            awakeBodies: game.streamer.dynamicBodies.activeBodyCount
         )
     }
 
     public func trimBodyTransients(to limits: CombatTransientLimits) -> CombatTransientCounts {
         CombatTransientCounts(
             activeRagdolls: game.ragdoll.runtime?.trim(to: limits.activeRagdolls) ?? 0,
-            awakeBodies: game.streamer?.dynamicBodies.sleepExcessBodies(over: limits.awakeBodies)
-                ?? 0
+            awakeBodies: game.streamer.dynamicBodies.sleepExcessBodies(over: limits.awakeBodies)
         )
     }
 }

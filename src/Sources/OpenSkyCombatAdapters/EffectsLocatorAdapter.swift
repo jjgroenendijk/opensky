@@ -9,7 +9,7 @@ import simd
 public protocol EffectsLocatorHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `EffectsWorldAdapter` that finds where a reference stands.
@@ -24,7 +24,7 @@ extension EffectsLocatorAdapter {
         if reference == .player {
             return game.gameSession?.walkController.feetPosition
         }
-        return game.streamer?.npcTransform(for: reference)?.position
+        return game.streamer.npcTransform(for: reference)?.position
             ?? game.scripts.bridge?.referenceState(for: reference)?.transform.position
     }
 }

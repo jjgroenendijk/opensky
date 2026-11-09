@@ -40,7 +40,7 @@ public protocol RuntimeStateConditionReadsHost: AnyObject {
     var magic: any MagicPort { get }
     var perception: any PerceptionPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
@@ -86,7 +86,7 @@ extension RuntimeStateConditionReadsAdapter {
         for key in game.actorWorld.combatActors().map(\.key) + indexing {
             guard
                 !seen.contains(key),
-                let entry = game.streamer?.referenceEntry(key: key)
+                let entry = game.streamer.referenceEntry(key: key)
             else { continue }
             seen.insert(key)
             entries.append(entry)
