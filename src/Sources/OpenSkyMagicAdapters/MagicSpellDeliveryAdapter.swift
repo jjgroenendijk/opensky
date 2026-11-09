@@ -1,8 +1,8 @@
 import OpenSkyActorsInterface
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 public import OpenSkyMagic
 public import OpenSkyMagicInterface
 public import OpenSkyPhysics
@@ -22,7 +22,7 @@ public protocol MagicSpellDeliveryHost: AnyObject {
     var factions: any FactionPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var worldRecords: (any WorldRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -168,7 +168,7 @@ extension MagicSpellDeliveryAdapter {
     }
 
     public func keyword(editorID: String) -> ReferenceKey? {
-        game.worldData?.locationStore?.keywords.keyword(editorID: editorID)
+        game.worldRecords?.locationKeywords?.keyword(editorID: editorID)
             .map { ReferenceKey(resolved: $0.id) }
     }
 

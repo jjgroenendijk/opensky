@@ -2,7 +2,7 @@
 // hazards, each unpaused frame steps the runtime, and hits land through the
 // magic coordinator. The rules live in the coordinator (docs/engine/traps.md).
 
-import Foundation
+public import Foundation
 import OpenSkyCells
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
@@ -24,19 +24,23 @@ public struct HazardWorldDependencies {
     public let magic: () -> MagicCoordinator
     public let spellHits: () -> any SpellHitApplying
     public let gameSession: () -> GameSession?
+    /// The wall clock, so a test can step the hazards by a known time.
+    public let now: () -> Date
 
     public init(
         hazards: @escaping () -> HazardCoordinator,
         combat: any CombatPort,
         magic: @escaping () -> MagicCoordinator,
         spellHits: @escaping () -> any SpellHitApplying,
-        gameSession: @escaping () -> GameSession?
+        gameSession: @escaping () -> GameSession?,
+        now: @escaping () -> Date
     ) {
         self.hazards = hazards
         self.combat = combat
         self.magic = magic
         self.spellHits = spellHits
         self.gameSession = gameSession
+        self.now = now
     }
 }
 
@@ -80,7 +84,8 @@ public final class HazardWorldAdapter {
     }
 
     /// Steps by wall-clock time, and not at all while a menu pauses the world.
-    func tick(paused: Bool, now: Date = Date()) {
+    func tick(paused: Bool) {
+        let now = dependencies.now()
         defer { lastFrame = paused ? nil : now }
         guard !paused, let lastFrame else { return }
         let seconds = Float(now.timeIntervalSince(lastFrame))

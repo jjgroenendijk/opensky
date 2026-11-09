@@ -256,7 +256,8 @@ extension GameSessionScopeFactories {
                 combat: scope.combat,
                 magic: { [unowned scope] in scope.magic },
                 spellHits: { [unowned scope] in scope.magicWorld },
-                gameSession: { [unowned scope] in scope.gameSession }
+                gameSession: { [unowned scope] in scope.gameSession },
+                now: { Date() }
             ),
             stage: scope.stage
         )
