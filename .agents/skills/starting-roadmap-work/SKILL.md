@@ -70,6 +70,11 @@ code itself.
    `gh pr ready <pr>`.
 
 - One branch and one PR per issue.
+- A new check that fails across the tree lands in slices, each its own PR: first the check as
+  a report that prints its count and fails nothing, then the fixes, one module or layer per
+  PR, then the gate, once the count on `main` is zero. One PR that adds the gate and fixes
+  the whole tree failed CI again and again: one such PR took 13.5 hours and 8 CI runs, 7 of
+  them failed, because each fix exposed the next finding only in CI.
 - Load the skill for the kind of work: `implementing-format-parsers`,
   `driving-the-running-game`, `testing-and-verifying`, and `committing-and-landing-work` to land it.
 - Scope changes are issue edits, not doc edits.

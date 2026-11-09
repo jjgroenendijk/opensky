@@ -5,265 +5,144 @@ Creation Engine, Gamebryo lineage) for macOS in Swift and Metal 4. It loads a us
 legally-owned install from disk and runs it. Trade-offs resolve in this order: legal
 cleanliness, correctness, native feel, performance, feature completeness.
 
-This file holds what applies to every task. Rules for one part of the tree live in the
-`AGENTS.md` of that folder (`src/Sources/`, `src/Tests/`, and some below them), and they load when
-you work there. Task workflows live in skills. A change to repo layout, tooling, or
-conventions updates the matching file in the same commit.
+This file holds what applies to every task; a folder's `AGENTS.md` holds its own rules, and
+skills hold the workflows. A rule a machine checks is one line naming its gate
+(`docs/tools/agent-instructions.md`). A change to layout, tooling, or conventions updates the
+matching file in the same commit.
 
 ## Legal & IP boundary — non-negotiable
 
-Located in Netherlands. EU Software Directive 2009/24/EC (arts. 5-6) and the Dutch
+Located in the Netherlands. EU Software Directive 2009/24/EC (arts. 5-6) and the Dutch
 Auteurswet permit reverse-engineering a program you lawfully own for interoperability.
 Reversing formats is fine. Redistributing Bethesda content or code is not. Therefore:
 
-- NEVER commit game content. No `.bsa`/`.ba2` archives, `.esm`/`.esp` plugins, `.nif`
-  meshes, `.dds` textures, `.hkx` animations, `.pex` scripts, audio, or anything extracted
-  from the install. Not even as test fixtures.
-- NEVER copy Bethesda code. No decompiled, disassembled, or leaked source. No code,
-  offsets, layouts, or binary class names from SKSE, CommonLibSSE, or other projects built
-  on the game binary. Facts and behaviour from them are fine through the clean-room read in
-  the `using-outside-sources` skill. Reimplement from observed behaviour and open format docs.
-- A frame OpenSky renders embeds the user's game assets, so a rendered capture is game
-  content too. Verification captures go to gitignored `.logs/`; link the local path in the
-  PR rather than committing the image. The one exception is a screenshot of OpenSky's own
-  launcher, with no game frame in it, at `docs/images/launcher-*.png` for the README.
-- The game install is read-only external input: located at runtime, never bundled, cached
-  into the repo, or copied into build output.
-- About to add a binary blob -> stop, ask.
-- The offline Creation Kit and UESP wiki mirrors are CC BY-SA text by others. They stay in the
-  gitignored `.cache/ck-wiki/` and `.cache/uesp-wiki/`; cite a page's `url`, never commit the page.
-
-`tools/lint/no-game-content.sh` (part of `make check` and CI) enforces the first and third rules and the
-wiki mirror rule over the whole tracked tree. Nothing enforces the second one; that is on you.
-
-A task that seems to require committing or embedding game data -> do not. Surface the
-conflict.
+- NEVER commit game content: no archive, plugin, mesh, texture, animation, script, audio, or
+  anything extracted from the install, not even as a test fixture.
+- NEVER copy Bethesda code: no decompiled, disassembled, or leaked source, and no code,
+  offsets, layouts, or binary class names from SKSE, CommonLibSSE, or other projects built on
+  the game binary. Their facts and behaviour are fine through the clean-room read in the
+  `using-outside-sources` skill. No gate can check this; it is on you.
+- A rendered frame embeds the user's assets, so a capture is game content: it goes to `.logs/`.
+  The exception is a launcher screenshot with no game frame, `docs/images/launcher-*.png`.
+- The game install is read-only input: located at runtime, never bundled, cached into the
+  repo, or copied into build output.
+- The offline wiki mirrors are CC BY-SA text by others: they stay in gitignored `.cache/`;
+  cite a page's `url`, never commit the page.
+- About to add a binary blob -> stop, ask. A task that seems to need game data in the repo
+  -> do not; surface the conflict. Gate for rules 1, 4, and 5: `no-game-content.sh`.
 
 ## Gotchas
 
-- The repo sits on a case-insensitive external APFS volume. A case-only rename needs
-  `git mv`, and AppleDouble `._*` files are ignored.
-- Xcode 26 and 27 ship without the Metal Toolchain. `make bootstrap`, once per checkout,
-  downloads it.
-- Target membership under `src/Sources/` follows the folder, not a list in the project file:
-  `OpenSky/` builds only into the app, `OpenSkyCLI/` only into the CLI, and `Shaders/` into
-  both. Every other folder is a module in `src/Package.swift`, linked by the app and the CLI
-  through one product, so a new module needs no project-file edit. An app-only source
-  (AppKit, Cocoa, SwiftUI) outside `OpenSky/` breaks the CLI build; `tools/lint/cli-boundary.sh`
-  catches it.
-- A folder that builds a target has the target's name, in PascalCase. A test selector names
-  the target: `make test T='OpenSkyFormatsCoreTests/BSAArchiveTests'`. Two names stay
-  lowercase on purpose: the CLI binary `openskycli`, and the bundle IDs, because macOS
-  stores permission grants against them.
-- The build cache is one tree per checkout under the main checkout's `.cache/Build/`, on the
-  data volume; the internal disk keeps only the app's asset cache. The compilation cache
-  store they all share sits beside them. `tools/xcodebuild.sh` passes both on every
-  `xcodebuild` call, and `tools/build-env.sh` names them for `tools/`. A new build command
-  that skips them starts a second, cold cache. `make prune` deletes the trees of removed
-  worktrees.
-- Anything that builds runs in a background shell: it can pass the tool timeout.
-- Linked worktrees share the main checkout's `src/.vendor/ffmpeg` through `make`, so a worktree
-  needs no `make bootstrap`. The cache's prefix mapping makes `#filePath` read
-  `/^src/...`; find the checkout at runtime instead (`docs/tools/build-system.md`).
-- The only git hook is `pre-commit` in `tools/githooks/`, which runs the file-length check;
-  `make bootstrap` turns it on. Run `make check` before committing. The CI
-  lint jobs on each pull request are the gate before code lands.
-- Facts about this machine and the outside world that will expire — CI status, missing TCC
-  permissions, blocked upstream spec hosts — live in `docs/tools/environment.md` with the
-  date observed. Check it before fighting an odd failure, and record new ones there.
+- The repo sits on a case-insensitive APFS volume: a case-only rename needs `git mv`.
+- Xcode 27 ships without the Metal Toolchain; `make bootstrap` downloads it once.
+- In `src/Sources/`, `OpenSky/` is app-only, `OpenSkyCLI/` CLI-only, `Shaders/` both, and each
+  other folder a package module (gate: `cli-boundary.sh`). A folder is named after its target;
+  only `openskycli` and the bundle IDs are lowercase, because macOS keys grants to them.
+- Build in a linked worktree, one per issue. Two sessions in one checkout share one build
+  tree, and two builds into one tree collide in xcodebuild's build database.
+- Every build goes through `make`, in a background shell, so it uses the shared build tree and
+  cache (`docs/tools/build-system.md`). `#filePath` reads `/^src/...`; find the checkout at runtime.
+- Facts that expire (CI status, permissions, blocked hosts) live in `docs/tools/environment.md`
+  with their date. Check it before fighting an odd failure.
 
 ## Environment & tech stack
 
 - Metal 4 only. No OpenGL, no MoltenVK, no abstraction layer over another API.
-- macOS 26+ (Tahoe) as the deployment target, Xcode 27, Apple Silicon. No older-macOS or
-  Intel paths unless asked.
-- Swift 6 language mode. Local builds and CI use the same Apple Swift, 6.4
-  (`tools/lint/swift-baseline.sh`).
-- Minimal C interop, only where a format genuinely needs it, wrapped behind a Swift
-  interface. No embedded game engine.
-- Dependencies: prefer the standard library and Apple frameworks, then Swift Packages via
-  SwiftPM. Record each new dependency and the reason in `docs/decisions/`; its license must
-  stay compatible with redistributing our code.
+- macOS 26+, Xcode 27, Apple Silicon only. Swift 6 mode, the same Swift locally and in CI
+  (gate: `tools/lint/swift-baseline.sh`). C interop only behind a Swift interface.
+- The game data root is a setting, never a constant; missing -> fail loud. The default probe
+  is `~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition/`, and on
+  this machine `/Volumes/data/steam/steamapps/`.
+- Dependencies: the standard library and Apple frameworks first, then SwiftPM packages. Record
+  each new one and its reason in `docs/decisions/`; its license must allow redistribution.
 
 ## Where things live
 
-- `src/` holds the Swift package, the Xcode workspace and project, and their `config/`. Xcode
-  reads every file under `src/` at each build start, so anything that grows (caches, logs,
-  worktrees) stays at the repository root, outside `src/` (`docs/tools/build-system.md`).
-- `src/Package.swift` declares every engine module. `docs/tools/modules.md` lists each one with
-  its layer and gives the import rules. Read it before you add a module or an import.
-- `src/config/Build/*.xcconfig` holds every build setting, signing included, never the pbxproj
-  (`docs/tools/build-system.md`). `src/config/TestPlans/` holds the test plans
-  (`docs/tools/test-runs.md`).
-- `.logs/` and `src/.vendor/` are gitignored. A script writes its output into
-  `.logs/<script>/<UTC timestamp>/` through `tools/run-dir.sh` and points `latest` at it.
-  Link the run directory, never a loose file (`docs/tools/run-output.md`).
-- `reference/` holds the developer-only tooling for the Windows reference game, run under
-  Wine beside OpenSky (`docs/tools/reference-game.md`). No release ships it.
-- Skills live in `.agents/skills/`; `.claude/skills` is a symlink to it. Each nested
-  `AGENTS.md` has a `CLAUDE.md` symlink beside it; `make lint` checks it.
+- `src/` holds the package, project, and `src/config/` (build settings, test plans). Anything
+  that grows stays outside it: Xcode reads every file under `src/` at each build start.
+- `docs/tools/modules.md` gives each module's layer and the import rules; read it before adding
+  either. `reference/` holds the developer-only reference-game tooling.
+- Run output goes to `.logs/<script>/<UTC timestamp>/`; link the run directory, never a loose
+  file. Skills live in `.agents/skills/` (gate: `tools/lint/agent-files.sh`).
 
 ## Architecture
 
-OpenSky follows six architecture styles. `docs/engine/architecture.md` explains each one,
-with an example. When you add code:
+`docs/engine/architecture.md` explains the six styles, each with an example. When you add code:
 
-- A feature uses another feature only through its `Interface` module. `tools/lint/module-graph.sh`
-  checks this (`docs/decisions/modular-architecture.md`).
-- Parsers and game rules are pure: values in, values out. Files, clocks, Metal, audio, and
-  UI stay in a thin shell around them.
-- Reach the outside world through a protocol (a port), such as `CombatWorld` or
-  `RenderFrameDriver`, so a test can pass a fake.
-- Game logic goes in a coordinator in its feature module, not in `GameViewController`.
+- A feature uses another only through its `Interface` module (gate: `module-graph.sh`).
+- Parsers and game rules are pure, values in and values out, inside a thin shell for files,
+  clocks, Metal, audio, and UI (gates: `deterministic-rules.sh`, SwiftLint).
+- Reach the outside world through a protocol (a port), so a test can pass a fake.
+- Game logic goes in a coordinator in its feature module, not in `GameViewController` (SwiftLint).
 - Change a data layout for speed only after a measurement shows the cost.
-- Simulation runs on the main actor, in a fixed order and without `await`. Reading and
-  decoding a file runs off it, and the frame drains the result. Do not add a new
-  `@unchecked Sendable` class, `DispatchQueue`, or `Task.detached`.
-  `docs/decisions/concurrency.md` has the rules.
+- Simulation runs on the main actor, in a fixed order, without `await`; file work runs off it
+  (`docs/decisions/concurrency.md`; SwiftLint).
 
 ## Build, run, test
 
-`make help` lists every target and option. `make fix` (autoformat, then `make check`) before
-committing; `make check` is the same gate without writes. Both lint the Swift files the
-branch changed, and every Swift file in CI or with `OPENSKY_CHECK_ALL=1`. `make install` refreshes
-`/Applications/OpenSky.app` after landing rendering work, because the user checks progress
-there. It puts `openskycli` inside the app, so driving the game with `openskycli game` needs
-no build unless the change is in the app's code (`driving-the-running-game`).
-
-Every build or test run costs minutes, so make every edit a change needs, then run one
-check, and fix everything it reports at once. CI runs the whole unit plan on every push to a
-pull request; locally, run the smallest plan that covers the change (`testing-and-verifying`
-skill) and record it in the commit's `Tests:` section. A green build does not prove a
-triangle appeared. Unit-test every format parser and math routine with synthetic fixtures
-built in code. The real-data suites need the user's install, so only `make test PLAN=RealData` runs
-them, and never in CI.
-
-## Loading game data (runtime, never repo)
-
-The default path to probe is
-`~/Library/Application Support/Steam/steamapps/common/Skyrim Special Edition/`; on this
-machine the data lives under `/Volumes/data/steam/steamapps/...`. The data root is a
-configurable setting, never a hardcoded constant. Missing -> fail loud. There is no bundled
-data to fall back to.
+`make help` lists every target. `make fix` before committing; `make check` is the same gate
+without writes, and CI runs it. `make install` refreshes `/Applications/OpenSky.app` after
+rendering work, because the user checks progress there. A run costs minutes: make every edit,
+run one check, and fix everything it reports at once. CI runs the whole unit plan on every push to a pull request;
+locally, run the smallest plan that covers the change (`testing-and-verifying` skill) and
+record it in the commit's `Tests:` section. A green build does not prove a triangle appeared.
+Unit-test every parser and math routine with synthetic fixtures built in code.
 
 ## Open work, docs, and checking a behaviour
 
-- Open work lives in GitHub issues and milestones; there is no roadmap file. Load the
-  `starting-roadmap-work` skill to pick up or finish an item.
-- `docs/` holds only what the code cannot show: sources of facts, design reasons, where
-  OpenSky differs from the game, how subsystems work together, and tool usage. History
-  lives in git. Load `writing-wiki-docs` before writing there.
-- Every new subsystem or user-verifiable behavior can be forced and inspected in the running
-  game through `openskycli game` in the same milestone: a command that sets it and a `state`
-  read that shows it. Parser, math, and infrastructure-only work may wait for its first
-  visible consumer. `driving-the-running-game` lists the commands, and
-  `docs/tools/acceptance-record.md` gives the acceptance record.
+- Open work lives in GitHub issues and milestones (`starting-roadmap-work` skill).
+- `docs/` holds only what the code cannot show (`writing-wiki-docs` skill).
+- A new subsystem or visible behaviour gets an `openskycli game` command that sets it and a
+  `state` read that shows it, in the same milestone (`driving-the-running-game` skill).
 
 ## Code quality
 
-If a machine can check a rule, a machine checks it; do not rely on people remembering it.
-Every language has a linter and an auto-formatter, configured under `tools/`; do not
-hand-format. Anything repeatable becomes a `make` target, not a documented manual
-procedure. CI runs `make format-check` and `make lint`, the two halves of `make check`, so a
-new check is a new script in `tools/lint/` or `tools/format/` and needs no other edit.
-
-Linting is strict and warnings are errors. Fix the issue rather than disabling or
-downgrading a rule: `make lint` fails on any suppression comment, on duplicated Swift, and
-on a comment block over 6 lines, with no baseline file
-(`docs/decisions/code-health-automation.md`). Parse and load failures use `throws` with typed
-errors, and malformed input must not crash: no force-unwrap, force-try, or force-cast on data
-from external files. `make lint-index` (unused code and the index-store checks) runs in CI on each
-pull request; locally only when a pull request fails it.
-
-Size code to the lint limits while writing, not after a failed `make fix`; that has been
-the top recurring time sink. The thresholds are in `tools/lint/.swiftlint.yml`, and rules
-absent from it run at SwiftLint defaults.
-
-No file is longer than 800 lines, in any language. Above 600 lines `tools/lint/file-length.sh` and
-the pre-commit hook print a warning: split the file then, while the split is still easy.
-A file over 800 lines fails the hook, `make check`, and CI. Split it to below 600 lines.
-`src/Package.swift` is the one exception, because SwiftPM reads a single manifest file.
+If a machine can check a rule, a machine checks it: a new check is a script in `tools/lint/`
+with a self-check, and `make check` and CI run it with no other edit. Fix a finding; never
+disable a rule. Size code to the limits in `tools/lint/.swiftlint.yml` while writing, not after
+a failed `make fix`. Split a file at the 600-line warning, to below 600; `file-length.sh` fails
+one over 800. `docs/tools/agent-instructions.md` lists every gate and what it checks.
 
 ## Writing style (agent output, docs, comments, commit bodies)
 
-Write for young, capable students who learn English as a second language: short
-sentences with one idea each, common words, and a technical term explained the first time
-it appears. No aphorisms, idioms, clever phrases, filler, or hedging. Prefer an example to a
-long explanation. Keep code comments short.
+Write for young, capable students who learn English as a second language: short sentences
+with one idea each, common words, and a technical term explained when it first appears. No
+aphorisms, idioms, clever phrases, filler, hedging, or emojis. Prefer an example. Quote code
+symbols and error strings verbatim. Use `[ERROR]`, `[WARNING]`, and `[INFO]` tags, unnumbered
+headings, and British spelling ("colour"); names from Apple, Havok, and the game keep theirs.
 
-- Quote code symbols, function names, API names, and error strings verbatim. Do not
-  abbreviate them.
-- No emojis. Where a severity marker is needed use bracket tags: `[ERROR]`, `[WARNING]`,
-  `[INFO]`. Headings are unnumbered.
-- British spelling: "colour", "behaviour", "optimise". New names in our code follow it too.
-  Names from Apple APIs, Havok, and the game keep their own spelling (`NSColor`).
-
-Code documents itself through names and types. A comment holds only the why that the code
-cannot show. `docs/` holds only what neither the code nor a short comment can hold, such as
-sources, measurements, and cross-subsystem design. Code that needs a what-comment gets a
-better name instead.
-
-- A doc comment on a declaration is at most about 3 lines.
-- A format fact gets one line plus a link to its `docs/formats/` page, which holds the detail.
-- No history ("was", "used to", issue numbers) and no restating of the type or parameter
-  names; git and the signature already hold them.
-
-```swift
-// Bad: restates the code and tells history.
-/// The damage multiplier. A `Float`. Was a `Double` before #412.
-// Good: says why.
-/// Sneak attacks skip armor, so this applies after the armor step.
-```
+Code documents itself through names and types. A comment holds only the why the code cannot
+show: at most about 3 lines on a declaration, no history ("was", issue numbers), and no
+restating of names. A format fact gets one line and a link to its `docs/formats/` page.
 
 ## How agents work here
 
-- Confirm Skyrim internals against an open spec or observed data, and flag uncertainty.
-  Training data is confidently wrong about byte layouts.
-- A performance idea, or a performance problem spotted mid-task, becomes a GitHub issue
-  (`gh issue create`) rather than an inline fix. One issue per idea; the title states the
-  win, the body states why it can be faster. Give it the `performance` label. No
-  measurement is needed to file it.
-- When the task shows that something is missing, such as a shader term, a record field, or
-  a step of a game rule, check the same area for more gaps before you finish: the rest of
-  the shader, the other fields of the record, the other steps of the rule. Implement every
-  gap you find in the same PR, and list them in the PR body. One gap usually means its
-  neighbours were never built either, so adding only the first one leaves the result wrong.
-- A pre-existing bug found mid-task in an area the task does not touch becomes a GitHub
-  issue with the `bug` label (`gh issue create --label bug`). One issue per bug; the body
-  states how to reproduce it, what was observed, and what is expected. This keeps the bug from
-  being lost and keeps the fix out of an unrelated PR. Fix it inline only when it blocks
-  the task, and say so in the commit.
-- Every difference found between Skyrim and OpenSky is recorded in a GitHub issue with the
-  `gap` label: a rule approximated, a field read but not used, a behaviour left out, or a
-  different result. The label lets one query list all of them. Search the open issues
-  first and add to a matching one. A note in `docs/` or a code
-  comment does not replace the issue, because open work lives only in issues. A
-  difference the same PR closes needs no issue.
-- A value or rule chosen without a source, such as a timing, a radius, or a formula read
-  from a setting's name, gets a row in `docs/engine/unverified-values.md` as well as its
-  mark on its own page. One list lets the values be checked against the game later.
-- An issue body states intent, not code locations: no file paths, line numbers, or pasted
-  code. Code moves faster than issues are worked. `starting-roadmap-work` has the rules.
-- Do the whole task in the main session. Do not split work across sub-agents: parallel
-  agents have edited the same worktree and collided. The one exception is the read-only
-  clean-room read in `using-outside-sources`, which edits nothing.
+- Confirm Skyrim internals against an open spec or observed data; training data is
+  confidently wrong about byte layouts.
+- A gap in the area you work on (a shader term, a record field): check the area for more, and
+  build them all in the same PR, listed in its body. Its neighbours were usually never built.
+- Each of these becomes its own GitHub issue, never an inline fix, and an issue body states
+  intent with no file paths or code (`starting-roadmap-work` skill):
+  - a performance idea, labelled `performance`, the title stating the win;
+  - a pre-existing bug in an area the task does not touch, labelled `bug`, with how to
+    reproduce it; fix it inline only when it blocks the task, and say so in the commit;
+  - a difference from Skyrim, labelled `gap`; search the open ones first and add to a match.
+- A value chosen without a source gets a row in `docs/engine/unverified-values.md`.
+- Do the whole task in the main session; parallel agents have collided in one worktree. The
+  one exception is the read-only clean-room read in `using-outside-sources`.
 
 ## Skills — load before the matching work
-
-Each skill in `.agents/skills/` holds the full workflow for one kind of task. Each skill
-folder also holds `evals.json`: test scenarios to run in a fresh session after you change
-the skill.
 
 | Skill | Load it when |
 | --- | --- |
 | `starting-roadmap-work` | Choosing the next item, starting an issue, or closing a milestone |
 | `committing-and-landing-work` | Committing, pushing, or opening and merging a pull request |
-| `implementing-format-parsers` | Adding or changing any file format parser: ESM, BSA, NIF, DDS, HKX, PEX, SWF, audio, or LOD |
+| `implementing-format-parsers` | Adding or changing any file format parser |
 | `writing-wiki-docs` | Adding or materially changing anything under `docs/` |
 | `probing-real-game-data` | Running engine code against the real Skyrim SE install |
 | `developing-cli-commands` | Adding or changing an `openskycli` command, option, or help text |
-| `driving-the-running-game` | Playing, testing, or debugging the live app window through `openskycli game`, or the Windows reference game through `openskycli reference` |
+| `driving-the-running-game` | Driving the live app with `openskycli game`, or the reference game with `openskycli reference` |
 | `testing-and-verifying` | Running any test, build check, or verification, and before pushing |
-| `consulting-uesp-wikis` | Looking up anything on the Creation Kit wiki (ck.uesp.net) or the UESP wiki (en.uesp.net), or syncing their offline copies |
-| `using-outside-sources` | Reading, citing, or taking anything from SKSE, CommonLibSSE, xEdit, nif.xml, OpenMW, or another third-party source about Skyrim internals |
+| `consulting-uesp-wikis` | Looking up the Creation Kit or UESP wiki, or syncing their offline copies |
+| `using-outside-sources` | Reading or taking anything from SKSE, CommonLibSSE, xEdit, nif.xml, OpenMW, or another third-party source |
 | `writing-agent-instructions` | Adding, editing, or reviewing an `AGENTS.md`, skill, or memory, or learning a new rule |

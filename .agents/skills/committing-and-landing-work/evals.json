@@ -80,5 +80,16 @@
       "Merges #39 with gh pr merge --rebase and without --delete-branch",
       "Moves the #40 branch onto main with git rebase --onto origin/main and pushes with --force-with-lease before merging it"
     ]
+  },
+  {
+    "skills": [
+      "committing-and-landing-work"
+    ],
+    "query": "My new lint finds 400 violations. Fix them all and enable the lint in one PR.",
+    "files": [],
+    "expected_behavior": [
+      "Explains that a gate with findings across the tree lands as report, fixes per module, then gate",
+      "Proposes splitting the work into several PRs instead of one"
+    ]
   }
 ]

@@ -1,45 +1,29 @@
 # AGENTS.md — HostedTestSupport
 
-Test support compiled into two unit-test bundles: `OpenSkyTests` and
-`OpenSkyRealDataTests`. The folder exists because the two targets are separate modules with
-no way to import each other, while a fixture like `FakeWorldProviders` is needed by both.
-Membership follows the folder, exactly as `src/Sources/OpenSky/` builds into the app alone.
-
-Only fixtures that need the app or two feature implementations belong here: the fake world
-providers, the acceptance harnesses, and chains such as
-`CombatCastingChain`. A fixture that needs neither goes in a `src/Tests/OpenSky<Layer>Testing/` or
-`src/Tests/<Name>Fixtures/` library, so the package test targets can use it too
-(`src/Tests/AGENTS.md`).
+Test support compiled into two bundles, `OpenSkyTests` and `OpenSkyRealDataTests`, which
+cannot import each other. Membership follows the folder.
 
 ## What belongs here
 
-Fixtures, fakes, and harnesses — anything with no `@Test` of its own — that at least one
-suite in each bundle uses. Support only the synthetic suites use stays in `src/Tests/OpenSkyTests/`;
-support only the real-data suites use stays in `src/Tests/OpenSkyRealDataTests/`. Keeping the split
-tight matters: a file here is compiled twice, once per bundle.
+A fixture, fake, or harness with no `@Test` of its own, that needs the app or two feature
+implementations, and that a suite in each bundle uses: the fake world providers, the
+acceptance harnesses, and chains such as `CombatCastingChain`. A file here compiles twice, so
+keep the set small:
 
-Fixtures are synthetic and built in code, never an extracted game file (root `AGENTS.md`,
-Legal & IP boundary). The established byte builders, `BSAFixture`, `ESMFixture`, `NIFFixture`
-and `PexFixture`, live in the `src/Tests/OpenSkyFormatsTesting/` library.
+- needs neither the app nor two implementations: a testing or fixture library
+  (`src/Tests/AGENTS.md`);
+- used by one bundle only: that bundle's own `Support/` folder.
 
 ## No tests here
 
-A `@Test` in this folder would run in both bundles, so the same unit test would also execute
-under `make test PLAN=RealData`. Nothing enforces that, so it is a review point.
+A `@Test` here would run in both bundles, so it would also run under the `RealData` plan.
+Nothing checks this; it is a review point. A suite that shares a fixture keeps its tests in
+its own type and the fixture in another, as `CellStreamerTests` and `CellStreamerFixture` do.
 
-A suite that shares a fixture with other suites keeps its `@Test` methods in its own type,
-and the fixture is a separate type. Example: `CellStreamerTests` in `OpenSkyWorldTests`
-calls `CellStreamerFixture` in `OpenSkyWorldFixtures`, and the acceptance chains call the
-same fixture.
-
-A type whose shared part is only constants does not need that treatment: give the constants
-their own namespace, as `WorldTimeAcceptanceClock` does, and leave the suite alone. Note that a
-`struct` holding nothing but static members is rewritten to an `enum` by `make fix`
-(SwiftFormat's `enumNamespaces`), which a Swift Testing suite type cannot be — the tests
-would have nothing to instantiate.
+A type that only shares constants gets its own namespace, as `WorldTimeAcceptanceClock` does.
+`make fix` rewrites a static-only `struct` to an `enum`, which a Swift Testing suite cannot be.
 
 ## Isolation
 
-`SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` applies here like everywhere else: a fake
-touching AppKit is `@MainActor`, and an extension of a `nonisolated` type must say
-`nonisolated extension` itself (root `AGENTS.md`, Conventions).
+The default actor isolation is the main actor here too: a fake that touches AppKit is
+`@MainActor`, and an extension of a `nonisolated` type says `nonisolated extension`.

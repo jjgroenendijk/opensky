@@ -16,9 +16,8 @@ test target that needs the fixtures links it: package test targets, `OpenSkyTest
 
 - Declarations that tests use are `public`. A struct a test builds has an explicit
   `public init(...)`.
-- A library may `@testable import` the module it builds fixtures for, and import the
-  modules and testing libraries below it. It never imports a feature implementation, so a
-  test that links it builds no other feature. `tools/lint/module-graph.sh` fails on such an import.
+- A library may `@testable import` the module it builds fixtures for and import what lies
+  below it, never a feature implementation (gate: `tools/lint/module-graph.sh`).
 - A fixture that needs its feature's implementation, such as a fake of a seam the
   implementation declares, goes in that feature's `<Name>Fixtures/` library. Only
   `<Name>Tests` and the Xcode bundles may link it. Example: `FakeCombatWorld` in
@@ -74,15 +73,11 @@ smaller the plan, the quicker the run. `make test PLAN=<name>` picks one:
 | `GPU` | every unit target, only the `.gpu` tests |
 | `UnitTests` | everything; CI runs it on every push |
 
-`UITests` lists `OpenSkyUITests` alone. `RealData` lists `OpenSkyRealDataTests` with the
-`.smoke` tag and carries the data root into the test host; `RealDataAll` is the whole
-bundle (`make test PLAN=RealDataAll`). `tools/lint/test-plans.sh` checks that `UnitTests` lists every
-unit test folder. `T=` narrows a plan to some targets, such as `T=OpenSkyFormatsESMTests`.
-
-Never list the UI bundle in a plan beside an app-hosted unit bundle: the app blocks as a
-test host while the UI runner waits for it, and the run deadlocks
-(`docs/tools/test-runs.md`). An env-gated suite outside `src/Tests/OpenSkyRealDataTests/` fails
-`make lint`, because no plan would ever run it.
+`UITests` lists `OpenSkyUITests` alone. `RealData` runs the `.smoke` real-data suites;
+`RealDataAll` runs the whole bundle. `T=` narrows a plan to some targets, such as
+`T=OpenSkyFormatsESMTests`. Which bundles each plan lists, and that no plan puts the UI bundle
+beside an app-hosted one (a deadlock), is checked (gate: `tools/lint/test-plans.sh`,
+`docs/tools/test-runs.md`).
 
 ## Tags
 
@@ -103,16 +98,13 @@ in `OPENSKY_SKIPPED_TAGS` and this trait reads it.
 | `.perf` | A timing gate. The Perf plan runs it, built optimized (`make test PLAN=Perf`) |
 | `.smoke` | A real-data suite in the smoke set that `make test PLAN=RealData` runs by default: one quick suite per format family and subsystem |
 
-`tools/lint/test-tags.sh` fails a suite that misses `.acceptance`, `.gpu`, or `.parser`, or a
-`.gpu` or `.slow` tag without its `.unlessPlanSkips`, and `make fix` adds
-them. A tag narrows a run (`make test PLAN=GPU`) but never pulls a real-data test into a
-unit run: a plan picks bundles, a tag picks tests inside them.
+A missing tag or `.unlessPlanSkips` fails the check, and `make fix` adds it (gate:
+`tools/lint/test-tags.sh`). A plan picks bundles; a tag picks tests inside them.
 
 ## Test order
 
-Every plan runs its tests in random order, and no suite carries `.serialized`
-(`tools/lint/test-order.sh`, `docs/decisions/test-coverage-rules.md`). A test that shares state with
-others reads only its own part of it, such as the log lines of its own category.
+Every plan runs its tests in random order, with no `.serialized` (gate:
+`tools/lint/test-order.sh`). A test that shares state reads only its own part of it.
 
 ## Flaky tests
 

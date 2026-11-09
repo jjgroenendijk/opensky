@@ -73,6 +73,9 @@ or `Model:`. Allowed trailers:
    `git push --force-with-lease`, and wait for CI again. Done and verified work always
    lands: commit and open the PR without waiting to be asked.
 
+A new check with findings across the tree lands as a report, then the fixes per module,
+then the gate (`starting-roadmap-work`). Never one PR that turns on the gate and fixes all.
+
 ## Landing gotchas seen repeatedly
 
 - A rebase merge writes new commits with new SHAs. In a stack of PRs, the next branch
