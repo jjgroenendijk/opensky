@@ -1,7 +1,7 @@
 // `StoryWorldAdapter` built over the started session: it registers its frame steps and
 // session events as it is built (docs/decisions/session-scope.md).
 
-import Foundation
+public import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
@@ -30,9 +30,10 @@ extension StoryWorldAdapter {
     public convenience init(
         game: some StoryWorldHost & StoryAmbientTalkHost & StorySocialSearchHost &
             StorySceneLinesHost & StorySceneCastHost,
-        stage: SessionStage?
+        stage: SessionStage?,
+        now: @escaping () -> Date
     ) {
-        self.init(game: game)
+        self.init(game: game, now: now)
         guard let stage else { return }
         registerStory(stage: stage)
     }

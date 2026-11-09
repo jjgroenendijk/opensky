@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
@@ -41,6 +41,7 @@ public struct StorySceneLinesAdapter {
     public let game: any StorySceneLinesHost
     public let state: StoryPartState
     public let sceneCast: StorySceneCastAdapter
+    public let now: () -> Date
 }
 
 extension StorySceneLinesAdapter {
@@ -160,7 +161,7 @@ extension StorySceneLinesAdapter {
             .map { responseTexts(of: $0).compactMap(\.self).joined(separator: " ") } ?? ""
         game.subtitles.say(
             text, kind: .general, seconds: Double(seconds),
-            now: Date().timeIntervalSinceReferenceDate
+            now: now().timeIntervalSinceReferenceDate
         )
     }
 

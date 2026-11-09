@@ -1,14 +1,13 @@
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
-public import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 public import OpenSkyPlayer
@@ -33,7 +32,7 @@ public protocol DialogueSpeakersHost: AnyObject {
     var factions: any FactionPort { get }
     var mountWorld: any MountWorldPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var worldRecords: (any WorldRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -92,7 +91,7 @@ extension DialogueSpeakersAdapter {
     /// The voice type of each loaded actor, for `GetIsVoiceType` and voice file paths.
     public func residentVoiceTypes() -> [ReferenceKey: FormID] {
         let entries = game.streamer.residentActorEntries()
-        guard let resolver = game.worldData?.actorValueBaselines?.resolver else { return [:] }
+        guard let resolver = game.worldRecords?.actorValueBaselines?.resolver else { return [:] }
         let records = ActorIdentityRecords(resolver: resolver)
         var voices: [ReferenceKey: FormID] = [:]
         for entry in entries {

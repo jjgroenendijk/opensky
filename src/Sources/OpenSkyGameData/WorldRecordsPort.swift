@@ -12,4 +12,6 @@ nonisolated public protocol WorldRecordsPort {
     var magicEffectStore: MagicEffectStore? { get }
     var questStore: QuestStore? { get }
     var leveledScriptEdits: LeveledScriptEdits? { get }
+    var actorValueBaselines: ActorValueBaselineResolver? { get }
+    var speechCheckSettings: SpeechCheckSettings { get }
 }

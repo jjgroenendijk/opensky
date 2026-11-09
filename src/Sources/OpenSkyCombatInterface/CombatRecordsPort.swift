@@ -10,7 +10,6 @@ nonisolated public protocol CombatRecordsPort: WorldRecordsPort {
     var scriptFileSystem: (any GameFileSource)? { get }
     var footstepStore: FootstepStore? { get }
     var soundStore: SoundRecordStore? { get }
-    var actorValueBaselines: ActorValueBaselineResolver? { get }
     var presentationRecords: PresentationRecordStore? { get }
     var inventoryBaselines: InventoryBaselineResolver? { get }
     var effectRecords: EffectRecordStore? { get }

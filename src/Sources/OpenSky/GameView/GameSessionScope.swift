@@ -178,7 +178,7 @@ final class GameSessionScope {
 
     lazy var dialogueWorld = DialogueWorldAdapter(game: ports, stage: stage)
     /// Scenes, story-manager events, and their voice lines.
-    lazy var storyWorld = StoryWorldAdapter(game: ports, stage: stage)
+    lazy var storyWorld = StoryWorldAdapter(game: ports, stage: stage, now: { Date() })
     /// The quest store's space, so a DLC scene names its quest as the runtime does.
     lazy var scenes = factories.makeScenes()
     lazy var storyManager = factories.makeStoryManager()
