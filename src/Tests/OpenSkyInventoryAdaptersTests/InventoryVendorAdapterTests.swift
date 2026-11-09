@@ -1,5 +1,6 @@
 // The vendor part reads a merchant's place, owner, and restock state from the session.
 
+import OpenSkyEngineTesting
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryAdapters
@@ -37,6 +38,10 @@ struct InventoryVendorAdapterTests {
         #expect(adapter.vendorPlaceFacts(of: Self.key, for: .nearSelf) == nil)
         host.fakeStreamer.referenceEntryKeyResult = try InventoryAdapterFixture.actorEntry()
         host.fakeStreamer.cellLocationResult = .interior(FormID(0x40))
+        let records = FakeWorldRecords()
+        records.factionStore = FactionStore(plugins: [])
+        records.magicItemPluginName = "Base.esm"
+        host.worldRecords = records
         let near = try #require(adapter.vendorPlaceFacts(of: Self.key, for: .nearEditorLocation))
         #expect(near.position == .zero)
         #expect(near.target == .zero)
