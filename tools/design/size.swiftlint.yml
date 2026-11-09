@@ -3,7 +3,6 @@
 only_rules:
   - function_parameter_count
   - large_tuple
-  - nesting
 
 function_parameter_count:
   warning: 4
@@ -12,6 +11,3 @@ function_parameter_count:
 large_tuple:
   warning: 2
   error: 2
-
-nesting:
-  type_level: 1

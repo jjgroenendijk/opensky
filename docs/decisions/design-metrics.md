@@ -26,7 +26,8 @@ Each rule starts at zero, as every check here does
 ## Rule 1: size limits
 
 SwiftLint checks the size of a function's parameter list, a tuple, and nested types. The
-report reads `tools/design/size.swiftlint.yml`.
+report reads `tools/design/size.swiftlint.yml`, which holds the limits that are not a gate yet.
+The nesting limit is a gate in `tools/lint/.swiftlint.yml` since 2026-11-09.
 
 | Limit | Value | Before | Findings when set (2026-11-09) | Reason |
 | --- | --- | --- | --- | --- |
