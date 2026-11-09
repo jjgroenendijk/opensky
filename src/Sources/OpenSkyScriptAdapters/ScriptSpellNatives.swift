@@ -2,13 +2,13 @@
 
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
@@ -28,14 +28,14 @@ import simd
 
 extension ScriptPerkBindingsAdapter {
     /// Fills these natives as the bridge is built.
-    public func fillSpellNatives(bridge: PapyrusWorldStateBridge, provider: WorldDataStores) {
+    public func fillSpellNatives(bridge: PapyrusWorldStateBridge, provider: any WorldRecordsPort) {
         bridge.magicNatives.casterRuntime = { [weak game = self.game] in game?.magic.caster }
         bridge.magicNatives.isCommandedActor = { [weak game = self.game] key in
             game?.magic.commanded.contains { $0.actor == key } ?? false
         }
         bridge.magicEffectStore = provider.magicEffectStore
         bridge.formListStore = provider.formListStore
-        bridge.keywordStore = provider.locationStore?.keywords
+        bridge.keywordStore = provider.locationKeywords
         bridge.magicNatives.dispelEffects = { [weak game = self.game] holder, predicate in
             game?.magic.dispelEffects(on: holder, where: predicate) ?? 0
         }
