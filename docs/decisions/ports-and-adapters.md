@@ -40,6 +40,7 @@ runs its rules on a small synthetic violation, which must fail.
 | 7 | A module depends only on a module at least as stable, or on an interface | A change in an unstable module then cannot force changes in the stable modules below it |
 | 8 | An adapter uses the type of another adapter only when it stores that adapter itself | Two adapters that know each other change together, and neither can be built in a test alone |
 | 9 | An adapter module holds no `unowned` reference: an adapter and each part hold their host strongly | An `unowned` reference crashes when its owner goes first, and a part that reaches back into its owner cannot be built alone |
+| 10 | A protocol in an interface module has a second conformer or a test fake | A protocol with one conformer and no fake is no seam a test uses; it costs a file and hides the type that does the work |
 
 A port is a protocol from an interface module or a foundation module, or a class from a data
 layer, such as `WorldDataStores`. A value type is a struct, an enum, a type alias, or a type of
@@ -62,6 +63,17 @@ not a game rule. A number moves with its rule into the feature module, with a un
 as `WardArc.halfArc` in `OpenSkyMagic`. A technical number, such as a distance below which two
 points are the same, gets a named constant in the adapter. A value without a source also gets a
 row in `/engine/unverified-values.md`.
+
+## One conformer
+
+`tools/lint-index/single-conformers.py` reads the index store in `make lint-index` and the
+`Index checks` CI job. It lists each protocol in an interface module that has one conformer in
+`src/Sources` and none in `src/Tests`. It reports and passes until its count is zero; then it
+becomes a gate. Measured 2026-11-09: 203 of 233 interface protocols, 185 of them in
+`OpenSkySessionInterface`.
+
+A port leaves the list in one of two ways. A test builds an adapter over a fake of it, or the
+port goes and its caller calls the type that does the work.
 
 ## Splitting a large adapter
 

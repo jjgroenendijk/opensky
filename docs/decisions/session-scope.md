@@ -236,3 +236,10 @@ Two more checks keep the design:
 
 - There is no registration-ordered multicast type left, so a new event needs a phase enum.
 - A unit test builds the session scope from a synthetic load and checks that it builds.
+
+## Glue size
+
+The glue is the session, the session interface, and the adapter modules: the code that connects
+the features to the running game. Measured 2026-11-09, before the adapter tests and the port
+collapse of the single-conformer report ([Ports and adapters](/decisions/ports-and-adapters.md#one-conformer)):
+32,789 lines of glue, against 33,336 lines in the interface modules it connects.
