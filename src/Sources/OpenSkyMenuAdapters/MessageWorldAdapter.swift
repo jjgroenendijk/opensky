@@ -2,10 +2,10 @@
 // script, keeps help counts on the player, and passes HUD and camera calls on.
 // The rules live in the coordinator. See docs/engine/messages.md.
 
-import Foundation
+public import Foundation
 import OpenSkyAudio
 import OpenSkyCamera
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -34,7 +34,7 @@ public protocol MessageWorldHost: MenuInputConsumer {
     var runtimeState: any RuntimeStatePort { get }
     var scripts: any ScriptPort { get }
     var subtitles: any SubtitlePort { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -49,13 +49,16 @@ public final class MessageWorldAdapter {
         )
     }
 
-    public init(game: some MessageWorldHost & MessageCameraEffectsHost) {
+    public let now: () -> Date
+
+    public init(game: some MessageWorldHost & MessageCameraEffectsHost, now: @escaping () -> Date) {
+        self.now = now
         cameraEffectsHost = game
         self.game = game
     }
 
     private var presentation: PresentationRecordStore? {
-        game.worldData?.presentationRecords
+        game.menuRecords?.presentationRecords
     }
 
     /// The MESG's QNAM owner, whose aliases the text's tags name.
@@ -63,7 +66,7 @@ public final class MessageWorldAdapter {
         guard
             let store = presentation,
             let link = store.messages.link(message.record.quest, from: message), !link.isDangling,
-            let quests = game.worldData?.questStore,
+            let quests = game.menuRecords?.questStore,
             let id = quests.formID(for: ReferenceKey(resolved: link.target))
         else { return nil }
         return quests.quest(id)

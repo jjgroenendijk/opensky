@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkySessionInterface
@@ -57,8 +57,8 @@ extension MenuWorldAdapter {
     }
 
     /// The game draws the logo in `MainMenuCell`, so it takes that cell's light.
-    private var titleLighting: RenderLighting? {
-        game.worldData?.menuRecords?.mainMenuLighting.flatMap {
+    public var titleLighting: RenderLighting? {
+        game.menuRecords?.menuRecords?.mainMenuLighting.flatMap {
             CellSceneBuilder.renderLighting(cell: $0.cell, template: $0.template)
         }
     }
@@ -67,7 +67,7 @@ extension MenuWorldAdapter {
         let renderer = gameSession.renderer
         if
             titleMeshes == nil,
-            let fileSystem = game.worldData?.scriptFileSystem
+            let fileSystem = game.menuRecords?.scriptFileSystem
         {
             let textures = try TextureLibrary(fileSystem: fileSystem, device: renderer.device)
             titleMeshes = MeshLibrary(

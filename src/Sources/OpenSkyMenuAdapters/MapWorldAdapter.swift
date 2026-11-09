@@ -4,7 +4,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCamera
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrimeInterface
@@ -37,7 +37,7 @@ public protocol MapWorldHost: MenuInputConsumer {
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
     var gameSession: (any GameSessionPort)? { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -99,7 +99,7 @@ public final class MapWorldAdapter {
     public func settingTexts<Key: GameSettingTextKey>(_: Key.Type = Key
         .self) -> GameSettingTexts<Key>
     {
-        game.worldData.map {
+        game.menuRecords.map {
             GameSettingTexts<Key>.resolve(store: $0.gameSettings) { [weak self] in self?.text($0) }
         } ?? .vanilla
     }

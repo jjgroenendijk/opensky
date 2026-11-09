@@ -1,7 +1,7 @@
 public import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyAudio
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -35,7 +35,7 @@ public protocol MenuWorldSkillsRaceHost: MenuInputConsumer {
     var renderer: (any RendererPort)? { get }
     var scripts: any ScriptPort { get }
     var swfMovies: any SWFMovieSourcePort { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -68,7 +68,7 @@ extension MenuWorldSkillsRaceAdapter {
     }
 
     public var perkSkySource: PerkSkySource? {
-        if state.perkSky == nil, let files = game.worldData?.scriptFileSystem {
+        if state.perkSky == nil, let files = game.menuRecords?.scriptFileSystem {
             state.perkSky = PerkSkySource(fileSystem: files)
         }
         return state.perkSky
@@ -164,7 +164,7 @@ extension MenuWorldSkillsRaceAdapter {
 
 extension MenuWorldSkillsRaceAdapter {
     public var identityRecords: ActorIdentityRecords? {
-        game.worldData?.actorValueBaselines?.resolver
+        game.menuRecords?.actorValueBaselines?.resolver
             .map(ActorIdentityRecords.init(resolver:))
     }
 

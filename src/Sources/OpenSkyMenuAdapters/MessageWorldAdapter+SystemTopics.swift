@@ -9,7 +9,7 @@ public import OpenSkyMenusInterface
 
 extension MessageWorldAdapter: SystemMenuTopicSource {
     public func systemMenuTopics(_ page: SystemMenuPage) -> [SystemMenuTopic] {
-        guard let data = game.worldData, let menus = data.menuRecords else { return [] }
+        guard let data = game.menuRecords, let menus = data.menuRecords else { return [] }
         switch page {
         case .help:
             let list = menus.helpManual.flatMap { data.formListStore?.flattened($0) }

@@ -1,10 +1,11 @@
 // App side of the settings, the title menu, the race menu, and the menu
 // natives. The rules live in the coordinators in OpenSkyMenus.
 
+public import Foundation
 public import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyAudio
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -32,12 +33,12 @@ public protocol MenuWorldHost: MenuInputConsumer {
     var loadingScreens: any LoadingScreenPort { get }
     var mapWorld: any MapWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
 }
 
 public final class MenuWorldAdapter {
     public let game: any MenuWorldHost
-    public let state = MenuPartState()
+    public let state: MenuPartState
     /// Built on first use, because it walks the install.
     public var titleMeshes: MeshLibrary?
     /// The camera the logo was placed for, while the title backdrop shows.
@@ -79,9 +80,12 @@ public final class MenuWorldAdapter {
         )
     }
 
-    public init(game: some MenuWorldHost & MenuWorldSettingsApplyHost & MenuWorldSkillsRaceHost &
-        MenuWorldNewGameHost & MenuWorldScriptMenusHost & MenuWorldTeleportsHost)
-    {
+    public init(
+        game: some MenuWorldHost & MenuWorldSettingsApplyHost & MenuWorldSkillsRaceHost &
+            MenuWorldNewGameHost & MenuWorldScriptMenusHost & MenuWorldTeleportsHost,
+        now: @escaping () -> Date
+    ) {
+        state = MenuPartState(now: now)
         settingsApplyHost = game
         skillsRaceHost = game
         newGameHost = game

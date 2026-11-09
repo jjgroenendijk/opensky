@@ -3,8 +3,8 @@
 // draws the tip, and a menu entry pauses the world. The rules live in the
 // coordinator. See docs/engine/loading-screens.md.
 
-import Foundation
-public import OpenSkyCells
+public import Foundation
+import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -33,7 +33,7 @@ public protocol LoadingScreenWorldHost: MenuInputConsumer {
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
     var streamer: any CellStreamerPort { get }
     var swfMovies: any SWFMovieSourcePort { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
 }
 
 public final class LoadingScreenWorldAdapter {
@@ -58,13 +58,19 @@ public final class LoadingScreenWorldAdapter {
         LoadingScreenPresentationAdapter(game: presentationHost, state: state, movie: movie)
     }
 
-    public init(game: some LoadingScreenWorldHost & LoadingScreenPresentationHost) {
+    public let clock: () -> Date
+
+    public init(
+        game: some LoadingScreenWorldHost & LoadingScreenPresentationHost,
+        clock: @escaping () -> Date
+    ) {
+        self.clock = clock
         presentationHost = game
         self.game = game
     }
 
     public var now: Double {
-        Date().timeIntervalSinceReferenceDate
+        clock().timeIntervalSinceReferenceDate
     }
 
     /// Covers the session start until the near grid and the first distant ring

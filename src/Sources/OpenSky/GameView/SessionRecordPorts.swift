@@ -6,6 +6,7 @@ import OpenSkyAIAdapters
 import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyGameData
+import OpenSkyMenuAdapters
 import OpenSkySessionAdapters
 
 class SessionRecordPorts {
@@ -36,6 +37,10 @@ class SessionRecordPorts {
     }
 
     var sessionRecords: (any SessionRecordsPort)? {
+        worldData
+    }
+
+    var menuRecords: (any MenuRecordsPort)? {
         worldData
     }
 }

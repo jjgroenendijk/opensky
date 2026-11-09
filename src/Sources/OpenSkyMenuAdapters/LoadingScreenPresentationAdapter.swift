@@ -1,5 +1,5 @@
 import Foundation
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyConditions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -30,7 +30,7 @@ public protocol LoadingScreenPresentationHost: MenuInputConsumer {
     var progression: any ProgressionPort { get }
     var renderer: (any RendererPort)? { get }
     var runtimeState: any RuntimeStatePort { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
 }
 
 /// Part of `LoadingScreenWorldAdapter`, over its own narrow host.
@@ -91,7 +91,7 @@ extension LoadingScreenPresentationAdapter {
     }
 
     public var presentationRecords: PresentationRecordStore? {
-        game.worldData?.presentationRecords
+        game.menuRecords?.presentationRecords
     }
 
     public func loadingConditionContext() -> ConditionContext {
@@ -155,7 +155,7 @@ extension LoadingScreenPresentationAdapter {
             !state.failedModels.contains(path) else { return [] }
         if
             state.meshes == nil,
-            let fileSystem = game.worldData?.scriptFileSystem
+            let fileSystem = game.menuRecords?.scriptFileSystem
         {
             let textures = attempt {
                 try TextureLibrary(fileSystem: fileSystem, device: renderer.device)

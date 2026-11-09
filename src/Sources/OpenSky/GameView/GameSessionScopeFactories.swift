@@ -137,7 +137,7 @@ extension GameSessionScopeFactories {
     }
 
     func makeMenuWorld() -> MenuWorldAdapter {
-        let adapter = MenuWorldAdapter(game: scope.ports)
+        let adapter = MenuWorldAdapter(game: scope.ports, now: { Date() })
         adapter.state.terminateApp = { NSApplication.shared.terminate(nil) }
         adapter.state.applyViewBindings = { [unowned scope] in
             (scope.hostView as? GameMetalView)?.bindings = $0
