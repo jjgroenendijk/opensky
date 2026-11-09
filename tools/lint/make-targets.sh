@@ -7,12 +7,12 @@ set -eu
 if [ "${1:-}" = --self-check ]; then
     tree="$(self_check_tree)"
     printf 'help:\n\t@true\n' >"$tree/Makefile"
-    printf 'Run `make help`, then `make test-unit`.\n' >"$tree/README.md"
+    printf '%s\n' "Run \`make help\`, then \`make test-unit\`." >"$tree/README.md"
     expect_failure "$0" "$tree" "README.md:1: make test-unit"
 fi
 cd "$(git rev-parse --show-toplevel)"
 targets="$(sed -n 's/^\([a-z][a-z0-9-]*\):.*/\1/p' Makefile | sort -u)"
-report="$(git ls-files -z -- ':!Makefile' | xargs -0 grep -HnoE '`make [a-z][a-z0-9-]*' 2>/dev/null \
+report="$(git ls-files -z -- ':!Makefile' ':!tools/lint/make-targets.sh' | xargs -0 grep -HnoE '`make [a-z][a-z0-9-]*' 2>/dev/null \
     | sed 's/:`make /: make /' | while IFS= read -r hit; do
         name="${hit##*make }"
         [ "${name%-}" = "$name" ] || continue

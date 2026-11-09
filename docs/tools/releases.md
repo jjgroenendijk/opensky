@@ -43,8 +43,8 @@ preview is then `v<new version>-preview.1`.
 ## By hand
 
 1. Build the app from `main`: `make build-app CONFIG=Release`.
-2. Pack it: `make package-dmg ARGS=OpenSky-0.1.0-preview.1`. The image lands in `.logs/dmg/<UTC>/`. It
-   holds `OpenSky.app` and a shortcut to Applications, so the user drags one onto the other.
+2. Pack it: `make package-dmg ARGS=OpenSky-0.1.0-preview.1`. The image lands in `.logs/dmg/<UTC>/`.
+   It holds `OpenSky.app` and a shortcut to Applications, so the user drags one onto the other.
 3. Publish it as a pre-release on the `main` commit you built:
 
    ```sh

@@ -18,11 +18,11 @@ protocol that lists only the parts it reads. `SessionPorts` in the app answers e
 the session scope builds each adapter with it (`/decisions/session-scope.md`).
 
 `tools/lint/module-graph.sh` checks rule 7 as its rule 13 (`/decisions/modular-architecture.md`).
-`tools/lint-index/adapter-references.py` checks rule 8 in `make lint-index` and the `Index checks` CI job
-on each pull request, because it reads the index store that a build writes.
-`tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks
-rule 5 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI
-run both. Each reads every adapter or app file, so `OPENSKY_CHECK_ALL=1` changes nothing for them. Each first
+`tools/lint-index/adapter-references.py` checks rule 8 in `make lint-index` and the `Index checks`
+CI job on each pull request, because it reads the index store that a build writes.
+`tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks rule
+5 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI run both.
+Each reads every adapter or app file, so `OPENSKY_CHECK_ALL=1` changes nothing for them. Each first
 runs its rules on a small synthetic violation, which must fail.
 
 ## The rules
