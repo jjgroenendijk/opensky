@@ -84,14 +84,15 @@ def ranges(lines):
 
 
 def self_check():
+    untested = min(wiring_modules() - tested_wiring_modules())
     diff = (
         "diff --git a/src/Sources/OpenSkyMagic/A.swift b/src/Sources/OpenSkyMagic/A.swift\n"
         "+++ b/src/Sources/OpenSkyMagic/A.swift\n@@ -0,0 +1,4 @@\n"
         f"{NEW}+a\n{NEW}+b\n{NEW}+c\n{MOVED}+moved\n"
         "diff --git a/src/Sources/OpenSky/B.swift b/src/Sources/OpenSky/B.swift\n"
         "+++ b/src/Sources/OpenSky/B.swift\n@@ -0,0 +1,1 @@\n+b\n"
-        "diff --git a/src/Sources/OpenSkyMagicAdapters/C.swift b/src/Sources/OpenSkyMagicAdapters/C.swift\n"
-        "+++ b/src/Sources/OpenSkyMagicAdapters/C.swift\n@@ -0,0 +1,1 @@\n+c\n"
+        f"diff --git a/src/Sources/{untested}/C.swift b/src/Sources/{untested}/C.swift\n"
+        f"+++ b/src/Sources/{untested}/C.swift\n@@ -0,0 +1,1 @@\n+c\n"
     )
     changed = changed_lines(diff)
     if changed != {"src/Sources/OpenSkyMagic/A.swift": {1, 2, 3}}:
