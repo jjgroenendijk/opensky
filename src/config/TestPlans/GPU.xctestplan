@@ -143,6 +143,12 @@
       "parallelizable" : true,
       "randomExecutionOrdering": true,
       "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyScriptAdaptersTests", "name" : "OpenSkyScriptAdaptersTests"}
+    },
+    {
+      "parallelizable" : true,
+      "randomExecutionOrdering": true,
+      "selectedTags" : {"tags" : ["gpu"]},
       "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyShadersTests", "name" : "OpenSkyShadersTests"}
     },
     {
