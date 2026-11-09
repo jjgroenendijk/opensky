@@ -4,7 +4,6 @@ import Foundation
 import OpenSkyActorPresentation
 import OpenSkyAgentControl
 import OpenSkyAIPackages
-public import OpenSkyCells
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -26,8 +25,7 @@ import OpenSkyWorldState
 public struct ScriptGameNativesWiring {
     public init(
         _ adapter: ScriptSessionBindingsAdapter,
-        bridge: PapyrusWorldStateBridge,
-        provider: WorldDataStores
+        bridge: PapyrusWorldStateBridge
     ) {
         var hooks = PapyrusGameNatives()
         _ = ScriptSaveAndScreenWiring(adapter, &hooks)
