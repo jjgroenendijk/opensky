@@ -1135,13 +1135,13 @@ targets += interface(
 targets += testing(
     "OpenSkySessionTesting",
     dependencies: [
-        "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyBehavior",
+        "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio", "OpenSkyBehavior",
         "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrimeInterface",
         "OpenSkyDialogueInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsAnimation",
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyMenusInterface", "OpenSkyPerceptionInterface",
         "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyQuestsInterface",
-        "OpenSkyRenderCore",
+        "OpenSkyRenderCore", "OpenSkyRendering",
         "OpenSkySaveInterface", "OpenSkyScriptingInterface", "OpenSkySessionInterface",
         "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
@@ -1354,6 +1354,13 @@ targets += composition(
         "OpenSkyRuntimeState", "OpenSkyScripting", "OpenSkyScriptingInterface",
         "OpenSkySessionInterface", "OpenSkyWeather", "OpenSkyWorld", "OpenSkyWorldInterface",
         "OpenSkyWorldState"
+    ],
+    tests: [
+        "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyRendering", "OpenSkyRuntimeState",
+        "OpenSkyScripting",
+        "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkySessionTesting",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 
