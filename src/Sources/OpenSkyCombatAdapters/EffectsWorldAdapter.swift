@@ -45,8 +45,7 @@ public protocol EffectsWorldHost: AnyObject {
 public final class EffectsWorldAdapter {
     /// A long frame steps as this, as for hazards.
     public static let longestStep: Float = 0.25
-    /// Base plugin of the streamed cells and the item and sound indexes.
-    public static let basePlugin = "Skyrim.esm"
+    // Base plugin of the streamed cells and the item and sound indexes.
 
     public let game: any EffectsWorldHost
     public let state = EffectsPartState()
@@ -120,7 +119,7 @@ public final class EffectsWorldAdapter {
         guard let records = game.worldData?.effectRecords else { return ExplosionRuntime() }
         let explosions = ExplosionRuntime(
             records: records,
-            itemPlugin: Self.basePlugin,
+            itemPlugin: EffectsBasePlugin.name,
             world: self
         )
         explosions.impulses = bodyImpulses.makeImpulses(world: self)
@@ -180,7 +179,7 @@ public final class EffectsWorldAdapter {
     func tick(gameSession: GameSession, streamer: CellStreamer?, now: Date = Date()) {
         let renderer = gameSession.renderer
         gameSession.imageSpaceLinks?.interior = streamer?.interiorScene.map {
-            InteriorImageSpace(imageSpace: $0.imageSpace, plugin: Self.basePlugin)
+            InteriorImageSpace(imageSpace: $0.imageSpace, plugin: EffectsBasePlugin.name)
         }
         let paused = gameSession.worldSimPaused
         let elapsed = lastFrame.map { Float(now.timeIntervalSince($0)) } ?? 0

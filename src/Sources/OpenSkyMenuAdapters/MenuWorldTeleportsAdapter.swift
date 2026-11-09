@@ -136,9 +136,9 @@ extension MenuWorldTeleportsAdapter {
     private func pollNewGameTeleport(now: Double) {
         if
             let since = state.newGameCoverSince,
-            game.simulationClock.now - since > MenuWorldAdapter.newGameCoverLimitSeconds
+            game.simulationClock.now - since > Self.newGameCoverLimitSeconds
         {
-            MenuWorldAdapter.logger.warning("[WARNING] the opening quest did not move the player")
+            MenusLog.logger.warning("[WARNING] the opening quest did not move the player")
             abandonNewGameCover()
         }
         guard let wait = state.newGameTeleport, let result = wait.poll(now).finish else { return }
@@ -163,4 +163,8 @@ extension MenuWorldTeleportsAdapter {
         state.raceMenuAfterTeleport = false
         game.raceMenu.open(limited: false)
     }
+}
+
+extension MenuWorldTeleportsAdapter {
+    static let newGameCoverLimitSeconds = 30.0
 }

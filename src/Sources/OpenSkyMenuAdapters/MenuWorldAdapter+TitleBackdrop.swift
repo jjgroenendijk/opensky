@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyCells
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
@@ -15,11 +15,6 @@ import OpenSkyWorld
 import simd
 
 extension MenuWorldAdapter {
-    public static let logger = EngineLogger(
-        subsystem: "nl.jjgroenendijk.opensky",
-        category: "Menus"
-    )
-
     public func showTitleBackdrop(_ shown: Bool) {
         titleLogoView = nil
         guard let gameSession = game.gameSession else { return }
@@ -42,7 +37,8 @@ extension MenuWorldAdapter {
         do {
             return try backdropScene(gameSession: gameSession)
         } catch {
-            Self.logger.error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
+            MenusLog.logger
+                .error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
             return .empty
         }
     }
@@ -55,7 +51,8 @@ extension MenuWorldAdapter {
                 lighting: backdrop.flatMap { _ in titleLighting }
             )
         } catch {
-            Self.logger.error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
+            MenusLog.logger
+                .error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
         }
     }
 
@@ -118,7 +115,8 @@ extension MenuWorldAdapter {
                 path: path, placementTransform: transform, formID: 0
             )
         } catch {
-            Self.logger.error("[ERROR] title smoke: \(String(describing: error), privacy: .public)")
+            MenusLog.logger
+                .error("[ERROR] title smoke: \(String(describing: error), privacy: .public)")
         }
     }
 }

@@ -40,7 +40,6 @@ public final class MenuWorldAdapter {
     public let state = MenuPartState()
     /// Built on first use, because it walks the install.
     public var titleMeshes: MeshLibrary?
-    public static let newGameCoverLimitSeconds = 30.0
     /// The camera the logo was placed for, while the title backdrop shows.
     public var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
 

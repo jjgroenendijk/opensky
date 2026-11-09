@@ -140,14 +140,6 @@ public final class AgentWorldAdapter {
     public func viewJob(_ target: AgentViewTarget) throws(AgentFailure) -> AgentTeleportJob {
         try hub.viewJob(target)
     }
-
-    public func notReady() -> AgentFailure {
-        hub.notReady()
-    }
-
-    public func resolveReference(_ text: String) throws(AgentFailure) -> AgentReference {
-        try hub.resolveReference(text)
-    }
 }
 
 extension AgentWorldAdapter: AgentControlWorld {

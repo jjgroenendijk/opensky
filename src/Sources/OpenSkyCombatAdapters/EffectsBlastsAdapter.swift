@@ -57,7 +57,7 @@ extension EffectsBlastsAdapter {
     public func playExplosionSound(_ sound: ReferenceKey, at position: SIMD3<Float>) {
         guard
             case let .plugin(name, objectID) = sound,
-            name == EffectsWorldAdapter.basePlugin.lowercased() else { return }
+            name == EffectsBasePlugin.name.lowercased() else { return }
         game.audio.soundDirector?.forcePlaySound(formID: FormID(objectID), position: position)
     }
 

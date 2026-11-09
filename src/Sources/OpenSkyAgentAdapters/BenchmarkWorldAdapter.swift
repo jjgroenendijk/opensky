@@ -8,12 +8,12 @@ import OpenSkyCells
 import OpenSkyDiagnostics
 import OpenSkyEffects
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyPhysics
 import OpenSkyPlayer
-public import OpenSkyRenderCore
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
@@ -101,11 +101,6 @@ public final class BenchmarkWorldAdapter {
     }
 
     private var arrivalStep: AgentWaitStep?
-    public var saved: SavedState? {
-        get { state.saved }
-        set { state.saved = newValue }
-    }
-
     public var request: BenchmarkRequest {
         get { state.request }
         set { state.request = newValue }
@@ -118,25 +113,11 @@ public final class BenchmarkWorldAdapter {
         frameSteps - (game.gameSession?.renderer.skippedFrames ?? 0)
     }
 
-    public var tourOverrides: [PlayerSettingID: Double] {
-        get { state.tourOverrides }
-        set { state.tourOverrides = newValue }
-    }
-
     private var plugins: Set<String> = []
     /// PNGs the tour asked for; the first one waits for its window copy.
     private var screenshots: [URL] = []
     /// A finished run waits for its last PNGs, so a quit right after it keeps them.
     private var finishing: (result: BenchmarkTourResult, framesLeft: Int)?
-
-    public struct SavedState {
-        let movementMode: CameraMovementMode
-        let wasFrozen: Bool
-        let hudEnabled: Bool
-        let camera: FreeFlyCamera
-        let forcedWeather: FormID?
-        let outputMuted: Bool
-    }
 
     public let tourSettingsHost: any BenchmarkTourSettingsHost
 

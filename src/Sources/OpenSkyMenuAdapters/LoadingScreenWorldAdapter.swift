@@ -6,7 +6,7 @@
 import Foundation
 public import OpenSkyCells
 import OpenSkyConditions
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
@@ -105,10 +105,11 @@ public final class LoadingScreenWorldAdapter {
         startCoverSince = nil
         moveTarget = nil
         if timedOut {
-            Self.logger.warning("[WARNING] start area not ready in time; cover lifted")
+            LoadingScreenLog.logger.warning("[WARNING] start area not ready in time; cover lifted")
         }
         let seconds = unsafe String(format: "%.2f", now - since)
-        Self.logger.notice("[INFO] start cover lifted after \(seconds, privacy: .public) s")
+        LoadingScreenLog.logger
+            .notice("[INFO] start cover lifted after \(seconds, privacy: .public) s")
         game.loadingScreens.loadFinished(at: now)
     }
 
@@ -133,11 +134,6 @@ public final class LoadingScreenWorldAdapter {
 
     public static let turnDegreesPerPoint: Float = 0.5
     public static let turnDegreesPerKey: Float = 10
-
-    public static let logger = EngineLogger(
-        subsystem: "nl.jjgroenendijk.opensky",
-        category: "Loading"
-    )
 }
 
 extension LoadingScreenWorldAdapter: LoadingScreenWorld {}

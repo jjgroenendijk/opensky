@@ -34,7 +34,7 @@ public struct EffectsWiring {
     ) {
         guard let records = provider.effectRecords else { return }
         gameSession.imageSpaceLinks = ImageSpaceLinks(
-            records: records, weatherPlugin: EffectsWorldAdapter.basePlugin
+            records: records, weatherPlugin: EffectsBasePlugin.name
         )
         adapter.game.effects.applyGraphicsSettings(adapter.game.playerSettings.store)
         let frameSteps = gameSession.frameSteps

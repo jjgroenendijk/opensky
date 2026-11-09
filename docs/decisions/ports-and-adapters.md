@@ -37,7 +37,7 @@ runs its rules on a small synthetic violation, which must fail.
 | 5 | An adapter has no magic number and no function over complexity 6 | A game rule in an adapter has no unit test; in its feature module it has one |
 | 6 | The late-setter, late-attached-world, and pure-core lints cover the app and the adapters | A dependency set after the initializer can be missing when the object is first used |
 | 7 | A module depends only on a module at least as stable, or on an interface | A change in an unstable module then cannot force changes in the stable modules below it |
-| 8 | No adapter uses the type of an adapter outside its own family | Two adapters that know each other change together, and neither can be built in a test alone |
+| 8 | An adapter uses the type of another adapter only when it stores that adapter itself | Two adapters that know each other change together, and neither can be built in a test alone |
 | 9 | An adapter module holds no `unowned` reference: an adapter and each part hold their host strongly | An `unowned` reference crashes when its owner goes first, and a part that reaches back into its owner cannot be built alone |
 
 A port is a protocol from an interface module or a foundation module, or a class from a data
@@ -46,10 +46,11 @@ the standard library, Foundation, or `simd`.
 
 Rule 8 reads real symbols, not text: a use is a reference in the index store, and the code
 that holds it belongs to the adapter whose symbol contains it. An adapter is a type whose name
-ends in `Adapter` in an adapter module or the app's `GameView/`. A family is an owner and the
-parts it was split into ([Splitting a large adapter](#splitting-a-large-adapter)): a part is an
-adapter that another adapter of the same module stores in a property. Inside one family, every
-use is allowed. A helper that answers no port, such as `SkyrimSaveImport`, is not named `Adapter`.
+ends in `Adapter` in an adapter module or the app's `GameView/`. An adapter may use another
+adapter of the same module that it stores in one of its own properties: an owner uses the parts
+it was split into ([Splitting a large adapter](#splitting-a-large-adapter)), and a part uses a
+sibling it was given. A part never uses its owner. A helper that answers no port, such as
+`SkyrimSaveImport`, is not named `Adapter`.
 
 Rule 3 counts members of inherited hosts, because the adapter can reach them all. Example:
 `MenuRouterHost` refines `MenuSoundHost`, so its 5 members and the 3 of `MenuSoundHost` count
