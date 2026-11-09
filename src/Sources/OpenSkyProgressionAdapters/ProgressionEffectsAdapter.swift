@@ -1,23 +1,16 @@
 import Foundation
-import OpenSkyActors
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
 import OpenSkyPlayer
 public import OpenSkyProgression
 public import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyRuntimeState
-import OpenSkyScripting
 public import OpenSkySessionInterface
-import OpenSkyWorld
 import OpenSkyWorldConditions
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -36,7 +29,7 @@ public protocol ProgressionEffectsHost: AnyObject {
 
 /// Part of `ProgressionWorldAdapter`, over its own narrow host.
 public struct ProgressionEffectsAdapter {
-    public unowned let game: any ProgressionEffectsHost
+    public let game: any ProgressionEffectsHost
 }
 
 extension ProgressionEffectsAdapter {

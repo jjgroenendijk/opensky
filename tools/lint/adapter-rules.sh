@@ -1,6 +1,6 @@
 #!/bin/sh
-# Rule 5 of docs/decisions/ports-and-adapters.md over every adapter module: no magic
-# numbers and a complexity of at most 6.
+# Rules 5 and 9 of docs/decisions/ports-and-adapters.md over every adapter module: no
+# magic numbers, a complexity of at most 6, and no unowned reference.
 set -eu
 # shellcheck source=tools/checks-lib.sh
 . "$(dirname "$0")/../checks-lib.sh"
@@ -22,8 +22,17 @@ struct Probe {
 
     func check() throws {}
 }
+
+final class Owner {
+    unowned let part: Owner
+
+    init(part: Owner) {
+        self.part = part
+    }
+}
 SWIFT
-    expect_failure "$0" "$tree" "(no_magic_numbers)" "(cyclomatic_complexity)"
+    expect_failure "$0" "$tree" "(no_magic_numbers)" "(cyclomatic_complexity)" \
+        "(adapter_unowned_reference)"
 fi
 config="$OPENSKY_TOOLS/lint/adapters.swiftlint.yml"
 
@@ -33,7 +42,7 @@ swiftlint=${SWIFTLINT:-swiftlint}
 modules=$(git ls-files 'src/Sources/*Adapters/*.swift' | cut -d/ -f1-3 | sort -u)
 [ -n "$modules" ] || { echo "[ OK ] no adapter module to lint"; exit 0; }
 if ! printf '%s\n' "$modules" | xargs "$swiftlint" lint --strict --quiet --config "$config"; then
-  echo "[ERROR] an adapter holds a magic number or a complex function (docs/decisions/ports-and-adapters.md, rule 5)" >&2
+  echo "[ERROR] an adapter holds a magic number, a complex function, or an unowned reference (docs/decisions/ports-and-adapters.md, rules 5 and 9)" >&2
   exit 1
 fi
-echo "[ OK ] adapter rules: no magic numbers, complexity at most 6"
+echo "[ OK ] adapter rules: no magic numbers, complexity at most 6, no unowned reference"

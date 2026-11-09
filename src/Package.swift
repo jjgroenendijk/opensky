@@ -1292,13 +1292,13 @@ targets += composition(
 targets += composition(
     "OpenSkyProgressionAdapters",
     dependencies: [
-        "OpenSkyActors", "OpenSkyAudio", "OpenSkyCells", "OpenSkyCombat", "OpenSkyConditions",
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventory",
-        "OpenSkyInventoryInterface",
-        "OpenSkyMagic", "OpenSkyMenus", "OpenSkyPlayer", "OpenSkyProgression",
-        "OpenSkyProgressionInterface", "OpenSkyQuests", "OpenSkyQuestsInterface",
-        "OpenSkyRuntimeState", "OpenSkyScripting", "OpenSkySessionInterface", "OpenSkyWorld",
-        "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyAudio", "OpenSkyCells", "OpenSkyConditions", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
+        "OpenSkyMagicInterface",
+        "OpenSkyPlayer", "OpenSkyProgression", "OpenSkyProgressionInterface",
+        "OpenSkyQuestsInterface",
+        "OpenSkyRuntimeState", "OpenSkySessionInterface", "OpenSkyWorldConditions",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 

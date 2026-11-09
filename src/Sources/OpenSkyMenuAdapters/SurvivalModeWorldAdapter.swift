@@ -2,13 +2,13 @@
 // the session's global store, as scripts and the Globals readout do.
 
 public import OpenSkyMenus
-public import OpenSkyRuntimeState
+public import OpenSkySessionInterface
 import OpenSkyWorldState
 
 public final class SurvivalModeWorldAdapter: SurvivalModeWorld {
-    private unowned let runtimeState: RuntimeStateCoordinator
+    private let runtimeState: any RuntimeStatePort
 
-    public init(runtimeState: RuntimeStateCoordinator) {
+    public init(runtimeState: any RuntimeStatePort) {
         self.runtimeState = runtimeState
     }
 

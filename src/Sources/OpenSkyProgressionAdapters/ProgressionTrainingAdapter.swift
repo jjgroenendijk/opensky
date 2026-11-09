@@ -3,14 +3,11 @@ public import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMenus
 public import OpenSkyProgression
 public import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 public import OpenSkySessionInterface
-import OpenSkyWorld
 
 /// What `ProgressionTrainingAdapter` reads from the session.
 @MainActor
@@ -26,7 +23,7 @@ public protocol ProgressionTrainingHost: AnyObject {
 
 /// Part of `ProgressionWorldAdapter`, over its own narrow host.
 public struct ProgressionTrainingAdapter {
-    public unowned let game: any ProgressionTrainingHost
+    public let game: any ProgressionTrainingHost
 }
 
 extension ProgressionTrainingAdapter {
