@@ -4,7 +4,9 @@
 import OpenSkyActorAdapters
 import OpenSkyAgentAdapters
 import OpenSkyAIAdapters
+import OpenSkyCells
 import OpenSkyCombatAdapters
+import OpenSkyGameData
 import OpenSkyInventoryAdapters
 import OpenSkyMagicAdapters
 import OpenSkyMenuAdapters
@@ -56,3 +58,13 @@ extension SessionPorts:
     DialogueCameraFocusHost, DialogueSpeakersHost, DialogueOutcomesHost, InventoryReadoutsHost,
     InventoryPickpocketHost, InventoryPerksHost, InventoryRecipesHost, InventoryVendorHost,
     InventoryCommandsHost {}
+
+extension SessionPorts {
+    var factionStore: FactionStore? {
+        worldData?.factionStore
+    }
+
+    var recordPluginName: String? {
+        worldData?.magicItemPluginName
+    }
+}

@@ -41,7 +41,7 @@ extension LockWorldAdapter {
         }
         // Frame steps run while the menu pauses the world; the menu keeps its own clock.
         gameSession.frameSteps.register(.lockpicking) { [weak game = self.game] _ in
-            game?.lockpickingMenu.tick(now: Date())
+            game?.lockpickingMenu.tick()
         }
         renderer.worldOverlaySources
             .register(identifier: "lock-selection") { [weak game = self.game] _, list in

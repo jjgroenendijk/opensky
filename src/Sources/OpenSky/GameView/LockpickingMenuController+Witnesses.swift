@@ -16,7 +16,7 @@ import OpenSkyWorldInterface
 
 /// Witnesses that forward to the narrow parts of `LockpickingMenuController`.
 extension LockpickingMenuController {
-    func tick(now: Date = Date()) {
-        board.tick(now: now)
+    func tick() {
+        board.tick()
     }
 }
