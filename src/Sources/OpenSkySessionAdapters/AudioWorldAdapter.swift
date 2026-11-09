@@ -3,7 +3,7 @@
 
 import OpenSkyActorPresentation
 public import OpenSkyAudio
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
@@ -33,12 +33,18 @@ public protocol AudioWorldHost: AnyObject {
     var effects: any EffectsPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
-    var worldData: WorldDataStores? { get }
+    var sessionRecords: (any SessionRecordsPort)? { get }
     /// Hands the started engine and directors to the session, which owns them.
-    func takeStartedAudio(
-        engine: WorldAudioEngine, sounds: WorldAudioSoundDirector,
-        music: WorldMusicDirector, footsteps: WorldAudioFootstepDirector
-    )
+    func takeStartedAudio(_ audio: StartedAudio)
+}
+
+/// The engine and directors the audio coordinator started, in one value, so a host
+/// that takes them needs no import of the world module.
+public struct StartedAudio {
+    public let engine: WorldAudioEngine
+    public let sounds: WorldAudioSoundDirector
+    public let music: WorldMusicDirector
+    public let footsteps: WorldAudioFootstepDirector
 }
 
 /// Answers `AudioWorld` from the session systems `game` owns.
@@ -64,8 +70,8 @@ public final class AudioWorldAdapter {
 }
 
 extension AudioWorldAdapter: AudioWorld {
-    public var audioWorldData: WorldDataStores? {
-        game.worldData
+    public var audioWorldData: (any AudioRecordsPort)? {
+        game.sessionRecords
     }
 
     public var audioFileSystem: (any GameFileSource)? {
@@ -78,8 +84,10 @@ extension AudioWorldAdapter: AudioWorld {
         music: WorldMusicDirector,
         footsteps: WorldAudioFootstepDirector
     ) {
-        game.takeStartedAudio(engine: engine, sounds: sounds, music: music, footsteps: footsteps)
-        if let store = game.worldData?.soundStore {
+        game.takeStartedAudio(
+            StartedAudio(engine: engine, sounds: sounds, music: music, footsteps: footsteps)
+        )
+        if let store = game.sessionRecords?.soundStore {
             engine.soundMix = SoundCategoryMix(
                 categories: store.categories, roles: store.categoryRoles,
                 timings: game.soundMixTimings
@@ -95,7 +103,7 @@ extension AudioWorldAdapter: AudioWorld {
         }
         game.gameSession?
             .soundMixInputs = { [weak self] in self?.mix.soundMixInputs() ?? SoundMixInputs() }
-        let store = game.worldData?.footstepStore
+        let store = game.sessionRecords?.footstepStore
         footsteps.onImpact = { [weak game] impact, position in
             game?.effects.showImpact(
                 impact, decal: store?.decal(of: impact), at: position, on: .ground

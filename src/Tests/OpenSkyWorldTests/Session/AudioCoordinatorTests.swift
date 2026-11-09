@@ -15,7 +15,7 @@ import Testing
 
 @MainActor
 private final class FakeAudioWorld: AudioWorld {
-    var audioWorldData: WorldDataStores?
+    var audioWorldData: (any AudioRecordsPort)?
     var audioFileSystem: (any GameFileSource)?
     var audioListenerPose: (position: SIMD3<Float>, yaw: Float) = (.zero, 0)
     var playerFeetArmatures: [FormID]?

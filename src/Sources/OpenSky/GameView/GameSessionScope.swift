@@ -100,7 +100,7 @@ final class GameSessionScope {
         } ?? .vanilla
     )
 
-    lazy var runtimeStateWorld = RuntimeStateWorldAdapter(game: ports)
+    lazy var runtimeStateWorld = RuntimeStateWorldAdapter(game: ports, now: { Date() })
     /// The Papyrus VM and its world bridge. Both stay nil without game data.
     lazy var scripts = factories.makeScripts()
 
@@ -140,7 +140,7 @@ final class GameSessionScope {
     )
     lazy var survivalModeWorld = SurvivalModeWorldAdapter(runtimeState: runtimeState)
 
-    lazy var saveGames = SaveGameWorldAdapter(game: ports)
+    lazy var saveGames = SaveGameWorldAdapter(game: ports, now: { Date() })
     lazy var menuWorld = factories.makeMenuWorld()
     lazy var mapWorld = MapWorldAdapter(game: ports)
     /// Builds and routes the menu coordinators below.

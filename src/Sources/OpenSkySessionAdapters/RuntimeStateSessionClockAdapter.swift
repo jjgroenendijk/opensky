@@ -3,7 +3,7 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyAudio
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrimeInterface
@@ -37,7 +37,7 @@ public protocol RuntimeStateSessionClockHost: AnyObject {
     var hud: any HUDPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var sessionRecords: (any SessionRecordsPort)? { get }
 }
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
@@ -92,11 +92,11 @@ extension RuntimeStateSessionClockAdapter {
     }
 
     public var musicStore: MusicRecordStore? {
-        game.worldData?.musicStore
+        game.sessionRecords?.musicStore
     }
 
     public var globalStore: GlobalStore? {
-        game.worldData?.globalStore
+        game.sessionRecords?.globalStore
     }
 
     /// Interior coordinates are local to the cell, as the camera holds them there.

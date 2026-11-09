@@ -6,6 +6,7 @@ import OpenSkyAIAdapters
 import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyGameData
+import OpenSkySessionAdapters
 
 class SessionRecordPorts {
     unowned let scope: GameSessionScope
@@ -31,6 +32,10 @@ class SessionRecordPorts {
     }
 
     var aiRecords: (any AIRecordsPort)? {
+        worldData
+    }
+
+    var sessionRecords: (any SessionRecordsPort)? {
         worldData
     }
 }

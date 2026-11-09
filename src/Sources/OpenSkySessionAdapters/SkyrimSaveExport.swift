@@ -37,7 +37,7 @@ public protocol SkyrimSaveExportHost: AnyObject {
 public enum SkyrimSaveExport {
     /// Reads the plugins off the main actor, then encodes and writes the file.
     public static func export(
-        _ contents: OpenSkySaveContents, game: any SkyrimSaveExportHost
+        _ contents: OpenSkySaveContents, game: any SkyrimSaveExportHost, savedAt: Date
     ) async throws -> (url: URL, report: ESSExportReport) {
         guard let directory = ESSSaveFolderSetting.folder() else {
             throw SkyrimSaveExportError.noSavesFolder
@@ -52,7 +52,7 @@ public enum SkyrimSaveExport {
             saveNumber: UInt32(attempt { try folder.saveURLs().count } ?? 0) + 1,
             gameDate: gameDate(contents.clock ?? GameClock(), game: game),
             experienceForNextLevel: game.progression.leveling?.experienceForNextLevel ?? 0,
-            savedAt: Date()
+            savedAt: savedAt
         )
         let result = try ESSExporter.run(contents, records: records, header: header)
         let url = try await folder.writeExport(result.data)
