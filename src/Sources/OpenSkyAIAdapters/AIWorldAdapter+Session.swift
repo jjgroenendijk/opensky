@@ -53,7 +53,7 @@ extension AIWorldAdapter {
 
     private func registerAIBodyShapes(stage: SessionStage) {
         let streamer = stage.streamer
-        guard let fileSystem = game.worldData?.scriptFileSystem else { return }
+        guard let fileSystem = game.aiRecords?.scriptFileSystem else { return }
         let bounds = AssetLoader<String, SIMD3<Float>> { path in
             let file = try NIFFile(data: fileSystem.contents(forPath: path))
             for case let .bound(_, halfExtents) in file.rootExtraData.map(\.value) {
@@ -76,7 +76,7 @@ extension AIWorldAdapter {
             guard
                 let game, let name = game.actorGraphWorld.graphs.movementStateName(of: actor)
             else { return nil }
-            return game.worldData?.movementTypes.type(named: name)?.speeds
+            return game.aiRecords?.movementTypes.type(named: name)?.speeds
         }
     }
 

@@ -4,7 +4,7 @@
 
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 public import OpenSkyFormatsCore
@@ -35,7 +35,7 @@ public protocol FollowerCommandWorldHost: AnyObject {
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var aiRecords: (any AIRecordsPort)? { get }
 }
 
 public final class FollowerCommandWorldAdapter {
@@ -199,7 +199,7 @@ extension FollowerCommandWorldAdapter: FollowerCommandWorld {
     }
 
     public var followerCommandSettings: FollowerCommandSettings {
-        game.worldData.map { .resolve(store: $0.gameSettings) } ?? .vanilla
+        game.aiRecords.map { .resolve(store: $0.gameSettings) } ?? .vanilla
     }
 }
 

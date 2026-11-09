@@ -2,6 +2,7 @@
 // A base of `SessionPorts`, so the composition root stays below the type size limit.
 
 import OpenSkyActorAdapters
+import OpenSkyAIAdapters
 import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyGameData
@@ -26,6 +27,10 @@ class SessionRecordPorts {
     }
 
     var actorRecords: (any ActorRecordsPort)? {
+        worldData
+    }
+
+    var aiRecords: (any AIRecordsPort)? {
         worldData
     }
 }
