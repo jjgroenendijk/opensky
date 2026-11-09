@@ -55,8 +55,7 @@ nonisolated extension CellSceneBuilder {
         )
         posed.isSequenceDoor = instance.isSequenceDoor
         posed.sequenceDoorKind = instance.sequenceDoorKind
-        let playback = SkinnedPosePlayback(skeleton: skeleton, models: [model])
-        return PosedCopy(instance: posed, pose: playback.pose, playback: playback)
+        return PosedCopy(instance: posed, skeleton: skeleton)
     }
 
     /// The last steps of a cell build: hazards, the vehicles' moving collision, and
@@ -78,4 +77,12 @@ nonisolated struct PosedCopy {
     let instance: ResolvedInstance
     let pose: SkinnedPoseBuffer
     let playback: any RenderAnimation
+
+    /// Poses `instance`'s model through a new buffer that its own playback reads.
+    init(instance: ResolvedInstance, skeleton: HKASkeleton) {
+        let playback = SkinnedPosePlayback(skeleton: skeleton, models: [instance.model])
+        self.instance = instance
+        pose = playback.pose
+        self.playback = playback
+    }
 }
