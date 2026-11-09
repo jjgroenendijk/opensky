@@ -22,7 +22,7 @@ import sys
 
 sys.path[:0] = ["tools/coverage", "tools/lint"]
 from coverage_profile import current_profiles, demangled, is_closure, is_synthesized, lcov, parse_lcov
-from swift_source import XCODE_ONLY, wiring_modules
+from swift_source import XCODE_ONLY, tested_wiring_modules, wiring_modules
 
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
@@ -35,7 +35,7 @@ COLOURS = ["-c", "color.diff.new=green", "-c", "color.diff.newMoved=blue",
 def changed_lines(diff):
     """{path: {line}} for the lines a coloured `git diff -U0` adds, without moved ones."""
     changed, lines, number = {}, None, 0
-    skipped = XCODE_ONLY | wiring_modules()
+    skipped = XCODE_ONLY | (wiring_modules() - tested_wiring_modules())
     for raw in diff.splitlines():
         text = ANSI.sub("", raw)
         if text.startswith("+++ "):

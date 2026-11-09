@@ -47,22 +47,46 @@ nonisolated public final class FakeWorldStateStorePort: WorldStateStorePort {
 }
 
 extension FakeWorldStateStorePort {
-    nonisolated public struct LeveledRollCall {
+    nonisolated public struct LeveledRollCall: CustomStringConvertible {
         public let key: ReferenceKey
         public let base: FormID
         public let roller: LeveledListRoller
+
+        public var description: String {
+            [
+                "key: " + String(describing: key),
+                "base: " + String(describing: base),
+                "roller: " + String(describing: roller)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SetCall {
+    nonisolated public struct SetCall: CustomStringConvertible {
         public let component: any WorldStateComponent
         public let key: ReferenceKey
         public let cell: CellSceneLocation?
+
+        public var description: String {
+            [
+                "component: " + String(describing: component),
+                "key: " + String(describing: key),
+                "cell: " + String(describing: cell)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SetEyeTextureCall {
+    nonisolated public struct SetEyeTextureCall: CustomStringConvertible {
         public let set: FormID
         public let actor: ReferenceKey
         public let cell: CellSceneLocation
+
+        public var description: String {
+            [
+                "set: " + String(describing: set),
+                "actor: " + String(describing: actor),
+                "cell: " + String(describing: cell)
+            ].joined(separator: ", ")
+        }
     }
 }
 

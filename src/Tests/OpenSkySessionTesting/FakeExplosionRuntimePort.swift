@@ -20,11 +20,20 @@ nonisolated public final class FakeExplosionRuntimePort: ExplosionRuntimePort {
 }
 
 extension FakeExplosionRuntimePort {
-    nonisolated public struct DetonateCall {
+    nonisolated public struct DetonateCall: CustomStringConvertible {
         public let spec: ExplosionSpec
         public let position: SIMD3<Float>
         public let cause: ExplosionCause
         public let source: FormID?
+
+        public var description: String {
+            [
+                "spec: " + String(describing: spec),
+                "position: " + String(describing: position),
+                "cause: " + String(describing: cause),
+                "source: " + String(describing: source)
+            ].joined(separator: ", ")
+        }
     }
 }
 

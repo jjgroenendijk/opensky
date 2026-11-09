@@ -73,31 +73,66 @@ nonisolated public final class FakeCombatPort: CombatPort {
 }
 
 extension FakeCombatPort {
-    nonisolated public struct ApplyFallCall {
+    nonisolated public struct ApplyFallCall: CustomStringConvertible {
         public let height: Float
         public let speed: Float
         public let actor: ReferenceKey
+
+        public var description: String {
+            [
+                "height: " + String(describing: height),
+                "speed: " + String(describing: speed),
+                "actor: " + String(describing: actor)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ApplyHealthDamageCall {
+    nonisolated public struct ApplyHealthDamageCall: CustomStringConvertible {
         public let amount: Float
         public let target: ReferenceKey
         public let attacker: ReferenceKey?
         public let kind: CombatHitKind
         public let canSever: Bool
+
+        public var description: String {
+            [
+                "amount: " + String(describing: amount),
+                "target: " + String(describing: target),
+                "attacker: " + String(describing: attacker),
+                "kind: " + String(describing: kind),
+                "canSever: " + String(describing: canSever)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct AdvanceArcheryCall {
+    nonisolated public struct AdvanceArcheryCall: CustomStringConvertible {
         public let events: [String]
         public let intent: ArcheryIntent
         public let isPlayerControlled: Bool
         public let delta: Float
+
+        public var description: String {
+            [
+                "events: " + String(describing: events),
+                "intent: " + String(describing: intent),
+                "isPlayerControlled: " + String(describing: isPlayerControlled),
+                "delta: " + String(describing: delta)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct AdvanceMeleeCall {
+    nonisolated public struct AdvanceMeleeCall: CustomStringConvertible {
         public let events: [String]
         public let intent: MeleeIntent
         public let isPlayerControlled: Bool
+
+        public var description: String {
+            [
+                "events: " + String(describing: events),
+                "intent: " + String(describing: intent),
+                "isPlayerControlled: " + String(describing: isPlayerControlled)
+            ].joined(separator: ", ")
+        }
     }
 }
 

@@ -21,11 +21,20 @@ nonisolated public final class FakePerkRuntimePort: PerkRuntimePort {
 }
 
 extension FakePerkRuntimePort {
-    nonisolated public struct ModifyCall {
+    nonisolated public struct ModifyCall: CustomStringConvertible {
         public let value: Float
         public let entryPoint: PerkEntryPoint
         public let holder: ActorValueHolder
         public let subjects: PerkEvaluationSubjects?
+
+        public var description: String {
+            [
+                "value: " + String(describing: value),
+                "entryPoint: " + String(describing: entryPoint),
+                "holder: " + String(describing: holder),
+                "subjects: " + String(describing: subjects)
+            ].joined(separator: ", ")
+        }
     }
 }
 

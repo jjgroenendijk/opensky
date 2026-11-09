@@ -71,40 +71,88 @@ nonisolated public final class FakeQuestRuntimePort: QuestRuntimePort {
 }
 
 extension FakeQuestRuntimePort {
-    nonisolated public struct SetStageCall {
+    nonisolated public struct SetStageCall: CustomStringConvertible {
         public let index: UInt16
         public let id: FormID
         public let items: [Int]?
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "id: " + String(describing: id),
+                "items: " + String(describing: items)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SetObjectiveDisplayedCall {
+    nonisolated public struct SetObjectiveDisplayedCall: CustomStringConvertible {
         public let index: UInt16
         public let isDisplayed: Bool
         public let id: FormID
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "isDisplayed: " + String(describing: isDisplayed),
+                "id: " + String(describing: id)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SetObjectiveCompletedCall {
+    nonisolated public struct SetObjectiveCompletedCall: CustomStringConvertible {
         public let index: UInt16
         public let isCompleted: Bool
         public let id: FormID
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "isCompleted: " + String(describing: isCompleted),
+                "id: " + String(describing: id)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SetObjectiveFailedCall {
+    nonisolated public struct SetObjectiveFailedCall: CustomStringConvertible {
         public let index: UInt16
         public let isFailed: Bool
         public let id: FormID
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "isFailed: " + String(describing: isFailed),
+                "id: " + String(describing: id)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ForceAliasCall {
+    nonisolated public struct ForceAliasCall: CustomStringConvertible {
         public let aliasID: UInt32
         public let reference: ReferenceKey?
         public let id: FormID
+
+        public var description: String {
+            [
+                "aliasID: " + String(describing: aliasID),
+                "reference: " + String(describing: reference),
+                "id: " + String(describing: id)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ForceLocationAliasCall {
+    nonisolated public struct ForceLocationAliasCall: CustomStringConvertible {
         public let aliasID: UInt32
         public let location: ResolvedFormID?
         public let id: FormID
+
+        public var description: String {
+            [
+                "aliasID: " + String(describing: aliasID),
+                "location: " + String(describing: location),
+                "id: " + String(describing: id)
+            ].joined(separator: ", ")
+        }
     }
 }
 

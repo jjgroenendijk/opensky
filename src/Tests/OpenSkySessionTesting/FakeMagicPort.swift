@@ -92,24 +92,50 @@ nonisolated public final class FakeMagicPort: MagicPort {
 }
 
 extension FakeMagicPort {
-    nonisolated public struct ApplyPlacedPoisonCall {
+    nonisolated public struct ApplyPlacedPoisonCall: CustomStringConvertible {
         public let poison: FormID
         public let caster: ReferenceKey
         public let target: ReferenceKey
+
+        public var description: String {
+            [
+                "poison: " + String(describing: poison),
+                "caster: " + String(describing: caster),
+                "target: " + String(describing: target)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct AdvanceCastingCall {
+    nonisolated public struct AdvanceCastingCall: CustomStringConvertible {
         public let intent: CastingIntent
         public let isPlayerControlled: Bool
         public let events: [String]
         public let weaponsDrawn: Bool?
+
+        public var description: String {
+            [
+                "intent: " + String(describing: intent),
+                "isPlayerControlled: " + String(describing: isPlayerControlled),
+                "events: " + String(describing: events),
+                "weaponsDrawn: " + String(describing: weaponsDrawn)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct AdvanceShoutCall {
+    nonisolated public struct AdvanceShoutCall: CustomStringConvertible {
         public let held: Bool
         public let delta: Float
         public let events: [String]
         public let isPlayerControlled: Bool
+
+        public var description: String {
+            [
+                "held: " + String(describing: held),
+                "delta: " + String(describing: delta),
+                "events: " + String(describing: events),
+                "isPlayerControlled: " + String(describing: isPlayerControlled)
+            ].joined(separator: ", ")
+        }
     }
 }
 

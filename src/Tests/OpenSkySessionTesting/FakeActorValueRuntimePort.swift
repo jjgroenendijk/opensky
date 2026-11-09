@@ -69,356 +69,203 @@ nonisolated public final class FakeActorValueRuntimePort: ActorValueRuntimePort 
 }
 
 extension FakeActorValueRuntimePort {
-    nonisolated public struct DamageKindByOnCall {
+    nonisolated public struct DamageKindByOnCall: CustomStringConvertible {
         public let kind: ActorValueKind
         public let amount: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "kind: " + String(describing: kind),
+                "amount: " + String(describing: amount),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct DamageAtByOnCall {
+    nonisolated public struct DamageAtByOnCall: CustomStringConvertible {
         public let index: Int32
         public let amount: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "amount: " + String(describing: amount),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct PauseRegenerationCall {
+    nonisolated public struct PauseRegenerationCall: CustomStringConvertible {
         public let kind: ActorValueKind
         public let holder: ActorValueHolder
         public let seconds: Float
+
+        public var description: String {
+            [
+                "kind: " + String(describing: kind),
+                "holder: " + String(describing: holder),
+                "seconds: " + String(describing: seconds)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct RestoreKindByOnCall {
+    nonisolated public struct RestoreKindByOnCall: CustomStringConvertible {
         public let kind: ActorValueKind
         public let amount: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "kind: " + String(describing: kind),
+                "amount: " + String(describing: amount),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct RestoreAtByOnCall {
+    nonisolated public struct RestoreAtByOnCall: CustomStringConvertible {
         public let index: Int32
         public let amount: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "amount: " + String(describing: amount),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SetCall {
+    nonisolated public struct SetCall: CustomStringConvertible {
         public let kind: ActorValueKind
         public let value: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "kind: " + String(describing: kind),
+                "value: " + String(describing: value),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SetValueCall {
+    nonisolated public struct SetValueCall: CustomStringConvertible {
         public let index: Int32
         public let value: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "value: " + String(describing: value),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SetBaseCall {
+    nonisolated public struct SetBaseCall: CustomStringConvertible {
         public let index: Int32
         public let value: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "value: " + String(describing: value),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct IncrementBaseCall {
+    nonisolated public struct IncrementBaseCall: CustomStringConvertible {
         public let index: Int32
         public let delta: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "delta: " + String(describing: delta),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct AdvanceSkillCall {
+    nonisolated public struct AdvanceSkillCall: CustomStringConvertible {
         public let index: Int32
         public let delta: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "delta: " + String(describing: delta),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct AddModifierCall {
+    nonisolated public struct AddModifierCall: CustomStringConvertible {
         public let delta: Float
         public let modifier: ActorValueModifier
         public let index: Int32
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "delta: " + String(describing: delta),
+                "modifier: " + String(describing: modifier),
+                "index: " + String(describing: index),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SetModifierCall {
+    nonisolated public struct SetModifierCall: CustomStringConvertible {
         public let value: Float
         public let modifier: ActorValueModifier
         public let index: Int32
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "value: " + String(describing: value),
+                "modifier: " + String(describing: modifier),
+                "index: " + String(describing: index),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ForceValueCall {
+    nonisolated public struct ForceValueCall: CustomStringConvertible {
         public let index: Int32
         public let value: Float
         public let holder: ActorValueHolder
+
+        public var description: String {
+            [
+                "index: " + String(describing: index),
+                "value: " + String(describing: value),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct MagicDamageMultiplierCall {
+    nonisolated public struct MagicDamageMultiplierCall: CustomStringConvertible {
         public let element: Int32?
         public let holder: ActorValueHolder
         public let settings: ActorResistanceSettings
-    }
-}
 
-nonisolated extension FakeActorValueRuntimePort {
-    public func setGodMode(_ isOn: Bool) {
-        setGodModeCalls.append(isOn)
-    }
-
-    public func baseValue(at index: Int32, on holder: ActorValueHolder) -> Float? {
-        baseValueCalls.append((index: index, holder: holder))
-        return baseValueResult
-    }
-
-    public func baseline(of holder: ActorValueHolder) -> ActorValueBaseline {
-        baselineCalls.append(holder)
-        guard let baselineResult else {
-            preconditionFailure("FakeActorValueRuntimePort.baseline has no result")
+        public var description: String {
+            [
+                "element: " + String(describing: element),
+                "holder: " + String(describing: holder),
+                "settings: " + String(describing: settings)
+            ].joined(separator: ", ")
         }
-        return baselineResult
-    }
-
-    public var baselines: ActorValueBaselineResolver {
-        get {
-            guard let baselinesValue
-            else { preconditionFailure("FakeActorValueRuntimePort.baselines is unset") }
-            return baselinesValue
-        }
-        set { baselinesValue = newValue }
-    }
-
-    public func current(of holder: ActorValueHolder) -> ActorValues {
-        currentCalls.append(holder)
-        guard let currentResult else {
-            preconditionFailure("FakeActorValueRuntimePort.current has no result")
-        }
-        return currentResult
-    }
-
-    @discardableResult
-    public func damage(
-        _ kind: ActorValueKind,
-        by amount: Float,
-        on holder: ActorValueHolder
-    ) -> ActorValueState {
-        damageKindByOnCalls.append(DamageKindByOnCall(kind: kind, amount: amount, holder: holder))
-        guard let damageKindByOnResult else {
-            preconditionFailure("FakeActorValueRuntimePort.damage has no result")
-        }
-        return damageKindByOnResult
-    }
-
-    @discardableResult
-    public func damage(
-        at index: Int32,
-        by amount: Float,
-        on holder: ActorValueHolder
-    ) -> Bool {
-        damageAtByOnCalls.append(DamageAtByOnCall(index: index, amount: amount, holder: holder))
-        return damageAtByOnResult
-    }
-
-    public func fraction(at index: Int32, on holder: ActorValueHolder) -> Float? {
-        fractionCalls.append((index: index, holder: holder))
-        return fractionResult
-    }
-
-    public func fractions(of holder: ActorValueHolder) -> ActorValues {
-        fractionsCalls.append(holder)
-        guard let fractionsResult else {
-            preconditionFailure("FakeActorValueRuntimePort.fractions has no result")
-        }
-        return fractionsResult
-    }
-
-    public func hasZeroHealth(_ holder: ActorValueHolder) -> Bool {
-        hasZeroHealthCalls.append(holder)
-        return hasZeroHealthResult
-    }
-
-    public func maximums(of holder: ActorValueHolder) -> ActorValues {
-        maximumsCalls.append(holder)
-        guard let maximumsResult else {
-            preconditionFailure("FakeActorValueRuntimePort.maximums has no result")
-        }
-        return maximumsResult
-    }
-
-    public func pauseRegeneration(
-        _ kind: ActorValueKind,
-        on holder: ActorValueHolder,
-        for seconds: Float
-    ) {
-        pauseRegenerationCalls.append(PauseRegenerationCall(
-            kind: kind,
-            holder: holder,
-            seconds: seconds
-        ))
-    }
-
-    public func permanentMaximum(of kind: ActorValueKind, for holder: ActorValueHolder) -> Float {
-        permanentMaximumCalls.append((kind: kind, holder: holder))
-        return permanentMaximumResult
-    }
-
-    public var regeneration: RegenerationSettings {
-        get {
-            guard let regenerationValue
-            else { preconditionFailure("FakeActorValueRuntimePort.regeneration is unset") }
-            return regenerationValue
-        }
-        set { regenerationValue = newValue }
-    }
-
-    public func regenerationPause(_ kind: ActorValueKind, of holder: ActorValueHolder) -> Float {
-        regenerationPauseCalls.append((kind: kind, holder: holder))
-        return regenerationPauseResult
-    }
-
-    @discardableResult
-    public func restore(
-        _ kind: ActorValueKind,
-        by amount: Float,
-        on holder: ActorValueHolder
-    ) -> ActorValueState {
-        restoreKindByOnCalls.append(RestoreKindByOnCall(kind: kind, amount: amount, holder: holder))
-        guard let restoreKindByOnResult else {
-            preconditionFailure("FakeActorValueRuntimePort.restore has no result")
-        }
-        return restoreKindByOnResult
-    }
-
-    @discardableResult
-    public func restore(at index: Int32, by amount: Float, on holder: ActorValueHolder)
-        -> Bool
-    {
-        restoreAtByOnCalls.append(RestoreAtByOnCall(index: index, amount: amount, holder: holder))
-        return restoreAtByOnResult
-    }
-
-    @discardableResult
-    public func restoreAll(on holder: ActorValueHolder) -> ActorValueState {
-        restoreAllCalls.append(holder)
-        guard let restoreAllResult else {
-            preconditionFailure("FakeActorValueRuntimePort.restoreAll has no result")
-        }
-        return restoreAllResult
-    }
-
-    public func value(at index: Int32, on holder: ActorValueHolder) -> Float? {
-        valueCalls.append((index: index, holder: holder))
-        return valueResult
-    }
-
-    public var store: WorldStateStore {
-        get {
-            guard let storeValue
-            else { preconditionFailure("FakeActorValueRuntimePort.store is unset") }
-            return storeValue
-        }
-        set { storeValue = newValue }
-    }
-
-    @discardableResult
-    public func set(
-        _ kind: ActorValueKind,
-        to value: Float,
-        on holder: ActorValueHolder
-    ) -> ActorValueState {
-        setCalls.append(SetCall(kind: kind, value: value, holder: holder))
-        guard let setResult else {
-            preconditionFailure("FakeActorValueRuntimePort.set has no result")
-        }
-        return setResult
-    }
-
-    public func entry(at index: Int32, on holder: ActorValueHolder) -> ActorValueEntry? {
-        entryCalls.append((index: index, holder: holder))
-        return entryResult
-    }
-
-    public func resolvedEntries(of holder: ActorValueHolder) -> [Int32: ActorValueEntry] {
-        resolvedEntriesCalls.append(holder)
-        return resolvedEntriesResult
-    }
-
-    @discardableResult
-    public func setValue(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
-        setValueCalls.append(SetValueCall(index: index, value: value, holder: holder))
-        return setValueResult
-    }
-
-    @discardableResult
-    public func setBase(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
-        setBaseCalls.append(SetBaseCall(index: index, value: value, holder: holder))
-        return setBaseResult
-    }
-
-    @discardableResult
-    public func incrementBase(
-        at index: Int32,
-        by delta: Float,
-        on holder: ActorValueHolder
-    ) -> Bool {
-        incrementBaseCalls.append(IncrementBaseCall(index: index, delta: delta, holder: holder))
-        return incrementBaseResult
-    }
-
-    @discardableResult
-    public func advanceSkill(
-        at index: Int32,
-        by delta: Float,
-        on holder: ActorValueHolder
-    ) -> Bool {
-        advanceSkillCalls.append(AdvanceSkillCall(index: index, delta: delta, holder: holder))
-        return advanceSkillResult
-    }
-
-    @discardableResult
-    public func addModifier(
-        _ delta: Float,
-        to modifier: ActorValueModifier,
-        at index: Int32,
-        on holder: ActorValueHolder
-    ) -> Bool {
-        addModifierCalls.append(AddModifierCall(
-            delta: delta,
-            modifier: modifier,
-            index: index,
-            holder: holder
-        ))
-        return addModifierResult
-    }
-
-    @discardableResult
-    public func setModifier(
-        _ value: Float,
-        for modifier: ActorValueModifier,
-        at index: Int32,
-        on holder: ActorValueHolder
-    ) -> Bool {
-        setModifierCalls.append(SetModifierCall(
-            value: value,
-            modifier: modifier,
-            index: index,
-            holder: holder
-        ))
-        return setModifierResult
-    }
-
-    @discardableResult
-    public
-    func forceValue(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
-        forceValueCalls.append(ForceValueCall(index: index, value: value, holder: holder))
-        return forceValueResult
-    }
-
-    public func magicDamageMultiplier(
-        element: Int32?,
-        on holder: ActorValueHolder,
-        settings: ActorResistanceSettings
-    ) -> Float {
-        magicDamageMultiplierCalls.append(MagicDamageMultiplierCall(
-            element: element,
-            holder: holder,
-            settings: settings
-        ))
-        return magicDamageMultiplierResult
     }
 }

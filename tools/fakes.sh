@@ -1,6 +1,6 @@
 #!/bin/sh
-# Writes a fake of every port in OpenSkySessionInterface into OpenSkySessionTesting, or into
-# the folder given, then formats it. The generator in tools/fake-gen/ is built once per
+# Writes a fake of each OpenSkySessionInterface port a test names into OpenSkySessionTesting, or
+# into the folder given, then formats it. The generator in tools/fake-gen/ is built once per
 # source hash with the SwiftSyntax that ships in Xcode.
 # Usage: tools/fakes.sh [output folder]
 set -eu

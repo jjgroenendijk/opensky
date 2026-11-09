@@ -39,7 +39,7 @@ gives a number. `tools/coverage/floor.sh` and `tools/coverage/changed-lines.sh` 
 | Floor | Value | Applies to | Why this value |
 | --- | --- | --- | --- |
 | `COVERAGE_FLOOR` | 80 % | each `OpenSkyFormats*` module | Parsers read untrusted files. The lowest module was 83 % when the floor was set |
-| `RULE_COVERAGE_FLOOR` | 55 % | each feature, interface, and world-domain module, except a composition module such as `OpenSkySession` and its interface, which hold ports and wiring | The lowest of these modules on the CI runner, rounded down to a multiple of 5, as for the parsers: `OpenSkyWorld` at 57.9 %. Some of these modules hold Metal and file shells that only the GPU and real-data runs reach |
+| `RULE_COVERAGE_FLOOR` | 55 % | each feature, interface, and world-domain module, and each adapter module with a test target, except a composition module such as `OpenSkySession` and its interface, which hold ports and wiring | The lowest of these modules on the CI runner, rounded down to a multiple of 5, as for the parsers: `OpenSkyWorld` at 57.9 %. Some of these modules hold Metal and file shells that only the GPU and real-data runs reach |
 | `CORE_COVERAGE_FLOOR` | 75 % | each pure core file (`*Core.swift`) | A core is values in, values out, so nearly every line is reachable from a test. The rest are readout sentences of rare outcomes |
 | `DIFF_COVERAGE_FLOOR` | 80 % | the package lines a pull request adds or changes | New code is the cheapest code to test: its author knows what it does |
 
@@ -75,3 +75,8 @@ tests cover them. The modules declared with `composition()` and their interfaces
 `OpenSkyMagicAdapters` and `OpenSkySessionInterface`, are outside too, for the reason the
 rule floor leaves them out: they hold ports and wiring, not game rules. A game rule found in
 an adapter moves into its feature module, where both rules apply.
+
+An adapter module with a test target, such as `OpenSkyProgressionAdapters` and its
+`OpenSkyProgressionAdaptersTests`, is inside both rules. Its tests build the adapter over the
+generated fakes in `OpenSkySessionTesting`, so its forwarding can be checked like any rule. Each
+adapter module joins when its test target lands.
