@@ -1,22 +1,16 @@
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyEffects
-import OpenSkyFactions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
 import OpenSkyMagic
 public import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyPlayer
-import OpenSkyScripting
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import simd
@@ -39,8 +33,10 @@ public protocol MagicArchetypeEffectsHost: AnyObject {
 
 /// Part of `MagicWorldAdapter`, over its own narrow host.
 public struct MagicArchetypeEffectsAdapter {
-    public unowned let owner: MagicWorldAdapter
-    public unowned let game: any MagicArchetypeEffectsHost
+    public let game: any MagicArchetypeEffectsHost
+    public let state: MagicPartState
+    public let heldMagic: MagicHeldMagicAdapter
+    public let spellDelivery: MagicSpellDeliveryAdapter
 }
 
 extension MagicArchetypeEffectsAdapter {
@@ -56,12 +52,12 @@ extension MagicArchetypeEffectsAdapter {
         case let .castingSound(sound, caster, starts):
             castingSound(sound, caster: caster, starts: starts)
         case let .paintActor(actor, shader, plugin, shown):
-            owner.heldMagic.paintActor(actor, shader: shader, plugin: plugin, shown: shown)
+            heldMagic.paintActor(actor, shader: shader, plugin: plugin, shown: shown)
         case let .castingArt(art, plugin, caster, starts):
             game.effectsWorld.effects
                 .showCastingArt(art, fromPlugin: plugin, on: caster, shown: starts)
         case let .castingLight(light, plugin, caster, starts):
-            owner.heldMagic.showCastingLight(light, plugin: plugin, caster: caster, shown: starts)
+            heldMagic.showCastingLight(light, plugin: plugin, caster: caster, shown: starts)
         case let .spellHit(event): game.effectsWorld.handleSpellHit(event)
         case let .notice(text): game.hud.showNotification(text)
         default: return false
@@ -79,7 +75,7 @@ extension MagicArchetypeEffectsAdapter {
         case let .spawnHazard(hazard, key): spawnHazard(hazard, at: key)
         case let .playerGrab(body, held): game.scripts.runtime?.queueGrab(of: body, held: held)
         case let .playerGraphEvent(name): game.gameSession?.locomotion.raise(name)
-        case let .detonateRune(payload, position): owner.spellDelivery.detonateRune(
+        case let .detonateRune(payload, position): spellDelivery.detonateRune(
                 payload,
                 at: position
             )
@@ -163,7 +159,7 @@ extension MagicArchetypeEffectsAdapter {
             forms.append(base)
         }
         let query = ActorKeywordQuery(keyword: keyword, forms: forms.compactMap(\.self))
-        if let known = owner.actorKeywordAnswers[query] {
+        if let known = state.actorKeywordAnswers[query] {
             return known
         }
         let answer = query.forms.contains { form in
@@ -171,7 +167,7 @@ extension MagicArchetypeEffectsAdapter {
             else { return false }
             return keywords.hasKeyword(keyword, on: id) == true
         }
-        owner.actorKeywordAnswers[query] = answer
+        state.actorKeywordAnswers[query] = answer
         return answer
     }
 

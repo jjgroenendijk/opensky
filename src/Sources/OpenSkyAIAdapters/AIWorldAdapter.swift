@@ -2,7 +2,7 @@
 // gait clips, and perception. It wires them into the frame loop and answers
 // their ports from the session systems. See docs/engine/coordinators.md.
 
-import OpenSkyActorPresentation
+public import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages

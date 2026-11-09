@@ -1,7 +1,6 @@
 // A marker walk keeps to its authored line through rocks and walls, but stands on the
 // roads and bridges along it (docs/engine/package-schedules.md).
 
-import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore

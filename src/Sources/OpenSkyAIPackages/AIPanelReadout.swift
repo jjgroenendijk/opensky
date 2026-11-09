@@ -5,7 +5,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyNavigation
 import OpenSkyPhysics
 public import OpenSkyWorldInterface
 

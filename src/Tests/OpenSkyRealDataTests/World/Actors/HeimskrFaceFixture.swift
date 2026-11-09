@@ -74,7 +74,7 @@ struct HeimskrFace {
     func renderer(animations: [any RenderAnimation]) throws -> Renderer {
         try Self.renderer(
             placements: assembly.renderPlacements(
-                at: assembly.transform, faceMorphs: playback.bindings
+                at: assembly.transform, faceMorphs: playback.renderBuffers
             ),
             animations: animations,
             transform: assembly.transform,

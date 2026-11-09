@@ -491,9 +491,8 @@ targets += interface(
     "OpenSkyWorld",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
-        "OpenSkyAudio", "OpenSkyBehavior", "OpenSkyConditions", "OpenSkyFormatsAnimation",
-        "OpenSkyFormatsMesh", "OpenSkyPhysics", "OpenSkyRenderCore", "OpenSkyRenderResources",
-        "OpenSkyShaderTypes"
+        "OpenSkyBehavior", "OpenSkyConditions", "OpenSkyFormatsAnimation", "OpenSkyFormatsMesh",
+        "OpenSkyPhysics", "OpenSkyRenderCore", "OpenSkyShaderTypes"
     ]
 )
 targets += interface(
@@ -888,17 +887,16 @@ targets += domain(
 targets += domain(
     "OpenSkyAIPackages",
     dependencies: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyPhysics",
-        "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyWorldInterface",
-        "OpenSkyInventoryInterface", "OpenSkyWorldConditionFunctions", "OpenSkyNavigation",
-        "OpenSkyActorPresentation", "OpenSkyPlayer", "OpenSkyRenderCore"
+        "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyRenderCore", "OpenSkyWorldConditionFunctions",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ],
     tests: [
         "OpenSkyEngineTesting", "OpenSkyFormatsTesting", "OpenSkyFeaturesTesting",
         "OpenSkyWorldTesting", "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyPhysics",
         "OpenSkyWorldInterface", "OpenSkyWorldState", "OpenSkyRenderCore", "OpenSkyNavigation",
-        "OpenSkyActorPresentation", "OpenSkyPlayer", "OpenSkyWorldConditions"
+        "OpenSkyPlayer", "OpenSkyWorldConditions"
     ]
 )
 targets += domain(
@@ -1128,7 +1126,8 @@ targets += interface(
         "OpenSkyDialogueInterface", "OpenSkyFactionsInterface", "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyMenusInterface", "OpenSkyPerceptionInterface",
         "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkySaveInterface",
-        "OpenSkyScriptingInterface", "OpenSkyWorldInterface", "OpenSkyRendering"
+        "OpenSkyScriptingInterface", "OpenSkyWorldInterface", "OpenSkyRendering",
+        "OpenSkyRenderResources"
     ]
 )
 targets += composition(
@@ -1235,9 +1234,9 @@ targets += composition(
         "OpenSkyMagicInterface", "OpenSkyMenus", "OpenSkyNavigation", "OpenSkyPerception",
         "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression",
         "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyRenderCore",
-        "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
+        "OpenSkyRenderResources", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
         "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkyWorld",
-        "OpenSkyWorldInterface", "OpenSkyWorldState", "OpenSkyWorldConditions"
+        "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 
@@ -1257,17 +1256,14 @@ targets += composition(
 targets += composition(
     "OpenSkyMagicAdapters",
     dependencies: [
-        "OpenSkyActorPresentation", "OpenSkyActors", "OpenSkyActorsInterface", "OpenSkyAudio",
-        "OpenSkyBehavior", "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface",
-        "OpenSkyConditions", "OpenSkyDialogue", "OpenSkyDialogueInterface", "OpenSkyEffects",
-        "OpenSkyFactions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
-        "OpenSkyGameData", "OpenSkyInventory", "OpenSkyInventoryInterface", "OpenSkyMagic",
-        "OpenSkyMagicInterface", "OpenSkyMenus", "OpenSkyMenusInterface", "OpenSkyNavigation",
-        "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression", "OpenSkyProgressionInterface",
-        "OpenSkyRenderCore", "OpenSkyRenderResources", "OpenSkyRendering",
-        "OpenSkyRuntimeState", "OpenSkyScripting", "OpenSkyScriptingInterface",
-        "OpenSkySessionInterface", "OpenSkyWorld", "OpenSkyWorldConditions",
-        "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyActorsInterface", "OpenSkyBehavior", "OpenSkyCells", "OpenSkyCombatInterface",
+        "OpenSkyConditions", "OpenSkyDialogueInterface", "OpenSkyEffects", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
+        "OpenSkyInventoryInterface", "OpenSkyMagic", "OpenSkyMagicInterface",
+        "OpenSkyMenusInterface", "OpenSkyNavigation", "OpenSkyPhysics", "OpenSkyPlayer",
+        "OpenSkyProgressionInterface", "OpenSkyRenderCore", "OpenSkyRendering",
+        "OpenSkyRuntimeState", "OpenSkyScriptingInterface", "OpenSkySessionInterface",
+        "OpenSkyWorld", "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 

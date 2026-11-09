@@ -76,9 +76,10 @@ other adapter needs those reads. The perk and progression domain has `PerkCoordi
 `src/Sources/OpenSkyProgression/`, answered by `ProgressionWorldAdapter`. `OpenSkyProgression` may
 not import `OpenSkyMagic`, so perk abilities are applied through `PerkWorld`.
 The AI domain has four coordinators, all answered by `AIWorldAdapter`. `PackageCoordinator`
-with `PackageCore` and `PackageWorld`, `AINavigationCoordinator` with `AINavigationCore` and
-`AINavigationWorld`, and `NPCAnimationCoordinator` with `NPCAnimationWorld` live in
-`src/Sources/OpenSkyAIPackages/`. `PerceptionCoordinator` with `PerceptionCore` and
+with `PackageCore` and `PackageWorld`, and `AINavigationCoordinator` with `AINavigationCore` and
+`AINavigationWorld` live in `src/Sources/OpenSkyAIPackages/`. `NPCAnimationCoordinator` with
+`NPCAnimationWorld` picks gait clips, so it lives with the other clip players in
+`src/Sources/OpenSkyActorPresentation/`. `PerceptionCoordinator` with `PerceptionCore` and
 `PerceptionSessionWorld` lives in `src/Sources/OpenSkyPerception/`. The perception coordinator is
 the pass's `PerceptionWorld`: it filters the session's actors down to the observers.
 Runtime state has `RuntimeStateCore`, `RuntimeStateCoordinator`, and

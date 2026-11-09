@@ -2,7 +2,6 @@ import OpenSkyBehavior
 public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyRenderCore
-import OpenSkyRenderResources
 import simd
 import Synchronization
 

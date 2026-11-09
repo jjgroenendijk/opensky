@@ -1,7 +1,6 @@
 import OpenSkyFormatsAnimation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyRenderResources
 
 /// One rig to assemble. A result whose `generation` is not the newest is dropped.
 nonisolated public struct PlayerRigRequest: Equatable, Sendable {
@@ -24,13 +23,13 @@ nonisolated public struct PlayerRigRequest: Equatable, Sendable {
     }
 }
 
-nonisolated public struct PlayerRigLoadResult<Asset: Sendable>: Sendable {
+nonisolated public struct PlayerRigLoadResult<Asset: Sendable, FaceMorph: Sendable>: Sendable {
     public let request: PlayerRigRequest
-    public let result: Result<PlayerRigAssembly<Asset>, PlayerBodyError>
+    public let result: Result<PlayerRigAssembly<Asset, FaceMorph>, PlayerBodyError>
 
     public init(
         request: PlayerRigRequest,
-        result: Result<PlayerRigAssembly<Asset>, PlayerBodyError>
+        result: Result<PlayerRigAssembly<Asset, FaceMorph>, PlayerBodyError>
     ) {
         self.request = request
         self.result = result
@@ -38,15 +37,15 @@ nonisolated public struct PlayerRigLoadResult<Asset: Sendable>: Sendable {
 }
 
 /// The meshes of one rig, before they are bound to a skeleton and a pose.
-nonisolated public struct PlayerRigAssembly<Asset: Sendable>: Sendable {
+nonisolated public struct PlayerRigAssembly<Asset: Sendable, FaceMorph: Sendable>: Sendable {
     public let assembly: ActorAssembly<Asset>
     /// Race, chargen, and expression morphs on the head parts; empty for the arms and a
     /// baked head.
-    public let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
+    public let faceMorphs: [ObjectIdentifier: FaceMorph]
 
     public init(
         assembly: ActorAssembly<Asset>,
-        faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:]
+        faceMorphs: [ObjectIdentifier: FaceMorph] = [:]
     ) {
         self.assembly = assembly
         self.faceMorphs = faceMorphs

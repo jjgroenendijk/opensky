@@ -1,7 +1,6 @@
 // What the last AI navigation control did, as a value. Only `text` builds the line.
 
 public import OpenSkyFormatsESM
-import OpenSkyNavigation
 public import OpenSkyWorldInterface
 
 nonisolated public enum AINavigationActionOutcome: Equatable, Sendable {

@@ -3,7 +3,6 @@
 
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyInventoryInterface
 public import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd

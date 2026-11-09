@@ -2,7 +2,6 @@
 
 import Foundation
 @testable import OpenSkyActorPresentation
-@testable import OpenSkyAIPackages
 import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

@@ -1,8 +1,6 @@
 import OpenSkyActorsInterface
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyFactions
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyMagic
@@ -30,7 +28,7 @@ public protocol MagicSpellDeliveryHost: AnyObject {
 
 /// Part of `MagicWorldAdapter`, over its own narrow host.
 public struct MagicSpellDeliveryAdapter {
-    public unowned let game: any MagicSpellDeliveryHost
+    public let game: any MagicSpellDeliveryHost
 }
 
 extension MagicSpellDeliveryAdapter {
