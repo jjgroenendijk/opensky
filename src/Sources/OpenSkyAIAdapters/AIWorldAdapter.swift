@@ -3,32 +3,28 @@
 // their ports from the session systems. See docs/engine/coordinators.md.
 
 public import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyFactions
+import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 import OpenSkyNavigation
 public import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -52,7 +48,7 @@ public protocol AIWorldHost: AnyObject {
 }
 
 public final class AIWorldAdapter {
-    public unowned let game: any AIWorldHost
+    public let game: any AIWorldHost
 
     public let seatingHost: any AISeatingHost
     public let detectionSenseHost: any AIDetectionSenseHost
@@ -64,19 +60,15 @@ public final class AIWorldAdapter {
     public let bumpsHost: any AIBumpsHost
 
     public var seating: AISeatingAdapter {
-        AISeatingAdapter(owner: self, game: seatingHost)
+        AISeatingAdapter(game: seatingHost, packageMoves: packageMoves)
     }
 
     public var detectionSense: AIDetectionSenseAdapter {
-        AIDetectionSenseAdapter(game: detectionSenseHost
-        )
+        AIDetectionSenseAdapter(game: detectionSenseHost)
     }
 
     public var perceptionSense: AIPerceptionSenseAdapter {
-        AIPerceptionSenseAdapter(
-            owner: self,
-            game: perceptionSenseHost
-        )
+        AIPerceptionSenseAdapter(game: perceptionSenseHost, detectionSense: detectionSense)
     }
 
     public var navigation: AINavigationAdapter {
@@ -84,21 +76,17 @@ public final class AIWorldAdapter {
     }
 
     public var packageMoves: AIPackageMovesAdapter {
-        AIPackageMovesAdapter(
-            owner: self,
-            game: packageMovesHost
-        )
+        AIPackageMovesAdapter(game: packageMovesHost)
     }
 
     public var packageState: AIPackageStateAdapter {
-        AIPackageStateAdapter(
-            owner: self,
-            game: packageStateHost
-        )
+        AIPackageStateAdapter(game: packageStateHost, packageMoves: packageMoves)
     }
 
     public var packageActs: AIPackageActsAdapter {
-        AIPackageActsAdapter(owner: self, game: packageActsHost)
+        AIPackageActsAdapter(
+            game: packageActsHost, packageMoves: packageMoves, navigation: navigation
+        )
     }
 
     public var bumps: AIBumpsAdapter {

@@ -1,30 +1,26 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyFactions
+import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 import OpenSkyNavigation
 public import OpenSkyPerception
 public import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -51,8 +47,8 @@ public protocol AIPerceptionSenseHost: AnyObject {
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
 public struct AIPerceptionSenseAdapter {
-    public unowned let owner: AIWorldAdapter
-    public unowned let game: any AIPerceptionSenseHost
+    public let game: any AIPerceptionSenseHost
+    public let detectionSense: AIDetectionSenseAdapter
 }
 
 extension AIPerceptionSenseAdapter {
@@ -69,11 +65,11 @@ extension AIPerceptionSenseAdapter {
                 facing: actor.facing,
                 isExterior: isExterior,
                 label: actor.label,
-                sneakSkill: owner.detectionSense.sneakSkill(of: actor.key)
+                sneakSkill: detectionSense.sneakSkill(of: actor.key)
             )
             observer.isSleeping = sleepers.contains(actor.key)
             observer.isFlying = game.dragonFlightWorld.isFlying(actor.key)
-            observer.blindness = owner.detectionSense.blindness(of: actor.key)
+            observer.blindness = detectionSense.blindness(of: actor.key)
             observer.combatTarget = game.combat.loop?.combatTarget(of: actor.key)
             return PerceptionCandidate(
                 observer: observer,
@@ -95,7 +91,7 @@ extension AIPerceptionSenseAdapter {
             eye: status.feetPosition + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
             gait: isMoving ? status.gait : nil,
             isSneaking: status.gait == .sneak,
-            traits: owner.detectionSense.playerDetectionTraits(
+            traits: detectionSense.playerDetectionTraits(
                 at: status.feetPosition, eyeHeight: PlayerCapsule.standard.eyeHeight
             ),
             name: "Player"

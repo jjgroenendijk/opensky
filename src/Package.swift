@@ -1166,17 +1166,20 @@ targets += composition(
 targets += composition(
     "OpenSkyAIAdapters",
     dependencies: [
-        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors",
-        "OpenSkyActorsInterface", "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface",
-        "OpenSkyConditions", "OpenSkyCrime", "OpenSkyCrimeInterface", "OpenSkyDialogue",
-        "OpenSkyDialogueInterface", "OpenSkyFactions", "OpenSkyFormatsAnimation",
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActorsInterface", "OpenSkyCells",
+        "OpenSkyCombatInterface",
+        "OpenSkyConditions", "OpenSkyCrimeInterface", "OpenSkyDialogueInterface",
+        "OpenSkyFactionsInterface",
+        "OpenSkyFormatsAnimation",
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
-        "OpenSkyInventory", "OpenSkyInventoryInterface", "OpenSkyMagic",
-        "OpenSkyMagicInterface", "OpenSkyNavigation", "OpenSkyPerception",
-        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression",
-        "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyRenderCore",
-        "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
-        "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkyWorld",
+        "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyNavigation",
+        "OpenSkyPerception",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer",
+        "OpenSkyProgressionInterface",
+        "OpenSkyQuestsInterface", "OpenSkyRenderCore",
+        "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScriptingInterface",
+        "OpenSkySessionInterface",
+        "OpenSkyWorld",
         "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )

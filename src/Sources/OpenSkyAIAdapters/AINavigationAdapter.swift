@@ -1,30 +1,25 @@
 public import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyFactions
+import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 import OpenSkyNavigation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -48,7 +43,7 @@ public protocol AINavigationHost: AnyObject {
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
 public struct AINavigationAdapter {
-    public unowned let game: any AINavigationHost
+    public let game: any AINavigationHost
 }
 
 extension AINavigationAdapter {

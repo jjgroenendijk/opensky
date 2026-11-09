@@ -1,9 +1,7 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
@@ -12,7 +10,6 @@ public import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -38,8 +35,8 @@ public protocol AISeatingHost: AnyObject {
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
 public struct AISeatingAdapter {
-    public unowned let owner: AIWorldAdapter
-    public unowned let game: any AISeatingHost
+    public let game: any AISeatingHost
+    public let packageMoves: AIPackageMovesAdapter
 }
 
 extension AISeatingAdapter {
@@ -59,7 +56,7 @@ extension AISeatingAdapter {
     /// own activation would. The opening's chopping block waits for that `OnActivate`.
     public func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat) {
         // A dragon's sit is its perch, which the dragon flight lands on.
-        guard !owner.packageActorFlies(actor) else { return }
+        guard !packageMoves.packageActorFlies(actor) else { return }
         let isNewSeat = game.furniture.occupancies[actor]?.seat != seat
         guard game.furniture.sit(actor, in: seat) != nil, isNewSeat, actor == .player else {
             return
@@ -140,7 +137,7 @@ extension AISeatingAdapter {
     }
 
     public func furnitureActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
-        owner.packageActorPosition(actor)
+        packageMoves.packageActorPosition(actor)
     }
 
     /// A crafting station: its furniture names a workbench type. A chair names none.

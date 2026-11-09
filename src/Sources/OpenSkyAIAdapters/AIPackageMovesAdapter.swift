@@ -1,37 +1,32 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyFactions
+import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 import OpenSkyNavigation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
 public import OpenSkyWorldInterface
-import OpenSkyWorldState
+public import OpenSkyWorldState
 import simd
 
 /// What `AIPackageMovesAdapter` reads from the session.
@@ -49,11 +44,23 @@ public protocol AIPackageMovesHost: AnyObject {
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
 public struct AIPackageMovesAdapter {
-    public unowned let owner: AIWorldAdapter
-    public unowned let game: any AIPackageMovesHost
+    public let game: any AIPackageMovesHost
 }
 
 extension AIPackageMovesAdapter {
+    public func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
+        guard actor != .player else { return game.gameSession?.locomotion.status.feetPosition }
+        guard let streamer = game.streamer else { return nil }
+        if let live = streamer.npcTransform(for: actor) {
+            return live.position
+        }
+        return streamer.referenceEntry(key: actor).flatMap(Self.placedPosition)
+    }
+
+    public static func placedPosition(_ entry: RuntimeReferenceEntry) -> SIMD3<Float>? {
+        entry.placedActor?.placement.position ?? entry.placedReference?.placement.position
+    }
+
     public var packageDrivesPlayer: Bool {
         game.vehicleWorld.isPlayerAIDriven
     }
@@ -66,18 +73,18 @@ extension AIPackageMovesAdapter {
         case .nearReference, .inCell:
             location.formID
                 .flatMap { game.streamer?.residentReferenceIndex().entry(for: $0) }
-                .flatMap(AIPackageStateAdapter.placedPosition)
+                .flatMap(Self.placedPosition)
         case .referenceAlias:
             aliasQuest
                 .flatMap {
                     game.scripts.bridge?.questRuntime?.aliasResolution()
                         .reference(alias: location.value, in: $0)
                 }
-                .flatMap(owner.packageActorPosition)
+                .flatMap(packageActorPosition)
         case .nearSelf, .nearPackageStart:
-            owner.packageActorPosition(actor)
+            packageActorPosition(actor)
         case .nearEditorLocation:
-            game.streamer?.referenceEntry(key: actor).flatMap(AIPackageStateAdapter.placedPosition)
+            game.streamer?.referenceEntry(key: actor).flatMap(Self.placedPosition)
         default:
             nil
         }

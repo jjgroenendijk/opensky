@@ -1,17 +1,13 @@
-import OpenSkyActors
-import OpenSkyCombat
+import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyConditions
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPerception
 public import OpenSkyPerceptionInterface
 import OpenSkyPhysics
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
@@ -35,7 +31,7 @@ public protocol AIDetectionSenseHost: AnyObject {
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
 public struct AIDetectionSenseAdapter {
-    public unowned let game: any AIDetectionSenseHost
+    public let game: any AIDetectionSenseHost
 }
 
 extension AIDetectionSenseAdapter {
