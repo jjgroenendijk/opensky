@@ -32,7 +32,6 @@ public protocol InventoryWorldHost: AnyObject {
     var furniture: any FurniturePort { get }
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }
-    var magic: any MagicPort { get }
     var menuScreens: any MenuScreensPort { get }
     var mapWorld: any MapWorldPort { get }
     var messages: any MessageCoordinatorPort { get }
