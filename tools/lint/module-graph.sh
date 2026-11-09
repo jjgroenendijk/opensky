@@ -54,10 +54,11 @@ COMPOSITION = {"OpenSkyPreview", "OpenSkySession"}
 # Rule 14. An adapter module depends on lower modules, interfaces, domains, and its own
 # feature's implementation, never on another feature's implementation. ADAPTER_OWNER names that
 # feature for each module that follows the rule; the modules in ADAPTERS_PENDING do not yet.
-ADAPTER_OWNER = {"OpenSkyProgressionAdapters": "OpenSkyProgression"}
+ADAPTER_OWNER = {"OpenSkyInventoryAdapters": "OpenSkyInventory",
+                 "OpenSkyProgressionAdapters": "OpenSkyProgression"}
 ADAPTERS_PENDING = {
     "OpenSkyAIAdapters", "OpenSkyActorAdapters", "OpenSkyAgentAdapters",
-    "OpenSkyCombatAdapters", "OpenSkyInventoryAdapters", "OpenSkyMagicAdapters",
+    "OpenSkyCombatAdapters", "OpenSkyMagicAdapters",
     "OpenSkyMenuAdapters", "OpenSkyScriptAdapters", "OpenSkySessionAdapters",
     "OpenSkyStoryAdapters",
 }

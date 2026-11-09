@@ -1,33 +1,23 @@
 // `InventoryWorldAdapter` joins the started session: what `wireWorldItems` registered.
 
-import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
-import OpenSkySessionInterface
-public import OpenSkyWorld
+public import OpenSkySessionInterface
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -35,7 +25,7 @@ import OpenSkyWorldState
 /// After the audio and Papyrus subscribers, so the activation sound plays
 /// whether or not the take succeeds. The crime reporter joins the take path.
 public struct InventoryWorldItemsWiring {
-    public init(_ adapter: InventoryWorldAdapter, streamer: CellStreamer) {
+    public init(_ adapter: InventoryWorldAdapter, streamer: any CellStreamerPort) {
         streamer.onInteraction.register(.worldItems) { [weak adapter] event in
             guard let adapter else { return }
             let action = event.target.interaction.action

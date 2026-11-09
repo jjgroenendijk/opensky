@@ -1,45 +1,28 @@
-import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyCells
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyFactions
 import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 public import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
-public import OpenSkySessionInterface
-import OpenSkyWorld
+import OpenSkySessionInterface
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-/// What `InventoryPapyrusAdapter` reads from the session.
-@MainActor
-public protocol InventoryPapyrusHost: AnyObject {
-    var inventory: any InventoryPort { get }
-}
-
 /// Part of `InventoryWorldAdapter`, over its own narrow host.
 public struct InventoryPapyrusAdapter {
-    public unowned let owner: InventoryWorldAdapter
-    public unowned let game: any InventoryPapyrusHost
+    public let game: any InventoryCommandsHost
 }
 
 extension InventoryPapyrusAdapter {
@@ -50,21 +33,30 @@ extension InventoryPapyrusAdapter {
     public func removeItem(
         _ item: FormID, count: Int32, from holder: ReferenceKey, to other: ReferenceKey?
     ) -> Bool {
-        owner.run(game.inventory.scriptRemoveItem(item, count: count, from: holder, to: other))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptRemoveItem(
+            item,
+            count: count,
+            from: holder,
+            to: other
+        ))
     }
 
     public func unequipSlot(_ slot: Int32, on actor: ReferenceKey) -> Bool {
-        owner.run(game.inventory.scriptUnequipSlot(slot, on: actor))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptUnequipSlot(slot, on: actor))
     }
 
     public func dropItem(_ item: FormID, count: Int32, from holder: ReferenceKey) -> ReferenceKey? {
-        owner.run(game.inventory.scriptDropObject(item, count: count, from: holder))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptDropObject(
+            item,
+            count: count,
+            from: holder
+        ))
     }
 
     public func removeAllItems(
         from holder: ReferenceKey, to other: ReferenceKey?, removeQuestItems: Bool
     ) -> Bool {
-        owner.run(game.inventory.scriptRemoveAllItems(
+        InventoryCommandRunner(game: game).run(game.inventory.scriptRemoveAllItems(
             from: holder, to: other, removeQuestItems: removeQuestItems
         ))
     }
@@ -78,15 +70,15 @@ extension InventoryPapyrusAdapter {
     }
 
     public func equipItem(_ item: FormID, on actor: ReferenceKey) -> Bool {
-        owner.run(game.inventory.scriptEquipItem(item, on: actor))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptEquipItem(item, on: actor))
     }
 
     public func unequipItem(_ item: FormID, on actor: ReferenceKey) -> Bool {
-        owner.run(game.inventory.scriptUnequipItem(item, on: actor))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptUnequipItem(item, on: actor))
     }
 
     public func setOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool {
-        owner.run(game.inventory.scriptSetOutfit(outfit, on: actor))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptSetOutfit(outfit, on: actor))
     }
 
     public func isEquipped(_ item: FormID, on actor: ReferenceKey) -> Bool? {
@@ -102,7 +94,7 @@ extension InventoryPapyrusAdapter {
     }
 
     public func unequipAll(on actor: ReferenceKey) -> Bool {
-        owner.run(game.inventory.scriptUnequipAll(on: actor))
+        InventoryCommandRunner(game: game).run(game.inventory.scriptUnequipAll(on: actor))
     }
 
     public func goldValue(of item: FormID) -> Int32? {
