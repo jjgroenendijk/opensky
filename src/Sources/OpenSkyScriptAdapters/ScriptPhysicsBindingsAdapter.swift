@@ -1,7 +1,7 @@
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 public import OpenSkyPhysics
 import OpenSkyRendering
 public import OpenSkyScripting
@@ -19,7 +19,8 @@ public protocol ScriptPhysicsBindingsHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var ragdoll: any RagdollPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    /// The keywords whose bounds give a scripted push its shape.
+    var worldRecords: (any WorldRecordsPort)? { get }
 }
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
@@ -132,7 +133,7 @@ extension ScriptPhysicsBindingsAdapter {
         let streamer = game.streamer
         guard
             streamer.dynamicBodies.bodyCount > 0,
-            let keywords = game.worldData?.locationStore?.keywords
+            let keywords = game.worldRecords?.locationKeywords
         else { return }
         for key in translations.keys.sorted() {
             guard

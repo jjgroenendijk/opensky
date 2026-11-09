@@ -149,6 +149,5 @@ final class InventoryHost: InventoryWorldHost, InventoryReadoutsHost, InventoryP
     }
 
     var gameSession: (any GameSessionPort)?
-    var factionStore: FactionStore?
-    var recordPluginName: String?
+    var worldRecords: (any WorldRecordsPort)?
 }
