@@ -193,6 +193,11 @@
     {
       "parallelizable": true,
       "randomExecutionOrdering": true,
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyProgressionAdaptersTests", "name": "OpenSkyProgressionAdaptersTests"}
+    },
+    {
+      "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyCLIArgumentsTests", "name": "OpenSkyCLIArgumentsTests"}
     },
     {

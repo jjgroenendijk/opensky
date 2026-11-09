@@ -139,7 +139,9 @@ for name in sorted(names):
                 failures.append(f"rule 4: fixtures library {name} depends on {dep}")
         elif name in tests:
             own = name[:-len("Tests")]
-            if (dep in features or dep in COMPOSITION) and dep != own:
+            # An adapter's API names the types of the feature it serves, so its tests may too.
+            served = ADAPTER_OWNER.get(own, set())
+            if (dep in features or dep in COMPOSITION) and dep != own and dep not in served:
                 failures.append(f"rule 5: {name} depends on the implementation {dep}")
             if dep in fixtures and dep != own + "Fixtures":
                 failures.append(f"rule 5: {name} depends on {dep}, another feature's fixtures")

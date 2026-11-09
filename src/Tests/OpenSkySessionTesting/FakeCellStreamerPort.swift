@@ -154,22 +154,46 @@ nonisolated public final class FakeCellStreamerPort: CellStreamerPort {
 }
 
 extension FakeCellStreamerPort {
-    nonisolated public struct MoveStandingActorCall {
+    nonisolated public struct MoveStandingActorCall: CustomStringConvertible {
         public let actor: ReferenceKey
         public let displacement: SIMD2<Float>
         public let headingTurn: Float
+
+        public var description: String {
+            [
+                "actor: " + String(describing: actor),
+                "displacement: " + String(describing: displacement),
+                "headingTurn: " + String(describing: headingTurn)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct SteerRiddenActorCall {
+    nonisolated public struct SteerRiddenActorCall: CustomStringConvertible {
         public let actor: ReferenceKey
         public let feet: SIMD3<Float>
         public let yaw: Float
+
+        public var description: String {
+            [
+                "actor: " + String(describing: actor),
+                "feet: " + String(describing: feet),
+                "yaw: " + String(describing: yaw)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct TurnActorCall {
+    nonisolated public struct TurnActorCall: CustomStringConvertible {
         public let actor: ReferenceKey
         public let heading: Float
         public let tolerance: Float
+
+        public var description: String {
+            [
+                "actor: " + String(describing: actor),
+                "heading: " + String(describing: heading),
+                "tolerance: " + String(describing: tolerance)
+            ].joined(separator: ", ")
+        }
     }
 }
 

@@ -7,14 +7,14 @@ public import OpenSkyWorldInterface
 nonisolated public final class FakeCellAnimatedVehiclePort: CellAnimatedVehiclePort {
     public typealias VehicleWheelRig = FakeVehicleWheelRigPort
     public var reference: UInt32 = 0
-    public var poseValue: PlayerPoseBuffer?
+    public var poseValue: SkinnedPoseBuffer?
     public var rig: VehicleWheelRig = FakeVehicleWheelRigPort()
 
     public init() {}
 }
 
 nonisolated extension FakeCellAnimatedVehiclePort {
-    public var pose: PlayerPoseBuffer {
+    public var pose: SkinnedPoseBuffer {
         get {
             guard let poseValue
             else { preconditionFailure("FakeCellAnimatedVehiclePort.pose is unset") }

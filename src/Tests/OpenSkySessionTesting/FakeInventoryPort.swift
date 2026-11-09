@@ -147,51 +147,113 @@ public final class FakeInventoryPort: InventoryPort {
 }
 
 extension FakeInventoryPort {
-    nonisolated public struct PickpocketCall {
+    nonisolated public struct PickpocketCall: CustomStringConvertible {
         public let item: FormID
         public let count: Int32
         public let name: String
         public let target: InventoryHolder
         public let roll: Float
+
+        public var description: String {
+            [
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "name: " + String(describing: name),
+                "target: " + String(describing: target),
+                "roll: " + String(describing: roll)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct PlantCall {
+    nonisolated public struct PlantCall: CustomStringConvertible {
         public let item: FormID
         public let count: Int32
         public let name: String
         public let target: InventoryHolder
         public let roll: Float
+
+        public var description: String {
+            [
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "name: " + String(describing: name),
+                "target: " + String(describing: target),
+                "roll: " + String(describing: roll)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ScriptAddItemCall {
+    nonisolated public struct ScriptAddItemCall: CustomStringConvertible {
         public let item: FormID
         public let count: Int32
         public let key: ReferenceKey
+
+        public var description: String {
+            [
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "key: " + String(describing: key)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ScriptDropObjectCall {
+    nonisolated public struct ScriptDropObjectCall: CustomStringConvertible {
         public let item: FormID
         public let count: Int32
         public let key: ReferenceKey
+
+        public var description: String {
+            [
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "key: " + String(describing: key)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ScriptRemoveAllItemsCall {
+    nonisolated public struct ScriptRemoveAllItemsCall: CustomStringConvertible {
         public let key: ReferenceKey
         public let other: ReferenceKey?
         public let removeQuestItems: Bool
+
+        public var description: String {
+            [
+                "key: " + String(describing: key),
+                "other: " + String(describing: other),
+                "removeQuestItems: " + String(describing: removeQuestItems)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ScriptRemoveItemCall {
+    nonisolated public struct ScriptRemoveItemCall: CustomStringConvertible {
         public let item: FormID
         public let count: Int32
         public let key: ReferenceKey
         public let other: ReferenceKey?
+
+        public var description: String {
+            [
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "key: " + String(describing: key),
+                "other: " + String(describing: other)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct TeammateRefusalCall {
+    nonisolated public struct TeammateRefusalCall: CustomStringConvertible {
         public let transfer: ContainerTransfer
         public let item: FormID
         public let count: Int32
         public let teammate: InventoryHolder
+
+        public var description: String {
+            [
+                "transfer: " + String(describing: transfer),
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "teammate: " + String(describing: teammate)
+            ].joined(separator: ", ")
+        }
     }
 }

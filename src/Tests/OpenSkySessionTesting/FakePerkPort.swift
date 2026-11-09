@@ -29,32 +29,68 @@ nonisolated public final class FakePerkPort: PerkPort {
 }
 
 extension FakePerkPort {
-    nonisolated public struct ChoicesCall {
+    nonisolated public struct ChoicesCall: CustomStringConvertible {
         public let entryPoint: PerkEntryPoint
         public let key: ReferenceKey
         public let seams: ConditionContext
+
+        public var description: String {
+            [
+                "entryPoint: " + String(describing: entryPoint),
+                "key: " + String(describing: key),
+                "seams: " + String(describing: seams)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ModifiedValueAtOnLockLevelCall {
+    nonisolated public struct ModifiedValueAtOnLockLevelCall: CustomStringConvertible {
         public let value: Float
         public let entryPoint: PerkEntryPoint
         public let holder: ActorValueHolder
         public let lock: ReferenceKey
         public let level: UInt8
+
+        public var description: String {
+            [
+                "value: " + String(describing: value),
+                "entryPoint: " + String(describing: entryPoint),
+                "holder: " + String(describing: holder),
+                "lock: " + String(describing: lock),
+                "level: " + String(describing: level)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ModifiedValueAtOnSubjectsSeamsCall {
+    nonisolated public struct ModifiedValueAtOnSubjectsSeamsCall: CustomStringConvertible {
         public let value: Float
         public let entryPoint: PerkEntryPoint
         public let key: ReferenceKey
         public let seams: ConditionContext
+
+        public var description: String {
+            [
+                "value: " + String(describing: value),
+                "entryPoint: " + String(describing: entryPoint),
+                "key: " + String(describing: key),
+                "seams: " + String(describing: seams)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct MultiplierCall {
+    nonisolated public struct MultiplierCall: CustomStringConvertible {
         public let entryPoint: PerkEntryPoint
         public let key: ReferenceKey
         public let target: ReferenceKey?
         public let attacker: ReferenceKey?
+
+        public var description: String {
+            [
+                "entryPoint: " + String(describing: entryPoint),
+                "key: " + String(describing: key),
+                "target: " + String(describing: target),
+                "attacker: " + String(describing: attacker)
+            ].joined(separator: ", ")
+        }
     }
 }
 

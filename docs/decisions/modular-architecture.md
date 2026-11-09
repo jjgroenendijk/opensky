@@ -55,7 +55,7 @@ runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI
 | 2. Feature -> Interface | A feature depends on lower modules and on Interfaces only, its own included | Gate |
 | 3. Thin Interface | An Interface depends on lower modules and other Interfaces only | Gate |
 | 4. Testing -> Interface | A `Testing` library depends on no feature implementation and no `Fixtures` library. A `Fixtures` library depends on no implementation but its own feature's | Gate |
-| 5. Tests -> own feature | `FeatureTests` depends on no feature implementation and no `Fixtures` library but its own. A test that needs two real implementations goes in `OpenSkyTests` | Gate |
+| 5. Tests -> own feature | `FeatureTests` depends on no feature implementation and no `Fixtures` library but its own. An adapter module's tests may also use the feature the adapter serves, because the adapter's API names its types. A test that needs two real implementations goes in `OpenSkyTests` | Gate |
 | 6. Complete sets | Every feature has its `Interface` and `Tests` targets, or an exception with a reason. Every Interface has its feature | Gate |
 | 7. Declared imports | Every `import` of a package module names the target itself or a declared dependency | Gate |
 | 8. Composition | `OpenSkyPreview`, the app, and the CLI may depend on anything | Allowed |

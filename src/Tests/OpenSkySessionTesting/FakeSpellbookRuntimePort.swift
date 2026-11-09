@@ -23,11 +23,20 @@ nonisolated public final class FakeSpellbookRuntimePort: SpellbookRuntimePort {
 }
 
 extension FakeSpellbookRuntimePort {
-    nonisolated public struct EquipCall {
+    nonisolated public struct EquipCall: CustomStringConvertible {
         public let spell: ReferenceKey
         public let hand: SpellHand
         public let holder: ActorValueHolder
         public let inventory: InventoryHolder?
+
+        public var description: String {
+            [
+                "spell: " + String(describing: spell),
+                "hand: " + String(describing: hand),
+                "holder: " + String(describing: holder),
+                "inventory: " + String(describing: inventory)
+            ].joined(separator: ", ")
+        }
     }
 }
 

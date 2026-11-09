@@ -361,8 +361,9 @@ for the feature interfaces, and `OpenSkyWorldTesting` for the world domains, suc
 the target count down, because every target costs manifest and graph time on each build.
 Their declarations are `public`, and a library may `@testable import` the modules it builds
 fixtures for. `OpenSkySessionTesting` is the one generated library: `tools/fake-gen/` reads
-each port in `OpenSkySessionInterface` with SwiftSyntax and writes a fake that stores each
-property and records each call, so an adapter test needs no hand-written fake.
+the ports in `OpenSkySessionInterface` with SwiftSyntax and writes a fake of each port a test
+names. A fake stores each property and records each call, so an adapter test needs no
+hand-written fake.
 One library, `OpenSkyTagsTesting`, holds no fixtures: it declares the shared
 Swift Testing tags, and the `testTarget` helper in `src/Package.swift` links it into every package
 test target ([test runs](/tools/test-runs.md#tags)).

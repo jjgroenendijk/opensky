@@ -101,56 +101,124 @@ public final class FakePapyrusWorldStateBridgePort: PapyrusWorldStateBridgePort 
 }
 
 extension FakePapyrusWorldStateBridgePort {
-    nonisolated public struct ActivateCall {
+    nonisolated public struct ActivateCall: CustomStringConvertible {
         public let target: ReferenceKey
         public let activator: ReferenceKey
         public let togglesOpen: Bool
+
+        public var description: String {
+            [
+                "target: " + String(describing: target),
+                "activator: " + String(describing: activator),
+                "togglesOpen: " + String(describing: togglesOpen)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct CastSpellCall {
+    nonisolated public struct CastSpellCall: CustomStringConvertible {
         public let spell: ReferenceKey
         public let source: ReferenceKey
         public let target: ReferenceKey?
         public let blame: ReferenceKey?
+
+        public var description: String {
+            [
+                "spell: " + String(describing: spell),
+                "source: " + String(describing: source),
+                "target: " + String(describing: target),
+                "blame: " + String(describing: blame)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct NoteStolenValueCall {
+    nonisolated public struct NoteStolenValueCall: CustomStringConvertible {
         public let value: Int64
         public let faction: ReferenceKey
         public let witnessed: Bool
+
+        public var description: String {
+            [
+                "value: " + String(describing: value),
+                "faction: " + String(describing: faction),
+                "witnessed: " + String(describing: witnessed)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct QueuePackageEventCall {
+    nonisolated public struct QueuePackageEventCall: CustomStringConvertible {
         public let slot: UInt32
         public let package: FormID
         public let actor: ReferenceKey
+
+        public var description: String {
+            [
+                "slot: " + String(describing: slot),
+                "package: " + String(describing: package),
+                "actor: " + String(describing: actor)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct RunPackageFragmentCall {
+    nonisolated public struct RunPackageFragmentCall: CustomStringConvertible {
         public let package: Package
         public let slot: UInt32
         public let actor: ReferenceKey
+
+        public var description: String {
+            [
+                "package: " + String(describing: package),
+                "slot: " + String(describing: slot),
+                "actor: " + String(describing: actor)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct RunPerkFragmentCall {
+    nonisolated public struct RunPerkFragmentCall: CustomStringConvertible {
         public let perk: Perk
         public let key: ReferenceKey
         public let index: UInt16
         public let activation: PerkFragmentActivation
+
+        public var description: String {
+            [
+                "perk: " + String(describing: perk),
+                "key: " + String(describing: key),
+                "index: " + String(describing: index),
+                "activation: " + String(describing: activation)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct RunTopicInfoFragmentsCall {
+    nonisolated public struct RunTopicInfoFragmentsCall: CustomStringConvertible {
         public let info: TopicInfo
         public let key: ReferenceKey
         public let phase: TopicInfoFragmentPhase
         public let context: TopicInfoFragmentContext
+
+        public var description: String {
+            [
+                "info: " + String(describing: info),
+                "key: " + String(describing: key),
+                "phase: " + String(describing: phase),
+                "context: " + String(describing: context)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct RunSceneFragmentCall {
+    nonisolated public struct RunSceneFragmentCall: CustomStringConvertible {
         public let scene: Scene
         public let key: ReferenceKey
         public let scriptName: String
         public let functionName: String
+
+        public var description: String {
+            [
+                "scene: " + String(describing: scene),
+                "key: " + String(describing: key),
+                "scriptName: " + String(describing: scriptName),
+                "functionName: " + String(describing: functionName)
+            ].joined(separator: ", ")
+        }
     }
 }
 

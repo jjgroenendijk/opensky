@@ -1135,15 +1135,14 @@ targets += interface(
 targets += testing(
     "OpenSkySessionTesting",
     dependencies: [
-        "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio", "OpenSkyBehavior",
+        "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyBehavior",
         "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrimeInterface",
-        "OpenSkyDialogueInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsAnimation",
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData",
-        "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyMenusInterface",
-        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyProgressionInterface",
-        "OpenSkyQuestsInterface", "OpenSkyRenderCore", "OpenSkyRenderResources",
-        "OpenSkyRendering", "OpenSkySaveInterface", "OpenSkyScriptingInterface",
-        "OpenSkySessionInterface", "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyDialogueInterface", "OpenSkyFormatsAnimation", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
+        "OpenSkyMagicInterface", "OpenSkyMenusInterface", "OpenSkyPhysics",
+        "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyRenderCore",
+        "OpenSkySaveInterface", "OpenSkyScriptingInterface", "OpenSkySessionInterface",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 targets += composition(
@@ -1326,6 +1325,11 @@ targets += composition(
         "OpenSkyQuestsInterface",
         "OpenSkyRuntimeState", "OpenSkySessionInterface", "OpenSkyWorldConditions",
         "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ],
+    tests: [
+        "OpenSkyCells", "OpenSkyConditions", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyProgression", "OpenSkyProgressionInterface", "OpenSkySessionInterface",
+        "OpenSkySessionTesting", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 

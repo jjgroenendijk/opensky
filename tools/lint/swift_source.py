@@ -59,9 +59,19 @@ def wiring_modules():
     return composed | {name + "Interface" for name in composed}
 
 
+def tested_wiring_modules():
+    """The adapter modules that have a test target over the generated port fakes. Both
+    coverage rules hold for them; the other wiring modules stay outside."""
+    return {
+        name for name in wiring_modules()
+        if name.endswith("Adapters") and pathlib.Path(f"src/Tests/{name}Tests").is_dir()
+    }
+
+
 def rule_modules():
-    """The game-rule modules: each feature, interface, and world-domain module, without the
-    wiring modules."""
+    """The game-rule modules: each feature, interface, and world-domain module, and each tested
+    adapter module, without the other wiring modules."""
     text = pathlib.Path("src/Package.swift").read_text()
     names = set(re.findall(r'\b(?:feature|domain|interface)\(\s*"(\w+)"', text))
-    return {module for name in names for module in (name, name + "Interface")} - wiring_modules()
+    modules = {module for name in names for module in (name, name + "Interface")}
+    return (modules - wiring_modules()) | tested_wiring_modules()

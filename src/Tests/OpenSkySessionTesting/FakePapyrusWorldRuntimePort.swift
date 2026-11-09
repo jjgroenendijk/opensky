@@ -55,24 +55,50 @@ nonisolated public final class FakePapyrusWorldRuntimePort: PapyrusWorldRuntimeP
 }
 
 extension FakePapyrusWorldRuntimePort {
-    nonisolated public struct QueueFurnitureEventCall {
+    nonisolated public struct QueueFurnitureEventCall: CustomStringConvertible {
         public let sitting: Bool
         public let actor: ReferenceKey
         public let furniture: ReferenceKey
+
+        public var description: String {
+            [
+                "sitting: " + String(describing: sitting),
+                "actor: " + String(describing: actor),
+                "furniture: " + String(describing: furniture)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct QueuePlayerBowShotCall {
+    nonisolated public struct QueuePlayerBowShotCall: CustomStringConvertible {
         public let weapon: FormID?
         public let ammunition: FormID?
         public let power: Float
         public let sunGazing: Bool
+
+        public var description: String {
+            [
+                "weapon: " + String(describing: weapon),
+                "ammunition: " + String(describing: ammunition),
+                "power: " + String(describing: power),
+                "sunGazing: " + String(describing: sunGazing)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct QueueWardHitCall {
+    nonisolated public struct QueueWardHitCall: CustomStringConvertible {
         public let holder: ReferenceKey
         public let caster: ReferenceKey
         public let spell: ReferenceKey
         public let status: Int32
+
+        public var description: String {
+            [
+                "holder: " + String(describing: holder),
+                "caster: " + String(describing: caster),
+                "spell: " + String(describing: spell),
+                "status: " + String(describing: status)
+            ].joined(separator: ", ")
+        }
     }
 }
 

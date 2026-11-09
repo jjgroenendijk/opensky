@@ -227,6 +227,12 @@
       "parallelizable" : true,
       "randomExecutionOrdering": true,
       "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyProgressionAdaptersTests", "name" : "OpenSkyProgressionAdaptersTests"}
+    },
+    {
+      "parallelizable" : true,
+      "randomExecutionOrdering": true,
+      "selectedTags" : {"tags" : ["gpu"]},
       "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyCLIArgumentsTests", "name" : "OpenSkyCLIArgumentsTests"}
     },
     {

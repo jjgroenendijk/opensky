@@ -53,11 +53,20 @@ nonisolated public final class FakeMenuWorldPort: MenuWorldPort {
 }
 
 extension FakeMenuWorldPort {
-    nonisolated public struct ShowGiftMenuCall {
+    nonisolated public struct ShowGiftMenuCall: CustomStringConvertible {
         public let actor: ReferenceKey
         public let giving: Bool
         public let filter: [ReferenceKey?]?
         public let showsStolenItems: Bool
+
+        public var description: String {
+            [
+                "actor: " + String(describing: actor),
+                "giving: " + String(describing: giving),
+                "filter: " + String(describing: filter),
+                "showsStolenItems: " + String(describing: showsStolenItems)
+            ].joined(separator: ", ")
+        }
     }
 }
 

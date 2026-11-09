@@ -45,32 +45,68 @@ public final class FakeInventoryRuntimePort: InventoryRuntimePort {
 }
 
 extension FakeInventoryRuntimePort {
-    nonisolated public struct AddCall {
+    nonisolated public struct AddCall: CustomStringConvertible {
         public let item: FormID
         public let count: Int32
         public let holder: InventoryHolder
         public let stolen: Bool
         public let copies: [ItemCopy]
+
+        public var description: String {
+            [
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "holder: " + String(describing: holder),
+                "stolen: " + String(describing: stolen),
+                "copies: " + String(describing: copies)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct RemoveCall {
+    nonisolated public struct RemoveCall: CustomStringConvertible {
         public let item: FormID
         public let count: Int32
         public let holder: InventoryHolder
+
+        public var description: String {
+            [
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct TransferCall {
+    nonisolated public struct TransferCall: CustomStringConvertible {
         public let item: FormID
         public let count: Int32
         public let source: InventoryHolder
         public let destination: InventoryHolder
         public let markingStolen: Bool
+
+        public var description: String {
+            [
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "source: " + String(describing: source),
+                "destination: " + String(describing: destination),
+                "markingStolen: " + String(describing: markingStolen)
+            ].joined(separator: ", ")
+        }
     }
 
-    nonisolated public struct ClearStolenCall {
+    nonisolated public struct ClearStolenCall: CustomStringConvertible {
         public let item: FormID
         public let count: Int32
         public let holder: InventoryHolder
+
+        public var description: String {
+            [
+                "item: " + String(describing: item),
+                "count: " + String(describing: count),
+                "holder: " + String(describing: holder)
+            ].joined(separator: ", ")
+        }
     }
 }
 
