@@ -31,6 +31,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pendingContinueSlot: String?
     /// Where the next Play window's content goes, such as beside the reference game.
     private var pendingContentRect: CGRect?
+    /// Keeps App Nap from slowing the frame loop of a hidden agent run.
+    private var hiddenRunActivity: (any NSObjectProtocol)?
 
     func applicationDidFinishLaunching(_: Notification) {
         // The shell is a committed dark design (Theme.swift): forcing dark
@@ -53,6 +55,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } else if LaunchPreferences.skipsLauncher() {
             begin(atTitleScreen: LaunchPreferences.forcedTitleScreen(), showingLauncher: false)
+            if LaunchPreferences.hidesWindow() {
+                NSApplication.shared.setActivationPolicy(.accessory)
+                hiddenRunActivity = ProcessInfo.processInfo.beginActivity(
+                    options: [.userInitiated, .latencyCritical], reason: "OpenSky hidden agent run"
+                )
+                return
+            }
         } else {
             showLauncher()
         }
@@ -62,6 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_: Notification) {
         worldLoader.cancel()
         agentControl?.shutdown()
+        hiddenRunActivity.map(ProcessInfo.processInfo.endActivity)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
@@ -252,6 +262,7 @@ extension AppDelegate: LauncherActions {
         gameWindow = window
         isPlaying = true
         let hidden = benchmarkHost.hidesNextWindow
+            || (LaunchPreferences.skipsLauncher() && LaunchPreferences.hidesWindow())
         let tourOwnsWindow = benchmarkHost.ownsNextWindow
         if let game = window.contentViewController as? GameViewController {
             _ = BenchmarkGameWiring(benchmarkHost, game: game, window: window)

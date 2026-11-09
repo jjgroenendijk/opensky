@@ -63,6 +63,8 @@ public struct GameArguments: ParsableCommand, Sendable {
         public var wait: Double = 180
         @Flag(help: "Open the title screen instead of the world.")
         public var title = false
+        @Flag(help: "Keep the game window off the screen and the app out of the Dock.")
+        public var hidden = false
         @Option(
             parsing: .unconditional,
             help: ArgumentHelp("Answer the Survival Mode prompt ahead of time.")

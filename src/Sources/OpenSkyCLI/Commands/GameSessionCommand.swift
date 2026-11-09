@@ -49,13 +49,16 @@ enum GameLaunch {
     private static func open(
         app: URL, arguments launch: GameArguments.Launch, socket: String
     ) throws {
-        var arguments = [
+        // -g keeps a hidden app in the background, so the app in front keeps the focus.
+        var arguments = launch.hidden ? ["-g"] : []
+        arguments += [
             "-n", app.path(percentEncoded: false),
             "--env", "OPENSKY_AGENT_CONTROL=1",
             "--env", "OPENSKY_SKIP_LAUNCHER=1",
             "--env", "OPENSKY_START_AT_TITLE=\(launch.title ? 1 : 0)",
             "--env", "OPENSKY_SURVIVAL_MODE=\(launch.survivalMode.rawValue)",
-            "--env", "OPENSKY_AGENT_SOCKET=\(socket)"
+            "--env", "OPENSKY_AGENT_SOCKET=\(socket)",
+            "--env", "OPENSKY_HIDDEN_WINDOW=\(launch.hidden ? 1 : 0)"
         ]
         if let dataRoot = launch.global.dataRoot {
             arguments += ["--env", "OPENSKY_DATA_ROOT=\(dataRoot)"]

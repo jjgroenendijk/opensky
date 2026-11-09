@@ -87,7 +87,8 @@ so the Game menu holds the Reference Game page's actions that need a running gam
 `Game > Capture Both Games`, and shows their result as the window's subtitle.
 
 Set `OPENSKY_SKIP_LAUNCHER` to `1` to skip the launcher and open the game. The load still
-runs, without the load panel. The UI tests and `openskycli game launch` set it.
+runs, without the load panel. The UI tests and `openskycli game launch` set it. With it,
+`OPENSKY_HIDDEN_WINDOW=1` (`game launch --hidden`) keeps the game window off the screen.
 
 ## Theme
 

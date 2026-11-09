@@ -1,0 +1,20 @@
+# Keys whose values change on every run of the same build. tour_diff.py drops each
+# key, at any depth, before it compares two runs (docs/tools/acceptance-record.md).
+seq
+frame
+frames
+elapsed
+elapsedSeconds
+frameTime
+frameTimeMs
+gpuMemory
+skippedFrames
+timeline
+wallClock
+timestamp
+# Animation clips load off the main thread, so how many have loaded, and the graph steps
+# and events since, depend on load timing. So does which actor last landed from a fall.
+clipsLoaded
+steps
+recentEvents
+lastFall

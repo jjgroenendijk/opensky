@@ -24,7 +24,7 @@ UV_RUN         := UV_LINK_MODE=copy uv run --locked --quiet --project tools/wiki
 .DEFAULT_GOAL := help
 .PHONY: help bootstrap build-app build-cli build-tests compile install test test-rerun \
 	test-package check-perms check fix format format-check lint lint-index dump-comments \
-	apply-comments run-cli benchmark profile sample-launch probe rank-gaps sync-wiki \
+	apply-comments run-cli benchmark tour-record tour-check profile sample-launch probe rank-gaps sync-wiki \
 	add-cli-command package-dmg render-icon prune clean setup-reference build-bridge
 
 ##@ Getting started
@@ -99,6 +99,12 @@ run-cli: build-cli ## Build and run openskycli [ARGS='vfs ls']
 
 benchmark: ## Fly the benchmark tour in the Release app [ARGS='--preset quick']
 	@./tools/benchmark.sh $(ARGS)
+
+tour-record: ## Replay the recorded tour in the built Release app; keep it as the reference
+	@./tools/tour/tour.sh record
+
+tour-check: ## Replay the tour and diff its state reads against the reference
+	@./tools/tour/tour.sh check
 
 profile: ## Record a Time Profiler trace of the benchmark tour [ARGS]
 	@./tools/profile.sh $(ARGS)

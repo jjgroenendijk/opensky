@@ -1,0 +1,29 @@
+# The recorded tour: one fixed route through an inn, read at state points.
+# tools/tour/tour.sh replays it and diffs each state read against the reference run.
+{"command": "time.pause"}
+{"command": "debug.sound", "args": {"on": false}}
+{"command": "debug.teleport", "args": {"cell": "WhiterunBanneredMare"}}
+{"command": "debug.time", "args": {"hour": 13}}
+{"command": "time.step", "args": {"n": 120}}
+{"command": "state.player"}
+{"command": "state.actors", "args": {"radius": 2048}}
+{"command": "input.hold", "args": {"action": "forward", "frames": 90}}
+{"command": "state.player"}
+{"command": "input.look", "args": {"dx": 90, "dy": 0}}
+{"command": "time.step", "args": {"n": 10}}
+{"command": "state.target"}
+{"command": "state.view"}
+{"command": "input.press", "args": {"action": "magic"}}
+{"command": "time.step", "args": {"n": 30}}
+{"command": "state.menu"}
+{"command": "input.press", "args": {"action": "menuCancel"}}
+{"command": "time.step", "args": {"n": 30}}
+{"command": "state.menu"}
+{"command": "input.press", "args": {"action": "readyWeapon"}}
+{"command": "time.step", "args": {"n": 60}}
+{"command": "input.hold", "args": {"action": "attack", "frames": 60}}
+{"command": "time.step", "args": {"n": 30}}
+{"command": "state.av", "args": {"name": "Magicka", "ref": "player"}}
+{"command": "state.av", "args": {"name": "Health", "ref": "player"}}
+{"command": "state.quest", "args": {"id": "MQ101"}}
+{"command": "state.time"}
