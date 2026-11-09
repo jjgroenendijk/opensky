@@ -61,18 +61,25 @@ nonisolated extension CellSceneBuilder {
         instances.compactMap { instance in
             guard let asset = instance.animated else { return nil }
             let nodes = objectPoseRig(modelPath: instance.modelPath, asset: asset)
-            let playback = SkinnedPosePlayback(
-                skeleton: nodes?.skeleton ?? asset.skeleton, models: [instance.model]
-            )
-            let parts = instance.model.meshes.compactMap { mesh in
-                mesh.skinning.map { TrapContactPart(skinning: $0, bounds: mesh.localBounds) }
-            }
-            let object = CellAnimatedObject(
-                reference: instance.formID, asset: asset, pose: playback.pose,
-                contactShape: TrapContactShape(boneNames: asset.skeleton.boneNames, parts: parts),
-                nodes: nodes, placement: instance.transform
-            )
-            return (object, playback)
+            return Self.animatedObject(instance, asset: asset, nodes: nodes)
         }
+    }
+
+    /// The object and the playback that publishes its pose, through one shared buffer.
+    static func animatedObject(
+        _ instance: ResolvedInstance, asset: BehaviorProjectAsset, nodes: EffectPoseRig?
+    ) -> (object: CellAnimatedObject, playback: any RenderAnimation) {
+        let playback = SkinnedPosePlayback(
+            skeleton: nodes?.skeleton ?? asset.skeleton, models: [instance.model]
+        )
+        let parts = instance.model.meshes.compactMap { mesh in
+            mesh.skinning.map { TrapContactPart(skinning: $0, bounds: mesh.localBounds) }
+        }
+        let object = CellAnimatedObject(
+            reference: instance.formID, asset: asset, pose: playback.pose,
+            contactShape: TrapContactShape(boneNames: asset.skeleton.boneNames, parts: parts),
+            nodes: nodes, placement: instance.transform
+        )
+        return (object, playback)
     }
 }
