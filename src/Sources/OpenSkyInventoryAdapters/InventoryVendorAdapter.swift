@@ -1,5 +1,5 @@
 import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyCrimeInterface
 public import OpenSkyFactionsInterface
@@ -29,7 +29,9 @@ public protocol InventoryVendorHost: AnyObject {
     var inventory: any InventoryPort { get }
     var runtimeState: any RuntimeStatePort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    /// The faction records that resolve a `PLVD` rule's links, and the plugin they name.
+    var factionStore: FactionStore? { get }
+    var recordPluginName: String? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -117,8 +119,8 @@ extension InventoryVendorAdapter {
     /// A record link from the loaded plugin as the identity a `PLVD` rule holds.
     private func recordKey(_ formID: FormID) -> ReferenceKey? {
         guard
-            let store = game.worldData?.factionStore,
-            let plugin = game.worldData?.magicItemPluginName,
+            let store = game.factionStore,
+            let plugin = game.recordPluginName,
             let resolved = store.resolvedID(formID, fromPlugin: plugin)
         else { return nil }
         return ReferenceKey(resolved: resolved)
