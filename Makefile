@@ -15,14 +15,6 @@ PRODUCTS       := $(DERIVED_DATA)/Build/Products/$(or $(CONFIG),Debug)
 RELEASE        := $(DERIVED_DATA)/Build/Products/Release
 # The vendored libraries, built once in the main checkout and linked into worktrees.
 VENDOR         := src/.vendor/ffmpeg/opensky-build-stamp src/.vendor/astcenc/opensky-build-stamp
-# The shaders compiled for the package test targets, which have no app bundle to load
-# default.metallib from. Fixtures find it through OPENSKY_SHADER_LIBRARY.
-SHADER_LIBRARY := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
-export OPENSKY_SHADER_LIBRARY := $(SHADER_LIBRARY)
-SHADER_FILES   := $(sort $(wildcard src/Sources/Shaders/*.metal))
-# Mirrors the Metal settings in src/config/Build/*.xcconfig; change both together.
-METAL_FLAGS    := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
-	-I src/Sources/OpenSkyShaderTypes
 ICON_SVG       := src/Sources/OpenSky/Resources/Branding/opensky-logo.svg
 ICON_DIR       := src/Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
 # The Python tools are one uv project. The uv cache is on the boot disk and the
@@ -62,13 +54,13 @@ install: | $(VENDOR) ## Build the Release app and CLI and copy them to /Applicat
 
 ##@ Test
 
-test: $(SHADER_LIBRARY) | $(VENDOR) ## Run a test plan [PLAN=Quick] [T] [N] [COVERAGE=1] [SAN] [CAP]
+test: | $(VENDOR) ## Run a test plan [PLAN=Quick] [T] [N] [COVERAGE=1] [SAN] [CAP]
 	@./tools/test.sh $(or $(PLAN),Quick)
 
 test-rerun: ## Rerun the last built plan without the build system [PLAN] [T]
 	@./tools/test-rerun.sh $(or $(PLAN),Quick)
 
-test-package: $(SHADER_LIBRARY) | $(VENDOR) ## Run package test targets with swift test [T]
+test-package: | $(VENDOR) ## Run package test targets with swift test [T]
 	@./tools/test-package.sh "$(T)"
 
 check-perms: ## Check the one-time macOS permission grants the UI tests need
@@ -158,11 +150,6 @@ src/.vendor/ffmpeg/opensky-build-stamp: tools/vendor-ffmpeg.sh
 
 src/.vendor/astcenc/opensky-build-stamp: tools/vendor-astcenc.sh
 	@./tools/link-shared.sh && ./tools/vendor-astcenc.sh && touch $@
-
-# Written to a temporary name first, so a failed compile leaves no file that looks current.
-$(SHADER_LIBRARY): $(SHADER_FILES) $(wildcard src/Sources/Shaders/*.h src/Sources/OpenSkyShaderTypes/*.h)
-	@mkdir -p $(@D) && xcrun -sdk macosx metal $(METAL_FLAGS) -o $@.tmp $(SHADER_FILES)
-	@mv $@.tmp $@ && echo "[ OK ] shader library: $@"
 
 $(ICON_DIR)/icon_1024.png: $(ICON_SVG)
 	@./tools/render-icon.sh $< $(ICON_DIR)

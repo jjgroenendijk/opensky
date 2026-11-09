@@ -7,4 +7,4 @@ mode="-i"
 [ -z "${1:-}" ] || mode="--dry-run --Werror"
 # shellcheck disable=SC2046,SC2086 # one word per file and per flag
 xcrun clang-format --style=file:tools/format/.clang-format $mode \
-    $(git ls-files -- 'src/Sources/*.metal' 'src/Sources/Shaders/*.h')
+    $(git ls-files -- 'src/Sources/*.metal' 'src/Sources/OpenSkyShaders/*.h')

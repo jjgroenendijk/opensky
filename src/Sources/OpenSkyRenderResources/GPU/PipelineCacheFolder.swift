@@ -4,7 +4,6 @@
 
 import CryptoKit
 public import Foundation
-public import Metal
 import OpenSkyFormatsCore
 
 nonisolated public enum PipelineCacheFolder {
@@ -15,16 +14,18 @@ nonisolated public enum PipelineCacheFolder {
 
     /// The archive for this process, or nil when the shader library or the executable
     /// cannot be found, so nothing identifies the build.
-    public static func archiveURL(inCacheFolder cacheFolder: URL, device: any MTLDevice) -> URL? {
+    public static func archiveURL(
+        inCacheFolder cacheFolder: URL, gpuName: String, shaderLibrary library: URL?
+    ) -> URL? {
         guard
-            let library = Bundle.main.url(forResource: "default", withExtension: "metallib"),
+            let library,
             let executable = Bundle.main.executableURL,
             let libraryStamp = fileStamp(library),
             let executableStamp = fileStamp(executable)
         else { return nil }
         let name = archiveName(
             osBuild: ProcessInfo.processInfo.operatingSystemVersionString,
-            gpu: device.name,
+            gpu: gpuName,
             stamps: [libraryStamp, executableStamp]
         )
         return folder(inCacheFolder: cacheFolder).appending(path: name)

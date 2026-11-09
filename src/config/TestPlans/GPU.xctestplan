@@ -10,12 +10,6 @@
     "codeCoverage" : true,
     "defaultTestExecutionTimeAllowance" : 120,
     "diagnosticCollectionPolicy" : "Never",
-    "environmentVariableEntries" : [
-      {
-        "key" : "OPENSKY_SHADER_LIBRARY",
-        "value" : "$(BUILD_DIR)/OpenSkyShaders.metallib"
-      }
-    ],
     "maximumTestExecutionTimeAllowance" : 300,
     "targetForVariableExpansion" : {
       "containerPath" : "container:OpenSky.xcodeproj",
@@ -138,6 +132,12 @@
       "randomExecutionOrdering": true,
       "selectedTags" : {"tags" : ["gpu"]},
       "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyRenderingTests", "name" : "OpenSkyRenderingTests"}
+    },
+    {
+      "parallelizable" : true,
+      "randomExecutionOrdering": true,
+      "selectedTags" : {"tags" : ["gpu"]},
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyShadersTests", "name" : "OpenSkyShadersTests"}
     },
     {
       "parallelizable" : true,

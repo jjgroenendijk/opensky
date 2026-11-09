@@ -54,7 +54,7 @@ every plan is in the scheme, sets the timeouts, sets no repetition, and selects 
 also checks that the Perf plan selects only the `perf` tag with the RealData data root, that the
 `RealData` plan selects only the `smoke` tag and `RealDataAll` the whole target, that `Quick` sets
 `OPENSKY_SKIPPED_TAGS` to `slow,gpu`, that no plan sets `skippedTags`, and that the sanitizer and
-`GPU` plans list the unit plan's targets and set its environment, such as the shader library path.
+`GPU` plans list the unit plan's targets and set its environment.
 
 ## Timeouts
 

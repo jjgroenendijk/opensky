@@ -14,11 +14,6 @@ SUPPORTED_PLATFORMS = macosx
 // borrow the app target's bridging header.
 SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
 
-// The shaders in Sources/Shaders import ShaderTypes.h from the package's
-// OpenSkyShaderTypes target. The target compiles them, because makeDefaultLibrary() reads
-// the main bundle.
-MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/OpenSkyShaderTypes
-
 // The vendored decode-only ffmpeg. A command-line tool has no bundle to embed into, so
 // it loads the dylibs straight from .vendor at run time. `make install` puts a copy in
 // the app's Contents/MacOS, where it uses the app's own copies.

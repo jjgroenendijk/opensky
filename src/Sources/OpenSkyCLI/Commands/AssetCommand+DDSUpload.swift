@@ -8,6 +8,7 @@ import OpenSkyCLIArguments
 import OpenSkyFormatsMesh
 import OpenSkyRendering
 import OpenSkyRenderResources
+import OpenSkyShaders
 
 extension AssetCommand {
     static func writeUploadedDDS(
@@ -35,7 +36,7 @@ extension AssetCommand {
         let images = try texture.textureType == .type3D
             ? TextureReadback.volumeSlices(of: texture, level: arguments.level)
             : [TextureReadback(
-                device: device, library: Renderer.makeBundledShaderLibrary(device: device)
+                device: device, library: ShaderLibrary.make(device: device)
             ).pixels(of: texture, level: arguments.level)]
         for (index, pixels) in images.enumerated() {
             let name = unsafe images.count > 1

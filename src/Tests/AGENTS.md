@@ -57,9 +57,8 @@ is named for the behavior it checks, such as `CombatAcceptanceTests`, never for 
 number.
 
 A suite that builds a `Renderer` goes in a package test target too. It passes
-`shaderLibrary: ShaderLibraryFixture.library(device: device)` from `OpenSkyEngineTesting`, because a
-package test has no app bundle to load `default.metallib` from. `make test` and `make test-package`
-compile the shaders first.
+`shaderLibrary: ShaderLibraryFixture.library(device: device)` from `OpenSkyEngineTesting`, which
+loads the `OpenSkyShaders` library once per device.
 
 ## Test plans
 

@@ -11,11 +11,6 @@ SUPPORTED_PLATFORMS = macosx
 // SWIFT_INCLUDE_PATHS; there is deliberately no bridging header.
 SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
 
-// The shaders in Sources/Shaders import ShaderTypes.h from the package's
-// OpenSkyShaderTypes target. The target compiles them, because makeDefaultLibrary() reads
-// the main bundle.
-MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/OpenSkyShaderTypes
-
 // Generated Info.plist keys.
 GENERATE_INFOPLIST_FILE = YES
 INFOPLIST_KEY_NSPrincipalClass = NSApplication

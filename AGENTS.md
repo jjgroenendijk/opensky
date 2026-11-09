@@ -35,9 +35,9 @@ Reversing formats is fine. Redistributing Bethesda content or code is not. There
 
 - The repo sits on a case-insensitive APFS volume: a case-only rename needs `git mv`.
 - Xcode 27 ships without the Metal Toolchain; `make bootstrap` downloads it once.
-- In `src/Sources/`, `OpenSky/` is app-only, `OpenSkyCLI/` CLI-only, `Shaders/` both, and each
-  other folder a package module (gate: `cli-boundary.sh`). A folder is named after its target;
-  only `openskycli` and the bundle IDs are lowercase, because macOS keys grants to them.
+- In `src/Sources/`, `OpenSky/` is app-only, `OpenSkyCLI/` CLI-only, and each other folder,
+  `OpenSkyShaders/` too, a package module (gate: `cli-boundary.sh`). A folder is named after its
+  target; only `openskycli` and the bundle IDs are lowercase, because macOS keys grants to them.
 - Build in a linked worktree, one per issue. Two sessions in one checkout share one build
   tree, and two builds into one tree collide in xcodebuild's build database.
 - Every build goes through `make`, in a background shell, so it uses the shared build tree and

@@ -17,6 +17,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyScriptingInterface
+import OpenSkyShaders
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import simd
@@ -141,8 +142,12 @@ final class GameViewController: NSViewController {
                     camera: nil,
                     input: cameraInput,
                     movementConfiguration: provider?.movementConfiguration ?? .synthetic,
-                    pipelineCache: PipelineCache.fromSettings(
-                        device: device, store: playerSettingsStore
+                    pipelineCache: PipelineCache(
+                        device: device,
+                        fileURL: PipelineCache.archiveURL(
+                            gpuName: device.name, store: playerSettingsStore,
+                            shaderLibrary: ShaderLibrary.url
+                        )
                     ),
                     wallClock: simulationClock
                 )

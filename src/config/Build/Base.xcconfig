@@ -43,10 +43,6 @@ PRODUCT_NAME = $(TARGET_NAME)
 // which every target that produces a bundle includes.
 CODE_SIGN_STYLE = Automatic
 
-// Metal. Shader warnings are errors, same as the Swift lint gate.
-MTL_FAST_MATH = YES
-MTL_TREAT_WARNINGS_AS_ERRORS = YES
-
 // Localization.
 LOCALIZATION_PREFERS_STRING_CATALOGS = YES
 ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES
