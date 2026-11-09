@@ -6,7 +6,7 @@
 import Foundation
 public import OpenSkyActors
 import OpenSkyActorsInterface
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -37,7 +37,7 @@ public protocol ActorWorldHost: AnyObject {
     var magic: any MagicPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var actorRecords: (any ActorRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
     var mapWorld: any MapWorldPort { get }
     var mounts: any MountPort { get }
@@ -162,7 +162,7 @@ public final class ActorWorldAdapter {
 
     private func resolveDisplayName(of key: ReferenceKey, base: FormID) -> String? {
         guard
-            let templates = game.worldData?
+            let templates = game.actorRecords?
                 .actorValueBaselines?.resolver?.templates,
             let strings = game.journal.strings
         else { return nil }

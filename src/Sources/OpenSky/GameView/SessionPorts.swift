@@ -32,13 +32,7 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import simd
 
-final class SessionPorts {
-    unowned let scope: GameSessionScope
-
-    init(scope: GameSessionScope) {
-        self.scope = scope
-    }
-}
+final class SessionPorts: SessionRecordPorts {}
 
 extension SessionPorts {
     var actorGraphWorld: any ActorGraphWorldPort {
@@ -532,10 +526,6 @@ extension SessionPorts {
 
     var vehicles: any VehiclePort {
         scope.vehicles
-    }
-
-    var worldData: WorldDataStores? {
-        scope.worldData
     }
 
     var worldLoadReport: WorldLoadReport? {

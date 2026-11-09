@@ -5,7 +5,7 @@
 import Foundation
 public import OpenSkyActorPresentation
 import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
@@ -33,7 +33,7 @@ public protocol VehicleWorldHost: AnyObject {
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
     var vehicles: any VehiclePort { get }
-    var worldData: WorldDataStores? { get }
+    var actorRecords: (any ActorRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 

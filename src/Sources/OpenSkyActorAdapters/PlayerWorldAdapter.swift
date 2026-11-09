@@ -5,7 +5,7 @@
 public import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -33,7 +33,7 @@ public protocol PlayerWorldHost: AnyObject {
     var player: any PlayerPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var worldState: any WorldStateStorePort { get }
-    var worldData: WorldDataStores? { get }
+    var actorRecords: (any ActorRecordsPort)? { get }
     var cellRunner: (any SerialCellBuildRunnerPort)? { get }
 }
 
@@ -65,7 +65,7 @@ public final class PlayerWorldAdapter {
     /// The rigs assemble on the session's build queue, beside the cells.
     public func rigSource() -> PlayerRigQueue? {
         game.cellRunner.map {
-            PlayerRigQueue(runner: $0, fileSystem: game.worldData?.scriptFileSystem)
+            PlayerRigQueue(runner: $0, fileSystem: game.actorRecords?.scriptFileSystem)
         }
     }
 }
@@ -136,7 +136,8 @@ extension PlayerWorldAdapter: PlayerWorld {
     public var playerBehaviorProject: String? {
         guard
             let identity = game.worldState.component(PlayerIdentityState.self, for: .player),
-            let race = game.worldData?.actorValueBaselines?.resolver?.races[identity.race.rawValue]
+            let race = game.actorRecords?.actorValueBaselines?.resolver?
+                .races[identity.race.rawValue]
         else { return nil }
         let graphs = race.details.behaviorGraphs
         guard let model = (identity.isFemale ? graphs.female : nil) ?? graphs.male else {

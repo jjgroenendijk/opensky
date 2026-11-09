@@ -5,7 +5,7 @@
 public import OpenSkyActorPresentation
 import OpenSkyAIPackages
 import OpenSkyBehavior
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
@@ -32,7 +32,7 @@ public protocol IdleWorldHost: AnyObject {
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
     var animationClips: ActorClipLoader? { get }
     var vehicleWorld: any VehicleWorldPort { get }
-    var worldData: WorldDataStores? { get }
+    var actorRecords: (any ActorRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -56,7 +56,7 @@ public final class IdleWorldAdapter {
     /// The clip loader is built first.
     public func sessionData() -> IdleSessionData? {
         guard
-            let store = game.worldData?.idleStore,
+            let store = game.actorRecords?.idleStore,
             let files = game.audioFileSystem,
             let clips = game.animationClips
         else { return nil }
