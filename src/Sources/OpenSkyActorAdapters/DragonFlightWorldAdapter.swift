@@ -6,7 +6,7 @@ public import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyAIPackages
 public import OpenSkyBehavior
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -31,7 +31,7 @@ public protocol DragonFlightWorldHost: AnyObject {
     var mounts: any MountPort { get }
     var packages: any PackagePort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var actorRecords: (any ActorRecordsPort)? { get }
 }
 
 public final class DragonFlightWorldAdapter {
@@ -72,7 +72,7 @@ public final class DragonFlightWorldAdapter {
 
 extension DragonFlightWorldAdapter: DragonFlightWorld {
     public var dragonFlightSettings: DragonFlightSettings {
-        game.worldData?.dragonFlightSettings ?? .standard
+        game.actorRecords?.dragonFlightSettings ?? .standard
     }
 
     /// The living fliers, and the dead ones still in the air, which crash-land.

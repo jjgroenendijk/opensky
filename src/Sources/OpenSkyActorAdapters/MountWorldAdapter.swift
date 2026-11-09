@@ -5,7 +5,7 @@
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrimeInterface
@@ -38,7 +38,7 @@ public protocol MountWorldHost: AnyObject {
     var perks: any PerkPort { get }
     var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
-    var worldData: WorldDataStores? { get }
+    var actorRecords: (any ActorRecordsPort)? { get }
 }
 
 public final class MountWorldAdapter {
@@ -171,7 +171,7 @@ public final class MountWorldAdapter {
     private func race(of key: ReferenceKey) -> Race? {
         guard
             let base = game.streamer.residentActorEntry(key: key)?.placedActor?.base,
-            let resolver = game.worldData?.actorValueBaselines?.resolver
+            let resolver = game.actorRecords?.actorValueBaselines?.resolver
         else { return nil }
         let identity = ActorIdentityRecords(resolver: resolver)
         return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }
@@ -219,7 +219,7 @@ extension MountWorldAdapter: MountWorld {
         return PlayerMountDriveStart(
             mount: key, kind: kind, saddleBone: saddleBone, feet: hold.feetPosition,
             yaw: hold.yaw, graph: loan?.instance, pose: loan?.pose ?? SkinnedPoseBuffer(),
-            configuration: game.worldData?.mountMovementConfiguration ?? .synthetic
+            configuration: game.actorRecords?.mountMovementConfiguration ?? .synthetic
         )
     }
 

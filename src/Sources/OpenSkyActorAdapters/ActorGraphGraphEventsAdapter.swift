@@ -2,7 +2,7 @@ import OpenSkyActorPresentation
 import OpenSkyAIPackages
 public import OpenSkyAudio
 import OpenSkyBehavior
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsCore
@@ -29,7 +29,7 @@ public protocol ActorGraphGraphEventsHost: AnyObject {
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
-    var worldData: WorldDataStores? { get }
+    var actorRecords: (any ActorRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -58,7 +58,7 @@ extension ActorGraphGraphEventsAdapter {
     }
 
     public func graphBase(of actor: ReferenceKey, base: FormID) -> ActorGraphBase? {
-        guard let resolver = game.worldData?.actorValueBaselines?.resolver else { return nil }
+        guard let resolver = game.actorRecords?.actorValueBaselines?.resolver else { return nil }
         let roll = game.worldState.leveledRoll(
             of: actor, base: base, with: resolver.templates.leveling
         )
@@ -100,7 +100,7 @@ extension ActorGraphGraphEventsAdapter {
 
     /// The sound types of the actor's own NPC_ record, the leaf of its leveled lists.
     private func sounds(of key: ReferenceKey, base: FormID) -> ActorSounds {
-        guard let resolver = game.worldData?.actorValueBaselines?.resolver else { return .none }
+        guard let resolver = game.actorRecords?.actorValueBaselines?.resolver else { return .none }
         let templates = resolver.templates
         let roll = game.worldState.leveledRoll(of: key, base: base, with: templates.leveling)
         let cacheKey = LeveledActorRollKey(base: base, roll: roll)

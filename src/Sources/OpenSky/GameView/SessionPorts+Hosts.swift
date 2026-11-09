@@ -59,13 +59,3 @@ extension SessionPorts:
     DialogueCameraFocusHost, DialogueSpeakersHost, DialogueOutcomesHost, InventoryReadoutsHost,
     InventoryPickpocketHost, InventoryPerksHost, InventoryRecipesHost, InventoryVendorHost,
     InventoryCommandsHost {}
-
-extension SessionPorts {
-    var worldRecords: (any WorldRecordsPort)? {
-        worldData
-    }
-
-    var combatRecords: (any CombatRecordsPort)? {
-        worldData
-    }
-}

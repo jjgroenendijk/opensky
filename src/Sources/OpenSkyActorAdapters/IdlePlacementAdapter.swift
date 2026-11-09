@@ -1,7 +1,7 @@
 public import OpenSkyActorPresentation
 import OpenSkyAIPackages
 public import OpenSkyBehavior
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 public import OpenSkyFormatsESM
@@ -29,7 +29,7 @@ public protocol IdlePlacementHost: AnyObject {
     var renderer: (any RendererPort)? { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var actorRecords: (any ActorRecordsPort)? { get }
 }
 
 /// Part of `IdleWorldAdapter`, over its own narrow host.
@@ -41,7 +41,7 @@ extension IdlePlacementAdapter {
     /// FormIDs inside a package are relative to its plugin when that plugin's move.
     public func packageIdleList(_ package: FormID) -> IdlePackageList? {
         guard
-            let store = game.worldData?.packageStore,
+            let store = game.actorRecords?.packageStore,
             let idles = store.package(package)?.details.idleAnimations,
             let resolver = store.translation(of: package)?.source ?? game.scripts.bridge?
                 .formIDResolver

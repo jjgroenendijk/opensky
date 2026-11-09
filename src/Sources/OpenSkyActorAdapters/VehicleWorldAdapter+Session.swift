@@ -31,7 +31,7 @@ extension VehicleWorldAdapter {
 
     private func registerVehicleWheels(stage: SessionStage) {
         let gameSession = stage.gameSession
-        guard let files = game.worldData?.scriptFileSystem else {
+        guard let files = game.actorRecords?.scriptFileSystem else {
             return
         }
         let wheels = AssetLoader<String, [SIMD2<Float>]> { path in

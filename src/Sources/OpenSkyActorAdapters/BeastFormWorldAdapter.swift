@@ -3,7 +3,7 @@
 // natives. The rules live in `PlayerBeastForm` (docs/engine/beast-forms.md).
 
 import OpenSkyActorsInterface
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
@@ -20,7 +20,7 @@ public protocol BeastFormWorldHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var menuWorld: any MenuWorldPort { get }
     var scripts: any ScriptPort { get }
-    var worldData: WorldDataStores? { get }
+    var actorRecords: (any ActorRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -59,7 +59,7 @@ public final class BeastFormWorldAdapter {
     }
 
     private var races: [UInt32: Race] {
-        game.worldData?.actorValueBaselines?.resolver?.races ?? [:]
+        game.actorRecords?.actorValueBaselines?.resolver?.races ?? [:]
     }
 
     var playerRace: Race? {
