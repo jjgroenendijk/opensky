@@ -5,7 +5,6 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDialogue
@@ -13,15 +12,11 @@ import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld
@@ -40,8 +35,8 @@ public struct StoryWiring {
             let files = adapter.game.audioFileSystem
         {
             let locator = VoiceLineLocator(dialogue: dialogue, quests: questStore)
-            adapter.voiceLocator = locator
-            adapter.voiceTimer = SceneVoiceTimer(
+            adapter.state.voiceLocator = locator
+            adapter.state.voiceTimer = SceneVoiceTimer(
                 locator: locator, read: { try files.contents(forPath: $0) }
             )
         }
@@ -68,7 +63,7 @@ public struct StoryWiring {
             adapter.runSessionStart(lists: adapter.sessionStartLists)
         }
         gameSession.worldTick.register(.story) { [weak adapter] _ in
-            adapter?.voiceTimer?.drain()
+            adapter?.state.voiceTimer?.drain()
             adapter?.ambientTalk.tickAmbientSpeech()
             adapter?.sceneLines.run(adapter?.scenes.tick() ?? [])
             adapter?.socialSearch.run(adapter?.storyManager.social.tick() ?? [])

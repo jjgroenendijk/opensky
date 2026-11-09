@@ -32,7 +32,7 @@ public final class MovieWorldAdapter: MoviePlayerWorld {
     /// The logo the game plays before the title menu.
     public static let startupLogo = "BGS_Logo.bik"
 
-    public unowned let game: any MovieWorldHost
+    public let game: any MovieWorldHost
     private var soundID: Int?
     /// The categories this movie muted, unmuted again when it ends.
     private var mutedCategories: [AudioCategory] = []

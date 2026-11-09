@@ -5,25 +5,18 @@
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyCrime
 public import OpenSkyCrimeInterface
 import OpenSkyDialogue
-import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 public import OpenSkyInventoryInterface
-import OpenSkyMenus
-import OpenSkyPerception
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyQuestsInterface
 import OpenSkyRendering
-import OpenSkyScripting
 public import OpenSkySessionInterface
 import OpenSkyWorld
 public import OpenSkyWorldInterface
@@ -48,7 +41,7 @@ public protocol CrimeWorldHost: AnyObject {
 
 /// Answers `CrimeSessionWorld` from the session systems `game` owns.
 public final class CrimeWorldAdapter {
-    public unowned let game: any CrimeWorldHost
+    public let game: any CrimeWorldHost
 
     public let factionsHost: any CrimeFactionsHost
     public let jailHost: any CrimeJailHost

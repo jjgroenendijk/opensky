@@ -3,7 +3,6 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
 public import OpenSkyDialogue
@@ -11,15 +10,11 @@ public import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -36,12 +31,12 @@ public protocol StorySceneCastHost: AnyObject {
     var packages: any PackagePort { get }
     var scripts: any ScriptPort { get }
     var worldState: any WorldStateStorePort { get }
+    var scenes: any ScenePort { get }
 }
 
 /// Part of `StoryWorldAdapter`, over its own narrow host.
 public struct StorySceneCastAdapter {
-    public unowned let owner: StoryWorldAdapter
-    public unowned let game: any StorySceneCastHost
+    public let game: any StorySceneCastHost
 }
 
 extension StorySceneCastAdapter {
@@ -61,7 +56,7 @@ extension StorySceneCastAdapter {
         let override = PackageOverride(
             packages: packages,
             owner: PackageOverrideOwner(source: owner.scene, slot: owner.action),
-            aliasQuest: self.owner.scenes.catalog.scene(owner.scene)?.quest
+            aliasQuest: game.scenes.catalog.scene(owner.scene)?.quest
         )
         return game.packages.runOverride(override, actor: actor) == .done ? .done : .running
     }
@@ -88,7 +83,7 @@ extension StorySceneCastAdapter {
 
     public func stopQuest(_ quest: FormID) {
         guard
-            let runtime = owner.questRuntime,
+            let runtime = (game.scripts.bridge?.questRuntime as? QuestRuntime),
             let key = runtime.quests.key(for: quest) else { return }
         attempt { try game.scripts.bridge?.stopQuest(for: key) }
     }

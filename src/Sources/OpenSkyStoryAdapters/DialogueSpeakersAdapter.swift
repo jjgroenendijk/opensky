@@ -2,26 +2,21 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
-import OpenSkyFactions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 public import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -44,8 +39,8 @@ public protocol DialogueSpeakersHost: AnyObject {
 
 /// Part of `DialogueWorldAdapter`, over its own narrow host.
 public struct DialogueSpeakersAdapter {
-    public unowned let owner: DialogueWorldAdapter
-    public unowned let game: any DialogueSpeakersHost
+    public let game: any DialogueSpeakersHost
+    public let voiceTypes: DialogueVoiceTypeCache
 }
 
 extension DialogueSpeakersAdapter {
@@ -109,8 +104,8 @@ extension DialogueSpeakersAdapter {
                 of: entry.key, base: base, with: records.templates.leveling
             )
             let key = LeveledActorRollKey(base: base, roll: roll)
-            let voice = owner.voiceTypesByRoll[key] ?? records.voiceType(ofBase: base, roll: roll)
-            owner.voiceTypesByRoll[key] = voice
+            let voice = voiceTypes.byRoll[key] ?? records.voiceType(ofBase: base, roll: roll)
+            voiceTypes.byRoll[key] = voice
             voices[entry.key] = voice
         }
         return voices

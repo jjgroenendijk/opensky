@@ -6,26 +6,21 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
 public import OpenSkyDialogue
 public import OpenSkyDialogueInterface
-import OpenSkyFactions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 public import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -48,27 +43,23 @@ public protocol DialogueWorldHost: AnyObject {
 
 /// Answers `DialogueWorld` from the session systems `game` owns.
 public final class DialogueWorldAdapter {
-    public unowned let game: any DialogueWorldHost
-    /// `VTCK` by actor base. A template walk per actor per condition context costs too much.
-    public var voiceTypesByRoll: [LeveledActorRollKey: FormID?] = [:]
+    public let game: any DialogueWorldHost
+    public let voiceTypes = DialogueVoiceTypeCache()
 
     public let cameraWiringHost: any DialogueCameraWiringHost
     public let speakersHost: any DialogueSpeakersHost
     public let outcomesHost: any DialogueOutcomesHost
 
     public var cameraWiring: DialogueCameraWiringAdapter {
-        DialogueCameraWiringAdapter(
-            owner: self,
-            game: cameraWiringHost
-        )
+        DialogueCameraWiringAdapter(game: cameraWiringHost)
     }
 
     public var speakers: DialogueSpeakersAdapter {
-        DialogueSpeakersAdapter(owner: self, game: speakersHost)
+        DialogueSpeakersAdapter(game: speakersHost, voiceTypes: voiceTypes)
     }
 
     public var outcomes: DialogueOutcomesAdapter {
-        DialogueOutcomesAdapter(owner: self, game: outcomesHost)
+        DialogueOutcomesAdapter(game: outcomesHost)
     }
 
     public init(game: some DialogueWorldHost & DialogueCameraWiringHost & DialogueSpeakersHost &
@@ -114,9 +105,7 @@ extension DialogueWorldAdapter: DialogueWorld {
     }
 
     public func spokeToPlayer(_ speaker: ReferenceKey) {
-        game.scripts.bridge?.updateScriptedState(of: speaker) {
-            $0.setFlag(ScriptedStateName.talkedToPlayer, true)
-        }
+        outcomes.spokeToPlayer(speaker)
     }
 }
 

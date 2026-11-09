@@ -1,13 +1,11 @@
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyDialogue
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -27,12 +25,15 @@ public protocol StoryAmbientTalkHost: AnyObject {
     var packages: any PackagePort { get }
     var perception: any PerceptionPort { get }
     var streamer: (any CellStreamerPort)? { get }
+    var scenes: any ScenePort { get }
 }
 
 /// Part of `StoryWorldAdapter`, over its own narrow host.
 public struct StoryAmbientTalkAdapter {
-    public unowned let owner: StoryWorldAdapter
-    public unowned let game: any StoryAmbientTalkHost
+    public let game: any StoryAmbientTalkHost
+    public let state: StoryPartState
+    public let sceneCast: StorySceneCastAdapter
+    public let sceneLines: StorySceneLinesAdapter
 }
 
 extension StoryAmbientTalkAdapter {
@@ -42,11 +43,11 @@ extension StoryAmbientTalkAdapter {
 
     /// Starts the lines whose delay has passed, then runs the ambient pass on its interval.
     public func tickAmbientSpeech() {
-        let now = owner.sceneSeconds
-        let due = owner.delayedLines.filter { $0.due <= now }
-        owner.delayedLines.removeAll { $0.due <= now }
+        let now = sceneCast.sceneSeconds
+        let due = state.delayedLines.filter { $0.due <= now }
+        state.delayedLines.removeAll { $0.due <= now }
         for line in due {
-            owner.sceneLines.startLine(
+            sceneLines.startLine(
                 info: line.info,
                 speaker: line.speaker,
                 lookAt: line.lookAt,
@@ -56,11 +57,11 @@ extension StoryAmbientTalkAdapter {
         if game.streamer?.dynamicBodies.lastPushCount ?? 0 > 0 {
             commentOnPlayer(.knockOver)
         }
-        owner.framesSinceAmbientSpeech += 1
-        guard owner.framesSinceAmbientSpeech >= Self.ambientSpeechInterval else { return }
-        owner.framesSinceAmbientSpeech = 0
-        let elapsed = Float(now - (owner.lastAmbientSpeechSeconds ?? now))
-        owner.lastAmbientSpeechSeconds = now
+        state.framesSinceAmbientSpeech += 1
+        guard state.framesSinceAmbientSpeech >= Self.ambientSpeechInterval else { return }
+        state.framesSinceAmbientSpeech = 0
+        let elapsed = Float(now - (state.lastAmbientSpeechSeconds ?? now))
+        state.lastAmbientSpeechSeconds = now
         guard let frame = ambientSpeechFrame(now: now) else { return }
         for line in game.dialogue.ambientLines(frame, seconds: elapsed) {
             sayAmbient(line)
@@ -70,8 +71,8 @@ extension StoryAmbientTalkAdapter {
     /// A witness near the player comments on `line`, such as a shout or a bow shot.
     public func commentOnPlayer(_ line: NPCSpeechLine) {
         guard
-            game.dialogue.isSharedReady(line, now: owner.sceneSeconds),
-            let frame = ambientSpeechFrame(now: owner.sceneSeconds)
+            game.dialogue.isSharedReady(line, now: sceneCast.sceneSeconds),
+            let frame = ambientSpeechFrame(now: sceneCast.sceneSeconds)
         else { return }
         if
             let said = game.dialogue.commentOnPlayer(
@@ -86,7 +87,7 @@ extension StoryAmbientTalkAdapter {
 
     /// `speaker` says its line of `line`'s subtype now, if its wait allows.
     public func sayOwnLine(_ line: NPCSpeechLine, speaker: ReferenceKey) {
-        guard let info = game.dialogue.npcLine(line, speaker: speaker, now: owner.sceneSeconds)
+        guard let info = game.dialogue.npcLine(line, speaker: speaker, now: sceneCast.sceneSeconds)
         else {
             return
         }
@@ -107,17 +108,18 @@ extension StoryAmbientTalkAdapter {
             attempt({ try runtime.choose(offer.info, speaker: speaker) }) != nil,
             let info = runtime.dialogue.info(offer.info)
         else { return nil }
-        let seconds = owner.lineDuration(of: info, speaker: speaker) ?? SceneLine.defaultSeconds
-        owner.speak(info: offer.info, speaker: speaker, lookAt: lookAt, seconds: seconds)
+        let seconds = sceneLines.lineDuration(of: info, speaker: speaker) ?? SceneLine
+            .defaultSeconds
+        sceneLines.speak(info: offer.info, speaker: speaker, lookAt: lookAt, seconds: seconds)
         return seconds
     }
 
     private func sayAmbient(_ line: AmbientLine) {
         guard let info = game.dialogue.runtime?.dialogue.info(line.info) else { return }
-        let seconds = owner.lineDuration(of: info, speaker: line.speaker) ?? SceneLine
+        let seconds = sceneLines.lineDuration(of: info, speaker: line.speaker) ?? SceneLine
             .defaultSeconds
         let lookAt: ReferenceKey? = line.kind == .combatTaunt ? nil : .player
-        owner.speak(info: line.info, speaker: line.speaker, lookAt: lookAt, seconds: seconds)
+        sceneLines.speak(info: line.info, speaker: line.speaker, lookAt: lookAt, seconds: seconds)
     }
 
     private func ambientSpeechFrame(now: Double) -> AmbientSpeechFrame? {
@@ -125,7 +127,7 @@ extension StoryAmbientTalkAdapter {
             game.streamer != nil,
             let player = game.gameSession?.walkController.feetPosition
         else { return nil }
-        let inScenes = owner.scenes.actorsInScenes()
+        let inScenes = game.scenes.actorsInScenes()
         let conversation = game.dialogue.conversationSpeaker
         let perception = game.perception.runtime
         let loop = game.combat.loop
@@ -147,24 +149,7 @@ extension StoryAmbientTalkAdapter {
         )
     }
 
-    /// The author named these idles, so they play without their own conditions.
-    public func playResponseIdles(of info: FormID, speaker: ReferenceKey, listener: ReferenceKey?) {
-        guard
-            let dialogue = game.dialogue.runtime?.dialogue,
-            let source = dialogue.responseSource(ofInfo: info)
-        else { return }
-        let resolver = dialogue.sourceResolver(ofInfo: source.formID)
-        let responses = source.responses
-        if let idle = responses.lazy.compactMap(\.speakerIdle).first.flatMap(resolver.resolve) {
-            game.idles.fireIdle(idle, on: speaker, ignoringConditions: true)
-        }
-        if
-            let listener, listener != speaker,
-            let idle = responses.lazy.compactMap(\.listenerIdle).first.flatMap(resolver.resolve)
-        {
-            game.idles.fireIdle(idle, on: listener, ignoringConditions: true)
-        }
-    }
+    // The author named these idles, so they play without their own conditions.
 }
 
 /// A line waiting out `fSpeechDelay` before it starts.
