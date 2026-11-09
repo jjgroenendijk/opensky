@@ -24,6 +24,7 @@ the legal boundary, is then read less.
 | No game content, no capture, and no wiki page in git | `tools/lint/no-game-content.sh` |
 | App-only code stays in `OpenSky/`, CLI-only code in `OpenSkyCLI/` | `tools/lint/cli-boundary.sh` |
 | A feature uses another only through its `Interface` module; no import of a higher layer | `tools/lint/module-graph.sh` |
+| The port fakes match `OpenSkySessionInterface`; `make fakes` writes them | `tools/lint/fakes.sh` |
 | Swift 6 mode, the same Swift locally and in CI | `tools/lint/swift-baseline.sh` |
 | `any X`, `internal` imports, `unsafe` marks | `tools/lint/language-rules.sh` and the compiler |
 | No `try?` outside `removeItem` and `close`; typed errors | `tools/lint/error-handling.sh` |

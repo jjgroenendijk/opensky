@@ -1131,6 +1131,22 @@ targets += interface(
         "OpenSkyRenderResources"
     ]
 )
+
+// Generated fakes of every session port (tools/fake-gen), for the adapter tests.
+targets += testing(
+    "OpenSkySessionTesting",
+    dependencies: [
+        "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio", "OpenSkyBehavior",
+        "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrimeInterface",
+        "OpenSkyDialogueInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsAnimation",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData",
+        "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyMenusInterface",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyProgressionInterface",
+        "OpenSkyQuestsInterface", "OpenSkyRenderCore", "OpenSkyRenderResources",
+        "OpenSkyRendering", "OpenSkySaveInterface", "OpenSkyScriptingInterface",
+        "OpenSkySessionInterface", "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ]
+)
 targets += composition(
     "OpenSkySession",
     dependencies: [
