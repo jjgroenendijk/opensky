@@ -56,11 +56,6 @@ public protocol MagicPort: AnyObject {
     func playerKnownSpells() -> [ResolvedSpell]
     func playerStaff() -> (staff: HeldStaff, charge: EnchantmentCharge)?
     func raceEffectLinks(base: FormID, actor: ReferenceKey) -> [SpellHitEffectLinks]
-    @discardableResult func readBook(_ item: FormID) -> CastingActionOutcome?
-    @discardableResult func readyKnownSpell(
-        at index: Int,
-        in hand: SpellHand
-    ) -> CastingActionOutcome
     /// Reads `item` and gives the line the outcome shows, or nil for no spell tome.
     func readBookLine(_ item: FormID) -> String?
     /// Readies a known spell and gives the line the outcome shows.

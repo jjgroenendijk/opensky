@@ -21,7 +21,6 @@ public protocol StoryAmbientTalkHost: AnyObject {
     var combat: any CombatPort { get }
     var dialogue: any DialoguePort { get }
     var gameSession: (any GameSessionPort)? { get }
-    var idles: any IdlePort { get }
     var packages: any PackagePort { get }
     var perception: any PerceptionPort { get }
     var streamer: (any CellStreamerPort)? { get }
