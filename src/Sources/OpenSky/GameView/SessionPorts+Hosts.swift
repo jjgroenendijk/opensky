@@ -52,7 +52,7 @@ extension SessionPorts:
     LockpickingBoardHost, MountDragonRidingHost, MessageCameraEffectsHost,
     FollowerCommandTasksHost, IdlePlacementHost, PlayerFirstPersonHost, PlayerFaceHost,
     AudioListenerHost, AudioMixHost, CrimeFactionsHost, CrimeJailHost, CrimeActorsHost,
-    ProgressionTrainingHost, ProgressionEffectsHost, MapTravelHost, MapQuestsHost,
+    ProgressionTrainingHost, ProgressionEffectsHost, MapRecordsHost, MapTravelHost, MapQuestsHost,
     DialogueCameraWiringHost, DialogueSpeakersHost, DialogueOutcomesHost, InventoryReadoutsHost,
     InventoryPickpocketHost, InventoryPerksHost, InventoryRecipesHost, InventoryVendorHost,
     InventoryCommandsHost {}

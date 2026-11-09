@@ -8,14 +8,12 @@ public import OpenSkyGameData
 public import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkySession
 import OpenSkySessionInterface
 import OpenSkyTerrain
 import OpenSkyWorld

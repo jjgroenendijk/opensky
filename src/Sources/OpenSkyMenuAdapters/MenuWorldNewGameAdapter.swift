@@ -3,25 +3,21 @@ import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyLaunch
 import OpenSkyLoading
-import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkySave
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -45,8 +41,9 @@ public protocol MenuWorldNewGameHost: AnyObject {
 
 /// Part of `MenuWorldAdapter`, over its own narrow host.
 public struct MenuWorldNewGameAdapter {
-    public unowned let owner: MenuWorldAdapter
-    public unowned let game: any MenuWorldNewGameHost
+    public let game: any MenuWorldNewGameHost
+    public let state: MenuPartState
+    public let teleports: MenuWorldTeleportsAdapter
 }
 
 extension MenuWorldNewGameAdapter {
@@ -64,14 +61,14 @@ extension MenuWorldNewGameAdapter {
         game.storyWorld.rerunSessionStart()
         game.saveGames.resetPlayTime()
         game.player.refreshBody()
-        owner.coverNextTeleport = true
+        state.coverNextTeleport = true
         switch start {
         case .vanilla:
-            owner.teleports.coverUntilFirstMove()
+            teleports.coverUntilFirstMove()
             if !game.storyWorld.startOpeningQuest() {
-                owner.teleports.abandonNewGameCover()
+                teleports.abandonNewGameCover()
             }
-        case let .cell(editorID): owner.teleportPlayer(.cell(editorID), openingRaceMenu: true)
+        case let .cell(editorID): teleports.teleportPlayer(.cell(editorID), openingRaceMenu: true)
         }
     }
 
@@ -80,6 +77,6 @@ extension MenuWorldNewGameAdapter {
     }
 
     public func quitApplication() {
-        owner.terminateApp()
+        state.terminateApp()
     }
 }

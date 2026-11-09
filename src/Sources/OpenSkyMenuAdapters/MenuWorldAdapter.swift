@@ -2,28 +2,24 @@
 // natives. The rules live in the coordinators in OpenSkyMenus.
 
 public import OpenSkyActorsInterface
-public import OpenSkyAgentControl
+import OpenSkyAgentControl
 import OpenSkyAudio
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyLaunch
 import OpenSkyLoading
-import OpenSkyMagic
+import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkySave
 import OpenSkySaveInterface
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -40,28 +36,10 @@ public protocol MenuWorldHost: MenuInputConsumer {
 }
 
 public final class MenuWorldAdapter {
-    public unowned let game: any MenuWorldHost
-    /// Set by the session scope, because quitting is the app shell's work.
-    public var terminateApp: () -> Void = {}
-    /// Set by the session scope, which owns the game view that reads the keys.
-    public var applyViewBindings: (InputBindings) -> Void = { _ in }
+    public let game: any MenuWorldHost
+    public let state = MenuPartState()
     /// Built on first use, because it walks the install.
     public var titleMeshes: MeshLibrary?
-    public var perkSky: PerkSkySource?
-    /// The move a new game makes, polled each frame until the player stands.
-    public var newGameTeleport: AgentWait?
-    /// A chosen test cell opens the race menu when the move ends; a quest's move does not.
-    public var raceMenuAfterTeleport = false
-    /// The player's race before a script or a magic effect changed it. Not saved.
-    public var originalPlayerRace: FormID?
-    public var startTickerInstalled = false
-    /// The opening quest's player `MoveTo` loads a far cell, so it gets a loading screen.
-    public var coverNextTeleport = false
-    public var teleportCovered = false
-    /// From New until the opening quest moves the player. A dark cover, not the
-    /// loading menu, because that menu pauses the scripts that make the move. On the
-    /// simulation clock, so a game paused by agent control does not run out the limit.
-    public var newGameCoverSince: Double?
     public static let newGameCoverLimitSeconds = 30.0
     /// The camera the logo was placed for, while the title backdrop shows.
     public var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
@@ -74,33 +52,31 @@ public final class MenuWorldAdapter {
 
     public var settingsApply: MenuWorldSettingsApplyAdapter {
         MenuWorldSettingsApplyAdapter(
-            owner: self,
-            game: settingsApplyHost
+            game: settingsApplyHost, state: state
         )
     }
 
     public var skillsRace: MenuWorldSkillsRaceAdapter {
         MenuWorldSkillsRaceAdapter(
-            owner: self,
-            game: skillsRaceHost
+            game: skillsRaceHost, state: state
         )
     }
 
     public var newGame: MenuWorldNewGameAdapter {
-        MenuWorldNewGameAdapter(owner: self, game: newGameHost)
+        MenuWorldNewGameAdapter(
+            game: newGameHost, state: state, teleports: teleports
+        )
     }
 
     public var scriptMenus: MenuWorldScriptMenusAdapter {
         MenuWorldScriptMenusAdapter(
-            owner: self,
-            game: scriptMenusHost
+            game: scriptMenusHost, state: state, skillsRace: skillsRace, teleports: teleports
         )
     }
 
     public var teleports: MenuWorldTeleportsAdapter {
         MenuWorldTeleportsAdapter(
-            owner: self,
-            game: teleportsHost
+            game: teleportsHost, state: state
         )
     }
 
@@ -119,13 +95,8 @@ public final class MenuWorldAdapter {
         game.mapWorld.records
     }
 
-    /// The `Player` record's own identity, before the race menu changed it.
     public var recordIdentity: PlayerIdentityState? {
-        guard let player = records?.player else { return nil }
-        return PlayerIdentityState(
-            record: player, details: player.details,
-            name: game.mapWorld.text(player.name) ?? "Prisoner"
-        )
+        skillsRace.recordIdentity
     }
 
     /// The name and race shown in the save list.

@@ -6,16 +6,14 @@ public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
 public import OpenSkyLoading
-import OpenSkyMenus
+public import OpenSkyMenus
 public import OpenSkyMenusInterface
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
-import OpenSkyRenderCore
+import OpenSkyQuestsInterface
+public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkySession
 public import OpenSkySessionInterface
 import OpenSkyTerrain
 import OpenSkyWorld
@@ -37,8 +35,9 @@ public protocol LoadingScreenPresentationHost: MenuInputConsumer {
 
 /// Part of `LoadingScreenWorldAdapter`, over its own narrow host.
 public struct LoadingScreenPresentationAdapter {
-    public unowned let owner: LoadingScreenWorldAdapter
-    public unowned let game: any LoadingScreenPresentationHost
+    public let game: any LoadingScreenPresentationHost
+    public let state: LoadingScreenPartState
+    public let movie: MenuMovieOverlay
 }
 
 extension LoadingScreenPresentationAdapter {
@@ -51,37 +50,37 @@ extension LoadingScreenPresentationAdapter {
             }
             return
         }
-        if owner.movieText != text {
+        if state.movieText != text {
             startMovie(text: text)
         }
-        if !frame.drawsObject, !owner.movieFadedOut, owner.movie.isLoaded {
-            owner.movieFadedOut = true
+        if !frame.drawsObject, !state.movieFadedOut, movie.isLoaded {
+            state.movieFadedOut = true
             attempt { try game.renderer?.updateSWFOverlay(LoadingMenuMovieBridge.fadeOut(runtime:))
             }
         }
     }
 
     public func startMovie(text: String) {
-        owner.movieText = text
-        owner.movieFadedOut = false
+        state.movieText = text
+        state.movieFadedOut = false
         let content = movieContent(text: text)
-        owner.movie.start(
+        movie.start(
             path: LoadingMenuMovieBridge.moviePath,
-            prepare: { [weak owner] runtime in
-                LoadingMenuMovieBridge.prepare(runtime: runtime) { owner?.movieText ?? "" }
+            prepare: { [weak state] runtime in
+                LoadingMenuMovieBridge.prepare(runtime: runtime) { state?.movieText ?? "" }
             },
             activate: { LoadingMenuMovieBridge.activate(runtime: $0, content: content) }
         )
     }
 
     public var isMovieLoaded: Bool {
-        owner.movie.isLoaded
+        movie.isLoaded
     }
 
     private func stopMovie() {
-        guard owner.movieText != nil else { return }
-        owner.movieText = nil
-        owner.movie.stop()
+        guard state.movieText != nil else { return }
+        state.movieText = nil
+        movie.stop()
     }
 
     private func movieContent(text: String) -> LoadingMenuContent {
@@ -111,9 +110,9 @@ extension LoadingScreenPresentationAdapter {
         guard let renderer = game.renderer, let gameSession = game.gameSession else { return }
         do {
             if let frame, frame.drawsObject {
-                let view = owner.coverView(gameSession)
+                let view = coverView(gameSession)
                 try renderer.setLoadingCover(
-                    owner.placement(frame, gameSession: gameSession),
+                    placement(frame, gameSession: gameSession),
                     lighting: LoadingCoverFrame.lighting(yaw: view.yaw, pitch: view.pitch)
                 )
             } else {
@@ -126,7 +125,7 @@ extension LoadingScreenPresentationAdapter {
                 )
         }
         presentMovie(frame)
-        gameSession.uiScene = frame?.overlay(showsText: !owner.movie.isLoaded) ?? .empty
+        gameSession.uiScene = frame?.overlay(showsText: !movie.isLoaded) ?? .empty
         game.hud.setCovered(frame != nil)
     }
 
@@ -137,5 +136,68 @@ extension LoadingScreenPresentationAdapter {
         } else {
             game.menuMode.dismiss(LoadingScreenWorldAdapter.identifier)
         }
+    }
+}
+
+extension LoadingScreenPresentationAdapter {
+    /// A model's radius is half its bound's diagonal.
+    private static let halfDiagonal: Float = 0.5
+    /// The radius of a cover model whose bound is unknown, in units.
+    private static let fallbackCoverRadius: Float = 64
+
+    public func placement(
+        _ frame: LoadingCoverFrame,
+        gameSession: any GameSessionPort
+    ) -> [RenderPlacement] {
+        let renderer = gameSession.renderer
+        guard
+            frame.drawsObject, let path = frame.model,
+            !state.failedModels.contains(path) else { return [] }
+        if
+            state.meshes == nil,
+            let fileSystem = game.worldData?.scriptFileSystem
+        {
+            let textures = attempt {
+                try TextureLibrary(fileSystem: fileSystem, device: renderer.device)
+            }
+            state.meshes = textures.map {
+                MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: $0)
+            }
+        }
+        do {
+            guard let model = try state.meshes?.model(path: path) else { return [] }
+            let view = coverView(gameSession)
+            let radius = state.meshes?.bounds(forPath: path)
+                .map { simd_distance($0.max, $0.min) * Self.halfDiagonal } ?? Self
+                .fallbackCoverRadius
+            return [RenderPlacement(
+                model: model,
+                transform: frame.objectTransform(
+                    eye: view.position, yaw: view.yaw, pitch: view.pitch, radius: radius,
+                    cameraOffset: cameraOffset(frame)
+                ),
+                castsShadows: false,
+                layer: .loadingCover
+            )]
+        } catch {
+            state.failedModels.insert(path)
+            LoadingScreenWorldAdapter.logger
+                .warning("[WARNING] loading screen model failed: \(path, privacy: .public)")
+            return []
+        }
+    }
+
+    public func coverView(_ gameSession: any GameSessionPort) -> FreeFlyCamera {
+        gameSession.dialogueRestorePose ?? gameSession.freeFlyCamera
+    }
+
+    /// The path's camera position at `seconds`, looping over the controller's window.
+    private func cameraOffset(_ frame: LoadingCoverFrame) -> SIMD3<Float> {
+        guard let path = frame.cameraPath, let track = state.cameraPaths?.value(for: path) else {
+            return .zero
+        }
+        let length = Double(track.stopTime - track.startTime)
+        let local = length > 0 ? frame.elapsedSeconds.truncatingRemainder(dividingBy: length) : 0
+        return track.translation(at: track.startTime + Float(local))
     }
 }

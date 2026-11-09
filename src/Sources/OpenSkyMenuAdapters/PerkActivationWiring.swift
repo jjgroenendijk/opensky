@@ -3,12 +3,9 @@
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld

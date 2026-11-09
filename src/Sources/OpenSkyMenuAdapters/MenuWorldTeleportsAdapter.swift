@@ -3,25 +3,21 @@ import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyInventoryInterface
 public import OpenSkyLaunch
 import OpenSkyLoading
-import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkySave
 public import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -43,8 +39,8 @@ public protocol MenuWorldTeleportsHost: AnyObject {
 
 /// Part of `MenuWorldAdapter`, over its own narrow host.
 public struct MenuWorldTeleportsAdapter {
-    public unowned let owner: MenuWorldAdapter
-    public unowned let game: any MenuWorldTeleportsHost
+    public let game: any MenuWorldTeleportsHost
+    public let state: MenuPartState
 }
 
 extension MenuWorldTeleportsAdapter {
@@ -64,13 +60,13 @@ extension MenuWorldTeleportsAdapter {
         case let .cell(editorID): target = .cell(editorID)
         case let .exterior(worldspace, x, y): target = .grid(x: x, y: y, worldspace: worldspace)
         }
-        owner.coverNextTeleport = true
+        state.coverNextTeleport = true
         teleportPlayer(target, openingRaceMenu: false)
     }
 
     /// A load puts the player back where the save was made, behind the loading screen.
     public func restorePlayerPlace(_ place: SavePlayerPlace) {
-        owner.coverNextTeleport = true
+        state.coverNextTeleport = true
         movePlayer(openingRaceMenu: false) { [game] () throws(AgentFailure) in
             try game.agentWorld.teleportJob(to: place)
         }
@@ -78,7 +74,7 @@ extension MenuWorldTeleportsAdapter {
 
     /// The launcher's Follow Windows Game, behind the loading screen like a load.
     public func followView(_ target: AgentViewTarget) {
-        owner.coverNextTeleport = true
+        state.coverNextTeleport = true
         movePlayer(openingRaceMenu: false) { [game] () throws(AgentFailure) in
             try game.agentWorld.viewJob(target)
         }
@@ -88,16 +84,16 @@ extension MenuWorldTeleportsAdapter {
         openingRaceMenu: Bool,
         job: () throws(AgentFailure) -> any AgentTeleportJobPort
     ) {
-        owner.raceMenuAfterTeleport = openingRaceMenu
+        state.raceMenuAfterTeleport = openingRaceMenu
         // In the same frame, so no world shows between the two covers.
         liftNewGameCover()
-        if owner.coverNextTeleport {
-            owner.coverNextTeleport = false
-            owner.teleportCovered = true
+        if state.coverNextTeleport {
+            state.coverNextTeleport = false
+            state.teleportCovered = true
             game.loadingScreens.beginLoad(at: Date().timeIntervalSinceReferenceDate)
         }
         do {
-            owner.newGameTeleport = try job().wait
+            state.newGameTeleport = try job().wait
         } catch {
             game.hud.showNotification("Move: \(error.message)")
             liftTeleportCover(at: Date().timeIntervalSinceReferenceDate)
@@ -108,23 +104,25 @@ extension MenuWorldTeleportsAdapter {
     }
 
     private func installStartTicker() {
-        guard !owner.startTickerInstalled, let gameSession = game.gameSession else { return }
-        owner.startTickerInstalled = true
-        gameSession.frameSteps.register(.newGameTeleport) { [weak owner] _ in
-            owner?.teleports.pollNewGameTeleport(now: Date().timeIntervalSinceReferenceDate)
+        guard !state.startTickerInstalled, let gameSession = game.gameSession else { return }
+        state.startTickerInstalled = true
+        gameSession.frameSteps.register(.newGameTeleport) { [weak game, state] _ in
+            guard let game else { return }
+            MenuWorldTeleportsAdapter(game: game, state: state)
+                .pollNewGameTeleport(now: Date().timeIntervalSinceReferenceDate)
         }
     }
 
     public func coverUntilFirstMove() {
-        owner.newGameCoverSince = game.simulationClock.now
+        state.newGameCoverSince = game.simulationClock.now
         attempt { try game.renderer?.setLoadingCover([]) }
         game.hud.setCovered(true)
         installStartTicker()
     }
 
     private func liftNewGameCover() {
-        guard owner.newGameCoverSince != nil else { return }
-        owner.newGameCoverSince = nil
+        guard state.newGameCoverSince != nil else { return }
+        state.newGameCoverSince = nil
         attempt { try game.renderer?.setLoadingCover(nil) }
         game.hud.setCovered(false)
     }
@@ -137,14 +135,14 @@ extension MenuWorldTeleportsAdapter {
 
     private func pollNewGameTeleport(now: Double) {
         if
-            let since = owner.newGameCoverSince,
+            let since = state.newGameCoverSince,
             game.simulationClock.now - since > MenuWorldAdapter.newGameCoverLimitSeconds
         {
             MenuWorldAdapter.logger.warning("[WARNING] the opening quest did not move the player")
             abandonNewGameCover()
         }
-        guard let wait = owner.newGameTeleport, let result = wait.poll(now).finish else { return }
-        owner.newGameTeleport = nil
+        guard let wait = state.newGameTeleport, let result = wait.poll(now).finish else { return }
+        state.newGameTeleport = nil
         if case let .failure(error) = result {
             game.hud.showNotification("Move: \(error.message)")
         }
@@ -154,15 +152,15 @@ extension MenuWorldTeleportsAdapter {
 
     /// A new or loaded game is played, so the player walks rather than flies.
     private func liftTeleportCover(at now: Double) {
-        guard owner.teleportCovered else { return }
-        owner.teleportCovered = false
+        guard state.teleportCovered else { return }
+        state.teleportCovered = false
         game.loadingScreens.loadFinished(at: now)
         game.gameSession?.setMovementMode(.walk)
     }
 
     private func openRaceMenuIfAsked() {
-        guard owner.raceMenuAfterTeleport else { return }
-        owner.raceMenuAfterTeleport = false
+        guard state.raceMenuAfterTeleport else { return }
+        state.raceMenuAfterTeleport = false
         game.raceMenu.open(limited: false)
     }
 }

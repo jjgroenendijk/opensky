@@ -138,8 +138,8 @@ extension GameSessionScopeFactories {
 
     func makeMenuWorld() -> MenuWorldAdapter {
         let adapter = MenuWorldAdapter(game: scope.ports)
-        adapter.terminateApp = { NSApplication.shared.terminate(nil) }
-        adapter.applyViewBindings = { [unowned scope] in
+        adapter.state.terminateApp = { NSApplication.shared.terminate(nil) }
+        adapter.state.applyViewBindings = { [unowned scope] in
             (scope.hostView as? GameMetalView)?.bindings = $0
         }
         return adapter

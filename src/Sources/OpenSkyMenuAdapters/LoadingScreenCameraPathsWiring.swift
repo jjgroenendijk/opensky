@@ -10,14 +10,12 @@ import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkySession
 import OpenSkySessionInterface
 import OpenSkyTerrain
 public import OpenSkyWorld
@@ -35,7 +33,7 @@ public struct LoadingScreenCameraPathsWiring {
         for path in Set(screens.compactMap(\.record.cameraPath)) {
             paths.prefetch(path)
         }
-        adapter.cameraPaths = paths
+        adapter.state.cameraPaths = paths
         gameSession.assetDrains.register(.loadingCameraPaths) { _ in paths.drain() }
     }
 }

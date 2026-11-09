@@ -9,7 +9,6 @@ public import OpenSkyGameData
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 public import OpenSkyRendering
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld

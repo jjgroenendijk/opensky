@@ -11,11 +11,10 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
-import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld

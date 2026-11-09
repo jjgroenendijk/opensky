@@ -2,9 +2,7 @@ import Foundation
 public import OpenSkyCells
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
@@ -23,7 +21,7 @@ public protocol MenuScreensGiftListsHost: AnyObject {
 
 /// Part of `MenuScreensWorldAdapter`, over its own narrow host.
 public struct MenuScreensGiftListsAdapter {
-    public unowned let game: any MenuScreensGiftListsHost
+    public let game: any MenuScreensGiftListsHost
 }
 
 extension MenuScreensGiftListsAdapter {
@@ -44,7 +42,7 @@ extension MenuScreensGiftListsAdapter {
     }
 
     public func readySpell(at index: Int, leftHand: Bool) -> String {
-        game.magic.readyKnownSpell(at: index, in: leftHand ? .left : .right).text
+        game.magic.readyKnownSpellLine(at: index, in: leftHand ? .left : .right)
     }
 }
 

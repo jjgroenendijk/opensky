@@ -20,6 +20,13 @@ public protocol InventoryPort: AnyObject, Sendable {
     func conditionKeywordCounts(of key: ReferenceKey) -> [FormID: Int32]?
     func containerHolder(for interaction: PlacedInteraction) -> InventoryHolder?
     @discardableResult func craft(_ recipe: ResolvedFormID) -> CraftingActionOutcome
+    /// Crafts `recipe` and gives the line its outcome shows, a refusal in `texts`.
+    func craftLine(_ recipe: ResolvedFormID, texts: GameSettingTexts<CraftingRefusalText>)
+        -> String
+    /// Toggles `item` and gives the line its outcome shows.
+    func toggleAlchemyIngredientLine(_ item: FormID) -> String
+    /// Brews the chosen ingredients and gives the line the outcome shows.
+    func brewChosenIngredientsLine() -> String
     var craftingSnapshot: CraftingControlSnapshot { get }
     @discardableResult func dropPlayerItem(_ item: FormID?, count: Int32) -> ItemActionOutcome
     @discardableResult func dropWeapon(

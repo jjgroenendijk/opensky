@@ -2,27 +2,24 @@
 // their saved states, the view, quest targets, and the fast travel trip.
 
 import Foundation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyCamera
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
+import OpenSkyCrimeInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -45,7 +42,7 @@ public protocol MapWorldHost: MenuInputConsumer {
 }
 
 public final class MapWorldAdapter {
-    public unowned let game: any MapWorldHost
+    public let game: any MapWorldHost
     /// Marker names and places are fixed for a session, so they resolve once.
     /// Marker sites per map worldspace, read once each.
     private var baseSites: [ResolvedFormID: [MapMarkerSite]] = [:]
@@ -53,25 +50,39 @@ public final class MapWorldAdapter {
     /// The map camera, so the map movie can place markers where the view sees them.
     public private(set) var mapViewPose: CinematicCameraPose?
 
+    public let recordsHost: any MapRecordsHost
     public let travelHost: any MapTravelHost
     public let questsHost: any MapQuestsHost
 
-    public var travel: MapTravelAdapter {
-        MapTravelAdapter(owner: self, game: travelHost)
-    }
-
-    public var quests: MapQuestsAdapter {
-        MapQuestsAdapter(owner: self, game: questsHost)
-    }
-
-    public init(game: some MapWorldHost & MapTravelHost & MapQuestsHost) {
-        travelHost = game
-        questsHost = game
-        self.game = game
+    public var mapRecords: MapRecordsAdapter {
+        MapRecordsAdapter(game: recordsHost)
     }
 
     public var records: MenuRecordData? {
-        game.worldData?.menuRecords
+        mapRecords.records
+    }
+
+    public var mapWorldspace: Worldspace? {
+        mapRecords.mapWorldspace
+    }
+
+    public var mapSettings: MenuMapSettings {
+        mapRecords.mapSettings
+    }
+
+    public var travel: MapTravelAdapter {
+        MapTravelAdapter(game: travelHost, mapRecords: mapRecords)
+    }
+
+    public var quests: MapQuestsAdapter {
+        MapQuestsAdapter(game: questsHost)
+    }
+
+    public init(game: some MapWorldHost & MapRecordsHost & MapTravelHost & MapQuestsHost) {
+        recordsHost = game
+        travelHost = game
+        questsHost = game
+        self.game = game
     }
 
     /// `DESC` text lives in the `.dlstrings` table, names in `.strings`.
@@ -98,12 +109,6 @@ public final class MapWorldAdapter {
             strings = game.localizedStringsLoader?()
         }
         return strings
-    }
-
-    /// The map of the worldspace the player stands in, or of its map parent.
-    public var mapWorldspace: Worldspace? {
-        guard let records, let current = game.streamer?.worldspaceEditorID else { return nil }
-        return records.mapWorldspace(of: current)
     }
 
     private func sites() -> [MapMarkerSite] {
@@ -176,10 +181,6 @@ extension MapWorldAdapter: MapMenuWorld {
 
     public func storeMarkerState(_ state: MapMarkerState, for key: ReferenceKey) {
         game.worldState.set(state, for: key)
-    }
-
-    public var mapSettings: MenuMapSettings {
-        records?.mapSettings ?? .vanilla
     }
 
     public var worldMapLimits: WorldMapLimits? {

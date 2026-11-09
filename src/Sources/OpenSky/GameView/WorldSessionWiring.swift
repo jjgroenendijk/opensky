@@ -238,7 +238,12 @@ final class WorldSessionWiring {
         _ = StoryWiring(game.storyWorld, provider: provider, gameSession: gameSession)
         _ = FollowerCommandWiring(game.followerCommandWorld, gameSession: gameSession)
         _ = CinematicCameraWiring(game.cinematicWorld, gameSession: gameSession)
-        _ = LoadingScreenWiring(game.loadingWorld, streamer: streamer, gameSession: gameSession)
+        // The app sees that a cell scene is a `CellScenePort`; the menu adapters do not.
+        _ = LoadingScreenWiring(
+            game.loadingWorld, streamer: streamer, gameSession: gameSession
+        ) { [weak game] scene in
+            game?.followerCommandWorld.bringFollowers(into: scene)
+        }
         // It wraps the scripts' cell attach, so it comes after `buildScripts`.
         buildCellReset(provider: provider, gameSession: gameSession, streamer: streamer)
     }

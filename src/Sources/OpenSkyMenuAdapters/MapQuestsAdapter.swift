@@ -1,25 +1,22 @@
 import Foundation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyCamera
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
+import OpenSkyMagicInterface
 import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -31,6 +28,7 @@ import simd
 /// What `MapQuestsAdapter` reads from the session.
 @MainActor
 public protocol MapQuestsHost: AnyObject {
+    var mapWorld: any MapWorldPort { get }
     var journal: any JournalPort { get }
     var runtimeState: any RuntimeStatePort { get }
     var streamer: (any CellStreamerPort)? { get }
@@ -39,8 +37,7 @@ public protocol MapQuestsHost: AnyObject {
 
 /// Part of `MapWorldAdapter`, over its own narrow host.
 public struct MapQuestsAdapter {
-    public unowned let owner: MapWorldAdapter
-    public unowned let game: any MapQuestsHost
+    public let game: any MapQuestsHost
 }
 
 extension MapQuestsAdapter {
@@ -53,7 +50,7 @@ extension MapQuestsAdapter {
             }
             return QuestTargetResolver.requests(
                 quest: quest, state: state,
-                text: { [self] in owner.text($0.displayText) ?? "Objective \($0.index)" },
+                text: { [self] in game.mapWorld.text($0.displayText) ?? "Objective \($0.index)" },
                 conditionsPass: questTargetCheck(quest: quest.formID, runtime: runtime)
             )
         }
@@ -62,8 +59,9 @@ extension MapQuestsAdapter {
             alias: { quest, alias in
                 runtime.aliasReference(alias: UInt32(bitPattern: alias), in: quest)
             },
-            place: { [weak owner] key in
-                owner?.quests.currentPosition(of: key).map { .placed(position: $0, cell: nil) }
+            place: { [weak game] key in
+                game.flatMap { MapQuestsAdapter(game: $0).currentPosition(of: key) }
+                    .map { .placed(position: $0, cell: nil) }
             }
         )
     }

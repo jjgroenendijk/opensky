@@ -61,6 +61,10 @@ public protocol MagicPort: AnyObject {
         at index: Int,
         in hand: SpellHand
     ) -> CastingActionOutcome
+    /// Reads `item` and gives the line the outcome shows, or nil for no spell tome.
+    func readBookLine(_ item: FormID) -> String?
+    /// Readies a known spell and gives the line the outcome shows.
+    func readyKnownSpellLine(at index: Int, in hand: SpellHand) -> String
     func restoreShoutCooldown(_ seconds: Float)
     var shoutMachine: ShoutMachine { get }
     var shouts: [ReferenceKey: ResolvedShout] { get }

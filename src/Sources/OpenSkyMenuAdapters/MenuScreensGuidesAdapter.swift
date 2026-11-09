@@ -4,7 +4,6 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 public import OpenSkyRendering
 public import OpenSkySessionInterface
@@ -25,7 +24,7 @@ public protocol MenuScreensGuidesHost: AnyObject {
 
 /// Part of `MenuScreensWorldAdapter`, over its own narrow host.
 public struct MenuScreensGuidesAdapter {
-    public unowned let game: any MenuScreensGuidesHost
+    public let game: any MenuScreensGuidesHost
 }
 
 extension MenuScreensGuidesAdapter {

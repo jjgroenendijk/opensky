@@ -3,25 +3,21 @@ import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyAudio
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyLaunch
 import OpenSkyLoading
-import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkySave
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -46,8 +42,10 @@ public protocol MenuWorldScriptMenusHost: AnyObject {
 
 /// Part of `MenuWorldAdapter`, over its own narrow host.
 public struct MenuWorldScriptMenusAdapter {
-    public unowned let owner: MenuWorldAdapter
-    public unowned let game: any MenuWorldScriptMenusHost
+    public let game: any MenuWorldScriptMenusHost
+    public let state: MenuPartState
+    public let skillsRace: MenuWorldSkillsRaceAdapter
+    public let teleports: MenuWorldTeleportsAdapter
 }
 
 extension MenuWorldScriptMenusAdapter {
@@ -87,11 +85,11 @@ extension MenuWorldScriptMenusAdapter {
 
     public func race(of actor: ReferenceKey) -> FormID? {
         if actor == .player {
-            return owner.playerIdentity?.race
+            return skillsRace.playerIdentity?.race
         }
         guard
             let base = game.scripts.bridge?.baseObject(of: actor),
-            let records = identityRecords
+            let records = skillsRace.identityRecords
         else { return nil }
         let roll = game.worldState.leveledRoll(
             of: actor,
@@ -104,29 +102,30 @@ extension MenuWorldScriptMenusAdapter {
     /// Only the player changes race: an NPC's body is built from its record.
     @discardableResult
     public func setRace(of actor: ReferenceKey, to race: FormID?) -> Bool {
-        guard actor == .player, var identity = owner.playerIdentity else { return false }
-        let original = owner.originalPlayerRace ?? identity.race
-        guard let wanted = race ?? owner.originalPlayerRace else { return true }
-        owner.originalPlayerRace = wanted == original ? nil : original
+        guard actor == .player, var identity = skillsRace.playerIdentity else { return false }
+        let original = state.originalPlayerRace ?? identity.race
+        guard let wanted = race ?? state.originalPlayerRace else { return true }
+        state.originalPlayerRace = wanted == original ? nil : original
         identity.race = wanted
-        owner.applyPlayerIdentity(identity)
+        skillsRace.applyPlayerIdentity(identity)
         game.scripts.runtime?.queueRaceSwitchComplete(actor: .player)
         return true
     }
 
     public func sex(ofBase base: FormID) -> Int? {
         let isFemale = base == MenuRecordData.playerBase
-            ? owner.playerIdentity?.isFemale : identityRecords?.isFemale(ofBase: base)
+            ? skillsRace.playerIdentity?.isFemale : skillsRace.identityRecords?
+            .isFemale(ofBase: base)
         return isFemale.map { $0 ? 1 : 0 }
     }
 
     public func race(ofBase base: FormID) -> FormID? {
         base == MenuRecordData.playerBase
-            ? owner.playerIdentity?.race : identityRecords?.race(ofBase: base)
+            ? skillsRace.playerIdentity?.race : skillsRace.identityRecords?.race(ofBase: base)
     }
 
     public func recordFlags(ofBase base: FormID) -> ActorBase.Flags? {
-        identityRecords?.templates.actors[base.rawValue]?.flags
+        skillsRace.identityRecords?.templates.actors[base.rawValue]?.flags
     }
 
     public func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID? {
@@ -138,7 +137,7 @@ extension MenuWorldScriptMenusAdapter {
 
     public func recordShouts(ofBase base: FormID) -> [ReferenceKey] {
         guard
-            let spells = identityRecords?.templates.actors[base.rawValue]?.spells,
+            let spells = skillsRace.identityRecords?.templates.actors[base.rawValue]?.spells,
             let bridge = game.scripts.bridge
         else { return [] }
         let shouts = game.magic.shouts
@@ -146,18 +145,18 @@ extension MenuWorldScriptMenusAdapter {
     }
 
     public func voiceType(ofBase base: FormID) -> FormID? {
-        identityRecords?.voiceType(ofBase: base)
+        skillsRace.identityRecords?.voiceType(ofBase: base)
     }
 
     public func giftFilter(ofBase base: FormID) -> FormID? {
-        identityRecords?.templates.actors[base.rawValue]?.details.giftFilter
+        skillsRace.identityRecords?.templates.actors[base.rawValue]?.details.giftFilter
     }
 
     public func name(of form: FormID) -> String? {
         if form == MenuRecordData.playerBase {
-            return owner.playerIdentity?.name
+            return skillsRace.playerIdentity?.name
         }
-        return game.mapWorld.text(identityRecords?.name(of: form))
+        return game.mapWorld.text(skillsRace.identityRecords?.name(of: form))
     }
 
     /// Only `Skyrim.esm` references, because the lookup outside the loaded cells
@@ -169,9 +168,9 @@ extension MenuWorldScriptMenusAdapter {
         }
         // A move out of the loaded cells loads a new area, so the game shows a screen.
         if game.streamer?.referenceEntry(key: target) == nil {
-            owner.coverNextTeleport = true
+            state.coverNextTeleport = true
         }
-        unsafe owner.teleportPlayer(
+        unsafe teleports.teleportPlayer(
             .reference(String(format: "0x%06X", objectID)),
             openingRaceMenu: false
         )
@@ -193,10 +192,5 @@ extension MenuWorldScriptMenusAdapter {
             showsStolenItems: showsStolenItems
         )
         game.menuScreens.gift.open(actor: actor, request: request)
-    }
-
-    public var identityRecords: ActorIdentityRecords? {
-        game.worldData?.actorValueBaselines?.resolver
-            .map(ActorIdentityRecords.init(resolver:))
     }
 }

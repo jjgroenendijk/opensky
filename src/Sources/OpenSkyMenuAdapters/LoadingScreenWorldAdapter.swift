@@ -13,14 +13,12 @@ import OpenSkyGameData
 public import OpenSkyLoading
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
-public import OpenSkyRenderCore
+import OpenSkyQuestsInterface
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkySession
 public import OpenSkySessionInterface
 import OpenSkyTerrain
 import OpenSkyWorld
@@ -42,9 +40,8 @@ public protocol LoadingScreenWorldHost: MenuInputConsumer {
 public final class LoadingScreenWorldAdapter {
     public static let identifier = MenuIdentifier.loadingMenu
 
-    public unowned let game: any LoadingScreenWorldHost
-    private var meshes: MeshLibrary?
-    private var failedModels: Set<String> = []
+    public let game: any LoadingScreenWorldHost
+    public let state = LoadingScreenPartState()
     /// When the session-start or travel cover went up; nil once it lifted.
     private var startCoverSince: Double?
     /// Where a fast travel lands; the cover waits until the grid is centered there.
@@ -53,20 +50,13 @@ public final class LoadingScreenWorldAdapter {
         self?.game.renderer
     }
 
-    /// The tip the movie shows; nil while no movie was asked for.
-    public var movieText: String?
-    public var movieFadedOut = false
-    var cameraPaths: AssetLoader<String, NIFCameraTrack>?
     /// A stuck build must not trap the player behind the cover.
     public static let startCoverLimitSeconds = 60.0
 
     public let presentationHost: any LoadingScreenPresentationHost
 
     public var presentation: LoadingScreenPresentationAdapter {
-        LoadingScreenPresentationAdapter(
-            owner: self,
-            game: presentationHost
-        )
+        LoadingScreenPresentationAdapter(game: presentationHost, state: state, movie: movie)
     }
 
     public init(game: some LoadingScreenWorldHost & LoadingScreenPresentationHost) {
@@ -76,16 +66,6 @@ public final class LoadingScreenWorldAdapter {
 
     public var now: Double {
         Date().timeIntervalSinceReferenceDate
-    }
-
-    /// The path's camera position at `seconds`, looping over the controller's window.
-    private func cameraOffset(_ frame: LoadingCoverFrame) -> SIMD3<Float> {
-        guard let path = frame.cameraPath, let track = cameraPaths?.value(for: path) else {
-            return .zero
-        }
-        let length = Double(track.stopTime - track.startTime)
-        let local = length > 0 ? frame.elapsedSeconds.truncatingRemainder(dividingBy: length) : 0
-        return track.translation(at: track.startTime + Float(local))
     }
 
     /// Covers the session start until the near grid and the first distant ring
@@ -114,7 +94,7 @@ public final class LoadingScreenWorldAdapter {
                 ?? streamer.composition.cells[CellCoordinate(containing: target)]
             guard scene != nil || timedOut else { return }
             game.loadingScreens.destinationKnown(
-                location: scene.flatMap { location(of: $0) },
+                location: scene.flatMap { location(of: $0.locationKey) },
                 at: now
             )
         }
@@ -134,51 +114,8 @@ public final class LoadingScreenWorldAdapter {
     }
 
     /// The destination cell's location, which is where the player stands when the screen is chosen.
-    func location(of scene: any CellScenePort) -> ResolvedFormID? {
-        game.runtimeStateWorld.location(of: scene.locationKey)
-    }
-
-    public func placement(
-        _ frame: LoadingCoverFrame,
-        gameSession: any GameSessionPort
-    ) -> [RenderPlacement] {
-        let renderer = gameSession.renderer
-        guard
-            frame.drawsObject, let path = frame.model,
-            !failedModels.contains(path) else { return [] }
-        if
-            meshes == nil,
-            let fileSystem = game.worldData?.scriptFileSystem
-        {
-            meshes = attempt { try TextureLibrary(fileSystem: fileSystem, device: renderer.device) }
-                .map {
-                    MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: $0)
-                }
-        }
-        do {
-            guard let model = try meshes?.model(path: path) else { return [] }
-            let view = coverView(gameSession)
-            let radius = meshes?.bounds(forPath: path)
-                .map { simd_distance($0.max, $0.min) * Self.halfDiagonal } ?? Self
-                .fallbackCoverRadius
-            return [RenderPlacement(
-                model: model,
-                transform: frame.objectTransform(
-                    eye: view.position, yaw: view.yaw, pitch: view.pitch, radius: radius,
-                    cameraOffset: cameraOffset(frame)
-                ),
-                castsShadows: false,
-                layer: .loadingCover
-            )]
-        } catch {
-            failedModels.insert(path)
-            Self.logger.warning("[WARNING] loading screen model failed: \(path, privacy: .public)")
-            return []
-        }
-    }
-
-    public func coverView(_ gameSession: any GameSessionPort) -> FreeFlyCamera {
-        gameSession.dialogueRestorePose ?? gameSession.freeFlyCamera
+    func location(of locationKey: CellLocationKey) -> ResolvedFormID? {
+        game.runtimeStateWorld.location(of: locationKey)
     }
 
     // MARK: - The loading movie
@@ -196,10 +133,6 @@ public final class LoadingScreenWorldAdapter {
     }
 
     public static let turnDegreesPerPoint: Float = 0.5
-    /// A model's radius is half its bound's diagonal.
-    private static let halfDiagonal: Float = 0.5
-    /// The radius of a cover model whose bound is unknown, in units.
-    private static let fallbackCoverRadius: Float = 64
     public static let turnDegreesPerKey: Float = 10
 
     public static let logger = EngineLogger(

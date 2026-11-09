@@ -2,25 +2,21 @@ public import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyLaunch
 import OpenSkyLoading
-import OpenSkyMagic
+import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 public import OpenSkyProgressionInterface
 public import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkySave
 public import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld

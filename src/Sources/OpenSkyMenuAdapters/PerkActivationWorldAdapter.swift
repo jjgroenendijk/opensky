@@ -5,12 +5,9 @@
 import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyMagic
 import OpenSkyMagicInterface
 public import OpenSkyMenus
-import OpenSkyProgression
 public import OpenSkyProgressionInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -29,7 +26,7 @@ public protocol PerkActivationWorldHost: AnyObject {
 }
 
 public final class PerkActivationWorldAdapter {
-    public unowned let game: any PerkActivationWorldHost
+    public let game: any PerkActivationWorldHost
 
     public init(game: any PerkActivationWorldHost) {
         self.game = game
