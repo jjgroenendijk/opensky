@@ -1,5 +1,4 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
@@ -8,27 +7,22 @@ import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
+import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 public import OpenSkyInventoryInterface
-import OpenSkyMagic
 public import OpenSkyMagicInterface
 import OpenSkyNavigation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -45,7 +39,7 @@ public protocol CombatGearHost: AnyObject {
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
 public struct CombatGearAdapter {
-    public unowned let game: any CombatGearHost
+    public let game: any CombatGearHost
 }
 
 extension CombatGearAdapter {

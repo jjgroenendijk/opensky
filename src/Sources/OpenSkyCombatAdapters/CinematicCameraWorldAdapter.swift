@@ -10,7 +10,7 @@ import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
 import OpenSkyEffects
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyFormatsMesh
 public import OpenSkyGameData
@@ -39,7 +39,7 @@ public protocol CinematicCameraWorldHost: AnyObject {
 }
 
 public final class CinematicCameraWorldAdapter {
-    public unowned let game: any CinematicCameraWorldHost
+    public let game: any CinematicCameraWorldHost
     /// Camera tracks by CAMS model path, all requested at wiring, off the main actor.
     var tracks: AssetLoader<String, NIFCameraTrack>?
     var lastFrame: Date?

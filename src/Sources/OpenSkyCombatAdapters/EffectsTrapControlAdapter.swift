@@ -6,12 +6,10 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -22,6 +20,7 @@ import simd
 /// What `EffectsTrapControlAdapter` reads from the session.
 @MainActor
 public protocol EffectsTrapControlHost: AnyObject {
+    var effects: any EffectsPort { get }
     var combat: any CombatPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var hazardWorld: any HazardWorldPort { get }
@@ -35,8 +34,10 @@ public protocol EffectsTrapControlHost: AnyObject {
 
 /// Part of `EffectsWorldAdapter`, over its own narrow host.
 public struct EffectsTrapControlAdapter {
-    public unowned let owner: EffectsWorldAdapter
-    public unowned let game: any EffectsTrapControlHost
+    public let game: any EffectsTrapControlHost
+    public let state: EffectsPartState
+    public let bodyImpulses: EffectsBodyImpulsesAdapter
+    public let locator: EffectsLocatorAdapter
 }
 
 extension EffectsTrapControlAdapter {
@@ -154,23 +155,23 @@ extension EffectsTrapControlAdapter {
         at anchor: ReferenceKey,
         count: Int
     ) -> ReferenceKey? {
-        guard let position = trapPosition(of: anchor) else { return nil }
-        if let spec = game.hazardWorld.store?.spec(for: base) {
+        guard let position = locator.trapPosition(of: anchor) else { return nil }
+        if let spec = game.hazardWorld.hazardSpec(for: base) {
             var last: ReferenceKey?
             for _ in 0 ..< max(1, count) {
-                let key = owner.nextHazardKey()
+                let key = state.nextHazardKey()
                 game.hazards.spawn(HazardPlacement(id: key, spec: spec, position: position))
                 last = key
             }
             return last
         }
-        guard let spec = owner.explosions.spec(for: base) else { return spawn(
+        guard let spec = game.combat.explosions.spec(for: base) else { return spawn(
             base,
             at: anchor,
             count: count
         ) }
         for _ in 0 ..< max(1, count) {
-            owner.explosions.detonate(spec, at: position, cause: .script)
+            game.combat.explosions.detonate(spec, at: position, cause: .script)
         }
         // An explosion leaves no reference a script can hold.
         return nil
@@ -191,18 +192,24 @@ extension EffectsTrapControlAdapter {
         _ actor: ReferenceKey, awayFrom source: ReferenceKey,
         along direction: SIMD3<Float>?, speed: Float
     ) -> Bool {
-        guard speed != 0, speed.isFinite, let feet = trapPosition(of: actor) else { return false }
-        let away = direction ?? trapPosition(of: source).map { feet - $0 } ?? .zero
+        guard
+            speed != 0, speed.isFinite,
+            let feet = locator.trapPosition(of: actor) else { return false }
+        let away = direction ?? locator.trapPosition(of: source).map { feet - $0 } ?? .zero
         let flat = SIMD3(away.x, away.y, 0)
         guard simd_length(flat) > 0 else { return false }
-        return owner.knockActor(actor, velocity: simd_normalize(flat) * speed, knockdown: false)
+        return bodyImpulses.knockActor(
+            actor,
+            velocity: simd_normalize(flat) * speed,
+            knockdown: false
+        )
     }
 
     public func knockDownActor(
         _ actor: ReferenceKey, awayFrom source: ReferenceKey, magnitude: Float
     ) -> Bool {
-        guard let from = trapPosition(of: source) else { return false }
-        return owner.knockDown(actor, from: from, magnitude: magnitude)
+        guard let from = locator.trapPosition(of: source) else { return false }
+        return bodyImpulses.knockDown(actor, from: from, magnitude: magnitude)
     }
 
     public func staggerActor(_ actor: ReferenceKey, magnitude: Float) -> Bool {
@@ -218,36 +225,26 @@ extension EffectsTrapControlAdapter {
         }
         return last
     }
-
-    /// Where a reference stands now: the player's feet, a moved NPC's capsule, or its
-    /// placement.
-    public func trapPosition(of reference: ReferenceKey) -> SIMD3<Float>? {
-        if reference == .player {
-            return game.gameSession?.walkController.feetPosition
-        }
-        return game.streamer?.npcTransform(for: reference)?.position
-            ?? game.scripts.bridge?.referenceState(for: reference)?.transform.position
-    }
 }
 
 extension EffectsTrapControlAdapter {
     public func playEffect(
         _ effect: ReferenceKey, on target: ReferenceKey, duration: Float?, facing: ReferenceKey?
     ) -> Bool {
-        owner.effects.attach(
+        game.effects.attach(
             effect, to: .actor(target), cause: .script, duration: duration, facing: facing
         ) != nil
     }
 
     public func stopEffect(_ effect: ReferenceKey, on target: ReferenceKey) -> Bool {
-        owner.effects.detach(effect, from: .actor(target)) > 0
+        game.effects.detach(effect, from: .actor(target)) > 0
     }
 
     public func applyImageSpaceModifier(
         _ modifier: ReferenceKey, strength: Float, held: Bool, fadeSeconds: Float
     ) -> Bool {
         guard let gameSession = game.gameSession else { return false }
-        return owner.effects.startModifier(
+        return game.effects.startModifier(
             modifier, strength: strength, looping: held, fadeIn: fadeSeconds,
             on: &gameSession.imageSpace
         )
@@ -255,6 +252,6 @@ extension EffectsTrapControlAdapter {
 
     public func removeImageSpaceModifier(_ modifier: ReferenceKey, fadeSeconds: Float) {
         guard let gameSession = game.gameSession else { return }
-        owner.effects.stopModifier(modifier, fadeOut: fadeSeconds, on: &gameSession.imageSpace)
+        game.effects.stopModifier(modifier, fadeOut: fadeSeconds, on: &gameSession.imageSpace)
     }
 }

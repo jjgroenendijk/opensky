@@ -1,6 +1,6 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyAudio
 import OpenSkyCells
 public import OpenSkyCombat
@@ -10,15 +10,13 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
+import OpenSkyMenusInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld

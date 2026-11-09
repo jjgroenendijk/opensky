@@ -4,7 +4,7 @@
 // live here; the shipped scripts decide (docs/engine/traps.md).
 
 public import OpenSkyFormatsESM
-import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore

@@ -4,7 +4,7 @@
 
 import Foundation
 import OpenSkyCells
-public import OpenSkyCombat
+import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagic
@@ -19,7 +19,7 @@ import OpenSkyWorldInterface
 /// replaces it.
 public struct HazardWorldDependencies {
     public let hazards: () -> HazardCoordinator
-    public let combat: CombatCoordinator
+    public let combat: any CombatPort
     /// A closure, because session start replaces the coordinator.
     public let magic: () -> MagicCoordinator
     public let spellHits: () -> any SpellHitApplying
@@ -27,7 +27,7 @@ public struct HazardWorldDependencies {
 
     public init(
         hazards: @escaping () -> HazardCoordinator,
-        combat: CombatCoordinator,
+        combat: any CombatPort,
         magic: @escaping () -> MagicCoordinator,
         spellHits: @escaping () -> any SpellHitApplying,
         gameSession: @escaping () -> GameSession?
@@ -71,6 +71,16 @@ public final class HazardWorldAdapter {
         guard !paused, let lastFrame else { return }
         let seconds = Float(now.timeIntervalSince(lastFrame))
         hazards.step(min(seconds, Self.longestStep))
+    }
+}
+
+extension HazardWorldAdapter {
+    public func hazardSpec(for key: ReferenceKey) -> HazardSpec? {
+        store?.spec(for: key)
+    }
+
+    public func hazardModelPath(for key: ReferenceKey) -> String? {
+        store?.modelPath(for: key)
     }
 }
 

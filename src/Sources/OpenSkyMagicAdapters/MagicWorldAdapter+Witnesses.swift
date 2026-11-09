@@ -69,6 +69,10 @@ extension MagicWorldAdapter {
         spellDelivery.aimedSpellTarget(within: range, for: caster)
     }
 
+    public func shoutCooldown(recovery: Float, multiplier: Float) -> Float {
+        ShoutCore.cooldown(recovery: recovery, multiplier: multiplier)
+    }
+
     public func castReach(within range: Float) -> Float {
         spellDelivery.castReach(within: range)
     }

@@ -3,16 +3,15 @@
 // (docs/engine/coordinators.md, docs/engine/locks.md).
 
 import Foundation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyConditions
-import OpenSkyCrime
+import OpenSkyCrimeInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 public import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
@@ -38,7 +37,7 @@ public protocol LockWorldHost: AnyObject {
 
 /// Answers `LockWorld` from the session systems `game` owns.
 public final class LockWorldAdapter {
-    public unowned let game: any LockWorldHost
+    public let game: any LockWorldHost
 
     public init(game: any LockWorldHost) {
         self.game = game

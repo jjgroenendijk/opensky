@@ -2,7 +2,7 @@
 
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 public import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
@@ -10,15 +10,14 @@ import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -41,11 +40,11 @@ public struct EffectsWiring {
         let frameSteps = gameSession.frameSteps
         frameSteps.register(.effects) { [weak adapter, weak gameSession, weak streamer] position in
             guard let adapter, let gameSession else { return }
-            adapter.cameraPosition = position
+            adapter.state.cameraPosition = position
             adapter.tick(gameSession: gameSession, streamer: streamer)
             let now = ProcessInfo.processInfo.systemUptime
-            let delta = Float(now - (adapter.lastImpulseStep ?? now))
-            adapter.lastImpulseStep = now
+            let delta = Float(now - (adapter.state.lastImpulseStep ?? now))
+            adapter.state.lastImpulseStep = now
             if gameSession.movementMode.isPlayerControlled {
                 adapter.game.combat.impulses?.advance(deltaTime: delta)
             }

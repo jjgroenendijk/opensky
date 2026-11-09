@@ -1,5 +1,4 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
@@ -8,27 +7,22 @@ public import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
+import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyNavigation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -51,8 +45,8 @@ public protocol CombatMotionHost: AnyObject {
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
 public struct CombatMotionAdapter {
-    public unowned let owner: CombatWorldAdapter
-    public unowned let game: any CombatMotionHost
+    public let game: any CombatMotionHost
+    public let impactEffects: CombatImpactEffectsAdapter
 }
 
 extension CombatMotionAdapter {
@@ -126,7 +120,7 @@ extension CombatMotionAdapter {
     }
 
     public func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>, gain: Float) {
-        owner.impactEffects.showImpact(impact, at: position)
+        impactEffects.showImpact(impact, at: position)
         guard
             let engine = game.gameSession?.worldAudio, engine.isRunning,
             let assets = game.audio.assets,

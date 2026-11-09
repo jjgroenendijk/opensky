@@ -1,17 +1,14 @@
 // `ActivationRefusalWorldAdapter` joins the started session: what `wire` registered.
 
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
-import OpenSkyCombat
-import OpenSkyDialogue
+import OpenSkyCombatInterface
+import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyScripting
+import OpenSkyMenusInterface
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld
