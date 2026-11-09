@@ -60,11 +60,7 @@ extension SessionPorts:
     InventoryCommandsHost {}
 
 extension SessionPorts {
-    var factionStore: FactionStore? {
-        worldData?.factionStore
-    }
-
-    var recordPluginName: String? {
-        worldData?.magicItemPluginName
+    var worldRecords: (any WorldRecordsPort)? {
+        worldData
     }
 }

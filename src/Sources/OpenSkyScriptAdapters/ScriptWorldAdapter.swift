@@ -11,7 +11,7 @@ import OpenSkyConditions
 import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
@@ -32,7 +32,8 @@ import simd
 /// What `ScriptWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
 public protocol ScriptWorldHost: AnyObject {
-    var worldData: WorldDataStores? { get }
+    /// The leveled-list edits scripts made, saved with the session.
+    var worldRecords: (any WorldRecordsPort)? { get }
     var containerMenu: any ContainerMenuPort { get }
     var hud: any HUDPort { get }
     var player: any PlayerPort { get }
@@ -157,8 +158,14 @@ public final class ScriptWorldAdapter {
         sessionBindings.fillGameNatives(bridge: bridge)
         bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
         bridge.formIDResolver = provider.scriptFormIDResolver
+        fillPlayerNatives(bridge: bridge)
+        return bridge
+    }
+
+    /// The natives that reach the player's mount, sneak state, and HUD.
+    public func fillPlayerNatives(bridge: PapyrusWorldStateBridge) {
         bridge.sessionNatives.leveledEdits = { [weak game] in
-            game?.worldData?.actorValueBaselines?.leveling.scriptEdits
+            game?.worldRecords?.leveledScriptEdits
         }
         bridge.playerNatives
             .playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
@@ -169,7 +176,6 @@ public final class ScriptWorldAdapter {
             .togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
         bridge.playerNatives
             .toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
-        return bridge
     }
 
     /// An `AttachAshPile` pile opens its actor's inventory, as activating the body would.
