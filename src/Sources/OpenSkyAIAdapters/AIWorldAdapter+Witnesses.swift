@@ -156,10 +156,6 @@ extension AIWorldAdapter {
         navigation.dismountPackageActor(rider)
     }
 
-    public var isStreaming: Bool {
-        navigation.isStreaming
-    }
-
     public var camera: AICameraPose? {
         navigation.camera
     }

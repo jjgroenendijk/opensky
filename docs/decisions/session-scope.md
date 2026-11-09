@@ -177,10 +177,10 @@ order. Examples:
 
 ## What is left
 
-Every coordinator takes its session data in the initializer. Two parts of the start still run
-after the scope is built:
+Every coordinator takes its session data in the initializer. The app builds the streamer
+first, over the loaded world, and the scope takes it in its initializer, so every adapter reads
+a streamer that exists. One part of the start still runs after the scope is built:
 
-- `start()` builds the streamer, so its users read it as an optional.
 - Session start replaces the inventory, magic, effects, and Papyrus coordinators with ones
   built over the streamer and the frame session, instead of the scope building them once.
   `WorldSessionWiring` builds them, so they stay in the session scope's files.

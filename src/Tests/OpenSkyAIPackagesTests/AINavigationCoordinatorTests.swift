@@ -14,7 +14,6 @@ import Testing
 
 @MainActor
 private final class FakeAINavigationWorld: AINavigationWorld {
-    var isStreaming = true
     var camera: AICameraPose? = AICameraPose(position: .zero, forward: SIMD3(1, 0, 0))
     var actors: [AIActorCandidate] = []
     var shapes: [StaticCollisionShape] = []
@@ -79,12 +78,6 @@ struct AINavigationCoordinatorTests {
         #expect(AINavigationCore.resolve(nil, in: []) == nil)
         #expect(AINavigationCore.name(of: nil, in: options) == "—")
         #expect(AINavigationCore.name(of: Self.far, in: options) == "Far")
-    }
-
-    @Test func theSnapshotIsUnavailableWithoutAStreamedCell() {
-        let (coordinator, world) = Self.coordinator()
-        world.isStreaming = false
-        #expect(coordinator.aiNavigationSnapshot == .unavailable)
     }
 
     @Test func selectingAndHostilityActOnTheChosenActor() {

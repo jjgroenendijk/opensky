@@ -16,7 +16,7 @@ public protocol ProgressionTrainingHost: AnyObject {
     var dialogueWorld: any DialogueWorldPort { get }
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -59,7 +59,7 @@ extension ProgressionTrainingAdapter {
     public func payTrainer(_ gold: Int, to trainer: ReferenceKey) -> Bool {
         guard
             let inventory = game.inventory.runtime?.inventory,
-            let holder = game.streamer?.inventoryHolder(of: trainer),
+            let holder = game.streamer.inventoryHolder(of: trainer),
             inventory.goldCount(of: .player) >= gold,
             attempt({ try inventory.remove(inventory.goldFormID, count: Int32(gold), from: .player)
             }) != nil

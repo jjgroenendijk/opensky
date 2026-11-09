@@ -29,7 +29,7 @@ public protocol AISeatingHost: AnyObject {
     var magicWorld: any MagicWorldPort { get }
     var playerSettingsStore: PlayerSettingsStore { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
 }
 
@@ -129,8 +129,8 @@ extension AISeatingAdapter {
 
 extension AISeatingAdapter {
     public func furnitureSeats(of furniture: ReferenceKey) -> [FurnitureSeat]? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let formID = streamer.referenceEntry(key: furniture)?.formID
         else { return nil }
         return streamer.residentInteraction(reference: formID)?.seats
@@ -142,8 +142,8 @@ extension AISeatingAdapter {
 
     /// A crafting station: its furniture names a workbench type. A chair names none.
     public func furnitureIsSpecial(_ furniture: ReferenceKey) -> Bool {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let formID = streamer.referenceEntry(key: furniture)?.formID
         else { return false }
         let station = streamer.residentInteraction(reference: formID)?.station
@@ -186,7 +186,7 @@ extension AISeatingAdapter {
         if actor == .player, let gameSession = game.gameSession {
             seatPlayer(at: seat.seat.seatedPose, gameSession: gameSession)
         } else if actor != .player {
-            game.streamer?.restActor(actor, at: ReferenceTransformOverride(
+            game.streamer.restActor(actor, at: ReferenceTransformOverride(
                 position: seat.seat.root, rotation: SIMD3(0, 0, seat.seat.heading)
             ))
             game.scripts.bridge?.activate(seat.furniture, by: actor, togglesOpen: false)
@@ -231,7 +231,7 @@ extension AISeatingAdapter {
                 seatPlayer(at: pose, gameSession: gameSession)
             }
         } else {
-            game.streamer?.restActor(actor, at: ReferenceTransformOverride(
+            game.streamer.restActor(actor, at: ReferenceTransformOverride(
                 position: pose.root, rotation: SIMD3(0, 0, pose.heading)
             ))
         }
@@ -251,7 +251,7 @@ extension AISeatingAdapter {
     }
 
     public func residentFurniture() -> [ReferenceKey] {
-        guard let streamer = game.streamer else { return [] }
+        let streamer = game.streamer
         return streamer.residentInteractions.filter { !$0.seats.isEmpty }.compactMap {
             streamer.referenceEntry(formID: $0.reference)?.key
         }

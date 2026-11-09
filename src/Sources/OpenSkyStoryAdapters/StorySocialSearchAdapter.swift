@@ -26,7 +26,7 @@ public protocol StorySocialSearchHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var packages: any PackagePort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
     var scenes: any ScenePort { get }
     var dialogueWorld: any DialogueWorldPort { get }
@@ -43,7 +43,7 @@ public struct StorySocialSearchAdapter {
 extension StorySocialSearchAdapter {
     /// Nil while no cell is loaded.
     public func questReferenceSearch() -> QuestReferenceSearch? {
-        guard let streamer = game.streamer else { return nil }
+        let streamer = game.streamer
         let references = streamer.residentReferenceIndex()
         let store = game.worldState
         let enable = EnableParentResolver(
@@ -85,7 +85,6 @@ extension StorySocialSearchAdapter {
 
 extension StorySocialSearchAdapter {
     public func socialFrame() -> SocialFrame? {
-        guard game.streamer != nil else { return nil }
         let inScenes = game.scenes.actorsInScenes()
         let actors = game.actorWorld.combatActors().map { actor in
             SocialActor(
@@ -100,7 +99,7 @@ extension StorySocialSearchAdapter {
         return SocialFrame(
             actors: actors,
             now: sceneCast.sceneSeconds,
-            isInterior: game.streamer?.interiorScene != nil,
+            isInterior: game.streamer.interiorScene != nil,
             playerInConversation: game.dialogue.conversationSpeaker != nil
         )
     }

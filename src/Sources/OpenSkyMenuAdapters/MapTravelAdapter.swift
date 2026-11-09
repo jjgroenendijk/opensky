@@ -39,7 +39,7 @@ public protocol MapTravelHost: AnyObject {
     var renderer: (any RendererPort)? { get }
     var saveGames: any SaveGameWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -71,9 +71,9 @@ extension MapTravelAdapter {
 
     /// The trip takes game time for the walk, then lands at the marker.
     public func travel(to marker: MapMarkerSite) -> Bool {
+        let streamer = game.streamer
         guard
-            let renderer = game.renderer, let gameSession = game.gameSession,
-            let streamer = game.streamer else { return false }
+            let renderer = game.renderer, let gameSession = game.gameSession else { return false }
         let from = gameSession.walkController.feetPosition
         let walk = game.worldData?
             .movementConfiguration.travelSpeed.value ?? PlayerMovementConfiguration

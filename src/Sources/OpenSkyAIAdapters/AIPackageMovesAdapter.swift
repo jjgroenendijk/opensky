@@ -38,7 +38,7 @@ public protocol AIPackageMovesHost: AnyObject {
     var idleWorld: any IdleWorldPort { get }
     var packages: any PackagePort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
 }
 
@@ -50,7 +50,7 @@ public struct AIPackageMovesAdapter {
 extension AIPackageMovesAdapter {
     public func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
         guard actor != .player else { return game.gameSession?.locomotion.status.feetPosition }
-        guard let streamer = game.streamer else { return nil }
+        let streamer = game.streamer
         if let live = streamer.npcTransform(for: actor) {
             return live.position
         }
@@ -72,7 +72,7 @@ extension AIPackageMovesAdapter {
         let point: SIMD3<Float>? = switch location.kind {
         case .nearReference, .inCell:
             location.formID
-                .flatMap { game.streamer?.residentReferenceIndex().entry(for: $0) }
+                .flatMap { game.streamer.residentReferenceIndex().entry(for: $0) }
                 .flatMap(Self.placedPosition)
         case .referenceAlias:
             aliasQuest
@@ -84,7 +84,7 @@ extension AIPackageMovesAdapter {
         case .nearSelf, .nearPackageStart:
             packageActorPosition(actor)
         case .nearEditorLocation:
-            game.streamer?.referenceEntry(key: actor).flatMap(Self.placedPosition)
+            game.streamer.referenceEntry(key: actor).flatMap(Self.placedPosition)
         default:
             nil
         }
@@ -97,7 +97,7 @@ extension AIPackageMovesAdapter {
 
     /// A dragon outdoors flies its package's walks; indoors it walks them.
     public func packageActorFlies(_ actor: ReferenceKey) -> Bool {
-        actor != .player && game.streamer?.interiorScene == nil
+        actor != .player && game.streamer.interiorScene == nil
             && game.dragonFlightWorld.actorFliesPackages(actor)
     }
 
@@ -120,10 +120,10 @@ extension AIPackageMovesAdapter {
         if game.furniture.isLeavingSeat(actor) {
             return .busy
         }
-        let result = game.streamer?.moveActor(
+        let result = game.streamer.moveActor(
             actor, to: point, direct: direct, gait: gait,
             runSlowdown: game.packages.followRunSlowdown(for: actor), walkRunBlend: walkRunBlend
-        ) ?? .actorNotResident
+        )
         game.packages.recordMove(result, for: actor)
         switch result {
         case .started: return .started
@@ -142,7 +142,7 @@ extension AIPackageMovesAdapter {
         )
         gameSession.playerWalkIgnoresStatics = direct
         let found = direct ? NavigationPathResult.path(.straight(to: point))
-            : game.streamer?.findPath(query) ?? .miss(.disconnected)
+            : game.streamer.findPath(query)
         switch found {
         case let .path(path):
             gameSession.playerWalkPath = path.waypoints + [point]
@@ -176,7 +176,7 @@ extension AIPackageMovesAdapter {
     ) -> [SIMD3<Float>]? {
         guard
             let key = packageTargetKey(start, aliasQuest: aliasQuest),
-            let lookup = game.streamer?.placedRecords
+            let lookup = game.streamer.placedRecords
         else { return nil }
         let path = lookup.linkedChain(from: key)
         return path.isEmpty ? nil : path

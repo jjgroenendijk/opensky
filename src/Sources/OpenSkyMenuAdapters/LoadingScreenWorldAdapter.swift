@@ -31,7 +31,7 @@ public protocol LoadingScreenWorldHost: MenuInputConsumer {
     var loadingScreens: any LoadingScreenPort { get }
     var renderer: (any RendererPort)? { get }
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var swfMovies: any SWFMovieSourcePort { get }
     var worldData: WorldDataStores? { get }
 }
@@ -70,7 +70,6 @@ public final class LoadingScreenWorldAdapter {
     /// Covers the session start until the near grid and the first distant ring
     /// are in, as the game does, so the world never opens with bare sky.
     public func coverSessionStart() {
-        guard game.streamer != nil else { return }
         startCoverSince = now
         moveTarget = nil
         game.loadingScreens.beginLoad(at: now)
@@ -79,14 +78,15 @@ public final class LoadingScreenWorldAdapter {
     /// Fast travel: the view goes dark at once, the screen is picked once the cell
     /// at `feet` is built, and it holds until the area around it is in.
     public func coverMove(to feet: SIMD3<Float>) {
-        guard game.streamer != nil, !game.loadingScreens.isCovering else { return }
+        guard !game.loadingScreens.isCovering else { return }
         startCoverSince = now
         moveTarget = feet
         game.loadingScreens.begin(at: now)
     }
 
     func liftStartCoverIfReady() {
-        guard let since = startCoverSince, let streamer = game.streamer else { return }
+        let streamer = game.streamer
+        guard let since = startCoverSince else { return }
         let timedOut = now - since > Self.startCoverLimitSeconds
         if let target = moveTarget, game.loadingScreens.isWaitingForDestination {
             let scene = streamer.interiorScene

@@ -28,7 +28,7 @@ public protocol SaveGameWorldHost: AnyObject {
     var progression: any ProgressionPort { get }
     var renderer: (any RendererPort)? { get }
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -178,7 +178,6 @@ public final class SaveGameWorldAdapter: SaveGameService {
     /// Papyrus `RequestSave` and `RequestAutoSave`: a save the script asked for, written
     /// whatever the autosave settings say. False when no session is running.
     public func requestSave(autosave: Bool) -> Bool {
-        guard game.streamer != nil else { return false }
         Task {
             if !hasListed {
                 await refreshSaveRows()
@@ -293,7 +292,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
 
     private func locationName() -> String {
         let texts = saveTexts
-        return switch game.streamer?.currentCellLocation {
+        return switch game.streamer.currentCellLocation {
         case let .exterior(cell): "\(texts.wilderness) \(cell.x), \(cell.y)"
         case let .interior(formID): "Interior \(formID)"
         case nil: texts.unknownLocation

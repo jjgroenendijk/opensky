@@ -44,15 +44,19 @@ final class DialogueAcceptanceChain {
             scriptFormIDResolver: FormIDResolver(pluginName: "Skyrim.esm", masters: []),
             dialogueStore: DialogueAcceptanceFixture.dialogueStore()
         )
+        let streamer = CellStreamerFixture.makeStreamer(runner: runner)
+        self.streamer = streamer
         controller = GameSessionScope(
-            worldData: data, cellRunner: nil, gameSession: nil, services: GameAppServices()
+            worldData: data,
+            cellRunner: nil,
+            gameSession: nil,
+            streamer: streamer,
+            services: GameAppServices()
         )
         session = try DialogueAcceptanceFixture.session(worldState: controller.worldState)
         controller.scripts = ScriptCoordinator(
             world: controller.scriptWorld, runtime: session.world, bridge: session.bridge
         )
-        streamer = CellStreamerFixture.makeStreamer(runner: runner)
-        controller.streamer = streamer
         _ = DialogueWiring(controller.dialogueWorld, streamer: streamer)
         // No cell is resident, so the app's own resident-actor walk finds
         // nobody. The speaker is supplied to the same seam it would fill.

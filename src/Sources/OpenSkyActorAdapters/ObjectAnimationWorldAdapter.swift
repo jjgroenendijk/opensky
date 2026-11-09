@@ -31,7 +31,7 @@ public protocol ObjectAnimationWorldHost: AnyObject {
     var audioFileSystem: (any GameFileSource)? { get }
     var gameSession: (any GameSessionPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -63,7 +63,7 @@ public final class ObjectAnimationWorldAdapter {
     func advance(_ delta: Float) {
         objects.sync()
         objects.tick(deltaTime: delta)
-        game.streamer?.poseMovingCollision { [objects] in objects.boneMatrices(of: $0) }
+        game.streamer.poseMovingCollision { [objects] in objects.boneMatrices(of: $0) }
         run(doors.sync())
         run(doors.tick(deltaTime: delta))
         game.nodeControllers.sync()
@@ -83,7 +83,7 @@ public final class ObjectAnimationWorldAdapter {
     }
 
     private func reference(of key: ReferenceKey) -> UInt32? {
-        game.streamer?.referenceEntry(key: key)?.formID.rawValue
+        game.streamer.referenceEntry(key: key)?.formID.rawValue
     }
 }
 
@@ -93,7 +93,7 @@ extension ObjectAnimationWorldAdapter: ObjectBehaviorWorld {
     }
 
     public func objectGraphFired(_ name: String, from reference: UInt32) {
-        guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key else {
+        guard let key = game.streamer.referenceEntry(formID: FormID(reference))?.key else {
             return
         }
         game.gameSession?.animationEvents?.handle(name, from: key)
@@ -174,7 +174,7 @@ extension ObjectAnimationWorldAdapter: PapyrusObjectAnimationBridge {
         if let code = doors.openStateCode(of: reference) {
             return code
         }
-        guard let interaction = game.streamer?.residentInteraction(reference: FormID(reference))
+        guard let interaction = game.streamer.residentInteraction(reference: FormID(reference))
         else { return 0 }
         return [.open, .search].contains(interaction.action) ? nil : 0
     }
@@ -186,7 +186,7 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
     }
 
     public func sequenceDoorWantsOpen(_ door: CellSequenceDoor) -> Bool {
-        guard let entry = game.streamer?.referenceEntry(formID: FormID(door.reference)) else {
+        guard let entry = game.streamer.referenceEntry(formID: FormID(door.reference)) else {
             return false
         }
         switch door.kind {
@@ -203,12 +203,12 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
         for command in commands {
             switch command {
             case let .textKey(name, reference):
-                guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key
+                guard let key = game.streamer.referenceEntry(formID: FormID(reference))?.key
                 else { continue }
                 game.gameSession?.animationEvents?.handle(name, from: key)
                 game.scripts.runtime?.queueAnimationEvent(sender: key, name: name)
             case let .setLeaves(deltas, reference):
-                game.streamer?.sequenceDoorLeaves[reference] = deltas
+                game.streamer.sequenceDoorLeaves[reference] = deltas
             }
         }
     }

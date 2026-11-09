@@ -42,7 +42,7 @@ public protocol AgentActorReadoutHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }
     var perception: any PerceptionPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -54,7 +54,7 @@ public struct AgentActorReadoutAdapter {
 
 extension AgentActorReadoutAdapter {
     public func cellState(at position: SIMD3<Float>) -> AgentJSON {
-        guard let streamer = game.streamer else { return .null }
+        let streamer = game.streamer
         if let interior = streamer.interiorScene {
             return ["interior": true, "name": .string(interior.summary.cellName)]
         }
@@ -66,7 +66,7 @@ extension AgentActorReadoutAdapter {
     }
 
     public func targetState() -> AgentJSON {
-        guard let target = game.streamer?.interactionTarget else { return .null }
+        guard let target = game.streamer.interactionTarget else { return .null }
         let interaction = target.interaction
         return [
             "ref": .formID(interaction.reference.rawValue),
@@ -93,7 +93,7 @@ extension AgentActorReadoutAdapter {
     ) -> (Float, AgentJSON)? {
         let distance = simd_distance(actor.feet, origin)
         guard distance <= radius else { return nil }
-        let entry = game.streamer?.referenceEntry(key: actor.key)
+        let entry = game.streamer.referenceEntry(key: actor.key)
         let formID = entry?.formID
         let graph: AgentJSON = game.actorGraphs.readout(for: actor.key).map(graphState) ?? .null
         return (distance, [

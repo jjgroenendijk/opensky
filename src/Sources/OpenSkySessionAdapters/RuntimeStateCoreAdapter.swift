@@ -198,7 +198,7 @@ extension RuntimeStateCoreAdapter {
 
     /// Where the player and each resident reference are now.
     private func currentReferencePlaces() -> ReferencePlaces {
-        guard let streamer = game.streamer else { return ReferencePlaces() }
+        let streamer = game.streamer
         let cells = streamer.residentCellLocations
         let count = streamer.residentReferenceCount
         var places: ReferencePlaces

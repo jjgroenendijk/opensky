@@ -28,7 +28,7 @@ protocol DialogueMenuSpeechHost: AnyObject {
     var menuMode: any MenuModePort { get }
     var renderer: (any RendererPort)? { get }
     var storyWorld: any StoryWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var subtitles: any SubtitlePort { get }
 }
 
@@ -176,7 +176,7 @@ extension DialogueMenuSpeechAdapter {
     /// The placed actor whose face the speaker's expression goes on.
     private var speakerFace: FormID? {
         owner.model.speakerKey
-            .flatMap { game.streamer?.referenceEntry(key: $0)?.placedActor?.formID }
+            .flatMap { game.streamer.referenceEntry(key: $0)?.placedActor?.formID }
     }
 
     /// Puts the emotion of the run on screen (INFO `TRDT`) on the speaker's face.

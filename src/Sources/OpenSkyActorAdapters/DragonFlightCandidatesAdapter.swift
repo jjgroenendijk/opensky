@@ -25,7 +25,7 @@ public protocol DragonFlightCandidatesHost: AnyObject {
     var mounts: any MountPort { get }
     var packages: any PackagePort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `DragonFlightWorldAdapter`, over its own narrow host.
@@ -48,7 +48,7 @@ extension DragonFlightCandidatesAdapter {
         }
         let scripted = game.scripts.bridge?.scriptedState(of: actor.key)
         candidate.isAllowedToFly = scripted?.flag(ScriptedStateName.allowFlying) ?? true
-        candidate.canFlyHere = game.streamer?.interiorScene == nil
+        candidate.canFlyHere = game.streamer.interiorScene == nil
         candidate.isRidden = game.mounts.drive?.mount == actor.key
         candidate.isDead = actor.isDead
         candidate.packageFlight = game.packages.flightTarget(of: actor.key).map {

@@ -27,7 +27,7 @@ public protocol CrimeActorsHost: AnyObject {
     var dialogueMenu: any DialogueMenuPort { get }
     var packages: any PackagePort { get }
     var perception: any PerceptionPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -56,11 +56,11 @@ extension CrimeActorsAdapter {
     }
 
     public func moveActor(_ key: ReferenceKey, to point: SIMD3<Float>) -> String? {
-        game.streamer.map { "\($0.moveActor(key, to: point))" }
+        "\(game.streamer.moveActor(key, to: point))"
     }
 
     public func stopActor(_ key: ReferenceKey) {
-        _ = game.streamer?.stopActor(key)
+        _ = game.streamer.stopActor(key)
     }
 
     public func suspendPackage(for key: ReferenceKey) {

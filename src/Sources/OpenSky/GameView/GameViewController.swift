@@ -172,10 +172,16 @@ final class GameViewController: NSViewController {
     }
 
     private func startSession(_ loaded: CellSession, gameSession: GameSession) {
+        let streamer = WorldSessionWiring.makeStreamer(
+            session: loaded,
+            renderer: gameSession.renderer,
+            radius: terrainLODConfigurationStore.snapshot().configuration.loadedGridRadius
+        )
         let session = GameSessionScope(
             worldData: loaded.data,
             cellRunner: loaded.runner,
             gameSession: gameSession,
+            streamer: streamer,
             services: appServices
         )
         self.session = session

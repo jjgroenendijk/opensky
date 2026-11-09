@@ -506,7 +506,7 @@ extension SessionPorts {
         scope.storyWorld
     }
 
-    var streamer: (any CellStreamerPort)? {
+    var streamer: any CellStreamerPort {
         scope.streamer
     }
 

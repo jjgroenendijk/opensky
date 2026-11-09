@@ -31,7 +31,7 @@ public protocol VehicleWorldHost: AnyObject {
     var renderer: (any RendererPort)? { get }
     var gameSession: (any GameSessionPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicles: any VehiclePort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
@@ -92,12 +92,12 @@ extension VehicleWorldAdapter: VehicleWorld {
             return game.gameSession
                 .map { ReferenceTransformOverride(position: $0.walkController.feetPosition) }
         }
-        return game.streamer?.npcTransform(for: key)
+        return game.streamer.npcTransform(for: key)
             ?? game.scripts.bridge?.placement(of: key)?.state.transform
     }
 
     public func vehicleFormID(of key: ReferenceKey) -> UInt32? {
-        game.streamer?.referenceEntry(key: key)?.formID.rawValue
+        game.streamer.referenceEntry(key: key)?.formID.rawValue
     }
 
     public func run(_ commands: [VehicleCommand]) {
@@ -105,9 +105,9 @@ extension VehicleWorldAdapter: VehicleWorld {
             switch command {
             case let .publishVehiclePoses(poses): game.gameSession?.instancePoses
                 .vehiclePoses = poses
-            case let .publishCarriedPoses(poses): game.streamer?.publishCarriedPoses(poses)
+            case let .publishCarriedPoses(poses): game.streamer.publishCarriedPoses(poses)
             case let .publishLinks(linked):
-                game.streamer?.publishVehicleLinks(linked)
+                game.streamer.publishVehicleLinks(linked)
             case let .placePlayer(pose): placePlayer(at: pose)
             case let .followerMoved(key, pose): vehicleFollowerMoved(key, to: pose)
             case let .followerRests(key, pose): vehicleFollowerRests(key, at: pose)
@@ -171,11 +171,11 @@ extension VehicleWorldAdapter: VehicleWorld {
     /// A follower drawn by a cell it left moves into the cell it is now in, so it does
     /// not vanish when the old cell unloads. The old cell drops it.
     public func vehicleFollowerMoved(_ key: ReferenceKey, to pose: ReferenceTransformOverride) {
-        if let formID = game.streamer?.referenceEntry(key: key)?.formID {
-            game.streamer?.setVehiclePose(VehicleCore.matrix(pose), for: formID)
+        if let formID = game.streamer.referenceEntry(key: key)?.formID {
+            game.streamer.setVehiclePose(VehicleCore.matrix(pose), for: formID)
         }
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             case let .exterior(drawing)? = streamer.cellLocation(of: key)
         else { return }
         let now = CellGridManager.cellCoordinate(for: pose.position)
@@ -218,7 +218,7 @@ extension VehicleWorldAdapter: VehicleWorld {
         at point: SIMD3<Float>,
         excluding vehicles: Set<ReferenceKey>
     ) -> Float? {
-        guard let streamer = game.streamer else { return nil }
+        let streamer = game.streamer
         let terrain = streamer.sampleTerrain(at: SIMD2(point.x, point.y))?.height
         let depth = point.z - (terrain ?? point.z - Self.groundSearchDepth) + 1
         guard depth > 0 else { return terrain }
@@ -239,7 +239,7 @@ extension VehicleWorldAdapter: VehicleWorld {
     public func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]? {
         guard
             let wheels,
-            let path = game.streamer?.placedRecords?.baseModelPath(for: key)
+            let path = game.streamer.placedRecords?.baseModelPath(for: key)
         else { return [] }
         switch wheels.state(of: path) {
         case .loading: return nil
@@ -249,8 +249,8 @@ extension VehicleWorldAdapter: VehicleWorld {
     }
 
     public func spinVehicleWheels(of key: ReferenceKey, turns: VehicleWheelTurns) {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let formID = vehicleFormID(of: key),
             let vehicle = streamer.residentAnimatedVehicles().first(where: {
                 $0.reference == formID
@@ -260,8 +260,8 @@ extension VehicleWorldAdapter: VehicleWorld {
     }
 
     private func hitchCarrier(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
-        game.worldState.set(pose, for: key, in: game.streamer?.cellLocation(of: key))
-        game.streamer?.placeStandingActor(key, at: pose)
+        game.worldState.set(pose, for: key, in: game.streamer.cellLocation(of: key))
+        game.streamer.placeStandingActor(key, at: pose)
     }
 
     public func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
@@ -270,10 +270,10 @@ extension VehicleWorldAdapter: VehicleWorld {
             game.gameSession?.placePlayerFeet(at: pose.position)
             return
         }
-        let cell = game.streamer?.cellLocation(of: key)
+        let cell = game.streamer.cellLocation(of: key)
         game.worldState.set(pose, for: key, in: cell)
         game.worldState.reset(.vehicleLink, for: key)
-        game.streamer?.restActor(key, at: pose)
+        game.streamer.restActor(key, at: pose)
     }
 }
 
@@ -290,7 +290,7 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
         let commands = vehicles.tow(vehicle, by: horse)
         guard !commands.isEmpty else { return }
         run(commands)
-        let cell = game.streamer?.cellLocation(of: vehicle)
+        let cell = game.streamer.cellLocation(of: vehicle)
         game.worldState.set(ReferenceVehicleLink(carrier: horse), for: vehicle, in: cell)
     }
 

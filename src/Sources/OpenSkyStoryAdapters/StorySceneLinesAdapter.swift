@@ -31,7 +31,7 @@ public protocol StorySceneLinesHost: AnyObject {
     var faceMorphs: any FaceMorphPort { get }
     var headTracking: any HeadTrackingPort { get }
     var renderer: (any RendererPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var subtitles: any SubtitlePort { get }
     var idles: any IdlePort { get }
 }
@@ -47,8 +47,9 @@ extension StorySceneLinesAdapter {
     /// The line's seconds plus `fGameplayVoiceFilePadding`, the gap before the next line.
     /// A speaker with no loaded body ends the line at once, as the reference game does.
     public func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
+        let streamer = game.streamer
         if
-            speaker != .player, let streamer = game.streamer,
+            speaker != .player,
             streamer.residentActorEntry(key: speaker) == nil
         {
             return 0
@@ -147,7 +148,7 @@ extension StorySceneLinesAdapter {
         }
         if
             let response = info?.responses.first,
-            let face = game.streamer?.referenceEntry(key: speaker)?.placedActor?.formID
+            let face = game.streamer.referenceEntry(key: speaker)?.placedActor?.formID
         {
             game.faceMorphs.showEmotion(
                 response.emotion, value: response.emotionValue, on: face,

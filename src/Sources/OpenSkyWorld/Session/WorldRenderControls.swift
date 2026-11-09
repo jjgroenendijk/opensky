@@ -15,8 +15,7 @@ public protocol RenderControlWorld: AnyObject {
     /// Nil when the GPU lacks Metal 4.
     var renderer: Renderer? { get }
     var gameSession: GameSession? { get }
-    /// Nil without game data.
-    var streamer: CellStreamer? { get }
+    var streamer: CellStreamer { get }
     func refocusGameView()
 }
 

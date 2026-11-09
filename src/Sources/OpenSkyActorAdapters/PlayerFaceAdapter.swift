@@ -26,7 +26,7 @@ public protocol PlayerFaceHost: AnyObject {
     var dialogueMenu: any DialogueMenuPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var renderer: (any RendererPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `PlayerWorldAdapter`, over its own narrow host.
@@ -38,7 +38,7 @@ public struct PlayerFaceAdapter {
 extension PlayerFaceAdapter {
     public var faceMorphSubject: FormID? {
         guard let key = game.dialogueMenu.speakerOrTarget else { return nil }
-        return game.streamer?.referenceEntry(key: key)?.placedActor?.formID
+        return game.streamer.referenceEntry(key: key)?.placedActor?.formID
     }
 
     public func faceMorphPlayback(for actor: FormID) -> FaceMorphPlayback? {
@@ -55,7 +55,7 @@ extension PlayerFaceAdapter {
 
     public func faceMood(of actor: FormID) -> FaceMoodInput {
         let key = actor == PlayerBody.actorFormID
-            ? ReferenceKey.player : game.streamer?.referenceEntry(formID: actor)?.key
+            ? ReferenceKey.player : game.streamer.referenceEntry(formID: actor)?.key
         guard let key else { return .calm }
         let facts = key == .player
             ? game.combat.playerActionFacts : game.combat.loop?.actionFacts(of: key)
@@ -76,9 +76,9 @@ extension PlayerFaceAdapter {
     private static let moodActorValue: Int32 = 4
 
     public var headTrackingSubjects: [HeadTrackingSubject] {
+        let streamer = game.streamer
         guard
-            let renderer = game.renderer, let gameSession = game.gameSession,
-            let streamer = game.streamer else { return [] }
+            let renderer = game.renderer, let gameSession = game.gameSession else { return [] }
         let deltas = gameSession.instancePoses.npcDeltas
         return game.actorWorld.combatActors().compactMap { actor in
             guard

@@ -25,7 +25,7 @@ public protocol RagdollRemainsHost: AnyObject {
     var inventory: any InventoryPort { get }
     var menuWorld: any MenuWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -45,9 +45,9 @@ extension RagdollRemainsAdapter {
 
     /// Only a drawn weapon falls; a sheathed one stays on the belt.
     public func dropWeapon(of key: ReferenceKey) -> Bool {
+        let streamer = game.streamer
         guard
             game.actorPlayback(for: key)?.weaponsDrawn == true,
-            let streamer = game.streamer,
             let holder = streamer.inventoryHolder(of: key),
             let actor = streamer.referenceEntry(key: key)?.placedActor,
             let cell = streamer.cellLocation(of: key)

@@ -28,7 +28,7 @@ public protocol IdlePlacementHost: AnyObject {
     var player: any PlayerPort { get }
     var renderer: (any RendererPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -53,7 +53,8 @@ extension IdlePlacementAdapter {
     }
 
     public func idleReferencePlacements() -> [IdleReferencePlacement]? {
-        guard game.renderer != nil, let streamer = game.streamer else { return nil }
+        let streamer = game.streamer
+        guard game.renderer != nil else { return nil }
         let scenes = streamer.interiorScene.map { [$0] }
             ?? streamer.composition.cells.values
             .sorted { $0.summary.cellName < $1.summary.cellName }
@@ -88,7 +89,7 @@ extension IdlePlacementAdapter {
             )
             presence.area = game.packages.sandboxArea(of: $0.key)
             presence.packageIdles = current[$0.key].flatMap(packageIdleList)
-            presence.isStill = game.streamer?.isActorWalking($0.key) == false
+            presence.isStill = game.streamer.isActorWalking($0.key) == false
             return presence
         }
         // The player has no package, so it takes no marker; a script idle still plays.
@@ -107,12 +108,12 @@ extension IdlePlacementAdapter {
     public func turnActor(
         _ actor: ReferenceKey, toHeading heading: Float, within tolerance: Float
     ) -> Float? {
-        game.streamer?.turnActor(actor, toHeading: heading, within: tolerance)
+        game.streamer.turnActor(actor, toHeading: heading, within: tolerance)
     }
 
     public func setProp(_ prop: ActorPropAttachment?, on actor: ReferenceKey) {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let placed = streamer.referenceEntry(key: actor)?.placedActor
         else { return }
         streamer.setActorProp(prop, on: placed.formID)
@@ -138,7 +139,7 @@ extension IdlePlacementAdapter {
             gameSession.placePlayerFeet(at: pose.feet)
             gameSession.freeFlyCamera.yaw = NPCYawMath.yaw(fromHeading: pose.heading)
         } else {
-            game.streamer?.restActor(actor, at: ReferenceTransformOverride(
+            game.streamer.restActor(actor, at: ReferenceTransformOverride(
                 position: pose.feet, rotation: SIMD3(0, 0, pose.heading)
             ))
         }

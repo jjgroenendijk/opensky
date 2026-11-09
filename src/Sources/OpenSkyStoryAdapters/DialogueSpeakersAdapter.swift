@@ -32,7 +32,7 @@ public protocol DialogueSpeakersHost: AnyObject {
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var factions: any FactionPort { get }
     var mountWorld: any MountWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -47,7 +47,7 @@ extension DialogueSpeakersAdapter {
     /// Dead and hostile actors are left out, and so are actors `ray` cannot reach. An actor
     /// with no passing topic still opens an empty menu, so the condition trace can explain why.
     public func talkCandidates(along ray: InteractionRay) -> [TalkCandidate] {
-        guard let streamer = game.streamer else { return [] }
+        let streamer = game.streamer
         return game.actorWorld.combatActors().compactMap { observation in
             guard
                 TalkTargetPicker.mayReach(observation.feet, along: ray),
@@ -70,7 +70,7 @@ extension DialogueSpeakersAdapter {
     }
 
     private func speakerName(entry: RuntimeReferenceEntry, fallback: String) -> String {
-        if let name = game.streamer?.interactionName(reference: entry.formID), !name.isEmpty {
+        if let name = game.streamer.interactionName(reference: entry.formID), !name.isEmpty {
             return name
         }
         return fallback.isEmpty ? entry.key.description : fallback
@@ -79,10 +79,10 @@ extension DialogueSpeakersAdapter {
     /// The same resolved name the crosshair prompt uses, so the prompt and the
     /// menu header agree.
     public func speakerLabel(for speaker: ReferenceKey) -> String {
-        guard let entry = game.streamer?.referenceEntry(key: speaker) else {
+        guard let entry = game.streamer.referenceEntry(key: speaker) else {
             return speaker.description
         }
-        if let name = game.streamer?.interactionName(reference: entry.formID), !name.isEmpty {
+        if let name = game.streamer.interactionName(reference: entry.formID), !name.isEmpty {
             return name
         }
         return entry.placedActor.flatMap { game.actorWorld.displayName(of: speaker, base: $0.base) }
@@ -91,11 +91,8 @@ extension DialogueSpeakersAdapter {
 
     /// The voice type of each loaded actor, for `GetIsVoiceType` and voice file paths.
     public func residentVoiceTypes() -> [ReferenceKey: FormID] {
-        guard
-            let entries = game.streamer?.residentActorEntries(),
-            let resolver = game.worldData?
-                .actorValueBaselines?.resolver
-        else { return [:] }
+        let entries = game.streamer.residentActorEntries()
+        guard let resolver = game.worldData?.actorValueBaselines?.resolver else { return [:] }
         let records = ActorIdentityRecords(resolver: resolver)
         var voices: [ReferenceKey: FormID] = [:]
         for entry in entries {
@@ -114,8 +111,8 @@ extension DialogueSpeakersAdapter {
     /// The posed `NPC Head [Head]` bone, or the capsule eye height when the
     /// actor has no rig.
     public func headPosition(of actor: ReferenceKey) -> SIMD3<Float>? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let entry = streamer.referenceEntry(key: actor),
             let placed = entry.placedActor
         else { return nil }

@@ -49,7 +49,7 @@ public protocol BenchmarkWorldHost: AnyObject {
     var runtimeState: any RuntimeStatePort { get }
     var sessionStartTiming: SessionStartTiming { get }
     var simulationClock: any SteppedWallClockPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldLoadReport: WorldLoadReport? { get }
 }
 
@@ -289,13 +289,13 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     }
 
     public var isStreamingSettled: Bool {
-        guard let streamer = game.streamer else { return true }
+        let streamer = game.streamer
         return streamer.transitionInFlight == nil && streamer.inFlightCellCount == 0
             && streamer.pendingCompletionCount == 0 && streamer.queuedRequestCount == 0
     }
 
     public func groundHeight(x: Float, y: Float) -> Float? {
-        game.streamer?.sampleTerrain(at: SIMD2(x, y))?.height
+        game.streamer.sampleTerrain(at: SIMD2(x, y))?.height
     }
 
     public func isBlocked(_ point: SIMD3<Float>, radius: Float) -> Bool {
@@ -311,8 +311,8 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
 
     public func crossesCollision(from start: SIMD3<Float>, to end: SIMD3<Float>) -> Bool {
         let line = end - start
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let ray = InteractionRay(
                 origin: start, direction: line, maximumDistance: simd_length(line)
             )
@@ -378,7 +378,7 @@ extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     public func gpuMemory() -> GPUMemoryUsage {
         var usage = game.gameSession?.renderer.gpuMemoryUsage() ?? GPUMemoryUsage()
         usage.processBytes = MemoryFootprint.physFootprintBytes().map { Int($0) } ?? 0
-        if let cached = game.streamer?.cachedAssetCounts {
+        if let cached = game.streamer.cachedAssetCounts {
             usage.cachedTextures = cached.textures
             usage.cachedModels = cached.models
         }

@@ -35,7 +35,7 @@ public protocol RagdollWorldHost: AnyObject {
     var ragdoll: any RagdollPort { get }
     var renderer: (any RendererPort)? { get }
     var gameSession: (any GameSessionPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 

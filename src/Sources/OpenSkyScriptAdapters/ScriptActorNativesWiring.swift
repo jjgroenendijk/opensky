@@ -60,7 +60,7 @@ public struct ScriptActorNativesWiring {
             sky.changeFog(change, in: cell)
         }
         bridge.sessionNatives.havokMass = { [weak game = adapter.game] key in
-            if let body = game?.streamer?.dynamicBodies.body(for: key) {
+            if let body = game?.streamer.dynamicBodies.body(for: key) {
                 return body.definition.mass
             }
             return game?.ragdoll.runtime?.world.ragdolls.first { $0.key == key }?

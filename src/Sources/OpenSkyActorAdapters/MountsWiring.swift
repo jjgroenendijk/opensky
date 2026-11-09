@@ -25,7 +25,7 @@ import simd
 public struct MountsWiring {
     public init(_ adapter: MountWorldAdapter, gameSession: GameSession) {
         gameSession.playerMount = adapter
-        guard let streamer = adapter.game.streamer else { return }
+        let streamer = adapter.game.streamer
         streamer.activationGate.register(.mount) { [weak adapter] target in
             adapter?.mounts.isActive == true && target.interaction.action == .open ? .mounted : nil
         }

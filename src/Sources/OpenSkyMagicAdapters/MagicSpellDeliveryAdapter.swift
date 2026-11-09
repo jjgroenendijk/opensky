@@ -21,7 +21,7 @@ public protocol MagicSpellDeliveryHost: AnyObject {
     var combat: any CombatPort { get }
     var factions: any FactionPort { get }
     var gameSession: (any GameSessionPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -96,14 +96,14 @@ extension MagicSpellDeliveryAdapter {
             origin: origin,
             aim: ProjectileFlight.normalized(castTarget(of: caster) - origin),
             isFirstPerson: false,
-            location: game.streamer?.cellLocation(of: caster)
+            location: game.streamer.cellLocation(of: caster)
         )
     }
 
     /// An NPC's eye, scaled with the actor.
     public func actorCastOrigin(of key: ReferenceKey) -> SIMD3<Float>? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let actor = streamer.referenceEntry(key: key)?.placedActor
         else { return nil }
         let moved = streamer.npcTransform(for: key)
@@ -189,7 +189,7 @@ extension MagicSpellDeliveryAdapter {
     }
 
     public var isOutdoors: Bool {
-        game.streamer.map { !$0.isInterior } ?? false
+        !game.streamer.isInterior
     }
 
     public func projectileProximity(of payload: SpellPayload) -> Float {

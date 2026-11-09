@@ -22,7 +22,7 @@ import OpenSkyWorldInterface
 @MainActor
 protocol ContainerMenuHost: MenuInputConsumer {
     var worldState: any WorldStateStorePort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var mapWorld: any MapWorldPort { get }
     var dialogueWorld: any DialogueWorldPort { get }
     var dialogueMenu: any DialogueMenuPort { get }

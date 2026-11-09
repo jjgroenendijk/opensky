@@ -52,10 +52,8 @@ public final class AgentTeleportJob {
 
     public init(hub: AgentHub, target: AgentTeleportTarget) throws(AgentFailure) {
         self.hub = hub
-        guard
-            let gameSession = hub.game.gameSession,
-            let streamer = hub.game.streamer
-        else {
+        let streamer = hub.game.streamer
+        guard let gameSession = hub.game.gameSession else {
             throw hub.notReady()
         }
         guard streamer.transitionInFlight == nil else {
@@ -109,7 +107,8 @@ public final class AgentTeleportJob {
         hub: AgentHub, place: SavePlayerPlace, pitch: Float? = nil
     ) throws(AgentFailure) {
         self.hub = hub
-        guard let streamer = hub.game.streamer, hub.game.renderer != nil else {
+        let streamer = hub.game.streamer
+        guard hub.game.renderer != nil else {
             throw hub.notReady()
         }
         guard streamer.transitionInFlight == nil else {
@@ -149,7 +148,7 @@ public final class AgentTeleportJob {
     }
 
     private func advance() throws(AgentFailure) -> AgentWaitStep {
-        guard let streamer = game.streamer else { throw hub.notReady() }
+        let streamer = game.streamer
         switch phase {
         case .lookingUp:
             try finishLookup()
@@ -232,8 +231,8 @@ public final class AgentTeleportJob {
             guard let entryDoor else {
                 throw AgentFailure(.unsupported, "the interior has no door to enter through")
             }
-            game.streamer?.isHeld = false
-            guard game.streamer?.requestDoorTransition(from: entryDoor) == true else {
+            game.streamer.isHeld = false
+            guard game.streamer.requestDoorTransition(from: entryDoor) == true else {
                 throw AgentFailure(.notReady, "a door transition is still loading")
             }
             phase = .loadingInterior(cell)
@@ -243,7 +242,8 @@ public final class AgentTeleportJob {
     // MARK: - Moving the player
 
     private func enterGrid(_ grid: CellCoordinate) {
-        guard let gameSession = game.gameSession, let streamer = game.streamer else { return }
+        let streamer = game.streamer
+        guard let gameSession = game.gameSession else { return }
         let center = Self.center(of: grid)
         // The height is a guess until the cell's terrain loads; then the
         // player is put on the ground.
@@ -253,7 +253,8 @@ public final class AgentTeleportJob {
     }
 
     private func snapToGround(in grid: CellCoordinate) {
-        guard let gameSession = game.gameSession, let streamer = game.streamer else { return }
+        let streamer = game.streamer
+        guard let gameSession = game.gameSession else { return }
         useCOCMarker(in: streamer.composition.cells[grid]?.references, grid: grid)
         useLoadedReference()
         if let exactFeet {
@@ -386,7 +387,7 @@ extension AgentTeleportJob {
             let front = SIMD2<Float>(sin(actor.facing), cos(actor.facing)) * actorStandOff
             return actor.feet + SIMD3(front, 0)
         }
-        let entry = game.streamer?.referenceEntry(key: key)
+        let entry = game.streamer.referenceEntry(key: key)
         return entry?.placedReference?.placement.position
             ?? entry?.placedActor?.placement.position
     }

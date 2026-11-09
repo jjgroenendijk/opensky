@@ -11,7 +11,7 @@ public protocol InventoryCommandsHost: AnyObject {
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 public struct InventoryCommandRunner {
@@ -36,7 +36,7 @@ public struct InventoryCommandRunner {
             case .refreshInteractionTarget:
                 // The streamer's raw target: the HUD's copy is already labelled, and a
                 // lock label appends to the name, so labelling it twice repeats the band.
-                game.hud.updateTarget(labelled(game.streamer?.interactionTarget))
+                game.hud.updateTarget(labelled(game.streamer.interactionTarget))
             case let .showNotice(text):
                 game.hud.showNotification(text)
             }

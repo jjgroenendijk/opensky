@@ -31,7 +31,7 @@ public protocol MagicHeldMagicHost: AnyObject {
     var menuWorld: any MenuWorldPort { get }
     var renderer: (any RendererPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `MagicWorldAdapter`, over its own narrow host.
@@ -83,8 +83,8 @@ extension MagicHeldMagicAdapter {
 
     /// The nearest loose body whose bounding sphere the aim ray passes through.
     public func telekinesisTarget(for caster: ReferenceKey, within reach: Float) -> ReferenceKey? {
-        guard let ray = aimRay(of: caster), let bodies = game.streamer?.dynamicBodies.bodies
-        else { return nil }
+        guard let ray = aimRay(of: caster) else { return nil }
+        let bodies = game.streamer.dynamicBodies.bodies
         let hits = bodies.compactMap { body -> (key: ReferenceKey, along: Float)? in
             let along = simd_dot(body.position - ray.origin, ray.direction)
             guard along > 0, along <= reach else { return nil }
@@ -95,21 +95,22 @@ extension MagicHeldMagicAdapter {
     }
 
     public func heldBody(_ key: ReferenceKey) -> MagicHeldBody? {
-        guard let body = game.streamer?.dynamicBodies.body(for: key) else { return nil }
+        guard let body = game.streamer.dynamicBodies.body(for: key) else { return nil }
         return MagicHeldBody(
             position: body.position, velocity: body.linearVelocity, mass: body.definition.mass
         )
     }
 
     public func pushBody(_ key: ReferenceKey, impulse: SIMD3<Float>) {
-        guard let body = game.streamer?.dynamicBodies.body(for: key) else { return }
-        game.streamer?.dynamicBodies.applyImpulse(impulse, at: body.position, to: key)
+        guard let body = game.streamer.dynamicBodies.body(for: key) else { return }
+        game.streamer.dynamicBodies.applyImpulse(impulse, at: body.position, to: key)
     }
 
     /// An NPC is held through the ridden-actor hold, which steers its pose each frame.
     /// The player is not lifted; the grab paralyses them instead.
     public func holdActor(_ actor: ReferenceKey, at point: SIMD3<Float>?) {
-        guard actor != .player, let streamer = game.streamer else { return }
+        let streamer = game.streamer
+        guard actor != .player else { return }
         guard let point else {
             if let ground = feet(of: actor).map({ SIMD3($0.x, $0.y, groundHeight(near: actor)) }) {
                 streamer.steerRiddenActor(actor, to: ground, yaw: 0)
@@ -154,7 +155,7 @@ extension MagicHeldMagicAdapter {
         let query = NavigationPathQuery(
             start: start, target: target, capsuleRadius: PlayerCapsule.standard.radius
         )
-        guard case let .path(path) = game.streamer?.findPath(query) ?? .miss(.disconnected) else {
+        guard case let .path(path) = game.streamer.findPath(query) else {
             return .noPath
         }
         return .path([start] + path.waypoints + [target])
@@ -226,7 +227,7 @@ extension MagicHeldMagicAdapter {
 
     private func feet(of key: ReferenceKey) -> SIMD3<Float>? {
         guard key != .player else { return game.gameSession?.walkController.feetPosition }
-        return game.streamer?.npcTransform(for: key)?.position
+        return game.streamer.npcTransform(for: key)?.position
             ?? game.scripts.bridge?.referenceState(for: key)?.transform.position
     }
 
@@ -241,7 +242,7 @@ extension MagicHeldMagicAdapter {
         let fades = game.magic.summonFades
         guard !fades.isEmpty || !gameSession.instancePoses.fades.isEmpty else { return }
         gameSession.instancePoses.fades = fades.reduce(into: [:]) { byFormID, entry in
-            guard let formID = game.streamer?.referenceEntry(key: entry.key)?.formID else { return }
+            guard let formID = game.streamer.referenceEntry(key: entry.key)?.formID else { return }
             byFormID[formID.rawValue] = entry.value
         }
     }

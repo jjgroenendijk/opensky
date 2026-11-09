@@ -36,7 +36,7 @@ public protocol RuntimeStateSessionClockHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var hud: any HUDPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -47,7 +47,7 @@ public struct RuntimeStateSessionClockAdapter {
 
 extension RuntimeStateSessionClockAdapter {
     public func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
-        game.streamer?.referenceEntry(formID: formID)
+        game.streamer.referenceEntry(formID: formID)
     }
 
     public var crosshairReference: FormID? {
@@ -102,8 +102,9 @@ extension RuntimeStateSessionClockAdapter {
     /// Interior coordinates are local to the cell, as the camera holds them there.
     /// The restore stands the player at these feet, so fly mode saves the camera.
     public func playerPlace() -> SavePlayerPlace? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer, let cell = streamer.currentCellLocation,
+            let cell = streamer.currentCellLocation,
             let gameSession = game.gameSession
         else { return nil }
         let feet = gameSession.movementMode.isPlayerControlled

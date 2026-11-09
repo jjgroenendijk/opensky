@@ -188,11 +188,11 @@ extension GameSessionScopeFactories {
     func makeObjectAnimationWorld() -> ObjectAnimationWorldAdapter {
         let adapter = ObjectAnimationWorldAdapter(game: scope.ports)
         adapter.animatedObjects = { [unowned scope] in
-            scope.streamer?.residentAnimatedObjects() ?? []
+            scope.streamer.residentAnimatedObjects()
         }
-        adapter.sequenceDoors = { [unowned scope] in scope.streamer?.residentSequenceDoors() ?? [] }
+        adapter.sequenceDoors = { [unowned scope] in scope.streamer.residentSequenceDoors() }
         adapter.nodeAnimations = { [unowned scope] in
-            scope.streamer?.residentNodeAnimations() ?? []
+            scope.streamer.residentNodeAnimations()
         }
         return adapter
     }

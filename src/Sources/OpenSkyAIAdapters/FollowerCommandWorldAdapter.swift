@@ -34,7 +34,7 @@ public protocol FollowerCommandWorldHost: AnyObject {
     var packages: any PackagePort { get }
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -84,8 +84,8 @@ public final class FollowerCommandWorldAdapter {
     /// ground there. True when the press was taken, so nothing in the world activates.
     public func takeActivation() -> Bool {
         guard game.followerCommands.isChoosing else { return takeFollowerPress() }
-        let picked = game.streamer?.interactionTarget
-            .flatMap { game.streamer?.referenceEntry(formID: $0.interaction.reference)?.key }
+        let picked = game.streamer.interactionTarget
+            .flatMap { game.streamer.referenceEntry(formID: $0.interaction.reference)?.key }
         let target = picked.flatMap(commandTarget) ?? (picked == nil ? groundTarget() : nil)
         game.followerCommands.command(target)
         return true
@@ -94,9 +94,9 @@ public final class FollowerCommandWorldAdapter {
     /// A press on a living follower waits: a tap talks, a hold opens command mode.
     private func takeFollowerPress() -> Bool {
         guard
-            let target = game.streamer?.interactionTarget,
-            let key = game.streamer?.referenceEntry(formID: target.interaction.reference)?.key,
-            game.streamer?.referenceEntry(key: key)?.placedActor != nil,
+            let target = game.streamer.interactionTarget,
+            let key = game.streamer.referenceEntry(formID: target.interaction.reference)?.key,
+            game.streamer.referenceEntry(key: key)?.placedActor != nil,
             game.aiWorld.packageActorActivity(key) != .dead,
             game.scripts.bridge?.scriptedState(of: key)
                 .flag(ScriptedStateName.playerTeammate) == true
@@ -112,7 +112,7 @@ public final class FollowerCommandWorldAdapter {
         switch game.followerCommands.advanceUseKey(by: delta, isDown: isDown) {
         case .tap:
             if let pressedTarget {
-                game.streamer?.activate(pressedTarget)
+                game.streamer.activate(pressedTarget)
             }
             pressedTarget = nil
         case let .hold(follower):
@@ -131,12 +131,12 @@ public final class FollowerCommandWorldAdapter {
                 origin: camera.position, direction: camera.forward, maximumDistance: pickReach
             )
         else { return nil }
-        let hit = game.streamer?.nearestCollisionHit(ray: ray)
+        let hit = game.streamer.nearestCollisionHit(ray: ray)
         let reach = hit?.distance ?? ray.maximumDistance
         let terrain = stride(from: Self.terrainStep, through: reach, by: Self.terrainStep)
             .lazy.map { ray.origin + ray.direction * $0 }
             .first { point in
-                game.streamer?.sampleTerrain(at: SIMD2(point.x, point.y))
+                game.streamer.sampleTerrain(at: SIMD2(point.x, point.y))
                     .map { point.z <= $0.height } ?? false
             }
         guard let point = terrain ?? hit?.position else { return nil }

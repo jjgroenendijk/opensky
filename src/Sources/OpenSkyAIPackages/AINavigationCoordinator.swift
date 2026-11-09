@@ -11,8 +11,6 @@ import simd
 /// What the AI & Navigation coordinator reads from the session.
 @MainActor
 public protocol AINavigationWorld: AnyObject {
-    /// False when no cell is streamed.
-    var isStreaming: Bool { get }
     /// Nil without a renderer.
     var camera: AICameraPose? { get }
     /// The same actor list the fight uses, so both readouts agree.
@@ -47,7 +45,7 @@ public final class AINavigationCoordinator {
     }
 
     public var aiNavigationSnapshot: AINavigationSnapshot {
-        guard let world, world.isStreaming else { return .unavailable }
+        guard let world else { return .unavailable }
         let actors = actorOptions()
         let selected = AINavigationCore.resolve(chosenActor, in: actors)
         return AINavigationSnapshot(
@@ -89,7 +87,7 @@ public final class AINavigationCoordinator {
     }
 
     public func selectAIActorFromCrosshair() {
-        guard let world, world.isStreaming, let reference = crosshairHit()?.reference else {
+        guard let world, let reference = crosshairHit()?.reference else {
             lastAction = .crosshairEmpty(verb: "select")
             return
         }
@@ -103,7 +101,7 @@ public final class AINavigationCoordinator {
     public func moveSelectedAIActorToCrosshair() {
         let actors = actorOptions()
         guard
-            let world, world.isStreaming,
+            let world,
             let key = AINavigationCore.resolve(chosenActor, in: actors)
         else {
             lastAction = .noActor(verb: "move")
@@ -122,7 +120,7 @@ public final class AINavigationCoordinator {
     public func stopSelectedAIActor() {
         let actors = actorOptions()
         guard
-            let world, world.isStreaming,
+            let world,
             let key = AINavigationCore.resolve(chosenActor, in: actors)
         else {
             lastAction = .noActor(verb: "stop")

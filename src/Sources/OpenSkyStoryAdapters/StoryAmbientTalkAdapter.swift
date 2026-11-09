@@ -23,7 +23,7 @@ public protocol StoryAmbientTalkHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var packages: any PackagePort { get }
     var perception: any PerceptionPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var scenes: any ScenePort { get }
 }
 
@@ -53,7 +53,7 @@ extension StoryAmbientTalkAdapter {
                 seconds: line.seconds
             )
         }
-        if game.streamer?.dynamicBodies.lastPushCount ?? 0 > 0 {
+        if game.streamer.dynamicBodies.lastPushCount > 0 {
             commentOnPlayer(.knockOver)
         }
         state.framesSinceAmbientSpeech += 1
@@ -122,10 +122,7 @@ extension StoryAmbientTalkAdapter {
     }
 
     private func ambientSpeechFrame(now: Double) -> AmbientSpeechFrame? {
-        guard
-            game.streamer != nil,
-            let player = game.gameSession?.walkController.feetPosition
-        else { return nil }
+        guard let player = game.gameSession?.walkController.feetPosition else { return nil }
         let inScenes = game.scenes.actorsInScenes()
         let conversation = game.dialogue.conversationSpeaker
         let perception = game.perception.runtime

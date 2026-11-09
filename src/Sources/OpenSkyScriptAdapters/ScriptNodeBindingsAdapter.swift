@@ -44,7 +44,7 @@ public protocol ScriptNodeBindingsHost: AnyObject {
     var perception: any PerceptionPort { get }
     var renderer: (any RendererPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
@@ -67,7 +67,7 @@ extension ScriptNodeBindingsAdapter {
         if let posed = posedNode(of: key, named: name) {
             return .found(toWorld * posed.model)
         }
-        guard let path = game.streamer?.placedRecords?.baseModelPath(for: key) else {
+        guard let path = game.streamer.placedRecords?.baseModelPath(for: key) else {
             return .missing
         }
         switch nodes.state(of: path) {
@@ -98,7 +98,7 @@ extension ScriptNodeBindingsAdapter {
             return (posed.local, toWorld * posed.model)
         }
         guard
-            let path = game.streamer?.placedRecords?.baseModelPath(for: key),
+            let path = game.streamer.placedRecords?.baseModelPath(for: key),
             case let .ready(transforms)? = state.modelNodes?.state(of: path),
             let rest = transforms[name.lowercased()]
         else { return nil }
@@ -120,7 +120,7 @@ extension ScriptNodeBindingsAdapter {
         {
             return bone
         }
-        guard let formID = game.streamer?.referenceEntry(key: key)?.formID else { return nil }
+        guard let formID = game.streamer.referenceEntry(key: key)?.formID else { return nil }
         return game.objectAnimationWorld.objects.bone(of: formID.rawValue, named: name)
     }
 
@@ -164,7 +164,8 @@ extension ScriptNodeBindingsAdapter {
     }
 
     public func answerPathWaits() {
-        if !state.pathWaits.isEmpty, let streamer = game.streamer {
+        let streamer = game.streamer
+        if !state.pathWaits.isEmpty {
             state.pathWaitAnswers
                 .merge(state.pathWaits.settle(streamer.npcMovementReadouts())) { first, _ in
                     first

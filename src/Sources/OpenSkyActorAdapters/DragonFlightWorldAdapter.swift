@@ -30,7 +30,7 @@ public protocol DragonFlightWorldHost: AnyObject {
     var idleWorld: any IdleWorldPort { get }
     var mounts: any MountPort { get }
     var packages: any PackagePort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -86,7 +86,7 @@ extension DragonFlightWorldAdapter: DragonFlightWorld {
 
     /// Each enabled perch seat in the loaded cells. A seat heading is clockwise from +Y.
     public func dragonPerches() -> [DragonPerch] {
-        guard let streamer = game.streamer else { return [] }
+        let streamer = game.streamer
         return streamer.residentInteractions.flatMap { interaction -> [DragonPerch] in
             let seats = interaction.seats.filter { $0.isEnabled && $0.rules.isPerch }
             guard
@@ -110,14 +110,14 @@ extension DragonFlightWorldAdapter: DragonFlightWorld {
     }
 
     public func holdForFlight(_ actor: ReferenceKey) -> (feet: SIMD3<Float>, yaw: Float)? {
-        game.streamer?.takeRiddenActor(actor).map { ($0.feetPosition, $0.yaw) }
+        game.streamer.takeRiddenActor(actor).map { ($0.feetPosition, $0.yaw) }
     }
 
     public func moveFlying(
         _ actor: ReferenceKey, state: DragonFlightState,
         inputs: [(name: String, value: BehaviorVariableValue)]
     ) {
-        game.streamer?.steerRiddenActor(actor, to: state.feet, yaw: state.yaw)
+        game.streamer.steerRiddenActor(actor, to: state.feet, yaw: state.yaw)
         for (name, value) in inputs {
             game.actorGraphs.setVariable(value, named: name, on: actor)
         }
@@ -132,7 +132,7 @@ extension DragonFlightWorldAdapter: DragonFlightWorld {
     }
 
     public func releaseFromFlight(_ actor: ReferenceKey) {
-        game.streamer?.releaseRiddenActor(actor)
+        game.streamer.releaseRiddenActor(actor)
         game.actorGraphs.setMotion(.still, for: actor)
     }
 

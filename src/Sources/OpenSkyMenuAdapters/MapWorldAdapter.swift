@@ -36,7 +36,7 @@ public protocol MapWorldHost: MenuInputConsumer {
     var messages: any MessageCoordinatorPort { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
     var gameSession: (any GameSessionPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -157,7 +157,7 @@ extension MapWorldAdapter: MapMenuWorld {
     }
 
     public var playerCell: CellSceneLocation? {
-        game.streamer?.currentCellLocation
+        game.streamer.currentCellLocation
     }
 
     public func mapMarkerSites() -> [MapMarkerSite] {
@@ -184,7 +184,7 @@ extension MapWorldAdapter: MapMenuWorld {
     }
 
     public var worldMapLimits: WorldMapLimits? {
-        guard game.streamer?.interiorScene == nil, let map = mapWorldspace?.details.map else {
+        guard game.streamer.interiorScene == nil, let map = mapWorldspace?.details.map else {
             return nil
         }
         return WorldMapLimits(map: map)

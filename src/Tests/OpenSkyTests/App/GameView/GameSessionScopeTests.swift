@@ -1,10 +1,12 @@
 // A session scope built over synthetic stores builds every coordinator from
-// its initializer, with no renderer, no streamer, and no late setter.
+// its initializer, with no renderer and no late setter.
 
 @testable import OpenSky
 @testable import OpenSkyCells
 import OpenSkyCrime
 import OpenSkyFormatsESM
+import OpenSkyWorldFixtures
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor
@@ -14,7 +16,11 @@ struct GameSessionScopeTests {
             scriptFormIDResolver: FormIDResolver(pluginName: "Skyrim.esm", masters: [])
         )
         return GameSessionScope(
-            worldData: data, cellRunner: nil, gameSession: nil, services: GameAppServices()
+            worldData: data,
+            cellRunner: nil,
+            gameSession: nil,
+            streamer: CellStreamerFixture.makeStreamer(runner: ManualCellBuildRunner()),
+            services: GameAppServices()
         )
     }
 
@@ -45,7 +51,6 @@ struct GameSessionScopeTests {
         _ = scope.systemMenu
         _ = scope.raceMenu
         _ = scope.menuScreens
-        #expect(scope.streamer == nil)
     }
 
     @Test func crimeReportsStoryEventsToTheScopesStoryWorld() {

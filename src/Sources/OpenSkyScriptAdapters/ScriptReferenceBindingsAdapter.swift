@@ -28,7 +28,7 @@ public protocol ScriptReferenceBindingsHost: AnyObject {
     var combatWorld: any CombatWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
@@ -41,8 +41,8 @@ extension ScriptReferenceBindingsAdapter {
     /// Where `PlayImpactEffect`'s pick meets a surface. A node not readable now picks
     /// from the reference. "Local" rotation is the node's turn inside its parent node.
     func impactHit(of pick: PapyrusImpactPick) -> ImpactPickHit? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let state = game.scripts.bridge?.referenceState(for: pick.source)
         else { return nil }
         let node = pick.node.isEmpty ? nil : nodeBindings.readyNode(

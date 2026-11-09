@@ -1,5 +1,5 @@
-// The World readouts' renderer controls with no renderer and no streamer: the
-// state a machine without Metal 4 ends up in. Every read must fall back to its
+// The World readouts' renderer controls with no renderer and an empty streamer:
+// the state a machine without Metal 4 ends up in. Every read must fall back to its
 // stated default without a GPU.
 
 @testable import OpenSkyGameData
@@ -8,6 +8,7 @@
 @testable import OpenSkyRendering
 @testable import OpenSkyRuntimeState
 @testable import OpenSkyWorld
+import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import OpenSkyWorldTesting
 import Testing
@@ -72,7 +73,7 @@ struct WorldRenderControlsTests {
 private final class EmptyRenderControlWorld: RenderControlWorld {
     let renderer: Renderer? = nil
     let gameSession: GameSession? = nil
-    let streamer: CellStreamer? = nil
+    let streamer = CellStreamerFixture.makeStreamer(runner: ManualCellBuildRunner())
     private(set) var refocusCount = 0
 
     func refocusGameView() {

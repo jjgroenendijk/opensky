@@ -36,7 +36,7 @@ public protocol MountWorldHost: AnyObject {
     var magicWorld: any MagicWorldPort { get }
     var messages: any MessageCoordinatorPort { get }
     var perks: any PerkPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
     var worldData: WorldDataStores? { get }
 }
@@ -122,7 +122,7 @@ public final class MountWorldAdapter {
             game.gameSession?.placePlayerFeet(at: feet)
             game.gameSession?.freeFlyCamera.yaw = yaw
         case let .raiseOnPlayer(event): game.gameSession?.locomotion.raise(event)
-        case let .steerMount(mount, feet, yaw): game.streamer?.steerRiddenActor(
+        case let .steerMount(mount, feet, yaw): game.streamer.steerRiddenActor(
                 mount,
                 to: feet,
                 yaw: yaw
@@ -130,7 +130,7 @@ public final class MountWorldAdapter {
         case let .reportMountEvents(mount, events):
             game.actorGraphWorld.graphs.report(events, from: mount)
         case let .releaseMount(mount):
-            game.streamer?.releaseRiddenActor(mount)
+            game.streamer.releaseRiddenActor(mount)
             game.actorGraphWorld.graphs.giveBack(mount)
         case .askToSteal, .reportTheft, .refused, .notify, .dragonBreath:
             applyOutcome(command)
@@ -170,7 +170,7 @@ public final class MountWorldAdapter {
 
     private func race(of key: ReferenceKey) -> Race? {
         guard
-            let base = game.streamer?.residentActorEntry(key: key)?.placedActor?.base,
+            let base = game.streamer.residentActorEntry(key: key)?.placedActor?.base,
             let resolver = game.worldData?.actorValueBaselines?.resolver
         else { return nil }
         let identity = ActorIdentityRecords(resolver: resolver)
@@ -214,7 +214,7 @@ extension MountWorldAdapter: MountWorld {
     public func takeMount(_ key: ReferenceKey, kind: MountKind, saddleBone: String)
         -> PlayerMountDriveStart?
     {
-        guard let hold = game.streamer?.takeRiddenActor(key) else { return nil }
+        guard let hold = game.streamer.takeRiddenActor(key) else { return nil }
         let loan = game.actorGraphWorld.graphs.lend(key)
         return PlayerMountDriveStart(
             mount: key, kind: kind, saddleBone: saddleBone, feet: hold.feetPosition,

@@ -22,7 +22,7 @@ public protocol PerkActivationWorldHost: AnyObject {
     var perkActivation: any PerkActivationPort { get }
     var perks: any PerkPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 public final class PerkActivationWorldAdapter {
@@ -35,7 +35,7 @@ public final class PerkActivationWorldAdapter {
 
 extension PerkActivationWorldAdapter: PerkActivationWorld {
     public func referenceKey(of target: InteractionTarget) -> ReferenceKey? {
-        game.streamer?.referenceEntry(formID: target.interaction.reference)?.key
+        game.streamer.referenceEntry(formID: target.interaction.reference)?.key
     }
 
     public func activateChoices(on target: ReferenceKey) -> [PerkEntryPointChoice] {
@@ -76,10 +76,10 @@ extension PerkActivationWorldAdapter: PerkActivationWorld {
     }
 
     public func performDefaultActivation(_ target: InteractionTarget) {
-        game.streamer?.activate(target, offeringPerkChoices: false)
+        game.streamer.activate(target, offeringPerkChoices: false)
     }
 
     public var crosshairTarget: InteractionTarget? {
-        game.streamer?.interactionTarget
+        game.streamer.interactionTarget
     }
 }

@@ -31,7 +31,7 @@ public protocol InventoryReadoutsHost: AnyObject {
     var journal: any JournalPort { get }
     var magic: any MagicPort { get }
     var player: any PlayerPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -48,7 +48,7 @@ extension InventoryReadoutsAdapter {
             if let spawn = game.worldState.component(ReferenceSpawnState.self, for: key) {
                 return spawn.base
             }
-            let entry = game.streamer?.referenceEntry(key: key)
+            let entry = game.streamer.referenceEntry(key: key)
             return entry?.placedReference?.base
         })
     }
@@ -58,7 +58,7 @@ extension InventoryReadoutsAdapter {
     }
 
     public func dropPlacement() -> DropPlacement? {
-        guard let gameSession = game.gameSession, let location = game.streamer?.currentCellLocation
+        guard let gameSession = game.gameSession, let location = game.streamer.currentCellLocation
         else { return nil }
         return WorldItemRuntime.dropPlacement(
             in: location,
@@ -69,11 +69,11 @@ extension InventoryReadoutsAdapter {
 
     public func nearestActorEntry() -> RuntimeReferenceEntry? {
         guard let gameSession = game.gameSession else { return nil }
-        return game.streamer?.nearestActorEntry(to: gameSession.freeFlyCamera.position)
+        return game.streamer.nearestActorEntry(to: gameSession.freeFlyCamera.position)
     }
 
     public func appearanceSkipReasons(forActor reference: FormID) -> [String] {
-        game.streamer?.appearanceSkipReasons(forActor: reference) ?? []
+        game.streamer.appearanceSkipReasons(forActor: reference)
     }
 
     public func theftBounty(of item: FormID, from reference: ReferenceKey) -> Int32 {

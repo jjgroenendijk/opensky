@@ -21,7 +21,7 @@ public protocol AgentViewHost: AnyObject {
     var benchmarkWorld: any BenchmarkWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var runtimeState: any RuntimeStatePort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
@@ -53,7 +53,8 @@ extension AgentViewAdapter {
     }
 
     public func referenceView() throws(AgentFailure) -> ReferenceView {
-        guard let gameSession = game.gameSession, let streamer = game.streamer else {
+        let streamer = game.streamer
+        guard let gameSession = game.gameSession else {
             throw hub.notReady()
         }
         let camera = gameSession.freeFlyCamera

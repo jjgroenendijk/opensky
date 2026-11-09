@@ -37,7 +37,7 @@ public protocol AIBumpsHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var packages: any PackagePort { get }
     var storyWorld: any StoryWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
 }
 
@@ -51,7 +51,7 @@ extension AIBumpsAdapter {
     public static let bumpSlack: Float = 4
 
     public func advanceBumps() {
-        guard let gameSession = game.gameSession, game.streamer != nil else { return }
+        guard let gameSession = game.gameSession else { return }
         let player = gameSession.walkController
         let loop = game.combat.loop
         let busy = game.storyWorld.scenes.actorsInScenes()
@@ -74,7 +74,7 @@ extension AIBumpsAdapter {
         for command in game.packages.advanceBumps(contacts, now: game.storyWorld.sceneSeconds) {
             switch command {
             case let .speak(actor): game.storyWorld.sayOwnLine(.bump, speaker: actor)
-            case let .move(actor, goal): _ = game.streamer?.moveActor(actor, to: goal)
+            case let .move(actor, goal): _ = game.streamer.moveActor(actor, to: goal)
             }
         }
     }

@@ -27,7 +27,7 @@ public protocol InventoryPerksHost: AnyObject {
     var mapWorld: any MapWorldPort { get }
     var perkActivation: any PerkActivationPort { get }
     var perks: any PerkPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `InventoryWorldAdapter`, over its own narrow host.
@@ -57,7 +57,7 @@ extension InventoryPerksAdapter {
     }
 
     public func perkActivateLabel(for reference: FormID) -> String? {
-        guard let key = game.streamer?.referenceEntry(formID: reference)?.key else { return nil }
+        guard let key = game.streamer.referenceEntry(formID: reference)?.key else { return nil }
         if let label = game.perkActivation.promptLabel(on: key) {
             return label
         }

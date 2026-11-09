@@ -19,7 +19,7 @@ public struct ScriptSkyWiring {
     public init(_ adapter: ScriptSkyBindingsAdapter, bridge: PapyrusWorldStateBridge) {
         bridge.sessionNatives.towardSun = { [weak game = adapter.game] in
             guard
-                let game, game.streamer?.isInterior != true,
+                let game, game.streamer.isInterior != true,
                 let session = game.gameSession, let renderer = game.renderer,
                 let weather = session.weather,
                 weather.timeOfDayWeights(hour: session.gameClock.hourOfDay).night < 1
@@ -31,7 +31,7 @@ public struct ScriptSkyWiring {
             return PapyrusPlayerView(eye: camera.position, forward: camera.forward)
         }
         bridge.sessionNatives.skyMode = { [weak game = adapter.game] in
-            game?.streamer?.isInterior == true ? ScriptSkyBindingsAdapter.SkyMode
+            game?.streamer.isInterior == true ? ScriptSkyBindingsAdapter.SkyMode
                 .interior : ScriptSkyBindingsAdapter.SkyMode.full
         }
     }

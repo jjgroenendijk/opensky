@@ -35,7 +35,7 @@ public protocol CrimeWorldHost: AnyObject {
     var mapWorld: any MapWorldPort { get }
     var perception: any PerceptionPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -134,22 +134,22 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     public var currentCellLocation: CellSceneLocation? {
-        game.streamer?.currentCellLocation
+        game.streamer.currentCellLocation
     }
 
     public func cellOwnership(at location: CellSceneLocation) -> RecordOwnership? {
-        game.streamer?.residentScene(at: location)?.owner
+        game.streamer.residentScene(at: location)?.owner
     }
 
     public func cellTrespassFlags(at location: CellSceneLocation) -> CellTrespassFlags {
-        game.streamer?.residentScene(at: location)?.trespass ?? CellTrespassFlags()
+        game.streamer.residentScene(at: location)?.trespass ?? CellTrespassFlags()
     }
 
     public func cellLocationLink(at location: CellSceneLocation)
         -> (link: FormID, plugin: String)?
     {
         guard
-            let scene = game.streamer?.residentScene(at: location),
+            let scene = game.streamer.residentScene(at: location),
             let link = scene.locationLink,
             let plugin = scene.ownerPluginName
         else { return nil }

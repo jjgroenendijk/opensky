@@ -38,7 +38,7 @@ public protocol AIPackageStateHost: AnyObject {
     var runtimeState: any RuntimeStatePort { get }
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -59,7 +59,7 @@ extension AIPackageStateAdapter {
 
     public func packageResidents() -> [RuntimeReferenceEntry]? {
         guard game.renderer != nil else { return nil }
-        return game.streamer?.residentActorEntries()
+        return game.streamer.residentActorEntries()
     }
 
     public var packageClock: GameClock? {
@@ -83,8 +83,7 @@ extension AIPackageStateAdapter {
             detection: game.perception.perceptionResolution(),
             referenceEnable: referenceEnableResolution(),
             clock: clock,
-            references: game.streamer?.residentReferenceIndex()
-                ?? RuntimeReferenceIndex(entries: [])
+            references: game.streamer.residentReferenceIndex()
         )
         game.runtimeStateWorld.addLiveSeams(to: &context)
         return context
@@ -99,7 +98,7 @@ extension AIPackageStateAdapter {
     /// An "in cell" input names an interior cell, so it compares cells, not distance.
     public func isWithin(_ location: Package.Location, actor: ReferenceKey) -> Bool {
         if location.kind == .inCell, let cell = location.formID {
-            return game.streamer?.cellLocation(of: actor) == .interior(cell)
+            return game.streamer.cellLocation(of: actor) == .interior(cell)
         }
         guard
             let place = packageMoves.packagePlace(of: location, actor: actor, aliasQuest: nil),
@@ -123,6 +122,6 @@ extension AIPackageStateAdapter {
     }
 
     public func packageMoverHasRoom(for actor: ReferenceKey) -> Bool {
-        actor == .player || game.streamer?.npcMovement.hasRoom(for: actor) ?? true
+        actor == .player || game.streamer.npcMovement.hasRoom(for: actor)
     }
 }

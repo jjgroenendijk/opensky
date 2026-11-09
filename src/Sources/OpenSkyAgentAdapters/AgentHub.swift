@@ -153,8 +153,9 @@ public struct AgentHub {
     /// Cells are in, whether or not a loading screen still covers them. A teleport
     /// that put up the cover waits for this, because it lifts the cover itself.
     public var isWorldLoaded: Bool {
+        let streamer = game.streamer
         guard
-            game.renderer != nil, let streamer = game.streamer,
+            game.renderer != nil,
             streamer.transitionInFlight == nil else { return false }
         return streamer.interiorScene != nil || !streamer.composition.cells.isEmpty
     }

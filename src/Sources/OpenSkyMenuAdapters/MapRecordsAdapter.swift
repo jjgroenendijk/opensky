@@ -6,7 +6,7 @@ public import OpenSkySessionInterface
 /// What `MapRecordsAdapter` reads from the session.
 @MainActor
 public protocol MapRecordsHost: AnyObject {
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -22,8 +22,8 @@ extension MapRecordsAdapter {
 
     /// The map of the worldspace the player stands in, or of its map parent.
     public var mapWorldspace: Worldspace? {
-        guard let records, let current = game.streamer?.worldspaceEditorID else { return nil }
-        return records.mapWorldspace(of: current)
+        guard let records else { return nil }
+        return records.mapWorldspace(of: game.streamer.worldspaceEditorID)
     }
 
     public var mapSettings: MenuMapSettings {

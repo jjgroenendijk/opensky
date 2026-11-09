@@ -36,7 +36,7 @@ public protocol ActorWorldHost: AnyObject {
     var journal: any JournalPort { get }
     var magic: any MagicPort { get }
     var gameSession: (any GameSessionPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
     var mapWorld: any MapWorldPort { get }
@@ -88,7 +88,7 @@ public final class ActorWorldAdapter {
         if key == .player {
             return .player
         }
-        guard let placement = game.streamer?.residentActorPlacement(key: key) else { return nil }
+        guard let placement = game.streamer.residentActorPlacement(key: key) else { return nil }
         return ActorValueHolder(
             key: key,
             subject: .actor(base: placement.base),
@@ -99,7 +99,7 @@ public final class ActorWorldAdapter {
     /// Each pose is the NPC movement transform, then a stored override, then
     /// the placement.
     public func combatActors() -> [CombatActorObservation] {
-        guard let streamer = game.streamer else { return [] }
+        let streamer = game.streamer
         let key = ActorListKey(
             streamer: ObjectIdentifier(streamer),
             poses: streamer.actorPoseRevision,
@@ -117,7 +117,8 @@ public final class ActorWorldAdapter {
 
     /// One resident actor from `combatActors()`, found by key in constant time.
     public func combatActor(key: ReferenceKey) -> CombatActorObservation? {
-        guard let streamer = game.streamer, let entry = streamer.residentActorEntry(key: key)
+        let streamer = game.streamer
+        guard let entry = streamer.residentActorEntry(key: key)
         else { return nil }
         return observation(of: entry, in: streamer)
     }
@@ -197,7 +198,7 @@ public final class ActorWorldAdapter {
             let actor = game.combat.engagedEnemy(playerFeet: gameSession.freeFlyCamera.position),
             let holder = actorValueHolder(for: actor.key)
         else { return nil }
-        let name = game.streamer?.residentActorPlacement(key: actor.key)
+        let name = game.streamer.residentActorPlacement(key: actor.key)
             .flatMap { displayName(of: actor.key, base: $0.base) } ?? ""
         return HUDEnemyHealth(name: name, health: runtime.fractions(of: holder).health)
     }
@@ -206,7 +207,7 @@ public final class ActorWorldAdapter {
 extension ActorWorldAdapter: ActorValueWorld {
     public func regeneratingHolders() -> [ActorValueHolder] {
         var holders: [ActorValueHolder] = [.player]
-        guard let streamer = game.streamer else { return holders }
+        let streamer = game.streamer
         for entry in streamer.residentActorEntries() {
             guard let actor = entry.placedActor else { continue }
             holders.append(ActorValueHolder(
@@ -219,8 +220,8 @@ extension ActorWorldAdapter: ActorValueWorld {
     }
 
     public func nearestActorValueHolder() -> ActorValueHolder? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let gameSession = game.gameSession,
             let entry = streamer.nearestActorEntry(to: gameSession.freeFlyCamera.position),
             let actor = entry.placedActor

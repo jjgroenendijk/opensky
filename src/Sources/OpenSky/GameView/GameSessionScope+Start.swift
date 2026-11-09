@@ -120,7 +120,7 @@ extension GameSessionScope {
 
     /// The playback drawing one resident actor, matched by its ACHR.
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback? {
-        guard let actor = streamer?.referenceEntry(key: key)?.placedActor else { return nil }
+        guard let actor = streamer.referenceEntry(key: key)?.placedActor else { return nil }
         return renderer?.scene.actorPlayback(for: actor.formID)
     }
 

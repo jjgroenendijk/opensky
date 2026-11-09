@@ -42,7 +42,7 @@ public protocol AgentWorldHost: AnyObject {
     var renderer: (any RendererPort)? { get }
     var gameSession: (any GameSessionPort)? { get }
     var simulationClock: any SteppedWallClockPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var titleMenu: any TitleMenuPort { get }
     var dataRoot: GameDataRoot? { get }
 }

@@ -28,7 +28,7 @@ public protocol ProgressionWorldHost: AnyObject {
     var mapWorld: any MapWorldPort { get }
     var menuWorld: any MenuWorldPort { get }
     var runtimeState: any RuntimeStatePort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldData: WorldDataStores? { get }
 }
 
@@ -90,7 +90,7 @@ public final class ProgressionWorldAdapter {
     }
 
     private func inventoryHolder(of key: ReferenceKey) -> InventoryHolder? {
-        key == .player ? .player : game.streamer?.inventoryHolder(of: key)
+        key == .player ? .player : game.streamer.inventoryHolder(of: key)
     }
 }
 

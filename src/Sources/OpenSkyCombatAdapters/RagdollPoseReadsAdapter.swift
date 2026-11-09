@@ -29,7 +29,7 @@ public protocol RagdollPoseReadsHost: AnyObject {
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var gameSession: (any GameSessionPort)? { get }
     var renderer: (any RendererPort)? { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
 }
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
@@ -39,7 +39,7 @@ public struct RagdollPoseReadsAdapter {
 
 extension RagdollPoseReadsAdapter {
     public var ragdollResidents: [RagdollResident] {
-        guard let streamer = game.streamer else { return [] }
+        let streamer = game.streamer
         return streamer.residentActorEntries().compactMap { entry in
             entry.placedActor.map {
                 RagdollResident(key: entry.key, position: $0.placement.position)
@@ -48,7 +48,7 @@ extension RagdollPoseReadsAdapter {
     }
 
     public var residentRagdollCells: Set<CellSceneLocation> {
-        game.streamer?.residentCellLocations ?? []
+        game.streamer.residentCellLocations
     }
 
     public func hasZeroHealth(_ key: ReferenceKey) -> Bool {
@@ -62,8 +62,8 @@ extension RagdollPoseReadsAdapter {
         if key == .player {
             return .player
         }
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer,
             let actor = streamer.referenceEntry(key: key)?.placedActor
         else { return nil }
         return ActorValueHolder(
@@ -75,9 +75,9 @@ extension RagdollPoseReadsAdapter {
         if key == .player {
             return playerRagdollPose
         }
+        let streamer = game.streamer
         guard
             let renderer = game.renderer,
-            let streamer = game.streamer,
             let actor = streamer.referenceEntry(key: key)?.placedActor,
             let playback = game.actorPlayback(for: key),
             let animated = playback.clip.orderedWorldTransforms(at: renderer.animationTime)
@@ -112,7 +112,7 @@ extension RagdollPoseReadsAdapter {
             let skeletonPath = body.assembly.visual.skeletonPath
                 .flatMap({ path in attempt { try VirtualFileSystem.meshPath(path) } }),
             let animated = body.animation.animatedBoneMatrices,
-            let cell = game.streamer?.currentCellLocation
+            let cell = game.streamer.currentCellLocation
         else { return nil }
         return RagdollActorPose(
             reference: .playerReference,
@@ -134,7 +134,7 @@ extension RagdollPoseReadsAdapter {
 
     /// The same static broadphase the player capsule queries.
     public var ragdollStepWorld: DynamicStepWorld {
-        guard let streamer = game.streamer else { return DynamicStepWorld() }
+        let streamer = game.streamer
         return DynamicStepWorld(
             staticCandidates: { [weak streamer] bounds in
                 streamer?.collisionCandidates(overlapping: bounds) ?? []
@@ -143,8 +143,9 @@ extension RagdollPoseReadsAdapter {
     }
 
     public func unloadedActorHome(of key: ReferenceKey) -> CellSceneLocation? {
+        let streamer = game.streamer
         guard
-            let streamer = game.streamer, streamer.referenceEntry(key: key) == nil,
+            streamer.referenceEntry(key: key) == nil,
             let placement = streamer.pluginPlacement(of: key), placement.entry.placedActor != nil
         else { return nil }
         return placement.home

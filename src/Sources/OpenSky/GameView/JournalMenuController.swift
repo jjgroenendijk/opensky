@@ -33,7 +33,7 @@ protocol JournalMenuHost: MenuInputConsumer {
     var menuMode: any MenuModePort { get }
     var renderer: (any RendererPort)? { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var swfMovies: any SWFMovieSourcePort { get }
     var worldState: any WorldStateStorePort { get }
 }
@@ -141,7 +141,7 @@ final class JournalMenuController {
                     guard let self, let key = aliases.reference(alias: aliasID, in: quest)
                     else { return nil }
                     let base = key == .player ? MenuRecordData.playerBase
-                        : self.game.streamer?.referenceEntry(key: key)?.placedActor?.base
+                        : self.game.streamer.referenceEntry(key: key)?.placedActor?.base
                     return base.flatMap { self.game.menuWorld.sex(ofBase: $0) }.map { $0 == 1 }
                 }
             }

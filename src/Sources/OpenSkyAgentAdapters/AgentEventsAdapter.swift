@@ -52,7 +52,7 @@ public protocol AgentEventsHost: AnyObject {
     var journalMenu: any JournalMenuPort { get }
     var menuMode: any MenuModePort { get }
     var scripts: any ScriptPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -88,7 +88,8 @@ extension AgentEventsAdapter {
     }
 
     private func wireEventCallbacks() {
-        guard !hub.tap.wired, let streamer = game.streamer else { return }
+        let streamer = game.streamer
+        guard !hub.tap.wired else { return }
         hub.tap.wired = true
         streamer.registerCellAttached(.agentEvents) { [weak state = hub.state] attachment in
             // A rebuild of the same cell after a state change is not a new load.
@@ -153,7 +154,7 @@ extension AgentEventsAdapter {
     }
 
     private func diffDeaths() {
-        guard let streamer = game.streamer else { return }
+        let streamer = game.streamer
         for entry in streamer.residentActorEntries() {
             let isDead = game.worldState.component(ActorDeathState.self, for: entry.key)?
                 .isDead ?? false
@@ -209,7 +210,8 @@ extension AgentEventsAdapter {
         var fields: [String: AgentJSON] = [
             "changes": .array(entries.map(change))
         ]
-        if let streamer = game.streamer {
+        do {
+            let streamer = game.streamer
             fields["transitionInFlight"] = streamer.transitionInFlight
                 .map { .formID($0.rawValue) } ?? .null
             fields["interiorRebuilding"] = .bool(streamer.interiorRebuildInFlight)
@@ -221,7 +223,7 @@ extension AgentEventsAdapter {
     }
 
     private func change(_ entry: WorldStateJournalEntry) -> AgentJSON {
-        let formID = game.streamer?.referenceEntry(key: entry.key)?.formID
+        let formID = game.streamer.referenceEntry(key: entry.key)?.formID
         return [
             "sequence": .init(Int(entry.sequence)),
             "ref": formID.map { .formID($0.rawValue) } ?? .string(String(describing: entry.key)),

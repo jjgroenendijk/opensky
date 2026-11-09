@@ -32,7 +32,7 @@ protocol DialogueMenuHost: MenuInputConsumer {
     var headTracking: any HeadTrackingPort { get }
     var menuMode: any MenuModePort { get }
     var storyWorld: any StoryWorldPort { get }
-    var streamer: (any CellStreamerPort)? { get }
+    var streamer: any CellStreamerPort { get }
     var swfMovies: any SWFMovieSourcePort { get }
 }
 
@@ -77,7 +77,7 @@ final class DialogueMenuController {
 
     /// The open conversation's speaker, else the crosshair's Talk target.
     var speakerOrTarget: ReferenceKey? {
-        model.speakerKey ?? game.streamer?.talk.speaker
+        model.speakerKey ?? game.streamer.talk.speaker
     }
 
     // MARK: - Lifecycle
@@ -119,7 +119,7 @@ final class DialogueMenuController {
 
     func openFromCrosshair() {
         guard !isOpen else { return }
-        guard let speaker = game.streamer?.talk.speaker else {
+        guard let speaker = game.streamer.talk.speaker else {
             dialogue.lastOutcome = "no actor under the crosshair"
             return
         }
