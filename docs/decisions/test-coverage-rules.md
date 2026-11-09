@@ -58,7 +58,10 @@ side of the merge commit it checks out.
 1. At least `DIFF_COVERAGE_FLOOR` of the changed executable lines ran in a test.
 2. Every function the branch adds ran in a test. A function counts as added when its first
    line is a changed line. A closure is not counted here, because a closure that never ran
-   inside a tested function is an untaken branch, and rule 1 counts its lines.
+   inside a tested function is an untaken branch, and rule 1 counts its lines. The init
+   accessor the compiler adds to a property-wrapped stored property is not counted either. It
+   runs only when an init assigns the property, so a property with a default value never
+   calls it. Example: `@Flag var hidden = false`.
 
 A line that git's moved-code detection (`git diff --color-moved`) marks as moved unchanged is
 not a changed line, even when its indentation changed. Moving a type to another module does
