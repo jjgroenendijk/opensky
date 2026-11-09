@@ -1,26 +1,20 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyDialogue
 import OpenSkyDialogueInterface
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyPerception
+import OpenSkyMenusInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
@@ -29,7 +23,6 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySave
 public import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWeather

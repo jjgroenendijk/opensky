@@ -1,14 +1,12 @@
 import OpenSkyActorPresentation
 public import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -32,7 +30,7 @@ public protocol AudioMixHost: AnyObject {
 
 /// Part of `AudioWorldAdapter`, over its own narrow host.
 public struct AudioMixAdapter {
-    public unowned let game: any AudioMixHost
+    public let game: any AudioMixHost
 }
 
 extension AudioMixAdapter {
@@ -43,7 +41,7 @@ extension AudioMixAdapter {
             menuMode: menus.isWorldSimPaused,
             loading: game.loadingScreens.isCovering,
             dialogue: game.dialogueMenu.isOpen,
-            statsMenu: menus.stack.identifiers.contains(SkillsMenuCoordinator.identifier)
+            statsMenu: menus.stack.identifiers.contains(MenuIdentifier.statsMenu)
         )
     }
 

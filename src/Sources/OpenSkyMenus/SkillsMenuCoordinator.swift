@@ -33,7 +33,7 @@ extension SkillsMenuWorld {
 }
 
 public final class SkillsMenuCoordinator {
-    public static let identifier: MenuIdentifier = "StatsMenu"
+    public static let identifier = MenuIdentifier.statsMenu
 
     public internal(set) var model: SkillsMenuModel?
     public private(set) var movieEnabled = true

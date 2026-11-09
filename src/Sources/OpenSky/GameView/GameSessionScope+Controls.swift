@@ -14,6 +14,7 @@ import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyScripting
 import OpenSkyScriptingInterface
+import OpenSkySessionAdapters
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState

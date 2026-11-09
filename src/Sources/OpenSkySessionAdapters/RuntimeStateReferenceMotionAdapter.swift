@@ -1,22 +1,18 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyConditions
 import OpenSkyCrimeInterface
-import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 public import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -40,8 +36,8 @@ public protocol RuntimeStateReferenceMotionHost: AnyObject {
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
 public struct RuntimeStateReferenceMotionAdapter {
-    public unowned let owner: RuntimeStateWorldAdapter
-    public unowned let game: any RuntimeStateReferenceMotionHost
+    public let game: any RuntimeStateReferenceMotionHost
+    public let state: RuntimeStatePartState
 }
 
 extension RuntimeStateReferenceMotionAdapter {
@@ -122,7 +118,7 @@ extension RuntimeStateReferenceMotionAdapter {
             cells: game.streamer?.residentCellLocations,
             deaths: worldState.revision(of: [.death])
         )
-        return owner.conditionCaches.deaths.value(for: key) {
+        return state.conditionCaches.deaths.value(for: key) {
             var view = DeathView()
             for key in worldState.sortedDirtyKeys() {
                 guard worldState.component(ActorDeathState.self, for: key)?.isDead == true else {
@@ -146,7 +142,7 @@ extension RuntimeStateReferenceMotionAdapter {
             markers: worldState.revision(of: [.mapMarker]),
             references: references.sortedKeys()
         )
-        return owner.conditionCaches.markers.value(for: key) {
+        return state.conditionCaches.markers.value(for: key) {
             var markers: Set<ReferenceKey> = []
             for entry in references.sortedEntries() {
                 guard let record = entry.placedReference?.mapMarker else { continue }

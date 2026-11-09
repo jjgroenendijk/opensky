@@ -1,24 +1,20 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyAudio
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyFactions
+import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyPerception
+import OpenSkyMenusInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
@@ -26,7 +22,6 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySave
 public import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -47,7 +42,7 @@ public protocol RuntimeStateSessionClockHost: AnyObject {
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
 public struct RuntimeStateSessionClockAdapter {
-    public unowned let game: any RuntimeStateSessionClockHost
+    public let game: any RuntimeStateSessionClockHost
 }
 
 extension RuntimeStateSessionClockAdapter {

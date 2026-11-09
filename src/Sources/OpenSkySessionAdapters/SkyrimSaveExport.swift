@@ -5,9 +5,9 @@
 public import Foundation
 import OpenSkyFormatsCore
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMenus
-import OpenSkyProgression
+import OpenSkyInventoryInterface
+import OpenSkyMenusInterface
+import OpenSkyProgressionInterface
 import OpenSkyRuntimeState
 public import OpenSkySave
 public import OpenSkySaveInterface

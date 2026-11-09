@@ -8,8 +8,7 @@ public import OpenSkyAgentControl
 import OpenSkyFormatsCore
 import OpenSkyFormatsESS
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMenus
+import OpenSkyInventoryInterface
 public import OpenSkyMenusInterface
 public import OpenSkySave
 import OpenSkySaveInterface

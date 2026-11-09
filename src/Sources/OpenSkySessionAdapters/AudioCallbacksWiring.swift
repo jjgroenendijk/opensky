@@ -3,14 +3,12 @@
 import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -40,8 +38,8 @@ public struct AudioCallbacksWiring {
         streamer.onMusicContextChanged = { [weak audio] context in
             audio?.musicDirector?.handleMusicContext(context)
         }
-        streamer.musicFeed.locationMusicType = { [unowned game = adapter.game] scene in
-            game.runtimeStateWorld.locationMusicType(of: scene.locationKey)
+        streamer.musicFeed.locationMusicType = { [weak game = adapter.game] scene in
+            game?.runtimeStateWorld.locationMusicType(of: scene.locationKey)
         }
     }
 }

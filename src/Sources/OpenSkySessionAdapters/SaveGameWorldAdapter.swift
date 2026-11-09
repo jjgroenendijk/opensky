@@ -6,14 +6,12 @@ import Metal
 public import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyGameData
-public import OpenSkyMenus
 public import OpenSkyMenusInterface
-import OpenSkyProgression
+import OpenSkyProgressionInterface
 public import OpenSkyRendering
 import OpenSkyRenderResources
 public import OpenSkySave
 public import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -38,8 +36,8 @@ public protocol SaveGameWorldHost: AnyObject {
 public final class SaveGameWorldAdapter: SaveGameService {
     public static let thumbnailSize = (width: 192, height: 108)
 
-    private unowned let game: any SaveGameWorldHost
-    private unowned let saveFiles: any SkyrimSaveExportHost & SkyrimSaveImportHost
+    private let game: any SaveGameWorldHost
+    private let saveFiles: any SkyrimSaveExportHost & SkyrimSaveImportHost
     private let autosaves = AutosavePolicy()
     /// When the last save of any kind was written, for Save on Pause.
     public private(set) var lastSaveDate: Date?

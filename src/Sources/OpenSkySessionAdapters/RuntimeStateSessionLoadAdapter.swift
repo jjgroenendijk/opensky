@@ -1,25 +1,21 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyFactions
+import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyPerception
+import OpenSkyMenusInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
@@ -27,7 +23,6 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySave
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -55,8 +50,9 @@ public protocol RuntimeStateSessionLoadHost: AnyObject {
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
 public struct RuntimeStateSessionLoadAdapter {
-    public unowned let owner: RuntimeStateWorldAdapter
-    public unowned let game: any RuntimeStateSessionLoadHost
+    public let game: any RuntimeStateSessionLoadHost
+    public let core: RuntimeStateCoreAdapter
+    public let saveContents: RuntimeStateSaveContentsAdapter
 }
 
 extension RuntimeStateSessionLoadAdapter {
@@ -69,12 +65,12 @@ extension RuntimeStateSessionLoadAdapter {
     /// A changed load order throws `SaveFailure.contentMissing`, or `.noMasterFiles` when
     /// no plugin of the save is loaded; `checksLoadOrder: false` loads it anyway.
     public func loadSession(slot: String, checksLoadOrder: Bool) async throws {
-        let current = checksLoadOrder ? await attempt { try await owner.pluginFingerprint() } : nil
+        let current = checksLoadOrder ? await attempt { try await core.pluginFingerprint() } : nil
         let file: OpenSkySaveFile
         do {
-            file = try await owner.store().read(slot: slot, verifyingAgainst: current)
+            file = try await core.store().read(slot: slot, verifyingAgainst: current)
         } catch OpenSkySaveError.fingerprintMismatch {
-            let saved = try await owner.store().read(slot: slot, verifyingAgainst: nil)
+            let saved = try await core.store().read(slot: slot, verifyingAgainst: nil)
             let loaded = Set((current ?? []).map { $0.name.lowercased() })
             let shared = saved.fingerprint.contains { loaded.contains($0.name.lowercased()) }
             throw shared ? SaveFailure.contentMissing : SaveFailure.noMasterFiles
@@ -90,7 +86,7 @@ extension RuntimeStateSessionLoadAdapter {
         game.scripts.restore(instances: file.scripts, timers: file.timers)
         game.scripts.bridge?.publishFactionReactions()
         game.scripts.bridge?.publishLeveledEdits()
-        owner.saveContents.restoreRuntimeExtras()
+        saveContents.restoreRuntimeExtras()
         game.combatWorld.run(game.combat.prepareForPersistence())
         game.messages.reloadHelpRecords()
         game.questNotices.reset()

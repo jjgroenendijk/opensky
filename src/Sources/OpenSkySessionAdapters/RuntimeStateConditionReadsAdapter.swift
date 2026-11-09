@@ -1,24 +1,20 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
-import OpenSkyFactions
+import OpenSkyCrimeInterface
+import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyPerception
+import OpenSkyMenusInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
@@ -26,7 +22,6 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySave
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -50,8 +45,9 @@ public protocol RuntimeStateConditionReadsHost: AnyObject {
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
 public struct RuntimeStateConditionReadsAdapter {
-    public unowned let owner: RuntimeStateWorldAdapter
-    public unowned let game: any RuntimeStateConditionReadsHost
+    public let game: any RuntimeStateConditionReadsHost
+    public let core: RuntimeStateCoreAdapter
+    public let liveSeams: RuntimeStateLiveSeamsAdapter
 }
 
 extension RuntimeStateConditionReadsAdapter {
@@ -67,7 +63,7 @@ extension RuntimeStateConditionReadsAdapter {
             globals: globals,
             quests: quests?.resolution() ?? .empty,
             aliases: quests?.aliasResolution() ?? .empty,
-            actors: owner.actorResolution(),
+            actors: core.actorResolution(),
             detection: game.perception.perceptionResolution(),
             magic: game.magic.magicConditionResolution(),
             crime: game.crime.conditionResolution(owning: references.sortedKeys()),
@@ -77,8 +73,8 @@ extension RuntimeStateConditionReadsAdapter {
             subject: crosshair?.key,
             target: crosshair?.key
         )
-        context.data = owner.conditionData()
-        owner.addLiveSeams(to: &context)
+        context.data = core.conditionData()
+        liveSeams.addLiveSeams(to: &context)
         return context
     }
 
