@@ -8,7 +8,6 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyObjectAnimation
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld

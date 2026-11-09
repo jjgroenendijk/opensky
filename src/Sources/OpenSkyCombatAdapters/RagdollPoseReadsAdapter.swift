@@ -1,22 +1,20 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
 public import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
+import OpenSkyMenusInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -36,7 +34,7 @@ public protocol RagdollPoseReadsHost: AnyObject {
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
 public struct RagdollPoseReadsAdapter {
-    public unowned let game: any RagdollPoseReadsHost
+    public let game: any RagdollPoseReadsHost
 }
 
 extension RagdollPoseReadsAdapter {

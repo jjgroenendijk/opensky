@@ -3,7 +3,6 @@ import OpenSkyAIPackages
 public import OpenSkyAudio
 import OpenSkyBehavior
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsCore
@@ -12,7 +11,6 @@ import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -37,8 +35,8 @@ public protocol ActorGraphGraphEventsHost: AnyObject {
 
 /// Part of `ActorGraphWorldAdapter`, over its own narrow host.
 public struct ActorGraphGraphEventsAdapter {
-    public unowned let owner: ActorGraphWorldAdapter
-    public unowned let game: any ActorGraphGraphEventsHost
+    public let game: any ActorGraphGraphEventsHost
+    public let state: ActorGraphPartState
 }
 
 extension ActorGraphGraphEventsAdapter {
@@ -53,9 +51,9 @@ extension ActorGraphGraphEventsAdapter {
             let footsteps = game.gameSession?.footstepDirector
         else { return }
         footsteps.handleActorGraphEvents(
-            [name], gait: owner.gaits[actor] ?? .walk, position: feet,
+            [name], gait: state.gaits[actor] ?? .walk, position: feet,
             armatures: game.actorPlayback(for: actor)?.armorAddons.footstepArmatures ?? [],
-            material: owner.groundMaterials[actor]
+            material: state.groundMaterials[actor]
         )
     }
 
@@ -67,7 +65,7 @@ extension ActorGraphGraphEventsAdapter {
             of: actor, base: base, with: resolver.templates.leveling
         )
         let key = LeveledActorRollKey(base: base, roll: roll)
-        if let cached = owner.graphBases[key] {
+        if let cached = state.graphBases[key] {
             return cached
         }
         let identity = ActorIdentityRecords(resolver: resolver)
@@ -79,7 +77,7 @@ extension ActorGraphGraphEventsAdapter {
         let weight = attempt { try resolver.templates.rolling(roll).resolve(base: base).weight } ??
             ResolvedActorAppearance.defaultWeight
         let graphBase = ActorGraphWorldAdapter.GraphBase(path: path, weight: weight)
-        owner.graphBases[key] = graphBase
+        state.graphBases[key] = graphBase
         return graphBase
     }
 
@@ -97,7 +95,7 @@ extension ActorGraphGraphEventsAdapter {
             return ActorSoundSource(
                 key: actor.key, position: actor.feet, sounds: sounds,
                 isConscious: !actor.isDead && !unconscious,
-                isMoving: owner.movers.contains(actor.key)
+                isMoving: state.movers.contains(actor.key)
             )
         }
     }
@@ -108,7 +106,7 @@ extension ActorGraphGraphEventsAdapter {
         let templates = resolver.templates
         let roll = game.worldState.leveledRoll(of: key, base: base, with: templates.leveling)
         let cacheKey = LeveledActorRollKey(base: base, roll: roll)
-        if let cached = owner.actorSounds[cacheKey] {
+        if let cached = state.actorSounds[cacheKey] {
             return cached
         }
         let chain = attempt { try templates.rolling(roll).resolve(base: base).chain } ?? []
@@ -126,7 +124,7 @@ extension ActorGraphGraphEventsAdapter {
                 )
             }
         }
-        owner.actorSounds[cacheKey] = sounds
+        state.actorSounds[cacheKey] = sounds
         return sounds
     }
 }

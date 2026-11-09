@@ -11,7 +11,6 @@ public import OpenSkyGameData
 import OpenSkyInventoryInterface
 public import OpenSkyObjectAnimation
 import OpenSkyRendering
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -37,7 +36,7 @@ public protocol ObjectAnimationWorldHost: AnyObject {
 }
 
 public final class ObjectAnimationWorldAdapter {
-    public unowned let game: any ObjectAnimationWorldHost
+    public let game: any ObjectAnimationWorldHost
     public var objects: any ObjectBehaviorPort {
         game.objectBehaviors
     }

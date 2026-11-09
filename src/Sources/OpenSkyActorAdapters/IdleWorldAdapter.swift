@@ -6,7 +6,6 @@ public import OpenSkyActorPresentation
 import OpenSkyAIPackages
 import OpenSkyBehavior
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
@@ -15,7 +14,7 @@ import OpenSkyNavigation
 import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
@@ -31,7 +30,6 @@ public protocol IdleWorldHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var idles: any IdlePort { get }
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
-    var scripts: any ScriptPort { get }
     var animationClips: ActorClipLoader? { get }
     var vehicleWorld: any VehicleWorldPort { get }
     var worldData: WorldDataStores? { get }
@@ -39,7 +37,7 @@ public protocol IdleWorldHost: AnyObject {
 }
 
 public final class IdleWorldAdapter {
-    public unowned let game: any IdleWorldHost
+    public let game: any IdleWorldHost
     public var idles: any IdlePort {
         game.idles
     }
@@ -47,7 +45,7 @@ public final class IdleWorldAdapter {
     public let placementHost: any IdlePlacementHost
 
     public var placement: IdlePlacementAdapter {
-        IdlePlacementAdapter(owner: self, game: placementHost)
+        IdlePlacementAdapter(game: placementHost)
     }
 
     public init(game: some IdleWorldHost & IdlePlacementHost) {
@@ -71,20 +69,6 @@ public final class IdleWorldAdapter {
 extension IdleWorldAdapter: IdleWorld {
     public func idleAnimationEvent(_ name: String, on actor: ReferenceKey) {
         game.vehicleWorld.handleIdleAnimationEvent(name, from: actor)
-    }
-
-    /// FormIDs inside a package are relative to its plugin when that plugin's move.
-    public func packageIdleList(_ package: FormID) -> IdlePackageList? {
-        guard
-            let store = game.worldData?.packageStore,
-            let idles = store.package(package)?.details.idleAnimations,
-            let resolver = store.translation(of: package)?.source ?? game.scripts.bridge?
-                .formIDResolver
-        else { return nil }
-        return IdlePackageList(
-            package: package, idles: idles.animations.compactMap(resolver.resolve),
-            flags: idles.flags, timer: idles.timer
-        )
     }
 
     public func idleConditionContext() -> ConditionContext {

@@ -2,7 +2,6 @@ public import OpenSkyActorPresentation
 import OpenSkyAIPackages
 public import OpenSkyBehavior
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 public import OpenSkyFormatsESM
@@ -11,7 +10,7 @@ import OpenSkyNavigation
 import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld
 public import OpenSkyWorldInterface

@@ -3,13 +3,11 @@
 // systems. The rules live in the coordinator (docs/engine/coordinators.md).
 
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyFactions
 import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 public import OpenSkyWorld

@@ -20,6 +20,7 @@ import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
+import OpenSkyPlayer
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
@@ -211,6 +212,14 @@ extension SessionPorts {
 
     var gameSession: (any GameSessionPort)? {
         scope.gameSession
+    }
+
+    func setPlayerBody(_ body: PlayerBody) throws {
+        try scope.gameSession?.setPlayerBody(body)
+    }
+
+    func setPlayerFirstPersonRig(_ rig: PlayerFirstPersonRig) throws {
+        try scope.gameSession?.setPlayerFirstPersonRig(rig)
     }
 
     var hazardWorld: any HazardWorldPort {

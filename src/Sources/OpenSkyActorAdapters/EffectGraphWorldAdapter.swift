@@ -5,7 +5,6 @@
 
 import OpenSkyActorPresentation
 import OpenSkyBehavior
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyEffects
 public import OpenSkyFormatsESM
@@ -30,7 +29,7 @@ public protocol EffectGraphWorldHost: AnyObject {
 }
 
 public final class EffectGraphWorldAdapter {
-    public unowned let game: any EffectGraphWorldHost
+    public let game: any EffectGraphWorldHost
 
     public init(game: any EffectGraphWorldHost) {
         self.game = game

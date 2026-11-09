@@ -29,6 +29,10 @@ public final class HUDCoordinator {
     private let movies: any MenuMovieLoading
     /// Bumped by each start and suspend, so only the newest start shows the HUD.
     private var startRequest = 0
+    /// Change gate in front of the HUD meter calls.
+    var meterBinding = HUDMeterBinding()
+    /// What the enemy health bar last showed; nil when it is hidden.
+    var publishedEnemy: HUDEnemyHealth?
     private weak let world: any SWFLayerWorld?
 
     public init(movies: any MenuMovieLoading, world: any SWFLayerWorld? = nil) {

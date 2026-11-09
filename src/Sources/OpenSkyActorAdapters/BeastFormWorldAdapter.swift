@@ -8,7 +8,6 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyRenderCore
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -27,7 +26,7 @@ public protocol BeastFormWorldHost: AnyObject {
 }
 
 public final class BeastFormWorldAdapter {
-    public unowned let game: any BeastFormWorldHost
+    public let game: any BeastFormWorldHost
 
     public init(game: any BeastFormWorldHost) {
         self.game = game

@@ -1189,16 +1189,17 @@ targets += composition(
     dependencies: [
         "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors",
         "OpenSkyActorsInterface", "OpenSkyAudio", "OpenSkyBehavior", "OpenSkyCamera",
-        "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyConditions",
-        "OpenSkyCrime", "OpenSkyCrimeInterface", "OpenSkyEffects", "OpenSkyFactions",
+        "OpenSkyCells", "OpenSkyCombatInterface", "OpenSkyConditions",
+        "OpenSkyCrimeInterface", "OpenSkyEffects", "OpenSkyFactions",
         "OpenSkyFactionsInterface", "OpenSkyFormatsAnimation", "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyInventory",
-        "OpenSkyInventoryInterface", "OpenSkyMagic", "OpenSkyMagicInterface", "OpenSkyMenus",
+        "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyInventoryInterface",
+        "OpenSkyMagicInterface",
         "OpenSkyMenusInterface", "OpenSkyNavigation", "OpenSkyObjectAnimation",
-        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression",
-        "OpenSkyProgressionInterface", "OpenSkyQuests", "OpenSkyQuestsInterface",
-        "OpenSkyRenderCore", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
-        "OpenSkyScriptingInterface", "OpenSkySession", "OpenSkySessionInterface",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer",
+        "OpenSkyProgressionInterface",
+        "OpenSkyQuestsInterface",
+        "OpenSkyRenderCore", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScriptingInterface",
+        "OpenSkySessionInterface",
         "OpenSkyTerrain", "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyWorldState",
         "OpenSkyWorldConditions"
     ]
@@ -1244,7 +1245,8 @@ targets += composition(
         "OpenSkyRenderResources", "OpenSkyRendering", "OpenSkyRuntimeState",
         "OpenSkyScriptingInterface",
         "OpenSkySessionInterface", "OpenSkyWorld",
-        "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState",
+        "OpenSkyQuestsInterface"
     ]
 )
 

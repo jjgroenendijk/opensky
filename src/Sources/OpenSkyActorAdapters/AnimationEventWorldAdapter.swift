@@ -8,7 +8,7 @@ import OpenSkyGameData
 import OpenSkyObjectAnimation
 import OpenSkyPlayer
 import OpenSkyRenderCore
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -30,7 +30,7 @@ public protocol AnimationEventWorldHost: AnyObject {
 }
 
 public final class AnimationEventWorldAdapter {
-    public unowned let game: any AnimationEventWorldHost
+    public let game: any AnimationEventWorldHost
 
     public init(game: any AnimationEventWorldHost) {
         self.game = game

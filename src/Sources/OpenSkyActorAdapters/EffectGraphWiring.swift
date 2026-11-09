@@ -2,7 +2,6 @@
 
 import OpenSkyActorPresentation
 import OpenSkyBehavior
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsESM

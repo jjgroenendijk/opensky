@@ -314,6 +314,14 @@ extension CombatWorldAdapter {
         }
     }
 
+    public func impact(dataSetEditorID: String, material: FormID?) -> ResolvedMeleeImpact? {
+        guard
+            let impacts = game.worldData?.footstepStore.map(MeleeImpactResolver.init(footsteps:)),
+            let set = impacts.dataSet(editorID: dataSetEditorID)
+        else { return nil }
+        return impacts.resolve(dataSet: set, material: material)
+    }
+
     public func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         motion.playImpact(impact, at: position)
     }

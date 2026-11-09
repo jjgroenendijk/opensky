@@ -6,7 +6,6 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyRenderCore
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld

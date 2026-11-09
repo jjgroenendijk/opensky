@@ -165,9 +165,10 @@ extension GameSessionScopeFactories {
 
     func makePlayerWorld() -> PlayerWorldAdapter {
         let adapter = PlayerWorldAdapter(game: scope.ports)
-        adapter.locomotion = { [unowned scope] in scope.gameSession?.locomotion }
-        adapter.firstPersonRig = { [unowned scope] in scope.gameSession?.playerFirstPersonRig }
-        adapter.playerFace = { [unowned scope] in scope.gameSession?.playerBody?.face }
+        adapter.state.locomotion = { [unowned scope] in scope.gameSession?.locomotion }
+        adapter.state
+            .firstPersonRig = { [unowned scope] in scope.gameSession?.playerFirstPersonRig }
+        adapter.state.playerFace = { [unowned scope] in scope.gameSession?.playerBody?.face }
         return adapter
     }
 

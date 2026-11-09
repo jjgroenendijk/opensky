@@ -14,7 +14,6 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyTerrain
@@ -39,7 +38,7 @@ public protocol VehicleWorldHost: AnyObject {
 }
 
 public final class VehicleWorldAdapter {
-    public unowned let game: any VehicleWorldHost
+    public let game: any VehicleWorldHost
     public var vehicles: any VehiclePort {
         game.vehicles
     }

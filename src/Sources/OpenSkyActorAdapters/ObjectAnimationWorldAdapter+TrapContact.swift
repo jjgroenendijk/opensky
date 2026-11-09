@@ -2,14 +2,12 @@
 // actors, and the trap's scripts get `OnTrapHitStart`, `OnTrapHit`, and `OnTrapHitStop`.
 // The contact rule lives in `TrapContactTracker`. See docs/engine/traps.md.
 
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyObjectAnimation
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld

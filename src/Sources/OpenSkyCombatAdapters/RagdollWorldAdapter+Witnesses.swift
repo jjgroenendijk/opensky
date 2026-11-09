@@ -1,5 +1,4 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
@@ -7,22 +6,19 @@ import OpenSkyBehavior
 import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
-import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld

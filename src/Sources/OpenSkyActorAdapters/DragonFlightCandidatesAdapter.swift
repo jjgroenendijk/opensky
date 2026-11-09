@@ -3,13 +3,11 @@ import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyBehavior
 import OpenSkyCells
-import OpenSkyCombat
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyRenderCore
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -32,7 +30,7 @@ public protocol DragonFlightCandidatesHost: AnyObject {
 
 /// Part of `DragonFlightWorldAdapter`, over its own narrow host.
 public struct DragonFlightCandidatesAdapter {
-    public unowned let game: any DragonFlightCandidatesHost
+    public let game: any DragonFlightCandidatesHost
 }
 
 extension DragonFlightCandidatesAdapter {

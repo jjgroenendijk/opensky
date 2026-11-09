@@ -6,19 +6,15 @@ public import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 public import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkySession
 public import OpenSkySessionInterface
 import OpenSkyWorld
 public import OpenSkyWorldInterface
@@ -43,24 +39,21 @@ public protocol PlayerWorldHost: AnyObject {
 
 /// Answers `PlayerWorld` and `FaceMorphWorld` from the session systems `game` owns.
 public final class PlayerWorldAdapter {
-    public unowned let game: any PlayerWorldHost
-    /// The session's player parts. The composition root sets these, so the host stays port-only.
-    public var locomotion: () -> LocomotionBridge? = { nil }
-    public var firstPersonRig: () -> PlayerFirstPersonRig? = { nil }
-    public var playerFace: () -> FaceMorphPlayback? = { nil }
+    public let game: any PlayerWorldHost
+    public let state = PlayerPartState()
 
     public let firstPersonHost: any PlayerFirstPersonHost
     public let faceHost: any PlayerFaceHost
 
     public var firstPerson: PlayerFirstPersonAdapter {
         PlayerFirstPersonAdapter(
-            owner: self,
-            game: firstPersonHost
+            game: firstPersonHost,
+            state: state
         )
     }
 
     public var face: PlayerFaceAdapter {
-        PlayerFaceAdapter(owner: self, game: faceHost)
+        PlayerFaceAdapter(game: faceHost, state: state)
     }
 
     public init(game: some PlayerWorldHost & PlayerFirstPersonHost & PlayerFaceHost) {
@@ -98,7 +91,7 @@ public final class PlayerRigQueue: PlayerRigSource {
 
 extension PlayerWorldAdapter: PlayerWorld {
     public var playerLocomotion: LocomotionBridge? {
-        locomotion()
+        state.locomotion()
     }
 
     public var isPlayerGrounded: Bool {
