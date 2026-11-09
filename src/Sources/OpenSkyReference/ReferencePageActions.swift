@@ -25,7 +25,7 @@ nonisolated public enum ReferencePageActions {
     public static let followedMessage = "OpenSky moves to the Windows game's view."
     public static let noPlayerMessage = "The Windows game has no player in a cell yet."
 
-    /// The reference window size when the game starts alone, as `make reference-game` uses.
+    /// The reference window size when the game starts alone, as `make run-cli ARGS='reference launch'` uses.
     public static let defaultWindowSize = (1280, 720)
     /// The most seconds a newly started Steam gets to log in before the launch fails.
     public static let steamWait = 120

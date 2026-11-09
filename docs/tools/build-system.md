@@ -1,36 +1,71 @@
 ---
 type: Tool
 title: Build system and xcodebuild invocation
-description: How the Makefile and the tools/ scripts share one xcodebuild invocation - the src/config/
-  xcconfig layer, the OpenSkyShaderTypes module, compilation caching across worktrees, signing,
-  output filtering, warnings as errors, and the products path.
+description: How make and the tools/ scripts share one xcodebuild invocation - the make targets, the
+  src/config/ xcconfig layer, the OpenSkyShaderTypes module, compilation caching across worktrees,
+  signing, the output summary, warnings as errors, and the products path.
 tags: [tool, build, make, xcodebuild]
 ---
 
 # Build system and xcodebuild invocation
 
-`make` is the one entry point. Every target that compiles, tests, or installs runs `xcodebuild`, and
-each builds its command line from one definition, so the scheme, configuration, cache location, and
-output cannot drift apart per target. Scripts under `tools/` share the same values through the
-environment.
+`make` is the one entry point, and `make help` lists every target and option. A recipe is one
+command: the logic lives in a script under `tools/` that takes arguments, so a script can be run and
+tested on its own. Each script that compiles, tests, or installs calls `tools/xcodebuild.sh`, which
+adds the shared part of the command line, so the cache location and the output cannot drift apart
+per target.
 
 ## The shared invocation
 
-The `Makefile` defines the common part once:
+`tools/xcodebuild.sh NAME ARGS...` runs `xcodebuild ARGS...` with:
 
-```make
-xcb = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration $(2) \
-    $(XCODEBUILD_DD) COMPILATION_CACHE_CAS_PATH=$(COMPILATION_CACHE) \
-    -IDEBuildingContinueBuildingAfterErrors=YES \
-    $(COVERAGE_$(2)) $(ARCHS_$(2)) $(XCODEBUILD_FLAGS)
-XCB_APP     := $(call xcb,$(SCHEME),$(CONFIG))
-XCB_CLI     := $(call xcb,$(CLI_SCHEME),$(CONFIG))
-XCB_RELEASE := $(call xcb,$(SCHEME),Release)
-XCB_TEST    := $(XCB_APP) -destination '$(DESTINATION)'
-```
+- `-workspace src/OpenSky.xcworkspace` and `-derivedDataPath`, this checkout's build tree;
+- `COMPILATION_CACHE_CAS_PATH` and `SDK_EXPLICIT_MODULES_OUTPUT_PATH`, shared by every tree;
+- `-IDEBuildingContinueBuildingAfterErrors=YES` ([below](#stale-module-copies));
+- `CLANG_COVERAGE_MAPPING=YES` for Debug ([test runs](/tools/test-runs.md#code-coverage)) and
+  `ARCHS=arm64` for Release, because `Float16` does not exist on x86_64;
+- `XCODEBUILD_FLAGS`, and a result bundle in the run directory.
 
-A target adds only its action and its own flags. `make -n build-app build-cli test-unit install`
-shows the shared prefix on every line, which checks that it still holds.
+`tools/build-env.sh` names the paths, for the scripts and for `make`: `OPENSKY_DERIVED_DATA`,
+`OPENSKY_COMPILATION_CACHE`, `OPENSKY_SDK_MODULES`, and `XCODE_XCCONFIG_FILE`. CI sets the first
+three itself. `tools/build.sh` builds the app, the CLI, a plan's test bundles, or the installed
+app, and `tools/test.sh` runs a plan.
+
+The options are variables with one meaning everywhere: `PLAN`, `CONFIG`, `T`, `N`, `COVERAGE`,
+`SAN`, `CAP`, `DIFF_BASE`, `ARGS` (the script's own arguments), and `XCODEBUILD_FLAGS`. Any other
+variable on the command line fails the run with the list.
+
+### The tooling, before and after
+
+Measured with `git ls-tree` on 2026-11-09, on `main` before the change and on the change:
+
+| Part | Before | After | Why it is not smaller |
+| --- | --- | --- | --- |
+| Make files | 3 files, 679 lines | 1 file, 168 lines | |
+| Make targets | 97, 35 in `make help` | 33, all in `make help` | |
+| `make help` | 95 lines with `ALL=1` | 61 lines | |
+| Scripts in `tools/` | 40 files, 3,618 lines | 44 files, 3,175 lines | The logic of the old recipes moved into scripts |
+| Checks: lint, format, coverage | 29 files, 2,900 lines | 42 files, 3,269 lines | One script per check, from the old recipes, and a self-check in every lint |
+| Test plans | 13 files, 3,937 lines | 9 files, 1,342 lines | [Test runs](/tools/test-runs.md#test-plans) gives each plan's reason |
+| Workflows | 633 lines | 604 lines | Each job still installs its tools |
+| Custom SwiftLint rules | 19 | 19 | Each is a project rule SwiftLint does not ship |
+| `make check`, no changes | 24 s | 14 s, with every self-check | |
+
+What went, and why Xcode or plain behaviour replaces it:
+
+- The two-builds-at-a-time slots and the per-tree locks. Two builds into one tree still collide in
+  xcodebuild's build database, so start a second build only after the first ends.
+- The cache budget and the seeding of a new tree from the newest one. `make prune` deletes the trees
+  of removed worktrees; a new tree builds from the shared compilation cache.
+- The phase timing. The result bundle holds the build and test times.
+- The stale-module retry ([below](#stale-module-copies)) and the cleanup of test bundles left
+  unsigned by a stopped build. A build that then fails `CodeSign` with "code object is not signed
+  at all" needs `make clean`.
+- The log filter. The summary comes from the result bundle ([below](#output-and-transcripts)).
+- The coverage computation stays: `xccov` reports no package file ([test
+  runs](/tools/test-runs.md#code-coverage)).
+- The module-graph check stays. It reads the declared graph from the manifest, not the imports,
+  and checks rules a manifest cannot state, such as layers.
 
 ### The workspace and the start-up scan
 
@@ -60,19 +95,11 @@ writes at about 135 MB/s against the internal disk's 2 GB/s. Measured on 2026-10
 `make build-app` there took 84 to 126 s when every task hit the
 [compilation cache](#compilation-caching).
 
-## The build cache budget
+## Build trees
 
-Many worktrees stay alive at once, so deleting only the trees of gone worktrees does not hold the
-disk. After a build takes its locks, `tools/build-cache-budget.sh` deletes the trees built longest
-ago until all trees fit in `BUILD_CACHE_GB`. It never deletes the tree about to build, or a tree
-whose lock is held. A deleted tree costs about five minutes when its worktree builds again: nearly
-every compile replays from the shared store, but every link, copy, and signing step runs again.
-The default is 200 GB. The trees are on the data volume, so the internal disk does not pay for it.
-CI keeps its one tree outside `CACHE_ROOT`, so the budget never deletes anything there.
-
-Measuring a tree with `du` costs about a second, so each build measures only its own tree when it
-ends and stores the size in `.opensky-size` inside the tree. That file's time stamp is when the
-tree was last built.
+`tools/build-env.sh` names one tree per checkout, `.cache/Build/<checkout folder>`, in the main
+checkout. `make clean` removes this checkout's tree, and `make prune` the trees of removed
+worktrees. CI keeps its tree inside its workspace.
 
 What each tree holds, measured on 2026-10-18:
 
@@ -80,54 +107,8 @@ What each tree holds, measured on 2026-10-18:
 | --- | --- | --- |
 | `Build/` (objects, products, build database) | 1.2 GB | No: a cache hit still writes a full copy, never an APFS clone |
 | `ModuleCache.noindex` (dependency scanner) | 470 MB | No: the hashes differ per checkout |
-| SDK precompiled modules | 230 MB | Yes: `SDK_MODULES`, `.cache/SDKModules.noindex` |
+| SDK precompiled modules | 230 MB | Yes: `OPENSKY_SDK_MODULES`, `.cache/SDKModules.noindex` |
 | `SourcePackages` | 50 MB | No: about 40 dependency tasks miss per new tree, which costs seconds |
-
-### Seeding a new tree
-
-A checkout without a tree gets an APFS clone of the tree built most recently, made by
-`tools/seed-build-tree.sh` with `cp -c`. A clone takes about 6 s and shares disk blocks with its
-source until a build rewrites them. `make link-shared`, run first by every building target, runs it,
-and so does the Claude Code session-start hook in `.claude/settings.json`, in the background. The
-script holds the locks of both trees while it clones, so a build that starts meanwhile waits.
-
-The clone does not make the first build incremental. Xcode records each output by its absolute
-path, and a new checkout has new paths, so every task runs again. What the clone saves is the
-cold work: third-party packages, test files the store has never seen, and fetching `SourcePackages`.
-Measured on 2026-10-24, a first `make build-cli` took 344 s from an empty tree and 158 to 172 s
-from a clone. The script deletes the clone's build database (`XCBuildData`): it names the source
-tree's outputs, and Xcode then warns about each one as a stale file outside its root.
-
-`du` counts a clone at full size, so the budget overestimates what the trees use on disk.
-
-## Two builds at a time
-
-Every command that compiles takes two locks first, in `tools/xcodebuild-lib.sh`:
-
-- A build slot: `build.lock.1` to `build.lock.N` under `CACHE_ROOT`. `OPENSKY_BUILD_SLOTS` sets
-  N, and the default is 2.
-- Its build tree: `<DERIVED_DATA>.build.lock`. Two builds into one tree would collide in
-  xcodebuild's build database, so a second build in the same checkout waits even when a slot is
-  free.
-
-A build that cannot take both waits and prints the owners' pids every 30 seconds. A lock whose
-owner is gone is taken over. The machine has four performance cores and 16 GB. Before the lock,
-up to eleven builds ran at once and each took many times longer than alone; two at once still
-fit in memory. `make test-rerun` takes no lock, because it compiles nothing.
-
-| Knob | Default | Changes |
-| --- | --- | --- |
-| `CONFIG` | `Debug` | The configuration for `build-app`, `build-cli`, `test-unit`, `app-path`, and `cli-path`. `install` is always Release |
-| `DESTINATION` | `platform=macOS,arch=arm64` | The test destination. Without `arch`, two "My Mac" entries match and xcodebuild warns |
-| `CACHE_ROOT` | `<main checkout>/.cache/Build` | Where every checkout's build tree and the build locks live, exported as `OPENSKY_CACHE_ROOT` |
-| `BUILD_CACHE_GB` | `200` | The [budget](#the-build-cache-budget) for all trees together, exported as `OPENSKY_BUILD_CACHE_GB` |
-| `DERIVED_DATA` | `$(CACHE_ROOT)/<checkout folder name>` | The build cache, exported to scripts as `OPENSKY_DERIVED_DATA` |
-| `COMPILATION_CACHE` | `<main checkout>/.cache/CompilationCache.noindex` | The compilation cache store every checkout shares, exported as `OPENSKY_COMPILATION_CACHE` |
-| `SDK_MODULES` | `<main checkout>/.cache/SDKModules.noindex` | The SDK's precompiled modules, shared by every tree. CI keeps them inside its build tree: there, beside it, the prune at the end of a build reloaded the package graph and crashed `xcodebuild` before the tests |
-| `XCODEBUILD_FLAGS` | empty | Extra flags or build settings |
-| `OPENSKY_XCODEBUILD_RAW` | unset | `=1` prints the whole transcript instead of the filtered output |
-| `OPENSKY_MAX_ERRORS` | `40` | How many unique errors the filtered output prints |
-| `OPENSKY_BUILD_SLOTS` | `2` | How many builds run on the machine at once |
 
 ## Build settings in src/config/
 
@@ -148,7 +129,7 @@ src/config/
 │   ├── UITests.xcconfig     OpenSkyUITests: TEST_TARGET_NAME
 │   └── Overrides.xcconfig   above every target, package targets too
 └── TestPlans/
-    └── *.xctestplan         the four test plans (see test runs)
+    └── *.xctestplan         the nine test plans (see test runs)
 ```
 
 The test plans are in `src/config/TestPlans/` for the same reason ([test runs](/tools/test-runs.md)).
@@ -157,8 +138,8 @@ target files sit above them and apply to both configurations of one target. Only
 differs per configuration inside one target still belongs in the project file.
 
 The project's files never reach a package target, whose settings come from `src/Package.swift`.
-`Overrides.xcconfig` is the one place for a setting that has to: the `Makefile` and
-`tools/xcodebuild-lib.sh` export `XCODE_XCCONFIG_FILE` pointing at it, and xcodebuild applies that
+`Overrides.xcconfig` is the one place for a setting that has to: `tools/build-env.sh` exports
+`XCODE_XCCONFIG_FILE` pointing at it, and xcodebuild applies that
 file above every target in the build. A build started from the Xcode window does not read it. It
 turns off a missing-dependency check that is wrong for package framework variants
 ([environment](/tools/environment.md#package-framework-variants-warn-about-declared-dependencies)).
@@ -195,7 +176,7 @@ cache. Each compile task is keyed on its command line and inputs, and a task wit
 replays the stored result instead of compiling. Explicit modules, which the cache needs, are already
 on by default. The store is `$(COMPILATION_CACHE)`, passed as `COMPILATION_CACHE_CAS_PATH` on every
 command line, so every checkout and every tree uses one store.
-`make clean` keeps it; `make clean DEEP=1` removes it.
+`make clean` keeps it; `make clean ARGS=--deep` removes it.
 
 What it helps and what it does not:
 
@@ -206,7 +187,7 @@ What it helps and what it does not:
   system's own incremental state decides.
 - A cache hit leaves the Swift driver's incremental record saying "needs build"
   ([environment](/tools/environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
-  Each switch between build contexts, such as `make build-cli` then `make test-unit`, then
+  Each switch between build contexts, such as `make build-cli` then `make test`, then
   compiles those modules again and relinks everything above them. So the `OpenSky` scheme
   builds `openskycli` for testing, and the Debug `make build-app` and `make build-cli` use
   `build-for-testing` on the `AgentControl` plan, so every Debug build is the test context.
@@ -220,7 +201,7 @@ and each miss. It is not checked in, because it adds lines to every transcript.
 The store grows to tens of gigabytes. It prunes itself in generations: on 2026-10-18 a new
 `builtin/v1.2/` folder started next to the 91 GB `v1.1/`, and each hit copied its entry into the
 new folder. `COMPILATION_CACHE_LIMIT_SIZE` set below the store's size shrank nothing at once.
-`make clean DEEP=1` removes it. CI starts its
+`make clean ARGS=--deep` removes it. CI starts its
 store over by size instead ([CI](/tools/ci.md#caches)).
 
 ### One store for every worktree
@@ -240,8 +221,8 @@ tree makes every other worktree miss. Two inputs did that:
 `llvm-cas --diff-graphs <key> <key>` on two keys of one task shows the input that differs.
 Measured on 2026-10-18 with both in place, a Debug `make build-app` from a second checkout into a
 fresh tree hit 647 of 688 tasks; before, it hit 12. Every checkout passes the same store path, the main
-checkout's. `make link-shared`, run first by every
-building target, links a worktree's `src/.vendor` to the main checkout's. It lives inside the
+checkout's. `tools/link-shared.sh`, run by the vendored libraries' file targets, links a
+worktree's `src/.vendor` to the main checkout's. It lives inside the
 package folder so that prefix mapping covers its header paths too.
 
 ### A live check after a one-file change
@@ -257,10 +238,10 @@ The misses are the two dependency packages, whose checkouts sit inside each tree
 
 The mapping has three costs:
 
-- A replayed task writes no index data. Periphery reads the index, so `make health` builds
+- A replayed task writes no index data. Periphery reads the index, so `make lint-index` builds
   uncached into the `-index` cache tree ([code-health automation](/decisions/code-health-automation.md)).
 - `#filePath` reads `/^src/...`, so a test cannot find the checkout from it. The build cache is
-  outside the checkout too, so `make test-real` passes the checkout to the test process as
+  outside the checkout too, so `make test PLAN=RealData` passes the checkout to the test process as
   `TEST_RUNNER_OPENSKY_CHECKOUT`, and real-data suites write into its `.logs/`.
 - Debug info names sources `/^src/...`. A command-line `lldb` needs
   `settings set target.source-map /^src <checkout>/src`.
@@ -286,7 +267,7 @@ comes up empty, and it depends on machine state the repository cannot check.
 A machine without the certificate, and CI, override on the command line, which beats every xcconfig:
 
 ```sh
-make test-unit XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
+make test XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
 ```
 
 A hand-written, gitignored `src/config/Build/Local.xcconfig` is the lasting form; the `#include?` picks
@@ -295,36 +276,13 @@ with a `TeamIdentifier` is right, and `Signature=adhoc` causes repeated prompts.
 
 ## Output and transcripts
 
-`tools/xcodebuild-run.sh` takes a log name and a full xcodebuild command. It writes the whole
-transcript to `.logs/<name>/<UTC timestamp>/<name>.log` and prints only diagnostics, tests that did
-not pass, and the closing status line. xcodebuild repeats each diagnostic several times, with colour
-codes and absolute paths. The filter strips both, prints each line once, and stops after
-`OPENSKY_MAX_ERRORS` errors. The first screen of a failed build is then the whole answer, and nobody
-has to grep the transcript. A failing run where no line matched the filter prints the last 40
-transcript lines instead. `xcodebuild -quiet` cannot do this: it decides what to print before the text
-exists, keeps no full copy, and drops `** TEST SUCCEEDED **`. Where transcripts go and how they age
-out is on the [run output](/tools/run-output.md) page.
-
-### Phases
-
-The transcript has no clock, so the wrapper notes when each phase starts in `phases.tsv` beside
-it and ends with one line, for example
-`[INFO] phases: make 2s, lock 0s, start 9s, resolve 4s, plan 41s, build 70s, test 12s (total 136s)`:
-
-| Phase | From | To |
-| --- | --- | --- |
-| `make` | `make` started (`OPENSKY_MAKE_STARTED`) | the wrapper started |
-| `lock` | the wrapper started | the build locks were taken and the stale-module check ran |
-| `start` | the lock | xcodebuild printed `Resolve Package Graph` |
-| `resolve` | `Resolve Package Graph` | `Resolved source packages:` |
-| `plan` | `Resolved source packages:` | `Build description path:` |
-| `build` | `Build description path:` | xcodebuild exited, less the test time |
-| `test` | the test time xcodebuild reports in `elapsed -- Testing started` | |
-
-The test runner's own output reaches the pipe only when the run ends, so the test time comes from
-xcodebuild's report of it, not from a line in the transcript. A phase whose start never appeared,
-such as `test` in a plain build, is left out. The [test runs](/tools/test-runs.md) page records
-what each phase costs on this machine.
+`tools/xcodebuild.sh` writes the whole transcript and the result bundle into
+`.logs/<name>/<UTC timestamp>/`, and prints only what the bundle holds, through
+`tools/xcresult_summary.py`: each error and warning once with its file and line, then the failed
+tests with their messages and the test totals. `xcresulttool get build-results` and `get
+test-results summary` hold both, so no filter parses the transcript. A failed run with no bundle
+prints the last 40 transcript lines. Where run directories go and how they age out is on the [run
+output](/tools/run-output.md) page.
 
 ### Stale module copies
 
@@ -340,18 +298,9 @@ method: with `-IDEBuildingContinueBuildingAfterErrors=NO`, the failed build left
 consistent. Every command line therefore passes `YES`, so a failed build still writes every module
 that did emit.
 
-`tools/stale-modules.sh` stays as the safety net. After a healthy build the two files are identical,
-so it treats any difference as stale and deletes the copy, together with the copy of every module
-whose emit-module dependency file (`<Module>-primary-emit-module.d`) names a stale copy, repeated
-until no new module is added, so one build rebuilds all layers together. `tools/xcodebuild-run.sh`
-runs it before every build, in the tree named by the build's `-derivedDataPath`, so the index tree
-of `make health` is checked too. When a build fails and leaves new stale copies, it deletes them
-and builds again, `OPENSKY_STALE_RETRIES` times (default 1), and no new pass starts after
-`OPENSKY_RETRY_MINUTES` (default 15). A failed build that finds no new stale copies has a real
-error, so it stops at once. Before each new pass it deletes the `-resultBundlePath` bundle that
-the failed pass wrote, because xcodebuild refuses a path that exists. A test run without building
-skips all of this. A `removed stale module copies` line in a build's output is worth a `bug`
-issue with the transcript: it means a case the flag does not cover.
+A script that deleted stale copies after each build was removed with the build wrapper; the flag
+covers the case it was written for. A build that fails with those errors right after an interface
+change in a lower module is worth a `bug` issue with the transcript.
 
 ### Driver records after a failed build
 
@@ -366,15 +315,9 @@ offset. So an old object reads the wrong field and crashes with `EXC_BAD_ACCESS`
 So after every failed build, `tools/failed-build-records.sh` reads the transcript and deletes
 the record of each target with a failed compile. The target is the folder of the failed file
 below `src/Sources/` or `src/Tests/`. A target without its record is compiled whole in the next
-build. `tools/xcodebuild-run.sh` does this for xcodebuild, in `$(DERIVED_DATA)/Build`.
+build. `tools/xcodebuild.sh` does this for xcodebuild, in the tree's `Build/`.
 `make compile` and `make test-package` do it for `swift build`, in `.build/out`. The cost
 is one full compile of each failed target, and only after a failure.
-
-A build that stops before a test bundle is linked leaves that bundle unsigned inside
-`OpenSky.app/Contents/PlugIns/`. A later plan that does not build the bundle then fails the app's
-own `CodeSign` step with "code object is not signed at all". So `tools/xcodebuild-run.sh` also runs
-`tools/unsigned-plugins.sh` before every build. It deletes each test bundle in the app whose
-signature does not verify, and the next build that needs the bundle builds it again.
 
 ## Warnings are errors
 
@@ -386,15 +329,10 @@ adds a deprecation warning to break the build. Fix the warning. Do not turn the 
 ## Products path
 
 For a macOS scheme built with `-derivedDataPath`, the products are always in
-`$(DERIVED_DATA)/Build/Products/$(CONFIG)`. The `Makefile` computes it as `PRODUCTS`, and scripts call
-`xcodebuild_products_dir CONFIG` from `tools/xcodebuild-lib.sh`, instead of paying seconds for
-`xcodebuild -showBuildSettings`. This holds because every target builds for macOS only.
-
-`tools/xcodebuild-lib.sh` is sourced, never run. It sets `OPENSKY_DERIVED_DATA` for a script run
-outside `make`, and provides the products path and the output filter. The test targets share the
-normal cache, except `make test-real PERF=1`, which changes a build setting and so builds into
-`$OPENSKY_DERIVED_DATA-optimized`. Both live under `CACHE_ROOT`, and the budget and `make prune`
-cover both.
+`<tree>/Build/Products/<CONFIG>`, so make and the scripts compute the path instead of paying seconds
+for `xcodebuild -showBuildSettings`. This holds because every target builds for macOS only.
+`make test PLAN=Perf` changes a build setting and so builds into `<tree>-optimized`, and
+`make lint-index` into `<tree>-index`. `make clean` and `make prune` cover all three.
 
 Two `xcodebuild` runs against the same derived-data folder deadlock until the tool times out. Let one
 finish before starting another.

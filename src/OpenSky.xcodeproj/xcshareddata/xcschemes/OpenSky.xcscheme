@@ -64,18 +64,6 @@
             reference = "container:config/TestPlans/Quick.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:config/TestPlans/Formats.xctestplan">
-         </TestPlanReference>
-         <TestPlanReference
-            reference = "container:config/TestPlans/Engine.xctestplan">
-         </TestPlanReference>
-         <TestPlanReference
-            reference = "container:config/TestPlans/Features.xctestplan">
-         </TestPlanReference>
-         <TestPlanReference
-            reference = "container:config/TestPlans/App.xctestplan">
-         </TestPlanReference>
-         <TestPlanReference
             reference = "container:config/TestPlans/AgentControl.xctestplan">
          </TestPlanReference>
          <TestPlanReference

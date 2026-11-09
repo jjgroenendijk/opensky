@@ -17,11 +17,11 @@ nonisolated public enum ReferenceLauncherError: Error, Equatable, Sendable, Loca
     public var errorDescription: String? {
         switch self {
         case let .notReady(message): message
-        case .noWine: "No Wine found; run make reference-setup."
-        case .noWineUser: "The prefix has no Wine user folder; run make reference-setup."
-        case .noWrapper: "The prefix has no Steam web helper wrapper; run make reference-setup."
+        case .noWine: "No Wine found; run make setup-reference."
+        case .noWineUser: "The prefix has no Wine user folder; run make setup-reference."
+        case .noWrapper: "The prefix has no Steam web helper wrapper; run make setup-reference."
         case let .outsidePrefix(path):
-            "Wine links this folder outside the prefix; run make reference-setup: \(path)"
+            "Wine links this folder outside the prefix; run make setup-reference: \(path)"
         case let .steamNotReady(seconds):
             "Windows Steam did not log in within \(seconds) s; start the game again, "
                 + "or give Steam more time with --steam-wait."

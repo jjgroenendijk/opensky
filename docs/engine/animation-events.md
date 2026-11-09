@@ -100,7 +100,7 @@ node can wait for it, and the graph acts without the engine. Examples on the ins
 - `AttackWinStart` and `AttackWinStartLeft` take transitions in `1hm_behavior.hkx`.
 - `FlapThrustBegin` and `FlapThrustEnd` switch a modifier in the dragon graph.
 
-`make gaps` counts such an event as done when a graph of the clip's own folder waits for it
+`make rank-gaps` counts such an event as done when a graph of the clip's own folder waits for it
 ([gap report](/tools/gaps.md)). A graph of another folder does not count. A door graph waits for
 `Open`, but a dragon clip that carries `Open` is not played by a door.
 
@@ -131,7 +131,7 @@ The install shows it:
 So the prefix only routes the event to the scripts. A script registered for the name runs its
 `OnAnimationEvent`; with no registration, nothing happens.
 
-`make gaps` also counts an event as done when a script registers for it, because the
+`make rank-gaps` also counts an event as done when a script registers for it, because the
 script VM delivers it ([gap report](/tools/gaps.md)).
 
 ## Footsteps no record answers
@@ -161,7 +161,7 @@ sound once, at the actor whose half sent it
 
 ## Not handled yet
 
-These annotations need a system OpenSky does not have. `make gaps` lists them under "Animation
+These annotations need a system OpenSky does not have. `make rank-gaps` lists them under "Animation
 events" ([gap report](/tools/gaps.md)).
 
 - An NPC's cast release frame. An NPC's spell is timed by a clock and does not wait for
@@ -171,7 +171,7 @@ events" ([gap report](/tools/gaps.md)).
 ## Events the game ignores
 
 Some events reach no graph listener and no engine system. The game takes no action on them,
-so OpenSky does not either, and `make gaps` counts them as done. A wolf fighting a bandit in the
+so OpenSky does not either, and `make rank-gaps` counts them as done. A wolf fighting a bandit in the
 reference game was recorded through the bridge, observed 2026-11-04
 ([reference game](/tools/reference-game.md#recording-graph-variables)):
 

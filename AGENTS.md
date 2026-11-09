@@ -33,7 +33,7 @@ Reversing formats is fine. Redistributing Bethesda content or code is not. There
 - The offline Creation Kit and UESP wiki mirrors are CC BY-SA text by others. They stay in the
   gitignored `.cache/ck-wiki/` and `.cache/uesp-wiki/`; cite a page's `url`, never commit the page.
 
-`make no-game-content` (part of `make check` and CI) enforces the first and third rules and the
+`tools/lint/no-game-content.sh` (part of `make check` and CI) enforces the first and third rules and the
 wiki mirror rule over the whole tracked tree. Nothing enforces the second one; that is on you.
 
 A task that seems to require committing or embedding game data -> do not. Surface the
@@ -49,26 +49,24 @@ conflict.
   `OpenSky/` builds only into the app, `OpenSkyCLI/` only into the CLI, and `Shaders/` into
   both. Every other folder is a module in `src/Package.swift`, linked by the app and the CLI
   through one product, so a new module needs no project-file edit. An app-only source
-  (AppKit, Cocoa, SwiftUI) outside `OpenSky/` breaks the CLI build; `make cli-boundary`
+  (AppKit, Cocoa, SwiftUI) outside `OpenSky/` breaks the CLI build; `tools/lint/cli-boundary.sh`
   catches it.
 - A folder that builds a target has the target's name, in PascalCase. A test selector names
-  the target: `make test-unit T='OpenSkyFormatsCoreTests/BSAArchiveTests'`. Two names stay
+  the target: `make test T='OpenSkyFormatsCoreTests/BSAArchiveTests'`. Two names stay
   lowercase on purpose: the CLI binary `openskycli`, and the bundle IDs, because macOS
   stores permission grants against them.
 - The build cache is one tree per checkout under the main checkout's `.cache/Build/`, on the
-  data volume; the internal disk keeps only the app's asset cache. Every build first deletes
-  the trees built longest ago once all trees pass `BUILD_CACHE_GB`. The compilation cache
-  store they all share sits beside them. `make` passes both on every `xcodebuild` call and
-  exports `OPENSKY_DERIVED_DATA` for `tools/`. A new build command that skips them starts a
-  second, cold cache.
-- Anything that builds runs in a background shell: it can pass the tool timeout. Two builds
-  run at a time on the machine: `make` waits for a free build slot and says whose builds it
-  waits for.
+  data volume; the internal disk keeps only the app's asset cache. The compilation cache
+  store they all share sits beside them. `tools/xcodebuild.sh` passes both on every
+  `xcodebuild` call, and `tools/build-env.sh` names them for `tools/`. A new build command
+  that skips them starts a second, cold cache. `make prune` deletes the trees of removed
+  worktrees.
+- Anything that builds runs in a background shell: it can pass the tool timeout.
 - Linked worktrees share the main checkout's `src/.vendor/ffmpeg` through `make`, so a worktree
   needs no `make bootstrap`. The cache's prefix mapping makes `#filePath` read
   `/^src/...`; find the checkout at runtime instead (`docs/tools/build-system.md`).
 - The only git hook is `pre-commit` in `tools/githooks/`, which runs the file-length check;
-  `make bootstrap` (or `make hooks`) turns it on. Run `make check` before committing. The CI
+  `make bootstrap` turns it on. Run `make check` before committing. The CI
   lint jobs on each pull request are the gate before code lands.
 - Facts about this machine and the outside world that will expire — CI status, missing TCC
   permissions, blocked upstream spec hosts — live in `docs/tools/environment.md` with the
@@ -80,7 +78,7 @@ conflict.
 - macOS 26+ (Tahoe) as the deployment target, Xcode 27, Apple Silicon. No older-macOS or
   Intel paths unless asked.
 - Swift 6 language mode. Local builds and CI use the same Apple Swift, 6.4
-  (`make swift-baseline`).
+  (`tools/lint/swift-baseline.sh`).
 - Minimal C interop, only where a format genuinely needs it, wrapped behind a Swift
   interface. No embedded game engine.
 - Dependencies: prefer the standard library and Apple frameworks, then Swift Packages via
@@ -110,7 +108,7 @@ conflict.
 OpenSky follows six architecture styles. `docs/engine/architecture.md` explains each one,
 with an example. When you add code:
 
-- A feature uses another feature only through its `Interface` module. `make module-graph`
+- A feature uses another feature only through its `Interface` module. `tools/lint/module-graph.sh`
   checks this (`docs/decisions/modular-architecture.md`).
 - Parsers and game rules are pure: values in, values out. Files, clocks, Metal, audio, and
   UI stay in a thin shell around them.
@@ -125,9 +123,9 @@ with an example. When you add code:
 
 ## Build, run, test
 
-`make help` lists the main targets; `make help ALL=1` lists every one. `make fix` (autoformat
-plus strict lint) before committing; `make check` is the same gate without writes. Both lint
-the Swift files the branch changed; `ALL=1` lints every file. `make install` refreshes
+`make help` lists every target and option. `make fix` (autoformat, then `make check`) before
+committing; `make check` is the same gate without writes. Both lint the Swift files the
+branch changed, and every Swift file in CI or with `OPENSKY_CHECK_ALL=1`. `make install` refreshes
 `/Applications/OpenSky.app` after landing rendering work, because the user checks progress
 there. It puts `openskycli` inside the app, so driving the game with `openskycli game` needs
 no build unless the change is in the app's code (`driving-the-running-game`).
@@ -137,7 +135,7 @@ check, and fix everything it reports at once. CI runs the whole unit plan on eve
 pull request; locally, run the smallest plan that covers the change (`testing-and-verifying`
 skill) and record it in the commit's `Tests:` section. A green build does not prove a
 triangle appeared. Unit-test every format parser and math routine with synthetic fixtures
-built in code. The real-data suites need the user's install, so only `make test-real` runs
+built in code. The real-data suites need the user's install, so only `make test PLAN=RealData` runs
 them, and never in CI.
 
 ## Loading game data (runtime, never repo)
@@ -166,22 +164,22 @@ data to fall back to.
 If a machine can check a rule, a machine checks it; do not rely on people remembering it.
 Every language has a linter and an auto-formatter, configured under `tools/`; do not
 hand-format. Anything repeatable becomes a `make` target, not a documented manual
-procedure. `make check` and `ci.yml` mirror each other, so a change to one gate changes
-both.
+procedure. CI runs `make format-check` and `make lint`, the two halves of `make check`, so a
+new check is a new script in `tools/lint/` or `tools/format/` and needs no other edit.
 
 Linting is strict and warnings are errors. Fix the issue rather than disabling or
 downgrading a rule: `make lint` fails on any suppression comment, on duplicated Swift, and
 on a comment block over 6 lines, with no baseline file
 (`docs/decisions/code-health-automation.md`). Parse and load failures use `throws` with typed
 errors, and malformed input must not crash: no force-unwrap, force-try, or force-cast on data
-from external files. `make health` (unused code and the index-store checks) runs in CI on each
+from external files. `make lint-index` (unused code and the index-store checks) runs in CI on each
 pull request; locally only when a pull request fails it.
 
 Size code to the lint limits while writing, not after a failed `make fix`; that has been
 the top recurring time sink. The thresholds are in `tools/lint/.swiftlint.yml`, and rules
 absent from it run at SwiftLint defaults.
 
-No file is longer than 800 lines, in any language. Above 600 lines `make file-length` and
+No file is longer than 800 lines, in any language. Above 600 lines `tools/lint/file-length.sh` and
 the pre-commit hook print a warning: split the file then, while the split is still easy.
 A file over 800 lines fails the hook, `make check`, and CI. Split it to below 600 lines.
 `src/Package.swift` is the one exception, because SwiftPM reads a single manifest file.

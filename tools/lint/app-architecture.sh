@@ -3,6 +3,8 @@
 # values, and small types (docs/decisions/ports-and-adapters.md). A self-check runs
 # each rule on a synthetic violation first, which must fail.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -13,7 +15,7 @@ import re
 import subprocess
 import sys
 
-sys.path.insert(0, "tools/lint")
+sys.path.insert(0, __import__("os").environ["OPENSKY_TOOLS"] + "/lint")
 from module_layers import DATA, FOUNDATION
 from swift_source import code_only, line_of
 
@@ -203,6 +205,9 @@ def self_check():
 
 
 self_check()
+if sys.argv[1:] == ["--self-check"]:
+    print("[ OK ] app-architecture self-check")
+    sys.exit(0)
 tracked = subprocess.run(
     ["git", "ls-files", "src/Sources/*.swift"], capture_output=True, text=True, check=True
 ).stdout.split()

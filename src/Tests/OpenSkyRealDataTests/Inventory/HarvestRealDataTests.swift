@@ -1,6 +1,6 @@
 // Harvests a real FLOR reference near Whiterun: its produce lands in the player
 // inventory, the harvested state survives a save round trip, and a second
-// harvest is refused. Run with `make test-real T='HarvestRealDataTests'`.
+// harvest is refused. Run with `make test PLAN=RealData T='HarvestRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyCells

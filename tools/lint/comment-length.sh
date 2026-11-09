@@ -3,6 +3,14 @@
 # (so `///` too). A block over the limit usually restates the code, repeats a
 # docs/formats page, or tells history. It lists each long block and fails.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Sources/OpenSkyX"
+    for _ in 1 2 3 4 5 6 7; do echo '// why'; done >"$tree/src/Sources/OpenSkyX/A.swift"
+    expect_failure "$0" "$tree" "7 comment lines"
+fi
 
 limit=6
 cd "$(git rev-parse --show-toplevel)"

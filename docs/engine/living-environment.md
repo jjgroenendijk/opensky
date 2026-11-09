@@ -30,7 +30,7 @@ The fly-path gate, `FlyPathGateRealDataTests`, flies through the 5 x 5 streamed 
 weather forced. It fails if any system is missing: no weather, no updated bones, no live particles,
 no rain, no shadow casters, or no drawn grass. It also checks frame time, collision build time,
 actor build time, animation and shadow update time, and memory against fixed budgets. The budgets
-are in the test. `make test-real PERF=1` runs it ([benchmark](/tools/benchmark.md)).
+are in the test. `make test PLAN=Perf` runs it ([benchmark](/tools/benchmark.md)).
 
 In a wide exterior view, grass and cell particles can change no pixels, because they are too far
 away. Their live counters show they ran. The [particles](/rendering/particles.md) and

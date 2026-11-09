@@ -19,7 +19,7 @@
 # Usage: tools/prune.sh [--days N] [--dry-run]
 set -eu
 
-days=14
+days=1
 dry_run=0
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -134,7 +134,6 @@ if [ -d "$cache_root" ]; then
     for tree in "$cache_root"/*; do
         [ -d "$tree" ] || continue
         name="$(basename "$tree")"
-        case "$name" in *.lock | *.lock.*) continue ;; esac
         case "$name" in *-optimized | *-index) name="${name%-*}" ;; esac
         if grep -q "/$name\$" "$live"; then continue; fi
         add "stale worktree cache" "$tree"
@@ -143,9 +142,7 @@ fi
 if [ -d "$legacy_root" ] && [ "$legacy_root" != "$cache_root" ]; then
     for tree in "$legacy_root"/*; do
         [ -d "$tree" ] || continue
-        case "$(basename "$tree")" in AssetCache | *.lock | *.lock.*) continue ;; esac
-        # A branch from before the move may be building there right now.
-        [ ! -d "$tree.build.lock" ] || continue
+        [ "$(basename "$tree")" != AssetCache ] || continue
         add "build tree on the boot volume" "$tree"
     done
 fi
@@ -167,19 +164,8 @@ fi
 #    main derived-data cache.
 add "obsolete install tree" "$root/build/install"
 
-# 3. Result bundles and log runs past the retention age. Result bundles moved
-#    from build/test-results to DerivedData/TestResults (#582); the old tree is
-#    pruned the same way until it ages out.
-results="${OPENSKY_DERIVED_DATA:-$root/DerivedData}/TestResults"
-prune_run_dirs "$results" "aged-out result bundle"
-prune_run_dirs "$root/build/test-results" "aged-out result bundle"
+# 3. Run directories past the retention age, result bundles included.
 prune_run_dirs "$root/.logs" "aged-out run output"
-# Bundles written straight into build/test-results predate the run-directory
-# convention; nothing points at them and every one is a full test result.
-for bundle in "$root"/build/test-results/*.xcresult; do
-    [ -e "$bundle" ] || continue
-    add "pre-convention result bundle" "$bundle"
-done
 
 # 4. Loose files directly under .logs/, from before the convention. Aged the
 #    same way, by modification time since they carry no timestamp in the name.

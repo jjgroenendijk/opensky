@@ -24,7 +24,7 @@ The reference example is the vendor domain in `src/Sources/OpenSkyInventory/`: `
 
 Logic in a `GameViewController+X` file runs only inside the app. A test must build the app
 host, and the CLI cannot call it. The view controller also grows with every milestone. A
-coordinator in a package module is tested with `make test-unit` in seconds.
+coordinator in a package module is tested with `make test` in seconds.
 
 ## Parts
 
@@ -211,7 +211,7 @@ These follow from [The Modular Architecture](/decisions/modular-architecture.md)
   or through the coordinator's own port, which the app answers.
 - The app is the composition root. It builds every coordinator in its wire function, in the
   order the wire functions already run.
-- `make module-graph` checks the imports.
+- `tools/lint/module-graph.sh` checks the imports.
 
 Example: vendors need an actor's faction memberships. `OpenSkyInventory` may not import
 `OpenSkyFactions`, so `VendorWorld.factionMemberships(of:)` returns an `ActorFactionState`
@@ -228,7 +228,7 @@ from `OpenSkyFactionsInterface`. The app answers it from its faction runtime.
 4. Test the core with values. Test the shell with a fake port.
 5. In the app, add the stored property, the wire function, and the port adapter. Point every
    caller at the coordinator, and delete the old functions.
-6. Run `make check` and `make test-unit T='<Feature>Tests'`, then `make build-app`.
+6. Run `make check` and `make test T='<Feature>Tests'`, then `make build-app`.
 
 Do not add a new `GameViewController+X` file for new logic. The lint rule
 `game_view_controller_extension` fails an extension of the view controller outside its own

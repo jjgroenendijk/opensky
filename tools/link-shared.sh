@@ -1,8 +1,8 @@
 #!/bin/sh
 # Point a linked git worktree at the main checkout's vendored ffmpeg, so a fresh
-# worktree does not rebuild it. Run first by every building make target
-# (`make link-shared`) and by tools/vendor-ffmpeg.sh. Idempotent, and silent when
-# there is nothing to do. The compilation cache needs no link: the Makefile names
+# worktree does not rebuild it. Run by the Makefile's vendored-library file targets,
+# which every building target depends on. Idempotent, and silent when there is
+# nothing to do. The compilation cache needs no link: tools/xcodebuild.sh names
 # one shared store on every xcodebuild command line.
 set -eu
 

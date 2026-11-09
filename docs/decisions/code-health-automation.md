@@ -28,28 +28,30 @@ baseline files, and updating the baselines after each refactor cost too much.
 
 ## The checks
 
-"Lint" means `make lint` and a CI job. "Health" means `make health`, which the `Index checks`
+"Lint" means `make lint` and a CI job. "Health" means `make lint-index`, which the `Index checks`
 CI job runs on each pull request.
 
 | Check | Tool | Where | Cost |
 | --- | --- | --- | --- |
-| Duplicated code | jscpd, `make duplicates` | Lint | Under a second, whole tree |
-| Unused code | Periphery, `make health` | Health, CI | Index build plus about 1.5 min scan |
-| No adapter uses another ([Ports and adapters](/decisions/ports-and-adapters.md)) | `tools/lint/adapter-references.py`, `make health` | Health, CI | Seconds after the index build |
+| Duplicated code | jscpd, `tools/lint/duplicates.sh` | Lint | Under a second, whole tree |
+| Unused code | Periphery, `make lint-index` | Health, CI | Index build plus about 1.5 min scan |
+| No adapter uses another ([Ports and adapters](/decisions/ports-and-adapters.md)) | `tools/lint-index/adapter-references.py`, `make lint-index` | Health, CI | Seconds after the index build |
 | Module graph (TMA) | `tools/lint/module-graph.sh` | Lint | Seconds, no build |
 | Comment length | `tools/lint/comment-length.sh` | Lint | Under a second |
-| File length | `tools/lint/file-length.sh`, `make file-length` | Lint, pre-commit hook | Under a second |
-| No lint suppressions | `make no-suppressions` | Lint | Instant |
+| File length | `tools/lint/file-length.sh`, `tools/lint/file-length.sh` | Lint, pre-commit hook | Under a second |
+| No lint suppressions | `tools/lint/no-suppressions.sh` | Lint | Instant |
+| Docs and scripts name only existing make targets | `tools/lint/make-targets.sh` | Lint | Under a second |
+| Each lint still catches a planted violation | `--self-check` of every `tools/lint/` script | Lint | Seconds, in parallel |
 | New SwiftLint rules | SwiftLint | Lint | Part of the current lint |
 | No new `GameViewController` extensions | SwiftLint `custom_rules` | Lint | Part of the current lint |
 | Architecture rules ([architecture styles](/engine/architecture.md#machine-checks)) | SwiftLint `custom_rules`, `module-graph` | Lint | Part of the current lint |
-| Module size | `tools/lint/module-size.sh`, `make module-size` | Lint | Under a second, whole tree |
-| Swift language rules ([Swift language rules](/decisions/language-rules.md)) | The compiler, `make language-rules` | Every build, CI | A few seconds for the self-check |
-| Error handling ([Error handling](/decisions/error-handling.md)) | `tools/lint/error-handling.sh`, `make error-handling` | Lint, CI | Under a second, whole tree |
-| Deterministic game rules ([Deterministic game rules](/decisions/deterministic-rules.md)) | `tools/lint/deterministic-rules.sh`, `make deterministic-rules` | Lint, CI | Under a second, whole tree |
-| Random test order ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `tools/lint/test-order.sh`, `make test-order` | Lint, CI | Under a second, whole tree |
-| Coverage floors: parsers, game rules, pure cores ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `llvm-cov`, `make coverage-floor` | After `make test-unit`, CI | Seconds |
-| Diff coverage ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `llvm-cov`, `make diff-coverage` | After `make test-unit`, CI on a pull request | Seconds |
+| Module size | `tools/lint/module-size.sh`, `tools/lint/module-size.sh` | Lint | Under a second, whole tree |
+| Swift language rules ([Swift language rules](/decisions/language-rules.md)) | The compiler, `tools/lint/language-rules.sh` | Every build, CI | A few seconds for the self-check |
+| Error handling ([Error handling](/decisions/error-handling.md)) | `tools/lint/error-handling.sh`, `tools/lint/error-handling.sh` | Lint, CI | Under a second, whole tree |
+| Deterministic game rules ([Deterministic game rules](/decisions/deterministic-rules.md)) | `tools/lint/deterministic-rules.sh`, `tools/lint/deterministic-rules.sh` | Lint, CI | Under a second, whole tree |
+| Random test order ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `tools/lint/test-order.sh`, `tools/lint/test-order.sh` | Lint, CI | Under a second, whole tree |
+| Coverage floors: parsers, game rules, pure cores ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `llvm-cov`, `make test PLAN=UnitTests COVERAGE=1` | After `make test`, CI | Seconds |
+| Diff coverage ([Test order and coverage rules](/decisions/test-coverage-rules.md)) | `llvm-cov`, `make test COVERAGE=1` | After `make test`, CI on a pull request | Seconds |
 
 ## Duplicated code: jscpd
 
@@ -120,7 +122,7 @@ The rules, the layer list, and the exceptions are in
 
 ## Comment length
 
-The limit and the rules are in AGENTS.md. `make comment-blocks` and `make comment-apply`
+The limit and the rules are in AGENTS.md. `make dump-comments` and `make apply-comments`
 help rewrite many blocks at once.
 
 ## File length
@@ -164,14 +166,14 @@ findings.
 
 ## Lint suppressions
 
-`make no-suppressions`, part of `make lint`, fails on any `swiftlint:disable` comment
+`tools/lint/no-suppressions.sh`, part of `make lint`, fails on any `swiftlint:disable` comment
 under `Sources` or `Tests`.
 
 ## Test coverage
 
 The unit plan measures the `OpenSky` app target and the package modules. `make
-coverage-floor`, run after `make test-unit`, fails when a parser module, a game-rule module,
-or a pure core file is under its floor, and `make diff-coverage` fails a pull request whose
+coverage-floor`, run after `make test`, fails when a parser module, a game-rule module,
+or a pure core file is under its floor, and `make test COVERAGE=1` fails a pull request whose
 new lines or functions no test ran.
 [Test order and coverage rules](/decisions/test-coverage-rules.md) gives each value and its
 reason.

@@ -22,7 +22,7 @@ the tag plans, coverage, and sanitizers work is on the [test runs](/tools/test-r
 - `OpenSkyTests`: unit tests with Swift Testing for what a package test target cannot hold: the
   app module and the acceptance chains. None of it needs game data.
 - `OpenSkyRealDataTests`: the suites that read the user's install and skip without a data root. They
-  are a separate bundle so `make test-unit` does not compile them and the `RealData` plan can select
+  are a separate bundle so `make test` does not compile them and the `RealData` plan can select
   them by target.
 - `OpenSkyUITests`: XCUITest smoke tests. The app launches, the main window appears, and there is no
   game data alert.
@@ -38,31 +38,28 @@ a test there would run in both bundles. It holds only fixtures that need the app
 
 | Command | What it does |
 | --- | --- |
-| `make test-unit [PLAN=Quick] [T='Target/Suite/test()'] [N=100]` | One test plan, `Quick` by default: every package bundle without the slow and GPU tests. Every plan builds `OpenSky.app` and `openskycli` for testing, because the scheme marks them so, but only a plan that lists `OpenSkyTests` runs tests inside the app. `PLAN=Formats`, `Engine`, `Features`, or `App` builds one layer; `GPU` runs the `.gpu` tests; `UnitTests` is the whole plan CI runs. `T` picks a suite or test, or a comma list of them, and a run fails when an entry matches no test; a name that does not start with an `OpenSky*Tests` target resolves under `OpenSkyTests/`. `N` reruns until the first failure, to show a test is flaky. `COVERAGE=1` gathers coverage |
+| `make test [PLAN=Quick] [T='Target/Suite/test()'] [N=100]` | One test plan, `Quick` by default: every package bundle without the slow and GPU tests. Every plan builds `OpenSky.app` and `openskycli` for testing, because the scheme marks them so, but only a plan that lists `OpenSkyTests` runs tests inside the app. `GPU` runs the `.gpu` tests; `UnitTests` is the whole plan CI runs. `T` picks a suite or test, or a comma list of them, and a run fails when an entry matches no test; a name that does not start with an `OpenSky*Tests` target resolves under `OpenSkyTests/`. `N` reruns until the first failure, to show a test is flaky. `COVERAGE=1` gathers coverage and checks the changed lines, and with `PLAN=UnitTests` the floors |
 | `make test-rerun [PLAN=Quick] [T=...]` | Reruns the plan as last built, from its `.xctestrun`, without the build system. It warns when a source changed after that build |
 | `make test-package T='Target[/Suite[/test()]],...'` | Package test targets through `swift test`: no Xcode, no app, and no other bundle |
-| `make compile [M='Module ...']` | `swift build` of the changed package modules, or the named ones, and every package target that depends on them. No Xcode, so it is the quick check while fixing compile errors |
+| `make compile [ARGS='Module ...']` | `swift build` of the changed package modules, or the named ones, and every package target that depends on them. No Xcode, so it is the quick check while fixing compile errors |
 | `make build-app`, `make build-cli` | Builds the app, or `openskycli`, alone [CONFIG] |
 | `make build-tests [PLAN=UnitTests]` | Compiles every bundle of a plan without running a test. Hosted bundles build the app they run in. Needs no install |
-| `make test-report` | Pass and fail counts, each failure's name and message, and code coverage, from the newest result bundle |
-| `make test-real [T='Class/method()'] [CAP=MB] [ALL=1]` | The real-data smoke set, the suites tagged `.smoke`, under the memory watchdog, narrowed by `T`. `ALL=1` runs the whole bundle |
-| `make test-real PERF=1` | Every real-data test tagged `.perf`, built optimized, for perf budgets |
-| `make test-sanitize SAN=thread`, `SAN=address` `[CAP=MB]` | The unit bundles under the Thread Sanitizer, or under ASan with UBSan |
-| `make test-ui [T='Suite/test()']` | The UI smoke tests. A time-out in "enabling automation mode" means Automation Mode asks for a password; `make test-perms` names the fix |
-| `make test-perms` | Checks the one-time permission grants |
+| `make test PLAN=RealData [T='Class/method()'] [CAP=MB]` | The real-data smoke set, the suites tagged `.smoke`, under the memory watchdog, narrowed by `T`. `PLAN=RealDataAll` runs the whole bundle |
+| `make test PLAN=Perf` | Every real-data test tagged `.perf`, built optimized, for perf budgets |
+| `make test PLAN=Sanitizers SAN=thread`, `SAN=address` `[CAP=MB]` | The unit bundles under the Thread Sanitizer, or under ASan with UBSan |
+| `make test PLAN=UITests [T='Suite/test()']` | The UI smoke tests. A time-out in "enabling automation mode" means Automation Mode asks for a password; `make check-perms` names the fix |
+| `make check-perms` | Checks the one-time permission grants |
 
-There are four kinds of test, each with one target named `test-<kind>`: unit, UI, sanitizer, and
-real-data. An option picks the plan inside a kind (`PLAN`, `SAN`, `PERF`, `ALL`), so each run is
-still one plain `xcodebuild test` call on one test plan ([test runs](/tools/test-runs.md)).
+`make test` runs every kind of test, unit, UI, sanitizer, and real-data, and `PLAN` picks it, so
+each run is one `xcodebuild` call on one test plan ([test runs](/tools/test-runs.md)).
 
 No automatic step runs the tests locally. What to test for a change is the author's judgment,
 guided by the `testing-and-verifying` skill, and the commit's `Tests:` section records what ran.
 CI runs the lint checks and the whole unit plan on every push to a pull request, and the sanitizers
-and `make health` weekly ([continuous integration](/tools/ci.md)).
+and `make lint-index` weekly ([continuous integration](/tools/ci.md)).
 
-Every build or test command waits for a build slot and for its own build tree
-([build system](/tools/build-system.md)), so at most two builds compile at once, and never two in
-one checkout.
+Two builds into one build tree collide in xcodebuild's build database, so start a second build
+in a checkout only after the first ends ([build system](/tools/build-system.md)).
 
 ## Real-data suites and the data root
 
@@ -75,29 +72,29 @@ the host sees nil. So exporting it in a shell does nothing, and the gated tests 
 `RealData` test plan carries the root instead:
 
 ```sh
-make test-real T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
-make test-real
-make test-real ALL=1
+make test PLAN=RealData T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
+make test PLAN=RealData
+make test PLAN=RealDataAll
 ```
 
-`make test-real` runs the smoke set: the suites tagged `.smoke`, one quick suite per format family
-and subsystem, through the `RealData` plan. `ALL=1` runs the `RealDataAll` plan, the whole bundle,
-for a milestone acceptance.
+`make test PLAN=RealData` runs the smoke set: the suites tagged `.smoke`, one quick suite per format family
+and subsystem, through the `RealData` plan. `PLAN=RealDataAll` runs the whole bundle, for a
+milestone acceptance.
 
 `-only-testing` accepts a misspelled Swift Testing name and exits 0 after running nothing. Nothing
 checks this, so read the test count in the output.
 
-`make test-real PERF=1` runs the Perf plan, which selects the real-data tests tagged `.perf`, so a new
+`make test PLAN=Perf` runs the Perf plan, which selects the real-data tests tagged `.perf`, so a new
 perf gate joins by its tag alone. It builds with optimization, because a physics step is a few
 hundred microseconds of tight `simd` math, which `-Onone` slows by more than an order of magnitude.
 It keeps the Debug configuration, because `@testable import` needs `ENABLE_TESTABILITY`, which
 Release turns off. It changes only the optimization level and sets the `OPENSKY_OPTIMIZED`
 condition, so a test knows which budget applies. Its products go in the `-optimized` cache tree
-beside the Debug one, so switching between it and `make test-unit` does not rebuild the engine
+beside the Debug one, so switching between it and `make test` does not rebuild the engine
 each time ([dynamic bodies](/engine/dynamic-bodies.md)).
 
 A gated suite written outside `src/Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would
-ever run it: `make test-real` would not reach it, and `make test-unit` would skip it.
+ever run it: `make test PLAN=RealData` would not reach it, and `make test` would skip it.
 
 ## Memory watchdog
 
@@ -113,8 +110,8 @@ other checkouts and the installed `/Applications/OpenSky.app`, and kill them.
 
 | Run | Cap | Time limit |
 | --- | --- | --- |
-| `make test-real`, with or without `PERF=1` | 6,144 MB | 3 hours |
-| `make test-sanitize` | 12,288 MB | 3 hours |
+| `make test PLAN=RealData`, `RealDataAll`, or `Perf` | 6,144 MB | 3 hours |
+| `make test PLAN=Sanitizers` | 12,288 MB | 3 hours |
 
 The real-data cap fits the whole set, because one host process runs every suite in turn and keeps
 their caches. `CAP=MB` lowers it for one test. Sanitizers get more for their shadow memory. Never
@@ -122,7 +119,9 @@ run a heavy real-data test with a raw `xcodebuild` that skips the watchdog.
 
 ## Results and perf gates
 
-After a run, `make test-report` names the failures. Do not read the `.xcresult` JSON by hand.
+A failed run prints each failing test and its message from the result bundle, and
+`python3 tools/xcresult_summary.py <bundle>` prints them again. Do not read the `.xcresult` JSON by
+hand.
 
 Set a perf budget from a real-install measurement: take a baseline, add margin, then set the cap.
 Guessing a threshold and raising it after each failed bench wasted many multi-minute runs. Keep
@@ -141,7 +140,7 @@ Each scene is a signpost interval, so the trace shows which scene a hot spot bel
 directory holds the trace and `samples.xml`, the exported sample table, for reading without
 Instruments.
 
-`make launch-sample` checks the app itself rather than the CLI. It launches
+`make sample-launch` checks the app itself rather than the CLI. It launches
 `/Applications/OpenSky.app` in play mode and, every few seconds for one minute (`SECONDS`), takes a
 one-second `sample` of the app and reads `game state frame`. Run `make install` and
 `make build-cli CONFIG=Release` first, so the app and the CLI come from one build. The run

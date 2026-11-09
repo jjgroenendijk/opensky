@@ -4,6 +4,21 @@
 # reason in cli-probe-exceptions.txt), and a number option is not declared as a String.
 # The tree-level rules are CLIConventionTests in OpenSkyCLIArgumentsTests.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Sources/OpenSkyCLIArguments" "$tree/src/Sources/OpenSkyCLI" "$tree/docs/tools" "$tree/tools/lint"
+    for a in a b c d e; do for b in a b c d e f g h; do
+        printf 'struct C%s%s: CLICommandArguments {\n    let c = CommandConfiguration(commandName: "c%s%s")\n}\n' \
+            "$a" "$b" "$a" "$b"
+    done; done >"$tree/src/Sources/OpenSkyCLIArguments/A.swift"
+    : >"$tree/docs/tools/cli.md"
+    : >"$tree/tools/probe.sh"
+    : >"$tree/tools/probe-swf.sh"
+    : >"$tree/tools/lint/cli-probe-exceptions.txt"
+    expect_failure "$0" "$tree" "caa (Caa) has no CLIRunnable runner"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -126,7 +141,7 @@ todos="$(
 )" || true
 if [ -n "$todos" ]; then
   printf '%s\n' "$todos"
-  printf "[FAIL] a new command still has TODO stubs from make new-cli-command\n" >&2
+  printf "[FAIL] a new command still has TODO stubs from make add-cli-command\n" >&2
   failed=1
 fi
 

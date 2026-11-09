@@ -37,7 +37,7 @@ fresh session starts from `gh`, not from a doc.
    session is working on it.
 3. Read the issue body. Its acceptance gate is what "done" means.
 
-To find gaps no issue names yet, run `make gaps` (`docs/tools/gaps.md`). It ranks what the
+To find gaps no issue names yet, run `make rank-gaps` (`docs/tools/gaps.md`). It ranks what the
 install's data uses and the engine does not do, such as unbound Papyrus natives or perk entry
 points no code reads, with how much of each area is done.
 

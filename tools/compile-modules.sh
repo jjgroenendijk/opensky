@@ -17,8 +17,6 @@ set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
-# shellcheck source=/dev/null
-. "$root/tools/xcodebuild-lib.sh"
 
 run_dir="$("$root/tools/run-dir.sh" compile)"
 graph="$run_dir/graph.txt"
@@ -79,8 +77,6 @@ count="$(printf '%s\n' "$tops" | wc -l | tr -d ' ')"
 
 log="$run_dir/compile.log"
 status=0
-opensky_build_lock
-trap 'opensky_build_unlock' EXIT INT TERM
 if [ "$count" -gt "${OPENSKY_COMPILE_MAX:-12}" ]; then
     printf '[INFO] %s top targets depend on %s; building the whole package\n' "$count" "$wanted"
     swift build --package-path src --build-tests >"$log" 2>&1 || status=$?
@@ -92,9 +88,9 @@ else
 fi
 # swift build adds a source excerpt under each error and a long compiler
 # command line per failed file; the error lines alone say the same.
-xcodebuild_summary "$root" <"$log" |
-    grep -vE '^[[:space:]]*\||nonzero exit code|^error: Build failed' || true
-[ "$status" -eq 0 ] || opensky_drop_failed_records "$root" "$log" "$root/src/.build/out"
+grep -E '(error|warning): ' "$log" | grep -vE 'nonzero exit code|^error: Build failed' \
+    | sed "s|$root/||" | awk '!seen[$0]++' | head -n 40 || true
+[ "$status" -eq 0 ] || "$root/tools/failed-build-records.sh" -d "$log" "$root/src/.build/out"
 printf '[INFO] full transcript: %s\n' "$log"
 if [ "$status" -ne 0 ]; then
     echo "[ERROR] compile failed" >&2

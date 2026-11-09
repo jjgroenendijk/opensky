@@ -15,6 +15,15 @@
 # in the pbxproj, so the language-mode scan reads both: a setting reintroduced in
 # the project file would silently override the xcconfig layer.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/OpenSky.xcodeproj" "$tree/src/config/Build"
+    echo 'SWIFT_VERSION = 5.0;' >"$tree/src/OpenSky.xcodeproj/project.pbxproj"
+    echo 'SWIFT_VERSION = 6.0' >"$tree/src/config/Build/Base.xcconfig"
+    expect_failure "$0" "$tree" "SWIFT_VERSION = 5.0;"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 

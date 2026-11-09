@@ -45,7 +45,7 @@ prints its help and exits 2. `cell` and `render` default to the
 
 ## Conventions
 
-`CLIConventionTests` checks the parsed command tree, and `make cli-conventions`
+`CLIConventionTests` checks the parsed command tree, and `tools/lint/cli-conventions.sh`
 (`tools/lint/cli-conventions.sh`) checks the source. Both run in `make check` and CI.
 
 - Names are lowercase kebab case: `asset-optimisation`, `--player-level`. Options are spelled
@@ -64,9 +64,9 @@ prints its help and exits 2. `cell` and `render` default to the
   `tools/probe.sh` or `tools/probe-swf.sh`. A command the probe cannot run, because it
   writes settings or opens the app, has a reason in `tools/lint/cli-probe-exceptions.txt`.
 
-`make new-cli-command NAME=<name> GROUP=<help group>` writes the stubs for a new top-level
+`make add-cli-command ARGS='<name> <help' group>` writes the stubs for a new top-level
 command: the arguments struct, the runner, the command file, a row in this page, and a probe
-run. Each stub says TODO, and `make cli-conventions` fails until none is left.
+run. Each stub says TODO, and `tools/lint/cli-conventions.sh` fails until none is left.
 
 ## Searching records
 
@@ -219,7 +219,7 @@ the number. A summary line goes to stderr.
   `--frames 60`.
 - The streaming, walk, and sustained frame time gates are real-data tests:
   `FlyPathGateRealDataTests`, `WalkPathGateRealDataTests`, and `SustainedRenderGateRealDataTests`.
-  `make test-real PERF=1` runs them ([benchmark](/tools/benchmark.md)).
+  `make test PLAN=Perf` runs them ([benchmark](/tools/benchmark.md)).
 
 ## make probe
 

@@ -15,12 +15,12 @@
     "skills": [
       "writing-wiki-docs"
     ],
-    "query": "docs/engine/papyrus-world.md fails make docs-length. Fix it.",
+    "query": "docs/engine/papyrus-world.md fails tools/lint/docs-length.sh. Fix it.",
     "files": [],
     "expected_behavior": [
       "Splits the page by topic or cuts content",
       "Does not raise DOCS_MAX_LINES in the Makefile",
-      "Fixes links so make docs-links passes"
+      "Fixes links so tools/lint/docs-links.sh passes"
     ]
   },
   {

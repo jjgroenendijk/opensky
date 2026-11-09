@@ -3,7 +3,7 @@
 # used by src/Sources/CASTCEncoder to encode textures at every ASTC block size and effort
 # level. See docs/decisions/astcenc.md.
 #
-# Invoked by `make bootstrap` and by `make astcenc`. Idempotent: a matching build stamp
+# Invoked by `make bootstrap` and by `make bootstrap`. Idempotent: a matching build stamp
 # short-circuits the whole script. Set OPENSKY_ASTCENC_FORCE=1 to rebuild anyway.
 #
 # Like ffmpeg, the build lands in the shared `.vendor` of the main checkout, and linked

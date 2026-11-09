@@ -25,7 +25,7 @@ and `PexFixture`, live in the `src/Tests/OpenSkyFormatsTesting/` library.
 ## No tests here
 
 A `@Test` in this folder would run in both bundles, so the same unit test would also execute
-under `make test-real`. Nothing enforces that, so it is a review point.
+under `make test PLAN=RealData`. Nothing enforces that, so it is a review point.
 
 A suite that shares a fixture with other suites keeps its `@Test` methods in its own type,
 and the fixture is a separate type. Example: `CellStreamerTests` in `OpenSkyWorldTests`

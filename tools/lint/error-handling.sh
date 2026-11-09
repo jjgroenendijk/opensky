@@ -8,14 +8,16 @@
 #
 # A self-check first runs both rules on small synthetic violations, which must fail.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
 
 cd "$(git rev-parse --show-toplevel)"
 
-python3 - <<'PY'
+python3 - "$@" <<'PY'
 import re
 import sys
 
-sys.path.insert(0, "tools/lint")
+sys.path.insert(0, __import__("os").environ["OPENSKY_TOOLS"] + "/lint")
 from swift_source import code_only, line_of, package_files
 # The last name of a call whose failure is expected and harmless. Reasons are on the
 # decision page.
@@ -64,6 +66,9 @@ def self_check():
 
 
 self_check()
+if sys.argv[1:] == ["--self-check"]:
+    print("[ OK ] error-handling self-check")
+    sys.exit(0)
 failures = []
 for module, name, code in package_files():
     for line, what in swallowed(code):

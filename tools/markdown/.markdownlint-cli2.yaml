@@ -1,5 +1,5 @@
 # OpenSky markdownlint-cli2 config — Markdown lint + autofix (AGENTS.md "Code quality").
-# Run: `make md-lint` / `make format` (autofix).
+# Run: `make format-check` / `make format` (autofix).
 config:
   default: true          # strict: all default rules on
   MD013:                 # line length
@@ -25,10 +25,10 @@ ignores:
   - build
   - DerivedData
   - DerivedData-optimized   # the optimized real-data perf build's own cache
-  - DerivedData-index       # the uncached index build `make health` scans
+  - DerivedData-index       # the uncached index build `make lint-index` scans
   - .logs           # gitignored scratch output; agents drop free-form notes here
   - src/.vendor      # vendored upstream sources built by make bootstrap, not ours to lint
-  - .cache          # caches, among them the wiki mirrors (make ck-wiki, make uesp-wiki)
+  - .cache          # caches, among them the wiki mirrors (make sync-wiki ARGS='--site ck', make sync-wiki ARGS='--site uesp')
   - "**/.venv"      # uv environments of the Python tools
   - .claude/worktrees  # linked worktrees nested below the main checkout
   - "**/._*"        # macOS AppleDouble junk on this volume

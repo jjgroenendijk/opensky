@@ -1,4 +1,4 @@
-// The reference game prefix: the Wine prefix `make reference-setup` builds, which the
+// The reference game prefix: the Wine prefix `make setup-reference` builds, which the
 // Reference Game page and `openskycli reference` read (docs/tools/reference-game.md).
 // It is developer tooling, so the group shows only with "Show details" on.
 

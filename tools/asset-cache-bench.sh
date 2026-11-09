@@ -6,7 +6,7 @@
 # launcher's Asset Optimisation page.
 #
 # Usage: tools/asset-cache-bench.sh PRODUCTS
-#   PRODUCTS  the Release products folder (make asset-cache-bench builds and passes it)
+#   PRODUCTS  the Release products folder (tools/benchmark.sh --compare-cache passes it)
 #
 # Writes .logs/asset-cache-bench/<UTC timestamp>/<variant>/ with each tour's result.
 set -eu

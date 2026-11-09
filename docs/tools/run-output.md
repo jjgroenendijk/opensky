@@ -9,8 +9,8 @@ tags: [tool, make, logs, disk, retention]
 
 # Run output layout and make prune
 
-Two gitignored trees hold everything a run of the tooling produces: `.logs/` for
-transcripts and captures, `TestResults/` in the build cache for `.xcresult` bundles. Both grow
+The gitignored `.logs/` holds everything a run of the tooling produces: transcripts,
+captures, and `.xcresult` bundles. It grows
 without bound, which fills a disk mid-session: one build cache per linked worktree runs to
 about ten gigabytes, and the worktree for a merged branch leaves its cache behind. The
 convention below makes each run a single directory, and `make prune` deletes the runs and
@@ -24,14 +24,13 @@ Every script that writes output a human reads later allocates one directory per 
 ```text
 .logs/<script>/<UTC timestamp>/          for example .logs/probe/<YYYYMMDDTHHMMSSZ>/
 .logs/<script>/latest -> <UTC timestamp>
-$OPENSKY_DERIVED_DATA/TestResults/<name>/<UTC timestamp>/<name>.xcresult
+.logs/test-<PLAN>/<UTC timestamp>/test-<PLAN>.xcresult
 ```
 
-Result bundles live under the build cache, not under `build/`. Xcode watches the Swift
-package at the repository root while it runs tests. A result bundle that grows inside the
-package root makes Xcode resolve the package again in the middle of the run. With the
-engine in the package, that crashed `xcodebuild test` with a `DVTInvalidation` assertion.
-Xcode does not watch its own build cache, so bundles there are safe.
+Result bundles stay outside `src/`. Xcode watches the Swift package folder while it runs
+tests, and a result bundle that grew inside it made Xcode resolve the package again in the
+middle of the run, which crashed `xcodebuild test` with a `DVTInvalidation` assertion.
+`.logs/` is at the repository root, outside the package folder.
 
 The timestamp is `date -u +%Y%m%dT%H%M%SZ`, so directory names sort in time order — that
 is how "newest run" and "older than the retention age" are both decided, without consulting
@@ -39,8 +38,7 @@ modification times that a backup or a copy can rewrite. `tools/run-dir.sh` creat
 directory, repoints `latest`, and prints the absolute path:
 
 ```sh
-run_dir="$("$root/tools/run-dir.sh" probe)"                       # under .logs/
-bundle="$("$root/tools/run-dir.sh" -b "$OPENSKY_DERIVED_DATA/TestResults" unit)"  # absolute
+run_dir="$("$root/tools/run-dir.sh" probe)"   # under .logs/
 ```
 
 Two rules follow from this and matter when adding a script:
@@ -48,7 +46,7 @@ Two rules follow from this and matter when adding a script:
 * **Print the run directory.** A PR body links the run directory, not a loose file, so the
   whole evidence of one run travels together. Captures embed the user's game assets and
   stay gitignored (AGENTS.md "Legal and IP boundary"); the link is a local path.
-* **A script that calls another script exports `OPENSKY_RUN_DIR`.** `tools/xcodebuild-run.sh`
+* **A script that calls another script exports `OPENSKY_RUN_DIR`.** `tools/xcodebuild.sh`
   writes into that directory instead of opening its own, so a script keeps every
   transcript it starts in one place. A
   wrapper that does not export it gets a separate run directory per inner script, which is
@@ -67,21 +65,21 @@ reads like a stale file rather than contention.
 
 | Producer | Run directory | Contents |
 | --- | --- | --- |
-| `make build-app`, `build-cli`, `install` | `.logs/<target>/` | xcodebuild transcript, `phases.tsv` |
-| `make test-<kind>` | `.logs/test-<kind>/`, `TestResults/<kind>/` in the build cache | xcodebuild transcript, `phases.tsv`, `.xcresult` |
+| `make build-app`, `build-cli`, `build-tests`, `install` | `.logs/<target>/` | xcodebuild transcript, `.xcresult` |
+| `make test PLAN=<plan>` | `.logs/test-<plan>/` | xcodebuild transcript, `.xcresult` |
+| `make check`, `fix`, `format`, `lint` | `.logs/<target>/` | one log per check |
 | `tools/probe.sh` | `.logs/probe/` | `probe.log` and every PNG the probe renders |
-| `tools/check-docs-links.sh` | `.logs/docs-links/` | link report |
 | `tools/vendor-ffmpeg.sh` | `.logs/vendor-ffmpeg/` | configure and build log, only when it actually builds |
 
-`make test-report` reads the newest `.xcresult` under the build cache's `TestResults`, one run
-directory deep, and falls back to the derived-data glob when there is none.
+`python3 tools/xcresult_summary.py <bundle>` prints a bundle's errors, warnings, and failed tests
+again.
 
 ## make prune
 
 ```sh
-make prune                    # retention 1 day
-make prune DRY_RUN=1          # print the plan, delete nothing
-make prune PRUNE_DAYS=7       # keep a week
+make prune                          # retention 1 day
+make prune ARGS=--dry-run           # print the plan, delete nothing
+make prune ARGS='--days 7'          # keep a week
 ```
 
 `tools/prune.sh` builds a plan, prints every entry with its size and the reason it is in
@@ -96,13 +94,12 @@ the plan, deletes them, and reports the space freed. Four rules produce the plan
    because those trees are untracked, so git's own `worktree prune` never reaches them.
 2. **`build/install`**, the private Release tree `make install` used before it started
    sharing the main derived-data cache.
-3. **Aged-out runs** under `.logs/` and the build cache's `TestResults/`: a run directory whose
+3. **Aged-out runs** under `.logs/`: a run directory whose
    timestamp is older than the retention age goes, except that the newest run of each
    script is always kept, so `latest` still resolves after a prune. A `latest` symlink left
    dangling by a prune is removed.
 4. **Pre-convention leftovers**: loose files directly under `.logs/` older than the
-   retention age, `.xcresult` bundles written straight into `build/test-results`, and
-   run directories left in `build/test-results/` from before bundles moved.
+   retention age.
 
 ## What prune will not touch
 

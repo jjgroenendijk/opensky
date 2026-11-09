@@ -1,7 +1,8 @@
 name: CI
 
-# The checks run on macOS, like a developer machine (docs/tools/ci.md). Each step
-# runs the same make target as `make check`. The lint checks share two jobs, so one
+# The checks run on macOS, like a developer machine (docs/tools/ci.md). Format and
+# Static checks run the two halves of `make check`, so the gates are the same by
+# construction, and Build & test runs `make test`. The checks share two jobs, so one
 # run uses at most 4 macOS runners at a time; the Free plan allows 5 per account.
 # The Changes and Lint jobs only read results, so they run on Linux.
 # A draft pull request runs too, so the full unit plan runs on a runner while the
@@ -39,7 +40,7 @@ env:
   # renovate: datasource=github-releases depName=astral-sh/uv
   UV_VERSION: 0.13.6
   # The image holds several Xcodes and its default moves. Name the one that matches the
-  # local Xcode; `make swift-baseline` fails when the Swift versions differ.
+  # local Xcode; `tools/lint/swift-baseline.sh` fails when the Swift versions differ.
   DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
   # The build cache and the compilation cache store inside the workspace, where the
   # cache actions find them, under a hidden folder that xcodebuild's start-up scan
@@ -48,7 +49,7 @@ env:
   OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/.cache/CompilationCache.noindex
   # Inside the build tree, not beside it: a build prunes these modules at its end, and
   # under the package root that reloaded the package graph before the tests.
-  SDK_MODULES: ${{ github.workspace }}/.cache/DerivedData/SDKExplicitPrecompiledModules
+  OPENSKY_SDK_MODULES: ${{ github.workspace }}/.cache/DerivedData/SDKExplicitPrecompiledModules
 
 jobs:
   format:
@@ -74,14 +75,11 @@ jobs:
           fi
           echo "$TOOLS_DIR" >>"$GITHUB_PATH"
           npm install --global --no-audit --no-fund "markdownlint-cli2@$MARKDOWNLINT_VERSION"
-      - run: make swift-format-check ALL=1
-      # The shaders use Xcode's clang-format, as locally.
-      - if: success() || failure()
-        run: make metal-format-check
-      - if: success() || failure()
-        run: make cpp-format-check
-      - if: success() || failure()
-        run: make md-lint
+      # The Python tools pin ruff in their uv.lock, so CI needs only uv.
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: ${{ env.UV_VERSION }}
+      - run: make format-check
 
   static-checks:
     name: Static checks
@@ -121,29 +119,12 @@ jobs:
           fi
           echo "$TOOLS_DIR" >>"$GITHUB_PATH"
           npm install --global --no-audit --no-fund "jscpd@$JSCPD_VERSION"
-      - run: make swift-lint ALL=1
-      - if: success() || failure()
-        run: make sh-lint workflow-lint
-      - if: success() || failure()
-        run: make module-graph
-      - if: success() || failure()
-        run: >-
-          make cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-links
-          docs-length agent-files comment-length panel-text load-order-only cli-conventions gap-registries duplicates
-          no-suppressions app-architecture adapter-rules
-      - if: success() || failure()
-        run: make file-length ALL=1
-      - if: success() || failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: make module-size
-      # The Python tools pin ruff in their uv.lock, so CI needs only uv.
-      - if: success() || failure()
-        uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.0
         with:
           version: ${{ env.UV_VERSION }}
-      - if: success() || failure()
-        run: make py-format-check py-lint
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: make lint
 
   # Decides whether Build & test runs. A pull request that changes only Markdown, docs,
   # skills, the Python tools, the markdownlint config, or the Renovate config skips it.
@@ -206,7 +187,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
-      # Depth 2 keeps the merge commit's base, which `make diff-coverage` diffs against.
+      # Depth 2 keeps the merge commit's base, which the changed-lines check diffs against.
       - uses: actions/checkout@v7
         with:
           fetch-depth: 2
@@ -219,12 +200,6 @@ jobs:
         run: |
           xcodebuild -version
           system_profiler SPDisplaysDataType
-      - run: make swift-baseline
-      - run: make language-rules
-      - run: make error-handling
-      - run: make deterministic-rules
-      - run: make test-order
-      - run: make coverage-self-check
       # One run then lists the compile errors of every target, not only the first.
       - name: Keep building after errors
         run: defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES
@@ -235,7 +210,7 @@ jobs:
           path: src/.vendor/ffmpeg
           key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
       # The app and CLI link the vendored ffmpeg, and a fresh checkout has none.
-      - run: make ffmpeg
+      - run: tools/vendor-ffmpeg.sh
       - if: steps.ffmpeg.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
@@ -247,7 +222,7 @@ jobs:
           path: src/.vendor/astcenc
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
       # The ASTC texture encoder links the vendored astcenc static library.
-      - run: make astcenc
+      - run: tools/vendor-astcenc.sh
       - if: steps.astcenc.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
@@ -288,13 +263,12 @@ jobs:
           if [ "${size:-0}" -gt "$CAS_MAX_MB" ]; then rm -rf "$store"; fi
       - name: Wait for the Metal Toolchain
         run: tools/ci/metal-toolchain.sh wait
-      # The whole unit plan with coverage: locally the default is the Quick plan
-      # without coverage, so this is the one run that sees every test.
-      - run: make test-unit PLAN=UnitTests COVERAGE=1 XCODEBUILD_FLAGS="$BUILD_FLAGS"
-      - run: make coverage-floor
-      # A pull request checks out its merge commit, whose first parent is the base.
-      - if: github.event_name == 'pull_request'
-        run: make diff-coverage DIFF_BASE=HEAD^1
+      # The whole unit plan with coverage, its floors, and the changed lines: locally the
+      # default is the Quick plan without coverage, so this is the one run that sees every
+      # test. A pull request checks out its merge commit, whose first parent is the base.
+      - run: make test PLAN=UnitTests COVERAGE=1 DIFF_BASE="$DIFF_BASE" XCODEBUILD_FLAGS="$BUILD_FLAGS"
+        env:
+          DIFF_BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || 'HEAD' }}
       - if: steps.sdk.outputs.cache-hit != 'true' && github.event_name == 'push'
         uses: actions/cache/save@v6
         with:
@@ -352,23 +326,22 @@ jobs:
       - uses: actions/checkout@v7
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
-      - run: make swift-baseline
       - uses: actions/cache/restore@v6
         with:
           path: src/.vendor/ffmpeg
           key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
-      - run: make ffmpeg
+      - run: tools/vendor-ffmpeg.sh
       - uses: actions/cache/restore@v6
         with:
           path: src/.vendor/astcenc
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
-      - run: make astcenc
+      - run: tools/vendor-astcenc.sh
       # Periphery is the one tool the CI image does not ship. The cask in the
       # periphery tap no longer installs, so take the Homebrew core formula.
       - run: brew install periphery
       - name: Wait for the Metal Toolchain
         run: tools/ci/metal-toolchain.sh wait
-      - run: make health XCODEBUILD_FLAGS="$BUILD_FLAGS"
+      - run: make lint-index XCODEBUILD_FLAGS="$BUILD_FLAGS"
       - name: Upload logs
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7

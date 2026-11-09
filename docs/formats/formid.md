@@ -73,7 +73,7 @@ Every engine and CLI path reads plugins as one load order, as the game does. The
 point is `ActiveLoadOrder.open(root:)`: it reads `plugins.txt` (or the vanilla fallback), opens
 each active plugin, and builds the FormID space. A tool that opened `Skyrim.esm` alone would
 miss every DLC and mod override, such as the Hearthfire edits to Whiterun's cells.
-`make load-order-only` fails on a single-file `ESMFile(url:)` outside the format modules.
+`tools/lint/load-order-only.sh` fails on a single-file `ESMFile(url:)` outside the format modules.
 Assets follow the same rule through the virtual file system, where loose files win over
 archives.
 

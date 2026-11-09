@@ -1,7 +1,7 @@
 // Records outside Skyrim.esm against the user's install: DLC scenes and story nodes
 // name quests the load-order quest store holds, DLC text resolves in its own
 // plugin's string tables, and NPC and item names come from FULL.
-// Run with `make test-real T='LoadOrderTextRealDataTests'`.
+// Run with `make test PLAN=RealData T='LoadOrderTextRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyCells

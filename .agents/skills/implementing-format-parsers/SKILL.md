@@ -35,7 +35,7 @@ The root `AGENTS.md` section "Legal & IP boundary" is the contract. This skill i
 ## 2. Pick the module and a model
 
 Each format family is one module, and it imports only `OpenSkyFormatsCore`
-(`docs/tools/modules.md` lists the families; `make module-graph` fails on another import).
+(`docs/tools/modules.md` lists the families; `tools/lint/module-graph.sh` fails on another import).
 The parser goes in `src/Sources/OpenSkyFormats<Family>/<Format>/`.
 
 Copy the shape of an existing format:
@@ -77,13 +77,13 @@ a one-line why. The spec links and the evidence go in the page, not in the code.
   An extracted game file is never a fixture, not even a tiny one, and not a cut-down copy
   of a mod file.
 - Put the suite in `src/Tests/OpenSkyFormats<Family>Tests/<Format>/` with
-  `@Suite(.tags(.parser))`. `make lint-test-tags` checks the tag. A suite that also builds
+  `@Suite(.tags(.parser))`. `tools/lint/test-tags.sh` checks the tag. A suite that also builds
   engine state goes in the test target of the highest module it imports (`src/Tests/AGENTS.md`).
 - A bug fix starts with a fixture that reproduces it and a test that fails.
 - Run `make test-package T='OpenSkyFormats<Family>Tests/<Suite>'` while working, then
-  `make test-unit PLAN=Formats` before pushing.
+  `make test` before pushing.
 - Check the layout on the real install with `make run-cli ARGS=...` or a real-data suite
-  under `src/Tests/OpenSkyRealDataTests/Formats/`, run by `make test-real`. A new probe
+  under `src/Tests/OpenSkyRealDataTests/Formats/`, run by `make test PLAN=RealData`. A new probe
   becomes an `openskycli` option or subcommand, not throwaway code
   (`probing-real-game-data` skill).
 

@@ -1,7 +1,7 @@
 // The HUD movie's notification and help-message entry points: their parameter
 // names, and two notifications plus one help message drawn on a frame. The
 // report and frames go to `.logs/hud-messages/`.
-// Run with `make test-real T='HUDMessagesRealDataTests'`.
+// Run with `make test PLAN=RealData T='HUDMessagesRealDataTests'`.
 
 import Foundation
 import Metal

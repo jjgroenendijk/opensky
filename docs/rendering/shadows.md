@@ -142,7 +142,7 @@ until the renderer is rebuilt; nothing saves it.
 
 ## Fly-path budget
 
-The fly-path streaming gate (`FlyPathGateRealDataTests`, `make test-real PERF=1`) holds both the
+The fly-path streaming gate (`FlyPathGateRealDataTests`, `make test PLAN=Perf`) holds both the
 average and the 95th percentile shadow pass time to 14 ms. That is below half of a 30 frames per
 second frame (33.33 ms) with some room over measured Whiterun runs. The benchmark tour reports the
 `shadows` pass per scene ([benchmark](/tools/benchmark.md)).

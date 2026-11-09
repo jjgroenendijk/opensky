@@ -68,6 +68,6 @@ Rules for code under `src/Sources/`. The module list, the layers, and the import
 - Make an edit that repeats across many files with a script, then review `git diff --stat`
   and a sample of the hunks. Do not read and edit each site in the conversation. Each file
   read stays in context for the rest of the session, so per-site edits cost far more.
-- Comments: `make comment-blocks PATHS='src/Sources/X' > .logs/comments.txt` prints only the long
+- Comments: `make dump-comments ARGS='src/Sources/X' > .logs/comments.txt` prints only the long
   blocks, each under a `=== path:first-last` header. Rewrite the text under each header,
-  leave a body empty to delete the block, then run `make comment-apply SPEC=.logs/comments.txt`.
+  leave a body empty to delete the block, then run `make apply-comments ARGS=.logs/comments.txt`.

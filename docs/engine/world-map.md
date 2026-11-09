@@ -118,7 +118,7 @@ default. A travel autosave follows when the player's setting asks for one.
 
 The formula was fitted to the Elder Scrolls wiki table "Fast Travel (Skyrim)", which lists
 game hours between towns, measured in light armor and rounded to half hours.
-`FastTravelTimeRealDataTests` (run with `make test-real`) measures the marker distances on
+`FastTravelTimeRealDataTests` (run with `make test PLAN=RealData`) measures the marker distances on
 the install. A city without a marker of its own name is timed from its stables, and
 Solitude is left out because nothing there sits beside its gate. The best-fit speed over the
 36 measured routes is 80.7 units per second, within 1% of 80.1. With 80.1, the mean ratio

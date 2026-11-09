@@ -1,6 +1,6 @@
 // Records from a plugin that loads later than its own master index says. Dragonborn
 // writes its own forms as 0x02xxxxxx but loads fifth, so read raw they name nothing.
-// Run with `make test-real T='PluginFormIDSpaceRealDataTests'`.
+// Run with `make test PLAN=RealData T='PluginFormIDSpaceRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyCells

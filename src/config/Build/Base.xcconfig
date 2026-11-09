@@ -29,7 +29,7 @@ SWIFT_STRICT_MEMORY_SAFETY = YES
 // flows it does not help.
 COMPILATION_CACHE_ENABLE_CACHING = YES
 
-// The vendored decode-only ffmpeg (make ffmpeg). The package declares its clang module,
+// The vendored decode-only ffmpeg (make bootstrap). The package declares its clang module,
 // CFFmpeg, but a target that imports an engine module also loads CFFmpeg, and the
 // headers it wraps are found through this search path.
 SWIFT_INCLUDE_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/include

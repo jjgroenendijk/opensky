@@ -5,6 +5,15 @@
 # on a listed name no code uses. Behaviour class names live in the animation
 # modules, so those are not scanned (docs/tools/gaps.md).
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Sources/OpenSkyFormatsMesh/NIF" "$tree/src/Sources/OpenSkyX"
+    echo 'let handled = ["NiNode"]' >"$tree/src/Sources/OpenSkyFormatsMesh/NIF/NIFBlockTypes.swift"
+    echo 'let names = ["NiNode", "NiFoo"]' >"$tree/src/Sources/OpenSkyX/A.swift"
+    expect_failure "$0" "$tree" "code names NiFoo"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 registry=src/Sources/OpenSkyFormatsMesh/NIF/NIFBlockTypes.swift

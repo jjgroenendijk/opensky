@@ -1,6 +1,6 @@
 // The NIF block types engine code handles by name: it decodes them, or skips them on
 // purpose. `openskycli gaps` lists the types the data holds and no code names.
-// `make gap-registries` checks this list against the type names in the code.
+// `tools/lint/gap-registries.sh` checks this list against the type names in the code.
 
 import Foundation
 

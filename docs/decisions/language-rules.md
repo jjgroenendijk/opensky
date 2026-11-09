@@ -39,7 +39,7 @@ fails the build.
 
 `src/Package.swift` lists the features in `languageSettings`, and `src/config/Build/Base.xcconfig` sets
 the matching build settings for the app, the CLI, and the Xcode test bundles.
-`tools/lint/language-rules.sh` (`make language-rules`, in `make check` and CI) checks that:
+`tools/lint/language-rules.sh` (`tools/lint/language-rules.sh`, in `make check` and CI) checks that:
 
 - every required feature is in `languageSettings`;
 - every feature in `languageSettings` has its build setting set to `YES` in the xcconfig, and the
@@ -54,7 +54,7 @@ the matching build settings for the app, the CLI, and the Xcode test bundles.
 
 ## Public imports in interface modules
 
-`make module-graph` rule 11 reads every `public import` in an interface module. It may name a
+`tools/lint/module-graph.sh` rule 11 reads every `public import` in an interface module. It may name a
 lower module or another interface module, never a feature implementation. `@_exported import` is
 not used anywhere, because it re-exports a module to every client without a `public import`
 line that shows it.

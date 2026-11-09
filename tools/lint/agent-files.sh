@@ -5,6 +5,14 @@
 # `name` equal to its folder, a description of at most 1024 characters, a body
 # of at most 500 lines, and an evals.json with at least three scenarios.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/docs"
+    echo '# Agents' >"$tree/docs/AGENTS.md"
+    expect_failure "$0" "$tree" "docs/CLAUDE.md must be a symlink to AGENTS.md"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 

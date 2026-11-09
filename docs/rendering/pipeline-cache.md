@@ -49,6 +49,6 @@ The switch is the `pipelineCache.enabled` player setting and applies on the next
 launcher's Graphics page has the same switch and clear button.
 
 To time a cold start, clear the cache on the Graphics page, then run
-`make benchmark PRESET=quick`. The app start in the result holds the renderer setup time
+`make benchmark ARGS='--preset quick'`. The app start in the result holds the renderer setup time
 ([benchmark](/tools/benchmark.md)). `--set pipelineCache.enabled=off` compiles every pipeline
 without the archive.

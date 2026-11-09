@@ -1,7 +1,7 @@
 // Whole-install field census: each decoded field must be set by at least one
 // record of the five masters or the Creation Club plugins. The few fields no
 // record sets are pinned. The census goes to `.logs/record-field-census.log`.
-// Run with `make test-real T='RecordFieldCensusRealDataTests'`.
+// Run with `make test PLAN=RealData T='RecordFieldCensusRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

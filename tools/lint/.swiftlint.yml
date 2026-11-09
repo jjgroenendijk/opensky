@@ -1,5 +1,5 @@
 # OpenSky SwiftLint config — strict linting mandatory (AGENTS.md "Code quality").
-# `make swift-lint` runs `swiftlint --strict`, so warnings fail the lint too.
+# `tools/lint/swiftlint.sh` runs `swiftlint --strict`, so warnings fail the lint too.
 
 # No `included:` here — SwiftLint resolves config paths relative to this file's
 # directory (tools/lint/), not the repo root. Callers pass paths explicitly

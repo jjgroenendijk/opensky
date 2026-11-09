@@ -40,7 +40,7 @@ node_modules/
 
 # Render captures stay local (.logs/ or temp), never in source control.
 *.[pP][nN][gG]
-# Exception: AppIcon PNGs generated from our own SVG (make icon) — no game content.
+# Exception: AppIcon PNGs generated from our own SVG (make render-icon) — no game content.
 !src/Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset/icon_*.png
 # Exception: README screenshots of OpenSky's own launcher, no game frame (AGENTS.md).
 !docs/images/launcher-*.png

@@ -1,7 +1,7 @@
 ---
 type: Tool
 title: Offline wikis
-description: How `make ck-wiki` and `make uesp-wiki` mirror the Creation Kit wiki and the UESP
+description: How `make sync-wiki ARGS='--site ck'` and `make sync-wiki ARGS='--site uesp'` mirror the Creation Kit wiki and the UESP
   wiki as Markdown, where the mirrors live, what each file holds, and why they read the
   MediaWiki API and the Wayback Machine.
 tags: [tool, reference, papyrus, creation-kit, uesp]
@@ -23,9 +23,9 @@ and read it without the network.
 ## Use
 
 ```sh
-make ck-wiki                            # the Creation Kit wiki
-make uesp-wiki                          # the Skyrim pages of the UESP wiki
-make uesp-wiki ARGS='--source wayback'  # force the Wayback Machine
+make sync-wiki ARGS='--site ck'                            # the Creation Kit wiki
+make sync-wiki ARGS='--site uesp'                          # the Skyrim pages of the UESP wiki
+make sync-wiki ARGS='--site uesp --source wayback'  # force the Wayback Machine
 ```
 
 The first run fetches every page: about 2,800 for the Creation Kit wiki, about 7,000 for UESP.
@@ -51,7 +51,7 @@ ls "$cache/ck-wiki/index.md" "$cache/uesp-wiki/index.md"
 
 `.cache/` is gitignored. The wiki text is licensed CC BY-SA and is not our work, so a mirror is
 never committed. Two checks enforce this. The tool refuses an `--out` folder inside a checkout
-unless git ignores it. `make no-game-content` fails on a tracked Markdown file whose frontmatter has
+unless git ignores it. `tools/lint/no-game-content.sh` fails on a tracked Markdown file whose frontmatter has
 the mirror's `fetched_from:` key.
 
 ## What each mirror holds

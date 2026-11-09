@@ -7,60 +7,7 @@
     }
   ],
   "defaultOptions" : {
-    "codeCoverage" : {
-      "targets" : [
-        {
-          "containerPath" : "container:OpenSky.xcodeproj",
-          "identifier" : "5A3BAE003000109100177F95",
-          "name" : "OpenSky"
-        },
-        {
-          "containerPath" : "container:.",
-          "identifier" : "OpenSkyFormatsCore",
-          "name" : "OpenSkyFormatsCore"
-        },
-        {
-          "containerPath" : "container:.",
-          "identifier" : "OpenSkyFormatsESM",
-          "name" : "OpenSkyFormatsESM"
-        },
-        {
-          "containerPath" : "container:.",
-          "identifier" : "OpenSkyFormatsMesh",
-          "name" : "OpenSkyFormatsMesh"
-        },
-        {
-          "containerPath" : "container:.",
-          "identifier" : "OpenSkyFormatsAnimation",
-          "name" : "OpenSkyFormatsAnimation"
-        },
-        {
-          "containerPath" : "container:.",
-          "identifier" : "OpenSkyFormatsAudio",
-          "name" : "OpenSkyFormatsAudio"
-        },
-        {
-          "containerPath" : "container:.",
-          "identifier" : "OpenSkyFormatsPEX",
-          "name" : "OpenSkyFormatsPEX"
-        },
-        {
-          "containerPath" : "container:.",
-          "identifier" : "OpenSkyFormatsSWF",
-          "name" : "OpenSkyFormatsSWF"
-        },
-        {
-          "containerPath" : "container:.",
-          "identifier" : "OpenSkyFormatsESS",
-          "name" : "OpenSkyFormatsESS"
-        },
-        {
-          "containerPath" : "container:.",
-          "identifier" : "OpenSkyGameData",
-          "name" : "OpenSkyGameData"
-        }
-      ]
-    },
+    "codeCoverage" : true,
     "defaultTestExecutionTimeAllowance" : 300,
     "maximumTestExecutionTimeAllowance" : 600,
     "testTimeoutsEnabled" : true

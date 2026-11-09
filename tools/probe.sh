@@ -6,11 +6,7 @@
 set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-# Same build cache and products layout the Makefile uses (Makefile DERIVED_DATA
-# and PRODUCTS).
-# shellcheck source=/dev/null
-. "$root/tools/xcodebuild-lib.sh"
-derived_data="$OPENSKY_DERIVED_DATA"
+cli="${1:?usage: tools/probe.sh OPENSKYCLI}"
 data_root="${OPENSKY_DATA_ROOT:-/Volumes/data/steam/steamapps/common/Skyrim Special Edition}"
 
 if [ ! -f "$data_root/Data/Skyrim.esm" ] && [ ! -f "$data_root/Skyrim.esm" ]; then
@@ -24,12 +20,6 @@ log_dir="$("$root/tools/run-dir.sh" probe)"
 log="$log_dir/probe.log"
 echo "[INFO] run directory: $log_dir"
 
-echo "[INFO] building openskycli (log: $log)"
-# Coverage on, like the Makefile's COVERAGE_Debug, so this build reuses the test
-# build's package intermediates instead of recompiling the engine.
-xcodebuild -workspace "$root/src/OpenSky.xcworkspace" -scheme OpenSkyCLI -configuration Debug \
-  -derivedDataPath "$derived_data" CLANG_COVERAGE_MAPPING=YES build >"$log" 2>&1
-cli="$(xcodebuild_products_dir Debug)/openskycli"
 [ -x "$cli" ] || { echo "[ERROR] openskycli binary not found at $cli"; exit 1; }
 
 fail() {

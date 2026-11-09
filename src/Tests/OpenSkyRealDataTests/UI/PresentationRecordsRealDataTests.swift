@@ -2,7 +2,7 @@
 // text with its unresolved tokens counted, LSCR pass counts for a few
 // destinations with the run-on census, and the CSTY numbers combat styles
 // feed the machine. Reports go to `.logs/presentation-records.log`.
-// Run with `make test-real T='PresentationRecordsRealDataTests'`.
+// Run with `make test PLAN=RealData T='PresentationRecordsRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyCombat

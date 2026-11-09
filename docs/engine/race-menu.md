@@ -67,7 +67,7 @@ count the types with type 0 included. They can only narrow a range, so a plugin 
 count shortens its row. `iBrowMorphCount` (20) has no TRI targets to check, because brows are
 head parts.
 
-The real-data suite `FaceMorphCountRealDataTests` (`make test-real ALL=1`) checks every playable
+The real-data suite `FaceMorphCountRealDataTests` (`make test PLAN=RealDataAll`) checks every playable
 race's chargen TRI against the counts and writes each difference to `.logs/face-morph-counts/`.
 No TRI holds more types than its count allows. Each race's `MPAV` fields (UESP "Skyrim
 Mod:Mod File Format/RACE", <https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/RACE>) set every
@@ -117,7 +117,7 @@ A `NAMA` value `n` selects the target `NoseType<n>` (field 0), `EyesType<n>` (fi
 `LipType<n>` (field 3). Field 1 is -1 or 0 and selects nothing. The TRI has no `Type0`
 targets, so 0 in the other fields means the base shape, and -1 means none.
 
-The probe (`ChargenMorphOrderRealDataTests`, run with `make test-real`) builds the face of
+The probe (`ChargenMorphOrderRealDataTests`, run with `make test PLAN=RealData`) builds the face of
 29 vanilla NPCs from `NAM9` and `NAMA` and compares it with the face shape in their baked
 FaceGen mesh. For each slider it measures the error again with the sign flipped and with the
 slider left out. Results are in `.logs/chargen-morph-order/fit.txt`:

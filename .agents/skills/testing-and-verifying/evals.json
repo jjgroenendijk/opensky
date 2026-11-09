@@ -6,7 +6,7 @@
     "query": "I changed BSAArchive's header parsing. Is it safe to push?",
     "files": [],
     "expected_behavior": [
-      "Runs make test-package T='OpenSkyFormatsCoreTests/BSAArchiveTests' or make test-unit PLAN=Formats T='OpenSkyFormatsCoreTests/BSAArchiveTests' in a background shell",
+      "Runs make test-package T='OpenSkyFormatsCoreTests/BSAArchiveTests' or make test T='OpenSkyFormatsCoreTests/BSAArchiveTests' in a background shell",
       "Runs only one xcodebuild at a time",
       "Lists the exact commands and results in the commit's Tests: section"
     ]
@@ -18,7 +18,7 @@
     "query": "Run the full real-data suite.",
     "files": [],
     "expected_behavior": [
-      "Uses make test-real under the memory watchdog, never a raw xcodebuild against the install",
+      "Uses make test PLAN=RealData under the memory watchdog, never a raw xcodebuild against the install",
       "Runs it in a background shell and waits for the notification"
     ]
   },
@@ -26,10 +26,10 @@
     "skills": [
       "testing-and-verifying"
     ],
-    "query": "make test-unit failed. What broke?",
+    "query": "make test failed. What broke?",
     "files": [],
     "expected_behavior": [
-      "Runs make test-report instead of hand-parsing .xcresult JSON",
+      "Runs the failure summary make test prints, or python3 tools/xcresult_summary.py on the bundle, instead of hand-parsing .xcresult JSON",
       "Names the failing tests and their messages"
     ]
   },
@@ -73,8 +73,8 @@
     "files": [],
     "expected_behavior": [
       "Runs the covering suite first with make test-package T='...'",
-      "Then runs make test-unit PLAN=Formats, not the whole unit plan, and leaves PLAN=UnitTests to CI",
-      "Does not run make test-real, because no real-data path changed"
+      "Then runs make test (the Quick plan), not the whole unit plan, and leaves PLAN=UnitTests to CI",
+      "Does not run make test PLAN=RealData, because no real-data path changed"
     ]
   },
   {
@@ -96,9 +96,9 @@
     "query": "I changed how the combat coordinator applies damage. What should I run before pushing?",
     "files": [],
     "expected_behavior": [
-      "Runs the covering unit suites with make test-unit PLAN=Features T='...'",
+      "Runs the covering unit suites with make test T='...'",
       "Does not build after every edit: makes the edits first and runs one check",
-      "Does not run make test-ui, because no UI test path changed, and says so in the Tests: section"
+      "Does not run make test PLAN=UITests, because no UI test path changed, and says so in the Tests: section"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "query": "I renamed the accessibility id of the launcher's Graphics preset control. What should I test?",
     "files": [],
     "expected_behavior": [
-      "Runs make test-ui with T= set to the UI tests that use that control, not the whole UI plan",
+      "Runs make test PLAN=UITests with T= set to the UI tests that use that control, not the whole UI plan",
       "Runs it in a background shell and waits for the notification"
     ]
   },
@@ -116,10 +116,10 @@
     "skills": [
       "testing-and-verifying"
     ],
-    "query": "BSAArchiveTests failed in make test-unit PLAN=Formats. I read the assertion and want to see the full failure output again without rebuilding.",
+    "query": "BSAArchiveTests failed in make test. I read the assertion and want to see the full failure output again without rebuilding.",
     "files": [],
     "expected_behavior": [
-      "Runs make test-rerun PLAN=Formats T='OpenSkyFormatsCoreTests/BSAArchiveTests' instead of make test-unit",
+      "Runs make test-rerun T='OpenSkyFormatsCoreTests/BSAArchiveTests' instead of make test",
       "Does not rerun after an edit without a build, because test-rerun tests the products as last built"
     ]
   },
@@ -131,7 +131,7 @@
     "files": [],
     "expected_behavior": [
       "Makes every edit first and runs one check",
-      "Runs make test-unit PLAN=Features T='...' once, then fixes everything it reports"
+      "Runs make test T='...' once, then fixes everything it reports"
     ]
   }
 ]

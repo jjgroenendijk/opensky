@@ -3,14 +3,18 @@
 # bundle-absolute from the docs/ root: [BSA](/formats/bsa.md). Files move or
 # get removed -> links dangle silently; this makes the break visible at
 # commit time (AGENTS.md "if a machine can check a rule...").
-#
-# Report -> stdout/stderr; full run log -> .logs/docs-links/<timestamp>/.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+  tree="$(self_check_tree)"
+  mkdir -p "$tree/docs"
+  printf 'See [gone](/gone.md).\n' >"$tree/docs/a.md"
+  expect_failure "$0" "$tree" "dangling link /gone.md"
+fi
 
-root="$(cd "$(dirname "$0")/.." && pwd)"
+root="$(git rev-parse --show-toplevel)"
 docs="$root/docs"
-log_dir="$("$root/tools/run-dir.sh" docs-links)"
-log="$log_dir/docs-links.log"
 
 # Every "](/...)" occurrence, one per line as "file:line:target"; anchors
 # (#section) stripped. grep exits 1 on files without links -> mask with true.
@@ -30,14 +34,9 @@ misses="$(
 )"
 
 checked="$(find "$docs" -name '*.md' | wc -l | tr -d ' ')"
-{
-  printf '[INFO] checked %s docs files\n' "$checked"
-  [ -z "$misses" ] || printf '%s\n' "$misses"
-} >"$log"
-
 if [ -n "$misses" ]; then
   printf '%s\n' "$misses" >&2
-  printf '[FAIL] dangling docs/ links (report: %s)\n' "$log" >&2
+  printf '[FAIL] dangling docs/ links. Fix each link to name an existing page.\n' >&2
   exit 1
 fi
 printf '[ OK ] docs links resolve (%s files)\n' "$checked"

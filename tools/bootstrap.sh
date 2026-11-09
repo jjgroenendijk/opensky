@@ -13,7 +13,7 @@ fi
 
 # Formatters + linters are mandatory (AGENTS.md "Code quality"). jscpd and
 # periphery are the code-health gates (docs/decisions/code-health-automation.md).
-# uv runs the Python tools and their linter; pandoc converts the wiki mirrors (make ck-wiki, make uesp-wiki).
+# uv runs the Python tools and their linter; pandoc converts the wiki mirrors (make sync-wiki ARGS='--site ck', make sync-wiki ARGS='--site uesp').
 for tool in swiftformat swiftlint markdownlint-cli2 shellcheck actionlint jscpd periphery uv pandoc; do
   if command -v "$tool" >/dev/null 2>&1; then
     echo "  [ OK ] $tool"
@@ -23,7 +23,7 @@ for tool in swiftformat swiftlint markdownlint-cli2 shellcheck actionlint jscpd 
   fi
 done
 
-# librsvg: rsvg-convert renders the AppIcon set from the SVG logo (make icon).
+# librsvg: rsvg-convert renders the AppIcon set from the SVG logo (make render-icon).
 if command -v rsvg-convert >/dev/null 2>&1; then
   echo "  [ OK ] rsvg-convert"
 else
@@ -57,6 +57,6 @@ else
   fi
 fi
 
-make hooks
+git config core.hooksPath tools/githooks
 
 echo "[ OK ] Bootstrap complete. Try: make check"

@@ -1,8 +1,8 @@
 import Foundation
 
 /// The offline Creation Kit wiki mirror, `.cache/ck-wiki/` in the main checkout, which
-/// every worktree shares. Nil when `make test-real` did not pass the checkout or the
-/// mirror was never synced with `make ck-wiki`.
+/// every worktree shares. Nil when `make test PLAN=RealData` did not pass the checkout or the
+/// mirror was never synced with `make sync-wiki ARGS='--site ck'`.
 nonisolated enum CreationKitWikiMirror {
     static let directory: URL? = {
         guard let checkout = ProcessInfo.processInfo.environment["OPENSKY_CHECKOUT"] else {

@@ -1,7 +1,7 @@
 ---
 name: consulting-uesp-wikis
 description: Looks up the Creation Kit wiki (ck.uesp.net) and the UESP wiki (en.uesp.net) in
-  their local Markdown mirrors, and syncs them with make ck-wiki and make uesp-wiki. The CK wiki
+  their local Markdown mirrors, and syncs them with make sync-wiki ARGS='--site ck' and make sync-wiki ARGS='--site uesp'. The CK wiki
   covers Papyrus scripts, functions, and events, condition functions, forms and record fields,
   editor tabs, and game settings. UESP covers Skyrim game rules, items, NPCs, quests, and
   formulas (Skyrim:) and file formats and record layouts (Skyrim Mod:, Tes5Mod:). Use whenever a
@@ -18,8 +18,8 @@ hold every page the tool keeps.
 
 | Mirror | Wiki | Holds | Sync |
 | --- | --- | --- | --- |
-| `.cache/ck-wiki/` | Creation Kit wiki | Papyrus, condition functions, forms, editor | `make ck-wiki` |
-| `.cache/uesp-wiki/` | UESP wiki | `Skyrim:` game pages, `Skyrim Mod:` formats and modding | `make uesp-wiki` |
+| `.cache/ck-wiki/` | Creation Kit wiki | Papyrus, condition functions, forms, editor | `make sync-wiki ARGS='--site ck'` |
+| `.cache/uesp-wiki/` | UESP wiki | `Skyrim:` game pages, `Skyrim Mod:` formats and modding | `make sync-wiki ARGS='--site uesp'` |
 
 Pick the wiki by the question. Papyrus and the editor: the CK wiki. How the game plays (a
 formula, an NPC, a quest stage) or a file layout: UESP. When unsure, search both.
@@ -88,9 +88,9 @@ settings are in `sites.py`, and the conversion steps and their reasons are in
 `docs/tools/offline-wikis.md`.
 
 1. Find the cause in the stored HTML under `.sync/pages/` and fix the converter.
-2. Run `make ck-wiki` and `make uesp-wiki`. Each converts every stored page again; only changed
+2. Run `make sync-wiki ARGS='--site ck'` and `make sync-wiki ARGS='--site uesp'`. Each converts every stored page again; only changed
    pages are fetched.
 3. Search both mirrors for the fault, not only the page you saw, for example
    `grep -rlF --include='*.md' '[TABLE]' "$cache/ck-wiki" "$cache/uesp-wiki"`. Fix and repeat
    until none is left.
-4. Run `make py-format py-lint` and fix what it reports.
+4. Run `make format py-lint` and fix what it reports.

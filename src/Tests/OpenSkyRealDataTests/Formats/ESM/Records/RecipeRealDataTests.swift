@@ -1,6 +1,6 @@
 // COBJ sweep over the five masters: every recipe decodes, its links resolve, and
 // the per-workbench, component-type, and condition-function censuses go to `.logs/`.
-// Run with `make test-real T='RecipeRealDataTests'`.
+// Run with `make test PLAN=RealData T='RecipeRealDataTests'`.
 
 import Foundation
 import OpenSkyConditions

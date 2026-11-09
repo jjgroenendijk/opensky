@@ -7,7 +7,7 @@
       "Declares the option in OpenSkyCLIArguments with parsing: .unconditional and a help sentence",
       "Uses the existing GraphicsPresetName enum instead of a String",
       "Updates the reference launch row in docs/tools/cli.md in the same commit",
-      "Runs make test-unit T=OpenSkyCLIArgumentsTests and make check"
+      "Runs make test T=OpenSkyCLIArgumentsTests and make check"
     ]
   },
   {

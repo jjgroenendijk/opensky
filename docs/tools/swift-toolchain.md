@@ -9,7 +9,7 @@ tags: [tool, build, concurrency, swift]
 
 OpenSky builds with Apple Swift 6.4.2 (Xcode 27.2), locally and in CI, and every Xcode build
 configuration is in Swift 6 language mode. Both facts are checked by `tools/lint/swift-baseline.sh`,
-reachable as `make swift-baseline`, so neither can regress silently.
+reachable as `tools/lint/swift-baseline.sh`, so neither can regress silently.
 
 ## What is enforced
 
@@ -35,7 +35,7 @@ failing the build, the linter, or the tests.
 
 | Gate | How it runs |
 | --- | --- |
-| Local one-shot | `make check` (first step) or `make swift-baseline` |
+| Local one-shot | `make check` (first step) or `tools/lint/swift-baseline.sh` |
 | CI | "Swift baseline" step in the `build-test` job |
 
 Both run the same script. The CI job runs it before the build, so a runner with another

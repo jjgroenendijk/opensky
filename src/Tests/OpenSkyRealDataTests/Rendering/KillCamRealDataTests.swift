@@ -1,7 +1,7 @@
 // A bow kill cam over the real camera paths and camera meshes, played through
 // a renderer to the end: the world clock slows while it plays, the view moves,
 // and the player's own view comes back. The report goes to `.logs/kill-cam.log`.
-// Run with `make test-real T='KillCamRealDataTests'`.
+// Run with `make test PLAN=RealData T='KillCamRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyCamera

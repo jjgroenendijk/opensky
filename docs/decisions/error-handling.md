@@ -8,7 +8,7 @@ tags: [decision, swift, errors, lint, code-quality]
 
 # Error handling
 
-OpenSky fails loud on bad or missing data. Two rules hold, and `make error-handling` (in
+OpenSky fails loud on bad or missing data. Two rules hold, and `tools/lint/error-handling.sh` (in
 `make check` and CI) checks both over every tracked Swift file under `src/Sources/`.
 
 | Rule | Where | What fails the check |

@@ -2,21 +2,18 @@
 # Runs `openskycli gaps` on the real install and keeps the report
 # (docs/tools/gaps.md): what the data uses that the engine does not do yet.
 #
-# Usage: tools/gaps.sh CLI [ARGS...]
-#   CLI   the Release openskycli (make gaps builds and passes it)
-#   ARGS  more gaps options, such as --only papyrus,perks
+# Usage: tools/gaps.sh [--no-build] [GAPS_OPTION...]
+#   --no-build   use the Release openskycli already built
+#   GAPS_OPTION  more gaps options, such as --only papyrus,perks or --limit 20
 #
 # Writes .logs/gaps/<UTC timestamp>/gaps.txt and summary.md, and prints the summary
 # table. A run of every section (no --only) also puts summary.md into README.md,
 # between the gaps markers. The report holds names and counts only, no game content.
 set -eu
 
-if [ "$#" -lt 1 ]; then
-    echo "[ERROR] usage: tools/gaps.sh CLI [ARGS...]" >&2
-    exit 2
-fi
-cli="$1"
-shift
+# shellcheck source=tools/release-products.sh
+. "$(dirname "$0")/release-products.sh"
+cli="$products/openskycli"
 [ -x "$cli" ] || { echo "[ERROR] no openskycli at $cli" >&2; exit 2; }
 
 root=$(cd "$(dirname "$0")/.." && pwd)
@@ -39,7 +36,7 @@ if [ "$status" -eq 0 ] && [ "$every_section" -eq 1 ]; then
         /<!-- gaps:begin -->/ {
             print
             print ""
-            print "Measured on " day " by `make gaps`."
+            print "Measured on " day " by `make rank-gaps`."
             print ""
             while ((getline line < table) > 0) print line
             print ""

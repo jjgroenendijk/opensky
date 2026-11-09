@@ -148,7 +148,7 @@ types the import uses and keeps the others as bytes.
 
 Not yet. No Skyrim save exists on the development machine
 ([environment](/tools/environment.md)). The layouts above come from UESP and are checked
-only against synthetic saves built from the same tables. `make test-real` with
+only against synthetic saves built from the same tables. `make test PLAN=RealData` with
 `OPENSKY_SKYRIM_SAVES` set runs `ESSRealDataTests`, which decodes every save in the folder
 and imports the newest. The first run on real saves must confirm:
 

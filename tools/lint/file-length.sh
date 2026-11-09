@@ -1,15 +1,23 @@
 #!/bin/sh
 # File-length check. A long file mixes several jobs and is slow to review, so a
 # text file over 600 lines gets a warning and one over 800 lines fails.
-# Default: the files the branch changed. --staged: the staged content, for the
-# pre-commit hook. --all: every tracked file.
+# Default: the files the branch changed, or every tracked file in CI. --staged: the
+# staged content, for the pre-commit hook.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    seq 801 >"$tree/long.txt"
+    expect_failure "$0" "$tree" "long.txt has 801 lines"
+fi
 
 warn=600
 limit=800
 cd "$(git rev-parse --show-toplevel)"
 
 mode="${1:-}"
+[ -n "$mode" ] || { [ -z "${CI:-}" ] && [ -z "${OPENSKY_CHECK_ALL:-}" ]; } || mode=--all
 case "$mode" in
 --staged) files="$(git diff --cached --name-only --diff-filter=AMR)" ;;
 --all) files="$(git ls-files)" ;;

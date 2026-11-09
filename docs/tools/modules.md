@@ -23,7 +23,7 @@ A module boundary makes the architecture visible and lets the compiler enforce i
 `src/Package.swift` lists what each module depends on, and the compiler rejects an `import` of a
 module that is not listed. So an upward dependency fails the build instead of slipping in.
 
-A module can also be tested alone: `make test-unit T='OpenSkyFormatsESMTests'` runs one test
+A module can also be tested alone: `make test T='OpenSkyFormatsESMTests'` runs one test
 target.
 
 ## The layout: The Modular Architecture
@@ -248,7 +248,7 @@ product.
 The `src/Sources/Shaders/*.metal` files are not in the package. The app and the CLI each compile
 them into the `default.metallib` of their own bundle, and `Renderer` loads it with
 `device.makeDefaultLibrary()` unless the caller passes a `shaderLibrary`. A package test has no
-such bundle. `make shader-library` compiles the same files with `xcrun metal`,
+such bundle. `make test` first compiles the same files with `xcrun metal`,
 and `ShaderLibraryFixture` in `src/Tests/OpenSkyEngineTesting/Rendering/` loads it from
 the path in `OPENSKY_SHADER_LIBRARY`. `make` sets that variable for `swift test`, and the
 `UnitTests` plan sets it for xcodebuild. A test that runs without it fails; it does not skip.
@@ -303,7 +303,7 @@ A lower module never imports a higher one. These patterns keep it that way:
 
 ## Module size
 
-A module stays below a size limit. `make module-size` counts the Swift source lines of each
+A module stays below a size limit. `tools/lint/module-size.sh` counts the Swift source lines of each
 folder under `src/Sources/`, without blank lines and comments, and prints every module sorted
 by size. The app target, `src/Sources/OpenSky/`, counts as a module. `make lint` and CI run it
 on the whole tree, because a module grows with each change.
@@ -340,7 +340,7 @@ rules:
 - Tests write `@testable import` to reach `internal` members.
 - `InternalImportsByDefault` is on. An import is `internal`, so a module's dependencies do not leak
   to its clients. A file whose public declarations use a type of `X` writes `public import X`. An
-  interface module publicly imports only lower modules and interfaces (`make module-graph` rule 11).
+  interface module publicly imports only lower modules and interfaces (`tools/lint/module-graph.sh` rule 11).
 - `ExistentialAny` and strict memory safety are on too: a protocol type is written `any X`, and an
   unsafe expression is marked `unsafe` ([Swift language rules](/decisions/language-rules.md)).
 - A package module does not swallow an error: write `attempt { try call() }` from
@@ -392,7 +392,7 @@ repository root. Only a workspace shows a scheme the test targets of a local pac
 `-project src/OpenSky.xcodeproj`, xcodebuild reports that the target "isn't a member of the specified
 test plan or scheme".
 
-`make test-unit T='<Target>src/Tests/...'` runs one package test target inside the unit plan.
+`make test T='<Target>src/Tests/...'` runs one package test target inside the unit plan.
 
 A suite goes in the test target of the highest module it imports, in `src/Package.swift` order. A
 suite that builds a `Renderer` passes `ShaderLibraryFixture.library(device:)` as its

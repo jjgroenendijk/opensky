@@ -8,9 +8,8 @@
 # Usage: tools/ci/build-timing.sh [PLAN]   (default UnitTests)
 set -eu
 plan="${1:-UnitTests}"
-dd="${OPENSKY_DERIVED_DATA:-DerivedData}"
-bundle="$dd/TestResults/unit-$plan/latest/unit-$plan.xcresult"
-transcript=.logs/test-unit/latest/test-unit.log
+bundle=".logs/test-$plan/latest/test-$plan.xcresult"
+transcript=".logs/test-$plan/latest/test-$plan.log"
 if [ ! -d "$bundle" ]; then
     echo "[INFO] no result bundle at $bundle"
     exit 0

@@ -29,7 +29,7 @@ Edition/`. The game has never run on this Mac, so:
   the reference game, at player levels 1, 9, and 17, are in the Wine prefix under
   `/Volumes/data/opensky-reference-game/drive_c/users/<user>/Documents/My Games/Skyrim
   Special Edition/Saves/`. Set `OPENSKY_SKYRIM_SAVES` to that folder and run
-  `make test-real` to run `ESSRealDataTests`.
+  `make test PLAN=RealData` to run `ESSRealDataTests`.
 
 Retires when a `plugins.txt` appears in a searched location.
 
@@ -43,7 +43,7 @@ automation mode". Run this once per machine to drop the password:
 sudo automationmodetool enable-automationmode-without-authentication
 ```
 
-`automationmodetool` without arguments shows the setting, and `make test-perms` fails while the
+`automationmodetool` without arguments shows the setting, and `make check-perms` fails while the
 password is still required.
 
 A grant belongs to the built product, not the terminal. It lasts only while the product keeps
@@ -57,7 +57,7 @@ one code signature, which is why signing names a real identity
 | Removable-volume access for package test targets | The plain `xctest` runner |
 
 A grant cannot be scripted: TCC is protected by SIP, and the Accessibility entry is in the
-root-owned system database. `make test-perms` checks what it can (the data root is readable,
+root-owned system database. `make check-perms` checks what it can (the data root is readable,
 and both bundles have a real signature) and opens the right settings pane for the rest. A
 machine without the `xctest` grant shows a dialog on its first unit run, and the run waits
 until it times out with "timed out while preparing"; click Allow once.
@@ -102,13 +102,13 @@ Checked 2026-10-08. The cask in the `peripheryapp/periphery` tap does not instal
 deprecated, because the upstream repository is archived, and plans to disable it on
 2027-08-12.
 
-Retires when Periphery has a maintained install path again, or `make health` moves to another
+Retires when Periphery has a maintained install path again, or `make lint-index` moves to another
 tool.
 
 ## Upstream spec hosts
 
 Checked 2026-10-20. Read the wikis from the offline mirrors
-([offline wikis](/tools/offline-wikis.md)); `make ck-wiki` and `make uesp-wiki` keep them
+([offline wikis](/tools/offline-wikis.md)); `make sync-wiki ARGS='--site ck'` and `make sync-wiki ARGS='--site uesp'` keep them
 current.
 
 | Host | State | Use instead |
@@ -131,7 +131,7 @@ Retires per host when it changes behaviour.
 | Symptom | Cause and workaround | Retires when |
 | --- | --- | --- |
 | `Virtual filesystem overlay file '.../all-product-headers.yaml' not found` in `make build-app` | A package test builds the same checkout at the same time. Run them one after the other | An overlapping build passes (checked 2026-10-24, Xcode 27) |
-| `DVTAssertInvalidatableObjectIsValid` in `IDESwiftPackageBuildable.blueprint` before any test runs | The build before failed and removed the `OpenSky` driver records. Run `make test-unit` again | A failed build is no longer followed by it (checked 2026-10-28, Xcode 27) |
+| `DVTAssertInvalidatableObjectIsValid` in `IDESwiftPackageBuildable.blueprint` before any test runs | The build before failed and removed the `OpenSky` driver records. Run `make test` again | A failed build is no longer followed by it (checked 2026-10-28, Xcode 27) |
 | `ValidateCAS` fails with `CAS validation requires exclusive access but CAS was in use` | Another checkout's build used the shared compilation cache store while this build validated it. Build again | A build validates the store while another build uses it (checked 2026-11-07, Xcode 27.2) |
 | `invalid or unsupported format for signature` naming a `.cstemp` file | A build stopped during `codesign`. Run `find "$OPENSKY_DERIVED_DATA/Build/Products" -name '*.cstemp' -delete` and build again. `make test-package` keeps its products in `.build/out/Products`; a failed compile there leaves them too, and the next run fails on `libOpenSkyTestSupport.a` | Xcode cleans its own signing temp files (checked 2026-10-04) |
 | `EXC_BAD_ACCESS` after a protocol or struct change | The incremental build does not recompile callers when a requirement is added mid-protocol, or a stored property is added to a struct another file stores. Add requirements at the end, or touch the callers. A clean CI build is not affected | The driver tracks layout changes (checked 2026-10-11, Xcode 27.0) |
@@ -145,7 +145,7 @@ build compiles only the fixed file, so the dependents keep old field offsets and
 ([build system](/tools/build-system.md#driver-records-after-a-failed-build)).
 
 Retires when the driver keeps skipped dependents in its record after a failed job: the
-reproduction then passes without the script's call in `tools/xcodebuild-run.sh`.
+reproduction then passes without the script's call in `tools/xcodebuild.sh`.
 
 ### A compilation cache hit leaves the driver record dirty
 
@@ -164,7 +164,7 @@ To see the driver's reasons, export `ADDITIONAL_SWIFT_DRIVER_FLAGS=-driver-show-
 before a build; the same flag in `OTHER_SWIFT_FLAGS` does nothing.
 
 Retires when swift-build reports a replayed job to the driver: `make build-cli` followed by
-`make test-unit` then compiles no Swift file.
+`make test` then compiles no Swift file.
 
 ### Package framework variants warn about declared dependencies
 
@@ -175,7 +175,7 @@ Build's `DIAGNOSE_MISSING_TARGET_DEPENDENCIES` finds no edge from a variant. Fix
 [swift-build PR 1457](https://github.com/swiftlang/swift-build/pull/1457).
 
 `src/config/Build/Overrides.xcconfig` turns the check off where `MACH_O_TYPE` is `mh_dylib`. The
-imports are still checked by `make module-graph`.
+imports are still checked by `tools/lint/module-graph.sh`.
 
 Retires when the installed Xcode ships that fix: delete the override, and a clean
 `make build-tests` prints no `is missing a dependency on` line.
@@ -188,6 +188,7 @@ Retires when the installed Xcode ships that fix: delete the override, and a clea
 | `The test runner hung before establishing connection`, or a real-data run that runs 0 tests with no error | A days-old `testmanagerd` stalls. Check its start with `ps -eo pid,lstart,command \| grep testmanagerd` and `kill -9` it; `launchd` starts a new one. It is shared, so check for other running tests first | A fresh daemon stops going stale (checked 2026-10-18) |
 | MetalFX tests wait out their allowance | `ANECompilerService` can stop answering for hours, and MetalFX builds its temporal scaler through it. The renderer builds scalers off the main actor ([upscaling](/rendering/upscaling.md#building-the-scaler)), and `MetalFXCompilerProbe` fails the tests early with a clear message | MetalFX builds its scalers without the Neural Engine (checked 2026-10-13) |
 | A real-data test uses tens of GB and locks the machine | Wrap heavy real-data runs in `tools/memguard.sh` ([testing](/testing.md#memory-watchdog)) | The tests carry their own bounds (checked 2026-07-20) |
+| `xccov` reports no package file, only `OpenSky.app` with 0 files | Package modules build into frameworks the result bundle does not list as coverage products. `tools/coverage/` reads the profile with `llvm-cov` instead ([test runs](/tools/test-runs.md#code-coverage)) | `xccov view --report` lists the package frameworks (checked 2026-11-09, Xcode 27.2) |
 | `xcrun xctrace record --launch -- openskycli ...` never starts the process | Start the process first and attach with `--attach <pid>`. `tools/profile.sh` does this ([profiling](/testing.md#profiling)) | A `--launch` recording of the CLI completes (checked 2026-10-01, xctrace 27.0) |
 
 ### Test plans and Swift Testing

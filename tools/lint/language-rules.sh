@@ -8,6 +8,16 @@
 #      snippet per rule with the flags it read from src/Package.swift. A snippet that
 #      compiles means the rule no longer holds, so the check fails.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/config/Build"
+    printf 'let languageSettings: [SwiftSetting] = [\n    .enableUpcomingFeature("InternalImportsByDefault"),\n]\n' \
+        >"$tree/src/Package.swift"
+    printf 'SWIFT_UPCOMING_FEATURE_INTERNAL_IMPORTS_BY_DEFAULT = YES\n' >"$tree/src/config/Build/Base.xcconfig"
+    expect_failure "$0" "$tree" "does not turn on ExistentialAny"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 

@@ -28,12 +28,12 @@ def sources_changed():
 
 
 def merged_profile(build):
-    """One profile over the newest run and every current kept run (`make test-unit`)."""
+    """One profile over the newest run and every current kept run (`make test`)."""
     profiles = sorted(
         build.glob("ProfileData/*/Coverage.profdata"), key=lambda path: path.stat().st_mtime
     )
     if not profiles:
-        sys.exit(f"[FAIL] no coverage profile under {build}/ProfileData. Run: make test-unit COVERAGE=1")
+        sys.exit(f"[FAIL] no coverage profile under {build}/ProfileData. Run: make test COVERAGE=1")
     kept = [
         (path, path.stat().st_mtime)
         for path in sorted(build.glob("ProfileData/*.profdata"))
@@ -62,7 +62,7 @@ def profile_objects(derived_data):
         if (framework / framework.stem).exists()
     ] + sorted(products.glob("OpenSky*.o"))
     if not objects:
-        sys.exit(f"[FAIL] no package modules under {products}. Run: make test-unit COVERAGE=1")
+        sys.exit(f"[FAIL] no package modules under {products}. Run: make test COVERAGE=1")
     return profile, objects
 
 

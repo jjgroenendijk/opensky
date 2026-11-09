@@ -16,7 +16,7 @@ so this skill is how the rest is done right.
 2. `make check` green, and the change verified as the `testing-and-verifying` skill
    describes. `make check` lints the Swift files the branch changed and includes the
    duplicate, comment-length, and suppression gates. The whole unit plan runs in CI on
-   every push, and so does `make health`; the sanitizers run in the weekly CI workflow.
+   every push, and so does `make lint-index`; the sanitizers run in the weekly CI workflow.
 3. Staged files legal: nothing extracted from the game install. New binary blob -> stop, ask.
 
 ## Message format
@@ -36,7 +36,7 @@ Tests: what ran and what did not, one line each
 ```
 
 `Tests:` is a record, not a checklist: one quick run that covers the change is a complete
-entry, and `test-ui not run: no UI test path changed` is a valid line.
+entry, and `UI tests not run: no UI test path changed` is a valid line.
 
 Breaking change -> `type(scope)!:` or `BREAKING CHANGE:` footer with migration steps.
 Issues -> `Fixes #123` / `Refs #123` footer; no issue -> body states the why.

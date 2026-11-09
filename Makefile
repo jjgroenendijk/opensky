@@ -1,595 +1,168 @@
-# OpenSky - the one entry point for everything scripted (AGENTS.md).
-#
-#   make help        list the main targets, grouped by task (ALL=1 lists every one)
-#   make bootstrap   once per checkout: install tools
-#   make fix         autoformat, then run every linter
-#   make test-unit   build and run the unit tests
-#
-# Common knobs: CONFIG=Debug|Release, DERIVED_DATA=<dir>, BUILD_CACHE_GB=<n>, XCODEBUILD_FLAGS='...'.
+# OpenSky - the one entry point for everything scripted (AGENTS.md). `make help`
+# lists every target. A recipe is one command: the logic lives in a script under
+# tools/ that takes arguments, so the Makefile reads as a table of what runs
+# (docs/tools/build-system.md).
 
-# ------------------------------------------------------------------------------
-# Configuration
-# ------------------------------------------------------------------------------
+# The options, each with one meaning everywhere. Any other variable on the command
+# line fails the run, so a mistyped option is not silently ignored.
+OPTIONS := PLAN CONFIG T N COVERAGE SAN CAP DIFF_BASE ARGS XCODEBUILD_FLAGS
+unknown := $(filter-out $(OPTIONS),$(foreach v,$(.VARIABLES),$(if $(filter command line,$(origin $(v))),$(v))))
+$(if $(unknown),$(error unknown variable $(unknown); the options are: $(OPTIONS)))
+export PLAN CONFIG T N COVERAGE SAN CAP DIFF_BASE XCODEBUILD_FLAGS
 
-WORKSPACE        := src/OpenSky.xcworkspace
-SCHEME           := OpenSky
-CLI_SCHEME       := OpenSkyCLI
-CONFIG           ?= Debug
-# "My Mac" offers an arm64 and an x86_64 entry; naming the architecture picks one.
-DESTINATION      ?= platform=macOS,arch=arm64
-XCODEBUILD_FLAGS ?=
-SWIFT_PATHS      := src/Sources src/Tests
-# When this make started, so tools/xcodebuild-run.sh can report the time make spent
-# before xcodebuild. A nested make keeps the outer value.
-export OPENSKY_MAKE_STARTED ?= $(shell date +%s)
-# The Swift files the branch changed, for the per-file format and lint checks.
-# ALL=1 checks the whole tree, as CI does.
-CHANGED_SWIFT     = $(shell { git diff --name-only --diff-filter=AMR $$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD) -- '*.swift'; \
-	git ls-files --others --exclude-standard -- '*.swift'; } 2>/dev/null | sort -u | while read -r f; do [ -f "$$f" ] && printf '%s ' "$$f"; done)
-LINT_SWIFT        = $(if $(ALL),$(SWIFT_PATHS),$(CHANGED_SWIFT))
-
-# Build cache. One tree per checkout, named after the checkout folder, in the main
-# checkout's hidden .cache/Build on the data volume: the boot volume holds only the
-# app's asset cache. Many worktrees stay alive at once, so every build first deletes
-# the trees built longest ago once all of them pass BUILD_CACHE_GB
-# (tools/build-cache-budget.sh). Every xcodebuild below passes the tree, and the
-# tools/ scripts read it from OPENSKY_DERIVED_DATA. CI sets that variable to a path
-# inside its workspace. It lives in a hidden folder: xcodebuild scans every visible
-# file under the package root at each start (docs/tools/build-system.md).
-SHARED_ROOT      := $(abspath $(dir $(shell git rev-parse --path-format=absolute --git-common-dir)))
-CACHE_ROOT       ?= $(SHARED_ROOT)/.cache/Build
-export OPENSKY_CACHE_ROOT := $(CACHE_ROOT)
-BUILD_CACHE_GB   ?= 200
-export OPENSKY_BUILD_CACHE_GB := $(BUILD_CACHE_GB)
-DERIVED_DATA     ?= $(or $(OPENSKY_DERIVED_DATA),$(CACHE_ROOT)/$(notdir $(CURDIR)))
-XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
-export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
-# The compilation cache store. Every worktree shares the main checkout's. Prefix
-# mapping and the fixed package name in src/config/Build/Overrides.xcconfig make the
-# keys the same in every worktree and every tree.
-COMPILATION_CACHE ?= $(or $(OPENSKY_COMPILATION_CACHE),$(SHARED_ROOT)/.cache/CompilationCache.noindex)
-export OPENSKY_COMPILATION_CACHE := $(COMPILATION_CACHE)
-# The SDK's precompiled modules depend only on the SDK, so every tree shares one set.
-SDK_MODULES      ?= $(SHARED_ROOT)/.cache/SDKModules.noindex
-# The unused-code scan's own build tree: uncached, so its index store is complete.
-INDEX_DATA       ?= $(DERIVED_DATA)-index
-# Settings that must also reach package targets (src/config/Build/Overrides.xcconfig).
-# xcodebuild reads this variable, so every xcodebuild in make and tools/ gets it.
-export XCODE_XCCONFIG_FILE := $(CURDIR)/src/config/Build/Overrides.xcconfig
-# Test result bundles. They live under the build cache rather than build/: xcodebuild
-# watches the package root, and a result bundle growing there during `test` makes it
-# re-resolve the package mid-run, which crashes it once the package is large (#582).
-TEST_RESULTS     := $(DERIVED_DATA)/TestResults
-# Xcode's default cache location. Only `make clean` uses it, to sweep what an
-# Xcode GUI build or an older checkout left there.
-XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
-
-# Every xcodebuild runs through this wrapper. It keeps the full transcript under
-# .logs/ and prints each diagnostic once, failures, and the final counts. It also
-# clears stale module copies (tools/stale-modules.sh). OPENSKY_XCODEBUILD_RAW=1
-# prints everything.
-XCB_RUN          := ./tools/xcodebuild-run.sh
-# Allocates a per-run output directory, .logs/<name>/<UTC timestamp>/, and points
-# <name>/latest at it, so `make prune` can age whole runs out (issue #347).
-RUN_DIR          := ./tools/run-dir.sh
-# How many days of run output `make prune` keeps. One: xcodebuild scans every
-# file under .logs/ at each start (docs/tools/build-system.md).
-PRUNE_DAYS       ?= 1
-
-# The shared xcodebuild command line: $(1) is the scheme, $(2) the configuration.
-# Targets append only their action and their own flags, so the project, cache
-# location, and XCODEBUILD_FLAGS cannot drift apart. tools/xcodebuild-lib.sh is
-# the shell twin of this.
-# A build keeps going after an error: a build that stops at the first error cancels
-# the Products copy of a module whose emit already finished, and that stale copy
-# breaks every build above it (docs/tools/build-system.md).
-xcb = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration $(2) \
-	$(XCODEBUILD_DD) COMPILATION_CACHE_CAS_PATH=$(COMPILATION_CACHE) \
-	SDK_EXPLICIT_MODULES_OUTPUT_PATH=$(SDK_MODULES) \
-	-IDEBuildingContinueBuildingAfterErrors=YES \
-	$(COVERAGE_$(2)) $(ARCHS_$(2)) $(XCODEBUILD_FLAGS)
-# A test build compiles every target with coverage and a plain build does not, and
-# both write the same package intermediates. So each Debug build turns coverage on,
-# or `make build-cli` and `make test` rebuild each other's engine (issue #714). Only the
-# command line wins over the setting each action picks; an xcconfig does not.
-COVERAGE_Debug   := CLANG_COVERAGE_MAPPING=YES
-# Apple Silicon only. Release would also compile x86_64, where Float16 does not
-# exist. ARCHS in Overrides.xcconfig still left package targets on x86_64.
-ARCHS_Release    := ARCHS=arm64
-# The same for the index tree: Debug, its own derived data, no compilation cache,
-# because a task replayed from the cache writes no index data.
-xcb_index = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration Debug \
-	-derivedDataPath $(INDEX_DATA) COMPILATION_CACHE_ENABLE_CACHING=NO \
-	SDK_EXPLICIT_MODULES_OUTPUT_PATH=$(SDK_MODULES) \
-	$(COVERAGE_Debug) $(XCODEBUILD_FLAGS)
-XCB_APP          := $(call xcb,$(SCHEME),$(CONFIG))
-XCB_CLI          := $(call xcb,$(CLI_SCHEME),$(CONFIG))
-XCB_RELEASE      := $(call xcb,$(SCHEME),Release)
-XCB_TEST         := $(XCB_APP) -destination '$(DESTINATION)'
-# Where xcodebuild puts built products. Derived rather than asked for, because
-# `xcodebuild -showBuildSettings` costs several seconds per call.
-PRODUCTS          = $(DERIVED_DATA)/Build/Products/$(CONFIG)
-# The shaders compiled for the package test targets, which have no app bundle to
-# load default.metallib from. Fixtures find it through OPENSKY_SHADER_LIBRARY; the
-# unit test plan points at the same path as $(BUILD_DIR)/OpenSkyShaders.metallib.
-SHADER_LIBRARY   := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
+DERIVED_DATA   := $(shell . tools/build-env.sh && echo "$$OPENSKY_DERIVED_DATA")
+PRODUCTS       := $(DERIVED_DATA)/Build/Products/$(or $(CONFIG),Debug)
+RELEASE        := $(DERIVED_DATA)/Build/Products/Release
+# The vendored libraries, built once in the main checkout and linked into worktrees.
+VENDOR         := src/.vendor/ffmpeg/opensky-build-stamp src/.vendor/astcenc/opensky-build-stamp
+# The shaders compiled for the package test targets, which have no app bundle to load
+# default.metallib from. Fixtures find it through OPENSKY_SHADER_LIBRARY.
+SHADER_LIBRARY := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
 export OPENSKY_SHADER_LIBRARY := $(SHADER_LIBRARY)
-SHADER_FILES     := $(sort $(wildcard src/Sources/Shaders/*.metal))
-SHADER_SOURCES   := $(SHADER_FILES) $(wildcard src/Sources/Shaders/*.h) \
-	$(wildcard src/Sources/OpenSkyShaderTypes/*.h)
+SHADER_FILES   := $(sort $(wildcard src/Sources/Shaders/*.metal))
 # Mirrors the Metal settings in src/config/Build/*.xcconfig; change both together.
-METAL_FLAGS      := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
+METAL_FLAGS    := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
 	-I src/Sources/OpenSkyShaderTypes
-
-# A docs page holds only what the code cannot show, so a long one usually repeats
-# the code or the history. Prose wraps at 100 columns, so 400 lines is about
-# twenty minutes of reading. Split or cut a page over it; do not raise it.
-DOCS_MAX_LINES   := 400
-
-# Line coverage floors in a `make test-unit COVERAGE=1` run, per OpenSkyFormats*
-# module, game-rule module, pure core file, and the lines a branch changes. The
-# reasons for each value are in docs/decisions/test-coverage-rules.md.
-COVERAGE_FLOOR   := 80
-RULE_COVERAGE_FLOOR := 55
-CORE_COVERAGE_FLOOR := 75
-DIFF_COVERAGE_FLOOR := 80
-DIFF_BASE        ?= $(shell git merge-base HEAD origin/main 2>/dev/null || echo HEAD)
-
-ICON_SVG         := src/Sources/OpenSky/Resources/Branding/opensky-logo.svg
-ICON_DIR         := src/Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
-
-# Test plans (src/config/TestPlans/*.xctestplan) choose which test bundles a run builds
-# and runs, instead of -only-testing flags (issue #346). A plan builds only the
-# bundles it lists, so the layer plans are the quick runs. The UI bundle must never
-# share a plan with an app-hosted bundle (OpenSkyTests, OpenSkyRealDataTests): both
-# would drive OpenSky.app at once and deadlock (issue #380).
-UNIT_PLAN        := -testPlan UnitTests
-# The plan with the smallest test bundle: the build context every Debug build of
-# the app and the CLI uses, so a test run after it compiles nothing again.
-BUILD_PLAN       := -testPlan AgentControl
-# Coverage is gathered only on request (CI, make coverage-floor): the profile merge
-# and the coverage archive in the result bundle cost time on every run otherwise.
-coverage_flag     = -enableCodeCoverage $(if $(COVERAGE),YES,NO)
-
-# Formatter and linter configuration.
-SWIFTFORMAT_CFG  := tools/format/.swiftformat
-SWIFTLINT_CFG    := tools/lint/.swiftlint.yml
-JSCPD_CFG        := tools/lint/.jscpd.json
-PERIPHERY_CFG    := tools/lint/.periphery.yml
-CLANGFORMAT_CFG  := tools/format/.clang-format
-MD_CFG           := tools/markdown/.markdownlint-cli2.yaml
-ACTIONLINT_CFG   := tools/lint/actionlint.yaml
-MD_GLOB          := **/*.md
-# The tool commands. Override one to try another build of the tool.
-SWIFTLINT        ?= swiftlint
-CLANG_FORMAT     ?= xcrun clang-format
-METAL_FILES      := $(shell find src/Sources -name '*.metal' 2>/dev/null) $(wildcard src/Sources/Shaders/*.h)
-# The Python tools are one uv project; uv.lock pins ruff. The uv cache is on
-# the boot disk and the project on the data volume, so uv copies instead of hard-linking.
-PY_PROJECT       := tools/wiki-mirror
-UV_RUN           := UV_LINK_MODE=copy uv run --locked --quiet --project $(PY_PROJECT)
+ICON_SVG       := src/Sources/OpenSky/Resources/Branding/opensky-logo.svg
+ICON_DIR       := src/Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
+# The Python tools are one uv project. The uv cache is on the boot disk and the
+# project on the data volume, so uv copies instead of hard-linking.
+UV_RUN         := UV_LINK_MODE=copy uv run --locked --quiet --project tools/wiki-mirror
 
 .DEFAULT_GOAL := help
+.PHONY: help bootstrap build-app build-cli build-tests compile install test test-rerun \
+	test-package check-perms check fix format format-check lint lint-index dump-comments \
+	apply-comments run-cli benchmark profile sample-launch probe rank-gaps sync-wiki \
+	add-cli-command package-dmg render-icon prune clean setup-reference build-bridge
 
 ##@ Getting started
 
-.PHONY: help bootstrap hooks ffmpeg astcenc link-shared seed-build-tree
+help: ## Show the targets and the options
+	@awk -f tools/make-help.awk $(MAKEFILE_LIST)
 
-# A `#|` target is a part of a listed one, such as each check inside `lint`.
-help: ## Show the main targets [ALL=1 also lists the parts]
-	@awk -v all="$(ALL)" 'BEGIN { FS = ":.*#[#|] "; print "Usage: make <target> [VAR=value]" } \
-		/^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } \
-		/^[a-z-]+:.*## / || (all != "" && /^[a-z-]+:.*#\| /) \
-			{ printf "  \033[36m%-19s\033[0m %s\n", $$1, $$2 }' \
-		$(MAKEFILE_LIST)
-
-bootstrap: ## Install the toolchain with Homebrew
+bootstrap: ## Install the toolchain and build the vendored libraries, once per checkout
 	@./tools/bootstrap.sh
 
-# The setting lives in the shared git config, so every worktree uses the hooks.
-hooks: #| Point git at the project hooks in tools/githooks
-	@git config core.hooksPath tools/githooks && echo "[ OK ] git hooks: tools/githooks"
+##@ Build
 
-ffmpeg: #| Build the vendored decode-only LGPL ffmpeg into src/.vendor/ffmpeg
-	@./tools/vendor-ffmpeg.sh
+build-app: | $(VENDOR) ## Build the app [CONFIG=Debug|Release]
+	@./tools/build.sh app
 
-astcenc: #| Build the vendored static astcenc into src/.vendor/astcenc
-	@./tools/vendor-astcenc.sh
+build-cli: | $(VENDOR) ## Build openskycli [CONFIG=Debug|Release]
+	@./tools/build.sh cli
 
-link-shared: seed-build-tree #| Point this worktree's ffmpeg and compile cache at the main checkout's
-	@./tools/link-shared.sh
+build-tests: | $(VENDOR) ## Compile a plan's test bundles without running them [PLAN]
+	@./tools/build.sh tests
 
-seed-build-tree: #| Clone the newest build tree for a checkout that has none yet
-	@./tools/seed-build-tree.sh
+compile: | $(VENDOR) ## swift build the changed package modules and their dependents [ARGS=modules]
+	@./tools/compile-modules.sh $(ARGS)
 
-##@ Format and lint
-
-.PHONY: fix check format format-check swift-format-check metal-format-check lint \
-        swift-baseline language-rules error-handling deterministic-rules test-order coverage-self-check swift-format swift-lint metal-format md-format md-lint sh-lint \
-        py-format py-format-check py-lint \
-        cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
-        docs-links docs-length agent-files workflow-lint comment-length panel-text load-order-only cli-conventions comment-blocks comment-apply \
-        duplicates no-suppressions file-length module-size app-architecture adapter-rules
-
-fix: format lint ## Autoformat, then run every linter (the everyday gate)
-
-check: swift-baseline language-rules error-handling deterministic-rules test-order coverage-self-check format-check lint docs-links ## The same gate without writing files [ALL=1 lints every Swift file]
-
-format: swift-format metal-format cpp-format md-format py-format ## Autoformat Swift, Metal, C++, Markdown, and Python
-
-format-check: swift-format-check metal-format-check cpp-format-check md-lint py-format-check #| Fail if anything is unformatted, without writing
-
-swift-format-check: #| Fail if any changed Swift file is unformatted [ALL=1 whole tree]
-	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to check"; exit 0; }; \
-		swiftformat --lint --config $(SWIFTFORMAT_CFG) $$files
-
-metal-format-check: #| Fail if any Metal shader is unformatted
-	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
-		--dry-run --Werror $(METAL_FILES)
-
-lint: swift-lint md-lint sh-lint py-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text load-order-only cli-conventions gap-registries duplicates no-suppressions file-length module-size app-architecture adapter-rules ## Run every linter (warnings fail)
-	@./tools/lint/module-graph.sh
-
-swift-baseline: #| Check for the Apple Swift that CI uses and Swift 6 mode in every target
-	@./tools/lint/swift-baseline.sh
-
-language-rules: #| Check the package and Xcode turn on the same Swift language rules, and each rejects a violation
-	@./tools/lint/language-rules.sh
-
-error-handling: #| Check no package module swallows an error and no file-reading module traps
-	@./tools/lint/error-handling.sh
-
-deterministic-rules: #| Check game rules read no hidden random source or clock, and no global state
-	@./tools/lint/deterministic-rules.sh
-
-test-order: #| Check every test plan shuffles its tests and no suite is serialized
-	@./tools/lint/test-order.sh
-
-coverage-self-check: #| Run the coverage scripts on synthetic data, without a test run
-	@./tools/lint/coverage-floor.sh --self-check
-	@./tools/lint/diff-coverage.sh --self-check
-
-swift-format: #| Autoformat the changed Swift files [ALL=1 whole tree]
-	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to format"; exit 0; }; \
-		swiftformat --config $(SWIFTFORMAT_CFG) $$files
-
-# src/Package.swift stays out, as in CI: one manifest cannot split to the file-length cap.
-swift-lint: #| Lint the changed Swift files strictly [ALL=1 whole tree]
-	@files="$(filter-out src/Package.swift,$(LINT_SWIFT))"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to lint"; exit 0; }; \
-		$(SWIFTLINT) lint --strict --quiet --config $(SWIFTLINT_CFG) $$files
-
-metal-format: #| Autoformat Metal shaders
-	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
-		-i $(METAL_FILES)
-
-md-format: #| Autofix Markdown
-	@markdownlint-cli2 --fix --config $(MD_CFG) "$(MD_GLOB)" || true
-
-md-lint: #| Lint Markdown strictly
-	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
-
-sh-lint: #| Shellcheck the tools/ and reference/ scripts
-	@shellcheck -s sh $$(find tools reference -type f -name '*.sh' -not -path '*/.venv/*')
-
-py-format: #| Autoformat the Python tools with ruff
-	@$(UV_RUN) ruff format $(PY_PROJECT)
-
-py-format-check: #| Fail if a Python tool file is unformatted
-	@$(UV_RUN) ruff format --check $(PY_PROJECT)
-
-py-lint: #| Lint the Python tools strictly with ruff
-	@$(UV_RUN) ruff check $(PY_PROJECT) && echo "[ OK ] Python tools clean"
-
-# Every src/Sources/ folder except OpenSky/ is built into or linked by OpenSkyCLI, so an
-# app-only import there breaks the CLI build. This catches it without building.
-cli-boundary: #| Keep AppKit out of the engine and format sources the CLI also builds
-	@offenders=$$(grep -rlE '^[[:space:]]*import (AppKit|Cocoa|SwiftUI)' --include='*.swift' \
-		$$(find src/Sources -mindepth 1 -maxdepth 1 -type d ! -name OpenSky) | sort); \
-	if [ -n "$$offenders" ]; then \
-		printf '[FAIL] app-only sources compiled into OpenSkyCLI:\n%s\n' "$$offenders" >&2; \
-		echo 'Fix: move the file to src/Sources/OpenSky/ with git mv, or drop the import.' >&2; \
-		exit 1; \
-	fi; \
-	echo "[ OK ] CLI target boundary clean"
-
-module-graph: #| Check the package graph follows The Modular Architecture
-	@./tools/lint/module-graph.sh
-
-realdata-plan: #| Check every env-gated suite is in the RealData plan
-	@./tools/lint/realdata-plan.sh \
-		&& echo "[ OK ] real-data suites and the RealData plan line up"
-
-lint-test-plans: #| Check every test plan sets timeouts and selects by target or tag
-	@./tools/lint/test-plans.sh && echo "[ OK ] test plans follow the rules"
-
-lint-test-targets: #| Check every Makefile target that runs tests is named test-<kind>
-	@./tools/lint/test-targets.sh && echo "[ OK ] test targets are named test-<kind>"
-
-lint-test-tags: #| Check suites carry the shared tags and .disabled names an issue [FIX=1]
-	@./tools/lint/test-tags.sh $(if $(FIX),--fix,) && echo "[ OK ] suites carry their tags"
-
-no-game-content: #| Check no game assets or rendered captures are tracked
-	@./tools/lint/no-game-content.sh && echo "[ OK ] no tracked game content"
-
-docs-links: #| Check links inside docs/ resolve
-	@./tools/check-docs-links.sh
-
-# The pre-commit hook runs the same script on the staged files.
-file-length: #| Fail on a changed file over 800 lines, warn over 600 [ALL=1 whole tree]
-	@./tools/lint/file-length.sh $(if $(ALL),--all,)
-
-# Every module, whatever the branch changed: a module grows with each change.
-module-size: #| Print each module's source lines; warn over 20,000, fail over 30,000
-	@./tools/lint/module-size.sh
-
-app-architecture: #| Check adapter modules, narrow hosts, and type sizes in the app layer
-	@./tools/lint/app-architecture.sh
-
-adapter-rules: #| Check the adapter modules hold no magic numbers or complex functions
-	@SWIFTLINT=$(SWIFTLINT) ./tools/lint/adapter-rules.sh
-
-docs-length: #| Check no docs page is longer than DOCS_MAX_LINES
-	@find docs -name '*.md' -exec wc -l {} + | LC_ALL=C sort -k2 | awk -v max=$(DOCS_MAX_LINES) \
-		'$$2 != "total" && $$1 > max { printf "[FAIL] %s has %s lines; the limit is %s. Split or cut it.\n", $$2, $$1, max; bad = 1 } \
-		END { if (!bad) printf "[ OK ] docs pages within %s lines\n", max; exit bad }'
-
-agent-files: #| Check AGENTS.md symlinks and the skill format limits
-	@./tools/lint/agent-files.sh
-
-workflow-lint: #| Lint the GitHub Actions workflows with actionlint
-	@actionlint -config-file $(ACTIONLINT_CFG) && echo "[ OK ] workflows clean"
-
-comment-length: #| Check no comment block is over the line limit
-	@./tools/lint/comment-length.sh
-
-panel-text: #| Check launcher and Settings pages hold no prose paragraphs or long tooltips
-	@./tools/lint/panel-text.sh
-
-load-order-only: #| Check engine code opens plugins only through the whole load order
-	@./tools/lint/load-order-only.sh
-
-cli-conventions: #| Check each openskycli command has a runner, a docs row, and a probe run
-	@./tools/lint/cli-conventions.sh
-
-gap-registries: #| Check the NIF block types openskycli gaps counts as handled match the code
-	@./tools/lint/gap-registries.sh
-
-# The whole tree in under a second. A scan of changed files only would miss a new
-# copy of code that did not change.
-duplicates: #| Check for duplicated Swift blocks (jscpd)
-	@./tools/lint/duplicates.sh $(JSCPD_CFG) $(SWIFT_PATHS)
-
-# Fix the finding instead (docs/decisions/code-health-automation.md).
-no-suppressions: #| Check no Swift file disables a SwiftLint rule
-	@offenders=$$(grep -rn 'swiftlint:disable' --include='*.swift' $(SWIFT_PATHS)); \
-	if [ -n "$$offenders" ]; then \
-		printf '[FAIL] SwiftLint suppressions:\n%s\n' "$$offenders" >&2; \
-		echo 'Fix: change the code so the rule passes, then drop the comment.' >&2; \
-		exit 1; \
-	fi; \
-	echo "[ OK ] no SwiftLint suppressions"
-
-comment-blocks: #| Print long comment blocks to rewrite in bulk [PATHS='src/Sources/X'] [REFS=1]
-	@./tools/comment-blocks.sh dump $(if $(REFS),-r,) $(PATHS)
-
-comment-apply: #| Write rewritten blocks from a comment-blocks spec back [SPEC=file]
-	@./tools/comment-blocks.sh apply "$(SPEC)"
-
-##@ Build checks
-
-.PHONY: compile build-tests shader-library
-
-# swift build of the package modules the branch changed, or M='A B', plus their
-# dependents. No Xcode, so it is the quick loop while fixing compile errors;
-# Xcode-only code still needs build-app, build-cli, or build-tests.
-compile: link-shared ## Compile changed package modules and their dependents [M='Module ...']
-	@./tools/compile-modules.sh $(M)
-
-# Every bundle of a plan compiled, no test run. Catches a change that breaks a test
-# target it did not run. Hosted bundles need the app, so it builds too.
-build-tests: link-shared ## Compile a plan's test bundles without running tests [PLAN=UnitTests|RealData|...]
-	@$(XCB_RUN) build-tests $(XCB_TEST) -testPlan $(or $(PLAN),UnitTests) build-for-testing
-
-shader-library: $(SHADER_LIBRARY) #| Compile the shaders the package tests load
-
-# Rebuilt only when a shader source is newer, so a warm test run pays nothing.
-# Written to a temporary name first, so a failed compile never leaves a file that
-# looks current to make.
-$(SHADER_LIBRARY): $(SHADER_SOURCES)
-	@mkdir -p $(@D)
-	@xcrun -sdk macosx metal $(METAL_FLAGS) -o $@.tmp $(SHADER_FILES)
-	@mv $@.tmp $@ && echo "[ OK ] shader library: $@"
-
-##@ Code health
-
-.PHONY: health health-index
-
-# Periphery reads the index store the compiler writes. The index tree is built
-# uncached, so its first run in a checkout is a full build; later runs are
-# incremental. The OpenSky scheme builds openskycli for testing, so the two plans
-# cover the app, the CLI, and every test bundle.
-health: health-index ## Build the index, then fail on unused code or an adapter that uses another
-	@./tools/lint/unused-code.sh $(PERIPHERY_CFG) "$(INDEX_DATA)/Index.noindex/DataStore"
-	@python3 tools/lint/adapter-references.py "$(INDEX_DATA)/Index.noindex/DataStore" .
-
-health-index: link-shared
-	@$(XCB_RUN) health-unit $(call xcb_index,$(SCHEME)) \
-		-destination '$(DESTINATION)' $(UNIT_PLAN) build-for-testing
-	@$(XCB_RUN) health-realdata $(call xcb_index,$(SCHEME)) \
-		-destination '$(DESTINATION)' -testPlan RealData build-for-testing
-
-##@ Build and run
-
-.PHONY: build-app build-cli run-cli install app-path cli-path probe new-cli-command icon dmg
-
-# A Debug build of the app or the CLI runs as a test build of the smallest plan, so
-# it shares one build context with every test run and compiles nothing twice
-# (docs/tools/environment.md, the dirty driver record). Release has no test context.
-build-app: link-shared ## Build the app [CONFIG]
-	@$(XCB_RUN) build-app $(if $(filter Release,$(CONFIG)),$(XCB_APP) build,$(XCB_TEST) $(BUILD_PLAN) build-for-testing)
-
-build-cli: link-shared ## Build the openskycli dev tool [CONFIG]
-	@$(XCB_RUN) build-cli $(if $(filter Release,$(CONFIG)),$(XCB_CLI) build,$(XCB_TEST) $(BUILD_PLAN) build-for-testing)
-
-run-cli: build-cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
-	@"$(PRODUCTS)/openskycli" $(ARGS)
-
-# Release shares the Debug cache directory, so a repeat install builds incrementally.
-# The CLI goes inside the app, so a session drives the installed app with no build.
-install: link-shared ## Build the Release app and CLI and copy them to /Applications
-	@$(XCB_RUN) install $(XCB_RELEASE) build
-	@$(XCB_RUN) install-cli $(call xcb,$(CLI_SCHEME),Release) build
-	@./tools/install-app.sh $(DERIVED_DATA)/Build/Products/Release/OpenSky.app \
-		$(DERIVED_DATA)/Build/Products/Release/openskycli /Applications/OpenSky.app
-
-app-path: #| Print the built OpenSky.app path [CONFIG]
-	@echo "$(PRODUCTS)/OpenSky.app"
-
-cli-path: #| Print the built openskycli path [CONFIG]
-	@echo "$(PRODUCTS)/openskycli"
-
-# Packs the app `make build-app CONFIG=Release` built; it builds nothing itself.
-dmg: ## Pack the Release app into a disk image for a release [NAME=OpenSky-<version>]
-	@./tools/package-dmg.sh "$(DERIVED_DATA)/Build/Products/Release/OpenSky.app" "$(or $(NAME),OpenSky)"
-
-probe: ## Smoke-test the CLI against the local install (skips if absent)
-	@./tools/probe.sh
-
-new-cli-command: #| Stub a new openskycli command, e.g. make new-cli-command NAME=light-probe GROUP=World
-	@./tools/new-cli-command.sh "$(NAME)" "$(GROUP)"
-
-icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
-	@command -v rsvg-convert >/dev/null || { echo "[ERROR] rsvg-convert not found: brew install librsvg" >&2; exit 1; }
-	@for size in 16 32 64 128 256 512 1024; do \
-		rsvg-convert -w $$size -h $$size $(ICON_SVG) -o $(ICON_DIR)/icon_$$size.png || exit 1; \
-	done; echo "[ OK ] $(ICON_DIR)"
+install: | $(VENDOR) ## Build the Release app and CLI and copy them to /Applications
+	@./tools/build.sh install
 
 ##@ Test
 
-# Each kind of test has one target named test-<kind> (tools/lint/test-targets.sh).
-# Each is one plain `xcodebuild test` call on one test plan, so Xcode decides what
-# runs. T adds -only-testing. T takes a comma list, one -only-testing per entry,
-# and a run fails when an entry matched no test (tools/test-selectors.sh).
+test: $(SHADER_LIBRARY) | $(VENDOR) ## Run a test plan [PLAN=Quick] [T] [N] [COVERAGE=1] [SAN] [CAP]
+	@./tools/test.sh $(or $(PLAN),Quick)
 
-.PHONY: test-unit test-rerun test-package test-ui test-sanitize test-real test-report test-perms \
-        coverage-floor diff-coverage sanitizer-shaders profile benchmark benchmark-again gaps launch-sample ck-wiki uesp-wiki
+test-rerun: ## Rerun the last built plan without the build system [PLAN] [T]
+	@./tools/test-rerun.sh $(or $(PLAN),Quick)
 
-# The result bundle of one run, in its own run directory (issue #347).
-test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
-# One -only-testing per entry of T. An entry that does not start with an
-# OpenSky*Tests target resolves under the bundle in $(1).
-comma := ,
-only_testing = $(foreach sel,$(subst $(comma), ,$(T)),-only-testing:'$(if $(filter \
-	OpenSky%Tests,$(firstword $(subst /, ,$(sel)))),,$(1)/)$(sel)')
-# One test host, watched by the memory watchdog: a real-data run once reached
-# 30 GB and locked the machine. $(1) is the default cap in MB, CAP overrides it.
-# $(3) is the run's derived data: the watchdog only watches processes built there.
-guarded = sh tools/memguard.sh "$(3)" $(or $(CAP),$(1)) 10800 & guard=$$!; \
-	trap 'kill $$guard 2>/dev/null' EXIT INT TERM; \
-	$(2) -parallel-testing-enabled NO -maximum-parallel-testing-workers 1 test
-# The perf gates measure the engine, not -Onone, so they build optimized in their
-# own cache, which keeps the Debug build (issue #392).
-XCB_PERF         := xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) \
-	-configuration Debug -derivedDataPath $(DERIVED_DATA)-optimized \
-	COMPILATION_CACHE_CAS_PATH=$(COMPILATION_CACHE) SDK_EXPLICIT_MODULES_OUTPUT_PATH=$(SDK_MODULES) \
-	-destination '$(DESTINATION)' $(XCODEBUILD_FLAGS) \
-	SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=s \
-	SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG OPENSKY_OPTIMIZED"
-
-# PLAN picks the unit plan. Quick, the default, is every package test bundle without
-# the slow and GPU tests, so it builds no app. A layer plan (Formats, Engine,
-# Features, App) builds only its bundles. UnitTests is everything, as CI runs it.
-# GPU selects the GPU tag across every bundle. N hunts a flaky test: it reruns
-# until the first failure, at most N times. The `test` action writes no .xctestrun,
-# so the run builds and tests as two actions, and test-rerun can reuse the build.
-PLAN             ?= Quick
-UNIT_PLANS       := Quick Formats Engine Features App UnitTests GPU
-check_plan = $(if $(filter $(PLAN),$(UNIT_PLANS)),,$(error PLAN must be one of: $(UNIT_PLANS)))
-# Each run overwrites Xcode's one profile, so a copy per plan lets the coverage
-# checks merge a Quick run and an App run, as CI's whole plan counts both.
-keep_coverage = profile="$$(ls -t $(DERIVED_DATA)/Build/ProfileData/*/Coverage.profdata 2>/dev/null | head -n 1)"; \
-	[ -z "$$profile" ] || cp "$$profile" "$(DERIVED_DATA)/Build/ProfileData/$(PLAN).profdata"
-test-unit: link-shared $(SHADER_LIBRARY) ## Run a unit plan [PLAN=Quick|Formats|Engine|Features|App|UnitTests|GPU] [T='Target/Suite/test(),...'] [N=100] [COVERAGE=1]
-	@$(check_plan)TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
-		$(XCB_RUN) test-unit $(XCB_TEST) $(call test_bundle,unit-$(PLAN)) \
-		-testPlan $(PLAN) $(call only_testing,OpenSkyTests) $(coverage_flag) \
-		$(if $(N),-run-tests-until-failure -test-iterations $(N)) build-for-testing test-without-building; \
-		status=$$?; $(if $(COVERAGE),$(keep_coverage);) exit $$status
-
-# The .xctestrun that the last test-unit or build-tests run of PLAN wrote. A rerun
-# through it skips the build system: seconds instead of minutes. It runs the
-# products as built, so an edit since then needs `make test-unit` again.
-xctestrun = $(lastword $(sort $(wildcard $(DERIVED_DATA)/Build/Products/$(SCHEME)_$(PLAN)_*.xctestrun)))
-test-rerun: ## Rerun the last built plan without the build system [PLAN=Quick|...] [T='Target/Suite/test(),...']
-	@$(check_plan)test -n "$(xctestrun)" || { \
-		echo "[ERROR] no built $(PLAN) plan under $(DERIVED_DATA): run make test-unit PLAN=$(PLAN) first" >&2; exit 2; }
-	@newer="$$(find src/Sources src/Tests src/config src/Package.swift -type f -newer "$(xctestrun)" 2>/dev/null | head -n 1)"; \
-		[ -z "$$newer" ] || echo "[WARNING] $$newer changed after the last build of $(PLAN); run make test-unit PLAN=$(PLAN) to rebuild"
-	@$(XCB_RUN) test-rerun xcodebuild -xctestrun "$(xctestrun)" $(XCODEBUILD_DD) \
-		-destination '$(DESTINATION)' $(call test_bundle,rerun-$(PLAN)) \
-		$(call only_testing,OpenSkyTests) $(coverage_flag) test-without-building
-
-# Package test targets through `swift test`: no Xcode, no app, no other bundle.
-# The package keeps its own build tree in src/.build/.
-test-package: link-shared $(SHADER_LIBRARY) ## Run package test targets with swift test [T='OpenSkyFormatsESMTests[/Suite[/test()]],...']
+test-package: $(SHADER_LIBRARY) | $(VENDOR) ## Run package test targets with swift test [T]
 	@./tools/test-package.sh "$(T)"
 
-# A timeout in "enabling automation mode" means Automation Mode asks for a
-# password: run make test-perms.
-test-ui: link-shared ## Run the UI tests (launches and drives the app) [T='Suite/test(),...']
-	@$(XCB_RUN) test-ui $(XCB_TEST) $(call test_bundle,ui) -testPlan UITests \
-		$(call only_testing,OpenSkyUITests) $(coverage_flag) test
+check-perms: ## Check the one-time macOS permission grants the UI tests need
+	@./tools/test-perms.sh
 
-# The sanitized builds have their own BUILD_DIR, and the plan finds the shaders
-# through $(BUILD_DIR). The shaders are not sanitized, so each gets a copy.
-sanitizer-shaders: $(SHADER_LIBRARY)
-	@for variant in Variant-TSan Variant-ASan-UBSan; do \
-		mkdir -p "$(DERIVED_DATA)/Build/Products/$$variant" && \
-		cp "$(SHADER_LIBRARY)" "$(DERIVED_DATA)/Build/Products/$$variant/" || exit 1; \
-	done
+##@ Check and fix
 
-# TSan and ASan with UBSan cannot share a build (issue #383), so SAN picks one. The
-# weekly CI workflow runs both; locally they are a milestone check.
-SANITIZER_CONFIG_thread  := Thread
-SANITIZER_CONFIG_address := Address
-test-sanitize: link-shared sanitizer-shaders ## Run the unit tests under a sanitizer SAN=thread|address [CAP=MB]
-	@$(call guarded,12288,$(XCB_RUN) test-sanitize-$(SAN) $(XCB_TEST) \
-		$(call test_bundle,sanitize-$(SAN)) -testPlan Sanitizers -only-test-configuration \
-		$(or $(SANITIZER_CONFIG_$(SAN)),$(error SAN must be thread or address)) $(coverage_flag),$(DERIVED_DATA))
+check: ## Run every format check and lint, writing nothing (what CI runs)
+	@./tools/run-checks.sh check
 
-# Real-data tests read the user's install, so they run on demand and before a
-# milestone acceptance, never in CI. The RealData plan is the smoke set, the tests
-# tagged `.smoke`; ALL=1 runs the RealDataAll plan, every real-data test. PERF=1
-# runs the Perf plan, the tests tagged `.perf`, built optimized.
-# The checkout, for real-data tests that write into `.logs/`; the build cache is
-# outside it. Xcode passes TEST_RUNNER_ variables to the test process.
-real_env = TEST_RUNNER_OPENSKY_CHECKOUT="$(CURDIR)" \
-	TEST_RUNNER_OPENSKY_SKYRIM_SAVES="$(OPENSKY_SKYRIM_SAVES)"
-test-real: link-shared ## Run the real-data smoke plan [ALL=1] [T='Suite/test(),...'] [CAP=MB] [PERF=1]
-	@$(call guarded,6144,$(if $(PERF), \
-		$(real_env) $(XCB_RUN) test-perf $(XCB_PERF) $(call test_bundle,perf) -testPlan Perf, \
-		$(real_env) $(XCB_RUN) test-real $(XCB_TEST) $(call test_bundle,real) -testPlan $(if $(ALL),RealDataAll,RealData)) \
-		$(call only_testing,OpenSkyRealDataTests) $(coverage_flag),$(DERIVED_DATA)$(if $(PERF),-optimized))
+fix: ## Format every file, then run check
+	@./tools/run-checks.sh format && ./tools/run-checks.sh check
 
-include tools/test-tools.mk
+format: ## Format every file
+	@./tools/run-checks.sh format
+
+format-check: ## The format half of check, as the CI Format job runs it
+	@./tools/run-checks.sh format-check
+
+lint: ## The lint half of check, as the CI Static checks job runs it
+	@./tools/run-checks.sh lint
+
+lint-index: | $(VENDOR) ## Build the index, then fail on unused code or an adapter that uses another
+	@./tools/lint-index.sh
+
+dump-comments: ## Print long comment blocks to rewrite in bulk [ARGS='-r src/Sources/X']
+	@./tools/comment-blocks.sh dump $(ARGS)
+
+apply-comments: ## Write rewritten comment blocks back [ARGS=spec-file]
+	@./tools/comment-blocks.sh apply $(ARGS)
+
+##@ Play and measure
+
+run-cli: build-cli ## Build and run openskycli [ARGS='vfs ls']
+	@"$(PRODUCTS)/openskycli" $(ARGS)
+
+benchmark: ## Fly the benchmark tour in the Release app [ARGS='--preset quick']
+	@./tools/benchmark.sh $(ARGS)
+
+profile: ## Record a Time Profiler trace of the benchmark tour [ARGS]
+	@./tools/profile.sh $(ARGS)
+
+sample-launch: ## Sample the installed app's main thread through its first minute [ARGS=seconds]
+	@./tools/launch-sample.sh "$(RELEASE)/openskycli" /Applications/OpenSky.app $(ARGS)
+
+probe: build-cli ## Smoke-test the CLI against the local install (skips if absent)
+	@./tools/probe.sh "$(PRODUCTS)/openskycli"
+
+rank-gaps: ## Rank what the install uses and the engine does not do yet [ARGS='--only papyrus']
+	@./tools/gaps.sh $(ARGS)
+
+##@ Data and code tools
+
+sync-wiki: ## Download or update an offline wiki in Markdown [ARGS='--site ck|uesp']
+	@$(UV_RUN) wiki-mirror $(ARGS)
+
+add-cli-command: ## Stub a new openskycli command [ARGS='light-probe World']
+	@./tools/new-cli-command.sh $(ARGS)
+
+##@ Release
+
+package-dmg: ## Pack the Release app into a disk image [ARGS=OpenSky-<version>]
+	@./tools/package-dmg.sh "$(RELEASE)/OpenSky.app" $(or $(ARGS),OpenSky)
+
+render-icon: $(ICON_DIR)/icon_1024.png ## Render the AppIcon PNGs from the SVG logo
 
 ##@ Housekeeping
 
-.PHONY: prune clean
+prune: ## Delete stale worktree caches and old run output [ARGS='--days 1 --dry-run']
+	@./tools/prune.sh $(ARGS)
 
-# `clean` empties this checkout. `prune` reaches what no checkout owns any more,
-# chiefly the caches of removed worktrees, which is what fills the data volume.
-prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=1] [DRY_RUN=1]
-	@./tools/prune.sh --days $(PRUNE_DAYS) $(if $(DRY_RUN),--dry-run,)
+clean: ## Remove this checkout's build output [ARGS=--deep also drops the shared cache]
+	@./tools/clean.sh $(ARGS)
 
-# Keeps the shared compile cache: keyed on the full command and inputs, it cannot go stale.
-# DEEP=1 removes it too, for timing a cold build; every worktree then starts cold.
-clean: ## Remove build output and caches [DEEP=1 also drops the shared compile cache]
-	@rm -rf build "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized" "$(INDEX_DATA)"
-	@rm -rf DerivedData DerivedData-optimized DerivedData-index src/.build
-	@[ -z "$(DEEP)" ] || rm -rf "$(COMPILATION_CACHE)" "$(SDK_MODULES)"
-	@if [ -d "$(XCODE_DERIVED_DATA)" ]; then \
-		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \
-			-type d -name 'OpenSky-*' -exec rm -rf {} +; \
-	fi
-include reference/reference.mk
+##@ Reference game
+
+setup-reference: ## Build the Wine prefix with Steam and a game copy [ARGS='<prefix> [<install>]']
+	@./reference/setup.sh $(ARGS)
+
+build-bridge: ## Install SKSE and build the bridge plugin [ARGS=<prefix>]
+	@./reference/bridge/build.sh $(ARGS)
+
+# The files the targets above produce, so make skips work that is done.
+
+src/.vendor/ffmpeg/opensky-build-stamp: tools/vendor-ffmpeg.sh
+	@./tools/link-shared.sh && ./tools/vendor-ffmpeg.sh && touch $@
+
+src/.vendor/astcenc/opensky-build-stamp: tools/vendor-astcenc.sh
+	@./tools/link-shared.sh && ./tools/vendor-astcenc.sh && touch $@
+
+# Written to a temporary name first, so a failed compile leaves no file that looks current.
+$(SHADER_LIBRARY): $(SHADER_FILES) $(wildcard src/Sources/Shaders/*.h src/Sources/OpenSkyShaderTypes/*.h)
+	@mkdir -p $(@D) && xcrun -sdk macosx metal $(METAL_FLAGS) -o $@.tmp $(SHADER_FILES)
+	@mv $@.tmp $@ && echo "[ OK ] shader library: $@"
+
+$(ICON_DIR)/icon_1024.png: $(ICON_SVG)
+	@./tools/render-icon.sh $< $(ICON_DIR)

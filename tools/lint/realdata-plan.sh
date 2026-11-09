@@ -1,13 +1,13 @@
 #!/bin/sh
-# RealData test-target lint (issues #381, #418). `make test-real` runs whatever
+# RealData test-target lint (issues #381, #418). `make test PLAN=RealData` runs whatever
 # src/config/TestPlans/RealData.xctestplan selects, and since #418 that is one whole target:
 # OpenSkyRealDataTests. So the check is no longer "is every suite named in the
 # plan" -- a 57-entry list nobody could keep spelled right -- but the two
 # structural facts that make target-level selection correct:
 #
 #   * Every env-gated suite lives in src/Tests/OpenSkyRealDataTests/. One in src/Tests/OpenSkyTests/,
-#     a package test folder, or a support folder is a suite `make test-real` never runs, and it
-#     would silently skip inside `make test-unit` instead, because a plain
+#     a package test folder, or a support folder is a suite `make test PLAN=RealData` never runs, and it
+#     would silently skip inside `make test` instead, because a plain
 #     `xcodebuild test` does not forward OPENSKY_DATA_ROOT into the host.
 #   * The RealData and RealDataAll plans select that target, with no selectedTests
 #     narrowing it -- a plan's own selectedTests does not match Swift Testing
@@ -22,6 +22,21 @@
 # gate src/Tests/OpenSkyRealDataTests/AGENTS.md prescribes) or declares its own
 # `dataRoot: GameDataRoot?`, and the type carries at least one @Test.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Tests/OpenSkyRealDataTests" "$tree/src/Tests/OpenSkyTests" "$tree/src/config/TestPlans"
+    for folder in OpenSkyRealDataTests OpenSkyTests; do
+        printf 'struct S {\n    let root = RealDataEnvironment.root\n    @Test func a() {}\n}\n' \
+            >"$tree/src/Tests/$folder/A.swift"
+    done
+    for plan in RealData RealDataAll; do
+        echo '{"testTargets": [{"target": {"name": "OpenSkyRealDataTests"}}]}' \
+            >"$tree/src/config/TestPlans/$plan.xctestplan"
+    done
+    expect_failure "$0" "$tree" "env-gated suite outside OpenSkyRealDataTests/"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -70,7 +85,7 @@ for folder in ELSEWHERE:
     for suite in gated_suites(folder):
         problems.append(
             f"env-gated suite outside {TARGET}/: {suite}"
-            f" (move the file into {TARGET}/, or `make test-real` never runs it)"
+            f" (move the file into {TARGET}/, or `make test PLAN=RealData` never runs it)"
         )
 
 if not gated_suites(HOME):
@@ -112,3 +127,4 @@ if problems:
         print(f"  {problem}", file=sys.stderr)
     raise SystemExit(1)
 PY
+echo "[ OK ] real-data suites and the RealData plans line up"

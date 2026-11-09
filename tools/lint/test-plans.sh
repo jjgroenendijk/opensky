@@ -3,11 +3,23 @@
 #
 # docs/tools/test-runs.md explains each rule. In short: every plan is in the
 # scheme, sets test timeouts, never repeats or retries tests, and selects by
-# target or tag, never by test name. The layer plans split the unit plan's
-# targets without overlap, Quick is every package target, the Perf plan selects
-# the `perf` tag, RealData the `smoke` tag, and each tag plan is the unit plan
-# narrowed to one tag.
+# target or tag, never by test name. UnitTests lists every unit test target,
+# Quick is every package target, the Perf plan selects the `perf` tag, RealData
+# the `smoke` tag, and each tag plan is the unit plan narrowed to one tag.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/config/TestPlans" "$tree/src/OpenSky.xcodeproj/xcshareddata/xcschemes" \
+        "$tree/src/Tests/OpenSkyTagsTesting"
+    echo '{"configurations": [], "defaultOptions": {}, "testTargets": []}' \
+        >"$tree/src/config/TestPlans/UnitTests.xctestplan"
+    echo 'reference = "container:config/TestPlans/UnitTests.xctestplan"' \
+        >"$tree/src/OpenSky.xcodeproj/xcshareddata/xcschemes/OpenSky.xcscheme"
+    : >"$tree/src/Tests/OpenSkyTagsTesting/Tags.swift"
+    expect_failure "$0" "$tree" "UnitTests: defaultOptions does not set testTimeoutsEnabled to true"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -25,11 +37,9 @@ TIMEOUT_KEYS = (
     "defaultTestExecutionTimeAllowance",
     "maximumTestExecutionTimeAllowance",
 )
-# Repetition hides a flaky test, so only `make test-unit N=...` asks for it.
+# Repetition hides a flaky test, so only `make test N=...` asks for it.
 REPEAT_KEYS = ("testRepetitionMode", "maximumTestRepetitions")
 TAG_PLANS = {"GPU": "gpu"}
-# The layer plans partition the unit plan: every target in exactly one of them.
-LAYER_PLANS = ("Formats", "Engine", "Features", "App")
 # Quick is every package target, skipping the tests that need seconds or a GPU.
 # Xcode ignores a plan's skippedTags, so the plan names them in the environment
 # and each tagged test reads it (src/Tests/OpenSkyTagsTesting/Tags.swift).
@@ -62,7 +72,7 @@ for name, plan in plans.items():
     for options in [defaults] + [config.get("options", {}) for config in plan["configurations"]]:
         for key in REPEAT_KEYS:
             if key in options:
-                problems.append(f"{name}: sets {key}; repeat with `make test-unit N=...` instead")
+                problems.append(f"{name}: sets {key}; repeat with `make test N=...` instead")
     for entry in plan.get("testTargets", []):
         target = entry.get("target", {}).get("name")
         for key in ("selectedTests", "skippedTests"):
@@ -76,14 +86,7 @@ for name, plan in plans.items():
                 problems.append(f"{name}: {target} {key} names unknown tags {sorted(unknown)}")
 
 
-layered = []
-for name in LAYER_PLANS:
-    entries = plans.get(name, {}).get("testTargets", [])
-    layered += [entry["target"]["name"] for entry in entries]
-    if any(entry.get("selectedTags") or entry.get("skippedTags") for entry in entries):
-        problems.append(f"{name}: a layer plan selects whole targets, no tags")
-if sorted(layered) != sorted(unit if (unit := [e["target"]["name"] for e in plans.get("UnitTests", {}).get("testTargets", [])]) else []):
-    problems.append(f"layer plans {LAYER_PLANS} must list every UnitTests target exactly once")
+unit = [e["target"]["name"] for e in plans.get("UnitTests", {}).get("testTargets", [])]
 # Every unit test folder is a target UnitTests runs; real-data and UI have their own plans.
 folders = {p.name for p in pathlib.Path("src/Tests").iterdir()
            if p.is_dir() and p.name.endswith("Tests")} - {"OpenSkyRealDataTests", "OpenSkyUITests"}
@@ -133,7 +136,7 @@ sanitized_env = plans.get("Sanitizers", {}).get("defaultOptions", {}).get("envir
 if unit_env != sanitized_env:
     problems.append("Sanitizers: must set the same environment as UnitTests")
 
-# A tag plan is the unit plan narrowed to one tag, so `make test-<tag>` sees every target.
+# A tag plan is the unit plan narrowed to one tag, so it sees every target.
 for name, tag in TAG_PLANS.items():
     plan = plans.get(name, {})
     entries = plan.get("testTargets", [])
@@ -150,3 +153,4 @@ if problems:
         print(f"  {problem}", file=sys.stderr)
     sys.exit(1)
 PY
+echo "[ OK ] test plans follow the rules"
