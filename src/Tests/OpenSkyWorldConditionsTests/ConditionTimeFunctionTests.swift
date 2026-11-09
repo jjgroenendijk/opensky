@@ -35,7 +35,8 @@ struct ConditionTimeFunctionTests {
     @Test func timeFunctionAnswersUnderAnUnresolvableRunOn() throws {
         // Only functions that need a reference care about the run-on, so a
         // clock read still answers with no subject bound.
-        var evaluator = ConditionEvaluator(context: ConditionContext(clock: GameClock(hour: 9)))
+        var evaluator = ConditionEvaluator(context: ConditionContext(clock: GameClock(hour: 9))
+            .using(.standard))
         let condition = try ConditionEvaluatorFixture.comparing(
             functionIndex: Self.getCurrentTime, 3, 6, runOn: 0
         )
@@ -49,7 +50,8 @@ struct ConditionTimeFunctionTests {
                 formID: 0x0000_0200, editorID: "GameHour", value: 21
             )
         ])
-        var evaluator = ConditionEvaluator(context: ConditionContext(globals: globals))
+        var evaluator = ConditionEvaluator(context: ConditionContext(globals: globals)
+            .using(.standard))
         let condition = try ConditionEvaluatorFixture.comparing(
             functionIndex: Self.getCurrentTime, 0, 21
         )
@@ -58,7 +60,7 @@ struct ConditionTimeFunctionTests {
     }
 
     @Test func getCurrentTimeWithoutAClockOrGlobalIsTagged() throws {
-        var evaluator = ConditionEvaluator(context: ConditionContext())
+        var evaluator = ConditionEvaluator(context: ConditionContext().using(.standard))
         let condition = try ConditionEvaluatorFixture.comparing(
             functionIndex: Self.getCurrentTime, 0, 12
         )
@@ -102,7 +104,7 @@ struct ConditionTimeFunctionTests {
     }
 
     @Test func getDayOfWeekWithoutAClockIsTagged() throws {
-        var evaluator = ConditionEvaluator(context: ConditionContext())
+        var evaluator = ConditionEvaluator(context: ConditionContext().using(.standard))
         let condition = try ConditionEvaluatorFixture.comparing(
             functionIndex: Self.getDayOfWeek, 0, 0
         )
@@ -142,7 +144,7 @@ struct ConditionTimeFunctionTests {
         var evaluator = try ConditionEvaluator(context: ConditionContext(
             globals: ConditionEvaluatorFixture.standardGlobals(),
             random: ConditionRandom(seed: 1234)
-        ))
+        ).using(.standard))
         for draw in draws {
             let condition = try ConditionEvaluatorFixture.comparing(
                 functionIndex: Self.getRandomPercent, 0, draw

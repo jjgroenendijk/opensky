@@ -13,7 +13,6 @@ nonisolated public struct QuestReferenceSearch: Sendable {
     public var origin: SIMD3<Float>?
     /// The context the match conditions read; the filler sets subject and quest.
     public var context: ConditionContext
-    public var registry: ConditionFunctionRegistry
     public var dead: Set<ReferenceKey>
     public var disabled: Set<ReferenceKey>
 
@@ -21,14 +20,12 @@ nonisolated public struct QuestReferenceSearch: Sendable {
         references: RuntimeReferenceIndex,
         origin: SIMD3<Float>?,
         context: ConditionContext,
-        registry: ConditionFunctionRegistry,
         dead: Set<ReferenceKey> = [],
         disabled: Set<ReferenceKey> = []
     ) {
         self.references = references
         self.origin = origin
         self.context = context
-        self.registry = registry
         self.dead = dead
         self.disabled = disabled
     }

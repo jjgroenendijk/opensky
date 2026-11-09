@@ -26,7 +26,7 @@ struct PerkCoordinatorTests {
             runtime: PerkRuntime(
                 store: WorldStateStore(),
                 perks: PerkRuntimeFixture.perkStore(index: index),
-                conditionRegistry: .empty
+                conditions: ConditionContext(functions: .empty)
             ),
             baselines: baselines,
             pluginName: PerkRuntimeFixture.pluginName

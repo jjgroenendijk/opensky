@@ -35,7 +35,7 @@ struct CraftingRealDataTests {
             context.inventory = InventoryConditionResolution(counts: [
                 .player: stacks.reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }
             ])
-            var evaluator = ConditionEvaluator(context: context)
+            var evaluator = ConditionEvaluator(context: context.using(.standard))
             return evaluator.firstFailure(in: conditions.conditions)
                 .map(evaluator.functionName(of:))
         }

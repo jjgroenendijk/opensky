@@ -19,6 +19,7 @@ public import OpenSkyWorldState
 
 nonisolated extension ConditionContext {
     public init(
+        functions: ConditionFunctionRegistry = .standard,
         globals: GlobalResolution = .empty,
         quests: QuestResolution = .empty,
         aliases: QuestAliasResolution = .empty,
@@ -38,7 +39,7 @@ nonisolated extension ConditionContext {
         target: ReferenceKey? = nil,
         random: ConditionRandom = ConditionRandom()
     ) {
-        self.init()
+        self.init(functions: functions)
         self.globals = globals
         self.quests = quests
         self.aliases = aliases
@@ -90,13 +91,6 @@ nonisolated extension ConditionFunctionRegistry {
         ConditionFunctions.installMounts(&registry)
         return registry
     }()
-}
-
-nonisolated extension ConditionEvaluator {
-    /// An evaluator over the whole-game registry.
-    public init(context: ConditionContext, tally: ConditionTally = ConditionTally()) {
-        self.init(context: context, registry: .standard, tally: tally)
-    }
 }
 
 nonisolated extension ConditionTally {

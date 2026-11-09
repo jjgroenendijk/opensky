@@ -4,6 +4,7 @@
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
+import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -125,7 +126,7 @@ struct ActiveEffectStackingTests {
         var runtime = ActiveEffectRuntime(
             values: values,
             effects: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
-            conditionRegistry: .standard
+            conditions: ConditionContext(functions: .standard)
         )
         ActiveEffectFixture.apply(
             &runtime,
@@ -224,7 +225,7 @@ struct ActiveEffectStackingTests {
         var runtime = ActiveEffectRuntime(
             values: values,
             effects: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
-            conditionRegistry: .standard
+            conditions: ConditionContext(functions: .standard)
         )
         values.damage(.health, by: 50, on: .player)
         ActiveEffectFixture.apply(

@@ -239,7 +239,7 @@ struct ConditionFunctionsDataTests {
             parameter1: item.parameter1,
             parameter2: item.parameter2
         )
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return evaluator.evaluate(condition)
     }
 

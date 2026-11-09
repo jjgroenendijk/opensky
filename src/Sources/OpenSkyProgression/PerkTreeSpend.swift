@@ -98,7 +98,8 @@ public struct PerkTreeSpendValidator {
         )
         context.subject = holder.key
         context.target = holder.key
-        var evaluator = ConditionEvaluator(context: context, registry: conditionRegistry)
+        var evaluator = ConditionEvaluator(context: context)
+        evaluator.context.functions = conditionRegistry
         evaluator.unknownFunctionsHold = true
         return evaluator.evaluate(record.record.conditions).isTrue
     }

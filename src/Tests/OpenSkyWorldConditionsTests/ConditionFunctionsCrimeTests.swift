@@ -44,7 +44,7 @@ struct ConditionFunctionsCrimeTests {
         value: Float = 1,
         function: UInt16 = getCrimeGold
     ) throws -> (outcome: ConditionOutcome, tally: ConditionTally) {
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: function,
             comparison,

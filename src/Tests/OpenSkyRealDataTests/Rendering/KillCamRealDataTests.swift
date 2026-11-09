@@ -20,10 +20,6 @@ import Testing
 
 @MainActor
 private final class RealKillCamWorld: CinematicCameraWorld {
-    var conditionFunctions: ConditionFunctionRegistry {
-        .standard
-    }
-
     let gameSession: GameSession
     let fileSystem: VirtualFileSystem
     let cameraPaths: CameraPathStore?
@@ -46,7 +42,7 @@ private final class RealKillCamWorld: CinematicCameraWorld {
     }
 
     func cameraConditionContext() -> ConditionContext {
-        ConditionContext()
+        ConditionContext(functions: .standard)
     }
 
     func cameraShotFacts(

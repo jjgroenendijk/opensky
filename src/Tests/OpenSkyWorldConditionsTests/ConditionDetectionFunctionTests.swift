@@ -56,7 +56,7 @@ struct ConditionDetectionFunctionTests {
         runOn: UInt32 = 0,
         context: ConditionContext
     ) throws -> (outcome: ConditionOutcome, tally: ConditionTally) {
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: functionIndex,
             comparison,

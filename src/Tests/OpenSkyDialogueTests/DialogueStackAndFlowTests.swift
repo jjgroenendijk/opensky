@@ -51,8 +51,7 @@ struct DialogueStackAndFlowTests {
         var runtime = try DialogueRuntime(
             store: store,
             dialogue: DialogueFixture.store(dialogueChildren: Self.topic(Self.topic, infos: infos)),
-            context: DialogueRuntimeFixture.context(),
-            registry: .dialogueTests
+            context: DialogueRuntimeFixture.context().using(.dialogueTests)
         )
         runtime.randomPick = { _ in pick }
         return runtime

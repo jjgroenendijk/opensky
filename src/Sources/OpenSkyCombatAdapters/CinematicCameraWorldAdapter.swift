@@ -80,10 +80,6 @@ public final class CinematicCameraWorldAdapter {
 }
 
 extension CinematicCameraWorldAdapter: CinematicCameraWorld {
-    public var conditionFunctions: ConditionFunctionRegistry {
-        .standard
-    }
-
     public var cameraPaths: CameraPathStore? {
         game.worldData?.presentationRecords?.cameras
     }

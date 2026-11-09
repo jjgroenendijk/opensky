@@ -66,8 +66,7 @@ struct StoryManagerRealDataTests {
             store: store,
             quests: QuestRuntime(store: store, quests: quests),
             story: StoryManagerStore(plugins: [(name: "Skyrim.esm", file: file)]),
-            context: ConditionContext(subject: .player),
-            registry: .standard
+            context: ConditionContext(subject: .player).using(.standard)
         )
         var event = StoryEventData(event: "ESJA")
         event.actor1 = .player

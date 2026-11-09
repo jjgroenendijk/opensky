@@ -41,6 +41,11 @@ public struct MagicEffectsData {
         self.pluginName = pluginName
         self.conditionRegistry = conditionRegistry
     }
+
+    /// The context the effect conditions start from.
+    var conditions: ConditionContext {
+        ConditionContext(functions: conditionRegistry)
+    }
 }
 
 /// The caster runtime's inputs.

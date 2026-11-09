@@ -81,8 +81,7 @@ struct StoryManagerTests {
             store: store,
             quests: QuestRuntime(store: store, quests: quests()),
             story: story,
-            context: context,
-            registry: ConditionFunctionRegistry()
+            context: context.using(ConditionFunctionRegistry())
         )
     }
 

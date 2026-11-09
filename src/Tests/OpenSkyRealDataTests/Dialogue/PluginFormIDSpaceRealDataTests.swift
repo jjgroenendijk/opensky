@@ -39,8 +39,8 @@ struct PluginFormIDSpaceRealDataTests {
                 && source.resolve(condition.parameter1.asFormID)?.plugin == Self.dragonborn
             {
                 checked += 1
-                var raw = ConditionEvaluator(context: context, registry: .standard)
-                var own = ConditionEvaluator(context: translated, registry: .standard)
+                var raw = ConditionEvaluator(context: context.using(.standard))
+                var own = ConditionEvaluator(context: translated.using(.standard))
                 #expect(Self.missesQuest(raw.evaluate(condition)), "\(quest.editorID ?? "")")
                 #expect(!Self.missesQuest(own.evaluate(condition)), "\(quest.editorID ?? "")")
             }
@@ -91,8 +91,7 @@ struct PluginFormIDSpaceRealDataTests {
             store: store,
             dialogue: dialogue,
             questStates: questRuntime.resolution(),
-            context: context,
-            registry: .standard
+            context: context.using(.standard)
         ))
         guard var events = try? runtime.start(entry.formID) else { return false }
         while runtime.isPlaying(entry.formID), runtime.now < 120 {

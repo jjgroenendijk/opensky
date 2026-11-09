@@ -202,8 +202,7 @@ struct DialogueAcceptanceRealDataTests {
             store: restored,
             dialogue: world.dialogue,
             questStates: quests.resolution(),
-            context: conditionContext(),
-            registry: .standard
+            context: conditionContext().using(.standard)
         )
         #expect(runtime.hasBeenSaid(offer.info), "the said line came back unsaid")
         #expect(runtime.saidState(of: offer.info).saidCount == 1)
@@ -277,8 +276,7 @@ extension DialogueAcceptanceRealDataTests {
             store: store,
             dialogue: dialogue,
             questStates: quests.resolution(),
-            context: conditionContext(),
-            registry: .standard
+            context: conditionContext().using(.standard)
         )
         let vfs = VirtualFileSystem(root: root)
         return World(

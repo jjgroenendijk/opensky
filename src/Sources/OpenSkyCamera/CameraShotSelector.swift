@@ -161,7 +161,6 @@ nonisolated extension CameraShotSelector {
     /// target as the Target run-on.
     public static func conditionCheck(
         context base: ConditionContext,
-        registry: ConditionFunctionRegistry,
         attacker: ReferenceKey,
         target: ReferenceKey?
     ) -> Check {
@@ -170,7 +169,7 @@ nonisolated extension CameraShotSelector {
         context.target = target
         let prepared = context
         return { path in
-            var evaluator = ConditionEvaluator(context: prepared, registry: registry)
+            var evaluator = ConditionEvaluator(context: prepared)
             return evaluator.firstFailure(in: path.conditions).map(evaluator.functionName(of:))
         }
     }

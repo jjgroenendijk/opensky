@@ -74,7 +74,7 @@ nonisolated struct QuestAliasMatch {
         context.aliasQuest = quest
         context.aliases = aliases
         context.formIDTranslation = translation
-        var evaluator = ConditionEvaluator(context: context, registry: search.registry)
+        var evaluator = ConditionEvaluator(context: context)
         return evaluator.evaluate(conditions).isTrue
     }
 

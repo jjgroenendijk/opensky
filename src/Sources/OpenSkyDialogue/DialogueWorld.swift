@@ -15,7 +15,6 @@ public protocol DialogueWorld: AnyObject {
     func conditionContext() -> ConditionContext
     /// The filled aliases alone, for a reader that needs them and no condition.
     func questAliases() -> QuestAliasResolution
-    var conditionRegistry: ConditionFunctionRegistry { get }
     /// Nil in a session with no script runtime.
     var fragments: (any DialogueFragmentDispatching)? { get }
     /// Walks the VFS, so the coordinator calls it once.

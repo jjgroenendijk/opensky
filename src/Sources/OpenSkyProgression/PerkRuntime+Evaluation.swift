@@ -166,9 +166,7 @@ extension PerkRuntime {
             }
             context.subject = reference
             context.target = subjects[.target] ?? reference
-            var evaluator = ConditionEvaluator(
-                context: context, registry: conditionRegistry
-            )
+            var evaluator = ConditionEvaluator(context: context)
             let outcome = evaluator.evaluate(tab.conditions)
             context.random = evaluator.context.random
             guard outcome.isTrue else {

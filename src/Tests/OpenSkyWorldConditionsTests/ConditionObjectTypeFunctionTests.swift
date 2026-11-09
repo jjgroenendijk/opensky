@@ -43,7 +43,7 @@ struct ConditionObjectTypeFunctionTests {
         context.data = ConditionDataResolution(
             keywords: KeywordStore(index: index), sourcePlugin: "Test.esm"
         )
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             comparisonValue: value.bitPattern, functionIndex: function, parameter1: type
         ))

@@ -57,8 +57,7 @@ struct QuestMatchingAliasTests {
         return QuestReferenceSearch(
             references: references,
             origin: SIMD3(0, 0, 0),
-            context: context,
-            registry: registry
+            context: context.using(registry)
         )
     }
 

@@ -4,6 +4,7 @@
 // `DialogueFixture`.
 
 import Foundation
+import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
@@ -180,7 +181,7 @@ struct PapyrusWorldDialogueTests {
         let runtime = try DialogueRuntime(
             store: session.worldState,
             dialogue: dialogueStore(),
-            registry: .standard,
+            context: ConditionContext(functions: .standard),
             fragments: session.bridge
         )
 

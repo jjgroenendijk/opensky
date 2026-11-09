@@ -23,6 +23,7 @@ struct ConditionEvaluatorTests {
     private func evaluator() throws -> ConditionEvaluator {
         try ConditionEvaluator(
             context: ConditionContext(globals: ConditionEvaluatorFixture.standardGlobals())
+                .using(.standard)
         )
     }
 
@@ -295,7 +296,7 @@ struct ConditionEvaluatorTests {
 
         var morning = try ConditionEvaluator(context: ConditionContext(
             globals: ConditionEvaluatorFixture.standardGlobals(), clock: GameClock(hour: 9)
-        ))
+        ).using(.standard))
         let day = morning.evaluate(list)
         #expect(day.isTrue)
         #expect(day.isConclusive)
@@ -305,7 +306,7 @@ struct ConditionEvaluatorTests {
         // though the OR block still passes.
         var night = try ConditionEvaluator(context: ConditionContext(
             globals: ConditionEvaluatorFixture.standardGlobals(), clock: GameClock(hour: 3)
-        ))
+        ).using(.standard))
         #expect(!night.evaluate(list).isTrue)
         #expect(night.tally.isClean)
         #expect(night.tally.conditionsEvaluated == 3)

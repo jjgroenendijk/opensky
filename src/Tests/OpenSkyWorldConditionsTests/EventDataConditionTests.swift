@@ -30,7 +30,7 @@ struct EventDataConditionTests {
             )])
         )
         context.event = event
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return evaluator.evaluate(condition)
     }
 

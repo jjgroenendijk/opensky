@@ -31,7 +31,6 @@ public struct ActiveEffectRuntime {
     /// rest of the engine uses answers here and an unevaluatable condition is
     /// the documented reason-tagged false rather than a silent pass.
     public var conditions: ConditionContext
-    public let conditionRegistry: ConditionFunctionRegistry
     /// What the runtime did and declined to do. Not `private(set)`: the tick
     /// half lives in `ActiveEffectRuntimeTick.swift` and a file-private setter
     /// would put it out of reach there.
@@ -74,13 +73,11 @@ public struct ActiveEffectRuntime {
     public init(
         values: any ActorValueAccess,
         effects: MagicEffectStore,
-        conditions: ConditionContext = ConditionContext(),
-        conditionRegistry: ConditionFunctionRegistry
+        conditions: ConditionContext = ConditionContext()
     ) {
         self.values = values
         self.effects = effects
         self.conditions = conditions
-        self.conditionRegistry = conditionRegistry
     }
 
     public var store: WorldStateStore {
@@ -236,7 +233,7 @@ public struct ActiveEffectRuntime {
         context.subject = target.key
         context.target = target.key
         context.magicApplication = application
-        var evaluator = ConditionEvaluator(context: context, registry: conditionRegistry)
+        var evaluator = ConditionEvaluator(context: context)
         let outcome = evaluator.evaluate(list)
         conditions.random = evaluator.context.random
         return outcome.isTrue

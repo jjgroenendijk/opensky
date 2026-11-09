@@ -86,7 +86,7 @@ struct PapyrusNativeWorldReadTests {
         context.dialogue = DialogueResolution(speakerInDialogue: fixture.key)
         let speaking = context
         fixture.session.bridge.sessionNatives.conditionEvaluator = {
-            ConditionEvaluator(context: speaking, registry: ConditionFunctionRegistry())
+            ConditionEvaluator(context: speaking.using(ConditionFunctionRegistry()))
         }
         let player = fixture.session.world.objectHandle(for: .player)
         #expect(dialogueTarget(fixture, fixture.receiver) == .returned(.object(player)))
@@ -103,7 +103,7 @@ struct PapyrusNativeWorldReadTests {
         context.speechChecks = SpeechCheckResolution(settings: .fallback, bribeFactor: 0.5)
         let priced = context
         fixture.session.bridge.sessionNatives.conditionEvaluator = {
-            ConditionEvaluator(context: priced, registry: ConditionFunctionRegistry())
+            ConditionEvaluator(context: priced.using(ConditionFunctionRegistry()))
         }
         let price = SpeechCheckSettings.fallback.bribeAmount(SpeechCheckActors(
             playerLevel: 30, playerSpeech: 50, npcLevel: 10, npcSpeech: 20,

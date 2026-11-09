@@ -225,10 +225,6 @@ extension StoryWorldAdapter: StoryManagerWorld {
         game.dialogueWorld.conditionContext()
     }
 
-    public var conditionRegistry: ConditionFunctionRegistry {
-        .standard
-    }
-
     public var questStarter: (any QuestStarting)? {
         self
     }

@@ -34,7 +34,6 @@ public struct DialogueRuntime: DialogueAccess {
 
     /// The filled quest aliases, which scene actors resolve through without a context.
     public var aliases: QuestAliasResolution
-    public var registry: ConditionFunctionRegistry
     /// Where a chosen response's result scripts go. Nil in a session with no
     /// script runtime, in which case the fragments a response declares are
     /// counted as unrun rather than silently dropped.
@@ -53,7 +52,6 @@ public struct DialogueRuntime: DialogueAccess {
         dialogue: DialogueStore,
         questStates: QuestResolution,
         aliases: QuestAliasResolution,
-        registry: ConditionFunctionRegistry,
         fragments: (any DialogueFragmentDispatching)?,
         context: @escaping () -> ConditionContext
     ) {
@@ -61,7 +59,6 @@ public struct DialogueRuntime: DialogueAccess {
         self.dialogue = dialogue
         self.questStates = questStates
         self.aliases = aliases
-        self.registry = registry
         self.fragments = fragments
         contextSource = LazyConditionContext(context)
     }
@@ -71,14 +68,12 @@ public struct DialogueRuntime: DialogueAccess {
         dialogue: DialogueStore,
         questStates: QuestResolution = .empty,
         context: ConditionContext = ConditionContext(),
-        registry: ConditionFunctionRegistry,
         fragments: (any DialogueFragmentDispatching)? = nil
     ) {
         self.store = store
         self.dialogue = dialogue
         self.questStates = questStates
         aliases = context.aliases
-        self.registry = registry
         self.fragments = fragments
         contextSource = LazyConditionContext { context }
     }
@@ -161,9 +156,7 @@ public struct DialogueRuntime: DialogueAccess {
     /// One pass over `topics`, ordered and traced. Every topic is evaluated, even after
     /// winners, so the tally can explain why an expected line did not appear.
     func selectTopics(_ topics: [DialogueTopic], speaker: ReferenceKey) -> DialogueSelection {
-        var evaluator = ConditionEvaluator(
-            context: context, registry: registry, tally: ConditionTally()
-        )
+        var evaluator = ConditionEvaluator(context: context, tally: ConditionTally())
         var offers: [DialogueTopicOffer] = []
         var rejected: [DialogueTopicOffer] = []
         for topic in ordered(topics) {

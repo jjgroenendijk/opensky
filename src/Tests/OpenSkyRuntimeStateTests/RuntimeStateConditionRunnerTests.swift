@@ -29,8 +29,7 @@ struct RuntimeStateConditionRunnerTests {
         let report = try RuntimeStateConditionRunner.report(
             source: "MUSTest",
             conditions: conditions,
-            context: ConditionEvaluatorFixture.populatedContext(),
-            registry: .standard,
+            context: ConditionEvaluatorFixture.populatedContext().using(.standard),
             tally: &tally
         )
 
@@ -62,8 +61,7 @@ struct RuntimeStateConditionRunnerTests {
         let report = try RuntimeStateConditionRunner.report(
             source: "MUSTest",
             conditions: conditions,
-            context: ConditionEvaluatorFixture.populatedContext(),
-            registry: .standard,
+            context: ConditionEvaluatorFixture.populatedContext().using(.standard),
             tally: &tally
         )
         #expect(report.lines.map(\.reason) == ["false"])
@@ -87,8 +85,7 @@ struct RuntimeStateConditionRunnerTests {
             let report = try RuntimeStateConditionRunner.report(
                 source: "MUSTest",
                 conditions: conditions,
-                context: ConditionEvaluatorFixture.populatedContext(),
-                registry: .standard,
+                context: ConditionEvaluatorFixture.populatedContext().using(.standard),
                 tally: &runnerTally
             )
             var evaluator = try ConditionEvaluatorFixture.evaluator()
@@ -104,8 +101,7 @@ struct RuntimeStateConditionRunnerTests {
         let report = try RuntimeStateConditionRunner.report(
             source: "MUSTEmpty",
             conditions: [],
-            context: ConditionEvaluatorFixture.populatedContext(),
-            registry: .standard,
+            context: ConditionEvaluatorFixture.populatedContext().using(.standard),
             tally: &tally
         )
         #expect(report.isSatisfied)
@@ -124,11 +120,11 @@ struct RuntimeStateConditionRunnerTests {
         var tally = ConditionTally()
         let context = try ConditionEvaluatorFixture.populatedContext()
         _ = RuntimeStateConditionRunner.report(
-            source: "MUSTest", conditions: conditions, context: context, registry: .standard,
+            source: "MUSTest", conditions: conditions, context: context.using(.standard),
             tally: &tally
         )
         let second = RuntimeStateConditionRunner.report(
-            source: "MUSTest", conditions: conditions, context: context, registry: .standard,
+            source: "MUSTest", conditions: conditions, context: context.using(.standard),
             tally: &tally
         )
         #expect(tally.conditionsEvaluated == 2)

@@ -87,7 +87,7 @@ struct PresentationRecordsRealDataTests {
         var context = ConditionContext()
         context.data = ConditionDataResolution(locations: locations)
         var lines = ["[INFO] LSCR \(store.loadScreens.records.count)"]
-        let names = ConditionEvaluator(context: context)
+        let names = ConditionEvaluator(context: context.using(.standard))
         var runOns: [String: Int] = [:]
         var functions: [String: Int] = [:]
         for screen in store.loadScreens.records {

@@ -28,7 +28,7 @@ struct ConditionPackageFunctionTests {
     ) throws -> ConditionOutcome {
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.packages = PackageConditionResolution(facts: facts)
-        var evaluator = ConditionEvaluator(context: context, registry: Self.registry)
+        var evaluator = ConditionEvaluator(context: context.using(Self.registry))
         return try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: function, 0, value, parameter1: parameter1
         ))

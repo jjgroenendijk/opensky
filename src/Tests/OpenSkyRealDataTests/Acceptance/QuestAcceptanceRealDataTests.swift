@@ -115,7 +115,7 @@ struct QuestAcceptanceRealDataTests {
             "the target quest grew conditions the census did not report"
         )
         var evaluator = try ConditionEvaluator(
-            context: ConditionContext(quests: session.runtime.resolution())
+            context: ConditionContext(quests: session.runtime.resolution()).using(.standard)
         )
         for index in QuestRealDataSession.questConditionIndices {
             let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.condition(

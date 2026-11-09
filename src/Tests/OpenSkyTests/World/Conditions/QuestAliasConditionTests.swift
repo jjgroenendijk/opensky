@@ -73,7 +73,8 @@ struct QuestAliasConditionTests {
         let store = WorldStateStore()
         let runtime = try quests(store)
         try runtime.startQuest(quest)
-        var evaluator = try ConditionEvaluator(context: context(runtime, aliasQuest: quest))
+        var evaluator = try ConditionEvaluator(context: context(runtime, aliasQuest: quest)
+            .using(.standard))
 
         let outcome = try evaluator.evaluate(isID(alias: 0))
         #expect(outcome.isTrue)
@@ -89,7 +90,8 @@ struct QuestAliasConditionTests {
         let store = WorldStateStore()
         let runtime = try quests(store)
         try runtime.startQuest(quest)
-        var evaluator = try ConditionEvaluator(context: context(runtime, aliasQuest: quest))
+        var evaluator = try ConditionEvaluator(context: context(runtime, aliasQuest: quest)
+            .using(.standard))
 
         for alias: Int32 in [1, 7, -1] {
             let outcome = try evaluator.evaluate(isID(alias: alias))
@@ -97,7 +99,8 @@ struct QuestAliasConditionTests {
             #expect(outcome.failures == [.unresolvedReference(.questAlias)])
         }
 
-        var scopeless = try ConditionEvaluator(context: context(runtime, aliasQuest: nil))
+        var scopeless = try ConditionEvaluator(context: context(runtime, aliasQuest: nil)
+            .using(.standard))
         let outcome = try scopeless.evaluate(isID(alias: 0))
         #expect(outcome.failures == [.unresolvedReference(.questAlias)])
     }
@@ -110,7 +113,8 @@ struct QuestAliasConditionTests {
         let runtime = try quests(store)
         try runtime.startQuest(quest)
         try runtime.stopQuest(quest)
-        var evaluator = try ConditionEvaluator(context: context(runtime, aliasQuest: quest))
+        var evaluator = try ConditionEvaluator(context: context(runtime, aliasQuest: quest)
+            .using(.standard))
 
         #expect(try evaluator.evaluate(isID(alias: 0)).failures
             == [.unresolvedReference(.questAlias)])
@@ -149,13 +153,14 @@ struct QuestAliasConditionTests {
         for name in ["Book", "NoSuchAlias"] {
             var condition = try ConditionEvaluatorFixture.isID(arnielBase)
             condition.parameter1Name = name
-            var evaluator = ConditionEvaluator(context: scoped)
+            var evaluator = ConditionEvaluator(context: scoped.using(.standard))
             #expect(evaluator.evaluate(condition).failures == [.unresolvedParameter(72)])
         }
 
         var condition = try ConditionEvaluatorFixture.isID(arnielBase)
         condition.parameter1Name = "Arniel"
-        var scopeless = try ConditionEvaluator(context: context(runtime, aliasQuest: nil))
+        var scopeless = try ConditionEvaluator(context: context(runtime, aliasQuest: nil)
+            .using(.standard))
         #expect(scopeless.evaluate(condition).failures == [.unresolvedParameter(72)])
     }
 

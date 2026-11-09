@@ -24,7 +24,7 @@ struct FurnitureConditionFunctionTests {
         condition.parameter1Name = name
         var context = context
         context.subject = actor
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return evaluator.evaluate(condition)
     }
 

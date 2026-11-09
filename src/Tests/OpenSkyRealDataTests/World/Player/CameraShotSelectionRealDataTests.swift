@@ -19,7 +19,7 @@ struct CameraShotSelectionRealDataTests {
         let plugins = try VanillaMasters.load(root: root)
         let store = CameraPathStore(plugins: plugins)
         var lines = ["[INFO] CPTH \(store.paths.records.count), CAMS \(store.shots.records.count)"]
-        let names = ConditionEvaluator(context: ConditionContext())
+        let names = ConditionEvaluator(context: ConditionContext().using(.standard))
         for rootID in store.forest.roots {
             lines += Self.tree(rootID, depth: 0, store: store, names: names)
         }
@@ -27,7 +27,7 @@ struct CameraShotSelectionRealDataTests {
 
         let target = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0001_A67C)
         let check = CameraShotSelector.conditionCheck(
-            context: ConditionContext(), registry: .standard, attacker: .player, target: target
+            context: ConditionContext().using(.standard), attacker: .player, target: target
         )
         var random = ConditionRandom(seed: 27)
         let selection = CameraShotSelector(store: store, check: check).select(random: &random)
@@ -49,8 +49,7 @@ struct CameraShotSelectionRealDataTests {
                 yaw: 0
             ) { _ in 1000 }
             let check = CameraShotSelector.conditionCheck(
-                context: context,
-                registry: .standard,
+                context: context.using(.standard),
                 attacker: .player,
                 target: target
             )

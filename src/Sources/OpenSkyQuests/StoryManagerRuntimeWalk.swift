@@ -27,9 +27,7 @@ extension StoryManagerRuntime {
             context.subject = .player
             context.target = event.actor1
             context.aliasQuest = nil
-            evaluator = ConditionEvaluator(
-                context: context, registry: runtime.registry, tally: ConditionTally()
-            )
+            evaluator = ConditionEvaluator(context: context, tally: ConditionTally())
         }
 
         /// Returns true when the event is consumed and the walk stops.

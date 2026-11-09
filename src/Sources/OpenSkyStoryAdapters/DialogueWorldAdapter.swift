@@ -92,10 +92,6 @@ extension DialogueWorldAdapter: DialogueWorld {
         return context
     }
 
-    public var conditionRegistry: ConditionFunctionRegistry {
-        .standard
-    }
-
     public var fragments: (any DialogueFragmentDispatching)? {
         game.scripts.bridge
     }

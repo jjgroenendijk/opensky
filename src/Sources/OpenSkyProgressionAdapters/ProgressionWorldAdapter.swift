@@ -62,7 +62,7 @@ public final class ProgressionWorldAdapter {
     public func perkRuntime(store worldState: WorldStateStore) -> PerkRuntime? {
         guard let store = game.worldData?.perkStore else { return nil }
         var runtime = PerkRuntime(
-            store: worldState, perks: store, conditionRegistry: .standard
+            store: worldState, perks: store, conditions: ConditionContext(functions: .standard)
         )
         runtime.liveConditions = { [weak game] references in
             game?.runtimeState.conditionContext(indexing: references) ?? ConditionContext()

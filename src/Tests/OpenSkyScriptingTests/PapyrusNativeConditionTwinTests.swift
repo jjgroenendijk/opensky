@@ -38,7 +38,7 @@ struct PapyrusNativeConditionTwinTests {
             pluginName: PapyrusWorldFixture.pluginName, masters: []
         )
         fixture.session.bridge.sessionNatives.conditionEvaluator = {
-            ConditionEvaluator(context: ConditionContext(), registry: registry)
+            ConditionEvaluator(context: ConditionContext().using(registry))
         }
         return fixture
     }

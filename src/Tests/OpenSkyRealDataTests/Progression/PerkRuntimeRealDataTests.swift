@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -26,7 +27,11 @@ struct PerkRuntimeRealDataTests {
     private static func runtime(root: GameDataRoot) -> (PerkRuntime, PerkStore) {
         let store = PerkStoreLoader.load(root: root)
         return (
-            PerkRuntime(store: WorldStateStore(), perks: store, conditionRegistry: .standard),
+            PerkRuntime(
+                store: WorldStateStore(),
+                perks: store,
+                conditions: ConditionContext(functions: .standard)
+            ),
             store
         )
     }
@@ -122,7 +127,7 @@ struct PerkRuntimeRealDataTests {
         var perks = PerkRuntime(
             store: store,
             perks: PerkStore(index: index, spells: spells),
-            conditionRegistry: .standard
+            conditions: ConditionContext(functions: .standard)
         )
         // The entry's spell tab asks `SpellHasCastingPerk`, which reads the spell
         // store the app's magic seam supplies.

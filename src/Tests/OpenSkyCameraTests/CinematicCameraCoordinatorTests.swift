@@ -14,16 +14,12 @@ import simd
 import Testing
 
 final class FakeCinematicWorld: CinematicCameraWorld {
-    var conditionFunctions: ConditionFunctionRegistry {
-        .standard
-    }
-
     var cameraPaths: CameraPathStore?
     var anchors: [ReferenceKey: CinematicAnchor] = [:]
     var playerPosition: SIMD3<Float>? = .zero
 
     func cameraConditionContext() -> ConditionContext {
-        ConditionContext()
+        ConditionContext(functions: .standard)
     }
 
     func cameraShotFacts(

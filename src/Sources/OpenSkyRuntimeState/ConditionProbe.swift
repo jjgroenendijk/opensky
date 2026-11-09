@@ -15,10 +15,9 @@ nonisolated public enum ConditionProbe: Sendable {
         of functionIndex: UInt16,
         parameter1: UInt32 = 0,
         parameter2: UInt32 = 0,
-        in context: ConditionContext,
-        registry: ConditionFunctionRegistry
+        in context: ConditionContext
     ) -> Result<Float, ConditionFailure> {
-        guard let function = registry[functionIndex] else {
+        guard let function = context.functions[functionIndex] else {
             return .failure(.unknownFunction(functionIndex))
         }
         var call = ConditionCall(
@@ -38,15 +37,13 @@ nonisolated public enum ConditionProbe: Sendable {
         of functionIndex: UInt16,
         parameter1: UInt32 = 0,
         parameter2: UInt32 = 0,
-        in context: ConditionContext,
-        registry: ConditionFunctionRegistry
+        in context: ConditionContext
     ) -> String {
         switch value(
             of: functionIndex,
             parameter1: parameter1,
             parameter2: parameter2,
-            in: context,
-            registry: registry
+            in: context
         ) {
         case let .success(value): RuntimeStateNumberText.text(value)
         case let .failure(failure): RuntimeStateConditionRunner.describe(failure)

@@ -146,8 +146,4 @@ extension RuntimeStateWorldAdapter {
     }
 }
 
-extension RuntimeStateWorldAdapter: RuntimeStateWorld {
-    public var conditionFunctions: ConditionFunctionRegistry {
-        .standard
-    }
-}
+extension RuntimeStateWorldAdapter: RuntimeStateWorld {}

@@ -87,7 +87,7 @@ struct CharacterLevelingRealDataTests {
         var runtime = PerkRuntime(
             store: WorldStateStore(),
             perks: perks,
-            conditionRegistry: .standard
+            conditions: ConditionContext(functions: .standard)
         )
         let validator = PerkTreeSpendValidator(
             runtime: runtime,

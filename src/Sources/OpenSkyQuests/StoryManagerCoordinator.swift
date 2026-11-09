@@ -14,7 +14,6 @@ public protocol StoryManagerWorld: AnyObject {
     /// Nil without game data.
     var questRuntime: QuestRuntime? { get }
     func conditionContext() -> ConditionContext
-    var conditionRegistry: ConditionFunctionRegistry { get }
     /// Starts quests with their scripts. Nil: the quest runtime starts them alone.
     var questStarter: (any QuestStarting)? { get }
 }
@@ -45,7 +44,6 @@ public final class StoryManagerCoordinator {
             quests: quests,
             story: story,
             context: world.conditionContext(),
-            registry: world.conditionRegistry,
             starter: world.questStarter
         )
     }

@@ -21,7 +21,11 @@ enum ProgressionCoordinatorFixture {
         let perkStore = PerkRuntimeFixture.perkStore(index: index)
         let perks = PerkCoordinator(
             world: world,
-            runtime: PerkRuntime(store: store, perks: perkStore, conditionRegistry: .empty),
+            runtime: PerkRuntime(
+                store: store,
+                perks: perkStore,
+                conditions: ConditionContext(functions: .empty)
+            ),
             baselines: nil,
             pluginName: PerkRuntimeFixture.pluginName
         )

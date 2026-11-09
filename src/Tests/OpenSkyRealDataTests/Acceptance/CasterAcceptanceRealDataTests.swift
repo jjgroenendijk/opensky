@@ -5,6 +5,7 @@
 
 import Foundation
 @testable import OpenSkyActors
+import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -123,7 +124,7 @@ struct CasterAcceptanceRealDataTests {
                 effects: ActiveEffectRuntime(
                     values: values,
                     effects: data.effects,
-                    conditionRegistry: .standard
+                    conditions: ConditionContext(functions: .standard)
                 )
             )
             spellbook = SpellbookRuntime(

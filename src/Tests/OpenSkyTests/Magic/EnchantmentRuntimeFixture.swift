@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSkyActors
+import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -330,7 +331,7 @@ extension EnchantmentRuntimeFixture {
             effects: ActiveEffectRuntime(
                 values: values,
                 effects: effects,
-                conditionRegistry: .magicTests
+                conditions: ConditionContext(functions: .magicTests)
             ),
             store: store,
             enchantments: enchantments,

@@ -23,7 +23,7 @@ struct ConditionAttackFunctionTests {
                 AttackKillResolution.Attack(attacker: subject, target: target, kills: kills)
             ])
         }
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: shouldAttackKill, 0, value, parameter1: parameter1
         ))

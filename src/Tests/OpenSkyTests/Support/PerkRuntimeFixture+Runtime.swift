@@ -2,6 +2,7 @@
 // spend. Needs Progression, Actors, and the whole-game condition registry.
 
 @testable public import OpenSkyActors
+import OpenSkyConditions
 public import OpenSkyFeaturesTesting
 @testable public import OpenSkyGameData
 @testable public import OpenSkyProgression
@@ -30,7 +31,7 @@ extension PerkRuntimeFixture {
             PerkRuntime(
                 store: worldState,
                 perks: perkStore(index: index()),
-                conditionRegistry: .standard
+                conditions: ConditionContext(functions: .standard)
             ),
             worldState
         )

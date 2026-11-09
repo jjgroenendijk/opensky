@@ -45,9 +45,7 @@ extension SceneRuntime {
                 context.target = nil
                 context.aliasQuest = entry.quest
                 context.formIDTranslation = entry.translation
-                let evaluator = ConditionEvaluator(
-                    context: context, registry: runtime.dialogue.registry, tally: ConditionTally()
-                )
+                let evaluator = ConditionEvaluator(context: context, tally: ConditionTally())
                 builtEvaluator = evaluator
                 return evaluator
             }

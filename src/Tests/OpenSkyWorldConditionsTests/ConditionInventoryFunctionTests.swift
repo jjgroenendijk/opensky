@@ -32,7 +32,7 @@ struct ConditionInventoryFunctionTests {
                 counts: [.player: [FormID(ingot): count]]
             )
         }
-        return ConditionEvaluator(context: context)
+        return ConditionEvaluator(context: context.using(.standard))
     }
 
     @Test func getItemCountReadsTheSubjectInventory() throws {
@@ -59,7 +59,7 @@ struct ConditionInventoryFunctionTests {
         )
         var context = ConditionContext(subject: chest)
         context.inventory = inventory
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
 
         #expect(try evaluator.evaluate(Self.holds(4)).isTrue)
         #expect(inventory.count(of: item, in: .player) == 0)
@@ -96,13 +96,13 @@ struct ConditionInventoryFunctionTests {
             operatorBits: 1, comparisonValue: Float(1).bitPattern, functionIndex: 659
         )
         var context = ConditionContext(subject: .player)
-        var unknown = ConditionEvaluator(context: context)
+        var unknown = ConditionEvaluator(context: context.using(.standard))
         #expect(unknown.evaluate(plainOnly).failures == [.unavailableData(.inventory)])
         context.tempering = TemperingConditionResolution(isEnchanted: false)
-        var plain = ConditionEvaluator(context: context)
+        var plain = ConditionEvaluator(context: context.using(.standard))
         #expect(plain.evaluate(plainOnly).isTrue)
         context.tempering = TemperingConditionResolution(isEnchanted: true)
-        var enchanted = ConditionEvaluator(context: context)
+        var enchanted = ConditionEvaluator(context: context.using(.standard))
         #expect(!enchanted.evaluate(plainOnly).isTrue)
         #expect(enchanted.functionName(of: plainOnly) == "EPTemperingItemIsEnchanted")
     }

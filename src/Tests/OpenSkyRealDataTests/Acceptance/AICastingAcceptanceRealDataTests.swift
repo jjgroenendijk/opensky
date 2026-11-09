@@ -6,6 +6,7 @@
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyCombat
+import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -57,7 +58,7 @@ struct AICastingAcceptanceRealDataTests {
             effects: ActiveEffectRuntime(
                 values: values,
                 effects: effects,
-                conditionRegistry: .standard
+                conditions: ConditionContext(functions: .standard)
             )
         )
         let baselines = ActorSpellBaselineResolver(

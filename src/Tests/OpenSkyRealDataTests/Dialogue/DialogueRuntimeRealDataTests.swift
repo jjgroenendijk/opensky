@@ -144,8 +144,7 @@ struct DialogueRuntimeRealDataTests {
             store: WorldStateStore(),
             dialogue: dialogue,
             questStates: QuestResolution(defaults: quests),
-            context: speaker.context(root: root, file: file),
-            registry: .standard
+            context: speaker.context(root: root, file: file).using(.standard)
         )
         runtime.randomPick = { _ in 0 }
         return World(dialogue: dialogue, runtime: runtime)

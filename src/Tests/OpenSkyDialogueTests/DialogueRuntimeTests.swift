@@ -56,8 +56,7 @@ struct DialogueRuntimeTests {
             store: WorldStateStore(),
             dialogue: DialogueRuntimeFixture.dialogueStore(),
             questStates: QuestResolution(defaults: quests),
-            context: DialogueRuntimeFixture.context(),
-            registry: .dialogueTests
+            context: DialogueRuntimeFixture.context().using(.dialogueTests)
         )
         let speaker = DialogueRuntimeFixture.speakerKey
         #expect((runtime.greeting(for: speaker) != nil) == speakerMatches)
@@ -301,11 +300,10 @@ final class RecordingDialogueDispatcher: DialogueFragmentDispatching {
             dialogue: DialogueRuntimeFixture.dialogueStore(),
             questStates: .empty,
             aliases: fixture.aliases,
-            registry: .dialogueTests,
             fragments: nil
         ) {
             builds += 1
-            return fixture
+            return fixture.using(.dialogueTests)
         }
         #expect(builds == 0)
         let speaker = DialogueRuntimeFixture.speakerKey
@@ -315,8 +313,7 @@ final class RecordingDialogueDispatcher: DialogueFragmentDispatching {
         let eager = try DialogueRuntime(
             store: WorldStateStore(),
             dialogue: DialogueRuntimeFixture.dialogueStore(),
-            context: fixture,
-            registry: .dialogueTests
+            context: fixture.using(.dialogueTests)
         )
         #expect(greeting == eager.greeting(for: speaker))
     }

@@ -31,7 +31,8 @@ struct QuestTargetConditionsRealDataTests {
             )
             return objective.targets.filter { target in
                 QuestTargetResolver.conditionsPass(
-                    target, quest: quest.formID, evaluator: ConditionEvaluator(context: context)
+                    target, quest: quest.formID,
+                    evaluator: ConditionEvaluator(context: context.using(.standard))
                 ) { _ in nil }
             }.map(\.aliasID)
         }

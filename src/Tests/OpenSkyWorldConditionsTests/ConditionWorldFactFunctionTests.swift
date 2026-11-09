@@ -32,7 +32,7 @@ struct ConditionWorldFactFunctionTests {
             parameter1: parameter1, parameter2: parameter2
         )
         condition.parameter2Name = parameter2Name
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return evaluator.evaluate(condition)
     }
 
