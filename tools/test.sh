@@ -20,7 +20,7 @@ cd "$root"
 # One -only-testing per entry of T. An entry that names no OpenSky*Tests target
 # resolves under the plan's own bundle.
 selectors() {
-    printf '%s' "${T:-}" | tr ',' '\n' | while read -r selector; do
+    printf '%s\n' "${T:-}" | tr ',' '\n' | while read -r selector; do
         [ -n "$selector" ] || continue
         case "$selector" in OpenSky*Tests | OpenSky*Tests/*) ;; *) selector="$1/$selector" ;; esac
         printf -- '-only-testing:%s\n' "$selector"
