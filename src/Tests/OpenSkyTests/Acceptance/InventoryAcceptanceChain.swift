@@ -15,7 +15,8 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyWorldState
 import simd
 
-/// The engine objects the gate drives, wired the way `WorldSessionWiring.buildWorldItems` wires
+/// The engine objects the gate drives, wired the way `GameSessionScopeFactories.makeInventory`
+/// wires
 /// them: one store, one inventory runtime over the fixture baselines, one world
 /// item runtime over a fixture reference index, and one equipment runtime.
 @MainActor

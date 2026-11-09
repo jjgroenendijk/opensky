@@ -20,7 +20,6 @@ extension CellResetCoordinator: CellResetPort {}
 extension CellStreamer: @MainActor CellStreamerPort {}
 extension GameSession: GameSessionPort {}
 extension LoadPhaseRecorder: LoadPhaseRecorderPort {}
-extension LocalizedLabels: LocalizedLabelsPort {}
 extension SteppedWallClock: SteppedWallClockPort {}
 extension WorldAudioFootstepDirector: WorldAudioFootstepDirectorPort {}
 extension WorldAudioSoundDirector: WorldAudioSoundDirectorPort {}

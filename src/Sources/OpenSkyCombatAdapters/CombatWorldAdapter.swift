@@ -39,7 +39,6 @@ public protocol CombatWorldHost: AnyObject {
     var combat: any CombatPort { get }
     var mapWorld: any MapWorldPort { get }
     var player: any PlayerPort { get }
-    var playerSettingsStore: PlayerSettingsStore { get }
     var renderer: (any RendererPort)? { get }
     var animationClips: ActorClipLoader? { get }
     var worldData: WorldDataStores? { get }

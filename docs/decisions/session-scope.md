@@ -175,15 +175,23 @@ order. Examples:
 | A task-local environment or a service locator (`swift-dependencies`, Godot autoloads, singletons) | Dependencies are hidden in the body, not the signature. A default value hides a missing dependency |
 | Coordinators read stores from one shared `WorldDataStores` port on demand | Every read can fail, so every method keeps the missing-data branch. It moves the late setter into a lookup |
 
-## What is left
+## Two stages
 
-Every coordinator takes its session data in the initializer. The app builds the streamer
-first, over the loaded world, and the scope takes it in its initializer, so every adapter reads
-a streamer that exists. One part of the start still runs after the scope is built:
+The app builds a session in two stages. The first stage is a `SessionStage`: the loaded world,
+the streamer over it, and the frame session. The scope takes it in its initializer, so every
+adapter reads a streamer that exists. In the second stage the scope builds every adapter and
+coordinator over the stage, once. An adapter built with a stage registers its frame steps and
+session events in its initializer; without one, as in a test, it registers nothing. The phase
+enums order the steps and events, so the build order does not matter.
 
-- Session start replaces the inventory, magic, effects, and Papyrus coordinators with ones
-  built over the streamer and the frame session, instead of the scope building them once.
-  `WorldSessionWiring` builds them, so they stay in the session scope's files.
+An adapter's initializer reads only the stage and its own state. It reads a coordinator only
+inside a registered closure, because the coordinator's initializer takes the adapter as its
+world, and an eager read would build the adapter again. Work that must run once at start, such
+as the quest scripts and the start-game-enabled quests, runs in `GameSessionScope.start()`.
+
+`GameWindowRegistry` in the app shell knows the game window and the game it runs. Agent
+control asks it for the current game, and it hands each new session and its window to the
+benchmark host, so the two never disagree when a window opens, swaps its game, or closes.
 
 The `Papyrus` bridge's native families stay as they are. Each family is a value with optional
 closures, and a missing family answers nothing on purpose, so a native refuses instead of
@@ -214,12 +222,15 @@ SwiftLint runs these rules in `make check` and CI (`tools/lint/.swiftlint.yml`):
   Live input, such as the player's subtitle switches, arrives through a method, such as
   `SubtitleCoordinator.apply(_:)`.
 - `coordinator_outside_session_scope` fails a coordinator initializer call in the app outside
-  the `GameSessionScope` and `WorldSessionWiring` files. The app shell and the launcher build
+  the `GameSessionScope` files. The app shell and the launcher build
   the app-scope coordinators, so they are excluded too. A package module may still build its
   own part, such as the inventory's lock coordinator.
 
 A coordinator sends an event through its world port, not an `on...` closure, such as
 `ActorGraphWorld.actorGraphFired(_:from:)`. The adapter that answers the port forwards it.
+
+- `connection_step_type` fails a type whose name ends in `Wiring`: an adapter registers as
+  it is built, so no connection step runs after the build.
 
 Two more checks keep the design:
 

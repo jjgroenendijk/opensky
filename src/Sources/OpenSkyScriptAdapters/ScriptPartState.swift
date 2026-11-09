@@ -4,6 +4,7 @@
 public import OpenSkyAIPackages
 public import OpenSkyFormatsCore
 public import OpenSkyGameData
+import OpenSkyScripting
 public import OpenSkyWeather
 
 public final class ScriptPartState {
@@ -19,6 +20,8 @@ public final class ScriptPartState {
     public var pathWaitAnswers: [UInt64: Bool] = [:]
     /// The session's weather. The composition root sets it, so the host stays port-only.
     public var weather: () -> WeatherSystem? = { nil }
+    /// The bridge `makeBridge` built; the script port shows it only as a port.
+    weak var bridge: PapyrusWorldStateBridge?
 
     public init() {}
 }

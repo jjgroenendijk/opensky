@@ -33,7 +33,6 @@ public protocol ActorGraphWorldHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var idleWorld: any IdleWorldPort { get }
     var objectAnimationWorld: any ObjectAnimationWorldPort { get }
-    var playerSettingsStore: PlayerSettingsStore { get }
     var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }
 }
@@ -46,7 +45,7 @@ public final class ActorGraphWorldAdapter {
 
     public let state = ActorGraphPartState()
 
-    static let settings: Set<PlayerSettingID> = [
+    public static let settings: Set<PlayerSettingID> = [
         .actorGraphs, .actorGraphFullRateDistance, .actorGraphDistance
     ]
 

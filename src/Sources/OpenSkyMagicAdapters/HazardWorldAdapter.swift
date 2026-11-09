@@ -46,11 +46,25 @@ public final class HazardWorldAdapter {
     public static let longestStep: Float = 0.25
 
     private let dependencies: HazardWorldDependencies
-    public internal(set) var store: HazardStore?
+    public private(set) var store: HazardStore?
     var lastFrame: Date?
 
     public init(_ dependencies: HazardWorldDependencies) {
         self.dependencies = dependencies
+    }
+
+    /// Without a stage, as in a test, it registers nothing.
+    public convenience init(_ dependencies: HazardWorldDependencies, stage: SessionStage?) {
+        self.init(dependencies)
+        guard let stage else { return }
+        store = stage.data.lockTrapData.hazards
+        stage.streamer.cellHazards.register(.hazards) { [weak self] event in
+            self?.load(event)
+        }
+        let gameSession = stage.gameSession
+        gameSession.frameSteps.register(.hazards) { [weak self, weak gameSession] _ in
+            self?.tick(paused: gameSession?.worldSimPaused ?? true)
+        }
     }
 
     public var hazards: HazardCoordinator {

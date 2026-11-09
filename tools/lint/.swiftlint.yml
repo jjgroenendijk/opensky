@@ -148,6 +148,13 @@ custom_rules:
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Take the dependency in the initializer; no wire or install method (docs/decisions/session-scope.md)"
     severity: error
+  connection_step_type:
+    name: "Connection step type"
+    regex: '^[ \t]*(@\w+(\([^)]*\))?\s+)*((public|package|internal|final|nonisolated)\s+)*(struct|class|enum|actor)\s+\w*Wiring\b'
+    included: 'src/Sources/OpenSky([A-Z][A-Za-z]*)?/.*\.swift$'
+    excluded_match_kinds: [comment, doccomment, doccomment.field, string]
+    message: "An adapter registers as it is built over the session stage; no connection step type (docs/decisions/session-scope.md)"
+    severity: error
   # A value type in a coordinator file trips this too: move it to its own file.
   late_setter_property:
     name: "Late setter property"
@@ -160,7 +167,7 @@ custom_rules:
     name: "Coordinator outside the session scope"
     regex: '\b[A-Z]\w*Coordinator\s*\('
     included: 'src/Sources/OpenSky/.*\.swift$'
-    excluded: 'src/Sources/OpenSky/(Shell/.*|Launcher/.*|GameView/(GameSessionScope|WorldSessionWiring)[^/]*)\.swift$'
+    excluded: 'src/Sources/OpenSky/(Shell/.*|Launcher/.*|GameView/GameSessionScope[^/]*)\.swift$'
     excluded_match_kinds: [comment, doccomment, doccomment.field, string]
     message: "Only the session scope builds a game coordinator; the app shell builds app-scope ones (docs/decisions/session-scope.md)"
     severity: error

@@ -6,7 +6,7 @@ import OpenSkyCrimeInterface
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -27,7 +27,6 @@ public protocol AISeatingHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var idleWorld: any IdleWorldPort { get }
     var magicWorld: any MagicWorldPort { get }
-    var playerSettingsStore: PlayerSettingsStore { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
     var vehicleWorld: any VehicleWorldPort { get }

@@ -1,3 +1,4 @@
+public import OpenSkyCells
 public import OpenSkyFormatsMesh
 public import OpenSkyGameData
 import OpenSkyRendering
@@ -11,6 +12,8 @@ public final class LoadingScreenPartState {
     public var movieText: String?
     public var movieFadedOut = false
     public var cameraPaths: AssetLoader<String, NIFCameraTrack>?
+    /// The app sees that a cell scene is a `CellScenePort`; the menu adapters do not.
+    public var bringFollowers: ((CellScene) -> Void)?
 
     public init() {}
 }

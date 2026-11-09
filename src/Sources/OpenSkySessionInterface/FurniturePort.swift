@@ -7,7 +7,6 @@ public protocol FurniturePort: AnyObject {
     func advance()
     var exits: [ReferenceKey: FurnitureOccupancy] { get }
     @discardableResult func greet(_ actor: ReferenceKey) -> Bool
-    var isEnabled: Bool { get set }
     func isInUse(_ furniture: ReferenceKey, marker: Int?, ignoringReserved: Bool) -> Bool
     func isLeavingSeat(_ actor: ReferenceKey) -> Bool
     var ledger: FurnitureSeatLedger { get }

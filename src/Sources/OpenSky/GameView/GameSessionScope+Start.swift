@@ -8,6 +8,7 @@ import OpenSkyAgentAdapters
 import OpenSkyAudio
 import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatAdapters
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -32,48 +33,23 @@ import OpenSkyWorldState
 import simd
 
 extension GameSessionScope {
-    /// Wires every system to the frame session and opens what the launcher asked for.
+    /// Starts what the built session runs at once, then opens what the launcher asked for.
     func start() {
-        guard let gameSession, let worldData, let cellRunner else { return }
+        guard let stage else { return }
         effects.applyGraphicsSettings(playerSettings.store)
         hud.start()
-        controllerRumble.settings = ShoutRumbleSettings.resolve(store: worldData.gameSettings)
+        controllerRumble.settings = ShoutRumbleSettings.resolve(store: stage.data.gameSettings)
         controllerRumble.isEnabled = { [store = playerSettings.store] in store.bool(.vibration) }
-        _ = MenuRouterWiring(menuRouter, gameSession: gameSession)
-        _ = BenchmarkWiring(benchmarkWorld, gameSession: gameSession)
-        wireMenuMode(gameSession: gameSession)
-        _ = WorldSessionWiring(
-            game: self,
-            session: CellSession(runner: cellRunner, data: worldData),
-            gameSession: gameSession
-        )
-        gameSession.worldTick.register(.survivalMode) { [weak self] _ in
-            self?.survivalMode.tick()
+        stage.gameSession.locomotion.waterPushRace = effectsWorld.waterPushRace(of: .player)
+        messages.reloadHelpRecords()
+        player.requestBody()
+        if scripts.bridge != nil {
+            scripts.startQuestScripts()
         }
-        // After streaming, so the HUD reads the streamer's update of this frame.
-        gameSession.frameSteps.register(.hud) { [weak self] _ in
-            guard let self else { return }
-            // Before the HUD draws, so a skill notice from this frame shows now.
-            progressionWorld.training.run(progression.takeCommands())
-            updateQuestNotices()
-            hud.updatePlayerModes(hudModeInputs(gameSession))
-            hud.setActivateLocked(playerControlLocks.disabled.contains(.activate))
-            hud.updateFrame()
-        }
+        storyWorld.runSessionStartLists()
         // The engine reads the world's sound records once, so it starts after they load.
         audio.audioEnabled = playerSettings.store.bool(.audioEnabled)
         openLaunchChoice()
-    }
-
-    /// The player states the HUD movie has a mode for.
-    private func hudModeInputs(_ gameSession: GameSession) -> HUDModeInputs {
-        HUDModeInputs(
-            movementDisabled: scripts.bridge?.isPlayerMovementEnabled == false,
-            sneaking: player.isSneaking,
-            swimming: gameSession.walkController.isSwimming,
-            ridingHorse: mounts.drive?.kind == .horse,
-            weaponDrawn: combat.isWeaponDrawn
-        )
     }
 
     /// After the world data, because the title's logo loads through it.
@@ -98,24 +74,6 @@ extension GameSessionScope {
             return
         }
         movieWorld.playStartupLogo { [weak self] in self?.titleMenu.open() }
-    }
-
-    /// Menu mode drives the renderer's world-sim pause and clears held world
-    /// input on entry, so no key sticks while the menu owns input.
-    private func wireMenuMode(gameSession: GameSession) {
-        let input = cameraInput
-        menuMode.onModeChange = { [weak self, weak gameSession, weak input] route, paused in
-            gameSession?.worldSimPaused = paused
-            if let self {
-                (hostView as? GameMetalView)?
-                    .setMenuCursorFree(menuRouter.menuCursorFree(for: route))
-            }
-            // Released on the route flip, not the pause: the dialogue menu
-            // captures input without stopping the world.
-            if route == .menu {
-                input?.releaseAll()
-            }
-        }
     }
 
     /// The playback drawing one resident actor, matched by its ACHR.
@@ -237,7 +195,7 @@ extension GameSessionScope {
 
 extension GameSessionScope: RenderControlWorld {
     var playerSettingsStore: PlayerSettingsStore {
-        playerSettings.store
+        services.playerSettingsStore
     }
 
     func refocusGameView() {

@@ -1,6 +1,6 @@
 // Take, drop, and container tests on a real `WorldStateStore` and
 // `InventoryRuntime`, with `FakeWorldReferences` in place of `CellStreamer`.
-// `WorldSessionWiring.buildWorldItems` builds the same object the app uses.
+// `GameSessionScopeFactories.makeInventory` builds the same object the app uses.
 
 import Foundation
 import OpenSkyFeaturesTesting

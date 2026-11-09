@@ -74,14 +74,12 @@ public protocol PapyrusWorldStateBridgePort: AnyObject, DialogueFragmentDispatch
     ) -> Bool
     func scriptedState(of key: ReferenceKey) -> ScriptedReferenceState
     func scriptedStateResolution() -> ScriptedStateConditionResolution
-    var sessionNatives: PapyrusSessionNatives { get set }
     @discardableResult func setQuestStage(_ stage: UInt16, for key: ReferenceKey) throws -> Bool
     var silentDeath: ReferenceKey? { get }
     func spawnReference(of base: ReferenceKey, at anchor: ReferenceKey) -> ReferenceKey?
     @discardableResult func startActorCombat(_ key: ReferenceKey, target: ReferenceKey) -> Bool
     @discardableResult func stopActorCombat(_ key: ReferenceKey) -> Bool
     func stopQuest(for key: ReferenceKey) throws
-    var storyNatives: PapyrusStoryNatives { get set }
     func updateScriptedState(of key: ReferenceKey, _ change: (inout ScriptedReferenceState) -> Void)
     @discardableResult func write(_ component: WorldStateComponentValue, for key: ReferenceKey)
         -> Bool

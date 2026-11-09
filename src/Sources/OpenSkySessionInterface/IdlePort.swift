@@ -41,7 +41,6 @@ public protocol IdlePort: AnyObject {
     func idleSnapshot(for actor: ReferenceKey?) -> IdleControlSnapshot
 
     func advance()
-    func drainLoads()
 }
 
 /// The default arguments a protocol requirement cannot carry.
