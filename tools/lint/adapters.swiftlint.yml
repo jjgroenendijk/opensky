@@ -3,7 +3,18 @@
 only_rules:
   - cyclomatic_complexity
   - no_magic_numbers
+  - custom_rules
 cyclomatic_complexity:
   warning: 6
   error: 7
   ignores_case_statements: true
+# Rule 9: a part of a split adapter holds its own host, not an unowned reference back to its
+# owner. The adapter modules in `excluded` are not converted yet.
+custom_rules:
+  adapter_unowned_reference:
+    name: Adapter unowned reference
+    regex: '\bunowned\b'
+    excluded_match_kinds: [comment, comment.mark, comment.url, doccomment, doccomment.field, string]
+    message: "An adapter holds its host strongly and no reference to its owner (docs/decisions/ports-and-adapters.md, rule 9)"
+    severity: error
+    excluded: 'Sources/OpenSky(AI|Actor|Agent|Combat|Inventory|Magic|Menu|Script|Session|Story)Adapters/'

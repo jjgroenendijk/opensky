@@ -51,6 +51,16 @@ RENDERER_DEPS = {
 EXTERNAL = {"HeapModule", "DequeModule", "ArgumentParser"}
 # Rule 8. Shared by the app and OpenSkyCLI; may depend on anything.
 COMPOSITION = {"OpenSkyPreview", "OpenSkySession"}
+# Rule 14. An adapter module depends on lower modules, interfaces, domains, and its own
+# feature's implementation, never on another feature's implementation. ADAPTER_OWNER names that
+# feature for each module that follows the rule; the modules in ADAPTERS_PENDING do not yet.
+ADAPTER_OWNER = {"OpenSkyProgressionAdapters": "OpenSkyProgression"}
+ADAPTERS_PENDING = {
+    "OpenSkyAIAdapters", "OpenSkyActorAdapters", "OpenSkyAgentAdapters",
+    "OpenSkyCombatAdapters", "OpenSkyInventoryAdapters", "OpenSkyMagicAdapters",
+    "OpenSkyMenuAdapters", "OpenSkyScriptAdapters", "OpenSkySessionAdapters",
+    "OpenSkyStoryAdapters",
+}
 # Rule 6. A feature without one of its targets, and why.
 MISSING = {
 }
@@ -129,6 +139,29 @@ for name in sorted(names):
                 failures.append(f"rule 5: {name} depends on the implementation {dep}")
             if dep in fixtures and dep != own + "Fixtures":
                 failures.append(f"rule 5: {name} depends on {dep}, another feature's fixtures")
+
+
+
+def adapter_failures(name, found, kinds):
+    """Rule 14 for one adapter module: found are its dependencies, kinds maps each to its kind."""
+    own = ADAPTER_OWNER.get(name)
+    return [f"rule 14: adapter module {name} depends on the implementation {dep}; "
+            f"use {dep}Interface" for dep in found
+            if dep != own and kinds(dep) == "feature"]
+
+
+probe_kinds = {"OpenSkyProgression": "feature", "OpenSkyCombat": "feature",
+               "OpenSkyCells": "domain", "OpenSkyCombatInterface": "interface"}
+if len(adapter_failures("OpenSkyProgressionAdapters", list(probe_kinds), probe_kinds.get)) != 1:
+    failures.append("rule 14 self-check: an adapter module depending on another feature passed")
+for name in sorted(n for n in names if n.endswith("Adapters")):
+    if name in ADAPTERS_PENDING:
+        if not adapter_failures(name, deps[name], kind):
+            failures.append(f"rule 14: {name} follows the rule; drop it from ADAPTERS_PENDING")
+    elif name not in ADAPTER_OWNER:
+        failures.append(f"rule 14: adapter module {name} names no own feature in ADAPTER_OWNER")
+    else:
+        failures += adapter_failures(name, deps[name], kind)
 
 for dep in sorted(set(deps.get(RENDERER, [])) - RENDERER_DEPS):
     failures.append(f"rule 10: the renderer depends on {dep}; pass its state in RenderFrameInput")

@@ -3,24 +3,16 @@
 // The rules live in the coordinators (docs/engine/coordinators.md).
 
 import Foundation
-import OpenSkyActors
 public import OpenSkyCells
-import OpenSkyCombat
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyPlayer
 public import OpenSkyProgression
 public import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyRuntimeState
-import OpenSkyScripting
 public import OpenSkySessionInterface
-import OpenSkyWorld
 import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 public import OpenSkyWorldState
@@ -42,7 +34,7 @@ public protocol ProgressionWorldHost: AnyObject {
 
 /// Answers `PerkWorld` and `ProgressionWorld` from the session systems `game` owns.
 public final class ProgressionWorldAdapter {
-    public unowned let game: any ProgressionWorldHost
+    public let game: any ProgressionWorldHost
 
     public let trainingHost: any ProgressionTrainingHost
     public let effectsHost: any ProgressionEffectsHost

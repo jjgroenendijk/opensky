@@ -20,8 +20,9 @@ the session scope builds each adapter with it (`/decisions/session-scope.md`).
 `tools/lint/module-graph.sh` checks rule 7 as its rule 13 (`/decisions/modular-architecture.md`).
 `tools/lint-index/adapter-references.py` checks rule 8 in `make lint-index` and the `Index checks`
 CI job on each pull request, because it reads the index store that a build writes.
-`tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks rule
-5 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI run both.
+`tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks rules
+5 and 9 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). Rule 9 skips the adapter modules its
+`excluded` pattern names, which are not converted yet. `make lint`, `make check`, and CI run both.
 Each reads every adapter or app file, so `OPENSKY_CHECK_ALL=1` changes nothing for them. Each first
 runs its rules on a small synthetic violation, which must fail.
 
@@ -37,6 +38,7 @@ runs its rules on a small synthetic violation, which must fail.
 | 6 | The late-setter, late-attached-world, and pure-core lints cover the app and the adapters | A dependency set after the initializer can be missing when the object is first used |
 | 7 | A module depends only on a module at least as stable, or on an interface | A change in an unstable module then cannot force changes in the stable modules below it |
 | 8 | No adapter uses the type of an adapter outside its own family | Two adapters that know each other change together, and neither can be built in a test alone |
+| 9 | An adapter module holds no `unowned` reference: an adapter and each part hold their host strongly | An `unowned` reference crashes when its owner goes first, and a part that reaches back into its owner cannot be built alone |
 
 A port is a protocol from an interface module or a foundation module, or a class from a data
 layer, such as `WorldDataStores`. A value type is a struct, an enum, a type alias, or a type of
@@ -62,8 +64,9 @@ row in `/engine/unverified-values.md`.
 ## Splitting a large adapter
 
 An adapter whose host passes 12 members is split into smaller adapters. Each smaller adapter
-is a struct with its own host. It holds an `unowned` reference to the owner only when it calls
-back into it. Example:
+is a struct with its own host, held strongly. The host is `SessionPorts`, which holds the scope
+`unowned`, so the strong reference makes no cycle. A part holds no reference to its owner. Until
+an adapter module is converted (rule 9), its parts may still hold one. Example:
 `CombatWorldAdapter` keeps its frame wiring and owns `CombatGearAdapter`,
 `CombatOutcomesAdapter`, and `CombatReportsAdapter`.
 
@@ -77,7 +80,8 @@ struct has no identity to hold.
 The adapters live in eleven modules, one per feature group, such as `OpenSkyMagicAdapters` and
 `OpenSkyStoryAdapters`. `src/Package.swift` declares them with the `composition` helper:
 
-- They may import feature implementations, because an adapter connects them.
+- They may import their own feature's implementation, and other features only through their
+  Interfaces (`module-graph.sh` rule 14).
 - No other package module may import them. Only the app and `openskycli` link them.
 - `module-graph.sh` treats every module whose name ends in `Adapters` as composition.
 

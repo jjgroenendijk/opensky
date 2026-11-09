@@ -5,7 +5,6 @@
 import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyMagicInterface
 
 nonisolated public enum ActiveEffectPerks: Sendable {
     /// A link no loaded plugin resolves applies nothing.
