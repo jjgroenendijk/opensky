@@ -1,28 +1,21 @@
 import Foundation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAudio
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyEffects
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -47,7 +40,7 @@ public protocol AgentRenderHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentRenderAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentRenderHost
 }
 
@@ -58,7 +51,7 @@ extension AgentRenderAdapter {
 
     /// Applies `pairs` over a copy of the saved settings, so nothing is written to disk.
     private func applySettings(_ pairs: [String]) throws(AgentFailure) -> AgentJSON {
-        guard let session = game.gameSession else { throw owner.notReady() }
+        guard let session = game.gameSession else { throw hub.notReady() }
         let saved = game.playerSettings.store
         var overrides: [PlayerSettingID: Double] = [:]
         for pair in pairs {
@@ -98,7 +91,7 @@ extension AgentRenderAdapter {
         case .skipBink:
             [
                 "skipped": .bool(game.movies.skip(force: true)),
-                "bink": owner.screens.binkState
+                "bink": hub.screens.binkState
             ]
         case let .titles(step): try driveTitles(step)
         case let .loadScreen(editorID): try forceLoadScreen(editorID)
@@ -126,7 +119,7 @@ extension AgentRenderAdapter {
     }
 
     private func setOverlay(_ name: String, enabled: Bool) throws(AgentFailure) -> AgentJSON {
-        guard let renderer = game.renderer else { throw owner.notReady() }
+        guard let renderer = game.renderer else { throw hub.notReady() }
         switch name.lowercased() {
         case "navmesh": renderer.navmeshOverlayEnabled = enabled
         case "path": renderer.pathOverlayEnabled = enabled
@@ -145,7 +138,7 @@ extension AgentRenderAdapter {
     }
 
     private func setChannel(_ name: String) throws(AgentFailure) -> AgentJSON {
-        guard let renderer = game.renderer else { throw owner.notReady() }
+        guard let renderer = game.renderer else { throw hub.notReady() }
         let modes = RenderDebugMode.allCases
         guard let mode = modes.first(where: { "\($0)".lowercased() == name.lowercased() }) else {
             let known = modes.map { "\($0)".lowercased() }.joined(separator: ", ")
@@ -157,34 +150,34 @@ extension AgentRenderAdapter {
 
     /// Goes through the script hook, so the reply shows what a script's fade does.
     private func fade(_ request: AgentFadeRequest) throws(AgentFailure) -> AgentJSON {
-        guard let fade = game.scripts.bridge?.gameNatives.fade else { throw owner.notReady() }
+        guard let fade = game.scripts.bridge?.gameNatives.fade else { throw hub.notReady() }
         fade(PapyrusFade(
             fadingOut: request.fadingOut, black: request.black,
             secondsBeforeFade: request.delay, duration: request.duration
         ))
-        return ["screenFade": owner.frameReadout.screenFadeState()]
+        return ["screenFade": hub.frameReadout.screenFadeState()]
     }
 
     private func playBink(_ request: MovieRequest) throws(AgentFailure) -> AgentJSON {
         guard game.movies.play(request, onEnd: { _ in }) else {
             throw AgentFailure(.invalidArgument, "a movie plays already, or no game files")
         }
-        return ["bink": owner.screens.binkState]
+        return ["bink": hub.screens.binkState]
     }
 
     /// Goes through the script hooks, as `fade` does.
     private func driveTitles(_ step: String) throws(AgentFailure) -> AgentJSON {
-        guard let natives = game.scripts.bridge?.gameNatives else { throw owner.notReady() }
+        guard let natives = game.scripts.bridge?.gameNatives else { throw hub.notReady() }
         switch step.lowercased() {
         case "show": natives.showTitleSequenceMenu?(true)
         case "hide": natives.showTitleSequenceMenu?(false)
         default:
-            guard TitleSequenceMovieBridge.clipPath(for: step) != nil else {
+            guard TitleSequenceClip.path(for: step) != nil else {
                 throw AgentFailure(.invalidArgument, "step must be show, hide, or Sequence1 to 4")
             }
             natives.startTitleSequence?(step)
         }
-        return ["titles": owner.screens.titlesState]
+        return ["titles": hub.screens.titlesState]
     }
 
     /// The screen holds until a call with no ID, which starts its fade.
@@ -192,23 +185,23 @@ extension AgentRenderAdapter {
         let now = Date().timeIntervalSinceReferenceDate
         guard let editorID else {
             game.loadingScreens.releaseForced(at: now)
-            return ["loading": owner.screens.loadingState]
+            return ["loading": hub.screens.loadingState]
         }
         guard game.loadingScreens.force(editorID: editorID, at: now) else {
             throw AgentFailure(.notFound, "no loading screen \(editorID)")
         }
-        return ["loading": owner.screens.loadingState]
+        return ["loading": hub.screens.loadingState]
     }
 
     /// Goes through the script hook, as `fade` does.
     private func setCartMode(_ enabled: Bool) throws(AgentFailure) -> AgentJSON {
-        guard let menus = game.scripts.bridge?.menus else { throw owner.notReady() }
+        guard let menus = game.scripts.bridge?.menus else { throw hub.notReady() }
         menus.setHUDCartMode(enabled)
-        return ["hud": owner.screens.hudState]
+        return ["hud": hub.screens.hudState]
     }
 
     private func setShadowQuality(_ name: String) throws(AgentFailure) -> AgentJSON {
-        guard let renderer = game.renderer else { throw owner.notReady() }
+        guard let renderer = game.renderer else { throw hub.notReady() }
         guard let quality = ShadowQuality(rawValue: name.lowercased()) else {
             let known = ShadowQuality.allCases.map(\.rawValue).joined(separator: ", ")
             throw AgentFailure(

@@ -14,7 +14,6 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkySession
 import OpenSkySessionInterface
 import OpenSkyWeather
 public import OpenSkyWorld

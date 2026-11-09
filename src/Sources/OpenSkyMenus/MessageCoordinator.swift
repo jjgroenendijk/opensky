@@ -37,7 +37,7 @@ extension MessageWorld {
 }
 
 public final class MessageCoordinator {
-    public static let identifier: MenuIdentifier = "MessageBoxMenu"
+    public static let identifier = MenuIdentifier.messageBoxMenu
 
     public private(set) var notifications = NotificationQueue()
     public private(set) var help = HelpMessageLedger()

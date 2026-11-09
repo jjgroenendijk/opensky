@@ -4,30 +4,29 @@
 import Foundation
 import MetalKit
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyDialogue
+import OpenSkyCombatInterface
+import OpenSkyDialogueInterface
 import OpenSkyEffects
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
+import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyPerception
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -49,152 +48,105 @@ public protocol AgentWorldHost: AnyObject {
 }
 
 public final class AgentWorldAdapter {
-    public unowned let game: any AgentWorldHost
+    public let hub: AgentHub
+    public var game: any AgentWorldHost {
+        hub.game
+    }
+
     /// Set by the session scope, because quitting is the app shell's work.
     public var terminateApp: () -> Void = {}
-    /// The diff state behind the game events.
-    public var tap = AgentEventTapState()
     private var quitScheduled = false
 
     public static let maximumTimeScale = 16.0
     /// How long a quit waits, so the reply leaves the socket before the app exits.
     private static let replyDrainSeconds = 0.2
 
-    public let renderHost: any AgentRenderHost
-    public let actorsHost: any AgentActorsHost
-    public let motionHost: any AgentMotionHost
-    public let behaviourHost: any AgentBehaviourHost
-    public let objectsHost: any AgentObjectsHost
-    public let menuReadoutHost: any AgentMenuReadoutHost
-    public let screensHost: any AgentScreensHost
-    public let eventsHost: any AgentEventsHost
-    public let playerReadoutHost: any AgentPlayerReadoutHost
-    public let frameReadoutHost: any AgentFrameReadoutHost
-    public let actorReadoutHost: any AgentActorReadoutHost
-    public let itemsHost: any AgentItemsHost
-    public let viewHost: any AgentViewHost
-    public let inputHost: any AgentInputHost
-    public let captureHost: any AgentCaptureHost
-
-    public var render: AgentRenderAdapter {
-        AgentRenderAdapter(owner: self, game: renderHost)
-    }
-
-    public var actors: AgentActorsAdapter {
-        AgentActorsAdapter(owner: self, game: actorsHost)
-    }
-
-    public var motion: AgentMotionAdapter {
-        AgentMotionAdapter(owner: self, game: motionHost)
-    }
-
-    public var behaviour: AgentBehaviourAdapter {
-        AgentBehaviourAdapter(owner: self, game: behaviourHost)
-    }
-
-    public var objects: AgentObjectsAdapter {
-        AgentObjectsAdapter(owner: self, game: objectsHost)
-    }
-
-    public var menuReadout: AgentMenuReadoutAdapter {
-        AgentMenuReadoutAdapter(
-            owner: self,
-            game: menuReadoutHost
-        )
-    }
-
-    public var screens: AgentScreensAdapter {
-        AgentScreensAdapter(owner: self, game: screensHost)
-    }
-
-    public var events: AgentEventsAdapter {
-        AgentEventsAdapter(owner: self, game: eventsHost)
-    }
-
-    public var playerReadout: AgentPlayerReadoutAdapter {
-        AgentPlayerReadoutAdapter(
-            owner: self,
-            game: playerReadoutHost
-        )
-    }
-
-    public var frameReadout: AgentFrameReadoutAdapter {
-        AgentFrameReadoutAdapter(
-            owner: self,
-            game: frameReadoutHost
-        )
-    }
-
-    public var actorReadout: AgentActorReadoutAdapter {
-        AgentActorReadoutAdapter(
-            owner: self,
-            game: actorReadoutHost
-        )
-    }
-
-    public var items: AgentItemsAdapter {
-        AgentItemsAdapter(owner: self, game: itemsHost)
-    }
-
-    public var view: AgentViewAdapter {
-        AgentViewAdapter(owner: self, game: viewHost)
-    }
-
-    public var input: AgentInputAdapter {
-        AgentInputAdapter(owner: self, game: inputHost)
-    }
-
-    public var capture: AgentCaptureAdapter {
-        AgentCaptureAdapter(owner: self, game: captureHost)
-    }
-
     public init(game: some AgentWorldHost & AgentRenderHost & AgentActorsHost & AgentMotionHost &
         AgentBehaviourHost & AgentObjectsHost & AgentMenuReadoutHost & AgentScreensHost &
         AgentEventsHost & AgentPlayerReadoutHost & AgentFrameReadoutHost & AgentActorReadoutHost &
         AgentItemsHost & AgentViewHost & AgentInputHost & AgentCaptureHost)
     {
-        renderHost = game
-        actorsHost = game
-        motionHost = game
-        behaviourHost = game
-        objectsHost = game
-        menuReadoutHost = game
-        screensHost = game
-        eventsHost = game
-        playerReadoutHost = game
-        frameReadoutHost = game
-        actorReadoutHost = game
-        itemsHost = game
-        viewHost = game
-        inputHost = game
-        captureHost = game
-        self.game = game
+        hub = AgentHub(game: game)
+    }
+
+    public var render: AgentRenderAdapter {
+        hub.render
+    }
+
+    public var actors: AgentActorsAdapter {
+        hub.actors
+    }
+
+    public var motion: AgentMotionAdapter {
+        hub.motion
+    }
+
+    public var behaviour: AgentBehaviourAdapter {
+        hub.behaviour
+    }
+
+    public var objects: AgentObjectsAdapter {
+        hub.objects
+    }
+
+    public var menuReadout: AgentMenuReadoutAdapter {
+        hub.menuReadout
+    }
+
+    public var screens: AgentScreensAdapter {
+        hub.screens
+    }
+
+    public var events: AgentEventsAdapter {
+        hub.events
+    }
+
+    public var playerReadout: AgentPlayerReadoutAdapter {
+        hub.playerReadout
+    }
+
+    public var frameReadout: AgentFrameReadoutAdapter {
+        hub.frameReadout
+    }
+
+    public var actorReadout: AgentActorReadoutAdapter {
+        hub.actorReadout
+    }
+
+    public var items: AgentItemsAdapter {
+        hub.items
+    }
+
+    public var view: AgentViewAdapter {
+        hub.view
+    }
+
+    public var input: AgentInputAdapter {
+        hub.input
+    }
+
+    public var capture: AgentCaptureAdapter {
+        hub.capture
     }
 
     public var dataRoot: GameDataRoot? {
-        game.dataRoot
+        hub.dataRoot
     }
 
-    /// True once a cell is in the scene and no door transition is loading.
     public var isWorldReady: Bool {
-        isWorldLoaded && !game.loadingScreens.isCovering
-    }
-
-    /// Cells are in, whether or not a loading screen still covers them. A teleport
-    /// that put up the cover waits for this, because it lifts the cover itself.
-    public var isWorldLoaded: Bool {
-        guard
-            game.renderer != nil, let streamer = game.streamer,
-            streamer.transitionInFlight == nil else { return false }
-        return streamer.interiorScene != nil || !streamer.composition.cells.isEmpty
+        hub.isWorldReady
     }
 
     public func viewJob(_ target: AgentViewTarget) throws(AgentFailure) -> AgentTeleportJob {
-        try view.viewJob(target)
+        try hub.viewJob(target)
     }
 
     public func notReady() -> AgentFailure {
-        AgentFailure(.notReady, "the world is not loaded yet")
+        hub.notReady()
+    }
+
+    public func resolveReference(_ text: String) throws(AgentFailure) -> AgentReference {
+        try hub.resolveReference(text)
     }
 }
 
@@ -238,13 +190,7 @@ extension AgentWorldAdapter: AgentControlWorld {
     }
 
     public var agentTimeline: AgentTimeline {
-        let clock = game.simulationClock
-        return AgentTimeline(
-            frame: clock.frame,
-            paused: clock.isFrozen,
-            pendingSteps: clock.pendingSteps,
-            scale: clock.scale
-        )
+        hub.agentTimeline
     }
 
     public func pauseSimulation() {

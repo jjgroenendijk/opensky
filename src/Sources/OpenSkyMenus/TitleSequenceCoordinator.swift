@@ -11,14 +11,6 @@ public import OpenSkyRendering
 /// `sequence4` on their own first frame, and `play()` runs one through.
 nonisolated public enum TitleSequenceMovieBridge: Sendable {
     public static let moviePath = "interface\\titles.swf"
-    public static let sequenceNames = ["sequence1", "sequence2", "sequence3", "sequence4"]
-
-    /// The clip a script names, matched without case: MQ101 asks for "Sequence1".
-    public static func clipPath(for sequence: String) -> String? {
-        let name = sequence.lowercased()
-        return sequenceNames.contains(name) ? "_root.\(name)" : nil
-    }
-
     public static func play(_ clipPath: String, runtime: SWFMovieRuntime) {
         _ = runtime.callMovie("play", atPath: clipPath)
     }
@@ -59,7 +51,7 @@ public final class TitleSequenceCoordinator {
     /// movie is not shown.
     @discardableResult
     public func start(_ sequence: String) -> Bool {
-        guard isShown, let clip = TitleSequenceMovieBridge.clipPath(for: sequence) else {
+        guard isShown, let clip = TitleSequenceClip.path(for: sequence) else {
             return false
         }
         lastSequence = sequence.lowercased()

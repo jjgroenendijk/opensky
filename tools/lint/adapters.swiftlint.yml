@@ -9,7 +9,7 @@ cyclomatic_complexity:
   error: 7
   ignores_case_statements: true
 # Rule 9: a part of a split adapter holds its own host, not an unowned reference back to its
-# owner. The adapter modules in `excluded` are not converted yet.
+# owner.
 custom_rules:
   adapter_unowned_reference:
     name: Adapter unowned reference
@@ -17,4 +17,3 @@ custom_rules:
     excluded_match_kinds: [comment, comment.mark, comment.url, doccomment, doccomment.field, string]
     message: "An adapter holds its host strongly and no reference to its owner (docs/decisions/ports-and-adapters.md, rule 9)"
     severity: error
-    excluded: 'Sources/OpenSkyAgentAdapters/'

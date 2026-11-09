@@ -1,28 +1,21 @@
 import Foundation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -65,7 +58,7 @@ public protocol AgentEventsHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentEventsAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentEventsHost
 }
 
@@ -76,42 +69,42 @@ extension AgentEventsAdapter {
         wireEventCallbacks()
         diffMenus()
         let now = ProcessInfo.processInfo.systemUptime
-        if now >= owner.tap.nextSlowPoll {
-            owner.tap.nextSlowPoll = now + Self.slowPollSeconds
+        if now >= hub.tap.nextSlowPoll {
+            hub.tap.nextSlowPoll = now + Self.slowPollSeconds
             diffDeaths()
             diffQuestStages()
             diffCombatAndScripts()
-            owner.tap.seeded = true
+            hub.tap.seeded = true
         }
         for line in EngineLogTap.drain() {
-            owner.tap.append(AgentEventKind.log, [
+            hub.tap.append(AgentEventKind.log, [
                 "category": .string(line.category), "message": .string(line.message)
             ])
         }
-        for (kind, data) in owner.tap.pending {
+        for (kind, data) in hub.tap.pending {
             emit(kind, data)
         }
-        owner.tap.pending.removeAll()
+        hub.tap.pending.removeAll()
     }
 
     private func wireEventCallbacks() {
-        guard !owner.tap.wired, let streamer = game.streamer else { return }
-        owner.tap.wired = true
-        streamer.registerCellAttached(.agentEvents) { [weak owner] attachment in
+        guard !hub.tap.wired, let streamer = game.streamer else { return }
+        hub.tap.wired = true
+        streamer.registerCellAttached(.agentEvents) { [weak state = hub.state] attachment in
             // A rebuild of the same cell after a state change is not a new load.
             guard attachment.isFirstIntegration else { return }
-            owner?.tap.append(AgentEventKind.cellLoaded, Self.cellData(attachment.scene))
+            state?.tap.append(AgentEventKind.cellLoaded, Self.cellData(attachment.scene))
         }
-        streamer.onCellDetached.register(.agentEvents) { [weak owner] location in
-            owner?.tap.append(AgentEventKind.cellUnloaded, Self.locationData(location))
+        streamer.onCellDetached.register(.agentEvents) { [weak state = hub.state] location in
+            state?.tap.append(AgentEventKind.cellUnloaded, Self.locationData(location))
         }
-        streamer.onInteraction.register(.agentEvents) { [weak owner] event in
-            owner?.tap.append(
+        streamer.onInteraction.register(.agentEvents) { [weak state = hub.state] event in
+            state?.tap.append(
                 AgentEventKind.activation,
                 Self.interactionData(event.target.interaction)
             )
         }
-        streamer.activationGate.refusals.register(.agentEvents) { [weak owner] event in
+        streamer.activationGate.refusals.register(.agentEvents) { [weak state = hub.state] event in
             var data = Self.interactionData(event.target.interaction)
             if case let .locked(level, _) = event.refusal {
                 data["reason"] = "locked"
@@ -121,7 +114,7 @@ extension AgentEventsAdapter {
             } else if event.refusal == .mounted {
                 data["reason"] = "mounted"
             }
-            owner?.tap.append(AgentEventKind.activationRefused, data)
+            state?.tap.append(AgentEventKind.activationRefused, data)
         }
     }
 
@@ -149,14 +142,14 @@ extension AgentEventsAdapter {
 
     private func diffMenus() {
         let menus = game.menuMode.stack.identifiers.map(\.name)
-        guard menus != owner.tap.menus else { return }
-        for name in owner.tap.menus where !menus.contains(name) {
-            owner.tap.append(AgentEventKind.menuClosed, ["menu": .string(name)])
+        guard menus != hub.tap.menus else { return }
+        for name in hub.tap.menus where !menus.contains(name) {
+            hub.tap.append(AgentEventKind.menuClosed, ["menu": .string(name)])
         }
-        for name in menus where !owner.tap.menus.contains(name) {
-            owner.tap.append(AgentEventKind.menuOpened, ["menu": .string(name)])
+        for name in menus where !hub.tap.menus.contains(name) {
+            hub.tap.append(AgentEventKind.menuOpened, ["menu": .string(name)])
         }
-        owner.tap.menus = menus
+        hub.tap.menus = menus
     }
 
     private func diffDeaths() {
@@ -164,10 +157,10 @@ extension AgentEventsAdapter {
         for entry in streamer.residentActorEntries() {
             let isDead = game.worldState.component(ActorDeathState.self, for: entry.key)?
                 .isDead ?? false
-            guard isDead, !owner.tap.dead.contains(entry.key) else { continue }
-            owner.tap.dead.insert(entry.key)
-            guard owner.tap.seeded else { continue }
-            owner.tap.append(AgentEventKind.actorDeath, [
+            guard isDead, !hub.tap.dead.contains(entry.key) else { continue }
+            hub.tap.dead.insert(entry.key)
+            guard hub.tap.seeded else { continue }
+            hub.tap.append(AgentEventKind.actorDeath, [
                 "ref": .formID(entry.formID.rawValue),
                 "name": .string(game.dialogueWorld.speakerLabel(for: entry.key))
             ])
@@ -180,10 +173,10 @@ extension AgentEventsAdapter {
             guard
                 let editorID = quest.editorID,
                 let stage = state.stagesReached.last,
-                owner.tap.questStages[editorID] != stage else { continue }
-            owner.tap.questStages[editorID] = stage
-            guard owner.tap.seeded else { continue }
-            owner.tap.append(
+                hub.tap.questStages[editorID] != stage else { continue }
+            hub.tap.questStages[editorID] = stage
+            guard hub.tap.seeded else { continue }
+            hub.tap.append(
                 AgentEventKind.questStage,
                 ["id": .string(editorID), "stage": .init(Int(stage))]
             )
@@ -192,23 +185,23 @@ extension AgentEventsAdapter {
 
     private func diffCombatAndScripts() {
         let melee = game.combat.meleeCombatSnapshot
-        if melee.hitCount > owner.tap.hitCount, owner.tap.seeded, let hit = melee.trace.last {
-            owner.tap.append(AgentEventKind.combatHit, [
+        if melee.hitCount > hub.tap.hitCount, hub.tap.seeded, let hit = melee.trace.last {
+            hub.tap.append(AgentEventKind.combatHit, [
                 "target": .string(hit.target), "damage": .init(hit.appliedDamage)
             ])
         }
-        owner.tap.hitCount = melee.hitCount
+        hub.tap.hitCount = melee.hitCount
         let scripts = game.scripts.scriptsSnapshot
         if
-            scripts.tickCount != owner.tap.scriptTick, scripts.lastTickFaulted > 0,
-            owner.tap.seeded
+            scripts.tickCount != hub.tap.scriptTick, scripts.lastTickFaulted > 0,
+            hub.tap.seeded
         {
-            owner.tap.append(AgentEventKind.scriptError, [
+            hub.tap.append(AgentEventKind.scriptError, [
                 "faulted": .init(scripts.lastTickFaulted), "tick": .init(scripts.tickCount),
                 "fault": .init(scripts.lastFault)
             ])
         }
-        owner.tap.scriptTick = scripts.tickCount
+        hub.tap.scriptTick = scripts.tickCount
     }
 
     public func changesState(limit: Int) -> AgentJSON {

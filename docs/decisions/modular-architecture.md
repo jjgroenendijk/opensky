@@ -64,7 +64,7 @@ runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI
 | 11. Interface exports | An Interface publicly imports only lower modules and other Interfaces, and no file uses `@_exported import` | Gate |
 | 12. Used dependencies | Every declared dependency of a target is imported by at least one of its files | Gate |
 | 13. Stable dependencies | A module under `src/Sources/` depends only on a module whose instability is not higher than its own, or on an Interface | Gate |
-| 14. Adapter modules | An adapter module depends on lower modules, Interfaces, `OpenSkyWorld` and its domains, and the implementations of its own feature group, never on another feature's implementation | Gate, for the modules not in `ADAPTERS_PENDING` |
+| 14. Adapter modules | An adapter module depends on lower modules, Interfaces, `OpenSkyWorld` and its domains, and the implementations of its own feature group, never on another feature's implementation | Gate |
 
 Rule 14 keeps the rule that features meet only through Interfaces true inside the adapter
 modules too. `ADAPTER_OWNER` in `module-graph.sh` names each module's feature group: one
@@ -73,9 +73,7 @@ adapter module of their own, such as `OpenSkyCrime`, `OpenSkyDialogue`, and `Ope
 `OpenSkyStoryAdapters`. The world feature and its domains
 are allowed, because they are the running session every adapter connects to: the session's
 loaded data, `WorldDataStores`, lives in `OpenSkyCells`, and the wiring steps take
-`GameSession`, whose members are domain types such as `WalkController`. The
-modules in `ADAPTERS_PENDING` still import other features; each leaves the list when it is
-converted, and the check fails while a converted module stays on it.
+`GameSession`, whose members are domain types such as `WalkController`.
 
 Rule 7 matters because Xcode builds all package modules into one product. A module can then
 compile with an `import` it never declared, and break later in `swift test` or on another

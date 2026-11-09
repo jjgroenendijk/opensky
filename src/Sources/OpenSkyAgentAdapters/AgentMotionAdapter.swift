@@ -1,8 +1,7 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 public import OpenSkyAgentControl
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -35,7 +34,7 @@ public protocol AgentMotionHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentMotionAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentMotionHost
 }
 
@@ -43,7 +42,7 @@ extension AgentMotionAdapter {
     public func orderFlight(_ reference: String, order: AgentFlightOrder) throws(AgentFailure)
         -> AgentJSON
     {
-        let actor = try owner.resolveReference(reference)
+        let actor = try hub.resolveReference(reference)
         guard game.combatWorld.actorFlies(actor.key) else {
             throw AgentFailure(.invalidArgument, "\(reference) does not fly")
         }
@@ -64,7 +63,7 @@ extension AgentMotionAdapter {
 
     public func flightState(reference: String?) throws(AgentFailure) -> AgentJSON {
         if let reference {
-            let actor = try owner.resolveReference(reference)
+            let actor = try hub.resolveReference(reference)
             var json = flightJSON(of: actor.key)
             json["ref"] = .formID(actor.formID.rawValue)
             return .object(json)
@@ -73,7 +72,7 @@ extension AgentMotionAdapter {
         return [
             "flying": .array(flying.map { key in
                 var json = flightJSON(of: key)
-                json["ref"] = owner.behaviour.formID(of: key) ?? .string("\(key)")
+                json["ref"] = hub.behaviour.formID(of: key) ?? .string("\(key)")
                 return .object(json)
             }),
             "eventsHandled": .init(game.dragonFlight.handledEvents)
@@ -85,13 +84,13 @@ extension AgentMotionAdapter {
         guard let drive = mounts.drive else {
             return [
                 "riding": .bool(false),
-                "lastMount": mounts.lastMount.flatMap(owner.behaviour.formID) ?? .null
+                "lastMount": mounts.lastMount.flatMap(hub.behaviour.formID) ?? .null
             ]
         }
         let orders = mounts.dragonOrders
         return [
             "riding": .bool(true),
-            "ref": owner.behaviour.formID(of: drive.mount) ?? .string("\(drive.mount)"),
+            "ref": hub.behaviour.formID(of: drive.mount) ?? .string("\(drive.mount)"),
             "kind": .string("\(drive.kind)"),
             "phase": .string("\(mounts.phase)"),
             "speed": .init(drive.motion.speed),
@@ -102,8 +101,8 @@ extension AgentMotionAdapter {
             "flight": drive.flight.map { .object(Self.flightJSON($0)) } ?? .null,
             "orders": drive.kind == .dragon ? [
                 "landingRequested": .bool(orders.landingRequested),
-                "lockedTarget": orders.lockedTarget.flatMap(owner.behaviour.formID) ?? .null,
-                "switchedTarget": orders.switchedTarget.flatMap(owner.behaviour.formID) ?? .null,
+                "lockedTarget": orders.lockedTarget.flatMap(hub.behaviour.formID) ?? .null,
+                "switchedTarget": orders.switchedTarget.flatMap(hub.behaviour.formID) ?? .null,
                 "attacking": .bool(orders.isAttacking),
                 "breath": .string("\(orders.breath)"),
                 "breathCooldown": .init(orders.breathCooldown)
@@ -128,8 +127,8 @@ extension AgentMotionAdapter {
             var json = Self.flightJSON(flight)
             json["ridden"] = .bool(true)
             json["rider"] = [
-                "lockedTarget": orders.lockedTarget.flatMap(owner.behaviour.formID) ?? .null,
-                "switchedTarget": orders.switchedTarget.flatMap(owner.behaviour.formID) ?? .null,
+                "lockedTarget": orders.lockedTarget.flatMap(hub.behaviour.formID) ?? .null,
+                "switchedTarget": orders.switchedTarget.flatMap(hub.behaviour.formID) ?? .null,
                 "attacking": .bool(orders.isAttacking)
             ]
             return json
@@ -139,7 +138,7 @@ extension AgentMotionAdapter {
         json["order"] = game.dragonFlight.orders[key].map { .string($0.rawValue) } ?? .null
         json["landingEvent"] = game.dragonFlight.landingEvents[key].map(AgentJSON.string) ?? .null
         if let perch = game.dragonFlight.flights[key]?.perch {
-            json["perch"] = owner.behaviour
+            json["perch"] = hub.behaviour
                 .formID(of: perch.reference) ?? .string("\(perch.reference)")
         }
         json["getIsFlying"] = .bool(game.dragonFlightWorld.isFlying(key))
@@ -204,7 +203,7 @@ extension AgentMotionAdapter {
     }
 
     public func knock(_ reference: String, damage: Float) throws(AgentFailure) -> AgentJSON {
-        let actor = try owner.resolveReference(reference)
+        let actor = try hub.resolveReference(reference)
         let knock = game.combat.forceKnockBack(actor.key, damage: damage)
         return [
             "ref": .formID(actor.formID.rawValue),
@@ -223,7 +222,7 @@ extension AgentMotionAdapter {
     }
 
     public func knockDown(_ reference: String, magnitude: Float) throws(AgentFailure) -> AgentJSON {
-        let actor = try owner.resolveReference(reference)
+        let actor = try hub.resolveReference(reference)
         let source = game.combat.meleeAttacker.feet
         let knocked = game.effectsWorld.knockDown(actor.key, from: source, magnitude: magnitude)
         return [
@@ -285,6 +284,6 @@ extension AgentMotionAdapter {
     }
 
     private func reference(_ key: ReferenceKey) -> AgentJSON {
-        key == .player ? .string("player") : owner.behaviour.formID(of: key) ?? .string("\(key)")
+        key == .player ? .string("player") : hub.behaviour.formID(of: key) ?? .string("\(key)")
     }
 }

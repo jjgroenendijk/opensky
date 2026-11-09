@@ -23,6 +23,8 @@ public protocol InventoryPort: AnyObject, Sendable {
         -> String
     /// Toggles `item` and gives the line its outcome shows.
     func toggleAlchemyIngredientLine(_ item: FormID) -> String
+    /// The line the item panel shows for `outcome`.
+    func text(of outcome: ItemActionOutcome) -> String
     /// Brews the chosen ingredients and gives the line the outcome shows.
     func brewChosenIngredientsLine() -> String
     var craftingSnapshot: CraftingControlSnapshot { get }

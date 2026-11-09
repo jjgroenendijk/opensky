@@ -33,13 +33,13 @@ public protocol AgentBehaviourHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentBehaviourAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentBehaviourHost
 }
 
 extension AgentBehaviourAdapter {
     public func packagesState(reference: String) throws(AgentFailure) -> AgentJSON {
-        let key = try owner.resolveReference(reference).key
+        let key = try hub.resolveReference(reference).key
         let readout = game.packages.readout(for: key)
         let execution = game.packages.executions[key]?.readout
         let mover = game.streamer?.npcMovementReadouts().first { $0.actor == key }
@@ -122,8 +122,8 @@ extension AgentBehaviourAdapter {
     public func playPaired(
         _ reference: String, target: String, idle editorID: String
     ) throws(AgentFailure) -> AgentJSON {
-        let lead = try owner.resolveReference(reference)
-        let partner = try owner.resolveReference(target)
+        let lead = try hub.resolveReference(reference)
+        let partner = try hub.resolveReference(target)
         let idles = game.idleWorld.idles
         guard let idle = idles.store?.idles.record(editorID: editorID) else {
             throw AgentFailure(.notFound, "no idle '\(editorID)'")
@@ -170,7 +170,7 @@ extension AgentBehaviourAdapter {
         switch command {
         case let .sit(reference, furniture): return try sit(reference, in: furniture)
         case let .stand(reference):
-            let actor = try owner.resolveReference(reference)
+            let actor = try hub.resolveReference(reference)
             return [
                 "ref": .formID(actor.formID.rawValue),
                 "stood": .bool(game.furniture.stand(actor.key))
@@ -186,7 +186,7 @@ extension AgentBehaviourAdapter {
     }
 
     public func furnitureState(reference: String) throws(AgentFailure) -> AgentJSON {
-        let target = try owner.resolveReference(reference)
+        let target = try hub.resolveReference(reference)
         let furniture = game.furniture
         if let seats = game.aiWorld.furnitureSeats(of: target.key), !seats.isEmpty {
             let holders = furniture.ledger.holders(of: target.key)
@@ -236,10 +236,10 @@ extension AgentBehaviourAdapter {
         _ reference: String,
         in furnitureText: String?
     ) throws(AgentFailure) -> AgentJSON {
-        let actor = try owner.resolveReference(reference)
+        let actor = try hub.resolveReference(reference)
         let furniture: ReferenceKey
         if let furnitureText {
-            furniture = try owner.resolveReference(furnitureText).key
+            furniture = try hub.resolveReference(furnitureText).key
         } else {
             guard let nearest = game.furniture.nearestFurniture(to: actor.key) else {
                 throw AgentFailure(.notFound, "no loaded furniture has a free seat")

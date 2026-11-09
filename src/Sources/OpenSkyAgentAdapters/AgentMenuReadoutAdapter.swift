@@ -1,5 +1,4 @@
 import Foundation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyEffects
@@ -7,20 +6,15 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -46,7 +40,7 @@ public protocol AgentMenuReadoutHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentMenuReadoutAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentMenuReadoutHost
 }
 
@@ -83,27 +77,27 @@ extension AgentMenuReadoutAdapter {
                 rows: snapshot.rows.map(\.text),
                 selected: snapshot.selectedIndex
             )
-        case TitleMenuCoordinator.identifier:
+        case MenuIdentifier.titleMenu:
             return titleMenuRows(top)
-        case SystemMenuCoordinator.identifier:
+        case MenuIdentifier.systemMenu:
             let menu = game.systemMenu
             let page = menu.movieMainPage ?? menu.snapshot.page
             return AgentMenuRows(menu: top.name, rows: page.rows, selected: page.selectedIndex)
-        case RaceMenuCoordinator.identifier:
+        case MenuIdentifier.raceMenu:
             let snapshot = game.raceMenu.snapshot
             return AgentMenuRows(
                 menu: top.name,
                 rows: snapshot.rows,
                 selected: snapshot.selectedIndex
             )
-        case SkillsMenuCoordinator.identifier:
+        case MenuIdentifier.statsMenu:
             let snapshot = game.skillsMenu.snapshot
             return AgentMenuRows(
                 menu: top.name,
                 rows: snapshot.rows,
                 selected: snapshot.selectedIndex ?? -1
             )
-        case MessageCoordinator.identifier:
+        case MenuIdentifier.messageBoxMenu:
             guard let box = game.messages.presentation else { return nil }
             return AgentMenuRows(
                 menu: top.name,
@@ -134,18 +128,18 @@ extension AgentMenuReadoutAdapter {
             "open": .array(game.menuMode.stack.identifiers.map { .string($0.name) }),
             "top": .init(game.menuMode.topMenu?.name),
             "worldPaused": .bool(game.menuMode.isWorldSimPaused),
-            "hud": owner.screens.hudState,
-            "loading": owner.screens.loadingState,
-            "movie": owner.screens.movieFocusState,
-            "bink": owner.screens.binkState,
-            "titles": owner.screens.titlesState,
-            "map": owner.screens.mapState
+            "hud": hub.screens.hudState,
+            "loading": hub.screens.loadingState,
+            "movie": hub.screens.movieFocusState,
+            "bink": hub.screens.binkState,
+            "titles": hub.screens.titlesState,
+            "map": hub.screens.mapState
         ]
         if let rows = menuRows() {
             result["rows"] = .array(rows.rows.map { .string($0) })
             result["selected"] = .init(rows.selected)
         }
-        if game.menuMode.topMenu == SkillsMenuCoordinator.identifier {
+        if game.menuMode.topMenu == MenuIdentifier.statsMenu {
             result["skills"] = skillsMenuState(game.skillsMenu.snapshot)
         }
         if game.systemMenu.isOpen {

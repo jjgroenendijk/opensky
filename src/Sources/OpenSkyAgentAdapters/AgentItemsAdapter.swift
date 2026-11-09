@@ -1,24 +1,18 @@
 import Foundation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -38,7 +32,7 @@ public protocol AgentItemsHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentItemsAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentItemsHost
 }
 
@@ -70,9 +64,9 @@ extension AgentItemsAdapter {
         guard let values = game.actorValues.runtime else {
             throw AgentFailure(.notReady, "actor values are not loaded")
         }
-        let reference = try owner.resolveReference(text)
-        let holder = try owner.actorValueHolder(for: reference)
-        let index = try owner.actorValueIndex(name)
+        let reference = try hub.resolveReference(text)
+        let holder = try hub.actorValueHolder(for: reference)
+        let index = try hub.actorValueIndex(name)
         let before = values.value(at: index, on: holder) ?? 0
         _ = write(values, index, holder, before)
         return [
@@ -122,12 +116,15 @@ extension AgentItemsAdapter {
     private func equipOnPlayer(_ item: FormID) throws(AgentFailure) {
         let outcome = game.inventoryWorld.run(game.inventory.equipItem(item, on: .player))
         guard case .equipped = outcome else {
-            throw AgentFailure(.invalidArgument, "equip refused: \(outcome.text)")
+            throw AgentFailure(
+                .invalidArgument,
+                "equip refused: \(game.inventory.text(of: outcome))"
+            )
         }
     }
 
     public func kill(_ text: String) throws(AgentFailure) -> AgentJSON {
-        let reference = try owner.resolveReference(text)
+        let reference = try hub.resolveReference(text)
         guard reference.key != .player else {
             throw AgentFailure(.unsupported, "the player cannot be killed from here")
         }
@@ -146,8 +143,8 @@ extension AgentItemsAdapter {
         guard let values = game.actorValues.runtime else {
             throw AgentFailure(.notReady, "actor values are not loaded")
         }
-        let reference = try owner.resolveReference(text)
-        let holder = try owner.actorValueHolder(for: reference)
+        let reference = try hub.resolveReference(text)
+        let holder = try hub.actorValueHolder(for: reference)
         game.worldState.reset(ActorDeathState.componentKind, for: reference.key)
         values.restoreAll(on: holder)
         return ["ref": .formID(reference.formID.rawValue), "dead": false]

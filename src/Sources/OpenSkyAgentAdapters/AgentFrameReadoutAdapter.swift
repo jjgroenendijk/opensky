@@ -1,28 +1,23 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
 import OpenSkyDiagnostics
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
+import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
@@ -47,7 +42,7 @@ public protocol AgentFrameReadoutHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentFrameReadoutAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentFrameReadoutHost
 }
 
@@ -68,7 +63,7 @@ extension AgentFrameReadoutAdapter {
             "hour": .init(clock.hourOfDay), "day": .init(clock.day),
             "month": .string(clock.monthName),
             "year": .init(clock.year), "daysPassed": .init(clock.daysPassed),
-            "timescale": .init(clock.timescale), "simulation": owner.agentTimeline.json,
+            "timescale": .init(clock.timescale), "simulation": hub.agentTimeline.json,
             "sky": skyState()
         ]
     }
@@ -99,7 +94,7 @@ extension AgentFrameReadoutAdapter {
     public func frameState() -> AgentJSON {
         let stats = game.renderControls.frameStatsSnapshot
         return [
-            "timeline": owner.agentTimeline.json,
+            "timeline": hub.agentTimeline.json,
             "fps": .number(stats.fps), "frameMS": .number(stats.frameMS),
             "maxFrameMS": .number(stats.maxFrameMS),
             "skippedFrames": .init(game.gameSession?.renderer.skippedFrames ?? 0),
@@ -116,13 +111,13 @@ extension AgentFrameReadoutAdapter {
                 .init($0.hiddenLargeReferenceSegments)
             } ?? .null,
             "screenFade": screenFadeState(),
-            "postEffects": owner.render.postEffectState(),
-            "lighting": owner.render.lightingState(),
-            "projectileVisuals": owner.render.projectileVisualState(),
-            "soundMix": owner.render.soundMixState(),
-            "treeWind": owner.render.treeWindState(),
-            "waterFlow": owner.render.waterFlowState(),
-            "precipitation": owner.render.precipitationState(),
+            "postEffects": hub.render.postEffectState(),
+            "lighting": hub.render.lightingState(),
+            "projectileVisuals": hub.render.projectileVisualState(),
+            "soundMix": hub.render.soundMixState(),
+            "treeWind": hub.render.treeWindState(),
+            "waterFlow": hub.render.waterFlowState(),
+            "precipitation": hub.render.precipitationState(),
             "gpuMemory": gpuMemoryState()
         ]
     }

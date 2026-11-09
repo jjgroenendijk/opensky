@@ -14,6 +14,10 @@ extension InventoryCoordinator {
         toggleAlchemyIngredient(item).text
     }
 
+    public func text(of outcome: ItemActionOutcome) -> String {
+        outcome.text
+    }
+
     public func brewChosenIngredientsLine() -> String {
         brewChosenIngredients().text
     }

@@ -1,27 +1,22 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
+import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -53,7 +48,7 @@ public protocol AgentActorReadoutHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentActorReadoutAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentActorReadoutHost
 }
 
@@ -85,7 +80,7 @@ extension AgentActorReadoutAdapter {
     }
 
     public func actorsState(radius: Float) throws(AgentFailure) -> AgentJSON {
-        guard let gameSession = game.gameSession else { throw owner.notReady() }
+        guard let gameSession = game.gameSession else { throw hub.notReady() }
         let origin = gameSession.freeFlyCamera.position
         let rows = game.actorWorld.combatActors().compactMap { actor in
             actorRow(actor, origin: origin, radius: radius)
@@ -113,14 +108,14 @@ extension AgentActorReadoutAdapter {
             "detects": game.perception.runtime
                 .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
                 ?? .null,
-            "eyeTexture": owner.actors.eyeTexture(of: actor.key),
-            "severed": owner.actors.severedState(of: actor.key),
+            "eyeTexture": hub.actors.eyeTexture(of: actor.key),
+            "severed": hub.actors.severedState(of: actor.key),
             "soundLoops": .array(
                 (game.gameSession?.soundDirector?.actorLoopNames(of: actor.key) ?? [])
                     .map(AgentJSON.string)
             ),
-            "skinDecals": .array(owner.render.skinDecalBones(of: actor.key).map(AgentJSON.string)),
-            "constraints": owner.actors.physicsConstraints(of: actor.key),
+            "skinDecals": .array(hub.render.skinDecalBones(of: actor.key).map(AgentJSON.string)),
+            "constraints": hub.actors.physicsConstraints(of: actor.key),
             "lagBones": .object(
                 (game.actorPlayback(for: actor.key)?.lagBoneOffsets ?? [:])
                     .mapValues(AgentJSON.init)
@@ -178,9 +173,9 @@ extension AgentActorReadoutAdapter {
         guard let values = game.actorValues.runtime else {
             throw AgentFailure(.notReady, "actor values are not loaded")
         }
-        let reference = try owner.resolveReference(text)
-        let holder = try owner.actorValueHolder(for: reference)
-        let index = try owner.actorValueIndex(name)
+        let reference = try hub.resolveReference(text)
+        let holder = try hub.actorValueHolder(for: reference)
+        let index = try hub.actorValueIndex(name)
         guard let value = values.value(at: index, on: holder) else {
             throw AgentFailure(.notFound, "\(name) has no value on this actor")
         }

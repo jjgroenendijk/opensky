@@ -1,25 +1,19 @@
 import Foundation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 public import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -43,7 +37,7 @@ public protocol AgentScreensHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentScreensAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentScreensHost
 }
 
@@ -158,7 +152,7 @@ extension AgentScreensAdapter {
         }) else {
             throw AgentFailure(.notFound, "no map marker named \(name)")
         }
-        guard game.mapWorld.travel(to: site) else { throw owner.notReady() }
+        guard game.mapWorld.travel(to: site) else { throw hub.notReady() }
         return ["marker": .string(site.name), "loading": loadingState]
     }
 }

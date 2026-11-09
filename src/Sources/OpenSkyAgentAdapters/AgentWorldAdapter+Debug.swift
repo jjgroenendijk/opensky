@@ -2,26 +2,20 @@
 // answers with the value as stored afterwards, so a script can check it.
 
 import Foundation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyEffects
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 public import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWeather
@@ -64,7 +58,7 @@ extension AgentWorldAdapter {
 
     private func moveJob(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentTeleportJob {
         switch command {
-        case let .teleport(target): try AgentTeleportJob(adapter: self, target: target)
+        case let .teleport(target): try AgentTeleportJob(hub: hub, target: target)
         case let .view(target): try view.viewJob(target)
         default: throw AgentFailure(.invalidArgument, "not a move")
         }
@@ -107,10 +101,10 @@ extension AgentWorldAdapter {
     public func teleportJob(to target: AgentTeleportTarget) throws(AgentFailure)
         -> AgentTeleportJob
     {
-        try AgentTeleportJob(adapter: self, target: target)
+        try AgentTeleportJob(hub: hub, target: target)
     }
 
     public func teleportJob(to place: SavePlayerPlace) throws(AgentFailure) -> AgentTeleportJob {
-        try AgentTeleportJob(adapter: self, place: place)
+        try AgentTeleportJob(hub: hub, place: place)
     }
 }

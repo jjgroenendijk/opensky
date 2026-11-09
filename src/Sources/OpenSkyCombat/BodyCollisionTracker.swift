@@ -35,7 +35,7 @@ nonisolated public struct BodyCollisionTracker: Sendable {
             quiet[body.key] = Self.quietSteps
             hits.append(BodyCollision(
                 body: body.key, position: body.position, speedLoss: loss, material: body.material,
-                surface: body.surfaceMaterial
+                surface: body.surfaceMaterial, gain: Self.gain(speedLoss: loss)
             ))
         }
         velocities = next
@@ -44,9 +44,9 @@ nonisolated public struct BodyCollisionTracker: Sendable {
     }
 }
 
-nonisolated extension BodyCollision {
+nonisolated extension BodyCollisionTracker {
     /// Louder for a harder hit: a quiet floor at the threshold, full level at `loudSpeedLoss`.
-    public var gain: Float {
+    public static func gain(speedLoss: Float) -> Float {
         let span = BodyCollisionTracker.loudSpeedLoss - BodyCollisionTracker.minimumSpeedLoss
         let share = (speedLoss - BodyCollisionTracker.minimumSpeedLoss) / span
         return BodyCollisionTracker.quietestGain

@@ -2,32 +2,30 @@ public import AppKit
 import Foundation
 import MetalKit
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyDialogue
+import OpenSkyCombatInterface
+import OpenSkyDialogueInterface
 import OpenSkyEffects
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMagic
-public import OpenSkyMenus
-import OpenSkyMenusInterface
+import OpenSkyMagicInterface
+public import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyPerception
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -51,7 +49,7 @@ public protocol AgentInputHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentInputAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentInputHost
 }
 
@@ -106,7 +104,7 @@ extension AgentInputAdapter {
     }
 
     public func selectMenuRow(label: String) throws(AgentFailure) -> AgentJSON {
-        guard let start = owner.menuReadout.menuRows() else {
+        guard let start = hub.menuReadout.menuRows() else {
             throw AgentFailure(.notFound, "no open menu has a row list")
         }
         guard let target = AgentMenuReadoutAdapter.rowIndex(of: label, in: start.rows) else {
@@ -117,7 +115,7 @@ extension AgentInputAdapter {
             let action: GameInputAction = target > current ? .menuDown : .menuUp
             dispatcher.apply(action, .press)
             dispatcher.apply(action, .release)
-            guard let next = owner.menuReadout.menuRows()?.selected, next != current else { break }
+            guard let next = hub.menuReadout.menuRows()?.selected, next != current else { break }
             current = next
         }
         guard current == target else {

@@ -12,7 +12,6 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkySession
 public import OpenSkySessionInterface
 import OpenSkyWeather
 public import OpenSkyWorld
@@ -34,8 +33,8 @@ public protocol BenchmarkTourSettingsHost: AnyObject {
 
 /// Part of `BenchmarkWorldAdapter`, over its own narrow host.
 public struct BenchmarkTourSettingsAdapter {
-    public unowned let owner: BenchmarkWorldAdapter
-    public unowned let game: any BenchmarkTourSettingsHost
+    public let game: any BenchmarkTourSettingsHost
+    public let state: BenchmarkPartState
 }
 
 extension BenchmarkTourSettingsAdapter {
@@ -47,7 +46,7 @@ extension BenchmarkTourSettingsAdapter {
         {
             values[definition.id.rawValue] = store.value(definition.id)
         }
-        for (id, value) in owner.tourOverrides {
+        for (id, value) in state.tourOverrides {
             values[id.rawValue] = value
         }
         return values
@@ -56,13 +55,13 @@ extension BenchmarkTourSettingsAdapter {
     public func beginTour(overrides: [PlayerSettingID: Double], passTiming: Bool) {
         guard let session = game.gameSession else { return }
         let renderer = session.renderer
-        owner.saved = BenchmarkWorldAdapter.SavedState(
+        state.saved = BenchmarkWorldAdapter.SavedState(
             movementMode: session.movementMode, wasFrozen: game.simulationClock.isFrozen,
             hudEnabled: renderer.swfEnabled, camera: session.freeFlyCamera,
             forcedWeather: session.weather?.forced, outputMuted: game.audio.outputMuted
         )
-        game.audio.outputMuted = owner.request.muted
-        owner.tourOverrides = overrides
+        game.audio.outputMuted = state.request.muted
+        state.tourOverrides = overrides
         if !overrides.isEmpty {
             apply(PlayerSettingsStore(copying: game.playerSettingsStore, overrides: overrides))
         }
@@ -71,27 +70,27 @@ extension BenchmarkTourSettingsAdapter {
         renderer.gpuFrameLog = GPUFrameLog()
         renderer.setPassTimingEnabled(passTiming)
         game.simulationClock.freeze()
-        if owner.view?.startUncappedFrames() == true {
+        if state.view?.startUncappedFrames() == true {
             renderer.waitsForFrameSlot = true
         }
     }
 
     public func tourFinished(_ result: BenchmarkTourResult) {
-        owner.finishAfterScreenshots(result)
+        state.finishAfterScreenshots(result)
     }
 
     public func endTour() {
-        guard let session = game.gameSession, let saved = owner.saved else { return }
+        guard let session = game.gameSession, let saved = state.saved else { return }
         let renderer = session.renderer
-        owner.view?.stopUncappedFrames()
+        state.view?.stopUncappedFrames()
         renderer.waitsForFrameSlot = false
         renderer.setPassTimingEnabled(false)
         renderer.gpuFrameLog = nil
         renderer.swfEnabled = saved.hudEnabled
-        if !owner.tourOverrides.isEmpty {
+        if !state.tourOverrides.isEmpty {
             apply(game.playerSettingsStore)
         }
-        owner.tourOverrides = [:]
+        state.tourOverrides = [:]
         game.audio.outputMuted = saved.outputMuted
         session.weather?.forceWeather(saved.forcedWeather, transition: .instant)
         session.freeFlyCamera = saved.camera
@@ -99,8 +98,8 @@ extension BenchmarkTourSettingsAdapter {
         if !saved.wasFrozen {
             game.simulationClock.resume()
         }
-        owner.arrival = nil
-        owner.saved = nil
+        state.arrival = nil
+        state.saved = nil
     }
 
     private func apply(_ store: PlayerSettingsStore) {

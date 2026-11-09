@@ -1,16 +1,14 @@
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
+import OpenSkyProgressionInterface
 public import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -36,17 +34,17 @@ public protocol AgentActorsHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentActorsAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentActorsHost
 }
 
 extension AgentActorsAdapter {
     public func setDrunk(_ reference: String, drunk: Bool) throws(AgentFailure) -> AgentJSON {
-        let actor = try owner.resolveReference(reference)
+        let actor = try hub.resolveReference(reference)
         let event = drunk ? ActorGraphNames.drunkStart : ActorGraphNames.drunkStop
         let taken: Bool
         if actor.key == .player {
-            guard let locomotion = game.gameSession?.locomotion else { throw owner.notReady() }
+            guard let locomotion = game.gameSession?.locomotion else { throw hub.notReady() }
             taken = locomotion.raiseGraphEvent(named: event)
         } else {
             guard game.actorGraphs.instance(of: actor.key) != nil else {
@@ -64,7 +62,7 @@ extension AgentActorsAdapter {
         guard
             let runtime = game.perks.runtime,
             let holder = game.actorWorld.actorValueHolder(for: .player)
-        else { throw owner.notReady() }
+        else { throw hub.notReady() }
         guard let perk = runtime.perks.perks.first(where: {
             $0.editorID?.lowercased() == editorID.lowercased()
         }) else {
@@ -92,7 +90,7 @@ extension AgentActorsAdapter {
     }
 
     public func setEyes(_ reference: String, textureSet: String) throws(AgentFailure) -> AgentJSON {
-        let actor = try owner.resolveReference(reference)
+        let actor = try hub.resolveReference(reference)
         guard let raw = FormID(hexText: textureSet)?.rawValue else {
             throw AgentFailure(.invalidArgument, "set must be a hex FormID")
         }
@@ -108,7 +106,7 @@ extension AgentActorsAdapter {
     }
 
     public func decapitate(_ reference: String) throws(AgentFailure) -> AgentJSON {
-        let actor = try owner.resolveReference(reference)
+        let actor = try hub.resolveReference(reference)
         guard game.worldState.component(ActorDeathState.self, for: actor.key)?.isDead == true
         else {
             throw AgentFailure(.unsupported, "\(reference) is alive; kill it first")
@@ -148,12 +146,12 @@ extension AgentActorsAdapter {
         _ link: AgentRagdollLink,
         linked: Bool
     ) throws(AgentFailure) -> AgentJSON {
-        guard let hooks = game.scripts.bridge?.gameNatives else { throw owner.notReady() }
+        guard let hooks = game.scripts.bridge?.gameNatives else { throw hub.notReady() }
         let first = try PapyrusConstraintEnd(
-            reference: owner.resolveReference(link.reference).key, node: link.node
+            reference: hub.resolveReference(link.reference).key, node: link.node
         )
         let second = try PapyrusConstraintEnd(
-            reference: owner.resolveReference(link.other).key, node: link.otherNode
+            reference: hub.resolveReference(link.other).key, node: link.otherNode
         )
         guard linked else {
             let removed = hooks.removeConstraints?(first, second) ?? false

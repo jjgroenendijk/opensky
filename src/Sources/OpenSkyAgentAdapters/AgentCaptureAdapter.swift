@@ -1,29 +1,28 @@
 public import Foundation
 import Metal
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
-import OpenSkyDialogue
+import OpenSkyCombatInterface
+import OpenSkyDialogueInterface
 import OpenSkyEffects
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
+import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyPerception
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -39,7 +38,7 @@ public protocol AgentCaptureHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentCaptureAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentCaptureHost
 }
 
@@ -48,7 +47,7 @@ extension AgentCaptureAdapter {
         -> AgentHandling
     {
         guard let gameSession = game.gameSession else {
-            throw owner.notReady()
+            throw hub.notReady()
         }
         if request.offscreen {
             return try .done(.success(captureOffscreen(
@@ -88,7 +87,7 @@ extension AgentCaptureAdapter {
         let renderer = gameSession.renderer
         let width = request.width ?? Int(drawableSize.width.rounded())
         let height = request.height ?? Int(drawableSize.height.rounded())
-        guard width > 0, height > 0 else { throw owner.notReady() }
+        guard width > 0, height > 0 else { throw hub.notReady() }
         let saved = (gameSession.worldSimPaused, renderer.uiEnabled, renderer.swfEnabled)
         gameSession.worldSimPaused = true
         if request.worldOnly {

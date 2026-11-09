@@ -77,6 +77,11 @@ struct AlchemyCoordinatorTests {
         #expect(coordinator.craftLine(recipe, texts: .vanilla) == "No crafting station is open.")
     }
 
+    @Test func anOutcomeReadsAsTheLineItShows() throws {
+        let coordinator = try Self.harness().coordinator
+        #expect(coordinator.text(of: .nothingToDrop) == ItemActionOutcome.nothingToDrop.text)
+    }
+
     @Test func aBrewUsesOneOfEachAndRegistersThePotion() throws {
         let harness = try Self.harness()
         try Self.carry([Fixture.wheat, Fixture.flower], harness, count: 2)

@@ -29,7 +29,7 @@ nonisolated public enum TitleMenuEntry: String, CaseIterable, Sendable {
 }
 
 public final class TitleMenuCoordinator {
-    public static let identifier: MenuIdentifier = "Main Menu"
+    public static let identifier = MenuIdentifier.titleMenu
 
     public private(set) var isOpen = false
     public private(set) var selectedIndex = 0
