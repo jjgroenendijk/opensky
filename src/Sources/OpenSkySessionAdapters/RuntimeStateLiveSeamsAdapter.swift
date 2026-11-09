@@ -1,23 +1,18 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyConditions
 import OpenSkyCrimeInterface
-import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -43,8 +38,9 @@ public protocol RuntimeStateLiveSeamsHost: AnyObject {
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
 public struct RuntimeStateLiveSeamsAdapter {
-    public unowned let owner: RuntimeStateWorldAdapter
-    public unowned let game: any RuntimeStateLiveSeamsHost
+    public let game: any RuntimeStateLiveSeamsHost
+    public let inventoryFacts: RuntimeStateInventoryFactsAdapter
+    public let referenceMotion: RuntimeStateReferenceMotionAdapter
 }
 
 extension RuntimeStateLiveSeamsAdapter {
@@ -59,13 +55,13 @@ extension RuntimeStateLiveSeamsAdapter {
         if !warnings.isEmpty {
             context.crime.situation?.trespassWarnings = warnings
         }
-        if let inventory = owner.inventoryFacts.inventoryResolution(context: context) {
+        if let inventory = inventoryFacts.inventoryResolution(context: context) {
             context.inventory = inventory
         }
-        context.referenceFacts = owner.referenceMotion.referenceFacts(of: context.references)
-        context.motion = owner.referenceMotion.motionResolution(references: context.references)
-        context.places = owner.referenceMotion.placeResolution(references: context.references)
-        owner.referenceMotion.addMountSeams(to: &context)
+        context.referenceFacts = referenceMotion.referenceFacts(of: context.references)
+        context.motion = referenceMotion.motionResolution(references: context.references)
+        context.places = referenceMotion.placeResolution(references: context.references)
+        referenceMotion.addMountSeams(to: &context)
         context.menus = MenuConditionResolution(
             isMenuOpen: game.menuMode.topMenu != nil,
             isLoading: game.menuMode.topMenu == MenuIdentifier.loadingMenu

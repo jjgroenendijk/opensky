@@ -1,6 +1,8 @@
 // What the last map control did, as a value. A fast-travel refusal reads the load
 // order's own notice, so the formatter asks for it.
 
+public import OpenSkyMenusInterface
+
 nonisolated public enum MapMenuOutcome: Equatable, Sendable {
     case markersRevealed(Int)
     case fogReset

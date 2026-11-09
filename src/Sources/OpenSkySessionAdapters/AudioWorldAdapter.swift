@@ -4,14 +4,12 @@
 import OpenSkyActorPresentation
 public import OpenSkyAudio
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -45,7 +43,7 @@ public protocol AudioWorldHost: AnyObject {
 
 /// Answers `AudioWorld` from the session systems `game` owns.
 public final class AudioWorldAdapter {
-    public unowned let game: any AudioWorldHost
+    public let game: any AudioWorldHost
 
     public let listenerHost: any AudioListenerHost
     public let mixHost: any AudioMixHost

@@ -7,6 +7,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 @testable import OpenSkyPlayer
 import simd

@@ -1,22 +1,18 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 public import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyConditions
 import OpenSkyCrimeInterface
-import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 public import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -36,8 +32,8 @@ public protocol RuntimeStateInventoryFactsHost: AnyObject {
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
 public struct RuntimeStateInventoryFactsAdapter {
-    public unowned let owner: RuntimeStateWorldAdapter
-    public unowned let game: any RuntimeStateInventoryFactsHost
+    public let game: any RuntimeStateInventoryFactsHost
+    public let state: RuntimeStatePartState
 }
 
 extension RuntimeStateInventoryFactsAdapter {
@@ -55,7 +51,7 @@ extension RuntimeStateInventoryFactsAdapter {
             },
             hasEquipment: game.inventory.equipment != nil
         )
-        return owner.conditionCaches.inventory.value(for: key) {
+        return state.conditionCaches.inventory.value(for: key) {
             freshInventoryResolution(context: context, runtime: runtime)
         }
     }

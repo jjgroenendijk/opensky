@@ -10,7 +10,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-public import OpenSkyMenus
+import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer

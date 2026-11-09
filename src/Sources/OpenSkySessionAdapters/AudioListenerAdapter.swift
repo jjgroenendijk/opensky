@@ -1,14 +1,12 @@
 public import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
@@ -34,7 +32,7 @@ public protocol AudioListenerHost: AnyObject {
 
 /// Part of `AudioWorldAdapter`, over its own narrow host.
 public struct AudioListenerAdapter {
-    public unowned let game: any AudioListenerHost
+    public let game: any AudioListenerHost
 }
 
 extension AudioListenerAdapter {

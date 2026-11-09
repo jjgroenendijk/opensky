@@ -2,7 +2,6 @@
 // it was built from. See docs/engine/runtime-state.md#caching-derived-views.
 
 public import OpenSkyActorsInterface
-import OpenSkyCombat
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData

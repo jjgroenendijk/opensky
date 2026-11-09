@@ -1330,19 +1330,22 @@ targets += composition(
 targets += composition(
     "OpenSkySessionAdapters",
     dependencies: [
-        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors",
-        "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio", "OpenSkyCells",
-        "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrime",
-        "OpenSkyCrimeInterface", "OpenSkyDialogue", "OpenSkyDialogueInterface",
-        "OpenSkyEffects", "OpenSkyFactions", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
-        "OpenSkyFormatsESS", "OpenSkyGameData", "OpenSkyInventory",
-        "OpenSkyInventoryInterface", "OpenSkyLoading", "OpenSkyMagic", "OpenSkyMagicInterface",
-        "OpenSkyMenus", "OpenSkyMenusInterface", "OpenSkyPerception", "OpenSkyPhysics",
-        "OpenSkyPlayer", "OpenSkyProgression", "OpenSkyQuestsInterface", "OpenSkyRenderCore",
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActorsInterface",
+        "OpenSkyAgentControl",
+        "OpenSkyAudio", "OpenSkyCells",
+        "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrimeInterface",
+        "OpenSkyDialogueInterface",
+        "OpenSkyEffects", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsESS", "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyLoading",
+        "OpenSkyMagicInterface",
+        "OpenSkyMenusInterface", "OpenSkyPhysics",
+        "OpenSkyPlayer", "OpenSkyQuestsInterface", "OpenSkyRenderCore",
         "OpenSkyRenderResources", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkySave",
-        "OpenSkySaveInterface", "OpenSkyScripting", "OpenSkyScriptingInterface",
+        "OpenSkySaveInterface", "OpenSkyScriptingInterface",
         "OpenSkySessionInterface", "OpenSkyWeather", "OpenSkyWorld", "OpenSkyWorldConditions",
-        "OpenSkyWorldInterface", "OpenSkyWorldState", "OpenSkyWorldConditionFunctions"
+        "OpenSkyWorldInterface", "OpenSkyWorldState", "OpenSkyWorldConditionFunctions",
+        "OpenSkyFactionsInterface",
+        "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface"
     ]
 )
 

@@ -1,25 +1,20 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
-import OpenSkyDialogue
-import OpenSkyFactions
+import OpenSkyDialogueInterface
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyPerception
+import OpenSkyMenusInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
@@ -27,7 +22,6 @@ import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySave
 public import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -51,13 +45,14 @@ public protocol RuntimeStateSaveContentsHost: AnyObject {
 
 /// Part of `RuntimeStateWorldAdapter`, over its own narrow host.
 public struct RuntimeStateSaveContentsAdapter {
-    public unowned let owner: RuntimeStateWorldAdapter
-    public unowned let game: any RuntimeStateSaveContentsHost
+    public let game: any RuntimeStateSaveContentsHost
+    public let core: RuntimeStateCoreAdapter
+    public let sessionClock: RuntimeStateSessionClockAdapter
 }
 
 extension RuntimeStateSaveContentsAdapter {
     public func saveSlots() async throws -> [String] {
-        try await owner.store().readSlots()
+        try await core.store().readSlots()
     }
 
     public func saveSession(slot: String) async throws {
@@ -70,8 +65,8 @@ extension RuntimeStateSaveContentsAdapter {
         thumbnail: SaveThumbnail?
     ) async throws {
         let contents = sessionContents(summary: summary, thumbnail: thumbnail)
-        let store = try await owner.store()
-        try await store.write(contents, fingerprint: owner.pluginFingerprint(), toSlot: slot)
+        let store = try await core.store()
+        try await store.write(contents, fingerprint: core.pluginFingerprint(), toSlot: slot)
     }
 
     /// The session as a save holds it. Arrows in flight and falling corpses are
@@ -94,23 +89,23 @@ extension RuntimeStateSaveContentsAdapter {
             timers: game.scripts.runtime?.timerStates() ?? [],
             summary: summary,
             thumbnail: thumbnail,
-            playerPlace: owner.sessionClock.playerPlace()
+            playerPlace: sessionClock.playerPlace()
         )
     }
 
     /// An imported Skyrim save is written as an ordinary slot, so it loads through
     /// the one restore path.
     public func writeImported(_ contents: OpenSkySaveContents, slot: String) async throws {
-        let store = try await owner.store()
-        try await store.write(contents, fingerprint: owner.pluginFingerprint(), toSlot: slot)
+        let store = try await core.store()
+        try await store.write(contents, fingerprint: core.pluginFingerprint(), toSlot: slot)
     }
 
     public func saveListings() async throws -> [OpenSkySaveSlotListing] {
-        try await owner.store().readListings()
+        try await core.store().readListings()
     }
 
     public func deleteSave(slot: String) async throws {
-        try await owner.store().remove(slot: slot)
+        try await core.store().remove(slot: slot)
     }
 
     private enum Extra {

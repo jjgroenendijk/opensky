@@ -63,9 +63,10 @@ ADAPTER_OWNER = {"OpenSkyActorAdapters": {"OpenSkyActors", "OpenSkyFactions"},
                  "OpenSkyMenuAdapters": {"OpenSkyMenus"},
                  "OpenSkyProgressionAdapters": {"OpenSkyProgression"},
                  "OpenSkyScriptAdapters": {"OpenSkyScripting"},
+                 "OpenSkySessionAdapters": {"OpenSkySave"},
                  "OpenSkyStoryAdapters": {"OpenSkyCrime", "OpenSkyDialogue", "OpenSkyQuests"}}
 ADAPTERS_PENDING = {
-    "OpenSkyAgentAdapters", "OpenSkySessionAdapters",
+    "OpenSkyAgentAdapters",
 }
 # Rule 6. A feature without one of its targets, and why.
 MISSING = {
