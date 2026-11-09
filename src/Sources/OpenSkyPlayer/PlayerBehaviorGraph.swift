@@ -72,8 +72,12 @@ nonisolated public struct PlayerBehaviorGraph {
         clipWorker: (any AssetLoadWorking<String, SplineBehaviorClip>)? = nil
     ) -> PlayerBehaviorGraph {
         let clips = clipWorker.map {
-            InstallBehaviorClipSource(paths: files.clipPaths, worker: $0)
-        } ?? InstallBehaviorClipSource(fileSystem: fileSystem, paths: files.clipPaths)
+            InstallBehaviorClipSource(
+                paths: files.clipPaths, projectFolder: files.projectFolder, worker: $0
+            )
+        } ?? InstallBehaviorClipSource(
+            fileSystem: fileSystem, paths: files.clipPaths, projectFolder: files.projectFolder
+        )
         let references = InstallBehaviorReferenceSource(
             fileSystem: fileSystem, rootPath: files.behaviorPath
         )
@@ -105,6 +109,8 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
     let rig: HKASkeleton
     let ragdoll: HKASkeleton?
     let clipPaths: [String]
+    /// Where the character file sits, two folders up; relative clip names start here.
+    let projectFolder: String
     var characterProperties = BehaviorCharacterProperties.empty
     var speedSamples: SpeedSampleProject?
 
@@ -140,6 +146,9 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
                 in: fileSystem,
                 folder: InstallBehaviorClipSource.animationFolder(forBehaviorPath: behaviorPath)
             ),
+            projectFolder: BehaviorProjectAsset.folder(
+                of: BehaviorProjectAsset.folder(of: characterPath)
+            ),
             characterProperties: characterGraph.flatMap { graph in
                 BehaviorProjectAsset.character(in: graph).map {
                     BehaviorCharacterProperties(character: $0, in: graph)
@@ -168,6 +177,7 @@ nonisolated public struct PlayerBehaviorGraphFiles: Sendable {
             behaviorPath: asset.behaviorPath, objectGraph: asset.objectGraph,
             behavior: asset.behavior, rig: asset.skeleton, ragdoll: asset.ragdollSkeleton,
             clipPaths: asset.clipPaths,
+            projectFolder: asset.projectFolder,
             characterProperties: asset.characterProperties,
             speedSamples: SpeedSampleProject.load(forProject: projectPath, from: fileSystem)
         )

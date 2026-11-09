@@ -24,6 +24,9 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
     /// Lowercased file name -> archive path, for every clip under the character
     /// animation folders.
     private let pathsByName: [String: String]
+    /// The folder a relative clip name outside the indexed paths starts from, such as
+    /// `..\sharedkillmoves\...` from `meshes\actors\character`.
+    private let projectFolder: String?
     private let limit: Int
     private var cache: [String: (any BehaviorClip)?] = [:]
     private var inFlight: Set<String> = []
@@ -31,17 +34,40 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
     public private(set) var missCount = 0
 
     /// Reads each clip inside the request, on the caller's thread.
-    public convenience init(fileSystem: any GameFileSource, paths: [String], limit: Int = 512) {
-        self.init(loading: .immediate(fileSystem), paths: paths, limit: limit)
+    public convenience init(
+        fileSystem: any GameFileSource,
+        paths: [String],
+        projectFolder: String? = nil,
+        limit: Int = 512
+    ) {
+        self.init(
+            loading: .immediate(fileSystem), paths: paths, projectFolder: projectFolder,
+            limit: limit
+        )
     }
 
     /// Reads clips on `worker`; a requested clip arrives at a later `drain()`.
     public convenience init(
         paths: [String],
+        projectFolder: String? = nil,
         limit: Int = 512,
         worker: any AssetLoadWorking<String, SplineBehaviorClip>
     ) {
-        self.init(loading: .worker(worker), paths: paths, limit: limit)
+        self.init(
+            loading: .worker(worker), paths: paths, projectFolder: projectFolder, limit: limit
+        )
+    }
+
+    /// The clips of a decoded project, on `worker`.
+    public convenience init(
+        project: BehaviorProjectAsset, worker: any AssetLoadWorking<String, SplineBehaviorClip>
+    ) {
+        self.init(paths: project.clipPaths, projectFolder: project.projectFolder, worker: worker)
+    }
+
+    /// The clips of one actor folder's file set, read on the caller's thread.
+    public convenience init(fileSystem: any GameFileSource, files: BehaviorFileSet) {
+        self.init(fileSystem: fileSystem, paths: files.animations, projectFolder: files.folder)
     }
 
     /// Indexes every archived character animation, which is the path list the
@@ -54,8 +80,9 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
         )
     }
 
-    private init(loading: Loading, paths: [String], limit: Int) {
+    private init(loading: Loading, paths: [String], projectFolder: String?, limit: Int) {
         self.loading = loading
+        self.projectFolder = projectFolder
         self.limit = limit
         var byName: [String: String] = [:]
         for path in paths {
@@ -112,7 +139,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
             return cached
         }
         guard !inFlight.contains(key) else { return nil }
-        guard cache.count + inFlight.count < limit, let path = pathsByName[key] else {
+        guard cache.count + inFlight.count < limit, let path = path(named: name, key: key) else {
             missCount += 1
             return nil
         }
@@ -138,7 +165,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
             case let .worker(worker) = loading,
             cache[key] == nil, !inFlight.contains(key),
             cache.count + inFlight.count < limit,
-            let path = pathsByName[key]
+            let path = path(named: name, key: key)
         else { return }
         inFlight.insert(key)
         worker.submit(path, priority: .prefetch)
@@ -155,6 +182,16 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
             store(attempt { try completion.result.get() }, for: key)
         }
         return finished.count
+    }
+
+    /// The indexed clip with this file name, else a relative name resolved from the
+    /// project folder. The engine finds a shared clip, such as a paired kill move, this way.
+    private func path(named name: String, key: String) -> String? {
+        if let path = pathsByName[key] {
+            return path
+        }
+        guard let projectFolder, name.contains("\\") || name.contains("/") else { return nil }
+        return BehaviorProjectAsset.join(projectFolder, name)
     }
 
     private func store(_ clip: (any BehaviorClip)?, for key: String) {

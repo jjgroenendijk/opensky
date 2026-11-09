@@ -69,7 +69,7 @@ nonisolated public enum BehaviorEventProbe {
         }
         let instance = BehaviorGraphInstance(
             graph: graph, in: objects, skeleton: BehaviorSkeleton(rig),
-            clips: InstallBehaviorClipSource(fileSystem: fileSystem, paths: set.animations)
+            clips: InstallBehaviorClipSource(fileSystem: fileSystem, files: set)
         )
         instance.references = InstallBehaviorReferenceSource(fileSystem: fileSystem, rootPath: key)
         instance.activate()

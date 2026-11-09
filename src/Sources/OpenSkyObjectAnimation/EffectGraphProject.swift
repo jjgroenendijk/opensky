@@ -51,7 +51,7 @@ final class EffectGraphProject {
             queue: AssetLoadQueue.background,
             load: InstallBehaviorClipSource.load(fileSystem: files)
         )
-        clips = InstallBehaviorClipSource(paths: loaded.asset.clipPaths, worker: worker)
+        clips = InstallBehaviorClipSource(project: loaded.asset, worker: worker)
         references = InstallBehaviorReferenceSource(
             fileSystem: files, pathsByName: loaded.referencePaths
         )

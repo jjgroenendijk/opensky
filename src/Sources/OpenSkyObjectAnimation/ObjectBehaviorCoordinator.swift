@@ -178,7 +178,7 @@ public final class ObjectBehaviorCoordinator {
             load = InstallBehaviorClipSource.load(fileSystem: files)
         }
         let worker = SerialAssetLoadWorker<String, SplineBehaviorClip>(load: load)
-        let clips = InstallBehaviorClipSource(paths: object.asset.clipPaths, worker: worker)
+        let clips = InstallBehaviorClipSource(project: object.asset, worker: worker)
         // An object never walks: bone 0 is a blade or a door leaf, so no bone is
         // the root whose travel is taken out of the pose.
         let instance = BehaviorGraphInstance(

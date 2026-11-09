@@ -8,6 +8,8 @@ import Foundation
 nonisolated public struct BehaviorFileSet: Equatable, Sendable {
     /// The actor folder plus the `behaviors` folder suffix, such as `meshes\actors\canine wolf`.
     public let name: String
+    /// The actor folder, where a clip generator's relative clip name starts.
+    public let folder: String
     public let behaviors: [String]
     public let skeleton: String?
     public let animations: [String]
@@ -36,6 +38,7 @@ nonisolated extension BehaviorGapSweep {
             let inside = paths.filter { $0.hasPrefix(folder + "\\") }
             return BehaviorFileSet(
                 name: folder + variant,
+                folder: folder,
                 behaviors: behaviorsByKey[key]?.sorted() ?? [],
                 skeleton: asset(among: inside, folder: folder, variant: variant, kind: .skeleton),
                 animations: inside.filter { $0.contains("\\animations\\") },

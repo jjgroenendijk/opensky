@@ -36,6 +36,16 @@ folder. The first-person set reuses the third-person names, such as `mt_idle.hkx
 third-person clips: the hands hang at the hips, and the `Camera1st` track gets the third-person
 camera, 56.5 units behind the head.
 
+A clip name outside that folder is a path relative to the project folder, the folder that holds the
+`behaviors` folder. The engine resolves `.` and `..` in it. Two examples from the install:
+
+- `..\SharedKillMoves\Human&SabreCat\Paired_1HMKillMove_SabreCatShortA.hkx` from
+  `meshes\actors\character` is `meshes\actors\sharedkillmoves\...`, the paired kill moves.
+- `..\Animations\horse_rider\Saddle_offset.hkx` from `meshes\actors\character\_1stperson` is
+  `meshes\actors\character\animations\horse_rider\...`.
+
+The character file does not list these clips, so the folder index alone never finds them.
+
 ## Clip triggers and annotations
 
 A clip tells the rest of the graph where it is with events. They come from two places.
