@@ -4,12 +4,16 @@
 
 public import OpenSkyCells
 
-public struct SessionStage {
-    public let gameSession: GameSession
+/// The stage every adapter is built over.
+public typealias SessionStage = SessionStageParts<GameSession>
+
+/// Generic over the session, so a test without Metal 4 can build one over a stand-in.
+public struct SessionStageParts<Session: AnyObject> {
+    public let gameSession: Session
     public let streamer: CellStreamer
     public let data: WorldDataStores
 
-    public init(gameSession: GameSession, streamer: CellStreamer, data: WorldDataStores) {
+    public init(gameSession: Session, streamer: CellStreamer, data: WorldDataStores) {
         self.gameSession = gameSession
         self.streamer = streamer
         self.data = data
