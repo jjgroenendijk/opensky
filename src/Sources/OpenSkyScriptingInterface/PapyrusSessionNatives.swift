@@ -1,5 +1,6 @@
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
+public import OpenSkyGameData
 import OpenSkyPerceptionInterface
 public import OpenSkyWorldState
 
@@ -33,6 +34,8 @@ public struct PapyrusSessionNatives {
     public var skyMode: (() -> Int32)?
     /// The VMAD scripts of an item's base record, for `OnEquipped` and `OnRead`.
     public var itemScripts: ((ReferenceKey) -> [AttachedScript])?
+    /// The shared roller's script changes; nil in a session without leveled lists.
+    public var leveledEdits: (() -> LeveledScriptEdits?)?
 
     public init() {}
 }

@@ -182,7 +182,7 @@ extension SystemMenuCoordinator {
         case let .delete(slot):
             perform("Deleting", done: saveTexts.deleted) { try await $0.deleteSave(slot: slot) }
         case .exportSkyrim:
-            perform("Exporting", done: "Exported") { try await $0.exportSkyrimSave() }
+            perform("Exporting", done: "Exported") { _ = try await $0.exportSkyrimSave() }
         case .back:
             saveLoadPage = nil
             showPage(.main)

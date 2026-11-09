@@ -71,12 +71,12 @@ Reversing formats is fine. Redistributing Bethesda content or code is not. There
 
 - A feature uses another only through its `Interface` module (gate: `module-graph.sh`).
 - Parsers and game rules are pure, values in and values out, inside a thin shell for files,
-  clocks, Metal, audio, and UI (gates: `deterministic-rules.sh`, SwiftLint).
+  clocks, Metal, audio, and UI (gates: `deterministic-rules.sh`, `syntax-rules.sh`).
 - Reach the outside world through a protocol (a port), so a test can pass a fake.
-- Game logic goes in a coordinator in its feature module, not in `GameViewController` (SwiftLint).
+- Game logic goes in a coordinator in its feature module, not in `GameViewController` (`syntax-rules.sh`).
 - Change a data layout for speed only after a measurement shows the cost.
 - Simulation runs on the main actor, in a fixed order, without `await`; file work runs off it
-  (`docs/decisions/concurrency.md`; SwiftLint).
+  (`docs/decisions/concurrency.md`; `syntax-rules.sh`).
 
 ## Build, run, test
 

@@ -18,7 +18,7 @@ extension PapyrusWorldStateBridge {
 
     /// Run after an `AddForm`, a `Revert`, a global write, and a load.
     public func publishLeveledEdits() {
-        guard let edits = leveledEdits() else { return }
+        guard let edits = sessionNatives.leveledEdits?() else { return }
         edits.setAddedEntries(scriptAddedLeveledEntries())
         var globals: [FormID: Float] = [:]
         for key in worldState.sortedOverriddenGlobalKeys() {

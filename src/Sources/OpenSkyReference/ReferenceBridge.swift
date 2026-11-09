@@ -63,7 +63,6 @@ nonisolated public struct ReferenceBridge: Sendable {
 
     /// Writes one batch under a name that sorts after every earlier one, and returns it.
     /// The plugin reads only `.txt` files, so the rename makes the batch appear whole.
-    @discardableResult
     public func send(_ lines: [String], at date: Date = Date()) throws -> String {
         let name = Self.batchName(at: date)
         try FileManager.default.createDirectory(

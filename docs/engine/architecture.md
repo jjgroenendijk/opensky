@@ -153,26 +153,26 @@ declared order.
 
 Every rule on this page and in [Coordinators](/engine/coordinators.md) has a check in
 `make check` and CI. The adapter rule needs the index store a build writes, so it runs in
-`make lint-index` and the `Index checks` CI job on each pull request. The SwiftLint rules are in `tools/lint/.swiftlint.yml`.
+`make lint-index` and the `Index checks` CI job on each pull request. The structural rules are in `tools/syntax-lint/`.
 
 | Rule | Check |
 | --- | --- |
 | A feature uses another feature only through its `Interface` module | `tools/lint/module-graph.sh`, rules 1 to 9 |
 | A module depends only on a module at least as stable, or on an `Interface` | `tools/lint/module-graph.sh` rule 13 |
 | No adapter uses the type of an adapter outside its own family | `make lint-index`, `tools/lint-index/adapter-references.py` |
-| Only the composition root names `GameViewController` | SwiftLint `controller_outside_composition_root` |
-| No `GameViewController` extension outside its own files | SwiftLint `game_view_controller_extension` |
-| No late-attach method in a package module or the app | SwiftLint `late_attached_world` |
-| No `wire...` or `install...` method in a package module or the app, except a static or private one | SwiftLint `late_setter_method` |
-| No coordinator property that holds a dependency and other modules can set | SwiftLint `late_setter_property` |
-| Only the session scope builds a game coordinator | SwiftLint `coordinator_outside_session_scope` |
-| An action returns a typed outcome, not `String` | SwiftLint `action_returns_text` |
-| A pure core imports no AppKit, Metal, or audio, and reads no clock | SwiftLint `pure_core_side_effect` |
-| The renderer holds no game state and is not cast to the session | `tools/lint/module-graph.sh` rule 10, SwiftLint `renderer_downcast` |
-| The Papyrus bridge gains collaborators only through a native family | SwiftLint `papyrus_loose_closure` |
-| A system joins the frame only through a `FrameSchedule` phase | SwiftLint `frame_callback_property` |
-| No new `@unchecked Sendable`, `Task.detached`, `DispatchQueue.main`, or semaphore in `src/Sources/` | SwiftLint `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore` |
-| A new `DispatchQueue` has a row in [Concurrency](/decisions/concurrency.md) | SwiftLint `new_dispatch_queue` |
+| Only the composition root names `GameViewController` | `syntax-rules.sh` `controller_outside_composition_root` |
+| No `GameViewController` extension outside its own files | `syntax-rules.sh` `game_view_controller_extension` |
+| No late-attach method in a package module or the app | `syntax-rules.sh` `late_attached_world` |
+| No `wire...` or `install...` method in a package module or the app, except a static or private one | `syntax-rules.sh` `late_setter_method` |
+| No coordinator property that holds a dependency and other modules can set | `syntax-rules.sh` `late_setter_property` |
+| Only the session scope builds a game coordinator | `syntax-rules.sh` `coordinator_outside_session_scope` |
+| An action returns a typed outcome, not `String` | `syntax-rules.sh` `action_returns_text` |
+| A pure core imports no AppKit, Metal, or audio, and reads no clock | `syntax-rules.sh` `pure_core_side_effect` |
+| The renderer holds no game state and is not cast to the session | `tools/lint/module-graph.sh` rule 10, `syntax-rules.sh` `renderer_downcast` |
+| The Papyrus bridge gains collaborators only through a native family | `syntax-rules.sh` `papyrus_loose_closure` |
+| A system joins the frame only through a `FrameSchedule` phase | `syntax-rules.sh` `frame_callback_property` |
+| No new `@unchecked Sendable`, `Task.detached`, `DispatchQueue.main`, or semaphore in `src/Sources/` | `syntax-rules.sh` `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore` |
+| A new `DispatchQueue` has a row in [Concurrency](/decisions/concurrency.md) | `syntax-rules.sh` `new_dispatch_queue` |
 | A module stays below 30,000 source lines | `tools/lint/module-size.sh` ([Module size](/tools/modules.md#module-size)) |
 | A protocol type is written `any X`, an import is `internal` unless it says `public import`, and unsafe code is marked `unsafe` | The compiler, set up and self-checked by `tools/lint/language-rules.sh` ([Swift language rules](/decisions/language-rules.md)) |
 | A package module never swallows an error with `try?` or an empty `catch`, except on the allowed calls, and the formats, game data, and save modules never trap | `tools/lint/error-handling.sh` ([Error handling](/decisions/error-handling.md)) |
