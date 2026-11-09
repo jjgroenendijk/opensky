@@ -4,7 +4,12 @@
 /// The record stores an adapter reads from the loaded world data.
 nonisolated public protocol WorldRecordsPort {
     var factionStore: FactionStore? { get }
+    var formListStore: FormListStore? { get }
+    var gameSettings: GameSettingStore { get }
     var magicItemPluginName: String? { get }
     var locationKeywords: KeywordStore? { get }
+    var locationStore: LocationStore? { get }
+    var magicEffectStore: MagicEffectStore? { get }
+    var questStore: QuestStore? { get }
     var leveledScriptEdits: LeveledScriptEdits? { get }
 }

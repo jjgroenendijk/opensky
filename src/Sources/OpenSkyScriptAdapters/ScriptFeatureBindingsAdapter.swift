@@ -1,6 +1,6 @@
 import OpenSkyActorPresentation
 import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
@@ -49,7 +49,7 @@ public struct ScriptFeatureBindingsAdapter {
 extension ScriptFeatureBindingsAdapter {
     /// The features the natives reach, each answered by its world adapter.
     public func seams(
-        provider: WorldDataStores,
+        provider: any WorldRecordsPort,
         worldState: WorldStateStore
     ) -> PapyrusBridgeSeams {
         var seams = PapyrusBridgeSeams()
@@ -74,7 +74,7 @@ extension ScriptFeatureBindingsAdapter {
     /// Without a QUST index every `Quest` native fails with
     /// `PapyrusQuestBridgeError.noQuestData`.
     private func quests(
-        provider: WorldDataStores,
+        provider: any WorldRecordsPort,
         worldState: WorldStateStore
     ) -> (any QuestAccess)? {
         provider.questStore.map {
