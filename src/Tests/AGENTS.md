@@ -14,6 +14,11 @@ scenes, actor visuals, and fakes over the world domains below `OpenSkyWorld`). E
 test target that needs the fixtures links it: package test targets, `OpenSkyTests`, and
 `OpenSkyRealDataTests`.
 
+`OpenSkySessionTesting` is generated. It holds one `Fake<Port>` for each port in
+`OpenSkySessionInterface`: each property is stored, and each method records its arguments and
+answers from a value the test sets. `make fakes` rewrites it after a port changes. Do not edit
+a fake by hand; the checks that a test needs go in the test (gate: `tools/lint/fakes.sh`).
+
 - Declarations that tests use are `public`. A struct a test builds has an explicit
   `public init(...)`.
 - A library may `@testable import` the module it builds fixtures for and import what lies

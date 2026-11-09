@@ -83,6 +83,9 @@ format-check: ## The format half of check, as the CI Format job runs it
 lint: ## The lint half of check, as the CI Static checks job runs it
 	@./tools/run-checks.sh lint
 
+fakes: ## Regenerate the port fakes in OpenSkySessionTesting from OpenSkySessionInterface
+	@./tools/fakes.sh
+
 lint-index: | $(VENDOR) ## Build the index, then fail on unused code or an adapter that uses another
 	@./tools/lint-index.sh
 
