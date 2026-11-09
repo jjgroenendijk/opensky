@@ -17,7 +17,7 @@ linked, and what happens when it is missing.
 ## Decision
 
 - Build ffmpeg 9.0.2 from source with `tools/vendor-ffmpeg.sh`, run by `make bootstrap` or alone as
-  `make ffmpeg`. The prefix is `src/.vendor/ffmpeg`, which is gitignored: the tarball, build tree, and
+  `make bootstrap`. The prefix is `src/.vendor/ffmpeg`, which is gitignored: the tarball, build tree, and
   dylibs never enter the repository.
 - Configure it decode-only and LGPL-only. The result is three libraries, `libavutil`,
   `libavcodec`, and `libswresample`, with four decoders (`wmav2`, `bink`, `binkaudio_dct`, and
@@ -155,9 +155,9 @@ The project's `$(SRCROOT)/.vendor` then resolves to the shared prefix. An existi
 left
 alone, so a worktree built with `OPENSKY_FFMPEG_FORCE=1` keeps its copy.
 
-`make link-shared` runs the linker, and every building and testing target depends on it. To move
-a worktree onto the shared prefix, delete its own `src/.vendor` while nothing builds there, then run
-`make link-shared`. A checkout opened straight in Xcode, with no `make` target ever run,
+The vendored libraries' file targets run the linker, and every building and testing target
+depends on them. To move a worktree onto the shared prefix, delete its own `src/.vendor` while
+nothing builds there, then run `tools/link-shared.sh`. A checkout opened straight in Xcode, with no `make` target ever run,
 still fails on the missing list, because `make` creates both the symlink and the placeholders.
 
 ## Runtime failure, not build failure

@@ -25,7 +25,7 @@
     "files": [],
     "expected_behavior": [
       "Checks for index.md in the mirror before anything else",
-      "When the mirror is missing, runs make ck-wiki in a background shell instead of fetching pages one by one",
+      "When the mirror is missing, runs make sync-wiki ARGS='--site ck' in a background shell instead of fetching pages one by one",
       "Does not copy any wiki page into the repository"
     ]
   },
@@ -44,7 +44,7 @@
     "query": "How does the Skyrim alchemy skill formula work? Check UESP.",
     "files": [],
     "expected_behavior": [
-      "Checks for index.md in .cache/uesp-wiki, and runs make uesp-wiki in a background shell when it is missing",
+      "Checks for index.md in .cache/uesp-wiki, and runs make sync-wiki ARGS='--site uesp' in a background shell when it is missing",
       "Reads Skyrim/Alchemy.md, not the CK wiki mirror",
       "Cites the page's url from the frontmatter"
     ]
@@ -55,8 +55,8 @@
     "files": [],
     "expected_behavior": [
       "Fixes the converter in tools/wiki-mirror without editing any mirror file",
-      "Reconverts with make ck-wiki and make uesp-wiki and searches both mirrors for the same fault",
-      "Runs make py-format py-lint and fixes what it reports"
+      "Reconverts with make sync-wiki ARGS='--site ck' and make sync-wiki ARGS='--site uesp' and searches both mirrors for the same fault",
+      "Runs make format py-lint and fixes what it reports"
     ]
   },
   {

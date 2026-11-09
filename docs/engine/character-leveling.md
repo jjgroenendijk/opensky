@@ -148,7 +148,7 @@ out of order.
 
 A condition function OpenSky does not implement holds when a spend is checked. The game has every
 function, so a perk the player meets in the game must not be locked by a gap in OpenSky. The
-function is still counted in the condition tally, so `make gaps` shows it. A
+function is still counted in the condition tally, so `make rank-gaps` shows it. A
 function that is implemented but answers false still refuses the spend.
 
 ## Conditions

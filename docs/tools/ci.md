@@ -17,11 +17,11 @@ developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 
 | Job | Make targets |
 | --- | --- |
-| Format | `swift-format-check`, `metal-format-check`, `cpp-format-check`, `md-lint` |
-| Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `lint-test-plans`, `lint-test-tags`, `lint-test-targets`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `panel-text`, `load-order-only`, `cli-conventions`, `gap-registries`, `duplicates`, `no-suppressions`, `file-length`, `module-size`, `py-format-check`, `py-lint` |
+| Format | `format-check`: every `tools/format/` script with `--check` |
+| Static checks | `lint`: every `tools/lint/` script and its self-check |
 | Changes | None. It decides whether Build & test runs |
-| Index checks | `health` |
-| Build & test | `swift-baseline`, `language-rules`, `error-handling`, `deterministic-rules`, `test-order`, `coverage-self-check`, `ffmpeg`, `astcenc`, `test-unit PLAN=UnitTests COVERAGE=1`, `coverage-floor`, `diff-coverage` (pull request only) |
+| Index checks | `lint-index` |
+| Build & test | `test PLAN=UnitTests COVERAGE=1`: the whole unit plan, the coverage floors, and the changed lines (diffed against the base on a pull request) |
 | Lint | None. It passes only when the jobs above pass |
 
 `Lint` is the one required status check on `main`. A pull request with a lint failure or a
@@ -39,14 +39,14 @@ Build & test, because nothing in it is compiled. Static checks still lint and te
 accepts that skip only when `Changes` asked for it. A push to `main` always builds, so the
 compilation cache stays current.
 
-## One make target per step
+## The same gate as make check
 
-Each step runs a `make` target that `make check` or `make test-unit` also runs. So the rules live in
-one place, the `Makefile` and the scripts under `tools/`. The workflow only installs the tools and
-calls `make`. A step after the first one in a job runs even when an earlier step failed, so one
-run shows every finding.
+Format and Static checks run `make format-check` and `make lint`, the two halves of `make check`, so
+the gate is the same locally and in CI by construction. The workflow only installs the tools and
+calls `make`. Each part runs to its end even when another part fails, so one run shows every
+finding.
 
-A new check gets a `make` target and a step in the same commit.
+A new check is a new script in `tools/lint/` or `tools/format/` and needs no workflow edit.
 
 ## The runner limit
 
@@ -90,21 +90,21 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
 
 - **No game data.** A runner has no Skyrim install. The job sets no `OPENSKY_DATA_ROOT`, so a
   test gated on the install skips. The real-data suites only compile, in the `Index checks` job:
-  a build of the unit plan does not compile `OpenSkyRealDataTests`. `make realdata-plan` checks
+  a build of the unit plan does not compile `OpenSkyRealDataTests`. `tools/lint/realdata-plan.sh` checks
   that every such suite lives in `OpenSkyRealDataTests`, which the unit plan does not include.
 - **Metal 4.** A test that needs a Metal 4 GPU gates on `device.supportsFamily(.metal4)` and
   skips without one. The runner's virtual GPU has no Metal 4, so these tests run only on a
   developer machine.
 - **Xcode.** The image holds several Xcodes, and its default changes over time. So the workflow
   `env` sets `DEVELOPER_DIR` to the one Xcode that matches the local one, and
-  `make swift-baseline` fails when the two Swift versions differ
+  `tools/lint/swift-baseline.sh` fails when the two Swift versions differ
   ([Swift toolchain](/tools/swift-toolchain.md)). The `xcode-27` image is a public preview of
   GitHub, so a job can wait longer for a runner than on `macos-26`.
 - **Every error at once.** The job sets Xcode's "continue building after errors" default, so a
   failed run lists the compile errors of every target.
 - **CI-only build flags.** `BUILD_FLAGS` turns off the index store, which nothing in CI reads, and
   skips the package plugin and macro trust prompts. They change no compiler output, so CI still
-  builds what `make test-unit` builds locally.
+  builds what `make test` builds locally.
 - **Metal Toolchain.** `tools/ci/metal-toolchain.sh start` downloads it in the background while
   the caches restore, and `wait` joins it before the build. It is not cached: it is 1.5 GB on disk,
   so a restore takes as long as the download and uses space the compilation cache needs.
@@ -117,14 +117,14 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
 
 ## Index checks
 
-`make health` runs every check that reads the index store: Periphery's unused-code scan and the
-adapter rule (`tools/lint/adapter-references.py`). A task replayed from the compilation cache
+`make lint-index` runs every check that reads the index store: Periphery's unused-code scan and the
+adapter rule (`tools/lint-index/adapter-references.py`). A task replayed from the compilation cache
 writes almost no index data. Measured 2026-11-08: a Debug build of the CLI into an empty tree,
 served from a warm cache, wrote 276 index units for about 5,000 Swift files. So the index build
 cannot reuse the cached build of Build & test. It builds uncached on its own runner, at the same
 time as Build & test. It also builds `OpenSkyRealDataTests`, which no other job compiles.
 
-Measured 2026-11-08 on #1885: the job takes 17 to 19 minutes, of which `make health` is about 16.
+Measured 2026-11-08 on #1885: the job takes 17 to 19 minutes, of which `make lint-index` is about 16.
 Build & test takes 22 minutes with a cold compilation cache and 10.5 with a warm one. So the job
 adds up to 8.5 minutes to a run, and it costs a fourth macOS runner. #1887 tracks an incremental
 index build. On the development Mac the same uncached build takes about 9 minutes.
@@ -164,7 +164,7 @@ The compilation cache roughly halves the build:
 ## Weekly
 
 `weekly.yml` runs on Sunday night and on demand (`gh workflow run weekly.yml`). It holds only
-`make test-sanitize SAN=thread` and `SAN=address`. Each rebuilds everything with instrumentation,
+`make test PLAN=Sanitizers SAN=thread` and `SAN=address`. Each rebuilds everything with instrumentation,
 which costs too much on every pull request.
 
 No pull request fails on a weekly finding, so the `Report` job keeps one issue,
@@ -181,5 +181,5 @@ demand. It reads the `Lint` result of `ci.yml` to pick a commit, and it restores
 
 ## Not in CI
 
-- `make test-ui`. It needs the Accessibility grant, which a runner cannot give.
+- `make test PLAN=UITests`. It needs the Accessibility grant, which a runner cannot give.
 - The real-data suites and perf gates. A runner has no game install.

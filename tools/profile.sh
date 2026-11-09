@@ -3,20 +3,16 @@
 # tour. xctrace attaches to the running app, because a process it launches here
 # never starts.
 #
-# Usage: tools/profile.sh PRODUCTS [BENCHMARK_OPTION...]
-#   PRODUCTS          the Release products folder (make profile builds and passes it)
+# Usage: tools/profile.sh [--no-build] [BENCHMARK_OPTION...]
+#   --no-build        profile the Release app already built
 #   BENCHMARK_OPTION  passed on to openskycli benchmark; the default is --preset quick
 #
 # Writes .logs/profile/<UTC timestamp>/: benchmark.log, result.json, tour.trace,
 # and samples.xml, the time-profile table for agents without Instruments.
 set -eu
 
-if [ "$#" -lt 1 ]; then
-    echo "[ERROR] usage: tools/profile.sh PRODUCTS [BENCHMARK_OPTION...]" >&2
-    exit 2
-fi
-products="$1"
-shift
+# shellcheck source=tools/release-products.sh
+. "$(dirname "$0")/release-products.sh"
 cli="$products/openskycli"
 app="$products/OpenSky.app"
 [ -x "$cli" ] || { echo "[ERROR] no openskycli at $cli" >&2; exit 2; }

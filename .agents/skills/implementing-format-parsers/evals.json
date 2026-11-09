@@ -44,7 +44,7 @@
     "query": "The new LIP parser needs a helper from OpenSkyFormatsMesh. Import it.",
     "files": [],
     "expected_behavior": [
-      "Refuses the import, because a format family imports only OpenSkyFormatsCore and make module-graph fails on it",
+      "Refuses the import, because a format family imports only OpenSkyFormatsCore and tools/lint/module-graph.sh fails on it",
       "Moves the shared helper down into OpenSkyFormatsCore instead"
     ]
   }

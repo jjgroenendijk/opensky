@@ -1,14 +1,14 @@
 ---
 type: Tool
 title: Gap report
-description: How `make gaps` finds what the game data uses and the engine does not do yet, what
+description: How `make rank-gaps` finds what the game data uses and the engine does not do yet, what
   each section counts, and what it cannot see.
 tags: [tool, cli, coverage, roadmap]
 ---
 
 # Gap report
 
-`make gaps` runs `openskycli gaps` on your install. It lists what the game data asks for that
+`make rank-gaps` runs `openskycli gaps` on your install. It lists what the game data asks for that
 the engine does not implement yet. Each item is ranked by how often the data uses it, so the
 top rows are the gaps a player meets first.
 
@@ -18,9 +18,9 @@ copies `summary.md` into the "Completion progress" table of `README.md`, between
 `gaps:begin` and `gaps:end` markers. Commit that change, so the README shows the progress.
 
 ```sh
-make gaps                         # every section; updates README.md
-make gaps ONLY=papyrus,perks      # some sections; README.md stays as it is
-make gaps LIMIT=20                # at most 20 rows per section
+make rank-gaps                         # every section; updates README.md
+make rank-gaps ARGS='--only papyrus',perks      # some sections; README.md stays as it is
+make rank-gaps ARGS='--limit 20'                # at most 20 rows per section
 ```
 
 The asset sections (`meshes`, `textures`, `animations`, `audio`, and the tag part of `swf`)
@@ -73,7 +73,7 @@ complete, so a new reader cannot be missed:
 | `PapyrusEngineEvents.sent` | SwiftLint `papyrus_event_literal`: no `"On..."` event name elsewhere in the scripting module |
 | Game settings | SwiftLint `game_setting_reader`: only the files of known readers call `setting(editorID:)` or declare `resolve(store:)` |
 | `NIFShaderFlag.lightingRead`, `effectRead` | SwiftLint `shader_flag_mask`: flags are read through `has(_:)` and a named constant |
-| `NIFBlockTypes.handled` | `make gap-registries`: the list holds exactly the NIF type names the code names |
+| `NIFBlockTypes.handled` | `tools/lint/gap-registries.sh`: the list holds exactly the NIF type names the code names |
 
 A new settings reader adds its call to `GapsGatherer.settingsRead` and its file to the
 `game_setting_reader` rule. A new shader flag reader adds the flag to `lightingRead` or

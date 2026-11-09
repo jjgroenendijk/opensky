@@ -16,7 +16,7 @@ the next agent writes it again from nothing.
 Two things this skill deliberately does not repeat: how to write a test in this repo
 (`src/Tests/OpenSkyTests/AGENTS.md` and `src/Tests/OpenSkyRealDataTests/AGENTS.md` load
 automatically when you
-touch those directories, and cover `@MainActor`, env gating, `make test-real`, and fixtures),
+touch those directories, and cover `@MainActor`, env gating, `make test PLAN=RealData`, and fixtures),
 and the CLI subcommand reference (`docs/tools/cli.md`).
 
 ## Build the probe into openskycli
@@ -28,7 +28,7 @@ and the CLI subcommand reference (`docs/tools/cli.md`).
    new code.
 2. If one comes close, extend it with an option or a report section. For example, a new
    NIF block field goes into the `nif` output, not into a new script.
-3. Otherwise add a subcommand: `make new-cli-command NAME=<name> GROUP=<help group>` writes
+3. Otherwise add a subcommand: `make add-cli-command ARGS='<name> <help' group>` writes
    every stub, and the rules are in the `developing-cli-commands` skill. The logic goes into the
    package module of its domain, with a unit test, and the command only parses and prints.
 4. Run it with `make run-cli ARGS=...` and commit it with the change it checked.
@@ -44,7 +44,7 @@ single `ESMFile(url:)`. A record a DLC or mod overrides is only right that way, 
 When the check is a pass/fail assertion that should keep holding, such as pixel values
 from an offscreen render, write it as a real-data test in `src/Tests/OpenSkyRealDataTests/`
 that stays, copying the shape of `CellRenderRealDataTests.swift`. That folder is the whole
-`RealData` plan, so a class there runs under `make test-real` with the data root in the
+`RealData` plan, so a class there runs under `make test PLAN=RealData` with the data root in the
 host. Never `swift path/to/script.swift` against engine sources: a script cannot import the
 package modules, and it does not get the data root or the memory watchdog.
 

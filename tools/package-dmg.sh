@@ -4,7 +4,7 @@
 # other. Only our own build goes in: the game install is never read here.
 #
 # Usage: tools/package-dmg.sh APP NAME
-#   APP   the Release OpenSky.app (make dmg passes it)
+#   APP   the Release OpenSky.app (make package-dmg passes it)
 #   NAME  the image name without .dmg, such as OpenSky-0.1.0-preview.1
 #
 # Writes .logs/dmg/<UTC timestamp>/NAME.dmg and prints its path last.

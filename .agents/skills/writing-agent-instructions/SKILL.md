@@ -89,9 +89,9 @@ Each skill folder has `evals.json`, a list of scenarios:
 ```json
 {
   "skills": ["testing-and-verifying"],
-  "query": "make test-unit failed. What broke?",
+  "query": "make test failed. What broke?",
   "files": [],
-  "expected_behavior": ["Runs make test-report instead of hand-parsing .xcresult JSON"]
+  "expected_behavior": ["Runs the failure summary make test prints, or python3 tools/xcresult_summary.py on the bundle, instead of hand-parsing .xcresult JSON"]
 }
 ```
 

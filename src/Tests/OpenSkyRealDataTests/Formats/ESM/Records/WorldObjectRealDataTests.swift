@@ -1,6 +1,6 @@
 // FLOR, TACT, FURN, and TREE sweep over the five masters: every record decodes,
 // every produce link reaches a decodable item, and the station census goes to `.logs/`.
-// Run with `make test-real T='WorldObjectRealDataTests'`.
+// Run with `make test PLAN=RealData T='WorldObjectRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

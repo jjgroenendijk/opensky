@@ -3,6 +3,18 @@
 # docs/decisions/modular-architecture.md). Reads the package graph from
 # `swift package dump-package`, so it needs no build. Every rule is a gate.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Sources/OpenSkyX" "$tree/src/Sources/OpenSkyY"
+    printf '%s\n' '// swift-tools-version: 6.0' 'import PackageDescription' \
+        'let package = Package(name: "probe", targets: [' \
+        '    .target(name: "OpenSkyX"), .target(name: "OpenSkyY"),' '])' >"$tree/src/Package.swift"
+    echo 'import OpenSkyY' >"$tree/src/Sources/OpenSkyX/A.swift"
+    echo 'public let y = 1' >"$tree/src/Sources/OpenSkyY/B.swift"
+    expect_failure "$0" "$tree" "rule 7: src/Sources/OpenSkyX/A.swift imports OpenSkyY"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -22,7 +34,7 @@ import sys
 
 # Rule 1. The lower modules, lowest layer first (module_layers.py). A lower module
 # depends only on a module in a lower layer.
-sys.path.insert(0, "tools/lint")
+sys.path.insert(0, __import__("os").environ["OPENSKY_TOOLS"] + "/lint")
 from module_layers import DOMAINS, LAYERS
 
 DOMAIN_OWNER = "OpenSkyWorld"

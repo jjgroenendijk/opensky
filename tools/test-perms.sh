@@ -54,7 +54,7 @@ check_signature() {
     bundle="$1"
     name="$(basename "$bundle")"
     if [ ! -d "$bundle" ]; then
-        echo "[INFO] $name not built yet — run make build-app or make test-ui first."
+        echo "[INFO] $name not built yet — run make build-app or make test PLAN=UITests first."
         return 0
     fi
     authority="$(codesign -dv --verbose=2 "$bundle" 2>&1 \
@@ -97,7 +97,7 @@ rather than verified. Each is one click, once per signature:
    System Settings > Privacy & Security > Full Disk Access > add:
      OpenSky.app                 (in DerivedData/Build/Products/Debug)
 
-`make test-ui` is the check that matters: it reaches a test case when every
+`make test PLAN=UITests` is the check that matters: it reaches a test case when every
 grant above is in place.
 
 Opening the Accessibility pane now...

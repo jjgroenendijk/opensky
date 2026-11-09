@@ -20,8 +20,8 @@ every performance change measures its win with this one.
 | --- | --- |
 | Launcher | The Benchmark page: pick a length, then Run Benchmark. The page shows the newest result |
 | CLI | `openskycli benchmark [--preset quick\|standard\|full]` opens the app hidden and muted, and waits for it to quit |
-| Make | `make benchmark PRESET=quick` builds Release and keeps the output in `.logs/benchmark/` |
-| Make, no build | `make benchmark-again PRESET=quick` runs the Release app that is already built |
+| Make | `make benchmark ARGS='--preset quick'` builds Release and keeps the output in `.logs/benchmark/` |
+| Make, no build | `make benchmark ARGS='--no-build --preset quick'` runs the Release app that is already built |
 | Running app | `openskycli game benchmark quick` starts the tour in the open game window |
 | App flag | `OpenSky.app --benchmark-request '<json>'`; this is what `openskycli benchmark` passes |
 
@@ -56,7 +56,7 @@ takes its option text, and a number takes a number. For example:
 `--set rendering.meshShaderGrass=on`, `--set assetOptimisation.directLoad=off`. The override
 lives only in the app's memory and is never saved. A setting therefore compares on and off
 with one build: `make benchmark ARGS='--set loading.parallelDecode=on'`, then
-`make benchmark-again ARGS='--set loading.parallelDecode=off'`.
+`make benchmark ARGS=--no-build ARGS='--set loading.parallelDecode=off'`.
 
 `--evict` uses `msync` with `MS_INVALIDATE`, the method of `vmtouch -e`, and needs no `sudo`.
 
@@ -315,4 +315,4 @@ port, so `BenchmarkTourCoordinatorTests` runs a whole tour against a fake world.
 
 The old fixed-path gates for streaming, walking, and sustained frame time are now real-data
 tests: `FlyPathGateRealDataTests`, `WalkPathGateRealDataTests`, and
-`SustainedRenderGateRealDataTests`. `make test-real PERF=1` runs them.
+`SustainedRenderGateRealDataTests`. `make test PLAN=Perf` runs them.

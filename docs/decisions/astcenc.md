@@ -15,7 +15,7 @@ Comparing and later converting textures needs an ASTC encoder for every block si
 ## Decision
 
 - Build [astcenc](https://github.com/ARM-software/astc-encoder) 5.7.0 from its source tarball with
-  `tools/vendor-astcenc.sh`, run by `make bootstrap` or alone as `make astcenc`. The script checks
+  `tools/vendor-astcenc.sh`, run by `make bootstrap` or alone as `make bootstrap`. The script checks
   the tarball's sha256, builds only the core library for NEON with cmake, and installs
   `libastcenc.a`, `astcenc.h`, and the license into `src/.vendor/astcenc`. That folder is gitignored,
   and linked worktrees share the main checkout's copy, as with ffmpeg.
@@ -43,4 +43,4 @@ redistributed OpenSky must carry the astcenc license text and its notice; the bu
 
 cmake builds the library; `make bootstrap` installs it with Homebrew. A missing `src/.vendor/astcenc`
 fails the link of any target that imports `OpenSkyRenderResources`. CI restores the prefix from its
-cache, keyed by the vendoring script, and runs `make astcenc` otherwise.
+cache, keyed by the vendoring script, and runs `make bootstrap` otherwise.

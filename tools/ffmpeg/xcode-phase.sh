@@ -20,13 +20,13 @@ libs="libavutil libavcodec libswresample"
 
 if [ ! -d "$prefix/lib" ]; then
   echo "error: vendored ffmpeg missing at $prefix — run 'make bootstrap' (or" \
-    "'make ffmpeg') to build it." >&2
+    "'make bootstrap') to build it." >&2
   exit 1
 fi
 
 for name in $libs; do
   if [ ! -f "$prefix/lib/$name.dylib" ]; then
-    echo "error: $name.dylib missing from $prefix/lib — run 'make ffmpeg' to rebuild" \
+    echo "error: $name.dylib missing from $prefix/lib — run 'make bootstrap' to rebuild" \
       "the vendored decode-only ffmpeg." >&2
     exit 1
   fi
@@ -44,7 +44,7 @@ mkdir -p "$dest"
 # (@rpath/libavcodec.63.dylib), which is what the executable's load command asks for.
 list="$prefix/embed-inputs.xcfilelist"
 [ -f "$list" ] || {
-  echo "error: $list missing — run 'make ffmpeg' to rebuild the vendored ffmpeg." >&2
+  echo "error: $list missing — run 'make bootstrap' to rebuild the vendored ffmpeg." >&2
   exit 1
 }
 

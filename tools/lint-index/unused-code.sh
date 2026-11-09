@@ -2,9 +2,9 @@
 # Unused-code gate: fail when Periphery finds an unused declaration, an assigned
 # but never read property, an unused import, or a redundant conformance. No
 # baseline: the tree starts at zero. Periphery reads the index store of the
-# uncached build `make health` runs first, so a stale index gives stale results.
+# uncached build `make lint-index` runs first, so a stale index gives stale results.
 #
-# Usage: tools/lint/unused-code.sh CONFIG INDEX_STORE
+# Usage: tools/lint-index/unused-code.sh CONFIG INDEX_STORE
 set -eu
 
 [ "$#" -eq 2 ] || { echo "[ERROR] usage: unused-code.sh CONFIG INDEX_STORE" >&2; exit 2; }
@@ -17,7 +17,7 @@ if ! command -v periphery >/dev/null 2>&1; then
   exit 1
 fi
 if [ ! -d "$index_store" ]; then
-  printf '[FAIL] no index store at %s. Run: make health\n' "$index_store" >&2
+  printf '[FAIL] no index store at %s. Run: make lint-index\n' "$index_store" >&2
   exit 1
 fi
 

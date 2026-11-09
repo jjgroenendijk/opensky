@@ -12,6 +12,13 @@
 # Checks every tracked file, so it also catches a blob that arrived by merge or
 # rebase rather than by `git add`.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    : >"$tree/planted.nif"
+    expect_failure "$0" "$tree" "planted.nif"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -67,3 +74,4 @@ if [ -n "$mirrored" ]; then
   } >&2
   exit 1
 fi
+echo "[ OK ] no tracked game content"

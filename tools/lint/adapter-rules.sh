@@ -1,15 +1,13 @@
 #!/bin/sh
 # Rule 5 of docs/decisions/ports-and-adapters.md over every adapter module: no magic
-# numbers and a complexity of at most 6. A self-check lints a synthetic violation first.
+# numbers and a complexity of at most 6.
 set -eu
-
-cd "$(git rev-parse --show-toplevel)"
-config=tools/lint/adapters.swiftlint.yml
-swiftlint=${SWIFTLINT:-swiftlint}
-
-probe=$(mktemp -d)
-trap 'rm -rf "$probe"' EXIT
-cat >"$probe/Probe.swift" <<'SWIFT'
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Sources/OpenSkyXAdapters"
+    cat >"$tree/src/Sources/OpenSkyXAdapters/Probe.swift" <<'SWIFT'
 struct Probe {
     func branches(_ a: Bool, _ b: Bool, _ c: Bool) throws -> Int {
         guard a else { return 0 }
@@ -25,13 +23,12 @@ struct Probe {
     func check() throws {}
 }
 SWIFT
-found=$("$swiftlint" lint --quiet --config "$config" "$probe/Probe.swift" 2>/dev/null || true)
-for rule in no_magic_numbers cyclomatic_complexity; do
-  case $found in
-    *"($rule)"*) ;;
-    *) echo "[ERROR] adapter-rules self-check: $rule missed its violation" >&2; exit 1 ;;
-  esac
-done
+    expect_failure "$0" "$tree" "(no_magic_numbers)" "(cyclomatic_complexity)"
+fi
+config="$OPENSKY_TOOLS/lint/adapters.swiftlint.yml"
+
+cd "$(git rev-parse --show-toplevel)"
+swiftlint=${SWIFTLINT:-swiftlint}
 
 modules=$(git ls-files 'src/Sources/*Adapters/*.swift' | cut -d/ -f1-3 | sort -u)
 [ -n "$modules" ] || { echo "[ OK ] no adapter module to lint"; exit 0; }

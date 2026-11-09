@@ -15,7 +15,7 @@ nonisolated public enum ReferenceBridgeError: Error, Equatable, Sendable, Locali
         switch self {
         case .notRunning:
             "The Windows game's bridge is not running. Start the game with "
-                + "make reference-game, after make reference-bridge."
+                + "make run-cli ARGS='reference launch', after make build-bridge."
         case let .timedOut(what): "The Windows game did not \(what) in time."
         case .noDialog: "The Windows game shows no message box."
         case let .noSuchButton(button, buttons):
@@ -123,7 +123,7 @@ nonisolated extension ReferencePrefix {
     }
 }
 
-/// What the bridge still lacks in the game copy; `make reference-bridge` installs each part.
+/// What the bridge still lacks in the game copy; `make build-bridge` installs each part.
 nonisolated public enum ReferenceBridgePart: String, CaseIterable, Sendable {
     case scriptExtender = "SKSE (skse64_loader.exe)"
     case addressLibrary = "the Address Library (Data/SKSE/Plugins/versionlib-*.bin)"

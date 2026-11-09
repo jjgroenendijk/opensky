@@ -1,13 +1,22 @@
 #!/bin/sh
 # Duplicated-code gate: fail when jscpd finds any Swift clone of at least the
 # token and line counts in the config. No baseline: the tree starts at zero.
-#
-# Usage: tools/lint/duplicates.sh CONFIG PATH...
+# The whole tree in under a second; a scan of changed files would miss a new copy
+# of code that did not change.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Sources/OpenSkyX"
+    for file in A B; do
+        for line in $(seq 30); do echo "let value$line = compute($line, $line + 1, \"$line\")"; done \
+            >"$tree/src/Sources/OpenSkyX/$file.swift"
+    done
+    expect_failure "$0" "$tree" "duplicated code"
+fi
 
-[ "$#" -ge 2 ] || { echo "[ERROR] usage: duplicates.sh CONFIG PATH..." >&2; exit 2; }
-config="$1"
-shift
+config="$OPENSKY_TOOLS/lint/.jscpd.json"
 cd "$(git rev-parse --show-toplevel)"
 
 if ! command -v jscpd >/dev/null 2>&1; then
@@ -18,7 +27,7 @@ fi
 report_dir="$(mktemp -d)"
 trap 'rm -rf "$report_dir"' EXIT
 
-jscpd -c "$config" -r json -o "$report_dir" --no-colors --silent "$@" >/dev/null 2>&1 || true
+jscpd -c "$config" -r json -o "$report_dir" --no-colors --silent src >/dev/null 2>&1 || true
 report="$report_dir/jscpd-report.json"
 if [ ! -f "$report" ]; then
   printf '[FAIL] jscpd wrote no report\n' >&2

@@ -18,7 +18,7 @@ test target that needs the fixtures links it: package test targets, `OpenSkyTest
   `public init(...)`.
 - A library may `@testable import` the module it builds fixtures for, and import the
   modules and testing libraries below it. It never imports a feature implementation, so a
-  test that links it builds no other feature. `make module-graph` fails on such an import.
+  test that links it builds no other feature. `tools/lint/module-graph.sh` fails on such an import.
 - A fixture that needs its feature's implementation, such as a fake of a seam the
   implementation declares, goes in that feature's `<Name>Fixtures/` library. Only
   `<Name>Tests` and the Xcode bundles may link it. Example: `FakeCombatWorld` in
@@ -48,7 +48,7 @@ have:
 - an acceptance chain in `src/Tests/OpenSkyTests/Acceptance/`,
 - two feature implementations, for example a Magic suite that spends real actor values.
   It goes in `src/Tests/OpenSkyTests/<Feature>/`, named for the feature it tests, because a
-  feature's tests may build no implementation but their own (`make module-graph`, rule 5).
+  feature's tests may build no implementation but their own (`tools/lint/module-graph.sh`, rule 5).
 
 Inside a target, test folders use the subfolder names of the source they test: tests for
 `src/Sources/OpenSkyWorld/Streaming/CellStreamer.swift` live in `src/Tests/OpenSkyWorldTests/Streaming/`,
@@ -59,29 +59,25 @@ number.
 
 A suite that builds a `Renderer` goes in a package test target too. It passes
 `shaderLibrary: ShaderLibraryFixture.library(device: device)` from `OpenSkyEngineTesting`, because a
-package test has no app bundle to load `default.metallib` from. `make test-unit` compiles the
-shaders first (`make shader-library`).
+package test has no app bundle to load `default.metallib` from. `make test` and `make test-package`
+compile the shaders first.
 
 ## Test plans
 
 `src/config/TestPlans/` holds the checked-in plans, so which bundles a run touches is
 reviewable configuration, not a flag. A plan builds only the bundles it lists, so the
-smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
+smaller the plan, the quicker the run. `make test PLAN=<name>` picks one:
 
 | Plan | Bundles |
 | --- | --- |
 | `Quick` (the default) | every package test target, without the `.slow` and `.gpu` tests |
-| `Formats` | the `OpenSkyFormats*Tests` targets |
-| `Engine` | game data, behavior, launch, reference game, agent control, asset cache, physics, rendering, audio, world state |
-| `Features` | every feature's tests, the world domains, save, menus, preview, CLI arguments |
-| `App` | `OpenSkyTests`, hosted by the app |
 | `GPU` | every unit target, only the `.gpu` tests |
 | `UnitTests` | everything; CI runs it on every push |
 
 `UITests` lists `OpenSkyUITests` alone. `RealData` lists `OpenSkyRealDataTests` with the
 `.smoke` tag and carries the data root into the test host; `RealDataAll` is the whole
-bundle (`make test-real ALL=1`). `make lint-test-plans` checks that `UnitTests` lists every
-unit test folder, and that the four layer plans list every `UnitTests` target exactly once.
+bundle (`make test PLAN=RealDataAll`). `tools/lint/test-plans.sh` checks that `UnitTests` lists every
+unit test folder. `T=` narrows a plan to some targets, such as `T=OpenSkyFormatsESMTests`.
 
 Never list the UI bundle in a plan beside an app-hosted unit bundle: the app blocks as a
 test host while the UI runner waits for it, and the run deadlocks
@@ -104,18 +100,18 @@ in `OPENSKY_SKIPPED_TAGS` and this trait reads it.
 | `.gpu` | A suite that reaches a Metal device |
 | `.parser` | A suite in an `OpenSkyFormats*Tests` target |
 | `.slow` | A test that takes seconds on a warm build |
-| `.perf` | A timing gate. The Perf plan runs it, built optimized (`make test-real PERF=1`) |
-| `.smoke` | A real-data suite in the smoke set that `make test-real` runs by default: one quick suite per format family and subsystem |
+| `.perf` | A timing gate. The Perf plan runs it, built optimized (`make test PLAN=Perf`) |
+| `.smoke` | A real-data suite in the smoke set that `make test PLAN=RealData` runs by default: one quick suite per format family and subsystem |
 
-`make lint-test-tags` fails a suite that misses `.acceptance`, `.gpu`, or `.parser`, or a
-`.gpu` or `.slow` tag without its `.unlessPlanSkips`, and `make lint-test-tags FIX=1` adds
-them. A tag narrows a run (`make test-unit PLAN=GPU`) but never pulls a real-data test into a
+`tools/lint/test-tags.sh` fails a suite that misses `.acceptance`, `.gpu`, or `.parser`, or a
+`.gpu` or `.slow` tag without its `.unlessPlanSkips`, and `make fix` adds
+them. A tag narrows a run (`make test PLAN=GPU`) but never pulls a real-data test into a
 unit run: a plan picks bundles, a tag picks tests inside them.
 
 ## Test order
 
 Every plan runs its tests in random order, and no suite carries `.serialized`
-(`make test-order`, `docs/decisions/test-coverage-rules.md`). A test that shares state with
+(`tools/lint/test-order.sh`, `docs/decisions/test-coverage-rules.md`). A test that shares state with
 others reads only its own part of it, such as the log lines of its own category.
 
 ## Flaky tests
@@ -126,5 +122,5 @@ A flaky test fails sometimes and passes sometimes on the same code. When you fin
 2. Open a `bug` issue with the run directory of the failing run.
 3. Never add a retry. A retry hides the failure, and the bug stays.
 
-`make test-unit T='Target/Suite/test()' N=100` reruns a test until it fails, to show it is flaky.
-`make lint-test-tags` fails a `.disabled` trait that names no issue.
+`make test T='Target/Suite/test()' N=100` reruns a test until it fails, to show it is flaky.
+`tools/lint/test-tags.sh` fails a `.disabled` trait that names no issue.

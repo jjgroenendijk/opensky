@@ -1,6 +1,6 @@
 // A crafting session at a vanilla forge for a fresh player, who wears the `Player`
 // record's iron outfit: a non-empty recipe list, `RecipeWeaponIronSword` eligible
-// once its parts are added, and a craft that consumes exactly its parts. Run with `make test-real
+// once its parts are added, and a craft that consumes exactly its parts. Run with `make test PLAN=RealData
 // T='CraftingRealDataTests'`.
 
 import Foundation

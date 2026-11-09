@@ -1,7 +1,7 @@
 // The lockpicking menu's 3D lock from the install: the lock, the shiv, and the pick
 // drawn in the menu scene at several pick angles and lock turns. Frames and the
 // report go to `.logs/lockpicking-lock/`.
-// Run with `make test-real T='LockpickingLockRenderRealDataTests'`.
+// Run with `make test PLAN=RealData T='LockpickingLockRenderRealDataTests'`.
 
 import Foundation
 import OpenSkyGameData

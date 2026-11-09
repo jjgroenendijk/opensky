@@ -24,13 +24,13 @@ play the game from start to finish yet.
 
 The table shows, per area, how many of the things the game data uses OpenSky handles. "Done"
 means a program could check it. It does not mean the item behaves exactly like the game. A row
-with "-" has no total to count against: it lists failures or names to check. `make gaps` counts
+with "-" has no total to count against: it lists failures or names to check. `make rank-gaps` counts
 this on a real install and updates the table. The [gap report page](docs/tools/gaps.md) says what
 each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-11-04 by `make gaps`.
+Measured on 2026-11-04 by `make rank-gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |

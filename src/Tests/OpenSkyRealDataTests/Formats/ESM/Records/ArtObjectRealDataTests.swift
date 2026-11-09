@@ -1,6 +1,6 @@
 // ARTO sweep over the five masters: every record decodes, the total is pinned,
 // and every ARTO link on MGEF and DUAL resolves in the store.
-// Run with `make test-real T='ArtObjectRealDataTests'`.
+// Run with `make test PLAN=RealData T='ArtObjectRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

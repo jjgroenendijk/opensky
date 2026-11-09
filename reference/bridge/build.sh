@@ -4,7 +4,7 @@
 # compiler and linker; xwin writes the Windows SDK into the prefix. Nothing lands in the
 # repo (docs/tools/reference-game.md#the-bridge-plugin).
 #
-# Usage: [SKSE=<archive>] [ADDRESS_LIBRARY=<archive>] reference/bridge/build.sh PREFIX
+# Usage: [SKSE=<archive>] [ADDRESS_LIBRARY=<archive>] reference/bridge/build.sh [PREFIX]
 #   SKSE             the SKSE64 archive for the game's version, downloaded from Nexus.
 #   ADDRESS_LIBRARY  the Address Library "All in one (Anniversary Edition)" archive.
 # Each part is skipped when it is already installed, so a rerun only rebuilds the plugin.
@@ -15,13 +15,16 @@ fail() {
     exit 1
 }
 
-[ "$#" -eq 1 ] || fail "usage: reference/bridge/build.sh PREFIX"
-prefix="${1%/}"
+[ "$#" -le 1 ] || fail "usage: reference/bridge/build.sh [PREFIX]"
+# Without PREFIX, the prefix the app's settings name.
+prefix="${1:-$(defaults read nl.jjgroenendijk.opensky OpenSkyReferencePrefix 2>/dev/null || true)}"
+[ -n "$prefix" ] || fail "no prefix in the app's settings; pass one: make build-bridge ARGS=<prefix>"
+prefix="${prefix%/}"
 source="$(cd "$(dirname "$0")" && pwd)"
 runtime="$prefix/opensky-runtime"
 game="$prefix/drive_c/Program Files (x86)/Steam/steamapps/common/Skyrim Special Edition"
 plugins="$game/Data/SKSE/Plugins"
-[ -f "$game/SkyrimSE.exe" ] || fail "no reference copy of the game in $prefix; run make reference-setup"
+[ -f "$game/SkyrimSE.exe" ] || fail "no reference copy of the game in $prefix; run make setup-reference"
 mkdir -p "$plugins"
 
 # unpack ARCHIVE: a fresh folder with the archive's files; macOS tar reads 7z and zip.
@@ -35,7 +38,7 @@ unpack() {
 echo "[INFO] Step 1: SKSE"
 if [ ! -f "$game/skse64_loader.exe" ]; then
     [ -n "${SKSE:-}" ] || fail "SKSE is not installed. Download the build for the game's version \
-from https://www.nexusmods.com/skyrimspecialedition/mods/30379 and pass SKSE=<archive>"
+from https://www.nexusmods.com/skyrimspecialedition/mods/30379 and run SKSE=<archive> make build-bridge"
     unpack "$SKSE"
     # Only the loader and its DLL: SKSE's scripts would replace the game's own.
     find "$runtime/unpack" -maxdepth 2 -type f \( -name 'skse64_*.exe' -o -name 'skse64_*.dll' \) \
@@ -48,7 +51,7 @@ echo "[INFO] Step 2: the Address Library"
 if ! ls "$plugins"/versionlib-*.bin >/dev/null 2>&1; then
     [ -n "${ADDRESS_LIBRARY:-}" ] || fail "the Address Library is not installed. Download \
 \"All in one (Anniversary Edition)\" from https://www.nexusmods.com/skyrimspecialedition/mods/32444 \
-and pass ADDRESS_LIBRARY=<archive>"
+and run ADDRESS_LIBRARY=<archive> make build-bridge"
     unpack "$ADDRESS_LIBRARY"
     find "$runtime/unpack" -type f -name 'versionlib-*.bin' -exec cp {} "$plugins/" \;
     rm -rf "$runtime/unpack"
@@ -86,4 +89,4 @@ cmake -S "$source" -B "$build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
 cmake --build "$build"
 cp "$build/OpenSkyBridge.dll" "$plugins/"
 echo "[ OK ] Installed $plugins/OpenSkyBridge.dll"
-echo "[INFO] make reference-game now starts the game through SKSE with the bridge."
+echo "[INFO] make run-cli ARGS='reference launch' now starts the game through SKSE with the bridge."

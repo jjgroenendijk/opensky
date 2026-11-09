@@ -1,7 +1,7 @@
 // Whole-install coverage: every live record in the five masters and the
 // Creation Club plugins decodes through `RecordDecoders`. A type with no
 // decoder, a decode that throws, or a decoder with no skip tally fails the sweep.
-// Run with `make test-real T='RecordCoverageRealDataTests'`.
+// Run with `make test PLAN=RealData T='RecordCoverageRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

@@ -223,7 +223,7 @@ loaded room full of clutter at rest therefore causes no rebuild at all.
 
 A step is a few hundred microseconds of tight `simd` math, which is exactly what Swift's `-Onone`
 handles worst: it runs about 24 times slower unoptimized. So the 2 ms step budget is checked by
-`make test-real PERF=1`, which builds with optimization. It keeps the Debug configuration, because
+`make test PLAN=Perf`, which builds with optimization. It keeps the Debug configuration, because
 `@testable import` needs `ENABLE_TESTABILITY`, and uses its own derived data folder. A normal
-`make test-real` checks the step against a loose limit, to catch a large regression
+`make test PLAN=RealData` checks the step against a loose limit, to catch a large regression
 ([testing](/testing.md)).

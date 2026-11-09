@@ -35,29 +35,28 @@ jobs:
       matrix:
         include:
           - name: Thread sanitizer
-            command: make test-sanitize SAN=thread XCODEBUILD_FLAGS="$BUILD_FLAGS"
+            command: make test PLAN=Sanitizers SAN=thread XCODEBUILD_FLAGS="$BUILD_FLAGS"
           - name: Address sanitizer
-            command: make test-sanitize SAN=address XCODEBUILD_FLAGS="$BUILD_FLAGS"
+            command: make test PLAN=Sanitizers SAN=address XCODEBUILD_FLAGS="$BUILD_FLAGS"
     steps:
       - if: inputs.force_failure
         run: exit 1
       - uses: actions/checkout@v7
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
-      - run: make swift-baseline
       - uses: actions/cache/restore@v6
         id: ffmpeg
         with:
           path: src/.vendor/ffmpeg
           key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
-      - run: make ffmpeg
+      - run: tools/vendor-ffmpeg.sh
       - uses: actions/cache/restore@v6
         id: astcenc
         with:
           path: src/.vendor/astcenc
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
       # The ASTC texture encoder links the vendored astcenc static library.
-      - run: make astcenc
+      - run: tools/vendor-astcenc.sh
       - name: Wait for the Metal Toolchain
         run: tools/ci/metal-toolchain.sh wait
       - run: ${{ matrix.command }}

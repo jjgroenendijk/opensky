@@ -17,7 +17,7 @@ let languageSettings: [SwiftSetting] = [
     .treatAllWarnings(as: .error)
 ]
 
-/// The vendored decode-only ffmpeg (make ffmpeg). Its headers are on every module's
+/// The vendored decode-only ffmpeg (make bootstrap). Its headers are on every module's
 /// search path because a module that imports OpenSkyAudio also loads CFFmpeg.
 let ffmpeg = Context.packageDirectory + "/.vendor/ffmpeg"
 let ffmpegHeaders: SwiftSetting = .unsafeFlags(["-Xcc", "-I\(ffmpeg)/include"])
@@ -260,7 +260,7 @@ let cffmpeg = Target.target(
         .linkedLibrary("avcodec"), .linkedLibrary("avutil"), .linkedLibrary("swresample")
     ]
 )
-/// The vendored astcenc (make astcenc), a static library behind a C shim. Like
+/// The vendored astcenc (make bootstrap), a static library behind a C shim. Like
 /// CFFmpeg, the target carries the link flags (docs/decisions/astcenc.md).
 let astcenc = Context.packageDirectory + "/.vendor/astcenc"
 let castcencoder = Target.target(

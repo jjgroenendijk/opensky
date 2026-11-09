@@ -10,8 +10,17 @@
 # of the same tag, because Xcode ignores a plan's skippedTags.
 # Acceptance suite names do not start with a milestone number.
 #
-# --fix adds the missing tags to each suite's @Suite attribute.
+# --fix adds the missing tags to each suite's @Suite attribute; make fix runs it.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Tests/OpenSkyFormatsXTests"
+    printf 'import Testing\n\nstruct ProbeTests {\n    @Test func a() {}\n}\n' \
+        >"$tree/src/Tests/OpenSkyFormatsXTests/A.swift"
+    expect_failure "$0" "$tree" "suite ProbeTests needs .parser"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -259,7 +268,7 @@ def main():
     for error in errors:
         print(f"[ERROR] {error}", file=sys.stderr)
     if errors:
-        print("[ERROR] fix: make lint-test-tags FIX=1 (tags only); see src/Tests/AGENTS.md",
+        print("[ERROR] fix: make fix adds the tags; see src/Tests/AGENTS.md",
               file=sys.stderr)
         return 1
     return 0
@@ -268,3 +277,4 @@ def main():
 if __name__ == "__main__":
     sys.exit(main())
 PY
+echo "[ OK ] suites carry their tags"

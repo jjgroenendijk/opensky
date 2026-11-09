@@ -4,6 +4,15 @@
 # sorted. Over WARN lines it warns; over LIMIT lines it fails, unless the module is on
 # module-size-exceptions.txt with an open issue that splits it.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Sources/OpenSkyX" "$tree/tools/lint"
+    : >"$tree/tools/lint/module-size-exceptions.txt"
+    seq -f 'let value%g = 1' 30001 >"$tree/src/Sources/OpenSkyX/A.swift"
+    expect_failure "$0" "$tree" "OpenSkyX has 30,001 lines"
+fi
 
 cd "$(git rev-parse --show-toplevel)"
 

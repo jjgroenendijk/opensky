@@ -1,15 +1,15 @@
 #!/bin/sh
 # Diff coverage (docs/decisions/test-coverage-rules.md), from the last
-# `make test-unit COVERAGE=1` run, over the Swift lines of package modules that
+# `make test COVERAGE=1` run, over the Swift lines of package modules that
 # the branch adds or changes since BASE:
 #
-#   1. At least FLOOR percent of the changed executable lines ran in a test.
+#   1. At least 80 percent of the changed executable lines ran in a test.
 #   2. Every function the branch adds ran in a test. Closures count under rule 1.
 #
 # A block git sees as moved unchanged is not new: rename detection for lines.
 #
-# Usage: tools/lint/diff-coverage.sh FLOOR BASE DERIVED_DATA
-#        tools/lint/diff-coverage.sh --self-check
+# Usage: tools/coverage/changed-lines.sh BASE DERIVED_DATA
+#        tools/coverage/changed-lines.sh --self-check
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
@@ -19,7 +19,7 @@ import re
 import subprocess
 import sys
 
-sys.path.insert(0, "tools/lint")
+sys.path[:0] = ["tools/coverage", "tools/lint"]
 from coverage_profile import current_profiles, demangled, is_closure, lcov, parse_lcov
 from swift_source import XCODE_ONLY, wiring_modules
 
@@ -52,20 +52,34 @@ def changed_lines(diff):
 
 
 def check(changed, files, readable_names):
-    """(covered, executable, [untested new functions]) over the changed lines."""
+    """(covered, executable, [untested new functions], {path: [lines no test ran]})."""
     covered = executable = 0
     untested = []
+    missed = {}
     for path, lines in sorted(changed.items()):
         data = files.get(path, {"lines": {}, "functions": []})
         for line in lines:
             if line in data["lines"]:
                 executable += 1
                 covered += data["lines"][line] > 0
+                if data["lines"][line] == 0:
+                    missed.setdefault(path, []).append(line)
         for line, name, count in data["functions"]:
             readable = readable_names.get(name, name)
             if line in lines and count == 0 and not is_closure(readable):
                 untested.append(f"{path}:{line}: {readable}")
-    return covered, executable, untested
+    return covered, executable, untested, missed
+
+
+def ranges(lines):
+    """`3-5, 9` for [3, 4, 5, 9]."""
+    spans = []
+    for line in sorted(lines):
+        if spans and line == spans[-1][1] + 1:
+            spans[-1][1] = line
+        else:
+            spans.append([line, line])
+    return ", ".join(str(a) if a == b else f"{a}-{b}" for a, b in spans)
 
 
 def self_check():
@@ -88,11 +102,12 @@ def self_check():
         }
     }
     names = {"c": "closure #1 in f()"}
-    covered, executable, untested = check(changed, files, names)
-    if (covered, executable, untested) != (1, 3, ["src/Sources/OpenSkyMagic/A.swift:2: g"]):
-        sys.exit(f"[ERROR] diff-coverage self-check: {covered}/{executable}, {untested}")
-    # A Quick run kept after the last source change merges in; an older App run does not.
-    if current_profiles("newest", [("Quick", 5), ("App", 1)], 3) != ["newest", "Quick"]:
+    result = check(changed, files, names)
+    expected = (1, 3, ["src/Sources/OpenSkyMagic/A.swift:2: g"], {"src/Sources/OpenSkyMagic/A.swift": [2, 3]})
+    if result != expected or ranges([3, 4, 5, 9]) != "3-5, 9":
+        sys.exit(f"[ERROR] diff-coverage self-check: {result}")
+    # A Quick run kept after the last source change merges in; an older GPU run does not.
+    if current_profiles("newest", [("Quick", 5), ("GPU", 1)], 3) != ["newest", "Quick"]:
         sys.exit("[ERROR] diff-coverage self-check: kept profiles chosen wrongly")
 
 
@@ -100,9 +115,9 @@ self_check()
 if sys.argv[1:] == ["--self-check"]:
     print("[ OK ] diff-coverage self-check")
     sys.exit(0)
-if len(sys.argv) != 4:
-    sys.exit("[ERROR] usage: diff-coverage.sh FLOOR BASE DERIVED_DATA")
-floor, base, derived_data = float(sys.argv[1]), sys.argv[2], sys.argv[3]
+if len(sys.argv) != 3:
+    sys.exit("[ERROR] usage: changed-lines.sh BASE DERIVED_DATA")
+floor, base, derived_data = 80.0, sys.argv[1], sys.argv[2]
 diff = subprocess.run(
     ["git", *COLOURS, "diff", "--color=always", "--color-moved=zebra",
      "--color-moved-ws=allow-indentation-change", "-U0", "-M", "--diff-filter=AMR", base],
@@ -115,11 +130,13 @@ if not changed:
 files = parse_lcov(lcov(derived_data))
 mangled = sorted({name for path in changed for _, name, _ in files.get(path, {}).get("functions", [])})
 readable_names = dict(zip(mangled, demangled(mangled)))
-covered, executable, untested = check(changed, files, readable_names)
+covered, executable, untested, missed = check(changed, files, readable_names)
 value = 100.0 if executable == 0 else 100.0 * covered / executable
 for entry in untested:
     print(f"[FAIL] {entry} never ran in a test")
 if value < floor:
+    for path, lines in sorted(missed.items()):
+        print(f"[INFO] no test ran {path}: lines {ranges(lines)}")
     print(f"[FAIL] {covered} of {executable} changed lines ran in a test: {value:.1f}%, floor {floor:.0f}%")
 if untested or value < floor:
     sys.exit("[FAIL] diff coverage: add tests for the new code")

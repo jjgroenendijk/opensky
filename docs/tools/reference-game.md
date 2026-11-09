@@ -107,9 +107,9 @@ continues where the last one stopped.
 
 1. Install Rosetta 2. It needs an administrator password:
    `softwareupdate --install-rosetta --agree-to-license`.
-2. Run `make reference-setup PREFIX=<folder>`. Pick a folder on the same APFS volume as the
-   game, outside the repo and outside the install, so the clone is instant. `GAME=<install>`
-   overrides the `OpenSkyDataRoot` setting as the copy's source. The script:
+2. Run `make setup-reference ARGS=<folder>`. Pick a folder on the same APFS volume as the
+   game, outside the repo and outside the install, so the clone is instant. A second argument,
+   `ARGS='<folder> <install>'`, overrides the `OpenSkyDataRoot` setting as the copy's source. The script:
    1. downloads Wine 11.0 and checks its SHA-256;
    2. downloads soju's web helper wrapper, DXVK, and GStreamer, and checks each SHA-256;
    3. creates the prefix, sets Windows 10, and writes the DLL overrides above;
@@ -117,10 +117,10 @@ continues where the last one stopped.
    5. clones the game and its `appmanifest_489830.acf` into the prefix's Steam library, and
       copies DXVK's DLLs into the copy's game folder;
    6. stores the folder as the `OpenSkyReferencePrefix` setting.
-3. Run `make reference-game`. Log in to Steam once in the window that opens. Steam does not
+3. Run `make run-cli ARGS='reference launch'`. Log in to Steam once in the window that opens. Steam does not
    start an out-of-date game, so it updates the copy to the current build first. In the
    game's Steam properties, set updates to "Only update this game when I launch it".
-4. Run `make reference-check`. It compares the Steam `buildid` of both installs and the
+4. Run `make run-cli ARGS='reference check'`. It compares the Steam `buildid` of both installs and the
    SHA-256 of every `.esm`, and names each difference.
 
 The setting has an environment override, `OPENSKY_REFERENCE_PREFIX`. The Wine binary is
@@ -130,7 +130,7 @@ found the same way: `OPENSKY_REFERENCE_WINE`, then `OpenSkyReferenceWine`, then
 
 ## Launching
 
-`make reference-game` (`openskycli reference launch`) and the launcher's Start buttons do
+`make run-cli ARGS='reference launch'` (`openskycli reference launch`) and the launcher's Start buttons do
 four things:
 
 1. They write `bBorderless=1`, `bFull Screen=0`, `iSize W`, and `iSize H` into the
@@ -166,7 +166,7 @@ launcher, to `~/Library/Application Support/OpenSky/Reference/Wine/<UTC time>/`.
 ## Side by side from the launcher
 
 The Reference Game page needs no terminal once a prefix exists. Choose Prefix picks one
-that `make reference-setup` built.
+that `make setup-reference` built.
 
 - **Start Both** splits the main screen. The Windows game opens borderless on the right
   half, and OpenSky's Play window on the left half, both with a 16:9 picture of the same
@@ -208,7 +208,7 @@ both first: SKSE's build for the game's version (mod 30379) and the Address Libr
 "All in one (Anniversary Edition)" (mod 32444). Then run:
 
 ```sh
-make reference-bridge SKSE=<skse archive> ADDRESS_LIBRARY=<address library archive>
+SKSE=<skse archive> ADDRESS_LIBRARY=<address library archive> make build-bridge
 ```
 
 It copies SKSE's loader and DLL and the `versionlib-*.bin` files into the game copy,
@@ -320,7 +320,7 @@ bridge line `camera first` sets it.
 
 Without the bridge, from OpenSky to the reference game:
 
-1. With OpenSky running, `make reference-view` (`openskycli reference export-view`) reads
+1. With OpenSky running, `make run-cli ARGS='reference export-view'` (`openskycli reference export-view`) reads
    `game state view` and writes the batch file `opensky` into the reference copy's game
    folder. The game reads a batch file there only without an extension
    (<https://en.uesp.net/wiki/Skyrim:Console#Using_Batch_Files_with_the_bat_Command>).
@@ -359,7 +359,7 @@ the conversion at its own shape.
 
 ## Capture and compare
 
-After `bat opensky`, `make reference-capture` (`openskycli reference capture`) writes one run
+After `bat opensky`, `make run-cli ARGS='reference capture'` (`openskycli reference capture`) writes one run
 folder, `.logs/reference/<UTC time>/`:
 
 | File | Holds |

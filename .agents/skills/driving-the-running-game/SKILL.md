@@ -82,9 +82,9 @@ The real Skyrim SE runs under Wine beside OpenSky, to compare behaviour and view
 (`docs/tools/reference-game.md`). The `OpenSkyBridge` SKSE plugin inside it runs console
 lines and reports the player's state, so never type keys into its window: Wine drops and
 misroutes them. `openskycli reference status` says what the prefix still lacks;
-`make reference-bridge` installs the plugin once per prefix.
+`make build-bridge` installs the plugin once per prefix.
 
-1. Start it with `make reference-game`, which uses the game's Low preset so both games fit
+1. Start it with `make run-cli ARGS='reference launch'`, which uses the game's Low preset so both games fit
    on one GPU. Wait for `reference state` to report `"mainMenu" : true`.
 2. `reference load [<save>]` loads a save from the main menu, by default the newest.
 3. Read with `reference state`: place, angles, hour, weather, field of view. Its angles are
@@ -102,4 +102,4 @@ misroutes them. `openskycli reference status` says what the prefix still lacks;
 If `reference` reports that the bridge is not running while the game is up, the game has
 not written its state for 3 s. A cell load stops it for a few seconds; wait and retry. A
 longer stall while another app is in front means the game paused, because `Skyrim.ini`
-lacks `bAlwaysActive=1`; `make reference-game` writes it, so restart the game that way.
+lacks `bAlwaysActive=1`; `make run-cli ARGS='reference launch'` writes it, so restart the game that way.

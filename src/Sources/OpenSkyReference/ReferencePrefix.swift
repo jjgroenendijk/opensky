@@ -168,7 +168,7 @@ nonisolated public enum ReferencePrefixStatus: Equatable, Sendable {
     /// The line the settings page and `reference status` show.
     public var message: String {
         switch self {
-        case .notSet: "No reference game prefix is set. Run make reference-setup."
+        case .notSet: "No reference game prefix is set. Run make setup-reference."
         case let .missing(path): "The reference prefix has no drive_c: \(path)"
         case let .noSteam(path): "The reference prefix has no Windows Steam: \(path)"
         case let .noGame(path): "The reference prefix has no copy of the game: \(path)"

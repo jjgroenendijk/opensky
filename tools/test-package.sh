@@ -30,16 +30,11 @@ done
 run="$("$root/tools/run-dir.sh" test-package)"
 log="$run/test-package.log"
 list="$run/test-list.txt"
-# shellcheck source=/dev/null
-. "$root/tools/xcodebuild-lib.sh"
-opensky_build_lock
-trap 'opensky_build_unlock' EXIT INT TERM
-
 status=0
 echo "[INFO] swift test list"
 swift test --package-path src list >"$list" 2>"$log" || status=$?
 if [ "$status" -ne 0 ]; then
-    opensky_drop_failed_records . "$log" src/.build/out
+    "$root/tools/failed-build-records.sh" -d "$log" src/.build/out
     grep -E '(error|warning): ' "$log" || tail -n 40 "$log"
     echo "[INFO] full transcript: $log"
     exit "$status"

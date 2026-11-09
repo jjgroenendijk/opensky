@@ -1,14 +1,14 @@
 #!/bin/sh
 # Coverage floors (docs/decisions/test-coverage-rules.md), from the last
-# `make test-unit COVERAGE=1` run. Each test run rewrites the profile, so a
-# filtered run reads too low.
+# `make test PLAN=UnitTests COVERAGE=1` run. Each test run rewrites the profile, so
+# a filtered run reads too low.
 #
-#   1. Every OpenSkyFormats* module keeps FORMAT_FLOOR percent line coverage.
-#   2. Every game-rule module (feature, interface, world domain) keeps RULE_FLOOR.
-#   3. Every pure core file (`*Core.swift`) keeps CORE_FLOOR.
+#   1. Every OpenSkyFormats* module keeps 80 percent line coverage.
+#   2. Every game-rule module (feature, interface, world domain) keeps 55 percent.
+#   3. Every pure core file (`*Core.swift`) keeps 75 percent.
 #
-# Usage: tools/lint/coverage-floor.sh FORMAT_FLOOR RULE_FLOOR CORE_FLOOR DERIVED_DATA
-#        tools/lint/coverage-floor.sh --self-check
+# Usage: tools/coverage/floor.sh DERIVED_DATA
+#        tools/coverage/floor.sh --self-check
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
@@ -16,7 +16,7 @@ cd "$(git rev-parse --show-toplevel)"
 python3 - "$@" <<'PY'
 import sys
 
-sys.path.insert(0, "tools/lint")
+sys.path[:0] = ["tools/coverage", "tools/lint"]
 from coverage_profile import lcov, parse_lcov
 from swift_source import rule_modules
 
@@ -71,10 +71,10 @@ self_check()
 if sys.argv[1:] == ["--self-check"]:
     print("[ OK ] coverage-floor self-check")
     sys.exit(0)
-if len(sys.argv) != 5:
-    sys.exit("[ERROR] usage: coverage-floor.sh FORMAT_FLOOR RULE_FLOOR CORE_FLOOR DERIVED_DATA")
-floors = dict(zip(("format", "rule", "core"), map(float, sys.argv[1:4])))
-found = units(parse_lcov(lcov(sys.argv[4])), rule_modules())
+if len(sys.argv) != 2:
+    sys.exit("[ERROR] usage: floor.sh DERIVED_DATA")
+floors = {"format": 80.0, "rule": 55.0, "core": 75.0}
+found = units(parse_lcov(lcov(sys.argv[1])), rule_modules())
 failures = below(found, floors)
 for label, kind, value in failures:
     print(f"[FAIL] {label:48} {value:6.2f}%  (floor {floors[kind]:.0f}% for {kind})")

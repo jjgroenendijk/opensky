@@ -19,7 +19,7 @@ env:
   DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
   OPENSKY_DERIVED_DATA: ${{ github.workspace }}/.cache/DerivedData
   OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/.cache/CompilationCache.noindex
-  SDK_MODULES: ${{ github.workspace }}/.cache/DerivedData/SDKExplicitPrecompiledModules
+  OPENSKY_SDK_MODULES: ${{ github.workspace }}/.cache/DerivedData/SDKExplicitPrecompiledModules
   # Ad-hoc signing: the runner holds no certificate, so users press Open Anyway once.
   BUILD_FLAGS: >-
     CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO OPENSKY_PREFIX_MAPPING=NO
@@ -65,18 +65,17 @@ jobs:
           ref: ${{ needs.plan.outputs.sha }}
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
-      - run: make swift-baseline
       # Restore only: the CI workflow owns these caches.
       - uses: actions/cache/restore@v6
         with:
           path: src/.vendor/ffmpeg
           key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
-      - run: make ffmpeg
+      - run: tools/vendor-ffmpeg.sh
       - uses: actions/cache/restore@v6
         with:
           path: src/.vendor/astcenc
           key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
-      - run: make astcenc
+      - run: tools/vendor-astcenc.sh
       - uses: actions/cache/restore@v6
         with:
           path: .cache/CompilationCache.noindex
@@ -89,7 +88,7 @@ jobs:
         id: dmg
         env:
           TAG: ${{ needs.plan.outputs.tag }}
-        run: echo "path=$(make -s dmg NAME="OpenSky-${TAG#v}" | tail -n 1)" | tee -a "$GITHUB_OUTPUT"
+        run: echo "path=$(make -s package-dmg ARGS="OpenSky-${TAG#v}" | tail -n 1)" | tee -a "$GITHUB_OUTPUT"
       - name: Publish the pre-release
         env:
           GH_TOKEN: ${{ github.token }}

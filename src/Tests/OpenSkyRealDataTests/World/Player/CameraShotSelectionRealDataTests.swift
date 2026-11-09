@@ -1,7 +1,7 @@
 // Camera shot selection over the five masters: the CPTH tree with each path's
 // zoom, shots and condition functions, then one selection for the player
 // against an actor. The report goes to `.logs/camera-shot-selection.log`.
-// Run with `make test-real T='CameraShotSelectionRealDataTests'`.
+// Run with `make test PLAN=RealData T='CameraShotSelectionRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyCamera

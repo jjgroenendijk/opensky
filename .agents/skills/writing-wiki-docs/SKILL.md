@@ -87,7 +87,7 @@ Byte layout table, then what was confirmed on the real install.
 
 `make check` and CI run these:
 
-- `make md-lint`: Markdown style.
-- `make docs-links`: every link inside `docs/` points at a file that exists.
-- `make docs-length`: no page is longer than `DOCS_MAX_LINES` in the `Makefile`. A
+- `make format-check`: Markdown style.
+- `tools/lint/docs-links.sh`: every link inside `docs/` points at a file that exists.
+- `tools/lint/docs-length.sh`: no page is longer than `DOCS_MAX_LINES` in the `Makefile`. A
   page over the limit is split by topic, or cut. Do not raise the limit.

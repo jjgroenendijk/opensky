@@ -23,7 +23,7 @@ names them, so a design discussion or a review can point at one rule.
 ## The Modular Architecture
 
 A feature uses another feature only through its `Interface` module. The app and `openskycli`
-build the implementations and pass them in. `make module-graph` checks the rules.
+build the implementations and pass them in. `tools/lint/module-graph.sh` checks the rules.
 
 [The Modular Architecture](/decisions/modular-architecture.md) has the rules, the layers, and
 the exceptions. This page does not repeat them.
@@ -75,7 +75,7 @@ Where it applies:
   frame the driver returns one `RenderFrameInput` value, built after every system has run:
   the view, the weather, the moved references, the player rigs, and the UI. The renderer
   reads game state only from that value, so nothing changes half way through an encode. A
-  renderer without a driver draws the input its caller sets. Rule 10 of `make module-graph`
+  renderer without a driver draws the input its caller sets. Rule 10 of `tools/lint/module-graph.sh`
   keeps the renderer's dependencies to formats, loaded data, assets, and draw helpers, and
   the lint rule `renderer_downcast` fails a cast of the renderer or its driver.
 - Files. Code reads game files through `any GameFileSource`. `VirtualFileSystem` is the
@@ -153,13 +153,13 @@ declared order.
 
 Every rule on this page and in [Coordinators](/engine/coordinators.md) has a check in
 `make check` and CI. The adapter rule needs the index store a build writes, so it runs in
-`make health` and the `Index checks` CI job on each pull request. The SwiftLint rules are in `tools/lint/.swiftlint.yml`.
+`make lint-index` and the `Index checks` CI job on each pull request. The SwiftLint rules are in `tools/lint/.swiftlint.yml`.
 
 | Rule | Check |
 | --- | --- |
-| A feature uses another feature only through its `Interface` module | `make module-graph`, rules 1 to 9 |
-| A module depends only on a module at least as stable, or on an `Interface` | `make module-graph` rule 13 |
-| No adapter uses the type of an adapter outside its own family | `make health`, `tools/lint/adapter-references.py` |
+| A feature uses another feature only through its `Interface` module | `tools/lint/module-graph.sh`, rules 1 to 9 |
+| A module depends only on a module at least as stable, or on an `Interface` | `tools/lint/module-graph.sh` rule 13 |
+| No adapter uses the type of an adapter outside its own family | `make lint-index`, `tools/lint-index/adapter-references.py` |
 | Only the composition root names `GameViewController` | SwiftLint `controller_outside_composition_root` |
 | No `GameViewController` extension outside its own files | SwiftLint `game_view_controller_extension` |
 | No late-attach method in a package module or the app | SwiftLint `late_attached_world` |
@@ -168,15 +168,15 @@ Every rule on this page and in [Coordinators](/engine/coordinators.md) has a che
 | Only the session scope builds a game coordinator | SwiftLint `coordinator_outside_session_scope` |
 | An action returns a typed outcome, not `String` | SwiftLint `action_returns_text` |
 | A pure core imports no AppKit, Metal, or audio, and reads no clock | SwiftLint `pure_core_side_effect` |
-| The renderer holds no game state and is not cast to the session | `make module-graph` rule 10, SwiftLint `renderer_downcast` |
+| The renderer holds no game state and is not cast to the session | `tools/lint/module-graph.sh` rule 10, SwiftLint `renderer_downcast` |
 | The Papyrus bridge gains collaborators only through a native family | SwiftLint `papyrus_loose_closure` |
 | A system joins the frame only through a `FrameSchedule` phase | SwiftLint `frame_callback_property` |
 | No new `@unchecked Sendable`, `Task.detached`, `DispatchQueue.main`, or semaphore in `src/Sources/` | SwiftLint `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore` |
 | A new `DispatchQueue` has a row in [Concurrency](/decisions/concurrency.md) | SwiftLint `new_dispatch_queue` |
-| A module stays below 30,000 source lines | `make module-size` ([Module size](/tools/modules.md#module-size)) |
-| A protocol type is written `any X`, an import is `internal` unless it says `public import`, and unsafe code is marked `unsafe` | The compiler, set up and self-checked by `make language-rules` ([Swift language rules](/decisions/language-rules.md)) |
-| A package module never swallows an error with `try?` or an empty `catch`, except on the allowed calls, and the formats, game data, and save modules never trap | `make error-handling` ([Error handling](/decisions/error-handling.md)) |
-| Tests run in random order: every plan shuffles and no suite is serialized | `make test-order` ([Test order and coverage rules](/decisions/test-coverage-rules.md)) |
-| Game-rule modules, pure cores, and parsers keep their coverage floor, and new package code ran in a test | `make coverage-floor`, `make diff-coverage` ([Test order and coverage rules](/decisions/test-coverage-rules.md)) |
-| Game rules read no hidden random source or clock, package modules hold no global mutable state or singletons except the allowed switches and sinks, and no module uses the system notification centre | `make deterministic-rules` ([Deterministic game rules](/decisions/deterministic-rules.md)) |
-| An interface module publicly imports only lower modules and interfaces, and no file uses `@_exported import` | `make module-graph` rule 11 |
+| A module stays below 30,000 source lines | `tools/lint/module-size.sh` ([Module size](/tools/modules.md#module-size)) |
+| A protocol type is written `any X`, an import is `internal` unless it says `public import`, and unsafe code is marked `unsafe` | The compiler, set up and self-checked by `tools/lint/language-rules.sh` ([Swift language rules](/decisions/language-rules.md)) |
+| A package module never swallows an error with `try?` or an empty `catch`, except on the allowed calls, and the formats, game data, and save modules never trap | `tools/lint/error-handling.sh` ([Error handling](/decisions/error-handling.md)) |
+| Tests run in random order: every plan shuffles and no suite is serialized | `tools/lint/test-order.sh` ([Test order and coverage rules](/decisions/test-coverage-rules.md)) |
+| Game-rule modules, pure cores, and parsers keep their coverage floor, and new package code ran in a test | `make test PLAN=UnitTests COVERAGE=1`, `make test COVERAGE=1` ([Test order and coverage rules](/decisions/test-coverage-rules.md)) |
+| Game rules read no hidden random source or clock, package modules hold no global mutable state or singletons except the allowed switches and sinks, and no module uses the system notification centre | `tools/lint/deterministic-rules.sh` ([Deterministic game rules](/decisions/deterministic-rules.md)) |
+| An interface module publicly imports only lower modules and interfaces, and no file uses `@_exported import` | `tools/lint/module-graph.sh` rule 11 |

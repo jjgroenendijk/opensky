@@ -12,11 +12,11 @@ first runs on small synthetic violations, which must fail (a self-check).
 
 | Rule | Check | Runs in |
 | --- | --- | --- |
-| Every test plan shuffles its tests | `make test-order` | `make check`, CI |
-| No Swift Testing suite is `.serialized` | `make test-order` | `make check`, CI |
-| Format, rule, and core floors | `make coverage-floor` | CI, after the unit tests |
-| Diff coverage | `make diff-coverage` | CI on a pull request, after the unit tests |
-| The coverage scripts catch a violation | `make coverage-self-check` | `make check`, CI |
+| Every test plan shuffles its tests | `tools/lint/test-order.sh` | `make check`, CI |
+| No Swift Testing suite is `.serialized` | `tools/lint/test-order.sh` | `make check`, CI |
+| Format, rule, and core floors | `make test PLAN=UnitTests COVERAGE=1` | CI, after the unit tests |
+| Diff coverage | `make test COVERAGE=1` | CI on a pull request, after the unit tests |
+| The coverage scripts catch a violation | `make check` | `make check`, CI |
 
 ## Random order
 
@@ -32,9 +32,9 @@ one test leaves state behind, and the next one passes only because of it.
 
 ## Coverage floors
 
-The floors read the merged profile of the recent `make test-unit COVERAGE=1` runs with `llvm-cov`
+The floors read the merged profile of the recent `make test COVERAGE=1` runs with `llvm-cov`
 ([Test runs](/tools/test-runs.md#code-coverage)). Each value is our own choice: no source
-gives a number. The `Makefile` holds the values.
+gives a number. `tools/coverage/floor.sh` and `tools/coverage/changed-lines.sh` hold the values.
 
 | Floor | Value | Applies to | Why this value |
 | --- | --- | --- | --- |

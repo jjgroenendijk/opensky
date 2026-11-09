@@ -7,7 +7,7 @@
 #   GROUP  the help group: "Game data", "World", "Game rules", "Assets",
 #          "Rendering", or "The app".
 #
-# Each stub says TODO; `make cli-conventions` fails until every TODO is replaced.
+# Each stub says TODO; `tools/lint/cli-conventions.sh` fails until every TODO is replaced.
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
@@ -93,4 +93,4 @@ chmod +x tools/probe.sh
 
 echo "[INFO] wrote $arguments and $command"
 echo "[INFO] added a runner, a help group entry, a docs/tools/cli.md row, and a tools/probe.sh run"
-echo "[INFO] replace every TODO, then run make fix and make cli-conventions"
+echo "[INFO] replace every TODO, then run make fix and tools/lint/cli-conventions.sh"

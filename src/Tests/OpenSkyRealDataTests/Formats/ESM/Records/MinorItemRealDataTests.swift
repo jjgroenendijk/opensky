@@ -1,6 +1,6 @@
 // KEYM, SLGM, and APPA sweep over `Skyrim.esm` and the DLC masters: every record
 // decodes, the totals are pinned, and the unread-field tally goes to `.logs/`.
-// Run with `make test-real T='MinorItemRealDataTests'`.
+// Run with `make test PLAN=RealData T='MinorItemRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

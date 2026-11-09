@@ -1,7 +1,7 @@
 // The lookup stores of the M23 to M28 records over the five masters: tree
 // shapes, dangling links, map markers, combat styles, chargen counts, and BPTD
 // node names against the character skeleton. The report goes to `.logs/`.
-// Run with `make test-real T='RecordGraphRealDataTests'`.
+// Run with `make test PLAN=RealData T='RecordGraphRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

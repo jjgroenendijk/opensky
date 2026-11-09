@@ -18,7 +18,7 @@ does not belong in the Swift engine or `openskycli`, because it never touches ga
   `tools/wiki-mirror/`. The tool code uses only the standard library.
 - `uv.lock` pins [ruff](https://docs.astral.sh/ruff/) (MIT), which formats and lints with every
   rule on. CI installs only uv, so local runs and CI use the same ruff without a separate pin.
-- `make py-format`, `make py-format-check`, and `make py-lint` run it. They are part of `make fix`
+- `make format`, `make format-check`, and `tools/lint/ruff.sh` run it. They are part of `make fix`
   and `make check`, and CI runs the checks in the Static checks job.
 - The tools have no unit tests. They do not ship in the app. Their output is checked by running
   them and reading the result; a sync reports every page that failed.

@@ -7,7 +7,7 @@
 # --enable-version3, which would relicense a redistributed OpenSky, and it drags in
 # roughly fifteen third-party dylibs at absolute paths. See docs/decisions/ffmpeg-audio.md.
 #
-# Invoked by `make bootstrap` and by `make ffmpeg`. Idempotent: a matching build stamp
+# Invoked by `make bootstrap` and by `make bootstrap`. Idempotent: a matching build stamp
 # short-circuits the whole script. Set OPENSKY_FFMPEG_FORCE=1 to rebuild anyway.
 #
 # The build always lands in the shared `.vendor` of the main checkout, whichever worktree

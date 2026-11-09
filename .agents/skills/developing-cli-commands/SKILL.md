@@ -28,13 +28,13 @@ so it is always current.
 | Logic worth a test | The package module of its domain, unit-tested there; the command only parses and prints |
 | An app command for `game` | `AgentCommandCatalog` in `OpenSkyAgentControl`; the CLI reads it |
 
-A new top-level command starts with `make new-cli-command NAME=<name> GROUP=<help group>`.
-It writes every stub, each marked TODO, and `make cli-conventions` fails until none is left.
+A new top-level command starts with `make add-cli-command ARGS='<name> <help' group>`.
+It writes every stub, each marked TODO, and `tools/lint/cli-conventions.sh` fails until none is left.
 A new subcommand copies a sibling, such as `ReferenceArguments+Bridge.swift`.
 
 ## Option rules
 
-`CLIConventionTests` and `make cli-conventions` enforce these, and CI fails on a miss.
+`CLIConventionTests` and `tools/lint/cli-conventions.sh` enforce these, and CI fails on a miss.
 
 - Every `@Option` takes `parsing: .unconditional`, so a value may start with `-`
   (`--y -2`).
@@ -63,9 +63,9 @@ A new subcommand copies a sibling, such as `ReferenceArguments+Bridge.swift`.
 ## Verify
 
 1. `make build-cli` (background shell).
-2. `make test-unit T=OpenSkyCLIArgumentsTests` runs the convention and parse tests. It is
+2. `make test T=OpenSkyCLIArgumentsTests` runs the convention and parse tests. It is
    the only CLI test target; there is no `OpenSkyCLITests`.
-3. `make check`, which includes `make cli-conventions`.
+3. `make check`, which includes `tools/lint/cli-conventions.sh`.
 4. Run the command once against the install, or against the running app or reference game
    for `game` and `reference`. Close any game you started. `make probe` runs every probe
    command and skips when the install is absent.

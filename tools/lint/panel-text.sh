@@ -3,6 +3,14 @@
 # readouts, not prose. It fails on a wrapping label built from text in their
 # code, and on a tooltip literal over the limit.
 set -eu
+# shellcheck source=tools/checks-lib.sh
+. "$(dirname "$0")/../checks-lib.sh"
+if [ "${1:-}" = --self-check ]; then
+    tree="$(self_check_tree)"
+    mkdir -p "$tree/src/Sources/OpenSky/Shell"
+    printf 'view.toolTip = "%0150d"\n' 0 >"$tree/src/Sources/OpenSky/Shell/A.swift"
+    expect_failure "$0" "$tree" "tooltip over 100 characters"
+fi
 
 limit=100
 cd "$(git rev-parse --show-toplevel)"

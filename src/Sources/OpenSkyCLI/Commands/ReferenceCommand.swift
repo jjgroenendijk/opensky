@@ -15,12 +15,12 @@ enum ReferenceCommand {
         if let wine = ReferenceSettings.wine(prefix: prefix) {
             print("[INFO] Wine: \(wine.path(percentEncoded: false))")
         } else {
-            print("[WARNING] No Wine found. Run make reference-setup.")
+            print("[WARNING] No Wine found. Run make setup-reference.")
         }
         guard status.isReady, let prefix else { return }
         let layout = ReferencePrefix(root: prefix)
         for part in ReferenceBridgePart.missing(in: layout) {
-            print("[WARNING] The bridge lacks \(part.rawValue). Run make reference-bridge.")
+            print("[WARNING] The bridge lacks \(part.rawValue). Run make build-bridge.")
         }
         let running = ReferenceBridge(prefix: layout).state() != nil
         print("[INFO] Bridge: \(running ? "the Windows game is running" : "no game running").")

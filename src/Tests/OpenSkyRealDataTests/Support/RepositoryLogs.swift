@@ -2,7 +2,7 @@ import Foundation
 
 /// The checkout's gitignored `.logs/` directory. `#filePath` reads `/^src/...`
 /// under the compilation cache, and the build cache sits outside the checkout,
-/// so `make test-real` passes the checkout in `OPENSKY_CHECKOUT`.
+/// so `make test PLAN=RealData` passes the checkout in `OPENSKY_CHECKOUT`.
 enum RepositoryLogs {
     struct CheckoutNotFound: Error, CustomStringConvertible {
         let bundle: URL

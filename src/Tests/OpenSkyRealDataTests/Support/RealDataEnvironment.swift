@@ -26,7 +26,7 @@ nonisolated enum RealDataEnvironment {
     }
 
     /// A frame-time gate measures the engine, not `-Onone`, so it needs the
-    /// optimised build that `make test-real PERF=1` makes.
+    /// optimised build that `make test PLAN=Perf` makes.
     static var canTimeFrames: Bool {
         #if OPENSKY_OPTIMIZED
             canRender

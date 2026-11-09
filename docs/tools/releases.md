@@ -33,7 +33,7 @@ The newest 20 previews are kept. After it publishes, the script deletes every ol
 with a `-preview.<N>` tag, together with its tag. A night without new commits publishes nothing,
 so it deletes nothing either. A stable release is never deleted.
 
-The macOS job then checks out that commit, runs `make build-app CONFIG=Release` and `make dmg`,
+The macOS job then checks out that commit, runs `make build-app CONFIG=Release` and `make package-dmg`,
 and publishes a pre-release. The notes are `.github/preview-release-notes.md` followed by
 GitHub's list of the pull requests merged since the last preview.
 
@@ -43,7 +43,7 @@ preview is then `v<new version>-preview.1`.
 ## By hand
 
 1. Build the app from `main`: `make build-app CONFIG=Release`.
-2. Pack it: `make dmg NAME=OpenSky-0.1.0-preview.1`. The image lands in `.logs/dmg/<UTC>/`. It
+2. Pack it: `make package-dmg ARGS=OpenSky-0.1.0-preview.1`. The image lands in `.logs/dmg/<UTC>/`. It
    holds `OpenSky.app` and a shortcut to Applications, so the user drags one onto the other.
 3. Publish it as a pre-release on the `main` commit you built:
 

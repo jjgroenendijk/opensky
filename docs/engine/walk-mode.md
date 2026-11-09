@@ -207,7 +207,7 @@ bodies collide through the same query ([dynamic bodies](/engine/dynamic-bodies.m
 
 ## The walk route gate
 
-`WalkPathGateRealDataTests` (`make test-real PERF=1`) runs a fixed route. Fixed 1/30 s input frames
+`WalkPathGateRealDataTests` (`make test PLAN=Perf`) runs a fixed route. Fixed 1/30 s input frames
 drive 1/120 s steps from Tamriel cell `(6,-2)` across streamed terrain to Chillfurrow Farm `(7,-3)`,
 around fixed waypoints, with small fixed sidesteps when a small static blocks progress. It requires:
 

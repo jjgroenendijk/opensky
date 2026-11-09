@@ -5,7 +5,7 @@
 #
 # Usage: tools/launch-sample.sh CLI APP [SECONDS]
 #   CLI      an openskycli from the same build as APP
-#   APP      the OpenSky.app to launch (make launch-sample uses the Release app)
+#   APP      the OpenSky.app to launch (make sample-launch uses the Release app)
 #   SECONDS  how long to sample after the launch starts (default 60)
 #
 # Writes .logs/launch-sample/<UTC timestamp>/: launch.log, frames.txt (one

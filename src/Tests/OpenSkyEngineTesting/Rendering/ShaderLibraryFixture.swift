@@ -1,7 +1,7 @@
 // The shader library a package test hands to `Renderer`. The app and openskycli
 // load `default.metallib` from their own bundle; a package test has no such
 // bundle, so `make` compiles the shaders into one file first
-// (`make shader-library`) and names it in OPENSKY_SHADER_LIBRARY.
+// (`make test` builds it) and names it in OPENSKY_SHADER_LIBRARY.
 
 import Foundation
 public import Metal
@@ -14,10 +14,10 @@ public enum ShaderLibraryFixtureError: Error, CustomStringConvertible {
         switch self {
         case .environmentMissing:
             "\(ShaderLibraryFixture.environmentKey) is not set. Run the tests through "
-                + "`make test-unit`, which compiles the shaders and sets it."
+                + "`make test`, which compiles the shaders and sets it."
         case let .fileMissing(path):
-            "no shader library at \(path). Run `make shader-library`, or run the tests "
-                + "through `make test-unit`."
+            "no shader library at \(path). Run the tests through `make test`, "
+                + "which compiles it."
         }
     }
 }

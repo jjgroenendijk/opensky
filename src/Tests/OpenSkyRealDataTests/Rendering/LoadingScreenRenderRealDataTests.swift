@@ -1,7 +1,7 @@
 // A loading screen picked for a door into a known interior, drawn the way a
 // transition draws it: the screen's object on the cover layer and its tip in
 // the overlay. Frames and the report go to `.logs/loading-screen/`.
-// Run with `make test-real T='LoadingScreenRenderRealDataTests'`.
+// Run with `make test PLAN=RealData T='LoadingScreenRenderRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyConditions
