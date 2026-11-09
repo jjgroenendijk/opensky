@@ -40,9 +40,7 @@ extension LockWorldAdapter {
             game?.lockpickingMenu.handle(refusal)
         }
         // Frame steps run while the menu pauses the world; the menu keeps its own clock.
-        gameSession.frameSteps.register(.lockpicking) { [weak game = self.game] _ in
-            game?.lockpickingMenu.tick()
-        }
+        gameSession.frameSteps.register(.lockpicking) { [weak self] _ in self?.stepLockpicking() }
         renderer.worldOverlaySources
             .register(identifier: "lock-selection") { [weak game = self.game] _, list in
                 guard let position = game?.inventory.locks.selectedInteraction?.position

@@ -45,6 +45,11 @@ public final class LockWorldAdapter {
 
     /// The selected lock's marker: yellow, about a door's half width.
     public static let markerSize: Float = 48
+
+    /// One frame of the open lockpicking board.
+    public func stepLockpicking() {
+        game.lockpickingMenu.tick()
+    }
 }
 
 extension LockWorldAdapter: LockWorld {

@@ -44,6 +44,11 @@ struct LockAndRefusalAdapterTests {
         #expect(host.fakePerks.modifiedValueAtOnLockLevelCalls.map(\.level) == [25])
     }
 
+    @Test func eachFrameStepsTheLockpickingBoard() {
+        LockWorldAdapter(game: host).stepLockpicking()
+        #expect(host.fakeLockpickingMenu.tickCallCount == 1)
+    }
+
     @Test func anUnplacedTargetHasOnlyItsOwnFacts() {
         let refusal = ActivationRefusalWorldAdapter(game: host, stage: nil)
         let bed = InventoryAdapterFixture.interaction(.use)
