@@ -133,6 +133,11 @@
     {
       "parallelizable" : true,
       "randomExecutionOrdering": true,
+      "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyMagicAdaptersTests", "name" : "OpenSkyMagicAdaptersTests"}
+    },
+    {
+      "parallelizable" : true,
+      "randomExecutionOrdering": true,
       "target" : {"containerPath" : "container:.", "identifier" : "OpenSkyScriptAdaptersTests", "name" : "OpenSkyScriptAdaptersTests"}
     },
     {
