@@ -41,7 +41,7 @@ nonisolated public enum FacialMoodRules {
     /// actor says now, if any.
     public static func goal(
         _ input: FaceMoodInput,
-        speaking: (emotion: TopicInfo.Response.Emotion, value: UInt32)?
+        speaking: (emotion: TopicInfo.ResponseEmotion, value: UInt32)?
     ) -> [String: Float] {
         if input.isFleeing {
             return ["DialogueFear": 1]

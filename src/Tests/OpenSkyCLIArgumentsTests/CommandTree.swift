@@ -31,14 +31,9 @@ enum CommandTree {
 
     /// The fields of the dump's `ArgumentInfoV0` these checks read.
     struct ArgumentInfo: Decodable {
-        struct Name: Decodable {
-            let kind: String
-            let name: String
-        }
-
         let kind: String
         let shouldDisplay: Bool
-        let names: [Name]?
+        let names: [ArgumentName]?
         let valueName: String?
         let abstract: String?
         let parsingStrategy: String
@@ -54,6 +49,11 @@ enum CommandTree {
         var displayName: String {
             longNames.first.map { "--\($0)" } ?? "<\(valueName ?? "value")>"
         }
+    }
+
+    struct ArgumentName: Decodable {
+        let kind: String
+        let name: String
     }
 
     private struct Dump: Decodable {

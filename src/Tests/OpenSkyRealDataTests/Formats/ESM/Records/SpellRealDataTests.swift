@@ -172,21 +172,11 @@ struct SpellRealDataTests {
 
     /// The stored SPIT cost against the cost recomputed from the effect list.
     private struct CostReconciliation {
-        struct Mismatch: CustomStringConvertible {
-            let editorID: String
-            let stored: UInt32
-            let computed: UInt32
-
-            var description: String {
-                "\(editorID) stored \(stored) computed \(computed)"
-            }
-        }
-
         private(set) var manual = 0
         private(set) var autoCalculated = 0
-        private(set) var mismatches: [Mismatch] = []
+        private(set) var mismatches: [CostMismatch] = []
 
-        var worst: Mismatch? {
+        var worst: CostMismatch? {
             mismatches.max { left, right in
                 difference(left) < difference(right)
             }
@@ -202,7 +192,7 @@ struct SpellRealDataTests {
                 autoCalculated += 1
                 let computed = spell.cost.cost
                 guard computed != data.baseCost else { continue }
-                mismatches.append(Mismatch(
+                mismatches.append(CostMismatch(
                     editorID: spell.editorID ?? "-",
                     stored: data.baseCost,
                     computed: computed
@@ -210,10 +200,20 @@ struct SpellRealDataTests {
             }
         }
 
-        private func difference(_ mismatch: Mismatch) -> UInt32 {
+        private func difference(_ mismatch: CostMismatch) -> UInt32 {
             mismatch.stored > mismatch.computed
                 ? mismatch.stored - mismatch.computed
                 : mismatch.computed - mismatch.stored
+        }
+    }
+
+    struct CostMismatch: CustomStringConvertible {
+        let editorID: String
+        let stored: UInt32
+        let computed: UInt32
+
+        var description: String {
+            "\(editorID) stored \(stored) computed \(computed)"
         }
     }
 }

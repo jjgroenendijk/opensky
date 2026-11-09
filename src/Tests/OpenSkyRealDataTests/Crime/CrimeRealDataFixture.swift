@@ -37,14 +37,6 @@ extension CrimeRealDataTests {
         let crimeFactionName: String
         let crimeValuesDescription: String
 
-        /// One owned item the shop places loose, with what taking it should
-        /// cost.
-        struct Theft {
-            let interaction: PlacedInteraction
-            let value: Int64
-            let expectedBounty: Int32
-        }
-
         /// Every loose item in the cell that the reference index knows, which is what
         /// a take can resolve. `WorldItemRuntime.take` needs the entry, and
         /// `scene.interactions` also holds references the index dropped.
@@ -72,11 +64,11 @@ extension CrimeRealDataTests {
         /// The dearest rather than the first, because a shop's loose clutter is
         /// mostly worth nothing and a zero-value item prices the theft at
         /// nothing — which would make the acceptance vacuous.
-        func dearestOwnedTakeable() -> Theft? {
+        func dearestOwnedTakeable() -> HarnessTheft? {
             takeables
                 .filter { reporter.verdict(on: $0.entry.key).isTheft }
                 .map { takeable in
-                    Theft(
+                    HarnessTheft(
                         interaction: takeable.interaction,
                         value: Int64(
                             definitions.definition(takeable.interaction.base)?.value ?? 0
@@ -95,6 +87,14 @@ extension CrimeRealDataTests {
                         : $0.value < $1.value
                 }
         }
+    }
+
+    /// One owned item the shop places loose, with what taking it should
+    /// cost.
+    struct HarnessTheft {
+        let interaction: PlacedInteraction
+        let value: Int64
+        let expectedBounty: Int32
     }
 
     /// Everything the crime layer asks about a running session, answered from

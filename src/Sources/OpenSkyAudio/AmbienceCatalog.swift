@@ -36,11 +36,11 @@ nonisolated public struct AmbienceBed: Equatable, Sendable {
         /// SOUN -> SNDR hop through SoundRecordStore before playback.
         public let sound: FormID
         /// The weather the entry plays in; empty plays in all weather.
-        public var weather: Region.SoundEntry.Conditions = []
+        public var weather: Region.SoundConditions = []
         /// The chance a one-shot plays at each roll; a loop ignores it.
         public var chance: Float = 1
 
-        public init(sound: FormID, weather: Region.SoundEntry.Conditions = [], chance: Float = 1) {
+        public init(sound: FormID, weather: Region.SoundConditions = [], chance: Float = 1) {
             self.sound = sound
             self.weather = weather
             self.chance = chance

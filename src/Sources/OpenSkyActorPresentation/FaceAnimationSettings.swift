@@ -58,7 +58,7 @@ nonisolated public struct FaceAnimationSettings: Equatable, Sendable {
 
     public init() {}
 
-    public func eyeRange(for emotion: TopicInfo.Response.Emotion?) -> EyeOffsetRange {
+    public func eyeRange(for emotion: TopicInfo.ResponseEmotion?) -> EyeOffsetRange {
         let name = switch emotion {
         case .anger?: "Angry"
         case .fear?: "Fear"

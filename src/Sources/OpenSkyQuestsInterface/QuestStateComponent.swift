@@ -205,7 +205,7 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
                 stage: stage.index, items: written.map { UInt16(clamping: $0) }
             )
         }
-        let flags = chosen.reduce(into: Quest.LogEntry.Flags()) {
+        let flags = chosen.reduce(into: Quest.LogEntryFlags()) {
             $0.formUnion(stage.logEntries[$1].flags)
         }
         if flags.contains(.completeQuest) {

@@ -22,7 +22,7 @@ nonisolated extension TopicInfo.Contents {
             )
         }
         var reader = BinaryReader(field.data)
-        let emotion = try TopicInfo.Response.Emotion(rawValue: reader.readUInt32())
+        let emotion = try TopicInfo.ResponseEmotion(rawValue: reader.readUInt32())
         let emotionValue = try reader.readUInt32()
         reader.skip(4) // unused
         let number = try reader.readUInt8()

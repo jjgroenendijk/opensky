@@ -173,7 +173,7 @@ public struct QuestRuntime: QuestAccess {
         guard let stage = matching.first else {
             throw QuestError.unknownStage(quest: id, stage: index)
         }
-        let flags = matching.reduce(into: Quest.Stage.Flags()) { $0.formUnion($1.flags) }
+        let flags = matching.reduce(into: Quest.StageFlags()) { $0.formUnion($1.flags) }
         let before = state(of: resolved)
         var state = before
         if !state.isRunning {

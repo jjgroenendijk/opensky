@@ -9,7 +9,7 @@ nonisolated public enum FacialExpressionCore {
     /// The TRI target an `INFO` `TRDT` emotion shows, at `value` out of 100.
     /// Neutral shows nothing.
     public static func emotionWeights(
-        _ emotion: TopicInfo.Response.Emotion, value: UInt32
+        _ emotion: TopicInfo.ResponseEmotion, value: UInt32
     ) -> [String: Float] {
         let name: String? = switch emotion {
         case .anger: "DialogueAnger"

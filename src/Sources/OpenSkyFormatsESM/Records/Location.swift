@@ -74,13 +74,13 @@ nonisolated public struct Location: Equatable, Sendable {
     }
 
     public struct WorldspaceCells: Equatable, Sendable {
-        public struct Grid: Equatable, Sendable {
-            public let y: Int16
-            public let x: Int16
-        }
-
         public let worldspace: FormID
-        public let cells: [Grid]
+        public let cells: [WorldspaceCellGrid]
+    }
+
+    public struct WorldspaceCellGrid: Equatable, Sendable {
+        public let y: Int16
+        public let x: Int16
     }
 
     public struct EnableParent: Equatable, Sendable {
@@ -339,10 +339,10 @@ nonisolated extension Location {
             skipped.noteTail(field.type, bytes: (field.data.count - 4) % 4)
             var reader = BinaryReader(field.data)
             let worldspace = try FormID(reader.readUInt32())
-            var values: [WorldspaceCells.Grid] = []
+            var values: [WorldspaceCellGrid] = []
             values.reserveCapacity((field.data.count - 4) / 4)
             for _ in 0 ..< ((field.data.count - 4) / 4) {
-                try values.append(WorldspaceCells.Grid(
+                try values.append(WorldspaceCellGrid(
                     y: Int16(bitPattern: reader.readUInt16()),
                     x: Int16(bitPattern: reader.readUInt16())
                 ))

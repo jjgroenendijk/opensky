@@ -26,7 +26,7 @@ extension FaceMorphWorld {
 public final class FaceMorphCoordinator {
     /// An emotion on one face, until an animation time, or until cleared.
     private struct HeldEmotion {
-        let emotion: TopicInfo.Response.Emotion
+        let emotion: TopicInfo.ResponseEmotion
         let value: UInt32
         let until: Float?
     }
@@ -76,7 +76,7 @@ public final class FaceMorphCoordinator {
     /// Shows `emotion` on `actor`'s face while it speaks. With `seconds`, it ends on its
     /// own.
     public func showEmotion(
-        _ emotion: TopicInfo.Response.Emotion, value: UInt32, on actor: FormID,
+        _ emotion: TopicInfo.ResponseEmotion, value: UInt32, on actor: FormID,
         now: Float, seconds: Float? = nil
     ) {
         emotions[actor] = HeldEmotion(

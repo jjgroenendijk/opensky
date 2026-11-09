@@ -18,7 +18,7 @@ nonisolated extension Quest.Contents {
         var reader = BinaryReader(field.data)
         var stage = Quest.Stage()
         stage.index = try reader.readUInt16()
-        stage.flags = try Quest.Stage.Flags(rawValue: reader.readUInt8())
+        stage.flags = try Quest.StageFlags(rawValue: reader.readUInt8())
         openStage = stage
     }
 
@@ -35,7 +35,7 @@ nonisolated extension Quest.Contents {
         }
         var reader = BinaryReader(field.data)
         var entry = Quest.LogEntry()
-        entry.flags = try Quest.LogEntry.Flags(rawValue: reader.readUInt8())
+        entry.flags = try Quest.LogEntryFlags(rawValue: reader.readUInt8())
         openLogEntry = entry
     }
 
@@ -102,7 +102,7 @@ nonisolated extension Quest.Contents {
             return
         }
         var reader = BinaryReader(field.data)
-        openObjective?.flags = try Quest.Objective.Flags(rawValue: reader.readUInt32())
+        openObjective?.flags = try Quest.ObjectiveFlags(rawValue: reader.readUInt32())
     }
 
     /// NNAM is an objective's display text inside the objective run and the
@@ -162,7 +162,7 @@ nonisolated extension Quest.Contents {
     /// ALST opens a reference alias, ALLS a location alias. Both close any
     /// alias still open, because ALED is the only legal terminator and a
     /// missing one is a mod quirk rather than a reason to lose the record.
-    public mutating func beginAlias(_ field: ESMField, category: Quest.Alias.Category) throws {
+    public mutating func beginAlias(_ field: ESMField, category: Quest.AliasCategory) throws {
         endAlias(terminated: false)
         flushObjective()
         flushStage()
