@@ -5,7 +5,6 @@
 import Foundation
 public import OpenSkyActorPresentation
 public import OpenSkyAudio
-public import OpenSkyCells
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyPhysics
@@ -17,7 +16,7 @@ import simd
 /// What the audio coordinator reads from the running session.
 public protocol AudioWorld: AnyObject {
     /// The stores the directors resolve against; nil without game data.
-    var audioWorldData: WorldDataStores? { get }
+    var audioWorldData: (any AudioRecordsPort)? { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var audioListenerPose: (position: SIMD3<Float>, yaw: Float) { get }
     /// Nil before the player body is assembled.

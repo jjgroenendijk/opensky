@@ -160,11 +160,11 @@ extension RuntimeStateCoreAdapter {
 /// FormIDs into the load-order space, so the stores are read in that space.
 extension RuntimeStateCoreAdapter {
     public func conditionData() -> ConditionDataResolution {
-        let locationStore = game.worldData?.locationStore
+        let locationStore = game.sessionRecords?.locationStore
         let places = currentReferencePlaces()
         return ConditionDataResolution(
             keywords: locationStore?.keywords,
-            formLists: game.worldData?.formListStore,
+            formLists: game.sessionRecords?.formListStore,
             locations: locationStore,
             sourcePlugin: FormIDResolver.loadOrderSpaceName,
             currentLocations: places.locations,
@@ -191,7 +191,7 @@ extension RuntimeStateCoreAdapter {
         if let cellLocations = state.cellLocations {
             return cellLocations
         }
-        let store = game.worldData?.locationStore
+        let store = game.sessionRecords?.locationStore
         state.cellLocations = store.map { CellLocationResolver(store: $0) }
         return state.cellLocations
     }

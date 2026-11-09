@@ -3,7 +3,7 @@
 
 public import Foundation
 import Metal
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyFormatsCore
 public import OpenSkyGameData
 public import OpenSkyMenusInterface
@@ -29,7 +29,7 @@ public protocol SaveGameWorldHost: AnyObject {
     var renderer: (any RendererPort)? { get }
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var sessionRecords: (any SessionRecordsPort)? { get }
 }
 
 @MainActor
@@ -41,7 +41,8 @@ public final class SaveGameWorldAdapter: SaveGameService {
     private let autosaves = AutosavePolicy()
     /// When the last save of any kind was written, for Save on Pause.
     public private(set) var lastSaveDate: Date?
-    private var sessionStart = Date()
+    private let now: () -> Date
+    private var sessionStart: Date
     private var playSecondsBefore: Double = 0
     /// The newest listing, so menus and autosave dates need no disk read.
     private var listings: [OpenSkySaveSlotListing] = []
@@ -51,7 +52,12 @@ public final class SaveGameWorldAdapter: SaveGameService {
     /// An autosave found the disk full; autosaves stay off until the app restarts.
     private var autosavesDisabled = false
 
-    public init(game: some SaveGameWorldHost & SkyrimSaveExportHost & SkyrimSaveImportHost) {
+    public init(
+        game: some SaveGameWorldHost & SkyrimSaveExportHost & SkyrimSaveImportHost,
+        now: @escaping () -> Date
+    ) {
+        self.now = now
+        sessionStart = now()
         self.game = game
         saveFiles = game
     }
@@ -75,7 +81,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
     /// The summary and picture are taken now, before the file work starts.
     public func saveGame(slot: String?) async throws -> String {
         let name = slot ?? Self.newSlotName(existing: Set(ownRows.map(\.slot)))
-        lastSaveDate = Date()
+        lastSaveDate = now()
         do {
             try await game.runtimeStateWorld.saveSession(
                 slot: name, summary: summary(), thumbnail: thumbnail()
@@ -98,7 +104,11 @@ public final class SaveGameWorldAdapter: SaveGameService {
         )
         lastSkyrimExport = .running
         do {
-            let (url, report) = try await SkyrimSaveExport.export(contents, game: saveFiles)
+            let (url, report) = try await SkyrimSaveExport.export(
+                contents,
+                game: saveFiles,
+                savedAt: now()
+            )
             lastSkyrimExport = .exported(url.lastPathComponent, report.lines)
             await refreshSaveRows()
             return url.lastPathComponent
@@ -127,7 +137,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
             try await SkyrimSaveImport.load(slot: slot, game: saveFiles)
             await refreshSaveRows()
             resetPlayTime()
-            lastSaveDate = Date()
+            lastSaveDate = now()
             return
         }
         if !listings.contains(where: { $0.slot == slot }) {
@@ -136,8 +146,8 @@ public final class SaveGameWorldAdapter: SaveGameService {
         let playSeconds = listings.first { $0.slot == slot }?.summary?.summary?.playSeconds
         try await game.runtimeStateWorld.loadSession(slot: slot, checksLoadOrder: checksLoadOrder)
         playSecondsBefore = playSeconds ?? 0
-        sessionStart = Date()
-        lastSaveDate = Date()
+        sessionStart = now()
+        lastSaveDate = now()
     }
 
     public func deleteSave(slot: String) async throws {
@@ -149,7 +159,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
     /// A new game counts play time from zero.
     public func resetPlayTime() {
         playSecondsBefore = 0
-        sessionStart = Date()
+        sessionStart = now()
         lastSaveDate = nil
     }
 
@@ -197,7 +207,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
         guard !autosavesDisabled, !isSavingDisabled else { return }
         let settings = game.playerSettings.store
         let due = trigger == .pause
-            ? autosaves.shouldSaveOnPause(settings: settings, lastSave: lastSaveDate, now: Date())
+            ? autosaves.shouldSaveOnPause(settings: settings, lastSave: lastSaveDate, now: now())
             : autosaves.isEnabled(trigger, settings: settings)
         guard due else { return }
         game.hud.showNotification(game.mapWorld.settingTexts(SaveNoticeText.self)[.autosaving])
@@ -245,46 +255,12 @@ public final class SaveGameWorldAdapter: SaveGameService {
         return "Save \(number)"
     }
 
-    public var saveTexts: SaveTexts {
-        game.worldData.map {
-            SaveTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
-        } ?? .vanilla
-    }
-
-    public static func row(
-        _ listing: OpenSkySaveSlotListing, texts: SaveTexts = .vanilla
-    ) -> SaveSlotRow {
-        let summary = listing.summary?.summary
-        let savedAt = listing.summary.map {
-            Date(timeIntervalSince1970: TimeInterval($0.metadata.creationTimestamp))
-        } ?? listing.modified
-        let title = summary.map { "\(listing.slot) - \($0.characterName)" } ?? listing.slot
-        let detail = summary.map {
-            let playTime = SavePlayTime.text(seconds: $0.playSeconds)
-            return "\(texts.level) \($0.level), \($0.locationName), \(playTime)"
-        } ?? listing.error ?? ""
-        let thumbnail = listing.summary?.thumbnail
-        return SaveSlotRow(
-            slot: listing.slot, title: title, detail: detail, savedAt: savedAt,
-            hasThumbnail: thumbnail != nil, error: listing.error,
-            character: summary.map {
-                SaveSlotCharacter(
-                    name: $0.characterName, race: $0.raceName, level: $0.level,
-                    playTime: SavePlayTime.text(seconds: $0.playSeconds)
-                )
-            },
-            picture: thumbnail.map {
-                SaveSlotPicture(width: $0.width, height: $0.height, rgba: $0.rgba)
-            }
-        )
-    }
-
     private func summary() -> SaveSummary {
         let identity = game.menuWorld.playerNameAndRace
         return SaveSummary(
             characterName: identity.name, level: game.progression.leveling?.level ?? 1,
             raceName: identity.race, locationName: locationName(),
-            playSeconds: playSecondsBefore + Date().timeIntervalSince(sessionStart)
+            playSeconds: playSecondsBefore + now().timeIntervalSince(sessionStart)
         )
     }
 
@@ -316,3 +292,39 @@ public final class SaveGameWorldAdapter: SaveGameService {
 }
 
 extension SaveGameWorldAdapter: SaveGameWorldPort {}
+
+extension SaveGameWorldAdapter {
+    public var saveTexts: SaveTexts {
+        game.sessionRecords.map {
+            SaveTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
+    }
+
+    public static func row(
+        _ listing: OpenSkySaveSlotListing, texts: SaveTexts = .vanilla
+    ) -> SaveSlotRow {
+        let summary = listing.summary?.summary
+        let savedAt = listing.summary.map {
+            Date(timeIntervalSince1970: TimeInterval($0.metadata.creationTimestamp))
+        } ?? listing.modified
+        let title = summary.map { "\(listing.slot) - \($0.characterName)" } ?? listing.slot
+        let detail = summary.map {
+            let playTime = SavePlayTime.text(seconds: $0.playSeconds)
+            return "\(texts.level) \($0.level), \($0.locationName), \(playTime)"
+        } ?? listing.error ?? ""
+        let thumbnail = listing.summary?.thumbnail
+        return SaveSlotRow(
+            slot: listing.slot, title: title, detail: detail, savedAt: savedAt,
+            hasThumbnail: thumbnail != nil, error: listing.error,
+            character: summary.map {
+                SaveSlotCharacter(
+                    name: $0.characterName, race: $0.raceName, level: $0.level,
+                    playTime: SavePlayTime.text(seconds: $0.playSeconds)
+                )
+            },
+            picture: thumbnail.map {
+                SaveSlotPicture(width: $0.width, height: $0.height, rgba: $0.rgba)
+            }
+        )
+    }
+}

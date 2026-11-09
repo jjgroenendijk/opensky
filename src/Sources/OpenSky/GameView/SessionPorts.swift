@@ -27,6 +27,7 @@ import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyScriptingInterface
 import OpenSkySession
+import OpenSkySessionAdapters
 import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -538,15 +539,12 @@ extension SessionPorts {
 }
 
 extension SessionPorts {
-    func takeStartedAudio(
-        engine: WorldAudioEngine, sounds: WorldAudioSoundDirector,
-        music: WorldMusicDirector, footsteps: WorldAudioFootstepDirector
-    ) {
+    func takeStartedAudio(_ audio: StartedAudio) {
         guard let session = scope.gameSession else { return }
-        session.worldAudio = engine
-        session.soundDirector = sounds
-        session.musicDirector = music
-        session.footstepDirector = footsteps
+        session.worldAudio = audio.engine
+        session.soundDirector = audio.sounds
+        session.musicDirector = audio.music
+        session.footstepDirector = audio.footsteps
     }
 }
 

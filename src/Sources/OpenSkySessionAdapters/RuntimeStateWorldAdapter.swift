@@ -2,12 +2,12 @@
 // renderer, the streamer, and the session systems, and runs save and load.
 // The rules live in the coordinator (docs/engine/coordinators.md).
 
-import Foundation
+public import Foundation
 import OpenSkyActorPresentation
 public import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 public import OpenSkyConditions
 import OpenSkyCrimeInterface
@@ -46,13 +46,14 @@ public protocol RuntimeStateWorldHost: AnyObject {
     var magic: any MagicPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var sessionRecords: (any SessionRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
 public final class RuntimeStateWorldAdapter {
     public let game: any RuntimeStateWorldHost
     public let state = RuntimeStatePartState()
+    public let now: () -> Date
 
     public let sessionClockHost: any RuntimeStateSessionClockHost
     public let conditionReadsHost: any RuntimeStateConditionReadsHost
@@ -83,7 +84,8 @@ public final class RuntimeStateWorldAdapter {
         RuntimeStateSaveContentsAdapter(
             game: saveContentsHost,
             core: core,
-            sessionClock: sessionClock
+            sessionClock: sessionClock,
+            now: now
         )
     }
 
@@ -111,12 +113,15 @@ public final class RuntimeStateWorldAdapter {
         RuntimeStateInventoryFactsAdapter(game: inventoryFactsHost, state: state)
     }
 
-    public init(game: some RuntimeStateWorldHost & RuntimeStateSessionClockHost &
-        RuntimeStateConditionReadsHost & RuntimeStateSaveContentsHost &
-        RuntimeStateSessionLoadHost &
-        RuntimeStateLiveSeamsHost & RuntimeStateReferenceMotionHost &
-        RuntimeStateInventoryFactsHost)
-    {
+    public init(
+        game: some RuntimeStateWorldHost & RuntimeStateSessionClockHost &
+            RuntimeStateConditionReadsHost & RuntimeStateSaveContentsHost &
+            RuntimeStateSessionLoadHost &
+            RuntimeStateLiveSeamsHost & RuntimeStateReferenceMotionHost &
+            RuntimeStateInventoryFactsHost,
+        now: @escaping () -> Date
+    ) {
+        self.now = now
         sessionClockHost = game
         conditionReadsHost = game
         saveContentsHost = game

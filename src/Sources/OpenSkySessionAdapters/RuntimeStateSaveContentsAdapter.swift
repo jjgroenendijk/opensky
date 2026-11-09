@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
@@ -48,6 +48,7 @@ public struct RuntimeStateSaveContentsAdapter {
     public let game: any RuntimeStateSaveContentsHost
     public let core: RuntimeStateCoreAdapter
     public let sessionClock: RuntimeStateSessionClockAdapter
+    public let now: () -> Date
 }
 
 extension RuntimeStateSaveContentsAdapter {
@@ -81,7 +82,7 @@ extension RuntimeStateSaveContentsAdapter {
         return OpenSkySaveContents(
             snapshot: game.worldState.snapshot(),
             metadata: SaveCreationMetadata(
-                creationTimestamp: UInt64(max(0, Date().timeIntervalSince1970)),
+                creationTimestamp: UInt64(max(0, now().timeIntervalSince1970)),
                 appVersion: SaveAppVersion.current
             ),
             clock: game.gameSession?.gameClock,
