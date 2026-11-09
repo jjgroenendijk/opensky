@@ -1,7 +1,7 @@
 import OpenSkyActorPresentation
 import OpenSkyAudio
 import OpenSkyCamera
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
 import OpenSkyEffects
@@ -19,7 +19,7 @@ public protocol CombatImpactEffectsHost: AnyObject {
     var idleWorld: any IdleWorldPort { get }
     var menuWorld: any MenuWorldPort { get }
     var ragdollWorld: any RagdollWorldPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
 }
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
@@ -30,7 +30,7 @@ public struct CombatImpactEffectsAdapter {
 extension CombatImpactEffectsAdapter {
     public func showImpact(_ resolved: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         guard let impact = resolved.impact else { return }
-        let store = game.worldData?.footstepStore
+        let store = game.combatRecords?.footstepStore
         let surface: ImpactSurface = if let target = resolved.target {
             .actor(target)
         } else if let normal = resolved.surfaceNormal {
@@ -47,7 +47,7 @@ extension CombatImpactEffectsAdapter {
     public func impactMaterial(of actor: ReferenceKey) -> FormID? {
         guard
             let race = game.menuWorld.race(of: actor),
-            let races = game.worldData?.actorValueBaselines?
+            let races = game.combatRecords?.actorValueBaselines?
                 .resolver?.races
         else { return nil }
         return races[race.rawValue]?.details.materialType
@@ -57,7 +57,7 @@ extension CombatImpactEffectsAdapter {
     public func raceFlags(of actor: ReferenceKey) -> Race.Flags? {
         guard
             let race = game.menuWorld.race(of: actor),
-            let races = game.worldData?.actorValueBaselines?.resolver?.races
+            let races = game.combatRecords?.actorValueBaselines?.resolver?.races
         else { return nil }
         return races[race.rawValue]?.flags
     }

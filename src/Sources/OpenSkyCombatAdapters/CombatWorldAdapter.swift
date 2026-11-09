@@ -7,7 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyBehavior
 import OpenSkyCamera
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
@@ -41,7 +41,7 @@ public protocol CombatWorldHost: AnyObject {
     var player: any PlayerPort { get }
     var renderer: (any RendererPort)? { get }
     var animationClips: ActorClipLoader? { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
 }
 
 /// Answers `CombatWorld` from the session systems `game` owns.
@@ -105,7 +105,7 @@ public final class CombatWorldAdapter {
     /// Nil without game data: the runtimes stay nil, and no fight starts with
     /// invented numbers.
     public func sessionData() -> CombatSessionData? {
-        guard let provider = game.worldData else { return nil }
+        guard let provider = game.combatRecords else { return nil }
         let settings = provider.gameSettings
         let text: GameTextResolver = { [game] in game.mapWorld.text($0) }
         var data = CombatSessionData(
@@ -136,11 +136,11 @@ public final class CombatWorldAdapter {
         }
     }
 
-    private static func items(_ provider: WorldDataStores) -> ItemDefinitionStore? {
+    private static func items(_ provider: any CombatRecordsPort) -> ItemDefinitionStore? {
         provider.inventoryBaselines?.items
     }
 
-    private static func impacts(_ provider: WorldDataStores) -> MeleeImpactResolver? {
+    private static func impacts(_ provider: any CombatRecordsPort) -> MeleeImpactResolver? {
         provider.footstepStore.map { MeleeImpactResolver(footsteps: $0) }
     }
 

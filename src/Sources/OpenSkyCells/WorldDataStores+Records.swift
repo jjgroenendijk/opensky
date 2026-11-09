@@ -1,3 +1,4 @@
+public import OpenSkyCombatInterface
 public import OpenSkyGameData
 
 extension WorldDataStores: WorldRecordsPort {
@@ -9,3 +10,5 @@ extension WorldDataStores: WorldRecordsPort {
         actorValueBaselines?.leveling.scriptEdits
     }
 }
+
+extension WorldDataStores: CombatRecordsPort {}

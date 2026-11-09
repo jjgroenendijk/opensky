@@ -3,7 +3,7 @@ import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
 public import OpenSkyBehavior
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
 import OpenSkyConditions
@@ -39,7 +39,7 @@ public protocol CombatMotionHost: AnyObject {
     var packages: any PackagePort { get }
     var ragdoll: any RagdollPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -124,7 +124,7 @@ extension CombatMotionAdapter {
         guard
             let engine = game.gameSession?.worldAudio, engine.isRunning,
             let assets = game.audio.assets,
-            let sounds = game.worldData?.soundStore,
+            let sounds = game.combatRecords?.soundStore,
             let sound = attempt({ try sounds.resolveAny(impact.sound) }),
             let path = sound.filePaths.first
         else { return }

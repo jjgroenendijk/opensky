@@ -2,12 +2,12 @@
 // the install, the renderer's override pose and time scale, and the kill that
 // starts a kill cam. The rules live in the coordinator. See docs/engine/kill-cam.md.
 
-import Foundation
+public import Foundation
 import OpenSkyActorsInterface
 public import OpenSkyCamera
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombat
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 public import OpenSkyConditions
 import OpenSkyEffects
 import OpenSkyFactionsInterface
@@ -35,7 +35,7 @@ public protocol CinematicCameraWorldHost: AnyObject {
     var factions: any FactionPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var runtimeState: any RuntimeStatePort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
 }
 
 public final class CinematicCameraWorldAdapter {
@@ -43,13 +43,15 @@ public final class CinematicCameraWorldAdapter {
     /// Camera tracks by CAMS model path, all requested at wiring, off the main actor.
     var tracks: AssetLoader<String, NIFCameraTrack>?
     var lastFrame: Date?
+    let now: () -> Date
 
-    public init(game: any CinematicCameraWorldHost) {
+    public init(game: any CinematicCameraWorldHost, now: @escaping () -> Date) {
         self.game = game
+        self.now = now
     }
 
     /// The install's base odds; the rest stay at their defaults.
-    public static func killCamSettings(_ data: WorldDataStores?) -> KillCamSettings {
+    public static func killCamSettings(_ data: (any CombatRecordsPort)?) -> KillCamSettings {
         var settings = KillCamSettings()
         if let store = data?.gameSettings {
             settings.baseOdds = KillCamSettings.resolve(store: store).baseOdds
@@ -81,7 +83,7 @@ public final class CinematicCameraWorldAdapter {
 
 extension CinematicCameraWorldAdapter: CinematicCameraWorld {
     public var cameraPaths: CameraPathStore? {
-        game.worldData?.presentationRecords?.cameras
+        game.combatRecords?.presentationRecords?.cameras
     }
 
     public func cameraConditionContext() -> ConditionContext {

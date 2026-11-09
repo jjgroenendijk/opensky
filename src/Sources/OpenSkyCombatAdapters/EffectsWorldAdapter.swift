@@ -3,12 +3,12 @@
 // coordinator; routes spell hits; and steps debris and effects each frame.
 // The rules live in the coordinators (docs/rendering/visual-effects.md).
 
-import Foundation
+public import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyCombat
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 public import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -32,7 +32,7 @@ import simd
 public protocol EffectsWorldHost: AnyObject {
     var combat: any CombatPort { get }
     var effects: any EffectsPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
     var hazardWorld: any HazardWorldPort { get }
     var hazards: any HazardPort { get }
     var magic: any MagicPort { get }
@@ -49,8 +49,9 @@ public final class EffectsWorldAdapter {
     public let game: any EffectsWorldHost
     public let state = EffectsPartState()
     /// Actors whose race abilities were looked at, so each is resolved once.
-    private var raceChecked: Set<ReferenceKey> = []
-    private var lastFrame: Date?
+    var raceChecked: Set<ReferenceKey> = []
+    var lastFrame: Date?
+    let now: () -> Date
 
     public let bodyImpulsesHost: any EffectsBodyImpulsesHost
     public let locatorHost: any EffectsLocatorHost
@@ -80,9 +81,12 @@ public final class EffectsWorldAdapter {
         EffectsEffectPlacementAdapter(game: effectPlacementHost, state: state)
     }
 
-    public init(game: some EffectsWorldHost & EffectsBodyImpulsesHost & EffectsTrapControlHost &
-        EffectsBlastsHost & EffectsEffectPlacementHost & EffectsLocatorHost)
-    {
+    public init(
+        game: some EffectsWorldHost & EffectsBodyImpulsesHost & EffectsTrapControlHost &
+            EffectsBlastsHost & EffectsEffectPlacementHost & EffectsLocatorHost,
+        now: @escaping () -> Date
+    ) {
+        self.now = now
         bodyImpulsesHost = game
         locatorHost = game
         trapControlHost = game
@@ -115,7 +119,7 @@ public final class EffectsWorldAdapter {
     /// The explosion runtime the combat coordinator owns. Without effect records it
     /// has no world, and nothing detonates.
     public func makeExplosions() -> ExplosionRuntime {
-        guard let records = game.worldData?.effectRecords else { return ExplosionRuntime() }
+        guard let records = game.combatRecords?.effectRecords else { return ExplosionRuntime() }
         let explosions = ExplosionRuntime(
             records: records,
             itemPlugin: EffectsBasePlugin.name,
@@ -160,7 +164,7 @@ public final class EffectsWorldAdapter {
 
     /// A main-thread library of its own: the cell build queue owns the other one.
     public static func meshes(
-        provider: WorldDataStores,
+        provider: any CombatRecordsPort,
         renderer: Renderer
     ) -> MeshLibrary? {
         guard
@@ -172,72 +176,6 @@ public final class EffectsWorldAdapter {
         else { return nil }
         return MeshLibrary(fileSystem: fileSystem, device: renderer.device, textures: textures)
     }
-
-    /// Steps by wall-clock time, and not at all while a menu pauses the world. The
-    /// interior's image space and the effect draw lists update every frame.
-    func tick(gameSession: GameSession, streamer: CellStreamer?, now: Date = Date()) {
-        let renderer = gameSession.renderer
-        gameSession.imageSpaceLinks?.interior = streamer?.interiorScene.map {
-            InteriorImageSpace(imageSpace: $0.imageSpace, plugin: EffectsBasePlugin.name)
-        }
-        let paused = gameSession.worldSimPaused
-        let elapsed = lastFrame.map { Float(now.timeIntervalSince($0)) } ?? 0
-        let seconds = paused ? 0 : min(elapsed, Self.longestStep)
-        lastFrame = paused ? nil : now
-        attachRaceEffects()
-        explosions.advance(seconds)
-        effectPlacement.stepHealthCues(seconds, gameSession: gameSession)
-        do {
-            try effects.step(seconds, extraModels: extraModels(), renderer: renderer)
-        } catch {
-            Self.logger.error(
-                "[ERROR] effect draw lists: \(String(describing: error), privacy: .public)"
-            )
-        }
-    }
-
-    /// Debris pieces and the models of spawned hazards, drawn beside the effects.
-    private func extraModels() -> [VisualEffectModel] {
-        let debris = explosions.debris.map {
-            VisualEffectModel(path: $0.path, transform: $0.transform)
-        }
-        let hazards = game.hazards.runtime.active.values
-            .filter { $0.source == .spawned }
-            .sorted { $0.id < $1.id }
-            .compactMap { hazard -> VisualEffectModel? in
-                guard let path = game.hazardWorld.hazardModelPath(for: hazard.spec.hazard) else {
-                    return nil
-                }
-                var transform = matrix_identity_float4x4
-                transform.columns.3 = SIMD4(hazard.position, 1)
-                return VisualEffectModel(path: path, transform: transform)
-            }
-        return debris + hazards + blasts.projectileModels()
-    }
-
-    /// Lasting race-ability looks for actors that arrived, and their removal for
-    /// actors that left.
-    private func attachRaceEffects() {
-        let resident = game.streamer.residentActorEntries()
-        let keys = Set(resident.map(\.key))
-        for gone in raceChecked.subtracting(keys) {
-            effects.detachAll(from: gone)
-        }
-        raceChecked.formIntersection(keys)
-        for entry in resident where !raceChecked.contains(entry.key) {
-            guard let base = entry.placedActor?.base else { continue }
-            raceChecked.insert(entry.key)
-            effects.attachLasting(
-                game.magic.raceEffectLinks(base: base, actor: entry.key),
-                to: entry.key
-            )
-        }
-    }
-
-    private static let logger = EngineLogger(
-        subsystem: "nl.jjgroenendijk.opensky",
-        category: "Effects"
-    )
 }
 
 extension EffectsWorldAdapter: ExplosionWorld {}

@@ -1,7 +1,7 @@
 // `EffectsWorldAdapter` built over the started session: it registers its frame steps and
 // session events as it is built (docs/decisions/session-scope.md).
 
-import Foundation
+public import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyCells
@@ -30,9 +30,10 @@ extension EffectsWorldAdapter {
     public convenience init(
         game: some EffectsWorldHost & EffectsBodyImpulsesHost & EffectsTrapControlHost &
             EffectsBlastsHost & EffectsEffectPlacementHost & EffectsLocatorHost,
-        stage: SessionStage?
+        stage: SessionStage?,
+        now: @escaping () -> Date
     ) {
-        self.init(game: game)
+        self.init(game: game, now: now)
         guard let stage else { return }
         registerEffects(stage: stage)
     }
@@ -49,13 +50,77 @@ extension EffectsWorldAdapter {
         frameSteps.register(.effects) { [weak self, weak gameSession, weak streamer] position in
             guard let self, let gameSession else { return }
             state.cameraPosition = position
-            tick(gameSession: gameSession, streamer: streamer)
-            let now = ProcessInfo.processInfo.systemUptime
-            let delta = Float(now - (state.lastImpulseStep ?? now))
-            state.lastImpulseStep = now
+            let now = now()
+            let renderer = gameSession.renderer
+            gameSession.imageSpaceLinks?.interior = streamer?.interiorScene.map {
+                InteriorImageSpace(imageSpace: $0.imageSpace, plugin: EffectsBasePlugin.name)
+            }
+            let paused = gameSession.worldSimPaused
+            let elapsed = lastFrame.map { Float(now.timeIntervalSince($0)) } ?? 0
+            let seconds = paused ? 0 : min(elapsed, Self.longestStep)
+            lastFrame = paused ? nil : now
+            attachRaceEffects()
+            explosions.advance(seconds)
+            effectPlacement.stepHealthCues(seconds, gameSession: gameSession)
+            do {
+                try effects.step(seconds, extraModels: extraModels(), renderer: renderer)
+            } catch {
+                Self.logger.error(
+                    "[ERROR] effect draw lists: \(String(describing: error), privacy: .public)"
+                )
+            }
+            let uptime = now.timeIntervalSinceReferenceDate
+            let delta = Float(uptime - (state.lastImpulseStep ?? uptime))
+            state.lastImpulseStep = uptime
             if gameSession.movementMode.isPlayerControlled {
                 game.combat.impulses?.advance(deltaTime: delta)
             }
         }
     }
+}
+
+/// The per-frame helpers of the effects frame step.
+extension EffectsWorldAdapter {
+    /// Debris pieces and the models of spawned hazards, drawn beside the effects.
+    private func extraModels() -> [VisualEffectModel] {
+        let debris = explosions.debris.map {
+            VisualEffectModel(path: $0.path, transform: $0.transform)
+        }
+        let hazards = game.hazards.runtime.active.values
+            .filter { $0.source == .spawned }
+            .sorted { $0.id < $1.id }
+            .compactMap { hazard -> VisualEffectModel? in
+                guard let path = game.hazardWorld.hazardModelPath(for: hazard.spec.hazard) else {
+                    return nil
+                }
+                var transform = matrix_identity_float4x4
+                transform.columns.3 = SIMD4(hazard.position, 1)
+                return VisualEffectModel(path: path, transform: transform)
+            }
+        return debris + hazards + blasts.projectileModels()
+    }
+
+    /// Lasting race-ability looks for actors that arrived, and their removal for
+    /// actors that left.
+    private func attachRaceEffects() {
+        let resident = game.streamer.residentActorEntries()
+        let keys = Set(resident.map(\.key))
+        for gone in raceChecked.subtracting(keys) {
+            effects.detachAll(from: gone)
+        }
+        raceChecked.formIntersection(keys)
+        for entry in resident where !raceChecked.contains(entry.key) {
+            guard let base = entry.placedActor?.base else { continue }
+            raceChecked.insert(entry.key)
+            effects.attachLasting(
+                game.magic.raceEffectLinks(base: base, actor: entry.key),
+                to: entry.key
+            )
+        }
+    }
+
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Effects"
+    )
 }

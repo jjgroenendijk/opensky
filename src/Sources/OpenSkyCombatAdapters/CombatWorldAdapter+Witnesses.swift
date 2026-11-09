@@ -309,14 +309,15 @@ extension CombatWorldAdapter {
     }
 
     public func impact(dataSet: FormID, material: FormID?) -> ResolvedMeleeImpact? {
-        game.worldData?.footstepStore.flatMap {
+        game.combatRecords?.footstepStore.flatMap {
             MeleeImpactResolver(footsteps: $0).resolve(dataSet: dataSet, material: material)
         }
     }
 
     public func impact(dataSetEditorID: String, material: FormID?) -> ResolvedMeleeImpact? {
         guard
-            let impacts = game.worldData?.footstepStore.map(MeleeImpactResolver.init(footsteps:)),
+            let impacts = game.combatRecords?.footstepStore
+                .map(MeleeImpactResolver.init(footsteps:)),
             let set = impacts.dataSet(editorID: dataSetEditorID)
         else { return nil }
         return impacts.resolve(dataSet: set, material: material)

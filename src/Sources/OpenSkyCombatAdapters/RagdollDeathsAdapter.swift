@@ -1,8 +1,8 @@
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombat
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
 import OpenSkyEffects
 import OpenSkyFormatsCore
@@ -32,7 +32,7 @@ public protocol RagdollDeathsHost: AnyObject {
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -57,7 +57,7 @@ extension RagdollDeathsAdapter {
     /// A location whose last living, enabled boss died clears itself
     /// (docs/formats/locations.md).
     private func clearLocations(afterDeathOf victim: ReferenceKey) {
-        guard let store = game.worldData?.locationStore, let bridge = game.scripts.bridge
+        guard let store = game.combatRecords?.locationStore, let bridge = game.scripts.bridge
         else { return }
         let world = game.worldState
         let streamer = game.streamer

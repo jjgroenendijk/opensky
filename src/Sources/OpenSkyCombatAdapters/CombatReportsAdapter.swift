@@ -3,7 +3,7 @@ import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyBehavior
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombat
 public import OpenSkyCombatInterface
 import OpenSkyConditions
@@ -40,7 +40,7 @@ public protocol CombatReportsHost: AnyObject {
     var progression: any ProgressionPort { get }
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
 }
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
@@ -69,7 +69,7 @@ extension CombatReportsAdapter {
         guard
             hit.aggressor == .player, hit.delivery == .melee || hit.delivery == .ranged,
             let source = hit.source,
-            let weapon = game.worldData?.inventoryBaselines?.items.weapon(source)
+            let weapon = game.combatRecords?.inventoryBaselines?.items.weapon(source)
         else { return }
         game.controllerRumble.weapon(weapon.rumble)
     }

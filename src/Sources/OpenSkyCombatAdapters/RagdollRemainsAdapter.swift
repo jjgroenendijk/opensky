@@ -1,7 +1,7 @@
 import OpenSkyActorPresentation
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombat
-import OpenSkyCombatInterface
+public import OpenSkyCombatInterface
 import OpenSkyEffects
 public import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -26,7 +26,7 @@ public protocol RagdollRemainsHost: AnyObject {
     var menuWorld: any MenuWorldPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
 }
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
@@ -117,20 +117,20 @@ extension RagdollRemainsAdapter {
     }
 
     private var loadOrderPlugin: String? {
-        game.worldData?.actorValueBaselines?.resolver?.pluginName
+        game.combatRecords?.actorValueBaselines?.resolver?.pluginName
     }
 
     private func race(of key: ReferenceKey) -> Race? {
         guard
             let race = game.menuWorld.race(of: key),
-            let races = game.worldData?.actorValueBaselines?.resolver?.races
+            let races = game.combatRecords?.actorValueBaselines?.resolver?.races
         else { return nil }
         return races[race.rawValue]
     }
 
     private func bodyParts(of key: ReferenceKey) -> ResolvedRecord<BodyPartData>? {
         guard let race = race(of: key), let plugin = loadOrderPlugin else { return nil }
-        return game.worldData?.presentationRecords?.bodyParts
+        return game.combatRecords?.presentationRecords?.bodyParts
             .resolve(race.details.bodyPartData, fromPlugin: plugin)
     }
 }

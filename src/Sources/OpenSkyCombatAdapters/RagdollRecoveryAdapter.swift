@@ -2,7 +2,7 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyBehavior
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombat
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
@@ -27,7 +27,7 @@ public protocol RagdollRecoveryHost: AnyObject {
     var mapWorld: any MapWorldPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
 }
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
@@ -67,7 +67,7 @@ extension RagdollRecoveryAdapter {
     public func bleedoutThreshold(of key: ReferenceKey) -> Float? {
         guard
             let base = game.streamer.referenceEntry(key: key)?.placedActor?.base,
-            let resolver = game.worldData?.actorValueBaselines?.resolver
+            let resolver = game.combatRecords?.actorValueBaselines?.resolver
         else { return nil }
         return resolver.characterClass(ofBase: base)?.bleedoutDefault
     }
