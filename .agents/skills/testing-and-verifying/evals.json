@@ -144,5 +144,16 @@
       "Runs the build in its own linked worktree, not in the checkout the other session builds in",
       "Starts make test in a background shell"
     ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "I split GameSession into two coordinators. Show that the game still behaves the same.",
+    "files": [],
+    "expected_behavior": [
+      "Runs make tour-record on the base and make tour-check on the branch, on a Release build",
+      "Explains each [DIFF] line as a bug or an intended change"
+    ]
   }
 ]

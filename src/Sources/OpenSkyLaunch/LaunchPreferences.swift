@@ -10,6 +10,8 @@ nonisolated public enum LaunchPreferences {
     public static let titleScreenKey = "OPENSKY_START_AT_TITLE"
     /// `1` or `0` overrides the "Agent control" setting for one launch.
     public static let agentControlKey = "OPENSKY_AGENT_CONTROL"
+    /// `openskycli game launch --hidden` sets this to `1`: the game window never comes on screen.
+    public static let hiddenWindowKey = "OPENSKY_HIDDEN_WINDOW"
 
     public static func skipsLauncher(
         environment: [String: String] = ProcessInfo.processInfo.environment
@@ -21,6 +23,12 @@ nonisolated public enum LaunchPreferences {
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) -> Bool {
         environment[titleScreenKey] == "1"
+    }
+
+    public static func hidesWindow(
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> Bool {
+        environment[hiddenWindowKey] == "1"
     }
 
     /// Whether the app opens the agent control socket; any other value keeps `setting`.

@@ -46,7 +46,7 @@ loaded reference.
 
 | Command | Does |
 | --- | --- |
-| `launch [--title] [--survival-mode on\|off\|ask] [--app <path>] [--wait <s>]` | Opens the app with the server on, or attaches to the running one, and waits for `worldReady`, 180 s by default. `--app` defaults to the build of this checkout. `--title` opens on the main menu, as the launcher's Play button does, and waits for `titleMenuOpen` instead, because the main menu loads no world. `--survival-mode` answers the Survival Mode prompt ahead of time; the default `off` means the prompt never stops a session |
+| `launch [--title] [--hidden] [--survival-mode on\|off\|ask] [--app <path>] [--wait <s>]` | Opens the app with the server on, or attaches to the running one, and waits for `worldReady`, 180 s by default. `--app` defaults to the build of this checkout. `--hidden` keeps the window off the screen and the app out of the Dock, as a hidden benchmark run does. `--title` opens on the main menu, as the launcher's Play button does, and waits for `titleMenuOpen` instead, because the main menu loads no world. `--survival-mode` answers the Survival Mode prompt ahead of time; the default `off` means the prompt never stops a session |
 | `attach` | Connects to the running app and prints the hello line: protocol version, data root, `worldReady` |
 | `status` | Running, data root, frame, paused |
 | `catalog` | Every command this app answers, with its arguments. The CLI parses against it |

@@ -37,6 +37,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Rendering or shaders | `make test PLAN=GPU`, plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make test PLAN=RealData T='Class/method()'`, one run per affected test |
 | App UI | `make build-app`; `make test PLAN=UITests T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
+| A refactor that must not change behaviour | `make tour-record` on the base, then `make tour-check` on the branch, both on a Release build (`docs/tools/acceptance-record.md`, Tour check) |
 | A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
 | Milestone acceptance | `make test PLAN=RealDataAll`, `make test PLAN=UITests`, and the acceptance record (format in `docs/tools/acceptance-record.md`) in the closing PR. A milestone about load or frame time adds `make sample-launch` on the installed Release app |
 

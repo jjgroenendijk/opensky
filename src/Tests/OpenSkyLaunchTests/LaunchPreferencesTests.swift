@@ -47,4 +47,11 @@ struct LaunchPreferencesTests {
         #expect(found.path == "/Games/Skyrim")
         #expect(found.note == "Chosen in Settings.")
     }
+
+    @Test func onlyAOneHidesTheWindow() {
+        let key = LaunchPreferences.hiddenWindowKey
+        #expect(LaunchPreferences.hidesWindow(environment: [key: "1"]))
+        #expect(!LaunchPreferences.hidesWindow(environment: [key: "0"]))
+        #expect(!LaunchPreferences.hidesWindow(environment: [:]))
+    }
 }
