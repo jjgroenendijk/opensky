@@ -1,22 +1,20 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -40,8 +38,8 @@ public protocol RagdollDeathsHost: AnyObject {
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
 public struct RagdollDeathsAdapter {
-    public unowned let owner: RagdollWorldAdapter
-    public unowned let game: any RagdollDeathsHost
+    public let game: any RagdollDeathsHost
+    public let poseReads: RagdollPoseReadsAdapter
 }
 
 extension RagdollDeathsAdapter {
@@ -87,7 +85,7 @@ extension RagdollDeathsAdapter {
     private func grantDeathItem(to key: ReferenceKey) {
         guard
             let values = game.actorValues.runtime,
-            let holder = owner.holder(of: key)
+            let holder = poseReads.holder(of: key)
         else { return }
         game.inventory.grantDeathItem(to: key, actorLevel: values.baseline(of: holder).level)
     }

@@ -7,13 +7,11 @@ import OpenSkyActors
 import OpenSkyAIPackages
 public import OpenSkyBehavior
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPlayer
 import OpenSkyRenderCore
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -37,7 +35,7 @@ public protocol DragonFlightWorldHost: AnyObject {
 }
 
 public final class DragonFlightWorldAdapter {
-    public unowned let game: any DragonFlightWorldHost
+    public let game: any DragonFlightWorldHost
     /// The wing dust of a landing approach. The game names no set for the engine's
     /// `FlightLandingEffect`; this is the take-off dust `DragonActorScript` plays.
     public static let landingDustSet = "FXDragonTakeoffImpactSet"
@@ -147,10 +145,10 @@ extension DragonFlightWorldAdapter: DragonFlightWorld {
     }
 
     public func playLandingDust(_: ReferenceKey, at point: SIMD3<Float>) {
-        guard
-            let impacts = game.worldData?.footstepStore.map(MeleeImpactResolver.init(footsteps:)),
-            let set = impacts.dataSet(editorID: Self.landingDustSet),
-            let impact = impacts.resolve(dataSet: set, material: nil)
+        guard let impact = game.combatWorld.impact(
+            dataSetEditorID: Self.landingDustSet,
+            material: nil
+        )
         else { return }
         game.combatWorld.playImpact(impact, at: point)
     }

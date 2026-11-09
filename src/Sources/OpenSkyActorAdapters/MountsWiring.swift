@@ -4,20 +4,17 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
+import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld
 import OpenSkyWorldInterface

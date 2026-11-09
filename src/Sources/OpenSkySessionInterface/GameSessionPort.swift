@@ -62,8 +62,6 @@ public protocol GameSessionPort: AnyObject {
     func setDialogueCameraFocus(_ focus: DialogueCameraFocus?)
     func setFirstPersonFOVY(radians: Float)
     func setMovementMode(_ mode: CameraMovementMode)
-    func setPlayerBody(_ body: (any PlayerBodyPort)?) throws
-    func setPlayerFirstPersonRig(_ rig: (any PlayerFirstPersonRigPort)?) throws
     @discardableResult func settlePlayerOnGround() -> Bool
     var soundDirector: WorldAudioSoundDirector? { get set }
     var soundMixInputs: (() -> SoundMixInputs)? { get set }

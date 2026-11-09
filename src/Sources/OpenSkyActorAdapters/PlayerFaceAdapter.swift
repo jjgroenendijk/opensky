@@ -2,19 +2,15 @@ public import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkySession
 public import OpenSkySessionInterface
 import OpenSkyWorld
 public import OpenSkyWorldInterface
@@ -35,8 +31,8 @@ public protocol PlayerFaceHost: AnyObject {
 
 /// Part of `PlayerWorldAdapter`, over its own narrow host.
 public struct PlayerFaceAdapter {
-    public unowned let owner: PlayerWorldAdapter
-    public unowned let game: any PlayerFaceHost
+    public let game: any PlayerFaceHost
+    public let state: PlayerPartState
 }
 
 extension PlayerFaceAdapter {
@@ -47,14 +43,14 @@ extension PlayerFaceAdapter {
 
     public func faceMorphPlayback(for actor: FormID) -> FaceMorphPlayback? {
         if actor == PlayerBody.actorFormID {
-            return owner.playerFace()
+            return state.playerFace()
         }
         return game.renderer?.scene.faceMorphPlayback(for: actor)
     }
 
     public var faceMorphPlaybacks: [FaceMorphPlayback] {
         let scene = game.renderer?.scene.animations.compactMap { $0 as? FaceMorphPlayback }
-        return (scene ?? []) + [owner.playerFace()].compactMap(\.self)
+        return (scene ?? []) + [state.playerFace()].compactMap(\.self)
     }
 
     public func faceMood(of actor: FormID) -> FaceMoodInput {
@@ -62,7 +58,7 @@ extension PlayerFaceAdapter {
             ? ReferenceKey.player : game.streamer?.referenceEntry(formID: actor)?.key
         guard let key else { return .calm }
         let facts = key == .player
-            ? game.combat.playerActionFacts : game.combat.loop?.phase(of: key)?.actionFacts
+            ? game.combat.playerActionFacts : game.combat.loop?.actionFacts(of: key)
         let mood = game.actorWorld.actorValueHolder(for: key).flatMap { holder in
             game.actorValues.runtime?.value(at: Self.moodActorValue, on: holder)
         }

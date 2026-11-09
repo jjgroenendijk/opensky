@@ -1,11 +1,9 @@
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyPlayer
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld

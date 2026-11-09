@@ -4,24 +4,22 @@
 // (docs/engine/coordinators.md).
 
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
-import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -43,7 +41,7 @@ public protocol RagdollWorldHost: AnyObject {
 
 /// Answers `RagdollSessionWorld` from the session systems `game` owns.
 public final class RagdollWorldAdapter {
-    public unowned let game: any RagdollWorldHost
+    public let game: any RagdollWorldHost
 
     public let recoveryHost: any RagdollRecoveryHost
     public let remainsHost: any RagdollRemainsHost
@@ -52,27 +50,23 @@ public final class RagdollWorldAdapter {
     public let deathsHost: any RagdollDeathsHost
 
     public var recovery: RagdollRecoveryAdapter {
-        RagdollRecoveryAdapter(owner: self, game: recoveryHost)
+        RagdollRecoveryAdapter(game: recoveryHost, poseReads: poseReads)
     }
 
     public var remains: RagdollRemainsAdapter {
-        RagdollRemainsAdapter(owner: self, game: remainsHost)
+        RagdollRemainsAdapter(game: remainsHost, poseReads: poseReads)
     }
 
     public var playerFall: RagdollPlayerFallAdapter {
-        RagdollPlayerFallAdapter(
-            owner: self,
-            game: playerFallHost
-        )
+        RagdollPlayerFallAdapter(game: playerFallHost, recovery: recovery)
     }
 
     public var poseReads: RagdollPoseReadsAdapter {
-        RagdollPoseReadsAdapter(game: poseReadsHost
-        )
+        RagdollPoseReadsAdapter(game: poseReadsHost)
     }
 
     public var deaths: RagdollDeathsAdapter {
-        RagdollDeathsAdapter(owner: self, game: deathsHost)
+        RagdollDeathsAdapter(game: deathsHost, poseReads: poseReads)
     }
 
     public init(game: some RagdollWorldHost & RagdollRecoveryHost & RagdollRemainsHost &

@@ -3,10 +3,8 @@ import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyRenderCore
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -28,20 +26,20 @@ public protocol RagdollPlayerFallHost: AnyObject {
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
 public struct RagdollPlayerFallAdapter {
-    public unowned let owner: RagdollWorldAdapter
-    public unowned let game: any RagdollPlayerFallHost
+    public let game: any RagdollPlayerFallHost
+    public let recovery: RagdollRecoveryAdapter
 }
 
 extension RagdollPlayerFallAdapter {
     public func advancePlayerDeath(delta: Float) {
-        guard let share = owner.healthFraction(of: .player) else { return }
+        guard let share = recovery.healthFraction(of: .player) else { return }
         let sample = PlayerHealthSample(
             share: share, isEssential: isPlayerEssential,
-            bleedoutRatio: owner.bleedoutThreshold(of: .player)
+            bleedoutRatio: recovery.bleedoutThreshold(of: .player)
         )
         if game.ragdoll.playerDeath.isBleedingOut {
             let regen = game.ragdoll.deathSettings.bleedoutRegenPercent / 100 * max(delta, 0)
-            owner.restoreHealthShare(regen, of: .player)
+            recovery.restoreHealthShare(regen, of: .player)
         }
         for command in game.ragdoll.advancePlayerDeath(by: delta, health: sample) {
             run(command)
@@ -64,7 +62,7 @@ extension RagdollPlayerFallAdapter {
             game.scripts.runtime?.queueEnterBleedout(actor: .player)
         case let .leaveBleedout(restoreHealth):
             if restoreHealth {
-                owner.restoreHealthShare(1, of: .player)
+                recovery.restoreHealthShare(1, of: .player)
             }
         case .die:
             _ = game.scripts.bridge?.stopActorCombat(.player)
@@ -97,8 +95,7 @@ extension RagdollPlayerFallAdapter {
         game.messages.presentChoices(
             title: nil, text: texts[.reloading],
             buttons: [texts[.loadOption], texts[.menuOption]]
-        ) { [weak owner] index in
-            guard owner != nil else { return }
+        ) { index in
             if index == 0 {
                 reloadNewestSave()
             } else {

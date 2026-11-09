@@ -1,5 +1,5 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyBehavior
 public import OpenSkyCells
@@ -7,10 +7,9 @@ import OpenSkyCombat
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyRenderCore
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -33,8 +32,8 @@ public protocol RagdollRecoveryHost: AnyObject {
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
 public struct RagdollRecoveryAdapter {
-    public unowned let owner: RagdollWorldAdapter
-    public unowned let game: any RagdollRecoveryHost
+    public let game: any RagdollRecoveryHost
+    public let poseReads: RagdollPoseReadsAdapter
 }
 
 extension RagdollRecoveryAdapter {
@@ -59,7 +58,7 @@ extension RagdollRecoveryAdapter {
     }
 
     public func healthFraction(of key: ReferenceKey) -> Float? {
-        guard let values = game.actorValues.runtime, let holder = owner.holder(of: key) else {
+        guard let values = game.actorValues.runtime, let holder = poseReads.holder(of: key) else {
             return nil
         }
         return values.fractions(of: holder)[.health]
@@ -81,7 +80,7 @@ extension RagdollRecoveryAdapter {
     public func restoreHealthShare(_ share: Float, of key: ReferenceKey) {
         guard
             let values = game.actorValues.runtime,
-            let holder = owner.holder(of: key) else { return }
+            let holder = poseReads.holder(of: key) else { return }
         let missing = values.maximums(of: holder)[.health] - values.current(of: holder)[.health]
         let amount = min(values.maximums(of: holder)[.health] * share, missing)
         if amount > 0 {
@@ -117,7 +116,7 @@ extension RagdollRecoveryAdapter {
         game.scripts.bridge?.updateScriptedState(of: key) {
             $0.setFlag(ScriptedStateName.bleedingOut, nil)
         }
-        if let values = game.actorValues.runtime, let holder = owner.holder(of: key) {
+        if let values = game.actorValues.runtime, let holder = poseReads.holder(of: key) {
             let missing = values.maximums(of: holder)[.health] - values.current(of: holder)[.health]
             if missing > 0 {
                 values.restore(.health, by: missing, on: holder)

@@ -6,21 +6,18 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyCrimeInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
+import OpenSkyMenusInterface
 public import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 public import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 public import OpenSkyWorldInterface
@@ -45,7 +42,7 @@ public protocol MountWorldHost: AnyObject {
 }
 
 public final class MountWorldAdapter {
-    public unowned let game: any MountWorldHost
+    public let game: any MountWorldHost
     public var mounts: any MountPort {
         game.mounts
     }
@@ -53,10 +50,7 @@ public final class MountWorldAdapter {
     public let dragonRidingHost: any MountDragonRidingHost
 
     public var dragonRiding: MountDragonRidingAdapter {
-        MountDragonRidingAdapter(
-            owner: self,
-            game: dragonRidingHost
-        )
+        MountDragonRidingAdapter(game: dragonRidingHost)
     }
 
     public init(game: some MountWorldHost & MountDragonRidingHost) {

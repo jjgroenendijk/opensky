@@ -7,7 +7,7 @@ import OpenSkyGameData
 import OpenSkyObjectAnimation
 import OpenSkyPlayer
 import OpenSkyRenderCore
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld
 import OpenSkyWorldInterface

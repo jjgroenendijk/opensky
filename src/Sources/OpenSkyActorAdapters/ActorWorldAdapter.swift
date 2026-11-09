@@ -7,20 +7,17 @@ import Foundation
 public import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyCells
-import OpenSkyCombat
 public import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkySessionInterface
@@ -48,11 +45,7 @@ public protocol ActorWorldHost: AnyObject {
 
 /// Answers `ActorValueWorld` and the resident-actor reads from the streamer.
 public final class ActorWorldAdapter {
-    public unowned let game: any ActorWorldHost
-    /// Change gate in front of the HUD meter contract.
-    private var meters = HUDMeterBinding()
-    /// What the enemy health bar last showed; nil when it is hidden.
-    private var publishedEnemy: HUDEnemyHealth?
+    public let game: any ActorWorldHost
     /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
     var baseNames: [LeveledActorRollKey: String?] = [:]
     /// Each reference's name, kept until a leveled roll is written or the strings load.
@@ -188,30 +181,13 @@ public final class ActorWorldAdapter {
         guard let gameSession, game.hud.isLoaded, let runtime = game.actorValues.runtime else {
             return
         }
-        var sample = runtime.hudMeters(for: .player)
+        var meters = runtime.fractions(of: .player)
         if let horse = riddenHorse() {
-            sample.stamina = runtime.hudMeters(for: horse).stamina
+            meters.stamina = runtime.fractions(of: horse).stamina
         }
-        let meters = meters.publishing(sample)
         let enemy = game.hud.shows(.enemyHealth)
             ? engagedEnemyHealth(runtime: runtime, gameSession: gameSession) : nil
-        let enemyChanged = enemy != publishedEnemy
-        guard meters != nil || enemyChanged else { return }
-        publishedEnemy = enemy
-        do {
-            try gameSession.renderer.updateSWFRuntime { runtime in
-                if let meters {
-                    HUDMovieBridge.setMeters(meters, runtime: runtime)
-                }
-                if enemyChanged {
-                    HUDMovieBridge.setEnemyHealth(enemy, runtime: runtime)
-                }
-            }
-        } catch {
-            Self.logger.error(
-                "[ERROR] HUD meters not published: \(String(describing: error), privacy: .public)"
-            )
-        }
+        game.hud.publishMeters(meters, enemy: enemy)
     }
 
     private func engagedEnemyHealth(
@@ -223,13 +199,8 @@ public final class ActorWorldAdapter {
         else { return nil }
         let name = game.streamer?.residentActorPlacement(key: actor.key)
             .flatMap { displayName(of: actor.key, base: $0.base) } ?? ""
-        return HUDEnemyHealth(name: name, health: runtime.hudMeters(for: holder).health)
+        return HUDEnemyHealth(name: name, health: runtime.fractions(of: holder).health)
     }
-
-    private static let logger = EngineLogger(
-        subsystem: "nl.jjgroenendijk.opensky",
-        category: "ActorValues"
-    )
 }
 
 extension ActorWorldAdapter: ActorValueWorld {

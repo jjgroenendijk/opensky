@@ -17,4 +17,4 @@ custom_rules:
     excluded_match_kinds: [comment, comment.mark, comment.url, doccomment, doccomment.field, string]
     message: "An adapter holds its host strongly and no reference to its owner (docs/decisions/ports-and-adapters.md, rule 9)"
     severity: error
-    excluded: 'Sources/OpenSky(Actor|Agent|Session)Adapters/'
+    excluded: 'Sources/OpenSky(Agent|Session)Adapters/'

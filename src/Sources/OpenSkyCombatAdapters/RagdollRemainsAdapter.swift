@@ -1,14 +1,14 @@
 import OpenSkyActorPresentation
 public import OpenSkyCells
 import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyEffects
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyQuestsInterface
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -31,8 +31,8 @@ public protocol RagdollRemainsHost: AnyObject {
 
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
 public struct RagdollRemainsAdapter {
-    public unowned let owner: RagdollWorldAdapter
-    public unowned let game: any RagdollRemainsHost
+    public let game: any RagdollRemainsHost
+    public let poseReads: RagdollPoseReadsAdapter
 }
 
 extension RagdollRemainsAdapter {
@@ -55,7 +55,7 @@ extension RagdollRemainsAdapter {
         let feet = actor.placement.position
         var position = feet
         if
-            let pose = owner.ragdollPose(of: key),
+            let pose = poseReads.ragdollPose(of: key),
             let hand = game.animatedPose(for: key)?[ActorAttachmentBone.drawnWeapon]
         {
             let world = pose.actorToWorld * hand.columns.3

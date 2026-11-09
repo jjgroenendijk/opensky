@@ -1,3 +1,4 @@
+public import OpenSkyGameData
 public import OpenSkyMenusInterface
 public import OpenSkyWorldInterface
 
@@ -9,6 +10,7 @@ public protocol HUDPort: AnyObject, MenuLayerOwner {
     var isCartMode: Bool { get }
     var isLoaded: Bool { get }
     var playerSetMarker: SIMD3<Float>? { get }
+    func publishMeters(_ meters: ActorValues, enemy: HUDEnemyHealth?)
     func setCartMode(_ enabled: Bool)
     func setCovered(_ covered: Bool)
     func setHelpMessage(_ text: String?)

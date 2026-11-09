@@ -1,12 +1,10 @@
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -19,13 +17,13 @@ public protocol MountDragonRidingHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
     var magic: any MagicPort { get }
     var magicWorld: any MagicWorldPort { get }
+    var mounts: any MountPort { get }
     var scripts: any ScriptPort { get }
 }
 
 /// Part of `MountWorldAdapter`, over its own narrow host.
 public struct MountDragonRidingAdapter {
-    public unowned let owner: MountWorldAdapter
-    public unowned let game: any MountDragonRidingHost
+    public let game: any MountDragonRidingHost
 }
 
 extension MountDragonRidingAdapter {
@@ -42,7 +40,7 @@ extension MountDragonRidingAdapter {
 
     private func actorsInView(within cone: Float) -> [ActorInView] {
         guard let camera = game.gameSession?.freeFlyCamera else { return [] }
-        let mount = owner.mounts.drive?.mount
+        let mount = game.mounts.drive?.mount
         return game.actorWorld.combatActors().compactMap { actor in
             guard !actor.isDead, actor.key != .player, actor.key != mount else { return nil }
             return MountTargeting.view(

@@ -5,19 +5,18 @@
 
 public import OpenSkyActorPresentation
 import OpenSkyAIPackages
-public import OpenSkyAudio
+import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 public import OpenSkyWorldInterface
@@ -40,21 +39,12 @@ public protocol ActorGraphWorldHost: AnyObject {
 }
 
 public final class ActorGraphWorldAdapter {
-    public unowned let game: any ActorGraphWorldHost
+    public let game: any ActorGraphWorldHost
     public var graphs: any ActorGraphPort {
         game.actorGraphs
     }
 
-    /// Each mover's drive gait, which picks its footstep list.
-    public var gaits: [ReferenceKey: LocomotionGait] = [:]
-    /// Each mover's ground material, which picks its footstep sound.
-    public var groundMaterials: [ReferenceKey: FormID] = [:]
-    /// The movers whose last drive moved them, for their movement loops.
-    public var movers: Set<ReferenceKey> = []
-    /// Each rolled actor base's sound types, after its audio template.
-    public var actorSounds: [LeveledActorRollKey: ActorSounds] = [:]
-    /// Each rolled actor base's race graph project and weight.
-    public var graphBases: [LeveledActorRollKey: GraphBase] = [:]
+    public let state = ActorGraphPartState()
 
     /// `path` is nil when the race names no graph.
     public struct GraphBase {
@@ -70,8 +60,8 @@ public final class ActorGraphWorldAdapter {
 
     public var graphEvents: ActorGraphGraphEventsAdapter {
         ActorGraphGraphEventsAdapter(
-            owner: self,
-            game: graphEventsHost
+            game: graphEventsHost,
+            state: state
         )
     }
 
@@ -83,12 +73,12 @@ public final class ActorGraphWorldAdapter {
     /// One NPC mover's drive, as its graph's locomotion inputs.
     public func drive(_ update: NPCLocomotionDriveUpdate) {
         let moving = update.intent != .still
-        gaits[update.actor] = update.gait
-        groundMaterials[update.actor] = update.groundMaterial
+        state.gaits[update.actor] = update.gait
+        state.groundMaterials[update.actor] = update.groundMaterial
         if moving {
-            movers.insert(update.actor)
+            state.movers.insert(update.actor)
         } else {
-            movers.remove(update.actor)
+            state.movers.remove(update.actor)
         }
         graphs.setMotion(
             ActorGraphMotion(

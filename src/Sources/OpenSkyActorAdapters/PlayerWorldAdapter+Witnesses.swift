@@ -2,19 +2,15 @@ public import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 public import OpenSkyPlayer
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkySession
 import OpenSkySessionInterface
 import OpenSkyWorld
 public import OpenSkyWorldInterface

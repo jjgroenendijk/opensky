@@ -4,20 +4,17 @@ import Foundation
 import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
-import OpenSkyMenus
+import OpenSkyMagicInterface
 import OpenSkyMenusInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyQuests
+import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkySessionInterface

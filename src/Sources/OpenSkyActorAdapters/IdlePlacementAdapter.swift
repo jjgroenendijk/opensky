@@ -1,8 +1,7 @@
 public import OpenSkyActorPresentation
 import OpenSkyAIPackages
 public import OpenSkyBehavior
-import OpenSkyCells
-import OpenSkyCombat
+public import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 public import OpenSkyFormatsESM
@@ -12,7 +11,7 @@ import OpenSkyPlayer
 import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 public import OpenSkyWorldInterface
@@ -28,16 +27,31 @@ public protocol IdlePlacementHost: AnyObject {
     var packages: any PackagePort { get }
     var player: any PlayerPort { get }
     var renderer: (any RendererPort)? { get }
+    var scripts: any ScriptPort { get }
     var streamer: (any CellStreamerPort)? { get }
+    var worldData: WorldDataStores? { get }
 }
 
 /// Part of `IdleWorldAdapter`, over its own narrow host.
 public struct IdlePlacementAdapter {
-    public unowned let owner: IdleWorldAdapter
-    public unowned let game: any IdlePlacementHost
+    public let game: any IdlePlacementHost
 }
 
 extension IdlePlacementAdapter {
+    /// FormIDs inside a package are relative to its plugin when that plugin's move.
+    public func packageIdleList(_ package: FormID) -> IdlePackageList? {
+        guard
+            let store = game.worldData?.packageStore,
+            let idles = store.package(package)?.details.idleAnimations,
+            let resolver = store.translation(of: package)?.source ?? game.scripts.bridge?
+                .formIDResolver
+        else { return nil }
+        return IdlePackageList(
+            package: package, idles: idles.animations.compactMap(resolver.resolve),
+            flags: idles.flags, timer: idles.timer
+        )
+    }
+
     public func idleReferencePlacements() -> [IdleReferencePlacement]? {
         guard game.renderer != nil, let streamer = game.streamer else { return nil }
         let scenes = streamer.interiorScene.map { [$0] }
@@ -73,7 +87,7 @@ extension IdlePlacementAdapter {
                 key: $0.key, feet: $0.feet, procedure: packages[$0.key], isDead: $0.isDead
             )
             presence.area = game.packages.sandboxArea(of: $0.key)
-            presence.packageIdles = current[$0.key].flatMap(owner.packageIdleList)
+            presence.packageIdles = current[$0.key].flatMap(packageIdleList)
             presence.isStill = game.streamer?.isActorWalking($0.key) == false
             return presence
         }

@@ -2,19 +2,15 @@ import OpenSkyActorPresentation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 public import OpenSkyPlayer
 import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkySession
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -26,28 +22,31 @@ import simd
 public protocol PlayerFirstPersonHost: AnyObject {
     var audio: any AudioPort { get }
     var gameSession: (any GameSessionPort)? { get }
+    /// The app sees the session's concrete body and rig types.
+    func setPlayerBody(_ body: PlayerBody) throws
+    func setPlayerFirstPersonRig(_ rig: PlayerFirstPersonRig) throws
     var renderer: (any RendererPort)? { get }
 }
 
 /// Part of `PlayerWorldAdapter`, over its own narrow host.
 public struct PlayerFirstPersonAdapter {
-    public unowned let owner: PlayerWorldAdapter
-    public unowned let game: any PlayerFirstPersonHost
+    public let game: any PlayerFirstPersonHost
+    public let state: PlayerPartState
 }
 
 extension PlayerFirstPersonAdapter {
     /// The footstep set follows the boots of the assembly just built.
     public func showPlayerBody(_ body: PlayerBody) throws {
         game.audio.updateFootstepSet(feetArmatures: body.feetArmatures)
-        try game.gameSession?.setPlayerBody(body)
+        try game.setPlayerBody(body)
     }
 
     public func showFirstPersonRig(_ rig: PlayerFirstPersonRig) throws {
-        try game.gameSession?.setPlayerFirstPersonRig(rig)
+        try game.setPlayerFirstPersonRig(rig)
     }
 
     public var playerFirstPersonRig: PlayerFirstPersonRig? {
-        owner.firstPersonRig()
+        state.firstPersonRig()
     }
 
     public var areFirstPersonArmsVisible: Bool {
