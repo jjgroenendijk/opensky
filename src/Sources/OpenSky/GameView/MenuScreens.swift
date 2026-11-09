@@ -12,8 +12,9 @@ protocol MenuScreensHost: AnyObject {
     var journalMenu: any JournalMenuPort { get }
 }
 
-/// One screen's routes, so the tables below list each screen once.
-private struct MenuScreenRoute {
+/// One screen's routes, so the tables below list each screen once. The routes hold their
+/// screen strongly: for the tutorial and Creation Club screens they are its only owner.
+struct MenuScreenRoute {
     let identifier: MenuIdentifier
     let key: (MenuInputEvent) -> Void
     let pointer: (MenuPointerEvent) -> Void
@@ -63,12 +64,12 @@ final class MenuScreens {
         mapMovie.onJournal = { [unowned game] in game.journalMenu.open() }
     }
 
-    private static func route(_ screen: MenuScreen<some Any>) -> MenuScreenRoute {
+    static func route(_ screen: MenuScreen<some Any>) -> MenuScreenRoute {
         MenuScreenRoute(
             identifier: screen.identifier,
-            key: { [unowned screen] in screen.route($0) },
-            pointer: { [unowned screen] in screen.route($0) },
-            tick: { [unowned screen] in screen.tick(now: $0) }
+            key: { screen.route($0) },
+            pointer: { screen.route($0) },
+            tick: { screen.tick(now: $0) }
         )
     }
 
