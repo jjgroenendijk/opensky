@@ -6,6 +6,7 @@ import OpenSkyAgentAdapters
 import OpenSkyAIAdapters
 import OpenSkyCells
 import OpenSkyCombatAdapters
+import OpenSkyCombatInterface
 import OpenSkyGameData
 import OpenSkyInventoryAdapters
 import OpenSkyMagicAdapters
@@ -61,6 +62,10 @@ extension SessionPorts:
 
 extension SessionPorts {
     var worldRecords: (any WorldRecordsPort)? {
+        worldData
+    }
+
+    var combatRecords: (any CombatRecordsPort)? {
         worldData
     }
 }

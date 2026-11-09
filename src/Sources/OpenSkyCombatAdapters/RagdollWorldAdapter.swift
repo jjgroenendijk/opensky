@@ -5,7 +5,7 @@
 
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
@@ -36,7 +36,7 @@ public protocol RagdollWorldHost: AnyObject {
     var renderer: (any RendererPort)? { get }
     var gameSession: (any GameSessionPort)? { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
 }
 
 /// Answers `RagdollSessionWorld` from the session systems `game` owns.
@@ -82,7 +82,7 @@ public final class RagdollWorldAdapter {
 
     /// Nil without game data, so the runtime stays nil.
     public func sessionData() -> RagdollSessionData? {
-        game.worldData.map { provider in
+        game.combatRecords.map { provider in
             RagdollSessionData(
                 collisionModels: game.audioFileSystem.map(NIFCollisionLibrary.init),
                 deathSettings: DeathSettings.resolve(store: provider.gameSettings)

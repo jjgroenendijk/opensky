@@ -3,7 +3,7 @@ public import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
 import OpenSkyBehavior
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
 public import OpenSkyConditions
@@ -40,7 +40,7 @@ public protocol CombatActorFactsHost: AnyObject {
     var perks: any PerkPort { get }
     var ragdoll: any RagdollPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -147,14 +147,14 @@ extension CombatActorFactsAdapter {
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
         guard
             case let .actor(base)? = game.actorWorld.actorValueHolder(for: key)?.subject,
-            let resolver = game.worldData?.actorValueBaselines?
+            let resolver = game.combatRecords?.actorValueBaselines?
                 .resolver,
             let link = attempt({ try resolver.templates
                     .rolling(game.worldState.leveledRoll(
                         of: key, base: base, with: resolver.templates.leveling
                     ))
                     .resolveCombatStyle(base: base).value }),
-            let style = game.worldData?.presentationRecords?
+            let style = game.combatRecords?.presentationRecords?
                 .combatStyles.resolve(link, fromPlugin: resolver.pluginName)
         else { return nil }
         return CombatStyleTuning(style: style.record)

@@ -1,6 +1,6 @@
 import Foundation
 import OpenSkyAudio
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
 import OpenSkyEffects
@@ -29,7 +29,7 @@ public protocol EffectsBodyImpulsesHost: AnyObject {
     var ragdoll: any RagdollPort { get }
     var renderer: (any RendererPort)? { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var combatRecords: (any CombatRecordsPort)? { get }
 }
 
 /// Part of `EffectsWorldAdapter`, over its own narrow host.
@@ -47,7 +47,7 @@ extension EffectsBodyImpulsesAdapter {
     // ID says so. [WARNING] Not confirmed against the game.
 
     public func makeImpulses(world: any ImpulseWorld) -> ImpulseRuntime {
-        guard let settings = game.worldData?.gameSettings
+        guard let settings = game.combatRecords?.gameSettings
         else { return ImpulseRuntime(world: world) }
         let text: GameTextResolver = { [game] in game.mapWorld.text($0) }
         return ImpulseRuntime(
@@ -84,7 +84,7 @@ extension EffectsBodyImpulsesAdapter {
     /// as a weapon's impact does.
     public func playCollision(_ collision: BodyCollision) {
         guard
-            let store = game.worldData?.footstepStore,
+            let store = game.combatRecords?.footstepStore,
             let dataSet = store.materialParents.impactDataSet(of: collision.material),
             let impact = MeleeImpactResolver(footsteps: store).resolve(
                 dataSet: dataSet,
@@ -156,7 +156,7 @@ extension EffectsBodyImpulsesAdapter {
         guard
             let base = actor == .player ? nil : game.streamer.residentActorEntry(key: actor)?
                 .placedActor?.base,
-            let resolver = game.worldData?.actorValueBaselines?.resolver
+            let resolver = game.combatRecords?.actorValueBaselines?.resolver
         else { return nil }
         let identity = ActorIdentityRecords(resolver: resolver)
         return identity.race(ofBase: base).flatMap { identity.races[$0.rawValue] }

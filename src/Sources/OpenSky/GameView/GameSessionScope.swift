@@ -201,7 +201,9 @@ final class GameSessionScope {
     lazy var cinematicCamera = CinematicCameraCoordinator(
         world: cinematicWorld, settings: CinematicCameraWorldAdapter.killCamSettings(worldData)
     )
-    lazy var cinematicWorld = CinematicCameraWorldAdapter(game: ports, stage: stage)
+    lazy var cinematicWorld = CinematicCameraWorldAdapter(
+        game: ports, stage: stage, now: { Date() }
+    )
     lazy var loadingScreens = LoadingScreenCoordinator(world: loadingWorld)
     lazy var loadingWorld = factories.makeLoadingWorld()
     /// World items, equipment, vendors and trades. Its runtimes stay nil without game data.
@@ -217,7 +219,7 @@ final class GameSessionScope {
     lazy var hazardWorld = factories.makeHazardWorld()
     /// Without effect records it plays nothing.
     lazy var effects = factories.makeEffects()
-    lazy var effectsWorld = EffectsWorldAdapter(game: ports, stage: stage)
+    lazy var effectsWorld = EffectsWorldAdapter(game: ports, stage: stage, now: { Date() })
     lazy var trapControl = factories.makeTrapControl()
     /// The player graphs, the body, and the locomotion and first-person readouts.
     lazy var player = PlayerCoordinator(
