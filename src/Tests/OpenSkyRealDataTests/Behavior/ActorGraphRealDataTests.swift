@@ -151,7 +151,9 @@ struct ActorGraphRealDataTests {
         let instance = BehaviorGraphInstance(
             graph: asset.behavior, in: asset.objectGraph,
             skeleton: BehaviorSkeleton(asset.skeleton),
-            clips: InstallBehaviorClipSource(fileSystem: files, paths: asset.clipPaths)
+            clips: InstallBehaviorClipSource(
+                fileSystem: files, paths: asset.clipPaths, projectFolder: asset.projectFolder
+            )
         )
         instance.references = InstallBehaviorReferenceSource(
             fileSystem: files,

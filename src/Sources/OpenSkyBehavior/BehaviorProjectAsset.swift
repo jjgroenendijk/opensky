@@ -99,15 +99,30 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
             .compactMap { HKBCharacterData.decode(at: target($0), in: graph) }.first
     }
 
+    /// The folder a clip generator's relative clip name starts from.
+    public var projectFolder: String {
+        Self.folder(of: projectPath)
+    }
+
     public static func folder(of path: String) -> String {
         guard let cut = path.lastIndex(of: "\\") else { return "" }
         return String(path[..<cut])
     }
 
-    /// `folder\name`, with forward slashes turned and the case folded.
+    /// `folder\name`, with forward slashes turned, the case folded, and `.` and `..` resolved.
+    /// A `..` above the archive root stays, so the file system rejects the path.
     public static func join(_ folder: String, _ name: String) -> String {
         let relative = name.replacingOccurrences(of: "/", with: "\\").lowercased()
-        return folder.isEmpty ? relative : folder + "\\" + relative
+        let joined = folder.isEmpty ? relative : folder + "\\" + relative
+        var parts: [Substring] = []
+        for part in joined.split(separator: "\\", omittingEmptySubsequences: false) {
+            switch part {
+            case ".": continue
+            case ".." where parts.last.map { $0 != ".." } ?? false: parts.removeLast()
+            default: parts.append(part)
+            }
+        }
+        return parts.joined(separator: "\\")
     }
 
     private static func target(_ object: HKXObjectRef) -> HKXPointerTarget {

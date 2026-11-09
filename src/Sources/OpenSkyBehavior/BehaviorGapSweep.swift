@@ -83,7 +83,7 @@ nonisolated public struct BehaviorGapSweep {
                 sweep.foldersWithoutSkeleton.append(set.name)
                 continue
             }
-            let clips = InstallBehaviorClipSource(fileSystem: fileSystem, paths: set.animations)
+            let clips = InstallBehaviorClipSource(fileSystem: fileSystem, files: set)
             sweep.properties = set.character.flatMap { loadProperties($0, fileSystem) } ?? .empty
             for path in set.behaviors {
                 do {
