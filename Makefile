@@ -86,6 +86,9 @@ lint: ## The lint half of check, as the CI Static checks job runs it
 lint-index: | $(VENDOR) ## Build the index, then fail on unused code or an adapter that uses another
 	@./tools/lint-index.sh
 
+design-report: ## Report the design-metric findings (docs/decisions/design-metrics.md); fails nothing
+	@./tools/design/size-report.sh
+
 dump-comments: ## Print long comment blocks to rewrite in bulk [ARGS='-r src/Sources/X']
 	@./tools/comment-blocks.sh dump $(ARGS)
 
