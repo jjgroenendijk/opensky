@@ -4,6 +4,7 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import OpenSkyRuntimeState
 @testable import OpenSkyScriptAdapters
 import OpenSkyScripting
@@ -92,5 +93,16 @@ struct ScriptNativesTests {
         adapter.nodeBindings.fillLineOfSight(bridge: bridge)
         #expect(bridge.perceptionNatives.seesTarget?(Self.actor, .player) == nil)
         #expect(bridge.perceptionNatives.seesTarget?(.player, Self.actor) == nil)
+    }
+
+    @Test func fogMassAndPosesNeedTheirWorlds() {
+        host.fakeStreamer.dynamicBodiesValue = DynamicBodyWorld()
+        adapter.actorBindings.fillActorNatives(bridge: bridge)
+        let natives = bridge.sessionNatives
+        #expect(natives.cellFog?(FormID(0x20), .power(2)) == false)
+        #expect(natives.havokMass?(Self.actor) == nil)
+        natives.publishTranslationPoses?([:])
+        adapter.nodeBindings.answerPathWaits()
+        #expect(host.fakeStreamer.referenceEntryKeyCalls.isEmpty)
     }
 }

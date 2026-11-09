@@ -1,6 +1,7 @@
 // The game natives reach saves, menus, effects, sounds, paths, and references.
 
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 @testable import OpenSkyScriptAdapters
 import OpenSkyScripting
 import OpenSkyScriptingInterface
@@ -68,8 +69,22 @@ struct ScriptGameNativesTests {
         natives.stopSound?(1)
         natives.setSoundVolume?(1, 0.5)
         natives.setParticleGeometry?(nil, 1)
+        natives.fade?(PapyrusFade(fadingOut: true, black: true, secondsBeforeFade: 0, duration: 1))
         #expect(natives.pathToReference?(Self.actor, .player, 1, 2) == false)
         host.fakeMovieWorld.playBinkResult = true
+        let movie = PapyrusBinkRequest(
+            fileName: "Intro.bik", interruptible: true, muteAudio: false, muteMusic: false,
+            letterbox: true
+        )
+        #expect(natives.playBink?(movie, 4) == true)
         #expect(host.fakeStreamer.moveActorCalls.isEmpty)
+    }
+
+    @Test func constraintsGoThroughThePhysicsBindings() {
+        host.fakeStreamer.dynamicBodiesValue = DynamicBodyWorld()
+        let first = PapyrusConstraintEnd(reference: Self.actor, node: "NPC Head")
+        let second = PapyrusConstraintEnd(reference: .player, node: "NPC Spine")
+        #expect(natives.addBallAndSocket?(first, second) == .returned(.boolean(false)))
+        #expect(natives.removeConstraints?(first, second) == false)
     }
 }
