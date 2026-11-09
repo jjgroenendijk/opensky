@@ -51,7 +51,7 @@ extension FollowerCommandTasksAdapter {
                 let interaction = game.streamer?.residentInteraction(reference: entry.formID)
             else { return nil }
             target = FollowerCommandTarget(
-                key: key, kind: FollowerCommandWorldAdapter.kind(of: interaction),
+                key: key, kind: Self.kind(of: interaction),
                 position: interaction.position
             )
             let locks = game.inventory.locks
@@ -61,7 +61,7 @@ extension FollowerCommandTasksAdapter {
             target.isOwned = game.crime.reporter?.verdict(on: key).isTheft == true
         }
         target.noFavorAllowed = game.scripts.bridge?.scriptedState(of: key)
-            .flag(FollowerCommandWorldAdapter.noFavorAllowed) == true
+            .flag(Self.noFavorAllowed) == true
         return target
     }
 
@@ -104,5 +104,19 @@ extension FollowerCommandTasksAdapter {
             _ = game.crime.reportLockpicking(of: key)
         }
         return true
+    }
+}
+
+extension FollowerCommandTasksAdapter {
+    public static let noFavorAllowed = "noFavorAllowed"
+
+    public static func kind(of interaction: PlacedInteraction) -> FollowerCommandTarget.Kind {
+        switch interaction.action {
+        case .take: .item
+        case .open: .door
+        case .search: .container
+        case .talk: .actor
+        case .activate, .use, .harvest: interaction.seats.isEmpty ? .activator : .furniture
+        }
     }
 }

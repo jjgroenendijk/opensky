@@ -145,18 +145,6 @@ public final class FollowerCommandWorldAdapter {
 
     /// The terrain test's step along the view ray, in units.
     public static let terrainStep: Float = 32
-
-    public static let noFavorAllowed = "noFavorAllowed"
-
-    public static func kind(of interaction: PlacedInteraction) -> FollowerCommandTarget.Kind {
-        switch interaction.action {
-        case .take: .item
-        case .open: .door
-        case .search: .container
-        case .talk: .actor
-        case .activate, .use, .harvest: interaction.seats.isEmpty ? .activator : .furniture
-        }
-    }
 }
 
 extension FollowerCommandWorldAdapter: FollowerCommandWorld {

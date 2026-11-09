@@ -57,9 +57,7 @@ extension ActorGraphGraphEventsAdapter {
         )
     }
 
-    public func graphBase(of actor: ReferenceKey, base: FormID) -> ActorGraphWorldAdapter
-        .GraphBase?
-    {
+    public func graphBase(of actor: ReferenceKey, base: FormID) -> ActorGraphBase? {
         guard let resolver = game.worldData?.actorValueBaselines?.resolver else { return nil }
         let roll = game.worldState.leveledRoll(
             of: actor, base: base, with: resolver.templates.leveling
@@ -76,7 +74,7 @@ extension ActorGraphGraphEventsAdapter {
         let path = model.map { ActorGraphCore.projectPath(modelPath: $0.path) }
         let weight = attempt { try resolver.templates.rolling(roll).resolve(base: base).weight } ??
             ResolvedActorAppearance.defaultWeight
-        let graphBase = ActorGraphWorldAdapter.GraphBase(path: path, weight: weight)
+        let graphBase = ActorGraphBase(path: path, weight: weight)
         state.graphBases[key] = graphBase
         return graphBase
     }

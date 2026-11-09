@@ -141,17 +141,10 @@ def module_of(path):
     return path.split("/")[2]
 
 
-def families(definitions, properties, references):
-    """Maps each adapter to one member of its family: an adapter and the parts it stores in
-    a property, joined both ways. Both live in one module, so an adapter of another
-    feature is never in the family."""
-    group = {}
-
-    def find(usr):
-        while group.get(usr, usr) != usr:
-            usr = group[usr]
-        return usr
-
+def stored(definitions, properties, references):
+    """Maps each adapter to the adapters it stores in one of its own properties, in its own
+    module. An owner stores its parts, and a part may store a sibling it calls."""
+    edges = {}
     for path, containers, usr in references:
         if usr not in definitions:
             continue
@@ -159,16 +152,17 @@ def families(definitions, properties, references):
             holder = next((d for d in definitions if container.startswith(d)), None)
             if container in properties and holder and holder != usr \
                     and module_of(definitions[usr][1]) == module_of(path):
-                group[find(usr)] = find(holder)
-    return {usr: find(usr) for usr in definitions}
+                edges.setdefault(holder, set()).add(usr)
+    return edges
 
 
 def violations(definitions, properties, references):
     """definitions: adapter usr -> (name, file). references: (file, container usrs, usr) uses.
 
-    A use breaks the rule when code inside one adapter names another adapter outside its
-    family. A family is an owner and the parts it was split into."""
-    root = families(definitions, properties, references).__getitem__
+    A use breaks the rule when code inside one adapter names another adapter that it does
+    not store itself. A part never names its owner, and no adapter names one of another
+    feature."""
+    edges = stored(definitions, properties, references)
 
     found = set()
     for path, containers, usr in references:
@@ -176,24 +170,25 @@ def violations(definitions, properties, references):
             continue
         users = {d for d in definitions for c in containers if c.startswith(d)}
         for user in users:
-            if root(user) != root(usr):
+            if user != usr and usr not in edges.get(user, set()):
                 found.add(f"rule 8: {path}: {definitions[user][0]} uses the adapter "
                           f"{definitions[usr][0]}")
     return sorted(found)
 
 
 def self_check():
-    """An owner may use the part it stores; an adapter may not use an unrelated one, even
-    one it stores, when the other adapter is in another module."""
+    """An owner may use the part it stores. A part may not use its owner, and an adapter
+    may not use one of another module, even one it stores."""
     magic, ward, combat = "s:A9MagicAdapterC", "s:A8WardPartV", "s:A10CombatAdapterC"
     definitions = {magic: ("MagicAdapter", "src/Sources/Magic/MagicAdapter.swift"),
                    ward: ("WardPart", "src/Sources/Magic/WardPart.swift"),
                    combat: ("CombatAdapter", "src/Sources/Combat/CombatAdapter.swift")}
     ward_property, combat_property = magic + "4wardvp", magic + "6combatvp"
     file = "src/Sources/Magic/MagicAdapter.swift"
+    part_file = "src/Sources/Magic/WardPart.swift"
     references = [(file, [ward_property], ward), (file, [magic + "4tickyyF"], ward),
-                  (file, [combat_property], combat)]
-    return len(violations(definitions, {ward_property, combat_property}, references)) == 1
+                  (file, [combat_property], combat), (part_file, [ward + "4tickyyF"], magic)]
+    return len(violations(definitions, {ward_property, combat_property}, references)) == 2
 
 
 def main():

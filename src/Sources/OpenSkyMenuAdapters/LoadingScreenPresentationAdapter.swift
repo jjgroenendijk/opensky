@@ -119,7 +119,7 @@ extension LoadingScreenPresentationAdapter {
                 try renderer.setLoadingCover(nil)
             }
         } catch {
-            LoadingScreenWorldAdapter.logger
+            LoadingScreenLog.logger
                 .error(
                     "[ERROR] loading cover failed: \(String(describing: error), privacy: .public)"
                 )
@@ -132,9 +132,9 @@ extension LoadingScreenPresentationAdapter {
     public func setLoadingPaused(_ paused: Bool) {
         if paused {
             game.menuMode.inputConsumer = game
-            game.menuMode.present(LoadingScreenWorldAdapter.identifier)
+            game.menuMode.present(MenuIdentifier.loadingMenu)
         } else {
-            game.menuMode.dismiss(LoadingScreenWorldAdapter.identifier)
+            game.menuMode.dismiss(MenuIdentifier.loadingMenu)
         }
     }
 }
@@ -181,7 +181,7 @@ extension LoadingScreenPresentationAdapter {
             )]
         } catch {
             state.failedModels.insert(path)
-            LoadingScreenWorldAdapter.logger
+            LoadingScreenLog.logger
                 .warning("[WARNING] loading screen model failed: \(path, privacy: .public)")
             return []
         }

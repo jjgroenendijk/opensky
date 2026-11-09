@@ -55,7 +55,7 @@ extension BenchmarkTourSettingsAdapter {
     public func beginTour(overrides: [PlayerSettingID: Double], passTiming: Bool) {
         guard let session = game.gameSession else { return }
         let renderer = session.renderer
-        state.saved = BenchmarkWorldAdapter.SavedState(
+        state.saved = BenchmarkSavedState(
             movementMode: session.movementMode, wasFrozen: game.simulationClock.isFrozen,
             hudEnabled: renderer.swfEnabled, camera: session.freeFlyCamera,
             forcedWeather: session.weather?.forced, outputMuted: game.audio.outputMuted

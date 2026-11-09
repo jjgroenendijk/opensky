@@ -107,7 +107,7 @@ extension AgentInputAdapter {
         guard let start = hub.menuReadout.menuRows() else {
             throw AgentFailure(.notFound, "no open menu has a row list")
         }
-        guard let target = AgentMenuReadoutAdapter.rowIndex(of: label, in: start.rows) else {
+        guard let target = Self.rowIndex(of: label, in: start.rows) else {
             throw AgentFailure(.notFound, "no row '\(label)' in \(start.menu)")
         }
         var current = start.selected
@@ -152,5 +152,17 @@ extension AgentInputAdapter {
             throw AgentFailure(.notFound, "no open menu takes text now")
         }
         return ["typed": .string(text)]
+    }
+}
+
+extension AgentInputAdapter {
+    /// An exact match wins, then a row that starts with the label, then one that
+    /// contains it. Case is ignored.
+    public static func rowIndex(of label: String, in rows: [String]) -> Int? {
+        let wanted = label.lowercased()
+        let lowered = rows.map { $0.lowercased() }
+        return lowered.firstIndex(of: wanted)
+            ?? lowered.firstIndex { $0.hasPrefix(wanted) }
+            ?? lowered.firstIndex { $0.contains(wanted) }
     }
 }

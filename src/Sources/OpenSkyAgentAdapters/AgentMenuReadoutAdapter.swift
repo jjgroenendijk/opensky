@@ -171,16 +171,6 @@ extension AgentMenuReadoutAdapter {
         ]
     }
 
-    /// An exact match wins, then a row that starts with the label, then one that
-    /// contains it. Case is ignored.
-    public static func rowIndex(of label: String, in rows: [String]) -> Int? {
-        let wanted = label.lowercased()
-        let lowered = rows.map { $0.lowercased() }
-        return lowered.firstIndex(of: wanted)
-            ?? lowered.firstIndex { $0.hasPrefix(wanted) }
-            ?? lowered.firstIndex { $0.contains(wanted) }
-    }
-
     public func openRaceMenu(limited: Bool) throws(AgentFailure) -> AgentJSON {
         guard game.raceMenu.isOpen || game.raceMenu.open(limited: limited) else {
             throw AgentFailure(.notReady, "the race menu needs a loaded world")

@@ -46,12 +46,6 @@ public final class ActorGraphWorldAdapter {
 
     public let state = ActorGraphPartState()
 
-    /// `path` is nil when the race names no graph.
-    public struct GraphBase {
-        let path: String?
-        let weight: Float
-    }
-
     static let settings: Set<PlayerSettingID> = [
         .actorGraphs, .actorGraphFullRateDistance, .actorGraphDistance
     ]

@@ -14,7 +14,13 @@ public final class ActorGraphPartState {
     /// Each rolled actor base's sound types, after its audio template.
     public var actorSounds: [LeveledActorRollKey: ActorSounds] = [:]
     /// Each rolled actor base's race graph project and weight.
-    public var graphBases: [LeveledActorRollKey: ActorGraphWorldAdapter.GraphBase] = [:]
+    public var graphBases: [LeveledActorRollKey: ActorGraphBase] = [:]
 
     public init() {}
+}
+
+/// `path` is nil when the race names no graph.
+public struct ActorGraphBase {
+    let path: String?
+    let weight: Float
 }
