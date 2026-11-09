@@ -66,10 +66,11 @@ hash="$( { swiftc --version 2>&1; cat "$source_dir"/*.swift; } | shasum | cut -c
 checker="$shared/.cache/syntax-lint/$hash/syntax-lint"
 if [ ! -x "$checker" ]; then
     mkdir -p "$(dirname "$checker")"
-    swiftc -O -module-name SyntaxLint "$source_dir"/*.swift -o "$checker.tmp" \
+    # The lint and its self-check run in parallel; each builds its own file, then renames it.
+    swiftc -O -module-name SyntaxLint "$source_dir"/*.swift -o "$checker.$$" \
         -I "$toolchain" -L "$toolchain" -lSwiftSyntax -lSwiftParser \
         -Xlinker -rpath -Xlinker "$toolchain"
-    mv "$checker.tmp" "$checker"
+    mv "$checker.$$" "$checker"
 fi
 
 cd "$(git rev-parse --show-toplevel)"

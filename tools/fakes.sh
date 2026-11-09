@@ -13,10 +13,11 @@ hash="$( { swiftc --version 2>&1; cat "$tools"/fake-gen/*.swift; } | shasum | cu
 generator="$shared/.cache/fake-gen/$hash/fake-gen"
 if [ ! -x "$generator" ]; then
     mkdir -p "$(dirname "$generator")"
-    swiftc -O -module-name FakeGen "$tools"/fake-gen/*.swift -o "$generator.tmp" \
+    # The drift lint and its self-check run in parallel; each builds its own file, then renames it.
+    swiftc -O -module-name FakeGen "$tools"/fake-gen/*.swift -o "$generator.$$" \
         -I "$toolchain" -L "$toolchain" -lSwiftSyntax -lSwiftParser \
         -Xlinker -rpath -Xlinker "$toolchain"
-    mv "$generator.tmp" "$generator"
+    mv "$generator.$$" "$generator"
 fi
 "$generator" "$root" "$output"
 swiftformat --quiet --config "$tools/format/.swiftformat" "$output"
