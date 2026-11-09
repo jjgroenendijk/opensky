@@ -24,7 +24,7 @@ public protocol CombatImpactEffectsHost: AnyObject {
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
 public struct CombatImpactEffectsAdapter {
-    public unowned let game: any CombatImpactEffectsHost
+    public let game: any CombatImpactEffectsHost
 }
 
 extension CombatImpactEffectsAdapter {

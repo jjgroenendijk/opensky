@@ -1,6 +1,6 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
@@ -8,15 +8,14 @@ import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
+import OpenSkyMenusInterface
 public import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -26,6 +25,7 @@ import simd
 /// What `EffectsBlastsAdapter` reads from the session.
 @MainActor
 public protocol EffectsBlastsHost: AnyObject {
+    var effects: any EffectsPort { get }
     var audio: any AudioPort { get }
     var combat: any CombatPort { get }
     var combatWorld: any CombatWorldPort { get }
@@ -36,8 +36,8 @@ public protocol EffectsBlastsHost: AnyObject {
 
 /// Part of `EffectsWorldAdapter`, over its own narrow host.
 public struct EffectsBlastsAdapter {
-    public unowned let owner: EffectsWorldAdapter
-    public unowned let game: any EffectsBlastsHost
+    public let game: any EffectsBlastsHost
+    public let state: EffectsPartState
 }
 
 extension EffectsBlastsAdapter {
@@ -46,7 +46,7 @@ extension EffectsBlastsAdapter {
     }
 
     public func explosionViewer() -> SIMD3<Float>? {
-        owner.cameraPosition
+        state.cameraPosition
     }
 
     public func applyExplosionDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
@@ -63,13 +63,13 @@ extension EffectsBlastsAdapter {
 
     public func startExplosionImageSpace(_ modifier: ReferenceKey, strength: Float) {
         guard let gameSession = game.gameSession else { return }
-        owner.effects.startModifier(modifier, strength: strength, on: &gameSession.imageSpace)
+        game.effects.startModifier(modifier, strength: strength, on: &gameSession.imageSpace)
     }
 
     public func placeExplosionHazard(_ hazard: ReferenceKey, at position: SIMD3<Float>) -> Bool {
-        guard let spec = game.hazardWorld.store?.spec(for: hazard) else { return false }
+        guard let spec = game.hazardWorld.hazardSpec(for: hazard) else { return false }
         game.hazards.spawn(HazardPlacement(
-            id: owner.nextHazardKey(),
+            id: state.nextHazardKey(),
             spec: spec,
             position: position
         ))
@@ -77,7 +77,7 @@ extension EffectsBlastsAdapter {
     }
 
     public func showExplosionModel(_ path: String, at position: SIMD3<Float>) {
-        owner.effects.showModel(path, at: .point(position), cause: .explosion)
+        game.effects.showModel(path, at: .point(position), cause: .explosion)
     }
 
     /// Above every visual effect instance id, so a projectile keeps its own particles.
@@ -103,14 +103,14 @@ extension EffectsBlastsAdapter {
 
     /// The flight lights of live projectiles, then the muzzle and blast flashes.
     public func projectileAndFlashLights() -> [RenderPointLight] {
-        let plugin = owner.explosions.itemPlugin
-        let records = owner.effects.records
+        let plugin = game.combat.explosions.itemPlugin
+        let records = game.effects.records
         let flying = (game.combat.archery?.projectiles.live ?? []).compactMap { projectile in
             records.resolve(projectile.profile.visuals.light, fromPlugin: plugin).flatMap {
                 renderLight($0, at: projectile.position, strength: 1)
             }
         }
-        let flashes = owner.effects.flashLights.compactMap {
+        let flashes = game.effects.flashLights.compactMap {
             renderLight($0.light, at: $0.position, strength: $0.strength)
         }
         return flying + flashes
@@ -122,7 +122,7 @@ extension EffectsBlastsAdapter {
     ) -> RenderPointLight? {
         guard
             case let .plugin(name, objectID) = key,
-            let record = owner.effects.records.lights
+            let record = game.effects.records.lights
                 .record(ResolvedFormID(plugin: name, objectID: objectID))?.record,
             record.radius > 0
         else { return nil }
@@ -136,11 +136,11 @@ extension EffectsBlastsAdapter {
     public func showMuzzleFlash(
         _ visuals: ProjectileVisuals, at position: SIMD3<Float>, along direction: SIMD3<Float>
     ) {
-        owner.effects.showMuzzleFlash(
+        game.effects.showMuzzleFlash(
             model: visuals.muzzleFlashModel,
-            light: owner.effects.records.resolve(
+            light: game.effects.records.resolve(
                 visuals.muzzleFlashLight,
-                fromPlugin: owner.explosions.itemPlugin
+                fromPlugin: game.combat.explosions.itemPlugin
             ),
             at: position, along: direction,
             duration: visuals.muzzleFlashDuration
@@ -148,7 +148,7 @@ extension EffectsBlastsAdapter {
     }
 
     public func showExplosionLight(_ light: ReferenceKey, at position: SIMD3<Float>) {
-        owner.effects.addFlashLight(
+        game.effects.addFlashLight(
             light,
             at: position,
             duration: EffectsCoordinator.instantArtDuration
@@ -158,7 +158,7 @@ extension EffectsBlastsAdapter {
     /// The blast's `IPDS` on the ground below it, as an impact with no material.
     public func playExplosionImpact(_ dataSet: ReferenceKey, at position: SIMD3<Float>) {
         guard
-            let id = owner.effects.records.loadOrderFormID(dataSet),
+            let id = game.effects.records.loadOrderFormID(dataSet),
             let resolved = game.combat.archery?.projectiles.impacts?
                 .resolve(dataSet: id, material: nil)
         else { return }

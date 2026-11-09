@@ -1228,17 +1228,22 @@ targets += composition(
 targets += composition(
     "OpenSkyCombatAdapters",
     dependencies: [
-        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActors",
-        "OpenSkyActorsInterface", "OpenSkyAudio", "OpenSkyBehavior", "OpenSkyCamera",
-        "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyConditions",
-        "OpenSkyCrime", "OpenSkyDialogue", "OpenSkyDialogueInterface", "OpenSkyEffects",
-        "OpenSkyFactions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
-        "OpenSkyGameData", "OpenSkyInventory", "OpenSkyInventoryInterface", "OpenSkyMagic",
-        "OpenSkyMagicInterface", "OpenSkyMenus", "OpenSkyNavigation", "OpenSkyPerception",
-        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer", "OpenSkyProgression",
-        "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyRenderCore",
-        "OpenSkyRenderResources", "OpenSkyRendering", "OpenSkyRuntimeState", "OpenSkyScripting",
-        "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkyWorld",
+        "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActorsInterface", "OpenSkyAudio",
+        "OpenSkyBehavior",
+        "OpenSkyCamera",
+        "OpenSkyCells", "OpenSkyCombat", "OpenSkyCombatInterface", "OpenSkyMenusInterface",
+        "OpenSkyFactionsInterface",
+        "OpenSkyCrimeInterface", "OpenSkyConditions",
+        "OpenSkyDialogueInterface", "OpenSkyEffects",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
+        "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
+        "OpenSkyNavigation",
+        "OpenSkyPerceptionInterface", "OpenSkyPhysics", "OpenSkyPlayer",
+        "OpenSkyProgressionInterface",
+        "OpenSkyRenderCore",
+        "OpenSkyRenderResources", "OpenSkyRendering", "OpenSkyRuntimeState",
+        "OpenSkyScriptingInterface",
+        "OpenSkySessionInterface", "OpenSkyWorld",
         "OpenSkyWorldConditions", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
@@ -1252,7 +1257,9 @@ targets += composition(
         "OpenSkyPerceptionInterface", "OpenSkyPlayer", "OpenSkyProgressionInterface",
         "OpenSkyRenderCore", "OpenSkyRendering", "OpenSkyRuntimeState",
         "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkyWorldConditions",
-        "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyWorldInterface", "OpenSkyWorldState", "OpenSkyActorsInterface",
+        "OpenSkyCombatInterface",
+        "OpenSkyDialogueInterface", "OpenSkyQuestsInterface", "OpenSkyWorld"
     ]
 )
 

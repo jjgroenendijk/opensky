@@ -1,9 +1,8 @@
-import OpenSkyActors
+import OpenSkyActorsInterface
 public import OpenSkyCombat
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
 public import OpenSkyMagicInterface
 public import OpenSkySessionInterface
 
@@ -18,7 +17,7 @@ public protocol CombatSpellCastsHost: AnyObject {
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
 public struct CombatSpellCastsAdapter {
-    public unowned let game: any CombatSpellCastsHost
+    public let game: any CombatSpellCastsHost
 }
 
 extension CombatSpellCastsAdapter {
@@ -57,7 +56,9 @@ extension CombatSpellCastsAdapter {
             cost: 0,
             range: game.magicWorld.castReach(within: spell.data?.range ?? 0),
             purpose: .shout,
-            cooldownSeconds: ShoutCore.cooldown(recovery: word.entry.recoveryTime, multiplier: 1)
+            cooldownSeconds: game.magicWorld.shoutCooldown(
+                recovery: word.entry.recoveryTime, multiplier: 1
+            )
         )
     }
 

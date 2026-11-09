@@ -2,7 +2,7 @@
 
 import Foundation
 public import OpenSkyCells
-import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic

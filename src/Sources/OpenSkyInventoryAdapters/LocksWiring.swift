@@ -1,16 +1,15 @@
 // `LockWorldAdapter` joins the started session: what `wireLocks` registered.
 
 import Foundation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyConditions
-import OpenSkyCrime
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore

@@ -56,14 +56,14 @@ COMPOSITION = {"OpenSkyPreview", "OpenSkySession"}
 # implementation. ADAPTER_OWNER names that group for each module that follows the rule; the
 # modules in ADAPTERS_PENDING do not yet.
 ADAPTER_OWNER = {"OpenSkyAIAdapters": {"OpenSkyPerception"},
+                 "OpenSkyCombatAdapters": {"OpenSkyCombat"},
                  "OpenSkyInventoryAdapters": {"OpenSkyInventory"},
                  "OpenSkyMagicAdapters": {"OpenSkyMagic"},
                  "OpenSkyProgressionAdapters": {"OpenSkyProgression"},
                  "OpenSkyScriptAdapters": {"OpenSkyScripting"},
                  "OpenSkyStoryAdapters": {"OpenSkyCrime", "OpenSkyDialogue", "OpenSkyQuests"}}
 ADAPTERS_PENDING = {
-    "OpenSkyActorAdapters", "OpenSkyAgentAdapters",
-    "OpenSkyCombatAdapters", "OpenSkyMenuAdapters", "OpenSkySessionAdapters",
+    "OpenSkyActorAdapters", "OpenSkyAgentAdapters", "OpenSkyMenuAdapters", "OpenSkySessionAdapters",
 }
 # Rule 6. A feature without one of its targets, and why.
 MISSING = {

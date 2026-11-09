@@ -5,7 +5,7 @@
 
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 public import OpenSkyCells
 public import OpenSkyCombat
 import OpenSkyCombatInterface
@@ -13,15 +13,14 @@ public import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
 public import OpenSkyMagicInterface
-import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -49,51 +48,45 @@ public final class EffectsWorldAdapter {
     /// Base plugin of the streamed cells and the item and sound indexes.
     public static let basePlugin = "Skyrim.esm"
 
-    public unowned let game: any EffectsWorldHost
-    public internal(set) var cameraPosition: SIMD3<Float>?
-    /// When the impulse step last ran, for the splash timer.
-    var lastImpulseStep: TimeInterval?
-    /// The heartbeat's script-sound instance; 0 when none plays.
-    public var heartbeatSound: Int32 = 0
+    public let game: any EffectsWorldHost
+    public let state = EffectsPartState()
     /// Actors whose race abilities were looked at, so each is resolved once.
     private var raceChecked: Set<ReferenceKey> = []
-    private var spawnedHazards: UInt64 = 0
     private var lastFrame: Date?
 
     public let bodyImpulsesHost: any EffectsBodyImpulsesHost
+    public let locatorHost: any EffectsLocatorHost
     public let trapControlHost: any EffectsTrapControlHost
     public let blastsHost: any EffectsBlastsHost
     public let effectPlacementHost: any EffectsEffectPlacementHost
 
     public var bodyImpulses: EffectsBodyImpulsesAdapter {
-        EffectsBodyImpulsesAdapter(
-            owner: self,
-            game: bodyImpulsesHost
-        )
+        EffectsBodyImpulsesAdapter(game: bodyImpulsesHost, effects: effects, locator: locator)
+    }
+
+    public var locator: EffectsLocatorAdapter {
+        EffectsLocatorAdapter(game: locatorHost)
     }
 
     public var trapControl: EffectsTrapControlAdapter {
         EffectsTrapControlAdapter(
-            owner: self,
-            game: trapControlHost
+            game: trapControlHost, state: state, bodyImpulses: bodyImpulses, locator: locator
         )
     }
 
     public var blasts: EffectsBlastsAdapter {
-        EffectsBlastsAdapter(owner: self, game: blastsHost)
+        EffectsBlastsAdapter(game: blastsHost, state: state)
     }
 
     public var effectPlacement: EffectsEffectPlacementAdapter {
-        EffectsEffectPlacementAdapter(
-            owner: self,
-            game: effectPlacementHost
-        )
+        EffectsEffectPlacementAdapter(game: effectPlacementHost, state: state)
     }
 
     public init(game: some EffectsWorldHost & EffectsBodyImpulsesHost & EffectsTrapControlHost &
-        EffectsBlastsHost & EffectsEffectPlacementHost)
+        EffectsBlastsHost & EffectsEffectPlacementHost & EffectsLocatorHost)
     {
         bodyImpulsesHost = game
+        locatorHost = game
         trapControlHost = game
         blastsHost = game
         effectPlacementHost = game
@@ -102,6 +95,10 @@ public final class EffectsWorldAdapter {
 
     public var effects: any EffectsPort {
         game.effects
+    }
+
+    public func nextHazardKey() -> ReferenceKey {
+        state.nextHazardKey()
     }
 
     public var explosions: any ExplosionRuntimePort {
@@ -126,7 +123,7 @@ public final class EffectsWorldAdapter {
             itemPlugin: Self.basePlugin,
             world: self
         )
-        explosions.impulses = bodyImpulses.makeImpulses()
+        explosions.impulses = bodyImpulses.makeImpulses(world: self)
         return explosions
     }
 
@@ -210,7 +207,7 @@ public final class EffectsWorldAdapter {
             .filter { $0.source == .spawned }
             .sorted { $0.id < $1.id }
             .compactMap { hazard -> VisualEffectModel? in
-                guard let path = game.hazardWorld.store?.modelPath(for: hazard.spec.hazard) else {
+                guard let path = game.hazardWorld.hazardModelPath(for: hazard.spec.hazard) else {
                     return nil
                 }
                 var transform = matrix_identity_float4x4
@@ -237,14 +234,6 @@ public final class EffectsWorldAdapter {
                 to: entry.key
             )
         }
-    }
-
-    /// The top bit marks effect spawns, so no world-state spawn uses the key.
-    private static let effectSpawnBit: UInt64 = 0x8000_0000_0000_0000
-
-    public func nextHazardKey() -> ReferenceKey {
-        spawnedHazards += 1
-        return .generated(Self.effectSpawnBit | spawnedHazards)
     }
 
     private static let logger = EngineLogger(

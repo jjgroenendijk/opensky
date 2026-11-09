@@ -8,7 +8,7 @@ import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyEffects
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData

@@ -2,18 +2,15 @@
 // and the player's state for `ActivationRefusalRule` and shows the text it returns.
 // See docs/engine/interaction.md#refused-activations.
 
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
-import OpenSkyCombat
-import OpenSkyDialogue
+import OpenSkyCombatInterface
+import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyScripting
+import OpenSkyMenusInterface
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -38,7 +35,7 @@ public protocol ActivationRefusalWorldHost: AnyObject {
 }
 
 public final class ActivationRefusalWorldAdapter {
-    public unowned let game: any ActivationRefusalWorldHost
+    public let game: any ActivationRefusalWorldHost
 
     public init(game: any ActivationRefusalWorldHost) {
         self.game = game
@@ -76,7 +73,7 @@ public final class ActivationRefusalWorldAdapter {
             state.isCreature = !game.magicWorld.actorHasKeyword("ActorTypeNPC", on: holder)
         }
         state.isCalmed = game.magic.influence(of: key).isCalmed
-        state.isFleeing = game.combat.loop?.phase(of: key)?.actionFacts.isFleeing == true
+        state.isFleeing = game.combat.loop?.actionFacts(of: key)?.isFleeing == true
         state.isUnconscious = game.scripts.bridge?.scriptedState(of: key)
             .flag(ScriptedStateName.unconscious) == true
         state.isInScene = game.scenes.actorsInScenes().contains(key)

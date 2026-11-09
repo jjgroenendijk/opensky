@@ -3,7 +3,6 @@
 // in the coordinator (docs/engine/coordinators.md).
 
 public import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyBehavior
@@ -11,25 +10,22 @@ import OpenSkyCamera
 public import OpenSkyCells
 public import OpenSkyCombat
 public import OpenSkyCombatInterface
-import OpenSkyCrime
-import OpenSkyDialogue
+import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyEffects
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyPerception
+import OpenSkyMenusInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -51,7 +47,7 @@ public protocol CombatWorldHost: AnyObject {
 
 /// Answers `CombatWorld` from the session systems `game` owns.
 public final class CombatWorldAdapter {
-    public unowned let game: any CombatWorldHost
+    public let game: any CombatWorldHost
     /// Rigs whose reaction clips were requested, because a room of actors shares one rig.
     private var warmedSkeletons: Set<String> = []
 
@@ -64,22 +60,19 @@ public final class CombatWorldAdapter {
     public let outcomesHost: any CombatOutcomesHost
 
     public var spellCasts: CombatSpellCastsAdapter {
-        CombatSpellCastsAdapter(game: spellCastsHost
-        )
+        CombatSpellCastsAdapter(game: spellCastsHost)
     }
 
     public var impactEffects: CombatImpactEffectsAdapter {
-        CombatImpactEffectsAdapter(game: impactEffectsHost
-        )
+        CombatImpactEffectsAdapter(game: impactEffectsHost)
     }
 
     public var reports: CombatReportsAdapter {
-        CombatReportsAdapter(owner: self, game: reportsHost)
+        CombatReportsAdapter(game: reportsHost, actorFacts: actorFacts)
     }
 
     public var actorFacts: CombatActorFactsAdapter {
-        CombatActorFactsAdapter(game: actorFactsHost
-        )
+        CombatActorFactsAdapter(game: actorFactsHost)
     }
 
     public var gear: CombatGearAdapter {
@@ -87,11 +80,13 @@ public final class CombatWorldAdapter {
     }
 
     public var motion: CombatMotionAdapter {
-        CombatMotionAdapter(owner: self, game: motionHost)
+        CombatMotionAdapter(game: motionHost, impactEffects: impactEffects)
     }
 
     public var outcomes: CombatOutcomesAdapter {
-        CombatOutcomesAdapter(owner: self, game: outcomesHost)
+        CombatOutcomesAdapter(
+            game: outcomesHost, motion: motion, impactEffects: impactEffects
+        )
     }
 
     public init(game: some CombatWorldHost & CombatSpellCastsHost & CombatImpactEffectsHost &

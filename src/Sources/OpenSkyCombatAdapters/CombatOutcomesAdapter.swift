@@ -1,5 +1,4 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyBehavior
@@ -7,25 +6,22 @@ import OpenSkyCamera
 import OpenSkyCells
 import OpenSkyCombat
 public import OpenSkyCombatInterface
-import OpenSkyCrime
-import OpenSkyDialogue
+import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyEffects
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyPerception
+import OpenSkyMenusInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -46,8 +42,9 @@ public protocol CombatOutcomesHost: AnyObject {
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
 public struct CombatOutcomesAdapter {
-    public unowned let owner: CombatWorldAdapter
-    public unowned let game: any CombatOutcomesHost
+    public let game: any CombatOutcomesHost
+    public let motion: CombatMotionAdapter
+    public let impactEffects: CombatImpactEffectsAdapter
 }
 
 extension CombatOutcomesAdapter {
@@ -56,7 +53,7 @@ extension CombatOutcomesAdapter {
         for command in commands {
             switch command {
             case let .showNotification(text): game.hud.showNotification(text)
-            case let .playImpact(impact, position): owner.playImpact(impact, at: position)
+            case let .playImpact(impact, position): motion.playImpact(impact, at: position)
             case let .detectionEvent(owner, position):
                 game.perception.runtime?.noteDetectionEvent(owner: owner, at: position)
             case let .removeReference(key): game.worldState.reset(key)
@@ -64,14 +61,14 @@ extension CombatOutcomesAdapter {
             case let .setCombatMusic(active): game.audio.musicDirector?.setCombatActive(active)
             case let .playerAttackedOutsideCombat(use):
                 game.storyWorld.commentOnPlayer(.playerAction(use == .swing ? "SWMW" : "FIWE"))
-            case let .drewBlood(hit, target): owner.impactEffects.drewBlood(hit, target: target)
+            case let .drewBlood(hit, target): impactEffects.drewBlood(hit, target: target)
             case let .playerBowShot(weapon, ammunition, power):
                 game.scripts.runtime?.queuePlayerBowShot(
                     weapon: weapon, ammunition: ammunition, power: power,
                     sunGazing: game.scripts.bridge?.isPlayerSunGazing ?? false
                 )
             case let .showDefaultBlood(target, position, melee):
-                owner.impactEffects.showDefaultBlood(on: target, at: position, melee: melee)
+                impactEffects.showDefaultBlood(on: target, at: position, melee: melee)
             case let .muzzleFlash(visuals, position, direction):
                 game.effectsWorld.showMuzzleFlash(visuals, at: position, along: direction)
             }

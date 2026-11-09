@@ -34,8 +34,9 @@ public protocol EffectsBodyImpulsesHost: AnyObject {
 
 /// Part of `EffectsWorldAdapter`, over its own narrow host.
 public struct EffectsBodyImpulsesAdapter {
-    public unowned let owner: EffectsWorldAdapter
-    public unowned let game: any EffectsBodyImpulsesHost
+    public let game: any EffectsBodyImpulsesHost
+    public let effects: any EffectsPort
+    public let locator: EffectsLocatorAdapter
 }
 
 extension EffectsBodyImpulsesAdapter {
@@ -45,14 +46,14 @@ extension EffectsBodyImpulsesAdapter {
     // The splash sound. No setting names it, so this is the one `SNDR` whose editor
     // ID says so. [WARNING] Not confirmed against the game.
 
-    public func makeImpulses() -> ImpulseRuntime {
+    public func makeImpulses(world: any ImpulseWorld) -> ImpulseRuntime {
         guard let settings = game.worldData?.gameSettings
-        else { return ImpulseRuntime(world: owner) }
+        else { return ImpulseRuntime(world: world) }
         let text: GameTextResolver = { [game] in game.mapWorld.text($0) }
         return ImpulseRuntime(
             settings: ImpulseSettings.resolve(store: settings),
             water: WaterImpactSettings.resolve(store: settings, text: text),
-            world: owner
+            world: world
         )
     }
 
@@ -181,7 +182,7 @@ extension EffectsBodyImpulsesAdapter {
         if game.ragdoll.knockDown(actor, from: source, magnitude: magnitude, downTime: downTime) {
             return true
         }
-        guard let feet = owner.trapControl.trapPosition(of: actor) else { return false }
+        guard let feet = locator.trapPosition(of: actor) else { return false }
         let away = SIMD3(feet.x - source.x, feet.y - source.y, 0)
         guard simd_length(away) > Self.sameSpot else { return false }
         let speed = magnitude * GameplayImpulse.havokScale
@@ -209,7 +210,7 @@ extension EffectsBodyImpulsesAdapter {
     }
 
     public func showSplash(_ splash: SplashEvent) {
-        owner.effects.showModel(splash.model, at: .point(splash.position), cause: .impact)
+        effects.showModel(splash.model, at: .point(splash.position), cause: .impact)
         game.renderer?.addWaterRipple(
             at: splash.position, strength: splash.weight.rippleStrength
         )

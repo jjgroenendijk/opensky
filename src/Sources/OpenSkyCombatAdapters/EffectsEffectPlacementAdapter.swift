@@ -1,6 +1,6 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
+import OpenSkyActorsInterface
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
@@ -8,15 +8,14 @@ import OpenSkyEffects
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
+import OpenSkyMenusInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 public import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -26,6 +25,7 @@ public import simd
 /// What `EffectsEffectPlacementAdapter` reads from the session.
 @MainActor
 public protocol EffectsEffectPlacementHost: AnyObject {
+    var combat: any CombatPort { get }
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
@@ -38,8 +38,8 @@ public protocol EffectsEffectPlacementHost: AnyObject {
 
 /// Part of `EffectsWorldAdapter`, over its own narrow host.
 public struct EffectsEffectPlacementAdapter {
-    public unowned let owner: EffectsWorldAdapter
-    public unowned let game: any EffectsEffectPlacementHost
+    public let game: any EffectsEffectPlacementHost
+    public let state: EffectsPartState
 }
 
 extension EffectsEffectPlacementAdapter {
@@ -95,8 +95,8 @@ extension EffectsEffectPlacementAdapter {
     }
 
     public func detonateEffectExplosion(_ explosion: ReferenceKey, at position: SIMD3<Float>) {
-        guard let spec = owner.explosions.spec(for: explosion) else { return }
-        owner.explosions.detonate(spec, at: position, cause: .spell)
+        guard let spec = game.combat.explosions.spec(for: explosion) else { return }
+        game.combat.explosions.detonate(spec, at: position, cause: .spell)
     }
 
     private static func transform(feet: SIMD3<Float>, yaw: Float) -> float4x4 {
@@ -107,17 +107,17 @@ extension EffectsEffectPlacementAdapter {
 
     /// A load stops the heartbeat at once and forgets the last health, as the game does.
     public func resetHealthCues() {
-        game.audio.soundDirector?.stopScriptSound(owner.heartbeatSound)
-        owner.heartbeatSound = 0
+        game.audio.soundDirector?.stopScriptSound(state.heartbeatSound)
+        state.heartbeatSound = 0
         game.effects.resetHealthCues()
     }
 
     /// A new game fades the heartbeat out, as the game does on a start.
     public func fadeOutHealthCues() {
         game.audio.soundDirector?.fadeOutScriptSound(
-            owner.heartbeatSound, seconds: PlayerHealthCues.heartbeatFadeSeconds
+            state.heartbeatSound, seconds: PlayerHealthCues.heartbeatFadeSeconds
         )
-        owner.heartbeatSound = 0
+        state.heartbeatSound = 0
         game.effects.resetHealthCues()
     }
 
@@ -128,8 +128,8 @@ extension EffectsEffectPlacementAdapter {
             current: values.current(of: .player).health,
             maximum: values.permanentMaximum(of: .health, for: .player)
         )
-        let playing = owner.heartbeatSound != 0 && director?
-            .isScriptSoundPlaying(owner.heartbeatSound) == true
+        let playing = state.heartbeatSound != 0 && director?
+            .isScriptSoundPlaying(state.heartbeatSound) == true
         let change = game.effects.stepHealthCues(
             share: share, seconds: seconds, heartbeatPlaying: playing,
             imageSpace: &gameSession.imageSpace
@@ -137,17 +137,17 @@ extension EffectsEffectPlacementAdapter {
         guard let change, let director else { return }
         switch change {
         case let .start(heartbeat):
-            director.stopScriptSound(owner.heartbeatSound)
-            owner.heartbeatSound = 0
+            director.stopScriptSound(state.heartbeatSound)
+            state.heartbeatSound = 0
             guard let sound = game.effects.heartbeatSound(heartbeat) else { return }
-            owner.heartbeatSound = director.playScriptSound(
-                formID: sound, at: owner.cameraPosition ?? .zero
+            state.heartbeatSound = director.playScriptSound(
+                formID: sound, at: state.cameraPosition ?? .zero
             )
         case .fadeOut:
             director.fadeOutScriptSound(
-                owner.heartbeatSound, seconds: PlayerHealthCues.heartbeatFadeSeconds
+                state.heartbeatSound, seconds: PlayerHealthCues.heartbeatFadeSeconds
             )
-            owner.heartbeatSound = 0
+            state.heartbeatSound = 0
         }
     }
 }

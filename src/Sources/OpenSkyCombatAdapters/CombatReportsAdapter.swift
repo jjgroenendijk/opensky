@@ -1,5 +1,4 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyAudio
@@ -8,26 +7,21 @@ public import OpenSkyCells
 import OpenSkyCombat
 public import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
-import OpenSkyDialogue
+import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 public import OpenSkyMagicInterface
 import OpenSkyNavigation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 public import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -51,15 +45,15 @@ public protocol CombatReportsHost: AnyObject {
 
 /// Part of `CombatWorldAdapter`, over its own narrow host.
 public struct CombatReportsAdapter {
-    public unowned let owner: CombatWorldAdapter
-    public unowned let game: any CombatReportsHost
+    public let game: any CombatReportsHost
+    public let actorFacts: CombatActorFactsAdapter
 }
 
 extension CombatReportsAdapter {
     /// Every landed blow passes here, so assault is noticed in one place.
     @discardableResult
     public func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
-        let wasHostile = owner.hostility(of: hit.target) == .hostile
+        let wasHostile = actorFacts.hostility(of: hit.target) == .hostile
         game.crime.reportAssault(on: hit.target, wasHostile: wasHostile, aggressor: hit.aggressor)
         if hit.aggressor == .player {
             game.perception.runtime?.noteAttack(by: .player)
@@ -86,7 +80,7 @@ extension CombatReportsAdapter {
     /// no damage yet, so it is not held back.
     private func speakCombatLines(for hit: ScriptHitEvent) {
         let now = game.storyWorld.sceneSeconds
-        let maximum = owner.health(of: hit.target)?.maximum ?? 0
+        let maximum = actorFacts.health(of: hit.target)?.maximum ?? 0
         let hurtSpeaks = hit.delivery == .spell
             || game.dialogue.speechTimers.hitSpeaks(damage: hit.damage, maximumHealth: maximum)
         var lines: [(NPCSpeechLine, ReferenceKey)] = [(.combatAttack, hit.aggressor)]

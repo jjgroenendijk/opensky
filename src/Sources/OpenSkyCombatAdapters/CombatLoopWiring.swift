@@ -1,7 +1,6 @@
 // `CombatWorldAdapter` joins the started session: what `wireLoop` registered.
 
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyBehavior
@@ -9,25 +8,22 @@ import OpenSkyCamera
 import OpenSkyCells
 import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyCrime
-import OpenSkyDialogue
+import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyEffects
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
-import OpenSkyPerception
+import OpenSkyMenusInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPlayer
-import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld
 import OpenSkyWorldInterface
