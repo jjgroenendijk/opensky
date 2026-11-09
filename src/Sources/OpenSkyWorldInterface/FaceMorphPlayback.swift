@@ -6,7 +6,6 @@
 import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyRenderCore
-public import OpenSkyRenderResources
 import simd
 import Synchronization
 
@@ -51,7 +50,7 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
     }
 
     public let actor: FormID
-    public let bindings: [ObjectIdentifier: FaceMorphBuffer]
+    public let bindings: [ObjectIdentifier: any FaceMorphWeightTarget]
     public let pairedPaths: [String]
     public let misses: [FaceMorphAssociationMiss]
     /// Changed on the main actor after the build queue hands the scene over.
@@ -71,13 +70,13 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
 
     public init(
         actor: FormID,
-        bindings: [ObjectIdentifier: FaceMorphBuffer],
+        bindings: [ObjectIdentifier: any FaceMorphWeightTarget],
         pairedPaths: [String],
         misses: [FaceMorphAssociationMiss]
     ) {
         self.actor = actor
         self.bindings = bindings
-        targetSet = Set(bindings.values.flatMap { $0.targets.map(\.name) })
+        targetSet = Set(bindings.values.flatMap(\.targetNames))
         targetNames = targetSet.sorted()
         self.pairedPaths = pairedPaths
         self.misses = misses

@@ -96,13 +96,4 @@ public final class ActorValueCoordinator {
         guard let carried, let capacity, carried.isFinite, capacity.isFinite else { return false }
         return carried > capacity
     }
-
-    /// The NPC_ base FormID, which is what the user types into the record dump.
-    public static func name(of holder: ActorValueHolder) -> String {
-        switch holder.subject {
-        case .player: "Player"
-        case let .actor(base): "\(holder.key.description) (base \(base))"
-        case .generated: holder.key.description
-        }
-    }
 }

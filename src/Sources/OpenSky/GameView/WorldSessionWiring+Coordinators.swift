@@ -4,6 +4,7 @@
 import OpenSkyActorAdapters
 import OpenSkyActorPresentation
 import OpenSkyCells
+import OpenSkyCombatAdapters
 import OpenSkyEffects
 import OpenSkyInventory
 import OpenSkyInventoryAdapters

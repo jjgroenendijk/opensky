@@ -1,24 +1,17 @@
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
-import OpenSkyFactions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
 public import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyPlayer
-import OpenSkyProgression
 public import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -40,7 +33,7 @@ public protocol MagicWorldFactsHost: AnyObject {
 
 /// Part of `MagicWorldAdapter`, over its own narrow host.
 public struct MagicWorldFactsAdapter {
-    public unowned let game: any MagicWorldFactsHost
+    public let game: any MagicWorldFactsHost
 }
 
 extension MagicWorldFactsAdapter {
@@ -78,7 +71,7 @@ extension MagicWorldFactsAdapter {
     }
 
     public func actorName(_ holder: ActorValueHolder) -> String {
-        ActorValueCoordinator.name(of: holder)
+        holder.readoutName
     }
 
     public func itemName(_ item: FormID) -> String {

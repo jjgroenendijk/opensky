@@ -202,7 +202,7 @@ struct ActorValueCoordinatorTests {
         #expect(coordinator.restoreSelectedFully().text == "No resident actor to act on.")
 
         world.nearest = actor
-        #expect(coordinator.snapshot.nearestActor?.name == ActorValueCoordinator.name(of: actor))
+        #expect(coordinator.snapshot.nearestActor?.name == actor.readoutName)
         #expect(coordinator.restoreSelectedFully().text
             .hasPrefix("Refilled \(actor.key.description)"))
     }

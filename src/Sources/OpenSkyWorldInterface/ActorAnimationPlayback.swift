@@ -5,7 +5,6 @@ public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRenderCore
-import OpenSkyRenderResources
 public import simd
 import Synchronization
 

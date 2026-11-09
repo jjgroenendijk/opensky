@@ -1,18 +1,15 @@
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyEffects
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyRenderCore
 public import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -39,13 +36,15 @@ public protocol MagicHeldMagicHost: AnyObject {
 
 /// Part of `MagicWorldAdapter`, over its own narrow host.
 public struct MagicHeldMagicAdapter {
-    public unowned let owner: MagicWorldAdapter
-    public unowned let game: any MagicHeldMagicHost
+    public let game: any MagicHeldMagicHost
+    public let state: MagicPartState
+    public let summonedActors: MagicSummonedActorsAdapter
+    public let spellDelivery: MagicSpellDeliveryAdapter
 }
 
 extension MagicHeldMagicAdapter {
     public func commandActor(_ actor: ReferenceKey, for caster: ReferenceKey) {
-        owner.summonedActors.enlist(actor, for: caster)
+        summonedActors.enlist(actor, for: caster)
     }
 
     public func livingActors(near key: ReferenceKey, radius: Float) -> [ReferenceKey] {
@@ -76,8 +75,8 @@ extension MagicHeldMagicAdapter {
                 direction: simd_normalize(gameSession.freeFlyCamera.forward)
             )
         }
-        guard let eye = owner.spellDelivery.actorCastOrigin(of: key) else { return nil }
-        let toward = owner.spellDelivery.castTarget(of: key) - eye
+        guard let eye = spellDelivery.actorCastOrigin(of: key) else { return nil }
+        let toward = spellDelivery.castTarget(of: key) - eye
         guard simd_length(toward) > 0 else { return nil }
         return MagicAimRay(origin: eye, direction: simd_normalize(toward))
     }
@@ -116,12 +115,12 @@ extension MagicHeldMagicAdapter {
                 streamer.steerRiddenActor(actor, to: ground, yaw: 0)
             }
             streamer.releaseRiddenActor(actor)
-            owner.grabbedActors.remove(actor)
+            state.grabbedActors.remove(actor)
             return
         }
-        if !owner.grabbedActors.contains(actor) {
+        if !state.grabbedActors.contains(actor) {
             guard streamer.takeRiddenActor(actor) != nil else { return }
-            owner.grabbedActors.insert(actor)
+            state.grabbedActors.insert(actor)
         }
         streamer.steerRiddenActor(actor, to: point, yaw: 0)
     }
@@ -194,8 +193,8 @@ extension MagicHeldMagicAdapter {
             }
             return position.flatMap { effects.renderLight(light.light, at: $0, strength: 1) }
         }
-        let casting = owner.castingLights.keys.sorted { "\($0)" < "\($1)" }.compactMap { caster in
-            owner.castingLights[caster].flatMap { light in
+        let casting = state.castingLights.keys.sorted { "\($0)" < "\($1)" }.compactMap { caster in
+            state.castingLights[caster].flatMap { light in
                 handLightPosition(of: caster).flatMap {
                     effects.renderLight(light, at: $0, strength: 1)
                 }
@@ -216,10 +215,10 @@ extension MagicHeldMagicAdapter {
         _ light: FormID, plugin: String, caster: ReferenceKey, shown: Bool
     ) {
         guard shown else {
-            owner.castingLights[caster] = nil
+            state.castingLights[caster] = nil
             return
         }
-        owner.castingLights[caster] = game.effectsWorld.effects.records.resolve(
+        state.castingLights[caster] = game.effectsWorld.effects.records.resolve(
             light,
             fromPlugin: plugin
         )

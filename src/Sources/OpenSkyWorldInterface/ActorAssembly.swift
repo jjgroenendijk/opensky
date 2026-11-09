@@ -2,7 +2,6 @@ import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyRenderResources
 public import simd
 
 nonisolated public struct ActorAssembly<Asset> {

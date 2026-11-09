@@ -1,34 +1,26 @@
 import Foundation
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
-import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyEffects
-import OpenSkyFactions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 public import OpenSkyGameData
-import OpenSkyInventory
 public import OpenSkyInventoryInterface
 public import OpenSkyMagic
 public import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyNavigation
 public import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 public import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 import OpenSkyWorld

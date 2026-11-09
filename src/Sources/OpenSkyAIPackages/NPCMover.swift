@@ -3,7 +3,6 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyNavigation
 public import OpenSkyPhysics
 public import OpenSkyPlayer
 public import OpenSkyWorldInterface

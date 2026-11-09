@@ -13,6 +13,7 @@ extension DragonFlightState: DragonFlightStatePort {}
 extension FaceMorphCoordinator: FaceMorphPort {}
 extension HeadTrackingCoordinator: HeadTrackingPort {}
 extension IdleCoordinator: IdlePort {}
+extension NPCAnimationCoordinator: NPCAnimationPort {}
 extension PlayerAnimationPlayback: PlayerAnimationPlaybackPort {}
 extension VehicleCoordinator: VehiclePort {}
 extension VehicleCore: VehicleCorePort {}

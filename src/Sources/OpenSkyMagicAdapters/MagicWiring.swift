@@ -1,26 +1,19 @@
 // `MagicWorldAdapter` joins the started session: what `wireMagic` registered.
 
-import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld

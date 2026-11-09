@@ -6,7 +6,6 @@ public import OpenSkyConditions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyNavigation
 public import OpenSkyPhysics
 import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface

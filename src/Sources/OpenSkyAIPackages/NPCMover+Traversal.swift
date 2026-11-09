@@ -2,7 +2,6 @@
 // swimming, ledge hops, gliding without ground, and the cell hand-off.
 
 import OpenSkyFormatsESM
-import OpenSkyNavigation
 import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyWorldInterface

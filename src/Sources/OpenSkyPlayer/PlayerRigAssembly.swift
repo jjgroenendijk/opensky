@@ -6,12 +6,12 @@ public import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyRendering
-import OpenSkyRenderResources
+public import OpenSkyRenderResources
 public import OpenSkyWorldInterface
 
 /// The player rig the renderer draws.
-public typealias PlayerRenderRig = PlayerRigAssembly<ActorRenderAsset>
-public typealias PlayerRenderRigResult = PlayerRigLoadResult<ActorRenderAsset>
+public typealias PlayerRenderRig = PlayerRigAssembly<ActorRenderAsset, FaceMorphBuffer>
+public typealias PlayerRenderRigResult = PlayerRigLoadResult<ActorRenderAsset, FaceMorphBuffer>
 
 /// Where the player coordinator gets its rigs: the build queue, or a fake in tests.
 public protocol PlayerRigSource: AnyObject {

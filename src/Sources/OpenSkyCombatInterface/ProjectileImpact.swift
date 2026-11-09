@@ -24,6 +24,18 @@ nonisolated public struct ProjectileImpact: Equatable, Sendable {
     /// The struck surface's normal, for a decal. Nil for an actor.
     public var normal: SIMD3<Float>?
 
+    public init(
+        distance: Float, position: SIMD3<Float>, target: ReferenceKey?, reference: FormID?,
+        material: FormID? = nil, normal: SIMD3<Float>? = nil
+    ) {
+        self.distance = distance
+        self.position = position
+        self.target = target
+        self.reference = reference
+        self.material = material
+        self.normal = normal
+    }
+
     public var isActor: Bool {
         target != nil
     }

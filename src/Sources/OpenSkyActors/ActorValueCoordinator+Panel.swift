@@ -11,7 +11,7 @@ extension ActorValueCoordinator {
         guard runtime != nil else { return .unavailable }
         let nearest = world?.nearestActorValueHolder()
         return ActorValueControlSnapshot(
-            nearestActor: nearest.map { readout(name: Self.name(of: $0)) },
+            nearestActor: nearest.map { readout(name: $0.readoutName) },
             runtimeActorCount: store.snapshot().entries.count { entry in
                 entry.delta.component(ActorValueState.self) != nil
             }
@@ -38,7 +38,7 @@ extension ActorValueCoordinator {
         guard let holder = selectedHolder() else { return .noTarget(target) }
         let state = runtime.restoreAll(on: holder)
         return record(.refilled(
-            actor: Self.name(of: holder),
+            actor: holder.readoutName,
             health: state.current.health,
             magicka: state.current.magicka,
             stamina: state.current.stamina
@@ -49,7 +49,7 @@ extension ActorValueCoordinator {
     public func resetSelected() -> ActorValueActionOutcome {
         guard let runtime else { return .unavailable }
         guard let holder = selectedHolder() else { return .noTarget(target) }
-        return record(.reset(actor: Self.name(of: holder), changed: runtime.reset(holder)))
+        return record(.reset(actor: holder.readoutName, changed: runtime.reset(holder)))
     }
 
     // MARK: - Private
@@ -82,7 +82,7 @@ extension ActorValueCoordinator {
         guard change(runtime, holder, index) else { return record(.notAnActorValue(index)) }
         return record(.changed(
             verb: verb,
-            actor: Self.name(of: holder),
+            actor: holder.readoutName,
             index: index,
             value: runtime.value(at: index, on: holder) ?? 0
         ))

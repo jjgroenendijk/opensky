@@ -1,7 +1,6 @@
 // Transform, draw delta, readout and persistence projections for one mover.
 
 import OpenSkyFormatsESM
-import OpenSkyNavigation
 import OpenSkyPlayer
 import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface

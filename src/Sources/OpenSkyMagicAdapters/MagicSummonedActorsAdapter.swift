@@ -1,6 +1,5 @@
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
@@ -8,9 +7,7 @@ import OpenSkyGameData
 public import OpenSkyMagic
 public import OpenSkyMagicInterface
 import OpenSkyPlayer
-import OpenSkyProgression
 public import OpenSkyProgressionInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -33,7 +30,7 @@ public protocol MagicSummonedActorsHost: AnyObject {
 
 /// Part of `MagicWorldAdapter`, over its own narrow host.
 public struct MagicSummonedActorsAdapter {
-    public unowned let game: any MagicSummonedActorsHost
+    public let game: any MagicSummonedActorsHost
 }
 
 extension MagicSummonedActorsAdapter {

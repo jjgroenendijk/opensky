@@ -2,27 +2,20 @@
 // them from the renderer's frame hooks, and answers `MagicWorld` from the
 // session systems. The rules live in the coordinator (docs/engine/coordinators.md).
 
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyFactions
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 public import OpenSkyMagic
 public import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -46,13 +39,8 @@ public protocol MagicWorldHost: AnyObject {
 
 /// Answers `MagicWorld` from the session systems `game` owns.
 public final class MagicWorldAdapter {
-    public unowned let game: any MagicWorldHost
-    /// The NPCs a Grab Actor effect holds through the ridden-actor hold.
-    public var grabbedActors: Set<ReferenceKey> = []
-    /// The `MGEF` casting light each readying caster shows, by caster.
-    public var castingLights: [ReferenceKey: ReferenceKey] = [:]
-    /// Race and base keywords never change in a session, and a lookup decodes the record.
-    public var actorKeywordAnswers: [ActorKeywordQuery: Bool] = [:]
+    public let game: any MagicWorldHost
+    public let state = MagicPartState()
 
     public let archetypeEffectsHost: any MagicArchetypeEffectsHost
     public let spellDeliveryHost: any MagicSpellDeliveryHost
@@ -62,8 +50,8 @@ public final class MagicWorldAdapter {
 
     public var archetypeEffects: MagicArchetypeEffectsAdapter {
         MagicArchetypeEffectsAdapter(
-            owner: self,
-            game: archetypeEffectsHost
+            game: archetypeEffectsHost, state: state, heldMagic: heldMagic,
+            spellDelivery: spellDelivery
         )
     }
 
@@ -73,7 +61,10 @@ public final class MagicWorldAdapter {
     }
 
     public var heldMagic: MagicHeldMagicAdapter {
-        MagicHeldMagicAdapter(owner: self, game: heldMagicHost)
+        MagicHeldMagicAdapter(
+            game: heldMagicHost, state: state, summonedActors: summonedActors,
+            spellDelivery: spellDelivery
+        )
     }
 
     public var summonedActors: MagicSummonedActorsAdapter {
