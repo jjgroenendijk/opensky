@@ -10,13 +10,11 @@ public import OpenSkyWorldState
 /// What the world adapters use of `StoryWorldAdapter`.
 public protocol StoryWorldPort: AnyObject, PapyrusStoryBridge {
     func commentOnPlayer(_ line: NPCSpeechLine)
-    func createQuestReference(_ base: FormID, at anchor: ReferenceKey) -> ReferenceKey?
     func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float?
     /// The quest runtime the Papyrus `Quest` natives read and write, over `store`.
     func questAccess(
         store: WorldStateStore, quests: QuestStore, locations: LocationStore?
     ) -> any QuestAccess
-    func questReferenceSearch() -> QuestReferenceSearch?
     func reportKill(victim: ReferenceKey, killer: ReferenceKey?)
     func reportStoryEvent(_ event: StoryEventData)
     func rerunSessionStart()

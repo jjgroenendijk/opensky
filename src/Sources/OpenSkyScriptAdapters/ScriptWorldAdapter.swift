@@ -153,7 +153,7 @@ public final class ScriptWorldAdapter {
         _ = ScriptSpellNativesWiring(perkBindings, bridge: bridge, provider: provider)
         _ = ScriptSkyWiring(skyBindings, bridge: bridge)
         _ = ScriptModelNodesWiring(nodeBindings, provider: provider, gameSession: gameSession)
-        _ = ScriptGameNativesWiring(sessionBindings, bridge: bridge, provider: provider)
+        _ = ScriptGameNativesWiring(sessionBindings, bridge: bridge)
         bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
         bridge.formIDResolver = provider.scriptFormIDResolver
         bridge.leveledEdits = { [weak game] in
