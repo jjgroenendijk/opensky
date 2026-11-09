@@ -1218,6 +1218,11 @@ targets += composition(
         "OpenSkySessionInterface",
         "OpenSkyTerrain", "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyWorldState",
         "OpenSkyWorldConditions"
+    ],
+    tests: [
+        "OpenSkyActorPresentation", "OpenSkyCombatInterface", "OpenSkyConditions",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyPlayer", "OpenSkyRendering",
+        "OpenSkySessionInterface", "OpenSkySessionTesting", "OpenSkyWorldInterface"
     ]
 )
 

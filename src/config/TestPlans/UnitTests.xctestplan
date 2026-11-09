@@ -137,6 +137,11 @@
     {
       "parallelizable": true,
       "randomExecutionOrdering": true,
+      "target": {"containerPath": "container:.", "identifier": "OpenSkyActorAdaptersTests", "name": "OpenSkyActorAdaptersTests"}
+    },
+    {
+      "parallelizable": true,
+      "randomExecutionOrdering": true,
       "target": {"containerPath": "container:.", "identifier": "OpenSkyStoryAdaptersTests", "name": "OpenSkyStoryAdaptersTests"}
     },
     {

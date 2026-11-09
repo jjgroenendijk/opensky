@@ -1,0 +1,94 @@
+// The actor, dragon flight, mount, player, and vehicle worlds read and drive their ports.
+
+import OpenSkyActorAdapters
+import OpenSkyCombatInterface
+import OpenSkyFormatsESM
+import OpenSkySessionTesting
+import OpenSkyWorldInterface
+import Testing
+
+@MainActor
+struct ActorMountPlayerTests {
+    private let host = ActorHost()
+    private static let actor = ReferenceKey.plugin(name: "base.esm", objectID: 0x20)
+
+    @Test func withoutALoopNoActorIsInCombat() {
+        let actors = ActorWorldAdapter(game: host, stage: nil)
+        #expect(!actors.isInCombat(Self.actor))
+        #expect(!actors.isCasting(Self.actor))
+        #expect(actors.combatActor(key: Self.actor) == nil)
+        #expect(actors.riddenHorse() == nil)
+        #expect(!actors.isRiddenHorseSprinting())
+        #expect(actors.playerCarriedWeight() == nil)
+        #expect(host.fakeStreamer.residentActorEntryCalls == [Self.actor])
+    }
+
+    @Test func flightForwardsToStreamerGraphsAndPackages() {
+        let flight = DragonFlightWorldAdapter(game: host, stage: nil)
+        flight.flightReachedPackageTarget(Self.actor)
+        flight.releaseFromFlight(Self.actor)
+        flight.raiseFlightEvent("TakeOff", on: Self.actor)
+        #expect(host.fakePackages.flightArrivedCalls == [Self.actor])
+        #expect(host.fakeStreamer.releaseRiddenActorCalls == [Self.actor])
+        #expect(host.fakeActorGraphs.raiseCalls.map(\.event) == ["TakeOff"])
+        #expect(flight.holdForFlight(Self.actor) == nil)
+        #expect(flight.flightGroundHeight(at: .zero) == nil)
+        #expect(!flight.isFlying(Self.actor))
+    }
+
+    @Test func onlyAnAllowedFlierFliesPackages() {
+        let flight = DragonFlightWorldAdapter(game: host, stage: nil)
+        host.fakeCombatWorld.actorFliesResult = true
+        #expect(flight.actorFliesPackages(Self.actor))
+        host.fakeCombatWorld.actorFliesResult = false
+        #expect(!flight.actorFliesPackages(Self.actor))
+    }
+
+    @Test func anInactiveMountIgnoresActivation() {
+        let mounts = MountWorldAdapter(game: host, stage: nil)
+        #expect(!mounts.takeActivation())
+        #expect(!mounts.isMountActive)
+        #expect(mounts.flyingMounts.isEmpty)
+        #expect(mounts.mountKind == nil)
+        #expect(mounts.lockCandidate() == nil)
+        #expect(mounts.switchCandidates().isEmpty)
+        #expect(mounts.allowsFlyingMountLandingRequests())
+    }
+
+    @Test func onlyALivingActorHasFeet() {
+        let mounts = MountWorldAdapter(game: host, stage: nil)
+        host.fakeActorWorld.combatActorResult = CombatActorObservation(key: Self.actor, feet: .one)
+        #expect(mounts.livingActorFeet(Self.actor) == .one)
+        host.fakeActorWorld.combatActorResult = CombatActorObservation(
+            key: Self.actor,
+            feet: .one,
+            isDead: true
+        )
+        #expect(mounts.livingActorFeet(Self.actor) == nil)
+    }
+
+    @Test func withoutASessionThePlayerReadsHaveDefaults() {
+        let player = PlayerWorldAdapter(game: host, stage: nil)
+        host.fakeCombat.isWeaponDrawn = true
+        #expect(player.playerWeaponsDrawn)
+        #expect(player.isPlayerGrounded)
+        #expect(player.firstPersonFOVYRadians == nil)
+        #expect(player.firstPersonArmsEnabled == nil)
+        #expect(!player.areFirstPersonArmsVisible)
+        #expect(player.faceMorphSubject == nil)
+        #expect(player.faceMorphPlaybacks.isEmpty)
+        #expect(player.rigSource() == nil)
+        #expect(player.playerLocomotion == nil)
+    }
+
+    @Test func vehicleCallsReachIdlesPackagesAndTheStreamer() {
+        let vehicles = VehicleWorldAdapter(game: host, stage: nil)
+        vehicles.evaluatePackage(Self.actor)
+        #expect(host.fakePackages.evaluateCalls == [Self.actor])
+        #expect(vehicles.vehicleFormID(of: Self.actor) == nil)
+        #expect(!vehicles.vehicleHasBone(Self.actor, named: "SaddleBone"))
+        #expect(!vehicles.isInKillMove(Self.actor))
+        vehicles.setPlayerAIDriven(true)
+        #expect(vehicles.isPlayerAIDriven)
+    }
+}
