@@ -58,7 +58,7 @@ public final class EffectGraphCoordinator {
     private(set) var models: [String: ModelState] = [:]
     private(set) var running: [SubGraphID: Running] = [:]
     /// The pose buffers an armour addon graph moved at the last step, by actor.
-    var overlaidPoses: [ReferenceKey: PlayerPoseBuffer] = [:]
+    var overlaidPoses: [ReferenceKey: SkinnedPoseBuffer] = [:]
     /// Off stops every effect graph; the effects still draw.
     public var isEnabled = true {
         didSet {

@@ -61,15 +61,14 @@ nonisolated extension CellSceneBuilder {
         instances.compactMap { instance in
             guard let asset = instance.animated else { return nil }
             let nodes = objectPoseRig(modelPath: instance.modelPath, asset: asset)
-            let pose = PlayerPoseBuffer()
-            let playback = PlayerAnimationPlayback(
-                skeleton: nodes?.skeleton ?? asset.skeleton, pose: pose, models: [instance.model]
+            let playback = SkinnedPosePlayback(
+                skeleton: nodes?.skeleton ?? asset.skeleton, models: [instance.model]
             )
             let parts = instance.model.meshes.compactMap { mesh in
                 mesh.skinning.map { TrapContactPart(skinning: $0, bounds: mesh.localBounds) }
             }
             let object = CellAnimatedObject(
-                reference: instance.formID, asset: asset, pose: pose,
+                reference: instance.formID, asset: asset, pose: playback.pose,
                 contactShape: TrapContactShape(boneNames: asset.skeleton.boneNames, parts: parts),
                 nodes: nodes, placement: instance.transform
             )

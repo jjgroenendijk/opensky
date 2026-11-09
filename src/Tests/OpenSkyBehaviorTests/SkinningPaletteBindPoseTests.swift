@@ -142,7 +142,7 @@ struct SkinningPaletteBindPoseTests {
     // MARK: - Rig
 
     /// The rig's own reference pose, composed through its parent chain and
-    /// keyed by bone name — exactly what `PlayerAnimationPlayback` writes.
+    /// keyed by bone name — exactly what `SkinnedPosePlayback` writes.
     private static func referencePoseWorlds() throws -> [String: float4x4] {
         let world = try SkeletonPoseMath.worldMatrices(
             skeleton: rig, localPoses: rig.referencePose

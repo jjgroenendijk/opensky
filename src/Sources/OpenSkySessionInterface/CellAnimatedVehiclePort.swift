@@ -5,6 +5,6 @@ public protocol CellAnimatedVehiclePort {
     associatedtype VehicleWheelRig: VehicleWheelRigPort
     var reference: UInt32 { get }
 
-    var pose: PlayerPoseBuffer { get }
+    var pose: SkinnedPoseBuffer { get }
     var rig: VehicleWheelRig { get }
 }

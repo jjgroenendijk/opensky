@@ -46,7 +46,7 @@ public final class PlayerCoordinator {
     /// `Actor.SetEyeTexture` on the player. It lasts until the body's 3D reloads.
     public var eyeTextureSet: FormID?
     /// The shown rigs' playbacks, which take the draw state each frame.
-    private var rigAnimations: [Bool: PlayerAnimationPlayback] = [:]
+    private var rigAnimations: [Bool: SkinnedPosePlayback] = [:]
     /// Why there is no body, when there is none.
     public private(set) var failureReason: String?
     /// Kept apart from `failureReason`: an install can have a working

@@ -14,7 +14,7 @@ extension FaceMorphCoordinator: FaceMorphPort {}
 extension HeadTrackingCoordinator: HeadTrackingPort {}
 extension IdleCoordinator: IdlePort {}
 extension NPCAnimationCoordinator: NPCAnimationPort {}
-extension PlayerAnimationPlayback: PlayerAnimationPlaybackPort {}
+extension SkinnedPosePlayback: SkinnedPosePlaybackPort {}
 extension VehicleCoordinator: VehiclePort {}
 extension VehicleCore: VehicleCorePort {}
 extension VehicleWheelRig: VehicleWheelRigPort {}

@@ -82,7 +82,7 @@ struct SequenceDoorTests {
         let rig = try Self.rig()
         let world = FakeDoorWorld()
         let first = CellSequenceDoor(
-            reference: 0x20, rig: rig, pose: PlayerPoseBuffer()
+            reference: 0x20, rig: rig, pose: SkinnedPoseBuffer()
         )
         world.doors = [first]
         let doors = SequenceDoorCoordinator(world: world)
@@ -104,7 +104,7 @@ struct SequenceDoorTests {
         #expect(leaves?.first?.columns.3 == SIMD4(0, 0, 50, 1))
 
         let rebuilt = CellSequenceDoor(
-            reference: 0x20, rig: rig, pose: PlayerPoseBuffer()
+            reference: 0x20, rig: rig, pose: SkinnedPoseBuffer()
         )
         world.doors = [rebuilt]
         #expect(doors.sync().isEmpty)

@@ -131,6 +131,23 @@ struct VehicleWheelsTests {
         #expect(simd_length(top - SIMD3(0, 1, 0)) < 0.001)
     }
 
+    @Test func aCartPosesThroughItsOwnBuffer() throws {
+        let file = try NIFFile(data: NIFFixture.file(
+            blocks: [
+                .init("NiNode", NIFFixture.niNode(children: [1])),
+                .init("NiNode", NIFFixture.niNode(
+                    prefix: NIFFixture.avObjectPrefix(nameIndex: 0, translation: [-70, -215, 50])
+                ))
+            ],
+            strings: ["WheelBackLeft"]
+        ))
+        let rig = try #require(try VehicleWheelRig(file: file))
+        let cart = CellAnimatedVehicle(reference: 0x700, rig: rig, pose: SkinnedPoseBuffer())
+        cart.pose.publish(rig.pose(VehicleWheelTurns()))
+        #expect(cart.reference == 0x700)
+        #expect(cart.pose.bones.count == 1)
+    }
+
     @Test func theFrontAxleSwivelsAndTheOuterWheelRollsFurther() {
         var core = VehicleCore()
         core.tow(

@@ -881,7 +881,8 @@ targets += domain(
     tests: [
         "OpenSkyEngineTesting", "OpenSkyFormatsTesting", "OpenSkyBehavior",
         "OpenSkyFormatsAnimation", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
-        "OpenSkyFormatsMesh", "OpenSkyWorldInterface", "OpenSkyActorPresentation"
+        "OpenSkyFormatsMesh", "OpenSkyWorldInterface", "OpenSkyActorPresentation",
+        "OpenSkyPlayer", "OpenSkyRendering"
     ]
 )
 targets += domain(

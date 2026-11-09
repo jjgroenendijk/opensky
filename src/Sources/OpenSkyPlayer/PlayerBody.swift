@@ -26,7 +26,7 @@ nonisolated public final class PlayerBody {
     public static let actorFormID = FormID(0)
 
     public let assembly: ActorAssembly<ActorRenderAsset>
-    public let animation: PlayerAnimationPlayback
+    public let animation: SkinnedPosePlayback
     /// Race, chargen, and expression morphs on the assembled head parts; empty for a
     /// baked head.
     public let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
@@ -40,7 +40,7 @@ nonisolated public final class PlayerBody {
 
     public init(
         assembly: ActorAssembly<ActorRenderAsset>,
-        animation: PlayerAnimationPlayback,
+        animation: SkinnedPosePlayback,
         faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:]
     ) {
         self.assembly = assembly

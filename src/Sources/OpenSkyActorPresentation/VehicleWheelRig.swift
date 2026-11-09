@@ -70,9 +70,9 @@ nonisolated public struct VehicleWheelRig: Sendable {
 nonisolated public struct CellAnimatedVehicle: Sendable {
     public let reference: UInt32
     public let rig: VehicleWheelRig
-    public let pose: PlayerPoseBuffer
+    public let pose: SkinnedPoseBuffer
 
-    public init(reference: UInt32, rig: VehicleWheelRig, pose: PlayerPoseBuffer) {
+    public init(reference: UInt32, rig: VehicleWheelRig, pose: SkinnedPoseBuffer) {
         self.reference = reference
         self.rig = rig
         self.pose = pose

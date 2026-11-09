@@ -117,7 +117,7 @@ public final class ActorGraphCoordinator {
     final class Running {
         let project: Project
         let instance: BehaviorGraphInstance
-        let pose = PlayerPoseBuffer()
+        let pose = SkinnedPoseBuffer()
         weak var playback: ActorAnimationPlayback?
         /// The drive's motion, and the motion the graph last heard about.
         var motion = ActorGraphMotion.still

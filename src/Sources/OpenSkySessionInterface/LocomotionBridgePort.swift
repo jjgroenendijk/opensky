@@ -11,7 +11,7 @@ public protocol LocomotionBridgePort: AnyObject {
     var isRunAllowed: Bool { get set }
     var isSprintAllowed: Bool { get set }
     @discardableResult func drainMountEvents() -> [String]
-    var pose: PlayerPoseBuffer { get }
+    var pose: SkinnedPoseBuffer { get }
     func raise(_ name: String)
     @discardableResult func raiseGraphEvent(named name: String) -> Bool
     var status: LocomotionStatus { get }

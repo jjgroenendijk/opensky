@@ -1,5 +1,5 @@
 // Env-gated player-locomotion drive over the user's install: the vanilla
-// player graph and body, bound through `PlayerPoseBuffer`, driven by
+// player graph and body, bound through `SkinnedPoseBuffer`, driven by
 // `WalkController` over real terrain through idle, walk, run, sprint, sneak,
 // jump, land and swim. Each state must be reached, pose distinctly, and move
 // the bone palettes. Needs Metal 4. Run with

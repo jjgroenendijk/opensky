@@ -33,7 +33,7 @@ private final class FakeDragonMountWorld: MountWorld {
     {
         PlayerMountDriveStart(
             mount: key, kind: kind, saddleBone: saddleBone, feet: SIMD3(0, 0, 0), yaw: 0,
-            graph: nil, pose: PlayerPoseBuffer(), configuration: .synthetic
+            graph: nil, pose: SkinnedPoseBuffer(), configuration: .synthetic
         )
     }
 

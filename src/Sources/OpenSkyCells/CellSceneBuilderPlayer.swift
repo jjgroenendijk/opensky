@@ -40,7 +40,7 @@ nonisolated extension CellSceneBuilder {
 
     public func makePlayerBody(
         skeleton: HKASkeleton,
-        pose: PlayerPoseBuffer,
+        pose: SkinnedPoseBuffer,
         equipped: [FormID]?,
         appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerBody, PlayerBodyError> {
@@ -54,7 +54,7 @@ nonisolated extension CellSceneBuilder {
 
     public func makePlayerFirstPersonRig(
         skeleton: HKASkeleton,
-        pose: PlayerPoseBuffer,
+        pose: SkinnedPoseBuffer,
         equipped: [FormID]?,
         appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerFirstPersonRig, PlayerBodyError> {

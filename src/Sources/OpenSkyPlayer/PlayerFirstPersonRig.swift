@@ -14,7 +14,7 @@ public import simd
 
 nonisolated public final class PlayerFirstPersonRig {
     public let assembly: ActorAssembly<ActorRenderAsset>
-    public let animation: PlayerAnimationPlayback
+    public let animation: SkinnedPosePlayback
     /// Index of `Camera1st [Cam1]` in the first-person rig, or nil when the
     /// skeleton does not declare it. Nil is a reportable fact about the
     /// install, not a crash: the arms then hang off the reference height.
@@ -23,7 +23,7 @@ nonisolated public final class PlayerFirstPersonRig {
     public private(set) var transform = matrix_identity_float4x4
     public private(set) var render: RenderScene
 
-    public init(assembly: ActorAssembly<ActorRenderAsset>, animation: PlayerAnimationPlayback) {
+    public init(assembly: ActorAssembly<ActorRenderAsset>, animation: SkinnedPosePlayback) {
         self.assembly = assembly
         self.animation = animation
         cameraBoneIndex = animation.skeleton.boneNames

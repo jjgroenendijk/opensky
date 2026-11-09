@@ -43,7 +43,7 @@ extension EffectGraphCoordinator {
     /// Hands each actor the bones its armour addon graphs posed; an actor whose addon
     /// graphs ended gets its own pose back.
     func poseArmorAddons() {
-        var overlays: [ReferenceKey: (pose: PlayerPoseBuffer, bones: [Int: HKABonePose])] = [:]
+        var overlays: [ReferenceKey: (pose: SkinnedPoseBuffer, bones: [Int: HKABonePose])] = [:]
         for id in running.keys.sorted() {
             guard
                 case let .armorAddon(actor, _) = id, let entry = running[id],
