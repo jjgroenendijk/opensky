@@ -7,7 +7,7 @@ import Synchronization
 
 /// The latest pose the behavior graph produced. An unchanged `revision` means no step ran
 /// since the last frame, so the consumer skips the compose-and-upload path.
-nonisolated public final class PlayerPoseBuffer: Sendable {
+nonisolated public final class SkinnedPoseBuffer: Sendable {
     nonisolated public struct Snapshot: Sendable {
         public var bones: [HKABonePose] = []
         public var revision = 0

@@ -218,7 +218,7 @@ extension MountWorldAdapter: MountWorld {
         let loan = game.actorGraphWorld.graphs.lend(key)
         return PlayerMountDriveStart(
             mount: key, kind: kind, saddleBone: saddleBone, feet: hold.feetPosition,
-            yaw: hold.yaw, graph: loan?.instance, pose: loan?.pose ?? PlayerPoseBuffer(),
+            yaw: hold.yaw, graph: loan?.instance, pose: loan?.pose ?? SkinnedPoseBuffer(),
             configuration: game.worldData?.mountMovementConfiguration ?? .synthetic
         )
     }

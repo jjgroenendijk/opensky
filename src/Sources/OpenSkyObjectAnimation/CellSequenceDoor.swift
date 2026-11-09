@@ -15,7 +15,7 @@ nonisolated public struct CellSequenceDoor: Sendable {
 
     public let reference: UInt32
     public let rig: SequenceDoorRig
-    public let pose: PlayerPoseBuffer
+    public let pose: SkinnedPoseBuffer
     /// The leaves plus the billboards and lag bones of the mesh, when it has any.
     public let nodes: EffectPoseRig?
     /// Where the door stands, so its billboards can turn to the camera.
@@ -23,7 +23,7 @@ nonisolated public struct CellSequenceDoor: Sendable {
     public let kind: Kind
 
     public init(
-        reference: UInt32, rig: SequenceDoorRig, pose: PlayerPoseBuffer,
+        reference: UInt32, rig: SequenceDoorRig, pose: SkinnedPoseBuffer,
         nodes: EffectPoseRig? = nil, placement: float4x4 = matrix_identity_float4x4,
         kind: Kind = .door
     ) {

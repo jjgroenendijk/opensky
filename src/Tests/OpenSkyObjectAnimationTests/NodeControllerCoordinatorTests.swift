@@ -48,7 +48,7 @@ struct NodeControllerCoordinatorTests {
         let rig = try #require(try NodeControllerRig(file: Self.file(flags: 0xC)))
         #expect(rig.skeleton.boneNames == ["Wheel"])
         let world = FakeNodeWorld()
-        let pose = PlayerPoseBuffer()
+        let pose = SkinnedPoseBuffer()
         world.meshes = [CellNodeAnimation(
             reference: 0x10, rig: rig, pose: pose, placement: matrix_identity_float4x4
         )]
@@ -78,7 +78,7 @@ struct NodeControllerCoordinatorTests {
         world.nodeControllerViewer = NIFBillboard.Viewer(
             eye: [100, 0, 50], forward: [-1, 0, 0], up: [0, 0, 1]
         )
-        let pose = PlayerPoseBuffer()
+        let pose = SkinnedPoseBuffer()
         world.meshes = [CellNodeAnimation(
             reference: 0x10, rig: rig, pose: pose,
             placement: MatrixMath.translation([0, 100, 0])
@@ -103,7 +103,8 @@ struct NodeControllerCoordinatorTests {
         let rig = try #require(try NodeControllerRig(file: Self.file(flags: 0xC)))
         let world = FakeNodeWorld()
         world.meshes = [CellNodeAnimation(
-            reference: 0x10, rig: rig, pose: PlayerPoseBuffer(), placement: matrix_identity_float4x4
+            reference: 0x10, rig: rig, pose: SkinnedPoseBuffer(),
+            placement: matrix_identity_float4x4
         )]
         let nodes = NodeControllerCoordinator(world: world)
         nodes.sync()

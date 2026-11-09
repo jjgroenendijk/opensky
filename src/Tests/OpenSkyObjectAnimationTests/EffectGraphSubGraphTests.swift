@@ -124,7 +124,7 @@ struct EffectGraphArmorAddonPoseTests {
     }
 
     @Test func anAddonGraphsBonesReachItsActorsPoseUntilItEnds() {
-        let pose = PlayerPoseBuffer()
+        let pose = SkinnedPoseBuffer()
         pose.publish([Self.rest, Self.rest])
         let world = FakeEffectWorld()
         let effects = EffectGraphCoordinator(world: world, files: { nil })

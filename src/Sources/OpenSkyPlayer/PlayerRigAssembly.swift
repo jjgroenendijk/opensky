@@ -24,11 +24,11 @@ public protocol PlayerRigSource: AnyObject {
 
 nonisolated extension PlayerBody {
     public convenience init(
-        rig: PlayerRenderRig, skeleton: HKASkeleton, pose: PlayerPoseBuffer
+        rig: PlayerRenderRig, skeleton: HKASkeleton, pose: SkinnedPoseBuffer
     ) {
         self.init(
             assembly: rig.assembly,
-            animation: PlayerAnimationPlayback(
+            animation: SkinnedPosePlayback(
                 skeleton: skeleton, pose: pose, models: rig.assembly.models.map(\.asset.model),
                 sheathNodes: rig.assembly.visual.sheathNodes
             ),
@@ -39,11 +39,11 @@ nonisolated extension PlayerBody {
 
 nonisolated extension PlayerFirstPersonRig {
     public convenience init(
-        rig: PlayerRenderRig, skeleton: HKASkeleton, pose: PlayerPoseBuffer
+        rig: PlayerRenderRig, skeleton: HKASkeleton, pose: SkinnedPoseBuffer
     ) {
         self.init(
             assembly: rig.assembly,
-            animation: PlayerAnimationPlayback(
+            animation: SkinnedPosePlayback(
                 skeleton: skeleton, pose: pose, models: rig.assembly.models.map(\.asset.model),
                 sheathNodes: rig.assembly.visual.sheathNodes
             )

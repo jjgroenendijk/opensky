@@ -7,7 +7,7 @@ public import simd
 nonisolated public struct CellAnimatedObject: Sendable {
     public let reference: UInt32
     public let asset: BehaviorProjectAsset
-    public let pose: PlayerPoseBuffer
+    public let pose: SkinnedPoseBuffer
     public let contactShape: TrapContactShape
     /// The graph's bones plus the billboards and lag bones of the mesh, when it has any.
     /// The pose buffer then holds this rig's model-frame bones, not the graph's.
@@ -16,7 +16,7 @@ nonisolated public struct CellAnimatedObject: Sendable {
     public let placement: float4x4
 
     public init(
-        reference: UInt32, asset: BehaviorProjectAsset, pose: PlayerPoseBuffer,
+        reference: UInt32, asset: BehaviorProjectAsset, pose: SkinnedPoseBuffer,
         contactShape: TrapContactShape = .empty, nodes: EffectPoseRig? = nil,
         placement: float4x4 = matrix_identity_float4x4
     ) {

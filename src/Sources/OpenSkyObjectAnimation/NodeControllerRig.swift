@@ -92,7 +92,7 @@ nonisolated public struct NodeControllerRig: Sendable {
 nonisolated public struct CellNodeAnimation: Sendable {
     public let reference: UInt32
     public let rig: NodeControllerRig
-    public let pose: PlayerPoseBuffer
+    public let pose: SkinnedPoseBuffer
     /// Where the cell placed the mesh; lag bones trail it and bone LOD measures from it.
     public let placement: float4x4
     /// The mesh's particle systems; an emitter below a moved node moves with it.
@@ -101,7 +101,7 @@ nonisolated public struct CellNodeAnimation: Sendable {
     public init(
         reference: UInt32,
         rig: NodeControllerRig,
-        pose: PlayerPoseBuffer,
+        pose: SkinnedPoseBuffer,
         placement: float4x4
     ) {
         self.reference = reference

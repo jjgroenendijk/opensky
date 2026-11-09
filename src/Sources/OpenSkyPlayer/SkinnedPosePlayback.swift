@@ -1,7 +1,7 @@
-// The graph-driven `RenderAnimation` for the player body. The graph steps on the 120 Hz
-// simulation clock in `LocomotionBridge.plan`, because it moves the capsule; this only
-// publishes that pose, so `update(at:)` ignores its time. `PlayerPoseBuffer` sits between
-// the two, so a rebuilt body reattaches to the running graph.
+// The `RenderAnimation` that publishes a behaviour graph's pose to skinned meshes: the
+// player body, effect models, vehicles, and animated objects. The graph steps on the
+// simulation clock elsewhere; this only publishes its pose, so `update(at:)` ignores its
+// time. `SkinnedPoseBuffer` sits between the two, so a rebuilt mesh reattaches to the graph.
 // See docs/engine/actor-animation.md.
 
 import OpenSkyBehavior
@@ -14,11 +14,11 @@ public import OpenSkyWorldInterface
 public import simd
 import Synchronization
 
-/// Drives one set of skinned meshes from a `PlayerPoseBuffer`. The player's instance is not
+/// Drives one set of skinned meshes from a `SkinnedPoseBuffer`. The player's instance is not
 /// in `RenderScene.animations`, because that list is evicted with its cell.
-nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
+nonisolated public final class SkinnedPosePlayback: RenderAnimation {
     public let skeleton: HKASkeleton
-    public let pose: PlayerPoseBuffer
+    public let pose: SkinnedPoseBuffer
     private let meshes: [RenderMesh]
     private let boneIndex: SkeletonBoneIndex
     /// The revision last composed, so an unchanged pose costs one comparison.
@@ -36,7 +36,7 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
     }
 
     public init(
-        skeleton: HKASkeleton, pose: PlayerPoseBuffer, models: [RenderModel],
+        skeleton: HKASkeleton, pose: SkinnedPoseBuffer = SkinnedPoseBuffer(), models: [RenderModel],
         sheathNodes: [String: String] = [:]
     ) {
         self.skeleton = skeleton

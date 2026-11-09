@@ -87,8 +87,8 @@ struct PlayerBodyAnimationTests {
     func theConformerWritesTheComposedPoseIntoThePalette() throws {
         let device = try #require(Self.device)
         let mesh = try Self.skinnedMesh(device: device)
-        let buffer = PlayerPoseBuffer()
-        let playback = PlayerAnimationPlayback(
+        let buffer = SkinnedPoseBuffer()
+        let playback = SkinnedPosePlayback(
             skeleton: Self.skeleton, pose: buffer, models: [mesh.model]
         )
 
@@ -118,8 +118,8 @@ struct PlayerBodyAnimationTests {
     func theSimulationClockDrivesTheConformerRatherThanTheWallClock() throws {
         let device = try #require(Self.device)
         let mesh = try Self.skinnedMesh(device: device)
-        let buffer = PlayerPoseBuffer()
-        let playback = PlayerAnimationPlayback(
+        let buffer = SkinnedPoseBuffer()
+        let playback = SkinnedPosePlayback(
             skeleton: Self.skeleton, pose: buffer, models: [mesh.model]
         )
         buffer.publish([Self.pose(SIMD3(1, 0, 0)), Self.pose(SIMD3(0, 0, 10))])
@@ -144,8 +144,8 @@ struct PlayerBodyAnimationTests {
     func theBindPoseResetIsReversible() throws {
         let device = try #require(Self.device)
         let mesh = try Self.skinnedMesh(device: device)
-        let buffer = PlayerPoseBuffer()
-        let playback = PlayerAnimationPlayback(
+        let buffer = SkinnedPoseBuffer()
+        let playback = SkinnedPosePlayback(
             skeleton: Self.skeleton, pose: buffer, models: [mesh.model]
         )
         buffer.publish([Self.pose(SIMD3(7, 0, 0)), Self.pose(SIMD3(0, 0, 10))])

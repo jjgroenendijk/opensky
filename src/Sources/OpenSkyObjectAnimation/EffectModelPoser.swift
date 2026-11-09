@@ -33,12 +33,12 @@ public final class EffectModelPoser: EffectModelPosing {
     /// A posed copy of one model, kept for the next effect of that model when its effect ends.
     final class Copy {
         let model: RenderModel
-        let pose = PlayerPoseBuffer()
-        let playback: PlayerAnimationPlayback
+        let pose = SkinnedPoseBuffer()
+        let playback: SkinnedPosePlayback
 
         init(model: RenderModel, skeleton: HKASkeleton) {
             self.model = model
-            playback = PlayerAnimationPlayback(skeleton: skeleton, pose: pose, models: [model])
+            playback = SkinnedPosePlayback(skeleton: skeleton, pose: pose, models: [model])
         }
     }
 

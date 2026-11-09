@@ -35,7 +35,7 @@ extension ActorGraphCoordinator {
     }
 
     /// Where the actor's graph publishes its pose; an armour addon's graph moves bones there.
-    public func pose(of actor: ReferenceKey) -> PlayerPoseBuffer? {
+    public func pose(of actor: ReferenceKey) -> SkinnedPoseBuffer? {
         running[actor]?.pose
     }
 
@@ -72,5 +72,5 @@ extension ActorGraphCoordinator {
 /// A graph lent to the player's mount drive, and the pose buffer its playback draws.
 public struct ActorGraphLoan {
     public let instance: BehaviorGraphInstance
-    public let pose: PlayerPoseBuffer
+    public let pose: SkinnedPoseBuffer
 }

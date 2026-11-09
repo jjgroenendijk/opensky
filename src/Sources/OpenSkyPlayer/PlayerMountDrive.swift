@@ -20,12 +20,12 @@ public struct PlayerMountDriveStart {
     public let yaw: Float
     /// The mount's graph, lent by the actor graphs, and the buffer its playback draws.
     public let graph: BehaviorGraphInstance?
-    public let pose: PlayerPoseBuffer
+    public let pose: SkinnedPoseBuffer
     public let configuration: PlayerMovementConfiguration
 
     public init(
         mount: ReferenceKey, kind: MountKind, saddleBone: String, feet: SIMD3<Float>,
-        yaw: Float, graph: BehaviorGraphInstance?, pose: PlayerPoseBuffer,
+        yaw: Float, graph: BehaviorGraphInstance?, pose: SkinnedPoseBuffer,
         configuration: PlayerMovementConfiguration
     ) {
         self.mount = mount

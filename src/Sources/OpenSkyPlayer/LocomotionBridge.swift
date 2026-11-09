@@ -32,12 +32,12 @@ nonisolated public final class LocomotionBridge {
     public var sampleWater: ((SIMD3<Float>) -> WaterReading?)?
     public var waterPushRace = WaterPushRace.normal
     /// The pose the last graph update produced, published here because only this steps
-    /// the graph, on the simulation clock (PlayerAnimationPlayback.swift).
-    public let pose: PlayerPoseBuffer
+    /// the graph, on the simulation clock (SkinnedPosePlayback.swift).
+    public let pose: SkinnedPoseBuffer
     /// The same, for the first-person rig. A separate buffer because the two
     /// graphs pose two different skeletons and a shared one would hand the
     /// arms the body's bones.
-    public let firstPersonPose = PlayerPoseBuffer()
+    public let firstPersonPose = SkinnedPoseBuffer()
 
     /// This frame's intent. The renderer writes it once per frame; every fixed
     /// step in that frame reads the same value.
@@ -118,7 +118,7 @@ nonisolated public final class LocomotionBridge {
         configuration: PlayerMovementConfiguration,
         graph: BehaviorGraphInstance? = nil,
         sampleWater: ((SIMD3<Float>) -> WaterReading?)? = nil,
-        pose: PlayerPoseBuffer = PlayerPoseBuffer()
+        pose: SkinnedPoseBuffer = SkinnedPoseBuffer()
     ) {
         self.pose = pose
         let events = LocomotionGraphEventQueue()

@@ -14,7 +14,7 @@ extension Renderer {
             scene.resetAnimationsToBindPose() + effects.scene.resetAnimationsToBindPose()
         }
         // The simulation steps the player's animation; this only publishes the pose and
-        // honours the same A/B toggle (PlayerAnimationPlayback.swift).
+        // honours the same A/B toggle (SkinnedPosePlayback.swift).
         lastAnimationUpdatedBoneCount = sceneBones
             + (frameInput.rigs.body?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)
             + (frameInput.rigs.arms?.publishAnimation(enabled: actorAnimationsEnabled) ?? 0)

@@ -71,7 +71,7 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
     nonisolated private struct GraphSource {
         let skeleton: HKASkeleton
         let boneIndex: SkeletonBoneIndex
-        let buffer: PlayerPoseBuffer
+        let buffer: SkinnedPoseBuffer
         var revision: Int?
         var pose: SkeletonPose?
 
@@ -201,7 +201,7 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
 
     /// Hands the pose to the actor's behaviour graph: `pose` is what the graph publishes,
     /// in the bone order of `skeleton`.
-    public func attachGraph(skeleton: HKASkeleton, pose: PlayerPoseBuffer) {
+    public func attachGraph(skeleton: HKASkeleton, pose: SkinnedPoseBuffer) {
         let source = GraphSource(
             skeleton: skeleton, boneIndex: SkeletonBoneIndex(names: skeleton.boneNames),
             buffer: pose

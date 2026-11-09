@@ -50,9 +50,9 @@ public struct SubGraphCharacter {
 /// The actor's skeleton and the buffer its own graph publishes its pose to.
 public struct SubGraphActorRig {
     public let skeleton: BehaviorSkeleton
-    public let pose: PlayerPoseBuffer
+    public let pose: SkinnedPoseBuffer
 
-    public init(skeleton: BehaviorSkeleton, pose: PlayerPoseBuffer) {
+    public init(skeleton: BehaviorSkeleton, pose: SkinnedPoseBuffer) {
         self.skeleton = skeleton
         self.pose = pose
     }

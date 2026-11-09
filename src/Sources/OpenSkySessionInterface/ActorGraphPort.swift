@@ -10,7 +10,7 @@ public protocol ActorGraphPort: AnyObject {
     var footIk: Bool { get set }
     func instance(of actor: ReferenceKey) -> BehaviorGraphInstance?
     func movementStateName(of actor: ReferenceKey) -> String?
-    func pose(of actor: ReferenceKey) -> PlayerPoseBuffer?
+    func pose(of actor: ReferenceKey) -> SkinnedPoseBuffer?
     @discardableResult func raise(_ event: String, on actor: ReferenceKey) -> Bool
     func readout(for actor: ReferenceKey) -> ActorGraphReadout?
     func setMotion(_ motion: ActorGraphMotion, for actor: ReferenceKey)
