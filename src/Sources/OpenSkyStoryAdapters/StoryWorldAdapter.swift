@@ -8,7 +8,6 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 public import OpenSkyConditions
 import OpenSkyCrime
 public import OpenSkyDialogue
@@ -16,15 +15,11 @@ import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 public import OpenSkyQuests
 public import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -48,7 +43,8 @@ public protocol StoryWorldHost: AnyObject {
 }
 
 public final class StoryWorldAdapter {
-    public unowned let game: any StoryWorldHost
+    public let game: any StoryWorldHost
+    public let state = StoryPartState()
     /// Quests the session-start pass started, whose stages wait for one script attach.
     private var deferredStarts: [FormID]?
     var sessionStartLists: [PluginQuestList] = []
@@ -57,14 +53,6 @@ public final class StoryWorldAdapter {
     private var framesSinceLocationCheck = 0
     /// Frames between location checks, because each builds a condition context.
     public static let locationCheckInterval = 30
-    /// Voice file lengths for scene lines. Nil without game data.
-    public var voiceTimer: SceneVoiceTimer?
-    /// Voice file paths for scene and menu lines. Nil without game data.
-    public var voiceLocator: VoiceLineLocator?
-    /// Lines waiting out `fSpeechDelay`, and the ambient speech pass's frame count.
-    public var delayedLines: [DelayedLine] = []
-    public var framesSinceAmbientSpeech = 0
-    public var lastAmbientSpeechSeconds: Double?
 
     public var scenes: any ScenePort {
         game.scenes
@@ -81,27 +69,20 @@ public final class StoryWorldAdapter {
 
     public var ambientTalk: StoryAmbientTalkAdapter {
         StoryAmbientTalkAdapter(
-            owner: self,
-            game: ambientTalkHost
+            game: ambientTalkHost, state: state, sceneCast: sceneCast, sceneLines: sceneLines
         )
     }
 
     public var socialSearch: StorySocialSearchAdapter {
-        StorySocialSearchAdapter(
-            owner: self,
-            game: socialSearchHost
-        )
+        StorySocialSearchAdapter(game: socialSearchHost, sceneCast: sceneCast)
     }
 
     public var sceneLines: StorySceneLinesAdapter {
-        StorySceneLinesAdapter(
-            owner: self,
-            game: sceneLinesHost
-        )
+        StorySceneLinesAdapter(game: sceneLinesHost, state: state, sceneCast: sceneCast)
     }
 
     public var sceneCast: StorySceneCastAdapter {
-        StorySceneCastAdapter(owner: self, game: sceneCastHost)
+        StorySceneCastAdapter(game: sceneCastHost)
     }
 
     public init(game: some StoryWorldHost & StoryAmbientTalkHost & StorySocialSearchHost &
@@ -234,12 +215,7 @@ extension StoryWorldAdapter: QuestStarting {
 extension StoryWorldAdapter: StoryEventReporting {
     /// An event with no `L1` takes the location of its `R1`, or the player's.
     public func reportStoryEvent(_ event: StoryEventData) {
-        var event = event
-        if event.location1 == nil {
-            event.location1 = game.runtimeState.conditionContext().data
-                .currentLocation(of: event.actor1 ?? .player)
-        }
-        storyManager.fire(event)
+        storyManager.fireLocated(event) { [game] in game.runtimeState.conditionContext() }
     }
 }
 

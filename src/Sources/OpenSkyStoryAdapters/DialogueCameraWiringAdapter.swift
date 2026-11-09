@@ -2,26 +2,21 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
-import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -41,8 +36,7 @@ public protocol DialogueCameraWiringHost: AnyObject {
 
 /// Part of `DialogueWorldAdapter`, over its own narrow host.
 public struct DialogueCameraWiringAdapter {
-    public unowned let owner: DialogueWorldAdapter
-    public unowned let game: any DialogueCameraWiringHost
+    public let game: any DialogueCameraWiringHost
 }
 
 extension DialogueCameraWiringAdapter {}

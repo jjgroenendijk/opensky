@@ -2,26 +2,21 @@ import OpenSkyActorPresentation
 public import OpenSkyActorsInterface
 import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogue
 public import OpenSkyDialogueInterface
-import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -42,12 +37,12 @@ public protocol DialogueOutcomesHost: AnyObject {
     var streamer: (any CellStreamerPort)? { get }
     var worldData: WorldDataStores? { get }
     var worldState: any WorldStateStorePort { get }
+    var scripts: any ScriptPort { get }
 }
 
 /// Part of `DialogueWorldAdapter`, over its own narrow host.
 public struct DialogueOutcomesAdapter {
-    public unowned let owner: DialogueWorldAdapter
-    public unowned let game: any DialogueOutcomesHost
+    public let game: any DialogueOutcomesHost
 }
 
 extension DialogueOutcomesAdapter {
@@ -77,7 +72,7 @@ extension DialogueOutcomesAdapter {
             case let .releaseFacing(actor): game.streamer?.releaseActorFacing(actor)
             case let .speechChallengeWon(challenge, speaker):
                 speechChallengeWon(challenge, speaker: speaker)
-            case let .spokeToPlayer(speaker): owner.spokeToPlayer(speaker)
+            case let .spokeToPlayer(speaker): spokeToPlayer(speaker)
             }
         }
     }
@@ -89,5 +84,11 @@ extension DialogueOutcomesAdapter {
         game.storyWorld.reportStoryEvent(event)
         game.worldState.incrementMiscStat(challenge.statName)
         game.progression.reportSpeechCheckWon()
+    }
+
+    func spokeToPlayer(_ speaker: ReferenceKey) {
+        game.scripts.bridge?.updateScriptedState(of: speaker) {
+            $0.setFlag(ScriptedStateName.talkedToPlayer, true)
+        }
     }
 }

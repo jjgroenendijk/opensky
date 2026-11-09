@@ -12,8 +12,8 @@ import OpenSkyInventory
 import OpenSkyLaunch
 import OpenSkyLoading
 import OpenSkyMagic
-public import OpenSkyMenus
-import OpenSkyMenusInterface
+import OpenSkyMenus
+public import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyProgression
 import OpenSkyProgressionInterface

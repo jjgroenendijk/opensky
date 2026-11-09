@@ -3,7 +3,6 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDialogue
@@ -11,15 +10,11 @@ public import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 public import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -38,12 +33,14 @@ public protocol StorySceneLinesHost: AnyObject {
     var renderer: (any RendererPort)? { get }
     var streamer: (any CellStreamerPort)? { get }
     var subtitles: any SubtitlePort { get }
+    var idles: any IdlePort { get }
 }
 
 /// Part of `StoryWorldAdapter`, over its own narrow host.
 public struct StorySceneLinesAdapter {
-    public unowned let owner: StoryWorldAdapter
-    public unowned let game: any StorySceneLinesHost
+    public let game: any StorySceneLinesHost
+    public let state: StoryPartState
+    public let sceneCast: StorySceneCastAdapter
 }
 
 extension StorySceneLinesAdapter {
@@ -58,7 +55,7 @@ extension StorySceneLinesAdapter {
         }
         let texts = responseTexts(of: info)
         let speech = game.dialogue.speechTimers
-        let seconds = owner.voiceTimer.map {
+        let seconds = state.voiceTimer.map {
             $0.duration(
                 of: info, voiceType: voiceTypeName(of: speaker), texts: texts, speech: speech
             )
@@ -88,7 +85,7 @@ extension StorySceneLinesAdapter {
     /// without game data or a known voice type.
     public func voicePaths(of info: FormID, speaker: ReferenceKey) -> [String] {
         guard
-            let voiceLocator = owner.voiceLocator,
+            let voiceLocator = state.voiceLocator,
             let record = voiceLocator.dialogue.info(info),
             let voiceType = voiceTypeName(of: speaker)
         else { return [] }
@@ -128,8 +125,8 @@ extension StorySceneLinesAdapter {
             startLine(info: id, speaker: speaker, lookAt: lookAt, seconds: seconds)
             return
         }
-        owner.delayedLines.append(DelayedLine(
-            due: owner.sceneSeconds + delay, info: id, speaker: speaker, lookAt: lookAt,
+        state.delayedLines.append(DelayedLine(
+            due: sceneCast.sceneSeconds + delay, info: id, speaker: speaker, lookAt: lookAt,
             seconds: max(seconds - Float(delay), 0)
         ))
     }
@@ -157,12 +154,30 @@ extension StorySceneLinesAdapter {
                 now: game.renderer?.animationTime ?? 0, seconds: seconds
             )
         }
-        owner.ambientTalk.playResponseIdles(of: id, speaker: speaker, listener: lookAt)
+        playResponseIdles(of: id, speaker: speaker, listener: lookAt)
         let text = info
             .map { responseTexts(of: $0).compactMap(\.self).joined(separator: " ") } ?? ""
         game.subtitles.say(
             text, kind: .general, seconds: Double(seconds),
             now: Date().timeIntervalSinceReferenceDate
         )
+    }
+
+    public func playResponseIdles(of info: FormID, speaker: ReferenceKey, listener: ReferenceKey?) {
+        guard
+            let dialogue = game.dialogue.runtime?.dialogue,
+            let source = dialogue.responseSource(ofInfo: info)
+        else { return }
+        let resolver = dialogue.sourceResolver(ofInfo: source.formID)
+        let responses = source.responses
+        if let idle = responses.lazy.compactMap(\.speakerIdle).first.flatMap(resolver.resolve) {
+            game.idles.fireIdle(idle, on: speaker, ignoringConditions: true)
+        }
+        if
+            let listener, listener != speaker,
+            let idle = responses.lazy.compactMap(\.listenerIdle).first.flatMap(resolver.resolve)
+        {
+            game.idles.fireIdle(idle, on: listener, ignoringConditions: true)
+        }
     }
 }

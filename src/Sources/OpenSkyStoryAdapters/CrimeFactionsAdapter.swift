@@ -1,25 +1,18 @@
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyCrime
 import OpenSkyCrimeInterface
 import OpenSkyDialogue
-import OpenSkyFactions
 public import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMenus
-import OpenSkyPerception
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyQuestsInterface
 import OpenSkyRendering
-import OpenSkyScripting
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -34,7 +27,7 @@ public protocol CrimeFactionsHost: AnyObject {
 
 /// Part of `CrimeWorldAdapter`, over its own narrow host.
 public struct CrimeFactionsAdapter {
-    public unowned let game: any CrimeFactionsHost
+    public let game: any CrimeFactionsHost
 }
 
 extension CrimeFactionsAdapter {

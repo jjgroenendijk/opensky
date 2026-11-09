@@ -64,11 +64,13 @@ runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI
 | 11. Interface exports | An Interface publicly imports only lower modules and other Interfaces, and no file uses `@_exported import` | Gate |
 | 12. Used dependencies | Every declared dependency of a target is imported by at least one of its files | Gate |
 | 13. Stable dependencies | A module under `src/Sources/` depends only on a module whose instability is not higher than its own, or on an Interface | Gate |
-| 14. Adapter modules | An adapter module depends on lower modules, Interfaces, `OpenSkyWorld` and its domains, and its own feature's implementation, never on another feature's implementation | Gate, for the modules not in `ADAPTERS_PENDING` |
+| 14. Adapter modules | An adapter module depends on lower modules, Interfaces, `OpenSkyWorld` and its domains, and the implementations of its own feature group, never on another feature's implementation | Gate, for the modules not in `ADAPTERS_PENDING` |
 
 Rule 14 keeps the rule that features meet only through Interfaces true inside the adapter
-modules too. `ADAPTER_OWNER` in `module-graph.sh` names each module's own feature, for
-example `OpenSkyProgression` for `OpenSkyProgressionAdapters`. The world feature and its domains
+modules too. `ADAPTER_OWNER` in `module-graph.sh` names each module's feature group: one
+feature, such as `OpenSkyProgression` for `OpenSkyProgressionAdapters`, or several that have no
+adapter module of their own, such as `OpenSkyCrime`, `OpenSkyDialogue`, and `OpenSkyQuests` for
+`OpenSkyStoryAdapters`. The world feature and its domains
 are allowed, because they are the running session every adapter connects to: the session's
 loaded data, `WorldDataStores`, lives in `OpenSkyCells`, and the wiring steps take
 `GameSession`, whose members are domain types such as `WalkController`. The
