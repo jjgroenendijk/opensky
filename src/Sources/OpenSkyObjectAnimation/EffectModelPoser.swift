@@ -5,12 +5,11 @@
 import Foundation
 import OpenSkyActorPresentation
 public import OpenSkyEffects
-import OpenSkyFormatsAnimation
+public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsMesh
 public import OpenSkyGameData
-import OpenSkyPlayer
-import OpenSkyRenderCore
+public import OpenSkyRenderCore
 public import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd
@@ -34,11 +33,11 @@ public final class EffectModelPoser: EffectModelPosing {
     final class Copy {
         let model: RenderModel
         let pose = SkinnedPoseBuffer()
-        let playback: SkinnedPosePlayback
+        let playback: any RenderAnimation
 
-        init(model: RenderModel, skeleton: HKASkeleton) {
+        init(model: RenderModel, skeleton: HKASkeleton, makePlayback: MakePlayback) {
             self.model = model
-            playback = SkinnedPosePlayback(skeleton: skeleton, pose: pose, models: [model])
+            playback = makePlayback(skeleton, pose, model)
         }
     }
 
@@ -76,12 +75,21 @@ public final class EffectModelPoser: EffectModelPosing {
     /// Off draws every effect model as authored.
     public var isEnabled = true
 
+    /// Builds the playback that publishes a copy's pose. The composition root passes the
+    /// player module's skinned playback, which this module does not import.
+    public typealias MakePlayback = (HKASkeleton, SkinnedPoseBuffer, RenderModel)
+        -> any RenderAnimation
+
+    private let makePlayback: MakePlayback
+
     public init(
         files: @escaping () -> (any GameFileSource)?,
         meshes: @escaping () -> MeshLibrary?,
         graphs: EffectGraphCoordinator,
-        viewer: @escaping () -> NIFBillboard.Viewer? = { nil }
+        viewer: @escaping () -> NIFBillboard.Viewer? = { nil },
+        makePlayback: @escaping MakePlayback
     ) {
+        self.makePlayback = makePlayback
         self.files = files
         self.meshes = meshes
         self.graphs = graphs
@@ -197,7 +205,7 @@ public final class EffectModelPoser: EffectModelPosing {
             return nil
         }
         nextCopy &+= 1
-        return Copy(model: model, skeleton: rig.skeleton)
+        return Copy(model: model, skeleton: rig.skeleton, makePlayback: makePlayback)
     }
 
     private func nodeRig(forModel path: String) -> RigState? {
