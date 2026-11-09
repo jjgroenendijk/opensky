@@ -1,5 +1,4 @@
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -25,8 +24,9 @@ public protocol ScriptPhysicsBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptPhysicsBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
-    public unowned let game: any ScriptPhysicsBindingsHost
+    public let game: any ScriptPhysicsBindingsHost
+    public let state: ScriptPartState
+    public let nodeBindings: ScriptNodeBindingsAdapter
 }
 
 extension ScriptPhysicsBindingsAdapter {
@@ -90,9 +90,9 @@ extension ScriptPhysicsBindingsAdapter {
 
     /// Pins `end` where `anchor`'s node and offset sit, once that model is read.
     private func pin(_ end: PhysicsLinkEnd, to anchor: PhysicsLinkEnd) -> PapyrusNativeResult {
-        guard let nodes = owner.modelNodes else { return .returned(.boolean(false)) }
-        let place: (simd_float4x4?) -> PapyrusValue = { [weak owner] node in
-            guard owner != nil, let node else { return .boolean(false) }
+        guard let nodes = state.modelNodes else { return .returned(.boolean(false)) }
+        let place: (simd_float4x4?) -> PapyrusValue = { node in
+            guard let node else { return .boolean(false) }
             let point = node * SIMD4(anchor.offset, 1)
             let pin = PhysicsPin(end: end, partner: anchor, point: SIMD3(point.x, point.y, point.z))
             let pinned = game.streamer?.dynamicBodies.body(for: end.reference) != nil
@@ -100,7 +100,7 @@ extension ScriptPhysicsBindingsAdapter {
                 : game.ragdoll.runtime?.addPin(pin) ?? false
             return .boolean(pinned)
         }
-        switch owner.nodeBindings.nodeTransform(
+        switch nodeBindings.nodeTransform(
             of: anchor.reference,
             named: anchor.node,
             nodes: nodes,

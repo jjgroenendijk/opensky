@@ -4,35 +4,26 @@
 
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
-public import OpenSkyAIPackages
+import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyEffects
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyGameData
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 public import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
-public import OpenSkyWeather
+import OpenSkyWeather
 public import OpenSkyWorld
 import OpenSkyWorldInterface
 public import OpenSkyWorldState
@@ -56,20 +47,8 @@ public protocol ScriptWorldHost: AnyObject {
 }
 
 public final class ScriptWorldAdapter {
-    public unowned let game: any ScriptWorldHost
-    /// Each model's node origins in model space, keyed by lowercased node name.
-    public var modelNodes: AssetLoader<String, [String: PosedBone]>?
-    /// Node lookups that wait for their model to load.
-    public var nodeWaits: [ModelNodeWait] = []
-    public var nextNodeToken = ModelNodeWait.firstToken
-    /// `Sound.PlayAndWait` answers the scheduler has not taken yet.
-    public var soundWaitAnswers: [UInt64: Bool] = [:]
-    public var pathWaits = ScriptPathWaits()
-    /// `PathToReference` answers the scheduler has not taken yet.
-    public var pathWaitAnswers: [UInt64: Bool] = [:]
-
-    /// The session's weather. The composition root sets it, so the host stays port-only.
-    public var weather: () -> WeatherSystem? = { nil }
+    public let game: any ScriptWorldHost
+    public let state = ScriptPartState()
 
     public let actorBindingsHost: any ScriptActorBindingsHost
     public let perkBindingsHost: any ScriptPerkBindingsHost
@@ -84,63 +63,49 @@ public final class ScriptWorldAdapter {
 
     public var actorBindings: ScriptActorBindingsAdapter {
         ScriptActorBindingsAdapter(
-            owner: self,
-            game: actorBindingsHost
+            game: actorBindingsHost, skyBindings: skyBindings, physicsBindings: physicsBindings
         )
     }
 
     public var perkBindings: ScriptPerkBindingsAdapter {
-        ScriptPerkBindingsAdapter(game: perkBindingsHost
-        )
+        ScriptPerkBindingsAdapter(game: perkBindingsHost)
     }
 
     public var sessionBindings: ScriptSessionBindingsAdapter {
         ScriptSessionBindingsAdapter(
-            owner: self,
-            game: sessionBindingsHost
+            game: sessionBindingsHost, state: state, playerBindings: playerBindings,
+            referenceBindings: referenceBindings, soundBindings: soundBindings,
+            nodeBindings: nodeBindings
         )
     }
 
     public var playerBindings: ScriptPlayerBindingsAdapter {
-        ScriptPlayerBindingsAdapter(
-            owner: self,
-            game: playerBindingsHost
-        )
+        ScriptPlayerBindingsAdapter(game: playerBindingsHost, physicsBindings: physicsBindings)
     }
 
     public var referenceBindings: ScriptReferenceBindingsAdapter {
-        ScriptReferenceBindingsAdapter(
-            owner: self,
-            game: referenceBindingsHost
-        )
+        ScriptReferenceBindingsAdapter(game: referenceBindingsHost, nodeBindings: nodeBindings)
     }
 
     public private(set) lazy var soundBindings = ScriptSoundBindingsAdapter(
-        owner: self,
-        game: soundBindingsHost
+        game: soundBindingsHost, state: state
     )
     public var physicsBindings: ScriptPhysicsBindingsAdapter {
         ScriptPhysicsBindingsAdapter(
-            owner: self,
-            game: physicsBindingsHost
+            game: physicsBindingsHost, state: state, nodeBindings: nodeBindings
         )
     }
 
     public var nodeBindings: ScriptNodeBindingsAdapter {
-        ScriptNodeBindingsAdapter(
-            owner: self,
-            game: nodeBindingsHost
-        )
+        ScriptNodeBindingsAdapter(game: nodeBindingsHost, state: state)
     }
 
     public private(set) lazy var skyBindings = ScriptSkyBindingsAdapter(
-        owner: self,
-        game: skyBindingsHost
+        game: skyBindingsHost, state: state
     )
     public var featureBindings: ScriptFeatureBindingsAdapter {
         ScriptFeatureBindingsAdapter(
-            owner: self,
-            game: featureBindingsHost
+            game: featureBindingsHost, skyBindings: skyBindings, soundBindings: soundBindings
         )
     }
 

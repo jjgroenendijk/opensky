@@ -1,26 +1,17 @@
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAIPackages
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
@@ -50,8 +41,9 @@ public protocol ScriptFeatureBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptFeatureBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
-    public unowned let game: any ScriptFeatureBindingsHost
+    public let game: any ScriptFeatureBindingsHost
+    public let skyBindings: ScriptSkyBindingsAdapter
+    public let soundBindings: ScriptSoundBindingsAdapter
 }
 
 extension ScriptFeatureBindingsAdapter {
@@ -74,24 +66,21 @@ extension ScriptFeatureBindingsAdapter {
         seams.itemNotices = ItemNoticeTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         seams.effectPresenter = game.effectsWorld
-        seams.weather = owner.skyBindings
-        seams.music = owner.soundBindings
+        seams.weather = skyBindings
+        seams.music = soundBindings
         return seams
     }
 
     /// Without a QUST index every `Quest` native fails with
     /// `PapyrusQuestBridgeError.noQuestData`.
-    private func quests(provider: WorldDataStores, worldState: WorldStateStore) -> QuestRuntime? {
-        guard let store = provider.questStore else { return nil }
-        var runtime = QuestRuntime(
-            store: worldState,
-            quests: store,
-            locations: provider.locationStore
-        )
-        runtime.referenceSearch = { [weak game] in game?.storyWorld.questReferenceSearch() }
-        runtime.referenceCreator = { [weak game] base, anchor in
-            game?.storyWorld.createQuestReference(base, at: anchor)
+    private func quests(
+        provider: WorldDataStores,
+        worldState: WorldStateStore
+    ) -> (any QuestAccess)? {
+        provider.questStore.map {
+            game.storyWorld.questAccess(
+                store: worldState, quests: $0, locations: provider.locationStore
+            )
         }
-        return runtime
     }
 }

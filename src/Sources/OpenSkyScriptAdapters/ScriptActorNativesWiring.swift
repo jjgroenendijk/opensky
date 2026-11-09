@@ -1,28 +1,19 @@
 // `ScriptActorBindingsAdapter` joins the started session: what `wireActorNatives` registered.
 
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
-import OpenSkyCrime
 import OpenSkyEffects
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
 import OpenSkyMagicInterface
-import OpenSkyMenus
 import OpenSkyMenusInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
@@ -65,8 +56,8 @@ public struct ScriptActorNativesWiring {
             let body = SIMD3<Float>(0, 0, PlayerCapsule.standard.torsoHeight)
             return game?.aiWorld.lightLevel(at: feet + body) ?? 1
         }
-        bridge.sessionNatives.cellFog = { [weak owner = adapter.owner] cell, change in
-            owner?.skyBindings.changeFog(change, in: cell) ?? false
+        bridge.sessionNatives.cellFog = { [sky = adapter.skyBindings] cell, change in
+            sky.changeFog(change, in: cell)
         }
         bridge.sessionNatives.havokMass = { [weak game = adapter.game] key in
             if let body = game?.streamer?.dynamicBodies.body(for: key) {
@@ -75,9 +66,9 @@ public struct ScriptActorNativesWiring {
             return game?.ragdoll.runtime?.world.ragdolls.first { $0.key == key }?
                 .instance.bodies.reduce(0) { $0 + $1.definition.mass }
         }
-        let owner = adapter.owner
-        bridge.sessionNatives.publishTranslationPoses = { [weak owner, weak bridge] poses in
-            owner?.physicsBindings.publishTranslations(poses, moves: bridge?.translations ?? [:])
+        let physics = adapter.physicsBindings
+        bridge.sessionNatives.publishTranslationPoses = { [weak bridge] poses in
+            physics.publishTranslations(poses, moves: bridge?.translations ?? [:])
         }
         bridge.perceptionNatives.livePosition = { [weak game = adapter.game] key in
             guard let game else { return nil }

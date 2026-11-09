@@ -9,7 +9,6 @@ import OpenSkyFormatsMesh
 public import OpenSkyGameData
 import OpenSkyNavigation
 import OpenSkyObjectAnimation
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRenderCore
@@ -50,8 +49,8 @@ public protocol ScriptNodeBindingsHost: AnyObject {
 
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptNodeBindingsAdapter {
-    public unowned let owner: ScriptWorldAdapter
-    public unowned let game: any ScriptNodeBindingsHost
+    public let game: any ScriptNodeBindingsHost
+    public let state: ScriptPartState
 }
 
 extension ScriptNodeBindingsAdapter {
@@ -60,10 +59,10 @@ extension ScriptNodeBindingsAdapter {
         nodes: AssetLoader<String, [String: PosedBone]>,
         then: @escaping (simd_float4x4?) -> PapyrusValue
     ) -> PapyrusNodeAnswer {
-        guard let state = game.scripts.bridge?.referenceState(for: key) else { return .missing }
+        guard let reference = game.scripts.bridge?.referenceState(for: key) else { return .missing }
         let toWorld = MatrixMath.placement(
-            position: state.transform.position, rotation: state.transform.rotation,
-            scale: state.transform.scale
+            position: reference.transform.position, rotation: reference.transform.rotation,
+            scale: reference.transform.scale
         )
         if let posed = posedNode(of: key, named: name) {
             return .found(toWorld * posed.model)
@@ -77,9 +76,9 @@ extension ScriptNodeBindingsAdapter {
         case .failed:
             return .missing
         case .loading:
-            let token = owner.nextNodeToken
-            owner.nextNodeToken += 1
-            owner.nodeWaits.append(ModelNodeWait(
+            let token = state.nextNodeToken
+            state.nextNodeToken += 1
+            state.nodeWaits.append(ModelNodeWait(
                 token: token, path: path, node: name.lowercased(), toWorld: toWorld, then: then
             ))
             return .loading(token: token)
@@ -90,17 +89,17 @@ extension ScriptNodeBindingsAdapter {
     public func readyNode(
         of key: ReferenceKey, named name: String
     ) -> (local: simd_float4x4, world: simd_float4x4)? {
-        guard let state = game.scripts.bridge?.referenceState(for: key) else { return nil }
+        guard let reference = game.scripts.bridge?.referenceState(for: key) else { return nil }
         let toWorld = MatrixMath.placement(
-            position: state.transform.position, rotation: state.transform.rotation,
-            scale: state.transform.scale
+            position: reference.transform.position, rotation: reference.transform.rotation,
+            scale: reference.transform.scale
         )
         if let posed = posedNode(of: key, named: name) {
             return (posed.local, toWorld * posed.model)
         }
         guard
             let path = game.streamer?.placedRecords?.baseModelPath(for: key),
-            case let .ready(transforms)? = owner.modelNodes?.state(of: path),
+            case let .ready(transforms)? = state.modelNodes?.state(of: path),
             let rest = transforms[name.lowercased()]
         else { return nil }
         return (rest.local, toWorld * rest.model)
@@ -128,22 +127,22 @@ extension ScriptNodeBindingsAdapter {
     /// Runs each waiting lookup whose model is in, then hands its answer to the
     /// scheduler, which takes it once the waiting call is queued.
     func answerNodeWaits() {
-        guard let nodes = owner.modelNodes, !owner.nodeWaits.isEmpty else { return }
-        for index in owner.nodeWaits.indices where owner.nodeWaits[index].answer == nil {
-            let wait = owner.nodeWaits[index]
+        guard let nodes = state.modelNodes, !state.nodeWaits.isEmpty else { return }
+        for index in state.nodeWaits.indices where state.nodeWaits[index].answer == nil {
+            let wait = state.nodeWaits[index]
             switch nodes.state(of: wait.path) {
             case let .ready(transforms):
-                owner.nodeWaits[index].answer = wait.then(
+                state.nodeWaits[index].answer = wait.then(
                     transforms[wait.node].map { wait.toWorld * $0.model }
                 )
             case .failed:
-                owner.nodeWaits[index].answer = wait.then(nil)
+                state.nodeWaits[index].answer = wait.then(nil)
             case .loading:
                 continue
             }
         }
         guard let scheduler = game.scripts.runtime?.scheduler else { return }
-        owner.nodeWaits.removeAll { wait in
+        state.nodeWaits.removeAll { wait in
             guard let answer = wait.answer else { return false }
             return scheduler.answer(wait.token, returning: answer)
         }
@@ -165,14 +164,14 @@ extension ScriptNodeBindingsAdapter {
     }
 
     public func answerPathWaits() {
-        if !owner.pathWaits.isEmpty, let streamer = game.streamer {
-            owner.pathWaitAnswers
-                .merge(owner.pathWaits.settle(streamer.npcMovementReadouts())) { first, _ in
+        if !state.pathWaits.isEmpty, let streamer = game.streamer {
+            state.pathWaitAnswers
+                .merge(state.pathWaits.settle(streamer.npcMovementReadouts())) { first, _ in
                     first
                 }
         }
         guard let scheduler = game.scripts.runtime?.scheduler else { return }
-        owner.pathWaitAnswers = owner.pathWaitAnswers.filter { token, arrived in
+        state.pathWaitAnswers = state.pathWaitAnswers.filter { token, arrived in
             !scheduler.answer(token, returning: .boolean(arrived))
         }
     }
