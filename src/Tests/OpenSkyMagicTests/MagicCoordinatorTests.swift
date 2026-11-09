@@ -121,8 +121,9 @@ struct MagicCoordinatorTests {
         let spells = coordinator.magicMenuSpells
         #expect(spells.map(\.name) == coordinator.playerKnownSpells().map(\.displayName))
         #expect(spells.map(\.isReadied) == [false])
-        coordinator.readyKnownSpell(at: 0, in: .right)
+        #expect(!coordinator.readyKnownSpellLine(at: 0, in: .right).isEmpty)
         #expect(coordinator.magicMenuSpells.map(\.isReadied) == [true])
+        #expect(coordinator.readBookLine(FormID(0x0700)) == nil)
         #expect(MagicCoordinator(world: FakeMagicWorld()).magicMenuSpells.isEmpty)
     }
 

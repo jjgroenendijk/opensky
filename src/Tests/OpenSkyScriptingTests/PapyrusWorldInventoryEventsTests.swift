@@ -111,6 +111,18 @@ struct PapyrusWorldInventoryEventsTests {
         #expect(Self.run(fixture) == ["onequipped"])
     }
 
+    @Test func readingAnItemReachesItsScripts() throws {
+        let fixture = try Fixture.make(events: [
+            ("OnRead", PapyrusWorldFixture.probeBody(note: "read"))
+        ])
+        fixture.session.bridge.sessionNatives.itemScripts = { _ in
+            [AttachedScript(name: "Lever", flags: [], properties: [])]
+        }
+        fixture.session.bridge.queueItemRead(base: fixture.key)
+        PapyrusWorldFixture.drain(fixture.session.world)
+        #expect(fixture.session.dispatch.notes == ["read"])
+    }
+
     @Test func aLoadIsNotReadAsItemMoves() throws {
         let fixture = try Self.fixture()
         _ = Self.run(fixture)

@@ -71,6 +71,12 @@ struct AlchemyCoordinatorTests {
         #expect(!coordinator.isCrafting)
     }
 
+    @Test func craftingWithNoOpenStationSaysSo() throws {
+        let coordinator = try Self.harness().coordinator
+        let recipe = ResolvedFormID(plugin: "Base.esm", objectID: 0x10)
+        #expect(coordinator.craftLine(recipe, texts: .vanilla) == "No crafting station is open.")
+    }
+
     @Test func aBrewUsesOneOfEachAndRegistersThePotion() throws {
         let harness = try Self.harness()
         try Self.carry([Fixture.wheat, Fixture.flower], harness, count: 2)
@@ -98,7 +104,7 @@ struct AlchemyCoordinatorTests {
         try Self.carry([Fixture.wheat, Fixture.salt], harness)
         let lab = harness.coordinator
         lab.toggleAlchemyIngredient(Fixture.wheat)
-        #expect(lab.toggleAlchemyIngredient(Fixture.salt).text.contains("No shared effect"))
+        #expect(lab.toggleAlchemyIngredientLine(Fixture.salt).contains("No shared effect"))
         #expect(lab.brewChosenIngredients() == .failed("You failed to create a potion."))
         #expect(harness.inventory.count(of: Fixture.wheat, in: .player) == 0)
         #expect(harness.inventory.count(of: Fixture.salt, in: .player) == 0)
@@ -120,7 +126,7 @@ struct AlchemyCoordinatorTests {
         #expect(lab.alchemySelection?.count == 3)
         lab.toggleAlchemyIngredient(Fixture.flower)
         #expect(lab.alchemySelection == [Fixture.wheat, Fixture.cap])
-        #expect(lab.brewChosenIngredients().text.contains("Poison of Damage Health"))
+        #expect(lab.brewChosenIngredientsLine().contains("Poison of Damage Health"))
     }
 
     @Test func modPotionsCreatedMakesMore() throws {
