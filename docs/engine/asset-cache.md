@@ -316,11 +316,11 @@ so the answer holds on any Mac and there is no per-Mac advice.
 
 ## Measurements
 
-`make benchmark ARGS=--compare-cache` flies the quick benchmark tour three times, each after a page cache
-eviction: from the original archives, from the optimised files, and with direct GPU loading. It
-reads the optimised files from the folder in the app settings, so build them first. The tables
-below came from an earlier single-view benchmark of one block, so their numbers do not compare
-with a tour.
+`make benchmark ARGS=--compare-cache` flies the quick benchmark tour three times, each after a page
+cache eviction: from the original archives, from the optimised files, and with direct GPU loading.
+It reads the optimised files from the folder in the app settings, so build them first. The tables
+below came from an earlier single-view benchmark of one block, so their numbers do not compare with
+a tour.
 
 Measured on 2026-10-07 on an Apple M1 with 16 GB and macOS 27, with the Release `openskycli`.
 The game data and every cache are on the same external USB SSD, so each table compares the

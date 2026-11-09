@@ -77,8 +77,8 @@ make test PLAN=RealData
 make test PLAN=RealDataAll
 ```
 
-`make test PLAN=RealData` runs the smoke set: the suites tagged `.smoke`, one quick suite per format family
-and subsystem, through the `RealData` plan. `PLAN=RealDataAll` runs the whole bundle, for a
+`make test PLAN=RealData` runs the smoke set: the suites tagged `.smoke`, one quick suite per format
+family and subsystem, through the `RealData` plan. `PLAN=RealDataAll` runs the whole bundle, for a
 milestone acceptance.
 
 `-only-testing` accepts a misspelled Swift Testing name and exits 0 after running nothing. Nothing

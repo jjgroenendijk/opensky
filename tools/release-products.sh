@@ -9,4 +9,4 @@ if [ "${1:-}" = --no-build ]; then
 else
     make -C "$opensky_root" --no-print-directory build-app build-cli CONFIG=Release
 fi
-products="$OPENSKY_DERIVED_DATA/Build/Products/Release"
+export products="$OPENSKY_DERIVED_DATA/Build/Products/Release"

@@ -49,12 +49,12 @@ same targets in one run. The Debug `build-app` and `build-cli` targets use
 compiles the package modules without coverage mapping and a test build with it, and the two
 contexts rewrite the same intermediates (Code coverage, below).
 
-`tools/lint/test-plans.sh`, part of `make lint`, checks the rules below that a machine can check: every
-plan is in the scheme, sets the timeouts, sets no repetition, and selects no test by name. It also
-checks that the Perf plan selects only the `perf` tag with the RealData data root, that the
+`tools/lint/test-plans.sh`, part of `make lint`, checks the rules below that a machine can check:
+every plan is in the scheme, sets the timeouts, sets no repetition, and selects no test by name. It
+also checks that the Perf plan selects only the `perf` tag with the RealData data root, that the
 `RealData` plan selects only the `smoke` tag and `RealDataAll` the whole target, that `Quick` sets
-`OPENSKY_SKIPPED_TAGS` to `slow,gpu`, that no plan sets `skippedTags`, and that the sanitizer and `GPU` plans list the unit plan's targets and
-set its environment, such as the shader library path.
+`OPENSKY_SKIPPED_TAGS` to `slow,gpu`, that no plan sets `skippedTags`, and that the sanitizer and
+`GPU` plans list the unit plan's targets and set its environment, such as the shader library path.
 
 ## Timeouts
 
@@ -231,19 +231,19 @@ The checks in `tools/coverage/` read `Build/ProfileData/*/Coverage.profdata` wit
 the result bundle with `xccov`. Each package module builds into its own framework under
 `PackageFrameworks/`, and the bundle lists none of them as a coverage product. So `xccov` reports
 only the app, with no files: `xccov view --report --only-targets` on a `UnitTests` bundle printed
-one row, `OpenSky.app 0 0.00%`, on 2026-11-09 with Xcode 27.2. Each test
-run rewrites that profile, so `make test COVERAGE=1` also keeps a copy as
-`Build/ProfileData/<PLAN>.profdata`. The checks merge the newest profile with every kept copy that
-is newer than the last change under `src/Sources/` or to `src/Package.swift`, with `llvm-profdata merge`.
-So a `PLAN=Quick` run and then a `T=OpenSkyTests` run count the app-hosted suites as CI's whole
-plan does, and a copy from before a source edit drops out. A filtered run covers less and reads too low.
+one row, `OpenSky.app 0 0.00%`, on 2026-11-09 with Xcode 27.2. Each test run rewrites that profile,
+so `make test COVERAGE=1` also keeps a copy as `Build/ProfileData/<PLAN>.profdata`. The checks merge
+the newest profile with every kept copy that is newer than the last change under `src/Sources/` or
+to `src/Package.swift`, with `llvm-profdata merge`. So a `PLAN=Quick` run and then a
+`T=OpenSkyTests` run count the app-hosted suites as CI's whole plan does, and a copy from before a
+source edit drops out. A filtered run covers less and reads too low.
 
-`make test PLAN=UnitTests COVERAGE=1` fails when a parser module, a game-rule module, or a pure
-core file is under its floor in `tools/coverage/floor.sh`. Only the whole plan runs every module's
-tests, so only it checks the floors. Every `COVERAGE=1` run fails when the lines a branch changes
-in package modules, or a function it adds, did not run in a test, and lists the lines no test ran.
-CI diffs a pull request against its base and a push to `main` against itself. The values and their reasons are in
-[Test order and coverage rules](/decisions/test-coverage-rules.md).
+`make test PLAN=UnitTests COVERAGE=1` fails when a parser module, a game-rule module, or a pure core
+file is under its floor in `tools/coverage/floor.sh`. Only the whole plan runs every module's tests,
+so only it checks the floors. Every `COVERAGE=1` run fails when the lines a branch changes in
+package modules, or a function it adds, did not run in a test, and lists the lines no test ran. CI
+diffs a pull request against its base and a push to `main` against itself. The values and their
+reasons are in [Test order and coverage rules](/decisions/test-coverage-rules.md).
 
 ## Sanitizers
 
@@ -261,9 +261,10 @@ of failing a bounds check, and much of the engine's concurrency is in `nonisolat
 
 The two sanitizers cannot share a build. xcodebuild builds every configuration in a plan even when
 told to run one, so each target narrows what runs, not what compiles. That is why this is its own
-plan: as configurations on `UnitTests`, the sanitized builds would compile on every `make test`. The first run of each configuration recompiles everything, so the weekly CI workflow
-runs both, not a local session. A sanitizer report shows as a failing test. Both configurations were
-clean when added, so a new report is a regression, and a real one becomes its own GitHub issue.
+plan: as configurations on `UnitTests`, the sanitized builds would compile on every `make test`. The
+first run of each configuration recompiles everything, so the weekly CI workflow runs both, not a
+local session. A sanitizer report shows as a failing test. Both configurations were clean when
+added, so a new report is a regression, and a real one becomes its own GitHub issue.
 
 ## Where test time goes
 

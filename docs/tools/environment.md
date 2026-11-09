@@ -107,9 +107,9 @@ tool.
 
 ## Upstream spec hosts
 
-Checked 2026-10-20. Read the wikis from the offline mirrors
-([offline wikis](/tools/offline-wikis.md)); `make sync-wiki ARGS='--site ck'` and `make sync-wiki ARGS='--site uesp'` keep them
-current.
+Checked 2026-10-20. Read the wikis from the offline mirrors ([offline
+wikis](/tools/offline-wikis.md)); `make sync-wiki ARGS='--site ck'` and
+`make sync-wiki ARGS='--site uesp'` keep them current.
 
 | Host | State | Use instead |
 | --- | --- | --- |

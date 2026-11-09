@@ -88,8 +88,8 @@ settings are in `sites.py`, and the conversion steps and their reasons are in
 `docs/tools/offline-wikis.md`.
 
 1. Find the cause in the stored HTML under `.sync/pages/` and fix the converter.
-2. Run `make sync-wiki ARGS='--site ck'` and `make sync-wiki ARGS='--site uesp'`. Each converts every stored page again; only changed
-   pages are fetched.
+2. Run `make sync-wiki ARGS='--site ck'` and `make sync-wiki ARGS='--site uesp'`. Each converts
+   every stored page again; only changed pages are fetched.
 3. Search both mirrors for the fault, not only the page you saw, for example
    `grep -rlF --include='*.md' '[TABLE]' "$cache/ck-wiki" "$cache/uesp-wiki"`. Fix and repeat
    until none is left.

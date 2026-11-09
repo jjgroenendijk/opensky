@@ -54,10 +54,10 @@ the matching build settings for the app, the CLI, and the Xcode test bundles.
 
 ## Public imports in interface modules
 
-`tools/lint/module-graph.sh` rule 11 reads every `public import` in an interface module. It may name a
-lower module or another interface module, never a feature implementation. `@_exported import` is
-not used anywhere, because it re-exports a module to every client without a `public import`
-line that shows it.
+`tools/lint/module-graph.sh` rule 11 reads every `public import` in an interface module. It may name
+a lower module or another interface module, never a feature implementation. `@_exported import` is
+not used anywhere, because it re-exports a module to every client without a `public import` line
+that shows it.
 
 ## Writing code under the rules
 

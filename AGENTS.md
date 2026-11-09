@@ -80,13 +80,13 @@ Reversing formats is fine. Redistributing Bethesda content or code is not. There
 
 ## Build, run, test
 
-`make help` lists every target. `make fix` before committing; `make check` is the same gate
-without writes, and CI runs it. `make install` refreshes `/Applications/OpenSky.app` after
-rendering work, because the user checks progress there. A run costs minutes: make every edit,
-run one check, and fix everything it reports at once. CI runs the whole unit plan on every push to a pull request;
-locally, run the smallest plan that covers the change (`testing-and-verifying` skill) and
-record it in the commit's `Tests:` section. A green build does not prove a triangle appeared.
-Unit-test every parser and math routine with synthetic fixtures built in code.
+`make help` lists every target. `make fix` before committing; `make check` is the same gate without
+writes, and CI runs it. `make install` refreshes `/Applications/OpenSky.app` after rendering work,
+because the user checks progress there. A run costs minutes: make every edit, run one check, and fix
+everything it reports at once. CI runs the whole unit plan on every push to a pull request; locally,
+run the smallest plan that covers the change (`testing-and-verifying` skill) and record it in the
+commit's `Tests:` section. A green build does not prove a triangle appeared. Unit-test every parser
+and math routine with synthetic fixtures built in code.
 
 ## Open work, docs, and checking a behaviour
 

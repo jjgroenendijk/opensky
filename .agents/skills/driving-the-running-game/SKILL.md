@@ -84,8 +84,8 @@ lines and reports the player's state, so never type keys into its window: Wine d
 misroutes them. `openskycli reference status` says what the prefix still lacks;
 `make build-bridge` installs the plugin once per prefix.
 
-1. Start it with `make run-cli ARGS='reference launch'`, which uses the game's Low preset so both games fit
-   on one GPU. Wait for `reference state` to report `"mainMenu" : true`.
+1. Start it with `make run-cli ARGS='reference launch'`, which uses the game's Low preset so both
+   games fit on one GPU. Wait for `reference state` to report `"mainMenu" : true`.
 2. `reference load [<save>]` loads a save from the main menu, by default the newest.
 3. Read with `reference state`: place, angles, hour, weather, field of view. Its angles are
    the console's: positive pitch looks down, heading 0 is north and turns clockwise.
@@ -99,7 +99,7 @@ misroutes them. `openskycli reference status` says what the prefix still lacks;
 7. Close both games when the check is done, because two games slow the machine:
    `game quit`, then `reference send qqq`.
 
-If `reference` reports that the bridge is not running while the game is up, the game has
-not written its state for 3 s. A cell load stops it for a few seconds; wait and retry. A
-longer stall while another app is in front means the game paused, because `Skyrim.ini`
-lacks `bAlwaysActive=1`; `make run-cli ARGS='reference launch'` writes it, so restart the game that way.
+If `reference` reports that the bridge is not running while the game is up, the game has not written
+its state for 3 s. A cell load stops it for a few seconds; wait and retry. A longer stall while
+another app is in front means the game paused, because `Skyrim.ini` lacks `bAlwaysActive=1`;
+`make run-cli ARGS='reference launch'` writes it, so restart the game that way.

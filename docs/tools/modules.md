@@ -339,8 +339,8 @@ rules:
   appear in an expression".
 - Tests write `@testable import` to reach `internal` members.
 - `InternalImportsByDefault` is on. An import is `internal`, so a module's dependencies do not leak
-  to its clients. A file whose public declarations use a type of `X` writes `public import X`. An
-  interface module publicly imports only lower modules and interfaces (`tools/lint/module-graph.sh` rule 11).
+  to its clients. A file whose public declarations use a type of `X` writes `public import X`.
+  An interface module publicly imports only lower modules and interfaces (module-graph rule 11).
 - `ExistentialAny` and strict memory safety are on too: a protocol type is written `any X`, and an
   unsafe expression is marked `unsafe` ([Swift language rules](/decisions/language-rules.md)).
 - A package module does not swallow an error: write `attempt { try call() }` from

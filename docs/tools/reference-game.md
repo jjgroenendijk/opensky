@@ -117,8 +117,8 @@ continues where the last one stopped.
    5. clones the game and its `appmanifest_489830.acf` into the prefix's Steam library, and
       copies DXVK's DLLs into the copy's game folder;
    6. stores the folder as the `OpenSkyReferencePrefix` setting.
-3. Run `make run-cli ARGS='reference launch'`. Log in to Steam once in the window that opens. Steam does not
-   start an out-of-date game, so it updates the copy to the current build first. In the
+3. Run `make run-cli ARGS='reference launch'`. Log in to Steam once in the window that opens. Steam
+   does not start an out-of-date game, so it updates the copy to the current build first. In the
    game's Steam properties, set updates to "Only update this game when I launch it".
 4. Run `make run-cli ARGS='reference check'`. It compares the Steam `buildid` of both installs and the
    SHA-256 of every `.esm`, and names each difference.
@@ -130,8 +130,8 @@ found the same way: `OPENSKY_REFERENCE_WINE`, then `OpenSkyReferenceWine`, then
 
 ## Launching
 
-`make run-cli ARGS='reference launch'` (`openskycli reference launch`) and the launcher's Start buttons do
-four things:
+`make run-cli ARGS='reference launch'` (`openskycli reference launch`) and the launcher's Start
+buttons do four things:
 
 1. They write `bBorderless=1`, `bFull Screen=0`, `iSize W`, and `iSize H` into the
    prefix's `SkyrimPrefs.ini`, starting from the game's `High.ini` preset when the game has
@@ -320,10 +320,10 @@ bridge line `camera first` sets it.
 
 Without the bridge, from OpenSky to the reference game:
 
-1. With OpenSky running, `make run-cli ARGS='reference export-view'` (`openskycli reference export-view`) reads
-   `game state view` and writes the batch file `opensky` into the reference copy's game
-   folder. The game reads a batch file there only without an extension
-   (<https://en.uesp.net/wiki/Skyrim:Console#Using_Batch_Files_with_the_bat_Command>).
+1. With OpenSky running, `make run-cli ARGS='reference export-view'`
+   (`openskycli reference export-view`) reads `game state view` and writes the batch file `opensky`
+   into the reference copy's game folder. The game reads a batch file there only without an
+   extension (<https://en.uesp.net/wiki/Skyrim:Console#Using_Batch_Files_with_the_bat_Command>).
 2. In the reference game, open the console and type `bat opensky`.
 
 The batch file holds standard console commands:
@@ -359,8 +359,8 @@ the conversion at its own shape.
 
 ## Capture and compare
 
-After `bat opensky`, `make run-cli ARGS='reference capture'` (`openskycli reference capture`) writes one run
-folder, `.logs/reference/<UTC time>/`:
+After `bat opensky`, `make run-cli ARGS='reference capture'` (`openskycli reference capture`) writes
+one run folder, `.logs/reference/<UTC time>/`:
 
 | File | Holds |
 | --- | --- |

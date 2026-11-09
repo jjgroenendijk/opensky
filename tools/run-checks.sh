@@ -30,11 +30,18 @@ parts "$mode" >"$list"
 while read -r script flag; do
     part="$(basename "$script" .sh)${flag:+ $flag}"
     log="$run_dir/$(printf '%s' "$part" | tr ' ' '_').log"
-    { sh "$script" ${flag:+"$flag"} >"$log" 2>&1; echo "$? $part" >"$log.status"; } &
+    # set -e would end the subshell on a failing part before it writes its status.
+    { code=0; sh "$script" ${flag:+"$flag"} >"$log" 2>&1 || code=$?; echo "$code $part" >"$log.status"; } &
 done <"$list"
 wait
 
 failed=0
+expected="$(wc -l <"$list" | tr -d ' ')"
+written="$(find "$run_dir" -name '*.status' | wc -l | tr -d ' ')"
+if [ "$written" -ne "$expected" ]; then
+    failed=$((expected - written))
+    echo "[ERROR] $failed parts wrote no status; read their logs in $run_dir"
+fi
 for status in "$run_dir"/*.status; do
     read -r code part <"$status"
     log="${status%.status}"

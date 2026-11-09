@@ -235,8 +235,8 @@ The app starts every session in `.game`. A headless `PapyrusRuntime` defaults to
 a parser or native test sees the result of a call at once. Example: a script that calls `AddItem`
 20 times finishes 20 steps after it starts under `.game`, and in one step under `.runToEnd`.
 
-`make test PLAN=RealData` checks the table against the local wiki mirror and writes the natives that have
-no wiki page to `.logs/native-timing/report.txt`. It skips when the mirror is missing.
+`make test PLAN=RealData` checks the table against the local wiki mirror and writes the natives that
+have no wiki page to `.logs/native-timing/report.txt`. It skips when the mirror is missing.
 
 An automatic property reads and writes its backing variable in its script's storage. A getter or
 setter with a body runs as an ordinary frame. A missing accessor, variable, property, or receiver is

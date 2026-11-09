@@ -9,8 +9,8 @@ tags: [decision, simulation, determinism, lint, code-quality]
 
 # Deterministic game rules
 
-The simulation runs on the main actor in a fixed order, so the same inputs give the same game
-state. Three rules keep that true, and `tools/lint/deterministic-rules.sh` (in `make check` and CI) checks
+The simulation runs on the main actor in a fixed order, so the same inputs give the same game state.
+Three rules keep that true, and `tools/lint/deterministic-rules.sh` (in `make check` and CI) checks
 them over every tracked Swift file of a package module.
 
 | Rule | Where | What fails the check |

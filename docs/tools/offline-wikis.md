@@ -51,8 +51,8 @@ ls "$cache/ck-wiki/index.md" "$cache/uesp-wiki/index.md"
 
 `.cache/` is gitignored. The wiki text is licensed CC BY-SA and is not our work, so a mirror is
 never committed. Two checks enforce this. The tool refuses an `--out` folder inside a checkout
-unless git ignores it. `tools/lint/no-game-content.sh` fails on a tracked Markdown file whose frontmatter has
-the mirror's `fetched_from:` key.
+unless git ignores it. `tools/lint/no-game-content.sh` fails on a tracked Markdown file whose
+frontmatter has the mirror's `fetched_from:` key.
 
 ## What each mirror holds
 

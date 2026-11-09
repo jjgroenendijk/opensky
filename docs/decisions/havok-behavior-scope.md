@@ -53,9 +53,9 @@ Evaluation is the goal. Ragdoll and physics classes next to behavior data are se
 
 The numbers come from a real-data census of every `.hkx` under `meshes\actors\character\`. The full
 report is derived from game content, so it stays in `.logs/`. Run it with
-`make test PLAN=RealData T='HKBBehaviorCensusRealDataTests/censusesCharacterBehaviorFiles()'`, or inspect one
-file with `openskycli hkx <key>`. The layouts are on the
-[HKX behavior graph objects](/formats/hkx-behavior.md) page.
+`make test PLAN=RealData T='HKBBehaviorCensusRealDataTests/censusesCharacterBehaviorFiles()'`, or
+inspect one file with `openskycli hkx <key>`. The layouts are on the [HKX behavior graph
+objects](/formats/hkx-behavior.md) page.
 
 There were 2,654 files with no container parse failure, every one a 64-bit `hk_2010.2.0-r1`
 packfile: 2,609 animation, 35 behavior, 4 skeleton, 3 character, and 3 project files.

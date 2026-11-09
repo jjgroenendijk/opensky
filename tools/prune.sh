@@ -211,14 +211,11 @@ done <"$plan"
 
 # A pruned run can leave `latest` pointing at nothing; drop those symlinks so a
 # dangling link never reads as "the newest run is missing".
-for base in "$root/.logs" "$results" "$root/build/test-results"; do
-    [ -d "$base" ] || continue
-    for name_dir in "$base"/*; do
-        link="$name_dir/latest"
-        if [ -L "$link" ] && [ ! -e "$link" ]; then
-            rm -f "$link"
-        fi
-    done
+for name_dir in "$root/.logs"/*; do
+    link="$name_dir/latest"
+    if [ -L "$link" ] && [ ! -e "$link" ]; then
+        rm -f "$link"
+    fi
 done
 
 printf '[ OK ] pruned, freed %s\n' "$human"
