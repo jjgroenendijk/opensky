@@ -13,6 +13,8 @@ nonisolated public final class FakeWorldRecords: WorldRecordsPort {
     public var magicEffectStore: MagicEffectStore?
     public var questStore: QuestStore?
     public var leveledScriptEdits: LeveledScriptEdits?
+    public var actorValueBaselines: ActorValueBaselineResolver?
+    public var speechCheckSettings = SpeechCheckSettings.fallback
 
     public init() {}
 }

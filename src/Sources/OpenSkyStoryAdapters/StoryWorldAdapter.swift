@@ -3,7 +3,7 @@
 // deaths and location changes into story events. The rules live in the
 // coordinators (docs/engine/scenes.md, docs/engine/story-manager.md).
 
-import Foundation
+public import Foundation
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
@@ -45,6 +45,7 @@ public protocol StoryWorldHost: AnyObject {
 public final class StoryWorldAdapter {
     public let game: any StoryWorldHost
     public let state = StoryPartState()
+    public let now: () -> Date
     /// Quests the session-start pass started, whose stages wait for one script attach.
     private var deferredStarts: [FormID]?
     var sessionStartLists: [PluginQuestList] = []
@@ -78,16 +79,20 @@ public final class StoryWorldAdapter {
     }
 
     public var sceneLines: StorySceneLinesAdapter {
-        StorySceneLinesAdapter(game: sceneLinesHost, state: state, sceneCast: sceneCast)
+        StorySceneLinesAdapter(game: sceneLinesHost, state: state, sceneCast: sceneCast, now: now)
     }
 
     public var sceneCast: StorySceneCastAdapter {
         StorySceneCastAdapter(game: sceneCastHost)
     }
 
-    public init(game: some StoryWorldHost & StoryAmbientTalkHost & StorySocialSearchHost &
-        StorySceneLinesHost & StorySceneCastHost)
-    {
+    /// `now` is the wall clock the subtitles time their lines on.
+    public init(
+        game: some StoryWorldHost & StoryAmbientTalkHost & StorySocialSearchHost &
+            StorySceneLinesHost & StorySceneCastHost,
+        now: @escaping () -> Date
+    ) {
+        self.now = now
         ambientTalkHost = game
         socialSearchHost = game
         sceneLinesHost = game

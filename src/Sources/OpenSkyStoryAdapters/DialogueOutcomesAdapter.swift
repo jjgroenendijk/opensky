@@ -1,14 +1,13 @@
 import OpenSkyActorPresentation
 public import OpenSkyActorsInterface
 import OpenSkyAIPackages
-public import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogue
 public import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -35,7 +34,7 @@ public protocol DialogueOutcomesHost: AnyObject {
     var progression: any ProgressionPort { get }
     var storyWorld: any StoryWorldPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var worldRecords: (any WorldRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
     var scripts: any ScriptPort { get }
 }
@@ -53,7 +52,7 @@ extension DialogueOutcomesAdapter {
             Int(runtime.inventory.count(of: runtime.inventory.goldFormID, in: runtime.player))
         }
         return SpeechCheckResolution(
-            settings: game.worldData?.speechCheckSettings,
+            settings: game.worldRecords?.speechCheckSettings,
             playerGold: gold,
             intimidationFactor: game.perks.multiplier(
                 at: .modPlayerIntimidation, on: .player, target: speaker

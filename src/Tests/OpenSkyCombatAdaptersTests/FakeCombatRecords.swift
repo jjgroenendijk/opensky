@@ -22,6 +22,7 @@ final class FakeCombatRecords: CombatRecordsPort {
     var footstepStore: FootstepStore?
     var soundStore: SoundRecordStore?
     var actorValueBaselines: ActorValueBaselineResolver?
+    var speechCheckSettings = SpeechCheckSettings.fallback
     var presentationRecords: PresentationRecordStore?
     var inventoryBaselines: InventoryBaselineResolver?
     var effectRecords: EffectRecordStore?
