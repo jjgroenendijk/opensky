@@ -46,12 +46,12 @@ public final class DialogueWorldAdapter {
     public let game: any DialogueWorldHost
     public let voiceTypes = DialogueVoiceTypeCache()
 
-    public let cameraWiringHost: any DialogueCameraWiringHost
+    public let cameraFocusHost: any DialogueCameraFocusHost
     public let speakersHost: any DialogueSpeakersHost
     public let outcomesHost: any DialogueOutcomesHost
 
-    public var cameraWiring: DialogueCameraWiringAdapter {
-        DialogueCameraWiringAdapter(game: cameraWiringHost)
+    public var cameraFocus: DialogueCameraFocusAdapter {
+        DialogueCameraFocusAdapter(game: cameraFocusHost)
     }
 
     public var speakers: DialogueSpeakersAdapter {
@@ -62,10 +62,10 @@ public final class DialogueWorldAdapter {
         DialogueOutcomesAdapter(game: outcomesHost)
     }
 
-    public init(game: some DialogueWorldHost & DialogueCameraWiringHost & DialogueSpeakersHost &
+    public init(game: some DialogueWorldHost & DialogueCameraFocusHost & DialogueSpeakersHost &
         DialogueOutcomesHost)
     {
-        cameraWiringHost = game
+        cameraFocusHost = game
         speakersHost = game
         outcomesHost = game
         self.game = game

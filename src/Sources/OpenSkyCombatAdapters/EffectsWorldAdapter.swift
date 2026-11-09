@@ -32,7 +32,6 @@ import simd
 public protocol EffectsWorldHost: AnyObject {
     var combat: any CombatPort { get }
     var effects: any EffectsPort { get }
-    var playerSettings: any PlayerSettingsPort { get }
     var worldData: WorldDataStores? { get }
     var hazardWorld: any HazardWorldPort { get }
     var hazards: any HazardPort { get }

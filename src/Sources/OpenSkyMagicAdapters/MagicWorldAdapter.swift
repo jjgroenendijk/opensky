@@ -33,7 +33,6 @@ public protocol MagicWorldHost: AnyObject {
     var magic: any MagicPort { get }
     var mapWorld: any MapWorldPort { get }
     var mountWorld: any MountWorldPort { get }
-    var perks: any PerkPort { get }
     var scripts: any ScriptPort { get }
 }
 
@@ -138,9 +137,11 @@ public final class MagicWorldAdapter {
     }
 
     /// Chained after regeneration and the Papyrus VM, on the same delta.
-    func registerEffects(_ coordinator: any MagicPort, gameSession: GameSession) {
+    func registerEffects(gameSession: GameSession) {
         let worldTick = gameSession.worldTick
-        worldTick.register(.magicEffects) { [weak self, weak coordinator, weak gameSession] delta in
+        worldTick.register(.magicEffects) { [weak self, weak gameSession] delta in
+            let coordinator = self?.game.magic
+            guard coordinator?.effects != nil else { return }
             self?.archetypeEffects.run(coordinator?.advanceEffects(delta: delta) ?? [])
             self?.heldMagic.publishMagicLights()
             self?.heldMagic.publishSummonFades()
@@ -153,10 +154,11 @@ public final class MagicWorldAdapter {
     }
 
     /// A frame step, beside melee: a cast is timed against the rendered frame.
-    func registerCasting(_ coordinator: any MagicPort, gameSession: GameSession) {
+    func registerCasting(gameSession: GameSession) {
         let frameSteps = gameSession.frameSteps
-        frameSteps.register(.spellCasting) { [weak self, weak coordinator, weak gameSession] _ in
-            guard let coordinator, let gameSession else { return }
+        frameSteps.register(.spellCasting) { [weak self, weak gameSession] _ in
+            guard let coordinator = self?.game.magic, coordinator.caster != nil, let gameSession
+            else { return }
             let locomotion = gameSession.locomotion
             let isPlayerControlled = gameSession.movementMode.isPlayerControlled
             let delta = locomotion.archeryIntent.deltaTime

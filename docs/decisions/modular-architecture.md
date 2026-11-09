@@ -72,7 +72,7 @@ feature, such as `OpenSkyProgression` for `OpenSkyProgressionAdapters`, or sever
 adapter module of their own, such as `OpenSkyCrime`, `OpenSkyDialogue`, and `OpenSkyQuests` for
 `OpenSkyStoryAdapters`. The world feature and its domains
 are allowed, because they are the running session every adapter connects to: the session's
-loaded data, `WorldDataStores`, lives in `OpenSkyCells`, and the wiring steps take
+loaded data, `WorldDataStores`, lives in `OpenSkyCells`, and the session stage holds
 `GameSession`, whose members are domain types such as `WalkController`.
 
 Rule 7 matters because Xcode builds all package modules into one product. A module can then

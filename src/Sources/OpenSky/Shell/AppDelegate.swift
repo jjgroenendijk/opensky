@@ -18,7 +18,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let worldLoader = WorldLoader()
     private var launcher: LauncherViewController?
     private var launcherWindow: NSWindow?
-    private(set) var gameWindow: NSWindow?
+    private lazy var gameWindows = GameWindowRegistry<GameViewController> { [benchmarkHost] in
+        benchmarkHost.sessionStarted($0, in: $1)
+    }
+
+    var gameWindow: NSWindow? {
+        gameWindows.window
+    }
+
     private var settingsController: SettingsWindowController?
     private var agentControl: AgentControlHost?
     private let benchmarkHost = BenchmarkRunHost()
@@ -39,9 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // appearance keeps every system control on the charcoal palette.
         NSApplication.shared.appearance = NSAppearance(named: .darkAqua)
         NSApplication.shared.mainMenu = MainMenu.make(target: self)
-        agentControl = AgentControlHost(currentGame: { [weak self] in
-            self?.gameWindow?.contentViewController as? GameViewController
-        })
+        agentControl = AgentControlHost(currentGame: { [weak self] in self?.gameWindows.game })
         benchmarkHost.onLauncherRunFinished = { [weak self] in
             self?.launcher?.showPage(id: "benchmark")
         }
@@ -115,9 +120,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// draw loop and drops the game graph.
     private func endGame() {
         cancelLoad()
-        pauseRendering(gameWindow?.contentViewController as? GameViewController)
         gameWindow?.delegate = nil
-        gameWindow = nil
+        pauseRendering(gameWindows.close())
         isPlaying = false
     }
 
@@ -149,11 +153,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard isPlaying else { return }
         launcherWindow?.orderOut(nil)
         let game = makeGame()
-        pauseRendering(gameWindow?.contentViewController as? GameViewController)
+        pauseRendering(gameWindows.game)
         gameWindow?.contentViewController = game
-        if let gameWindow {
-            _ = BenchmarkGameWiring(benchmarkHost, game: game, window: gameWindow)
-        }
+        gameWindows.switchGame(to: game)
     }
 }
 
@@ -185,12 +187,12 @@ extension AppDelegate: LauncherActions {
     }
 
     func referenceView() -> ReferenceView? {
-        let game = gameWindow?.contentViewController as? GameViewController
+        let game = gameWindows.game
         return try? game?.session?.agentWorld.view.referenceView()
     }
 
     func followReference(_ view: ReferenceView) -> Bool {
-        let game = gameWindow?.contentViewController as? GameViewController
+        let game = gameWindows.game
         guard let session = game?.session, view.feet.count == 3 else { return false }
         session.menuWorld.followView(AgentViewTarget(
             feet: SIMD3(view.feet[0], view.feet[1], view.feet[2]), yawDegrees: view.yawDegrees,
@@ -205,7 +207,7 @@ extension AppDelegate: LauncherActions {
     }
 
     func captureWorld(to url: URL, width: Int, height: Int) throws {
-        let game = gameWindow?.contentViewController as? GameViewController
+        let game = gameWindows.game
         guard let world = game?.session?.agentWorld else {
             throw ReferenceCaptureError.openSkyFailed("Start the game in OpenSky first.")
         }
@@ -259,13 +261,12 @@ extension AppDelegate: LauncherActions {
     private func open(atTitleScreen: Bool) {
         let window = makeGameWindow(atTitleScreen: atTitleScreen)
         window.delegate = self
-        gameWindow = window
         isPlaying = true
         let hidden = benchmarkHost.hidesNextWindow
             || (LaunchPreferences.skipsLauncher() && LaunchPreferences.hidesWindow())
         let tourOwnsWindow = benchmarkHost.ownsNextWindow
         if let game = window.contentViewController as? GameViewController {
-            _ = BenchmarkGameWiring(benchmarkHost, game: game, window: window)
+            gameWindows.open(game, in: window)
         }
         launcherWindow?.orderOut(nil)
         guard !hidden else { return }

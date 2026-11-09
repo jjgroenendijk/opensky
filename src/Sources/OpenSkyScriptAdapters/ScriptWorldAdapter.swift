@@ -141,6 +141,7 @@ public final class ScriptWorldAdapter {
             globals: game.runtimeState.globalStore,
             seams: featureBindings.seams(provider: provider, worldState: worldState)
         )
+        state.bridge = bridge
         bridge.sessionNatives.clockSource = { [weak gameSession] in gameSession?.gameClock }
         // The game counts real time from its launch, without frozen time (CK wiki
         // "GetCurrentRealTime - Utility"): the time before this session, then its frames.
@@ -148,12 +149,12 @@ public final class ScriptWorldAdapter {
         bridge.sessionNatives.realTimeSource = { [weak gameSession] in
             beforeSession + (gameSession?.gameTime.realSecondsRun ?? 0)
         }
-        _ = ScriptActorNativesWiring(actorBindings, bridge: bridge)
-        _ = ScriptLineOfSightWiring(nodeBindings, bridge: bridge)
-        _ = ScriptSpellNativesWiring(perkBindings, bridge: bridge, provider: provider)
-        _ = ScriptSkyWiring(skyBindings, bridge: bridge)
-        _ = ScriptModelNodesWiring(nodeBindings, provider: provider, gameSession: gameSession)
-        _ = ScriptGameNativesWiring(sessionBindings, bridge: bridge)
+        actorBindings.fillActorNatives(bridge: bridge)
+        nodeBindings.fillLineOfSight(bridge: bridge)
+        perkBindings.fillSpellNatives(bridge: bridge, provider: provider)
+        skyBindings.fillSky(bridge: bridge)
+        nodeBindings.fillModelNodes(provider: provider, gameSession: gameSession)
+        sessionBindings.fillGameNatives(bridge: bridge)
         bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
         bridge.formIDResolver = provider.scriptFormIDResolver
         bridge.leveledEdits = { [weak game] in

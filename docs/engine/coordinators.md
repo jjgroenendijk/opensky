@@ -90,8 +90,8 @@ context, because it reads every feature's runtime. Papyrus has `ScriptCoordinato
 `ScriptWorld` in `src/Sources/OpenSkyScripting/`, answered by `ScriptWorldAdapter`, which also gives
 the natives their collaborators. `WorldRenderControls` in `src/Sources/OpenSkyWorld/Session/` holds
 the renderer and streamer controls that agent control uses. It has no core, because it only reads
-and writes the renderer. `WorldSessionWiring` in the app builds the streamer and runs every wire
-function in order.
+and writes the renderer. `GameSessionScope` in the app builds every adapter and
+coordinator over the session stage ([session scope](/decisions/session-scope.md)).
 
 A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
 state and its movie code go in a small app class, such as `ContainerMenuController`, and

@@ -12,18 +12,7 @@ import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 
-/// What `MenuRouter` reads from the session to wire the menus.
-@MainActor
-protocol MenuRouterHost: MenuSoundHost {
-    var controlMapLoader: (() throws -> ControlMapFile)? { get }
-    var mapWorld: any MapWorldPort { get }
-    var menuTextLoader: (() -> any LocalizedLabelsPort)? { get }
-    var messages: any MessageCoordinatorPort { get }
-    var playerSettings: any PlayerSettingsPort { get }
-}
-
 final class MenuRouter {
-    unowned let game: any MenuRouterHost
     private let hotkeys: MenuHotkeys
     let ticks: MenuFrameTick
     private let routeHosts: MenuRoutes
@@ -32,8 +21,7 @@ final class MenuRouter {
         monitor
     }
 
-    init(game: some MenuRouterHost & MenuHotkeyHost & MenuTickHost & MenuRouteHosts) {
-        self.game = game
+    init(game: some MenuHotkeyHost & MenuTickHost & MenuRouteHosts) {
         hotkeys = MenuHotkeys(game: game)
         ticks = MenuFrameTick(game: game)
         routeHosts = MenuRoutes(play: game, front: game)

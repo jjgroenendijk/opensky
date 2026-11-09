@@ -29,7 +29,7 @@ the legal boundary, is then read less.
 | No `try?` outside `removeItem` and `close`; typed errors | `tools/lint/error-handling.sh` |
 | No system random source, clock, mutable static, or singleton in game rules | `tools/lint/deterministic-rules.sh` |
 | No `@unchecked Sendable`, `Task.detached`, or new `DispatchQueue` | SwiftLint `unchecked_sendable`, `detached_task`, and the queue rules |
-| No `GameViewController+X.swift` file; no late setter | SwiftLint `game_view_controller_extension`, `late_setter_method`, `late_attached_world` |
+| No `GameViewController+X.swift` file; no late setter or connection step | SwiftLint `game_view_controller_extension`, `late_setter_method`, `late_attached_world`, `connection_step_type` |
 | Ports and adapters | `tools/lint/app-architecture.sh`, `tools/lint/adapter-rules.sh` |
 | Records read through the whole load order | `tools/lint/load-order-only.sh` |
 | A file stays under 800 lines | `tools/lint/file-length.sh` and the pre-commit hook |

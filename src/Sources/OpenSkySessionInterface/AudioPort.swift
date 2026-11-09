@@ -1,7 +1,7 @@
 public import OpenSkyAudio
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
-public import OpenSkyWorldInterface
+import OpenSkyGameData
+import OpenSkyWorldInterface
 
 /// What the world adapters use of `AudioCoordinator`.
 public protocol AudioPort: AnyObject {
@@ -11,7 +11,6 @@ public protocol AudioPort: AnyObject {
     var audioEnabled: Bool { get set }
     var audioMasterVolume: Float { get set }
     var engine: WorldAudioEngine? { get }
-    var engineStarted: FrameSchedule<AudioEngineStartStep, Void> { get }
     var musicDirector: WorldMusicDirector? { get }
     var outputMuted: Bool { get set }
     func setAudioVolume(_ volume: Float, for category: AudioCategory)

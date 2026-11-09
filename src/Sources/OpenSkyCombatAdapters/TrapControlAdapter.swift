@@ -35,6 +35,23 @@ public final class TrapControlAdapter {
         self.dependencies = dependencies
     }
 
+    /// Without a stage, as in a test, it registers nothing.
+    public convenience init(_ dependencies: TrapControlDependencies, stage: SessionStage?) {
+        self.init(dependencies)
+        stage?.gameSession.renderer.worldOverlaySources
+            .register(identifier: "trap-selection") { [weak self] _, list in
+                guard let position = self?.selectedEntry?.placedReference?.placement.position
+                else {
+                    return
+                }
+                list.addMarker(
+                    at: position,
+                    size: TrapControlAdapter.markerSize,
+                    color: WorldOverlayMarkerColour.trap
+                )
+            }
+    }
+
     var selectedEntry: RuntimeReferenceEntry? {
         selected.flatMap { dependencies.streamer()?.referenceEntry(key: $0) }
     }

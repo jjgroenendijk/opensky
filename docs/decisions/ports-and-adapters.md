@@ -89,12 +89,13 @@ The adapters live in eleven modules, one per feature group, such as `OpenSkyMagi
 
 ## Connecting a started session
 
-The session starts after its adapters are built, so an adapter is connected to it later. The
-connection is a step, not a method: a `<Name>Wiring` struct whose initializer does the work, such
-as `CombatMeleeWiring(combatWorld, gameSession: gameSession)`. The composition root builds the
-steps in order. An adapter, a coordinator, and the app keep no `wire...` or `install...` method,
-and no `attach(world:)`-style setter, so the `late_setter_method` and `late_attached_world`
-SwiftLint rules hold everywhere, the app included.
+An adapter is complete when it is built. The scope builds it over the session's first stage,
+`SessionStage`, and its initializer registers its frame steps and events, such as
+`CombatWorldAdapter(game: ports, stage: stage)`. No connection step runs later. An adapter, a
+coordinator, and the app keep no `wire...` or `install...` method, no `attach(world:)`-style
+setter, and no `<Name>Wiring` type, so the `late_setter_method`, `late_attached_world`, and
+`connection_step_type` SwiftLint rules hold everywhere, the app included
+([session scope](/decisions/session-scope.md)).
 
 ## The game view
 

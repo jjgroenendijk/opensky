@@ -126,10 +126,6 @@ extension SessionPorts {
         scope.containerMenu
     }
 
-    var controlMapLoader: (() throws -> ControlMapFile)? {
-        scope.controlMapLoader
-    }
-
     var controllerRumble: any ControllerRumblePort {
         scope.controllerRumble
     }
@@ -320,10 +316,6 @@ extension SessionPorts {
 
     var menuScreensWorld: any MenuScreensWorldPort {
         scope.menuScreensWorld
-    }
-
-    var menuTextLoader: (() -> any LocalizedLabelsPort)? {
-        scope.menuTextLoader
     }
 
     var menuWorld: any MenuWorldPort {

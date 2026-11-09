@@ -22,7 +22,7 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import simd
 
-final class GameViewController: NSViewController {
+final class GameViewController: NSViewController, GameWindowContent {
     /// Locator failure shown inside World. Settings remains reachable so the
     /// root can be corrected without relaunching or dismissing an alert loop.
     var startupErrorMessage: String?
@@ -172,7 +172,7 @@ final class GameViewController: NSViewController {
     }
 
     private func startSession(_ loaded: CellSession, gameSession: GameSession) {
-        let streamer = WorldSessionWiring.makeStreamer(
+        let streamer = GameSessionScopeBuild.makeStreamer(
             session: loaded,
             renderer: gameSession.renderer,
             radius: terrainLODConfigurationStore.snapshot().configuration.loadedGridRadius

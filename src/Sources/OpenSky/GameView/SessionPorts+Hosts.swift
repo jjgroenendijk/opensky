@@ -21,7 +21,7 @@ extension SessionPorts:
     DialogueCameraHost, DialogueMenuHost, DialogueWorldHost, DragonFlightWorldHost,
     EffectGraphWorldHost, EffectsWorldHost, FollowerCommandWorldHost, IdleWorldHost,
     InventoryMenuHost, InventoryWorldHost, JournalMenuHost, LoadingScreenWorldHost, LockWorldHost,
-    LockpickingMenuHost, MagicWorldHost, MapWorldHost, MenuRouterHost, MenuHotkeyHost,
+    LockpickingMenuHost, MagicWorldHost, MapWorldHost, MenuHotkeyHost,
     MenuTickHost, MenuPlayRoutesHost, MenuFrontRoutesHost, MenuScreensHost, MenuScreensWorldHost,
     MenuSoundHost, MenuWorldHost, MessageWorldHost, MountWorldHost, MovieWorldHost,
     ObjectAnimationWorldHost, PerkActivationWorldHost, PlayerWorldHost, ProgressionWorldHost,
@@ -53,6 +53,6 @@ extension SessionPorts:
     FollowerCommandTasksHost, IdlePlacementHost, PlayerFirstPersonHost, PlayerFaceHost,
     AudioListenerHost, AudioMixHost, CrimeFactionsHost, CrimeJailHost, CrimeActorsHost,
     ProgressionTrainingHost, ProgressionEffectsHost, MapRecordsHost, MapTravelHost, MapQuestsHost,
-    DialogueCameraWiringHost, DialogueSpeakersHost, DialogueOutcomesHost, InventoryReadoutsHost,
+    DialogueCameraFocusHost, DialogueSpeakersHost, DialogueOutcomesHost, InventoryReadoutsHost,
     InventoryPickpocketHost, InventoryPerksHost, InventoryRecipesHost, InventoryVendorHost,
     InventoryCommandsHost {}

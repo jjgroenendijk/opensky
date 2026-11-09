@@ -1,7 +1,7 @@
 public import OpenSkyBehavior
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkyWorldInterface
 
 /// What the world adapters use of `ActorGraphCoordinator`.
@@ -24,7 +24,6 @@ public protocol ActorGraphPort: AnyObject {
     func report(_ names: [String], from actor: ReferenceKey)
 
     func awaitEvent(_ event: String, on actor: ReferenceKey) -> UInt64?
-    func load(settings store: PlayerSettingsStore)
     func tick(deltaTime: Float)
     func variable(named name: String, on actor: ReferenceKey) -> BehaviorVariableValue?
     func variableResolution(player: BehaviorVariableStore?) -> GraphVariableResolution

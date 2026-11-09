@@ -152,19 +152,19 @@ extension GameSessionScopeFactories {
     }
 
     func makeBenchmarkWorld() -> BenchmarkWorldAdapter {
-        let adapter = BenchmarkWorldAdapter(game: scope.ports)
+        let adapter = BenchmarkWorldAdapter(game: scope.ports, stage: scope.stage)
         adapter.view = BenchmarkViewSurface(view: scope.hostView)
         return adapter
     }
 
     func makeScriptWorld() -> ScriptWorldAdapter {
-        let adapter = ScriptWorldAdapter(game: scope.ports)
+        let adapter = ScriptWorldAdapter(game: scope.ports, stage: scope.stage)
         adapter.state.weather = { [unowned scope] in scope.gameSession?.weather }
         return adapter
     }
 
     func makePlayerWorld() -> PlayerWorldAdapter {
-        let adapter = PlayerWorldAdapter(game: scope.ports)
+        let adapter = PlayerWorldAdapter(game: scope.ports, stage: scope.stage)
         adapter.state.locomotion = { [unowned scope] in scope.gameSession?.locomotion }
         adapter.state
             .firstPersonRig = { [unowned scope] in scope.gameSession?.playerFirstPersonRig }
@@ -186,7 +186,7 @@ extension GameSessionScopeFactories {
     }
 
     func makeObjectAnimationWorld() -> ObjectAnimationWorldAdapter {
-        let adapter = ObjectAnimationWorldAdapter(game: scope.ports)
+        let adapter = ObjectAnimationWorldAdapter(game: scope.ports, stage: scope.stage)
         adapter.animatedObjects = { [unowned scope] in
             scope.streamer.residentAnimatedObjects()
         }
@@ -213,6 +213,14 @@ extension GameSessionScopeFactories {
             world: scope.actorGraphWorld, files: { [unowned scope] in scope.audioFileSystem }
         )
         coordinator.actorPlayback = { [unowned scope] in scope.actorPlayback(for: $0) }
+        guard scope.stage != nil, scope.audioFileSystem != nil else { return coordinator }
+        let store = scope.playerSettingsStore
+        coordinator.load(settings: store)
+        // The launcher page writes the same settings while a session runs.
+        store.observe { [weak coordinator, weak store] id in
+            guard let store, ActorGraphWorldAdapter.settings.contains(id) else { return }
+            coordinator?.load(settings: store)
+        }
         return coordinator
     }
 
@@ -241,17 +249,23 @@ extension GameSessionScopeFactories {
     }
 
     func makeHazardWorld() -> HazardWorldAdapter {
-        HazardWorldAdapter(HazardWorldDependencies(
-            hazards: { [unowned scope] in scope.hazards },
-            combat: scope.combat,
-            magic: { [unowned scope] in scope.magic },
-            spellHits: { [unowned scope] in scope.magicWorld },
-            gameSession: { [unowned scope] in scope.gameSession }
-        ))
+        HazardWorldAdapter(
+            HazardWorldDependencies(
+                hazards: { [unowned scope] in scope.hazards },
+                combat: scope.combat,
+                magic: { [unowned scope] in scope.magic },
+                spellHits: { [unowned scope] in scope.magicWorld },
+                gameSession: { [unowned scope] in scope.gameSession }
+            ),
+            stage: scope.stage
+        )
     }
 
     func makeTrapControl() -> TrapControlAdapter {
-        TrapControlAdapter(TrapControlDependencies(streamer: { [unowned scope] in scope.streamer }))
+        TrapControlAdapter(
+            TrapControlDependencies(streamer: { [unowned scope] in scope.streamer }),
+            stage: scope.stage
+        )
     }
 
     func makeFactionWorld() -> FactionWorldAdapter {

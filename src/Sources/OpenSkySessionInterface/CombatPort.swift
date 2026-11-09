@@ -36,7 +36,6 @@ public protocol CombatPort: AnyObject {
     var isWeaponDrawn: Bool { get }
     var items: ItemDefinitionStore? { get }
     var lastFall: FallOutcome? { get }
-    func load(settings store: PlayerSettingsStore)
     var loop: CombatLoopRuntime? { get }
     var melee: MeleeCombatRuntime? { get }
     var meleeAttacker: MeleeAttacker { get }

@@ -12,5 +12,4 @@ public protocol PlayerPort: AnyObject {
     func playIdle(named name: String, state: String?)
     var raceGraphFailureReason: String? { get }
     func refreshBody()
-    func requestBody()
 }

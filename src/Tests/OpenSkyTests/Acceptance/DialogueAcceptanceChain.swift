@@ -57,7 +57,10 @@ final class DialogueAcceptanceChain {
         controller.scripts = ScriptCoordinator(
             world: controller.scriptWorld, runtime: session.world, bridge: session.bridge
         )
-        _ = DialogueWiring(controller.dialogueWorld, streamer: streamer)
+        let dialogueWorld = controller.dialogueWorld
+        streamer.talk.activations.register(.dialogue) { [weak dialogueWorld] event in
+            dialogueWorld?.handleTalkActivation(event)
+        }
         // No cell is resident, so the app's own resident-actor walk finds
         // nobody. The speaker is supplied to the same seam it would fill.
         streamer.talk.candidateSource = { _ in [Self.candidate] }

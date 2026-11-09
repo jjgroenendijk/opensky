@@ -68,6 +68,14 @@ final class BenchmarkRunHost {
         pending == nil ? nil : LoadPhaseRecorder()
     }
 
+    /// Muted before the first frame, so the world's first sounds stay silent too.
+    func sessionStarted(_ session: GameSessionScope, in window: NSWindow) {
+        if pending?.muted == true {
+            session.audio.outputMuted = true
+        }
+        attach(tour: session.benchmarkWorld, window: window)
+    }
+
     func attach(tour: BenchmarkWorldAdapter, window: NSWindow) {
         self.tour = tour
         playToolbar.benchmark = tour
