@@ -1138,7 +1138,8 @@ targets += testing(
         "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio", "OpenSkyBehavior",
         "OpenSkyCombatInterface", "OpenSkyConditions", "OpenSkyCrimeInterface",
         "OpenSkyDialogueInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsAnimation",
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData",
+        "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyMenusInterface", "OpenSkyPerceptionInterface",
         "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyQuestsInterface",
         "OpenSkyRenderCore", "OpenSkyRenderResources", "OpenSkyRendering",
@@ -1353,6 +1354,13 @@ targets += composition(
         "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkyTerrain", "OpenSkyWorld",
         "OpenSkyWorldConditions",
         "OpenSkyWorldInterface", "OpenSkyWorldState"
+    ],
+    tests: [
+        "OpenSkyAgentControl", "OpenSkyCombatInterface", "OpenSkyConditions",
+        "OpenSkyEngineTesting", "OpenSkyFormatsESM", "OpenSkyFormatsTesting", "OpenSkyGameData",
+        "OpenSkyLaunch", "OpenSkyMenus", "OpenSkyMenusInterface", "OpenSkyPlayer",
+        "OpenSkyRendering", "OpenSkySessionInterface", "OpenSkySessionTesting",
+        "OpenSkyWorldInterface"
     ]
 )
 
