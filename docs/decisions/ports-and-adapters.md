@@ -80,8 +80,8 @@ struct has no identity to hold.
 The adapters live in eleven modules, one per feature group, such as `OpenSkyMagicAdapters` and
 `OpenSkyStoryAdapters`. `src/Package.swift` declares them with the `composition` helper:
 
-- They may import their own feature's implementation, and other features only through their
-  Interfaces (`module-graph.sh` rule 14).
+- They may import the implementations of their own feature group, and other features only
+  through their Interfaces (`module-graph.sh` rule 14).
 - No other package module may import them. Only the app and `openskycli` link them.
 - `module-graph.sh` treats every module whose name ends in `Adapters` as composition.
 

@@ -1,25 +1,18 @@
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyCrime
 import OpenSkyCrimeInterface
 import OpenSkyDialogue
-import OpenSkyFactions
 public import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
-import OpenSkyMenus
-import OpenSkyPerception
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyQuestsInterface
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface

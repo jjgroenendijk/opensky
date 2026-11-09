@@ -1,5 +1,4 @@
 import OpenSkyAIPackages
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogue
@@ -10,10 +9,10 @@ public import OpenSkyQuests
 public import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
+import OpenSkyWorldConditions
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
@@ -29,12 +28,16 @@ public protocol StorySocialSearchHost: AnyObject {
     var scripts: any ScriptPort { get }
     var streamer: (any CellStreamerPort)? { get }
     var worldState: any WorldStateStorePort { get }
+    var scenes: any ScenePort { get }
+    var dialogueWorld: any DialogueWorldPort { get }
+    var storyManager: any StoryManagerPort { get }
+    var runtimeState: any RuntimeStatePort { get }
 }
 
 /// Part of `StoryWorldAdapter`, over its own narrow host.
 public struct StorySocialSearchAdapter {
-    public unowned let owner: StoryWorldAdapter
-    public unowned let game: any StorySocialSearchHost
+    public let game: any StorySocialSearchHost
+    public let sceneCast: StorySceneCastAdapter
 }
 
 extension StorySocialSearchAdapter {
@@ -47,7 +50,7 @@ extension StorySocialSearchAdapter {
             delta: { store.delta(for: $0) },
             parent: { [weak streamer] in streamer?.referenceEntry(formID: $0) }
         )
-        var context = owner.conditionContext()
+        var context = game.dialogueWorld.conditionContext()
         context.references = references
         let entries = references.sortedEntries()
         let feet = game.gameSession.map { gameSession in
@@ -58,7 +61,7 @@ extension StorySocialSearchAdapter {
             references: references,
             origin: feet,
             context: context,
-            registry: owner.conditionRegistry,
+            registry: ConditionFunctionRegistry.standard,
             dead: Set(game.actorWorld.combatActors().filter(\.isDead).map(\.key)),
             disabled: Set(entries.filter { !enable.isEnabled($0) }.map(\.key))
         )
@@ -83,7 +86,7 @@ extension StorySocialSearchAdapter {
 extension StorySocialSearchAdapter {
     public func socialFrame() -> SocialFrame? {
         guard game.streamer != nil else { return nil }
-        let inScenes = owner.scenes.actorsInScenes()
+        let inScenes = game.scenes.actorsInScenes()
         let actors = game.actorWorld.combatActors().map { actor in
             SocialActor(
                 key: actor.key,
@@ -96,7 +99,7 @@ extension StorySocialSearchAdapter {
         }
         return SocialFrame(
             actors: actors,
-            now: owner.sceneSeconds,
+            now: sceneCast.sceneSeconds,
             isInterior: game.streamer?.interiorScene != nil,
             playerInConversation: game.dialogue.conversationSpeaker != nil
         )
@@ -111,7 +114,7 @@ extension StorySocialSearchAdapter {
 
     public func run(_ commands: [SocialEventCommand]) {
         for case let .reportStoryEvent(event) in commands {
-            owner.reportStoryEvent(event)
+            game.storyManager.fireLocated(event) { [game] in game.runtimeState.conditionContext() }
         }
     }
 }

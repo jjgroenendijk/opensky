@@ -4,26 +4,21 @@ import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
-import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionInterface
 public import OpenSkyWorld
@@ -37,11 +32,10 @@ import simd
 public struct DialogueCameraWiring {
     public init(_ adapter: DialogueCameraWiringAdapter, gameSession: GameSession) {
         let renderer = gameSession.renderer
-        gameSession.worldTick.register(.dialogueCamera) { [weak owner = adapter.owner] delta in
-            owner?.cameraWiring.game.dialogueCamera.refreshFocus()
-            owner?.cameraWiring.game.faceMorphs
-                .tick(now: owner?.cameraWiring.game.renderer?.animationTime ?? 0)
-            owner?.cameraWiring.game.headTracking.tick(deltaTime: delta)
+        gameSession.worldTick.register(.dialogueCamera) { [weak game = adapter.game] delta in
+            game?.dialogueCamera.refreshFocus()
+            game?.faceMorphs.tick(now: game?.renderer?.animationTime ?? 0)
+            game?.headTracking.tick(deltaTime: delta)
         }
         renderer.worldOverlaySources
             .register(identifier: "dialogue-camera") { [weak gameSession] context, list in

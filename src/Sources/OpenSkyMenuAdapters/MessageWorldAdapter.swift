@@ -40,7 +40,7 @@ public protocol MessageWorldHost: MenuInputConsumer {
 }
 
 public final class MessageWorldAdapter {
-    public unowned let game: any MessageWorldHost
+    public let game: any MessageWorldHost
     var cachedEditorIDs: [String]?
 
     public let cameraEffectsHost: any MessageCameraEffectsHost

@@ -52,16 +52,17 @@ EXTERNAL = {"HeapModule", "DequeModule", "ArgumentParser"}
 # Rule 8. Shared by the app and OpenSkyCLI; may depend on anything.
 COMPOSITION = {"OpenSkyPreview", "OpenSkySession"}
 # Rule 14. An adapter module depends on lower modules, interfaces, the world feature and its
-# domains, and its own feature's implementation, never on another feature's implementation. ADAPTER_OWNER names that
-# feature for each module that follows the rule; the modules in ADAPTERS_PENDING do not yet.
-ADAPTER_OWNER = {"OpenSkyInventoryAdapters": "OpenSkyInventory",
-                 "OpenSkyMagicAdapters": "OpenSkyMagic",
-                 "OpenSkyProgressionAdapters": "OpenSkyProgression",
-                 "OpenSkyScriptAdapters": "OpenSkyScripting"}
+# domains, and the implementations of its own feature group, never on another feature's
+# implementation. ADAPTER_OWNER names that group for each module that follows the rule; the
+# modules in ADAPTERS_PENDING do not yet.
+ADAPTER_OWNER = {"OpenSkyInventoryAdapters": {"OpenSkyInventory"},
+                 "OpenSkyMagicAdapters": {"OpenSkyMagic"},
+                 "OpenSkyProgressionAdapters": {"OpenSkyProgression"},
+                 "OpenSkyScriptAdapters": {"OpenSkyScripting"},
+                 "OpenSkyStoryAdapters": {"OpenSkyCrime", "OpenSkyDialogue", "OpenSkyQuests"}}
 ADAPTERS_PENDING = {
     "OpenSkyAIAdapters", "OpenSkyActorAdapters", "OpenSkyAgentAdapters",
     "OpenSkyCombatAdapters", "OpenSkyMenuAdapters", "OpenSkySessionAdapters",
-    "OpenSkyStoryAdapters",
 }
 # Rule 6. A feature without one of its targets, and why.
 MISSING = {
@@ -145,10 +146,10 @@ for name in sorted(names):
 
 def adapter_failures(name, found, kinds):
     """Rule 14 for one adapter module: found are its dependencies, kinds maps each to its kind."""
-    own = ADAPTER_OWNER.get(name)
+    own = ADAPTER_OWNER.get(name, set()) | {DOMAIN_OWNER}
     return [f"rule 14: adapter module {name} depends on the implementation {dep}; "
             f"use {dep}Interface" for dep in found
-            if dep not in (own, DOMAIN_OWNER) and kinds(dep) == "feature"]
+            if dep not in own and kinds(dep) == "feature"]
 
 
 probe_kinds = {"OpenSkyProgression": "feature", "OpenSkyCombat": "feature",
