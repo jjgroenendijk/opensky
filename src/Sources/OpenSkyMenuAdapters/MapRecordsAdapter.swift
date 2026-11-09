@@ -1,4 +1,4 @@
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkySessionInterface
@@ -7,7 +7,7 @@ public import OpenSkySessionInterface
 @MainActor
 public protocol MapRecordsHost: AnyObject {
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
 }
 
 /// Part of `MapWorldAdapter` that reads the map's records.
@@ -17,7 +17,7 @@ public struct MapRecordsAdapter {
 
 extension MapRecordsAdapter {
     public var records: MenuRecordData? {
-        game.worldData?.menuRecords
+        game.menuRecords?.menuRecords
     }
 
     /// The map of the worldspace the player stands in, or of its map parent.

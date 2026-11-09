@@ -90,13 +90,13 @@ extension MenuWorldTeleportsAdapter {
         if state.coverNextTeleport {
             state.coverNextTeleport = false
             state.teleportCovered = true
-            game.loadingScreens.beginLoad(at: Date().timeIntervalSinceReferenceDate)
+            game.loadingScreens.beginLoad(at: state.now().timeIntervalSinceReferenceDate)
         }
         do {
             state.newGameTeleport = try job().wait
         } catch {
             game.hud.showNotification("Move: \(error.message)")
-            liftTeleportCover(at: Date().timeIntervalSinceReferenceDate)
+            liftTeleportCover(at: state.now().timeIntervalSinceReferenceDate)
             openRaceMenuIfAsked()
             return
         }
@@ -109,7 +109,7 @@ extension MenuWorldTeleportsAdapter {
         gameSession.frameSteps.register(.newGameTeleport) { [weak game, state] _ in
             guard let game else { return }
             MenuWorldTeleportsAdapter(game: game, state: state)
-                .pollNewGameTeleport(now: Date().timeIntervalSinceReferenceDate)
+                .pollNewGameTeleport(now: state.now().timeIntervalSinceReferenceDate)
         }
     }
 

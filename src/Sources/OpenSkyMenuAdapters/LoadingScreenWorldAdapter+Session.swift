@@ -1,13 +1,13 @@
 // `LoadingScreenWorldAdapter` built over the started session: it registers its frame steps and
 // session events as it is built (docs/decisions/session-scope.md).
 
-import Foundation
+public import Foundation
 import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyFormatsMesh
+public import OpenSkyGameData
 import OpenSkyLoading
 import OpenSkyMenus
 import OpenSkyMenusInterface
@@ -27,16 +27,17 @@ extension LoadingScreenWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
         game: some LoadingScreenWorldHost & LoadingScreenPresentationHost,
-        stage: SessionStage?
+        stage: SessionStage?,
+        clock: @escaping () -> Date
     ) {
-        self.init(game: game)
+        self.init(game: game, clock: clock)
         guard let stage else { return }
         registerLoadingScreen(stage: stage)
     }
 
-    private func registerLoadingScreenCameraPaths(stage: SessionStage) {
-        let gameSession = stage.gameSession
-        guard let files = game.worldData?.scriptFileSystem else { return }
+    /// Loads the camera paths the loading screens name, all of them started at once.
+    public func cameraPathLoader() -> AssetLoader<String, NIFCameraTrack>? {
+        guard let files = game.menuRecords?.scriptFileSystem else { return nil }
         let paths = AssetLoader<String, NIFCameraTrack> { path in
             try NIFCameraTrack(file: NIFFile(data: files.contents(forPath: "meshes\\" + path)))
         }
@@ -44,6 +45,12 @@ extension LoadingScreenWorldAdapter {
         for path in Set(screens.compactMap(\.record.cameraPath)) {
             paths.prefetch(path)
         }
+        return paths
+    }
+
+    private func registerLoadingScreenCameraPaths(stage: SessionStage) {
+        let gameSession = stage.gameSession
+        guard let paths = cameraPathLoader() else { return }
         state.cameraPaths = paths
         gameSession.assetDrains.register(.loadingCameraPaths) { _ in paths.drain() }
     }

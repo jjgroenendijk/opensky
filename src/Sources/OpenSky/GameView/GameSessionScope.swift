@@ -193,7 +193,7 @@ final class GameSessionScope {
     )
     lazy var subtitles = SubtitleCoordinator(presenter: hud)
 
-    lazy var messageWorld = MessageWorldAdapter(game: ports, stage: stage)
+    lazy var messageWorld = MessageWorldAdapter(game: ports, stage: stage, now: { Date() })
     /// Wait, training, books, help, magic, gifts, crafting, and text entry.
     lazy var menuScreens = MenuScreens(game: ports, screens: factories.makeMenuScreenCoordinators())
     lazy var menuScreensWorld = MenuScreensWorldAdapter(game: ports)

@@ -1,3 +1,4 @@
+public import Foundation
 public import OpenSkyAgentControl
 public import OpenSkyFormatsESM
 public import OpenSkyMenus
@@ -24,6 +25,10 @@ public final class MenuPartState {
     /// loading menu, because that menu pauses the scripts that make the move. On the
     /// simulation clock, so a game paused by agent control does not run out the limit.
     public var newGameCoverSince: Double?
+    /// The wall clock the loading cover times itself by.
+    public let now: () -> Date
 
-    public init() {}
+    public init(now: @escaping () -> Date) {
+        self.now = now
+    }
 }

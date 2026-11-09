@@ -2,6 +2,7 @@
 // session, and the loaded world. Without a stage, as in a test, each is built without
 // game data (docs/decisions/session-scope.md).
 
+import Foundation
 import OpenSkyActorAdapters
 import OpenSkyAIAdapters
 import OpenSkyAIPackages
@@ -133,7 +134,11 @@ extension GameSessionScopeFactories {
     }
 
     func makeLoadingWorld() -> LoadingScreenWorldAdapter {
-        let world = LoadingScreenWorldAdapter(game: scope.ports, stage: scope.stage)
+        let world = LoadingScreenWorldAdapter(
+            game: scope.ports,
+            stage: scope.stage,
+            clock: { Date() }
+        )
         world.state.bringFollowers = { [weak scope] scene in
             scope?.followerCommandWorld.bringFollowers(into: scene)
         }

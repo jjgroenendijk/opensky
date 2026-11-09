@@ -1,5 +1,5 @@
 import Foundation
-public import OpenSkyCells
+import OpenSkyCells
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -16,7 +16,7 @@ public protocol MenuScreensGiftListsHost: AnyObject {
     var inventoryWorld: any InventoryWorldPort { get }
     var magic: any MagicPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
 }
 
 /// Part of `MenuScreensWorldAdapter`, over its own narrow host.
@@ -75,7 +75,7 @@ extension MenuScreensGiftListsAdapter {
     /// The item and its keywords as form list entries, for a gift filter.
     private func giftIdentities(of item: FormID) -> Set<ReferenceKey> {
         guard
-            let data = game.worldData, let lists = data.formListStore,
+            let data = game.menuRecords, let lists = data.formListStore,
             let plugin = data.magicItemPluginName
         else { return [] }
         let keywords = game.inventoryWorld.itemKeywords(of: item) ?? []

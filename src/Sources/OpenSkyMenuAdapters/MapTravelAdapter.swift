@@ -1,7 +1,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCamera
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrimeInterface
@@ -40,7 +40,7 @@ public protocol MapTravelHost: AnyObject {
     var saveGames: any SaveGameWorldPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
 }
 
 /// Part of `MapWorldAdapter`, over its own narrow host.
@@ -75,7 +75,7 @@ extension MapTravelAdapter {
         guard
             let renderer = game.renderer, let gameSession = game.gameSession else { return false }
         let from = gameSession.walkController.feetPosition
-        let walk = game.worldData?
+        let walk = game.menuRecords?
             .movementConfiguration.travelSpeed.value ?? PlayerMovementConfiguration
             .fallbackTravelSpeed
         let seconds = FastTravelRule.gameSeconds(

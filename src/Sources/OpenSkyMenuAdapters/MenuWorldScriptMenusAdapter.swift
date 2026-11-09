@@ -2,7 +2,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
 import OpenSkyAudio
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -36,7 +36,7 @@ public protocol MenuWorldScriptMenusHost: AnyObject {
     var raceMenu: any RaceMenuPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var menuRecords: (any MenuRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -129,7 +129,7 @@ extension MenuWorldScriptMenusAdapter {
     }
 
     public func leveledBase(of actor: ReferenceKey, base: FormID) -> FormID? {
-        guard let templates = game.worldData?.actorValueBaselines?.resolver?.templates
+        guard let templates = game.menuRecords?.actorValueBaselines?.resolver?.templates
         else { return base }
         let roll = game.worldState.leveledRoll(of: actor, base: base, with: templates.leveling)
         return templates.rolling(roll).leveledBase(of: base)
