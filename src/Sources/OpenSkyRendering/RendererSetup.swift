@@ -234,15 +234,6 @@ extension Renderer {
         )
     }
 
-    /// The shaders the app and openskycli compile into `default.metallib` in
-    /// their own bundle.
-    public static func makeBundledShaderLibrary(device: any MTLDevice) throws -> any MTLLibrary {
-        guard let library = device.makeDefaultLibrary() else {
-            throw RendererError.defaultLibraryMissing
-        }
-        return library
-    }
-
     public static func makePipelines(
         view: MTKView,
         library: any MTLLibrary,

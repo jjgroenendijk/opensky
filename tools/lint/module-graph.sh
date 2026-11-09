@@ -43,7 +43,7 @@ DOMAIN_OWNER = "OpenSkyWorld"
 RENDERER = "OpenSkyRendering"
 RENDERER_DEPS = {
     "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
-    "OpenSkyGameData", "OpenSkyShaderTypes",
+    "OpenSkyGameData", "OpenSkyShaderTypes", "OpenSkyShaders",
     "OpenSkyAssetCache", "CASTCEncoder", "OpenSkyImageKernels", "OpenSkyRenderCore",
     "OpenSkyRenderResources",
 }

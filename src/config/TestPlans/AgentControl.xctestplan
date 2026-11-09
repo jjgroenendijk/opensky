@@ -10,12 +10,6 @@
     "codeCoverage": true,
     "defaultTestExecutionTimeAllowance": 120,
     "diagnosticCollectionPolicy": "Never",
-    "environmentVariableEntries": [
-      {
-        "key": "OPENSKY_SHADER_LIBRARY",
-        "value": "$(BUILD_DIR)/OpenSkyShaders.metallib"
-      }
-    ],
     "maximumTestExecutionTimeAllowance": 300,
     "targetForVariableExpansion": {
       "containerPath": "container:OpenSky.xcodeproj",

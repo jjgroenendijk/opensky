@@ -158,8 +158,9 @@ Structs and constants shared by Swift and the Metal shaders live in
 Swift package, so a file that writes `import OpenSkyShaderTypes` sees the types and no other file
 does. SwiftPM links a clang target's object file, so the target also holds `ShaderTypes.m`, which
 declares nothing. It is Objective-C because the header imports Foundation.
-`MTL_HEADER_SEARCH_PATHS` points at the same folder, so every shader file keeps
-`#import "ShaderTypes.h"`.
+The shaders reach the header by a relative path, `../OpenSkyShaderTypes/ShaderTypes.h`, because
+a package target's Metal compile takes no header search path
+([shader library](/decisions/shader-library.md)).
 
 There is no bridging header. A bridging header is visible to every Swift file in its target, so every
 file depended on the shared header whether it used it or not, and `OpenSkyCLI` had to name the app's

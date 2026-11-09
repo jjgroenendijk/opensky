@@ -71,11 +71,6 @@
 			path = OpenSky;
 			sourceTree = "<group>";
 		};
-		5A3BAE033000109100177F95 /* Shaders */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Shaders;
-			sourceTree = "<group>";
-		};
 		5AC1000130001093001700A5 /* OpenSkyCLI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = OpenSkyCLI;
@@ -170,7 +165,6 @@
 			isa = PBXGroup;
 			children = (
 				5A3BAE033000109100177F96 /* OpenSky */,
-				5A3BAE033000109100177F95 /* Shaders */,
 				5AC1000130001093001700A5 /* OpenSkyCLI */,
 			);
 			path = Sources;
@@ -218,7 +212,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				5A3BAE033000109100177F96 /* OpenSky */,
-				5A3BAE033000109100177F95 /* Shaders */,
 			);
 			name = OpenSky;
 			packageProductDependencies = (
@@ -312,7 +305,6 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				5A3BAE033000109100177F95 /* Shaders */,
 				5AC1000130001093001700A5 /* OpenSkyCLI */,
 			);
 			name = OpenSkyCLI;

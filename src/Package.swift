@@ -244,7 +244,7 @@ func composition(_ name: String, dependencies: [String], tests: [String]? = nil)
 
 // MARK: - Modules, bottom-up
 
-/// The structs shared with Metal. The shaders in Sources/Shaders include the same header.
+/// The structs shared with Metal. The shaders in Sources/OpenSkyShaders include the same header.
 let shaderTypes = Target.target(name: "OpenSkyShaderTypes", publicHeadersPath: ".")
 /// The vendored ffmpeg as a clang module (Sources/CFFmpeg/include/module.modulemap).
 /// A C target, not a system library: when a testing library shares OpenSkyAudio
@@ -289,6 +289,8 @@ targets += foundation("OpenSkyFormatsCore", tests: ["OpenSkyTagsTesting", "OpenS
 /// times slower unoptimized, so Debug builds them optimized too.
 let optimizedInDebug: [SwiftSetting] = [.unsafeFlags(["-O"], .when(configuration: .debug))]
 targets += foundation("OpenSkyImageKernels", swiftSettings: optimizedInDebug)
+// The Metal shaders: SwiftPM compiles the `.metal` files into the bundle's `default.metallib`.
+targets += foundation("OpenSkyShaders", tests: ["OpenSkyTagsTesting"])
 let formatFamilies = ["ESM", "Mesh", "Animation", "Audio", "PEX", "SWF", "ESS"]
 for family in formatFamilies {
     let module = "OpenSkyFormats\(family)"
@@ -409,8 +411,8 @@ targets += foundation(
     "OpenSkyRendering",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
-        "OpenSkyGameData", "OpenSkyShaderTypes", "OpenSkyAssetCache", "OpenSkyRenderCore",
-        "OpenSkyRenderResources"
+        "OpenSkyGameData", "OpenSkyShaderTypes", "OpenSkyShaders", "OpenSkyAssetCache",
+        "OpenSkyRenderCore", "OpenSkyRenderResources"
     ],
     tests: [
         "OpenSkyTagsTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
@@ -445,7 +447,8 @@ targets += testing(
         "OpenSkyFormatsTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyFormatsAnimation",
         "OpenSkyFormatsMesh", "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyPhysics",
-        "OpenSkyRendering", "OpenSkyWorldState", "OpenSkyRenderCore", "OpenSkyFormatsSWF"
+        "OpenSkyRendering", "OpenSkyWorldState", "OpenSkyRenderCore", "OpenSkyFormatsSWF",
+        "OpenSkyShaders"
     ]
 )
 
@@ -1140,7 +1143,7 @@ targets += composition(
         "OpenSkyTerrain", "OpenSkyEffects", "OpenSkyCamera", "OpenSkyRuntimeState",
         "OpenSkyActorPresentation", "OpenSkyObjectAnimation", "OpenSkyPlayer",
         "OpenSkyAIPackages", "OpenSkyCells", "OpenSkyLoading", "OpenSkyAssetCache",
-        "OpenSkyPhysics", "OpenSkyRenderResources"
+        "OpenSkyPhysics", "OpenSkyRenderResources", "OpenSkyShaders"
     ]
 )
 

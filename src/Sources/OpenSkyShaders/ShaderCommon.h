@@ -7,7 +7,7 @@
 #include <metal_stdlib>
 #include <simd/simd.h>
 
-#import "ShaderTypes.h"
+#import "../OpenSkyShaderTypes/ShaderTypes.h"
 
 using namespace metal;
 

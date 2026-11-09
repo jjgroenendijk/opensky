@@ -16,7 +16,6 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 # shellcheck source=tools/build-env.sh
 . "$root/tools/build-env.sh"
-products="$OPENSKY_DERIVED_DATA/Build/Products"
 
 # One -only-testing per entry of T. An entry that names no OpenSky*Tests target
 # resolves under the plan's own bundle.
@@ -67,10 +66,6 @@ case "$plan" in
             address) configuration=Address ;;
             *) echo "[ERROR] the Sanitizers plan needs SAN=thread or SAN=address" >&2; exit 2 ;;
         esac
-        # Each sanitizer builds into its own variant folder, where the plan finds the shaders.
-        for variant in Variant-TSan Variant-ASan-UBSan; do
-            mkdir -p "$products/$variant" && cp "$products/OpenSkyShaders.metallib" "$products/$variant/"
-        done
         bundle=OpenSkyTests
         guard "$OPENSKY_DERIVED_DATA" 12288
         set -- "$@" -testPlan Sanitizers -only-test-configuration "$configuration" \

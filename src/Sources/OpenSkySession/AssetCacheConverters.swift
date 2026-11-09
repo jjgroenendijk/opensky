@@ -8,6 +8,7 @@ import OpenSkyGameData
 public import OpenSkyLoading
 import OpenSkyPhysics
 import OpenSkyRenderResources
+import OpenSkyShaders
 
 nonisolated public enum AssetCacheConverters {
     /// An output that re-encodes textures needs a Metal device to decode the shipped blocks.
@@ -32,7 +33,7 @@ nonisolated public enum AssetCacheConverters {
         return try make(
             textureOutput: textureOutput,
             device: device,
-            library: device?.makeDefaultLibrary()
+            library: device.map { try ShaderLibrary.make(device: $0) }
         )
     }
 }

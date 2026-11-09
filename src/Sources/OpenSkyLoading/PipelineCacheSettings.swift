@@ -2,26 +2,24 @@
 // folder, so the one folder setting places both caches.
 
 public import Foundation
-public import Metal
 import OpenSkyAssetCache
 import OpenSkyFormatsCore
 public import OpenSkyGameData
 public import OpenSkyRenderResources
 
 extension PipelineCache {
-    /// A cache with an archive file when the setting is on, else one that only compiles.
-    public static func fromSettings(device: any MTLDevice, store: PlayerSettingsStore) throws
-        -> PipelineCache
-    {
-        try PipelineCache(device: device, fileURL: archiveURL(device: device, store: store))
-    }
-
-    static func archiveURL(device: any MTLDevice, store: PlayerSettingsStore) -> URL? {
+    /// The archive file when the setting is on, else nil, so the cache only compiles.
+    /// `shaderLibrary` is the compiled library file, which the archive name stamps.
+    public static func archiveURL(
+        gpuName: String, store: PlayerSettingsStore, shaderLibrary: URL?
+    ) -> URL? {
         guard
             store.bool(.pipelineCacheEnabled),
             let folder = archiveFolder(store: store)
         else { return nil }
-        return PipelineCacheFolder.archiveURL(inCacheFolder: folder, device: device)
+        return PipelineCacheFolder.archiveURL(
+            inCacheFolder: folder, gpuName: gpuName, shaderLibrary: shaderLibrary
+        )
     }
 
     /// The folder that holds the archives, whether or not the cache is on.

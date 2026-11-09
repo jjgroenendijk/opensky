@@ -12,11 +12,11 @@ tags: [decision, tooling, metal, lint, format]
 
 - Formatter: clang-format (Metal is C++-based; Apple ships clang-format with Xcode,
   invoked `xcrun clang-format`). Config `tools/format/.clang-format`, style matched to
-  hand-written `src/Sources/Shaders/*.metal` conventions. Wired into `make format`
+  hand-written `src/Sources/OpenSkyShaders/*.metal` conventions. Wired into `make format`
   / `make format-check` (`metal-format` target).
 - Linter: no standalone Metal linter exists (clang-tidy needs a Metal compile database;
   not worth the setup for one shader file). Documented exception: the Metal compiler is
-  the linter — `MTL_TREAT_WARNINGS_AS_ERRORS = YES` in both build configs -> any shader
+  the linter — `MTL_TREAT_WARNINGS_AS_ERRORS = YES` in `Overrides.xcconfig` -> any shader
   warning fails every app build.
 
 ## Rationale

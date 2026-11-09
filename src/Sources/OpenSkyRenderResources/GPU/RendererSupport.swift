@@ -24,7 +24,6 @@ nonisolated public enum RendererError: Error {
     case commandAllocatorUnavailable
     case sharedEventUnavailable
     case bufferAllocationFailed
-    case defaultLibraryMissing
     case pipelineAttachmentMissing
     case depthStateAllocationFailed
     case samplerAllocationFailed

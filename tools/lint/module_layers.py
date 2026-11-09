@@ -4,7 +4,7 @@ docs/tools/modules.md explains each layer and the import rules between them.
 """
 
 LAYERS = [
-    ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder", "OpenSkyImageKernels",
+    ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder", "OpenSkyImageKernels", "OpenSkyShaders",
      "OpenSkyCLIArguments"],
     ["OpenSkyFormatsCore"],
     ["OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",

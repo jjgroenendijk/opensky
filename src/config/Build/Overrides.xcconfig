@@ -18,6 +18,11 @@ OPENSKY_DEFINES_MODULE_CFFmpeg = NO
 OPENSKY_DEFINES_MODULE_CASTCEncoder = NO
 DEFINES_MODULE = $(OPENSKY_DEFINES_MODULE_$(PRODUCT_NAME):default=$(inherited))
 
+// Metal, for the shaders the OpenSkyShaders package target compiles. Shader warnings are
+// errors, same as the Swift lint gate. swift build passes neither (docs/decisions/shader-library.md).
+MTL_FAST_MATH = YES
+MTL_TREAT_WARNINGS_AS_ERRORS = YES
+
 // Compilation-cache keys must not depend on where a checkout or its build tree
 // lives, or no other worktree can reuse an entry. Prefix mapping turns the checkout
 // into /^src, the tree into /^derived, and products into /^built; it has to reach

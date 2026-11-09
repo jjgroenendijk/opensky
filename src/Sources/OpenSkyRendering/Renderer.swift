@@ -5,6 +5,7 @@ public import MetalKit
 import OpenSkyFormatsCore
 public import OpenSkyRenderCore
 public import OpenSkyRenderResources
+import OpenSkyShaders
 import OpenSkyShaderTypes
 import QuartzCore
 public import simd
@@ -349,8 +350,7 @@ public final class Renderer: NSObject {
     public var lastShadowDrawStats = ShadowDrawStats()
 
     /// `scene` nil -> synthetic DemoScene; `camera` nil -> its demo camera;
-    /// `shaderLibrary` nil -> the `default.metallib` of the app or openskycli
-    /// bundle. A package test passes the library its fixture loads instead.
+    /// `shaderLibrary` nil -> a fresh load of `ShaderLibrary`; a test passes the one it caches.
     /// This builds the GPU half only; `GameSession(view:)` in the engine builds
     /// a renderer and drives its frames.
     public init(
@@ -375,7 +375,7 @@ public final class Renderer: NSObject {
 
         colorPixelFormat = Self.configure(view: view)
 
-        let library = try shaderLibrary ?? Self.makeBundledShaderLibrary(device: device)
+        let library = try shaderLibrary ?? ShaderLibrary.make(device: device)
         let compiler = try pipelineCache ?? PipelineCache(device: device, fileURL: nil)
         self.pipelineCache = compiler
         let pipelines = try Self.makePipelines(view: view, library: library, compiler: compiler)
