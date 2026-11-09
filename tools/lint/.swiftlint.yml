@@ -84,8 +84,9 @@ cyclomatic_complexity:
   warning: 12
   error: 20
 
+# Design rule 1 (docs/decisions/design-metrics.md).
 nesting:
-  type_level: 2
+  type_level: 1
 
 # SwiftFormat (--wrapconditions before-first, --enable wrapMultilineStatementBraces)
 # breaks a long `if let a, let b, c > 0 {` onto multiple lines and drops the `{`
