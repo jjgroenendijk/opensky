@@ -11,8 +11,8 @@ tags: [tool, agents, skills, lint]
 The agent files (`AGENTS.md` at the root and in some folders) and the skills in
 `.agents/skills/` hold the rules an agent follows. A rule that a machine checks is written
 there once, in one line that names its gate. A gate is a check that fails the run: a script
-in `tools/lint/` or `tools/format/`, a SwiftLint rule, or the compiler. `make check` and CI run
-every gate. The text keeps only what no gate can hold, and the reason for it.
+in `tools/lint/` or `tools/format/`, a SwiftLint rule, a structural rule, or the compiler.
+`make check` and CI run every gate. The text keeps only what no gate can hold, and the reason for it.
 
 A rule written twice is read once, and a long file is skimmed. The rule that matters most,
 the legal boundary, is then read less.
@@ -29,9 +29,10 @@ the legal boundary, is then read less.
 | No `try?` outside `removeItem` and `close`; typed errors | `tools/lint/error-handling.sh` |
 | A condition context carries its function registry; no function takes both apart | `tools/lint/condition-context.sh` |
 | No system random source, clock, mutable static, or singleton in game rules | `tools/lint/deterministic-rules.sh` |
-| No `@unchecked Sendable`, `Task.detached`, or new `DispatchQueue` | SwiftLint `unchecked_sendable`, `detached_task`, and the queue rules |
-| No `GameViewController+X.swift` file; no late setter or connection step | SwiftLint `game_view_controller_extension`, `late_setter_method`, `late_attached_world`, `connection_step_type` |
-| Ports and adapters | `tools/lint/app-architecture.sh`, `tools/lint/adapter-rules.sh` |
+| No `@unchecked Sendable`, `Task.detached`, or new `DispatchQueue` | `tools/lint/syntax-rules.sh` `unchecked_sendable`, `detached_task`, and the queue rules |
+| No `GameViewController+X.swift` file; no late setter or connection step | `tools/lint/syntax-rules.sh` `game_view_controller_extension`, `late_setter_method`, `late_attached_world`, `connection_step_type` |
+| Ports and adapters | `tools/lint/app-architecture.sh`, `tools/lint/adapter-rules.sh`, `tools/lint/syntax-rules.sh` |
+| Architecture styles and the `openskycli gaps` registries: one rule per structure, on the syntax tree | `tools/lint/syntax-rules.sh` |
 | Records read through the whole load order | `tools/lint/load-order-only.sh` |
 | A file stays under 800 lines | `tools/lint/file-length.sh` and the pre-commit hook |
 | A comment block stays under 7 lines; no suppression; no duplicated code | `tools/lint/comment-length.sh`, `no-suppressions.sh`, `duplicates.sh` |

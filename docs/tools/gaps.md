@@ -69,10 +69,10 @@ complete, so a new reader cannot be missed:
 
 | List | Check |
 | --- | --- |
-| `PerkEntryPoint.engineRead` | SwiftLint `perk_entry_point_literal`: no raw entry-point number elsewhere |
-| `PapyrusEngineEvents.sent` | SwiftLint `papyrus_event_literal`: no `"On..."` event name elsewhere in the scripting module |
-| Game settings | SwiftLint `game_setting_reader`: only the files of known readers call `setting(editorID:)` or declare `resolve(store:)` |
-| `NIFShaderFlag.lightingRead`, `effectRead` | SwiftLint `shader_flag_mask`: flags are read through `has(_:)` and a named constant |
+| `PerkEntryPoint.engineRead` | `syntax-rules.sh` `perk_entry_point_literal`: no raw entry-point number elsewhere |
+| `PapyrusEngineEvents.sent` | `syntax-rules.sh` `papyrus_event_literal`: no `"On..."` event name elsewhere in the scripting module |
+| Game settings | `syntax-rules.sh` `game_setting_reader`: only the files of known readers call `setting(editorID:)` or declare `resolve(store:)` |
+| `NIFShaderFlag.lightingRead`, `effectRead` | `syntax-rules.sh` `shader_flag_mask`: flags are read through `has(_:)` and a named constant |
 | `NIFBlockTypes.handled` | `tools/lint/gap-registries.sh`: the list holds exactly the NIF type names the code names |
 
 A new settings reader adds its call to `GapsGatherer.settingsRead` and its file to the

@@ -21,7 +21,8 @@ the session scope builds each adapter with it (`/decisions/session-scope.md`).
 `tools/lint-index/adapter-references.py` checks rule 8 in `make lint-index` and the `Index checks`
 CI job on each pull request, because it reads the index store that a build writes.
 `tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks rules
-5 and 9 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI
+5 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `tools/lint/syntax-rules.sh` checks
+rule 9. `make lint`, `make check`, and CI
 run both.
 Each reads every adapter or app file, so `OPENSKY_CHECK_ALL=1` changes nothing for them. Each first
 runs its rules on a small synthetic violation, which must fail.
@@ -94,7 +95,7 @@ An adapter is complete when it is built. The scope builds it over the session's 
 `CombatWorldAdapter(game: ports, stage: stage)`. No connection step runs later. An adapter, a
 coordinator, and the app keep no `wire...` or `install...` method, no `attach(world:)`-style
 setter, and no `<Name>Wiring` type, so the `late_setter_method`, `late_attached_world`, and
-`connection_step_type` SwiftLint rules hold everywhere, the app included
+`connection_step_type` structural rules hold everywhere, the app included
 ([session scope](/decisions/session-scope.md)).
 
 ## The game view

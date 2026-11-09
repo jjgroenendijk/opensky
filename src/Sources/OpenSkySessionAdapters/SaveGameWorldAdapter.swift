@@ -73,7 +73,6 @@ public final class SaveGameWorldAdapter: SaveGameService {
     }
 
     /// The summary and picture are taken now, before the file work starts.
-    @discardableResult
     public func saveGame(slot: String?) async throws -> String {
         let name = slot ?? Self.newSlotName(existing: Set(ownRows.map(\.slot)))
         lastSaveDate = Date()
@@ -93,7 +92,6 @@ public final class SaveGameWorldAdapter: SaveGameService {
     }
 
     /// The summary and picture are taken now, as for an OpenSky save.
-    @discardableResult
     public func exportSkyrimSave() async throws -> String {
         let contents = game.runtimeStateWorld.sessionContents(
             summary: summary(), thumbnail: thumbnail()
@@ -184,7 +182,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
             }
             let dates = Dictionary(ownRows.map { ($0.slot, $0.savedAt) }) { first, _ in first }
             do {
-                try await saveGame(slot: autosave ? autosaves.nextSlot(saved: dates) : nil)
+                _ = try await saveGame(slot: autosave ? autosaves.nextSlot(saved: dates) : nil)
             } catch {
                 Self.logger
                     .error("[ERROR] script save: \(String(describing: error), privacy: .public)")
@@ -209,7 +207,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
             }
             let dates = Dictionary(ownRows.map { ($0.slot, $0.savedAt) }) { first, _ in first }
             do {
-                try await saveGame(slot: autosaves.nextSlot(saved: dates))
+                _ = try await saveGame(slot: autosaves.nextSlot(saved: dates))
             } catch SaveFailure.outOfDiskSpace {
                 autosavesDisabled = true
                 game.hud.showNotification(saveTexts.autosaveDisabled)

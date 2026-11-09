@@ -209,7 +209,7 @@ and the ragdoll's push land in the same frame as the damage. Every cast reaches 
 
 ## The checks
 
-SwiftLint runs these rules in `make check` and CI (`tools/lint/.swiftlint.yml`):
+`tools/lint/syntax-rules.sh` runs these rules on the syntax tree in `make check` and CI:
 
 - `late_setter_method` fails a method in a package module or the app whose name starts with `wire` or
   `install`. A `static` method is allowed, because it fills a registry value, such as the

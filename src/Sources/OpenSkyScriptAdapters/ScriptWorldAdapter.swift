@@ -157,7 +157,7 @@ public final class ScriptWorldAdapter {
         sessionBindings.fillGameNatives(bridge: bridge)
         bridge.sessionNatives.itemScripts = Self.itemScripts(provider.placedRecords)
         bridge.formIDResolver = provider.scriptFormIDResolver
-        bridge.leveledEdits = { [weak game] in
+        bridge.sessionNatives.leveledEdits = { [weak game] in
             game?.worldData?.actorValueBaselines?.leveling.scriptEdits
         }
         bridge.playerNatives

@@ -43,8 +43,8 @@ CI job runs on each pull request.
 | Docs and scripts name only existing make targets | `tools/lint/make-targets.sh` | Lint | Under a second |
 | Each lint still catches a planted violation | `--self-check` of every `tools/lint/` script | Lint | Seconds, in parallel |
 | New SwiftLint rules | SwiftLint | Lint | Part of the current lint |
-| No new `GameViewController` extensions | SwiftLint `custom_rules` | Lint | Part of the current lint |
-| Architecture rules ([architecture styles](/engine/architecture.md#machine-checks)) | SwiftLint `custom_rules`, `module-graph` | Lint | Part of the current lint |
+| No new `GameViewController` extensions | `syntax-rules.sh` | Lint | Part of the current lint |
+| Architecture rules ([architecture styles](/engine/architecture.md#machine-checks)) | `syntax-rules.sh`, `module-graph` | Lint | Part of the current lint |
 | Module size | `tools/lint/module-size.sh`, `tools/lint/module-size.sh` | Lint | Under a second, whole tree |
 | Swift language rules ([Swift language rules](/decisions/language-rules.md)) | The compiler, `tools/lint/language-rules.sh` | Every build, CI | A few seconds for the self-check |
 | Error handling ([Error handling](/decisions/error-handling.md)) | `tools/lint/error-handling.sh`, `tools/lint/error-handling.sh` | Lint, CI | Under a second, whole tree |
@@ -154,14 +154,42 @@ an optional flag field: absent, false, and true. `Bool?` states that exactly.
 `type_body_length` counts one declaration body only. A type split over many extension
 files, like `GameViewController`, passes it. So a second rule is needed for that type.
 
+## Structural rules on the syntax tree
+
+A regular expression reads characters, not declarations. It misses a case written over two
+lines, and it matches a case inside a comment or a string. So every rule that reads Swift
+structure runs on a syntax tree, a compiler check, or the index store. A regular expression
+stays only for text: comment length, spelling, and file length.
+
+`tools/lint/syntax-rules.sh` builds `tools/syntax-lint/` with SwiftParser, the Swift parser
+that ships in Xcode, and keeps the binary in `.cache/syntax-lint/` under a hash of its
+sources. Each rule walks the tree of a file and reports the node it rejects. It reads the
+files the branch changed, or every file in CI.
+
+Measured 2026-11-09: 21 regex rules before (20 in `tools/lint/.swiftlint.yml`, 1 in
+`tools/lint/adapters.swiftlint.yml`), 0 after.
+
+| Rule | Check |
+| --- | --- |
+| `game_view_controller_extension`, `late_attached_world`, `late_setter_method`, `connection_step_type`, `late_setter_property` | Syntax tree: declarations |
+| `coordinator_outside_session_scope`, `controller_outside_composition_root`, `renderer_downcast` | Syntax tree: calls, names, and casts |
+| `action_returns_text`, `pure_core_side_effect`, `papyrus_loose_closure`, `frame_callback_property` | Syntax tree: signatures, imports, and property types |
+| `perk_entry_point_literal`, `papyrus_event_literal`, `shader_flag_mask`, `game_setting_reader` | Syntax tree: literals and calls |
+| `unchecked_sendable`, `detached_task`, `main_queue_or_semaphore`, `new_dispatch_queue` | Syntax tree: attributes and calls |
+| `adapter_unowned_reference` | Syntax tree: the `unowned` keyword |
+
+No rule became a compiler flag: the compiler has no switch for any of them. The tree found
+cases the regular expressions missed: an `async throws` action that returned `String`, and a
+bridge closure property with a default value.
+
 ## GameViewController extensions
 
 `GameViewController` keeps only the view, input, and the render loop, in
 `GameViewController.swift`. The game objects live in the session scope
-([session scope](/decisions/session-scope.md)). A SwiftLint `custom_rules` entry,
-`game_view_controller_extension`, forbids `extension GameViewController` in any other
+([session scope](/decisions/session-scope.md)). The structural rule
+`game_view_controller_extension` forbids `extension GameViewController` in any other
 file. The allowed file names are one regular expression
-in `tools/lint/.swiftlint.yml`. It is a design rule for the future, not a list of old
+in `tools/syntax-lint/Rules.swift`. It is a design rule for the future, not a list of old
 findings.
 
 ## Lint suppressions

@@ -27,7 +27,7 @@ Rules for code under `src/Sources/`. The module list, the layers, and the import
   `Package+Schedule.swift`. File names stay unique inside a target, because Swift rejects
   two files with one name in the same module.
 - Game logic goes in a coordinator in its feature module, never a `GameViewController+X.swift`
-  file, which the package tests and the CLI cannot reach (gate: SwiftLint
+  file, which the package tests and the CLI cannot reach (gate: `syntax-rules.sh`
   `game_view_controller_extension`). `VendorCore` with `VendorCoordinator` is the example.
 - At the file-length warning, split into a satellite file (`Renderer.swift` ->
   `RendererScenePass.swift`); check first which members need same-file `private(set)` access.
