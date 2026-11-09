@@ -158,9 +158,11 @@ nonisolated extension SWFRuntimeNatives {
         target.addChild(picture, atDepth: 0)
         owner.markDirty()
         _ = owner.timers.add(
-            callee: .object(loader),
-            method: "onDeferredLoadInit",
-            arguments: [context.argument(1)],
+            SWFTimerCall(
+                callee: .object(loader),
+                method: "onDeferredLoadInit",
+                arguments: [context.argument(1)]
+            ),
             period: 1,
             repeats: false
         )
@@ -178,9 +180,11 @@ nonisolated extension SWFRuntimeNatives {
         owner.runtime.noteMissing("MovieClipLoader.loadClip")
         let target = context.argument(1)
         _ = owner.timers.add(
-            callee: .object(loader),
-            method: "onDeferredLoadError",
-            arguments: [target],
+            SWFTimerCall(
+                callee: .object(loader),
+                method: "onDeferredLoadError",
+                arguments: [target]
+            ),
             period: 1,
             repeats: false
         )

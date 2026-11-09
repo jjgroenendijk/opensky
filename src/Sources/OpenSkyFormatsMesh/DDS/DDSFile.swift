@@ -196,14 +196,7 @@ nonisolated public struct DDSFile: Sendable {
         }
         depth = header.depth
 
-        // DDSD_MIPMAPCOUNT absent -> single level, whatever dwMipMapCount says.
-        let claimedMips = header.flags & Layout.flagMipMapCount != 0
-            ? max(1, header.mipCount) : 1
-        let fullChain = Int.bitWidth - max(width, height, header.depth).leadingZeroBitCount
-        guard claimedMips <= fullChain else {
-            throw DDSError.malformed("mip count \(claimedMips) exceeds full chain \(fullChain)")
-        }
-        mipCount = claimedMips
+        mipCount = try Self.claimedMipCount(header: header)
         guard !(header.isVolume && isCubemap) else {
             throw DDSError.malformed("volume texture marked as a cubemap")
         }
@@ -219,8 +212,10 @@ nonisolated public struct DDSFile: Sendable {
             let ranges = try Self.mipRanges(
                 header: header,
                 mipCount: mipCount,
-                bytesPerBlock: packing.bytesPerTexel ?? format.bytesPerBlock,
-                blockDimension: format.blockDimension,
+                block: (
+                    bytes: packing.bytesPerTexel ?? format.bytesPerBlock,
+                    dimension: format.blockDimension
+                ),
                 bytes: start ..< data.count
             )
             faces.append(ranges)
@@ -477,20 +472,32 @@ nonisolated extension DDSFile {
     /// Tightly packed chain inside `bytes` (payload start ..< file end): each
     /// level is ceil(w/4) * ceil(h/4) blocks per slice, and a volume level holds
     /// all its slices (DDS guide block-size math).
+    /// DDSD_MIPMAPCOUNT absent -> single level, whatever dwMipMapCount says.
+    private static func claimedMipCount(header: Header) throws -> Int {
+        let claimedMips = header.flags & Layout.flagMipMapCount != 0
+            ? max(1, header.mipCount) : 1
+        let largest = max(header.width, header.height, header.depth)
+        let fullChain = Int.bitWidth - largest.leadingZeroBitCount
+        guard claimedMips <= fullChain else {
+            throw DDSError.malformed("mip count \(claimedMips) exceeds full chain \(fullChain)")
+        }
+        return claimedMips
+    }
+
     private static func mipRanges(
         header: Header,
         mipCount: Int,
-        bytesPerBlock: Int,
-        blockDimension: Int,
+        block: (bytes: Int, dimension: Int),
         bytes: Range<Int>
     ) throws -> [Range<Int>] {
+        let blockDimension = block.dimension
         var ranges: [Range<Int>] = []
         var offset = bytes.lowerBound
         for level in 0 ..< mipCount {
             let blocksWide = (max(1, header.width >> level) + blockDimension - 1) / blockDimension
             let blocksHigh = (max(1, header.height >> level) + blockDimension - 1) / blockDimension
             let slices = max(1, header.depth >> level)
-            let size = blocksWide * blocksHigh * bytesPerBlock * slices
+            let size = blocksWide * blocksHigh * block.bytes * slices
             guard offset + size <= bytes.upperBound else {
                 throw DDSError.malformed(
                     "mip \(level) needs \(size) bytes at \(offset), "

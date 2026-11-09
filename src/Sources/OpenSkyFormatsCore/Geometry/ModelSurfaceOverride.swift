@@ -129,10 +129,9 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
                     diffuse: skin?.diffuse ?? diffuseTexture,
                     normal: skin?.normal ?? normalTexture,
                     detail: detailTexture, faceTint: faceTintTexture,
-                    lightMask: skin?.lightMask, specular: skin?.specular
+                    lightMask: skin?.lightMask, specular: skin?.specular,
+                    replacesTint: tint != nil, skinTone: material.tintsSkin ? skinTone : nil
                 ),
-                replacesTint: tint != nil,
-                skinTone: material.tintsSkin ? skinTone : nil,
                 projected: projected
             )
         }
@@ -149,8 +148,6 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
                     diffuse: swap.diffuseTexture, normal: swap.normalTexture, detail: nil,
                     faceTint: nil, lightMask: nil, specular: nil
                 ),
-                replacesTint: false,
-                skinTone: nil,
                 projected: projected
             ))
             meshes[index] = Self.mesh(mesh, colors: mesh.colors, materialSlot: materials.count - 1)
@@ -164,6 +161,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     }
 
     /// The texture paths one material takes instead of its own; nil keeps the material's.
+    /// `replacesTint` drops the tint colour the NIF stores, and `skinTone` sets one.
     private struct Textures {
         let diffuse: String?
         let normal: String?
@@ -171,6 +169,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         let faceTint: String?
         let lightMask: String?
         let specular: String?
+        var replacesTint = false
+        var skinTone: SIMD3<Float>?
     }
 
     /// An actor's own colour replaces the tint colour the NIF stores. The skin tone
@@ -178,18 +178,16 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     private static func retextured(
         _ material: Material,
         textures: Textures,
-        replacesTint: Bool,
-        skinTone: SIMD3<Float>?,
         projected: ProjectedMaterial?
     ) -> Material {
         var shading = material.shading
         if let projected, material.effect == nil, !material.waterSurface {
             shading.projected = projected
         }
-        if replacesTint {
+        if textures.replacesTint {
             shading.tintColor = nil
         }
-        if let skinTone {
+        if let skinTone = textures.skinTone {
             shading.tintColor = skinTone
         }
         if let detail = textures.detail {

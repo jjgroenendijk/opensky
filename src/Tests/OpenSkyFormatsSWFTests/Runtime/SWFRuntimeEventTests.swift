@@ -234,7 +234,7 @@ struct SWFRuntimeEventTests {
             return .undefined
         }
         let identifier = runtime.timers.add(
-            callee: .object(target), method: "tick", arguments: [],
+            SWFTimerCall(callee: .object(target), method: "tick", arguments: []),
             period: runtime.timerTicks(milliseconds: 1), repeats: true
         )
         #expect(identifier > 0)
@@ -255,7 +255,8 @@ struct SWFRuntimeEventTests {
             return .undefined
         }
         _ = runtime.timers.add(
-            callee: .object(target), method: "tick", arguments: [], period: 1, repeats: false
+            SWFTimerCall(callee: .object(target), method: "tick", arguments: []),
+            period: 1, repeats: false
         )
         runtime.advance()
         runtime.advance()
@@ -264,7 +265,7 @@ struct SWFRuntimeEventTests {
 
         for _ in 0 ..< (SWFRuntimeTimers.maximumTimers + 4) {
             _ = runtime.timers.add(
-                callee: .object(target), method: "tick", arguments: [],
+                SWFTimerCall(callee: .object(target), method: "tick", arguments: []),
                 period: 1000, repeats: true
             )
         }

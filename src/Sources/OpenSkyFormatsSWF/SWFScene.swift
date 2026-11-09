@@ -55,17 +55,31 @@ nonisolated public struct SWFScene: Equatable, Sendable {
 
     public static func build(movie: SWFMovie) -> SWFScene {
         var builder = SceneBuilder(movie: movie)
-        builder.walk(
-            placements: movie.frame1,
-            parentTransform: .identity,
-            parentColor: .identity,
-            clipCount: 0,
-            spriteDepth: 0
-        )
+        builder.walk(placements: movie.frame1, parent: .root)
         return SWFScene(
             commands: builder.commands,
             skippedPlacements: builder.skipped
         )
+    }
+}
+
+/// Where a scene walk stands: the transforms gathered so far, the masks of the enclosing
+/// scopes, and how deep the sprites nest.
+nonisolated struct SWFWalkState {
+    var transform: SWFTransform
+    var color: SWFColorTransform
+    var clipCount: Int
+    var spriteDepth: Int
+
+    static let root = SWFWalkState(
+        transform: .identity, color: .identity, clipCount: 0, spriteDepth: 0
+    )
+
+    /// The state a sprite's own timeline starts from.
+    var nested: SWFWalkState {
+        var next = self
+        next.spriteDepth += 1
+        return next
     }
 }
 
@@ -78,13 +92,7 @@ nonisolated private struct SceneBuilder {
     /// Walks one timeline's placements (already depth-ascending). `clipCount`
     /// is the number of masks active in enclosing scopes; local clips add to
     /// it for nested draws.
-    mutating func walk(
-        placements: [SWFPlacedObject],
-        parentTransform: SWFTransform,
-        parentColor: SWFColorTransform,
-        clipCount: Int,
-        spriteDepth: Int
-    ) {
+    mutating func walk(placements: [SWFPlacedObject], parent: SWFWalkState) {
         // Local clip stack: (clipDepth, mask items), expired in depth order.
         var active: [(clipDepth: UInt16, masks: [SWFSceneItem])] = []
         for placement in placements {
@@ -92,25 +100,25 @@ nonisolated private struct SceneBuilder {
                 commands.append(.endClip(masks: last.masks))
                 active.removeLast()
             }
-            let transform = parentTransform
+            let transform = parent.transform
                 .concatenating(SWFTransform(matrix: placement.matrix))
-            let color = parentColor.concatenating(placement.colorTransform)
+            let color = parent.color.concatenating(placement.colorTransform)
             if placement.clipDepth != nil {
                 let masks = maskItems(
                     characterId: placement.characterId,
                     transform: transform,
                     color: color,
-                    spriteDepth: spriteDepth
+                    spriteDepth: parent.spriteDepth
                 )
                 commands.append(.beginClip(masks: masks))
                 active.append((placement.clipDepth ?? placement.depth, masks))
             } else {
                 emit(
                     placement: placement,
-                    transform: transform,
-                    color: color,
-                    clipCount: clipCount + active.count,
-                    spriteDepth: spriteDepth
+                    state: SWFWalkState(
+                        transform: transform, color: color,
+                        clipCount: parent.clipCount + active.count, spriteDepth: parent.spriteDepth
+                    )
                 )
             }
         }
@@ -119,57 +127,41 @@ nonisolated private struct SceneBuilder {
         }
     }
 
-    private mutating func emit(
-        placement: SWFPlacedObject,
-        transform: SWFTransform,
-        color: SWFColorTransform,
-        clipCount: Int,
-        spriteDepth: Int
-    ) {
+    private mutating func emit(placement: SWFPlacedObject, state: SWFWalkState) {
         switch movie.characters[placement.characterId] {
         case let .shape(shape):
             let item = SWFSceneItem(
-                content: .shape(shape.characterId), transform: transform, colorTransform: color
+                content: .shape(shape.characterId), transform: state.transform,
+                colorTransform: state.color
             )
-            commands.append(.draw(item: item, clipCount: clipCount))
+            commands.append(.draw(item: item, clipCount: state.clipCount))
         case let .staticText(text):
             // Fold the text tag's own placement MATRIX here so glyph layout
             // stays in the text's local record space.
             let item = SWFSceneItem(
                 content: .staticText(text.characterId),
-                transform: transform.concatenating(SWFTransform(matrix: text.matrix)),
-                colorTransform: color
+                transform: state.transform.concatenating(SWFTransform(matrix: text.matrix)),
+                colorTransform: state.color
             )
-            commands.append(.draw(item: item, clipCount: clipCount))
+            commands.append(.draw(item: item, clipCount: state.clipCount))
         case let .editText(text):
             let item = SWFSceneItem(
-                content: .editText(text.characterId), transform: transform, colorTransform: color
+                content: .editText(text.characterId), transform: state.transform,
+                colorTransform: state.color
             )
-            commands.append(.draw(item: item, clipCount: clipCount))
+            commands.append(.draw(item: item, clipCount: state.clipCount))
         case let .button(button):
-            guard spriteDepth < SWFScene.maximumSpriteDepth else {
+            guard state.spriteDepth < SWFScene.maximumSpriteDepth else {
                 skipped += 1
                 return
             }
-            walk(
-                placements: button.stateTimeline.frame1,
-                parentTransform: transform,
-                parentColor: color,
-                clipCount: clipCount,
-                spriteDepth: spriteDepth + 1
-            )
+            walk(placements: button.stateTimeline.frame1, parent: state.nested)
         case let .sprite(sprite):
-            guard spriteDepth < SWFScene.maximumSpriteDepth else {
+            guard state.spriteDepth < SWFScene.maximumSpriteDepth else {
                 skipped += 1
                 return
             }
-            walk(
-                placements: sprite.frame1,
-                parentTransform: transform,
-                parentColor: color,
-                clipCount: clipCount,
-                spriteDepth: spriteDepth + 1
-            )
+            walk(placements: sprite.frame1, parent: state.nested)
         default:
             // Fonts and bitmaps are referenced, never placed; a missing id is
             // a dangling placement.

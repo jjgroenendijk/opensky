@@ -58,13 +58,12 @@ nonisolated public struct ESMFormIDIndex: Sendable {
     /// `splitBytes` is a parameter so a test can split a small plugin.
     init(file: ESMFile, splitBytes: Int) {
         data = file.data
-        var units: [Unit] = []
-        var found: [Entry] = []
+        var parts: (units: [Unit], found: [Entry]) = ([], [])
         for group in file.topGroups {
-            Self.split(
-                group: group, owners: Owners(), limit: splitBytes, units: &units, into: &found
-            )
+            Self.split(group: group, owners: Owners(), limit: splitBytes, into: &parts)
         }
+        var found = parts.found
+        let units = parts.units
         let inParallel = LoadOptimisations.isOn(.parallelFormIDIndex)
         found += ParallelDecode.mapInOrder(units, chunkSize: 1, inParallel: inParallel) { unit in
             var entries: [Entry] = []
@@ -135,19 +134,19 @@ nonisolated public struct ESMFormIDIndex: Sendable {
     /// Keeps a small group whole as one unit; a large one gives its own records
     /// to `found` and splits its subgroups further.
     private static func split(
-        group: ESMGroup, owners: Owners, limit: Int, units: inout [Unit], into found: inout [Entry]
+        group: ESMGroup, owners: Owners, limit: Int,
+        into parts: inout (units: [Unit], found: [Entry])
     ) {
         guard group.contentRange.count > limit else {
-            units.append(Unit(group: group, owners: owners))
+            parts.units.append(Unit(group: group, owners: owners))
             return
         }
         guard let children = attempt({ try group.children() }) else { return }
         let owners = owners.entering(group)
         for child in children {
             switch child {
-            case let .record(record): append(record, owners: owners, to: &found)
-            case let .group(sub):
-                split(group: sub, owners: owners, limit: limit, units: &units, into: &found)
+            case let .record(record): append(record, owners: owners, to: &parts.found)
+            case let .group(sub): split(group: sub, owners: owners, limit: limit, into: &parts)
             }
         }
     }

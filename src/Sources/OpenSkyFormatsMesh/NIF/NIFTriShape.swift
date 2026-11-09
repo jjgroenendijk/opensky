@@ -104,13 +104,12 @@ nonisolated public struct NIFTriShape: Sendable {
             )
         }
 
-        let geometry = try Self.readGeometry(
+        let geometry = dataSize > 0 ? try Self.readGeometry(
             &reader,
             attributes: attributes,
             vertexCount: vertexCount,
-            triangleCount: triangleCount,
-            present: dataSize > 0
-        )
+            triangleCount: triangleCount
+        ) : (arrays: VertexArrays(), indices: [])
         positions = geometry.arrays.positions
         uvs = geometry.arrays.uvs
         normals = geometry.arrays.normals
@@ -143,10 +142,8 @@ nonisolated public struct NIFTriShape: Sendable {
         _ reader: inout BinaryReader,
         attributes: VertexAttributes,
         vertexCount: Int,
-        triangleCount: Int,
-        present: Bool
+        triangleCount: Int
     ) throws -> (arrays: VertexArrays, indices: [UInt16]) {
-        guard present else { return (VertexArrays(), []) }
         let arrays = try readVertexRecords(
             &reader,
             attributes: attributes,

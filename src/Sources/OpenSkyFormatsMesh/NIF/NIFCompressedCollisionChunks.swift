@@ -44,13 +44,13 @@ nonisolated extension NIFCompressedCollisionMesh {
         }
         let vertexCount = try readVertexCount(reader: &reader)
         let transform = try resolvedTransform(index: transformIndex, in: transforms)
-        let vertices = try readVertices(
-            reader: &reader,
-            count: vertexCount,
-            translation: translation,
-            transform: transform,
-            scale: scale
-        )
+        let vertices = try readVertices(reader: &reader, count: vertexCount).map { local in
+            var point = local + translation
+            if let transform {
+                point = transform.apply(to: point)
+            }
+            return point * scale * NIFCollisionModel.havokToEngineScale
+        }
         let sourceIndices = try readUInt16Array(
             reader: &reader,
             label: "compressed indices"
@@ -93,26 +93,19 @@ nonisolated extension NIFCompressedCollisionMesh {
         return transforms[Int(index)]
     }
 
+    /// The chunk-local points, before the chunk's translation and transform.
     private static func readVertices(
         reader: inout BinaryReader,
-        count: Int,
-        translation: SIMD3<Float>,
-        transform: ChunkTransform?,
-        scale: SIMD3<Float>
+        count: Int
     ) throws -> [SIMD3<Float>] {
-        let unitScale = NIFCollisionModel.havokToEngineScale
         var vertices: [SIMD3<Float>] = []
         vertices.reserveCapacity(count)
         for _ in 0 ..< count {
-            var point = try SIMD3<Float>(
+            try vertices.append(SIMD3<Float>(
                 Float(reader.readUInt16()),
                 Float(reader.readUInt16()),
                 Float(reader.readUInt16())
-            ) / 1000 + translation
-            if let transform {
-                point = transform.apply(to: point)
-            }
-            vertices.append(point * scale * unitScale)
+            ) / 1000)
         }
         return vertices
     }
@@ -145,12 +138,11 @@ nonisolated extension NIFCompressedCollisionMesh {
         var output: [UInt32] = []
         var cursor = 0
         for length in strips {
+            guard length >= 3 else {
+                throw NIFError.malformed("compressed strip length \(length) is below 3")
+            }
             try appendStrip(
-                source: source,
-                cursor: cursor,
-                length: length,
-                vertexCount: vertexCount,
-                output: &output
+                source[cursor ..< cursor + length], vertexCount: vertexCount, output: &output
             )
             cursor += length
         }
@@ -166,19 +158,15 @@ nonisolated extension NIFCompressedCollisionMesh {
     }
 
     private static func appendStrip(
-        source: [UInt16],
-        cursor: Int,
-        length: Int,
+        _ strip: ArraySlice<UInt16>,
         vertexCount: Int,
         output: inout [UInt32]
     ) throws {
-        guard length >= 3 else {
-            throw NIFError.malformed("compressed strip length \(length) is below 3")
-        }
-        for triangle in 0 ..< length - 2 {
-            let first = source[cursor + triangle]
-            let second = source[cursor + triangle + 1]
-            let third = source[cursor + triangle + 2]
+        let start = strip.startIndex
+        for triangle in 0 ..< strip.count - 2 {
+            let first = strip[start + triangle]
+            let second = strip[start + triangle + 1]
+            let third = strip[start + triangle + 2]
             let ordered = triangle.isMultiple(of: 2)
                 ? [first, second, third]
                 : [first, third, second]

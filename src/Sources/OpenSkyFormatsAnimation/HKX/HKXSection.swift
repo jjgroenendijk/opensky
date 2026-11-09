@@ -108,15 +108,13 @@ nonisolated public struct HKXSection: Sendable {
         localFixups = try Self.readTable(
             fileData,
             header: header,
-            from: header.localFixupsOffset,
-            to: header.globalFixupsOffset,
+            region: header.localFixupsOffset ..< header.globalFixupsOffset,
             entryWords: 2
         ).map { HKXLocalFixup(fromOffset: Int($0[0]), toOffset: Int($0[1])) }
         globalFixups = try Self.readTable(
             fileData,
             header: header,
-            from: header.globalFixupsOffset,
-            to: header.virtualFixupsOffset,
+            region: header.globalFixupsOffset ..< header.virtualFixupsOffset,
             entryWords: 3
         ).map {
             HKXGlobalFixup(
@@ -128,8 +126,7 @@ nonisolated public struct HKXSection: Sendable {
         virtualFixups = try Self.readTable(
             fileData,
             header: header,
-            from: header.virtualFixupsOffset,
-            to: header.exportsOffset,
+            region: header.virtualFixupsOffset ..< header.exportsOffset,
             entryWords: 3
         ).map {
             HKXVirtualFixup(
@@ -146,12 +143,11 @@ nonisolated public struct HKXSection: Sendable {
     private static func readTable(
         _ fileData: Data,
         header: HKXSectionHeader,
-        from: Int,
-        to: Int,
+        region: Range<Int>,
         entryWords: Int
     ) throws -> [[UInt32]] {
-        var reader = BinaryReader(fileData, offset: header.dataStart + from)
-        let end = header.dataStart + to
+        var reader = BinaryReader(fileData, offset: header.dataStart + region.lowerBound)
+        let end = header.dataStart + region.upperBound
         var entries: [[UInt32]] = []
         while reader.offset + entryWords * 4 <= end {
             var words: [UInt32] = []

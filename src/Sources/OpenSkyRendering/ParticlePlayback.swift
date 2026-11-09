@@ -296,8 +296,8 @@ nonisolated public struct ParticleSimulator: Sendable {
             )
         case let .subTex(subTexture):
             particle.atlasIndex = subTexture.frame(
-                at: fraction, start: particle.frames.x, loopStart: particle.frames.y,
-                frames: particle.frames.z, frameTotal: definition.subtextureOffsets.count
+                at: fraction, drawn: particle.frames,
+                frameTotal: definition.subtextureOffsets.count
             )
         default:
             break

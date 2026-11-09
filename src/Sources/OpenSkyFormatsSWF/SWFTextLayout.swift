@@ -94,9 +94,7 @@ nonisolated public enum SWFTextLayout: Sendable {
         let metrics = FontScaledMetrics(
             font: font, emTwips: Float(text.fontHeight ?? 240)
         )
-        let leftInset = Float(text.layout.map { Int($0.leftMargin) + Int($0.indent) } ?? 0)
-        let rightInset = Float(text.layout?.rightMargin ?? 0)
-        let availableWidth = Float(text.bounds.xMax - text.bounds.xMin) - leftInset - rightInset
+        let availableWidth = text.availableWidth
         var shaper = LineShaper(metrics: metrics)
         let paragraphs = content
             .replacingOccurrences(of: "\r\n", with: "\n")
@@ -117,10 +115,7 @@ nonisolated public enum SWFTextLayout: Sendable {
             let start = min(max(0, firstLine), max(0, lines.count - 1))
             shown = lines[start ..< min(lines.count, start + fitting)]
         }
-        let placed = place(
-            lines: Array(shown), text: text, metrics: metrics,
-            leftInset: leftInset, availableWidth: availableWidth
-        )
+        let placed = place(lines: Array(shown), text: text, metrics: metrics)
         let color = text.color ?? SWFColor(red: 0, green: 0, blue: 0, alpha: 255)
         let runs = placed.isEmpty ? [] : [SWFTextRun(
             fontID: nil, emTwips: metrics.emTwips, color: color, glyphs: placed
@@ -147,17 +142,16 @@ nonisolated public enum SWFTextLayout: Sendable {
     private static func place(
         lines: [ShapedLine],
         text: SWFEditText,
-        metrics: FontScaledMetrics,
-        leftInset: Float,
-        availableWidth: Float
+        metrics: FontScaledMetrics
     ) -> [SWFGlyphPlacement] {
+        let availableWidth = text.availableWidth
         let align = text.layout?.align ?? 0
         let extraLeading = Float(text.layout?.leading ?? 0)
         let lineAdvance = metrics.ascent + metrics.descent + metrics.leading + extraLeading
         var placed: [SWFGlyphPlacement] = []
         var baseline = Float(text.bounds.yMin) + metrics.ascent
         for line in lines {
-            var startX = Float(text.bounds.xMin) + leftInset
+            var startX = Float(text.bounds.xMin) + text.leftInset
             if availableWidth > 0 {
                 switch align {
                 case 1: startX += availableWidth - line.width
@@ -319,5 +313,17 @@ nonisolated private struct LineShaper {
             result.append(current)
         }
         return result
+    }
+}
+
+nonisolated extension SWFEditText {
+    /// The left margin and the first-line indent, in twips.
+    fileprivate var leftInset: Float {
+        Float(layout.map { Int($0.leftMargin) + Int($0.indent) } ?? 0)
+    }
+
+    /// The width between the margins, where lines wrap and align.
+    fileprivate var availableWidth: Float {
+        Float(bounds.xMax - bounds.xMin) - leftInset - Float(layout?.rightMargin ?? 0)
     }
 }

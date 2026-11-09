@@ -64,8 +64,7 @@ nonisolated extension NIFFile.Flattener {
         let skinning = try resolveSkinning(
             geometry: (arrays, triangles),
             partition: partition,
-            instance: instance,
-            data: skinData,
+            skin: (instance, skinData),
             usesNodeReferencePose: usesNodeReferencePose
         ).withBodyParts(parted?.parts ?? [])
         return NIFFile.FlattenerShapeGeometry(
@@ -83,10 +82,10 @@ nonisolated extension NIFFile.Flattener {
     private func resolveSkinning(
         geometry: (arrays: NIFTriShape.VertexArrays, triangles: [UInt16]),
         partition: NIFSkinPartition,
-        instance: NIFSkinInstance,
-        data: NIFSkinData,
+        skin: (instance: NIFSkinInstance, data: NIFSkinData),
         usesNodeReferencePose: Bool
     ) throws -> MeshSkinning {
+        let (instance, data) = skin
         let arrays = geometry.arrays
         let triangles = geometry.triangles
         let vertexCount = arrays.positions.count

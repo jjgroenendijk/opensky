@@ -5,6 +5,21 @@
 
 import Foundation
 
+/// What a timer calls: a function, or a method on a receiver, with its arguments.
+nonisolated public struct SWFTimerCall: Equatable {
+    /// The function to call, or the receiver when `method` names one.
+    public let callee: AS2Value
+    /// Method name for the `setInterval(object, "name", ms)` form.
+    public let method: String?
+    public let arguments: [AS2Value]
+
+    public init(callee: AS2Value, method: String?, arguments: [AS2Value]) {
+        self.callee = callee
+        self.method = method
+        self.arguments = arguments
+    }
+}
+
 /// Timers a running movie scheduled, keyed by the id `setInterval` handed back.
 nonisolated public final class SWFRuntimeTimers {
     /// One scheduled callback.
@@ -41,13 +56,7 @@ nonisolated public final class SWFRuntimeTimers {
     }
 
     /// Schedules a timer and returns its id, or 0 when the list is full.
-    public func add(
-        callee: AS2Value,
-        method: String?,
-        arguments: [AS2Value],
-        period: Int,
-        repeats: Bool
-    ) -> Int {
+    public func add(_ call: SWFTimerCall, period: Int, repeats: Bool) -> Int {
         guard entries.count < SWFRuntimeTimers.maximumTimers else {
             dropped += 1
             return 0
@@ -57,7 +66,7 @@ nonisolated public final class SWFRuntimeTimers {
         let ticks = max(1, period)
         entries.append(
             Entry(
-                id: identifier, callee: callee, method: method, arguments: arguments,
+                id: identifier, callee: call.callee, method: call.method, arguments: call.arguments,
                 period: ticks, remaining: ticks, repeats: repeats
             )
         )
@@ -185,9 +194,11 @@ nonisolated extension SWFRuntimeNatives {
         }
         let milliseconds = try context.interpreter.toNumber(context.argument(intervalIndex))
         let identifier = owner.timers.add(
-            callee: callee,
-            method: method,
-            arguments: Array(context.arguments.dropFirst(intervalIndex + 1)),
+            SWFTimerCall(
+                callee: callee,
+                method: method,
+                arguments: Array(context.arguments.dropFirst(intervalIndex + 1))
+            ),
             period: owner.timerTicks(milliseconds: milliseconds),
             repeats: repeats
         )
