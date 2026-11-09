@@ -28,7 +28,7 @@ struct PerkTreeSpendTests {
         let store = WorldStateStore()
         var runtime = PerkRuntime(
             store: store, perks: PerkRuntimeFixture.perkStore(index: index),
-            conditionRegistry: .standard
+            conditions: ConditionContext(functions: .standard)
         )
         runtime.conditions = ConditionContext()
         let trees = PerkRuntimeFixture.trees(index: index)
@@ -176,7 +176,7 @@ struct PerkTreeSpendTests {
         let index = try PerkRuntimeFixture.index()
         let runtime = PerkRuntime(
             store: WorldStateStore(), perks: PerkRuntimeFixture.perkStore(index: index),
-            conditionRegistry: .standard
+            conditions: ConditionContext(functions: .standard)
         )
         let validator = PerkTreeSpendValidator(
             runtime: runtime,

@@ -1,5 +1,6 @@
 // The dialogue runtime over the fixture world.
 
+import OpenSkyConditions
 @testable public import OpenSkyDialogue
 @testable public import OpenSkyDialogueInterface
 public import OpenSkyFeaturesTesting
@@ -19,8 +20,7 @@ extension DialogueRuntimeFixture {
             store: store,
             dialogue: dialogueStore(),
             questStates: QuestResolution(defaults: quests),
-            context: context(),
-            registry: .dialogueTests,
+            context: context().using(.dialogueTests),
             fragments: fragments
         )
     }

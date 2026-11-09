@@ -217,7 +217,7 @@ struct PerkRuntimeTests {
         var effects = ActiveEffectRuntime(
             values: PerkRuntimeFixture.values(store: store),
             effects: MagicEffectStore(index: index),
-            conditionRegistry: .standard
+            conditions: ConditionContext(functions: .standard)
         )
         let ability = PerkRuntimeFixture.key(PerkRuntimeFixture.Perk.ability)
         let spell = PerkRuntimeFixture.key(PerkRuntimeFixture.Spell.stoneskin)

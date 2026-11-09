@@ -28,7 +28,7 @@ struct SkillUseMultiplierTests {
             runtime: PerkRuntime(
                 store: WorldStateStore(),
                 perks: PerkRuntimeFixture.perkStore(index: index),
-                conditionRegistry: Self.registry
+                conditions: ConditionContext(functions: Self.registry)
             ),
             baselines: nil,
             pluginName: PerkRuntimeFixture.pluginName

@@ -33,7 +33,7 @@ struct DialogueConditionFunctionTests {
         _ condition: Condition,
         _ context: ConditionContext
     ) -> (outcome: ConditionOutcome, tally: ConditionTally) {
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let outcome = evaluator.evaluate(condition)
         return (outcome, evaluator.tally)
     }

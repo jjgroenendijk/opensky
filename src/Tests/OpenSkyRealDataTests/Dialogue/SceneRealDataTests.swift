@@ -58,8 +58,7 @@ struct SceneRealDataTests {
             store: store,
             dialogue: DialogueStore(file: file, pluginName: "Skyrim.esm", localized: true),
             questStates: questRuntime.resolution(),
-            context: context,
-            registry: .standard
+            context: context.using(.standard)
         )
         var runtime = SceneRuntime(catalog: catalog, dialogue: dialogue)
         var events = try runtime.start(entry.formID)

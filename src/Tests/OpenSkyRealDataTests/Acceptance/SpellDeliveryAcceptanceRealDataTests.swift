@@ -8,6 +8,7 @@ import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -211,7 +212,7 @@ struct SpellDeliveryAcceptanceRealDataTests {
             effects: ActiveEffectRuntime(
                 values: values,
                 effects: magicEffects,
-                conditionRegistry: .standard
+                conditions: ConditionContext(functions: .standard)
             ),
             items: ItemDefinitionStore(file: file),
             holder: holder

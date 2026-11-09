@@ -33,7 +33,7 @@ struct ConditionActorSituationFunctionTests {
     ) throws -> ConditionOutcome {
         var context = try ConditionEvaluatorFixture.populatedContext()
         change(&context)
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             comparisonValue: value.bitPattern, functionIndex: function, parameter1: parameter1
         ))

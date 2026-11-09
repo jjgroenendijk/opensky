@@ -93,8 +93,7 @@ enum SceneFixture {
             store: store,
             dialogue: DialogueRuntimeFixture.dialogueStore(),
             questStates: QuestResolution(defaults: quests, overrides: overrides),
-            context: context,
-            registry: .dialogueTests
+            context: context.using(.dialogueTests)
         )
         return SceneRuntime(
             catalog: SceneCatalog(scenes: [scene] + others), dialogue: dialogue,

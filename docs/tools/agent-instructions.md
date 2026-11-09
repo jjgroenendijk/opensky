@@ -27,6 +27,7 @@ the legal boundary, is then read less.
 | Swift 6 mode, the same Swift locally and in CI | `tools/lint/swift-baseline.sh` |
 | `any X`, `internal` imports, `unsafe` marks | `tools/lint/language-rules.sh` and the compiler |
 | No `try?` outside `removeItem` and `close`; typed errors | `tools/lint/error-handling.sh` |
+| A condition context carries its function registry; no function takes both apart | `tools/lint/condition-context.sh` |
 | No system random source, clock, mutable static, or singleton in game rules | `tools/lint/deterministic-rules.sh` |
 | No `@unchecked Sendable`, `Task.detached`, or new `DispatchQueue` | SwiftLint `unchecked_sendable`, `detached_task`, and the queue rules |
 | No `GameViewController+X.swift` file; no late setter or connection step | SwiftLint `game_view_controller_extension`, `late_setter_method`, `late_attached_world`, `connection_step_type` |

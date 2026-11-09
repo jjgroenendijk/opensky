@@ -191,7 +191,7 @@ struct IdleRuntimeRealDataTests {
         context.subject = actor
         let base = context
         return IdleSelector(store: store) { idle in
-            var evaluator = ConditionEvaluator(context: base)
+            var evaluator = ConditionEvaluator(context: base.using(.standard))
             return evaluator.firstFailure(in: idle.conditions).map(evaluator.functionName(of:))
         }
     }

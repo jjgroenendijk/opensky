@@ -10,6 +10,7 @@ import Foundation
 @testable public import OpenSkyBehavior
 @testable public import OpenSkyCombat
 @testable public import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable public import OpenSkyFormatsESM
 @testable public import OpenSkyGameData
@@ -62,7 +63,7 @@ public final class CombatCastingChain {
             effects: ActiveEffectRuntime(
                 values: values,
                 effects: SpellbookFixture.effectStore(index: index),
-                conditionRegistry: .standard
+                conditions: ConditionContext(functions: .standard)
             )
         )
     }

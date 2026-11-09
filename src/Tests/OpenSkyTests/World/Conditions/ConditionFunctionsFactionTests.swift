@@ -346,7 +346,7 @@ extension ConditionFunctionsFactionTests {
         comparison: UInt8 = 0,
         value: Float = 1
     ) throws -> (outcome: ConditionOutcome, tally: ConditionTally) {
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: index,
             comparison,
@@ -363,7 +363,7 @@ extension ConditionFunctionsFactionTests {
         comparison: UInt8 = 0,
         value: Float = 1
     ) throws -> (outcome: ConditionOutcome, tally: ConditionTally) {
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             operatorBits: comparison,
             comparisonValue: value.bitPattern,

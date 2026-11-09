@@ -14,10 +14,9 @@ nonisolated public enum RuntimeStateConditionRunner: Sendable {
         source: String,
         conditions: [Condition],
         context: ConditionContext,
-        registry: ConditionFunctionRegistry,
         tally: inout ConditionTally
     ) -> RuntimeStateConditionReport {
-        var evaluator = ConditionEvaluator(context: context, registry: registry, tally: tally)
+        var evaluator = ConditionEvaluator(context: context, tally: tally)
         var lines: [RuntimeStateConditionLine] = []
         var outcomes: [Bool] = []
         for (offset, condition) in conditions.enumerated() {
@@ -26,7 +25,7 @@ nonisolated public enum RuntimeStateConditionRunner: Sendable {
             lines.append(
                 RuntimeStateConditionLine(
                     index: offset + 1,
-                    text: describe(condition, registry: evaluator.registry),
+                    text: describe(condition, registry: evaluator.context.functions),
                     isTrue: outcome.isTrue,
                     reason: reason(for: outcome)
                 )
@@ -38,7 +37,7 @@ nonisolated public enum RuntimeStateConditionRunner: Sendable {
             source: source,
             isSatisfied: combine(conditions: conditions, outcomes: outcomes),
             lines: lines,
-            tallyLines: tallyLines(tally, registry: registry)
+            tallyLines: tallyLines(tally, registry: context.functions)
         )
     }
 

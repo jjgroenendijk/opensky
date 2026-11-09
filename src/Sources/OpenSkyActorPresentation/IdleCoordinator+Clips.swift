@@ -74,9 +74,8 @@ extension IdleCoordinator {
                 adjust?(&context)
             }
             base = context
-            var evaluator = ConditionEvaluator(
-                context: context, registry: self?.conditionFunctions ?? ConditionFunctionRegistry()
-            )
+            context.functions = self?.conditionFunctions ?? .empty
+            var evaluator = ConditionEvaluator(context: context)
             return evaluator.firstFailure(in: idle.conditions).map(evaluator.functionName(of:))
         }
         guard let store else {

@@ -27,7 +27,7 @@ struct PapyrusStageItemTests {
         let quest = try Self.quest(firstItemConditioned: true)
         #expect(bridge.passingItems(of: quest, stage: 10) == nil)
         bridge.sessionNatives.conditionEvaluator = {
-            ConditionEvaluator(context: ConditionContext(), registry: .empty)
+            ConditionEvaluator(context: ConditionContext().using(.empty))
         }
         #expect(bridge.passingItems(of: quest, stage: 10) == [1])
         let open = try Self.quest(firstItemConditioned: false)

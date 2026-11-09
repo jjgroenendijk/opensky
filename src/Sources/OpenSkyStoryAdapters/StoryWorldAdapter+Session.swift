@@ -82,7 +82,7 @@ extension StoryWorldAdapter {
         }
         session.conditionEvaluator = { [weak self] in
             ConditionEvaluator(
-                context: self?.conditionContext() ?? ConditionContext(), registry: .standard
+                context: self?.conditionContext() ?? ConditionContext(functions: .standard)
             )
         }
     }

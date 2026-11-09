@@ -28,7 +28,6 @@ public struct PerkRuntime: PerkAccess {
     /// What a perk effect's PRKC condition tabs are evaluated against. The `perks`
     /// seam is rebuilt per evaluation, so `HasPerk` reads live ownership.
     public var conditions: ConditionContext
-    public let conditionRegistry: ConditionFunctionRegistry
     /// What the runtime did and declined to do. Not `private(set)`: the
     /// evaluation half lives in `PerkRuntimeEvaluation.swift`.
     public var tally = PerkRuntimeTally()
@@ -44,13 +43,11 @@ public struct PerkRuntime: PerkAccess {
     public init(
         store: WorldStateStore,
         perks: PerkStore,
-        conditions: ConditionContext = ConditionContext(),
-        conditionRegistry: ConditionFunctionRegistry
+        conditions: ConditionContext = ConditionContext()
     ) {
         worldState = store
         self.perks = perks
         self.conditions = conditions
-        self.conditionRegistry = conditionRegistry
     }
 
     // MARK: - Reading

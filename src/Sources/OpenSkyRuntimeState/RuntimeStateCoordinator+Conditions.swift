@@ -29,7 +29,6 @@ extension RuntimeStateCoordinator {
             source: source,
             conditions: track.conditions,
             context: conditionContext(),
-            registry: world?.conditionFunctions ?? ConditionFunctionRegistry(),
             tally: &tally
         )
         conditionTally = tally

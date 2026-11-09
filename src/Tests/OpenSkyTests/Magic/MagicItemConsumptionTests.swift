@@ -8,6 +8,7 @@
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
+import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
@@ -80,7 +81,7 @@ struct MagicItemConsumptionTests {
             effects: ActiveEffectRuntime(
                 values: values,
                 effects: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
-                conditionRegistry: .magicTests
+                conditions: ConditionContext(functions: .magicTests)
             ),
             inventory: InventoryRuntime(store: store, baselines: baselines)
         )
@@ -184,7 +185,7 @@ struct MagicItemConsumptionTests {
             effects: MagicEffectStore(plugins: [
                 (ActiveEffectFixture.pluginName, master), ("Later.esp", later)
             ]),
-            conditionRegistry: .magicTests
+            conditions: ConditionContext(functions: .magicTests)
         )
         let inventory = InventoryRuntime(
             store: store,

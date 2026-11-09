@@ -93,7 +93,7 @@ struct QuestAcceptanceBudgetTests {
 
         let runtime = try #require(session.bridge.questRuntime)
         let context = ConditionContext(quests: runtime.resolution())
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let floor = session.world.runtime.tally.instructionsExecuted
 
         // Every registered quest condition function, evaluated over the quest

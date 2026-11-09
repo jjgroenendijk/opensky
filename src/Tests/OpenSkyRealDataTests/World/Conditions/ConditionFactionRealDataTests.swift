@@ -236,7 +236,7 @@ struct ConditionFactionRealDataTests {
         var evaluator = ConditionEvaluator(context: ConditionContext(
             factions: harness.seam,
             subject: harness.guardKey
-        ))
+        ).using(.standard))
         let outcome = evaluator.evaluate(condition)
         return (outcome, evaluator.tally)
     }

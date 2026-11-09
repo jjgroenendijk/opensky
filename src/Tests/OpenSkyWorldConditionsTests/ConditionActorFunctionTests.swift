@@ -9,6 +9,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyWorldConditions
+import OpenSkyWorldTesting
 import Testing
 
 struct ConditionActorFunctionTests {
@@ -91,15 +92,10 @@ struct ConditionActorFunctionTests {
         parameter1: UInt32 = 0,
         context: ConditionContext
     ) throws -> (outcome: ConditionOutcome, tally: ConditionTally) {
-        var evaluator = ConditionEvaluator(context: context)
-        let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
-            functionIndex: functionIndex,
-            comparison,
-            value,
-            runOn: runOn,
-            parameter1: parameter1
-        ))
-        return (outcome, evaluator.tally)
+        try ConditionEvaluatorFixture.evaluateStandard(
+            functionIndex, comparison, value,
+            runOn: runOn, parameter1: parameter1, context: context
+        )
     }
 
     // MARK: - Actor values
@@ -252,7 +248,7 @@ struct ConditionActorFunctionTests {
         ).outcome == .true)
         // `GetIsID` under run-on 3 confirms it is the bandit's *placement* that
         // was resolved, not merely some actor state: the base form matches.
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             comparisonValue: Float(1).bitPattern,
             functionIndex: Self.getIsID,
@@ -274,7 +270,7 @@ struct ConditionActorFunctionTests {
             parameter1: Self.healthIndex,
             runOn: 3
         )
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         #expect(evaluator.evaluate(condition) == .true)
     }
 

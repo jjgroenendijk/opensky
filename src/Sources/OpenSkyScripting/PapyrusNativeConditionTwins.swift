@@ -141,7 +141,7 @@ extension PapyrusWorldStateBridge {
         _ index: UInt16, on subject: ReferenceKey, parameter1: UInt32, parameter2: UInt32
     ) -> Result<Float, ConditionFailure>? {
         guard let evaluator = sessionNatives.conditionEvaluator?() else { return nil }
-        guard let function = evaluator.registry[index] else {
+        guard let function = evaluator.context.functions[index] else {
             return .failure(.unknownFunction(index))
         }
         var context = evaluator.context

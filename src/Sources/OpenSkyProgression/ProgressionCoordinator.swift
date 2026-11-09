@@ -231,7 +231,7 @@ public final class ProgressionCoordinator {
     ) -> PerkSpendRefusal? {
         guard let runtime = perks.runtime else { return .unresolvedPerk }
         let validator = PerkTreeSpendValidator(
-            runtime: runtime, trees: trees, conditionRegistry: runtime.conditionRegistry
+            runtime: runtime, trees: trees, conditionRegistry: runtime.conditions.functions
         )
         return validator.refusal(
             for: perk, on: holder, conditions: world.conditionContext()

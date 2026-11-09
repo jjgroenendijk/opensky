@@ -39,7 +39,7 @@ struct ConditionEquipmentFunctionTests {
             equipment: facts.map { [subject: $0] } ?? [:],
             keywordCounts: [subject: keywordCounts]
         )
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: function, 0, value, parameter1: parameter1
         ))

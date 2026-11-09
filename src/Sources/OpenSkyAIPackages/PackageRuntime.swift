@@ -235,7 +235,8 @@ nonisolated public struct ActorPackageRuntime {
             guard
                 let package = attempt({ try store.resolve(id) }),
                 package.package.schedule.matches(clock) else { continue }
-            var evaluator = ConditionEvaluator(context: context, registry: conditionFunctions)
+            var evaluator = ConditionEvaluator(context: context)
+            evaluator.context.functions = conditionFunctions
             evaluator.context.formIDTranslation = store.translation(of: id)
             let outcome = evaluator.evaluate(package.package.conditions)
             evaluator.context.formIDTranslation = context.formIDTranslation

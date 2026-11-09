@@ -57,7 +57,7 @@ struct DialogueSharedAndResetTests {
             )
         }
         return DialogueRuntime(
-            store: store, dialogue: dialogue, context: context, registry: .dialogueTests
+            store: store, dialogue: dialogue, context: context.using(.dialogueTests)
         )
     }
 

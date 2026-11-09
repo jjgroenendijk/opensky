@@ -6,6 +6,7 @@
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
+import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
@@ -58,7 +59,7 @@ struct ActiveEffectRealDataTests {
             effects: ActiveEffectRuntime(
                 values: values,
                 effects: MagicEffectStoreLoader.load(root: root, baseFile: file),
-                conditionRegistry: .standard
+                conditions: ConditionContext(functions: .standard)
             ),
             inventory: InventoryRuntime(store: store, baselines: baselines),
             items: baselines.items

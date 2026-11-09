@@ -26,7 +26,7 @@ struct ConditionMountFunctionTests {
     ) throws -> ConditionOutcome {
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.mounts = mounts
-        var evaluator = ConditionEvaluator(context: context, registry: Self.registry)
+        var evaluator = ConditionEvaluator(context: context.using(Self.registry))
         return try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: function, 0, value
         ))

@@ -44,7 +44,7 @@ struct ConditionMotionFunctionTests {
         var table = [target: other]
         table[subject] = facts
         context.motion = MotionConditionResolution(facts: table)
-        var evaluator = ConditionEvaluator(context: context, registry: Self.registry)
+        var evaluator = ConditionEvaluator(context: context.using(Self.registry))
         return try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             operatorBits: comparison, comparisonValue: value.bitPattern, functionIndex: function,
             parameter1: parameter1, parameter2: parameter2

@@ -26,6 +26,6 @@ nonisolated extension ConditionEvaluator {
     /// The Creation Kit name of `condition`'s function, or its CK number when unknown.
     public func functionName(of condition: Condition) -> String {
         let number = Int(condition.functionIndex) + ConditionFunctionRegistry.creationKitOffset
-        return registry[condition.functionIndex]?.name ?? "function \(number)"
+        return context.functions[condition.functionIndex]?.name ?? "function \(number)"
     }
 }

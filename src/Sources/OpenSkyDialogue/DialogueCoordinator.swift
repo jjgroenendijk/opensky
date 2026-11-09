@@ -77,7 +77,6 @@ public final class DialogueCoordinator {
             dialogue: index,
             questStates: quests,
             aliases: world.questAliases(),
-            registry: world.conditionRegistry,
             fragments: world.fragments
         ) { [world] in
             var context = world.conditionContext()

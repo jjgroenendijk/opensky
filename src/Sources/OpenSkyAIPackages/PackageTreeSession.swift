@@ -47,7 +47,8 @@ struct PackageTreeSession: PackageTreeHost, PackageInputResolving {
         live.subject = actor
         live.clock = clock
         context = live
-        var evaluator = ConditionEvaluator(context: live, registry: conditionFunctions)
+        live.functions = conditionFunctions
+        var evaluator = ConditionEvaluator(context: live)
         evaluator.context.formIDTranslation = translation
         let outcome = evaluator.evaluate(conditions)
         evaluator.context.formIDTranslation = live.formIDTranslation

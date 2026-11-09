@@ -34,6 +34,8 @@ nonisolated public protocol ConditionCombatTargetResolving: Sendable {
 /// code builds one from a snapshot. Feature seams are stored by type
 /// (`ConditionResolution`); each feature adds an accessor such as `context.magic`.
 nonisolated public struct ConditionContext: Sendable {
+    /// The functions the conditions run on. Empty makes every function unknown.
+    public var functions: ConditionFunctionRegistry = .empty
     /// The one seam global values come through (`GlobalResolution`).
     public var globals: GlobalResolution = .empty
     /// Load-order keyword, form-list and location stores plus the current and
@@ -73,6 +75,17 @@ nonisolated public struct ConditionContext: Sendable {
     private var resolutions: [ObjectIdentifier: any ConditionResolution] = [:]
 
     public init() {}
+
+    public init(functions: ConditionFunctionRegistry) {
+        self.functions = functions
+    }
+
+    /// This context running on `functions` instead.
+    public func using(_ functions: ConditionFunctionRegistry) -> ConditionContext {
+        var context = self
+        context.functions = functions
+        return context
+    }
 
     /// The resolution of `type` this context carries, or `type.empty`.
     public subscript<Resolution: ConditionResolution>(

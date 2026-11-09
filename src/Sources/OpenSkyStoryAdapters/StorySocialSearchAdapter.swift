@@ -60,8 +60,7 @@ extension StorySocialSearchAdapter {
         return QuestReferenceSearch(
             references: references,
             origin: feet,
-            context: context,
-            registry: ConditionFunctionRegistry.standard,
+            context: context.using(ConditionFunctionRegistry.standard),
             dead: Set(game.actorWorld.combatActors().filter(\.isDead).map(\.key)),
             disabled: Set(entries.filter { !enable.isEnabled($0) }.map(\.key))
         )

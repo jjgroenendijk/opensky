@@ -21,7 +21,8 @@ extension ActiveEffectFixture {
         let effects = MagicEffectStore(plugins: [(pluginName, file)])
         return (
             ActiveEffectRuntime(
-                values: values, effects: effects, conditionRegistry: conditionRegistry
+                values: values, effects: effects,
+                conditions: ConditionContext(functions: conditionRegistry)
             ),
             store
         )

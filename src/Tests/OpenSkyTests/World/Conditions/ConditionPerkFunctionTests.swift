@@ -36,7 +36,7 @@ struct ConditionPerkFunctionTests {
         comparison: UInt8 = 0,
         value: Float = 1
     ) throws -> (outcome: ConditionOutcome, tally: ConditionTally) {
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: hasPerk,
             comparison,

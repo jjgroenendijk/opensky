@@ -20,7 +20,7 @@ struct PerkActivateChoiceTests {
             runtime: PerkRuntime(
                 store: WorldStateStore(),
                 perks: PerkActivateFixture.store(),
-                conditionRegistry: .empty
+                conditions: ConditionContext(functions: .empty)
             ),
             baselines: nil,
             pluginName: PerkActivateFixture.pluginName

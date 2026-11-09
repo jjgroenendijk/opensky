@@ -202,11 +202,7 @@ final class FakeDialogueWorld: DialogueWorld {
     }
 
     func conditionContext() -> ConditionContext {
-        context
-    }
-
-    var conditionRegistry: ConditionFunctionRegistry {
-        .dialogueTests
+        context.using(.dialogueTests)
     }
 
     var fragments: (any DialogueFragmentDispatching)? {

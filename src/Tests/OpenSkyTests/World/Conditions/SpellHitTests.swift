@@ -4,6 +4,7 @@
 
 import Foundation
 @testable import OpenSkyActors
+import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -35,7 +36,7 @@ struct SpellHitTests {
             effects: ActiveEffectRuntime(
                 values: values,
                 effects: effects,
-                conditionRegistry: .standard
+                conditions: ConditionContext(functions: .standard)
             ),
             values: values,
             spellbook: spellbook

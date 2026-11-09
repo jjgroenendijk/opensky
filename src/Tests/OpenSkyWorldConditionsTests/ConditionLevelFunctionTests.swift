@@ -10,6 +10,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyWorldConditions
+import OpenSkyWorldTesting
 import Testing
 
 struct ConditionLevelFunctionTests {
@@ -68,15 +69,10 @@ struct ConditionLevelFunctionTests {
         parameter1: UInt32 = 0,
         context: ConditionContext
     ) throws -> (outcome: ConditionOutcome, tally: ConditionTally) {
-        var evaluator = ConditionEvaluator(context: context)
-        let outcome = try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
-            functionIndex: functionIndex,
-            comparison,
-            value,
-            runOn: runOn,
-            parameter1: parameter1
-        ))
-        return (outcome, evaluator.tally)
+        try ConditionEvaluatorFixture.evaluateStandard(
+            functionIndex, comparison, value,
+            runOn: runOn, parameter1: parameter1, context: context
+        )
     }
 
     @Test func getLevelReadsTheSubjectsLevel() throws {

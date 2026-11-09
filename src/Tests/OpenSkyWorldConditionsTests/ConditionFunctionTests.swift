@@ -111,7 +111,7 @@ struct ConditionFunctionTests {
 
     @Test func unresolvableSubjectTargetAndReferenceAreTaggedFalse() throws {
         // Empty context: nothing is bound and the index is empty.
-        var evaluator = ConditionEvaluator(context: ConditionContext())
+        var evaluator = ConditionEvaluator(context: ConditionContext().using(.standard))
         let subject = try evaluator.evaluate(
             ConditionEvaluatorFixture.isID(Self.subjectBase, runOn: 0)
         )
@@ -140,16 +140,17 @@ struct ConditionFunctionTests {
             comparisonValue: Float(1).bitPattern, functionIndex: 300
         )
         context.data = ConditionDataResolution(interiors: [subject: true])
-        var inside = ConditionEvaluator(context: context)
+        var inside = ConditionEvaluator(context: context.using(.standard))
         #expect(inside.evaluate(condition).isTrue)
 
         context.data = ConditionDataResolution(interiors: [subject: false])
-        var outside = ConditionEvaluator(context: context)
+        var outside = ConditionEvaluator(context: context.using(.standard))
         let answer = outside.evaluate(condition)
         #expect(!answer.isTrue)
         #expect(answer.isConclusive)
 
-        var unknown = try ConditionEvaluator(context: ConditionEvaluatorFixture.populatedContext())
+        var unknown = try ConditionEvaluator(context: ConditionEvaluatorFixture.populatedContext()
+            .using(.standard))
         #expect(!unknown.evaluate(condition).isConclusive)
     }
 
@@ -162,11 +163,11 @@ struct ConditionFunctionTests {
             comparisonValue: Float(1).bitPattern, functionIndex: 555
         )
         context.data = ConditionDataResolution(interiors: [subject: false])
-        var loaded = ConditionEvaluator(context: context)
+        var loaded = ConditionEvaluator(context: context.using(.standard))
         #expect(loaded.evaluate(condition).isTrue)
 
         context.data = ConditionDataResolution()
-        var unloaded = ConditionEvaluator(context: context)
+        var unloaded = ConditionEvaluator(context: context.using(.standard))
         #expect(!unloaded.evaluate(condition).isTrue)
     }
 
@@ -176,7 +177,7 @@ struct ConditionFunctionTests {
             comparisonValue: Float(1).bitPattern, functionIndex: 555, runOn: 2, reference: 0x14
         )
         context.data = ConditionDataResolution(interiors: [.player: false])
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         #expect(evaluator.evaluate(condition).isTrue)
     }
 

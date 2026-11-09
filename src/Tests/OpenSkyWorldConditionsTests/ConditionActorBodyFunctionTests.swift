@@ -25,7 +25,7 @@ struct ConditionActorBodyFunctionTests {
     ) throws -> ConditionOutcome {
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.actors = ActorStateResolution(states: [subject: state])
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: function, 0, value
         ))
@@ -68,12 +68,12 @@ struct ConditionActorBodyFunctionTests {
         )
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.actors = ActorStateResolution(states: [Self.subject: state])
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         #expect(evaluator.evaluate(nord) == .true)
         #expect(evaluator.evaluate(other).isTrue == false)
         state.race = nil
         context.actors = ActorStateResolution(states: [Self.subject: state])
-        evaluator = ConditionEvaluator(context: context)
+        evaluator = ConditionEvaluator(context: context.using(.standard))
         #expect(evaluator.evaluate(nord).failures == [.unavailableActorState])
     }
 
@@ -96,7 +96,7 @@ struct ConditionActorBodyFunctionTests {
             var state = Self.state(hand: .nothing)
             state.raceKeywords = keywords
             context.actors = ActorStateResolution(states: [Self.subject: state])
-            var evaluator = ConditionEvaluator(context: context)
+            var evaluator = ConditionEvaluator(context: context.using(.standard))
             return (try? evaluator.evaluate(ConditionEvaluatorFixture.comparing(
                 functionIndex: 715, 0, 1
             ))) ?? .false
@@ -111,7 +111,7 @@ struct ConditionActorBodyFunctionTests {
         state.general[24] = ActorValueEntry(base: 50, permanent: 10, temporary: 5, damage: -3)
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.actors = ActorStateResolution(states: [Self.subject: state])
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         #expect(try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: 494, 0, 60, parameter1: 24
         )) == .true)
@@ -132,7 +132,7 @@ struct ConditionActorBodyFunctionTests {
         player.race = FormID(0x13746)
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.actors = ActorStateResolution(states: [Self.subject: npc, .player: player])
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let isSex = { (index: UInt16, sex: UInt32) in
             try ConditionEvaluatorFixture.comparing(functionIndex: index, 0, 1, parameter1: sex)
         }
@@ -142,7 +142,7 @@ struct ConditionActorBodyFunctionTests {
         #expect(try evaluator.evaluate(isSex(130, 0x13746)) == .true)
         npc.isFemale = nil
         context.actors = ActorStateResolution(states: [Self.subject: npc])
-        evaluator = ConditionEvaluator(context: context)
+        evaluator = ConditionEvaluator(context: context.using(.standard))
         #expect(try evaluator.evaluate(isSex(70, 1)).failures == [.unavailableActorState])
     }
 

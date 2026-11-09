@@ -76,8 +76,7 @@ struct DialogueBranchTests {
             store: store,
             dialogue: DialogueFixture.store(dialogueChildren: topics, branchRecords: branches),
             questStates: QuestResolution(defaults: quests),
-            context: DialogueRuntimeFixture.context(),
-            registry: .dialogueTests
+            context: DialogueRuntimeFixture.context().using(.dialogueTests)
         )
     }
 

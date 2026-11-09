@@ -133,7 +133,7 @@ struct EffectConditionTests {
         runtime = ActiveEffectRuntime(
             values: runtime.values,
             effects: MagicEffectStore(index: index),
-            conditionRegistry: Self.registry
+            conditions: ConditionContext(functions: Self.registry)
         )
 
         let report = SpellAbilityApplication.reconcile(

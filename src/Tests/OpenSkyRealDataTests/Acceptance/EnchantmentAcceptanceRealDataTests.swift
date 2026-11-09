@@ -9,6 +9,7 @@ import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -133,7 +134,7 @@ struct EnchantmentAcceptanceRealDataTests {
                     )
                 ),
                 effects: indexes.effects,
-                conditionRegistry: .standard
+                conditions: ConditionContext(functions: .standard)
             )
         }
     }

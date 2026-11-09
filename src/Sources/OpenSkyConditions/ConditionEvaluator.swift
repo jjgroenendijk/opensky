@@ -157,7 +157,6 @@ nonisolated public struct ConditionRandom: Equatable, Sendable {
 /// the whole list.
 nonisolated public struct ConditionEvaluator: Sendable {
     public var context: ConditionContext
-    public let registry: ConditionFunctionRegistry
     public private(set) var tally: ConditionTally
     /// When true, a function the registry lacks holds instead of failing. The failure is
     /// still tallied, so a census sees it. A perk spend uses this (docs/engine/perks.md).
@@ -165,11 +164,9 @@ nonisolated public struct ConditionEvaluator: Sendable {
 
     public init(
         context: ConditionContext,
-        registry: ConditionFunctionRegistry,
         tally: ConditionTally = ConditionTally()
     ) {
         self.context = context
-        self.registry = registry
         self.tally = tally
     }
 
@@ -224,7 +221,7 @@ nonisolated public struct ConditionEvaluator: Sendable {
     // MARK: - One condition
 
     private mutating func result(of condition: Condition) -> Result<Bool, ConditionFailure> {
-        guard let function = registry[condition.functionIndex] else {
+        guard let function = context.functions[condition.functionIndex] else {
             return .failure(.unknownFunction(condition.functionIndex))
         }
         let condition = translated(condition, for: function)

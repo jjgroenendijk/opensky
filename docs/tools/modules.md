@@ -283,9 +283,10 @@ A lower module never imports a higher one. These patterns keep it that way:
   The app is the composition root, so it may downcast to the implementation it built, for
   example `questRuntime as? QuestRuntime` for the journal menu.
 - A lower module never names a registry or default that a higher module owns. Example:
-  `PerkRuntime`, `ActiveEffectRuntime`, and `DialogueRuntime` take their
-  `ConditionFunctionRegistry` as a parameter, and the caller passes `.standard`, which lives
-  in `OpenSkyWorldConditions`, above every feature interface. A package test target builds its own
+  `PerkRuntime`, `ActiveEffectRuntime`, and `DialogueRuntime` read the
+  `ConditionFunctionRegistry` from the context they are given (`context.functions`). The
+  whole-game context initialiser fills in `.standard`, which lives in `OpenSkyWorldConditions`,
+  above every feature interface. A package test target builds its own
   registry from the install functions it can reach, for example `.magicTests` in
   `OpenSkyMagicTests`.
 - A lower module that stores something for every feature keeps an open set instead of a closed

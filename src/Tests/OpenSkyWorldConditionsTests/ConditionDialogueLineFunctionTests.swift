@@ -19,7 +19,7 @@ struct ConditionDialogueLineFunctionTests {
     ) throws -> ConditionOutcome {
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.dialogue = dialogue
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: function, 0, value, runOn: runOn
         ))

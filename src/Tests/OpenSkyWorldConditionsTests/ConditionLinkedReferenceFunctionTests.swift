@@ -51,7 +51,7 @@ struct ConditionLinkedReferenceFunctionTests {
         _ parameter1: UInt32,
         _ parameter2: UInt32 = 0
     ) throws -> ConditionOutcome {
-        var evaluator = try ConditionEvaluator(context: context())
+        var evaluator = try ConditionEvaluator(context: context().using(.standard))
         return try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             comparisonValue: value.bitPattern, functionIndex: function,
             parameter1: parameter1, parameter2: parameter2

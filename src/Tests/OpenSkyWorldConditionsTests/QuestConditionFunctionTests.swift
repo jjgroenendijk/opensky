@@ -55,7 +55,7 @@ struct QuestConditionFunctionTests {
         _ condition: Condition,
         _ context: ConditionContext
     ) -> ConditionOutcome {
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return evaluator.evaluate(condition)
     }
 
@@ -173,7 +173,7 @@ struct QuestConditionFunctionTests {
     /// bucket, never a throw and never a comparison against zero.
     @Test func anUnresolvableQuestIsAReasonTaggedFailure() throws {
         let absent = FormID(0x9999)
-        var evaluator = try ConditionEvaluator(context: context())
+        var evaluator = try ConditionEvaluator(context: context().using(.standard))
         let outcome = try evaluator.evaluate([
             condition(58, quest: absent, equals: 0),
             condition(56, quest: absent, equals: 0),

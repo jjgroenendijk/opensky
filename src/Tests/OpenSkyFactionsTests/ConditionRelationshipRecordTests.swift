@@ -42,7 +42,7 @@ struct ConditionRelationshipRecordTests {
         )
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installFaction(&registry)
-        var evaluator = ConditionEvaluator(context: context, registry: registry)
+        var evaluator = ConditionEvaluator(context: context.using(registry))
         return try evaluator.evaluate(ConditionEvaluatorFixture.condition(
             comparisonValue: value.bitPattern, functionIndex: function,
             parameter1: parameter1, parameter2: parameter2

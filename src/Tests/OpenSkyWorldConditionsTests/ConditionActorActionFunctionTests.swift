@@ -25,7 +25,7 @@ struct ConditionActorActionFunctionTests {
         state.action = action
         var context = try ConditionEvaluatorFixture.populatedContext()
         context.actors = ActorStateResolution(states: [subject: state])
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: function, 0, value
         ))
@@ -83,7 +83,7 @@ struct ConditionActorActionFunctionTests {
             context.data = ConditionDataResolution(
                 keywords: KeywordStore(plugins: [("Skyrim.esm", file)]), sourcePlugin: "Skyrim.esm"
             )
-            var evaluator = ConditionEvaluator(context: context)
+            var evaluator = ConditionEvaluator(context: context.using(.standard))
             try outcomes.append(evaluator.evaluate(ConditionEvaluatorFixture.comparing(
                 functionIndex: 697, 0, 1, parameter1: 0x914E8
             )))
@@ -114,7 +114,7 @@ struct ConditionActorActionFunctionTests {
         context.data = ConditionDataResolution(
             keywords: KeywordStore(plugins: [("Skyrim.esm", file)]), sourcePlugin: "Skyrim.esm"
         )
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         let targetID = ConditionEvaluatorFixture.targetFormID
         #expect(try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
             functionIndex: 513, 0, 1, parameter1: targetID

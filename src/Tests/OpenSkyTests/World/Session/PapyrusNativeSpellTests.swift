@@ -3,6 +3,7 @@
 // one component. Only the cast's target world is faked.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -69,7 +70,7 @@ struct PapyrusNativeSpellTests {
             runtime: ActiveEffectRuntime(
                 values: values,
                 effects: effectStore,
-                conditionRegistry: .standard
+                conditions: ConditionContext(functions: .standard)
             )
         )
         session.bridge.actorNatives.actorValueRuntime = { values }

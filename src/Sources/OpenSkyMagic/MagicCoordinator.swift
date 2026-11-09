@@ -116,9 +116,7 @@ public final class MagicCoordinator {
         self.world = world
         self.storyEvents = storyEvents
         effects = data.effects.map {
-            ActiveEffectRuntime(
-                values: $0.values, effects: $0.store, conditionRegistry: $0.conditionRegistry
-            )
+            ActiveEffectRuntime(values: $0.values, effects: $0.store, conditions: $0.conditions)
         }
         pluginName = data.effects?.pluginName ?? ""
         spellPluginName = data.casting?.spellPluginName

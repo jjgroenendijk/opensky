@@ -23,7 +23,6 @@ public struct StoryManagerRuntime {
     public let quests: QuestRuntime
     public let story: StoryManagerStore
     public var context: ConditionContext
-    public var registry: ConditionFunctionRegistry
     public weak var starter: (any QuestStarting)?
 
     public init(
@@ -31,14 +30,12 @@ public struct StoryManagerRuntime {
         quests: QuestRuntime,
         story: StoryManagerStore,
         context: ConditionContext,
-        registry: ConditionFunctionRegistry,
         starter: (any QuestStarting)? = nil
     ) {
         self.store = store
         self.quests = quests
         self.story = story
         self.context = context
-        self.registry = registry
         self.starter = starter
     }
 

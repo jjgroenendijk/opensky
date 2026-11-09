@@ -22,7 +22,7 @@ struct CameraConditionFunctionTests {
         )
         var context = ConditionContext()
         context.camera = camera
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return evaluator.evaluate(condition)
     }
 
@@ -36,7 +36,7 @@ struct CameraConditionFunctionTests {
         let condition = try ConditionEvaluatorFixture.condition(
             comparisonValue: value.bitPattern, functionIndex: function, parameter1: parameter1
         )
-        var evaluator = ConditionEvaluator(context: context)
+        var evaluator = ConditionEvaluator(context: context.using(.standard))
         return evaluator.evaluate(condition).isTrue
     }
 
