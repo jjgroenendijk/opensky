@@ -155,7 +155,7 @@ struct NIFParticleParameterTests {
             loopStartFrameFudge: 0, frameCount: 8, frameCountFudge: 0
         )
         let frames = [0, 0.25, 0.5, 0.75].map {
-            subTexture.frame(at: $0, start: 0, loopStart: 1, frames: 8, frameTotal: 4)
+            subTexture.frame(at: $0, drawn: SIMD3(0, 1, 8), frameTotal: 4)
         }
         #expect(frames == [0, 2, 1, 3])
     }

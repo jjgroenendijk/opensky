@@ -118,8 +118,8 @@ nonisolated extension ParticleSimulator {
                     subTexture.frameCount + random.unit() * subTexture.frameCountFudge
                 )
                 particle.atlasIndex = subTexture.frame(
-                    at: 0, start: particle.frames.x, loopStart: particle.frames.y,
-                    frames: particle.frames.z, frameTotal: definition.subtextureOffsets.count
+                    at: 0, drawn: particle.frames,
+                    frameTotal: definition.subtextureOffsets.count
                 )
             case let .inheritVelocity(inherit):
                 // A local-space system already carries its particles along.

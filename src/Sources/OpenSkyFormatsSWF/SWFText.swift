@@ -49,11 +49,10 @@ nonisolated public struct SWFTextDefinition: Equatable, Sendable {
         let characterId = try bits.readAlignedUInt16()
         let bounds = try SWFShapeParser.parseRect(&bits)
         let matrix = try SWFShapeParser.parseMatrix(&bits)
-        let glyphBits = try Int(bits.readAlignedUInt8())
-        let advanceBits = try Int(bits.readAlignedUInt8())
-        let records = try parseRecords(
-            &bits, hasAlpha: hasAlpha, glyphBits: glyphBits, advanceBits: advanceBits
+        let widths = try GlyphWidths(
+            glyphBits: Int(bits.readAlignedUInt8()), advanceBits: Int(bits.readAlignedUInt8())
         )
+        let records = try parseRecords(&bits, hasAlpha: hasAlpha, widths: widths)
         return SWFTextDefinition(
             characterId: characterId, bounds: bounds, matrix: matrix, records: records
         )
@@ -65,8 +64,7 @@ nonisolated public struct SWFTextDefinition: Equatable, Sendable {
     private static func parseRecords(
         _ bits: inout SWFBitReader,
         hasAlpha: Bool,
-        glyphBits: Int,
-        advanceBits: Int
+        widths: GlyphWidths
     ) throws -> [SWFTextRecord] {
         var records: [SWFTextRecord] = []
         while true {
@@ -74,10 +72,7 @@ nonisolated public struct SWFTextDefinition: Equatable, Sendable {
             if flags == 0 {
                 return records
             }
-            try records.append(parseRecord(
-                &bits, flags: flags, hasAlpha: hasAlpha,
-                glyphBits: glyphBits, advanceBits: advanceBits
-            ))
+            try records.append(parseRecord(&bits, flags: flags, hasAlpha: hasAlpha, widths: widths))
         }
     }
 
@@ -88,8 +83,7 @@ nonisolated public struct SWFTextDefinition: Equatable, Sendable {
         _ bits: inout SWFBitReader,
         flags: UInt8,
         hasAlpha: Bool,
-        glyphBits: Int,
-        advanceBits: Int
+        widths: GlyphWidths
     ) throws -> SWFTextRecord {
         let hasFont = flags & 0x08 != 0
         var fontID: UInt16?
@@ -112,7 +106,7 @@ nonisolated public struct SWFTextDefinition: Equatable, Sendable {
         if hasFont {
             textHeight = try bits.readAlignedUInt16()
         }
-        let glyphs = try parseGlyphEntries(&bits, glyphBits: glyphBits, advanceBits: advanceBits)
+        let glyphs = try parseGlyphEntries(&bits, widths: widths)
         return SWFTextRecord(
             fontID: fontID, textHeight: textHeight, color: color,
             xOffset: xOffset, yOffset: yOffset, glyphs: glyphs
@@ -123,17 +117,22 @@ nonisolated public struct SWFTextDefinition: Equatable, Sendable {
     /// GlyphAdvance SB[advanceBits], bit-packed without inter-entry alignment.
     private static func parseGlyphEntries(
         _ bits: inout SWFBitReader,
-        glyphBits: Int,
-        advanceBits: Int
+        widths: GlyphWidths
     ) throws -> [SWFGlyphEntry] {
         let count = try Int(bits.readAlignedUInt8())
         var glyphs: [SWFGlyphEntry] = []
         glyphs.reserveCapacity(count)
         for _ in 0 ..< count {
-            let index = try Int(bits.readUB(glyphBits))
-            let advance = try bits.readSB(advanceBits)
+            let index = try Int(bits.readUB(widths.glyphBits))
+            let advance = try bits.readSB(widths.advanceBits)
             glyphs.append(SWFGlyphEntry(glyphIndex: index, advance: advance))
         }
         return glyphs
     }
+}
+
+/// The bit widths of a text tag's glyph index and glyph advance, read once per tag.
+nonisolated private struct GlyphWidths {
+    let glyphBits: Int
+    let advanceBits: Int
 }

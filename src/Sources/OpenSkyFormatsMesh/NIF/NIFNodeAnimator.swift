@@ -74,7 +74,7 @@ nonisolated public struct NIFNodeAnimator: Sendable {
         }
         for (index, controller) in controllers {
             guard case let .lag(lag) = controller.motion else { continue }
-            trail(controller.node, lag, controller: index, deltaTime: deltaTime, placement)
+            trail(controller.node, lag, controller: index, step: (deltaTime, placement))
         }
     }
 
@@ -152,9 +152,10 @@ nonisolated public struct NIFNodeAnimator: Sendable {
     /// Moves the lag bone's world transform toward its rest under the parent, then
     /// expresses it in the parent's space again.
     private mutating func trail(
-        _ node: Int, _ lag: NIFLagBone, controller: Int, deltaTime: Float,
-        _ placement: NIFNodeTransform
+        _ node: Int, _ lag: NIFLagBone, controller: Int,
+        step: (deltaTime: Float, placement: NIFNodeTransform)
     ) {
+        let (deltaTime, placement) = step
         let parent = placement.composed(with: parentTransform(of: node))
         let goal = parent.composed(with: animation.nodes[node].rest)
         let current = NIFLagBoneMotion.step(

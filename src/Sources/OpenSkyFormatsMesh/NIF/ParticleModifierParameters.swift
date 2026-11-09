@@ -195,15 +195,11 @@ nonisolated public struct ParticleSubTexture: Equatable, Sendable {
         self.frameCountFudge = frameCountFudge
     }
 
-    /// The frame at `fraction` of the life, for a particle that drew `start`,
-    /// `loopStart`, and `frames`. The result stays inside `0 ..< frameTotal`.
-    public func frame(
-        at fraction: Float,
-        start: Float,
-        loopStart: Float,
-        frames: Float,
-        frameTotal: Int
-    ) -> Int {
+    /// The frame at `fraction` of the life, for a particle that drew its start, loop start,
+    /// and frame count as `drawn.x`, `drawn.y`, and `drawn.z`. The result stays inside
+    /// `0 ..< frameTotal`.
+    public func frame(at fraction: Float, drawn: SIMD3<Float>, frameTotal: Int) -> Int {
+        let (start, loopStart, frames) = (drawn.x, drawn.y, drawn.z)
         guard frameTotal > 0 else { return 0 }
         let last = min(endFrame, Float(frameTotal - 1))
         var frame = start + simd_clamp(fraction, 0, 1) * max(frames, 0)

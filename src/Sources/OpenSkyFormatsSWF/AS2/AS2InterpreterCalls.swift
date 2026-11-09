@@ -79,9 +79,10 @@ nonisolated extension AS2Interpreter {
         let name = try toString(frame.pop())
         let arguments = try popArguments(frame)
         let callee = try getVariable(name, frame: frame, offset: offset)
-        return try startConstruction(
-            callee, name: name, arguments: arguments, frame: frame, offset: offset
-        )
+        guard let constructor = callee.functionValue else {
+            return try missingConstructor(name, frame: frame)
+        }
+        return try construct(constructor, arguments: arguments, offset: offset, frame: frame)
     }
 
     private func constructMethod(_ frame: AS2Frame, offset: Int) throws(AS2Fault) -> AS2Flow {
@@ -92,24 +93,17 @@ nonisolated extension AS2Interpreter {
         if !name.isEmpty {
             callee = try getMember(name, of: receiver, offset: offset)
         }
-        return try startConstruction(
-            callee, name: name, arguments: arguments, frame: frame, offset: offset
-        )
-    }
-
-    private func startConstruction(
-        _ callee: AS2Value,
-        name: String,
-        arguments: [AS2Value],
-        frame: AS2Frame,
-        offset: Int
-    ) throws(AS2Fault) -> AS2Flow {
         guard let constructor = callee.functionValue else {
-            runtime.noteMissing(name)
-            try frame.push(.undefined)
-            return .next
+            return try missingConstructor(name, frame: frame)
         }
         return try construct(constructor, arguments: arguments, offset: offset, frame: frame)
+    }
+
+    /// `new` on a name that is not a function: Flash pushes `undefined` and goes on.
+    private func missingConstructor(_ name: String, frame: AS2Frame) throws(AS2Fault) -> AS2Flow {
+        runtime.noteMissing(name)
+        try frame.push(.undefined)
+        return .next
     }
 
     /// `new`: a fresh object whose prototype is the constructor's `prototype`,

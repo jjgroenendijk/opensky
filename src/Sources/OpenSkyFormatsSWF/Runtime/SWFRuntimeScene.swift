@@ -10,13 +10,7 @@ nonisolated extension SWFMovieRuntime {
     /// dirty flag.
     public func makeScene() -> SWFScene {
         var builder = SWFRuntimeSceneBuilder(runtime: self)
-        builder.walk(
-            node: root,
-            parentTransform: .identity,
-            parentColor: .identity,
-            clipCount: 0,
-            spriteDepth: 0
-        )
+        builder.walk(node: root, parent: .root)
         clearDirty()
         return SWFScene(commands: builder.commands, skippedPlacements: builder.skipped)
     }
@@ -45,13 +39,7 @@ nonisolated private struct SWFRuntimeSceneBuilder {
     /// Set by `emit` for the clip it walks next; `walk` takes it at entry.
     var pendingGrid: GridContext?
 
-    mutating func walk(
-        node: SWFDisplayObject,
-        parentTransform: SWFTransform,
-        parentColor: SWFColorTransform,
-        clipCount: Int,
-        spriteDepth: Int
-    ) {
+    mutating func walk(node: SWFDisplayObject, parent: SWFWalkState) {
         let grid = pendingGrid
         pendingGrid = nil
         var active: [(clipDepth: UInt16, masks: [SWFSceneItem])] = []
@@ -63,12 +51,12 @@ nonisolated private struct SWFRuntimeSceneBuilder {
             guard child.isVisible else {
                 continue
             }
-            let transform = parentTransform
+            let transform = parent.transform
                 .concatenating(SWFTransform(matrix: child.matrix))
-            let color = parentColor.concatenating(child.colorTransform)
+            let color = parent.color.concatenating(child.colorTransform)
             if let clipDepth = child.clipDepth {
                 let masks = maskItems(
-                    node: child, transform: transform, color: color, spriteDepth: spriteDepth
+                    node: child, transform: transform, color: color, spriteDepth: parent.spriteDepth
                 )
                 commands.append(.beginClip(masks: masks))
                 active.append((clipDepth, masks))
@@ -82,14 +70,14 @@ nonisolated private struct SWFRuntimeSceneBuilder {
                         spriteTransform: $0.transform, childMatrix: child.matrix
                     )
                 }
-                append(item, clipCount: clipCount + active.count)
+                append(item, clipCount: parent.clipCount + active.count)
             } else {
                 emit(
                     node: child,
-                    transform: transform,
-                    color: color,
-                    clipCount: clipCount + active.count,
-                    spriteDepth: spriteDepth
+                    state: SWFWalkState(
+                        transform: transform, color: color,
+                        clipCount: parent.clipCount + active.count, spriteDepth: parent.spriteDepth
+                    )
                 )
             }
         }
@@ -98,13 +86,7 @@ nonisolated private struct SWFRuntimeSceneBuilder {
         }
     }
 
-    private mutating func emit(
-        node: SWFDisplayObject,
-        transform: SWFTransform,
-        color: SWFColorTransform,
-        clipCount: Int,
-        spriteDepth: Int
-    ) {
+    private mutating func emit(node: SWFDisplayObject, state: SWFWalkState) {
         switch node.content {
         case .shape:
             // `walk` draws shapes itself, with the sprite's scaling grid.
@@ -119,42 +101,36 @@ nonisolated private struct SWFRuntimeSceneBuilder {
             append(
                 SWFSceneItem(
                     content: .staticText(id),
-                    transform: transform.concatenating(SWFTransform(matrix: text.matrix)),
-                    colorTransform: color
+                    transform: state.transform.concatenating(SWFTransform(matrix: text.matrix)),
+                    colorTransform: state.color
                 ),
-                clipCount: clipCount
+                clipCount: state.clipCount
             )
         case let .editText(id):
             append(
                 SWFSceneItem(
                     content: .editText(id),
-                    transform: transform,
-                    colorTransform: color,
+                    transform: state.transform,
+                    colorTransform: state.color,
                     textOverride: runtime.text(of: node),
                     textFirstLine: runtime.windowsLines(node) ? runtime
                         .textScroll(of: node) - 1 : nil,
                     textBounds: node.textBounds
                 ),
-                clipCount: clipCount
+                clipCount: state.clipCount
             )
         case let .clip(id):
-            guard spriteDepth < SWFScene.maximumSpriteDepth else {
+            guard state.spriteDepth < SWFScene.maximumSpriteDepth else {
                 skipped += 1
                 return
             }
             let splitter = id.flatMap { runtime.movie.sprite($0)?.scalingGrid }
             pendingGrid = splitter.map {
                 GridContext(
-                    splitter: $0, bounds: runtime.localBounds(of: node), transform: transform
+                    splitter: $0, bounds: runtime.localBounds(of: node), transform: state.transform
                 )
             }
-            walk(
-                node: node,
-                parentTransform: transform,
-                parentColor: color,
-                clipCount: clipCount,
-                spriteDepth: spriteDepth + 1
-            )
+            walk(node: node, parent: state.nested)
         }
     }
 

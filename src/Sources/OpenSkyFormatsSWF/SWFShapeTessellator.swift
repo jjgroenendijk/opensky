@@ -154,7 +154,7 @@ nonisolated public enum SWFShapeTessellator: Sendable {
                 ))
             }
             edges.sort { $0.xTop + $0.xBottom < $1.xTop + $1.xBottom }
-            emitSpans(edges: edges, yTop: yTop, yBottom: yBottom, evenOdd: evenOdd, into: &vertices)
+            emitSpans(edges: edges, yRange: yTop ... yBottom, evenOdd: evenOdd, into: &vertices)
         }
     }
 
@@ -162,8 +162,7 @@ nonisolated public enum SWFShapeTessellator: Sendable {
     /// (two triangles) for every filled span.
     private static func emitSpans(
         edges: [BandEdge],
-        yTop: Double,
-        yBottom: Double,
+        yRange: ClosedRange<Double>,
         evenOdd: Bool,
         into vertices: inout [SIMD2<Float>]
     ) {
@@ -181,7 +180,7 @@ nonisolated public enum SWFShapeTessellator: Sendable {
                 appendTrapezoid(
                     left: left,
                     right: edge,
-                    yRange: yTop ... yBottom,
+                    yRange: yRange,
                     into: &vertices
                 )
                 openEdge = nil

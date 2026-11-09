@@ -70,6 +70,10 @@ struct AS2ObjectModelTests {
         #expect(AS2Fixture.boolean(AS2Fixture.evaluate(actions)) == true)
     }
 
+    @Test func newOnANameThatIsNoFunctionGivesUndefined() {
+        #expect(AS2Fixture.evaluate(Self.construct("Missing")) == .undefined)
+    }
+
     @Test func instanceOfIsFalseWithoutExtends() {
         let actions = Self.classPair
             + Self.construct("Derived")

@@ -189,8 +189,7 @@ nonisolated private enum HKASplineTrackDecoder {
         let controlPoints = try readVectorControlPoints(
             cursor: &cursor,
             descriptor: descriptor,
-            types: types,
-            bounds: components.bounds,
+            axes: (types, components.bounds),
             count: header.controlPointCount
         )
         try cursor.align(to: 4)
@@ -269,10 +268,10 @@ nonisolated private enum HKASplineTrackDecoder {
     private static func readVectorControlPoints(
         cursor: inout HKASplineCursor,
         descriptor: HKASplineVectorDescriptor,
-        types: [HKASplineSubTrackType],
-        bounds: [HKASplineBounds?],
+        axes: (types: [HKASplineSubTrackType], bounds: [HKASplineBounds?]),
         count: Int
     ) throws -> [[Float]] {
+        let (types, bounds) = axes
         var controlPoints = [[Float]](repeating: [], count: 3)
         for axis in 0 ..< 3 where types[axis] == .spline {
             controlPoints[axis].reserveCapacity(count)
