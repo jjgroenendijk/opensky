@@ -35,9 +35,10 @@ for port in ports.sorted() {
         typeModules: index.typeModules, visible: visible,
         mainActorFakes: mainActorFakes
     )
-    try writer.source().write(
-        to: output.appendingPathComponent("\(writer.fakeName).swift"), atomically: true,
-        encoding: .utf8
-    )
+    for file in writer.files() {
+        try file.text.write(
+            to: output.appendingPathComponent(file.name), atomically: true, encoding: .utf8
+        )
+    }
 }
 print("[ OK ] \(ports.count) fakes written to \(output.path)")
