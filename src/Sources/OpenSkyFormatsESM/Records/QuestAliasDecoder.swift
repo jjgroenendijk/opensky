@@ -75,14 +75,17 @@ nonisolated extension Quest.Alias {
             name = try reader.readZString()
         case "FNAM":
             guard field.data.count >= 4 else { return tally.note(.malformedField(field.type)) }
-            flags = try Flags(rawValue: reader.readUInt32())
+            flags = try Quest.AliasFlags(rawValue: reader.readUInt32())
         case "COCT":
             guard field.data.count >= 4 else { return tally.note(.malformedField(field.type)) }
             declaredItemCount = try reader.readUInt32()
         case "CNTO":
             guard field.data.count >= 8 else { return tally.note(.malformedField(field.type)) }
             let item = try FormID(reader.readUInt32())
-            try items.append(Item(item: item, count: Int32(bitPattern: reader.readUInt32())))
+            try items.append(Quest.AliasItem(
+                item: item,
+                count: Int32(bitPattern: reader.readUInt32())
+            ))
         default:
             if try keywords.decode(field: field) {
                 return

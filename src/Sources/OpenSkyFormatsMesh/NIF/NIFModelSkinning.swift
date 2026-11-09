@@ -12,7 +12,7 @@ nonisolated extension NIFFile.Flattener {
     public func resolveSkinnedGeometry(
         shape: NIFTriShape,
         usesNodeReferencePose: Bool
-    ) throws -> ShapeGeometry {
+    ) throws -> NIFFile.FlattenerShapeGeometry {
         let instanceBlock = try block(at: Int(shape.skinRef))
         guard
             ["NiSkinInstance", "BSDismemberSkinInstance"]
@@ -68,7 +68,7 @@ nonisolated extension NIFFile.Flattener {
             data: skinData,
             usesNodeReferencePose: usesNodeReferencePose
         ).withBodyParts(parted?.parts ?? [])
-        return ShapeGeometry(
+        return NIFFile.FlattenerShapeGeometry(
             positions: arrays.positions,
             normals: arrays.normals,
             tangents: arrays.tangents,

@@ -24,16 +24,16 @@ struct PapyrusNativePerkTests {
         let registry: PapyrusNativeRegistry
         let receiver: PapyrusObjectHandle
         let key: ReferenceKey
-        let perks: Box
+        let perks: FixtureBox
         let holder: ActorValueHolder
+    }
 
-        /// A reference box, because the bridge closures capture the runtime and
-        /// `PerkRuntime` is a struct.
-        final class Box {
-            var runtime: PerkRuntime
-            init(_ runtime: PerkRuntime) {
-                self.runtime = runtime
-            }
+    /// A reference box, because the bridge closures capture the runtime and
+    /// `PerkRuntime` is a struct.
+    final class FixtureBox {
+        var runtime: PerkRuntime
+        init(_ runtime: PerkRuntime) {
+            self.runtime = runtime
         }
     }
 
@@ -49,7 +49,7 @@ struct PapyrusNativePerkTests {
         )
         PapyrusWorldFixture.drain(session.world)
         let (runtime, _) = try PerkRuntimeFixture.runtime(store: session.worldState)
-        let box = Fixture.Box(runtime)
+        let box = FixtureBox(runtime)
         let holder = ActorValueHolder(key: entry.key, subject: .actor(base: FormID(0x0004_0002)))
         session.bridge.progressionNatives.mutatePerks = { mutation, perk, actor in
             guard actor == entry.key else { return false }

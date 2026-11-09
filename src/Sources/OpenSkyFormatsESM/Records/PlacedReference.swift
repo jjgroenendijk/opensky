@@ -22,19 +22,19 @@ nonisolated public struct PlacedReference: Sendable {
     /// XTEL field: destination door reference + arrival transform + flags.
     /// xEdit names the FormID target "Door" but constrains it to REFR.
     public struct TeleportDestination: Equatable, Sendable {
-        public struct Flags: OptionSet, Equatable, Sendable {
-            public let rawValue: UInt32
-
-            public init(rawValue: UInt32) {
-                self.rawValue = rawValue
-            }
-
-            public static let noAlarm = Flags(rawValue: 0x0000_0001)
-        }
-
         public let door: FormID
         public let placement: Placement
-        public let flags: Flags
+        public let flags: TeleportDestinationFlags
+    }
+
+    public struct TeleportDestinationFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
+
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
+
+        public static let noAlarm = TeleportDestinationFlags(rawValue: 0x0000_0001)
     }
 
     /// One XLKR linked-reference entry. A null or absent keyword reads as
@@ -324,7 +324,7 @@ nonisolated public struct PlacedReference: Sendable {
                     Float(bitPattern: reader.readUInt32())
                 )
             ),
-            flags: TeleportDestination.Flags(rawValue: reader.readUInt32())
+            flags: TeleportDestinationFlags(rawValue: reader.readUInt32())
         )
     }
 }

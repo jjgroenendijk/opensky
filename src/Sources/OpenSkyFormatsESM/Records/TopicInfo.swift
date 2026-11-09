@@ -49,47 +49,7 @@ nonisolated public struct TopicInfo: Sendable {
     }
 
     public struct Response: Equatable, Sendable {
-        public enum Emotion: Equatable, Sendable {
-            case neutral
-            case anger
-            case disgust
-            case fear
-            case sad
-            case happy
-            case surprise
-            case puzzled
-            case unknown(UInt32)
-
-            public init(rawValue: UInt32) {
-                switch rawValue {
-                case 0: self = .neutral
-                case 1: self = .anger
-                case 2: self = .disgust
-                case 3: self = .fear
-                case 4: self = .sad
-                case 5: self = .happy
-                case 6: self = .surprise
-                case 7: self = .puzzled
-                default: self = .unknown(rawValue)
-                }
-            }
-
-            public var rawValue: UInt32 {
-                switch self {
-                case .neutral: 0
-                case .anger: 1
-                case .disgust: 2
-                case .fear: 3
-                case .sad: 4
-                case .happy: 5
-                case .surprise: 6
-                case .puzzled: 7
-                case let .unknown(value): value
-                }
-            }
-        }
-
-        public let emotion: Emotion
+        public let emotion: ResponseEmotion
         public let emotionValue: UInt32
         public let number: UInt8
         public let sound: FormID?
@@ -99,6 +59,46 @@ nonisolated public struct TopicInfo: Sendable {
         public var edits: String?
         public var speakerIdle: FormID?
         public var listenerIdle: FormID?
+    }
+
+    public enum ResponseEmotion: Equatable, Sendable {
+        case neutral
+        case anger
+        case disgust
+        case fear
+        case sad
+        case happy
+        case surprise
+        case puzzled
+        case unknown(UInt32)
+
+        public init(rawValue: UInt32) {
+            switch rawValue {
+            case 0: self = .neutral
+            case 1: self = .anger
+            case 2: self = .disgust
+            case 3: self = .fear
+            case 4: self = .sad
+            case 5: self = .happy
+            case 6: self = .surprise
+            case 7: self = .puzzled
+            default: self = .unknown(rawValue)
+            }
+        }
+
+        public var rawValue: UInt32 {
+            switch self {
+            case .neutral: 0
+            case .anger: 1
+            case .disgust: 2
+            case .fear: 3
+            case .sad: 4
+            case .happy: 5
+            case .surprise: 6
+            case .puzzled: 7
+            case let .unknown(value): value
+            }
+        }
     }
 
     public private(set) var formID: FormID

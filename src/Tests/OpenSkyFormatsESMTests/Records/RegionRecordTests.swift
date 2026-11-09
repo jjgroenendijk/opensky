@@ -131,7 +131,7 @@ struct RegionRecordTests {
 
     /// The RDSA condition bits docs/formats/weather.md lists.
     @Test func soundConditionBitsMatchTheDocumentedList() {
-        let documented: [(Region.SoundEntry.Conditions, UInt32)] = [
+        let documented: [(Region.SoundConditions, UInt32)] = [
             (.pleasant, 0x01), (.cloudy, 0x02), (.rainy, 0x04), (.snowy, 0x08)
         ]
         for (condition, bits) in documented {

@@ -4,7 +4,7 @@ public import OpenSkyFormatsESM
 public protocol FaceMorphPort: AnyObject {
     func clearEmotion(on actor: FormID)
     func showEmotion(
-        _ emotion: TopicInfo.Response.Emotion,
+        _ emotion: TopicInfo.ResponseEmotion,
         value: UInt32,
         on actor: FormID,
         now: Float,
@@ -16,7 +16,7 @@ public protocol FaceMorphPort: AnyObject {
 /// The default arguments a protocol requirement cannot carry.
 extension FaceMorphPort {
     public func showEmotion(
-        _ emotion: TopicInfo.Response.Emotion,
+        _ emotion: TopicInfo.ResponseEmotion,
         value: UInt32,
         on actor: FormID,
         now: Float

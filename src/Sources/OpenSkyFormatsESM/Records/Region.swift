@@ -15,30 +15,30 @@ nonisolated public struct Region: Sendable {
     /// Each entry is a 12-byte struct: SNDR (or SOUN legacy marker) FormID,
     /// weather-state filter flags, and a per-entry weight.
     public struct SoundEntry: Equatable, Sendable {
-        /// Weather states under which this entry is eligible. Bit 0x01 = pleasant,
-        /// 0x02 = cloudy, 0x04 = rainy, 0x08 = snowy. An empty set means the
-        /// entry plays in all weather.
-        public struct Conditions: OptionSet, Equatable, Sendable {
-            public let rawValue: UInt32
-
-            public init(rawValue: UInt32) {
-                self.rawValue = rawValue
-            }
-
-            public static let pleasant = Conditions(rawValue: 0x0001)
-            public static let cloudy = Conditions(rawValue: 0x0002)
-            public static let rainy = Conditions(rawValue: 0x0004)
-            public static let snowy = Conditions(rawValue: 0x0008)
-        }
-
         /// SNDR (or SOUN legacy marker) FormID. The runtime resolves the
         /// SOUN.SDSC hop to its SNDR.
         public let sound: FormID
-        public let conditions: Conditions
+        public let conditions: SoundConditions
         /// Per-entry weight in the 0-1 range (probe against Skyrim.esm:
         /// min 0.01, max 1.0; the CK presents it as a percentage but the
         /// stored value is the 0-1 weight the runtime uses).
         public let chance: Float
+    }
+
+    /// Weather states under which this entry is eligible. Bit 0x01 = pleasant,
+    /// 0x02 = cloudy, 0x04 = rainy, 0x08 = snowy. An empty set means the
+    /// entry plays in all weather.
+    public struct SoundConditions: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
+
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
+
+        public static let pleasant = SoundConditions(rawValue: 0x0001)
+        public static let cloudy = SoundConditions(rawValue: 0x0002)
+        public static let rainy = SoundConditions(rawValue: 0x0004)
+        public static let snowy = SoundConditions(rawValue: 0x0008)
     }
 
     /// RDAT area type codes (uint32). Weather and sound are decoded.
@@ -242,7 +242,7 @@ nonisolated public struct Region: Sendable {
         entries.reserveCapacity(count)
         for _ in 0 ..< count {
             let sound = try FormID(reader.readUInt32())
-            let conditions = try SoundEntry.Conditions(rawValue: reader.readUInt32())
+            let conditions = try SoundConditions(rawValue: reader.readUInt32())
             let chance = try reader.readFloat32()
             entries.append(SoundEntry(
                 sound: sound,

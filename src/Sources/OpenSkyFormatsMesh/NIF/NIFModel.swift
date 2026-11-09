@@ -29,12 +29,6 @@ nonisolated extension NIFFile {
     }
 
     public struct Flattener: Sendable {
-        /// Dedup key: which shader/alpha property blocks a shape referenced.
-        public struct SlotKey: Hashable, Sendable {
-            public let shaderPropertyBlock: Int?
-            public let alphaPropertyBlock: Int?
-        }
-
         public let file: NIFFile
         public let hierarchy: NIFNodeHierarchy
         public let skeleton: NIFSkeleton?
@@ -43,7 +37,7 @@ nonisolated extension NIFFile {
         /// The block index of each mesh, in `meshes` order.
         public var meshBlocks: [Int] = []
         public var materials: [Material] = []
-        public var slotIndexes: [SlotKey: Int] = [:]
+        public var slotIndexes: [FlattenerSlotKey: Int] = [:]
         public var skippedShapeCount = 0
         public var editorMarkerShapeCount = 0
 
@@ -156,7 +150,7 @@ nonisolated extension NIFFile {
                 skippedShapeCount += 1
                 return
             }
-            let key = SlotKey(
+            let key = FlattenerSlotKey(
                 shaderPropertyBlock: shape.shaderPropertyRef >= 0
                     ? Int(shape.shaderPropertyRef) : nil,
                 alphaPropertyBlock: shape.alphaPropertyRef >= 0
@@ -194,23 +188,12 @@ nonisolated extension NIFFile {
             meshBlocks += pieces.map { _ in index }
         }
 
-        public struct ShapeGeometry: Sendable {
-            public let positions: [SIMD3<Float>]
-            public let normals: [SIMD3<Float>]
-            public let tangents: [SIMD3<Float>]
-            public let bitangents: [SIMD3<Float>]
-            public let uvs: [SIMD2<Float>]
-            public let colors: [SIMD4<Float>]
-            public let indices: [UInt16]
-            public let skinning: MeshSkinning?
-        }
-
         private func resolveGeometry(
             shape: NIFTriShape,
             usesNodeReferencePose: Bool
-        ) throws -> ShapeGeometry {
+        ) throws -> FlattenerShapeGeometry {
             guard shape.skinRef >= 0 else {
-                return ShapeGeometry(
+                return FlattenerShapeGeometry(
                     positions: shape.positions,
                     normals: shape.normals,
                     tangents: shape.tangents,
@@ -227,6 +210,23 @@ nonisolated extension NIFFile {
             )
         }
     }
+
+    public struct FlattenerShapeGeometry: Sendable {
+        public let positions: [SIMD3<Float>]
+        public let normals: [SIMD3<Float>]
+        public let tangents: [SIMD3<Float>]
+        public let bitangents: [SIMD3<Float>]
+        public let uvs: [SIMD2<Float>]
+        public let colors: [SIMD4<Float>]
+        public let indices: [UInt16]
+        public let skinning: MeshSkinning?
+    }
+
+    /// Dedup key: which shader/alpha property blocks a shape referenced.
+    public struct FlattenerSlotKey: Hashable, Sendable {
+        public let shaderPropertyBlock: Int?
+        public let alphaPropertyBlock: Int?
+    }
 }
 
 nonisolated extension NIFFile.Flattener {
@@ -234,7 +234,7 @@ nonisolated extension NIFFile.Flattener {
     /// `Material.waterSurface`, a sky shader its unlit sky material. An undecodable
     /// effect or no ref gives `Material.fallback`.
     /// Out-of-range refs are malformed, same as the walk.
-    private func resolveMaterial(key: SlotKey) throws -> Material {
+    private func resolveMaterial(key: NIFFile.FlattenerSlotKey) throws -> Material {
         var shader: NIFLightingShaderProperty?
         var textures: NIFShaderTextureSet?
         if let index = key.shaderPropertyBlock {
@@ -301,7 +301,7 @@ nonisolated extension NIFFile.Flattener {
     }
 
     /// The shader's controllers on their own clock; nil when none moves or they fail.
-    private func shaderAnimation(_ key: SlotKey) -> MaterialAnimation? {
+    private func shaderAnimation(_ key: NIFFile.FlattenerSlotKey) -> MaterialAnimation? {
         key.shaderPropertyBlock.flatMap { element in
             attempt { try NIFShaderAnimation.animation(ofShader: element, file: file) }
         }

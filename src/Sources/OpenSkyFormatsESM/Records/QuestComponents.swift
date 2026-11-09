@@ -9,22 +9,9 @@ nonisolated extension Quest {
     /// One INDX group. A quest advances by stage index, and the same index may
     /// legally appear more than once in a record.
     public struct Stage: Equatable, Sendable {
-        public struct Flags: OptionSet, Equatable, Sendable {
-            public let rawValue: UInt8
-
-            public init(rawValue: UInt8) {
-                self.rawValue = rawValue
-            }
-
-            /// Setting this stage starts the quest.
-            public static let startUpStage = Flags(rawValue: 1 << 1)
-            /// Setting this stage stops the quest.
-            public static let shutDownStage = Flags(rawValue: 1 << 2)
-        }
-
         /// INDX word 0. uint16 per xEdit, and never negative in vanilla data.
         public var index: UInt16 = 0
-        public var flags = Flags()
+        public var flags = StageFlags()
         /// QSDT groups under this stage, in file order. More than one means
         /// the journal picks between them by condition.
         public var logEntries: [LogEntry] = []
@@ -37,21 +24,23 @@ nonisolated extension Quest {
         }
     }
 
+    public struct StageFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
+
+        public init(rawValue: UInt8) {
+            self.rawValue = rawValue
+        }
+
+        /// Setting this stage starts the quest.
+        public static let startUpStage = StageFlags(rawValue: 1 << 1)
+        /// Setting this stage stops the quest.
+        public static let shutDownStage = StageFlags(rawValue: 1 << 2)
+    }
+
     /// One QSDT group inside a stage: the journal text shown when the stage is
     /// set, plus the conditions that select it and the quest-ending flags.
     public struct LogEntry: Equatable, Sendable {
-        public struct Flags: OptionSet, Equatable, Sendable {
-            public let rawValue: UInt8
-
-            public init(rawValue: UInt8) {
-                self.rawValue = rawValue
-            }
-
-            public static let completeQuest = Flags(rawValue: 1 << 0)
-            public static let failQuest = Flags(rawValue: 1 << 1)
-        }
-
-        public var flags = Flags()
+        public var flags = LogEntryFlags()
         public var conditions = ConditionList()
         /// CNAM, the journal paragraph. Localized plugins hold a string ID.
         public var text: LString?
@@ -62,28 +51,39 @@ nonisolated extension Quest {
         public var legacyFields: [Data] = []
     }
 
+    public struct LogEntryFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt8
+
+        public init(rawValue: UInt8) {
+            self.rawValue = rawValue
+        }
+
+        public static let completeQuest = LogEntryFlags(rawValue: 1 << 0)
+        public static let failQuest = LogEntryFlags(rawValue: 1 << 1)
+    }
+
     /// One QOBJ group: an objective line in the journal and the map targets
     /// it points at.
     public struct Objective: Equatable, Sendable {
-        public struct Flags: OptionSet, Equatable, Sendable {
-            public let rawValue: UInt32
-
-            public init(rawValue: UInt32) {
-                self.rawValue = rawValue
-            }
-
-            /// This objective is satisfied by itself or the previous one.
-            public static let oredWithPrevious = Flags(rawValue: 1 << 0)
-        }
-
         /// QOBJ. By convention it matches a stage index, but nothing enforces
         /// that, and duplicates are legal.
         public var index: UInt16 = 0
-        public var flags = Flags()
+        public var flags = ObjectiveFlags()
         /// NNAM, the objective text. Required by xEdit; absent only in
         /// malformed data.
         public var displayText: LString?
         public var targets: [Target] = []
+    }
+
+    public struct ObjectiveFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
+
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
+
+        /// This objective is satisfied by itself or the previous one.
+        public static let oredWithPrevious = ObjectiveFlags(rawValue: 1 << 0)
     }
 
     /// One QSTA group: which alias the compass marker points at.
@@ -115,96 +115,13 @@ nonisolated extension Quest {
     /// which exclusive subrecords appear, so each slot decodes into its own
     /// property and `fillType` reports the choice afterwards.
     public struct Alias: Equatable, Sendable {
-        /// Which subrecord opened the group. Location aliases resolve to an
-        /// LCTN, reference aliases to a placed ACHR or REFR.
-        public enum Category: Equatable, Sendable {
-            case reference
-            case location
-        }
-
-        public struct Flags: OptionSet, Equatable, Sendable {
-            public let rawValue: UInt32
-
-            public init(rawValue: UInt32) {
-                self.rawValue = rawValue
-            }
-
-            public static let optional = Flags(rawValue: 1 << 1)
-            /// Ref. The alias target is a quest object, undroppable while the
-            /// quest runs.
-            public static let questObject = Flags(rawValue: 1 << 2)
-            public static let allowReuseInQuest = Flags(rawValue: 1 << 3)
-            /// Ref. A dead actor may fill the alias.
-            public static let allowDead = Flags(rawValue: 1 << 4)
-            /// Ref. Find Matching Reference searches only the loaded area.
-            public static let matchInLoadedArea = Flags(rawValue: 1 << 5)
-            /// Ref. Makes the target essential while the quest runs.
-            public static let essential = Flags(rawValue: 1 << 6)
-            /// Ref. A disabled reference may fill the alias.
-            public static let allowDisabled = Flags(rawValue: 1 << 7)
-            /// Ref. Makes the target protected while the quest runs.
-            public static let protected = Flags(rawValue: 1 << 10)
-            /// Ref. Find Matching Reference prefers the match closest to the player.
-            public static let matchClosest = Flags(rawValue: 1 << 13)
-        }
-
-        /// How the alias gets its value, derived from which slots were filled.
-        /// The order matches the Creation Kit's own union order, so an alias
-        /// that somehow carries two fill subrecords reports the one the editor
-        /// would have shown.
-        public enum FillType: Equatable, Sendable {
-            /// Ref: ALFR names a specific placed reference.
-            case specificReference
-            /// Ref: ALUA names an NPC whose unique instance fills the alias.
-            case uniqueActor
-            /// Ref: ALFA + ALRT — a location alias plus an LCRT ref type.
-            case locationAliasReference
-            /// Loc: ALFL names a specific LCTN.
-            case specificLocation
-            /// Loc: ALFA + KNAM — a reference alias plus a keyword.
-            case referenceAliasLocation
-            /// Loc/Ref: ALEQ + ALEA copy an alias from another quest.
-            case externalAlias
-            /// Ref: ALCO creates a new instance of a base object.
-            case createReferenceToObject
-            /// Ref: ALNA + ALNT match a reference near another alias.
-            case nearAlias
-            /// Loc/Ref: ALFE + ALFD fill from a story-manager event.
-            case fromEvent
-            /// No fill subrecord: filled by script, forced in from another
-            /// alias (ALFI), or matched purely on conditions.
-            case none
-
-            public var name: String {
-                switch self {
-                case .specificReference: "specific reference"
-                case .uniqueActor: "unique actor"
-                case .locationAliasReference: "location alias reference"
-                case .specificLocation: "specific location"
-                case .referenceAliasLocation: "reference alias location"
-                case .externalAlias: "external alias"
-                case .createReferenceToObject: "create reference to object"
-                case .nearAlias: "near alias"
-                case .fromEvent: "from event"
-                case .none: "none"
-                }
-            }
-        }
-
-        /// One CNTO entry: an item added to the alias target for the quest.
-        /// No COED follows these, unlike the container form.
-        public struct Item: Equatable, Sendable {
-            public let item: FormID
-            public let count: Int32
-        }
-
         /// ALST / ALLS. The number scripts and conditions address the alias by.
         public let id: UInt32
-        public let category: Category
+        public let category: AliasCategory
         /// ALID, the authoring name — "QuestGiver", "Location". Substituted
         /// into journal text through the <Alias=Name> markup.
         public var name: String?
-        public var flags = Flags()
+        public var flags = AliasFlags()
         /// ALFI, the alias this one is forced into when it fills.
         public var forceIntoAlias: Int32?
 
@@ -235,7 +152,7 @@ nonisolated extension Quest {
         /// COCT as written; advisory, exactly as on CONT.
         public var declaredItemCount: UInt32?
         /// CNTO: items given to the target for the quest's duration.
-        public var items: [Item] = []
+        public var items: [AliasItem] = []
         public var spells: [FormID] = [] // ALSP
         public var factions: [FormID] = [] // ALFC
         public var packages: [FormID] = [] // ALPC
@@ -246,14 +163,14 @@ nonisolated extension Quest {
         public var guardWarnOverride: FormID? // GWOR
         public var combatOverride: FormID? // ECOR
 
-        public init(id: UInt32, category: Category) {
+        public init(id: UInt32, category: AliasCategory) {
             self.id = id
             self.category = category
         }
 
         /// One branch per documented fill subrecord, in the Creation Kit's
         /// own union order.
-        public var fillType: FillType {
+        public var fillType: AliasFillType {
             if forcedReference != nil {
                 return .specificReference
             }
@@ -288,5 +205,88 @@ nonisolated extension Quest {
             }
             return .none
         }
+    }
+
+    /// One CNTO entry: an item added to the alias target for the quest.
+    /// No COED follows these, unlike the container form.
+    public struct AliasItem: Equatable, Sendable {
+        public let item: FormID
+        public let count: Int32
+    }
+
+    /// How the alias gets its value, derived from which slots were filled.
+    /// The order matches the Creation Kit's own union order, so an alias
+    /// that somehow carries two fill subrecords reports the one the editor
+    /// would have shown.
+    public enum AliasFillType: Equatable, Sendable {
+        /// Ref: ALFR names a specific placed reference.
+        case specificReference
+        /// Ref: ALUA names an NPC whose unique instance fills the alias.
+        case uniqueActor
+        /// Ref: ALFA + ALRT — a location alias plus an LCRT ref type.
+        case locationAliasReference
+        /// Loc: ALFL names a specific LCTN.
+        case specificLocation
+        /// Loc: ALFA + KNAM — a reference alias plus a keyword.
+        case referenceAliasLocation
+        /// Loc/Ref: ALEQ + ALEA copy an alias from another quest.
+        case externalAlias
+        /// Ref: ALCO creates a new instance of a base object.
+        case createReferenceToObject
+        /// Ref: ALNA + ALNT match a reference near another alias.
+        case nearAlias
+        /// Loc/Ref: ALFE + ALFD fill from a story-manager event.
+        case fromEvent
+        /// No fill subrecord: filled by script, forced in from another
+        /// alias (ALFI), or matched purely on conditions.
+        case none
+
+        public var name: String {
+            switch self {
+            case .specificReference: "specific reference"
+            case .uniqueActor: "unique actor"
+            case .locationAliasReference: "location alias reference"
+            case .specificLocation: "specific location"
+            case .referenceAliasLocation: "reference alias location"
+            case .externalAlias: "external alias"
+            case .createReferenceToObject: "create reference to object"
+            case .nearAlias: "near alias"
+            case .fromEvent: "from event"
+            case .none: "none"
+            }
+        }
+    }
+
+    public struct AliasFlags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
+
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
+
+        public static let optional = AliasFlags(rawValue: 1 << 1)
+        /// Ref. The alias target is a quest object, undroppable while the
+        /// quest runs.
+        public static let questObject = AliasFlags(rawValue: 1 << 2)
+        public static let allowReuseInQuest = AliasFlags(rawValue: 1 << 3)
+        /// Ref. A dead actor may fill the alias.
+        public static let allowDead = AliasFlags(rawValue: 1 << 4)
+        /// Ref. Find Matching Reference searches only the loaded area.
+        public static let matchInLoadedArea = AliasFlags(rawValue: 1 << 5)
+        /// Ref. Makes the target essential while the quest runs.
+        public static let essential = AliasFlags(rawValue: 1 << 6)
+        /// Ref. A disabled reference may fill the alias.
+        public static let allowDisabled = AliasFlags(rawValue: 1 << 7)
+        /// Ref. Makes the target protected while the quest runs.
+        public static let protected = AliasFlags(rawValue: 1 << 10)
+        /// Ref. Find Matching Reference prefers the match closest to the player.
+        public static let matchClosest = AliasFlags(rawValue: 1 << 13)
+    }
+
+    /// Which subrecord opened the group. Location aliases resolve to an
+    /// LCTN, reference aliases to a placed ACHR or REFR.
+    public enum AliasCategory: Equatable, Sendable {
+        case reference
+        case location
     }
 }

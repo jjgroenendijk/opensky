@@ -14,10 +14,10 @@ struct QuestAliasRecordTests {
     /// the fill type they should add up to.
     private struct FillCase {
         let fill: Data
-        let expected: Quest.Alias.FillType
+        let expected: Quest.AliasFillType
         let location: Bool
 
-        init(_ fill: Data, _ expected: Quest.Alias.FillType, location: Bool = false) {
+        init(_ fill: Data, _ expected: Quest.AliasFillType, location: Bool = false) {
             self.fill = fill
             self.expected = expected
             self.location = location

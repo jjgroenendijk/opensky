@@ -53,7 +53,7 @@ struct TopicInfoRecordTests {
         #expect(info.sharedInfo == FormID(0x202))
         #expect(info.responses.count == 2)
         let first: TopicInfo.Response = try #require(info.responses.first)
-        #expect(first.emotion == TopicInfo.Response.Emotion.happy)
+        #expect(first.emotion == TopicInfo.ResponseEmotion.happy)
         #expect(first.emotionValue == 80)
         #expect(first.number == 7)
         #expect(first.sound == FormID(0x401))

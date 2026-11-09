@@ -42,7 +42,7 @@ nonisolated public struct QuestLocationAliasFill: Equatable, Sendable {
 nonisolated public enum QuestAliasSkipKind: SkipTallyKind {
     /// A fill type OpenSky does not implement yet. Carries the type so the
     /// tally names which ones a corpus actually needs.
-    case unsupportedFillType(Quest.Alias.FillType)
+    case unsupportedFillType(Quest.AliasFillType)
     /// A location alias (ALLS) whose fill type still needs condition or
     /// alias-search machinery. Direct ALFL aliases are filled.
     case locationAlias
