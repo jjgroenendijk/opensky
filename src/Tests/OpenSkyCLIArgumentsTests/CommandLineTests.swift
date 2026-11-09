@@ -180,7 +180,6 @@ struct CommandLineTests {
         let launch = try command(["game", "launch"], as: GameArguments.Launch.self)
         #expect(launch.survivalMode == .off)
         #expect(!launch.hidden)
-        _ = GameArguments.Launch()
         #expect(try command(["game", "launch", "--hidden"], as: GameArguments.Launch.self).hidden)
         let asking = try command(
             ["game", "launch", "--survival-mode", "ask"], as: GameArguments.Launch.self

@@ -14,6 +14,9 @@ import tempfile
 # Swift closures are functions to llvm-cov; a closure that never ran inside a tested
 # function is a branch, so the line rule counts it and the function rule does not.
 CLOSURE_MARKS = ("closure #", "implicit closure", "autoclosure")
+# The compiler adds an init accessor to each property-wrapped stored property. It
+# runs only when an init assigns the property, so a default value never calls it.
+SYNTHESIZED_MARKS = ("property wrapped field init accessor",)
 
 
 def current_profiles(newest, kept, sources_changed):
@@ -124,3 +127,7 @@ def demangled(names):
 
 def is_closure(readable):
     return any(mark in readable for mark in CLOSURE_MARKS)
+
+
+def is_synthesized(readable):
+    return any(mark in readable for mark in SYNTHESIZED_MARKS)

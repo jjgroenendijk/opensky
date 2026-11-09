@@ -4,7 +4,8 @@
 # the branch adds or changes since BASE:
 #
 #   1. At least 80 percent of the changed executable lines ran in a test.
-#   2. Every function the branch adds ran in a test. Closures count under rule 1.
+#   2. Every function the branch adds ran in a test. Closures count under rule 1,
+#      and an accessor the compiler adds for a property wrapper is skipped.
 #
 # A block git sees as moved unchanged is not new: rename detection for lines.
 #
@@ -20,7 +21,7 @@ import subprocess
 import sys
 
 sys.path[:0] = ["tools/coverage", "tools/lint"]
-from coverage_profile import current_profiles, demangled, is_closure, lcov, parse_lcov
+from coverage_profile import current_profiles, demangled, is_closure, is_synthesized, lcov, parse_lcov
 from swift_source import XCODE_ONLY, wiring_modules
 
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
@@ -66,7 +67,7 @@ def check(changed, files, readable_names):
                     missed.setdefault(path, []).append(line)
         for line, name, count in data["functions"]:
             readable = readable_names.get(name, name)
-            if line in lines and count == 0 and not is_closure(readable):
+            if line in lines and count == 0 and not (is_closure(readable) or is_synthesized(readable)):
                 untested.append(f"{path}:{line}: {readable}")
     return covered, executable, untested, missed
 
@@ -98,10 +99,10 @@ def self_check():
     files = {
         "src/Sources/OpenSkyMagic/A.swift": {
             "lines": {1: 1, 2: 0, 3: 0, 9: 0},
-            "functions": [(1, "f", 1), (2, "g", 0), (3, "c", 0), (9, "old", 0)],
+            "functions": [(1, "f", 1), (2, "g", 0), (3, "c", 0), (3, "w", 0), (9, "old", 0)],
         }
     }
-    names = {"c": "closure #1 in f()"}
+    names = {"c": "closure #1 in f()", "w": "property wrapped field init accessor of A.flag"}
     result = check(changed, files, names)
     expected = (1, 3, ["src/Sources/OpenSkyMagic/A.swift:2: g"], {"src/Sources/OpenSkyMagic/A.swift": [2, 3]})
     if result != expected or ranges([3, 4, 5, 9]) != "3-5, 9":
