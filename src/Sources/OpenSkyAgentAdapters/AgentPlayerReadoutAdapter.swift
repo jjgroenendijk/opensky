@@ -1,27 +1,22 @@
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
+import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -53,27 +48,27 @@ public protocol AgentPlayerReadoutHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentPlayerReadoutAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentPlayerReadoutHost
 }
 
 extension AgentPlayerReadoutAdapter {
     public func playerState() throws(AgentFailure) -> AgentJSON {
-        guard let gameSession = game.gameSession else { throw owner.notReady() }
+        guard let gameSession = game.gameSession else { throw hub.notReady() }
         let camera = gameSession.freeFlyCamera
         var result: [String: AgentJSON] = [
             "position": .init(camera.position),
             "yaw": .init(MatrixMath.signedDegrees(fromRadians: camera.yaw)),
             "pitch": .init(MatrixMath.degrees(fromRadians: camera.pitch)),
             "movementMode": .string(String(describing: gameSession.movementMode)),
-            "cell": owner.actorReadout.cellState(at: camera.position),
+            "cell": hub.actorReadout.cellState(at: camera.position),
             "worldspace": game.streamer.map { .string($0.worldspaceEditorID) } ?? .null,
             "bodyFailure": .init(game.player.failureReason),
             "form": .string(game.playerBeastForm.rawValue),
             "behaviorProject": .init(game.player.graphProject),
             "behaviorProjectFailure": .init(game.player.raceGraphFailureReason)
         ]
-        result.merge(owner.frameReadout.weatherReport(gameSession.weather)) { $1 }
+        result.merge(hub.frameReadout.weatherReport(gameSession.weather)) { $1 }
         if let values = game.actorValues.runtime {
             let current = values.current(of: .player)
             let maximum = values.maximums(of: .player)
@@ -166,10 +161,10 @@ extension AgentPlayerReadoutAdapter {
                 "small": .init(game.controllerRumble.soundMotors.small),
                 "big": .init(game.controllerRumble.soundMotors.big)
             ],
-            "healthCues": owner.render.healthCueState(),
+            "healthCues": hub.render.healthCueState(),
             "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
             "ragdoll": .bool(game.ragdoll.runtime?.world.isRagdolling(.player) == true),
-            "eyeTexture": owner.actors.eyeTexture(of: .player),
+            "eyeTexture": hub.actors.eyeTexture(of: .player),
             "controls": [
                 "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),
                 "savingDisabled": .bool(locks.savingDisabled),

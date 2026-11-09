@@ -19,7 +19,7 @@ public protocol SystemMenuWorld: SWFLayerWorld, MenuInputConsumer {
 }
 
 public final class SystemMenuCoordinator {
-    public static let identifier: MenuIdentifier = "SystemMenu"
+    public static let identifier = MenuIdentifier.systemMenu
 
     public internal(set) var model = SystemMenuModel()
     public internal(set) var settingsPage: SettingsPageModel

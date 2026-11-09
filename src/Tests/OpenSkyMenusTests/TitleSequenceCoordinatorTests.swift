@@ -2,15 +2,16 @@
 // in lower case, and plays one only while the titles are shown.
 
 @testable import OpenSkyMenus
+import OpenSkyMenusInterface
 import Testing
 
 @MainActor
 struct TitleSequenceCoordinatorTests {
     @Test func aSequenceNameFindsItsClipWithoutCase() {
-        #expect(TitleSequenceMovieBridge.clipPath(for: "Sequence1") == "_root.sequence1")
-        #expect(TitleSequenceMovieBridge.clipPath(for: "SEQUENCE4") == "_root.sequence4")
-        #expect(TitleSequenceMovieBridge.clipPath(for: "Sequence5") == nil)
-        #expect(TitleSequenceMovieBridge.clipPath(for: "") == nil)
+        #expect(TitleSequenceClip.path(for: "Sequence1") == "_root.sequence1")
+        #expect(TitleSequenceClip.path(for: "SEQUENCE4") == "_root.sequence4")
+        #expect(TitleSequenceClip.path(for: "Sequence5") == nil)
+        #expect(TitleSequenceClip.path(for: "") == nil)
     }
 
     @Test func aClipPlaysOnlyWhileTheTitlesAreShown() {

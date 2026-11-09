@@ -2,7 +2,6 @@
 // keyboard and the agent control server both call it, so the game cannot tell
 // a key press from an injected one (docs/tools/agent-control.md).
 
-public import OpenSkyMenusInterface
 import OpenSkyRendering
 public import OpenSkyScriptingInterface
 

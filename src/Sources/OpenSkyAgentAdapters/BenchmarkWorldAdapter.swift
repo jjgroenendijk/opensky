@@ -17,7 +17,6 @@ public import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyRenderResources
 import OpenSkyRuntimeState
-import OpenSkySession
 public import OpenSkySessionInterface
 import OpenSkyWeather
 public import OpenSkyWorld
@@ -73,13 +72,18 @@ public final class BenchmarkWorldAdapter {
     private static let millisecondsPerSecond = 1000.0
     /// A probe pushed farther than this, in units, started inside something.
     private static let pushedOut: Float = 0.01
-    public unowned let game: any BenchmarkWorldHost
+    public let game: any BenchmarkWorldHost
     public var tour: any BenchmarkTourPort {
         game.benchmarkTour
     }
 
+    public let state = BenchmarkPartState()
     /// The game window side of a tour, set by the session scope.
-    public var view: (any BenchmarkViewPort)?
+    public var view: (any BenchmarkViewPort)? {
+        get { state.view }
+        set { state.view = newValue }
+    }
+
     /// Started on the first frame the world is ready.
     public var pendingRequest: BenchmarkRequest?
     /// Measures the app start once, for the first tour after launch.
@@ -91,10 +95,22 @@ public final class BenchmarkWorldAdapter {
     public var onRunningChange: ((Bool) -> Void)?
     public var onFinish: ((BenchmarkRun) -> Void)?
 
-    public var arrival: (any AgentTeleportJobPort)?
+    public var arrival: (any AgentTeleportJobPort)? {
+        get { state.arrival }
+        set { state.arrival = newValue }
+    }
+
     private var arrivalStep: AgentWaitStep?
-    public var saved: SavedState?
-    public var request = BenchmarkRequest()
+    public var saved: SavedState? {
+        get { state.saved }
+        set { state.saved = newValue }
+    }
+
+    public var request: BenchmarkRequest {
+        get { state.request }
+        set { state.request = newValue }
+    }
+
     private var ticks = 0
     private var frameSteps = 0
     /// Frames the GPU drew; a frame whose slot the GPU still held is not one.
@@ -102,7 +118,11 @@ public final class BenchmarkWorldAdapter {
         frameSteps - (game.gameSession?.renderer.skippedFrames ?? 0)
     }
 
-    public var tourOverrides: [PlayerSettingID: Double] = [:]
+    public var tourOverrides: [PlayerSettingID: Double] {
+        get { state.tourOverrides }
+        set { state.tourOverrides = newValue }
+    }
+
     private var plugins: Set<String> = []
     /// PNGs the tour asked for; the first one waits for its window copy.
     private var screenshots: [URL] = []
@@ -121,15 +141,13 @@ public final class BenchmarkWorldAdapter {
     public let tourSettingsHost: any BenchmarkTourSettingsHost
 
     public var tourSettings: BenchmarkTourSettingsAdapter {
-        BenchmarkTourSettingsAdapter(
-            owner: self,
-            game: tourSettingsHost
-        )
+        BenchmarkTourSettingsAdapter(game: tourSettingsHost, state: state)
     }
 
     public init(game: some BenchmarkWorldHost & BenchmarkTourSettingsHost) {
         tourSettingsHost = game
         self.game = game
+        state.finishAfterScreenshots = { [weak self] in self?.finishAfterScreenshots($0) }
     }
 
     public var isRunning: Bool {

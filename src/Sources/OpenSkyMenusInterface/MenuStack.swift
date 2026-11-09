@@ -86,4 +86,8 @@ nonisolated extension MenuIdentifier {
     public static let journalMenu = MenuIdentifier("Journal")
     public static let dialogueMenu = MenuIdentifier("Dialogue Menu")
     public static let statsMenu = MenuIdentifier("StatsMenu")
+    public static let titleMenu = MenuIdentifier("Main Menu")
+    public static let systemMenu = MenuIdentifier("SystemMenu")
+    public static let raceMenu = MenuIdentifier("RaceSex Menu")
+    public static let messageBoxMenu = MenuIdentifier("MessageBoxMenu")
 }

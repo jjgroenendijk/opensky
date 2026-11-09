@@ -42,7 +42,7 @@ nonisolated public struct RacePreset: Equatable, Sendable {
 }
 
 public final class RaceMenuCoordinator {
-    public static let identifier: MenuIdentifier = "RaceSex Menu"
+    public static let identifier = MenuIdentifier.raceMenu
 
     public internal(set) var model: RaceMenuModel?
     /// The type counts the menu may offer, from the game settings.

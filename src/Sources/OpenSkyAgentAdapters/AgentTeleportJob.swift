@@ -5,14 +5,12 @@
 import Foundation
 public import OpenSkyAgentControl
 public import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRenderCore
 import OpenSkyRendering
-import OpenSkySave
 public import OpenSkySaveInterface
 public import OpenSkySessionInterface
 import OpenSkyWorld
@@ -32,7 +30,7 @@ public final class AgentTeleportJob {
     public static let timeoutSeconds = 120.0
     public static let settleFrames = 2
 
-    private unowned let adapter: AgentWorldAdapter
+    private let hub: AgentHub
     private var phase: Phase
     private var deadline: Double?
     private var lookup: Result<CellDirectoryEntry?, AgentFailure>?
@@ -49,16 +47,16 @@ public final class AgentTeleportJob {
     private var worldspace: String?
 
     private var game: any AgentWorldHost {
-        adapter.game
+        hub.game
     }
 
-    public init(adapter: AgentWorldAdapter, target: AgentTeleportTarget) throws(AgentFailure) {
-        self.adapter = adapter
+    public init(hub: AgentHub, target: AgentTeleportTarget) throws(AgentFailure) {
+        self.hub = hub
         guard
-            let gameSession = adapter.game.gameSession,
-            let streamer = adapter.game.streamer
+            let gameSession = hub.game.gameSession,
+            let streamer = hub.game.streamer
         else {
-            throw adapter.notReady()
+            throw hub.notReady()
         }
         guard streamer.transitionInFlight == nil else {
             throw AgentFailure(.notReady, "a door transition is still loading")
@@ -77,7 +75,7 @@ public final class AgentTeleportJob {
         case let .reference(text):
             let reference: AgentReference
             do throws(AgentFailure) {
-                reference = try adapter.resolveReference(text)
+                reference = try hub.resolveReference(text)
             } catch where error.code == .notFound {
                 guard let formID = FormID(token: text) else { throw error }
                 lookedUpReference = text
@@ -85,7 +83,7 @@ public final class AgentTeleportJob {
                 try startReferenceLookup(formID)
                 return
             }
-            guard let feet = Self.standingSpot(of: reference.key, game: adapter.game) else {
+            guard let feet = Self.standingSpot(of: reference.key, game: hub.game) else {
                 throw AgentFailure(.notFound, "the reference has no placement")
             }
             phase = .settling(untilFrame: 0)
@@ -108,11 +106,11 @@ public final class AgentTeleportJob {
 
     /// A loaded save's place: its cell loads first, then the player stands where the save was made.
     public init(
-        adapter: AgentWorldAdapter, place: SavePlayerPlace, pitch: Float? = nil
+        hub: AgentHub, place: SavePlayerPlace, pitch: Float? = nil
     ) throws(AgentFailure) {
-        self.adapter = adapter
-        guard let streamer = adapter.game.streamer, adapter.game.renderer != nil else {
-            throw adapter.notReady()
+        self.hub = hub
+        guard let streamer = hub.game.streamer, hub.game.renderer != nil else {
+            throw hub.notReady()
         }
         guard streamer.transitionInFlight == nil else {
             throw AgentFailure(.notReady, "a door transition is still loading")
@@ -151,14 +149,14 @@ public final class AgentTeleportJob {
     }
 
     private func advance() throws(AgentFailure) -> AgentWaitStep {
-        guard let streamer = game.streamer else { throw adapter.notReady() }
+        guard let streamer = game.streamer else { throw hub.notReady() }
         switch phase {
         case .lookingUp:
             try finishLookup()
         case let .loadingGrid(grid):
             guard
                 streamer.composition.cells[grid] != nil,
-                adapter.isWorldLoaded else { return .wait }
+                hub.isWorldLoaded else { return .wait }
             snapToGround(in: grid)
             phase = settling()
         case let .loadingInterior(cell):
@@ -179,11 +177,11 @@ public final class AgentTeleportJob {
             phase = settling()
         case let .settling(untilFrame):
             guard
-                adapter.isWorldLoaded,
+                hub.isWorldLoaded,
                 game.simulationClock.frame >= untilFrame else { return .wait }
             // Boots on the ground: a placed height above the floor must not end in a fall.
             game.gameSession?.settlePlayerOnGround()
-            return try .done(.success(adapter.query(.player)))
+            return try .done(.success(hub.playerReadout.playerState()))
         }
         return .wait
     }
@@ -197,7 +195,7 @@ public final class AgentTeleportJob {
     private func startLookup(
         _ find: @escaping @Sendable (LoadOrderPlugins) -> CellDirectoryEntry?
     ) throws(AgentFailure) {
-        guard let root = adapter.dataRoot else {
+        guard let root = hub.dataRoot else {
             throw AgentFailure(.notReady, "no game data is loaded")
         }
         Task { [weak self] in
@@ -313,7 +311,7 @@ extension AgentTeleportJob {
         guard let text = lookedUpReference else { return }
         lookedUpReference = nil
         guard
-            let reference = attempt({ try adapter.resolveReference(text) }),
+            let reference = attempt({ try hub.resolveReference(text) }),
             let spot = Self.standingSpot(of: reference.key, game: game)
         else { return }
         exactFeet = spot
@@ -322,7 +320,7 @@ extension AgentTeleportJob {
     // MARK: - References outside the loaded cells
 
     private func startReferenceLookup(_ formID: FormID) throws(AgentFailure) {
-        guard let root = adapter.dataRoot else {
+        guard let root = hub.dataRoot else {
             throw AgentFailure(.notReady, "no game data is loaded")
         }
         Task { [weak self] in

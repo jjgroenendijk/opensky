@@ -1,30 +1,22 @@
 import Foundation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAIPackages
-import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyEffects
-import OpenSkyFactions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyLoading
-import OpenSkyMenus
 import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
-import OpenSkyProgression
 import OpenSkyProgressionInterface
-import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyRuntimeState
 import OpenSkySaveInterface
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -49,7 +41,7 @@ public protocol AgentObjectsHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentObjectsAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentObjectsHost
 }
 
@@ -58,7 +50,7 @@ extension AgentObjectsAdapter {
         let commands = game.followerCommands
         var json: [String: AgentJSON] = [
             "phase": .string(Self.phaseName(commands.phase)),
-            "follower": commands.phase.follower.flatMap(owner.behaviour.formID) ?? .null,
+            "follower": commands.phase.follower.flatMap(hub.behaviour.formID) ?? .null,
             "lastDecision": commands.lastDecision.map(decisionJSON) ?? .null,
             "lastOutcome": commands.lastOutcome.map { .string($0.rawValue) } ?? .null,
             "pickDistance": .init(commands.settings.pickDistance)
@@ -77,7 +69,7 @@ extension AgentObjectsAdapter {
     private func commandFollower(
         _ reference: String, target: String?, exit: Bool
     ) throws(AgentFailure) -> AgentJSON {
-        let follower = try owner.resolveReference(reference).key
+        let follower = try hub.resolveReference(reference).key
         let commands = game.followerCommands
         if exit {
             guard commands.phase.follower == follower, commands.cancel() else {
@@ -108,8 +100,8 @@ extension AgentObjectsAdapter {
     }
 
     private func setTeammate(_ reference: String, on: Bool) throws(AgentFailure) -> AgentJSON {
-        let resolved = try owner.resolveReference(reference)
-        guard let bridge = game.scripts.bridge else { throw owner.notReady() }
+        let resolved = try hub.resolveReference(reference)
+        guard let bridge = game.scripts.bridge else { throw hub.notReady() }
         bridge.updateScriptedState(of: resolved.key) {
             $0.setFlag(ScriptedStateName.playerTeammate, on)
         }
@@ -122,8 +114,8 @@ extension AgentObjectsAdapter {
         _ reference: String,
         rank: Int8
     ) throws(AgentFailure) -> AgentJSON {
-        let resolved = try owner.resolveReference(reference)
-        guard let relationships = game.factions.relationships else { throw owner.notReady() }
+        let resolved = try hub.resolveReference(reference)
+        guard let relationships = game.factions.relationships else { throw hub.notReady() }
         relationships.setRank(rank, of: resolved.key, toward: .player)
         let state = relationships.state(of: .player)
         return [
@@ -139,7 +131,7 @@ extension AgentObjectsAdapter {
         if let point = AgentArguments.point(fromText: text) {
             return FollowerCommandTarget(key: nil, kind: .ground, position: point)
         }
-        return try game.followerCommandWorld.commandTarget(owner.resolveReference(text).key)
+        return try game.followerCommandWorld.commandTarget(hub.resolveReference(text).key)
     }
 
     private static func phaseName(_ phase: FollowerCommandPhase) -> String {
@@ -164,7 +156,7 @@ extension AgentObjectsAdapter {
     private func taskJSON(_ task: FollowerCommandTask) -> AgentJSON {
         [
             "action": .string(task.action.rawValue),
-            "target": task.target.key.flatMap(owner.behaviour.formID) ?? .null,
+            "target": task.target.key.flatMap(hub.behaviour.formID) ?? .null,
             "position": .init(task.target.position),
             "kind": .string(task.target.kind.rawValue),
             "unlocks": .bool(task.unlocks),
@@ -214,7 +206,7 @@ extension AgentObjectsAdapter {
         if let quest = game.scripts.bridge?.questRuntime?.quests.key(editorID: text) {
             return quest
         }
-        return try owner.resolveReference(text).key
+        return try hub.resolveReference(text).key
     }
 
     /// The calls the reference's scripts wait in, such as `Utility.Wait` or an
@@ -249,7 +241,7 @@ extension AgentObjectsAdapter {
         guard let reference else {
             return ["objects": .array(objects.rows.map(Self.json))]
         }
-        let target = try owner.resolveReference(reference)
+        let target = try hub.resolveReference(reference)
         guard let row = objects.rows.first(where: { $0.reference == target.formID.rawValue }) else {
             throw AgentFailure(.notFound, "that reference runs no object graph")
         }
@@ -292,7 +284,7 @@ extension AgentObjectsAdapter {
     public func effectsState(reference: String?) throws(AgentFailure) -> AgentJSON {
         var rows = game.effectGraphs.rows
         if let reference {
-            let target = try owner.resolveReference(reference)
+            let target = try hub.resolveReference(reference)
             rows = rows.filter { $0.actor == target.key }
         }
         let posed = game.effectModelPoser.rows.map { row -> AgentJSON in
@@ -333,7 +325,7 @@ extension AgentObjectsAdapter {
         guard let reference else {
             return ["nodes": .array(nodes.references.map { ["ref": .formID($0)] })]
         }
-        let target = try owner.resolveReference(reference)
+        let target = try hub.resolveReference(reference)
         guard let rows = nodes.nodes(of: target.formID.rawValue) else {
             throw AgentFailure(.notFound, "that reference plays no node controllers")
         }
@@ -358,11 +350,11 @@ extension AgentObjectsAdapter {
         switch command {
         case let .subGraphEvent(ref, event):
             reference = ref
-            taken = try game.effectGraphs.deliver(event, from: owner.resolveReference(ref).key)
+            taken = try game.effectGraphs.deliver(event, from: hub.resolveReference(ref).key)
         case let .subGraphVariable(ref, name, value):
             reference = ref
             taken = try game.effectGraphs.setSubGraphVariable(
-                value, named: name, on: owner.resolveReference(ref).key
+                value, named: name, on: hub.resolveReference(ref).key
             )
         default:
             throw AgentFailure(.invalidArgument, "not a sub-graph command")

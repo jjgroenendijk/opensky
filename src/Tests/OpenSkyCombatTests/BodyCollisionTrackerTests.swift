@@ -39,19 +39,7 @@ struct BodyCollisionTrackerTests {
     }
 
     @Test func aHarderHitIsLouder() {
-        let soft = BodyCollision(
-            body: .generated(1),
-            position: .zero,
-            speedLoss: 150,
-            material: nil
-        )
-        let hard = BodyCollision(
-            body: .generated(1),
-            position: .zero,
-            speedLoss: 2000,
-            material: nil
-        )
-        #expect(soft.gain == BodyCollisionTracker.quietestGain)
-        #expect(hard.gain == 1)
+        #expect(BodyCollisionTracker.gain(speedLoss: 150) == BodyCollisionTracker.quietestGain)
+        #expect(BodyCollisionTracker.gain(speedLoss: 2000) == 1)
     }
 }

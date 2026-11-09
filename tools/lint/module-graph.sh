@@ -53,9 +53,9 @@ EXTERNAL = {"HeapModule", "DequeModule", "ArgumentParser"}
 COMPOSITION = {"OpenSkyPreview", "OpenSkySession"}
 # Rule 14. An adapter module depends on lower modules, interfaces, the world feature and its
 # domains, and the implementations of its own feature group, never on another feature's
-# implementation. ADAPTER_OWNER names that group for each module that follows the rule; the
-# modules in ADAPTERS_PENDING do not yet.
-ADAPTER_OWNER = {"OpenSkyActorAdapters": {"OpenSkyActors", "OpenSkyFactions"},
+# implementation. ADAPTER_OWNER names that group for each adapter module.
+ADAPTER_OWNER = {"OpenSkyAgentAdapters": {"OpenSkyAgentControl"},
+                 "OpenSkyActorAdapters": {"OpenSkyActors", "OpenSkyFactions"},
                  "OpenSkyAIAdapters": {"OpenSkyPerception"},
                  "OpenSkyCombatAdapters": {"OpenSkyCombat"},
                  "OpenSkyInventoryAdapters": {"OpenSkyInventory"},
@@ -65,9 +65,6 @@ ADAPTER_OWNER = {"OpenSkyActorAdapters": {"OpenSkyActors", "OpenSkyFactions"},
                  "OpenSkyScriptAdapters": {"OpenSkyScripting"},
                  "OpenSkySessionAdapters": {"OpenSkySave"},
                  "OpenSkyStoryAdapters": {"OpenSkyCrime", "OpenSkyDialogue", "OpenSkyQuests"}}
-ADAPTERS_PENDING = {
-    "OpenSkyAgentAdapters",
-}
 # Rule 6. A feature without one of its targets, and why.
 MISSING = {
 }
@@ -162,10 +159,7 @@ probe_kinds = {"OpenSkyProgression": "feature", "OpenSkyCombat": "feature",
 if len(adapter_failures("OpenSkyProgressionAdapters", list(probe_kinds), probe_kinds.get)) != 1:
     failures.append("rule 14 self-check: an adapter module depending on another feature passed")
 for name in sorted(n for n in names if n.endswith("Adapters")):
-    if name in ADAPTERS_PENDING:
-        if not adapter_failures(name, deps[name], kind):
-            failures.append(f"rule 14: {name} follows the rule; drop it from ADAPTERS_PENDING")
-    elif name not in ADAPTER_OWNER:
+    if name not in ADAPTER_OWNER:
         failures.append(f"rule 14: adapter module {name} names no own feature in ADAPTER_OWNER")
     else:
         failures += adapter_failures(name, deps[name], kind)

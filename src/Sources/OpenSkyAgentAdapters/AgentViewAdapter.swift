@@ -9,7 +9,6 @@ public import OpenSkyReference
 import OpenSkyRenderCore
 import OpenSkyRendering
 import OpenSkyRuntimeState
-import OpenSkySave
 import OpenSkySaveInterface
 public import OpenSkySessionInterface
 import OpenSkyWeather
@@ -27,7 +26,7 @@ public protocol AgentViewHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentViewAdapter {
-    public unowned let owner: AgentWorldAdapter
+    public let hub: AgentHub
     public let game: any AgentViewHost
 }
 
@@ -41,7 +40,7 @@ extension AgentViewAdapter {
             worldspace: target.interiorCell == nil ? target.worldspace : nil
         )
         let job = try AgentTeleportJob(
-            adapter: owner, place: place,
+            hub: hub, place: place,
             pitch: MatrixMath.radians(fromDegrees: target.pitchDegrees)
         )
         if let hour = target.hour {
@@ -55,7 +54,7 @@ extension AgentViewAdapter {
 
     public func referenceView() throws(AgentFailure) -> ReferenceView {
         guard let gameSession = game.gameSession, let streamer = game.streamer else {
-            throw owner.notReady()
+            throw hub.notReady()
         }
         let camera = gameSession.freeFlyCamera
         let feet = gameSession.walkController.feetPosition

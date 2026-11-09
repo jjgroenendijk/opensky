@@ -21,8 +21,8 @@ the session scope builds each adapter with it (`/decisions/session-scope.md`).
 `tools/lint-index/adapter-references.py` checks rule 8 in `make lint-index` and the `Index checks`
 CI job on each pull request, because it reads the index store that a build writes.
 `tools/lint/app-architecture.sh` checks rules 1 to 4, and `tools/lint/adapter-rules.sh` checks rules
-5 and 9 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). Rule 9 skips the adapter modules its
-`excluded` pattern names, which are not converted yet. `make lint`, `make check`, and CI run both.
+5 and 9 with SwiftLint (`tools/lint/adapters.swiftlint.yml`). `make lint`, `make check`, and CI
+run both.
 Each reads every adapter or app file, so `OPENSKY_CHECK_ALL=1` changes nothing for them. Each first
 runs its rules on a small synthetic violation, which must fail.
 
@@ -65,8 +65,9 @@ row in `/engine/unverified-values.md`.
 
 An adapter whose host passes 12 members is split into smaller adapters. Each smaller adapter
 is a struct with its own host, held strongly. The host is `SessionPorts`, which holds the scope
-`unowned`, so the strong reference makes no cycle. A part holds no reference to its owner. Until
-an adapter module is converted (rule 9), its parts may still hold one. Example:
+`unowned`, so the strong reference makes no cycle. A part holds no reference to its owner
+(rule 9). Parts that share state hold a shared `final class`, such as `AgentPartState`, or a
+value that carries the sibling parts, such as `AgentHub`. Example:
 `CombatWorldAdapter` keeps its frame wiring and owns `CombatGearAdapter`,
 `CombatOutcomesAdapter`, and `CombatReportsAdapter`.
 

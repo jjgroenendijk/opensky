@@ -3,28 +3,23 @@
 
 import Foundation
 import OpenSkyActorPresentation
-import OpenSkyActors
 import OpenSkyActorsInterface
 public import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCells
-import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyCrimeInterface
-import OpenSkyFactions
+import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
-import OpenSkyProgression
-import OpenSkyQuests
+import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRenderCore
 import OpenSkyRendering
@@ -90,7 +85,9 @@ extension AgentWorldAdapter {
         default: throw AgentFailure(.invalidArgument, "not an inspection query")
         }
     }
+}
 
+extension AgentHub {
     public func resolveReference(_ text: String) throws(AgentFailure) -> AgentReference {
         switch text.lowercased() {
         case "player":
@@ -137,5 +134,3 @@ extension AgentWorldAdapter {
         return index
     }
 }
-
-extension AgentWorldAdapter {}

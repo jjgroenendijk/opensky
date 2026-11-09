@@ -4,6 +4,7 @@
 
 import Foundation
 public import OpenSkyFormatsCore
+public import OpenSkyMenusInterface
 
 /// The input context an action belongs to. A key can mean one thing per context.
 nonisolated public enum InputContext: String, CaseIterable, Sendable {
