@@ -1,7 +1,7 @@
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 public import OpenSkyConditions
 import OpenSkyCrimeInterface
@@ -39,7 +39,7 @@ public protocol AIPackageStateHost: AnyObject {
     var runtimeStateWorld: any RuntimeStateWorldPort { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var aiRecords: (any AIRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -51,7 +51,7 @@ public struct AIPackageStateAdapter {
 
 extension AIPackageStateAdapter {
     public func packageLeveledRoll(of actor: ReferenceKey, base: FormID) -> LeveledRoll? {
-        guard actor != .player, let roller = game.worldData?.actorValueBaselines?.leveling else {
+        guard actor != .player, let roller = game.aiRecords?.actorValueBaselines?.leveling else {
             return nil
         }
         return game.worldState.leveledRoll(of: actor, base: base, with: roller)

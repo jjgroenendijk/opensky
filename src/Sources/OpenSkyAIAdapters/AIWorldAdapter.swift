@@ -5,7 +5,7 @@
 public import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrimeInterface
@@ -43,7 +43,7 @@ public protocol AIWorldHost: AnyObject {
     var npcAnimation: any NPCAnimationPort { get }
     var packages: any PackagePort { get }
     var scripts: any ScriptPort { get }
-    var worldData: WorldDataStores? { get }
+    var aiRecords: (any AIRecordsPort)? { get }
     var worldState: any WorldStateStorePort { get }
 }
 
@@ -110,7 +110,7 @@ public final class AIWorldAdapter {
     }
 
     public func packageData() -> PackageSessionData? {
-        guard let provider = game.worldData, let store = provider.packageStore else {
+        guard let provider = game.aiRecords, let store = provider.packageStore else {
             return nil
         }
         let settings = provider.gameSettings

@@ -1,7 +1,7 @@
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
 public import OpenSkyAIPackages
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyDialogueInterface
@@ -31,7 +31,7 @@ public protocol AIPackageActsHost: AnyObject {
     var scripts: any ScriptPort { get }
     var storyWorld: any StoryWorldPort { get }
     var streamer: any CellStreamerPort { get }
-    var worldData: WorldDataStores? { get }
+    var aiRecords: (any AIRecordsPort)? { get }
 }
 
 /// Part of `AIWorldAdapter`, over its own narrow host.
@@ -131,7 +131,7 @@ extension AIPackageActsAdapter {
     private func shoutSpell(_ selector: Package.Target) -> ReferenceKey? {
         guard
             let key = selectedForm(selector),
-            let shouts = game.worldData?.shoutStore,
+            let shouts = game.aiRecords?.shoutStore,
             let shout = shouts.shouts.values.first(where: { ReferenceKey(resolved: $0.id) == key }),
             let spell = shout.words.first?.spell
         else { return nil }
