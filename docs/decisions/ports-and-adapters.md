@@ -32,7 +32,7 @@ runs its rules on a small synthetic violation, which must fail.
 | Rule | What must be true | Why |
 | --- | --- | --- |
 | 1 | An adapter that needs no AppKit or SwiftUI lives in an adapter package module | The app keeps only the shell and the composition root; the module size limit holds |
-| 2 | A host member is a port or a value type | A port can be faked in a test; a concrete class, a view, or another adapter cannot |
+| 2 | A host member is a port or a value type. A port is a protocol of an Interface, a lower layer, or the adapter module itself | A port can be faked in a test; a concrete class, a view, or another adapter cannot |
 | 3 | A host has at most 12 members, its inherited hosts included | A wide host hides what the adapter depends on |
 | 4 | An app or adapter type has at most 4 extension files and 600 lines | Matches the file length warning, so one type stays readable in one sitting |
 | 5 | An adapter has no magic number and no function over complexity 6 | A game rule in an adapter has no unit test; in its feature module it has one |

@@ -81,7 +81,8 @@ def parse(sources):
 
 def type_kind(name, found):
     """value, port, protocol, or reference for a declared type name. A protocol of an
-    interface or foundation module is a port, and so is a class of loaded data."""
+    interface, foundation, or adapter module is a port, and so is a class of loaded data.
+    An adapter module declares a port for the records it reads, so a test can fake them."""
     if name in VALUE_TYPES:
         return "value"
     kinds = [(kind, module) for kind, _, module, _, _, _ in found.get(name, []) if kind != "extension"]
@@ -91,7 +92,8 @@ def type_kind(name, found):
     if kind in ("struct", "enum", "typealias"):
         return "value"
     if kind == "protocol":
-        return "port" if is_interface_module(module) or module in FOUNDATION else "protocol"
+        known = is_interface_module(module) or is_adapter_module(module) or module in FOUNDATION
+        return "port" if known else "protocol"
     return "port" if module in DATA else "reference"
 
 
@@ -199,6 +201,8 @@ def self_check():
         "src/Sources/OpenSky/GameView/E.swift": "import AppKit\nprotocol EHost: AnyObject {\n"
         "    var hits: any SpellHitApplying { get }\n    var count: Int { get }\n}\n"
         "final class ViewAdapter {}\n",
+        "src/Sources/OpenSkyMagicAdapters/F.swift": "public protocol FRecordsPort {}\n"
+        "protocol FHost: AnyObject {\n    var records: (any FRecordsPort)? { get }\n}\n",
     }
     if check(clean):
         sys.exit(f"[ERROR] app-architecture self-check: a clean tree failed: {check(clean)}")
