@@ -87,3 +87,26 @@ its own check on the index store (`tools/lint-index/public-surface.py`).
 Example: a parser module marks a record's raw `unknownNAM5` field `public`, but only the parser
 and its tests read it. Without the keyword, the field is internal, and a later change to it
 cannot break another module.
+
+## Rule 4: no cycles between types across files
+
+When type A uses type B and B uses A, neither can change or be tested alone. A cycle that
+spans files usually means one type or one module is really two. This is the Acyclic
+Dependencies Principle, after Robert C. Martin, applied to types. `make design-index-report`
+also lists each cycle (`tools/lint-index/type-cycles.py`).
+
+- Type A uses type B when code inside A names B or one of its members, and both are declared
+  in the same module under `src/Sources/`.
+- Code in an extension counts for the type it extends, and the type sits in the file that
+  declares it.
+- A cycle is a group of types where each one reaches every other through such uses. A cycle
+  whose types all sit in one file is allowed, such as a tree node and its parent, a recursive
+  enum, or an owner and its delegate.
+
+| Limit | Value | Findings when set (2026-11-10) | Reason |
+| --- | --- | --- | --- |
+| Cycles whose types sit in more than one file | 0 | 49 cycles, 241 types | The rule has no tolerance. The largest cycles are the save decoders in `OpenSkySave` (32 types), the record types in `OpenSkyFormatsESM` (30), and the NIF decoders in `OpenSkyFormatsMesh` (23) |
+
+Example: a save decoder calls each part decoder, and each part decoder calls back into the
+main decoder to validate what it read. When the validation moves into its own type, both
+sides use that type, and the cycle is gone.
