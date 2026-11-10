@@ -2,7 +2,8 @@
 // world. It takes the clock, the camera, and the HUD for the run and gives them
 // back at the end. The tour rules live in the coordinator (docs/tools/benchmark.md).
 
-public import Metal
+public import Foundation
+import Metal
 import OpenSkyAgentControl
 import OpenSkyCells
 import OpenSkyDiagnostics
@@ -125,7 +126,17 @@ public final class BenchmarkWorldAdapter {
         BenchmarkTourSettingsAdapter(game: tourSettingsHost, state: state)
     }
 
-    public init(game: some BenchmarkWorldHost & BenchmarkTourSettingsHost) {
+    /// Monotonic seconds for frame timing, and the wall clock for report names.
+    public let mediaClock: () -> Double
+    public let wallClock: () -> Date
+
+    public init(
+        game: some BenchmarkWorldHost & BenchmarkTourSettingsHost,
+        mediaClock: @escaping () -> Double,
+        wallClock: @escaping () -> Date
+    ) {
+        self.mediaClock = mediaClock
+        self.wallClock = wallClock
         tourSettingsHost = game
         self.game = game
         state.finishAfterScreenshots = { [weak self] in self?.finishAfterScreenshots($0) }
@@ -187,7 +198,7 @@ public final class BenchmarkWorldAdapter {
         guard reportsAppStart, let report = game.worldLoadReport else { return nil }
         reportsAppStart = false
         let sinceStart = BenchmarkAppStart.processStart()
-            .map { Date().timeIntervalSince($0) * Self.millisecondsPerSecond }
+            .map { wallClock().timeIntervalSince($0) * Self.millisecondsPerSecond }
         return BenchmarkAppStart(
             report: report, session: game.sessionStartTiming, processToWorldReadyMS: sinceStart
         )
@@ -237,11 +248,11 @@ public final class BenchmarkWorldAdapter {
 
 extension BenchmarkWorldAdapter: BenchmarkTourWorld {
     public var now: Double {
-        CACurrentMediaTime()
+        mediaClock()
     }
 
     public var date: Date {
-        Date()
+        wallClock()
     }
 
     public var frameSize: (width: Int, height: Int) {

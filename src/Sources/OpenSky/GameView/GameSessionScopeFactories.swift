@@ -146,13 +146,16 @@ extension GameSessionScopeFactories {
     }
 
     func makeAgentWorld() -> AgentWorldAdapter {
-        let adapter = AgentWorldAdapter(game: scope.ports)
+        let adapter = AgentWorldAdapter(game: scope.ports, now: { Date() })
         adapter.terminateApp = { NSApplication.shared.terminate(nil) }
         return adapter
     }
 
     func makeBenchmarkWorld() -> BenchmarkWorldAdapter {
-        let adapter = BenchmarkWorldAdapter(game: scope.ports, stage: scope.stage)
+        let adapter = BenchmarkWorldAdapter(
+            game: scope.ports, stage: scope.stage,
+            mediaClock: { CACurrentMediaTime() }, wallClock: { Date() }
+        )
         adapter.view = BenchmarkViewSurface(view: scope.hostView)
         return adapter
     }
