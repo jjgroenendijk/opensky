@@ -50,7 +50,7 @@ extension AgentObjectsAdapter {
         let commands = game.followerCommands
         var json: [String: AgentJSON] = [
             "phase": .string(Self.phaseName(commands.phase)),
-            "follower": commands.phase.follower.flatMap(hub.behaviour.formID) ?? .null,
+            "follower": commands.phase.follower.flatMap(behaviour.formID) ?? .null,
             "lastDecision": commands.lastDecision.map(decisionJSON) ?? .null,
             "lastOutcome": commands.lastOutcome.map { .string($0.rawValue) } ?? .null,
             "pickDistance": .init(commands.settings.pickDistance)
@@ -156,7 +156,7 @@ extension AgentObjectsAdapter {
     private func taskJSON(_ task: FollowerCommandTask) -> AgentJSON {
         [
             "action": .string(task.action.rawValue),
-            "target": task.target.key.flatMap(hub.behaviour.formID) ?? .null,
+            "target": task.target.key.flatMap(behaviour.formID) ?? .null,
             "position": .init(task.target.position),
             "kind": .string(task.target.kind.rawValue),
             "unlocks": .bool(task.unlocks),
@@ -360,5 +360,11 @@ extension AgentObjectsAdapter {
             throw AgentFailure(.invalidArgument, "not a sub-graph command")
         }
         return try ["taken": .bool(taken), "subGraphs": effectsState(reference: reference)]
+    }
+}
+
+extension AgentObjectsAdapter {
+    private var behaviour: AgentBehaviourAdapter {
+        AgentBehaviourAdapter(hub: hub, game: hub.behaviourHost)
     }
 }

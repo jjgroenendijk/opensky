@@ -61,14 +61,14 @@ extension AgentPlayerReadoutAdapter {
             "yaw": .init(MatrixMath.signedDegrees(fromRadians: camera.yaw)),
             "pitch": .init(MatrixMath.degrees(fromRadians: camera.pitch)),
             "movementMode": .string(String(describing: gameSession.movementMode)),
-            "cell": hub.actorReadout.cellState(at: camera.position),
+            "cell": actorReadout.cellState(at: camera.position),
             "worldspace": .string(game.streamer.worldspaceEditorID),
             "bodyFailure": .init(game.player.failureReason),
             "form": .string(game.playerBeastForm.rawValue),
             "behaviorProject": .init(game.player.graphProject),
             "behaviorProjectFailure": .init(game.player.raceGraphFailureReason)
         ]
-        result.merge(hub.frameReadout.weatherReport(gameSession.weather)) { $1 }
+        result.merge(frameReadout.weatherReport(gameSession.weather)) { $1 }
         if let values = game.actorValues.runtime {
             let current = values.current(of: .player)
             let maximum = values.maximums(of: .player)
@@ -161,10 +161,10 @@ extension AgentPlayerReadoutAdapter {
                 "small": .init(game.controllerRumble.soundMotors.small),
                 "big": .init(game.controllerRumble.soundMotors.big)
             ],
-            "healthCues": hub.render.healthCueState(),
+            "healthCues": render.healthCueState(),
             "death": .string(String(describing: game.ragdoll.playerDeath.phase)),
             "ragdoll": .bool(game.ragdoll.runtime?.world.isRagdolling(.player) == true),
-            "eyeTexture": hub.actors.eyeTexture(of: .player),
+            "eyeTexture": actors.eyeTexture(of: .player),
             "controls": [
                 "disabled": .array(locks.disabled.map(\.rawValue).sorted().map(AgentJSON.string)),
                 "savingDisabled": .bool(locks.savingDisabled),
@@ -199,5 +199,23 @@ extension AgentPlayerReadoutAdapter {
             "missingEvents": .array(snapshot.missingEvents.map(AgentJSON.string)),
             "missingVariables": .array(snapshot.missingVariables.map(AgentJSON.string))
         ]
+    }
+}
+
+extension AgentPlayerReadoutAdapter {
+    private var render: AgentRenderAdapter {
+        AgentRenderAdapter(hub: hub, game: hub.renderHost)
+    }
+
+    private var actors: AgentActorsAdapter {
+        AgentActorsAdapter(hub: hub, game: hub.actorsHost)
+    }
+
+    private var frameReadout: AgentFrameReadoutAdapter {
+        AgentFrameReadoutAdapter(hub: hub, game: hub.frameReadoutHost)
+    }
+
+    private var actorReadout: AgentActorReadoutAdapter {
+        AgentActorReadoutAdapter(hub: hub, game: hub.actorReadoutHost)
     }
 }

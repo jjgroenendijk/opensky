@@ -180,7 +180,7 @@ public final class AgentTeleportJob {
                 game.simulationClock.frame >= untilFrame else { return .wait }
             // Boots on the ground: a placed height above the floor must not end in a fall.
             game.gameSession?.settlePlayerOnGround()
-            return try .done(.success(hub.playerReadout.playerState()))
+            return try .done(.success(playerReadout.playerState()))
         }
         return .wait
     }
@@ -397,3 +397,9 @@ extension AgentTeleportJob {
 }
 
 extension AgentTeleportJob: AgentTeleportJobPort {}
+
+extension AgentTeleportJob {
+    private var playerReadout: AgentPlayerReadoutAdapter {
+        AgentPlayerReadoutAdapter(hub: hub, game: hub.playerReadoutHost)
+    }
+}

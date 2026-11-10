@@ -73,63 +73,63 @@ public final class AgentWorldAdapter {
     }
 
     public var render: AgentRenderAdapter {
-        hub.render
+        AgentRenderAdapter(hub: hub, game: hub.renderHost)
     }
 
     var actors: AgentActorsAdapter {
-        hub.actors
+        AgentActorsAdapter(hub: hub, game: hub.actorsHost)
     }
 
     var motion: AgentMotionAdapter {
-        hub.motion
+        AgentMotionAdapter(hub: hub, game: hub.motionHost)
     }
 
     public var behaviour: AgentBehaviourAdapter {
-        hub.behaviour
+        AgentBehaviourAdapter(hub: hub, game: hub.behaviourHost)
     }
 
     public var objects: AgentObjectsAdapter {
-        hub.objects
+        AgentObjectsAdapter(hub: hub, game: hub.objectsHost)
     }
 
     public var menuReadout: AgentMenuReadoutAdapter {
-        hub.menuReadout
+        AgentMenuReadoutAdapter(hub: hub, game: hub.menuReadoutHost)
     }
 
     var screens: AgentScreensAdapter {
-        hub.screens
+        AgentScreensAdapter(hub: hub, game: hub.screensHost)
     }
 
     public var events: AgentEventsAdapter {
-        hub.events
+        AgentEventsAdapter(hub: hub, game: hub.eventsHost)
     }
 
     public var playerReadout: AgentPlayerReadoutAdapter {
-        hub.playerReadout
+        AgentPlayerReadoutAdapter(hub: hub, game: hub.playerReadoutHost)
     }
 
     public var frameReadout: AgentFrameReadoutAdapter {
-        hub.frameReadout
+        AgentFrameReadoutAdapter(hub: hub, game: hub.frameReadoutHost)
     }
 
     public var actorReadout: AgentActorReadoutAdapter {
-        hub.actorReadout
+        AgentActorReadoutAdapter(hub: hub, game: hub.actorReadoutHost)
     }
 
     public var items: AgentItemsAdapter {
-        hub.items
+        AgentItemsAdapter(hub: hub, game: hub.itemsHost)
     }
 
     public var view: AgentViewAdapter {
-        hub.view
+        AgentViewAdapter(hub: hub, game: hub.viewHost)
     }
 
     public var input: AgentInputAdapter {
-        hub.input
+        AgentInputAdapter(hub: hub, game: hub.inputHost)
     }
 
     public var capture: AgentCaptureAdapter {
-        hub.capture
+        AgentCaptureAdapter(hub: hub, game: hub.captureHost)
     }
 
     public var dataRoot: GameDataRoot? {
@@ -141,7 +141,7 @@ public final class AgentWorldAdapter {
     }
 
     public func viewJob(_ target: AgentViewTarget) throws(AgentFailure) -> AgentTeleportJob {
-        try hub.viewJob(target)
+        try view.viewJob(target)
     }
 }
 

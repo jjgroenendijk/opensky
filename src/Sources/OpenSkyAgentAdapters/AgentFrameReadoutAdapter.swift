@@ -106,14 +106,14 @@ extension AgentFrameReadoutAdapter {
             "fullLODReferences": .init(game.streamer.fullLODReferenceCount),
             "generatedTerrainBlocks": .init(game.streamer.generatedTerrainBlockCount),
             "hiddenLargeReferenceLOD": .init(game.streamer.hiddenLargeReferenceSegments),
-            "screenFade": screenFadeState(),
-            "postEffects": hub.render.postEffectState(),
-            "lighting": hub.render.lightingState(),
-            "projectileVisuals": hub.render.projectileVisualState(),
-            "soundMix": hub.render.soundMixState(),
-            "treeWind": hub.render.treeWindState(),
-            "waterFlow": hub.render.waterFlowState(),
-            "precipitation": hub.render.precipitationState(),
+            "screenFade": render.screenFadeState(),
+            "postEffects": render.postEffectState(),
+            "lighting": render.lightingState(),
+            "projectileVisuals": render.projectileVisualState(),
+            "soundMix": render.soundMixState(),
+            "treeWind": render.treeWindState(),
+            "waterFlow": render.waterFlowState(),
+            "precipitation": render.precipitationState(),
             "gpuMemory": gpuMemoryState()
         ]
     }
@@ -140,14 +140,6 @@ extension AgentFrameReadoutAdapter {
     }
 
     /// The `Game.FadeOutGame` fader: its colour, how much it covers, and whether it moves.
-    public func screenFadeState() -> AgentJSON {
-        guard let fade = game.gameSession?.imageSpace.screenFade else { return .null }
-        return [
-            "colour": .string(fade.colour == .zero ? "black" : "white"),
-            "cover": .init(fade.cover), "running": .bool(fade.isRunning)
-        ]
-    }
-
     private func terrainLODState() -> AgentJSON {
         guard let curve = game.renderControls.terrainLODBrightness else { return .null }
         return [
@@ -183,5 +175,11 @@ extension AgentFrameReadoutAdapter {
             ]
         })
         return ["weather": .init(weather.currentWeatherEditorID), "weatherBlend": blend]
+    }
+}
+
+extension AgentFrameReadoutAdapter {
+    private var render: AgentRenderAdapter {
+        AgentRenderAdapter(hub: hub, game: hub.renderHost)
     }
 }

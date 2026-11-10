@@ -108,14 +108,14 @@ extension AgentActorReadoutAdapter {
             "detects": game.perception.runtime
                 .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
                 ?? .null,
-            "eyeTexture": hub.actors.eyeTexture(of: actor.key),
-            "severed": hub.actors.severedState(of: actor.key),
+            "eyeTexture": actors.eyeTexture(of: actor.key),
+            "severed": actors.severedState(of: actor.key),
             "soundLoops": .array(
                 (game.gameSession?.soundDirector?.actorLoopNames(of: actor.key) ?? [])
                     .map(AgentJSON.string)
             ),
-            "skinDecals": .array(hub.render.skinDecalBones(of: actor.key).map(AgentJSON.string)),
-            "constraints": hub.actors.physicsConstraints(of: actor.key),
+            "skinDecals": .array(render.skinDecalBones(of: actor.key).map(AgentJSON.string)),
+            "constraints": actors.physicsConstraints(of: actor.key),
             "lagBones": .object(
                 (game.actorPlayback(for: actor.key)?.lagBoneOffsets ?? [:])
                     .mapValues(AgentJSON.init)
@@ -184,5 +184,15 @@ extension AgentActorReadoutAdapter {
             "name": .string(name),
             "value": .init(value)
         ]
+    }
+}
+
+extension AgentActorReadoutAdapter {
+    private var render: AgentRenderAdapter {
+        AgentRenderAdapter(hub: hub, game: hub.renderHost)
+    }
+
+    private var actors: AgentActorsAdapter {
+        AgentActorsAdapter(hub: hub, game: hub.actorsHost)
     }
 }
