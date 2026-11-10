@@ -95,6 +95,9 @@ design-report: ## Report the design-metric findings (docs/decisions/design-metri
 design-index-report: | $(VENDOR) ## Build the index, then report the design rules that read it; fails nothing
 	@./tools/design/index-report.sh
 
+module-metrics: ## Report each module's abstractness, instability, and distance (design rule 6); fails nothing
+	@./tools/design/module-metrics.sh
+
 dump-comments: ## Print long comment blocks to rewrite in bulk [ARGS='-r src/Sources/X']
 	@./tools/comment-blocks.sh dump $(ARGS)
 

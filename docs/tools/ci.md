@@ -179,6 +179,10 @@ The compilation cache roughly halves the build:
 `make test PLAN=Sanitizers SAN=thread` and `SAN=address`. Each rebuilds everything with instrumentation,
 which costs too much on every pull request.
 
+The `Module metrics` job runs `make module-metrics` and keeps `module-metrics.md` as a run
+artifact for 90 days. It is design rule 6 of [Design metrics](/decisions/design-metrics.md), a
+report that fails nothing.
+
 No pull request fails on a weekly finding, so the `Report` job keeps one issue,
 "Weekly checks fail on main", with the `bug` and `code-health` labels
 (`tools/ci/weekly-issue.sh`). A failed run opens it, or comments on it when it is open. A green

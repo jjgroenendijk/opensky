@@ -110,3 +110,21 @@ also lists each cycle (`tools/lint-index/type-cycles.py`).
 Example: a save decoder calls each part decoder, and each part decoder calls back into the
 main decoder to validate what it read. When the validation moves into its own type, both
 sides use that type, and the cycle is gone.
+
+## Rule 6: abstractness and instability per module
+
+A module that many others use should be abstract, so it can change without breaking them. A
+module that uses many others and that no other uses can stay concrete. This is the distance
+from the main sequence, after Robert C. Martin. `make module-metrics` writes the report to
+`module-metrics.md` in its run directory, and the weekly workflow runs it and keeps the file.
+
+- Instability is `I = Ce / (Ca + Ce)`. `Ce` counts the package modules a module depends on,
+  and `Ca` counts the package modules that depend on it. Test targets, and the support modules
+  under `src/Tests/`, count for neither.
+- Abstractness is `A = protocols / types` declared in the module's Swift files.
+- Distance is `D = |A + I - 1|`. A module on the main sequence has `D = 0`.
+
+This rule is a report, not a gate. An interface module here holds value types as well as
+protocols, so a large distance is a question for a review, not a failure. On 2026-11-10, 30 of
+84 modules have a distance of 0.7 or more. Most are the format and interface modules, which
+many modules use and which hold mostly value types.
