@@ -5,7 +5,7 @@
 
 import OpenSkyFormatsCore
 public import OpenSkyWorldState
-public import simd
+import simd
 
 /// One actor's death, and where its corpse ended up.
 nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Sendable {
@@ -46,7 +46,7 @@ nonisolated public struct ActorDeathState: WorldStateComponent, Equatable, Senda
     }
 
     /// This state with the ragdoll's settled root pose recorded.
-    public func settled(at position: SIMD3<Float>, orientation: simd_quatf) -> Self {
+    func settled(at position: SIMD3<Float>, orientation: simd_quatf) -> Self {
         var state = self
         state.restingTransform = ReferenceTransformOverride(
             position: position,

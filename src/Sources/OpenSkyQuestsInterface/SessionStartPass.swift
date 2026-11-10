@@ -15,7 +15,7 @@ nonisolated public struct SessionStartReport: Equatable, Sendable {
 
     public init() {}
 
-    public var startedCount: Int {
+    var startedCount: Int {
         entries.count { $0.outcome == .started }
     }
 }

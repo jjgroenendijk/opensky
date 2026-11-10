@@ -63,7 +63,7 @@ nonisolated public struct InventoryConditionResolution: Sendable {
     }
 
     /// Nil without equipment data for `actor`.
-    public func equipment(of actor: ReferenceKey) -> ActorEquipmentFacts? {
+    func equipment(of actor: ReferenceKey) -> ActorEquipmentFacts? {
         equipment[actor]
     }
 

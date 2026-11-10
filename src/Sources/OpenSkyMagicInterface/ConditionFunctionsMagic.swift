@@ -6,8 +6,8 @@
 
 import Foundation
 public import OpenSkyConditions
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
     public static func installMagic(_ registry: inout ConditionFunctionRegistry) {
@@ -149,7 +149,7 @@ nonisolated extension ConditionFunctions {
     /// The two-step is `ConditionCall.actorState()`'s and for the same reason:
     /// "the run-on named nothing" and "the named thing is not an actor this
     /// session tracks magic for" are different gaps.
-    public static func magicState(
+    static func magicState(
         _ call: ConditionCall
     ) -> Result<MagicConditionState, ConditionFailure> {
         call.referenceKey().flatMap { key in
@@ -163,7 +163,7 @@ nonisolated extension ConditionFunctions {
     /// One function whose parameter #1 is a FormID naming a record: resolve the
     /// parameter to runtime identity, resolve the run-on to magic state, then
     /// let `answer` compare the two.
-    public static func magicParameter(
+    static func magicParameter(
         _ call: ConditionCall,
         index: UInt16,
         answer: (MagicConditionState, ReferenceKey)
@@ -180,7 +180,7 @@ nonisolated extension ConditionFunctions {
 
     /// One function whose parameter #1 is a casting source: resolve it to a
     /// hand, resolve the run-on to magic state, then let `answer` read it.
-    public static func castingSource(
+    static func castingSource(
         _ call: ConditionCall,
         index: UInt16,
         answer: (MagicConditionState, SpellHand) -> Result<Float, ConditionFailure>
@@ -203,7 +203,7 @@ nonisolated extension ConditionFunctions {
     /// A hand holding nothing is `.unavailableMagic(.equippedSpell)` rather
     /// than a number: every value both functions return names a real casting
     /// type or delivery, so there is none left over to mean "no spell".
-    public static func readiedSpell(
+    static func readiedSpell(
         _ call: ConditionCall,
         index: UInt16,
         read: (ResolvedSpell) -> Float?
@@ -225,7 +225,7 @@ nonisolated extension ConditionFunctions {
     /// SPIT casting type as the condition function numbers it, or nil for a
     /// value outside the documented three. A scroll's casting type is xEdit's
     /// SCRL-only 3, which `GetCurrentCastingType` does not name.
-    public static func castingTypeValue(of spell: ResolvedSpell) -> Float? {
+    static func castingTypeValue(of spell: ResolvedSpell) -> Float? {
         switch spell.data?.castingType {
         case .constantEffect: 0
         case .fireAndForget: 1
@@ -236,7 +236,7 @@ nonisolated extension ConditionFunctions {
 
     /// MGEF delivery as the condition function numbers it, or nil for a
     /// mod-authored value this build has no name for.
-    public static func deliveryValue(of spell: ResolvedSpell) -> Float? {
+    static func deliveryValue(of spell: ResolvedSpell) -> Float? {
         switch spell.data?.delivery {
         case .selfTarget: 0
         case .touch: 1

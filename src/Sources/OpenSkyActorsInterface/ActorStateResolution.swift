@@ -68,7 +68,7 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var injuredHealthPercent: Float = 0
 
     /// `GetIsInjured`: health below the race's injured share (Creation Kit wiki).
-    public var isInjured: Bool {
+    var isInjured: Bool {
         guard maximums.health > 0, !isDead else { return false }
         return current.health / maximums.health < injuredHealthPercent
     }
@@ -170,14 +170,14 @@ nonisolated public struct ActorStateResolution: Sendable {
 
     /// Living NPCs that fight now. Every fight in OpenSky is one side against the player,
     /// so they form one combat group.
-    public var fightingNonPlayerCount: Int {
+    var fightingNonPlayerCount: Int {
         states.count { $0.key != .player && !$0.value.isDead
             && $0.value.combatActivity != .notFighting
         }
     }
 
     /// Living actors that fight `target`: one combat group.
-    public func fightingCount(against target: ReferenceKey) -> Int {
+    func fightingCount(against target: ReferenceKey) -> Int {
         states.count { !$0.value.isDead && $0.value.combatTarget == target }
     }
 
@@ -189,7 +189,7 @@ nonisolated public struct ActorStateResolution: Sendable {
 
     /// True when nothing was wired, which is what a context with no world
     /// running carries.
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         states.isEmpty
     }
 }

@@ -33,7 +33,7 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     /// A beast form cannot open the character menus or the map, switch the camera, or
     /// use favourites (UESP "Skyrim:Lycanthropy", "Skyrim:Vampire Lord"). The skills key
     /// stays: it opens the form's perk tree.
-    public var isBlockedInBeastForm: Bool {
+    var isBlockedInBeastForm: Bool {
         switch self {
         case .inventory, .magic, .map, .cameraMode: true
         default: hotkeySlot != nil
@@ -42,7 +42,7 @@ nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
 
     /// The `DisablePlayerControls` group that locks this action, or nil when none does.
     /// The wait key and the favourites open menus, so the menu group locks them.
-    public var controlGroup: PlayerControlGroup? {
+    var controlGroup: PlayerControlGroup? {
         switch self {
         case .forward, .back, .left, .right, .up, .down, .run, .sprint, .jump: .movement
         case .attack, .block, .shout, .readyWeapon: .fighting

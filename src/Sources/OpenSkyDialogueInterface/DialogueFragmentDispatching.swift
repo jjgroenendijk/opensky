@@ -36,7 +36,7 @@ nonisolated public struct TopicInfoFragmentContext: Equatable, Sendable {
 
 extension DialogueFragmentDispatching {
     @discardableResult
-    public func runTopicInfoFragments(
+    func runTopicInfoFragments(
         of info: TopicInfo, key: ReferenceKey, phase: TopicInfoFragmentPhase
     ) -> [String] {
         runTopicInfoFragments(of: info, key: key, phase: phase, context: .none)

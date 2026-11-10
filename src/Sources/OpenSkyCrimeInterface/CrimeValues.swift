@@ -255,7 +255,7 @@ nonisolated public struct CrimeActor: Equatable, Sendable {
 
     /// The player with no memberships, which is what a synthetic scene and a
     /// fresh session both start from.
-    public static let player = CrimeActor()
+    static let player = CrimeActor()
 
     /// Whether property owned by `owner` is this actor's to use. An actor owner
     /// matches the NPC_ base, so the player matches none. A faction owner matches a
@@ -314,7 +314,7 @@ nonisolated public struct ReferenceOwnershipReadout: Equatable, Sendable {
     }
 
     /// Whether the reference record itself names an owner.
-    public var isOwned: Bool {
+    var isOwned: Bool {
         owner != nil
     }
 }

@@ -130,19 +130,19 @@ public protocol QuestAccess {
 extension QuestAccess {
     /// Sets a stage with the items no condition decided (`Quest.Stage.defaultItems`).
     @discardableResult
-    public func setStage(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
+    func setStage(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
         try setStage(index, on: id, items: nil)
     }
 
     /// Shows one objective in the journal.
     @discardableResult
-    public func setObjectiveDisplayed(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
+    func setObjectiveDisplayed(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
         try setObjectiveDisplayed(index, true, on: id)
     }
 
     /// Flags one objective completed.
     @discardableResult
-    public func setObjectiveCompleted(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
+    func setObjectiveCompleted(_ index: UInt16, on id: FormID) throws -> QuestRuntimeState {
         try setObjectiveCompleted(index, true, on: id)
     }
 }

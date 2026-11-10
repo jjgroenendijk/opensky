@@ -70,7 +70,7 @@ nonisolated public struct ActorFactionState: WorldStateComponent, Sendable {
 
     /// Rank -1 lists a potential member, such as a potential follower, which
     /// `GetInFaction` and `IsInFaction` do not count (ck.uesp.net "IsInFaction - Actor").
-    public func countsAsMember(of faction: ReferenceKey) -> Bool {
+    func countsAsMember(of faction: ReferenceKey) -> Bool {
         (rank(in: faction) ?? -1) >= 0
     }
 

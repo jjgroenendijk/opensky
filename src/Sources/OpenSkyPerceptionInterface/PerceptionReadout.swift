@@ -79,7 +79,7 @@ nonisolated public struct PerceptionReadout: Equatable, Sendable {
     public let droppedPairCount: Int
     public let lineOfSightQueryCount: Int
 
-    public static let empty = PerceptionReadout(
+    static let empty = PerceptionReadout(
         pairs: [],
         observerCount: 0,
         targetCount: 0,

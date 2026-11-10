@@ -71,7 +71,7 @@ nonisolated public struct ItemEnchantmentProfile: Equatable, Sendable {
     /// the list is empty, or the item has a listed keyword.
     /// - Parameter listedKeywords: the resolved `wornRestriction` list, or nil when
     ///   it could not be resolved, which allows everything.
-    public func allowsWearing(keywords: [FormID], listedKeywords: [FormID]?) -> Bool {
+    func allowsWearing(keywords: [FormID], listedKeywords: [FormID]?) -> Bool {
         guard let listedKeywords, !listedKeywords.isEmpty else { return true }
         let carried = Set(keywords.map(\.rawValue))
         return listedKeywords.contains { carried.contains($0.rawValue) }

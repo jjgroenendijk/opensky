@@ -24,12 +24,12 @@ nonisolated public struct ScriptedStateConditionResolution: ConditionResolution,
     }
 
     /// A script's `EquipShout` first, then what the actor readied when the state was built.
-    public func equippedShout(of key: ReferenceKey) -> ReferenceKey? {
+    func equippedShout(of key: ReferenceKey) -> ReferenceKey? {
         state(of: key)?.form(ScriptedStateName.equippedShout) ?? equippedShouts[key]
     }
 
     /// The state of `key`, empty when no script changed it. Nil when nothing was wired.
-    public func state(of key: ReferenceKey) -> ScriptedReferenceState? {
+    func state(of key: ReferenceKey) -> ScriptedReferenceState? {
         guard let states else { return nil }
         return states[key] ?? ScriptedReferenceState()
     }

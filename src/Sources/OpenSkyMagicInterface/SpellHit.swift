@@ -116,7 +116,7 @@ nonisolated public struct SpellMagnitudeAdjustment: Equatable, Sendable {
     /// 0 for immunity, above 1 for a weakness.
     public let multiplier: Float
 
-    public var adjustedMagnitude: Float {
+    var adjustedMagnitude: Float {
         baseMagnitude * multiplier
     }
 
@@ -176,7 +176,7 @@ nonisolated public struct SpellHitReport: Equatable, Sendable {
         wardHits.append(SpellWardHit(holder: holder, status: .friendly))
     }
 
-    public var didApply: Bool {
+    var didApply: Bool {
         targetCount > 0
     }
 

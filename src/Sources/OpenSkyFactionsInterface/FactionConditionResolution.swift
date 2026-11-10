@@ -26,34 +26,34 @@ nonisolated public struct FactionConditionResolution: Sendable {
         self.derivation = derivation
     }
 
-    public var isAvailable: Bool {
+    var isAvailable: Bool {
         facts.isAvailable && derivation != nil
     }
 
-    public func key(of formID: FormID) -> ReferenceKey? {
+    func key(of formID: FormID) -> ReferenceKey? {
         facts.key(of: formID)
     }
 
     /// Nil for an actor no cell has streamed, or a key that names no actor.
-    public func profile(of key: ReferenceKey) -> ActorSocialProfile? {
+    func profile(of key: ReferenceKey) -> ActorSocialProfile? {
         guard isAvailable else { return nil }
         return facts.fact(of: key)
     }
 
-    public func isMember(_ actor: ReferenceKey, of faction: ReferenceKey) -> Bool? {
+    func isMember(_ actor: ReferenceKey, of faction: ReferenceKey) -> Bool? {
         profile(of: actor)?.memberships.countsAsMember(of: faction)
     }
 
     /// Nil when `actor` is not a member. The condition function and the Papyrus
     /// native spell that case as different numbers.
-    public func rank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8? {
+    func rank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8? {
         profile(of: actor)?.memberships.rank(in: faction)
     }
 
     /// Nil when either actor has no profile. No declared relation reads as
     /// `.neutral`, the Creation Kit default, because `GetFactionRelation` has
     /// no value for "unrelated".
-    public func factionReaction(
+    func factionReaction(
         of observer: ReferenceKey,
         toward target: ReferenceKey
     ) -> ActorReaction? {
@@ -67,7 +67,7 @@ nonisolated public struct FactionConditionResolution: Sendable {
 
     /// The signed relationship rank, from a script first and a `RELA` record
     /// second. Nil when neither names the pair.
-    public func relationshipRank(of observer: ReferenceKey, toward target: ReferenceKey) -> Int8? {
+    func relationshipRank(of observer: ReferenceKey, toward target: ReferenceKey) -> Int8? {
         guard
             let derivation,
             let mine = profile(of: observer),
@@ -85,7 +85,7 @@ nonisolated public struct FactionConditionResolution: Sendable {
         return Int8(clamping: signed)
     }
 
-    public func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool? {
+    func isHostile(_ observer: ReferenceKey, toward target: ReferenceKey) -> Bool? {
         guard
             let derivation,
             let mine = profile(of: observer),

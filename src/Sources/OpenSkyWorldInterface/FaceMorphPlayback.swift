@@ -60,7 +60,7 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
         state.withLock { $0.unknownTargetCount }
     }
 
-    public var weights: [String: Float] {
+    var weights: [String: Float] {
         state.withLock { $0.weights }
     }
 

@@ -84,7 +84,7 @@ nonisolated public struct ActorValueState: WorldStateComponent, Sendable {
     /// The override table is untouched: an override is a delta on a derived
     /// baseline, and a shrinking maximum does not make the session's own
     /// contribution to it any smaller.
-    public func clamped(to maximums: ActorValues) -> Self {
+    func clamped(to maximums: ActorValues) -> Self {
         ActorValueState(current: current.clamped(to: maximums), overrides: overrides)
     }
 

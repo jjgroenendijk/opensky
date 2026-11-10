@@ -96,7 +96,7 @@ nonisolated public struct PerkEntryPointOutcome: Equatable, Sendable {
     public let skipped: [PerkEntryPointSkip]
 
     /// Whether any perk changed the number.
-    public var didChange: Bool {
+    var didChange: Bool {
         value != input
     }
 

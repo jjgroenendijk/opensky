@@ -182,7 +182,7 @@ nonisolated public struct ActiveEffect: Equatable, Sendable {
         max(0, duration - elapsed)
     }
 
-    public var isExpired: Bool {
+    var isExpired: Bool {
         !isConstant && elapsed >= duration
     }
 

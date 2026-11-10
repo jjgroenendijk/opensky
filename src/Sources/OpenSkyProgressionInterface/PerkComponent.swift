@@ -24,7 +24,7 @@ nonisolated public struct PerkState: WorldStateComponent, Sendable {
         owned.isEmpty
     }
 
-    public var count: Int {
+    var count: Int {
         owned.count
     }
 

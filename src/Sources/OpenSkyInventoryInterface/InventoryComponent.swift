@@ -120,7 +120,7 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
 
     // MARK: - Reading
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         stacks.isEmpty && equipped.isEmpty
     }
 
@@ -147,7 +147,7 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
 
     /// Whether any copy of `item` here is stolen, which is what an inventory
     /// row's marker shows.
-    public func isStolen(_ item: FormID) -> Bool {
+    func isStolen(_ item: FormID) -> Bool {
         stolenCount(of: item) > 0
     }
 

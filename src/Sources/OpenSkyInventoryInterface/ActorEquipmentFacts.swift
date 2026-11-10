@@ -61,7 +61,7 @@ nonisolated public struct ActorEquipmentFacts: Equatable, Sendable {
 
     /// `GetEquippedItemType` for a casting-source parameter: 0 left, 1 right. The voice
     /// and instant sources hold no item.
-    public func itemType(source: Int32) -> Int32 {
+    func itemType(source: Int32) -> Int32 {
         switch source {
         case 0: leftHandType
         case 1: rightHandType
@@ -69,7 +69,7 @@ nonisolated public struct ActorEquipmentFacts: Equatable, Sendable {
         }
     }
 
-    public func apparel(with keyword: FormID) -> Int {
+    func apparel(with keyword: FormID) -> Int {
         items.count { $0.isApparel && $0.keywords.contains(keyword) }
     }
 }

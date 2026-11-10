@@ -33,14 +33,14 @@ nonisolated public struct PerkEntryPointChoice: Sendable {
     }
 
     /// A select-spell choice, as a fake world answers one.
-    public init(spell: ResolvedSpell) {
+    init(spell: ResolvedSpell) {
         self.spell = spell
         text = nil
         activation = nil
     }
 
     /// A select-text choice, as a fake world answers one.
-    public init(text: String) {
+    init(text: String) {
         spell = nil
         self.text = .text(text)
         activation = nil

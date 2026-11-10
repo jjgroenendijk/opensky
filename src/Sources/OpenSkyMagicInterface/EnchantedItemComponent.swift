@@ -59,7 +59,7 @@ nonisolated public struct EnchantedItemState: WorldStateComponent, Sendable {
 
     /// Every sequence any worn item established, which is what a wholesale
     /// removal — an `unequipAll`, a load — dispels.
-    public var allWornSequences: Set<UInt64> {
+    var allWornSequences: Set<UInt64> {
         Set(wornEffects.values.joined())
     }
 
