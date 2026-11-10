@@ -134,7 +134,7 @@ nonisolated extension CellSceneBuilder {
     /// `entry`'s plugin baseline with this build's delta laid over it. The
     /// baseline is re-derived from the decoded record, never cached, so it
     /// cannot go stale against a reloaded plugin.
-    nonisolated public func resolvedRuntimeState(
+    nonisolated func resolvedRuntimeState(
         for entry: RuntimeReferenceEntry,
         deltas: [ReferenceKey: ReferenceStateDelta]
     ) -> ReferenceState {

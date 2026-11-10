@@ -3,7 +3,7 @@
 
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyPhysics
+import OpenSkyPhysics
 public import OpenSkyWorldInterface
 
 /// What the NPC animation coordinator reads from the session.
@@ -20,7 +20,7 @@ public final class NPCAnimationCoordinator {
     /// Each actor's animation playback; the composition root answers it from the streamer.
     public var actorPlayback: (ReferenceKey) -> ActorAnimationPlayback? = { _ in nil }
     /// Skeleton and path of each gait clip that failed to load, as `skeleton#path`.
-    public private(set) var unresolvableClips: Set<String> = []
+    private(set) var unresolvableClips: Set<String> = []
     /// Movers whose gait clip is still loading.
     private var waiting: [ReferenceKey: ActorClipKey] = [:]
     /// Each horse's rider, which plays the rider clip of the horse's gait.
@@ -89,7 +89,7 @@ public final class NPCAnimationCoordinator {
 
     /// The clip when it is loaded. Nil for a gait with no direct clip, without game
     /// data, while it loads, or when it failed. A failed load is not retried.
-    public func gaitClip(
+    func gaitClip(
         _ gait: LocomotionGait,
         skeletonMeshPath: String,
         female: Bool

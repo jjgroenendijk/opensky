@@ -45,7 +45,7 @@ public final class FaceMorphCoordinator {
     public var dialogueExpressionsEnabled = true
     public var eyeMovementEnabled = true
     /// A number in 0 ..< 1 for blink gaps. A test fixes it.
-    public var random: () -> Float = { [stream = RandomStream(seed: 0x4641_4345)] in
+    var random: () -> Float = { [stream = RandomStream(seed: 0x4641_4345)] in
         stream.float(in: 0 ..< 1)
     }
 
@@ -145,7 +145,7 @@ public final class FaceMorphCoordinator {
 }
 
 extension FaceMorphCoordinator {
-    public var faceMorphSnapshot: FaceMorphControlSnapshot {
+    var faceMorphSnapshot: FaceMorphControlSnapshot {
         guard let playback = selectedPlayback else { return .empty }
         return FaceMorphControlSnapshot(
             actor: playback.actor,
@@ -155,7 +155,7 @@ extension FaceMorphCoordinator {
         )
     }
 
-    public func setFaceMorphWeight(_ weight: Float, target: String) {
+    func setFaceMorphWeight(_ weight: Float, target: String) {
         selectedPlayback?.setWeight(weight, for: target)
     }
 }

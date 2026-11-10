@@ -32,7 +32,7 @@ nonisolated public enum HeadTrackingCore {
     public static let neckBone = "NPC Neck [Neck]"
     public static let headBone = "NPC Head [Head]"
     /// A target further round than this is behind the actor, which looks ahead.
-    public static let giveUpYaw: Float = .pi * 0.6
+    static let giveUpYaw: Float = .pi * 0.6
     /// The neck takes this part of the turn, and the head the rest.
     public static let neckShare: Float = 0.4
     /// Below this, in radians, a turn has reached its goal.
@@ -40,7 +40,7 @@ nonisolated public enum HeadTrackingCore {
 
     /// The look from `eye` toward `target`, both in the actor's own frame: +Y forward,
     /// +Z up, as the skeleton is authored. Nil when the target is behind.
-    public static func look(
+    static func look(
         from eye: SIMD3<Float>, at target: SIMD3<Float>,
         settings: HeadTrackingSettings = .vanilla
     ) -> HeadLook? {
@@ -54,7 +54,7 @@ nonisolated public enum HeadTrackingCore {
         return limited(HeadLook(yaw: yaw, pitch: atan2f(offset.z, flat)), settings: settings)
     }
 
-    public static func limited(_ look: HeadLook, settings: HeadTrackingSettings) -> HeadLook {
+    static func limited(_ look: HeadLook, settings: HeadTrackingSettings) -> HeadLook {
         let yaw = settings.maximumYaw
         let pitch = settings.pitchRange
         return HeadLook(
@@ -84,7 +84,7 @@ nonisolated public enum HeadTrackingCore {
 
     /// The glance away from the target at `time` seconds: forward outside each cycle's
     /// glance window. `seed` gives each actor its own glances.
-    public static func glance(at time: Float, seed: UInt32, timing: HeadGlanceTiming) -> HeadLook {
+    static func glance(at time: Float, seed: UInt32, timing: HeadGlanceTiming) -> HeadLook {
         let largest = max(abs(timing.offsetMin), abs(timing.offsetMax))
         guard time.isFinite, time >= 0, timing.resetPosition > 0, largest > 0 else {
             return .forward

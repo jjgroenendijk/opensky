@@ -17,10 +17,10 @@ nonisolated public struct PlayerBehaviorGraph {
     public static let skeletonPath = "meshes\\actors\\character\\character assets\\skeleton.hkx"
     public static let characterPath = "meshes\\actors\\character\\characters\\defaultmale.hkx"
     /// The project the character graphs come from; a female player runs its sibling.
-    public static let characterProjectPath = "meshes\\actors\\character\\defaultmale.hkx"
+    static let characterProjectPath = "meshes\\actors\\character\\defaultmale.hkx"
 
     /// True for a project in the human character folder, such as `defaultfemale.hkx`.
-    public static func isCharacterProject(_ project: String) -> Bool {
+    static func isCharacterProject(_ project: String) -> Bool {
         project.lowercased().hasPrefix("meshes\\actors\\character\\")
     }
 
@@ -39,20 +39,20 @@ nonisolated public struct PlayerBehaviorGraph {
     /// install ships exactly one and no record points at it.
     public static let firstPersonRigPath = "meshes\\actors\\character\\_1stperson\\skeleton.nif"
 
-    public let instance: BehaviorGraphInstance
+    let instance: BehaviorGraphInstance
     /// The Havok rig, kept rather than only its `BehaviorSkeleton` projection:
     /// composing a pose to world matrices needs the parent chain, which
     /// `BehaviorSkeleton` deliberately does not carry.
-    public let skeleton: HKASkeleton
+    let skeleton: HKASkeleton
     public let clips: InstallBehaviorClipSource
     /// Where the graph's `hkbBehaviorReferenceGenerator` names resolve. Held so
     /// a readout can report how many behavior files the folder offered.
-    public let referenceSource: InstallBehaviorReferenceSource
+    let referenceSource: InstallBehaviorReferenceSource
 
     /// Loads a player graph and its rig; defaults name the third-person set. Throws on a
     /// missing or malformed `0_master.hkx`, because running without a graph would look
     /// like an animation bug, not a load failure. A `clipWorker` reads clips off the caller.
-    public static func load(
+    static func load(
         fileSystem: any GameFileSource,
         behaviorPath: String = Self.behaviorPath,
         skeletonPath: String = Self.skeletonPath,
@@ -66,7 +66,7 @@ nonisolated public struct PlayerBehaviorGraph {
 
     /// Builds the running instance from decoded files. The decode can run off
     /// the main actor; this step cannot, because the instance is not `Sendable`.
-    public static func build(
+    static func build(
         _ files: PlayerBehaviorGraphFiles,
         fileSystem: any GameFileSource,
         clipWorker: (any AssetLoadWorking<String, SplineBehaviorClip>)? = nil

@@ -8,7 +8,7 @@
 import Foundation
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsAnimation
-public import OpenSkyPhysics
+import OpenSkyPhysics
 public import OpenSkyWorldInterface
 
 nonisolated public enum ActorAnimationClipLoader: Sendable {
@@ -32,7 +32,7 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
 
     /// Direct gait clips named by the vanilla behavior graph census. They are
     /// in-place; the NPC capsule remains the sole movement authority.
-    public static func gaitAnimationPath(_ gait: LocomotionGait, female: Bool) -> String? {
+    static func gaitAnimationPath(_ gait: LocomotionGait, female: Bool) -> String? {
         gaitFileName(gait).map {
             characterRoot + "animations\\\(female ? "female" : "male")\\mt_" + $0
         }
@@ -40,7 +40,7 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
 
     /// The gait clips to try, in order, as `idleAnimationPaths(skeletonMeshPath:female:)`.
     /// Empty for a gait with no direct clip.
-    public static func gaitAnimationPaths(
+    static func gaitAnimationPaths(
         _ gait: LocomotionGait, skeletonMeshPath: String, female: Bool
     ) -> [String] {
         guard let location = CreatureClipNames.location(skeletonMeshPath: skeletonMeshPath) else {
@@ -50,7 +50,7 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
     }
 
     /// The rider's clip on a horse: idle when the horse stands, else its gait.
-    public static func riderAnimationPath(_ gait: LocomotionGait?) -> String {
+    static func riderAnimationPath(_ gait: LocomotionGait?) -> String {
         let name = gait.flatMap(gaitFileName) ?? "idle.hkx"
         return characterRoot + "animations\\horse_rider\\" + name
     }

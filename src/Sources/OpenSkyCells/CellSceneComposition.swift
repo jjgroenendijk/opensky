@@ -294,7 +294,7 @@ nonisolated public struct CellSceneComposition {
 
     /// Trigger broadphase over resident cells, so a volume on a seam is found from either
     /// side. Cells go in (x, y) order, because script event order must be stable.
-    public func triggerCandidates(overlapping bounds: ModelBounds) -> [TriggerVolume] {
+    func triggerCandidates(overlapping bounds: ModelBounds) -> [TriggerVolume] {
         orderedCells().flatMap { $0.triggerVolumes.candidates(overlapping: bounds) }
     }
 
@@ -316,13 +316,13 @@ nonisolated public struct CellSceneComposition {
         }.map(\.value)
     }
 
-    public func triggerStats() -> TriggerVolumeStats {
+    func triggerStats() -> TriggerVolumeStats {
         cells.values.reduce(into: TriggerVolumeStats()) {
             $0.add($1.triggerVolumes.stats)
         }
     }
 
-    public func collisionStats() -> StaticCollisionStats {
+    func collisionStats() -> StaticCollisionStats {
         cells.values.reduce(into: StaticCollisionStats()) {
             $0.add($1.staticCollision.stats)
         }

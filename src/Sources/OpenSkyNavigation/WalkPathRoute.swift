@@ -42,7 +42,7 @@ nonisolated public enum WalkPathRoute: Sendable {
         return atan2f(delta.y, delta.x)
     }
 
-    public static func interiorTarget(
+    static func interiorTarget(
         from position: SIMD2<Float>,
         yaw: Float
     ) -> SIMD2<Float> {

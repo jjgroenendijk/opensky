@@ -25,14 +25,14 @@ nonisolated public struct WalkController: Sendable {
     }
 
     public static let gravity = PhysicsStep.gravity
-    public static let maximumSlopeDegrees = PhysicsStep.maximumSlopeDegrees
+    static let maximumSlopeDegrees = PhysicsStep.maximumSlopeDegrees
     public static let fixedTimeStep = PhysicsStep.fixedTimeStep
     public static let maximumFrameTime = PhysicsStep.maximumFrameTime
-    public static let groundSnapDistance: Float = 24
+    static let groundSnapDistance: Float = 24
     /// How fast a swimmer may rise or sink, units per second. The capsule is
     /// held at the surface by a clamped correction rather than by buoyancy
     /// integration, so a swimmer cannot be launched by a deep step.
-    public static let maximumSwimVerticalSpeed: Float = 200
+    static let maximumSwimVerticalSpeed: Float = 200
 
     public let capsule: PlayerCapsule
     public let configuration: PlayerMovementConfiguration
@@ -62,9 +62,9 @@ nonisolated public struct WalkController: Sendable {
     /// The last fall that ended on the ground and nobody took yet.
     public internal(set) var landing: WalkLanding?
 
-    public struct HorizontalMove: Sendable {
-        public let result: CapsuleMoveResult
-        public let support: CapsuleStepSupport?
+    struct HorizontalMove: Sendable {
+        let result: CapsuleMoveResult
+        let support: CapsuleStepSupport?
     }
 
     public init(

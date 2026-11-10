@@ -26,27 +26,27 @@ import simd
 nonisolated public struct ActorBuildCounts: Sendable {
     /// Non-deleted ACHRs owned by this cell: local persistent + temporary
     /// children plus position-mapped worldspace-persistent placements.
-    public var discovered = 0
-    public var rendered = 0
+    var discovered = 0
+    var rendered = 0
     /// Actors present but deliberately not drawn: initially-disabled ACHRs
     /// (record flag 0x800) and ones runtime state disabled or deleted. One
     /// bucket keeps the accounting rule above; the log line says which applied.
-    public var disabledSkips = 0
+    var disabledSkips = 0
     /// Malformed ACHR records, unresolved template/visual chains, and
     /// assemblies with no core geometry.
-    public var failures = 0
+    var failures = 0
     /// One human-readable reason per failure ("ACHR <id>: <why>") — the 5.6
     /// acceptance rule: every counted failure is explained, so
     /// `failureReasons.count == failures` always.
     public var failureReasons: [String] = []
     /// Rendered actors split exactly into animated + bind-pose fallback.
-    public var animated = 0
-    public var animationFailures = 0
+    var animated = 0
+    var animationFailures = 0
     public var animationFailureReasons: [String] = []
     /// Every `AppearanceSkip`, per actor, as "ACHR <id>: <reason> (<subject>)".
     /// Not an error: a masked skin torso still reports one. The inventory readout
     /// uses it to say why an equipped piece drew nothing.
-    public var appearanceSkipReasons: [String] = []
+    var appearanceSkipReasons: [String] = []
 }
 
 /// Assembled actor render data handed to makeScene beside static instances.
@@ -54,12 +54,12 @@ nonisolated public struct CellActorBuild {
     public var placements: [RenderPlacement] = []
     public var animations: [any RenderAnimation] = []
     public var counts = ActorBuildCounts()
-    public var durationMS = 0.0
+    var durationMS = 0.0
     /// Runtime index entries for every ACHR this cell owns, including ones not
     /// drawn: an initially-disabled actor still exists at runtime.
-    public var entries: [RuntimeReferenceEntry] = []
+    var entries: [RuntimeReferenceEntry] = []
     /// Actors that exist but are disabled: the AI, the HUD, and the agent skip them.
-    public var disabledKeys: Set<ReferenceKey> = []
+    var disabledKeys: Set<ReferenceKey> = []
 }
 
 /// What an actor's `XESP` link may name besides the cell's own actors.

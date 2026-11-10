@@ -15,7 +15,7 @@ nonisolated public struct CellLocationResolver: Sendable {
         cells = LocationCellMap(store: store)
     }
 
-    public func location(of scene: CellScene) -> ResolvedFormID? {
+    func location(of scene: CellScene) -> ResolvedFormID? {
         location(of: scene.locationKey)
     }
 

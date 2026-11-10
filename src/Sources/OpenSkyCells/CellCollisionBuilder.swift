@@ -5,7 +5,7 @@
 import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyFormatsMesh
+import OpenSkyFormatsMesh
 public import OpenSkyGameData
 public import OpenSkyPhysics
 import OpenSkyRendering
@@ -55,7 +55,7 @@ nonisolated public struct CellCollisionAccumulator: Sendable {
     public var stats = StaticCollisionStats()
 
     /// The per-model tallies that hold whether or not any body is placed.
-    public mutating func record(model: NIFCollisionModel) {
+    mutating func record(model: NIFCollisionModel) {
         if !model.bodies.isEmpty {
             stats.collisionModelReferenceCount += 1
         }
@@ -76,10 +76,10 @@ nonisolated public struct CellCollisionProducts: Sendable {
 
 nonisolated public struct CellCollisionPartitionKey: Hashable, Sendable {
     public let modelKey: String
-    public let bodyIndex: Int
-    public let shapeIndex: Int
+    let bodyIndex: Int
+    let shapeIndex: Int
 
-    public init(_ modelKey: String, _ bodyIndex: Int, _ shapeIndex: Int) {
+    init(_ modelKey: String, _ bodyIndex: Int, _ shapeIndex: Int) {
         self.modelKey = modelKey
         self.bodyIndex = bodyIndex
         self.shapeIndex = shapeIndex
@@ -91,7 +91,7 @@ nonisolated public struct CellCollisionPartitionCache: Sendable {
         CellCollisionPartitionKey: StaticCollisionPartitionResult
     ] = [:]
 
-    public mutating func partitions(
+    mutating func partitions(
         key: CellCollisionPartitionKey,
         geometry: NIFCollisionGeometry
     ) -> StaticCollisionPartitionResult {
@@ -109,21 +109,21 @@ nonisolated public struct CellCollisionPartitionCache: Sendable {
         }
     }
 
-    public func contains(_ key: CellCollisionPartitionKey) -> Bool {
+    func contains(_ key: CellCollisionPartitionKey) -> Bool {
         entries[key] != nil
     }
 
-    public var count: Int {
+    var count: Int {
         entries.count
     }
 }
 
 /// Where one decoded shape lands in the world, bundled so the placement call
 /// stays inside the strict parameter cap.
-nonisolated public struct ShapePlacement: Sendable {
-    public let key: CellCollisionPartitionKey
-    public let transform: float4x4
-    public let reference: FormID
+nonisolated struct ShapePlacement: Sendable {
+    let key: CellCollisionPartitionKey
+    let transform: float4x4
+    let reference: FormID
 }
 
 nonisolated public struct CellCollisionGridEntry: Sendable {

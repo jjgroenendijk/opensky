@@ -16,7 +16,7 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     /// True for a package that rides the actor's horse when it has one.
     public let ridesHorse: Bool
     /// The furniture seat the actor sat down in, which it leaves with the package.
-    public internal(set) var seat: PackageSeat?
+    var seat: PackageSeat?
     /// The package's preferred speed, when its flag turns it on.
     public let gait: LocomotionGait?
     /// Where the preferred speed sits between walk and run: fast walk and jog.
@@ -37,17 +37,17 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     }
 
     /// The procedure the readout shows.
-    public var machine: PackageProcedureMachine? {
+    var machine: PackageProcedureMachine? {
         runner.primary
     }
 
     /// True while the walking procedure is a static-pathing patrol.
-    public var isDirect: Bool {
+    var isDirect: Bool {
         runner.mover.flatMap { runner.running[$0]?.setup.isDirect } ?? false
     }
 
     /// Package ends so far: completions, and laps of a repeatable patrol.
-    public var ends: Int {
+    var ends: Int {
         runner.completions + runner.laps
     }
 
@@ -87,7 +87,7 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
 
     /// "Start At Nearest?": the walk begins at the point nearest `start`. A
     /// repeatable patrol keeps the points it skipped for its next lap; a plain one drops them.
-    public static func startingAtNearest(
+    static func startingAtNearest(
         _ path: [SIMD3<Float>], to start: SIMD3<Float>, loops: Bool
     ) -> [SIMD3<Float>] {
         guard

@@ -9,12 +9,12 @@ public import OpenSkyWorldInterface
 
 /// Pure over raw-FormID tables of one plugin, like `ActorVisualResolver`.
 nonisolated public struct HeadPartResolver: Sendable {
-    public let headParts: [UInt32: HeadPart]
-    public let formLists: [UInt32: FormList]
-    public let textureSets: [UInt32: TextureSet]
-    public let colors: [UInt32: ColorForm]
+    let headParts: [UInt32: HeadPart]
+    let formLists: [UInt32: FormList]
+    let textureSets: [UInt32: TextureSet]
+    let colors: [UInt32: ColorForm]
 
-    public init(
+    init(
         headParts: [UInt32: HeadPart],
         formLists: [UInt32: FormList] = [:],
         textureSets: [UInt32: TextureSet] = [:],

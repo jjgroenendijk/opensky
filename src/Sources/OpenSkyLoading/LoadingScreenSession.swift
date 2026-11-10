@@ -10,7 +10,7 @@ import simd
 nonisolated public struct LoadingScreenSession: Equatable, Sendable {
     /// Long enough that a fast cell build shows a readable screen, not a
     /// one-frame flash.
-    public static let minimumSeconds = 1.5
+    static let minimumSeconds = 1.5
     public static let fadeSeconds = 0.4
 
     nonisolated public enum Phase: Equatable, Sendable {
@@ -52,19 +52,19 @@ nonisolated public struct LoadingScreenSession: Equatable, Sendable {
     }
 
     /// Cover opacity: 1 while showing, falling to 0 over the fade.
-    public func opacity(at time: Double) -> Float {
+    func opacity(at time: Double) -> Float {
         guard let fadeStart, time > fadeStart else { return 1 }
         return Float(max(0, 1 - (time - fadeStart) / Self.fadeSeconds))
     }
 
     /// The object's rotation in degrees: RNAM plus the player's turn about Z.
-    public var objectRotationDegrees: SIMD3<Float> {
+    var objectRotationDegrees: SIMD3<Float> {
         let initial = SIMD3<Float>(screen?.record.initialRotation.map(SIMD3<Float>.init) ?? .zero)
         return initial + SIMD3(0, 0, turnDegrees)
     }
 
     /// Seconds the screen has shown, for the camera path.
-    public func elapsedSeconds(at time: Double) -> Double {
+    func elapsedSeconds(at time: Double) -> Double {
         max(0, time - startedAt)
     }
 

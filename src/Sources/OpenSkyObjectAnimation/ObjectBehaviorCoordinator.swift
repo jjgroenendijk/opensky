@@ -52,7 +52,7 @@ public final class ObjectBehaviorCoordinator {
     }
 
     /// Papyrus message tokens start at 1; animation waits use their own range.
-    public static let firstToken: UInt64 = 1 << 48
+    static let firstToken: UInt64 = 1 << 48
 
     weak let world: (any ObjectBehaviorWorld)?
     /// A closure, because the install is chosen after the app builds this coordinator.

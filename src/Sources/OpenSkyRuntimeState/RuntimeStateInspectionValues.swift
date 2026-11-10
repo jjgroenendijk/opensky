@@ -20,31 +20,31 @@ nonisolated public enum RuntimeStateNumberText: Sendable {
 }
 
 /// One condition's own verdict inside an evaluated list.
-nonisolated public struct RuntimeStateConditionLine: Equatable, Sendable {
+nonisolated struct RuntimeStateConditionLine: Equatable, Sendable {
     /// One-based position in the authored list.
-    public let index: Int
+    let index: Int
     /// `<function> <operator> <right-hand side>`, plus an `(or)` marker when
     /// the condition is OR-joined to the one after it.
-    public let text: String
-    public let isTrue: Bool
+    let text: String
+    let isTrue: Bool
     /// Why this condition answered as it did: "true", "false", or the
     /// `ConditionFailure` spelled out.
-    public let reason: String
+    let reason: String
 }
 
 /// The result of evaluating one condition list against the live context.
-nonisolated public struct RuntimeStateConditionReport: Equatable, Sendable {
+nonisolated struct RuntimeStateConditionReport: Equatable, Sendable {
     /// Name of the record the list came from.
-    public let source: String
+    let source: String
     /// The list's overall verdict under the documented OR grouping.
-    public let isSatisfied: Bool
-    public let lines: [RuntimeStateConditionLine]
+    let isSatisfied: Bool
+    let lines: [RuntimeStateConditionLine]
     /// Preformatted `ConditionTally` counters, one per line.
-    public let tallyLines: [String]
+    let tallyLines: [String]
     /// Set when no evaluation happened, stating why. Nil on a real result.
-    public let message: String?
+    let message: String?
 
-    public init(
+    init(
         source: String,
         isSatisfied: Bool,
         lines: [RuntimeStateConditionLine],
@@ -60,7 +60,7 @@ nonisolated public struct RuntimeStateConditionReport: Equatable, Sendable {
 
     /// A stated non-answer, so a missing record reads as a reason rather than
     /// as an empty list that looks like a satisfied condition.
-    public static func unavailable(source: String, message: String) -> RuntimeStateConditionReport {
+    static func unavailable(source: String, message: String) -> RuntimeStateConditionReport {
         RuntimeStateConditionReport(
             source: source, isSatisfied: false, lines: [], tallyLines: [], message: message
         )

@@ -6,7 +6,7 @@ import OpenSkyFormatsESM
 public import OpenSkyWorldInterface
 
 nonisolated public enum IdleReadout {
-    public static func markersText(for snapshot: IdleControlSnapshot) -> String {
+    static func markersText(for snapshot: IdleControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Idle markers: unavailable" }
         guard !snapshot.markers.isEmpty else { return "Idle markers: none in the loaded cells" }
         let lines = snapshot.markers.map { marker in
@@ -22,7 +22,7 @@ nonisolated public enum IdleReadout {
             + "\(trace.editorID ?? trace.id.description): \(verdictText(trace.verdict))"
     }
 
-    public static func pathText(_ path: IdleServedPath) -> String {
+    static func pathText(_ path: IdleServedPath) -> String {
         switch path {
         case let .graphEvent(files): "graph event (\(files.last ?? "graph"))"
         case .namedClip: "clip named after the event"
@@ -32,7 +32,7 @@ nonisolated public enum IdleReadout {
         }
     }
 
-    public static func propText(_ prop: IdleProp) -> String {
+    static func propText(_ prop: IdleProp) -> String {
         switch prop {
         case let .attached(editorID, _, bone): "\(editorID) on \(bone)"
         case .none: "none"
@@ -53,7 +53,7 @@ nonisolated public enum IdleReadout {
     }
 }
 
-nonisolated public enum HeadAssemblyReadout {
+nonisolated enum HeadAssemblyReadout {
     static func missText(_ reason: HeadPartMiss.Reason) -> String {
         switch reason {
         case .missingRecord: "no such head part"

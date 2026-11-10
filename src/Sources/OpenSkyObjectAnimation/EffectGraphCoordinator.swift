@@ -102,7 +102,7 @@ public final class EffectGraphCoordinator {
         return taken
     }
 
-    public func hasSubGraphs(on actor: ReferenceKey) -> Bool {
+    func hasSubGraphs(on actor: ReferenceKey) -> Bool {
         running.values.contains { $0.attachment.actor == actor }
     }
 
@@ -148,7 +148,7 @@ public final class EffectGraphCoordinator {
 
     /// The rig an effect model's graph poses: nil while the model loads, which this starts,
     /// and `.some(nil)` when the model names no graph.
-    public func graphSkeleton(forModel path: String) -> HKASkeleton?? {
+    func graphSkeleton(forModel path: String) -> HKASkeleton?? {
         if let project = project(forModel: path) {
             return .some(project.asset.skeleton)
         }

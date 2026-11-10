@@ -5,9 +5,4 @@
 nonisolated public struct CellSession {
     public let runner: SerialCellBuildRunner
     public let data: WorldDataStores
-
-    public init(runner: SerialCellBuildRunner, data: WorldDataStores) {
-        self.runner = runner
-        self.data = data
-    }
 }

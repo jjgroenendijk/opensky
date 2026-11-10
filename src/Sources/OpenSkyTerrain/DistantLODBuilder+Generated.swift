@@ -29,7 +29,7 @@ nonisolated public protocol TerrainLODGenerating: AnyObject {
 
 nonisolated extension DistantLODBlock {
     /// Beside the vanilla file's path, so the two never share a cache entry.
-    public var generatedMeshKey: String {
+    var generatedMeshKey: String {
         generatedPath(path)
     }
 

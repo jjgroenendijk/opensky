@@ -62,7 +62,7 @@ public struct NPCMovementWorld {
     }
 
     /// A horse is not blocked by the cart it pulls, nor a rider by the cart it sits on.
-    public func collisionQuery(for actor: ReferenceKey) -> WalkController.CollisionQuery {
+    func collisionQuery(for actor: ReferenceKey) -> WalkController.CollisionQuery {
         guard vehicleActors.contains(actor), let ignoring = collisionQueryIgnoringVehicles
         else { return collisionQuery }
         return ignoring
@@ -117,11 +117,11 @@ public struct NPCMovementRuntime {
     public static let maximumSimultaneousMovers = ActorMovementLimits.maximumSimultaneousMovers
     /// CPU budget for all NPC locomotion at the cap in a 16.67 ms frame. The real-data
     /// measurement checks the drive against it, and the frame ledger reads it.
-    public static let maximumCPUTimeMillisecondsAtCap: Double = 2
-    public static let waypointTolerance: Float = 12
-    public static let stuckTimeout: Float = 2
-    public static let progressTolerance: Float = 1
-    public static let runDistance: Float = 512
+    static let maximumCPUTimeMillisecondsAtCap: Double = 2
+    static let waypointTolerance: Float = 12
+    static let stuckTimeout: Float = 2
+    static let progressTolerance: Float = 1
+    static let runDistance: Float = 512
     /// How fast an actor may turn, in radians per second. `nonisolated`, so the
     /// in-place turn (`NPCFacingHold`) can use it without main-actor isolation.
     nonisolated public static let maximumYawSpeed: Float = .pi * 2
@@ -146,11 +146,11 @@ public struct NPCMovementRuntime {
 
     public init() {}
 
-    public var activeMoverCount: Int {
+    var activeMoverCount: Int {
         movers.count
     }
 
-    public var activeFacingCount: Int {
+    var activeFacingCount: Int {
         facings.count
     }
 
@@ -525,9 +525,9 @@ struct NPCParkedMovement {
 
 public struct NPCMoverEmissions {
     public var drive: NPCLocomotionDriveUpdate?
-    public var persistence: [NPCMovementPersistence] = []
-    public var triggers: [TriggerTransitionEvent] = []
-    public var doors: [(actor: ReferenceKey, reference: FormID)] = []
+    var persistence: [NPCMovementPersistence] = []
+    var triggers: [TriggerTransitionEvent] = []
+    var doors: [(actor: ReferenceKey, reference: FormID)] = []
     /// A fall of the mover's actor that ended this step.
     public var landing: WalkLanding?
 }

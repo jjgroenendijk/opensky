@@ -60,7 +60,7 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
 
     /// Short enough to avoid a held mouth after audio, long enough to keep the
     /// last open shape from snapping to bind pose on one frame.
-    public static let decayDuration: Float = 0.15
+    static let decayDuration: Float = 0.15
 
     public let actor: FormID
     private let faceMorph: any LipMorphWeightApplying

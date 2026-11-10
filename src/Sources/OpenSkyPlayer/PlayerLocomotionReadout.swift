@@ -5,9 +5,9 @@
 import Foundation
 import OpenSkyBehavior
 
-nonisolated public enum PlayerLocomotionReadout: Sendable {
+nonisolated enum PlayerLocomotionReadout: Sendable {
     /// The breath left under water, and whether the player is drowning.
-    public static func breathLine(_ breath: PlayerBreath?) -> String {
+    static func breathLine(_ breath: PlayerBreath?) -> String {
         guard let breath else { return "Breath: unavailable" }
         let total = format(breath.settings.breathSeconds)
         let left = "\(format(breath.remainingSeconds)) of \(total) s"
@@ -18,7 +18,7 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
 
     /// What the behavior graph is doing: the state path, the variables the
     /// bridge wrote, and the events that came back.
-    public static func graphText(for snapshot: PlayerLocomotionSnapshot) -> String {
+    static func graphText(for snapshot: PlayerLocomotionSnapshot) -> String {
         let status = snapshot.status
         let bodyLines = snapshot.bodyFailureReason.map { ["Player body: none (\($0))"] } ?? []
         guard status.graphAvailable else {

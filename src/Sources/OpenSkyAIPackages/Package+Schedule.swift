@@ -2,11 +2,11 @@
 // shape lives with the parsers in OpenSkyFormatsESM; `GameClock` is runtime state.
 
 import Foundation
-public import OpenSkyFormatsESM
-public import OpenSkyWorldState
+import OpenSkyFormatsESM
+import OpenSkyWorldState
 
 nonisolated extension Package.Schedule {
-    public func matches(_ clock: GameClock) -> Bool {
+    func matches(_ clock: GameClock) -> Bool {
         guard hour >= 0 else { return matchesCalendar(clock) }
         let start = Int(hour) * 60 + max(Int(minute), 0)
         let duration = Int(durationMinutes)
@@ -27,7 +27,7 @@ nonisolated extension Package.Schedule {
 
     /// Next daily start/end edge, bounded to one day. Calendar-only edges
     /// are covered by the runtime's interval reevaluation.
-    public func minutesUntilBoundary(after clock: GameClock) -> Float? {
+    func minutesUntilBoundary(after clock: GameClock) -> Float? {
         guard hour >= 0 else { return nil }
         let now = clock.hourOfDay * 60
         let start = Float(Int(hour) * 60 + max(Int(minute), 0))
@@ -72,7 +72,7 @@ nonisolated extension Package.Schedule {
 nonisolated extension GameClock {
     /// PACK PSDT weekday index: Sundas = 0 ... Loredas = 6. Skyrim normally
     /// begins on Sundas, 17th of Last Seed, 4E 201 (UESP Skyrim:Calendar).
-    public var packageWeekday: Int {
+    var packageWeekday: Int {
         let days = Int(floor(Double(daysPassed)))
         return ((days % 7) + 7) % 7
     }

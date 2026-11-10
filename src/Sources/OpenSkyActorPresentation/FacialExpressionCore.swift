@@ -27,7 +27,7 @@ nonisolated public enum FacialExpressionCore {
 
     /// How closed both eyes are `elapsed` seconds into a blink, 0 to 1: closing over the
     /// down time, then opening over the up time.
-    public static func blinkClosure(elapsed: Float, settings: FaceAnimationSettings) -> Float {
+    static func blinkClosure(elapsed: Float, settings: FaceAnimationSettings) -> Float {
         let down = max(settings.blinkDownTime, 0)
         let up = max(settings.blinkUpTime, 0)
         guard elapsed.isFinite, elapsed >= 0, elapsed < down + up else { return 0 }
@@ -39,7 +39,7 @@ nonisolated public enum FacialExpressionCore {
 
     /// The eye drift at `time` for one emotion's range, in radians: a new point in the
     /// range every `interval` seconds. `seed` gives each actor its own drift.
-    public static func eyeOffset(
+    static func eyeOffset(
         at time: Float, seed: UInt32, range: EyeOffsetRange, interval: Float
     ) -> HeadLook {
         guard time.isFinite, time >= 0, interval > 0 else { return .forward }

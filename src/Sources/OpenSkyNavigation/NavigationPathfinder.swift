@@ -10,7 +10,7 @@ import OpenSkyGameData
 public import OpenSkyWorldInterface
 import simd
 
-nonisolated public enum NavigationPortal: Equatable, Sendable {
+nonisolated enum NavigationPortal: Equatable, Sendable {
     case edge(SIMD3<Float>, SIMD3<Float>)
     case door(reference: FormID, source: SIMD3<Float>, destination: SIMD3<Float>)
     /// A ledge edge link: a jump up or a drop down from `source` on the source edge to
@@ -19,13 +19,13 @@ nonisolated public enum NavigationPortal: Equatable, Sendable {
 }
 
 nonisolated public struct NavigationTransition: Equatable, Sendable {
-    public let target: NavigationTriangleID
-    public let portal: NavigationPortal
+    let target: NavigationTriangleID
+    let portal: NavigationPortal
 }
 
 nonisolated public struct NavigationCameFrom: Sendable {
-    public let node: NavigationTriangleID
-    public let portal: NavigationPortal
+    let node: NavigationTriangleID
+    let portal: NavigationPortal
 }
 
 nonisolated public struct NavigationOpenEntry: Comparable, Sendable {
@@ -253,11 +253,11 @@ nonisolated private struct NavigationProjectedEndpoints {
 }
 
 nonisolated extension RuntimeNavigationGraph {
-    public func triangle(_ node: NavigationTriangleID) -> RuntimeNavigationTriangle? {
+    func triangle(_ node: NavigationTriangleID) -> RuntimeNavigationTriangle? {
         mesh(containing: node)?.triangle(node.triangle)
     }
 
-    public func transitions(
+    func transitions(
         from node: NavigationTriangleID,
         into result: inout [NavigationTransition]
     ) {

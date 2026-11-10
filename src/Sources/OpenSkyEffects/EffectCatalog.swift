@@ -3,10 +3,10 @@
 
 import Foundation
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyRendering
 
-nonisolated public enum EffectRecordKind: String, Equatable, Sendable, CaseIterable {
+nonisolated enum EffectRecordKind: String, Equatable, Sendable, CaseIterable {
     case visualEffect = "Visual effect"
     case shader = "Effect shader"
     case addon = "Addon node"
@@ -15,18 +15,18 @@ nonisolated public enum EffectRecordKind: String, Equatable, Sendable, CaseItera
     case material = "Material object"
 }
 
-nonisolated public struct EffectCatalogEntry: Equatable, Sendable {
-    public let name: String
-    public let key: ReferenceKey
-    public let kind: EffectRecordKind
+nonisolated struct EffectCatalogEntry: Equatable, Sendable {
+    let name: String
+    let key: ReferenceKey
+    let kind: EffectRecordKind
 }
 
-nonisolated public struct EffectCatalog: Sendable {
+nonisolated struct EffectCatalog: Sendable {
     /// Sorted by name; a name two records share keeps the first kind's record.
-    public let entries: [EffectCatalogEntry]
+    let entries: [EffectCatalogEntry]
     private let byName: [String: EffectCatalogEntry]
 
-    public init(records: EffectRecordStore) {
+    init(records: EffectRecordStore) {
         let entries = Self.entries(records.visualEffects, .visualEffect)
             + Self.entries(records.effectShaders, .shader)
             + Self.entries(records.addonNodes, .addon)
@@ -41,7 +41,7 @@ nonisolated public struct EffectCatalog: Sendable {
         self.entries = byName.values.sorted { $0.name < $1.name }
     }
 
-    public func entry(named name: String) -> EffectCatalogEntry? {
+    func entry(named name: String) -> EffectCatalogEntry? {
         byName[name]
     }
 
@@ -58,7 +58,7 @@ nonisolated public struct EffectCatalog: Sendable {
 
 nonisolated extension EffectRecordStore {
     /// Short label-and-value lines for the inspector.
-    public func details(of entry: EffectCatalogEntry) -> [String] {
+    func details(of entry: EffectCatalogEntry) -> [String] {
         let kind = "Kind: \(entry.kind.rawValue)"
         switch entry.kind {
         case .visualEffect:

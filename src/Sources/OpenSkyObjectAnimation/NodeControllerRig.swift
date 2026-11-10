@@ -66,7 +66,7 @@ nonisolated public struct NodeControllerRig: Sendable {
         )
     }
 
-    public func sequence(named name: String) -> NIFSequence? {
+    func sequence(named name: String) -> NIFSequence? {
         sequences.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
     }
 

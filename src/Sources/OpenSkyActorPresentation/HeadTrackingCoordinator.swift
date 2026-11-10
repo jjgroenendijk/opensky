@@ -31,9 +31,9 @@ public protocol HeadTrackingWorld: AnyObject {
 
 public final class HeadTrackingCoordinator {
     /// An actor this near the player looks at the player when nothing else holds its eye.
-    public static let noticeDistance: Float = 384
+    static let noticeDistance: Float = 384
     /// Eye height in the skeleton frame, before the actor's scale.
-    public static let eyeHeight: Float = 120
+    static let eyeHeight: Float = 120
 
     weak var world: (any HeadTrackingWorld)?
     public let settings: HeadTrackingSettings

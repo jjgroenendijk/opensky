@@ -74,7 +74,7 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
     /// True once the actor is pointing where it was asked to point, to within
     /// half a degree — below what a viewer can see and above what the fixed
     /// step's own arithmetic settles to.
-    public var isSettled: Bool {
+    var isSettled: Bool {
         abs(NPCYawMath.shortestTurn(from: yaw, to: targetYaw)) <= Self.settleTolerance
     }
 
@@ -136,7 +136,7 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
         NPCMovementPersistence(actor: actor, transform: transform, cell: nil, reason: reason)
     }
 
-    public static let settleTolerance = MatrixMath.radians(fromDegrees: 0.5)
+    static let settleTolerance = MatrixMath.radians(fromDegrees: 0.5)
 
     /// The yaw that points from `origin` at `target`, or `fallback` when the
     /// two are the same column of air.

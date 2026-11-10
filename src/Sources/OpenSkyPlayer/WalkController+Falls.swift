@@ -41,9 +41,4 @@ nonisolated public struct WalkLanding: Equatable, Sendable {
     public let height: Float
     /// Downward speed at the moment of landing, units per second.
     public let speed: Float
-
-    public init(height: Float, speed: Float) {
-        self.height = height
-        self.speed = speed
-    }
 }

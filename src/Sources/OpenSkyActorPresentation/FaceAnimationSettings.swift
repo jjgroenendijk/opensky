@@ -3,7 +3,7 @@
 // docs/engine/face-morphs.md.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 
 /// How far the eyes drift for one emotion, in radians. Positive heading looks left,
@@ -14,7 +14,7 @@ nonisolated public struct EyeOffsetRange: Equatable, Sendable {
     public var pitchMin: Float
     public var pitchMax: Float
 
-    public init(headingMin: Float, headingMax: Float, pitchMin: Float, pitchMax: Float) {
+    init(headingMin: Float, headingMax: Float, pitchMin: Float, pitchMax: Float) {
         self.headingMin = headingMin
         self.headingMax = headingMax
         self.pitchMin = pitchMin
@@ -58,7 +58,7 @@ nonisolated public struct FaceAnimationSettings: Equatable, Sendable {
 
     public init() {}
 
-    public func eyeRange(for emotion: TopicInfo.ResponseEmotion?) -> EyeOffsetRange {
+    func eyeRange(for emotion: TopicInfo.ResponseEmotion?) -> EyeOffsetRange {
         let name = switch emotion {
         case .anger?: "Angry"
         case .fear?: "Fear"

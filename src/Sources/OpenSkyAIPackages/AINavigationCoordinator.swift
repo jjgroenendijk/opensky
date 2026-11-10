@@ -27,8 +27,8 @@ public protocol AINavigationWorld: AnyObject {
 }
 
 @MainActor
-public final class AINavigationCoordinator {
-    public private(set) var lastAction = AINavigationActionOutcome.idle
+final class AINavigationCoordinator {
+    private(set) var lastAction = AINavigationActionOutcome.idle
 
     /// Nil follows the nearest resident actor. A chosen actor that stops being
     /// resident also falls back to the nearest one.
@@ -39,12 +39,12 @@ public final class AINavigationCoordinator {
     private let packages: PackageCoordinator
     weak let world: (any AINavigationWorld)?
 
-    public init(packages: PackageCoordinator, world: any AINavigationWorld) {
+    init(packages: PackageCoordinator, world: any AINavigationWorld) {
         self.world = world
         self.packages = packages
     }
 
-    public var aiNavigationSnapshot: AINavigationSnapshot {
+    var aiNavigationSnapshot: AINavigationSnapshot {
         guard let world else { return .unavailable }
         let actors = actorOptions()
         let selected = AINavigationCore.resolve(chosenActor, in: actors)
@@ -56,7 +56,7 @@ public final class AINavigationCoordinator {
         )
     }
 
-    public var selectedAIActor: ReferenceKey? {
+    var selectedAIActor: ReferenceKey? {
         get { AINavigationCore.resolve(chosenActor, in: actorOptions()) }
         set {
             chosenActor = newValue
@@ -68,7 +68,7 @@ public final class AINavigationCoordinator {
         }
     }
 
-    public var selectedAIActorIsHostile: Bool {
+    var selectedAIActorIsHostile: Bool {
         get {
             guard let world, let key = selectedAIActor else { return false }
             return world.isHostile(key)
@@ -86,7 +86,7 @@ public final class AINavigationCoordinator {
         }
     }
 
-    public func selectAIActorFromCrosshair() {
+    func selectAIActorFromCrosshair() {
         guard let world, let reference = crosshairHit()?.reference else {
             lastAction = .crosshairEmpty(verb: "select")
             return
@@ -98,7 +98,7 @@ public final class AINavigationCoordinator {
         selectedAIActor = key
     }
 
-    public func moveSelectedAIActorToCrosshair() {
+    func moveSelectedAIActorToCrosshair() {
         let actors = actorOptions()
         guard
             let world,
@@ -117,7 +117,7 @@ public final class AINavigationCoordinator {
         )
     }
 
-    public func stopSelectedAIActor() {
+    func stopSelectedAIActor() {
         let actors = actorOptions()
         guard
             let world,
@@ -130,7 +130,7 @@ public final class AINavigationCoordinator {
         lastAction = .stopped(actor: name, hadMover: world.stopActor(key))
     }
 
-    public func reevaluateSelectedAIActorPackage() {
+    func reevaluateSelectedAIActorPackage() {
         let actors = actorOptions()
         guard let key = AINavigationCore.resolve(chosenActor, in: actors) else {
             lastAction = .noActor(verb: "reevaluate")

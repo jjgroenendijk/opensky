@@ -154,7 +154,7 @@ public final class IdleCoordinator {
     /// The world context one `advance` shares between its actors.
     var passContext: (sequence: UInt64, context: ConditionContext)?
     var isAdvancing = false
-    public internal(set) var usesIdleMarkers = true
+    var usesIdleMarkers = true
     /// The player has no playback, so a player idle only times its events with this rig.
     static let playerSkeletonPath = ActorAnimationClipLoader.characterRoot
         + "character assets\\skeleton.nif"

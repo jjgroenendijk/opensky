@@ -8,26 +8,12 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import simd
 
-nonisolated public struct KillCamCandidate: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let position: SIMD3<Float>
-    public let radius: Float
-    public let height: Float
-    public let health: Float
-
-    public init(
-        key: ReferenceKey,
-        position: SIMD3<Float>,
-        radius: Float,
-        height: Float,
-        health: Float
-    ) {
-        self.key = key
-        self.position = position
-        self.radius = radius
-        self.height = height
-        self.health = health
-    }
+nonisolated struct KillCamCandidate: Equatable, Sendable {
+    let key: ReferenceKey
+    let position: SIMD3<Float>
+    let radius: Float
+    let height: Float
+    let health: Float
 }
 
 nonisolated public struct KillCamSettings: Equatable, Sendable {
@@ -35,7 +21,7 @@ nonisolated public struct KillCamSettings: Equatable, Sendable {
     /// fKillCamBaseOdds; the install sets 1, so every eligible kill plays.
     public var baseOdds: Float = 1
     /// The player's own kill cam chance, 0...1, which scales `baseOdds`. Tests set it.
-    public var playerOdds: Float = 1
+    var playerOdds: Float = 1
     /// Vanilla plays a kill cam only on the last enemy; off allows every kill.
     public var lastEnemyOnly = true
 
@@ -70,7 +56,7 @@ nonisolated public enum KillCamTrigger {
     }
 
     /// The nearest actor the arrow ray meets whose health the damage covers.
-    public static func arrowKill(
+    static func arrowKill(
         ray: (origin: SIMD3<Float>, direction: SIMD3<Float>),
         range: Float,
         damage: Float,

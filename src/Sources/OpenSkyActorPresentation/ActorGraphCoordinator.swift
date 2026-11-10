@@ -156,7 +156,7 @@ public final class ActorGraphCoordinator {
     public static let recentEventLimit = 12
     /// Papyrus message tokens start at 1 and object graph waits at 2^48; actor waits
     /// use the range above both.
-    public static let firstToken: UInt64 = 1 << 56
+    static let firstToken: UInt64 = 1 << 56
 
     weak let world: (any ActorGraphWorld)?
     /// A closure, because the install is chosen after the app builds this coordinator.

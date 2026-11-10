@@ -6,12 +6,12 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyPhysics
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 
 /// The `AIActorStatsLabel` and `AIMovementStatsLabel` lines.
-nonisolated public enum AINavigationReadout: Sendable {
+nonisolated enum AINavigationReadout: Sendable {
     /// What one move request answered, in the words the readout shows.
-    public static func moveResultText(_ result: NPCMoveCommandResult, actor: String) -> String {
+    static func moveResultText(_ result: NPCMoveCommandResult, actor: String) -> String {
         switch result {
         case .started:
             "Move: \(actor) is pathing to the crosshair point."
@@ -24,7 +24,7 @@ nonisolated public enum AINavigationReadout: Sendable {
         }
     }
 
-    public static func missText(_ miss: NavigationPathMiss) -> String {
+    static func missText(_ miss: NavigationPathMiss) -> String {
         switch miss {
         case .startProjection: "the actor is not standing on the navmesh"
         case .targetProjection: "the crosshair point is not on the navmesh"
@@ -34,10 +34,10 @@ nonisolated public enum AINavigationReadout: Sendable {
 }
 
 /// The `AIPackageStatsLabel` lines: which package the schedule chose, and when.
-nonisolated public enum AIPackageReadout: Sendable {
+nonisolated enum AIPackageReadout: Sendable {
     /// Where the current package's procedure is, such as
     /// `Procedure: patrol, moving, point 3 of 32`.
-    public static func procedureStateText(for machine: PackageProcedureMachine) -> String {
+    static func procedureStateText(for machine: PackageProcedureMachine) -> String {
         var state = stateText(for: machine.state)
         if case .sandboxing = machine.state {
             unsafe state += String(format: ", %.2f game hours left", machine.sandbox.hoursLeft)
@@ -48,7 +48,7 @@ nonisolated public enum AIPackageReadout: Sendable {
     }
 
     /// The tree's procedures that run at once, such as `Running: sit, wait`; nil for one.
-    public static func runningText(for machines: [PackageProcedureMachine]) -> String? {
+    static func runningText(for machines: [PackageProcedureMachine]) -> String? {
         guard machines.count > 1 else { return nil }
         return "Running: " + machines.map { "\($0.kind.name) (\(stateText(for: $0.state)))" }
             .joined(separator: ", ")
@@ -71,7 +71,7 @@ nonisolated public enum AIPackageReadout: Sendable {
     }
 
     /// Which package won for one actor, and which procedure it runs.
-    public static func selectionText(for package: PackageActorReadout) -> String {
+    static func selectionText(for package: PackageActorReadout) -> String {
         guard let current = package.currentPackage else {
             return "Package: none selected (base \(package.actorBase))"
         }
@@ -84,7 +84,7 @@ nonisolated public enum AIPackageReadout: Sendable {
         return "Package: \(name) (\(current)), \(procedure)\(evaluated)\(held)"
     }
 
-    public static func procedureText(for procedure: PackageProcedureKind) -> String {
+    static func procedureText(for procedure: PackageProcedureKind) -> String {
         if case let .unsupported(name) = procedure {
             return "unsupported (\(name))"
         }

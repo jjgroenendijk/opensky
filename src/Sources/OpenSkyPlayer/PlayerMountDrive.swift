@@ -140,7 +140,7 @@ public final class PlayerMountDrive {
 
     /// Steps a dragon toward `goal`: the flight moves it and its graph follows. Returns
     /// the events its graph fired and the flight's own events.
-    public func fly(
+    func fly(
         toward goal: DragonFlightGoal, deltaTime: Float, world: MountStepWorld
     ) -> (graph: [String], flight: [DragonFlightEvent]) {
         guard var state = flight else { return ([], []) }
@@ -179,7 +179,7 @@ public final class PlayerMountDrive {
     }
 
     /// Raises an event on the mount's graph, such as a dragon's breath.
-    public func raiseGraphEvent(_ name: String) {
+    func raiseGraphEvent(_ name: String) {
         bridge.raise(name)
     }
 

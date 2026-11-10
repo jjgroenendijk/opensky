@@ -129,7 +129,7 @@ nonisolated extension DistantLODBuilder {
 
     /// A tree inside the load distance draws as LOD, unless its cell is loaded:
     /// a loaded cell draws its full trees (docs/engine/distant-lod.md).
-    public static func drawsTreeLOD(
+    static func drawsTreeLOD(
         at position: SIMD3<Float>,
         center: SIMD3<Float>,
         loadDistance: Float,

@@ -12,9 +12,9 @@ public import simd
 
 public struct NPCKnockbackSlide {
     /// Below this horizontal speed, units per second, a grounded slide is over.
-    public static let settleSpeed: Float = 5
+    static let settleSpeed: Float = 5
     /// The longest a slide runs, seconds, so an actor stuck in the air still settles.
-    public static let maximumDuration: Float = 3
+    static let maximumDuration: Float = 3
 
     public let actor: ReferenceKey
     public let formID: FormID
@@ -50,12 +50,12 @@ public struct NPCKnockbackSlide {
         elapsed = 0
     }
 
-    public mutating func takeLanding() -> WalkLanding? {
+    mutating func takeLanding() -> WalkLanding? {
         controller.takeLanding()
     }
 
     /// Slides one frame. Returns true once the push has faded on the ground.
-    public mutating func advance(by frameTime: Float, world: NPCMovementWorld) -> Bool {
+    mutating func advance(by frameTime: Float, world: NPCMovementWorld) -> Bool {
         controller.update(
             frameTime: frameTime,
             yaw: yaw,
@@ -95,7 +95,7 @@ public struct NPCKnockbackSlide {
     }
 
     /// The same readout with another state, for the rest a faded slide leaves.
-    public func readout(as state: NPCMovementState) -> NPCMovementReadout {
+    func readout(as state: NPCMovementState) -> NPCMovementReadout {
         NPCMovementReadout(
             actor: actor, state: state, feetPosition: controller.feetPosition, yaw: yaw,
             waypointIndex: 0, waypointCount: 0, gait: .walk, repathCount: 0

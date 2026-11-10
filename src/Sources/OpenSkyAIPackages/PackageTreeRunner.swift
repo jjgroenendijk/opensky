@@ -9,26 +9,26 @@ public import OpenSkyWorldInterface
 
 /// What the runner asks of the session: branch conditions and leaf setups.
 @MainActor
-public protocol PackageTreeHost {
+protocol PackageTreeHost {
     mutating func passes(_ conditions: [Condition]) -> Bool
     func setup(for leaf: PackageProcedureLeaf, objectLists: [Int8: [ReferenceKey]])
         -> PackageLeafSetup
 }
 
 /// A command from one running procedure.
-nonisolated public struct PackageTreeCommand: Equatable, Sendable {
-    public let leaf: Int
-    public let command: PackageProcedureCommand
+nonisolated struct PackageTreeCommand: Equatable, Sendable {
+    let leaf: Int
+    let command: PackageProcedureCommand
 }
 
 nonisolated public struct PackageRunningLeaf: Equatable, Sendable {
-    public let leaf: PackageProcedureLeaf
-    public internal(set) var machine: PackageProcedureMachine
+    let leaf: PackageProcedureLeaf
+    var machine: PackageProcedureMachine
     public let setup: PackageLeafSetup
 }
 
 nonisolated public struct PackageTreeRunner: Equatable, Sendable {
-    public enum Outcome: Equatable, Sendable {
+    enum Outcome: Equatable, Sendable {
         case succeeded
         case failed
     }
@@ -46,16 +46,16 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
     /// The leaf whose walk the mover runs.
     public internal(set) var mover: Int?
     /// What finds found, by the object-list input they fill.
-    public internal(set) var objectLists: [Int8: [ReferenceKey]] = [:]
+    var objectLists: [Int8: [ReferenceKey]] = [:]
     /// Times the package was done: a `FNAM` procedure succeeded or the tree ran out.
-    public internal(set) var completions = 0
+    var completions = 0
     /// Set once the tree stopped for good.
-    public internal(set) var outcome: Outcome?
+    var outcome: Outcome?
     /// The last procedure that ended, for the readout once nothing runs.
-    public internal(set) var lastFinished: PackageProcedureMachine?
+    var lastFinished: PackageProcedureMachine?
     /// The seats of ended procedures, by node. A sit that completes its package ends
     /// in the same step that asks to sit, so the sit reads its seat here.
-    public internal(set) var finishedSeats: [Int: PackageSeat] = [:]
+    var finishedSeats: [Int: PackageSeat] = [:]
     var cursors: [Int: Int] = [:]
     var live: [Int: Set<Int>] = [:]
     var random: ConditionRandom
@@ -67,7 +67,7 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
     }
 
     /// The machine the readout shows: the walking one, else any running one.
-    public var primary: PackageProcedureMachine? {
+    var primary: PackageProcedureMachine? {
         if let mover, let leaf = running[mover] {
             return leaf.machine
         }
@@ -75,12 +75,12 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
     }
 
     /// Repeatable patrol laps and orbits so far, each of which ends the package once.
-    public var laps: Int {
+    var laps: Int {
         running.values.reduce(0) { $0 + $1.machine.laps }
     }
 
     @MainActor
-    public mutating func start(host: inout some PackageTreeHost) -> [PackageTreeCommand] {
+    mutating func start(host: inout some PackageTreeHost) -> [PackageTreeCommand] {
         guard running.isEmpty, outcome == nil, !tree.nodes.isEmpty else { return [] }
         let entry = enter(0, host: &host)
         if entry != .running {
@@ -91,7 +91,7 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
 
     /// Feeds one event to one running procedure, then moves the tree on.
     @MainActor
-    public mutating func handle(
+    mutating func handle(
         _ event: PackageProcedureEvent, leaf node: Int, host: inout some PackageTreeHost
     ) -> [PackageTreeCommand] {
         guard var leaf = running[node] else { return [] }
@@ -103,7 +103,7 @@ nonisolated public struct PackageTreeRunner: Equatable, Sendable {
     }
 
     /// The running leaves, in node order, so a tick visits them deterministically.
-    public var runningNodes: [Int] {
+    var runningNodes: [Int] {
         running.keys.sorted()
     }
 

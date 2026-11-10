@@ -50,7 +50,7 @@ nonisolated public struct BumpReactions: Equatable, Sendable {
     public init() {}
 
     /// Actors held out of their package by a reaction.
-    public var reactingActors: Set<ReferenceKey> {
+    var reactingActors: Set<ReferenceKey> {
         Set(stages.keys)
     }
 
@@ -93,7 +93,7 @@ nonisolated public struct BumpReactions: Equatable, Sendable {
     }
 
     /// Drops `actor`'s reaction, such as when it starts a fight or unloads.
-    public mutating func cancel(_ actor: ReferenceKey) {
+    mutating func cancel(_ actor: ReferenceKey) {
         stages[actor] = nil
     }
 

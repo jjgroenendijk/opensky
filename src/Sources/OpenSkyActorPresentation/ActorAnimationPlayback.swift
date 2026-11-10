@@ -155,7 +155,7 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
     }
 
     /// Ends the playing override now, as when a held idle is released.
-    public func endOverride() {
+    func endOverride() {
         state.withLock {
             $0.clip = $0.locomotionClip
             $0.overrideEnd = 0
@@ -201,7 +201,7 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
 
     /// Hands the pose to the actor's behaviour graph: `pose` is what the graph publishes,
     /// in the bone order of `skeleton`.
-    public func attachGraph(skeleton: HKASkeleton, pose: SkinnedPoseBuffer) {
+    func attachGraph(skeleton: HKASkeleton, pose: SkinnedPoseBuffer) {
         let source = GraphSource(
             skeleton: skeleton, boneIndex: SkeletonBoneIndex(names: skeleton.boneNames),
             buffer: pose
@@ -210,7 +210,7 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
     }
 
     /// Returns the actor to its clips.
-    public func detachGraph() {
+    func detachGraph() {
         state.withLock { $0.graph = nil }
     }
 
@@ -278,7 +278,7 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
     }
 
     /// Where the actor stands now, which its lag bones trail.
-    public var placement: float4x4 {
+    var placement: float4x4 {
         get { state.withLock { $0.placement } }
         set { state.withLock { $0.placement = newValue } }
     }

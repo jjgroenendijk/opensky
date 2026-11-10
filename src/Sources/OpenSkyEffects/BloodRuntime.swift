@@ -10,14 +10,14 @@ import simd
 nonisolated public struct ScreenBloodRuntime: Equatable, Sendable {
     nonisolated public struct Splatter: Equatable, Sendable {
         /// Screen position, 0-1 on each axis, y down.
-        public var center: SIMD2<Float>
+        var center: SIMD2<Float>
         /// The share of the screen height.
-        public var size: Float
-        public var opacity: Float
-        public var rotation: Float
+        var size: Float
+        var opacity: Float
+        var rotation: Float
         /// Where the flare sits, in splatter sizes from the centre.
-        public var flareOffset: SIMD2<Float>
-        public var age: Float = 0
+        var flareOffset: SIMD2<Float>
+        var age: Float = 0
     }
 
     public var settings = BloodEffectSettings.vanilla
@@ -65,7 +65,7 @@ nonisolated public struct ScreenBloodRuntime: Equatable, Sendable {
         return added
     }
 
-    public mutating func advance(_ seconds: Float) {
+    mutating func advance(_ seconds: Float) {
         guard seconds > 0 else { return }
         for index in splatters.indices {
             splatters[index].age += seconds
@@ -79,7 +79,7 @@ nonisolated public struct ScreenBloodRuntime: Equatable, Sendable {
 
     /// The share of its opacity a splatter of `age` keeps: whole until the fade starts,
     /// then falling evenly to nothing at the duration.
-    public func fade(age: Float) -> Float {
+    func fade(age: Float) -> Float {
         guard settings.duration > 0 else { return 0 }
         let unit = age / settings.duration
         let start = min(max(settings.fadeStart, 0), 1)
@@ -89,7 +89,7 @@ nonisolated public struct ScreenBloodRuntime: Equatable, Sendable {
     }
 
     /// This frame's quads for the renderer: each splatter, then its flare.
-    public var draws: [ScreenBloodSplat] {
+    var draws: [ScreenBloodSplat] {
         splatters.flatMap { splatter -> [ScreenBloodSplat] in
             let opacity = splatter.opacity * fade(age: splatter.age)
             guard opacity > 0 else { return [] }
@@ -142,7 +142,7 @@ nonisolated public struct WeaponBloodRuntime: Equatable, Sendable {
         ages[weapon] = 0
     }
 
-    public mutating func advance(_ seconds: Float) {
+    mutating func advance(_ seconds: Float) {
         guard seconds > 0 else { return }
         for key in ages.keys {
             ages[key, default: 0] += seconds
@@ -152,7 +152,7 @@ nonisolated public struct WeaponBloodRuntime: Equatable, Sendable {
 
     /// Whole for `fWeaponBloodLifetime`, then fading over `fWeaponBloodFadeDuration`;
     /// gone below `fWeaponBloodFalloffThreshold`.
-    public func strength(age: Float) -> Float {
+    func strength(age: Float) -> Float {
         let fading = age - settings.weaponBloodLifetime
         let value = fading <= 0 ? 1
             : settings.weaponBloodFadeDuration > 0

@@ -116,7 +116,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         self.colors = colors
     }
 
-    public static func build(
+    static func build(
         from file: ESMFile,
         localized _: Bool,
         pluginName: String

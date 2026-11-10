@@ -90,7 +90,7 @@ public final class AssetCacheCoordinator {
     }
 
     /// The check runs again, because it counts only the kinds that are on.
-    public func setKind(_ kind: AssetCacheKind, stored: Bool) {
+    func setKind(_ kind: AssetCacheKind, stored: Bool) {
         guard settings.kinds.contains(kind) != stored else { return }
         update { settings in
             if stored {

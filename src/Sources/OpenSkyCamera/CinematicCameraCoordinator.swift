@@ -33,7 +33,7 @@ public final class CinematicCameraCoordinator {
     public private(set) var attacker: ReferenceKey?
     public private(set) var target: ReferenceKey?
     public private(set) var lastSelection = CameraShotSelection.none
-    public private(set) var lastOutcome: String?
+    private(set) var lastOutcome: String?
     public private(set) var shake: CameraShake?
     public private(set) var time: Double = 0
     public private(set) var playedCount = 0

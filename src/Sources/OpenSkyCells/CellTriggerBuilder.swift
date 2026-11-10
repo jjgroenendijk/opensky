@@ -6,7 +6,7 @@
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyFormatsMesh
+import OpenSkyFormatsMesh
 public import OpenSkyGameData
 public import OpenSkyPhysics
 public import OpenSkyWorldState
@@ -136,7 +136,7 @@ nonisolated extension CellSceneBuilder {
     /// gameplay triggers; the rest are counted exclusions
     /// (docs/engine/trigger-volumes.md). A sphere's radius is `halfExtents.x`:
     /// all 137 spheres in `Skyrim.esm` store one value on every axis.
-    nonisolated public static func triggerGeometry(
+    nonisolated static func triggerGeometry(
         of primitive: PlacedReference.Primitive
     ) -> NIFCollisionGeometry? {
         switch primitive.type {

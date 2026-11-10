@@ -74,7 +74,7 @@ nonisolated extension LocomotionBridge {
 
     /// The blend `hkbRigidBodyRagdollControlsModifier` asks for, or nil when no graph has
     /// run one. Read off the instance, so it cannot go stale.
-    public var ragdollBlendDuration: Float? {
+    var ragdollBlendDuration: Float? {
         graph?.ragdollBlendDuration
     }
 

@@ -63,11 +63,11 @@ nonisolated public struct HeadTrackingSettings: Equatable, Sendable {
 
     public init() {}
 
-    public var maximumYaw: Float {
+    var maximumYaw: Float {
         radians(max(trackXY, 0))
     }
 
-    public var pitchRange: ClosedRange<Float> {
+    var pitchRange: ClosedRange<Float> {
         radians(min(trackMinZ, trackMaxZ)) ... radians(max(trackMinZ, trackMaxZ))
     }
 

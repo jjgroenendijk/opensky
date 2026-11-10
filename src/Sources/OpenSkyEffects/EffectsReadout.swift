@@ -8,9 +8,9 @@ import OpenSkyRendering
 
 nonisolated public enum EffectsReadout {
     /// Rows shown per list; the rest are counted.
-    public static let listedRows = 6
+    static let listedRows = 6
 
-    public static func imageSpace(_ state: ImageSpaceState, eye: EyeAdaptation) -> String {
+    static func imageSpace(_ state: ImageSpaceState, eye: EyeAdaptation) -> String {
         let baseline = state.forcedBaseline.map { "\($0.record.editorID ?? "forced") (forced)" }
             ?? state.baseline.dominantName
         let sources = state.baseline.sources
@@ -48,7 +48,7 @@ nonisolated public enum EffectsReadout {
             + " · scene \(scene) · eye \(adapted)"
     }
 
-    public static func visualEffects(_ snapshot: VisualEffectSnapshot) -> String {
+    static func visualEffects(_ snapshot: VisualEffectSnapshot) -> String {
         var lines = [
             "Effects: \(snapshot.instances.count) live · \(snapshot.attachedTotal) attached"
                 + " · \(snapshot.failedModels) bad models",

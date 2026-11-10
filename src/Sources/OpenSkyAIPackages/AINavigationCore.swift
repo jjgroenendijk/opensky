@@ -2,7 +2,7 @@
 // actor the selection resolves to, and the names the readout prints.
 
 public import OpenSkyFormatsESM
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 import simd
 
 /// One resident actor as the session reports it, before the camera distance.
@@ -28,15 +28,15 @@ nonisolated public struct AICameraPose: Equatable, Sendable {
     }
 }
 
-nonisolated public enum AINavigationCore {
+nonisolated enum AINavigationCore {
     /// How far the move-to-point pick reaches, world units. Whiterun's market
     /// is a couple of thousand units across; the use-key distance could only
     /// send an actor to its own feet. The broad phase searches the ray's
     /// bounds, so it is no larger than it needs to be.
-    public static let pickDistance: Float = 4096
+    static let pickDistance: Float = 4096
 
     /// Nearest the camera first, ties broken by key.
-    public static func options(
+    static func options(
         _ candidates: [AIActorCandidate],
         eye: SIMD3<Float>
     ) -> [AIActorOption] {
@@ -52,7 +52,7 @@ nonisolated public enum AINavigationCore {
     }
 
     /// The chosen actor while it is still resident, else the nearest one.
-    public static func resolve(
+    static func resolve(
         _ chosen: ReferenceKey?,
         in actors: [AIActorOption]
     ) -> ReferenceKey? {
@@ -62,14 +62,14 @@ nonisolated public enum AINavigationCore {
         return actors.first?.key
     }
 
-    public static func name(of key: ReferenceKey?, in actors: [AIActorOption]) -> String {
+    static func name(of key: ReferenceKey?, in actors: [AIActorOption]) -> String {
         guard let key else { return "—" }
         return actors.first { $0.key == key }?.name ?? key.description
     }
 
     /// The readout for a registered actor that no package won. That is a real
     /// outcome, not a missing readout.
-    public static func emptyPackageReadout(_ actor: ReferenceKey) -> PackageActorReadout {
+    static func emptyPackageReadout(_ actor: ReferenceKey) -> PackageActorReadout {
         PackageActorReadout(
             actor: actor,
             actorBase: FormID(0),

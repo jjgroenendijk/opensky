@@ -90,7 +90,7 @@ nonisolated public enum WeatherSelection: Sendable {
 
     /// Weighted pick by `chance`. Zero/negative chances are ignored; an
     /// all-zero pool falls back to a uniform pick so a candidate always wins.
-    public static func pick(from pool: [WeightedWeather], seed: UInt64) -> FormID? {
+    static func pick(from pool: [WeightedWeather], seed: UInt64) -> FormID? {
         guard !pool.isEmpty else { return nil }
         var rng = SplitMix64(seed: seed)
         let total = pool.reduce(0) { $0 + max(0, $1.chance) }

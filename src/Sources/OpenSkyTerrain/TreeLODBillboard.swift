@@ -1,12 +1,12 @@
 // Engine geometry for traditional Skyrim tree LOD: two double-sided planes
 // intersecting at 90 degrees, using one LST rectangle in the worldspace atlas.
 
-public import OpenSkyFormatsCore
-public import OpenSkyFormatsMesh
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 import simd
 
-nonisolated public enum TreeLODBillboard: Sendable {
-    public static func model(type: TreeLODType, atlasPath: String) -> Model {
+nonisolated enum TreeLODBillboard: Sendable {
+    static func model(type: TreeLODType, atlasPath: String) -> Model {
         let halfWidth = type.width * 0.5
         let bottom = type.uvMax.y
         let top = type.uvMin.y

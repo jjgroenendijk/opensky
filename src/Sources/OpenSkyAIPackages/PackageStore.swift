@@ -24,7 +24,7 @@ nonisolated public struct PackageStore: Sendable {
     /// FormIDs move; its conditions stay as written (`ConditionEvaluator`).
     private var translations: [UInt32: FormIDTranslation] = [:]
 
-    public init(file: ESMFile) {
+    init(file: ESMFile) {
         self.init(loadOrder: LoadOrderPlugins(file: file))
     }
 
@@ -48,7 +48,7 @@ nonisolated public struct PackageStore: Sendable {
         skippedRecords = skipped
     }
 
-    public init(
+    init(
         packages: [Package], actorTemplates: ActorTemplateResolver,
         formLists: [FormID: [FormID]] = [:]
     ) {
@@ -67,7 +67,7 @@ nonisolated public struct PackageStore: Sendable {
     }
 
     /// A package by editor ID, ignoring case, or by hexadecimal FormID.
-    public func packageID(named name: String) -> FormID? {
+    func packageID(named name: String) -> FormID? {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         let hex = trimmed.lowercased().hasPrefix("0x") ? String(trimmed.dropFirst(2)) : trimmed
         if let raw = UInt32(hex, radix: 16), packages[raw] != nil {
@@ -84,7 +84,7 @@ nonisolated public struct PackageStore: Sendable {
         translations[id.rawValue]
     }
 
-    public func packageStack(
+    func packageStack(
         for actorBase: FormID, roll: LeveledRoll? = nil
     ) throws -> ActorSourcedField<[FormID]> {
         try actorTemplates.rolling(roll).resolvePackages(base: actorBase).packages

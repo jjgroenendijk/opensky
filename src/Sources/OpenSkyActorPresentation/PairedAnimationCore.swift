@@ -3,7 +3,7 @@
 // See docs/engine/paired-animations.md.
 
 import Foundation
-public import OpenSkyBehavior
+import OpenSkyBehavior
 import OpenSkyFormatsESM
 public import OpenSkyWorldInterface
 
@@ -16,7 +16,7 @@ nonisolated public enum PairedAnimationCore {
     public static let endEvents = ["PairEnd", "pairedStop"]
     /// A pair whose end event never comes ends after this long. [WARNING] OpenSky's choice:
     /// the longest vanilla paired clip found is shorter.
-    public static let maximumSeconds: Float = 30
+    static let maximumSeconds: Float = 30
 
     /// True when an `IDLE` with this event plays on two actors.
     public static func isPaired(event: String) -> Bool {
@@ -26,7 +26,7 @@ nonisolated public enum PairedAnimationCore {
     /// The partner's graph takes the lead's event with `pa_` toggled: `pa_KillMoveC` leads
     /// the victim to `NPC_KillMoveC` as `KillMoveC`, and the rider's `HorseEnter` the horse
     /// as `pa_HorseEnter`. Read from the install's graphs.
-    public static func partnerEvent(of event: String) -> String {
+    static func partnerEvent(of event: String) -> String {
         isPaired(event: event) ? String(event.dropFirst(pairedEventPrefix.count))
             : pairedEventPrefix + event
     }
@@ -49,7 +49,7 @@ nonisolated public enum PairedAnimationCore {
         endEvents.contains { $0.caseInsensitiveCompare(name) == .orderedSame }
     }
 
-    public static func hasExpired(_ play: PairedAnimationPlay, now: Float) -> Bool {
+    static func hasExpired(_ play: PairedAnimationPlay, now: Float) -> Bool {
         now - play.start >= maximumSeconds || now < play.start
     }
 }
@@ -57,7 +57,7 @@ nonisolated public enum PairedAnimationCore {
 nonisolated extension PairedAnimationCore {
     /// The partner `seconds` after the pair started, on its way from `start` to `mark`.
     /// The move is linear in time (docs/engine/paired-animations.md#reaching-the-mark).
-    public static func approach(
+    static func approach(
         from start: PairedActorPose, to mark: PairedActorPose, after seconds: Float,
         _ synchronized: BehaviorSynchronizedMark
     ) -> PairedActorPose {
@@ -73,7 +73,7 @@ nonisolated extension PairedAnimationCore {
         )
     }
 
-    public static func reachesMark(after seconds: Float, _ synchronized: BehaviorSynchronizedMark)
+    static func reachesMark(after seconds: Float, _ synchronized: BehaviorSynchronizedMark)
         -> Bool
     {
         !synchronized.reorientsSupportCharacter || seconds >= synchronized.getToMarkTime

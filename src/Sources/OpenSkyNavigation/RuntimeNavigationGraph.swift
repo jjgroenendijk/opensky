@@ -60,7 +60,7 @@ nonisolated public struct RuntimeNavigationMesh: Sendable {
         ).mapValues { links in links.map(\.door).sorted { $0.rawValue < $1.rawValue } }
     }
 
-    public func triangle(_ index: Int) -> RuntimeNavigationTriangle? {
+    func triangle(_ index: Int) -> RuntimeNavigationTriangle? {
         guard triangles.indices.contains(index) else { return nil }
         return triangles[index]
     }
@@ -106,12 +106,12 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
     private var doorTriangles: [UInt32: [NavigationTriangleID]] = [:]
     private var scratch = NavigationQueryScratch()
 
-    public var triangleCount: Int {
+    var triangleCount: Int {
         navmeshes.values.reduce(0) { $0 + $1.triangles.count }
     }
 
     /// Kept on residency changes, because the pathfinder asks once per searched triangle.
-    public private(set) var hasTeleportDoors = false
+    private(set) var hasTeleportDoors = false
 
     public mutating func setCell(_ location: CellSceneLocation, contents: NavigationCellContents) {
         removeCell(location)
@@ -205,11 +205,11 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
         navmeshes[node.navmesh.rawValue]
     }
 
-    public func door(_ reference: FormID) -> RuntimeNavigationDoor? {
+    func door(_ reference: FormID) -> RuntimeNavigationDoor? {
         doors[reference.rawValue]
     }
 
-    public func triangles(atDoor reference: FormID) -> [NavigationTriangleID] {
+    func triangles(atDoor reference: FormID) -> [NavigationTriangleID] {
         doorTriangles[reference.rawValue] ?? []
     }
 

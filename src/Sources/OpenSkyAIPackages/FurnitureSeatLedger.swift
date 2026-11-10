@@ -68,7 +68,7 @@ nonisolated public struct FurnitureSeatLedger: Sendable {
         holders = holders.filter { $0.value != actor }
     }
 
-    public func holder(of furniture: ReferenceKey, index: Int) -> ReferenceKey? {
+    func holder(of furniture: ReferenceKey, index: Int) -> ReferenceKey? {
         holders[SeatKey(furniture: furniture, index: index)]
     }
 

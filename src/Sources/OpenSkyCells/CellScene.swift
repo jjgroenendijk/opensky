@@ -47,7 +47,7 @@ nonisolated public struct CellScene: Sendable {
     /// The WRLD's load-order FormID, which a location's `LCEC` cell list names. Nil indoors.
     public let worldspace: FormID?
     /// The CELL's load-order FormID. Nil for a scene built without a cell record.
-    public var cellFormID: FormID?
+    var cellFormID: FormID?
     /// The CELL's Public Area and Off Limits flags, which trespass reads.
     public var trespass = CellTrespassFlags()
     /// The CELL or its WRLD has the Can't Wait flag.
@@ -171,8 +171,8 @@ nonisolated public struct CellScene: Sendable {
 nonisolated public struct CellLoadSummary: Equatable, Sendable {
     /// Cell editor ID when present, else "cell <FormID>".
     public let cellName: String
-    public let gridX: Int32
-    public let gridY: Int32
+    let gridX: Int32
+    let gridY: Int32
     /// Non-deleted REFRs in the persistent and temporary children groups.
     public let totalRefCount: Int
     public let drawnRefCount: Int
@@ -183,40 +183,40 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
     /// Mesh load failed: missing file, parse error, or empty model.
     public let modelFailureSkipCount: Int
     /// The REFR record itself failed to decode.
-    public let malformedRefSkipCount: Int
+    let malformedRefSkipCount: Int
     /// Distinct models loaded (MeshLibrary.loadedCount).
-    public let modelCount: Int
+    let modelCount: Int
     /// Distinct texture paths loaded / unresolved (TextureLibrary counters).
-    public let textureCount: Int
-    public let missingTextureCount: Int
+    let textureCount: Int
+    let missingTextureCount: Int
     /// One per painted, visible quadrant (0-4), or 1 for the fallback plane.
-    public var terrainQuadrantCount = 0
+    var terrainQuadrantCount = 0
     /// ATXT splat layers drawn across all terrain quadrants.
-    public var terrainLayerCount = 0
+    var terrainLayerCount = 0
     /// A broken LTEX/TXST chain, or over `TerrainConstant.maxLayers`.
-    public var terrainLayerSkipCount = 0
+    var terrainLayerSkipCount = 0
     /// Procedural GRAS instances/types retained by this cell.
-    public var grassPlacementCount = 0
-    public var grassTypeCount = 0
+    var grassPlacementCount = 0
+    var grassTypeCount = 0
     /// LTEX GNAM references with no usable GRAS DATA/MODL record.
-    public var grassTypeSkipCount = 0
+    var grassTypeSkipCount = 0
     /// Flat water planes drawn for this cell (0 or 1).
     public var waterPlaneCount = 0
     /// Supported LIGH/XEMI placements available to forward draws.
-    public var pointLightCount = 0
+    var pointLightCount = 0
     /// Disabled at runtime; skipped like an initially-disabled record.
     public var runtimeDisabledSkipCount = 0
     /// Deleted at runtime. The header `deleted` flag is filtered before counting.
     public var runtimeDeletedSkipCount = 0
     /// Initially disabled, or held off by a disabled enable parent.
-    public var disabledSkipCount = 0
+    var disabledSkipCount = 0
     /// `XESP` links whose parent was outside the build. Not a skip bucket.
-    public var unresolvedEnableParentCount = 0
+    var unresolvedEnableParentCount = 0
     /// Objects the game placed here. Outside `totalRefCount`, inside `drawnRefCount`:
     /// `totalRefCount + spawnedRefCount == drawnRefCount + skippedRefCount`.
     public var spawnedRefCount = 0
     /// Spawns past the 24-bit object ID space; counted so the identity holds.
-    public var spawnedUnaddressableSkipCount = 0
+    var spawnedUnaddressableSkipCount = 0
     /// Local and position-mapped persistent ACHRs; each lands in one bucket below.
     public var actorCount = 0
     public var actorDrawnCount = 0
@@ -227,16 +227,16 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
     /// One "ACHR <id>: <why>" per counted failure.
     public var actorFailureReasons: [String] = []
     /// Wall time of the cell's actor collect+resolve+assemble phase.
-    public var actorBuildDurationMS = 0.0
+    var actorBuildDurationMS = 0.0
     /// Rendered actors split into live idle playback + reason-tagged static fallback.
     public var actorAnimatedCount = 0
     public var actorAnimationFailureCount = 0
-    public var actorAnimationFailureReasons: [String] = []
+    var actorAnimationFailureReasons: [String] = []
     /// "ACHR <id>: <reason> (<subject>)". Not failures, so outside the identities;
     /// read by the inventory and equipment inspection.
     public var actorAppearanceSkipReasons: [String] = []
     /// Records the builder could not decode so far, outside the reference buckets.
-    public var skippedRecords = SkippedRecords()
+    var skippedRecords = SkippedRecords()
 
     public var skippedRefCount: Int {
         unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount

@@ -6,7 +6,7 @@ import simd
 
 nonisolated extension VehicleCore {
     /// The game's front turntable hinge stops at 40 degrees each way.
-    public static let maximumSteer: Float = 40 * .pi / 180
+    static let maximumSteer: Float = 40 * .pi / 180
 
     /// The distance between the front and the rear axle, or 0 for one axle.
     static func wheelbase(_ wheels: [SIMD2<Float>]?) -> Float {

@@ -3,30 +3,30 @@
 // rule and the census behind it: docs/formats/loading-screens.md#selection.
 
 import Foundation
-public import OpenSkyConditions
+import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyWorldConditions
 
-nonisolated public struct LoadScreenSelector: Sendable {
+nonisolated struct LoadScreenSelector: Sendable {
     /// The failing condition's name, or nil when the screen may show.
-    public typealias Check = @Sendable (ResolvedRecord<LoadScreen>) -> String?
+    typealias Check = @Sendable (ResolvedRecord<LoadScreen>) -> String?
 
-    public let screens: [ResolvedRecord<LoadScreen>]
+    let screens: [ResolvedRecord<LoadScreen>]
     private let check: Check
 
-    public init(screens: [ResolvedRecord<LoadScreen>], check: @escaping Check) {
+    init(screens: [ResolvedRecord<LoadScreen>], check: @escaping Check) {
         self.screens = screens
         self.check = check
     }
 
     /// Screens in load order whose conditions pass.
-    public func passing() -> [ResolvedRecord<LoadScreen>] {
+    func passing() -> [ResolvedRecord<LoadScreen>] {
         screens.filter { check($0) == nil }
     }
 
     /// One passing screen, picked with the seeded generator.
-    public func pick(random: inout ConditionRandom) -> ResolvedRecord<LoadScreen>? {
+    func pick(random: inout ConditionRandom) -> ResolvedRecord<LoadScreen>? {
         let candidates = passing()
         guard !candidates.isEmpty else { return nil }
         return candidates[Int(random.next() % UInt64(candidates.count))]
@@ -34,7 +34,7 @@ nonisolated public struct LoadScreenSelector: Sendable {
 
     /// The standard check: conditions run on the player, whose current
     /// location is `destination` while the screen is chosen.
-    public static func conditionCheck(
+    static func conditionCheck(
         context base: ConditionContext,
         destination: ResolvedFormID?
     ) -> Check {
@@ -54,7 +54,7 @@ nonisolated public struct LoadScreenSelector: Sendable {
 }
 
 nonisolated extension LoadScreenSelector {
-    public init(store: PresentationRecordStore, check: @escaping Check) {
+    init(store: PresentationRecordStore, check: @escaping Check) {
         self.init(screens: store.loadScreens.records, check: check)
     }
 }

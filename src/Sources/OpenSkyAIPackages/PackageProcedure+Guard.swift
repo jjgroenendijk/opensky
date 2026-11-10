@@ -7,7 +7,7 @@ import simd
 
 nonisolated extension PackageProcedureMachine {
     /// True while the guard has warned an intruder that is still in its warn radius.
-    public var isWarning: Bool {
+    var isWarning: Bool {
         kind == .guardArea && warnings > 0
     }
 
