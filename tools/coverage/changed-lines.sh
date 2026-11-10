@@ -7,6 +7,9 @@
 #   2. Every function the branch adds ran in a test. Closures count under rule 1,
 #      and an accessor the compiler adds for a property wrapper is skipped.
 #
+# A file that imports a Metal framework is left out: only the GPU tests reach it, and
+# the CI runner has no Metal 4.
+#
 # A block git sees as moved unchanged is not new: rename detection for lines.
 #
 # Usage: tools/coverage/changed-lines.sh BASE DERIVED_DATA
@@ -24,6 +27,8 @@ sys.path[:0] = ["tools/coverage", "tools/lint"]
 from coverage_profile import current_profiles, demangled, is_closure, is_synthesized, lcov, parse_lcov
 from swift_source import XCODE_ONLY, tested_wiring_modules, wiring_modules
 
+METAL_IMPORT = re.compile(r"^(?:@\w+\s+)*(?:(?:public|package|internal)\s+)?import\s+"
+                          r"(?:Metal|MetalKit|MetalFX|MetalPerformanceShaders)\b", re.MULTILINE)
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 # The colours `git diff --color-moved` gets, so a moved added line is told apart.
@@ -32,8 +37,17 @@ COLOURS = ["-c", "color.diff.new=green", "-c", "color.diff.newMoved=blue",
            "-c", "color.diff.newMovedAlternative=blue"]
 
 
-def changed_lines(diff):
-    """{path: {line}} for the lines a coloured `git diff -U0` adds, without moved ones."""
+def needs_metal(path):
+    try:
+        with open(path, encoding="utf-8", errors="ignore") as source:
+            return bool(METAL_IMPORT.search(source.read()))
+    except OSError:
+        return False
+
+
+def changed_lines(diff, metal=needs_metal):
+    """{path: {line}} for the lines a coloured `git diff -U0` adds, without moved ones and
+    without files that import a Metal framework."""
     changed, lines, number = {}, None, 0
     skipped = XCODE_ONLY | (wiring_modules() - tested_wiring_modules())
     for raw in diff.splitlines():
@@ -41,7 +55,7 @@ def changed_lines(diff):
         if text.startswith("+++ "):
             path = text[6:] if text.startswith("+++ b/") else ""
             usable = (path.startswith("src/Sources/") and path.endswith(".swift")
-                      and path.split("/")[2] not in skipped)
+                      and path.split("/")[2] not in skipped and not metal(path))
             lines = changed.setdefault(path, set()) if usable else None
         elif (hunk := HUNK.match(text)):
             number = int(hunk.group(1))
@@ -93,8 +107,10 @@ def self_check():
         "+++ b/src/Sources/OpenSky/B.swift\n@@ -0,0 +1,1 @@\n+b\n"
         f"diff --git a/src/Sources/{untested}/C.swift b/src/Sources/{untested}/C.swift\n"
         f"+++ b/src/Sources/{untested}/C.swift\n@@ -0,0 +1,1 @@\n+c\n"
+        "diff --git a/src/Sources/OpenSkyRendering/Pass.swift b/src/Sources/OpenSkyRendering/Pass.swift\n"
+        "+++ b/src/Sources/OpenSkyRendering/Pass.swift\n@@ -0,0 +1,1 @@\n+d\n"
     )
-    changed = changed_lines(diff)
+    changed = changed_lines(diff, metal=lambda path: path.endswith("Pass.swift"))
     if changed != {"src/Sources/OpenSkyMagic/A.swift": {1, 2, 3}}:
         sys.exit(f"[ERROR] diff-coverage self-check: changed lines {changed}")
     files = {
@@ -106,7 +122,10 @@ def self_check():
     names = {"c": "closure #1 in f()", "w": "property wrapped field init accessor of A.flag"}
     result = check(changed, files, names)
     expected = (1, 3, ["src/Sources/OpenSkyMagic/A.swift:2: g"], {"src/Sources/OpenSkyMagic/A.swift": [2, 3]})
-    if result != expected or ranges([3, 4, 5, 9]) != "3-5, 9":
+    imports = ["import Metal\n", "public import MetalKit\n", "@preconcurrency import Metal\n"]
+    others = ["import MetalTypes\n", "// import Metal\n", "import simd\n"]
+    found = [bool(METAL_IMPORT.search(text)) for text in imports + others]
+    if result != expected or ranges([3, 4, 5, 9]) != "3-5, 9" or found != [True] * 3 + [False] * 3:
         sys.exit(f"[ERROR] diff-coverage self-check: {result}")
     # A Quick run kept after the last source change merges in; an older GPU run does not.
     if current_profiles("newest", [("Quick", 5), ("GPU", 1)], 3) != ["newest", "Quick"]:

@@ -77,6 +77,12 @@ tests cover them. The modules declared with `composition()` and their interfaces
 rule floor leaves them out: they hold ports and wiring, not game rules. A game rule found in
 an adapter moves into its feature module, where both rules apply.
 
+A file that imports a Metal framework (`Metal`, `MetalKit`, `MetalFX`, or
+`MetalPerformanceShaders`) is outside the diff-coverage rules too. Only the GPU tests reach
+it, and the CI runner has no Metal 4, so its lines never run there. Metal-free render code,
+such as all of `OpenSkyRenderCore`, stays inside. Example: a change to a render pass that
+encodes draw calls counts nothing; a change to the culling math it calls counts as usual.
+
 An adapter module with a test target, such as `OpenSkyProgressionAdapters` and its
 `OpenSkyProgressionAdaptersTests`, is inside both rules. Its tests build the adapter over the
 generated fakes in `OpenSkySessionTesting`, so its forwarding can be checked like any rule. Each
