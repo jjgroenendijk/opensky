@@ -111,6 +111,26 @@ Example: a save decoder calls each part decoder, and each part decoder calls bac
 main decoder to validate what it read. When the validation moves into its own type, both
 sides use that type, and the cycle is gone.
 
+## Rule 5: Law of Demeter
+
+A long chain through objects ties the caller to the inner structure of objects it does not
+own. This is the Law of Demeter, after Lieberherr. `make design-index-report` also lists each
+deep chain (`tools/lint-index/member-chains.py`).
+
+- A chain is a run of member accesses on one line, such as `game.combat.archery?.projectiles.live`.
+- A step counts when the index store names the member it reaches, and that member belongs to a
+  class, an actor, or a protocol limited to classes declared under `src/Sources/`.
+- Steps through structs and enums do not count, so reading the fields of a parsed record is
+  allowed.
+
+| Limit | Value | Findings when set (2026-11-10) | Reason |
+| --- | --- | --- | --- |
+| Steps through reference types in one chain | 3 | 18 chains | The issue's value. All findings are in the adapters, where an adapter reaches through its host into a feature's runtime |
+
+Example: `game.combat.archery?.projectiles.live` reaches through four objects. A `liveProjectiles`
+member on the combat port gives the adapter the list, and the adapter no longer depends on how
+archery stores it.
+
 ## Rule 6: abstractness and instability per module
 
 A module that many others use should be abstract, so it can change without breaking them. A

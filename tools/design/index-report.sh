@@ -11,3 +11,4 @@ cd "$root"
 python3 tools/lint-index/fan-out.py "$store" .
 python3 tools/lint-index/public-surface.py "$store" .
 python3 tools/lint-index/type-cycles.py "$store" .
+python3 tools/lint-index/member-chains.py "$store" .
