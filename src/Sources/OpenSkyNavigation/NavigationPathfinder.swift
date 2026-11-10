@@ -77,173 +77,178 @@ nonisolated public struct NavigationQueryScratch: Sendable {
     }
 }
 
-nonisolated public enum NavigationPathfinder: Sendable {
-    public static func findPath(
-        _ query: NavigationPathQuery,
-        in graph: RuntimeNavigationGraph,
-        scratch: inout NavigationQueryScratch
-    ) -> NavigationPathResult {
-        guard
-            case let .hit(start) = graph.projection(
-                of: query.start, searchRadius: query.projectionRadius
-            ) else { return .miss(.startProjection) }
-        guard
-            case let .hit(target) = graph.projection(
-                of: query.target, searchRadius: query.projectionRadius
-            ) else { return .miss(.targetProjection) }
-
-        scratch.reset()
-        scratch.costs[start.triangle] = 0
-        let firstHeuristic = heuristic(start.triangle, target: target.triangle, in: graph)
-        scratch.push(NavigationOpenEntry(
-            node: start.triangle, cost: firstHeuristic, heuristic: firstHeuristic
-        ))
-
-        var expanded = 0
-        while let entry = scratch.pop() {
-            guard !scratch.closed.contains(entry.node) else { continue }
-            scratch.closed.insert(entry.node)
-            expanded += 1
-            if entry.node == target.triangle {
-                return makePath(
-                    endpoints: NavigationProjectedEndpoints(start: start, target: target),
-                    asked: (query, expanded),
-                    graph: graph,
-                    scratch: &scratch
-                )
-            }
-            expand(entry.node, target: target.triangle, graph: graph, scratch: &scratch)
-        }
-        return .miss(.disconnected)
-    }
-
-    private static func expand(
-        _ node: NavigationTriangleID,
-        target: NavigationTriangleID,
-        graph: RuntimeNavigationGraph,
-        scratch: inout NavigationQueryScratch
-    ) {
-        guard let baseCost = scratch.costs[node] else { return }
-        graph.transitions(from: node, into: &scratch.transitions)
-        for transition in scratch.transitions where !scratch.closed.contains(transition.target) {
-            let newCost = baseCost + transitionCost(transition, from: node, in: graph)
-            if let oldCost = scratch.costs[transition.target], newCost >= oldCost {
-                continue
-            }
-            scratch.costs[transition.target] = newCost
-            scratch.cameFrom[transition.target] = NavigationCameFrom(
-                node: node, portal: transition.portal
-            )
-            let estimate = heuristic(transition.target, target: target, in: graph)
-            scratch.push(NavigationOpenEntry(
-                node: transition.target,
-                cost: newCost + estimate,
-                heuristic: estimate
-            ))
-        }
-    }
-
-    /// A jump costs as much as this much more walking, so a path walks around a ledge
-    /// when the way round is short. OpenSky's own number.
-    static let ledgePenalty: Float = 128
-
-    private static func transitionCost(
-        _ transition: NavigationTransition,
-        from source: NavigationTriangleID,
-        in graph: RuntimeNavigationGraph
-    ) -> Float {
-        guard
-            let sourceTriangle = graph.triangle(source),
-            let targetTriangle = graph.triangle(transition.target)
-        else { return .greatestFiniteMagnitude }
-        let sourceCenter = sourceTriangle.centroid
-        let targetCenter = targetTriangle.centroid
-        let length: Float = switch transition.portal {
-        case let .edge(first, second):
-            simd_distance(sourceCenter, (first + second) / 2)
-                + simd_distance((first + second) / 2, targetCenter)
-        case let .door(_, sourceDoor, targetDoor):
-            simd_distance(sourceCenter, sourceDoor) + simd_distance(targetDoor, targetCenter)
-        case let .ledge(from, landing):
-            simd_distance(sourceCenter, from) + simd_distance(from, landing)
-                + simd_distance(landing, targetCenter) + Self.ledgePenalty
-        }
-        return length * waterFactor(
-            from: sourceTriangle.flags.contains(.water), to: targetTriangle.flags.contains(.water)
-        )
-    }
-
-    /// A swim costs more than a walk, and entering the water more still, so a path swims
-    /// only where the way round on land is far longer.
-    static func waterFactor(from sourceIsWater: Bool, to targetIsWater: Bool) -> Float {
-        switch (sourceIsWater, targetIsWater) {
-        case (false, true): 5
-        case (true, _): 4
-        case (false, false): 1
-        }
-    }
-
-    private static func heuristic(
-        _ node: NavigationTriangleID,
-        target: NavigationTriangleID,
-        in graph: RuntimeNavigationGraph
-    ) -> Float {
-        guard
-            !graph.hasTeleportDoors,
-            let start = graph.triangle(node)?.centroid,
-            let finish = graph.triangle(target)?.centroid
-        else { return 0 }
-        return simd_distance(start, finish)
-    }
-
-    private static func makePath(
-        endpoints: NavigationProjectedEndpoints,
-        asked: (query: NavigationPathQuery, expanded: Int),
-        graph: RuntimeNavigationGraph,
-        scratch: inout NavigationQueryScratch
-    ) -> NavigationPathResult {
-        let (query, expanded) = asked
-        scratch.corridor.append(endpoints.target.triangle)
-        var current = endpoints.target.triangle
-        while current != endpoints.start.triangle {
-            guard let previous = scratch.cameFrom[current] else {
-                return .miss(.disconnected)
-            }
-            scratch.corridorTransitions.append(NavigationTransition(
-                target: current, portal: previous.portal
-            ))
-            current = previous.node
-            scratch.corridor.append(current)
-        }
-        scratch.corridor.reverse()
-        scratch.corridorTransitions.reverse()
-        let pulled = NavigationFunnel.pull(NavigationFunnelInput(
-            corridor: scratch.corridor,
-            transitions: scratch.corridorTransitions,
-            start: endpoints.start.position,
-            target: endpoints.target.position,
-            radius: query.capsuleRadius
-        ), graph: graph)
-        var sequences: [CellSceneLocation: UInt64] = [:]
-        for node in scratch.corridor {
+nonisolated extension RuntimeNavigationGraph {
+    public enum Pathfinder: Sendable {
+        public static func findPath(
+            _ query: NavigationPathQuery,
+            in graph: RuntimeNavigationGraph,
+            scratch: inout NavigationQueryScratch
+        ) -> NavigationPathResult {
             guard
-                let cell = graph.mesh(containing: node)?.cell,
-                let sequence = graph.installedCells[cell]
-            else { continue }
-            sequences[cell] = sequence
+                case let .hit(start) = graph.projection(
+                    of: query.start, searchRadius: query.projectionRadius
+                ) else { return .miss(.startProjection) }
+            guard
+                case let .hit(target) = graph.projection(
+                    of: query.target, searchRadius: query.projectionRadius
+                ) else { return .miss(.targetProjection) }
+
+            scratch.reset()
+            scratch.costs[start.triangle] = 0
+            let firstHeuristic = heuristic(start.triangle, target: target.triangle, in: graph)
+            scratch.push(NavigationOpenEntry(
+                node: start.triangle, cost: firstHeuristic, heuristic: firstHeuristic
+            ))
+
+            var expanded = 0
+            while let entry = scratch.pop() {
+                guard !scratch.closed.contains(entry.node) else { continue }
+                scratch.closed.insert(entry.node)
+                expanded += 1
+                if entry.node == target.triangle {
+                    return makePath(
+                        endpoints: NavigationProjectedEndpoints(start: start, target: target),
+                        asked: (query, expanded),
+                        graph: graph,
+                        scratch: &scratch
+                    )
+                }
+                expand(entry.node, target: target.triangle, graph: graph, scratch: &scratch)
+            }
+            return .miss(.disconnected)
         }
-        return .path(NavigationPath(
-            waypoints: pulled.waypoints,
-            doorCrossings: pulled.doorCrossings,
-            stats: NavigationPathStats(
-                nodesExpanded: expanded,
-                corridorTriangleCount: scratch.corridor.count
-            ),
-            corridor: scratch.corridor,
-            cellSequences: sequences,
-            target: query.target,
-            ledgeCrossings: pulled.ledgeCrossings
-        ))
+
+        private static func expand(
+            _ node: NavigationTriangleID,
+            target: NavigationTriangleID,
+            graph: RuntimeNavigationGraph,
+            scratch: inout NavigationQueryScratch
+        ) {
+            guard let baseCost = scratch.costs[node] else { return }
+            graph.transitions(from: node, into: &scratch.transitions)
+            for transition in scratch.transitions
+                where !scratch.closed.contains(transition.target)
+            {
+                let newCost = baseCost + transitionCost(transition, from: node, in: graph)
+                if let oldCost = scratch.costs[transition.target], newCost >= oldCost {
+                    continue
+                }
+                scratch.costs[transition.target] = newCost
+                scratch.cameFrom[transition.target] = NavigationCameFrom(
+                    node: node, portal: transition.portal
+                )
+                let estimate = heuristic(transition.target, target: target, in: graph)
+                scratch.push(NavigationOpenEntry(
+                    node: transition.target,
+                    cost: newCost + estimate,
+                    heuristic: estimate
+                ))
+            }
+        }
+
+        /// A jump costs as much as this much more walking, so a path walks around a ledge
+        /// when the way round is short. OpenSky's own number.
+        static let ledgePenalty: Float = 128
+
+        private static func transitionCost(
+            _ transition: NavigationTransition,
+            from source: NavigationTriangleID,
+            in graph: RuntimeNavigationGraph
+        ) -> Float {
+            guard
+                let sourceTriangle = graph.triangle(source),
+                let targetTriangle = graph.triangle(transition.target)
+            else { return .greatestFiniteMagnitude }
+            let sourceCenter = sourceTriangle.centroid
+            let targetCenter = targetTriangle.centroid
+            let length: Float = switch transition.portal {
+            case let .edge(first, second):
+                simd_distance(sourceCenter, (first + second) / 2)
+                    + simd_distance((first + second) / 2, targetCenter)
+            case let .door(_, sourceDoor, targetDoor):
+                simd_distance(sourceCenter, sourceDoor) + simd_distance(targetDoor, targetCenter)
+            case let .ledge(from, landing):
+                simd_distance(sourceCenter, from) + simd_distance(from, landing)
+                    + simd_distance(landing, targetCenter) + Self.ledgePenalty
+            }
+            return length * waterFactor(
+                from: sourceTriangle.flags.contains(.water),
+                to: targetTriangle.flags.contains(.water)
+            )
+        }
+
+        /// A swim costs more than a walk, and entering the water more still, so a path swims
+        /// only where the way round on land is far longer.
+        static func waterFactor(from sourceIsWater: Bool, to targetIsWater: Bool) -> Float {
+            switch (sourceIsWater, targetIsWater) {
+            case (false, true): 5
+            case (true, _): 4
+            case (false, false): 1
+            }
+        }
+
+        private static func heuristic(
+            _ node: NavigationTriangleID,
+            target: NavigationTriangleID,
+            in graph: RuntimeNavigationGraph
+        ) -> Float {
+            guard
+                !graph.hasTeleportDoors,
+                let start = graph.triangle(node)?.centroid,
+                let finish = graph.triangle(target)?.centroid
+            else { return 0 }
+            return simd_distance(start, finish)
+        }
+
+        private static func makePath(
+            endpoints: NavigationProjectedEndpoints,
+            asked: (query: NavigationPathQuery, expanded: Int),
+            graph: RuntimeNavigationGraph,
+            scratch: inout NavigationQueryScratch
+        ) -> NavigationPathResult {
+            let (query, expanded) = asked
+            scratch.corridor.append(endpoints.target.triangle)
+            var current = endpoints.target.triangle
+            while current != endpoints.start.triangle {
+                guard let previous = scratch.cameFrom[current] else {
+                    return .miss(.disconnected)
+                }
+                scratch.corridorTransitions.append(NavigationTransition(
+                    target: current, portal: previous.portal
+                ))
+                current = previous.node
+                scratch.corridor.append(current)
+            }
+            scratch.corridor.reverse()
+            scratch.corridorTransitions.reverse()
+            let pulled = NavigationFunnel.pull(NavigationFunnelInput(
+                corridor: scratch.corridor,
+                transitions: scratch.corridorTransitions,
+                start: endpoints.start.position,
+                target: endpoints.target.position,
+                radius: query.capsuleRadius
+            ), graph: graph)
+            var sequences: [CellSceneLocation: UInt64] = [:]
+            for node in scratch.corridor {
+                guard
+                    let cell = graph.mesh(containing: node)?.cell,
+                    let sequence = graph.installedCells[cell]
+                else { continue }
+                sequences[cell] = sequence
+            }
+            return .path(NavigationPath(
+                waypoints: pulled.waypoints,
+                doorCrossings: pulled.doorCrossings,
+                stats: NavigationPathStats(
+                    nodesExpanded: expanded,
+                    corridorTriangleCount: scratch.corridor.count
+                ),
+                corridor: scratch.corridor,
+                cellSequences: sequences,
+                target: query.target,
+                ledgeCrossings: pulled.ledgeCrossings
+            ))
+        }
     }
 }
 
