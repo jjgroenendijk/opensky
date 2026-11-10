@@ -67,7 +67,7 @@ enum SkeletonCommand {
         let nifNodeNames: Set<String>
         do {
             let nif = try NIFFile(data: fileSystem.contents(forPath: nifKey))
-            nifNodeNames = try Set(NIFSkeleton(file: nif).boneTransforms.keys)
+            nifNodeNames = try Set(nif.skeleton().boneTransforms.keys)
         } catch {
             throw CLIError.failure("cannot decode \(nifKey): \(String(describing: error))")
         }

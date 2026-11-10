@@ -11,17 +11,24 @@ public import simd
 nonisolated public struct NIFNodeHierarchy: Sendable {
     public let worldTransforms: [Int: float4x4]
     public let names: [Int: String]
+}
 
-    public init(file: NIFFile, keepingRoot: Bool = false) throws {
-        var builder = Builder(file: file, keepingRoot: keepingRoot)
-        for root in file.roots {
+nonisolated extension NIFFile {
+    /// The bind-pose world transform and name of every node block.
+    public func nodeHierarchy(keepingRoot: Bool = false) throws -> NIFNodeHierarchy {
+        var builder = HierarchyBuilder(file: self, keepingRoot: keepingRoot)
+        for root in roots {
             try builder.walk(from: root)
         }
-        worldTransforms = builder.worldTransforms
-        names = builder.names
+        return NIFNodeHierarchy(worldTransforms: builder.worldTransforms, names: builder.names)
     }
 
-    private struct Builder {
+    /// The bone tree of a skeleton NIF.
+    public func skeleton() throws -> NIFSkeleton {
+        try NIFSkeleton(hierarchy: nodeHierarchy())
+    }
+
+    private struct HierarchyBuilder {
         /// Plausibility limit on how deeply a real skeleton nests. Depth costs
         /// heap rather than call frames, so this stays a policy choice instead
         /// of standing in for the thread's stack budget.
@@ -73,7 +80,7 @@ nonisolated public struct NIFNodeHierarchy: Sendable {
         }
 
         private static func decodeNode(
-            _ block: NIFFile.Block,
+            _ block: NIFBlock,
             header: NIFHeader
         ) throws -> NIFNode {
             if block.typeName == NIFSwitchNode.typeName {
@@ -101,8 +108,7 @@ nonisolated public struct NIFSkeleton: Sendable {
         self.boneTransforms = boneTransforms
     }
 
-    public init(file: NIFFile) throws {
-        let hierarchy = try NIFNodeHierarchy(file: file)
+    init(hierarchy: NIFNodeHierarchy) {
         var transforms: [String: float4x4] = [:]
         for (index, name) in hierarchy.names where transforms[name] == nil {
             if let transform = hierarchy.worldTransforms[index] {

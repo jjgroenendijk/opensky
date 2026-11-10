@@ -5,16 +5,16 @@
 public import Foundation
 import OpenSkyFormatsCore
 
-nonisolated public struct NIFFile: Sendable {
-    /// One block: type name from the header table + raw payload bytes.
-    public struct Block: Sendable {
-        public let typeName: String
-        public let data: Data
-    }
+/// One block: type name from the header table + raw payload bytes.
+nonisolated public struct NIFBlock: Sendable {
+    public let typeName: String
+    public let data: Data
+}
 
+nonisolated public struct NIFFile: Sendable {
     public let header: NIFHeader
     /// Every block in file order, header's size array as the slice widths.
-    public let blocks: [Block]
+    public let blocks: [NIFBlock]
     /// Footer root refs: block indices; -1 = null ref. Not validated here —
     /// ref resolution is the scene-graph layer's job.
     public let roots: [Int32]
@@ -23,7 +23,7 @@ nonisolated public struct NIFFile: Sendable {
         var reader = BinaryReader(data)
         header = try NIFHeader(reader: &reader)
 
-        var blocks: [Block] = []
+        var blocks: [NIFBlock] = []
         for index in 0 ..< header.blockCount {
             let size = header.blockSizes[index]
             let typeName = header.blockTypes[header.blockTypeIndices[index]]
@@ -32,7 +32,7 @@ nonisolated public struct NIFFile: Sendable {
                     "block \(index) (\(typeName), \(size) bytes) extends past end of file"
                 )
             }
-            blocks.append(Block(typeName: typeName, data: payload))
+            blocks.append(NIFBlock(typeName: typeName, data: payload))
         }
         self.blocks = blocks
 

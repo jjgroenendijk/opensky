@@ -33,7 +33,7 @@ nonisolated extension NIFFile {
     }
 
     /// The mesh pool node of a mesh particle system, or -1.
-    private func meshPool(of block: NIFFile.Block) -> Int32 {
+    private func meshPool(of block: NIFBlock) -> Int32 {
         guard
             block.typeName == NIFMeshParticleData.systemTypeName,
             let system = attempt({ try NIFParticleSystem(data: block.data, header: header) }),
@@ -117,7 +117,7 @@ nonisolated extension NIFFile {
         }
 
         func decodeSystem(
-            block: NIFFile.Block,
+            block: NIFBlock,
             parent: float4x4
         ) throws -> ParticleSystemDefinition {
             let system = try NIFParticleSystem(data: block.data, header: file.header)
@@ -162,11 +162,11 @@ nonisolated extension NIFFile {
                 alphaPropertyRef: system.alphaPropertyRef,
                 effectShader: effectShader(ref: system.shaderPropertyRef),
                 alphaProperty: alphaProperty(ref: system.alphaPropertyRef),
-                controllers: NIFParticleControllerDecoder.controllers(
+                controllers: NIFFile.ParticleControllerDecoder.controllers(
                     from: system.object.controllerRef, file: file
                 )
             )
-            definition.sequenceControllers = try NIFParticleControllerDecoder
+            definition.sequenceControllers = try NIFFile.ParticleControllerDecoder
                 .sequenceControllers(from: system.object.controllerRef, file: file)
             return definition
         }
@@ -174,7 +174,7 @@ nonisolated extension NIFFile {
         /// A modifier whose refs need the graph: the bomb, gravity, drag, age death, the
         /// colliders, and the recycle bound. Nil for any other type.
         private func placedModifier(
-            _ block: NIFFile.Block,
+            _ block: NIFBlock,
             systemTransform: float4x4
         ) throws -> ParticleModifier? {
             var reader = BinaryReader(block.data)
@@ -322,7 +322,7 @@ nonisolated extension NIFFile {
             }
         }
 
-        private func block(at index: Int) throws -> NIFFile.Block {
+        private func block(at index: Int) throws -> NIFBlock {
             guard index >= 0, index < file.blocks.count else {
                 throw NIFError.malformed(
                     "block ref \(index) out of range (\(file.blocks.count) blocks)"
@@ -336,7 +336,7 @@ nonisolated extension NIFFile {
 /// A particle system the walk reached, decoded once the walk is done.
 private struct FoundSystem {
     let index: Int
-    let block: NIFFile.Block
+    let block: NIFBlock
     let parent: float4x4
 }
 

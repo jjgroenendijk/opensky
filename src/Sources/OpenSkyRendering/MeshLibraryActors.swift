@@ -25,7 +25,7 @@ nonisolated extension MeshLibrary {
             return .failure(.missing)
         }
         do {
-            let skeleton = try NIFSkeleton(file: NIFFile(data: data))
+            let skeleton = try NIFFile(data: data).skeleton()
             actorSkeletons[pathKey] = skeleton
             return .success(ActorSkeletonAsset(pathKey: pathKey, skeleton: skeleton))
         } catch {
@@ -198,7 +198,7 @@ nonisolated extension MeshLibrary {
         guard
             let data = attempt({ try fileSystem.contents(forPath: path) }),
             let file = attempt({ try NIFFile(data: data) }),
-            let skeleton = attempt({ try NIFSkeleton(file: file) })
+            let skeleton = attempt({ try file.skeleton() })
         else { return nil }
         cachedCharacterSkeleton = skeleton
         return skeleton

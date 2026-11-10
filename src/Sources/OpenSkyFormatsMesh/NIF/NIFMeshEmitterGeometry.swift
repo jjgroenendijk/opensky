@@ -9,8 +9,8 @@ nonisolated enum NIFMeshEmitterGeometry {
     static let maximumVertices = 65536
 
     /// The shape behind an emitter mesh ref; nil for a block type that holds none.
-    static func shape(_ block: NIFFile.Block, _ file: NIFFile) throws -> NIFTriShape? {
-        try NIFTriShape.decode(block, in: file)
+    static func shape(_ block: NIFBlock, _ file: NIFFile) throws -> NIFTriShape? {
+        try file.triShape(of: block)
     }
 
     static func append(

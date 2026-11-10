@@ -127,35 +127,6 @@ nonisolated extension NIFTriShape {
         )
         lodTriangleCounts = shape.lodSizes
     }
-
-    /// The `NIFTriShape` behind any geometry block, or nil for a type that holds none.
-    public static func decode(_ block: NIFFile.Block, in file: NIFFile) throws -> NIFTriShape? {
-        switch block.typeName {
-        case "BSTriShape":
-            return try NIFTriShape(data: block.data, header: file.header)
-        case "BSSubIndexTriShape":
-            return try NIFSubIndexTriShape(data: block.data, header: file.header).shape
-        case "BSDynamicTriShape":
-            return try NIFDynamicTriShape(data: block.data, header: file.header).shape
-        case NIFLegacyTriShape.typeName, NIFLegacyTriShape.lodTypeName:
-            var reader = BinaryReader(block.data)
-            let shape = try NIFLegacyTriShape(
-                reader: &reader, header: file.header,
-                isLOD: block.typeName == NIFLegacyTriShape.lodTypeName
-            )
-            guard shape.dataRef >= 0, Int(shape.dataRef) < file.blocks.count else {
-                throw NIFError.malformed("\(block.typeName) has no NiTriShapeData")
-            }
-            let dataBlock = file.blocks[Int(shape.dataRef)]
-            guard dataBlock.typeName == NIFTriShapeData.typeName else {
-                throw NIFError.malformed("\(block.typeName) data is \(dataBlock.typeName)")
-            }
-            var dataReader = BinaryReader(dataBlock.data)
-            return try NIFTriShape(legacy: shape, data: NIFTriShapeData(reader: &dataReader))
-        default:
-            return nil
-        }
-    }
 }
 
 nonisolated extension NIFBlockDecoders {
@@ -168,4 +139,35 @@ nonisolated extension NIFBlockDecoders {
         },
         NIFTriShapeData.typeName: { reader, _ in try NIFTriShapeData(reader: &reader) }
     ]
+}
+
+nonisolated extension NIFFile {
+    /// The `NIFTriShape` behind any geometry block, or nil for a type that holds none.
+    public func triShape(of block: NIFBlock) throws -> NIFTriShape? {
+        switch block.typeName {
+        case "BSTriShape":
+            return try NIFTriShape(data: block.data, header: header)
+        case "BSSubIndexTriShape":
+            return try NIFSubIndexTriShape(data: block.data, header: header).shape
+        case "BSDynamicTriShape":
+            return try NIFDynamicTriShape(data: block.data, header: header).shape
+        case NIFLegacyTriShape.typeName, NIFLegacyTriShape.lodTypeName:
+            var reader = BinaryReader(block.data)
+            let shape = try NIFLegacyTriShape(
+                reader: &reader, header: header,
+                isLOD: block.typeName == NIFLegacyTriShape.lodTypeName
+            )
+            guard shape.dataRef >= 0, Int(shape.dataRef) < blocks.count else {
+                throw NIFError.malformed("\(block.typeName) has no NiTriShapeData")
+            }
+            let dataBlock = blocks[Int(shape.dataRef)]
+            guard dataBlock.typeName == NIFTriShapeData.typeName else {
+                throw NIFError.malformed("\(block.typeName) data is \(dataBlock.typeName)")
+            }
+            var dataReader = BinaryReader(dataBlock.data)
+            return try NIFTriShape(legacy: shape, data: NIFTriShapeData(reader: &dataReader))
+        default:
+            return nil
+        }
+    }
 }

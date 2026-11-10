@@ -6,107 +6,196 @@
 import Foundation
 import OpenSkyFormatsCore
 
-nonisolated enum NIFParticleControllerDecoder {
-    /// `BSPSysMultiTargetEmitterCtlr` adds two fields after the base layout.
-    static let emitterControllerTypes: Set = ["NiPSysEmitterCtlr", "BSPSysMultiTargetEmitterCtlr"]
-    static let boolInterpolatorTypes: Set = ["NiBoolInterpolator", "NiBoolTimelineInterpolator"]
-    /// nif.xml `#INV_FLT#`: the pose value is unset.
-    static let invalidFloat: Float = -3.402823466e+38
+nonisolated extension NIFFile {
+    enum ParticleControllerDecoder {
+        /// `BSPSysMultiTargetEmitterCtlr` adds two fields after the base layout.
+        static let emitterControllerTypes: Set = [
+            "NiPSysEmitterCtlr",
+            "BSPSysMultiTargetEmitterCtlr"
+        ]
+        static let boolInterpolatorTypes: Set = ["NiBoolInterpolator", "NiBoolTimelineInterpolator"]
 
-    /// Every particle controller from `ref` along the next-controller links.
-    static func controllers(from ref: Int32, file: NIFFile) throws -> ParticleControllerSet {
-        try chain(from: ref, file: file, feeds: FeedCache()).set
-    }
-
-    /// The chain's controllers as each named sequence feeds them, by lowercased sequence
-    /// name. A sequence that feeds none of the chain's controllers is left out.
-    static func sequenceControllers(
-        from ref: Int32, file: NIFFile
-    ) throws -> [String: ParticleControllerSet] {
-        guard ref >= 0 else { return [:] }
-        var result: [String: ParticleControllerSet] = [:]
-        for sequence in try NIFControllerSequenceDecoder.sequences(file: file) {
-            guard let name = sequence.name?.lowercased(), result[name] == nil else { continue }
-            let fed = try chain(from: ref, file: file, feeds: FeedCache(sequence: sequence))
-            if fed.usedSequence {
-                result[name] = fed.set
-            }
+        /// Every particle controller from `ref` along the next-controller links.
+        static func controllers(from ref: Int32, file: NIFFile) throws -> ParticleControllerSet {
+            try chain(from: ref, file: file, feeds: ParticleFeedCache()).set
         }
-        return result
-    }
 
-    private static func chain(
-        from ref: Int32, file: NIFFile, feeds: FeedCache
-    ) throws -> (set: ParticleControllerSet, usedSequence: Bool) {
-        // A system with controllers steps only when one is `NiPSysUpdateCtlr`.
-        var set = ParticleControllerSet(updatesSimulation: ref < 0)
-        var feeds = feeds
-        var next = ref
-        var visited: Set<Int32> = []
-        while next >= 0 {
-            guard visited.insert(next).inserted else {
-                throw NIFError.malformed("controller chain loops at block \(next)")
+        /// The chain's controllers as each named sequence feeds them, by lowercased sequence
+        /// name. A sequence that feeds none of the chain's controllers is left out.
+        static func sequenceControllers(
+            from ref: Int32, file: NIFFile
+        ) throws -> [String: ParticleControllerSet] {
+            guard ref >= 0 else { return [:] }
+            var result: [String: ParticleControllerSet] = [:]
+            for sequence in try NIFFile.ControllerSequenceDecoder.sequences(file: file) {
+                guard let name = sequence.name?.lowercased(), result[name] == nil else { continue }
+                let fed = try chain(
+                    from: ref,
+                    file: file,
+                    feeds: ParticleFeedCache(sequence: sequence)
+                )
+                if fed.usedSequence {
+                    result[name] = fed.set
+                }
             }
-            let index = next
-            let block = try Self.block(index, file)
+            return result
+        }
+
+        private static func chain(
+            from ref: Int32, file: NIFFile, feeds: ParticleFeedCache
+        ) throws -> (set: ParticleControllerSet, usedSequence: Bool) {
+            // A system with controllers steps only when one is `NiPSysUpdateCtlr`.
+            var set = ParticleControllerSet(updatesSimulation: ref < 0)
+            var feeds = feeds
+            var next = ref
+            var visited: Set<Int32> = []
+            while next >= 0 {
+                guard visited.insert(next).inserted else {
+                    throw NIFError.malformed("controller chain loops at block \(next)")
+                }
+                let index = next
+                let block = try Self.block(index, file)
+                var reader = BinaryReader(block.data)
+                next = try Int32(bitPattern: reader.readUInt32())
+                if emitterControllerTypes.contains(block.typeName) {
+                    let controller = try emitterController(&reader, file: file)
+                    let feed = controller.isManagerFed ? try feeds.feed(index, file) : nil
+                    try set.emitters.append(controller.fed(by: feed, file: file))
+                } else if
+                    let parameter = ParticleModifierController
+                        .Parameter(rawValue: block.typeName)
+                {
+                    var whole = BinaryReader(block.data)
+                    let raw = try NIFParticleModifierController(
+                        parameter: parameter, reader: &whole, header: file.header
+                    )
+                    try set.modifiers.append(modifierController(
+                        raw,
+                        feeds: &feeds,
+                        index: index,
+                        file: file
+                    ))
+                } else if block.typeName == visibilityControllerType {
+                    var whole = BinaryReader(block.data)
+                    let base = try NIFInterpolatedController(reader: &whole)
+                    let (timing, ref) = try feeds.source(base, index: index, file: file)
+                    set.visibility = try ParticleVisibilityTrack(
+                        timing: timing,
+                        keys: boolKeys(ref, file: file)
+                    )
+                } else if block.typeName == NIFParticleUpdateController.typeName {
+                    set.updatesSimulation = true
+                }
+            }
+            return (set, feeds.usedSequence)
+        }
+
+        static let visibilityControllerType = "NiVisController"
+
+        private static func modifierController(
+            _ raw: NIFParticleModifierController,
+            feeds: inout ParticleFeedCache,
+            index: Int32,
+            file: NIFFile
+        ) throws -> ParticleModifierController {
+            let (timing, ref) = try feeds.source(raw.base, index: index, file: file)
+            let isBool = raw.parameter == .active
+            return try ParticleModifierController(
+                parameter: raw.parameter,
+                modifierName: raw.modifierName,
+                timing: timing,
+                floatKeys: isBool ? [] : floatKeys(ref, file: file),
+                boolKeys: isBool ? boolKeys(ref, file: file) : []
+            )
+        }
+
+        /// Reads past the next-controller ref, which the caller has already read.
+        private static func emitterController(
+            _ reader: inout BinaryReader,
+            file: NIFFile
+        ) throws -> RawEmitterController {
+            let flags = try reader.readUInt16()
+            let frequency = try reader.readFloat32()
+            let phase = try reader.readFloat32()
+            let start = try reader.readFloat32()
+            let stop = try reader.readFloat32()
+            reader.skip(4) // target
+            let interpolator = try Int32(bitPattern: reader.readUInt32())
+            let nameIndex = try reader.readUInt32()
+            let visibility = try Int32(bitPattern: reader.readUInt32())
+            let name = nameIndex != .max && Int(nameIndex) < file.header.strings.count
+                ? file.header.strings[Int(nameIndex)] : nil
+            return try RawEmitterController(
+                name: name,
+                timing: ControllerTiming(
+                    cycle: ControllerCycle(rawValue: (flags >> 1) & 0x3) ?? .clamp,
+                    frequency: frequency,
+                    phase: phase,
+                    startTime: start,
+                    stopTime: stop
+                ),
+                birthRate: floatKeys(interpolator, file: file),
+                active: boolKeys(visibility, file: file),
+                isManagerFed: flags & 0x20 != 0
+            )
+        }
+
+        /// `NiFloatInterpolator`: pose value, then a `NiFloatData` ref. Another
+        /// interpolator type (a blend from a controller manager) gives no keys.
+        static func floatKeys(_ ref: Int32, file: NIFFile) throws -> [NIFKey<Float>] {
+            guard ref >= 0 else { return [] }
+            let block = try Self.block(ref, file)
+            guard block.typeName == "NiFloatInterpolator" else { return [] }
             var reader = BinaryReader(block.data)
-            next = try Int32(bitPattern: reader.readUInt32())
-            if emitterControllerTypes.contains(block.typeName) {
-                let controller = try emitterController(&reader, file: file)
-                let feed = controller.isManagerFed ? try feeds.feed(index, file) : nil
-                try set.emitters.append(controller.fed(by: feed, file: file))
-            } else if
-                let parameter = ParticleModifierController
-                    .Parameter(rawValue: block.typeName)
-            {
-                var whole = BinaryReader(block.data)
-                let raw = try NIFParticleModifierController(
-                    parameter: parameter, reader: &whole, header: file.header
-                )
-                try set.modifiers.append(modifierController(
-                    raw,
-                    feeds: &feeds,
-                    index: index,
-                    file: file
-                ))
-            } else if block.typeName == visibilityControllerType {
-                var whole = BinaryReader(block.data)
-                let base = try NIFInterpolatedController(reader: &whole)
-                let (timing, ref) = try feeds.source(base, index: index, file: file)
-                set.visibility = try ParticleVisibilityTrack(
-                    timing: timing,
-                    keys: boolKeys(ref, file: file)
-                )
-            } else if block.typeName == NIFParticleUpdateController.typeName {
-                set.updatesSimulation = true
+            let value = try reader.readFloat32()
+            let dataRef = try Int32(bitPattern: reader.readUInt32())
+            if dataRef >= 0 {
+                let data = try Self.block(dataRef, file)
+                guard data.typeName == "NiFloatData" else {
+                    throw NIFError.malformed("float interpolator data is \(data.typeName)")
+                }
+                var keys = BinaryReader(data.data)
+                return try NIFTransformData.keyGroup(&keys) { try $0.readFloat32() }
             }
+            return value == NIFFloat.invalid || !value.isFinite ? [] : [NIFKey(
+                time: 0,
+                value: value
+            )]
         }
-        return (set, feeds.usedSequence)
-    }
 
-    static let visibilityControllerType = "NiVisController"
+        /// `NiBoolInterpolator` or `NiBoolTimelineInterpolator`: pose byte (2 is unset),
+        /// then a `NiBoolData` ref.
+        static func boolKeys(_ ref: Int32, file: NIFFile) throws -> [NIFKey<Bool>] {
+            guard ref >= 0 else { return [] }
+            let block = try Self.block(ref, file)
+            guard boolInterpolatorTypes.contains(block.typeName) else { return [] }
+            var reader = BinaryReader(block.data)
+            let value = try reader.readUInt8()
+            let dataRef = try Int32(bitPattern: reader.readUInt32())
+            if dataRef >= 0 {
+                let data = try Self.block(dataRef, file)
+                guard data.typeName == "NiBoolData" else {
+                    throw NIFError.malformed("bool interpolator data is \(data.typeName)")
+                }
+                var keys = BinaryReader(data.data)
+                return try NIFTransformData.keyGroup(&keys, keySize: 5) { try $0.readUInt8() != 0 }
+            }
+            return value > 1 ? [] : [NIFKey(time: 0, value: value == 1)]
+        }
 
-    private static func modifierController(
-        _ raw: NIFParticleModifierController,
-        feeds: inout FeedCache,
-        index: Int32,
-        file: NIFFile
-    ) throws -> ParticleModifierController {
-        let (timing, ref) = try feeds.source(raw.base, index: index, file: file)
-        let isBool = raw.parameter == .active
-        return try ParticleModifierController(
-            parameter: raw.parameter,
-            modifierName: raw.modifierName,
-            timing: timing,
-            floatKeys: isBool ? [] : floatKeys(ref, file: file),
-            boolKeys: isBool ? boolKeys(ref, file: file) : []
-        )
+        static func block(_ ref: Int32, _ file: NIFFile) throws -> NIFBlock {
+            guard ref >= 0, Int(ref) < file.blocks.count else {
+                throw NIFError
+                    .malformed("block ref \(ref) out of range (\(file.blocks.count) blocks)")
+            }
+            return file.blocks[Int(ref)]
+        }
     }
 
     /// The default sequence feeds, read once per chain and only when a controller needs them.
     /// With `sequence` set, that sequence's feed wins where it feeds the controller.
-    private struct FeedCache {
-        var sequence: NIFControllerSequenceDecoder.DecodedSequence?
+    private struct ParticleFeedCache {
+        var sequence: NIFFile.DecodedSequence?
         private(set) var usedSequence = false
         private var feeds: [Int32: SequenceFeed]?
 
@@ -115,7 +204,7 @@ nonisolated enum NIFParticleControllerDecoder {
                 usedSequence = true
                 return own
             }
-            let all = try feeds ?? NIFControllerSequenceDecoder.defaultFeeds(file: file)
+            let all = try feeds ?? NIFFile.ControllerSequenceDecoder.defaultFeeds(file: file)
             feeds = all
             return all[index]
         }
@@ -155,9 +244,9 @@ nonisolated enum NIFParticleControllerDecoder {
         func fed(by feed: SequenceFeed?, file: NIFFile) throws -> ParticleEmitterController {
             guard let feed else { return decoded }
             let rate = try feed.interpolators["BirthRate"]
-                .map { try NIFParticleControllerDecoder.floatKeys($0, file: file) } ?? []
+                .map { try NIFFile.ParticleControllerDecoder.floatKeys($0, file: file) } ?? []
             let on = try feed.interpolators["EmitterActive"]
-                .map { try NIFParticleControllerDecoder.boolKeys($0, file: file) } ?? []
+                .map { try NIFFile.ParticleControllerDecoder.boolKeys($0, file: file) } ?? []
             return ParticleEmitterController(
                 modifierName: name,
                 timing: feed.timing,
@@ -165,83 +254,5 @@ nonisolated enum NIFParticleControllerDecoder {
                 active: on.isEmpty ? active : on
             )
         }
-    }
-
-    /// Reads past the next-controller ref, which the caller has already read.
-    private static func emitterController(
-        _ reader: inout BinaryReader,
-        file: NIFFile
-    ) throws -> RawEmitterController {
-        let flags = try reader.readUInt16()
-        let frequency = try reader.readFloat32()
-        let phase = try reader.readFloat32()
-        let start = try reader.readFloat32()
-        let stop = try reader.readFloat32()
-        reader.skip(4) // target
-        let interpolator = try Int32(bitPattern: reader.readUInt32())
-        let nameIndex = try reader.readUInt32()
-        let visibility = try Int32(bitPattern: reader.readUInt32())
-        let name = nameIndex != .max && Int(nameIndex) < file.header.strings.count
-            ? file.header.strings[Int(nameIndex)] : nil
-        return try RawEmitterController(
-            name: name,
-            timing: ControllerTiming(
-                cycle: ControllerCycle(rawValue: (flags >> 1) & 0x3) ?? .clamp,
-                frequency: frequency,
-                phase: phase,
-                startTime: start,
-                stopTime: stop
-            ),
-            birthRate: floatKeys(interpolator, file: file),
-            active: boolKeys(visibility, file: file),
-            isManagerFed: flags & 0x20 != 0
-        )
-    }
-
-    /// `NiFloatInterpolator`: pose value, then a `NiFloatData` ref. Another
-    /// interpolator type (a blend from a controller manager) gives no keys.
-    static func floatKeys(_ ref: Int32, file: NIFFile) throws -> [NIFKey<Float>] {
-        guard ref >= 0 else { return [] }
-        let block = try Self.block(ref, file)
-        guard block.typeName == "NiFloatInterpolator" else { return [] }
-        var reader = BinaryReader(block.data)
-        let value = try reader.readFloat32()
-        let dataRef = try Int32(bitPattern: reader.readUInt32())
-        if dataRef >= 0 {
-            let data = try Self.block(dataRef, file)
-            guard data.typeName == "NiFloatData" else {
-                throw NIFError.malformed("float interpolator data is \(data.typeName)")
-            }
-            var keys = BinaryReader(data.data)
-            return try NIFTransformData.keyGroup(&keys) { try $0.readFloat32() }
-        }
-        return value == invalidFloat || !value.isFinite ? [] : [NIFKey(time: 0, value: value)]
-    }
-
-    /// `NiBoolInterpolator` or `NiBoolTimelineInterpolator`: pose byte (2 is unset),
-    /// then a `NiBoolData` ref.
-    static func boolKeys(_ ref: Int32, file: NIFFile) throws -> [NIFKey<Bool>] {
-        guard ref >= 0 else { return [] }
-        let block = try Self.block(ref, file)
-        guard boolInterpolatorTypes.contains(block.typeName) else { return [] }
-        var reader = BinaryReader(block.data)
-        let value = try reader.readUInt8()
-        let dataRef = try Int32(bitPattern: reader.readUInt32())
-        if dataRef >= 0 {
-            let data = try Self.block(dataRef, file)
-            guard data.typeName == "NiBoolData" else {
-                throw NIFError.malformed("bool interpolator data is \(data.typeName)")
-            }
-            var keys = BinaryReader(data.data)
-            return try NIFTransformData.keyGroup(&keys, keySize: 5) { try $0.readUInt8() != 0 }
-        }
-        return value > 1 ? [] : [NIFKey(time: 0, value: value == 1)]
-    }
-
-    static func block(_ ref: Int32, _ file: NIFFile) throws -> NIFFile.Block {
-        guard ref >= 0, Int(ref) < file.blocks.count else {
-            throw NIFError.malformed("block ref \(ref) out of range (\(file.blocks.count) blocks)")
-        }
-        return file.blocks[Int(ref)]
     }
 }

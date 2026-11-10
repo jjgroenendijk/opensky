@@ -6,9 +6,9 @@ import Foundation
 import OpenSkyFormatsCore
 import simd
 
-nonisolated extension NIFCollisionDecoder {
+nonisolated extension NIFFile.CollisionDecoder {
     mutating func decodeLeafShape(
-        block: NIFFile.Block,
+        block: NIFBlock,
         parent: float4x4
     ) throws -> [NIFCollisionShape] {
         switch block.typeName {
@@ -49,7 +49,7 @@ nonisolated extension NIFCollisionDecoder {
     }
 
     private func decodeCompressedShape(
-        block: NIFFile.Block,
+        block: NIFBlock,
         parent: float4x4
     ) throws -> [NIFCollisionShape] {
         var reader = BinaryReader(block.data)
@@ -76,7 +76,7 @@ nonisolated extension NIFCollisionDecoder {
     }
 
     private func decodePackedShape(
-        block: NIFFile.Block,
+        block: NIFBlock,
         parent: float4x4
     ) throws -> [NIFCollisionShape] {
         var reader = BinaryReader(block.data)
@@ -103,7 +103,7 @@ nonisolated extension NIFCollisionDecoder {
     }
 
     private func decodeNiTriStripsShape(
-        block: NIFFile.Block,
+        block: NIFBlock,
         parent: float4x4
     ) throws -> [NIFCollisionShape] {
         var reader = BinaryReader(block.data)
@@ -142,7 +142,7 @@ nonisolated extension NIFCollisionDecoder {
     }
 
     private func decodeConvexVertices(
-        block: NIFFile.Block,
+        block: NIFBlock,
         parent: float4x4
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)
@@ -183,7 +183,7 @@ nonisolated extension NIFCollisionDecoder {
     }
 
     private func decodeBox(
-        block: NIFFile.Block,
+        block: NIFBlock,
         parent: float4x4
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)
@@ -198,7 +198,7 @@ nonisolated extension NIFCollisionDecoder {
     }
 
     private func decodeSphere(
-        block: NIFFile.Block,
+        block: NIFBlock,
         parent: float4x4
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)
@@ -212,7 +212,7 @@ nonisolated extension NIFCollisionDecoder {
     }
 
     private func decodeCapsule(
-        block: NIFFile.Block,
+        block: NIFBlock,
         parent: float4x4
     ) throws -> NIFCollisionShape {
         var reader = BinaryReader(block.data)

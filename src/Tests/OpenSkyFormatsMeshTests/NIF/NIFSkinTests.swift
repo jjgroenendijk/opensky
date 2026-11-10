@@ -61,7 +61,7 @@ struct NIFSkinTests {
     }
 
     private func skeleton(headTranslation: Float) throws -> NIFSkeleton {
-        try NIFSkeleton(file: NIFFile(data: NIFFixture.file(
+        try NIFFile(data: NIFFixture.file(
             blocks: [
                 .init("NiNode", NIFFixture.niNode(
                     prefix: NIFFixture.avObjectPrefix(nameIndex: 0),
@@ -73,7 +73,7 @@ struct NIFSkinTests {
                 )))
             ],
             strings: ["Root", "Head"]
-        )))
+        )).skeleton()
     }
 
     @Test func decodesInstanceDataAndPartition() throws {
@@ -128,7 +128,7 @@ struct NIFSkinTests {
             blocks: blocks,
             strings: ["Root", "Bone", "skeleton.nif"]
         ))
-        let skeleton = try NIFSkeleton(file: file)
+        let skeleton = try file.skeleton()
         let bone = try #require(skeleton.boneTransforms["Bone"])
 
         #expect(bone.columns.3 == SIMD4(10, 20, 0, 1))

@@ -100,7 +100,7 @@ nonisolated public struct NIFFieldOfViewTrack: Equatable, Sendable {
             let controller = try NIFTimeController(reader: &reader)
             if block.typeName == NIFPlainController.Kind.frustumFieldOfView.rawValue {
                 timing = controller.timing
-                degrees = try NIFParticleControllerDecoder.floatKeys(
+                degrees = try NIFFile.ParticleControllerDecoder.floatKeys(
                     reader.readNIFRef(),
                     file: file
                 )

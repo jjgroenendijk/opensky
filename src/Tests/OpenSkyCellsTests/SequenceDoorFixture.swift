@@ -40,7 +40,7 @@ enum SequenceDoorFixture {
     private static func interpolator(data: UInt32) -> Data {
         var out = Data()
         for _ in 0 ..< 8 {
-            out.appendFloat32(NIFParticleControllerDecoder.invalidFloat)
+            out.appendFloat32(NIFFloat.invalid)
         }
         out.appendUInt32(data)
         return out

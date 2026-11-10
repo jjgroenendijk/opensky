@@ -23,7 +23,7 @@ nonisolated public enum NIFBlockDecoders: Sendable {
 
     /// The decoded value of `block`, or nil when no whole-block decoder reads its type.
     /// Throws when the bytes do not fit the layout, or when bytes are left over.
-    public static func decode(_ block: NIFFile.Block, header: NIFHeader) throws -> (any Sendable)? {
+    public static func decode(_ block: NIFBlock, header: NIFHeader) throws -> (any Sendable)? {
         guard let decode = all[block.typeName] else { return nil }
         var reader = BinaryReader(block.data)
         let value = try decode(&reader, header)

@@ -76,7 +76,7 @@ struct PreviewRealDataTests {
         let skeletonData = try vfs.contents(
             forPath: "meshes\\actors\\character\\character assets\\skeleton.nif"
         )
-        let skeleton = try NIFSkeleton(file: NIFFile(data: skeletonData))
+        let skeleton = try NIFFile(data: skeletonData).skeleton()
         let model = try NIFFile(data: data).model(skeleton: skeleton)
 
         #expect(model.meshes.count == 2)

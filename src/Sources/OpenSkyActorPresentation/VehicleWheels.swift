@@ -16,7 +16,7 @@ nonisolated public enum VehicleWheels {
     static func nodes(
         in file: NIFFile, prefix: String = "wheel"
     ) throws -> [(name: String, transform: float4x4)] {
-        let hierarchy = try NIFNodeHierarchy(file: file)
+        let hierarchy = try file.nodeHierarchy()
         return hierarchy.names.sorted { $0.key < $1.key }.compactMap { index, name in
             guard
                 name.lowercased().hasPrefix(prefix),

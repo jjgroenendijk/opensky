@@ -127,3 +127,62 @@ nonisolated extension NIFFile {
         return found
     }
 }
+
+// NiNode: a grouping node with child refs under a local transform. Subclasses
+// such as BSFadeNode only append fields, so one decoder reads the shared prefix.
+
+nonisolated public struct NIFNode: Sendable {
+    /// Block types traversed as plain grouping nodes: NiNode layout prefix,
+    /// draw-all-children semantics. Selector nodes (NiSwitchNode, NiLODNode)
+    /// are absent: drawing every child would stack their alternatives. A billboard
+    /// draws at rest unless a node rig turns it to the camera.
+    public static let traversedTypes: Set = [
+        "NiNode", "BSFadeNode", "BSLeafAnimNode", "BSTreeNode",
+        "BSOrderedNode", "BSMultiBoundNode", NIFValueNode.typeName,
+        NIFRangeNode.blastType, NIFRangeNode.damageStageType, NIFMasterParticleSystem.typeName,
+        NIFBillboard.typeName
+    ]
+
+    public let object: NIFObjectPrefix
+    /// Child block refs in file order; -1 = empty slot (kept positional).
+    public let children: [Int32]
+
+    init(object: NIFObjectPrefix, children: [Int32]) {
+        self.object = object
+        self.children = children
+    }
+
+    public init(data: Data, header: NIFHeader) throws {
+        var reader = BinaryReader(data)
+        object = try NIFObjectPrefix(reader: &reader, header: header)
+
+        children = try Self.readRefs(&reader, label: "child")
+        // Effects list + subclass tail fields ignored; the block slice
+        // bounds them.
+    }
+
+    /// Reads the whole `NiNode` part, effects list included, so a subclass can
+    /// continue with its own fields.
+    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+        object = try NIFObjectPrefix(reader: &reader, header: header)
+        children = try Self.readRefs(&reader, label: "child")
+        _ = try Self.readRefs(&reader, label: "effect")
+    }
+
+    /// A uint32 count, then that many int32 block refs.
+    static func readRefs(
+        _ reader: inout BinaryReader,
+        label: String
+    ) throws -> [Int32] {
+        let count = try Int(reader.readUInt32())
+        guard count <= reader.bytesRemaining / 4 else {
+            throw NIFError.malformed("\(label) count \(count) exceeds block size")
+        }
+        var refs: [Int32] = []
+        refs.reserveCapacity(count)
+        for _ in 0 ..< count {
+            try refs.append(Int32(bitPattern: reader.readUInt32()))
+        }
+        return refs
+    }
+}
