@@ -6,14 +6,14 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// Starts the scripts of one effect run on its target and queues `OnEffectStart`.
     /// A script still loading attaches once it loads, unless the run ended first.
     /// `announces` false attaches an effect a save brought back, with no `OnInit` or start.
-    public func startEffectScripts(
+    func startEffectScripts(
         _ run: PapyrusActiveEffectRun,
         scripts: [AttachedScript],
         formIDResolver: FormIDResolver,

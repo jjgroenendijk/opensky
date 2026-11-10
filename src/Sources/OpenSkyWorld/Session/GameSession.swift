@@ -324,7 +324,7 @@ public final class GameSession: RenderFrameDriver {
     }
 
     /// What this frame draws and casts, from `PlayerRigVisibility`.
-    public var rigVisibility: PlayerRigVisibility {
+    var rigVisibility: PlayerRigVisibility {
         PlayerRigVisibility.resolve(
             mode: movementMode,
             hasBody: playerBody != nil,

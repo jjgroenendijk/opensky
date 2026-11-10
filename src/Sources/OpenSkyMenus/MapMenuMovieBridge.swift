@@ -6,10 +6,10 @@
 // them. See docs/engine/world-map.md#map-movie.
 
 import Foundation
-public import OpenSkyFormatsSWF
+import OpenSkyFormatsSWF
 
 /// A call the map movie makes.
-nonisolated public enum MapMovieEvent: Equatable, Sendable {
+nonisolated enum MapMovieEvent: Equatable, Sendable {
     case marker(Int)
     case toggleLocalMap
     case journal
@@ -17,31 +17,25 @@ nonisolated public enum MapMovieEvent: Equatable, Sendable {
 }
 
 /// One marker as the movie draws it.
-nonisolated public struct MapMovieMarker: Equatable, Sendable {
-    public let name: String
+nonisolated struct MapMovieMarker: Equatable, Sendable {
+    let name: String
     /// Index into the movie's `IconTypes`, which follows the `TNAM` marker types.
-    public let iconType: Int
-    public let isUndiscovered: Bool
-
-    public init(name: String, iconType: Int, isUndiscovered: Bool) {
-        self.name = name
-        self.iconType = iconType
-        self.isUndiscovered = isUndiscovered
-    }
+    let iconType: Int
+    let isUndiscovered: Bool
 }
 
-nonisolated public enum MapMenuMovieBridge: Sendable {
-    public static let moviePath = "interface\\map.swf"
-    public static let menuName = "WorldMap"
-    public static let markersPerCreate = 10
+nonisolated enum MapMenuMovieBridge: Sendable {
+    static let moviePath = "interface\\map.swf"
+    static let menuName = "WorldMap"
+    static let markersPerCreate = 10
     /// `PlayerSetMarker` in the movie's `IconTypes`, after the 60 `TNAM` types and the
     /// door and quest icons.
-    public static let playerSetIconType = 65
-    public static let sinkHostFunctions = [
+    static let playerSetIconType = 65
+    static let sinkHostFunctions = [
         "PlaySound", "myLog", "ClickCallback", "SetLocalMapExtents"
     ]
 
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime,
         onEvent: @escaping @MainActor @Sendable (MapMovieEvent) -> Void
     ) {
@@ -68,7 +62,7 @@ nonisolated public enum MapMenuMovieBridge: Sendable {
     }
 
     /// `Init` registers the movie's callbacks, so `SetDateString` follows it.
-    public static func activate(date: String, runtime: SWFMovieRuntime) {
+    static func activate(date: String, runtime: SWFMovieRuntime) {
         call("Init", runtime: runtime)
         runtime.callMovie(
             "SetPlatform",
@@ -77,7 +71,7 @@ nonisolated public enum MapMenuMovieBridge: Sendable {
         runtime.callMovie("SetDateString", arguments: [.string(date)])
     }
 
-    public static func create(_ markers: [MapMovieMarker], runtime: SWFMovieRuntime) {
+    static func create(_ markers: [MapMovieMarker], runtime: SWFMovieRuntime) {
         call("SetNumMarkers", arguments: [.integer(markers.count)], runtime: runtime)
         writeMarkerData(markers.flatMap { marker in
             [
@@ -91,7 +85,7 @@ nonisolated public enum MapMenuMovieBridge: Sendable {
     }
 
     /// `points` holds each marker's place on the stage, 0 to 1, or nil when off screen.
-    public static func refresh(
+    static func refresh(
         _ points: [SIMD2<Float>?], selected: Int?, runtime: SWFMovieRuntime
     ) {
         writeMarkerData(points.flatMap { point -> [AS2Value] in

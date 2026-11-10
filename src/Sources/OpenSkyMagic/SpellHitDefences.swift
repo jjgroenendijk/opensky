@@ -15,18 +15,18 @@ import OpenSkyMagicInterface
 @MainActor
 public struct SpellHitDefences {
     /// A roll in 0 ..< 100 for the absorption chance.
-    public var absorptionRoll: () -> Float = { 100 }
+    var absorptionRoll: () -> Float = { 100 }
     /// Whether `target` faces the caster closely enough for its ward to block.
-    public var wardFaces: (_ target: ReferenceKey, _ caster: ReferenceKey) -> Bool = { _, _ in
+    var wardFaces: (_ target: ReferenceKey, _ caster: ReferenceKey) -> Bool = { _, _ in
         true
     }
 
     /// Whether nothing solid stands between `impact` and the bystander.
-    public var reaches: (_ target: ReferenceKey, _ impact: SIMD3<Float>) -> Bool = { _, _ in true }
+    var reaches: (_ target: ReferenceKey, _ impact: SIMD3<Float>) -> Bool = { _, _ in true }
     /// The `Mod Ward Magicka Absorption Pct` share a ward holder gets back.
-    public var wardMagickaShare: (_ holder: ReferenceKey) -> Float = { _ in 0 }
+    var wardMagickaShare: (_ holder: ReferenceKey) -> Float = { _ in 0 }
     /// The most ward power `holder` may hold (`MagicWorldSettings.wardPowerCap`).
-    public var wardPowerCap: (_ holder: ActorValueHolder) -> Float = { _ in .infinity }
+    var wardPowerCap: (_ holder: ActorValueHolder) -> Float = { _ in .infinity }
 
     public static let none = SpellHitDefences()
 
@@ -93,8 +93,8 @@ extension SpellHitApplication {
     /// Ward Power, which a ward effect accumulates while held.
     public static let wardPowerActorValue: Int32 = 63
     /// Absorb Chance, in percent.
-    public static let absorbChanceActorValue: Int32 = 83
-    public static let magickaActorValue: Int32 = 25
+    static let absorbChanceActorValue: Int32 = 83
+    static let magickaActorValue: Int32 = 25
 
     /// The summed magnitude of the hostile entries, which is what a ward has to hold.
     static func hostileMagnitude(

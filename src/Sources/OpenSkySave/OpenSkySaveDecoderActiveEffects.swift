@@ -2,22 +2,22 @@
 // Bad floats and empty effects are normalized by the state types. An unknown
 // source kind or mode throws: this build wrote both closed enums itself.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's saved active effects, before they are merged back into the
 /// delta.
-nonisolated public struct SaveActiveEffectEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: ActiveEffectState
+nonisolated struct SaveActiveEffectEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: ActiveEffectState
 }
 
-nonisolated public enum OpenSkySaveActiveEffectDecoder: Sendable {
-    public static func decodeActiveEffects(_ payload: Data) throws -> [SaveActiveEffectEntry] {
+nonisolated enum OpenSkySaveActiveEffectDecoder: Sendable {
+    static func decodeActiveEffects(_ payload: Data) throws -> [SaveActiveEffectEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("AEFF entry count")
         try OpenSkySaveDecoder.validate(
@@ -118,11 +118,11 @@ nonisolated public enum OpenSkySaveActiveEffectDecoder: Sendable {
 }
 
 nonisolated extension SaveActiveEffectEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.isEmpty ? nil : state.erased
     }
 }

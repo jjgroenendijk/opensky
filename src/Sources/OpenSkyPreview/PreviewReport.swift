@@ -32,7 +32,7 @@ nonisolated public struct PreviewReport: Codable, Equatable, Sendable {
     public var views: [PreviewViewReport]
 
     /// Fails when any view is blank.
-    public var passed: Bool {
+    var passed: Bool {
         !views.isEmpty && views.allSatisfy { !$0.blank }
     }
 

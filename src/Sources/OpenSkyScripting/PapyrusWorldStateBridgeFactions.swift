@@ -64,7 +64,7 @@ extension PapyrusWorldStateBridge {
     /// Leaves every faction, including the authored ones the accessor seeds first.
     /// - Returns: how many memberships ended.
     @discardableResult
-    public func removeFromAllFactions(_ actor: ReferenceKey) -> Int? {
+    func removeFromAllFactions(_ actor: ReferenceKey) -> Int? {
         guard let runtime = factionNatives.runtime(actor) else { return nil }
         let memberships = worldState.component(ActorFactionState.self, for: actor)?
             .memberships ?? []

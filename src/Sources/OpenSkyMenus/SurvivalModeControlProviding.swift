@@ -3,19 +3,13 @@
 import Foundation
 import OpenSkyGameData
 
-nonisolated public struct SurvivalModeSnapshot: Equatable, Sendable {
-    public let answer: SurvivalModeAnswer
-    public let isForced: Bool
+nonisolated struct SurvivalModeSnapshot: Equatable, Sendable {
+    let answer: SurvivalModeAnswer
+    let isForced: Bool
     /// Nil when the Survival Mode plugin is not loaded.
-    public let globals: SurvivalModeGlobals?
+    let globals: SurvivalModeGlobals?
 
-    public init(answer: SurvivalModeAnswer, isForced: Bool, globals: SurvivalModeGlobals?) {
-        self.answer = answer
-        self.isForced = isForced
-        self.globals = globals
-    }
-
-    public var lines: [String] {
+    var lines: [String] {
         let source = isForced ? " (launch option)" : ""
         var lines = ["Answer: \(answer.rawValue)\(source)"]
         guard let globals else {
@@ -30,11 +24,11 @@ nonisolated public struct SurvivalModeSnapshot: Equatable, Sendable {
 }
 
 extension SurvivalModeCoordinator {
-    public var survivalModeSnapshot: SurvivalModeSnapshot {
+    var survivalModeSnapshot: SurvivalModeSnapshot {
         SurvivalModeSnapshot(answer: answer, isForced: forcedAnswer != nil, globals: globals)
     }
 
-    public func setSurvivalMode(_ on: Bool) {
+    func setSurvivalMode(_ on: Bool) {
         store.set(.survivalMode, to: on ? 1 : 0)
     }
 }

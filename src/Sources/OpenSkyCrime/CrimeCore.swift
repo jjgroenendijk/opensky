@@ -3,39 +3,39 @@
 // bounties. Values in, values out. See docs/engine/coordinators.md.
 
 import Foundation
-public import OpenSkyCrimeInterface
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyCrimeInterface
+import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 import simd
 
 /// The three faction lists the readout's popups offer, sorted by name.
-nonisolated public struct CrimeFactionOptions: Equatable, Sendable {
-    public let all: [FactionOption]
-    public let crime: [FactionOption]
-    public let vendors: [FactionOption]
+nonisolated struct CrimeFactionOptions: Equatable, Sendable {
+    let all: [FactionOption]
+    let crime: [FactionOption]
+    let vendors: [FactionOption]
 }
 
-nonisolated public enum CrimeCore {
+nonisolated enum CrimeCore {
     /// How far the player may move from a pursuing guard's last destination
     /// before the guard repaths. Half the confrontation distance, so a guard
     /// never arrives where the player was a whole conversation's reach ago.
-    public static let guardRepathDistance: Float = GuardResponseState.confrontDistance / 2
+    static let guardRepathDistance: Float = GuardResponseState.confrontDistance / 2
 
-    public static let noFactionTracksCrimeText = "No faction in this load order tracks crime."
-    public static let noFactionsText = "This load order carries no factions."
+    static let noFactionTracksCrimeText = "No faction in this load order tracks crime."
+    static let noFactionsText = "This load order carries no factions."
 
-    public static func factionName(_ key: ReferenceKey, in store: FactionStore?) -> String {
+    static func factionName(_ key: ReferenceKey, in store: FactionStore?) -> String {
         store?.faction(key: key)?.displayName ?? key.description
     }
 
-    public static func factionOption(_ key: ReferenceKey, in store: FactionStore) -> FactionOption {
+    static func factionOption(_ key: ReferenceKey, in store: FactionStore) -> FactionOption {
         FactionOption(key: key, name: factionName(key, in: store))
     }
 
     /// One outcome as a readout line. A refusal is named, so a zero bounty
     /// never reads as a crime nobody noticed.
-    public static func outcomeText(
+    static func outcomeText(
         _ outcome: CrimeOutcome,
         label: String,
         factionName: String?
@@ -49,7 +49,7 @@ nonisolated public enum CrimeCore {
 
     /// Sorted once per load order: a vanilla load order carries well over a
     /// thousand factions.
-    public static func factionOptions(_ store: FactionStore) -> CrimeFactionOptions {
+    static func factionOptions(_ store: FactionStore) -> CrimeFactionOptions {
         let sorted = store.sortedFactions
         func options(_ factions: [ResolvedFaction]) -> [FactionOption] {
             factions
@@ -63,7 +63,7 @@ nonisolated public enum CrimeCore {
         )
     }
 
-    public static func bountyReadouts(
+    static func bountyReadouts(
         _ ledger: CrimeLedgerState,
         factions store: FactionStore,
         texts: CrimeTexts = .vanilla,
@@ -86,7 +86,7 @@ nonisolated public enum CrimeCore {
     }
 
     /// The owner a verdict was reached against, by name.
-    public static func ownerName(_ owner: ReferenceOwner?, in store: FactionStore) -> String? {
+    static func ownerName(_ owner: ReferenceOwner?, in store: FactionStore) -> String? {
         switch owner {
         case nil:
             nil
@@ -99,7 +99,7 @@ nonisolated public enum CrimeCore {
 
     /// Every faction the player owes, with its crime values, and the factions
     /// the player resisted.
-    public static func guardHostility(
+    static func guardHostility(
         ledger: CrimeLedgerState,
         factions store: FactionStore,
         resisted: Set<ReferenceKey>,
@@ -123,7 +123,7 @@ nonisolated public enum CrimeCore {
         return hostility
     }
 
-    public static func guardKey(of action: GuardAction) -> ReferenceKey {
+    static func guardKey(of action: GuardAction) -> ReferenceKey {
         switch action {
         case let .pursue(guardKey, _), let .confront(guardKey, _, _): guardKey
         }
@@ -131,12 +131,12 @@ nonisolated public enum CrimeCore {
 
     /// A pursuing guard repaths only once the player has moved away from where
     /// it was last sent.
-    public static func needsRepath(lastTarget: SIMD3<Float>?, player: SIMD3<Float>) -> Bool {
+    static func needsRepath(lastTarget: SIMD3<Float>?, player: SIMD3<Float>) -> Bool {
         guard let lastTarget else { return true }
         return simd_distance(lastTarget, player) >= guardRepathDistance
     }
 
-    public static func settlementText(
+    static func settlementText(
         _ settlement: ArrestSettlement,
         factionName: String,
         moved: Bool

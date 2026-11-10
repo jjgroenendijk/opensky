@@ -59,11 +59,11 @@ nonisolated public struct ItemRequestFacts: Equatable, Sendable {
     /// Weapons, armour, spells, potions, food, ingredients, poisons, and scrolls.
     public var canBeFavourite = true
     /// An enchanted item whose enchantment the equip runtime cannot apply.
-    public var hasUnusableEnchantment = false
+    var hasUnusableEnchantment = false
     /// The item cannot be worn by the player's race or its slots.
-    public var cannotBeWorn = false
+    var cannotBeWorn = false
     /// A non-playable item, such as a creature's skin, which the player cannot take off.
-    public var isNonPlayable = false
+    var isNonPlayable = false
     public var playerIsAirborne = false
     public var playerIsAttacking = false
     public var hasDropRoom = true

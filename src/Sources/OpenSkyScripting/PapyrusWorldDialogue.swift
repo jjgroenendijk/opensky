@@ -96,7 +96,7 @@ extension PapyrusWorldRuntime {
     }
 
     /// Response result scripts holding a live instance.
-    public var dialogueInfoCount: Int {
+    var dialogueInfoCount: Int {
         Set(dialogueInstanceKeys.map(\.reference)).count
     }
 

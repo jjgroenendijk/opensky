@@ -8,7 +8,7 @@ import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 
 extension MagicCoordinator {
-    public var magicEffectControlSnapshot: MagicEffectControlSnapshot {
+    var magicEffectControlSnapshot: MagicEffectControlSnapshot {
         guard let runtime = effects else { return .unavailable }
         let nearest = world.nearestActorValueHolder()
         var snapshot = MagicEffectControlSnapshot(
@@ -22,7 +22,7 @@ extension MagicCoordinator {
     }
 
     @discardableResult
-    public func consumeFirstCarriedMagicItem() -> MagicEffectActionOutcome {
+    func consumeFirstCarriedMagicItem() -> MagicEffectActionOutcome {
         guard effects != nil else { return recordEffect(.unavailable) }
         let item = carriedItems { items, item in items.magicItemUse(item) == nil ? nil : item }
             .first
@@ -31,7 +31,7 @@ extension MagicCoordinator {
     }
 
     @discardableResult
-    public func dispelPlayerMagicEffects() -> MagicEffectActionOutcome {
+    func dispelPlayerMagicEffects() -> MagicEffectActionOutcome {
         guard let removed = withEffects({ $0.dispelAll(on: .player) }) else {
             return recordEffect(.unavailable)
         }
@@ -93,7 +93,7 @@ extension MagicCoordinator {
 }
 
 extension MagicCoordinator {
-    public var castingControlSnapshot: CastingControlSnapshot {
+    var castingControlSnapshot: CastingControlSnapshot {
         guard caster != nil else { return .unavailable }
         var snapshot = CastingControlSnapshot(
             conditionLines: magicConditionLines()
@@ -127,7 +127,7 @@ extension MagicCoordinator {
     }
 
     @discardableResult
-    public func selectNextKnownSpell() -> CastingActionOutcome {
+    func selectNextKnownSpell() -> CastingActionOutcome {
         let known = playerKnownSpells()
         guard !known.isEmpty else { return recordCasting(.noSpellsKnown) }
         selection = MagicCore.nextSelection(after: selection, count: known.count)
@@ -155,7 +155,7 @@ extension MagicCoordinator {
     /// Fast-forwards the charge, then the maintenance floor, so one press is
     /// one whole cast. Held buttons reach the same states over real frames.
     @discardableResult
-    public func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome {
+    func castReadiedSpell(in hand: SpellHand) -> CastingActionOutcome {
         guard let caster else { return recordCasting(.unavailable) }
         let outcome = caster.begin(hand, on: .player)
         if let failure = outcome.failure {

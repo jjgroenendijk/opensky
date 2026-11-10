@@ -4,10 +4,10 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 
 nonisolated extension RecordTextDump {
-    public static func relationshipSummary(_ record: ESMRecord) throws -> String? {
+    static func relationshipSummary(_ record: ESMRecord) throws -> String? {
         switch record.type {
         case "RELA": try relationSummary(record)
         case "ASTP": try associationTypeSummary(record)

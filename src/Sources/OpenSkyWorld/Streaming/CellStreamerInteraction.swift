@@ -69,7 +69,7 @@ extension CellStreamer {
 
     /// A character's candidates but the vehicles' moving collision, for an actor that
     /// rides or pulls a vehicle.
-    public func collisionCandidatesIgnoringVehicles(
+    func collisionCandidatesIgnoringVehicles(
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
         fixedCollisionCandidates(overlapping: bounds)

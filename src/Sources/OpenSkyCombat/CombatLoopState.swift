@@ -9,8 +9,8 @@ import OpenSkyFormatsESM
 import simd
 
 /// One blow an actor landed on the player, kept for the readout's trace.
-nonisolated public struct CombatIncomingHit: Equatable, Sendable {
-    public let damage: MeleeDamageResult
+nonisolated struct CombatIncomingHit: Equatable, Sendable {
+    let damage: MeleeDamageResult
     /// Whether the player's own graph took the hit-react event.
-    public let playedReaction: Bool
+    let playedReaction: Bool
 }

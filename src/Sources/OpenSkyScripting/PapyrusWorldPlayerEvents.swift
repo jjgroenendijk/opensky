@@ -17,7 +17,7 @@ extension PapyrusWorldRuntime {
     /// Queues `OnLocationChange(akOldLoc, akNewLoc)` on each script of `actor`. A nil
     /// location is the wilderness, which scripts see as `None`. Returns the count.
     @discardableResult
-    public func queueLocationChange(
+    func queueLocationChange(
         actor: ReferenceKey, from old: ResolvedFormID?, to new: ResolvedFormID?
     ) -> Int {
         queueActorEvent(
@@ -73,7 +73,7 @@ extension PapyrusWorldRuntime {
 
     /// `OnVampireFeed(Actor akTarget)` on the feeder's scripts.
     @discardableResult
-    public func queueVampireFeed(feeder: ReferenceKey, target: ReferenceKey) -> Int {
+    func queueVampireFeed(feeder: ReferenceKey, target: ReferenceKey) -> Int {
         queueActorEvent(
             PapyrusEngineEvents.onVampireFeed, on: feeder,
             arguments: [.object(objectHandle(for: target))]

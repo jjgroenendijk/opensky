@@ -14,7 +14,7 @@ nonisolated extension LockTexts {
         }
     }
 
-    public func text(for outcome: LockActionOutcome) -> String {
+    func text(for outcome: LockActionOutcome) -> String {
         switch outcome {
         case .idle: "No lock action yet."
         case .noRuntime: "No item runtime."

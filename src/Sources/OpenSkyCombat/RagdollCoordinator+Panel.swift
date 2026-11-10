@@ -2,34 +2,34 @@
 // through the same `RagdollRuntime.trigger(_:)` a death reaches, so a forced
 // verifies that route rather than adding a second one.
 
-public import OpenSkyCombatInterface
+import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import simd
 
 extension RagdollCoordinator {
-    public var ragdollStatsSnapshot: RagdollStatsSnapshot {
+    var ragdollStatsSnapshot: RagdollStatsSnapshot {
         runtime?.world.statsSnapshot ?? RagdollStatsSnapshot()
     }
 
     /// False without a runtime, without a selected actor, or when its
     /// skeleton carries no bodies.
     @discardableResult
-    public func triggerRagdoll() -> Bool {
+    func triggerRagdoll() -> Bool {
         guard let runtime, let key = world.selectedRagdollActor else { return false }
         return runtime.trigger(key)
     }
 
-    public func setRagdollFrozen(_ frozen: Bool) {
+    func setRagdollFrozen(_ frozen: Bool) {
         runtime?.isFrozen = frozen
     }
 
-    public func setRagdollSelfCollision(_ enabled: Bool) {
+    func setRagdollSelfCollision(_ enabled: Bool) {
         runtime?.isSelfCollisionEnabled = enabled
     }
 
     /// The deaths stand; only the simulated bodies go.
-    public func clearRagdolls() -> [RagdollCommand] {
+    func clearRagdolls() -> [RagdollCommand] {
         runtime?.reset()
         hasPublishedPoses = false
         return [.publishPoses([:])]

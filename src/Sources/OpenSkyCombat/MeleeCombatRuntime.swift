@@ -20,17 +20,17 @@ public final class MeleeCombatRuntime {
     /// How many hit records the trace keeps. A swing through a crowd lands
     /// several at once, so this is a handful of swings rather than a handful
     /// of hits.
-    public static let traceLimit = 16
+    static let traceLimit = 16
 
-    public let settings: CombatSettings
+    let settings: CombatSettings
     public private(set) var state = MeleeCombatState()
     /// The most recent landed hits, oldest first.
-    public private(set) var trace: [MeleeHitRecord] = []
+    private(set) var trace: [MeleeHitRecord] = []
     /// Swings that reached their contact frame, and hits those swings landed.
     /// The two differ by every swing that connected with nothing, which is
     /// most of them.
     public private(set) var swingCount = 0
-    public private(set) var hitCount = 0
+    private(set) var hitCount = 0
 
     /// The weapon the player is swinging. Written when equipment resolves; the
     /// unarmed profile until then. Its `handType` is what `iRightHandType`
@@ -46,18 +46,18 @@ public final class MeleeCombatRuntime {
 
     /// Resolves the IPCT chain for a landed hit. Nil in a synthetic session,
     /// and then hits are silent rather than absent.
-    public var impacts: MeleeImpactResolver?
+    var impacts: MeleeImpactResolver?
 
     /// Holds the guard up from something other than the mouse button. Ored
     /// with the frame's intent, so releasing the button does not drop a guard
     /// a probe or a headless driver put up.
     public var panelBlocking = false
     /// Power attack and bash damage, stamina, and reach.
-    public var powerAttacks = PowerAttackSettings.vanilla
+    var powerAttacks = PowerAttackSettings.vanilla
     /// The Block experience of a blocked blow and a bash.
-    public var skillUses = MeleeSkillUseSettings.vanilla
+    var skillUses = MeleeSkillUseSettings.vanilla
     /// Stagger strength and chance.
-    public var staggers = StaggerSettings.vanilla
+    var staggers = StaggerSettings.vanilla
     /// Seeded, so a fight replays; drawn from only for the `iStaggerAttackChance` roll.
     var staggerRandom = ConditionRandom()
     /// What the swing in progress is, set when its start event is raised.
@@ -89,7 +89,7 @@ public final class MeleeCombatRuntime {
     /// Until then the graph keeps the old hands' numbers, which pick the sheathe clip.
     private var redraw: RedrawPhase?
 
-    public init(settings: CombatSettings, world: (any MeleeCombatWorld)? = nil) {
+    init(settings: CombatSettings, world: (any MeleeCombatWorld)? = nil) {
         self.settings = settings
         self.world = world
     }
@@ -134,7 +134,7 @@ public final class MeleeCombatRuntime {
 
     /// Asks for a specific draw state rather than a toggle, which is what a
     /// checkbox means. A request that matches the current state does nothing.
-    public func setWeaponDrawn(_ drawn: Bool) {
+    func setWeaponDrawn(_ drawn: Bool) {
         guard drawn != state.drawState.isWeaponInHand else { return }
         requestWeaponToggle()
     }
@@ -166,7 +166,7 @@ public final class MeleeCombatRuntime {
     /// Forgets every edge and every in-flight swing. Called when the bridge
     /// resets, so a teleport cannot land the hit the swing before it was
     /// interrupted by.
-    public func reset() {
+    func reset() {
         state.reset()
         trace = []
         swingCount = 0
@@ -188,7 +188,7 @@ public final class MeleeCombatRuntime {
     // MARK: - Readout
 
     /// Where the swing would reach right now, for the readout and the tests.
-    public var currentReach: Float {
+    var currentReach: Float {
         MeleeSwing.reach(
             weapon: weapon,
             settings: settings,

@@ -152,11 +152,11 @@ public enum PreviewRenderJob {
 }
 
 /// How much of a frame is not background. Pure, so a test can feed it pixels.
-nonisolated public enum PreviewCoverage {
+nonisolated enum PreviewCoverage {
     /// A channel difference at or below this counts as the same colour.
     static let tolerance = 8
 
-    public static func fraction(_ pixels: [UInt32]) -> Double {
+    static func fraction(_ pixels: [UInt32]) -> Double {
         guard !pixels.isEmpty else { return 0 }
         var counts: [UInt32: Int] = [:]
         for pixel in pixels {

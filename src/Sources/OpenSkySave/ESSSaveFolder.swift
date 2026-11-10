@@ -115,7 +115,7 @@ nonisolated public struct ESSSaveFolder: Sendable {
 
     // MARK: - List rows
 
-    public static func summary(of header: ESSHeader) -> SaveSummary {
+    static func summary(of header: ESSHeader) -> SaveSummary {
         SaveSummary(
             characterName: header.playerName, level: Int(header.playerLevel),
             raceName: header.playerRaceEditorID, locationName: header.playerLocation,

@@ -4,16 +4,16 @@
 // "If the target is dead, reanimate them". See docs/engine/magic-archetypes.md.
 
 import Foundation
-public import OpenSkyFormatsESM
-public import OpenSkyMagicInterface
+import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 
-nonisolated public enum SummonCore {
+nonisolated enum SummonCore {
     /// UESP "Skyrim:Conjuration": Twin Souls lets the player have "two atronachs or
     /// reanimated zombies", and adds 1 at entry point 68, so the base is 1.
-    public static let baseCommandLimit: Float = 1
+    static let baseCommandLimit: Float = 1
 
     /// `commanded` with `actor` added. Past `limit`, the caster's oldest actors go.
-    public static func commanding(
+    static func commanding(
         _ actor: CommandedActor, in commanded: [CommandedActor], limit: Int
     ) -> (kept: [CommandedActor], released: [CommandedActor]) {
         var kept = commanded + [actor]
@@ -26,7 +26,7 @@ nonisolated public enum SummonCore {
     }
 
     /// The actor that the end of effect `sequence` on `holder` releases.
-    public static func ending(
+    static func ending(
         _ sequence: UInt64, on holder: ReferenceKey, in commanded: [CommandedActor]
     ) -> Int? {
         commanded.firstIndex { $0.holder == holder && $0.sequence == sequence }

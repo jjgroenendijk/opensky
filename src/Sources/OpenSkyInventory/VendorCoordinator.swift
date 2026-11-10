@@ -101,7 +101,7 @@ public final class VendorCoordinator {
 
     /// The rules a trade with `vendor` runs under. A nil vendor is a nominated
     /// container, which trades anything.
-    public func rules(for vendor: Vendor?) -> BarterRules {
+    func rules(for vendor: Vendor?) -> BarterRules {
         guard let vendor else { return .unrestricted }
         let core = core
         return BarterRules(vendor: vendor, hour: world?.hourOfDay) { [weak world] item in
@@ -126,7 +126,7 @@ public final class VendorCoordinator {
     /// Moves every chest's last stocking back one interval, so each restocks on the
     /// next barter.
     @discardableResult
-    public func makeAllRestocksDue() -> Int {
+    func makeAllRestocksDue() -> Int {
         guard let world else { return 0 }
         var ledger = world.vendorRestockLedger
         let wait = Double(max(0, restockSettings.days) * 24)

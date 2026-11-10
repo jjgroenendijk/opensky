@@ -5,13 +5,13 @@
 
 import Foundation
 import OpenSkyQuestsInterface
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension PapyrusWorldRuntime {
     /// False when `handle` names no script instance.
     @discardableResult
-    public func registerTrackedStats(handle: PapyrusObjectHandle, _ isRegistered: Bool) -> Bool {
+    func registerTrackedStats(handle: PapyrusObjectHandle, _ isRegistered: Bool) -> Bool {
         guard let key = keysByHandle[handle] else { return false }
         if isRegistered {
             trackedStatListeners.insert(key)

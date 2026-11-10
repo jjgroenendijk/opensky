@@ -73,7 +73,7 @@ public struct EnchantmentLedger {
     /// Puts `amount` of charge back into `profile`'s item, capped at its capacity.
     /// A full item stops being recorded.
     @discardableResult
-    public func recharge(
+    func recharge(
         _ profile: ItemEnchantmentProfile,
         by amount: Float = .infinity,
         on holder: ActorValueHolder

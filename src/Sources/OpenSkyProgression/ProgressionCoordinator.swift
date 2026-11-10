@@ -61,7 +61,7 @@ public final class ProgressionCoordinator {
     public private(set) var skillSelection = ActorValueIdentity.firstSkillIndex
     /// The selected box of that skill's tree, by `INAM`.
     public var nodeSelection: UInt32 = 0
-    public internal(set) var lastAction = ProgressionActionOutcome.idle
+    var lastAction = ProgressionActionOutcome.idle
     /// Cost, per-level cap, and refusal notices.
     public let training: TrainingSettings
     public let texts: ProgressionTexts
@@ -129,7 +129,7 @@ public final class ProgressionCoordinator {
 
     /// Ignores an index that is not a skill. The old box means nothing in the
     /// new tree, so the box lands on the new tree's first one.
-    public func selectSkill(_ index: Int32) {
+    func selectSkill(_ index: Int32) {
         guard ActorValueIdentity.isSkill(index: index), index != skillSelection else { return }
         skillSelection = index
         nodeSelection = firstNode(forSkill: index)
@@ -214,7 +214,7 @@ public final class ProgressionCoordinator {
     }
 
     /// Nil when the player can buy `perk` now.
-    public func perkSpendRefusal(for perk: ReferenceKey) -> PerkSpendRefusal? {
+    func perkSpendRefusal(for perk: ReferenceKey) -> PerkSpendRefusal? {
         spendRefusal(for: perk, on: .player)
     }
 

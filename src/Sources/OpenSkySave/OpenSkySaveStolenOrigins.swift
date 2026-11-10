@@ -2,15 +2,15 @@
 // clear the stolen flag after a load too. Rows ascend by owner, then item.
 // Layout: docs/formats/opensky-save-actor-chunks.md.
 
-public import Foundation
-public import OpenSkyCrimeInterface
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyCrimeInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Per row: the owning faction's key, the item FormID, and the count.
-    public static func writeStolenOrigins(
+    static func writeStolenOrigins(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -28,7 +28,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
-    public static func decodeStolenOrigins(
+    static func decodeStolenOrigins(
         _ payload: Data
     ) throws -> [SaveStoryEntry<StolenOriginsState>] {
         let tag = OpenSkySaveFormat.ChunkTag.stolenOrigins

@@ -12,29 +12,18 @@ import OpenSkyWorldState
 nonisolated public struct TemperStep: Equatable, Sendable {
     public let from: Int32
     public let to: Int32
-
-    public init(from: Int32, to: Int32) {
-        self.from = from
-        self.to = to
-    }
 }
 
 /// The held copies a tempering recipe can improve.
-nonisolated public struct TemperTarget: Equatable, Sendable {
-    public let item: FormID
+nonisolated struct TemperTarget: Equatable, Sendable {
+    let item: FormID
     /// The level of each held copy, highest first.
-    public let copies: [Int32]
+    let copies: [Int32]
     /// The best level the player's skill reaches.
-    public let maximum: Int32
-
-    public init(item: FormID, copies: [Int32], maximum: Int32) {
-        self.item = item
-        self.copies = copies
-        self.maximum = maximum
-    }
+    let maximum: Int32
 
     /// The copy a temper improves: the lowest one below the maximum.
-    public var from: Int32? {
+    var from: Int32? {
         copies.filter { $0 < maximum }.min()
     }
 }

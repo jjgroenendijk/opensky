@@ -5,15 +5,15 @@
 // typed conversion error so the interpreter can fault without trapping.
 
 import Foundation
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 
-nonisolated public enum PapyrusCoercionError: Error, Equatable {
+nonisolated enum PapyrusCoercionError: Error, Equatable {
     case unsupported(source: String, destination: String)
     case invalidNumber(String)
 }
 
-nonisolated public struct PapyrusCoercion: Sendable {
-    public func toBoolean(_ value: PapyrusValue) -> Bool {
+nonisolated struct PapyrusCoercion: Sendable {
+    func toBoolean(_ value: PapyrusValue) -> Bool {
         switch value {
         case .none:
             false
@@ -32,7 +32,7 @@ nonisolated public struct PapyrusCoercion: Sendable {
         }
     }
 
-    public func toInteger(_ value: PapyrusValue) throws(PapyrusCoercionError) -> Int32 {
+    func toInteger(_ value: PapyrusValue) throws(PapyrusCoercionError) -> Int32 {
         switch value {
         case let .integer(value):
             value
@@ -47,7 +47,7 @@ nonisolated public struct PapyrusCoercion: Sendable {
         }
     }
 
-    public func toFloat(_ value: PapyrusValue) throws(PapyrusCoercionError) -> Float {
+    func toFloat(_ value: PapyrusValue) throws(PapyrusCoercionError) -> Float {
         switch value {
         case let .float(value):
             return value
@@ -65,7 +65,7 @@ nonisolated public struct PapyrusCoercion: Sendable {
         }
     }
 
-    public func toString(_ value: PapyrusValue) -> String {
+    func toString(_ value: PapyrusValue) -> String {
         switch value {
         case .none:
             "None"

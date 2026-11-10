@@ -20,12 +20,12 @@ nonisolated public struct ItemEnchantmentProfileCache: Sendable {
     public private(set) var reuseCount = 0
 
     /// How many items the cache holds an answer for, enchanted or not.
-    public var count: Int {
+    var count: Int {
         entries.count
     }
 
     /// Whether nothing has been asked for since the last wiring.
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         entries.isEmpty
     }
 
@@ -54,7 +54,7 @@ nonisolated public struct ItemEnchantmentProfileCache: Sendable {
     /// The tallies reset with them: they count what this wiring has done, and
     /// carrying them across a rewire would describe entries that no longer
     /// exist.
-    public mutating func invalidate() {
+    mutating func invalidate() {
         entries.removeAll(keepingCapacity: true)
         resolvedCount = 0
         reuseCount = 0
@@ -62,7 +62,7 @@ nonisolated public struct ItemEnchantmentProfileCache: Sendable {
 
     /// What the Equipment section shows, which is the reading that makes the
     /// reuse visible without a profiler.
-    public var readout: EnchantmentCacheReadout {
+    var readout: EnchantmentCacheReadout {
         EnchantmentCacheReadout(
             itemCount: count,
             resolvedCount: resolvedCount,
@@ -70,7 +70,7 @@ nonisolated public struct ItemEnchantmentProfileCache: Sendable {
         )
     }
 
-    public init(
+    init(
         entries: [FormID: ItemEnchantmentProfile?] = [:],
         resolvedCount: Int = 0,
         reuseCount: Int = 0

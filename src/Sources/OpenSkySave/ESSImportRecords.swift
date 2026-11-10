@@ -30,24 +30,12 @@ nonisolated public protocol ESSImportRecords {
 /// Where the save left the player.
 nonisolated public struct ESSImportedPlacement: Equatable, Sendable {
     /// A worldspace or an interior cell.
-    public let space: ResolvedFormID
+    let space: ResolvedFormID
     public let isInterior: Bool
     public let spaceEditorID: String?
     public let position: SIMD3<Float>
     /// The facing, radians, from the player's reference change when it has one.
-    public let heading: Float?
+    let heading: Float?
     /// The exterior cell the save names, if any.
-    public let cell: SIMD2<Int32>?
-
-    public init(
-        space: ResolvedFormID, isInterior: Bool, spaceEditorID: String?,
-        position: SIMD3<Float>, heading: Float?, cell: SIMD2<Int32>?
-    ) {
-        self.space = space
-        self.isInterior = isInterior
-        self.spaceEditorID = spaceEditorID
-        self.position = position
-        self.heading = heading
-        self.cell = cell
-    }
+    let cell: SIMD2<Int32>?
 }

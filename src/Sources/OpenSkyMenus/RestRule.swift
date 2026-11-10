@@ -21,7 +21,7 @@ nonisolated public enum RestRefusal: String, Equatable, Sendable, CaseIterable {
     case cell = "InCell"
 
     /// The game setting that holds the text, such as `sNoWaitInAir`.
-    public func settingEditorID(sleeping: Bool) -> String {
+    func settingEditorID(sleeping: Bool) -> String {
         text(sleeping: sleeping).rawValue
     }
 

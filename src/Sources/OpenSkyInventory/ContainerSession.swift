@@ -42,12 +42,12 @@ public final class ContainerSession {
         inventory.inventory(of: container).totalCount
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         contents.isEmpty
     }
 
     /// Whether the store currently reads this container as open.
-    public var isOpen: Bool {
+    var isOpen: Bool {
         runtime.store.component(ReferenceActivationState.self, for: container.key)?.isOpen ?? false
     }
 
@@ -55,7 +55,7 @@ public final class ContainerSession {
 
     /// Whether taking from this container is theft, and from whom. Not cached, so
     /// a key handed over while the chest is open changes the answer.
-    public var ownership: OwnershipVerdict {
+    var ownership: OwnershipVerdict {
         runtime.crime?.verdict(on: container.key) ?? .unowned
     }
 
@@ -105,7 +105,7 @@ public final class ContainerSession {
     ///
     /// - Throws: `InventoryError.insufficientCount` when the player holds
     ///   fewer, which writes nothing.
-    public func deposit(_ item: FormID, count: Int32 = 1) throws {
+    func deposit(_ item: FormID, count: Int32 = 1) throws {
         try inventory.transfer(item, count: count, from: player, to: container)
     }
 

@@ -24,7 +24,7 @@ nonisolated public struct CombatTransientLimits: Equatable, Sendable {
     public var awakeBodies: Int
 
     /// What a session runs with.
-    public static let standard = CombatTransientLimits(
+    static let standard = CombatTransientLimits(
         liveProjectiles: 12,
         // UESP "Skyrim:Archery": "Only 15 missed arrows or bolts can be present at once".
         stuckProjectiles: 15,
@@ -32,7 +32,7 @@ nonisolated public struct CombatTransientLimits: Equatable, Sendable {
         awakeBodies: 64
     )
 
-    public init(
+    init(
         liveProjectiles: Int,
         stuckProjectiles: Int,
         activeRagdolls: Int,
@@ -57,7 +57,7 @@ nonisolated public struct CombatTransientLimits: Equatable, Sendable {
     }
 
     /// Whether any population is over its ceiling.
-    public func needsTrim(_ counts: CombatTransientCounts) -> Bool {
+    func needsTrim(_ counts: CombatTransientCounts) -> Bool {
         excess(over: counts) != .none
     }
 }

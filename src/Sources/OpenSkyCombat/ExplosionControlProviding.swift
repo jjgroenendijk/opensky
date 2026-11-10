@@ -4,24 +4,10 @@
 public import OpenSkyCombatInterface
 public import OpenSkyPhysics
 
-nonisolated public struct ExplosionControlSnapshot: Equatable, Sendable {
-    public let reports: [ExplosionReport]
-    public let detonationTotal: Int
-    public let debrisCount: Int
-    public let skippedPlacements: Int
-    public let hazards: [TrapHazardRow]
-
-    public init(
-        reports: [ExplosionReport],
-        detonationTotal: Int,
-        debrisCount: Int,
-        skippedPlacements: Int,
-        hazards: [TrapHazardRow]
-    ) {
-        self.reports = reports
-        self.detonationTotal = detonationTotal
-        self.debrisCount = debrisCount
-        self.skippedPlacements = skippedPlacements
-        self.hazards = hazards
-    }
+nonisolated struct ExplosionControlSnapshot: Equatable, Sendable {
+    let reports: [ExplosionReport]
+    let detonationTotal: Int
+    let debrisCount: Int
+    let skippedPlacements: Int
+    let hazards: [TrapHazardRow]
 }

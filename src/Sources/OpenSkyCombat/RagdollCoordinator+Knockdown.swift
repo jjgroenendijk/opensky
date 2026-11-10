@@ -10,7 +10,7 @@ import simd
 
 extension RagdollCoordinator {
     /// The get-up blend when the graph runs no `hkbGetUpModifier`; OpenSky's value.
-    public static let fallbackGetUpDuration: Float = 1
+    static let fallbackGetUpDuration: Float = 1
     static let pelvisBone = "NPC Pelvis [Pelv]"
     static let neckBone = "NPC Neck [Neck]"
 

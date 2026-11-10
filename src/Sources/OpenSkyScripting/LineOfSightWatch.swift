@@ -22,11 +22,6 @@ nonisolated public struct LineOfSightWatch: Equatable, Sendable {
         public let viewer: ReferenceKey
         public let target: ReferenceKey
 
-        public init(viewer: ReferenceKey, target: ReferenceKey) {
-            self.viewer = viewer
-            self.target = target
-        }
-
         public static func < (lhs: Self, rhs: Self) -> Bool {
             (lhs.viewer, lhs.target) < (rhs.viewer, rhs.target)
         }
@@ -53,7 +48,7 @@ nonisolated public struct LineOfSightWatch: Equatable, Sendable {
     }
 
     /// A new registration for the same pair replaces the old one.
-    public mutating func register(_ instance: PapyrusInstanceKey, _ pair: Pair, mode: Mode) {
+    mutating func register(_ instance: PapyrusInstanceKey, _ pair: Pair, mode: Mode) {
         entries[instance, default: [:]][pair] = Entry(mode: mode)
     }
 

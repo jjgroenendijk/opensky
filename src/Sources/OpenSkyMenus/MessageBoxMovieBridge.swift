@@ -4,16 +4,16 @@
 // See docs/engine/messages.md#message-boxes.
 
 import Foundation
-public import OpenSkyFormatsSWF
-public import OpenSkyMenusInterface
+import OpenSkyFormatsSWF
+import OpenSkyMenusInterface
 
-nonisolated public enum MessageBoxMovieBridge: Sendable {
-    public static let moviePath = "interface\\messagebox.swf"
-    public static let menuPath = "/MessageMenu"
-    public static let sinkHostFunctions = ["PlaySound", "myLog"]
+nonisolated enum MessageBoxMovieBridge: Sendable {
+    static let moviePath = "interface\\messagebox.swf"
+    static let menuPath = "/MessageMenu"
+    static let sinkHostFunctions = ["PlaySound", "myLog"]
 
     /// `buttonPress` carries the button's position among the buttons sent.
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime,
         onButton: @escaping @MainActor @Sendable (Int) -> Void
     ) {
@@ -29,7 +29,7 @@ nonisolated public enum MessageBoxMovieBridge: Sendable {
         }
     }
 
-    public static func activate(runtime: SWFMovieRuntime) {
+    static func activate(runtime: SWFMovieRuntime) {
         runtime.callMovie(
             "SetPlatform",
             atPath: menuPath,
@@ -38,7 +38,7 @@ nonisolated public enum MessageBoxMovieBridge: Sendable {
     }
 
     /// Sends one box. A one-button box can be cancelled, as the engine model allows.
-    public static func publish(_ request: MessageBoxRequest, runtime: SWFMovieRuntime) {
+    static func publish(_ request: MessageBoxRequest, runtime: SWFMovieRuntime) {
         let text = [request.title, request.text]
             .compactMap { $0?.isEmpty == false ? $0 : nil }
             .joined(separator: "\n\n")
@@ -55,7 +55,7 @@ nonisolated public enum MessageBoxMovieBridge: Sendable {
     }
 
     /// Moves the movie's focus to the button at `row`, which draws its highlight.
-    public static func highlight(row: Int, runtime: SWFMovieRuntime) {
+    static func highlight(row: Int, runtime: SWFMovieRuntime) {
         guard
             let menu = runtime.node(atPath: menuPath, from: runtime.root),
             let buttons = menu.object.lookup("MessageButtons")?.property.value.objectValue,

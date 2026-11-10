@@ -7,7 +7,7 @@ public import OpenSkyMenusInterface
 
 public final class TextEntryMenuCoordinator: MenuScreen<Bool> {
     public static let identifier: MenuIdentifier = "TextEntry Menu"
-    public static let hint = "Type a name   Enter: accept   Esc: cancel"
+    static let hint = "Type a name   Enter: accept   Esc: cancel"
     public static let lengthLimit = 64
 
     public private(set) var text = ""
@@ -28,7 +28,7 @@ public final class TextEntryMenuCoordinator: MenuScreen<Bool> {
 
     /// `onFinish` gets the accepted text, or nil when the player cancels.
     @discardableResult
-    public func open(
+    func open(
         title: String, text: String = "", onFinish: ((String?) -> Void)? = nil
     ) -> Bool {
         guard !isOpen else { return false }

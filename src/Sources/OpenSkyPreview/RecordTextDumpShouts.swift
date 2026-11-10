@@ -4,11 +4,11 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
-    public static func shoutFamilySummary(
+    static func shoutFamilySummary(
         record: ESMRecord,
         localized: Bool,
         magicContext: MagicContext?
@@ -150,7 +150,7 @@ nonisolated extension RecordTextDump {
         return names.isEmpty ? "none" : names.joined(separator: ", ")
     }
 
-    public static func handSlotsText(_ hands: HandSlots) -> String {
+    static func handSlotsText(_ hands: HandSlots) -> String {
         switch hands {
         case .bothHands: "both"
         case .rightHand: "right"

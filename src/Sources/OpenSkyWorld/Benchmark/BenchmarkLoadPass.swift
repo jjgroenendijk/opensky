@@ -7,12 +7,12 @@ public import OpenSkyRendering
 
 nonisolated public struct BenchmarkCellLoad: Codable, Equatable, Sendable {
     /// `Tamriel (6,-2)` or `interior 00016204`.
-    public let label: String
-    public let totalMS: Double
+    let label: String
+    let totalMS: Double
     /// The build error; a failed cell makes the run not comparable.
-    public let error: String?
+    let error: String?
 
-    public init(label: String, totalMS: Double, error: String? = nil) {
+    init(label: String, totalMS: Double, error: String? = nil) {
         self.label = label
         self.totalMS = totalMS
         self.error = error

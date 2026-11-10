@@ -3,7 +3,7 @@
 // sorts every list, so an unchanged spellbook re-encodes identically.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyMagicInterface
 public import OpenSkyWorldState
@@ -18,7 +18,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `SPLB` chunk: every snapshot entry carrying a spellbook, in the
     /// snapshot's `ReferenceKey` order. A session in which nobody learned
     /// anything writes no chunk.
-    public static func writeSpellbooks(
+    static func writeSpellbooks(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

@@ -34,7 +34,7 @@ public struct PlayerLevelRuntime {
 
     /// Where the live level is published, taken from the baselines this runtime
     /// writes through, so no wiring step can connect one reader and forget another.
-    public var levelSource: PlayerLevelSource {
+    var levelSource: PlayerLevelSource {
         values.baselines.playerLevel
     }
 
@@ -96,7 +96,7 @@ public struct PlayerLevelRuntime {
 
     /// Notes `count` skill points gained, which the level-up screen counts
     /// separately from the experience they banked.
-    public func noteSkillIncreases(_ count: Int) {
+    func noteSkillIncreases(_ count: Int) {
         write(state.notingSkillIncreases(count))
     }
 

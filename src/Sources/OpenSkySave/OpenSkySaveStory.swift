@@ -2,34 +2,34 @@
 // start record, and the exclusive dialogue branch a speaker is in. Each merges
 // into the `RDLT` deltas by key. Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyDialogueInterface
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyDialogueInterface
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyQuestsInterface
+import OpenSkyQuestsInterface
 public import OpenSkyWorldState
 
 /// One saved component of a story chunk, before it is merged back into the delta.
-nonisolated public struct SaveStoryEntry<State: WorldStateComponent>: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: State
+nonisolated struct SaveStoryEntry<State: WorldStateComponent>: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: State
 }
 
 nonisolated extension SaveStoryEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.erased
     }
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// Every playing scene. No scene writes no chunk.
-    public static func writeScenes(
+    static func writeScenes(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -55,7 +55,7 @@ nonisolated extension OpenSkySaveEncoder {
     }
 
     /// The pause time of every paused scene.
-    public static func writeScenePauses(
+    static func writeScenePauses(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -69,7 +69,7 @@ nonisolated extension OpenSkySaveEncoder {
     }
 
     /// Every quest the story manager started.
-    public static func writeStoryManagerQuests(
+    static func writeStoryManagerQuests(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -83,7 +83,7 @@ nonisolated extension OpenSkySaveEncoder {
     }
 
     /// Every speaker in an exclusive branch.
-    public static func writeDialogueBranches(
+    static func writeDialogueBranches(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -116,8 +116,8 @@ nonisolated extension OpenSkySaveEncoder {
     }
 }
 
-nonisolated public enum OpenSkySaveStoryDecoder: Sendable {
-    public static func decodeScenes(_ payload: Data) throws -> [SaveStoryEntry<SceneRuntimeState>] {
+nonisolated enum OpenSkySaveStoryDecoder: Sendable {
+    static func decodeScenes(_ payload: Data) throws -> [SaveStoryEntry<SceneRuntimeState>] {
         try decode(
             payload, tag: OpenSkySaveFormat.ChunkTag.scenes,
             minimumSize: OpenSkySaveFormat.minimumSceneEntrySize
@@ -155,7 +155,7 @@ nonisolated public enum OpenSkySaveStoryDecoder: Sendable {
         }
     }
 
-    public static func decodeScenePauses(
+    static func decodeScenePauses(
         _ payload: Data
     ) throws -> [SaveStoryEntry<SceneRuntimeState>] {
         try decode(
@@ -184,7 +184,7 @@ nonisolated public enum OpenSkySaveStoryDecoder: Sendable {
         }
     }
 
-    public static func decodeStoryManagerQuests(
+    static func decodeStoryManagerQuests(
         _ payload: Data
     ) throws -> [SaveStoryEntry<StoryManagerQuestState>] {
         try decode(
@@ -201,7 +201,7 @@ nonisolated public enum OpenSkySaveStoryDecoder: Sendable {
         }
     }
 
-    public static func decodeDialogueBranches(
+    static func decodeDialogueBranches(
         _ payload: Data
     ) throws -> [SaveStoryEntry<DialogueBranchState>] {
         try decode(

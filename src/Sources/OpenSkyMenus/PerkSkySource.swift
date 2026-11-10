@@ -2,20 +2,20 @@
 // textures on the first frame after. Kept for the session.
 
 import Foundation
-@preconcurrency @unsafe public import Metal
+@preconcurrency @unsafe import Metal
 public import OpenSkyGameData
 public import OpenSkyRendering
 
 public final class PerkSkySource {
-    public static let domePath = "meshes\\interface\\intperkskydome.nif"
-    public static let starPath = "meshes\\interface\\intperkstars01.nif"
-    public static let linePath = "meshes\\interface\\intperkline01.nif"
+    static let domePath = "meshes\\interface\\intperkskydome.nif"
+    static let starPath = "meshes\\interface\\intperkstars01.nif"
+    static let linePath = "meshes\\interface\\intperkline01.nif"
     static let paths = [domePath, starPath, linePath]
 
-    public struct Models {
-        public let dome: MenuSceneModel
-        public let star: MenuSceneModel
-        public let line: MenuSceneModel
+    struct Models {
+        let dome: MenuSceneModel
+        let star: MenuSceneModel
+        let line: MenuSceneModel
     }
 
     private let loader: MenuSceneModelLoader
@@ -27,12 +27,12 @@ public final class PerkSkySource {
         )
     }
 
-    public var failure: String? {
+    var failure: String? {
         loader.failure
     }
 
     /// The models once all three files are in; nil while they load or after a failure.
-    public func models(device: any MTLDevice) -> Models? {
+    func models(device: any MTLDevice) -> Models? {
         loader.models(device: device).map { Models(dome: $0[0], star: $0[1], line: $0[2]) }
     }
 }

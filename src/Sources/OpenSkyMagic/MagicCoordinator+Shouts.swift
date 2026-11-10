@@ -23,7 +23,7 @@ nonisolated public enum ShoutGraphNames: Sendable {
     public static let observedEvents = [spellFire]
 }
 
-nonisolated public enum ShoutRefusal: Equatable, Sendable {
+nonisolated enum ShoutRefusal: Equatable, Sendable {
     /// Entry point 82 left the value at or below 0; `AllowShoutingPerk` adds 1.
     case notAllowed
     case recovering(seconds: Float)
@@ -37,7 +37,7 @@ nonisolated public enum ShoutRefusal: Equatable, Sendable {
     case noDragonSoul
 }
 
-nonisolated public enum ShoutOutcome: Equatable, Sendable {
+nonisolated enum ShoutOutcome: Equatable, Sendable {
     case idle
     case shouted(shout: String, words: Int, cooldown: Float)
     case refused(ShoutRefusal)
@@ -81,14 +81,14 @@ extension MagicCoordinator {
     }
 
     /// Entry point 82 on a base of 0: `AllowShoutingPerk` adds 1 once its quest stage is done.
-    public var isShoutAllowed: Bool {
+    var isShoutAllowed: Bool {
         world.perkModified(
             0, at: .modShoutOK, on: .player,
             subjects: PerkEvaluationSubjects(owner: .player), seams: ConditionContext()
         ) > 0
     }
 
-    public var equippedShout: ResolvedShout? {
+    var equippedShout: ResolvedShout? {
         world.shoutKnowledge.equipped.flatMap { shouts[$0] }
     }
 

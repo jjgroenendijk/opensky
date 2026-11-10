@@ -4,16 +4,16 @@
 // upload, sampler and sRGB policy). AppKit- and GPU-free — model and camera
 // are pure values, unit-tested; rendering reuses Renderer.renderOffscreen.
 
-public import OpenSkyFormatsCore
-public import OpenSkyRenderCore
+import OpenSkyFormatsCore
+import OpenSkyRenderCore
 import OpenSkyRendering
 import simd
 
-nonisolated public enum TexturePreviewScene: Sendable {
+nonisolated enum TexturePreviewScene: Sendable {
     /// Quad height in world units. At the framing distance below the quad
     /// sits far beyond the renderer's 10-unit near plane, so even extreme
     /// texture aspects never clip.
-    public static let quadHeight: Float = 1000
+    static let quadHeight: Float = 1000
 
     /// Must match the renderer's projection fov (65 deg) so the framing
     /// distance below fills the frame vertically.
@@ -23,7 +23,7 @@ nonisolated public enum TexturePreviewScene: Sendable {
     /// UV v=0 at the top (+Z) matching DDS row order, CCW winding as seen
     /// from the camera (renderer front face). Width follows the texture
     /// aspect so texels stay square.
-    public static func model(textureKey: String, aspect: Float) -> Model {
+    static func model(textureKey: String, aspect: Float) -> Model {
         let halfWidth = quadHeight * max(aspect, 0.001) / 2
         let halfHeight = quadHeight / 2
         let mesh = Mesh(
@@ -62,7 +62,7 @@ nonisolated public enum TexturePreviewScene: Sendable {
     /// Head-on camera at the distance where the quad's height exactly fills
     /// the vertical fov (hair of margin). Black sun + white ambient -> the
     /// fragment shader outputs the sampled texel unchanged.
-    public static func camera() -> SceneCamera {
+    static func camera() -> SceneCamera {
         let distance = quadHeight / 2 / tanf(fovYRadians / 2) * 1.02
         return SceneCamera(
             eye: SIMD3(0, -distance, 0),

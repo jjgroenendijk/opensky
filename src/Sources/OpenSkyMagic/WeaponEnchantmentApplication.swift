@@ -85,7 +85,7 @@ public enum WeaponEnchantmentApplication {
     }
 
     /// Applies a hit that reached only `target`, or nothing when it is nil.
-    public static func apply(
+    static func apply(
         _ hit: WeaponEnchantmentHit,
         owner: ActorValueHolder?,
         target: ActorValueHolder?,

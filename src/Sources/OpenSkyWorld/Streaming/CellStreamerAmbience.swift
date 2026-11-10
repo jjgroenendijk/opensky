@@ -14,11 +14,11 @@ import OpenSkyTerrain
 /// Cheap identity for diff: only the fields that drive `AmbienceBed.resolve`.
 /// The director's bed cache means equal keys never re-resolve.
 nonisolated public struct AmbienceKey: Hashable, Sendable {
-    public let isInterior: Bool
-    public let interiorFormID: UInt32?
-    public let exteriorCenter: CellCoordinate?
-    public let regions: [UInt32]
-    public let acousticSpace: UInt32?
+    let isInterior: Bool
+    let interiorFormID: UInt32?
+    let exteriorCenter: CellCoordinate?
+    let regions: [UInt32]
+    let acousticSpace: UInt32?
 }
 
 extension CellStreamer {

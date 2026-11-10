@@ -10,11 +10,11 @@ public import OpenSkyCombatInterface
 
 /// What one observed event did to the state.
 nonisolated public struct MeleeStateChange: Equatable, Sendable {
-    public let drawState: WeaponDrawState
-    public let attackPhase: MeleeAttackPhase
+    let drawState: WeaponDrawState
+    let attackPhase: MeleeAttackPhase
     /// True on the event that moved the weapon between the sheathed node and
     /// the hand node, which is the frame the attachment is rebuilt on.
-    public let movedAttachment: Bool
+    let movedAttachment: Bool
     /// True on the contact frame, which is the frame the sweep runs on.
     public let openedHitWindow: Bool
 }
@@ -26,12 +26,12 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
     /// Whether the guard is up, from `blockStart` and `blockStop`.
     public private(set) var isBlocking = false
     /// Whether a stagger is playing, from `staggerStart` and `staggerStop`.
-    public private(set) var isStaggering = false
+    private(set) var isStaggering = false
     /// Whether the swing's combo window is open, from `AttackWinStart` to
     /// `AttackWinEnd`. A press now chains into the next swing.
     public private(set) var isChainWindowOpen = false
     /// How many swings have reached their contact frame since construction.
-    public private(set) var contactCount = 0
+    private(set) var contactCount = 0
     /// Monotonic id of the swing in progress, so a hit filter can say "this
     /// target has already been hit by *this* swing". Zero before the first
     /// swing; rises on every `attackStart`.
@@ -185,7 +185,7 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
 
     /// Forgets everything, for a teleport or a graph re-attach. The weapon goes
     /// back to sheathed because the newly attached graph starts there.
-    public mutating func reset() {
+    mutating func reset() {
         self = MeleeCombatState()
     }
 }

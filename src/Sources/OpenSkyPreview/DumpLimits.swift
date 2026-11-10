@@ -11,7 +11,7 @@ nonisolated public struct DumpLimits: Equatable, Sendable {
     /// Nesting of the decoded view; it only stops runaway reflection.
     public var depth: Int
 
-    public static let preview = DumpLimits(lines: 400, collection: 24, fields: 64, depth: 8)
+    static let preview = DumpLimits(lines: 400, collection: 24, fields: 64, depth: 8)
     public static let complete = DumpLimits(
         lines: .max, collection: .max, fields: .max, depth: 32
     )

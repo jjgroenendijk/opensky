@@ -9,7 +9,7 @@ import simd
 
 extension PapyrusNativeFunctions {
     /// OpenSky draws the sun at infinity, so a position is this far from the player along it.
-    public static let sunDistance: Float = 100_000
+    static let sunDistance: Float = 100_000
 
     static func installSky(into registry: inout PapyrusNativeRegistry) {
         for (axis, name) in ["GetSunPositionX", "GetSunPositionY", "GetSunPositionZ"].enumerated() {
@@ -41,10 +41,10 @@ extension PapyrusNativeFunctions {
 
 /// Looking at the sun: the look direction within `coneDegrees` of it. No open source
 /// gives the game's angle, so the cone is OpenSky's reading.
-nonisolated public enum PapyrusSunGaze: Sendable {
-    public static let coneDegrees: Float = 5
+nonisolated enum PapyrusSunGaze: Sendable {
+    static let coneDegrees: Float = 5
 
-    public static func isGazing(forward: SIMD3<Float>, towardSun: SIMD3<Float>) -> Bool {
+    static func isGazing(forward: SIMD3<Float>, towardSun: SIMD3<Float>) -> Bool {
         let lengths = simd_length(forward) * simd_length(towardSun)
         guard lengths > 0, lengths.isFinite else { return false }
         return simd_dot(forward, towardSun) / lengths >= cos(coneDegrees * .pi / 180)

@@ -25,31 +25,31 @@ nonisolated public protocol ESSExportRecords {
 }
 
 nonisolated public struct ESSExportPlugin: Equatable, Sendable {
-    public let name: String
+    let name: String
     /// An ESL-flagged plugin, which the game numbers in the light plugin list.
-    public let isLight: Bool
+    let isLight: Bool
 
-    public init(name: String, isLight: Bool = false) {
+    init(name: String, isLight: Bool = false) {
         self.name = name
         self.isLight = isLight
     }
 }
 
 nonisolated public struct ESSExportScript: Equatable, Sendable {
-    nonisolated public struct Variable: Equatable, Sendable {
-        public let name: String
-        public let typeName: String
+    nonisolated struct Variable: Equatable, Sendable {
+        let name: String
+        let typeName: String
         /// The compiled initial value, which an instance holds until a script sets it.
-        public let initial: PapyrusValue
+        let initial: PapyrusValue
 
-        public init(name: String, typeName: String, initial: PapyrusValue) {
+        init(name: String, typeName: String, initial: PapyrusValue) {
             self.name = name
             self.typeName = typeName
             self.initial = initial
         }
 
         /// Object and array variables hold VM handles, which OpenSky does not keep.
-        public var holdsHandle: Bool {
+        var holdsHandle: Bool {
             switch PapyrusType(name: typeName) {
             case .object, .array: true
             case .none, .boolean, .integer, .float, .string: false
@@ -57,16 +57,10 @@ nonisolated public struct ESSExportScript: Equatable, Sendable {
         }
     }
 
-    public let name: String
+    let name: String
     /// Empty for a script with no parent.
-    public let parent: String
-    public let variables: [Variable]
-
-    public init(name: String, parent: String, variables: [Variable]) {
-        self.name = name
-        self.parent = parent
-        self.variables = variables
-    }
+    let parent: String
+    let variables: [Variable]
 }
 
 /// Header text the session knows and the snapshot does not.

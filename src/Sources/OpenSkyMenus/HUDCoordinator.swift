@@ -13,7 +13,7 @@ import simd
 
 public final class HUDCoordinator {
     public private(set) var isLoaded = false
-    public private(set) var loadError: String?
+    private(set) var loadError: String?
     public private(set) var interactionTarget: InteractionTarget?
     /// Where the tracked quests' targets stand, for the compass.
     public private(set) var questTargets: [SIMD3<Float>] = []
@@ -331,7 +331,7 @@ extension HUDCoordinator: SubtitlePresenting {
 }
 
 extension HUDCoordinator {
-    public var controlSnapshot: HUDControlSnapshot {
+    var controlSnapshot: HUDControlSnapshot {
         HUDControlSnapshot(
             prompt: effectivePrompt,
             cameraHeading: world?.viewCamera.map { HUDCore.headingDegrees($0.yaw) },

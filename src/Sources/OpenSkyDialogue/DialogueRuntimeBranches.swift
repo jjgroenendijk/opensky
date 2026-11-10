@@ -14,7 +14,7 @@ import OpenSkyWorldState
 @MainActor
 extension DialogueRuntime {
     /// The exclusive branch `speaker` is in, or nil.
-    public func exclusiveBranch(of speaker: ReferenceKey) -> FormID? {
+    func exclusiveBranch(of speaker: ReferenceKey) -> FormID? {
         store.component(DialogueBranchState.self, for: speaker)?.exclusiveBranch
     }
 

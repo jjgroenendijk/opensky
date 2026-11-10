@@ -38,7 +38,7 @@ extension ProgressionCoordinator {
 
     /// The readout's Train control: one session with the nearest trainer.
     @discardableResult
-    public func trainWithNearestTrainer() -> ProgressionActionOutcome {
+    func trainWithNearestTrainer() -> ProgressionActionOutcome {
         guard let offer = world.nearestTrainer() else { return record(.noTrainer) }
         let skill = ActorValueIdentity.name(at: offer.skill) ?? "skill \(offer.skill)"
         return switch train(with: offer) {

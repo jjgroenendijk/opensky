@@ -1,21 +1,21 @@
 // FCTN chunk: faction memberships, merged into the `RDLT` deltas by `ReferenceKey`.
 // A faction the load order lost is kept, so removing a plugin keeps progress.
 
-public import Foundation
+import Foundation
 public import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's saved memberships, before they are merged back into the delta.
-nonisolated public struct SaveFactionEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: ActorFactionState
+nonisolated struct SaveFactionEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: ActorFactionState
 }
 
-nonisolated public enum OpenSkySaveFactionDecoder: Sendable {
-    public static func decodeFactionMemberships(_ payload: Data) throws -> [SaveFactionEntry] {
+nonisolated enum OpenSkySaveFactionDecoder: Sendable {
+    static func decodeFactionMemberships(_ payload: Data) throws -> [SaveFactionEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("FCTN entry count")
         try OpenSkySaveDecoder.validate(
@@ -60,11 +60,11 @@ nonisolated public enum OpenSkySaveFactionDecoder: Sendable {
 }
 
 nonisolated extension SaveFactionEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.isEmpty ? nil : state.erased
     }
 }

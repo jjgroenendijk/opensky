@@ -16,7 +16,7 @@ extension MapMenuCoordinator {
         return marker
     }
 
-    public var playerMarkerName: String {
+    var playerMarkerName: String {
         world?.playerMarkerTexts[.name] ?? PlayerMarkerText.name.fallback
     }
 
@@ -37,14 +37,14 @@ extension MapMenuCoordinator {
         run(.askUndiscovered(site.position), target: .site(site))
     }
 
-    public func setPlayerMarker(at position: SIMD3<Float>) {
+    func setPlayerMarker(at position: SIMD3<Float>) {
         guard let world, let worldspace = world.mapWorldspaceName else { return }
         world.playerSetMarker = PlayerSetMapMarker(worldspace: worldspace, position: position)
         lastOutcome = .playerMarkerPlaced(world.playerMarkerTexts[.placeMarker], position)
         world.showPlayerSetMarker(position)
     }
 
-    public func removePlayerMarker() {
+    func removePlayerMarker() {
         guard let world else { return }
         world.playerSetMarker = nil
         lastOutcome = .playerMarkerAnswered(world.playerMarkerTexts[.remove])

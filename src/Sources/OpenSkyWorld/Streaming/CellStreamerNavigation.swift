@@ -6,7 +6,7 @@
 import OpenSkyCells
 import OpenSkyGameData
 public import OpenSkyNavigation
-public import OpenSkyPlayer
+import OpenSkyPlayer
 public import OpenSkyWorldInterface
 import simd
 
@@ -48,7 +48,7 @@ extension CellStreamer {
         navigationState.repathRequests.append(request)
     }
 
-    public func advanceWorldSystems(frameTime: Float, player: PlayerCapsuleState?) {
+    func advanceWorldSystems(frameTime: Float, player: PlayerCapsuleState?) {
         advancePhysics(frameTime: frameTime, player: player)
         advanceNPCMovement(frameTime: frameTime)
         advanceNavigation()

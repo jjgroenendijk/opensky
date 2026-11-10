@@ -41,7 +41,7 @@ extension QuestRuntime {
     }
 
     /// Location currently filling one ALLS alias.
-    public func aliasLocation(alias aliasID: UInt32, in id: FormID) -> ResolvedFormID? {
+    func aliasLocation(alias aliasID: UInt32, in id: FormID) -> ResolvedFormID? {
         guard let key = quests.key(for: id) else { return nil }
         return store.component(QuestAliasState.self, for: key)?.location(forAlias: aliasID)
     }

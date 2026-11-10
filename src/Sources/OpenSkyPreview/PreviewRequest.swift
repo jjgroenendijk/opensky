@@ -41,7 +41,7 @@ nonisolated public struct PreviewView: Equatable, Sendable {
     /// Game units from the framed center; nil fits the bounds.
     public var distance: Float?
 
-    public init(name: String, yaw: Float, pitch: Float, distance: Float? = nil) {
+    init(name: String, yaw: Float, pitch: Float, distance: Float? = nil) {
         self.name = name
         self.yaw = yaw
         self.pitch = pitch
@@ -79,7 +79,7 @@ nonisolated public enum PreviewAngle: String, CaseIterable, Sendable {
     }
 
     /// `all`, or angle names joined by commas.
-    public static func views(named list: String) throws(PreviewError) -> [PreviewView] {
+    static func views(named list: String) throws(PreviewError) -> [PreviewView] {
         if list == "all" {
             return allCases.map(\.view)
         }

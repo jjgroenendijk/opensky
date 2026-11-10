@@ -32,7 +32,7 @@ public struct CellResetQueries {
 @MainActor
 public final class CellResetCoordinator {
     /// What resets. Enable state, created references, quest and script state do not.
-    public static let resetKinds: [WorldStateComponentKind] = [
+    static let resetKinds: [WorldStateComponentKind] = [
         .death, .actorValues, .combat, .inventory, .activation, .lock, .deletion, .transform,
         .relocation, .harvest, .itemCopies, .leveledRoll
     ]
@@ -106,7 +106,7 @@ public final class CellResetCoordinator {
 
     /// Moves every departure back far enough that each cell resets on the next visit.
     @discardableResult
-    public func makeAllDue() -> Int {
+    func makeAllDue() -> Int {
         var ledger = ledger
         let wait = Double(max(settings.hours, settings.clearedHours))
         for (location, departure) in ledger.departures {
@@ -117,7 +117,7 @@ public final class CellResetCoordinator {
     }
 
     /// For a forced reset.
-    public var readout: String {
+    var readout: String {
         let waiting = "Cells left behind: \(ledger.departures.count)"
         guard let lastReset else { return waiting + "  Last cell reset: none" }
         return waiting + "  Last cell reset: \(lastReset.location)"

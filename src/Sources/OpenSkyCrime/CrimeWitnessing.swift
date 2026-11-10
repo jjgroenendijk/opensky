@@ -48,12 +48,12 @@ public struct FixedCrimeWitnesses: CrimeWitnessSource {
     /// Watchers per perpetrator. An actor with no entry is unobserved.
     public var observers: [ReferenceKey: [ReferenceKey]]
 
-    public init(observers: [ReferenceKey: [ReferenceKey]] = [:]) {
+    init(observers: [ReferenceKey: [ReferenceKey]] = [:]) {
         self.observers = observers
     }
 
     /// Everybody in `observers` watches `perpetrator`.
-    public init(watching perpetrator: ReferenceKey, by observers: [ReferenceKey]) {
+    init(watching perpetrator: ReferenceKey, by observers: [ReferenceKey]) {
         self.init(observers: [perpetrator: observers])
     }
 

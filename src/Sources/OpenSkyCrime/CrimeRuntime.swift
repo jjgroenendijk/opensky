@@ -45,7 +45,7 @@ public struct CrimeRuntime {
     }
 
     /// What one crime faction charges, or nil when it prices nothing.
-    public func prices(of faction: ReferenceKey) -> CrimePrices? {
+    func prices(of faction: ReferenceKey) -> CrimePrices? {
         factions.faction(key: faction).flatMap { settings.prices(for: $0.faction) }
     }
 
@@ -100,7 +100,7 @@ public struct CrimeRuntime {
     }
 
     /// How many crimes of each kind `key` has committed against `faction`.
-    public func crimeCounts(
+    func crimeCounts(
         of faction: ReferenceKey,
         on key: ReferenceKey = .player
     ) -> CrimeCounts {
@@ -153,7 +153,7 @@ public struct CrimeRuntime {
     /// which is what every hook in the engine actually wants: it holds the act,
     /// not the answer to "was anybody looking".
     @discardableResult
-    public func reportWitnessed(_ event: CrimeEvent) -> CrimeOutcome {
+    func reportWitnessed(_ event: CrimeEvent) -> CrimeOutcome {
         report(event.witnessed(by: witnesses))
     }
 
@@ -230,7 +230,7 @@ public struct CrimeRuntime {
     ///
     /// - Returns: true when there was a ledger to drop.
     @discardableResult
-    public func reset(on key: ReferenceKey = .player) -> Bool {
+    func reset(on key: ReferenceKey = .player) -> Bool {
         worldState.reset(.crimeLedger, for: key)
     }
 
@@ -308,7 +308,7 @@ public struct CrimeRuntime {
 @MainActor
 extension CrimeEvent {
     /// This event with `witnessed` set from a witness source.
-    public func witnessed(by source: any CrimeWitnessSource) -> CrimeEvent {
+    func witnessed(by source: any CrimeWitnessSource) -> CrimeEvent {
         guard !witnessed else { return self }
         var seen = CrimeEvent(
             kind: kind,

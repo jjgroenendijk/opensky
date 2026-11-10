@@ -36,7 +36,7 @@ nonisolated public struct ESSPluginIndex: Sendable {
         var lock: LockData?
     }
 
-    public let loadOrder: [String]
+    let loadOrder: [String]
     var forms: [Key: Form] = [:]
     /// Placed reference -> its base form, for the references the save changed.
     var referenceBases: [Key: ResolvedFormID] = [:]

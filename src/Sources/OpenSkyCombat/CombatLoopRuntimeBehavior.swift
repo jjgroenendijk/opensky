@@ -5,11 +5,11 @@
 // is left of the cap. See docs/engine/combat-behavior.md.
 
 import Foundation
-public import OpenSkyActorsInterface
+import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyConditions
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
@@ -19,7 +19,7 @@ extension CombatLoopRuntime {
     /// Advances every engaged actor by one fixed step and acts on what each did.
     /// - Returns: the hostility read for each living actor, so the step asks once.
     @discardableResult
-    public func driveBehaviors(world: any CombatLoopWorld) -> [ReferenceKey: ActorHostility] {
+    func driveBehaviors(world: any CombatLoopWorld) -> [ReferenceKey: ActorHostility] {
         let actors = world.combatActors()
         settleRoster(actors)
         let player = world.combatPlayer

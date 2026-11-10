@@ -3,26 +3,26 @@
 // remainder. Only rows with a violent part are written, so a theft-only session
 // writes no chunk. See docs/formats/opensky-save-actor-chunks.md.
 
-public import Foundation
+import Foundation
 import OpenSkyCrimeInterface
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's violent gold per faction, before it splits the `CRIM` totals.
-nonisolated public struct SaveViolentCrimeGoldEntry: Equatable, Sendable {
-    public struct Row: Equatable, Sendable {
-        public let faction: ReferenceKey
-        public let violentGold: Int32
+nonisolated struct SaveViolentCrimeGoldEntry: Equatable, Sendable {
+    struct Row: Equatable, Sendable {
+        let faction: ReferenceKey
+        let violentGold: Int32
     }
 
-    public let key: ReferenceKey
-    public let rows: [Row]
+    let key: ReferenceKey
+    let rows: [Row]
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// The `CRVG` chunk, in the snapshot's `ReferenceKey` order.
-    public static func writeViolentCrimeGold(
+    static func writeViolentCrimeGold(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -47,7 +47,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveCrimeDecoder {
-    public static func decodeViolentGold(_ payload: Data) throws -> [SaveViolentCrimeGoldEntry] {
+    static func decodeViolentGold(_ payload: Data) throws -> [SaveViolentCrimeGoldEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CRVG entry count")
         try OpenSkySaveDecoder.validate(
@@ -82,7 +82,7 @@ nonisolated extension OpenSkySaveCrimeDecoder {
     /// The `CRIM` ledgers with each row's violent part split out. A violent part over
     /// the total is clamped, and a row with no `CRIM` row is dropped: `CRIM` says what
     /// is owed, as `INVN` does for `STOL`.
-    public static func splittingViolent(
+    static func splittingViolent(
         _ values: [SaveViolentCrimeGoldEntry],
         in ledgers: [SaveCrimeLedgerEntry]
     ) -> [SaveCrimeLedgerEntry] {

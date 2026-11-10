@@ -1,21 +1,21 @@
 // INVN chunk: reference inventories, merged into the `RDLT` deltas by
 // `ReferenceKey`, so a reference with only items needs no `RDLT` entry.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One owner's saved inventory, before it is merged back into its delta.
-nonisolated public struct SaveInventoryEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let inventory: ReferenceInventoryState
+nonisolated struct SaveInventoryEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let inventory: ReferenceInventoryState
 }
 
-nonisolated public enum OpenSkySaveInventoryDecoder: Sendable {
-    public static func decodeInventories(_ payload: Data) throws -> [SaveInventoryEntry] {
+nonisolated enum OpenSkySaveInventoryDecoder: Sendable {
+    static func decodeInventories(_ payload: Data) throws -> [SaveInventoryEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("INVN entry count")
         try OpenSkySaveDecoder.validate(
@@ -87,11 +87,11 @@ nonisolated public enum OpenSkySaveInventoryDecoder: Sendable {
 }
 
 nonisolated extension SaveInventoryEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         inventory.erased
     }
 }

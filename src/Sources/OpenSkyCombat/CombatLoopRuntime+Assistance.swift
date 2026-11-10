@@ -9,7 +9,7 @@ import simd
 extension CombatLoopRuntime {
     /// How far an actor looks for an ally in a fight. OpenSky's value; the wiki names
     /// no range.
-    public static let assistRadius: Float = 2048
+    static let assistRadius: Float = 2048
 
     /// Only living, calm actors within `assistRadius` of an engaged one are asked, so
     /// the faction check runs for few pairs.

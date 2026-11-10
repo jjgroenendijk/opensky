@@ -15,20 +15,20 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
     /// The fraction of damage the target's armour stops, after the cap.
     public var armorFraction: Float
     /// `1 + fPowerAttackDefaultBonus` for a power attack.
-    public var powerMultiplier: Float = 1
+    var powerMultiplier: Float = 1
     /// `Mod Attack Damage` of the attacker times `Mod Incoming Damage` of the target.
-    public var perkMultiplier: Float = 1
+    var perkMultiplier: Float = 1
     /// The attacker's `Attack Damage Mult` actor value, which scales weapons, fists, and bashes.
     public var attackDamageMultiplier: Float = 1
     /// What `Calculate Weapon Damage` adds to the base damage.
     public var weaponDamageBonus: Float = 0
     /// The critical damage, added after every factor. Tempering does not raise it.
     public var criticalDamage: Float = 0
-    public var isCritical = false
+    var isCritical = false
     /// `Mod Target Stagger` of the attacker times `Mod Incoming Stagger` of the target.
-    public var staggerMultiplier: Float = 1
+    var staggerMultiplier: Float = 1
     /// `Mod Bashing Damage`, which scales a bash.
-    public var bashMultiplier: Float = 1
+    var bashMultiplier: Float = 1
 
     public static let plain = Self()
 
@@ -42,7 +42,7 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
         self.armorFraction = armorFraction
     }
 
-    public var isSneakAttack: Bool {
+    var isSneakAttack: Bool {
         sneakMultiplier != 1
     }
 

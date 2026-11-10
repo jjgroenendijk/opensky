@@ -4,20 +4,20 @@
 // See docs/engine/main-menu.md#credits.
 
 import Foundation
-public import OpenSkyFormatsSWF
+import OpenSkyFormatsSWF
 
-nonisolated public enum CreditsMenuMovieBridge: Sendable {
-    public static let moviePath = "interface\\creditsmenu.swf"
+nonisolated enum CreditsMenuMovieBridge: Sendable {
+    static let moviePath = "interface\\creditsmenu.swf"
     /// The credits text in the interface archive.
-    public static let creditsPath = "interface\\credits.txt"
-    public static let codeObjectName = "CodeObj"
+    static let creditsPath = "interface\\credits.txt"
+    static let codeObjectName = "CodeObj"
     /// Movie pixels the text moves up per frame. OpenSky's pace: the game reads
     /// its own from code, which is not public.
-    public static let scrollSpeed = 1.0
+    static let scrollSpeed = 1.0
 
     /// Fills `CodeObj` and starts the scroll. `onClose` runs when the text has
     /// scrolled past or the player leaves.
-    public static func activate(
+    static func activate(
         runtime: SWFMovieRuntime,
         credits: String,
         onClose: @escaping @MainActor @Sendable () -> Void

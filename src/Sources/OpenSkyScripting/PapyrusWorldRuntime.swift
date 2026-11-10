@@ -92,13 +92,13 @@ public final class PapyrusWorldRuntime {
     public var aliasResolution: QuestAliasResolution = .empty
     /// One handle per alias slot, filled or not, so an alias property is never None and
     /// `ForceRefTo` on an empty alias has a receiver. See `PapyrusWorldAliasSlots.swift`.
-    public var aliasSlotHandles: [PapyrusAliasSlot: PapyrusObjectHandle] = [:]
+    var aliasSlotHandles: [PapyrusAliasSlot: PapyrusObjectHandle] = [:]
     public var aliasSlotsByHandle: [PapyrusObjectHandle: PapyrusAliasSlot] = [:]
     /// The alias slot each alias script instance serves.
     public var aliasSlotsByInstance: [PapyrusInstanceKey: PapyrusAliasSlot] = [:]
     /// Newest alias filled and bound, worded like a `recentEvents` entry, for
     /// the Scripts readout. Nil until a quest with an alias starts.
-    public var lastQuestAliasFill: String?
+    var lastQuestAliasFill: String?
     /// Running magic effects with scripts, and the `ActiveMagicEffect` instances that
     /// serve them. See `PapyrusWorldEffectScripts.swift`.
     public var effectScripts = PapyrusEffectScripts()
@@ -124,7 +124,7 @@ public final class PapyrusWorldRuntime {
     /// Quests a shut-down stage stopped; their instances retire once the fragments ran.
     var shutDownQuests: Set<ReferenceKey> = []
     /// Whether a quest runs again, so a restart keeps the instances a shut-down would retire.
-    public var isQuestRunning: (ReferenceKey) -> Bool = { _ in false }
+    var isQuestRunning: (ReferenceKey) -> Bool = { _ in false }
     /// The single main-actor FIFO event queue; global order is preserved.
     public var eventQueue: [PapyrusScriptEvent] = []
     /// The next queue position a running drain reads. `retire` moves it back when it
@@ -132,7 +132,7 @@ public final class PapyrusWorldRuntime {
     var drainCursor: Int?
     /// Instances whose call used up its instruction slice. Their queued events stay
     /// queued, in order, until that call settles or waits on a latent call.
-    public var busyInstances: Set<PapyrusInstanceKey> {
+    var busyInstances: Set<PapyrusInstanceKey> {
         suspensionTracker.heldInstances
     }
 
@@ -156,7 +156,7 @@ public final class PapyrusWorldRuntime {
     /// Attach, dispatch, and restore skips, for inspection and acceptance.
     public var skips = PapyrusWorldSkipTally()
     /// VMAD property-binding skips aggregated across every attach.
-    public var bindingSkips = ScriptBindingTally()
+    var bindingSkips = ScriptBindingTally()
 
     /// Resolves a script name to its compiled form on first need. Nil means no
     /// library (headless tests). Failed names go into `unresolvableScripts`, so they
@@ -166,7 +166,7 @@ public final class PapyrusWorldRuntime {
     /// `.loading`. Wins over `scriptProvider` when set.
     public var scriptLibrary: ((String) -> AssetLoadState<[PexFile]>)?
     /// Script names the provider already failed to resolve, keyed lowercased.
-    public var unresolvableScripts: Set<String> = []
+    var unresolvableScripts: Set<String> = []
     /// `PexObject.staticCallScripts` of each loaded script, keyed lowercased.
     var staticCallScriptsByKey: [String: [String]] = [:]
     /// Attaches and fragments that wait for a script to load, oldest first.
@@ -176,16 +176,16 @@ public final class PapyrusWorldRuntime {
     /// down from `UInt64.max`, while instance handles count up from 1.
     public var opaqueHandlesByKey: [ReferenceKey: PapyrusObjectHandle] = [:]
     public var opaqueKeysByHandle: [PapyrusObjectHandle: ReferenceKey] = [:]
-    public var nextOpaqueHandleValue = UInt64.max
+    var nextOpaqueHandleValue = UInt64.max
     /// Attaches the scripts of a stopped quest or an unloaded reference; true when
     /// any attached.
-    public var attachOnUse: ((ReferenceKey) -> Bool)?
+    var attachOnUse: ((ReferenceKey) -> Bool)?
     /// The scripts a stopped quest or an unloaded reference would attach; empty otherwise.
-    public var scriptsOfTarget: ((ReferenceKey) -> [String])?
+    var scriptsOfTarget: ((ReferenceKey) -> [String])?
     /// Activation depth of the event currently being dispatched; 0 while
     /// nothing is dispatching, which is the depth a player use-key activation
     /// starts from. Read by `queueOnActivate(target:activator:)`.
-    public private(set) var currentActivationDepth = 0
+    private(set) var currentActivationDepth = 0
 
     /// What the most recent tick that actually stepped did, so an inspector
     /// can read the per-frame budget spend the callers otherwise discard.
@@ -196,13 +196,13 @@ public final class PapyrusWorldRuntime {
     /// Preformatted names of the most recently dispatched events, oldest
     /// first, at most `recentEventLimit` of them. `eventQueue` holds what is
     /// still pending, so this is the only record of what already ran.
-    public var recentEvents: [String] {
+    var recentEvents: [String] {
         Array(recentEventRing)
     }
 
     private var recentEventRing: Deque<String> = []
     /// Recent-event entries pushed out of the ring by newer ones.
-    public private(set) var droppedRecentEventCount = 0
+    private(set) var droppedRecentEventCount = 0
 
     public let suspensionTracker: PapyrusWorldSuspensionTracker
     public var accumulatorSeconds = 0.0
@@ -216,18 +216,18 @@ public final class PapyrusWorldRuntime {
     /// How deep a chain of script activations may go before `OnActivate` is refused.
     /// Player use starts at depth 0. Refusals count as
     /// `activationRecursionCappedTotal`.
-    public static let maximumActivationDepth = 8
+    static let maximumActivationDepth = 8
 
     /// Entries `recentEvents` retains, matching
     /// `RuntimeStateSnapshot.journalTailLimit`: both feed a state read
     /// that shows recent history rather than a whole session.
-    public static let recentEventLimit = 8
+    static let recentEventLimit = 8
 
     /// Marks the depth every activation queued from inside this dispatch sits
     /// at. A latent handler that resumes on a later tick has lost the depth
     /// and re-enters at 0; that is a stated simplification, and the per-tick
     /// event budget still bounds the damage.
-    public func withActivationDepth<Result>(
+    func withActivationDepth<Result>(
         _ depth: Int, _ body: () -> Result
     ) -> Result {
         let previous = currentActivationDepth
@@ -269,7 +269,7 @@ public final class PapyrusWorldRuntime {
 
     /// Appends `event` to the recent-event ring, evicting the oldest entry
     /// and counting it once the ring is full.
-    public func recordDispatchedEvent(_ event: PapyrusScriptEvent) {
+    func recordDispatchedEvent(_ event: PapyrusScriptEvent) {
         recentEventRing.append(
             "\(event.functionName) -> \(event.target.scriptName)"
         )
@@ -286,7 +286,7 @@ public final class PapyrusWorldRuntime {
 
     /// Enqueues `OnInit` unless it already fired or is already queued.
     /// `OnInit` fires once ever per instance and the fired set persists.
-    public func enqueueOnInitIfNeeded(_ key: PapyrusInstanceKey) {
+    func enqueueOnInitIfNeeded(_ key: PapyrusInstanceKey) {
         guard !firedOnInit.contains(key), !pendingOnInit.contains(key) else {
             return
         }
@@ -416,7 +416,7 @@ nonisolated public final class PapyrusWorldSuspensionTracker {
     private var faulted = 0
 
     /// Instances with a suspended call that holds them.
-    public var heldInstances: Set<PapyrusInstanceKey> {
+    var heldInstances: Set<PapyrusInstanceKey> {
         Set(holdingIDs.compactMap { instanceByID[$0] })
     }
 

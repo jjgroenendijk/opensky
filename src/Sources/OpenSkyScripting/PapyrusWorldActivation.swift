@@ -12,7 +12,7 @@ extension PapyrusWorldRuntime {
     /// an error. Depth is `currentActivationDepth + 1`; a chain past
     /// `maximumActivationDepth` is tallied.
     @discardableResult
-    public func queueOnActivate(
+    func queueOnActivate(
         target: ReferenceKey,
         activator: ReferenceKey
     ) -> PapyrusActivationOutcome {

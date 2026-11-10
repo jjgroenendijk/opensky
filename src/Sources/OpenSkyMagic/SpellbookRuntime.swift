@@ -43,7 +43,7 @@ public struct SpellbookRuntime: SpellbookAccess {
         store.component(SpellbookState.self, for: holder.key) ?? SpellbookState()
     }
 
-    public func knows(_ spell: ReferenceKey, _ holder: ActorValueHolder) -> Bool {
+    func knows(_ spell: ReferenceKey, _ holder: ActorValueHolder) -> Bool {
         state(of: holder).knows(spell)
     }
 
@@ -84,7 +84,7 @@ public struct SpellbookRuntime: SpellbookAccess {
     ///
     /// - Returns: how many were not already known.
     @discardableResult
-    public func grantStartSpells(
+    func grantStartSpells(
         to holder: ActorValueHolder,
         additional: [ReferenceKey] = []
     ) -> Int {
@@ -128,7 +128,7 @@ public struct SpellbookRuntime: SpellbookAccess {
     /// inventory, so it stays (docs/engine/spellcasting.md).
     /// - Returns: what the reading did.
     @discardableResult
-    public func read(
+    func read(
         book: ReferenceKey,
         teaching spell: ReferenceKey?,
         on holder: ActorValueHolder
@@ -228,7 +228,7 @@ public struct SpellbookRuntime: SpellbookAccess {
     // MARK: - Powers
 
     /// Marks `power` spent on whole game day `day`.
-    public func spendPower(_ power: ReferenceKey, onDay day: Int32, on holder: ActorValueHolder) {
+    func spendPower(_ power: ReferenceKey, onDay day: Int32, on holder: ActorValueHolder) {
         write(state(of: holder).spendingPower(power, onDay: day), for: holder)
     }
 

@@ -5,7 +5,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkyMenusInterface
 import OpenSkyRendering
 
@@ -23,17 +23,17 @@ public final class SystemMenuCoordinator {
 
     public internal(set) var model = SystemMenuModel()
     public internal(set) var settingsPage: SettingsPageModel
-    public internal(set) var saveLoadPage: SaveLoadPageModel?
+    var saveLoadPage: SaveLoadPageModel?
     public internal(set) var controlsPage = ControlsPageModel()
-    public internal(set) var quitPage: ConfirmationModel?
+    var quitPage: ConfirmationModel?
     /// The Help or Installed Content page while one is up.
     public internal(set) var topicPage: SystemMenuTopicPageModel?
     /// Set by the app; nil leaves both topic pages empty.
     public weak var topicSource: (any SystemMenuTopicSource)?
     /// The result of the last save, load, or remap, for the readout.
-    public internal(set) var lastMessage: String?
+    var lastMessage: String?
     /// The running save, load, or delete; one at a time.
-    public internal(set) var saveWork: Task<Void, Never>?
+    var saveWork: Task<Void, Never>?
     public let settings: PlayerSettingsCoordinator
     public weak let saves: any SaveGameService?
     /// On by default, so play mode draws the menu. The HUD is suspended while
@@ -48,7 +48,7 @@ public final class SystemMenuCoordinator {
     /// The movie's `SystemPage` state at the last check, to see a topic's text close.
     var lastMovieState: Int?
     /// Called once; finding the data root walks the file system.
-    public var locateDataRoot: () -> GameDataRoot? = { attempt { try GameDataLocator.locate() } }
+    var locateDataRoot: () -> GameDataRoot? = { attempt { try GameDataLocator.locate() } }
     private var dataRoot: GameDataRoot?
     private var dataRootResolved = false
 
@@ -82,7 +82,7 @@ public final class SystemMenuCoordinator {
         movie.isLoaded
     }
 
-    public var movieError: String? {
+    var movieError: String? {
         movie.error
     }
 
@@ -119,7 +119,7 @@ public final class SystemMenuCoordinator {
         movie.stop()
     }
 
-    public func setMovieEnabled(_ enabled: Bool) {
+    func setMovieEnabled(_ enabled: Bool) {
         guard enabled != movieEnabled else { return }
         movieEnabled = enabled
         guard model.isOpen else { return }
@@ -131,7 +131,7 @@ public final class SystemMenuCoordinator {
     }
 
     /// The settings store owns the value; this reads and writes through it.
-    public var masterVolume: Float {
+    var masterVolume: Float {
         get { Float(settings.store.value(.masterVolume)) }
         set { settings.store.set(.masterVolume, to: Double(newValue)) }
     }
@@ -171,7 +171,7 @@ public final class SystemMenuCoordinator {
         }
     }
 
-    public var dataRootValue: GameDataRoot? {
+    var dataRootValue: GameDataRoot? {
         if !dataRootResolved {
             dataRoot = locateDataRoot()
             dataRootResolved = true
@@ -179,7 +179,7 @@ public final class SystemMenuCoordinator {
         return dataRoot
     }
 
-    public static func dataRootSourceLabel(_ source: GameDataRoot.Source) -> String {
+    static func dataRootSourceLabel(_ source: GameDataRoot.Source) -> String {
         switch source {
         case .commandLine: "command line"
         case .environment: "\(GameDataLocator.environmentKey) environment variable"

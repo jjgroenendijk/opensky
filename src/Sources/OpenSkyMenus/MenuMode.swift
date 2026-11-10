@@ -49,7 +49,7 @@ public final class MenuModeController {
 
     /// The world policy one menu is open under, or the default for a menu that
     /// is not open.
-    public func policy(of identifier: MenuIdentifier) -> MenuWorldPolicy {
+    func policy(of identifier: MenuIdentifier) -> MenuWorldPolicy {
         policies[identifier] ?? .pausesWorld
     }
 
@@ -58,7 +58,7 @@ public final class MenuModeController {
     }
 
     /// The routing decision for the AppKit input layer.
-    public var currentRoute: InputRoute {
+    var currentRoute: InputRoute {
         stack.isMenuMode ? .menu : .world
     }
 
@@ -82,7 +82,7 @@ public final class MenuModeController {
     /// mode or hands a running world back to a non-pausing menu underneath.
     /// Returns the removed identifier, or nil in gameplay.
     @discardableResult
-    public func dismissTop() -> MenuIdentifier? {
+    func dismissTop() -> MenuIdentifier? {
         let previous = state
         guard let removed = stack.pop() else { return nil }
         policies[removed] = nil
@@ -101,7 +101,7 @@ public final class MenuModeController {
     }
 
     /// Closes every menu, returning to gameplay mode. No-op in gameplay.
-    public func dismissAll() {
+    func dismissAll() {
         guard stack.isMenuMode else { return }
         let previous = state
         stack.removeAll()

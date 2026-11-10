@@ -10,7 +10,7 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension CrimeCoordinator {
-    public var crimeFactionSnapshot: CrimeFactionControlSnapshot {
+    var crimeFactionSnapshot: CrimeFactionControlSnapshot {
         guard let reporter, world.hasFactionData else { return .unavailable }
         let store = reporter.runtime.factions
         let options = factionOptions(store)

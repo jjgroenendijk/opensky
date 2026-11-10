@@ -84,7 +84,7 @@ public final class RaceMenuCoordinator {
         movie.isLoaded
     }
 
-    public var movieError: String? {
+    var movieError: String? {
         movie.error
     }
 
@@ -188,7 +188,7 @@ public final class RaceMenuCoordinator {
     }
 
     /// Puts the player back to the `Player` record; only while the menu is closed.
-    public func resetToRecord() {
+    func resetToRecord() {
         guard !isOpen, let world, let identity = world.recordIdentity else { return }
         world.applyPlayerIdentity(identity)
         lastResult = "Reset to the Player record"
@@ -196,7 +196,7 @@ public final class RaceMenuCoordinator {
 
     /// Puts the next or previous preset face of the player's race on the player;
     /// only while the menu is closed.
-    public func applyPreset(offset: Int) {
+    func applyPreset(offset: Int) {
         guard !isOpen, let world, var identity = world.playerIdentity else { return }
         let presets = world.racePresets(race: identity.race, isFemale: identity.isFemale)
         guard !presets.isEmpty else {

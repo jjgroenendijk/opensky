@@ -8,7 +8,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyMagicInterface
 
 /// MGEF `SNDD` sound kinds (UESP "Skyrim Mod:Mod File Format/MGEF").
-nonisolated public enum MagicEffectSoundKind: UInt32, Equatable, Sendable, CaseIterable {
+nonisolated enum MagicEffectSoundKind: UInt32, Equatable, Sendable, CaseIterable {
     case drawSheathe = 0
     case charge = 1
     case ready = 2
@@ -16,7 +16,7 @@ nonisolated public enum MagicEffectSoundKind: UInt32, Equatable, Sendable, CaseI
     case castLoop = 4
     case onHit = 5
 
-    public var name: String {
+    var name: String {
         switch self {
         case .drawSheathe: "Draw/Sheathe"
         case .charge: "Charge"
@@ -29,15 +29,15 @@ nonisolated public enum MagicEffectSoundKind: UInt32, Equatable, Sendable, CaseI
 }
 
 /// One hand as the cue rule sees it on one frame.
-nonisolated public struct CastingHandView: Equatable, Sendable {
-    public var phase: SpellCastPhase = .idle
+nonisolated struct CastingHandView: Equatable, Sendable {
+    var phase: SpellCastPhase = .idle
     /// The spell the hand is casting, nil while idle.
-    public var spell: ReferenceKey?
-    public var isDualCast = false
+    var spell: ReferenceKey?
+    var isDualCast = false
     /// The wiki gives Charge and Ready to fire-and-forget spells only.
-    public var isConcentration = false
+    var isConcentration = false
 
-    public init(
+    init(
         phase: SpellCastPhase = .idle, spell: ReferenceKey? = nil, isDualCast: Bool = false,
         isConcentration: Bool = false
     ) {
@@ -49,28 +49,28 @@ nonisolated public struct CastingHandView: Equatable, Sendable {
 }
 
 /// One thing a casting hand starts or stops.
-nonisolated public struct CastingCue: Equatable, Sendable {
-    public enum What: Equatable, Sendable {
+nonisolated struct CastingCue: Equatable, Sendable {
+    enum What: Equatable, Sendable {
         case sound(MagicEffectSoundKind)
         /// The MGEF casting art, or its dual-cast art.
         case art(dual: Bool)
     }
 
-    public let what: What
-    public let starts: Bool
-    public let spell: ReferenceKey
+    let what: What
+    let starts: Bool
+    let spell: ReferenceKey
 
-    public init(_ what: What, starts: Bool, spell: ReferenceKey) {
+    init(_ what: What, starts: Bool, spell: ReferenceKey) {
         self.what = what
         self.starts = starts
         self.spell = spell
     }
 }
 
-nonisolated public enum CastingCueRule {
+nonisolated enum CastingCueRule {
     /// The cues of one hand going from `old` to `new`. `cast` is the spell a release
     /// cast this frame, which the wiki's Release sound needs: "successfully casts".
-    public static func cues(
+    static func cues(
         from old: CastingHandView, to new: CastingHandView, cast: ReferenceKey?
     ) -> [CastingCue] {
         var cues: [CastingCue] = []
@@ -99,7 +99,7 @@ nonisolated public enum CastingCueRule {
 
     /// "The sound that plays when the player draws or sheathes their weapons with this
     /// spell in either hand."
-    public static func drawCues(
+    static func drawCues(
         drawn old: Bool?, now new: Bool?, readied: [ReferenceKey]
     ) -> [CastingCue] {
         guard let old, let new, old != new else { return [] }
@@ -128,7 +128,7 @@ nonisolated public enum SpellFireGraphNames: Sendable {
 
     public static let observedEvents = [left, right, staff]
 
-    public static func event(of hand: SpellHand) -> String {
+    static func event(of hand: SpellHand) -> String {
         hand == .left ? left : right
     }
 }
@@ -137,7 +137,7 @@ nonisolated public enum SpellFireGraphNames: Sendable {
 /// leaves when the hand is thrown forward.
 nonisolated public struct SpellReleaseLatch: Equatable, Sendable {
     /// An OpenSky value: how long a release waits for a graph that raises nothing.
-    public static let fireWithoutGraphAfter: Float = 0.4
+    static let fireWithoutGraphAfter: Float = 0.4
 
     public private(set) var waited: [SpellHand: Float] = [:]
 
@@ -148,7 +148,7 @@ nonisolated public struct SpellReleaseLatch: Equatable, Sendable {
     }
 
     /// The hold the caster runtime gets for `hand`: still held while the release waits.
-    public mutating func hold(
+    mutating func hold(
         _ hand: SpellHand, state: (pressed: Bool, phase: SpellCastPhase), fired: Bool, delta: Float
     ) -> Bool {
         let (pressed, phase) = state
@@ -168,12 +168,7 @@ nonisolated public struct SpellReleaseLatch: Equatable, Sendable {
 }
 
 /// One cast a release completed.
-nonisolated public struct CompletedCast: Equatable, Sendable {
-    public let slot: CastSlot
-    public let spell: ReferenceKey
-
-    public init(slot: CastSlot, spell: ReferenceKey) {
-        self.slot = slot
-        self.spell = spell
-    }
+nonisolated struct CompletedCast: Equatable, Sendable {
+    let slot: CastSlot
+    let spell: ReferenceKey
 }

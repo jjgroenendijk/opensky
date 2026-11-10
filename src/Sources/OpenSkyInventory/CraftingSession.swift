@@ -41,19 +41,13 @@ nonisolated public enum CraftingError: Error, Equatable {
 }
 
 /// One recipe with its current verdict.
-nonisolated public struct CraftingRecipeStatus: Equatable, Sendable {
-    public let recipe: CraftingRecipe
-    public let eligibility: RecipeEligibility
+nonisolated struct CraftingRecipeStatus: Equatable, Sendable {
+    let recipe: CraftingRecipe
+    let eligibility: RecipeEligibility
     /// The held copies a tempering recipe improves. Nil at a crafting station.
-    public let temper: TemperTarget?
+    let temper: TemperTarget?
 
-    public init(recipe: CraftingRecipe, eligibility: RecipeEligibility, temper: TemperTarget?) {
-        self.recipe = recipe
-        self.eligibility = eligibility
-        self.temper = temper
-    }
-
-    public var isReady: Bool {
+    var isReady: Bool {
         eligibility.isEligible && (temper.map { $0.from != nil } ?? true)
     }
 }
@@ -103,7 +97,7 @@ public final class CraftingSession {
     }
 
     /// Every offered recipe with its verdict right now.
-    public var statuses: [CraftingRecipeStatus] {
+    var statuses: [CraftingRecipeStatus] {
         guard !station.improves else { return temperStatuses }
         return recipes.map {
             CraftingRecipeStatus(recipe: $0, eligibility: eligibility(of: $0), temper: nil)

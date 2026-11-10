@@ -13,7 +13,7 @@ nonisolated public enum CrimeNote: Equatable, Sendable {
     /// A witness reached a guard, so the bounty stays.
     case reportDelivered(faction: String, by: String)
 
-    public var text: String {
+    var text: String {
         switch self {
         case .idle: "No crime recorded yet."
         case let .recorded(outcome, label, faction):
@@ -43,7 +43,7 @@ nonisolated public enum GuardNote: Equatable, Sendable {
     case escaped(gold: Int32, faction: String)
     case actorCriminal(name: String, faction: String)
 
-    public var text: String {
+    var text: String {
         switch self {
         case .idle: "No guard has acted yet."
         case let .arrestRefused(faction, refusal):

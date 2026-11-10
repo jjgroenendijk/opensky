@@ -55,7 +55,7 @@ extension PapyrusWorldStateBridge {
 
     /// Marks `holder`'s next equip changes as a script's, so the items' own scripts hear
     /// nothing of them. An item the script's equip pushes out of its slot counts too.
-    public func noteScriptedEquip(on holder: ReferenceKey) {
+    func noteScriptedEquip(on holder: ReferenceKey) {
         scriptedEquipHolders.insert(holder)
     }
 

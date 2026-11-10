@@ -30,7 +30,7 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
     private var pending: SaveLoadAction?
 
     /// The Save page leaves imports out, because a Skyrim save is never written.
-    public init(mode: SaveLoadMode, rows: [SaveSlotRow], texts: SaveTexts = .vanilla) {
+    init(mode: SaveLoadMode, rows: [SaveSlotRow], texts: SaveTexts = .vanilla) {
         self.mode = mode
         self.texts = texts
         self.rows = Self.sorted(mode == .save ? rows.filter { !$0.isImport } : rows)
@@ -53,7 +53,7 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
         mode == .save && selectedIndex == rows.count + 1
     }
 
-    public var selectedRow: SaveSlotRow? {
+    var selectedRow: SaveSlotRow? {
         let index = mode == .save ? selectedIndex - 1 : selectedIndex
         return rows.indices.contains(index) ? rows[index] : nil
     }
@@ -66,7 +66,7 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
     }
 
     /// Asks before deleting the selected file. Nothing happens on New Save or an import.
-    public mutating func requestDelete() {
+    mutating func requestDelete() {
         guard let row = selectedRow, !row.isImport else { return }
         ask(
             SettingTextFormat.fill(texts.deleteQuestion, [row.title]),
@@ -75,7 +75,7 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
     }
 
     @discardableResult
-    public mutating func handle(_ event: MenuInputEvent) -> SaveLoadAction? {
+    mutating func handle(_ event: MenuInputEvent) -> SaveLoadAction? {
         if var question = confirmation {
             let choice = question.handle(event)
             confirmation = question

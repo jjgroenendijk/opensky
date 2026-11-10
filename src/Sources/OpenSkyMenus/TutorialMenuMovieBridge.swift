@@ -4,14 +4,14 @@
 // The exit button calls `CloseMenu`. See docs/engine/messages.md#help-topics.
 
 import Foundation
-public import OpenSkyFormatsSWF
+import OpenSkyFormatsSWF
 
-nonisolated public enum TutorialMenuMovieBridge: Sendable {
-    public static let moviePath = "interface\\tutorialmenu.swf"
-    public static let menuPath = "/Menu_mc"
+nonisolated enum TutorialMenuMovieBridge: Sendable {
+    static let moviePath = "interface\\tutorialmenu.swf"
+    static let menuPath = "/Menu_mc"
 
     /// `buttonName` answers a controlmap user event, such as "Activate", with its key.
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime,
         buttonName: @escaping @MainActor @Sendable (String) -> String?,
         onClose: @escaping @MainActor @Sendable () -> Void
@@ -27,7 +27,7 @@ nonisolated public enum TutorialMenuMovieBridge: Sendable {
     }
 
     /// The root `InitExtensions` wires the exit button; `SetPlatform` shows the mouse one.
-    public static func activate(runtime: SWFMovieRuntime) {
+    static func activate(runtime: SWFMovieRuntime) {
         runtime.callMovie("InitExtensions")
         runtime.callMovie(
             "SetPlatform",
@@ -35,7 +35,7 @@ nonisolated public enum TutorialMenuMovieBridge: Sendable {
         )
     }
 
-    public static func publish(title: String, text: String, runtime: SWFMovieRuntime) {
+    static func publish(title: String, text: String, runtime: SWFMovieRuntime) {
         MenuMovieText.set(title, atPath: "\(menuPath)/TitleText", runtime: runtime)
         MenuMovieText.assign(
             .string(text), member: "text", atPath: "\(menuPath)/HelpText", runtime: runtime

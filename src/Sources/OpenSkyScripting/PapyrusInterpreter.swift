@@ -8,27 +8,27 @@ import Foundation
 public import OpenSkyFormatsPEX
 public import OpenSkyScriptingInterface
 
-nonisolated public enum PapyrusFlow {
+nonisolated enum PapyrusFlow {
     case next
     case jump(Int)
     case returned(PapyrusValue)
     case suspended(SuspendedCall)
 }
 
-nonisolated public enum PapyrusResumeTarget: Sendable {
+nonisolated enum PapyrusResumeTarget: Sendable {
     case root
     case assign(PexValue)
 }
 
-public final class PapyrusContinuation {
+final class PapyrusContinuation {
     private let interpreter: PapyrusInterpreter
     private var consumed = false
 
-    public init(interpreter: PapyrusInterpreter) {
+    init(interpreter: PapyrusInterpreter) {
         self.interpreter = interpreter
     }
 
-    public func resume(id: UInt64, returning value: PapyrusValue) -> PapyrusRunOutcome {
+    func resume(id: UInt64, returning value: PapyrusValue) -> PapyrusRunOutcome {
         guard !consumed else {
             return .faulted(.invalidResume)
         }
@@ -37,23 +37,23 @@ public final class PapyrusContinuation {
     }
 }
 
-public final class PapyrusInterpreter {
-    public let runtime: PapyrusRuntime
-    public var frames: [PapyrusFrame] = []
+final class PapyrusInterpreter {
+    let runtime: PapyrusRuntime
+    var frames: [PapyrusFrame] = []
 
     private var remainingBudget: Int
-    public var pendingResume: (id: UInt64, target: PapyrusResumeTarget)?
+    var pendingResume: (id: UInt64, target: PapyrusResumeTarget)?
 
-    public init(runtime: PapyrusRuntime) {
+    init(runtime: PapyrusRuntime) {
         self.runtime = runtime
         remainingBudget = runtime.limits.instructionBudget
     }
 
-    public var instructionIndex: Int {
+    var instructionIndex: Int {
         frames.last.map { max(0, $0.instructionIndex - 1) } ?? 0
     }
 
-    public func invoke(
+    func invoke(
         _ functionName: String,
         on handle: PapyrusObjectHandle,
         arguments: [PapyrusValue]
@@ -95,7 +95,7 @@ public final class PapyrusInterpreter {
     }
 
     /// Runs the `Set` function of the full property `name` with `value`.
-    public func setProperty(
+    func setProperty(
         _ name: String,
         on handle: PapyrusObjectHandle,
         to value: PapyrusValue
@@ -126,7 +126,7 @@ public final class PapyrusInterpreter {
         }
     }
 
-    public func invokeStatic(
+    func invokeStatic(
         _ functionName: String,
         on scriptName: String,
         arguments: [PapyrusValue]
@@ -162,7 +162,7 @@ public final class PapyrusInterpreter {
         }
     }
 
-    public func resume(id: UInt64, returning value: PapyrusValue) -> PapyrusRunOutcome {
+    func resume(id: UInt64, returning value: PapyrusValue) -> PapyrusRunOutcome {
         guard let pending = pendingResume, pending.id == id else {
             return fault(.invalidResume)
         }
@@ -191,7 +191,7 @@ public final class PapyrusInterpreter {
         }
     }
 
-    public func run() -> PapyrusRunOutcome {
+    func run() -> PapyrusRunOutcome {
         do {
             while let frame = frames.last {
                 guard frame.instructionIndex < frame.function.instructions.count else {
@@ -228,7 +228,7 @@ public final class PapyrusInterpreter {
         }
     }
 
-    public func pushFrame(
+    func pushFrame(
         _ resolved: PapyrusResolvedFunction,
         instanceHandle: PapyrusObjectHandle?,
         arguments: [PapyrusValue],
@@ -291,7 +291,7 @@ nonisolated public struct SuspendedCall {
     public let id: UInt64
     public let nativeCall: PapyrusNativeCall
     public let request: PapyrusNativeSuspension
-    public let continuation: PapyrusContinuation
+    let continuation: PapyrusContinuation
     /// True for a used-up instruction slice. A latent call releases its instance, so
     /// other events on it run meanwhile (CK wiki "Threading Notes (Papyrus)").
     public let holdsInstance: Bool

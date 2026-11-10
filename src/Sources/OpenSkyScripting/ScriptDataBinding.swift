@@ -9,11 +9,11 @@ import OpenSkyFormatsPEX
 public import OpenSkyQuestsInterface
 public import OpenSkyScriptingInterface
 
-nonisolated public enum ScriptBindingError: Error, Equatable {
+nonisolated enum ScriptBindingError: Error, Equatable {
     case removedScript(String)
 }
 
-nonisolated public enum ScriptBindingSkipReason: SkipTallyKind {
+nonisolated enum ScriptBindingSkipReason: SkipTallyKind {
     case removedProperty
     case missingProperty
     /// A full property with no `Set` function, so a VMAD value cannot reach it.
@@ -27,7 +27,7 @@ nonisolated public enum ScriptBindingSkipReason: SkipTallyKind {
     case unresolvedReference
     case typeMismatch
 
-    public var name: String {
+    var name: String {
         switch self {
         case .removedProperty: "removed property"
         case .missingProperty: "property missing from PEX"
@@ -40,35 +40,35 @@ nonisolated public enum ScriptBindingSkipReason: SkipTallyKind {
     }
 }
 
-public typealias ScriptBindingTally = SkipTally<ScriptBindingSkipReason>
+typealias ScriptBindingTally = SkipTally<ScriptBindingSkipReason>
 
 /// A VMAD value for a full property. Its `Set` function runs once on the new instance,
 /// before `OnInit`, because the function may write other variables.
-nonisolated public struct PapyrusPropertySetting: Sendable {
-    public let propertyName: String
-    public let value: PapyrusValue
+nonisolated struct PapyrusPropertySetting: Sendable {
+    let propertyName: String
+    let value: PapyrusValue
 }
 
-nonisolated public struct ScriptBinding: Sendable {
-    public let initialValues: [String: PapyrusValue]
+nonisolated struct ScriptBinding: Sendable {
+    let initialValues: [String: PapyrusValue]
     /// In VMAD order, applied after `initialValues`.
-    public let propertySettings: [PapyrusPropertySetting]
+    let propertySettings: [PapyrusPropertySetting]
     /// Direct VMAD FormIDs that resolved all the way through
     /// `FormIDResolver` -> `ReferenceKey` -> caller-owned opaque handle.
-    public let resolvedReferences: [ReferenceKey]
-    public let skipped: ScriptBindingTally
+    let resolvedReferences: [ReferenceKey]
+    let skipped: ScriptBindingTally
 }
 
-nonisolated public struct BoundScriptInstance: Sendable {
-    public let handle: PapyrusObjectHandle
-    public let binding: ScriptBinding
+nonisolated struct BoundScriptInstance: Sendable {
+    let handle: PapyrusObjectHandle
+    let binding: ScriptBinding
 }
 
 extension AttachedScript {
     /// Creates one instance with its bound values; a suspended setter is dropped. An
     /// unfilled alias and a reference with no live handle keep the PEX compiler default.
     /// The caller allocates world-reference handles.
-    public func makeInstance(
+    func makeInstance(
         in runtime: PapyrusRuntime,
         handle: PapyrusObjectHandle? = nil,
         formIDResolver: FormIDResolver,
@@ -94,7 +94,7 @@ extension AttachedScript {
 
     /// `aliasHandle` answers filled-alias properties; nil means `objectHandle` does.
     /// `aliasSlot`, when set, answers every alias property with its slot's handle.
-    public func binding(
+    func binding(
         in runtime: PapyrusRuntime,
         formIDResolver: FormIDResolver,
         aliases: QuestAliasResolution = .empty,

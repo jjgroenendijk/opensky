@@ -145,7 +145,7 @@ nonisolated extension QuestJournalMovieBridge {
     ]
 
     /// The endpiece clip's frame labels in timeline order, as measured.
-    public static var endpieceFrames: [String] {
+    static var endpieceFrames: [String] {
         [
             "Main", "MagesGuild", "ThievesGuild", "DarkBrotherhood", "Companion",
             "Favor", "Daedric", "Misc", "CivilWar", "DLC01", "DLC02"

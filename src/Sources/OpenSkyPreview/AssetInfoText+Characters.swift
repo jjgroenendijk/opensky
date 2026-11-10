@@ -6,7 +6,7 @@ import Foundation
 
 nonisolated extension AssetInfoText {
     /// One line per body part. `skeleton` is nil when the skeleton did not load.
-    public static func bodyPartNodes(
+    static func bodyPartNodes(
         _ parts: [(part: String, node: String)],
         skeleton: Set<String>?
     ) -> String {
@@ -21,7 +21,7 @@ nonisolated extension AssetInfoText {
     }
 
     /// Which bones a tagfile names that the character skeleton also has.
-    public static func boneBinding(_ bones: [String], skeleton: Set<String>?) -> String {
+    static func boneBinding(_ bones: [String], skeleton: Set<String>?) -> String {
         guard !bones.isEmpty else { return "Bones: none" }
         guard let skeleton else { return "Bones: \(bones.count), skeleton not loaded" }
         let misses = bones.filter { !skeleton.contains($0) }

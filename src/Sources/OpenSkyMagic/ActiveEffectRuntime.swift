@@ -42,28 +42,28 @@ public struct ActiveEffectRuntime {
     /// them after each change.
     public var worldActions: [MagicWorldAction] = []
     /// Health healing effects gave back since the coordinator last drained it.
-    public var healing: [MagicHealingUse] = []
+    var healing: [MagicHealingUse] = []
     /// Actors a Harmony-shaped calm reached, which forget a pickpocket catch.
-    public var calmedAround: [ReferenceKey] = []
+    var calmedAround: [ReferenceKey] = []
     /// The actor-value holder of a caster, for Absorb. Only the player without a world.
-    public var holderResolver: (ReferenceKey) -> ActorValueHolder? = { key in
+    var holderResolver: (ReferenceKey) -> ActorValueHolder? = { key in
         key == .player ? .player : nil
     }
 
     /// What kind of record a source is, for the cures.
-    public var sourceCategory: (ActiveEffectSource) -> ActiveEffectSourceCategory = { _ in .other }
+    var sourceCategory: (ActiveEffectSource) -> ActiveEffectSourceCategory = { _ in .other }
     /// Whether an actor carries `ActorTypeUndead`, for Turn Undead.
-    public var isUndead: (ActorValueHolder) -> Bool = { _ in false }
+    var isUndead: (ActorValueHolder) -> Bool = { _ in false }
     /// Why a world archetype cannot act on an actor, such as Enhance Weapon on empty
     /// hands. Nil lets it act.
-    public var worldRefusal: (MagicWorldArchetype, ActorValueHolder)
+    var worldRefusal: (MagicWorldArchetype, ActorValueHolder)
         -> MagicEffectPlanFailure? = { _, _ in nil }
 
     /// The game settings that scale a Value and Parts magnitude.
     public var valueAndParts = MagicValueAndPartsScale()
     /// The spell-side `CTDA` list of the entry a stored effect came from, which is
     /// checked again every second. Nil when the source is not known here.
-    public var entryConditions: (ActiveEffect) -> ConditionList? = { _ in nil }
+    var entryConditions: (ActiveEffect) -> ConditionList? = { _ in nil }
     /// Seconds toward the next condition check. Internal for the tick file.
     var conditionClock: Float = 0
     /// What the effects being applied right now came from, for `EffectWasDualCast`
@@ -97,7 +97,7 @@ public struct ActiveEffectRuntime {
     }
 
     /// Whether `holder` carries an application of `effect`, as `HasMagicEffect` needs.
-    public func hasMagicEffect(_ effect: ReferenceKey, on holder: ActorValueHolder) -> Bool {
+    func hasMagicEffect(_ effect: ReferenceKey, on holder: ActorValueHolder) -> Bool {
         state(of: holder).hasEffect(effect)
     }
 
@@ -199,7 +199,7 @@ public struct ActiveEffectRuntime {
     /// Removes every effect on `holder` — the Dispel archetype's shape, and
     /// what a dev control offers.
     @discardableResult
-    public mutating func dispelAll(on holder: ActorValueHolder) -> Int {
+    mutating func dispelAll(on holder: ActorValueHolder) -> Int {
         dispel(on: holder) { _ in true }
     }
 

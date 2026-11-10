@@ -85,7 +85,7 @@ public final class InventoryItemPreviewSource {
     private var textures: TextureLibrary?
     private var built: [String: PreviewModel] = [:]
     private var order: [String] = []
-    public private(set) var failures: [String: String] = [:]
+    private(set) var failures: [String: String] = [:]
 
     /// `immediate` loads inside the request, for tests and tools.
     public init(fileSystem: any GameFileSource, immediate: Bool = false) {

@@ -65,7 +65,7 @@ public struct InventoryRuntime: InventoryAccess {
     }
 
     /// How many stolen copies of `item` `holder` holds.
-    public func stolenCount(of item: FormID, in holder: InventoryHolder) -> Int32 {
+    func stolenCount(of item: FormID, in holder: InventoryHolder) -> Int32 {
         inventory(of: holder).stolenCount(of: item)
     }
 
@@ -81,7 +81,7 @@ public struct InventoryRuntime: InventoryAccess {
     }
 
     /// Total gold value of everything `holder` carries, before barter adjustment.
-    public func carriedValue(of holder: InventoryHolder) -> Int64 {
+    func carriedValue(of holder: InventoryHolder) -> Int64 {
         inventory(of: holder).stacks.reduce(0) { running, stack in
             let value = baselines.items.gameValue(of: stack.item)
             return running + Int64(value) * Int64(stack.count)
@@ -320,7 +320,7 @@ public struct InventoryRuntime: InventoryAccess {
     /// slot conflicts.
     /// - Returns: true when the stored state changed.
     @discardableResult
-    public func equip(_ item: FormID, on holder: InventoryHolder) -> Bool {
+    func equip(_ item: FormID, on holder: InventoryHolder) -> Bool {
         store.set(inventory(of: holder).equipping(item), for: holder.key, in: holder.cell)
     }
 
@@ -347,7 +347,7 @@ public struct InventoryRuntime: InventoryAccess {
     ///
     /// - Returns: true when a runtime inventory was actually removed.
     @discardableResult
-    public func reset(_ holder: InventoryHolder) -> Bool {
+    func reset(_ holder: InventoryHolder) -> Bool {
         store.reset(.inventory, for: holder.key)
     }
 }

@@ -2,29 +2,29 @@
 // `ReferenceKey` like `INVN`. Declared counts are checked against the bytes
 // left. Bad floats are normalized by `ActorValueState.init`, not rejected.
 
-public import Foundation
+import Foundation
 public import OpenSkyActorsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's saved current values, before they are merged back into the
 /// delta.
-nonisolated public struct SaveActorValueEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: ActorValueState
+nonisolated struct SaveActorValueEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: ActorValueState
 }
 
 /// One actor's saved actor-value overrides, before they merge onto its `AVAL`
 /// entry.
-nonisolated public struct SaveActorValueOverrideEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let overrides: [Int32: ActorValueOverride]
+nonisolated struct SaveActorValueOverrideEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let overrides: [Int32: ActorValueOverride]
 }
 
-nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
-    public static func decodeActorValues(_ payload: Data) throws -> [SaveActorValueEntry] {
+nonisolated enum OpenSkySaveActorValueDecoder: Sendable {
+    static func decodeActorValues(_ payload: Data) throws -> [SaveActorValueEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("AVAL entry count")
         try OpenSkySaveDecoder.validate(
@@ -43,7 +43,7 @@ nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
 
     /// `AVOV`: one entry per actor with overrides, each a list of
     /// `(index, base offset, permanent, damage)` records.
-    public static func decodeActorValueOverrides(
+    static func decodeActorValueOverrides(
         _ payload: Data
     ) throws -> [SaveActorValueOverrideEntry] {
         var reader = SaveReader(payload)
@@ -64,7 +64,7 @@ nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
 
     /// Lays each actor's override table onto its `AVAL` entry. An `AVOV` entry
     /// without an `AVAL` entry is dropped, since the encoder writes both together.
-    public static func mergeOverrides(
+    static func mergeOverrides(
         _ overrides: [SaveActorValueOverrideEntry],
         into values: [SaveActorValueEntry]
     ) -> [SaveActorValueEntry] {
@@ -135,11 +135,11 @@ nonisolated public enum OpenSkySaveActorValueDecoder: Sendable {
 }
 
 nonisolated extension SaveActorValueEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.erased
     }
 }

@@ -19,7 +19,7 @@ extension GameSession {
     }
 
     /// True while the override frames the player's own head.
-    public var isDialogueCameraFramingPlayer: Bool {
+    var isDialogueCameraFramingPlayer: Bool {
         dialogueCameraState.focus?.framesPlayer ?? false
     }
 
@@ -31,7 +31,7 @@ extension GameSession {
     /// The field of view that mode projects with, which is what releasing the
     /// override re-projects to. The one statement of the per-mode rule;
     /// `activeFOVYRadians` reads it rather than repeating it.
-    public var dialogueCameraRestoreFOVYRadians: Float {
+    var dialogueCameraRestoreFOVYRadians: Float {
         movementMode == .walk
             ? firstPersonCamera.fovYRadians
             : FirstPersonCamera.defaultFOVYRadians

@@ -1,15 +1,15 @@
 // QJLG chunk: the journal's newest log entry per quest, laid onto the QSTS states.
 // Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
-public import OpenSkyQuestsInterface
-public import OpenSkyWorldState
+import Foundation
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyQuestsInterface
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Every quest state with a log entry, in the snapshot's key order.
-    public static func writeQuestJournalLogs(
+    static func writeQuestJournalLogs(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -34,7 +34,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveQuestDecoder {
-    public static func decodeQuestJournalLogs(
+    static func decodeQuestJournalLogs(
         _ payload: Data
     ) throws -> [ReferenceKey: QuestJournalLog] {
         let tag = OpenSkySaveFormat.ChunkTag.questJournalLogs

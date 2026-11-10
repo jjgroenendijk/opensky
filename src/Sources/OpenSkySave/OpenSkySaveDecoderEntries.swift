@@ -1,15 +1,15 @@
 // RDLT chunk decoding: reference keys, cell locations and component values. The
 // payload is its own `Data`, so a corrupt count cannot read into the next chunk.
 
-public import Foundation
+import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyWorldState
 import simd
 
-nonisolated public enum OpenSkySaveEntryDecoder: Sendable {
-    public static func decodeEntries(_ payload: Data) throws -> [WorldStateSnapshotEntry] {
+nonisolated enum OpenSkySaveEntryDecoder: Sendable {
+    static func decodeEntries(_ payload: Data) throws -> [WorldStateSnapshotEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RDLT entry count")
         try OpenSkySaveDecoder.validate(
@@ -27,7 +27,7 @@ nonisolated public enum OpenSkySaveEntryDecoder: Sendable {
     }
 
     /// GVAR chunk: count, then key + declared-type tag + float32 value per global.
-    public static func decodeGlobals(_ payload: Data) throws -> [WorldStateGlobalSnapshotEntry] {
+    static func decodeGlobals(_ payload: Data) throws -> [WorldStateGlobalSnapshotEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("GVAR entry count")
         try OpenSkySaveDecoder.validate(
@@ -63,7 +63,7 @@ nonisolated public enum OpenSkySaveEntryDecoder: Sendable {
         )
     }
 
-    public static func decodeKey(_ reader: inout SaveReader) throws -> ReferenceKey {
+    static func decodeKey(_ reader: inout SaveReader) throws -> ReferenceKey {
         let tag = try reader.uint8("reference key kind")
         switch tag {
         case OpenSkySaveFormat.KeyTag.plugin:
@@ -78,7 +78,7 @@ nonisolated public enum OpenSkySaveEntryDecoder: Sendable {
     }
 
     /// Shared with the `INVN` decoder, which writes the same tagged cell.
-    public static func decodeCell(_ reader: inout SaveReader) throws -> CellSceneLocation? {
+    static func decodeCell(_ reader: inout SaveReader) throws -> CellSceneLocation? {
         let tag = try reader.uint8("cell kind")
         switch tag {
         case OpenSkySaveFormat.CellTag.absent:

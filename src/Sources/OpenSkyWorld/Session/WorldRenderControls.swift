@@ -4,7 +4,7 @@
 
 import OpenSkyDiagnostics
 import OpenSkyGameData
-public import OpenSkyPhysics
+import OpenSkyPhysics
 public import OpenSkyRenderCore
 public import OpenSkyRendering
 public import OpenSkyRuntimeState
@@ -45,7 +45,7 @@ public final class WorldRenderControls {
 }
 
 extension WorldRenderControls {
-    public var shadowsActive: Bool {
+    var shadowsActive: Bool {
         renderer?.shadowRenders ?? false
     }
 
@@ -54,18 +54,18 @@ extension WorldRenderControls {
         renderer?.terrainLODBrightness
     }
 
-    public func refocusGameView() {
+    func refocusGameView() {
         world?.refocusGameView()
     }
 }
 
 extension WorldRenderControls {
-    public var renderDebugMode: RenderDebugMode {
+    var renderDebugMode: RenderDebugMode {
         get { renderer?.renderDebug.mode ?? .off }
         set { renderer?.renderDebug.mode = newValue }
     }
 
-    public var renderDebugLayers: RenderLayer {
+    var renderDebugLayers: RenderLayer {
         get { renderer?.renderDebug.layers ?? .all }
         set { renderer?.renderDebug.layers = newValue }
     }
@@ -87,7 +87,7 @@ extension WorldRenderControls {
 }
 
 extension WorldRenderControls {
-    public var movementMode: CameraMovementMode {
+    var movementMode: CameraMovementMode {
         get { gameSession?.movementMode ?? .fly }
         set { gameSession?.setMovementMode(newValue) }
     }
@@ -98,7 +98,7 @@ extension WorldRenderControls {
         renderer?.frameStats.snapshot() ?? .empty
     }
 
-    public var sceneStatsSnapshot: SceneStatsSnapshot {
+    var sceneStatsSnapshot: SceneStatsSnapshot {
         let draw = renderer?.combinedDrawStats() ?? SceneDrawStats()
         return SceneStatsSnapshot(
             drawCalls: draw.drawCalls,
@@ -112,7 +112,7 @@ extension WorldRenderControls {
 }
 
 extension WorldRenderControls {
-    public var dynamicBodyStatsSnapshot: DynamicBodyStatsSnapshot {
+    var dynamicBodyStatsSnapshot: DynamicBodyStatsSnapshot {
         streamer?.dynamicBodies.statsSnapshot ?? DynamicBodyStatsSnapshot()
     }
 }

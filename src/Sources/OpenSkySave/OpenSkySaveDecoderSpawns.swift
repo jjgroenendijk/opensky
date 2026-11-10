@@ -1,20 +1,20 @@
 // SPWN chunk: objects the game placed, merged into the `RDLT` deltas by
 // `ReferenceKey`. A spawn usually has no `RDLT` entry of its own.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkyWorldState
 import simd
 
 /// One saved spawned object, before it is merged back into its delta.
-nonisolated public struct SaveSpawnEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let spawn: ReferenceSpawnState
+nonisolated struct SaveSpawnEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let spawn: ReferenceSpawnState
 }
 
-nonisolated public enum OpenSkySaveSpawnDecoder: Sendable {
-    public static func decodeSpawns(_ payload: Data) throws -> [SaveSpawnEntry] {
+nonisolated enum OpenSkySaveSpawnDecoder: Sendable {
+    static func decodeSpawns(_ payload: Data) throws -> [SaveSpawnEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("SPWN entry count")
         try OpenSkySaveDecoder.validate(
@@ -73,11 +73,11 @@ nonisolated public enum OpenSkySaveSpawnDecoder: Sendable {
 }
 
 nonisolated extension SaveSpawnEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         spawn.location
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         spawn.erased
     }
 }

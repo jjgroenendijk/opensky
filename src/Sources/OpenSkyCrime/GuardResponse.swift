@@ -5,7 +5,7 @@
 // 2999 (<https://ck.uesp.net/wiki/Category:Settings>). See docs/engine/guard-response.md.
 
 import Foundation
-public import OpenSkyCrimeInterface
+import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -13,29 +13,17 @@ import OpenSkyWorldInterface
 
 /// One guard the session can see, reduced to what the confrontation decision
 /// reads.
-nonisolated public struct GuardCandidate: Equatable, Sendable {
-    public let guardKey: ReferenceKey
-    public let crimeFaction: ReferenceKey
+nonisolated struct GuardCandidate: Equatable, Sendable {
+    let guardKey: ReferenceKey
+    let crimeFaction: ReferenceKey
     /// Whether the perception pass has the player at `detected` for this guard.
-    public let detectsPlayer: Bool
+    let detectsPlayer: Bool
     /// World-space distance to the player.
-    public let distance: Float
-
-    public init(
-        guardKey: ReferenceKey,
-        crimeFaction: ReferenceKey,
-        detectsPlayer: Bool,
-        distance: Float
-    ) {
-        self.guardKey = guardKey
-        self.crimeFaction = crimeFaction
-        self.detectsPlayer = detectsPlayer
-        self.distance = distance
-    }
+    let distance: Float
 }
 
 /// What one tick of guard response asks the session to do.
-nonisolated public enum GuardAction: Equatable, Sendable {
+nonisolated enum GuardAction: Equatable, Sendable {
     /// Walk toward the player: the guard has seen a bounty worth an arrest and
     /// is not yet close enough to speak.
     case pursue(guardKey: ReferenceKey, crimeFaction: ReferenceKey)
@@ -49,31 +37,31 @@ nonisolated public enum GuardAction: Equatable, Sendable {
 /// Session state rather than a component, for the reason `assaultedActors`
 /// is: it answers "what happened in this encounter", and a reloaded save starts
 /// every encounter from the ledger. Recorded in docs/engine/guard-response.md.
-nonisolated public struct GuardResponseState: Equatable, Sendable {
+nonisolated struct GuardResponseState: Equatable, Sendable {
     /// How close a guard has to be to open the conversation, in world units.
     /// The interaction ray's reach, so a guard speaks from where the player
     /// could have spoken to it.
-    public static let confrontDistance: Float = InteractionRay.defaultMaximumDistance
+    static let confrontDistance: Float = InteractionRay.defaultMaximumDistance
     /// Game seconds a guard waits before confronting again after a
     /// confrontation that could not run — no dialogue index, another menu in
     /// the way. One game hour, this engine's number. A conversation the player
     /// walks out of is not this case: UESP records that "If you cancel the
     /// dialogue when guards attempt to arrest you, they will attack you"
     /// (<https://en.uesp.net/wiki/Skyrim:Crime>), which is `resist`.
-    public static let reconfrontGameSeconds: Double = 3600
+    static let reconfrontGameSeconds: Double = 3600
 
     /// The guard currently in the arrest conversation, and its faction.
-    public private(set) var active: GuardAction?
+    private(set) var active: GuardAction?
     /// Game time before which each guard will not confront again.
-    public private(set) var cooldownUntil: [ReferenceKey: Double] = [:]
+    private(set) var cooldownUntil: [ReferenceKey: Double] = [:]
     /// Crime factions whose guards the player resisted.
-    public private(set) var resisted: Set<ReferenceKey> = []
+    private(set) var resisted: Set<ReferenceKey> = []
 
-    public init() {}
+    init() {}
 
     /// What to do this tick. At most one confrontation at a time, with the nearest
     /// eligible guard. An attack-on-sight guard is skipped: it is already hostile.
-    public func actions(
+    func actions(
         guards: [GuardCandidate],
         bounty: (ReferenceKey) -> CrimeLedgerEntry?,
         values: (ReferenceKey) -> Faction.CrimeValues?,
@@ -114,7 +102,7 @@ nonisolated public struct GuardResponseState: Equatable, Sendable {
     }
 
     /// Records that a confrontation opened.
-    public mutating func begin(_ action: GuardAction) {
+    mutating func begin(_ action: GuardAction) {
         guard case .confront = action else { return }
         active = action
     }
@@ -122,7 +110,7 @@ nonisolated public struct GuardResponseState: Equatable, Sendable {
     /// Ends the open confrontation. A settled one (paid or jailed) needs no
     /// cooldown, because the bounty it was about is gone; one that could not
     /// run holds that guard off for `reconfrontGameSeconds`.
-    public mutating func end(settled: Bool, now: Double) {
+    mutating func end(settled: Bool, now: Double) {
         if case let .confront(guardKey, _, _) = active, !settled {
             cooldownUntil[guardKey] = now + Self.reconfrontGameSeconds
         }
@@ -130,19 +118,19 @@ nonisolated public struct GuardResponseState: Equatable, Sendable {
     }
 
     /// The player refused arrest: every guard of that faction turns hostile.
-    public mutating func resist(_ crimeFaction: ReferenceKey, now: Double) {
+    mutating func resist(_ crimeFaction: ReferenceKey, now: Double) {
         resisted.insert(crimeFaction)
         end(settled: true, now: now)
     }
 
     /// Forgets a faction's resistance once its bounty is gone, so paying later
     /// does not leave the guards angry forever.
-    public mutating func forgive(_ crimeFaction: ReferenceKey) {
+    mutating func forgive(_ crimeFaction: ReferenceKey) {
         resisted.remove(crimeFaction)
     }
 
     /// Drops every cooldown and resistance, for a new game or a dev reset.
-    public mutating func reset() {
+    mutating func reset() {
         self = GuardResponseState()
     }
 }

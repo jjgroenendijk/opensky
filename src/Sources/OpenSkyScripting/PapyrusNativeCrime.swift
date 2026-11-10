@@ -6,8 +6,8 @@
 // docs/engine/bounty-ledger.md.
 
 import Foundation
-public import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsESM
+import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
     public static func installCrime(into registry: inout PapyrusNativeRegistry) {
@@ -192,7 +192,7 @@ extension PapyrusNativeFunctions {
     /// Resolves a `Faction` receiver, then runs `body`. A FACT is keyed by the same
     /// `ReferenceKey` as its memberships and ledger rows, so it resolves like an
     /// `Actor` receiver.
-    public static func factionTarget(
+    static func factionTarget(
         _ call: PapyrusNativeCall,
         _ context: PapyrusNativeContext,
         body: (any PapyrusWorldBridge, ReferenceKey) -> PapyrusNativeResult

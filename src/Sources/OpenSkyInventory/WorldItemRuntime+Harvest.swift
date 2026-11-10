@@ -34,11 +34,6 @@ nonisolated public struct HarvestMoment: Equatable, Sendable {
     public let day: Float?
     /// Nil without a clock; the season's chance then does not apply.
     public let season: HarvestSeason?
-
-    public init(day: Float?, season: HarvestSeason?) {
-        self.day = day
-        self.season = season
-    }
 }
 
 extension WorldItemRuntime {
@@ -108,7 +103,7 @@ extension WorldItemRuntime {
     }
 
     /// Clears the harvested component: the plant grows back now.
-    public func resetHarvest(_ interaction: PlacedInteraction) throws {
+    func resetHarvest(_ interaction: PlacedInteraction) throws {
         guard let entry = references?.referenceEntry(formID: interaction.reference) else {
             throw HarvestError.unknownReference(interaction.reference)
         }

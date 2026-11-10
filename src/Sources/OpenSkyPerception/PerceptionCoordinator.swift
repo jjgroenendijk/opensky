@@ -2,7 +2,7 @@
 // resident actors observe, and answers the AI & Navigation detection section.
 // The pass itself is `PerceptionRuntime`. See docs/engine/coordinators.md.
 
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 public import OpenSkyRenderCore
@@ -117,7 +117,7 @@ extension PerceptionCoordinator: PerceptionWorld {
 }
 
 extension PerceptionCoordinator {
-    public func perceptionLines(for actor: ReferenceKey) -> [String] {
+    func perceptionLines(for actor: ReferenceKey) -> [String] {
         runtime?.readout().pairs(involving: actor).map(\.summaryLine) ?? []
     }
 }

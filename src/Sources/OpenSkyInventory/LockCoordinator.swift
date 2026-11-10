@@ -50,11 +50,11 @@ extension LockWorld {
 
 /// The perk entry points lockpicking reads, by their xEdit index.
 nonisolated public enum LockpickingEntryPoint {
-    public static let sweetSpot = PerkEntryPoint.modLockpickSweetSpot
-    public static let startingArc = PerkEntryPoint.setLockpickStartingArc
-    public static let unbreakable = PerkEntryPoint.makeLockpicksUnbreakable
+    static let sweetSpot = PerkEntryPoint.modLockpickSweetSpot
+    static let startingArc = PerkEntryPoint.setLockpickStartingArc
+    static let unbreakable = PerkEntryPoint.makeLockpicksUnbreakable
     public static let keyReward = PerkEntryPoint.modLockpickingKeyRewardChance
-    public static let crimeChance = PerkEntryPoint.modLockpickingCrimeChance
+    static let crimeChance = PerkEntryPoint.modLockpickingCrimeChance
 }
 
 /// The lock a session is picking, as it stood when the session began.
@@ -89,7 +89,7 @@ public final class LockCoordinator {
     public internal(set) var lastOutcome: LockpickingOutcome?
     public internal(set) var lastAction = LockActionOutcome.idle
     /// The selected lock.
-    public var selectedLock: FormID?
+    var selectedLock: FormID?
 
     public init(
         world: any LockWorld,

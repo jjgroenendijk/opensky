@@ -24,12 +24,12 @@ public final class InventoryCoordinator {
     /// Captured on open, because the cell holding the container may be evicted
     /// while it is still open.
     public private(set) var sessionName: String?
-    public private(set) var lastAction = ItemActionOutcome.idle
+    private(set) var lastAction = ItemActionOutcome.idle
     /// Kept apart from `lastAction`, so a grant does not overwrite the
     /// take and drop readout on the other readout.
-    public private(set) var lastGrant = GrantActionOutcome.idle
+    private(set) var lastGrant = GrantActionOutcome.idle
     /// The NPC by default: an equip is only visible on a rendered actor.
-    public var inspectionTarget = EquipmentTargetSelector.nearestActor
+    var inspectionTarget = EquipmentTargetSelector.nearestActor
     /// Nil without a FACT and FLST index.
     public let vendors: VendorCoordinator?
     /// Lock state, keys, and lockpicking, over the same world-item runtime.
@@ -38,7 +38,7 @@ public final class InventoryCoordinator {
     public let craftingCatalog: CraftingCatalog?
     /// At most one station is in use at a time.
     public internal(set) var crafting: CraftingSession?
-    public internal(set) var lastCraft = CraftingActionOutcome.idle
+    var lastCraft = CraftingActionOutcome.idle
     weak let recipeConditions: (any RecipeConditionChecking)?
     weak let skillUses: (any SkillUseReporting)?
     /// The experience formulas a crafting session reports with.
@@ -54,7 +54,7 @@ public final class InventoryCoordinator {
     /// The ingredients chosen at the open alchemy lab, in the order chosen. Nil when no
     /// lab is open.
     public internal(set) var alchemySelection: [FormID]?
-    public internal(set) var lastAlchemy = AlchemyActionOutcome.idle
+    var lastAlchemy = AlchemyActionOutcome.idle
     public let alchemySettings: AlchemySettings
     public let alchemyTexts: AlchemyTexts
     /// The MGEF index ingredient effects resolve through. Nil leaves alchemy unavailable.
@@ -175,7 +175,7 @@ public final class InventoryCoordinator {
     }
 
     @discardableResult
-    public func closeOpenContainer() -> ItemActionOutcome {
+    func closeOpenContainer() -> ItemActionOutcome {
         guard let session else { return .noContainer }
         session.close()
         self.session = nil

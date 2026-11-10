@@ -7,25 +7,11 @@ import OpenSkyGameData
 
 /// Per-frame scene accounting plus the streaming and memory numbers that answer
 /// "is this frame slow because of what is resident?".
-nonisolated public struct SceneStatsSnapshot: Equatable, Sendable {
-    public let drawCalls: Int
-    public let drawnInstances: Int
-    public let culledInstances: Int
-    public let residentCellCount: Int
+nonisolated struct SceneStatsSnapshot: Equatable, Sendable {
+    let drawCalls: Int
+    let drawnInstances: Int
+    let culledInstances: Int
+    let residentCellCount: Int
     /// Process physical footprint, or nil when the mach call fails.
-    public let memoryFootprintMB: Double?
-
-    public init(
-        drawCalls: Int,
-        drawnInstances: Int,
-        culledInstances: Int,
-        residentCellCount: Int,
-        memoryFootprintMB: Double?
-    ) {
-        self.drawCalls = drawCalls
-        self.drawnInstances = drawnInstances
-        self.culledInstances = culledInstances
-        self.residentCellCount = residentCellCount
-        self.memoryFootprintMB = memoryFootprintMB
-    }
+    let memoryFootprintMB: Double?
 }

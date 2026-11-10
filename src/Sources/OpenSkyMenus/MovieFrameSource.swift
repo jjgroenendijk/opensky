@@ -14,11 +14,6 @@ nonisolated public struct MovieClock: Equatable, Sendable {
     public let framesPerSecond: Double
     public let frameCount: Int
 
-    public init(framesPerSecond: Double, frameCount: Int) {
-        self.framesPerSecond = framesPerSecond
-        self.frameCount = frameCount
-    }
-
     public var duration: Double {
         Double(frameCount) / framesPerSecond
     }

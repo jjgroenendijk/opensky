@@ -168,7 +168,7 @@ extension PapyrusWorldStateBridge {
 
     /// `ForceRefTo` and `Clear`: writes the fill, then moves the alias scripts to the
     /// new reference, so they get `OnInit` there as a fresh fill does.
-    public func forceAlias(_ slot: PapyrusAliasSlot, to reference: ReferenceKey?) throws {
+    func forceAlias(_ slot: PapyrusAliasSlot, to reference: ReferenceKey?) throws {
         let resolved = try resolveQuest(slot.quest)
         try resolved.runtime.forceAlias(slot.aliasID, to: reference, on: resolved.quest.formID)
         syncAliasScripts(of: slot, resolved)
@@ -176,7 +176,7 @@ extension PapyrusWorldStateBridge {
 
     /// `ForceLocationTo` and `LocationAlias.Clear`. A location alias carries no scripts
     /// OpenSky attaches, so only the fill changes.
-    public func forceLocationAlias(
+    func forceLocationAlias(
         _ slot: PapyrusAliasSlot, to location: ResolvedFormID?
     ) throws {
         let resolved = try resolveQuest(slot.quest)

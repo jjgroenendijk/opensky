@@ -45,7 +45,7 @@ nonisolated public enum MapMarkerRules {
     }
 
     /// The markers the world map draws: visible ones, nearest first.
-    public static func shown(
+    static func shown(
         _ sites: [MapMarkerSite],
         around point: SIMD3<Float>
     ) -> [MapMarkerSite] {

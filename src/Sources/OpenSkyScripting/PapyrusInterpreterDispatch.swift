@@ -1,11 +1,11 @@
 // Opcode fan-out kept separate from the execution loop.
 
 import Foundation
-public import OpenSkyFormatsPEX
+import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
-    public func requireOperands(
+    func requireOperands(
         _ count: Int,
         instruction: PexInstruction
     ) throws(PapyrusFault) -> [PexValue] {
@@ -18,7 +18,7 @@ extension PapyrusInterpreter {
         return instruction.operands
     }
 
-    public func step(
+    func step(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow {

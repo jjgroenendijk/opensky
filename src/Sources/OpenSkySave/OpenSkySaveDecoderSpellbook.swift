@@ -2,21 +2,21 @@
 // `SpellbookState.init` normalizes duplicate and stale keys, so no content error
 // fails a load.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's saved spellbook, before it is merged back into the delta.
-nonisolated public struct SaveSpellbookEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: SpellbookState
+nonisolated struct SaveSpellbookEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: SpellbookState
 }
 
-nonisolated public enum OpenSkySaveSpellbookDecoder: Sendable {
-    public static func decodeSpellbooks(_ payload: Data) throws -> [SaveSpellbookEntry] {
+nonisolated enum OpenSkySaveSpellbookDecoder: Sendable {
+    static func decodeSpellbooks(_ payload: Data) throws -> [SaveSpellbookEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("SPLB entry count")
         try OpenSkySaveDecoder.validate(
@@ -101,11 +101,11 @@ nonisolated public enum OpenSkySaveSpellbookDecoder: Sendable {
 }
 
 nonisolated extension SaveSpellbookEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.isEmpty ? nil : state.erased
     }
 }

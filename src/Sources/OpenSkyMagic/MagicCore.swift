@@ -8,14 +8,14 @@ import OpenSkyGameData
 import OpenSkyMagicInterface
 
 /// One condition function the Spellcasting readout probes against the player.
-nonisolated public struct MagicConditionProbe: Equatable, Sendable {
-    public let function: UInt16
-    public let name: String
-    public let parameter: UInt32
+nonisolated struct MagicConditionProbe: Equatable, Sendable {
+    let function: UInt16
+    let name: String
+    let parameter: UInt32
     /// What the parameter names, for the readout line.
-    public let parameterText: String
+    let parameterText: String
 
-    public func line(value: String) -> String {
+    func line(value: String) -> String {
         "\(name)(\(parameterText)) -> \(value)"
     }
 }
@@ -41,7 +41,7 @@ nonisolated public enum MagicCore {
 
     /// The whole day a `GameClock.daysPassed` reading names, clamped so an
     /// absurd clock cannot trap the conversion.
-    public static func gameDay(_ days: Float) -> Int32 {
+    static func gameDay(_ days: Float) -> Int32 {
         guard days.isFinite else { return 0 }
         let whole = days.rounded(.down)
         if whole <= Float(Int32.min) {

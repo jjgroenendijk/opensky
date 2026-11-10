@@ -1,14 +1,14 @@
 // HELP chunk: help-message counts per input event, on the player's delta.
 // Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
-public import OpenSkyScriptingInterface
-public import OpenSkyWorldState
+import Foundation
+import OpenSkyFormatsCore
+import OpenSkyScriptingInterface
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Events in name order, so the same state writes the same bytes.
-    public static func writeHelpMessages(
+    static func writeHelpMessages(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -26,7 +26,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
-    public static func decodeHelpMessages(
+    static func decodeHelpMessages(
         _ payload: Data
     ) throws -> [SaveStoryEntry<HelpMessageState>] {
         let tag = OpenSkySaveFormat.ChunkTag.helpMessages

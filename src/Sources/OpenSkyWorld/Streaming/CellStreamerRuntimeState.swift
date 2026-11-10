@@ -178,12 +178,12 @@ extension CellStreamer {
     // MARK: - Inspection (tests + streaming verification)
 
     /// Rebuild requests queued but not yet dispatched.
-    public var queuedRebuildCount: Int {
+    var queuedRebuildCount: Int {
         rebuildRequests.count
     }
 
     /// Resident cells with a rebuild currently in flight.
-    public var rebuildingCellCount: Int {
+    var rebuildingCellCount: Int {
         core.rebuilding.count
     }
 

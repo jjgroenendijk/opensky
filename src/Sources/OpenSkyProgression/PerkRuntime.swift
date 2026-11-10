@@ -154,7 +154,7 @@ public struct PerkRuntime: PerkAccess {
 
     /// Owned perks for `holders` as the condition machinery reads them, which
     /// is what `HasPerk` answers from.
-    public func conditionResolution(
+    func conditionResolution(
         for holders: [ReferenceKey],
         sourcePlugin: String?
     ) -> PerkConditionResolution {
@@ -166,7 +166,7 @@ public struct PerkRuntime: PerkAccess {
     }
 
     /// The owned set of each of `holders`, for the seam and for the bridge.
-    public func ownership(of holders: [ReferenceKey]) -> [ReferenceKey: Set<ReferenceKey>] {
+    func ownership(of holders: [ReferenceKey]) -> [ReferenceKey: Set<ReferenceKey>] {
         var owned: [ReferenceKey: Set<ReferenceKey>] = [:]
         for key in holders {
             let granted = effectPerks[key] ?? []

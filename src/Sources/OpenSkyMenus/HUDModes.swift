@@ -28,7 +28,7 @@ nonisolated public struct HUDModeInputs: Equatable, Sendable {
 nonisolated public enum HUDModeRules {
     /// The mode stack, bottom first; the movie shows the top mode. A disabled
     /// movement sits above cart mode, as the Creation Kit wiki notes for `SetHudCartMode`.
-    public static func modes(_ inputs: HUDModeInputs) -> [HUDMode] {
+    static func modes(_ inputs: HUDModeInputs) -> [HUDMode] {
         var modes: [HUDMode] = []
         if inputs.ridingHorse {
             modes.append(inputs.weaponDrawn ? .warHorse : .horse)

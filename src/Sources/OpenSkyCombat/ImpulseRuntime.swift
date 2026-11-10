@@ -98,7 +98,7 @@ public final class ImpulseRuntime {
     }
 
     /// Shows and logs a splash.
-    public func play(_ splash: SplashEvent) {
+    func play(_ splash: SplashEvent) {
         splashCount += 1
         world?.showSplash(splash)
         record(.splash(splash))

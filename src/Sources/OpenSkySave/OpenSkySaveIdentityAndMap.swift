@@ -1,23 +1,23 @@
 // PIDN, MRKS, FOGM, and PMRK chunks: the player's identity, map marker state, the
 // local map fog, and the custom marker. Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyActorsInterface
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyActorsInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyWorldInterface
-public import OpenSkyWorldState
+import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveFormat.ChunkTag {
     /// The player's race, sex, name, and face.
-    public static let playerIdentity = "PIDN"
+    static let playerIdentity = "PIDN"
     /// Map markers whose visible, discovered, or travel flags changed.
-    public static let mapMarkers = "MRKS"
+    static let mapMarkers = "MRKS"
     /// The local map's explored squares per cell.
-    public static let localMapFog = "FOGM"
+    static let localMapFog = "FOGM"
     /// The marker the player placed on the world map.
-    public static let playerSetMarker = "PMRK"
+    static let playerSetMarker = "PMRK"
 }
 
 nonisolated extension OpenSkySaveFormat {
@@ -32,7 +32,7 @@ nonisolated extension OpenSkySaveFormat {
 }
 
 nonisolated extension OpenSkySaveEncoder {
-    public static func writeIdentityAndMap(
+    static func writeIdentityAndMap(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -106,7 +106,7 @@ nonisolated extension CellSceneLocation {
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
-    public static func decodeIdentities(_ payload: Data) throws
+    static func decodeIdentities(_ payload: Data) throws
         -> [SaveStoryEntry<PlayerIdentityState>]
     {
         let tag = OpenSkySaveFormat.ChunkTag.playerIdentity
@@ -122,7 +122,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
         }
     }
 
-    public static func decodeMarkers(_ payload: Data) throws -> [SaveStoryEntry<MapMarkerState>] {
+    static func decodeMarkers(_ payload: Data) throws -> [SaveStoryEntry<MapMarkerState>] {
         let tag = OpenSkySaveFormat.ChunkTag.mapMarkers
         return try decode(
             payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumMarkerEntrySize
@@ -137,7 +137,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
         }
     }
 
-    public static func decodeFog(_ payload: Data) throws -> [SaveStoryEntry<LocalMapFogState>] {
+    static func decodeFog(_ payload: Data) throws -> [SaveStoryEntry<LocalMapFogState>] {
         let tag = OpenSkySaveFormat.ChunkTag.localMapFog
         return try decode(
             payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumFogEntrySize
@@ -158,7 +158,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
         }
     }
 
-    public static func decodePlayerMarkers(_ payload: Data) throws
+    static func decodePlayerMarkers(_ payload: Data) throws
         -> [SaveStoryEntry<PlayerSetMapMarker>]
     {
         let tag = OpenSkySaveFormat.ChunkTag.playerSetMarker

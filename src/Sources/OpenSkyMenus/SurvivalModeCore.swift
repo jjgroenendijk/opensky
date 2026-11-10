@@ -26,23 +26,16 @@ nonisolated public struct SurvivalModeGlobals: Equatable, Sendable {
     /// `SRVT`, the player's choice; the plugin starts or stops the mode to match.
     public var toggle: Bool
     /// `SRVE`, whether the mode runs now.
-    public var enabled: Bool
+    var enabled: Bool
     /// `SRVS`, whether the plugin lets the player choose yet.
-    public var canBeEnabled: Bool
-
-    public init(prompted: Bool, toggle: Bool, enabled: Bool, canBeEnabled: Bool) {
-        self.prompted = prompted
-        self.toggle = toggle
-        self.enabled = enabled
-        self.canBeEnabled = canBeEnabled
-    }
+    var canBeEnabled: Bool
 }
 
 nonisolated public enum SurvivalModeCore {
-    public static let promptedEditorID = "Survival_PlayerHasBeenPrompted"
-    public static let toggleEditorID = "Survival_ModeToggle"
-    public static let enabledEditorID = "Survival_ModeEnabled"
-    public static let canBeEnabledEditorID = "Survival_ModeCanBeEnabled"
+    static let promptedEditorID = "Survival_PlayerHasBeenPrompted"
+    static let toggleEditorID = "Survival_ModeToggle"
+    static let enabledEditorID = "Survival_ModeEnabled"
+    static let canBeEnabledEditorID = "Survival_ModeCanBeEnabled"
 
     public enum Step: Equatable, Sendable {
         case none
@@ -65,7 +58,7 @@ nonisolated public enum SurvivalModeCore {
         return globals.toggle == setting ? .none : .mirror(globals.toggle)
     }
 
-    public static func answer(ask: Bool, setting: Bool) -> SurvivalModeAnswer {
+    static func answer(ask: Bool, setting: Bool) -> SurvivalModeAnswer {
         ask ? .ask : setting ? .on : .off
     }
 }

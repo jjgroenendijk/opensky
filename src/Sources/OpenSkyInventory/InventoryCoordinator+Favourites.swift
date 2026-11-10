@@ -20,7 +20,7 @@ extension InventoryCoordinator {
 
     /// Binds `slot` to `item`, which becomes a favourite if it was not one.
     @discardableResult
-    public func bindHotkey(_ slot: Int, to item: FormID) -> FavouriteOutcome {
+    func bindHotkey(_ slot: Int, to item: FormID) -> FavouriteOutcome {
         guard let runtime else { return .unavailable }
         guard let bound = playerFavourites.binding(item, to: slot) else { return .badSlot(slot) }
         runtime.store.set(bound, for: .player)

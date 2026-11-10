@@ -19,7 +19,7 @@ nonisolated public struct ItemListRow: Equatable, Sendable {
     }
 
     /// The row as the text panel lists it.
-    public var line: String {
+    var line: String {
         let count = count > 1 ? " (\(count))" : ""
         return "\(name)\(count)\(isEquipped ? "  [equipped]" : "")"
     }
@@ -35,39 +35,35 @@ nonisolated public struct ItemListCategory: Equatable, Sendable {
     }
 }
 
-nonisolated public struct ItemListMenuModel: Equatable, Sendable {
-    public private(set) var categories: [ItemListCategory]
-    public private(set) var selectedCategory = 0
-    public private(set) var selectedRow = 0
+nonisolated struct ItemListMenuModel: Equatable, Sendable {
+    private(set) var categories: [ItemListCategory]
+    private(set) var selectedCategory = 0
+    private(set) var selectedRow = 0
 
-    public init(categories: [ItemListCategory]) {
-        self.categories = categories
-    }
-
-    public var rows: [ItemListRow] {
+    var rows: [ItemListRow] {
         categories.indices.contains(selectedCategory) ? categories[selectedCategory].rows : []
     }
 
-    public var selected: ItemListRow? {
+    var selected: ItemListRow? {
         rows.indices.contains(selectedRow) ? rows[selectedRow] : nil
     }
 
-    public mutating func moveCategory(by step: Int) {
+    mutating func moveCategory(by step: Int) {
         guard !categories.isEmpty else { return }
         selectedCategory = (selectedCategory + step + categories.count) % categories.count
         selectedRow = 0
     }
 
-    public mutating func moveRow(by step: Int) {
+    mutating func moveRow(by step: Int) {
         selectRow(selectedRow + step)
     }
 
-    public mutating func selectRow(_ index: Int) {
+    mutating func selectRow(_ index: Int) {
         selectedRow = rows.isEmpty ? 0 : min(max(index, 0), rows.count - 1)
     }
 
     /// New rows keep the category and the nearest row.
-    public mutating func replace(_ categories: [ItemListCategory]) {
+    mutating func replace(_ categories: [ItemListCategory]) {
         self.categories = categories
         selectedCategory = min(selectedCategory, max(0, categories.count - 1))
         selectRow(selectedRow)

@@ -136,7 +136,7 @@ extension PapyrusWorldStateBridge {
 
     /// `KillSilent`: the same death, but the story manager hears no `KILL` event.
     @discardableResult
-    public func killActorSilently(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
+    func killActorSilently(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
         silentDeath = key
         defer { silentDeath = nil }
         return killActor(key, killer: killer)

@@ -4,7 +4,7 @@
 // docs/engine/perks.md.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyProgressionInterface
 
 nonisolated public enum PerkEntryPointEvaluator: Sendable {
@@ -42,7 +42,7 @@ nonisolated public enum PerkEntryPointEvaluator: Sendable {
     }
 
     /// Whether `apply` computes `function` at all, whatever its payload.
-    public static func supports(_ function: PerkFunction) -> Bool {
+    static func supports(_ function: PerkFunction) -> Bool {
         let probe = PerkEntryPointOperand(function: function, data: nil)
         return apply(probe, to: 0) { _ in nil } != .failure(.unsupportedFunction(function))
     }

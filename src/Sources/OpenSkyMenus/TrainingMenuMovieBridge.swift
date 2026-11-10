@@ -37,7 +37,7 @@ nonisolated public struct TrainingCard: Equatable, Sendable {
     }
 
     /// The card's lines, in the movie's field order. The wording is OpenSky's.
-    public var lines: [String] {
+    var lines: [String] {
         [
             "\(skillName) \(skillLevel)",
             "\(trainerName) trains up to \(trainerMaximum)",
@@ -56,7 +56,7 @@ nonisolated public enum TrainingMovieEvent: Equatable, Sendable {
 
 nonisolated public enum TrainingMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\trainingmenu.swf"
-    public static let menuPath = "/TrainingMenuObj"
+    static let menuPath = "/TrainingMenuObj"
     static let fieldNames = [
         "SkillName", "TrainerSkill", "TimesTrained", "TrainCost", "CurrentGold"
     ]
@@ -84,7 +84,7 @@ nonisolated public enum TrainingMenuMovieBridge: Sendable {
         )
     }
 
-    public static func publish(_ card: TrainingCard, runtime: SWFMovieRuntime) {
+    static func publish(_ card: TrainingCard, runtime: SWFMovieRuntime) {
         for (name, line) in zip(fieldNames, card.lines) {
             MenuMovieText.set(line, atPath: "\(menuPath)/\(name)", runtime: runtime)
         }

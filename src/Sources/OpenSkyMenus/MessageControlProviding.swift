@@ -4,27 +4,27 @@ import Foundation
 import OpenSkyMenusInterface
 import OpenSkyScriptingInterface
 
-nonisolated public struct MessageControlSnapshot: Equatable, Sendable {
-    public var isAvailable = false
-    public var visible: [String] = []
-    public var waitingCount = 0
-    public var postedCount = 0
-    public var droppedCount = 0
-    public var helpText: String?
+nonisolated struct MessageControlSnapshot: Equatable, Sendable {
+    var isAvailable = false
+    var visible: [String] = []
+    var waitingCount = 0
+    var postedCount = 0
+    var droppedCount = 0
+    var helpText: String?
     /// One line per help event: its count and whether it is done.
-    public var helpLines: [String] = []
-    public var openBox: String?
-    public var queuedBoxes = 0
+    var helpLines: [String] = []
+    var openBox: String?
+    var queuedBoxes = 0
     /// What draws the open box: the vanilla movie, or the overlay and why.
-    public var boxDrawing: String?
-    public var lastAnswer: String?
-    public var lastOutcome: String?
+    var boxDrawing: String?
+    var lastAnswer: String?
+    var lastOutcome: String?
 
-    public init() {}
+    init() {}
 }
 
 extension MessageCoordinator {
-    public func snapshot(lastOutcome: String?) -> MessageControlSnapshot {
+    func snapshot(lastOutcome: String?) -> MessageControlSnapshot {
         var snapshot = MessageControlSnapshot()
         snapshot.isAvailable = world != nil
         snapshot.visible = notifications.visible.map(\.text)
@@ -47,8 +47,8 @@ extension MessageCoordinator {
     }
 }
 
-nonisolated public enum MessageReadout {
-    public static func text(for snapshot: MessageControlSnapshot) -> String {
+nonisolated enum MessageReadout {
+    static func text(for snapshot: MessageControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Messages: no game data" }
         var lines = [
             "Notifications: \(snapshot.visible.count) shown, \(snapshot.waitingCount) waiting",

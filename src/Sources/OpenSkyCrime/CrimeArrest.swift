@@ -38,13 +38,13 @@ public struct CrimeArrest {
     }
 
     /// The faction's chest for the player's belongings (`PLCN`) as a runtime identity.
-    public func belongingsChest(of faction: ReferenceKey) -> ReferenceKey? {
+    func belongingsChest(of faction: ReferenceKey) -> ReferenceKey? {
         guard let resolved = crime.factions.faction(key: faction) else { return nil }
         return crime.factions.linkKey(resolved.faction.playerInventoryContainer, of: resolved)
     }
 
     /// The faction's jail outfit (`JOUT`), in the load-order space.
-    public func jailOutfit(of faction: ReferenceKey) -> FormID? {
+    func jailOutfit(of faction: ReferenceKey) -> FormID? {
         guard let resolved = crime.factions.faction(key: faction) else { return nil }
         return crime.factions.linkFormID(resolved.faction.jailOutfit, of: resolved)
     }
@@ -109,7 +109,7 @@ public struct CrimeArrest {
     /// in `Skyrim.esm` places `EvidenceChestStolenGoods` or
     /// `EvidenceChestPlayerInventory`, neither of which authors a `CNTO`.
     /// Recorded in docs/engine/guard-response.md.
-    public func unresidentEvidence(of faction: ReferenceKey) -> InventoryHolder? {
+    func unresidentEvidence(of faction: ReferenceKey) -> InventoryHolder? {
         evidenceChest(of: faction).map { InventoryHolder(key: $0, owner: .generated) }
     }
 

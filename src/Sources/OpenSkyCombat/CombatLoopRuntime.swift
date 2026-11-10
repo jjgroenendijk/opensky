@@ -27,22 +27,22 @@ public final class CombatLoopRuntime: CombatControlling {
     /// `ActorMovementLimits.maximumSimultaneousMovers`, because each engaged actor
     /// needs a mover. Past the cap the nearest win, and `crowdedOutCount` counts
     /// the rest.
-    public static let maximumEngagedActors = ActorMovementLimits.maximumSimultaneousMovers
+    static let maximumEngagedActors = ActorMovementLimits.maximumSimultaneousMovers
 
     /// How many incoming hits the trace keeps.
-    public static let traceLimit = 16
+    static let traceLimit = 16
 
     /// Seconds the player's damage flash decays over. An OpenSky number: the
     /// HUD hook needs a duration and no record states one.
-    public static let damageFlashSeconds: Float = 0.35
+    static let damageFlashSeconds: Float = 0.35
 
     public let settings: CombatSettings
     /// Ceilings on everything the fight spawns.
-    public var limits = CombatTransientLimits.standard
+    var limits = CombatTransientLimits.standard
     /// The cadence, block, flee and search numbers every machine runs on.
     public var behaviorSettings = CombatBehaviorSettings.standard
     /// The Block experience of a blow the player blocks.
-    public var skillUses = MeleeSkillUseSettings.vanilla
+    var skillUses = MeleeSkillUseSettings.vanilla
     /// Stagger strength and chance of an NPC blow.
     public var staggers = StaggerSettings.vanilla
     /// Flee distances and the ally follow radius.
@@ -57,15 +57,15 @@ public final class CombatLoopRuntime: CombatControlling {
     /// One machine per actor that is fighting or has fought, keyed by actor.
     public private(set) var behaviors: [ReferenceKey: CombatBehaviorMachine] = [:]
     /// Hostile living actors the cap refused a machine at the last step.
-    public private(set) var crowdedOutCount = 0
+    private(set) var crowdedOutCount = 0
     /// Blows the player has taken, oldest first.
-    public private(set) var incomingTrace: [CombatIncomingHit] = []
-    public private(set) var incomingHitCount = 0
+    private(set) var incomingTrace: [CombatIncomingHit] = []
+    private(set) var incomingHitCount = 0
     /// The HUD's damage-flash hook: 1 the step a blow lands, decaying to 0 over
     /// `damageFlashSeconds`.
     public private(set) var playerDamageFlash: Float = 0
     /// Transients removed by the caps since construction, cumulative.
-    public private(set) var trimmedTransients = CombatTransientCounts()
+    private(set) var trimmedTransients = CombatTransientCounts()
     /// Human-readable result of the last readout or script action.
     public var lastAction = CombatLoopOutcome.idle
 
@@ -194,7 +194,7 @@ public final class CombatLoopRuntime: CombatControlling {
     /// Whether `key` engages without having to perceive its target: a script
     /// called `StartCombat`, the player hit it and it has not detected the player yet,
     /// or it is an ally sent at its commander's foe.
-    public func engagesWithoutPerceiving(_ key: ReferenceKey) -> Bool {
+    func engagesWithoutPerceiving(_ key: ReferenceKey) -> Bool {
         forcedTargets[key] != nil || provoked.contains(key) || commanders[key] != nil
     }
 
@@ -250,7 +250,7 @@ public final class CombatLoopRuntime: CombatControlling {
     /// Here rather than in the satellite because `behaviors` is `private(set)`
     /// and that is per file: the satellite decides what to tell a machine but
     /// must not be able to rewrite its phase behind the runtime's back.
-    public func stepBehavior(
+    func stepBehavior(
         of key: ReferenceKey, inputs: CombatBehaviorInputs
     ) -> CombatBehaviorStep {
         var machine = behaviors[key] ?? makeMachine(for: key)
@@ -291,7 +291,7 @@ public final class CombatLoopRuntime: CombatControlling {
     }
 
     /// Drops a charge the world refused to begin, leaving the fight running.
-    public func abandonCast(of key: ReferenceKey, world: any CombatLoopWorld) {
+    func abandonCast(of key: ReferenceKey, world: any CombatLoopWorld) {
         world.cancelCombatCast(by: key)
         behaviors[key]?.abandonCast()
     }
@@ -306,12 +306,12 @@ public final class CombatLoopRuntime: CombatControlling {
     }
 
     /// Records how many hostile living actors the engagement cap refused.
-    public func noteCrowdedOut(_ count: Int) {
+    func noteCrowdedOut(_ count: Int) {
         crowdedOutCount = count
     }
 
     /// Appends one incoming hit to the trace, trimming to the limit.
-    public func append(_ hit: CombatIncomingHit) {
+    func append(_ hit: CombatIncomingHit) {
         incomingHitCount += 1
         incomingTrace.append(hit)
         if incomingTrace.count > Self.traceLimit {

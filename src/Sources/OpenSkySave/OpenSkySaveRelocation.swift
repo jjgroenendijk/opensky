@@ -1,22 +1,22 @@
 // RLOC chunk: references `MoveTo` sent to another cell. Merged into the `RDLT`
 // deltas by key. Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyWorldState
 
 /// One saved move, before it is merged back into the delta.
-nonisolated public struct SaveRelocationEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let relocation: ReferenceRelocation
+nonisolated struct SaveRelocationEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let relocation: ReferenceRelocation
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// Every moved reference, in snapshot order. No move writes no chunk.
-    public static func writeRelocations(
+    static func writeRelocations(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -35,8 +35,8 @@ nonisolated extension OpenSkySaveEncoder {
     }
 }
 
-nonisolated public enum OpenSkySaveRelocationDecoder: Sendable {
-    public static func decodeRelocations(_ payload: Data) throws -> [SaveRelocationEntry] {
+nonisolated enum OpenSkySaveRelocationDecoder: Sendable {
+    static func decodeRelocations(_ payload: Data) throws -> [SaveRelocationEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RLOC entry count")
         try OpenSkySaveDecoder.validate(
@@ -62,11 +62,11 @@ nonisolated public enum OpenSkySaveRelocationDecoder: Sendable {
 }
 
 nonisolated extension SaveRelocationEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         relocation.erased
     }
 }

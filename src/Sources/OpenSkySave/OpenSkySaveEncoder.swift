@@ -4,7 +4,7 @@
 public import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkySaveInterface
 public import OpenSkyScriptingInterface
 public import OpenSkyWorldState
@@ -168,7 +168,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         }
     }
 
-    public static func writeCell(_ cell: CellSceneLocation?, into writer: inout BinaryWriter) {
+    static func writeCell(_ cell: CellSceneLocation?, into writer: inout BinaryWriter) {
         switch cell {
         case .none:
             writer.writeUInt8(OpenSkySaveFormat.CellTag.absent)

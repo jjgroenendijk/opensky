@@ -8,29 +8,19 @@ import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 
 /// One filled soul gem copy the player carries.
-nonisolated public struct EnchantingGemReadout: Equatable, Sendable {
-    public let gem: SoulGemCandidate
-
-    public init(gem: SoulGemCandidate) {
-        self.gem = gem
-    }
+nonisolated struct EnchantingGemReadout: Equatable, Sendable {
+    let gem: SoulGemCandidate
 }
 
-nonisolated public struct EnchantingControlSnapshot: Equatable, Sendable {
-    public static let unavailable = EnchantingControlSnapshot(gems: []
+nonisolated struct EnchantingControlSnapshot: Equatable, Sendable {
+    static let unavailable = EnchantingControlSnapshot(gems: []
     )
 
-    public let gems: [EnchantingGemReadout]
-
-    public init(
-        gems: [EnchantingGemReadout]
-    ) {
-        self.gems = gems
-    }
+    let gems: [EnchantingGemReadout]
 }
 
 extension MagicCoordinator {
-    public var enchantingSnapshot: EnchantingControlSnapshot {
+    var enchantingSnapshot: EnchantingControlSnapshot {
         guard effects != nil, enchantmentStore != nil, let inventory = world.inventory else {
             return .unavailable
         }

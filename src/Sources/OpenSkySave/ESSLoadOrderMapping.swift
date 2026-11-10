@@ -14,7 +14,7 @@ nonisolated public enum ESSUnmappedReason: Hashable, Sendable {
     case formIDArrayIndexOutOfRange(UInt32)
     case unknownRefIDKind
 
-    public var description: String {
+    var description: String {
         switch self {
         case let .pluginNotLoaded(name): "plugin \(name) is not loaded"
         case let .pluginIndexOutOfRange(index): "plugin index \(index) is past the save's list"
@@ -97,11 +97,11 @@ nonisolated public struct ESSLoadOrderMapping: Sendable {
     }
 
     /// The form id in the current load-order space, as record stores number forms.
-    public func currentFormID(_ form: ResolvedFormID) -> FormID? {
+    func currentFormID(_ form: ResolvedFormID) -> FormID? {
         currentResolver.localFormID(of: form)
     }
 
-    public var comparison: ESSLoadOrderComparison {
+    var comparison: ESSLoadOrderComparison {
         ESSLoadOrderComparison(
             savePlugins: savePlugins + saveLightPlugins, currentPlugins: currentPlugins
         )
@@ -133,12 +133,12 @@ nonisolated public struct ESSLoadOrderComparison: Equatable, Sendable {
         added = currentPlugins.filter { !saved.contains($0.lowercased()) }
     }
 
-    public var missing: [String] {
+    var missing: [String] {
         rows.filter { $0.currentPosition == nil }.map(\.name)
     }
 
     /// True when the plugins both lists hold appear in a different relative order.
-    public var isReordered: Bool {
+    var isReordered: Bool {
         let order = rows.compactMap(\.currentPosition)
         return order != order.sorted()
     }

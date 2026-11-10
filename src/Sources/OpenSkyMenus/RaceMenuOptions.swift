@@ -141,7 +141,7 @@ nonisolated public struct RaceMenuLabels: Equatable, Sendable {
         self.genders = genders
     }
 
-    public func text(_ key: String) -> String {
+    func text(_ key: String) -> String {
         texts[key] ?? Self.english[key] ?? key
     }
 }

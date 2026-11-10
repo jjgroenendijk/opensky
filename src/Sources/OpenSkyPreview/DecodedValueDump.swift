@@ -10,7 +10,7 @@ nonisolated public enum DecodedValueDump {
     public typealias Resolve = (FormID) -> String
 
     /// Elements printed per collection before the rest is summarized.
-    public static var collectionCap: Int {
+    static var collectionCap: Int {
         DumpLimits.current.collection
     }
 

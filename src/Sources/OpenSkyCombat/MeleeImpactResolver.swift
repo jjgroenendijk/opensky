@@ -32,7 +32,7 @@ nonisolated public struct MeleeImpactResolver: Sendable {
     ///   - weapon: the swing profile; its `impactDataSet` is the WEAP INAM.
     ///   - material: the MATT type struck, tried with its parents, or nil for the
     ///     table's default entry.
-    public func resolve(weapon: MeleeWeaponProfile, material: FormID?) -> ResolvedMeleeImpact? {
+    func resolve(weapon: MeleeWeaponProfile, material: FormID?) -> ResolvedMeleeImpact? {
         weapon.impactDataSet.flatMap { resolve(dataSet: $0, material: material) }
     }
 

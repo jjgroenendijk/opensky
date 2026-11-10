@@ -9,14 +9,9 @@ import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 
 /// One worn armour piece: its record weight and what the wearer's perks make of it.
-nonisolated public struct WornArmourWeight: Equatable, Sendable {
-    public let authored: Float
-    public let worn: Float
-
-    public init(authored: Float, worn: Float) {
-        self.authored = authored
-        self.worn = worn
-    }
+nonisolated struct WornArmourWeight: Equatable, Sendable {
+    let authored: Float
+    let worn: Float
 }
 
 extension InventoryCoordinator {

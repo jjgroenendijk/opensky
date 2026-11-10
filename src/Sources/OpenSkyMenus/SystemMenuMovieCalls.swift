@@ -3,16 +3,16 @@
 // `GameDelegate`; this names those calls and fills the lists it hands over.
 
 import Foundation
-public import OpenSkyFormatsSWF
-public import OpenSkyMenusInterface
+import OpenSkyFormatsSWF
+import OpenSkyMenusInterface
 
 nonisolated extension SystemMenuMovieBridge {
-    public static let saveLoadListPath = "\(systemPagePath)/SaveLoadPanel/List_mc"
+    static let saveLoadListPath = "\(systemPagePath)/SaveLoadPanel/List_mc"
     /// `MappingList` is the `InputMappingPanel` clip itself.
-    public static let mappingListPath = "\(systemPagePath)/InputMappingPanel"
+    static let mappingListPath = "\(systemPagePath)/InputMappingPanel"
 
     /// The `SystemPage` state the movie shows, such as 1 for the save list.
-    public static func pageState(runtime: SWFMovieRuntime) -> Int? {
+    static func pageState(runtime: SWFMovieRuntime) -> Int? {
         guard
             let page = runtime.node(atPath: systemPagePath, from: runtime.root),
             case let .number(state) = page.object.lookup("iCurrentState")?.property.value
@@ -21,7 +21,7 @@ nonisolated extension SystemMenuMovieBridge {
     }
 
     /// Movie-to-engine calls of the System page.
-    public enum Request: String, CaseIterable, Sendable {
+    enum Request: String, CaseIterable, Sendable {
         case quicksave = "QuickSave"
         /// `SAVE([entryList, batchSize])`: the saves to write over.
         case saveList = "SAVE"
@@ -44,21 +44,21 @@ nonisolated extension SystemMenuMovieBridge {
     }
 
     /// Calls that need no answer: the list fills at once, and settings save as they change.
-    public static let quietRequests = [
+    static let quietRequests = [
         "UseCurrentCharacterFilter", "ForceStopSaveListLoading", "SaveControls", "SaveSettings",
         "SetSaveDisabled"
     ]
 
-    public struct Call: Equatable, Sendable {
-        public let request: Request
+    struct Call: Equatable, Sendable {
+        let request: Request
         /// The first non-negative number the call passed.
-        public let index: Int?
+        let index: Int?
         /// The first string the call passed.
-        public let text: String?
+        let text: String?
     }
 
     /// Queues each call; the coordinator answers it after the event that made it.
-    public static func registerCalls(
+    static func registerCalls(
         runtime: SWFMovieRuntime,
         onCall: @escaping @MainActor @Sendable (Call) -> Void
     ) {
@@ -88,7 +88,7 @@ nonisolated extension SystemMenuMovieBridge {
     // MARK: - Answers
 
     /// Fills the list a `SAVE` or `LOAD` call passed.
-    public static func fillSaveList(
+    static func fillSaveList(
         _ rows: [SaveSlotRow], request: Request, runtime: SWFMovieRuntime
     ) {
         let list = runtime.lastHostArguments[request.rawValue]?.first
@@ -99,7 +99,7 @@ nonisolated extension SystemMenuMovieBridge {
 
     /// One row per remappable gameplay action. `buttonName` is the symbol of the
     /// key's button art, and `buttonID` its hex fallback.
-    public static func mappingRows(
+    static func mappingRows(
         _ bindings: InputBindings, keyName: (UInt32) -> String
     ) -> [[String: AS2Value]] {
         InputBindings.slots.enumerated().compactMap { index, slot in
@@ -117,7 +117,7 @@ nonisolated extension SystemMenuMovieBridge {
     }
 
     /// Replaces the rows of the Controls list the movie passed with `request`.
-    public static func fillMappings(
+    static func fillMappings(
         _ rows: [[String: AS2Value]], request: Request, runtime: SWFMovieRuntime
     ) {
         let arguments = runtime.lastHostArguments[request.rawValue] ?? []
@@ -126,7 +126,7 @@ nonisolated extension SystemMenuMovieBridge {
     }
 
     /// Ends the movie's wait for a key; false shows "That button is reserved."
-    public static func finishRemap(succeeded: Bool, runtime: SWFMovieRuntime) {
+    static func finishRemap(succeeded: Bool, runtime: SWFMovieRuntime) {
         runtime.callMovie("FinishRemapMode", arguments: [.boolean(succeeded)])
     }
 }

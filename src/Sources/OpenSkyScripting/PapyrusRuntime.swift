@@ -16,7 +16,7 @@ public final class PapyrusRuntime {
     public let limits: PapyrusLimits
     public let nativeDispatch: any PapyrusNativeDispatch
     public let tally: PapyrusTally
-    public let coercion = PapyrusCoercion()
+    let coercion = PapyrusCoercion()
 
     public var scripts: [String: PexObject] = [:] {
         didSet {
@@ -29,7 +29,7 @@ public final class PapyrusRuntime {
     }
 
     /// Changes whenever `scripts` does, so a cached lookup knows it may be stale.
-    public private(set) var scriptsGeneration = 0
+    private(set) var scriptsGeneration = 0
 
     /// Instructions every script together may still run in this fixed step. The world
     /// runtime sets it for each step; outside a step nothing limits it.
@@ -121,7 +121,7 @@ public final class PapyrusRuntime {
         return handle
     }
 
-    public func invoke(
+    func invoke(
         _ functionName: String,
         on handle: PapyrusObjectHandle,
         arguments: [PapyrusValue] = []
@@ -132,7 +132,7 @@ public final class PapyrusRuntime {
         )
     }
 
-    public func setProperty(
+    func setProperty(
         _ name: String,
         on handle: PapyrusObjectHandle,
         to value: PapyrusValue
@@ -141,7 +141,7 @@ public final class PapyrusRuntime {
         return PapyrusInterpreter(runtime: self).setProperty(name, on: handle, to: value)
     }
 
-    public func invokeStatic(
+    func invokeStatic(
         _ functionName: String,
         on scriptName: String,
         arguments: [PapyrusValue] = []
@@ -152,7 +152,7 @@ public final class PapyrusRuntime {
         )
     }
 
-    public func resume(
+    func resume(
         _ suspendedCall: SuspendedCall,
         returning value: PapyrusValue? = nil
     ) -> PapyrusRunOutcome {
@@ -167,7 +167,7 @@ public final class PapyrusRuntime {
     }
 
     /// The compiled form of the library script `name`, kept until the library changes.
-    public func index(named name: String) -> PapyrusScriptIndex? {
+    func index(named name: String) -> PapyrusScriptIndex? {
         if let known = indicesBySpelling[name] {
             return known
         }
@@ -180,7 +180,7 @@ public final class PapyrusRuntime {
     }
 
     /// `scriptChain(from:)` as indices, child first.
-    public func indexChain(from name: String) throws(PapyrusFault) -> [PapyrusScriptIndex] {
+    func indexChain(from name: String) throws(PapyrusFault) -> [PapyrusScriptIndex] {
         if let known = indexChains[name] {
             return known
         }
@@ -218,7 +218,7 @@ public final class PapyrusRuntime {
         return result
     }
 
-    public func resolvesObject(_ handle: PapyrusObjectHandle, as typeName: String) -> Bool {
+    func resolvesObject(_ handle: PapyrusObjectHandle, as typeName: String) -> Bool {
         guard
             let instance = instance(for: handle),
             let chain = attempt({ try scriptChain(from: instance.rootScriptName) })
@@ -244,7 +244,7 @@ public final class PapyrusRuntime {
         }
     }
 
-    public func runtimeValue(_ value: PexValue, typeName: String? = nil) -> PapyrusValue {
+    func runtimeValue(_ value: PexValue, typeName: String? = nil) -> PapyrusValue {
         switch value {
         case .null:
             typeName.map { PapyrusType(name: $0).defaultValue } ?? .none
@@ -261,7 +261,7 @@ public final class PapyrusRuntime {
         }
     }
 
-    public func allocateSuspensionID() -> UInt64 {
+    func allocateSuspensionID() -> UInt64 {
         defer { nextSuspensionValue &+= 1 }
         return nextSuspensionValue
     }
@@ -313,7 +313,7 @@ extension PapyrusRuntime {
     /// Adds a decoded file's objects to the script library, last writer wins,
     /// which is how a lazily loaded script joins a runtime built with an empty
     /// (or partial) file list.
-    public func register(_ file: PexFile) {
+    func register(_ file: PexFile) {
         for object in file.objects {
             scripts[Self.key(object.name)] = object
         }

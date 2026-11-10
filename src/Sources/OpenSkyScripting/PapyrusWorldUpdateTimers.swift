@@ -46,7 +46,7 @@ nonisolated public struct PapyrusUpdateTimerRegistry: Sendable {
         self.maximumGameHoursPerStep = max(0, maximumGameHoursPerStep)
     }
 
-    public var pendingCount: Int {
+    var pendingCount: Int {
         entries.values.reduce(0) { $0 + $1.count }
     }
 

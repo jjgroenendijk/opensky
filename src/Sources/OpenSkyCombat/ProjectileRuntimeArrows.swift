@@ -9,14 +9,12 @@ public import OpenSkyFormatsESM
 import simd
 
 /// The arrows standing in actors, the clock they age on, and the recovery roll.
-public struct AttachedArrows {
-    public internal(set) var now: Float = 0
+struct AttachedArrows {
+    var now: Float = 0
     /// When each arrow in an actor comes out, by its spawned key.
-    public internal(set) var expiry: [ReferenceKey: Float] = [:]
-    public internal(set) var recoveredCount = 0
+    var expiry: [ReferenceKey: Float] = [:]
+    var recoveredCount = 0
     var random = ConditionRandom()
-
-    public init() {}
 }
 
 extension ProjectileRuntime {

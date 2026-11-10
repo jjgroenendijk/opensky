@@ -28,7 +28,7 @@ nonisolated public struct HUDFrameUpdate: Equatable, Sendable {
 nonisolated public enum HUDCore {
     public static let scaleRange: ClosedRange<Float> = 0.5 ... 2
 
-    public static func prompt(for target: InteractionTarget?) -> String? {
+    static func prompt(for target: InteractionTarget?) -> String? {
         guard let interaction = target?.interaction else {
             return nil
         }
@@ -73,7 +73,7 @@ nonisolated public enum HUDCore {
         return headingDegrees(atan2(offset.y, offset.x))
     }
 
-    public static func effectivePrompt(
+    static func effectivePrompt(
         _ settings: HUDSettings,
         target: InteractionTarget?
     ) -> String? {

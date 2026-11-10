@@ -4,7 +4,7 @@
 
 import Foundation
 public import OpenSkyPerceptionInterface
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import simd
 
 nonisolated public enum DetectionFormula: Sendable {
@@ -40,7 +40,7 @@ nonisolated public enum DetectionFormula: Sendable {
     /// Zero at and beyond the maximum distance, and 1 at zero distance. A
     /// non-finite or negative distance attenuates to nothing rather than
     /// producing a NaN that would poison every comparison downstream.
-    public static func attenuation(
+    static func attenuation(
         distance: Float,
         settings: DetectionSettings,
         isExterior: Bool,
@@ -64,7 +64,7 @@ nonisolated public enum DetectionFormula: Sendable {
     /// What movement at `gait` multiplies the target's noise by. Only the running
     /// multiplier is vanilla's; sneak and sprint are ours (`DetectionSettings`).
     /// Swimming uses walking's.
-    public static func movementMultiplier(
+    static func movementMultiplier(
         gait: LocomotionGait?,
         settings: DetectionSettings
     ) -> Float {
@@ -80,7 +80,7 @@ nonisolated public enum DetectionFormula: Sendable {
     /// The sound term, before distance attenuation. Muffle scales the armour
     /// part only (UESP "Skyrim:Muffle (effect)"): a silenced target still
     /// makes the base noise of its own steps.
-    public static func soundFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+    static func soundFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
         let traits = inputs.traits
         let weight = finiteNonNegative(traits.equippedWeight)
         let unmuffled = 1 - min(finiteNonNegative(traits.muffle), 1)
@@ -96,7 +96,7 @@ nonisolated public enum DetectionFormula: Sendable {
     /// The CK wiki's visual term before distance attenuation: light, movement, the
     /// observer's blindness, and invisibility. Zero without a clear sight line, outside
     /// the cone, or for a sleeping observer, whose blindness the CK wiki sets to full.
-    public static func visualFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+    static func visualFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
         guard inputs.hasLineOfSight, inputs.isInViewCone, !inputs.observer.isSleeping else {
             return 0
         }
@@ -110,7 +110,7 @@ nonisolated public enum DetectionFormula: Sendable {
 
     /// `1 + moving * fSneakLightMoveMult + running * fSneakLightRunMult`, with moving
     /// and running as 0 or 1. A sprint counts as running.
-    public static func movementFactor(
+    static func movementFactor(
         inputs: DetectionInputs, settings: DetectionSettings
     ) -> Float {
         guard let gait = inputs.gait else { return 1 }
@@ -128,7 +128,7 @@ nonisolated public enum DetectionFormula: Sendable {
 
     /// `GetLightLevel` of the target: its 0...1 light times 100, plus
     /// `iLightLevelInteriorMod` indoors, capped at `iLightLevelMax`.
-    public static func lightLevel(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+    static func lightLevel(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
         let interior = inputs.isExterior ? 0 : settings.lightLevelInteriorMod.value
         let level = finiteNonNegative(inputs.traits.lightLevel) * 100 + interior
         return min(max(0, level), max(0, settings.lightLevelMax.value))
@@ -136,7 +136,7 @@ nonisolated public enum DetectionFormula: Sendable {
 
     /// The CK wiki's light term, `(fDetectionSneakLightMod + light level) * fSneakLightMult`,
     /// halved outdoors by `fSneakLightExteriorMult`.
-    public static func lightFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
+    static func lightFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
         let exterior = inputs.isExterior ? max(0, settings.lightExteriorMult.value) : 1
         let light = (settings.lightMod.value + lightLevel(inputs: inputs, settings: settings))
             * settings.lightMult.value * exterior
@@ -144,7 +144,7 @@ nonisolated public enum DetectionFormula: Sendable {
     }
 
     /// One skill level, clamped and weighted into a skill factor.
-    public static func skillFactor(
+    static func skillFactor(
         level: Float = DetectionTargetTraits.startingSkill,
         settings: DetectionSettings
     ) -> Float {
@@ -162,7 +162,7 @@ nonisolated public enum DetectionFormula: Sendable {
 
     /// The observer's skill factor, times `1 + alert * fSneakAlertMod + sleeping *
     /// fSneakSleepBonus + notCombatTarget * fSneakCombatMod` (CK wiki "Category:Detection").
-    public static func noticerFactor(
+    static func noticerFactor(
         inputs: DetectionInputs,
         settings: DetectionSettings
     ) -> Float {
@@ -175,7 +175,7 @@ nonisolated public enum DetectionFormula: Sendable {
 
     /// The target's skill factor. The player's is `fPlayerDetectionSneakBase +
     /// fPlayerDetectionSneakMult * skill`, with the skill clamped as for any actor.
-    public static func sneakerFactor(
+    static func sneakerFactor(
         inputs: DetectionInputs,
         settings: DetectionSettings
     ) -> Float {
@@ -193,7 +193,7 @@ nonisolated public enum DetectionFormula: Sendable {
     /// The whole formula, with its terms. Past the maximum distance the value is
     /// `fSneakBaseValue` alone: the unattenuated skill gap must not let a skilled
     /// observer notice a target at any range.
-    public static func breakdown(
+    static func breakdown(
         inputs: DetectionInputs,
         settings: DetectionSettings
     ) -> DetectionBreakdown {
@@ -236,7 +236,7 @@ nonisolated public enum DetectionFormula: Sendable {
     /// sound and skill terms cancel `fSneakBaseValue`. Closed form:
     /// `max * (1 - needed^(1/exponent))`, with `needed = -base / (sound + skill)`.
     /// Zero when even a touching target is too quiet. Shown as a readout only.
-    public static func noiseRadius(
+    static func noiseRadius(
         gait: LocomotionGait?,
         settings: DetectionSettings,
         isExterior: Bool,

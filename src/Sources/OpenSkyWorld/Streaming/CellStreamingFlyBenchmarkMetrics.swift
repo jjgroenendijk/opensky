@@ -4,21 +4,21 @@
 // rules; Driver hands in its runner + configuration.
 
 import Foundation
-public import OpenSkyCells
+import OpenSkyCells
 import OpenSkyFormatsCore
-public import OpenSkyRendering
+import OpenSkyRendering
 
-nonisolated public struct ActorBuildBenchmarkSummary: Sendable {
-    public let p95: Double
-    public let discovered: Int
-    public let rendered: Int
-    public let failures: Int
-    public let animated: Int
+nonisolated struct ActorBuildBenchmarkSummary: Sendable {
+    let p95: Double
+    let discovered: Int
+    let rendered: Int
+    let failures: Int
+    let animated: Int
     /// Cells with build metrics, one per touched cell.
-    public let cellCount: Int
+    let cellCount: Int
 }
 
-nonisolated public func validatedFlyUpdateBudgets(
+nonisolated func validatedFlyUpdateBudgets(
     render: OffscreenBenchResult,
     configuration: CellStreamingFlyBenchmarkConfiguration
 ) throws {
@@ -64,7 +64,7 @@ nonisolated public func validatedFlyUpdateBudgets(
     }
 }
 
-nonisolated public func validateCollisionBuildMetrics(
+nonisolated func validateCollisionBuildMetrics(
     runner: SerialCellBuildRunner,
     configuration: CellStreamingFlyBenchmarkConfiguration,
     expectedCount: Int
@@ -93,7 +93,7 @@ nonisolated public func validateCollisionBuildMetrics(
 /// failure reason-tagged — 5.6 zero-unexplained rule), then the latency
 /// budget over the same per-cell durations. Count of metric entries is
 /// validated by validateCollisionBuildMetrics.
-nonisolated public func validatedActorBuildMetrics(
+nonisolated func validatedActorBuildMetrics(
     runner: SerialCellBuildRunner,
     configuration: CellStreamingFlyBenchmarkConfiguration
 ) throws -> ActorBuildBenchmarkSummary {
@@ -159,6 +159,6 @@ nonisolated private func validateActorAccounting(
     }
 }
 
-nonisolated public func p95Index(count: Int) -> Int {
+nonisolated func p95Index(count: Int) -> Int {
     min(count - 1, Int(ceil(Double(count) * 0.95)) - 1)
 }

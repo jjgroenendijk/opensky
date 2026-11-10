@@ -42,7 +42,7 @@ public final class MessageCoordinator {
     public private(set) var notifications = NotificationQueue()
     public private(set) var help = HelpMessageLedger()
     public private(set) var boxes = MessageBoxMenuModel()
-    public private(set) var lastAnswer: MessageBoxAnswer?
+    private(set) var lastAnswer: MessageBoxAnswer?
     private var frame: UInt64 = 0
     private var nextToken: UInt64 = 1
     /// Engine menus waiting on a button, by token. A token not here is a script's.
@@ -148,7 +148,7 @@ public final class MessageCoordinator {
     /// Shows a MESG from the readout as a notification or as a box, as the
     /// readout asks. No script waits on a box opened here.
     @discardableResult
-    public func show(editorID: String, asBox: Bool) -> MessageShowOutcome {
+    func show(editorID: String, asBox: Bool) -> MessageShowOutcome {
         guard
             let key = world?.messageKey(editorID: editorID),
             let built = world?.buildMessage(key, arguments: [])
@@ -329,13 +329,13 @@ extension MessageCoordinator: PapyrusPresenting {
 }
 
 /// What one readout `show` did. Only `text` builds the readout line.
-nonisolated public enum MessageShowOutcome: Equatable, Sendable {
+nonisolated enum MessageShowOutcome: Equatable, Sendable {
     case notFound(String)
     case opened(String)
     case posted(String)
     case noText(String)
 
-    public var text: String {
+    var text: String {
         switch self {
         case let .notFound(editorID): "No message \(editorID)"
         case let .opened(editorID): "Opened \(editorID)"

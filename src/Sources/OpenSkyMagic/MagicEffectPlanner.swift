@@ -43,7 +43,7 @@ nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     }
 
     /// The EFIT magnitude, which a level cap or a cloak radius reads.
-    public var magnitude: Float {
+    var magnitude: Float {
         values.first?.magnitude ?? 0
     }
 }

@@ -106,7 +106,7 @@ nonisolated public struct JournalMenuModel: Equatable, Sendable {
 
     /// True when the page has nothing to list, which is the one case the movie
     /// answers with its own `NoQuestsText` rather than with a list.
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         entries.isEmpty
     }
 
@@ -125,7 +125,7 @@ nonisolated public struct JournalMenuModel: Equatable, Sendable {
 
     /// Switches between the active and completed lists, re-clamping the
     /// selection into whichever list is now shown.
-    public mutating func setShowsCompleted(_ flag: Bool) {
+    mutating func setShowsCompleted(_ flag: Bool) {
         guard flag != showsCompleted else { return }
         showsCompleted = flag
         select(0)

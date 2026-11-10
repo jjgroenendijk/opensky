@@ -3,7 +3,7 @@
 
 import Foundation
 public import OpenSkyActorsInterface
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyGameData
 public import OpenSkyWorldState
 
@@ -16,7 +16,7 @@ nonisolated extension OpenSkySaveEncoder {
 
     /// The `AVAL` chunk: every entry with an actor-value component, in key order. Each
     /// repeats its key and cell, because a values-only actor has no `RDLT` entry.
-    public static func writeActorValues(
+    static func writeActorValues(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -42,7 +42,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `AVOV` chunk: every actor with values off its record baseline. Always beside
     /// `AVAL`, which the decoder needs for current health. Offsets, not values; the
     /// temporary modifier is skipped (`ChunkTag.actorValueOverrides`).
-    public static func writeActorValueOverrides(
+    static func writeActorValueOverrides(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

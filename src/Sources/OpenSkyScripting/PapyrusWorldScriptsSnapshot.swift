@@ -3,17 +3,17 @@
 // testable without AppKit.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
-public import OpenSkyScriptingInterface
-public import OpenSkyWorldState
+import OpenSkyScriptingInterface
+import OpenSkyWorldState
 
 @MainActor
 extension PapyrusWorldRuntime {
     /// One VM sample for the Scripts readout. `target` is the interacted reference, or
     /// nil. `runningQuestCount` comes from `QuestRuntime`, because quest state is the
     /// store's. `questAliasFillFailures` comes from the bridge.
-    public func scriptsSnapshot(
+    func scriptsSnapshot(
         target: ReferenceKey? = nil,
         targetDescription: String? = nil,
         runningQuestCount: Int = 0,
@@ -62,7 +62,7 @@ extension PapyrusWorldRuntime {
     /// Runs `ticks` fixed steps now, whether or not the VM is paused. The
     /// count is clamped to `maximumBurstTicks` so a stray value from
     /// a control cannot stall the frame.
-    public func burst(ticks: Int, gameClock: GameClock? = nil) {
+    func burst(ticks: Int, gameClock: GameClock? = nil) {
         for _ in 0 ..< min(max(0, ticks), Self.maximumBurstTicks) {
             stepFixed(gameClock: gameClock)
         }
@@ -71,7 +71,7 @@ extension PapyrusWorldRuntime {
     /// Upper bound on one `burst(ticks:gameClock:)` call. Sixty steps is two
     /// seconds at the 1/30 s fixed step: long enough to walk a latent
     /// `Utility.Wait` through, short enough to stay imperceptible.
-    public static let maximumBurstTicks = 60
+    static let maximumBurstTicks = 60
 
     /// Sorted script names attached to `key`, empty when it is nil or carries
     /// no instances.

@@ -55,13 +55,13 @@ public final class MagicCoordinator {
     /// Seconds each broken ward stays in `IsWardState` 2.
     var brokenWardSeconds: [ReferenceKey: Float] = [:]
     /// The absorption roll, in 0 ..< 100. A test fixes it.
-    public var spellDefenceRoll: () -> Float = { [stream = RandomStream(seed: 0x5350_4446)] in
+    var spellDefenceRoll: () -> Float = { [stream = RandomStream(seed: 0x5350_4446)] in
         stream.float(in: 0 ..< 100)
     }
 
     public let soulTrapSettings: SoulTrapSettings
     public let enchantingSettings: EnchantingSettings
-    public internal(set) var lastEnchanting = EnchantingOutcome.idle
+    var lastEnchanting = EnchantingOutcome.idle
     /// Every SHOU in the load order, by key.
     public let shouts: [ReferenceKey: ResolvedShout]
     /// The load order's shouts, for an NPC's spell list.
@@ -73,25 +73,25 @@ public final class MagicCoordinator {
     var panelShoutHold: Float?
     /// The shout the machine is voicing, fixed at the press.
     var voicedShout: ReferenceKey?
-    public internal(set) var lastShout = ShoutOutcome.idle
+    var lastShout = ShoutOutcome.idle
     /// Each casting hand as the cues saw it last frame; an idle hand is left out.
     var castingViews: [CastSlot: CastingHandView] = [:]
     public internal(set) var releaseLatch = SpellReleaseLatch()
     var wasWeaponsDrawn: Bool?
-    public internal(set) var castingCueCount = 0
-    public internal(set) var lastCastingCue: String?
+    var castingCueCount = 0
+    var lastCastingCue: String?
     /// Runes waiting on the ground, oldest first. Not saved.
-    public internal(set) var runes: [PlacedRune] = []
+    var runes: [PlacedRune] = []
     public let runeSettings: RuneSettings
     public let summonSettings: SummonSettings
     public let worldSettings: MagicWorldSettings
     /// Dismissed summons and the seconds before each goes.
     var fadingSummons: [(actor: CommandedActor, seconds: Float)] = []
-    public internal(set) var detonatedRunes = 0
+    var detonatedRunes = 0
     /// Summoned and reanimated actors, oldest first. Not saved.
     public internal(set) var commanded: [CommandedActor] = []
     /// Detect Life paint, Telekinesis and Grab Actor holds, and Guide trails. Not saved.
-    public internal(set) var holds: [MagicHold] = []
+    var holds: [MagicHold] = []
     /// Lights the Light archetype placed. Not saved.
     public internal(set) var magicLights: [MagicLight] = []
     public let holdSettings: MagicHoldSettings
@@ -104,8 +104,8 @@ public final class MagicCoordinator {
     var grantedActors: Set<ReferenceKey> = []
     /// An index into the player's known spells. Clamped on read.
     var selection = 0
-    public internal(set) var lastEffectAction = MagicEffectActionOutcome.idle
-    public internal(set) var lastCastingAction = CastingActionOutcome.idle
+    var lastEffectAction = MagicEffectActionOutcome.idle
+    var lastCastingAction = CastingActionOutcome.idle
 
     /// Without data there is no game: every runtime is nil, and each action says so.
     public init(

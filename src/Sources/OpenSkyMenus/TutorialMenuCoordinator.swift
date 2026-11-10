@@ -33,9 +33,9 @@ public protocol TutorialMenuWorld: MenuScreenWorld {
 
 public final class TutorialMenuCoordinator: MenuScreen<Never> {
     public static let identifier: MenuIdentifier = "Tutorial Menu"
-    public static let hint = "W/S: scroll   Tab or Esc: close"
+    static let hint = "W/S: scroll   Tab or Esc: close"
 
-    public private(set) var topic: HelpTopic?
+    private(set) var topic: HelpTopic?
     private var panelLine = 0
     private weak var world: (any TutorialMenuWorld)?
 
@@ -53,7 +53,7 @@ public final class TutorialMenuCoordinator: MenuScreen<Never> {
     }
 
     @discardableResult
-    public func open(topic editorID: String) -> Bool {
+    func open(topic editorID: String) -> Bool {
         guard !isOpen else { return false }
         guard let topic = world?.helpTopic(editorID) else {
             lastResult = "Not opened: no topic \(editorID)"
@@ -77,7 +77,7 @@ public final class TutorialMenuCoordinator: MenuScreen<Never> {
     }
 
     @discardableResult
-    public func openFirstTopic() -> Bool {
+    func openFirstTopic() -> Bool {
         guard let first = world?.helpTopicEditorIDs.first else {
             lastResult = "Not opened: no help topics"
             return false

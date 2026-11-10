@@ -7,9 +7,9 @@
 
 import Foundation
 public import OpenSkyConditions
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
-public import OpenSkyProgressionInterface
+import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyProgressionInterface
 
 /// Validates a requested perk against the tree, the chain and the record's own
 /// conditions.
@@ -17,31 +17,21 @@ public import OpenSkyProgressionInterface
 /// `@MainActor` only because reading ownership goes through `PerkRuntime`,
 /// which writes to a main-actor store.
 @MainActor
-public struct PerkTreeSpendValidator {
+struct PerkTreeSpendValidator {
     /// Ownership plus the load-order PERK index.
-    public let runtime: PerkRuntime
+    let runtime: PerkRuntime
     /// Where each perk sits in a skill tree.
-    public let trees: PerkTreeIndex
-    public let conditionRegistry: ConditionFunctionRegistry
+    let trees: PerkTreeIndex
+    let conditionRegistry: ConditionFunctionRegistry
 
     /// Depth cap for the walk back to a chain head, matching `PerkStore`'s own
     /// cap so a mod-authored `NNAM` loop cannot hang a click.
     private static let chainDepthCap = 32
 
-    public init(
-        runtime: PerkRuntime,
-        trees: PerkTreeIndex,
-        conditionRegistry: ConditionFunctionRegistry
-    ) {
-        self.runtime = runtime
-        self.trees = trees
-        self.conditionRegistry = conditionRegistry
-    }
-
     /// Whether `holder` may spend a point on `perk` now: nil when allowed, else the
     /// refusing rule. The `perks` seam of `conditions` is rebuilt from live ownership,
     /// so a `HasPerk` prerequisite sees what the actor owns now.
-    public func refusal(
+    func refusal(
         for perk: ReferenceKey,
         on holder: ActorValueHolder,
         conditions: ConditionContext

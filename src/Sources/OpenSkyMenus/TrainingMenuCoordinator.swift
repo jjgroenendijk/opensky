@@ -19,7 +19,7 @@ public protocol TrainingMenuWorld: MenuScreenWorld {
 
 public final class TrainingMenuCoordinator: MenuScreen<TrainingMovieEvent> {
     public static let identifier: MenuIdentifier = "Training Menu"
-    public static let hint = "E: train   Tab or Esc: leave"
+    static let hint = "E: train   Tab or Esc: leave"
 
     public private(set) var trainer: ReferenceKey?
     public private(set) var card: TrainingCard?
@@ -60,7 +60,7 @@ public final class TrainingMenuCoordinator: MenuScreen<TrainingMovieEvent> {
 
     /// Opens the menu on the trainer the player stands closest to.
     @discardableResult
-    public func openNearest() -> Bool {
+    func openNearest() -> Bool {
         guard let trainer = world?.nearestTrainer else {
             lastResult = "Not opened: no trainer nearby"
             return false

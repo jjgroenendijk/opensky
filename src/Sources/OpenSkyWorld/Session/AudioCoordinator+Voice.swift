@@ -32,7 +32,7 @@ extension AudioCoordinator {
         category: "LipSync"
     )
 
-    public var voiceFileFilter: String {
+    var voiceFileFilter: String {
         get { voice.filter }
         set { voice.filter = newValue }
     }
@@ -42,16 +42,16 @@ extension AudioCoordinator {
         voice.listing
     }
 
-    public var selectableVoiceFileNames: [String] {
+    var selectableVoiceFileNames: [String] {
         Array(matchedVoicePaths().prefix(AudioLabCore.voicePickerLimit))
     }
 
-    public var voiceFileMatchCount: Int {
+    var voiceFileMatchCount: Int {
         matchedVoicePaths().count
     }
 
     /// Nil when the line played or waits for its file; else the reason.
-    public func playVoiceFile(named name: String) -> AudioTriggerRefusal? {
+    func playVoiceFile(named name: String) -> AudioTriggerRefusal? {
         guard let engine, engine.isRunning else { return refuseVoice(.engineNotRunning) }
         guard let voiceFiles else { return refuseVoice(.noGameData) }
         voice.waitingPath = nil
@@ -103,12 +103,12 @@ extension AudioCoordinator {
         }
     }
 
-    public var currentVoiceDescription: String? {
+    var currentVoiceDescription: String? {
         guard let path = voice.playingPath, let playback = voice.playing else { return nil }
         return AudioLabCore.voiceDescription(path: path, playback: playback)
     }
 
-    public var voicePlaybackDescription: String {
+    var voicePlaybackDescription: String {
         guard let playback = voice.playing else { return "" }
         return AudioLabCore.playbackDescription(
             playback: playback,
@@ -117,11 +117,11 @@ extension AudioCoordinator {
         )
     }
 
-    public var lastVoiceError: String? {
+    var lastVoiceError: String? {
         voice.lastError
     }
 
-    public var lipSyncEnabled: Bool {
+    var lipSyncEnabled: Bool {
         get { voice.lipSyncEnabled }
         set {
             voice.lipSyncEnabled = newValue
@@ -129,7 +129,7 @@ extension AudioCoordinator {
         }
     }
 
-    public var lipSyncSnapshot: LipSyncSnapshot {
+    var lipSyncSnapshot: LipSyncSnapshot {
         voice.lipPlayback?.snapshot ?? .empty
     }
 

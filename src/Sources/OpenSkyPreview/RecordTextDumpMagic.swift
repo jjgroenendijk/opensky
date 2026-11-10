@@ -60,7 +60,7 @@ nonisolated extension RecordTextDump {
         )
     }
 
-    public static func magicSummary(
+    static func magicSummary(
         record: ESMRecord,
         localized: Bool,
         lists: (keyword: KeywordContext?, formList: FormListContext?),
@@ -124,7 +124,7 @@ nonisolated extension RecordTextDump {
     /// A PERK link as text. Named through the store when the dump was given
     /// one, and printed raw otherwise, so a caller without a PERK store still
     /// sees the link rather than nothing.
-    public static func perkText(_ id: FormID?, _ context: MagicContext?) -> String {
+    static func perkText(_ id: FormID?, _ context: MagicContext?) -> String {
         guard let id else { return "-" }
         guard let perks = context?.perks else { return id.description }
         return perks.displayString(for: id, fromPlugin: context?.sourcePlugin ?? "")

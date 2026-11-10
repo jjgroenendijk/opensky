@@ -1,12 +1,12 @@
 // PTMR chunk decoding: pending Papyrus update-timer slots. Shaped like the PSCR decoder:
 // the payload is its own `Data`, and the count passes `OpenSkySaveDecoder.validate`.
 
-public import Foundation
-public import OpenSkyScriptingInterface
+import Foundation
+import OpenSkyScriptingInterface
 
-nonisolated public enum OpenSkySaveTimerDecoder: Sendable {
+nonisolated enum OpenSkySaveTimerDecoder: Sendable {
     /// `PTMR` chunk: a timer count, then one entry per armed slot.
-    public static func decodeTimers(_ payload: Data) throws -> [PapyrusTimerState] {
+    static func decodeTimers(_ payload: Data) throws -> [PapyrusTimerState] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PTMR timer count")
         try OpenSkySaveDecoder.validate(

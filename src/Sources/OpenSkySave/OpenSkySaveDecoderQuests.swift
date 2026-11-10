@@ -1,31 +1,31 @@
 // QSTS, QALS and location-alias chunks: quest state and alias fills, merged into
 // the `RDLT` deltas by `ReferenceKey`.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 public import OpenSkyQuestsInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One quest's saved state, before it is merged back into its delta.
-nonisolated public struct SaveQuestEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let state: QuestRuntimeState
+nonisolated struct SaveQuestEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let state: QuestRuntimeState
 }
 
 /// One quest's saved alias table, before the merge.
-nonisolated public struct SaveQuestAliasEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let state: QuestAliasState
+nonisolated struct SaveQuestAliasEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let state: QuestAliasState
 }
 
-nonisolated public struct SaveQuestLocationAliasEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let fills: [QuestLocationAliasFill]
+nonisolated struct SaveQuestLocationAliasEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let fills: [QuestLocationAliasFill]
 }
 
-nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
-    public static func decodeQuestStates(_ payload: Data) throws -> [SaveQuestEntry] {
+nonisolated enum OpenSkySaveQuestDecoder: Sendable {
+    static func decodeQuestStates(_ payload: Data) throws -> [SaveQuestEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("QSTS entry count")
         try OpenSkySaveDecoder.validate(
@@ -43,7 +43,7 @@ nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
     }
 
     /// `QALS`: the filled alias tables.
-    public static func decodeQuestAliases(_ payload: Data) throws -> [SaveQuestAliasEntry] {
+    static func decodeQuestAliases(_ payload: Data) throws -> [SaveQuestAliasEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("QALS entry count")
         try OpenSkySaveDecoder.validate(
@@ -60,7 +60,7 @@ nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
         return entries
     }
 
-    public static func decodeQuestLocationAliases(
+    static func decodeQuestLocationAliases(
         _ payload: Data
     ) throws -> [SaveQuestLocationAliasEntry] {
         var reader = SaveReader(payload)
@@ -100,7 +100,7 @@ nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
         return entries
     }
 
-    public static func mergeLocationAliases(
+    static func mergeLocationAliases(
         _ aliases: [SaveQuestLocationAliasEntry],
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
@@ -208,21 +208,21 @@ nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
 }
 
 nonisolated extension SaveQuestEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         nil
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.erased
     }
 }
 
 nonisolated extension SaveQuestAliasEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         nil
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.erased
     }
 }

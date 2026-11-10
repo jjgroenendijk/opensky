@@ -126,7 +126,7 @@ public final class CasterRuntime {
     /// Most whole applications one `advance` may run for a maintained cast, so
     /// a multi-second stall cannot land a minute of healing in one frame. The
     /// same cap `ActiveEffectRuntime` puts on its steps.
-    public static let maximumApplicationsPerAdvance = ActiveEffectRuntime.maximumStepsPerAdvance
+    static let maximumApplicationsPerAdvance = ActiveEffectRuntime.maximumStepsPerAdvance
 
     public let spellbook: SpellbookRuntime
     public let values: any ActorValueAccess
@@ -164,7 +164,7 @@ public final class CasterRuntime {
     /// mark its effects as dual cast.
     public private(set) var isApplyingDualCast = false
     /// Casts a release completed since the coordinator last took them, newest last.
-    public private(set) var completedCasts: [CompletedCast] = []
+    private(set) var completedCasts: [CompletedCast] = []
     /// The staffs held in hands and their charge. Nil casts no staff.
     public weak var staffs: (any StaffCharging)?
     /// Every staff spell a hand began, by key, so a later frame finds it again.
@@ -449,7 +449,7 @@ extension CasterRuntime {
     }
 
     /// Hands over the casts completed since the last call.
-    public func takeCompletedCasts() -> [CompletedCast] {
+    func takeCompletedCasts() -> [CompletedCast] {
         defer { completedCasts = [] }
         return completedCasts
     }
@@ -474,7 +474,7 @@ extension CasterRuntime {
 
     /// Every actor with a cast in flight, in key order. What the combat readout
     /// counts so an NPC mid-charge is visible rather than assumed.
-    public var castingActors: [ReferenceKey] {
+    var castingActors: [ReferenceKey] {
         Set(casts.filter(\.value.phase.isCasting).keys.map(\.caster)).sorted()
     }
 }

@@ -1,23 +1,23 @@
 // LOCK chunk: runtime lock state of doors and containers. Merged into the `RDLT`
 // deltas by key. Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One saved lock, before it is merged back into the delta.
-nonisolated public struct SaveLockEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: ReferenceLockState
+nonisolated struct SaveLockEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: ReferenceLockState
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// Every changed lock, in snapshot order. No change writes no chunk.
-    public static func writeLocks(
+    static func writeLocks(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -38,8 +38,8 @@ nonisolated extension OpenSkySaveEncoder {
     }
 }
 
-nonisolated public enum OpenSkySaveLockDecoder: Sendable {
-    public static func decodeLocks(_ payload: Data) throws -> [SaveLockEntry] {
+nonisolated enum OpenSkySaveLockDecoder: Sendable {
+    static func decodeLocks(_ payload: Data) throws -> [SaveLockEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("LOCK entry count")
         try OpenSkySaveDecoder.validate(
@@ -67,11 +67,11 @@ nonisolated public enum OpenSkySaveLockDecoder: Sendable {
 }
 
 nonisolated extension SaveLockEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.erased
     }
 }

@@ -18,7 +18,7 @@ public import OpenSkyWorldState
 nonisolated extension OpenSkySaveDecoder {
     /// Parsed chunk payloads, with the defaults an absent chunk implies.
     public struct Body: Sendable {
-        public var entries: [WorldStateSnapshotEntry] = []
+        var entries: [WorldStateSnapshotEntry] = []
         /// Absent `GVAR` chunk means no global was overridden, which is also
         /// what a save written before that chunk existed means.
         public var globals: [WorldStateGlobalSnapshotEntry] = []
@@ -35,107 +35,107 @@ nonisolated extension OpenSkySaveDecoder {
         /// Absent `PTMR`: no update timer was pending.
         public var timers: [PapyrusTimerState] = []
         /// Absent `INVN`: every container and actor re-derives its contents from records.
-        public var inventories: [SaveInventoryEntry] = []
+        var inventories: [SaveInventoryEntry] = []
         /// Absent `SPWN`: no dropped item or summon rejoins the world.
-        public var spawns: [SaveSpawnEntry] = []
+        var spawns: [SaveSpawnEntry] = []
         /// Absent `QSTS`: every quest re-derives its baseline from its DNAM flags.
-        public var quests: [SaveQuestEntry] = []
+        var quests: [SaveQuestEntry] = []
         /// Absent `QALS`: every running quest restores with empty aliases.
-        public var questAliases: [SaveQuestAliasEntry] = []
+        var questAliases: [SaveQuestAliasEntry] = []
         /// Absent QLOC means no persisted location-alias targets.
-        public var questLocationAliases: [SaveQuestLocationAliasEntry] = []
+        var questLocationAliases: [SaveQuestLocationAliasEntry] = []
         /// Absent `QJLG`: the journal shows each quest's highest reached stage.
-        public var questJournalLogs: [ReferenceKey: QuestJournalLog] = [:]
+        var questJournalLogs: [ReferenceKey: QuestJournalLog] = [:]
         /// Absent `AVAL`: everyone re-derives their maximums and starts full.
-        public var actorValues: [SaveActorValueEntry] = []
+        var actorValues: [SaveActorValueEntry] = []
         /// Absent `AVOV`: everyone re-derives the whole actor-value table.
-        public var actorValueOverrides: [SaveActorValueOverrideEntry] = []
+        var actorValueOverrides: [SaveActorValueOverrideEntry] = []
         /// Absent `DETH`: every actor restores alive.
-        public var deaths: [SaveDeathEntry] = []
+        var deaths: [SaveDeathEntry] = []
         /// Absent `CBTS`: every actor restores neutral.
-        public var combatStates: [SaveCombatStateEntry] = []
+        var combatStates: [SaveCombatStateEntry] = []
         /// Absent `DLGS`: every response restores unsaid.
-        public var dialogue: [SaveDialogueEntry] = []
+        var dialogue: [SaveDialogueEntry] = []
         /// Absent `DLGT`: no said response waits for its reset time.
-        public var dialogueSaidDays: [ReferenceKey: [ReferenceKey: Double]] = [:]
+        var dialogueSaidDays: [ReferenceKey: [ReferenceKey: Double]] = [:]
         /// Absent `AEFF`: no actor carries a timed magic effect.
-        public var activeEffects: [SaveActiveEffectEntry] = []
+        var activeEffects: [SaveActiveEffectEntry] = []
         /// Absent `SPLB`: everyone restores with an empty spellbook.
-        public var spellbooks: [SaveSpellbookEntry] = []
+        var spellbooks: [SaveSpellbookEntry] = []
         /// Absent `ECHG`: every weapon is fully charged and no worn item owns an effect.
-        public var enchantedItems: [SaveEnchantedItemEntry] = []
+        var enchantedItems: [SaveEnchantedItemEntry] = []
         /// Absent `PRKS`: nobody owns a perk.
-        public var perks: [SavePerkEntry] = []
+        var perks: [SavePerkEntry] = []
         /// Absent `FCTN`: no membership component; each actor is seeded from its record
         /// on the next query.
-        public var factions: [SaveFactionEntry] = []
+        var factions: [SaveFactionEntry] = []
         /// Absent `RELS`: every pair restores to its `RELA` record.
-        public var relationships: [SaveRelationshipEntry] = []
+        var relationships: [SaveRelationshipEntry] = []
         /// Absent `PLVL`: the player is still level 1.
-        public var playerProgress: [SavePlayerProgressEntry] = []
-        public var legendarySkills: [ReferenceKey: [Int32: Int]] = [:]
-        public var trainingSessions: [ReferenceKey: Int] = [:]
+        var playerProgress: [SavePlayerProgressEntry] = []
+        var legendarySkills: [ReferenceKey: [Int32: Int]] = [:]
+        var trainingSessions: [ReferenceKey: Int] = [:]
         /// Absent `CRIM`: nobody owes anything.
-        public var crimeLedgers: [SaveCrimeLedgerEntry] = []
+        var crimeLedgers: [SaveCrimeLedgerEntry] = []
         /// Absent `STOL`: every `INVN` item is honest.
-        public var stolenGoods: [SaveStolenGoodsEntry] = []
+        var stolenGoods: [SaveStolenGoodsEntry] = []
         /// Absent `TMPR`: every held copy is plain.
-        public var temperedItems: [SaveTemperedItemEntry] = []
-        public var itemCopies: [SaveTemperedItemEntry] = []
+        var temperedItems: [SaveTemperedItemEntry] = []
+        var itemCopies: [SaveTemperedItemEntry] = []
         /// Absent `CPOT`: the player brewed nothing.
-        public var createdPotions: [SaveStoryEntry<CreatedPotionState>] = []
+        var createdPotions: [SaveStoryEntry<CreatedPotionState>] = []
         /// Absent `INGK`: no ingredient effect is known.
-        public var ingredientKnowledge: [SaveStoryEntry<IngredientKnowledgeState>] = []
+        var ingredientKnowledge: [SaveStoryEntry<IngredientKnowledgeState>] = []
         /// Absent `WPSN`: no weapon is poisoned.
-        public var weaponPoisons: [SaveStoryEntry<WeaponPoisonState>] = []
+        var weaponPoisons: [SaveStoryEntry<WeaponPoisonState>] = []
         /// Absent `FAVS`: no item is a favourite.
-        public var favourites: [SaveStoryEntry<FavouritesState>] = []
+        var favourites: [SaveStoryEntry<FavouritesState>] = []
         /// Absent `ENCK`: no enchantment is known or made.
-        public var enchanting: [SaveStoryEntry<EnchantingState>] = []
+        var enchanting: [SaveStoryEntry<EnchantingState>] = []
         /// Absent `CRVG`: every `CRIM` row is non-violent gold.
-        public var violentCrimeGold: [SaveViolentCrimeGoldEntry] = []
-        public var relationshipFavour: [SaveRelationshipFavourEntry] = []
-        public var stolenOrigins: [SaveStoryEntry<StolenOriginsState>] = []
+        var violentCrimeGold: [SaveViolentCrimeGoldEntry] = []
+        var relationshipFavour: [SaveRelationshipFavourEntry] = []
+        var stolenOrigins: [SaveStoryEntry<StolenOriginsState>] = []
         /// Absent `HRVS`: every plant is unharvested.
-        public var harvests: [SaveHarvestEntry] = []
+        var harvests: [SaveHarvestEntry] = []
         /// Absent `HRVD`: no harvest has a known day, so none grows back.
-        public var harvestDays: [SaveHarvestDayEntry] = []
+        var harvestDays: [SaveHarvestDayEntry] = []
         /// Absent `LOCK`: every lock is as its plugin placed it.
-        public var locks: [SaveLockEntry] = []
+        var locks: [SaveLockEntry] = []
         /// Absent `CRST`: no cell has a departure, so none resets on the next visit.
-        public var cellResets: [SaveCellResetLedger] = []
-        public var vendorRestocks: [SaveVendorRestockLedger] = []
+        var cellResets: [SaveCellResetLedger] = []
+        var vendorRestocks: [SaveVendorRestockLedger] = []
         /// Absent `RLOC`: every reference is in its plugin cell.
-        public var relocations: [SaveRelocationEntry] = []
-        public var motionTypes: [SaveMotionTypeEntry] = []
+        var relocations: [SaveRelocationEntry] = []
+        var motionTypes: [SaveMotionTypeEntry] = []
         /// Absent `LVRL`: every reference rolls at the live player level.
-        public var leveledRolls: [SaveLeveledRollEntry] = []
+        var leveledRolls: [SaveLeveledRollEntry] = []
         /// Absent `SCNS`: no scene is playing.
-        public var scenes: [SaveStoryEntry<SceneRuntimeState>] = []
+        var scenes: [SaveStoryEntry<SceneRuntimeState>] = []
         /// Absent `SCNP`: no scene is paused. Each entry holds only `pausedAt`.
-        public var scenePauses: [SaveStoryEntry<SceneRuntimeState>] = []
+        var scenePauses: [SaveStoryEntry<SceneRuntimeState>] = []
         /// Absent `SMQS`: the story manager started no quest.
-        public var storyManagerQuests: [SaveStoryEntry<StoryManagerQuestState>] = []
+        var storyManagerQuests: [SaveStoryEntry<StoryManagerQuestState>] = []
         /// Absent `DLBS`: no speaker is in an exclusive branch.
-        public var dialogueBranches: [SaveStoryEntry<DialogueBranchState>] = []
-        public var helpMessages: [SaveStoryEntry<HelpMessageState>] = []
+        var dialogueBranches: [SaveStoryEntry<DialogueBranchState>] = []
+        var helpMessages: [SaveStoryEntry<HelpMessageState>] = []
         /// Absent `PRUL`: god mode is off and the player's crimes are reported.
-        public var playerRules: [SaveStoryEntry<PlayerRuleSwitches>] = []
+        var playerRules: [SaveStoryEntry<PlayerRuleSwitches>] = []
         /// Absent `SCRS`: no script set a flag the save keeps.
-        public var scriptedStates: [SaveStoryEntry<ScriptedReferenceState>] = []
+        var scriptedStates: [SaveStoryEntry<ScriptedReferenceState>] = []
         /// Absent `MSTS`: no stat was counted.
-        public var miscStats: [SaveStoryEntry<MiscStatsState>] = []
+        var miscStats: [SaveStoryEntry<MiscStatsState>] = []
         /// Absent `QTRK`: the journal showed no quest.
-        public var questTracking: [SaveStoryEntry<QuestTrackingState>] = []
+        var questTracking: [SaveStoryEntry<QuestTrackingState>] = []
         /// Absent `PIDN`: the player is the vanilla `Player` record.
-        public var identities: [SaveStoryEntry<PlayerIdentityState>] = []
+        var identities: [SaveStoryEntry<PlayerIdentityState>] = []
         /// Absent `PCPX`: each identity keeps its race's default face texture.
-        public var complexions: [ReferenceKey: FormID] = [:]
+        var complexions: [ReferenceKey: FormID] = [:]
         /// Absent `MRKS`: every marker is as its record flags say.
-        public var markers: [SaveStoryEntry<MapMarkerState>] = []
+        var markers: [SaveStoryEntry<MapMarkerState>] = []
         /// Absent `FOGM`: the local map is fogged everywhere.
-        public var fog: [SaveStoryEntry<LocalMapFogState>] = []
+        var fog: [SaveStoryEntry<LocalMapFogState>] = []
         /// Absent `PMRK`: the player placed no marker.
-        public var playerMarkers: [SaveStoryEntry<PlayerSetMapMarker>] = []
+        var playerMarkers: [SaveStoryEntry<PlayerSetMapMarker>] = []
     }
 }

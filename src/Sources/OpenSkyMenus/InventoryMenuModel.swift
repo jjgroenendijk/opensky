@@ -63,15 +63,15 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     /// Whether any copy in this row is stolen, which is what the "Stolen"
     /// marker shows. "As long as this tag is present, the item is considered
     /// stolen" (<https://en.uesp.net/wiki/Skyrim:Crime>).
-    public var isStolen: Bool {
+    var isStolen: Bool {
         stolenCount > 0
     }
 
-    public var totalWeight: Float {
+    var totalWeight: Float {
         weight * Float(count)
     }
 
-    public var totalValue: Int64 {
+    var totalValue: Int64 {
         Int64(value) * Int64(count)
     }
 }
@@ -99,7 +99,7 @@ nonisolated public struct InventoryMenuCategory: Equatable, Sendable {
 
     /// Whether `entry` belongs in this category. An empty family set is the
     /// "All" tab and takes everything.
-    public func accepts(_ entry: InventoryMenuEntry) -> Bool {
+    func accepts(_ entry: InventoryMenuEntry) -> Bool {
         guard !favourites else { return entry.isFavourite }
         guard !families.isEmpty else { return true }
         guard food == nil || food == entry.isFood else { return false }

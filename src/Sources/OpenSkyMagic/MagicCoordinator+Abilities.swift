@@ -12,7 +12,7 @@ import OpenSkyWorldState
 extension MagicCoordinator {
     /// How often every resident actor's abilities are reconciled, so a spell a
     /// script added or removed takes effect without a hook on every path.
-    public static let abilityReconcileSeconds: Float = 1
+    static let abilityReconcileSeconds: Float = 1
 
     /// Applies the abilities `holder` knows and removes the ones it forgot.
     @discardableResult

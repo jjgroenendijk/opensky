@@ -18,8 +18,8 @@ import simd
 /// Deterministic path: launch center -> one cell east -> one cell north.
 /// Each leg samples a linear camera flight; every waypoint then waits for its
 /// full 5x5 grid to settle before continuing.
-nonisolated public enum CellStreamingFlyPath: Sendable {
-    public static func waypoints(start: CellCoordinate) -> [CellCoordinate] {
+nonisolated enum CellStreamingFlyPath: Sendable {
+    static func waypoints(start: CellCoordinate) -> [CellCoordinate] {
         [
             start,
             CellCoordinate(x: start.x + 1, y: start.y),
@@ -27,7 +27,7 @@ nonisolated public enum CellStreamingFlyPath: Sendable {
         ]
     }
 
-    public static func positions(
+    static func positions(
         from start: CellCoordinate,
         to end: CellCoordinate,
         samples: Int
@@ -41,7 +41,7 @@ nonisolated public enum CellStreamingFlyPath: Sendable {
         }
     }
 
-    public static func expectedCells(start: CellCoordinate, radius: Int32) -> Set<CellCoordinate> {
+    static func expectedCells(start: CellCoordinate, radius: Int32) -> Set<CellCoordinate> {
         waypoints(start: start).reduce(into: Set<CellCoordinate>()) { result, waypoint in
             let manager = CellGridManager(
                 initialPosition: CellGridManager.cellCenter(of: waypoint),
@@ -55,10 +55,10 @@ nonisolated public enum CellStreamingFlyPath: Sendable {
 nonisolated public struct CellStreamingFlyBenchmarkResult: Sendable {
     public let render: OffscreenBenchResult
     public let actorAnimatedCount: Int
-    public let animationUpdateBudgetMS: Double
-    public let shadowUpdateBudgetMS: Double
-    public let audioUpdateBudgetMS: Double
-    public let scriptUpdateBudgetMS: Double
+    let animationUpdateBudgetMS: Double
+    let shadowUpdateBudgetMS: Double
+    let audioUpdateBudgetMS: Double
+    let scriptUpdateBudgetMS: Double
     public let weatherName: String
     public let animationUpdatedBoneCount: Int
     public let particleSystemCount: Int

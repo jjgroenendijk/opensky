@@ -9,7 +9,7 @@ public import OpenSkyCombatInterface
 nonisolated public enum MeleePowerDirection: Equatable, Sendable {
     case inPlace, forward, backward, left, right
 
-    public init(moveForward: Float, moveRight: Float) {
+    init(moveForward: Float, moveRight: Float) {
         if abs(moveForward) >= abs(moveRight), abs(moveForward) > 0.1 {
             self = moveForward > 0 ? .forward : .backward
         } else if abs(moveRight) > 0.1 {
@@ -20,7 +20,7 @@ nonisolated public enum MeleePowerDirection: Equatable, Sendable {
     }
 
     /// The `0_master.hkx` event that starts this power attack.
-    public var eventName: String {
+    var eventName: String {
         switch self {
         case .inPlace: CombatGraphNames.attackPowerStartInPlace
         case .forward: CombatGraphNames.attackPowerStartForward
@@ -32,7 +32,7 @@ nonisolated public enum MeleePowerDirection: Equatable, Sendable {
 }
 
 /// What a press became once it was released or held long enough.
-nonisolated public enum MeleeHoldOutcome: Equatable, Sendable {
+nonisolated enum MeleeHoldOutcome: Equatable, Sendable {
     /// Released early: a swing, or a bash with the guard up.
     case tapped(MeleeStrikeKind)
     /// Held past the delay: a power attack or a power bash, still to be paid for.
@@ -41,25 +41,25 @@ nonisolated public enum MeleeHoldOutcome: Equatable, Sendable {
 
 /// The hold clock of the attack button. A press waits for its release or the
 /// power-attack delay, so a power attack never has to interrupt a started swing.
-nonisolated public struct MeleeHold: Equatable, Sendable {
+nonisolated struct MeleeHold: Equatable, Sendable {
     /// The INI `fInitialPowerAttackDelay` default: a press held this long powers up.
-    public static let powerAttackDelay: Float = 0.3
+    static let powerAttackDelay: Float = 0.3
 
-    public private(set) var heldSeconds: Float = 0
-    public private(set) var coolDownLeft: Float = 0
+    private(set) var heldSeconds: Float = 0
+    private(set) var coolDownLeft: Float = 0
     /// The press waiting for its outcome, or nil.
-    public private(set) var pending: MeleeStrikeKind?
+    private(set) var pending: MeleeStrikeKind?
 
-    public init() {}
+    init() {}
 
     /// A press with the guard down starts a swing, with it up a bash.
-    public mutating func pressed(asBash: Bool) {
+    mutating func pressed(asBash: Bool) {
         pending = asBash ? .bash : .normal
         heldSeconds = 0
     }
 
     /// Advances the clock by one frame. Answers once per press.
-    public mutating func advance(held: Bool, deltaTime: Float) -> MeleeHoldOutcome? {
+    mutating func advance(held: Bool, deltaTime: Float) -> MeleeHoldOutcome? {
         let step = deltaTime.isFinite ? max(0, deltaTime) : 0
         coolDownLeft = max(0, coolDownLeft - step)
         guard let kind = pending else { return nil }
@@ -77,11 +77,11 @@ nonisolated public struct MeleeHold: Equatable, Sendable {
     }
 
     /// A power attack started; the next one waits `coolDown` seconds.
-    public mutating func startedPowerAttack(coolDown: Float) {
+    mutating func startedPowerAttack(coolDown: Float) {
         coolDownLeft = coolDown.isFinite ? max(0, coolDown) : 0
     }
 
-    public mutating func reset() {
+    mutating func reset() {
         self = Self()
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
-public import OpenSkyMenusInterface
-public import OpenSkyRenderCore
+import OpenSkyMenusInterface
+import OpenSkyRenderCore
 import simd
 
 nonisolated extension MessageBoxPresentation {
@@ -20,7 +20,7 @@ nonisolated extension MessageBoxPresentation {
         MenuTextPanel.label(string, y: y, style: (size, color), panelWidth: Self.width)
     }
 
-    public var scene: UIScene {
+    var scene: UIScene {
         var nodes = [UINode(
             anchor: .center,
             content: .panel(

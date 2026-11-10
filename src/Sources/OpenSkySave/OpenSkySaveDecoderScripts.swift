@@ -2,13 +2,13 @@
 // payload is its own `Data`, and both counts pass `OpenSkySaveDecoder.validate` before
 // anything reserves storage.
 
-public import Foundation
-public import OpenSkyScriptingInterface
+import Foundation
+import OpenSkyScriptingInterface
 
-nonisolated public enum OpenSkySaveScriptDecoder: Sendable {
+nonisolated enum OpenSkySaveScriptDecoder: Sendable {
     /// `PSCR` chunk: an instance count, then one entry per live script
     /// instance.
-    public static func decodeScripts(_ payload: Data) throws -> [PapyrusInstanceState] {
+    static func decodeScripts(_ payload: Data) throws -> [PapyrusInstanceState] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PSCR instance count")
         try OpenSkySaveDecoder.validate(

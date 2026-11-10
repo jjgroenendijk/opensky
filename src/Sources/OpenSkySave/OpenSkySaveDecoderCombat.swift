@@ -1,21 +1,21 @@
 // CBTS chunk: combat hostility, merged into the `RDLT` deltas by `ReferenceKey`.
 // An unknown hostility byte decodes as neutral, so a newer save still loads.
 
-public import Foundation
+import Foundation
 public import OpenSkyActorsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's saved hostility, before it is merged back into the delta.
-nonisolated public struct SaveCombatStateEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: ActorCombatState
+nonisolated struct SaveCombatStateEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: ActorCombatState
 }
 
-nonisolated public enum OpenSkySaveCombatDecoder: Sendable {
-    public static func decodeCombatStates(_ payload: Data) throws -> [SaveCombatStateEntry] {
+nonisolated enum OpenSkySaveCombatDecoder: Sendable {
+    static func decodeCombatStates(_ payload: Data) throws -> [SaveCombatStateEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CBTS entry count")
         try OpenSkySaveDecoder.validate(
@@ -49,11 +49,11 @@ nonisolated public enum OpenSkySaveCombatDecoder: Sendable {
 }
 
 nonisolated extension SaveCombatStateEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.erased
     }
 }

@@ -64,7 +64,7 @@ public final class PapyrusNativeContext {
 }
 
 public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
-    public static var empty: PapyrusNativeRegistry {
+    static var empty: PapyrusNativeRegistry {
         PapyrusNativeRegistry()
     }
 
@@ -112,12 +112,12 @@ public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
         ] != nil
     }
 
-    public var count: Int {
+    var count: Int {
         functions.count
     }
 
     /// Every registered native as the registration spells it, sorted by key.
-    public var registeredNames: [(scriptName: String, functionName: String)] {
+    var registeredNames: [(scriptName: String, functionName: String)] {
         functions.values
             .sorted { lhs, rhs in
                 (lhs.key.scriptName, lhs.key.functionName)

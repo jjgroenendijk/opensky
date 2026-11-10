@@ -22,7 +22,7 @@ nonisolated public struct ScriptSoundInstances: Equatable, Sendable {
     private var instances: [Int32: Instance] = [:]
     private var nextID: Int32 = 1
 
-    public init() {}
+    init() {}
 
     /// A new instance ID. 0 stays free: it means "failed to play".
     public mutating func begin(waitToken: UInt64? = nil) -> Int32 {
@@ -88,7 +88,7 @@ nonisolated public struct ScriptSoundInstances: Equatable, Sendable {
         instances[id].map { !$0.stopped } ?? false
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         instances.isEmpty
     }
 }

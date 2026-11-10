@@ -3,34 +3,34 @@
 // `ICPY` carries the rest of each copy and replaces this chunk's state when present.
 // `ItemCopyState.init` drops bad levels, so no content error fails a load.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One owner's saved tempered copies, before they are merged back into the delta.
-nonisolated public struct SaveTemperedItemEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: ItemCopyState
+nonisolated struct SaveTemperedItemEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: ItemCopyState
 }
 
 nonisolated extension SaveTemperedItemEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.isEmpty ? nil : state.erased
     }
 }
 
-nonisolated public enum OpenSkySaveTemperedItems: Sendable {
+nonisolated enum OpenSkySaveTemperedItems: Sendable {
     /// Per owner: key, cell, item count, then per item the FormID, a level count,
     /// and one int32 level per copy. Items ascend, so equal state gives equal bytes.
-    public static func write(
+    static func write(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -61,7 +61,7 @@ nonisolated public enum OpenSkySaveTemperedItems: Sendable {
         }
     }
 
-    public static func decode(_ payload: Data) throws -> [SaveTemperedItemEntry] {
+    static func decode(_ payload: Data) throws -> [SaveTemperedItemEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("TMPR entry count")
         try validate(count, OpenSkySaveFormat.minimumTemperedEntrySize, reader)

@@ -13,7 +13,7 @@ nonisolated public final class SWFMovieLoader {
     /// paths are archive-style (backslash separated, lowercased).
     public static let interfacePrefix = "interface\\"
     public static let movieSuffix = ".swf"
-    public static let fontConfigPath = "interface\\fontconfig.txt"
+    static let fontConfigPath = "interface\\fontconfig.txt"
 
     /// A decoded fontconfig plus the fontlib movies it names.
     public struct FontEnvironment: Sendable {

@@ -5,37 +5,31 @@ import Foundation
 import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
 
-nonisolated public struct PerkActivationSnapshot: Equatable, Sendable {
+nonisolated struct PerkActivationSnapshot: Equatable, Sendable {
     /// One choice: its label and how it acts.
-    public struct Row: Equatable, Sendable {
-        public let label: String
-        public let runsImmediately: Bool
-        public let replacesDefault: Bool
+    struct Row: Equatable, Sendable {
+        let label: String
+        let runsImmediately: Bool
+        let replacesDefault: Bool
 
-        public init(label: String, runsImmediately: Bool, replacesDefault: Bool) {
+        init(label: String, runsImmediately: Bool, replacesDefault: Bool) {
             self.label = label
             self.runsImmediately = runsImmediately
             self.replacesDefault = replacesDefault
         }
 
-        public var title: String {
+        var title: String {
             let flags = [runsImmediately ? "runs at once" : nil, replacesDefault ? "replaces" : nil]
                 .compactMap(\.self)
             return flags.isEmpty ? label : "\(label) (\(flags.joined(separator: ", ")))"
         }
     }
 
-    public let target: String?
-    public let rows: [Row]
-    public let lastRun: PerkChoiceRun?
+    let target: String?
+    let rows: [Row]
+    let lastRun: PerkChoiceRun?
 
-    public init(target: String?, rows: [Row], lastRun: PerkChoiceRun?) {
-        self.target = target
-        self.rows = rows
-        self.lastRun = lastRun
-    }
-
-    public var readout: String {
+    var readout: String {
         [
             "Target: \(target ?? "none")",
             "Choices: \(rows.count)",
@@ -45,7 +39,7 @@ nonisolated public struct PerkActivationSnapshot: Equatable, Sendable {
 }
 
 extension PerkActivationCoordinator {
-    public var perkActivationSnapshot: PerkActivationSnapshot {
+    var perkActivationSnapshot: PerkActivationSnapshot {
         guard let target = world?.crosshairTarget else {
             return PerkActivationSnapshot(target: nil, rows: [], lastRun: lastRun)
         }
@@ -62,7 +56,7 @@ extension PerkActivationCoordinator {
     }
 
     @discardableResult
-    public func runPerkChoice(at index: Int) -> Bool {
+    func runPerkChoice(at index: Int) -> Bool {
         guard
             let target = world?.crosshairTarget,
             let key = world?.referenceKey(of: target)

@@ -17,7 +17,7 @@ nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
     case help
     case quit
 
-    public var title: String {
+    var title: String {
         switch self {
         case .resume: "Resume"
         case .quicksave: "Quicksave"
@@ -48,14 +48,14 @@ nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
 
     /// Capitalized fragment used to build accessibility identifiers, so a row's
     /// control id is derived rather than written twice.
-    public var identifierFragment: String {
+    var identifierFragment: String {
         rawValue.prefix(1).uppercased() + rawValue.dropFirst()
     }
 }
 
 nonisolated extension SystemMenuPage {
     /// The rawValue with its first letter capitalized, such as "InstalledContent".
-    public var label: String {
+    var label: String {
         rawValue.prefix(1).uppercased() + rawValue.dropFirst()
     }
 }
@@ -66,7 +66,7 @@ nonisolated public enum SystemMenuOutcome: Equatable, Sendable {
     case quicksave
     case showPage(SystemMenuPage)
 
-    public var label: String {
+    var label: String {
         switch self {
         case .resume: "Resume"
         case .quicksave: "Quicksave"
@@ -92,7 +92,7 @@ nonisolated public struct SystemMenuModel: Equatable, Sendable {
     }
 
     /// True while the Settings page is up.
-    public var settingsRevealed: Bool {
+    var settingsRevealed: Bool {
         page == .settings
     }
 
@@ -112,12 +112,12 @@ nonisolated public struct SystemMenuModel: Equatable, Sendable {
     }
 
     /// Back from a sub-page to the row list.
-    public mutating func showMain() {
+    mutating func showMain() {
         page = .main
     }
 
     /// The movie opened a page by itself.
-    public mutating func show(_ page: SystemMenuPage) {
+    mutating func show(_ page: SystemMenuPage) {
         guard isOpen else { return }
         self.page = page
     }

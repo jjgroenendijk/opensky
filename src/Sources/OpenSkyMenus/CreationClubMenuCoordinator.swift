@@ -21,7 +21,7 @@ public final class CreationClubMenuCoordinator: MenuScreen<CreationClubMovieEven
     }
 
     @discardableResult
-    public func open() -> Bool {
+    func open() -> Bool {
         guard !isOpen else { return false }
         lastResult = "Opened offline"
         present(path: CreationClubMenuMovieBridge.moviePath) { [weak self] runtime in

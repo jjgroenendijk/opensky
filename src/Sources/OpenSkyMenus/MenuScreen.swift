@@ -58,7 +58,7 @@ public class MenuScreen<Event> {
         publish()
     }
 
-    public func close() {
+    func close() {
         guard isOpen else { return }
         isOpen = false
         movie.stop()

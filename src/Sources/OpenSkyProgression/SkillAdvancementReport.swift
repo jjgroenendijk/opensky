@@ -28,7 +28,7 @@ nonisolated public struct SkillAdvancementTally: Equatable, Sendable {
     /// Character levels gained by the points this runtime granted.
     public private(set) var characterLevels = 0
 
-    public var isClean: Bool {
+    var isClean: Bool {
         missingParameters == 0
     }
 

@@ -4,7 +4,7 @@
 // on opposite sides of the hit. Documented in docs/engine/melee-damage.md.
 
 import Foundation
-public import OpenSkyCombatInterface
+import OpenSkyCombatInterface
 import OpenSkyPhysics
 
 /// What the blocker was holding, which picks the formula branch.
@@ -22,9 +22,9 @@ nonisolated public struct MeleeDamageResult: Equatable, Sendable {
     /// WEAP base damage before anything reduced it.
     public let base: Float
     /// The fraction the block absorbed, after the cap. Zero when unblocked.
-    public let blockedFraction: Float
+    let blockedFraction: Float
     /// What actually comes off health.
-    public let applied: Float
+    let applied: Float
     /// The attacker's fortify multiplier this result was resolved with, so a
     /// readout can show why the number is not the WEAP one. 1 for a character
     /// with no fortify effect.
@@ -32,9 +32,9 @@ nonisolated public struct MeleeDamageResult: Equatable, Sendable {
     /// Skill, sneak-attack, and armour terms.
     public let strike: WeaponStrike
     /// What the target blocked with, or nil when it did not block.
-    public let block: MeleeBlockKind?
+    let block: MeleeBlockKind?
 
-    public init(
+    init(
         base: Float,
         blockedFraction: Float,
         applied: Float,
@@ -50,12 +50,12 @@ nonisolated public struct MeleeDamageResult: Equatable, Sendable {
         self.block = block
     }
 
-    public var wasBlocked: Bool {
+    var wasBlocked: Bool {
         blockedFraction > 0
     }
 
     /// Whether a fortify effect moved the number away from the WEAP base.
-    public var wasFortified: Bool {
+    var wasFortified: Bool {
         attackMultiplier != 1
     }
 }
@@ -68,7 +68,7 @@ nonisolated public enum MeleeDamage: Sendable {
     /// What one landed swing takes off the target's health. `block` is nil when the
     /// target was not blocking. `bonusMultiplier` is the blocker's
     /// `CombatFortifyBonus.block`; `attackMultiplier` the attacker's `melee(handType:)`.
-    public static func resolve(
+    static func resolve(
         weapon: MeleeWeaponProfile,
         block: MeleeBlockKind?,
         settings: CombatSettings,
@@ -108,7 +108,7 @@ nonisolated public enum MeleeDamage: Sendable {
     }
 
     /// The blocked fraction on its own, capped at `fBlockMax`.
-    public static func blockedFraction(
+    static func blockedFraction(
         attackerDamage: Float,
         block: MeleeBlockKind,
         settings: CombatSettings,

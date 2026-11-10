@@ -1,4 +1,4 @@
-public import OpenSkyPerceptionInterface
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import simd
 
@@ -6,7 +6,7 @@ extension DetectionPairState {
     /// One step of accumulation or decay. `targetPosition` becomes the investigate
     /// position whenever anything is perceived. Zero or non-finite `seconds`
     /// leaves the state alone.
-    public func advanced(
+    func advanced(
         inputs: DetectionInputs,
         targetPosition: SIMD3<Float>,
         by seconds: Float,
@@ -39,7 +39,7 @@ extension DetectionPairState {
 
     /// The state a level reads as. `detected` needs the full level, so an
     /// observer is only ever certain at the top of the scale.
-    public static func classify(level: Float, settings: DetectionSettings) -> DetectionState {
+    static func classify(level: Float, settings: DetectionSettings) -> DetectionState {
         if level >= max(0, settings.detectedLevel.value) {
             return .detected
         }

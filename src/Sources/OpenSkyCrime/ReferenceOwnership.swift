@@ -50,12 +50,12 @@ nonisolated public struct OwnershipResolver: Sendable {
     }
 
     /// What `actor` may do with a reference owned by `owner`.
-    public func verdict(for actor: CrimeActor, owner: ReferenceOwner?) -> OwnershipVerdict {
+    func verdict(for actor: CrimeActor, owner: ReferenceOwner?) -> OwnershipVerdict {
         actor.verdict(on: owner)
     }
 
     /// The whole question in one call: the two `XOWN` pairs in, a verdict out.
-    public func verdict(
+    func verdict(
         for actor: CrimeActor,
         reference: RecordOwnership?,
         cell: RecordOwnership?

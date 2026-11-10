@@ -2,22 +2,22 @@
 // `ReferenceKey`. `PlayerProgressState.init` clamps every field, and a pick that
 // is not one of the three primaries is dropped.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyProgressionInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's saved character-level progress, before it is merged back into
 /// the delta.
-nonisolated public struct SavePlayerProgressEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: PlayerProgressState
+nonisolated struct SavePlayerProgressEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: PlayerProgressState
 }
 
-nonisolated public enum OpenSkySaveProgressDecoder: Sendable {
-    public static func decodePlayerProgress(_ payload: Data) throws -> [SavePlayerProgressEntry] {
+nonisolated enum OpenSkySaveProgressDecoder: Sendable {
+    static func decodePlayerProgress(_ payload: Data) throws -> [SavePlayerProgressEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PLVL entry count")
         try OpenSkySaveDecoder.validate(
@@ -35,7 +35,7 @@ nonisolated public enum OpenSkySaveProgressDecoder: Sendable {
     }
 
     /// The `PLGD` chunk: legendary counts per skill, keyed by holder.
-    public static func decodeLegendarySkills(_ payload: Data) throws
+    static func decodeLegendarySkills(_ payload: Data) throws
         -> [ReferenceKey: [Int32: Int]]
     {
         var reader = SaveReader(payload)
@@ -69,7 +69,7 @@ nonisolated public enum OpenSkySaveProgressDecoder: Sendable {
     }
 
     /// The `PTRN` chunk: training sessions this level, keyed by holder.
-    public static func decodeTrainingSessions(_ payload: Data) throws -> [ReferenceKey: Int] {
+    static func decodeTrainingSessions(_ payload: Data) throws -> [ReferenceKey: Int] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PTRN entry count")
         try OpenSkySaveDecoder.validate(
@@ -96,7 +96,7 @@ nonisolated public enum OpenSkySaveProgressDecoder: Sendable {
 
     /// Lays a sibling chunk's values onto each holder's `PLVL` progress; a holder
     /// with no `PLVL` entry gets a fresh progress carrying only that value.
-    public static func merge<Value>(
+    static func merge<Value>(
         _ values: [ReferenceKey: Value],
         into progress: [SavePlayerProgressEntry],
         apply: (PlayerProgressState, Value) -> PlayerProgressState
@@ -159,11 +159,11 @@ nonisolated public enum OpenSkySaveProgressDecoder: Sendable {
 }
 
 nonisolated extension SavePlayerProgressEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.isEmpty ? nil : state.erased
     }
 }

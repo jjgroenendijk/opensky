@@ -74,7 +74,7 @@ nonisolated public struct CellStreamCore: Sendable {
 
     /// Marks a rebuild for a resident cell. False when the cell is not resident, so no
     /// rebuild is dispatched for an unbuilt or unloaded cell.
-    public mutating func beginRebuild(_ coordinate: CellCoordinate) -> Bool {
+    mutating func beginRebuild(_ coordinate: CellCoordinate) -> Bool {
         guard resident.contains(coordinate) else { return false }
         rebuilding.insert(coordinate)
         return true

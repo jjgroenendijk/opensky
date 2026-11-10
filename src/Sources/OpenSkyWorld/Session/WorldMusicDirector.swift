@@ -6,14 +6,14 @@
 
 public import Foundation
 public import OpenSkyAudio
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyWorldInterface
 
 @MainActor
 public final class WorldMusicDirector {
-    public static let logger = EngineLogger(
+    static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "WorldMusicDirector"
     )
@@ -68,7 +68,7 @@ public final class WorldMusicDirector {
         lastMusicRefusal?.text
     }
 
-    public init(
+    init(
         engine: WorldAudioEngine,
         musicStore: MusicRecordStore?,
         weatherStore: WeatherStore?,

@@ -46,7 +46,7 @@ extension ProgressionCoordinator {
     }
 
     /// One entry per box, in `INAM` order.
-    public func perkTreeNodes(forSkill index: Int32) -> [PerkTreeNodeReadout] {
+    func perkTreeNodes(forSkill index: Int32) -> [PerkTreeNodeReadout] {
         guard let record = skillInformation(index) else { return [] }
         let plugin = record.sourcePlugin
         return record.information.perkTree.map { node in
@@ -72,7 +72,7 @@ extension ProgressionCoordinator {
     }
 
     /// Nil when the box grants nothing, as every tree's entry node does.
-    public func perkInspection(node: UInt32, forSkill index: Int32) -> PerkInspection? {
+    func perkInspection(node: UInt32, forSkill index: Int32) -> PerkInspection? {
         guard
             let key = perkKey(node: node, forSkill: index),
             let resolved = perks.runtime?.record(key)
@@ -103,7 +103,7 @@ extension ProgressionCoordinator {
         return ReferenceKey(resolved: resolved.id)
     }
 
-    public func selectedPerkKey() -> ReferenceKey? {
+    func selectedPerkKey() -> ReferenceKey? {
         perkKey(node: nodeSelection, forSkill: skillSelection)
     }
 

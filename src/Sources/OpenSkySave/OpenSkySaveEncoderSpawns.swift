@@ -1,7 +1,7 @@
 // SPWN chunk writing, in its own file because the encoder body is at its length limit.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyWorldState
 
@@ -14,7 +14,7 @@ nonisolated extension OpenSkySaveEncoder {
 
     /// The `SPWN` chunk: every spawn component, in key order, with its key repeated. The
     /// cell is the component's `location` (where it is), not the delta's attribution cell.
-    public static func writeSpawnedReferences(
+    static func writeSpawnedReferences(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

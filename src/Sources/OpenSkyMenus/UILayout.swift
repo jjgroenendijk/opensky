@@ -2,31 +2,31 @@
 // container rect. Pure float math.
 
 // Cross-axis alignment for a vertical stack.
-public import OpenSkyRenderCore
+import OpenSkyRenderCore
 
-nonisolated public enum UIStackAlignment: Sendable {
+nonisolated enum UIStackAlignment: Sendable {
     case leading, center, trailing
 }
 
 /// Lays out a column of items top-to-bottom within a container rect.
-nonisolated public struct UIVerticalStack: Sendable {
-    public var spacing: Float
-    public var alignment: UIStackAlignment
+nonisolated struct UIVerticalStack: Sendable {
+    var spacing: Float
+    var alignment: UIStackAlignment
 
-    public init(spacing: Float = 0, alignment: UIStackAlignment = .leading) {
+    init(spacing: Float = 0, alignment: UIStackAlignment = .leading) {
         self.spacing = spacing
         self.alignment = alignment
     }
 
     /// Total column height for the given item sizes, including inter-item gaps.
-    public func totalHeight(sizes: [UISize]) -> Float {
+    func totalHeight(sizes: [UISize]) -> Float {
         guard !sizes.isEmpty else { return 0 }
         let content = sizes.reduce(0) { $0 + $1.height }
         return content + spacing * Float(sizes.count - 1)
     }
 
     /// Frames for each item, stacked from `container`'s top edge, cross-aligned.
-    public func layout(sizes: [UISize], in container: UIRect) -> [UIRect] {
+    func layout(sizes: [UISize], in container: UIRect) -> [UIRect] {
         var cursorY = container.y
         return sizes.map { size in
             let originX: Float = switch alignment {

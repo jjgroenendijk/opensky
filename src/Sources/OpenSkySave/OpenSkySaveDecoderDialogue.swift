@@ -1,19 +1,19 @@
 // DLGS and DLGT chunks: said-state per INFO, merged into the `RDLT` deltas by
 // `ReferenceKey`. DLGT adds the day each speaker last said an INFO.
 
-public import Foundation
+import Foundation
 public import OpenSkyDialogueInterface
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyGameData
+import OpenSkyWorldState
 
 /// One INFO's saved said-state, before it is merged back into its delta.
-nonisolated public struct SaveDialogueEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let state: DialogueRuntimeState
+nonisolated struct SaveDialogueEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let state: DialogueRuntimeState
 }
 
-nonisolated public enum OpenSkySaveDialogueDecoder: Sendable {
+nonisolated enum OpenSkySaveDialogueDecoder: Sendable {
     static func apply(tag: String, payload: Data, to body: inout OpenSkySaveDecoder.Body) throws {
         if tag == OpenSkySaveFormat.ChunkTag.dialogueSaidDays {
             body.dialogueSaidDays = try decodeSaidDays(payload)
@@ -22,7 +22,7 @@ nonisolated public enum OpenSkySaveDialogueDecoder: Sendable {
         }
     }
 
-    public static func decodeSaidDays(
+    static func decodeSaidDays(
         _ payload: Data
     ) throws -> [ReferenceKey: [ReferenceKey: Double]] {
         var reader = SaveReader(payload)
@@ -57,7 +57,7 @@ nonisolated public enum OpenSkySaveDialogueDecoder: Sendable {
 
     /// The `DLGS` entries with their `DLGT` days. A day for an INFO `DLGS` does
     /// not name is dropped, because a count of 0 is the unsaid baseline.
-    public static func withSaidDays(
+    static func withSaidDays(
         _ days: [ReferenceKey: [ReferenceKey: Double]],
         in entries: [SaveDialogueEntry]
     ) -> [SaveDialogueEntry] {
@@ -69,7 +69,7 @@ nonisolated public enum OpenSkySaveDialogueDecoder: Sendable {
         }
     }
 
-    public static func decodeDialogueStates(_ payload: Data) throws -> [SaveDialogueEntry] {
+    static func decodeDialogueStates(_ payload: Data) throws -> [SaveDialogueEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("DLGS entry count")
         try OpenSkySaveDecoder.validate(
@@ -92,11 +92,11 @@ nonisolated public enum OpenSkySaveDialogueDecoder: Sendable {
 }
 
 nonisolated extension SaveDialogueEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         nil
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.isUntouched ? nil : state.erased
     }
 }

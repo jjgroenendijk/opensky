@@ -10,7 +10,7 @@ public import OpenSkyGameData
 public import OpenSkyMagicInterface
 
 /// What kind of record put an effect on an actor, as the cures ask it.
-nonisolated public enum ActiveEffectSourceCategory: Equatable, Sendable {
+nonisolated enum ActiveEffectSourceCategory: Equatable, Sendable {
     /// A `SPEL` of type Disease.
     case disease
     /// An `ALCH` with the Poison flag.
@@ -25,22 +25,22 @@ nonisolated public struct MagicWorldAction: Equatable, Sendable {
         case ended
     }
 
-    public let phase: Phase
-    public let archetype: MagicWorldArchetype
+    let phase: Phase
+    let archetype: MagicWorldArchetype
     /// The MGEF, whose associated item names the hazard, weapon, or spell.
-    public let effect: ReferenceKey
-    public let target: ActorValueHolder
-    public let magnitude: Float
+    let effect: ReferenceKey
+    let target: ActorValueHolder
+    let magnitude: Float
     /// Who cast the effect, where one is known.
-    public var caster: ReferenceKey?
+    var caster: ReferenceKey?
     /// The stored effect's sequence on `target`; zero for an effect that acts once.
-    public var sequence: UInt64 = 0
+    var sequence: UInt64 = 0
     /// The EFIT duration, seconds, of an effect that acts once.
-    public var duration: Float = 0
+    var duration: Float = 0
     /// The EFIT area, feet, of an effect that acts once.
-    public var area: UInt32 = 0
+    var area: UInt32 = 0
 
-    public init(
+    init(
         phase: Phase,
         archetype: MagicWorldArchetype,
         effect: ReferenceKey,
@@ -59,7 +59,7 @@ extension ActiveEffectRuntime {
     /// Ward strength "charges up" over "a period of time of about one second"
     /// (<https://en.uesp.net/wiki/Skyrim:Ward>). UESP says "about", so this is an
     /// estimate.
-    public static let accumulateSeconds: Float = 1
+    static let accumulateSeconds: Float = 1
 
     /// The rule of the MGEF a stored effect applies.
     public func rule(of effect: ActiveEffect) -> MagicArchetypeRule? {
@@ -101,7 +101,7 @@ extension ActiveEffectRuntime {
 
     /// Whether the MGEF's own conditions hold with `holder` as the subject. Detect Life
     /// asks this of each actor it may paint.
-    public mutating func effectConditionsHold(
+    mutating func effectConditionsHold(
         _ effect: ReferenceKey, on holder: ActorValueHolder
     ) -> Bool {
         guard let resolved = effects.effect(key: effect) else { return false }

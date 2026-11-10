@@ -2,14 +2,14 @@
 // builds sentences (docs/engine/coordinators.md).
 
 import Foundation
-public import OpenSkyGameData
-public import OpenSkyProgressionInterface
+import OpenSkyGameData
+import OpenSkyProgressionInterface
 
 nonisolated extension ProgressionActionOutcome {
     static let unavailableText = "Progression unavailable: no game data loaded."
 
     /// `training` holds the load order's refusal notices.
-    public func text(training: TrainingSettings) -> String {
+    func text(training: TrainingSettings) -> String {
         switch self {
         case .idle: "No leveling action yet."
         case .unavailable: Self.unavailableText

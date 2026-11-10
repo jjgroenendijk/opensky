@@ -59,7 +59,7 @@ nonisolated public enum PlayerMarkerStep: Equatable, Sendable {
 }
 
 /// The answers to `sMoveMarkerQuestion`, in button order.
-nonisolated public enum PlayerMarkerMoveAnswer: Int, CaseIterable, Sendable {
+nonisolated enum PlayerMarkerMoveAnswer: Int, CaseIterable, Sendable {
     case move, remove, leave
 }
 

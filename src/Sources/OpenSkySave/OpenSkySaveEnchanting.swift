@@ -2,16 +2,16 @@
 // deltas by key. Made rows ascend by id, so equal state gives equal bytes.
 // Layout: docs/formats/opensky-save-actor-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-public import OpenSkyMagicInterface
-public import OpenSkyWorldState
+import OpenSkyMagicInterface
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// The known keys; then per made enchantment its id, name, capacity, cost per use,
     /// and each base key with its power.
-    public static func writeEnchanting(
+    static func writeEnchanting(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -40,7 +40,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
-    public static func decodeEnchanting(
+    static func decodeEnchanting(
         _ payload: Data
     ) throws -> [SaveStoryEntry<EnchantingState>] {
         let tag = OpenSkySaveFormat.ChunkTag.enchanting

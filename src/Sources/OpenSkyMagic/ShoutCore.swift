@@ -68,7 +68,7 @@ nonisolated public struct ShoutMachine: Equatable, Sendable {
         phase == .idle
     }
 
-    public mutating func begin() {
+    mutating func begin() {
         guard isIdle, cooldown <= 0 else { return }
         phase = .inhaling(held: 0)
     }

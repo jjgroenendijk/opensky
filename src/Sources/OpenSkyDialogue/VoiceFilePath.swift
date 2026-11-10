@@ -6,7 +6,7 @@
 // Pure: the caller supplies the strings, so table tests can pin the rule.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 
 nonisolated public enum VoiceFilePath: Sendable {
     /// Archive directory every voice file lives under, as a canonical VFS key.
@@ -66,7 +66,7 @@ nonisolated public enum VoiceFilePath: Sendable {
     /// The FormID as it appears in a voice file name. The Creation Kit writes the
     /// plugin's own index as zero, so index `masterCount` is cleared and a master's
     /// index stays. Dawnguard lines read `00xxxxxx`; its Update.esm overrides keep `01`.
-    public static func exportedFormID(_ id: FormID, masterCount: Int) -> UInt32 {
+    static func exportedFormID(_ id: FormID, masterCount: Int) -> UInt32 {
         id.masterIndex >= masterCount ? id.objectID : id.rawValue
     }
 }

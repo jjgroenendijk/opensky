@@ -19,11 +19,6 @@ nonisolated public struct ESSLeveledLockPair: Hashable, Comparable, Sendable {
     public let authored: UInt8
     public let stored: UInt8
 
-    public init(authored: UInt8, stored: UInt8) {
-        self.authored = authored
-        self.stored = stored
-    }
-
     public static func < (lhs: Self, rhs: Self) -> Bool {
         (lhs.authored, lhs.stored) < (rhs.authored, rhs.stored)
     }
@@ -58,7 +53,7 @@ nonisolated public struct ESSLockSurvey: Equatable, Sendable {
     }
 
     /// Leveled locks by (authored level, stored level), with how often each pair occurs.
-    public var leveledPairs: [ESSLeveledLockPair: Int] {
+    var leveledPairs: [ESSLeveledLockPair: Int] {
         var counts: [ESSLeveledLockPair: Int] = [:]
         for row in rows {
             guard let lock = row.authored, lock.isLeveled else { continue }

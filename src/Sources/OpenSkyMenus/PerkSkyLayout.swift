@@ -3,52 +3,52 @@
 // `Point17` lies flat around the origin, and +Z is up. See docs/engine/perk-sky.md.
 
 import Foundation
-public import OpenSkyProgressionInterface
+import OpenSkyProgressionInterface
 import simd
 
-nonisolated public struct PerkSkyStar: Equatable, Sendable {
-    public let node: UInt32
-    public let position: SIMD3<Float>
-    public let state: PerkStarState
+nonisolated struct PerkSkyStar: Equatable, Sendable {
+    let node: UInt32
+    let position: SIMD3<Float>
+    let state: PerkStarState
 }
 
-nonisolated public struct PerkSkyLine: Equatable, Sendable {
-    public let parent: UInt32
-    public let child: UInt32
-    public let from: SIMD3<Float>
-    public let to: SIMD3<Float>
-    public let state: PerkLineState
+nonisolated struct PerkSkyLine: Equatable, Sendable {
+    let parent: UInt32
+    let child: UInt32
+    let from: SIMD3<Float>
+    let to: SIMD3<Float>
+    let state: PerkLineState
 }
 
-nonisolated public struct PerkSkyCamera: Equatable, Sendable {
-    public var eye: SIMD3<Float>
-    public var target: SIMD3<Float>
-    public var up: SIMD3<Float> = [0, 0, 1]
+nonisolated struct PerkSkyCamera: Equatable, Sendable {
+    var eye: SIMD3<Float>
+    var target: SIMD3<Float>
+    var up: SIMD3<Float> = [0, 0, 1]
 }
 
-nonisolated public enum PerkSkyLayout {
+nonisolated enum PerkSkyLayout {
     /// Degrees between two ring slots, as the movie's `SKILL_ANGLE`.
-    public static let slotDegrees: Float = 20
+    static let slotDegrees: Float = 20
     /// The dome's ring radius, used when the mesh lacks a `Point` node.
     static let ringRadius: Float = 99.34
 
-    public static func anchorName(slot: Int) -> String {
+    static func anchorName(slot: Int) -> String {
         unsafe String(format: "Point%02d", slot)
     }
 
     /// Turns a vector from the frame of the skill ahead into dome space. Slots go
     /// clockwise seen from above, so slot 1 is to the right of slot 0.
-    public static func rotate(_ vector: SIMD3<Float>, yawDegrees: Float) -> SIMD3<Float> {
+    static func rotate(_ vector: SIMD3<Float>, yawDegrees: Float) -> SIMD3<Float> {
         simd_quatf(angle: -yawDegrees * .pi / 180, axis: [0, 0, 1]).act(vector)
     }
 
-    public static func defaultAnchor(slot: Int) -> SIMD3<Float> {
+    static func defaultAnchor(slot: Int) -> SIMD3<Float> {
         rotate([0, ringRadius, 0], yawDegrees: Float(slot) * slotDegrees)
     }
 
     /// The stars of one tree, grown up from its anchor. `selected` is the box the
     /// tree page has on; nil on the ring.
-    public static func stars(
+    static func stars(
         _ perks: [SkillsMenuPerk], at place: (slot: Int, anchor: SIMD3<Float>), selected: UInt32?,
         settings: PerkSkySettings
     ) -> [PerkSkyStar] {
@@ -77,7 +77,7 @@ nonisolated public enum PerkSkyLayout {
     }
 
     /// One line per connection inside the tree, lit once its upper end can be bought.
-    public static func lines(_ perks: [SkillsMenuPerk], stars: [PerkSkyStar]) -> [PerkSkyLine] {
+    static func lines(_ perks: [SkillsMenuPerk], stars: [PerkSkyStar]) -> [PerkSkyLine] {
         let positions = Dictionary(
             stars.map { ($0.node, $0.position) }, uniquingKeysWith: { first, _ in first }
         )
@@ -133,7 +133,7 @@ nonisolated public enum PerkSkyLayout {
 
     /// The ring camera at `yaw`, moved toward the tree camera by `treeBlend` (0 to 1),
     /// then lifted by `introOffset` while the opening move plays.
-    public static func camera(
+    static func camera(
         yawDegrees: Float, treeBlend: Float, introOffset: SIMD3<Float>,
         settings: PerkSkySettings
     ) -> PerkSkyCamera {

@@ -11,16 +11,16 @@ nonisolated public enum ControlsPageAction: Equatable, Sendable {
 }
 
 nonisolated public struct ControlsPageModel: Equatable, Sendable {
-    public static let resetTitle = "Reset to Defaults"
+    static let resetTitle = "Reset to Defaults"
 
-    public private(set) var selectedIndex = 0
+    private(set) var selectedIndex = 0
     /// True while the page waits for the key to bind.
     public private(set) var waitingForKey = false
-    public private(set) var confirmation: ConfirmationModel?
+    private(set) var confirmation: ConfirmationModel?
 
     public init() {}
 
-    public var rowCount: Int {
+    var rowCount: Int {
         InputBindings.slots.count + 1
     }
 
@@ -30,7 +30,7 @@ nonisolated public struct ControlsPageModel: Equatable, Sendable {
     }
 
     @discardableResult
-    public mutating func handle(_ event: MenuInputEvent) -> ControlsPageAction? {
+    mutating func handle(_ event: MenuInputEvent) -> ControlsPageAction? {
         if var question = confirmation {
             let choice = question.handle(event)
             confirmation = choice == nil ? question : nil
@@ -62,7 +62,7 @@ nonisolated public struct ControlsPageModel: Equatable, Sendable {
     }
 
     /// The movie's Controls list picked the row of `event`; the next key binds it.
-    public mutating func beginRemap(event: String) {
+    mutating func beginRemap(event: String) {
         guard let index = InputBindings.slots.firstIndex(where: { $0.event == event }) else {
             return
         }

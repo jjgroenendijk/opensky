@@ -2,25 +2,25 @@
 
 import Foundation
 public import OpenSkyFormatsPEX
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 
-nonisolated public enum PapyrusFrameCompletion: Sendable {
+nonisolated enum PapyrusFrameCompletion: Sendable {
     case root
     case assign(PexValue)
     case discard
 }
 
-public final class PapyrusFrame {
-    public let owner: PapyrusScriptIndex
-    public let compiled: PapyrusCompiledFunction
-    public let instanceHandle: PapyrusObjectHandle?
-    public let completion: PapyrusFrameCompletion
+final class PapyrusFrame {
+    let owner: PapyrusScriptIndex
+    let compiled: PapyrusCompiledFunction
+    let instanceHandle: PapyrusObjectHandle?
+    let completion: PapyrusFrameCompletion
 
     /// Parameters and locals, in `compiled`'s slot order.
-    public private(set) var slots: [PapyrusValue]
-    public var instructionIndex = 0
+    private(set) var slots: [PapyrusValue]
+    var instructionIndex = 0
 
-    public init(
+    init(
         owner: PapyrusScriptIndex,
         compiled: PapyrusCompiledFunction,
         instanceHandle: PapyrusObjectHandle?,
@@ -33,19 +33,19 @@ public final class PapyrusFrame {
         slots = compiled.slotDefaults
     }
 
-    public var ownerScript: PexObject {
+    var ownerScript: PexObject {
         owner.script
     }
 
-    public var function: PexFunction {
+    var function: PexFunction {
         compiled.function
     }
 
-    public var defaultReturnValue: PapyrusValue {
+    var defaultReturnValue: PapyrusValue {
         compiled.defaultReturnValue
     }
 
-    public func setSlot(_ slot: Int, to value: PapyrusValue) {
+    func setSlot(_ slot: Int, to value: PapyrusValue) {
         slots[slot] = value
     }
 }

@@ -8,7 +8,7 @@ import OpenSkyGameData
 
 extension WorldAudioSoundDirector {
     /// The plugin the sound and acoustic-space stores are built from.
-    public static let soundPlugin = "Skyrim.esm"
+    static let soundPlugin = "Skyrim.esm"
 
     static func outputModels(_ records: EffectRecordStore) -> (FormID) -> OutputModelProfile? {
         { id in

@@ -2,9 +2,9 @@
 // `FootLeft` and `FootRight` events at the frame a foot lands, and a speed cadence would
 // drift from the animation. Driven by the per-frame audio tick, skipped while paused.
 
-public import Foundation
-public import OpenSkyAudio
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyAudio
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyPhysics
@@ -12,7 +12,7 @@ import simd
 
 @MainActor
 public final class WorldAudioFootstepDirector {
-    public static let logger = EngineLogger(
+    static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "WorldAudioFootstep"
     )
@@ -23,36 +23,36 @@ public final class WorldAudioFootstepDirector {
     private let assets: AudioAssetLoader
     /// MATT index, for naming the ground material in the readout. Empty in a
     /// synthetic session, and then a material is reported by FormID.
-    public var materialTypes = MaterialTypeIndex.empty
+    var materialTypes = MaterialTypeIndex.empty
 
     /// Footstep playback. On by default, like the SFX and ambience beds; the
     /// audio controls write back here.
     /// Each routed step's impact, for its dust model; set by the session.
     public var onImpact: ((Impact, SIMD3<Float>) -> Void)?
-    public var footstepsEnabled = true
+    var footstepsEnabled = true
     /// The SOPM output models, so another actor's step past its sound's range is skipped.
-    public var outputModels: ((FormID) -> OutputModelProfile?)?
+    var outputModels: ((FormID) -> OutputModelProfile?)?
 
     /// The MATT under the player's feet in the last routed frame. Nil while airborne.
-    public private(set) var groundMaterial: FormID?
+    private(set) var groundMaterial: FormID?
 
     /// A material the readout pins in place of the ground contact's, for
     /// verifying that a chosen surface really does select a different sound.
     /// Nil — the default — follows the ground.
-    public var forcedMaterial: FormID?
+    var forcedMaterial: FormID?
 
     /// The set the player currently walks with. Starts at the store's default
     /// set and is replaced when the player's feet armature resolves to one.
     public private(set) var footstepSet: FootstepSet?
 
-    public private(set) var lastFootstepError: String?
+    private(set) var lastFootstepError: String?
     /// Events routed and events played since construction. The two differ by
     /// the tags the current set has no footstep for, which is normal vanilla
     /// data rather than a fault, so both are reported.
-    public private(set) var routedEventCount = 0
-    public private(set) var playedFootstepCount = 0
+    private(set) var routedEventCount = 0
+    private(set) var playedFootstepCount = 0
 
-    public init(
+    init(
         engine: WorldAudioEngine,
         footstepStore: FootstepStore?,
         soundStore: SoundRecordStore?,
@@ -66,7 +66,7 @@ public final class WorldAudioFootstepDirector {
     }
 
     /// Test seam: same shape, with the file loader injected directly.
-    public init(
+    init(
         engine: WorldAudioEngine,
         footstepStore: FootstepStore?,
         soundStore: SoundRecordStore?,
@@ -89,7 +89,7 @@ public final class WorldAudioFootstepDirector {
     /// Routes one frame's graph events. Events with no tag in the gait's footstep list are
     /// dropped. Steps play at the player's feet with the ground contact's MATT, so snow and
     /// wood sound different.
-    public func handleGraphEvents(
+    func handleGraphEvents(
         _ names: [String],
         gait: LocomotionGait,
         position: SIMD3<Float>,
@@ -150,7 +150,7 @@ public final class WorldAudioFootstepDirector {
 
     /// Which of the FSTS lists a locomotion gait reads. One-to-one: the five
     /// gaits the bridge resolves are the five lists a footstep set carries.
-    nonisolated public static func footstepGait(for gait: LocomotionGait) -> FootstepGait {
+    nonisolated static func footstepGait(for gait: LocomotionGait) -> FootstepGait {
         switch gait {
         case .walk: .walking
         case .run: .running
@@ -161,14 +161,14 @@ public final class WorldAudioFootstepDirector {
     }
 
     /// The tags the current set answers to for one gait, for the readout.
-    public func tags(for gait: LocomotionGait) -> [String] {
+    func tags(for gait: LocomotionGait) -> [String] {
         guard let footstepStore, let footstepSet else { return [] }
         return footstepStore.tags(for: Self.footstepGait(for: gait), in: footstepSet)
     }
 
     /// Plays one footstep for `tag` without waiting for the graph to fire it.
     /// The verification control; nil when the step played.
-    public func forcePlayFootstep(
+    func forcePlayFootstep(
         tag: String,
         gait: LocomotionGait,
         position: SIMD3<Float>
@@ -190,18 +190,18 @@ public final class WorldAudioFootstepDirector {
 
     /// The material every resolution is made against: the readout's pinned one
     /// when it has pinned one, else the ground contact's.
-    public var activeMaterial: FormID? {
+    var activeMaterial: FormID? {
         forcedMaterial ?? groundMaterial
     }
 
     /// How the readout names the current set.
-    public var footstepSetDescription: String {
+    var footstepSetDescription: String {
         guard let footstepSet else { return "none" }
         return describe(footstepSet)
     }
 
     /// How the readout names the surface footsteps currently resolve against.
-    public var materialDescription: String {
+    var materialDescription: String {
         guard let material = activeMaterial else { return "none" }
         let name = materialTypes.describe(material)
         return forcedMaterial == nil ? name : "\(name) (forced)"

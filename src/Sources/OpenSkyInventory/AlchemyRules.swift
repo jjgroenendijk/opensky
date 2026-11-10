@@ -49,42 +49,37 @@ nonisolated public struct AlchemySettings: Equatable, Sendable {
 }
 
 /// One carried ingredient as the rules see it.
-nonisolated public struct AlchemyIngredient: Equatable, Sendable {
-    public let id: FormID
-    public let effects: [MagicItemEffect]
-
-    public init(id: FormID, effects: [MagicItemEffect]) {
-        self.id = id
-        self.effects = effects
-    }
+nonisolated struct AlchemyIngredient: Equatable, Sendable {
+    let id: FormID
+    let effects: [MagicItemEffect]
 }
 
 /// One effect two or more chosen ingredients share.
-nonisolated public struct AlchemySharedEffect: Equatable, Sendable {
-    public let effect: ResolvedMagicEffect
+nonisolated struct AlchemySharedEffect: Equatable, Sendable {
+    let effect: ResolvedMagicEffect
     /// The entry of the ingredient whose version costs most, which the brew uses.
-    public let entry: MagicItemEffect
+    let entry: MagicItemEffect
     /// Each sharing ingredient and the index of this effect in its list.
-    public let sources: [FormID: Int]
+    let sources: [FormID: Int]
 }
 
 /// One effect of a brew, after the skill and the perks.
 nonisolated public struct AlchemyBrewedEffect: Equatable, Sendable {
-    public let effect: ResolvedMagicEffect
+    let effect: ResolvedMagicEffect
     public let result: CreatedPotionEffect
     /// The gold the effect adds to the value.
-    public let cost: Float
+    let cost: Float
 }
 
 /// What brewing the chosen ingredients makes.
 nonisolated public struct AlchemyBrew: Equatable, Sendable {
     /// Costliest first, so the first one names the result.
-    public let effects: [AlchemyBrewedEffect]
+    let effects: [AlchemyBrewedEffect]
     public let isPoison: Bool
     public let value: Int32
     /// The value at the skill alone, without perks or Fortify Alchemy, which the
     /// skill use counts.
-    public let skillValue: Float
+    let skillValue: Float
     /// What brewing teaches: each ingredient and the indices of its shared effects.
     public let learned: [FormID: [Int]]
 
@@ -104,17 +99,17 @@ nonisolated public struct AlchemyBrew: Equatable, Sendable {
 }
 
 /// What the perks of the brewer say about one brew.
-nonisolated public struct AlchemyPerks {
+nonisolated struct AlchemyPerks {
     /// Mod Alchemy Effectiveness for one effect, as a multiplier.
-    public let effectiveness: (ResolvedMagicEffect, _ isPoison: Bool) -> Float
+    let effectiveness: (ResolvedMagicEffect, _ isPoison: Bool) -> Float
     /// Purify Alchemy Ingredients: a potion keeps only its good effects, a poison its bad.
-    public let purifies: Bool
+    let purifies: Bool
 
-    public static var none: AlchemyPerks {
+    static var none: AlchemyPerks {
         AlchemyPerks(effectiveness: { _, _ in 1 }, purifies: false)
     }
 
-    public init(
+    init(
         effectiveness: @escaping (ResolvedMagicEffect, Bool) -> Float,
         purifies: Bool
     ) {
@@ -125,7 +120,7 @@ nonisolated public struct AlchemyPerks {
 
 nonisolated public enum AlchemyRules {
     /// The effects at least two of `ingredients` list, in the order they first appear.
-    public static func shared(
+    static func shared(
         _ ingredients: [AlchemyIngredient],
         resolve: (FormID) -> ResolvedMagicEffect?
     ) -> [AlchemySharedEffect] {
@@ -155,7 +150,7 @@ nonisolated public enum AlchemyRules {
     /// `fAlchemyIngredientInitMult * (1 + (fAlchemySkillFactor - 1) * skill / 100)`.
     /// Fortify Alchemy is not added here: the `AlchemySkillBoosts` and `PerkSkillBoosts`
     /// perks apply it through Mod Alchemy Effectiveness.
-    public static func powerFactor(skill: Float, settings: AlchemySettings) -> Float {
+    static func powerFactor(skill: Float, settings: AlchemySettings) -> Float {
         settings.ingredientMultiplier * (1 + (settings.skillFactor - 1) * max(0, skill) / 100)
     }
 
@@ -198,7 +193,7 @@ nonisolated public enum AlchemyRules {
     }
 
     /// Brews `ingredients`, or nil when they share no effect.
-    public static func brew(
+    static func brew(
         _ ingredients: [AlchemyIngredient],
         resolve: (FormID) -> ResolvedMagicEffect?,
         power: Float,

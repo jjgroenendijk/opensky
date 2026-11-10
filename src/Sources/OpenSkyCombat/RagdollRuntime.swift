@@ -291,7 +291,7 @@ public final class RagdollRuntime: DeathReporting {
     ///
     /// - Returns: true when a ragdoll now exists for `key`.
     @discardableResult
-    public func trigger(_ key: ReferenceKey) -> Bool {
+    func trigger(_ key: ReferenceKey) -> Bool {
         guard let seam else { return false }
         if seam.deathState(of: key)?.isDead != true {
             noteZeroHealth(of: key)
@@ -325,14 +325,14 @@ public final class RagdollRuntime: DeathReporting {
 
     /// Suspends and resumes stepping without discarding the corpses, which is
     /// what the readout's freeze control drives.
-    public var isFrozen: Bool {
+    var isFrozen: Bool {
         get { world.isFrozen }
         set { world.isFrozen = newValue }
     }
 
     /// Whether a ragdoll's own bones may touch each other; the readout's
     /// self-collision control drives it.
-    public var isSelfCollisionEnabled: Bool {
+    var isSelfCollisionEnabled: Bool {
         get { world.isSelfCollisionEnabled }
         set { world.isSelfCollisionEnabled = newValue }
     }

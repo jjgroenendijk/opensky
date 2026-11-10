@@ -58,7 +58,7 @@ public final class MoviePlayerCoordinator {
         self.makeWorker = makeWorker
     }
 
-    public var isPlaying: Bool {
+    var isPlaying: Bool {
         pending != nil || playback != nil
     }
 

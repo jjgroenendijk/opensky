@@ -36,7 +36,7 @@ public final class SkillsMenuCoordinator {
     public static let identifier = MenuIdentifier.statsMenu
 
     public internal(set) var model: SkillsMenuModel?
-    public private(set) var movieEnabled = true
+    private(set) var movieEnabled = true
     public internal(set) var skyEnabled = true
     /// True while the sky plays `CameraOutro` after a close; input waits.
     public internal(set) var isClosing = false
@@ -76,7 +76,7 @@ public final class SkillsMenuCoordinator {
         movie.isLoaded
     }
 
-    public var movieError: String? {
+    var movieError: String? {
         movie.error
     }
 
@@ -110,7 +110,7 @@ public final class SkillsMenuCoordinator {
     }
 
     /// The text goes at once; the sky then plays `CameraOutro` before the menu leaves.
-    public func close() {
+    func close() {
         guard model != nil, !isClosing else { return }
         stopMovie()
         guard sky.isShown, skyEnabled else {

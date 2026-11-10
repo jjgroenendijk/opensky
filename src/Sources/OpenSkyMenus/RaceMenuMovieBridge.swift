@@ -4,25 +4,25 @@
 
 import Foundation
 import OpenSkyActorsInterface
-public import OpenSkyFormatsSWF
-public import OpenSkyMenusInterface
+import OpenSkyFormatsSWF
+import OpenSkyMenusInterface
 
-nonisolated public enum RaceMenuMovieBridge: Sendable {
-    public static let moviePath = "interface\\racesex_menu.swf"
+nonisolated enum RaceMenuMovieBridge: Sendable {
+    static let moviePath = "interface\\racesex_menu.swf"
     /// Movie-to-engine calls that only report sounds and text focus.
-    public static let sinkHostFunctions = [
+    static let sinkHostFunctions = [
         "SetAllowTextInput", "ShowVirtualKeyboard", "PlaySound", "myLog"
     ]
     /// Slider callbacks the engine names; each is answered as a slider change. The
     /// movie's own test list uses the vanilla ones, so the same names are kept.
-    public static let sliderHostFunctions = [
+    static let sliderHostFunctions = [
         "ChangeDoubleMorph", "ChangeWeight", "ChangeHeadPart", "ChangeHeadPreset",
         "ChangeTintingMask", "ChangeFaceDetails", "ChangePreset", "ChangeHairColorPreset",
         "ChangeSex"
     ]
     static let pcPlatform = SystemMenuMovieBridge.pcPlatform
 
-    public enum Request: Equatable, Sendable {
+    enum Request: Equatable, Sendable {
         case race(Int)
         /// `id` is the slider's row in `RaceMenuModel.rows`.
         case slider(id: Int, value: Double)
@@ -32,7 +32,7 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
         case done
     }
 
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime,
         onRequest: @escaping @MainActor @Sendable (Request) -> Void
     ) {
@@ -79,7 +79,7 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
 
     /// Once the panels exist. The root forwards both to the panels, and `SetPlatform`
     /// makes each button attach its key art.
-    public static func setPlatform(runtime: SWFMovieRuntime) {
+    static func setPlatform(runtime: SWFMovieRuntime) {
         runtime.callMovie("SetPlatform", arguments: [.number(pcPlatform), .boolean(false)])
         runtime.callMovie("InitExtensions")
     }
@@ -89,7 +89,7 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
 
     /// False when the movie's category list did not build, so the movie cannot show
     /// what `publish` sends and the engine rows must stay in charge.
-    public static func listsBuilt(runtime: SWFMovieRuntime) -> Bool {
+    static func listsBuilt(runtime: SWFMovieRuntime) -> Bool {
         guard
             let panels = runtime.node(atPath: panelsPath, from: runtime.root),
             let list = panels.object.lookup("_CategoriesList")?.property.value
@@ -101,7 +101,7 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
     }
 
     /// Sends the categories, races, sliders, and name the model holds.
-    public static func publish(_ model: RaceMenuModel, runtime: SWFMovieRuntime) {
+    static func publish(_ model: RaceMenuModel, runtime: SWFMovieRuntime) {
         runtime.callMovie("SetCategoriesList", arguments: RaceMenuCategory.allCases.flatMap {
             [AS2Value.string(model.labels.text($0.labelKey)), .integer($0.rawValue)]
         })
@@ -117,7 +117,7 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
 
     /// Sends only the sliders. `SetCategoriesList` and `SetRaceList` select a category,
     /// so a change made in Body or Head must not send them, or the menu jumps to Race.
-    public static func publishSliders(_ model: RaceMenuModel, runtime: SWFMovieRuntime) {
+    static func publishSliders(_ model: RaceMenuModel, runtime: SWFMovieRuntime) {
         let sliders = model.rows.enumerated().flatMap { item in
             slider(id: item.offset, row: item.element, model: model)
         }
@@ -126,7 +126,7 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
 
     /// The movie shows its loading icon before each change it sends and hides it only
     /// when the engine calls `HideLoadingIcon`, once the head shows the change.
-    public static func finishChange(runtime: SWFMovieRuntime) {
+    static func finishChange(runtime: SWFMovieRuntime) {
         runtime.callMovie("HideLoadingIcon")
     }
 
@@ -161,7 +161,7 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
     }
 
     @discardableResult
-    public static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
+    static func handle(_ event: MenuInputEvent, runtime: SWFMovieRuntime) -> Bool {
         guard let key = event.swfKey else { return false }
         let down = runtime.handle(.keyDown(code: key.code, ascii: key.ascii))
         let up = runtime.handle(.keyUp(code: key.code))

@@ -5,7 +5,7 @@
 import Foundation
 
 /// A star's state, named after the vanilla `intperkstars01.nif` sequences.
-nonisolated public enum PerkStarState: String, Equatable, Sendable {
+nonisolated enum PerkStarState: String, Equatable, Sendable {
     case locked = "Locked"
     case unlocked = "Unlocked"
     case owned = "Owned"
@@ -24,7 +24,7 @@ nonisolated public enum PerkStarState: String, Equatable, Sendable {
 }
 
 /// A line's state, named after the vanilla `intperkline01.nif` sequences.
-nonisolated public enum PerkLineState: String, Equatable, Sendable {
+nonisolated enum PerkLineState: String, Equatable, Sendable {
     case locked = "Locked"
     case unlocked = "Unlocked"
 
@@ -34,27 +34,27 @@ nonisolated public enum PerkLineState: String, Equatable, Sendable {
 }
 
 /// The sequence one star or line plays now, and when it started.
-nonisolated public struct PerkSkyPlayback: Equatable, Sendable {
-    public let sequence: String
-    public let started: Double
+nonisolated struct PerkSkyPlayback: Equatable, Sendable {
+    let sequence: String
+    let started: Double
     /// The steady sequence that follows a transition; nil while steady.
-    public let next: String?
+    let next: String?
 
-    public func seconds(at now: Double) -> Float {
+    func seconds(at now: Double) -> Float {
         Float(max(0, now - started))
     }
 }
 
 /// Tracks the playback of every star and line by key.
-nonisolated public struct PerkSkyAnimator<Key: Hashable & Sendable>: Sendable {
+nonisolated struct PerkSkyAnimator<Key: Hashable & Sendable>: Sendable {
     private var playbacks: [Key: PerkSkyPlayback] = [:]
     private var steady: [Key: String] = [:]
 
-    public init() {}
+    init() {}
 
     /// The playback for `key` in steady state `state`. `transition` names the sequence
     /// from the last state; `duration` gives a sequence's length, nil when missing.
-    public mutating func playback(
+    mutating func playback(
         _ key: Key, state: String, transition: (String) -> String?,
         at time: (now: Double, duration: (String) -> Float?)
     ) -> PerkSkyPlayback {
@@ -83,7 +83,7 @@ nonisolated public struct PerkSkyAnimator<Key: Hashable & Sendable>: Sendable {
     }
 
     /// Drops the keys not in `kept`, so a later return starts steady again.
-    public mutating func keep(_ kept: Set<Key>) {
+    mutating func keep(_ kept: Set<Key>) {
         playbacks = playbacks.filter { kept.contains($0.key) }
         steady = steady.filter { kept.contains($0.key) }
     }

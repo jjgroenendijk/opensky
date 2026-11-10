@@ -5,7 +5,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 
-nonisolated public enum GrantActionOutcome: Equatable, Sendable {
+nonisolated enum GrantActionOutcome: Equatable, Sendable {
     case idle
     case unavailable
     case notAStack(count: Int32)
@@ -14,7 +14,7 @@ nonisolated public enum GrantActionOutcome: Equatable, Sendable {
     case granted(count: Int32, item: String, to: InventoryGrantTarget)
     case failed(reason: String)
 
-    public var text: String {
+    var text: String {
         switch self {
         case .idle: "No grant yet."
         case .unavailable: "Inventory and equipment unavailable: no game data loaded."

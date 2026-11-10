@@ -1,11 +1,11 @@
 // MSTS and QTRK chunks: the player's misc stats, and which quests the player
 // tracks. Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
+import Foundation
 import OpenSkyDialogueInterface
-public import OpenSkyFormatsCore
-public import OpenSkyQuestsInterface
-public import OpenSkyWorldState
+import OpenSkyFormatsCore
+import OpenSkyQuestsInterface
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     static func writeJournal(
@@ -25,7 +25,7 @@ nonisolated extension OpenSkySaveEncoder {
     }
 
     /// Stats in name order, so the same state writes the same bytes.
-    public static func writeMiscStats(
+    static func writeMiscStats(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -40,7 +40,7 @@ nonisolated extension OpenSkySaveEncoder {
         }
     }
 
-    public static func writeQuestTracking(
+    static func writeQuestTracking(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -54,7 +54,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
-    public static func decodeMiscStats(_ payload: Data) throws -> [SaveStoryEntry<MiscStatsState>] {
+    static func decodeMiscStats(_ payload: Data) throws -> [SaveStoryEntry<MiscStatsState>] {
         let tag = OpenSkySaveFormat.ChunkTag.miscStats
         return try decode(
             payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumMiscStatsEntrySize
@@ -73,7 +73,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
         }
     }
 
-    public static func decodeQuestTracking(
+    static func decodeQuestTracking(
         _ payload: Data
     ) throws -> [SaveStoryEntry<QuestTrackingState>] {
         try decode(

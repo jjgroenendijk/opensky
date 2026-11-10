@@ -37,7 +37,7 @@ extension BookMenuWorld {
 
 public final class BookMenuCoordinator: MenuScreen<Never> {
     public static let identifier: MenuIdentifier = "Book Menu"
-    public static let hint = "A/D: turn page   Tab or Esc: close"
+    static let hint = "A/D: turn page   Tab or Esc: close"
 
     public private(set) var content: BookContent?
     /// The first line the text panel shows.
@@ -95,7 +95,7 @@ public final class BookMenuCoordinator: MenuScreen<Never> {
 
     /// Opens the first carried book.
     @discardableResult
-    public func openFirstCarried() -> Bool {
+    func openFirstCarried() -> Bool {
         guard let item = world?.carriedBooks.first else {
             lastResult = "Not opened: no book carried"
             return false

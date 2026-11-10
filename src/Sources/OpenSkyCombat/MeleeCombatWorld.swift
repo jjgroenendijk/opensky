@@ -14,14 +14,14 @@ import simd
 
 /// One landed hit, kept for the readout's last-hit trace.
 nonisolated public struct MeleeHitRecord: Equatable, Sendable {
-    public let target: ReferenceKey
-    public let damage: MeleeDamageResult
+    let target: ReferenceKey
+    let damage: MeleeDamageResult
     /// Whether the target's graph was told to stagger.
-    public let staggered: Bool
+    let staggered: Bool
     /// A swing, power attack, bash, or power bash.
-    public let kind: MeleeStrikeKind
+    let kind: MeleeStrikeKind
 
-    public init(
+    init(
         target: ReferenceKey,
         damage: MeleeDamageResult,
         staggered: Bool,

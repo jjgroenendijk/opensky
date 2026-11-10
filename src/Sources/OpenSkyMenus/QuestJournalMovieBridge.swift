@@ -44,7 +44,7 @@ nonisolated public enum QuestJournalMovieBridge: Sendable {
 
     /// Frame label of a completed objective entry clip, measured off the clip's
     /// own timeline.
-    public static let objectiveCompletedFrame = "Completed"
+    static let objectiveCompletedFrame = "Completed"
 
     // MARK: - Bring-up
 

@@ -2,28 +2,28 @@
 // it holds only the key and the cell. HRVD adds the game day of each timed
 // harvest. Both merge into the `RDLT` deltas by key, HRVD last.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyInventoryInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One saved harvested reference, before it is merged back into the delta.
-nonisolated public struct SaveHarvestEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
+nonisolated struct SaveHarvestEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
 }
 
 /// The game day of one saved harvest.
-nonisolated public struct SaveHarvestDayEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let day: Float
+nonisolated struct SaveHarvestDayEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let day: Float
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// Every harvested reference, in snapshot order. Nothing harvested writes no chunk.
-    public static func writeHarvests(
+    static func writeHarvests(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -53,8 +53,8 @@ nonisolated extension OpenSkySaveEncoder {
     }
 }
 
-nonisolated public enum OpenSkySaveHarvestDecoder: Sendable {
-    public static func decodeHarvests(_ payload: Data) throws -> [SaveHarvestEntry] {
+nonisolated enum OpenSkySaveHarvestDecoder: Sendable {
+    static func decodeHarvests(_ payload: Data) throws -> [SaveHarvestEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("HRVS entry count")
         try OpenSkySaveDecoder.validate(
@@ -75,7 +75,7 @@ nonisolated public enum OpenSkySaveHarvestDecoder: Sendable {
     }
 
     /// A non-finite day is dropped, so its plant stays harvested with no time.
-    public static func decodeHarvestDays(_ payload: Data) throws -> [SaveHarvestDayEntry] {
+    static func decodeHarvestDays(_ payload: Data) throws -> [SaveHarvestDayEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("HRVD entry count")
         try OpenSkySaveDecoder.validate(
@@ -98,21 +98,21 @@ nonisolated public enum OpenSkySaveHarvestDecoder: Sendable {
 }
 
 nonisolated extension SaveHarvestDayEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         nil
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         ReferenceHarvestState(isHarvested: true, harvestedOnDay: day).erased
     }
 }
 
 nonisolated extension SaveHarvestEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         ReferenceHarvestState.harvested.erased
     }
 }

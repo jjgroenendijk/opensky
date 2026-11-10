@@ -27,7 +27,7 @@ public struct DialogueRuntime: DialogueAccess {
     /// Everything a condition may read. Selection overrides `subject`, `target`
     /// and `aliasQuest` per response and leaves the rest alone. Built on the first
     /// read, so a runtime that evaluates no condition does not build every view.
-    public var context: ConditionContext {
+    var context: ConditionContext {
         get { contextOverride ?? contextSource.context }
         set { contextOverride = newValue }
     }
@@ -39,7 +39,7 @@ public struct DialogueRuntime: DialogueAccess {
     /// counted as unrun rather than silently dropped.
     public var fragments: (any DialogueFragmentDispatching)?
     /// Picks one of `count` stacked Random responses. Tests fix it.
-    public var randomPick: @MainActor (Int) -> Int = {
+    var randomPick: @MainActor (Int) -> Int = {
         let stream = RandomStream(seed: 0x5049_434B)
         return { stream.int(below: $0) }
     }()
@@ -47,7 +47,7 @@ public struct DialogueRuntime: DialogueAccess {
     private let contextSource: LazyConditionContext
     private var contextOverride: ConditionContext?
 
-    public init(
+    init(
         store: WorldStateStore,
         dialogue: DialogueStore,
         questStates: QuestResolution,
@@ -97,7 +97,7 @@ public struct DialogueRuntime: DialogueAccess {
     ///
     /// - Returns: true when runtime state was actually removed.
     @discardableResult
-    public func reset(_ id: FormID) -> Bool {
+    func reset(_ id: FormID) -> Bool {
         guard let key = dialogue.key(forInfo: id) else { return false }
         return store.reset(.dialogue, for: key)
     }

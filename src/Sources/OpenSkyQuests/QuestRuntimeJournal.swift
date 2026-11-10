@@ -4,7 +4,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyQuestsInterface
+import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
 extension QuestRuntime {
@@ -49,7 +49,7 @@ extension QuestRuntime {
 
 nonisolated extension MiscStats {
     /// The per-type stat a completion counts. Misc quests count their objectives.
-    public static func completionStat(for kind: Quest.Kind) -> String? {
+    static func completionStat(for kind: Quest.Kind) -> String? {
         switch kind {
         case .mainQuest: "Main Quests Completed"
         case .sideQuests: "Side Quests Completed"

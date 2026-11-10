@@ -74,7 +74,7 @@ public final class HazardCoordinator {
 
 extension HazardCoordinator {
     /// The live hazards for the Traps section, by name.
-    public var hazardRows: [TrapHazardRow] {
+    var hazardRows: [TrapHazardRow] {
         runtime.active.values
             .sorted { ($0.spec.name, $0.id.description) < ($1.spec.name, $1.id.description) }
             .map { hazard in

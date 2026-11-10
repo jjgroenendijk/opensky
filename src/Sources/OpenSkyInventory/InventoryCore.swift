@@ -9,8 +9,8 @@ public import OpenSkyInventoryInterface
 /// Pure inventory rules. Values in, values out.
 nonisolated public enum InventoryCore {
     public static let noRuntimeText = "World items unavailable: no game data loaded."
-    public static let noEquipmentText = "Equipment unavailable: no game data loaded."
-    public static let noContainerText = "No container open."
+    static let noEquipmentText = "Equipment unavailable: no game data loaded."
+    static let noContainerText = "No container open."
 
     /// FULL name, else editor ID, else the FormID. Never empty, so a readout
     /// line always names something.
@@ -24,12 +24,12 @@ nonisolated public enum InventoryCore {
 
     /// The reference key plus the NPC_ base, which is what the record dump
     /// takes as input.
-    public static func actorName(_ holder: InventoryHolder) -> String {
+    static func actorName(_ holder: InventoryHolder) -> String {
         guard case let .actor(base) = holder.owner else { return holder.key.description }
         return "\(holder.key.description) (base \(base))"
     }
 
-    public static func noTargetText(_ target: EquipmentTargetSelector) -> String {
+    static func noTargetText(_ target: EquipmentTargetSelector) -> String {
         switch target {
         case .player: "No player inventory."
         case .nearestActor: "No resident actor to equip on."
@@ -49,7 +49,7 @@ nonisolated public enum InventoryCore {
 
     /// "body|forearms" plus hands, so a conflict reads off the readout without
     /// decoding a bitfield.
-    public static func describe(_ occupancy: EquipmentOccupancy) -> String {
+    static func describe(_ occupancy: EquipmentOccupancy) -> String {
         let namedSlots = BodySlots.namedSlots.filter { occupancy.slots.contains($0.slots) }
         var parts = namedSlots.map(\.name)
         if occupancy.hands.contains(.rightHand) {
@@ -68,7 +68,7 @@ nonisolated public enum InventoryCore {
     }
 
     /// Why a grant is refused, or nil when it may go ahead.
-    public static func grantRefusal(
+    static func grantRefusal(
         item: FormID, count: Int32, isKnown: Bool
     ) -> GrantActionOutcome? {
         guard count > 0 else { return .notAStack(count: count) }
@@ -76,7 +76,7 @@ nonisolated public enum InventoryCore {
         return nil
     }
 
-    public static func equipSentence(
+    static func equipSentence(
         changed: Bool,
         item: String,
         target: String,
@@ -89,7 +89,7 @@ nonisolated public enum InventoryCore {
         return "Equipped \(item) on \(target)\(displaced)."
     }
 
-    public static func takeAllSentence(_ moved: [InventoryStack]) -> String {
+    static func takeAllSentence(_ moved: [InventoryStack]) -> String {
         let total = moved.reduce(0) { $0 + Int($1.count) }
         return "Took all: \(total) items in \(moved.count) stacks."
     }

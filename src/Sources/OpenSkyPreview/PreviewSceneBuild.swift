@@ -6,7 +6,7 @@ import Foundation
 public import OpenSkyCells
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyRenderCore
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import simd
 
@@ -20,7 +20,7 @@ nonisolated public struct PreviewResolvedTarget: Codable, Equatable, Sendable {
     public var modelPath: String?
     public var cell: String?
 
-    public init(kind: String) {
+    init(kind: String) {
         self.kind = kind
     }
 }
@@ -33,7 +33,7 @@ nonisolated public struct PreviewScene: Sendable {
     public var failures: [String]
     public var stage: PreviewStage
     /// The worldspace whose weather the cell stage shows; nil indoors and in the studio.
-    public var weatherWorldspace: String?
+    var weatherWorldspace: String?
     /// The eye of a player entering an interior; views then turn from there.
     public var entry: PlacedReference.Placement?
 }
@@ -200,8 +200,8 @@ nonisolated public struct PreviewSceneBuilder {
 }
 
 /// The studio stage: even light from above the front, no sky, no fog.
-nonisolated public enum PreviewStudio {
-    public static let lighting = RenderLighting(
+nonisolated enum PreviewStudio {
+    static let lighting = RenderLighting(
         ambientColor: SIMD3(repeating: 0.55),
         directionalAmbient: DirectionalAmbientColors(
             positiveX: SIMD3(repeating: 0.5), negativeX: SIMD3(repeating: 0.5),
@@ -215,7 +215,7 @@ nonisolated public enum PreviewStudio {
 
     /// The clear colour behind the subject: a mid grey, so dark and light assets
     /// both stand out.
-    public static let background = SIMD3<Double>(0.18, 0.18, 0.2)
+    static let background = SIMD3<Double>(0.18, 0.18, 0.2)
 }
 
 /// What a placed reference draws, where, and at which scale.

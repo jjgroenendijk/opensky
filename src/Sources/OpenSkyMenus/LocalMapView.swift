@@ -5,24 +5,24 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyWorldInterface
 import simd
 
-nonisolated public struct LocalMapView: Equatable, Sendable {
-    public static let cellSize: Float = 4096
+nonisolated struct LocalMapView: Equatable, Sendable {
+    static let cellSize: Float = 4096
 
-    public let center: SIMD2<Float>
+    let center: SIMD2<Float>
     /// Half the side of the square the map shows, in world units.
-    public let halfExtent: Float
+    let halfExtent: Float
 
-    public init(center: SIMD2<Float>, halfExtent: Float) {
+    init(center: SIMD2<Float>, halfExtent: Float) {
         self.center = center
         self.halfExtent = max(halfExtent, 1)
     }
 
     /// The loaded `grid` by `grid` cells around the player's cell.
-    public static func exterior(player: SIMD3<Float>, grid: Int) -> Self {
+    static func exterior(player: SIMD3<Float>, grid: Int) -> Self {
         let cell = SIMD2((player.x / cellSize).rounded(.down), (player.y / cellSize).rounded(.down))
         let center = (cell + 0.5) * cellSize
         return LocalMapView(
@@ -31,17 +31,17 @@ nonisolated public struct LocalMapView: Equatable, Sendable {
     }
 
     /// A world point on the map image, 0 to 1 with y down, or nil outside it.
-    public func project(_ point: SIMD3<Float>) -> SIMD2<Float>? {
+    func project(_ point: SIMD3<Float>) -> SIMD2<Float>? {
         let local = (SIMD2(point.x, point.y) - center) / (halfExtent * 2) + 0.5
         guard (0 ... 1).contains(local.x), (0 ... 1).contains(local.y) else { return nil }
         return SIMD2(local.x, 1 - local.y)
     }
 }
 
-nonisolated public enum LocalMapFog {
+nonisolated enum LocalMapFog {
     /// The fog square of a point: an exterior cell is split in 8 by 8; an interior
     /// uses its bounds.
-    public static func square(
+    static func square(
         of point: SIMD3<Float>, cell: CellSceneLocation, interiorBounds: (
             SIMD2<Float>,
             SIMD2<Float>

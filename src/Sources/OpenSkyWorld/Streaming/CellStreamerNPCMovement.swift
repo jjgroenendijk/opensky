@@ -13,26 +13,26 @@ public import OpenSkyWorldState
 public import simd
 
 public struct CellStreamerNPCMovementState {
-    public var runtime = NPCMovementRuntime()
+    var runtime = NPCMovementRuntime()
     public var swimBreadcrumbs = SwimBreadcrumbs()
-    public var configuration = PlayerMovementConfiguration.synthetic
-    public var onPersist: ((NPCMovementPersistence) -> Void)?
-    public var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
-    public var onPosesChanged: (([UInt32: float4x4]) -> Void)?
-    public var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
-    public var onLanding: ((ReferenceKey, WalkLanding) -> Void)?
+    var configuration = PlayerMovementConfiguration.synthetic
+    var onPersist: ((NPCMovementPersistence) -> Void)?
+    var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
+    var onPosesChanged: (([UInt32: float4x4]) -> Void)?
+    var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
+    var onLanding: ((ReferenceKey, WalkLanding) -> Void)?
     /// An actor walked into another cell. Called after its rest write.
-    public var onCellHandoff: ((NPCMovementPersistence) -> Void)?
+    var onCellHandoff: ((NPCMovementPersistence) -> Void)?
     /// The player and the standing actors walkers steer around.
-    public var standingActors: (() -> [NPCNeighbour])?
-    public var waterPushRace: ((ReferenceKey) -> WaterPushRace)?
+    var standingActors: (() -> [NPCNeighbour])?
+    var waterPushRace: ((ReferenceKey) -> WaterPushRace)?
     /// The half size of an actor's skeleton bound (`BBX`), once it has loaded.
     public var bodyHalfExtents: ((ReferenceKey) -> SIMD3<Float>?)?
-    public var movementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)?
+    var movementSpeeds: ((ReferenceKey) -> MovementType.Speeds?)?
     /// Rest writes no resident build has drawn yet, oldest first, per actor.
-    public var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
+    var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
     /// The rest write in progress, so its store mutation rebuilds no cell.
-    public var recordingRest: NPCMovementPersistence?
+    var recordingRest: NPCMovementPersistence?
     /// Rest writes held while the runtime mutates. A listener that starts the next
     /// move would else write into a runtime copy that the mutation then overwrites.
     public var heldRests: [NPCMovementPersistence]?
@@ -47,10 +47,10 @@ public struct CellStreamerNPCMovementState {
 
 /// One NPC pose written to the store and drawn through a delta until the cell
 /// that draws the actor is built from a snapshot that holds it.
-public struct NPCUnbakedRest {
-    public let sequence: UInt64
-    public let placement: PlacedReference.Placement
-    public let drawingCell: CellSceneLocation
+struct NPCUnbakedRest {
+    let sequence: UInt64
+    let placement: PlacedReference.Placement
+    let drawingCell: CellSceneLocation
 }
 
 extension CellStreamer {
@@ -372,7 +372,7 @@ extension CellStreamer {
         holdingRests { npcMovement.persistForSave() }
     }
 
-    public func advanceNPCMovement(frameTime: Float) {
+    func advanceNPCMovement(frameTime: Float) {
         bindNPCMovementCallbacks()
         holdingRests { advanceMovers(frameTime: frameTime) }
         bakeBuiltRests()

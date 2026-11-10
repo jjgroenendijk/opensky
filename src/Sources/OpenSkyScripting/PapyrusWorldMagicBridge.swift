@@ -100,7 +100,7 @@ public protocol PapyrusWorldMagicBridge: AnyObject, Sendable {
 
 extension PapyrusWorldMagicBridge {
     @discardableResult
-    public func castSpell(
+    func castSpell(
         _ spell: ReferenceKey, from source: ReferenceKey, at target: ReferenceKey?
     ) -> Bool {
         castSpell(spell, from: source, at: target, blame: nil)

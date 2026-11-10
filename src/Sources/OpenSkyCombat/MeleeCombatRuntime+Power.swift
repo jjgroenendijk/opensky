@@ -3,14 +3,14 @@
 
 import Foundation
 import OpenSkyActorsInterface
-public import OpenSkyCombatInterface
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 
 extension MeleeCombatRuntime {
     /// Latches one held press, as if the button stayed down past the delay. What the
     /// readout's Power attack button calls; with the guard up it is a power bash.
-    public func requestPowerAttack() {
+    func requestPowerAttack() {
         pendingAttack = true
         pendingPower = true
     }
@@ -150,22 +150,16 @@ extension MeleeCombatRuntime {
 
 /// What a bash strikes with: the shield's base rating, or the weapon's base damage
 /// without a shield, and the basher's Block skill.
-nonisolated public struct BashSource: Equatable, Sendable {
-    public var weaponDamage: Float
-    public var shieldRating: Float?
-    public var blockSkill: Float
-
-    public init(weaponDamage: Float, shieldRating: Float?, blockSkill: Float) {
-        self.weaponDamage = weaponDamage
-        self.shieldRating = shieldRating
-        self.blockSkill = blockSkill
-    }
+nonisolated struct BashSource: Equatable, Sendable {
+    var weaponDamage: Float
+    var shieldRating: Float?
+    var blockSkill: Float
 }
 
 /// Bash damage, from UESP "Skyrim:Block": half the weapon's base damage or the
 /// shield's base rating, times a factor the Block skill moves between two settings.
-nonisolated public enum MeleeBash: Sendable {
-    public static func damage(
+nonisolated enum MeleeBash: Sendable {
+    static func damage(
         _ source: BashSource, isPlayer: Bool, isPower: Bool, settings: PowerAttackSettings
     ) -> Float {
         let range = source.shieldRating == nil ? settings.weaponBash : settings.shieldBash

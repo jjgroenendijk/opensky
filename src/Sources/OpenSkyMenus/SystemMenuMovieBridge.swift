@@ -16,10 +16,10 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     public static let menuPath = "/QuestJournalFader/Menu_mc"
     public static let systemPagePath = "\(menuPath)/SystemFader/Page_mc"
     public static let systemCategoryListPath = "\(systemPagePath)/CategoryList_mc/List_mc"
-    public static let settingsCategoryListPath = "\(systemPagePath)/SettingsPanel/List_mc"
-    public static let systemFaderPath = "\(menuPath)/SystemFader"
+    static let settingsCategoryListPath = "\(systemPagePath)/SettingsPanel/List_mc"
+    static let systemFaderPath = "\(menuPath)/SystemFader"
     public static let questsFaderPath = "\(menuPath)/QuestsFader"
-    public static let statsFaderPath = "\(menuPath)/StatsFader"
+    static let statsFaderPath = "\(menuPath)/StatsFader"
 
     /// `PLATFORM_PC_KBMOUSE`, the value the movie's platform switch expects for
     /// keyboard and mouse.
@@ -125,14 +125,14 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     // MARK: - Readout
 
     /// Faults and distinct unresolved names, for the verification readout.
-    public static func diagnostics(runtime: SWFMovieRuntime) -> (faults: Int, missingNames: Int) {
+    static func diagnostics(runtime: SWFMovieRuntime) -> (faults: Int, missingNames: Int) {
         let tally = runtime.tally
         return (tally.faultTotal, tally.missingNames.count)
     }
 
     /// The page brought to the front, derived from the actual System category
     /// rows rather than a bridge-owned flag.
-    public static func currentState(runtime: SWFMovieRuntime) -> String? {
+    static func currentState(runtime: SWFMovieRuntime) -> String? {
         guard
             let fader = runtime.node(atPath: systemFaderPath, from: runtime.root),
             let index = fader.timeline?.frameIndex(forLabel: "forceFade"),
@@ -151,7 +151,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     }
 
     /// Settings categories reached by activating the `$SETTINGS` system row.
-    public static func settingsCategoryLabels(runtime: SWFMovieRuntime) -> [String] {
+    static func settingsCategoryLabels(runtime: SWFMovieRuntime) -> [String] {
         MenuMovieEntryList.labels(atPath: settingsCategoryListPath, runtime: runtime)
     }
 
@@ -200,7 +200,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         return true
     }
 
-    public static let settingsCategoryIndex = 4
+    static let settingsCategoryIndex = 4
 
     /// The movie's row text for each engine row.
     public static let rowEntries: [String: SystemMenuEntry] = [

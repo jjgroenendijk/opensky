@@ -98,17 +98,17 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
 
     /// `Paralysis` in the vanilla actor-value table: "This will also set the
     /// boolean actor value Paralyze to 1 to prevent movement."
-    public static let paralysisActorValue: Int32 = 53
+    static let paralysisActorValue: Int32 = 53
     /// `Invisibility` in the vanilla actor-value table. Detection reads it.
     public static let invisibilityActorValue: Int32 = 54
     /// `Telekinesis`: "set the boolean actor value Telekinesis to 1 in order to allow you
     /// to see item stats at a distance."
-    public static let telekinesisActorValue: Int32 = 88
+    static let telekinesisActorValue: Int32 = 88
     /// `Grabbed`, held at 1 on an actor Grab Actor holds.
-    public static let grabbedActorValue: Int32 = 161
+    static let grabbedActorValue: Int32 = 161
     /// `PerceptionCondition` through `BrainCondition`, the seven slots between
     /// `ResistDisease` (45) and `Paralysis` (53). Value and Parts changes each one.
-    public static let bodyPartConditionValues: [Int32] = Array(46 ... 52)
+    static let bodyPartConditionValues: [Int32] = Array(46 ... 52)
 
     /// The rule for `archetype`, or nil while it has none.
     public static func rule(for archetype: MagicEffectArchetype) -> Self? {
@@ -158,7 +158,7 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
 
     /// Whether the magnitude is the highest target level the effect works on:
     /// "up to level <MAG>". Turn Undead is "similar to Demoralize".
-    public var capsTargetLevel: Bool {
+    var capsTargetLevel: Bool {
         switch self {
         case .influence(.calm), .influence(.frenzy), .influence(.demoralize),
              .influence(.rally), .influence(.turnUndead), .world(.disarm),
@@ -171,7 +171,7 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
 
     /// Whether the effect does anything once, at the moment it lands, rather than
     /// for as long as it runs.
-    public var actsOnce: Bool {
+    var actsOnce: Bool {
         switch self {
         case .dispel, .world(.stagger), .world(.spawnHazard), .world(.disarm),
              .world(.banish), .world(.commandSummoned), .world(.werewolfFeed),
@@ -184,7 +184,7 @@ nonisolated public enum MagicArchetypeRule: Equatable, Sendable {
 
     /// Whether the effect only works while it runs, so a zero duration does
     /// nothing. A constant effect still runs.
-    public var needsDuration: Bool {
+    var needsDuration: Bool {
         switch self {
         case .influence, .heldFlag, .accumulate, .world(.cloak), .world(.boundWeapon),
              .world(.soulTrap), .world(.slowTime), .world(.summon), .world(.reanimate),

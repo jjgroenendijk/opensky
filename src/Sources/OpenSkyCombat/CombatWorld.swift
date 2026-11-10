@@ -272,7 +272,7 @@ extension CombatWorld {
     }
 
     /// `key`'s perks applied to `value`, under `subjects` and, unless given, empty seams.
-    public func perkModified(
+    func perkModified(
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,

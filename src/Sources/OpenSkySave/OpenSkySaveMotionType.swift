@@ -1,22 +1,22 @@
 // RMOT chunk: the motion types scripts set with `SetMotionType`. Merged into the
 // `RDLT` deltas by key. Layout: docs/formats/opensky-save.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyWorldState
 
 /// One saved motion type, before it is merged back into the delta.
-nonisolated public struct SaveMotionTypeEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let motionType: ReferenceMotionType
+nonisolated struct SaveMotionTypeEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let motionType: ReferenceMotionType
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// Every reference a script set a motion type on, in snapshot order. None writes no chunk.
-    public static func writeMotionTypes(
+    static func writeMotionTypes(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -35,8 +35,8 @@ nonisolated extension OpenSkySaveEncoder {
     }
 }
 
-nonisolated public enum OpenSkySaveMotionTypeDecoder: Sendable {
-    public static func decodeMotionTypes(_ payload: Data) throws -> [SaveMotionTypeEntry] {
+nonisolated enum OpenSkySaveMotionTypeDecoder: Sendable {
+    static func decodeMotionTypes(_ payload: Data) throws -> [SaveMotionTypeEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RMOT entry count")
         try OpenSkySaveDecoder.validate(
@@ -79,11 +79,11 @@ nonisolated extension OpenSkySaveDecoder {
 }
 
 nonisolated extension SaveMotionTypeEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         motionType.erased
     }
 }

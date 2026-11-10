@@ -78,7 +78,7 @@ public final class TitleMenuCoordinator {
         movie.isLoaded
     }
 
-    public var movieError: String? {
+    var movieError: String? {
         movie.error
     }
 
@@ -169,7 +169,7 @@ public final class TitleMenuCoordinator {
         }
     }
 
-    public func newGame(at start: NewGameStart) {
+    func newGame(at start: NewGameStart) {
         close()
         world?.startNewGame(at: start)
         switch start {

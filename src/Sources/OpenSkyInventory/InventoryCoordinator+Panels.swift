@@ -3,7 +3,7 @@
 // enforced.
 
 public import OpenSkyCrimeInterface
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
@@ -11,7 +11,7 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 extension InventoryCoordinator {
-    public var itemControlSnapshot: ItemControlSnapshot {
+    var itemControlSnapshot: ItemControlSnapshot {
         guard let runtime else { return .unavailable }
         return ItemControlSnapshot(
             playerStacks: readout(runtime.inventory.inventory(of: runtime.player).stacks),
@@ -22,7 +22,7 @@ extension InventoryCoordinator {
 }
 
 extension InventoryCoordinator {
-    public var inventoryEquipmentSnapshot: InventoryEquipmentSnapshot {
+    var inventoryEquipmentSnapshot: InventoryEquipmentSnapshot {
         guard let runtime else { return .unavailable }
         let container = session?.container
         return InventoryEquipmentSnapshot(
@@ -45,7 +45,7 @@ extension InventoryCoordinator {
     /// Adds the stack on purpose. It lands in the journal and the save exactly
     /// like a take does.
     @discardableResult
-    public func grantItem(
+    func grantItem(
         _ item: FormID, count: Int32, to target: InventoryGrantTarget
     ) -> GrantActionOutcome {
         guard let runtime else { return .unavailable }

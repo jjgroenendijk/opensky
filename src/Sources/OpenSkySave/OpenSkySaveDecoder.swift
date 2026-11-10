@@ -339,7 +339,7 @@ nonisolated extension OpenSkySaveDecoder {
     /// Rejects a declared element count that cannot possibly fit in the bytes
     /// left, before anything reserves storage for it. Without this a corrupt
     /// four-byte count is an out-of-memory crash rather than a thrown error.
-    public static func validate(
+    static func validate(
         count: UInt32,
         minimumElementSize: Int,
         remaining: Int,

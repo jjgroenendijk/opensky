@@ -50,7 +50,7 @@ public final class GiftMenuCoordinator: ItemListMenuScreen {
     }
 
     @discardableResult
-    public func openNearest() -> Bool {
+    func openNearest() -> Bool {
         guard let actor = world?.nearestActor else {
             lastResult = "Not opened: no actor nearby"
             return false
