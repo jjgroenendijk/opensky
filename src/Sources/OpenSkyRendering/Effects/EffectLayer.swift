@@ -105,7 +105,7 @@ public final class EffectLayer {
             _ layout: MTLVertexDescriptor
         ) throws -> any MTLRenderPipelineState {
             try Self.makePipeline(
-                vertex: vertex, layout: layout, library: library, compiler: compiler, view: view
+                (vertex, layout), library: library, compiler: compiler, view: view
             )
         }
         staticPipeline = try make("staticMeshVertex", StaticVertexLayout.vertexDescriptor())
@@ -196,12 +196,12 @@ public final class EffectLayer {
 
     /// Additive: the membrane only ever brightens what is under it.
     private static func makePipeline(
-        vertex: String,
-        layout: MTLVertexDescriptor,
+        _ stage: (vertex: String, layout: MTLVertexDescriptor),
         library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView
     ) throws -> any MTLRenderPipelineState {
+        let (vertex, layout) = stage
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = vertex

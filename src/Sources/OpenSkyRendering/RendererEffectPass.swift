@@ -85,9 +85,10 @@ extension Renderer {
             )
             encode(
                 groups: groups,
-                staticPipeline: effects.staticPipeline,
-                skinnedPipeline: effects.skinnedPipeline,
-                morphedSkinnedPipeline: effects.morphedPipeline,
+                pipelines: GroupPipelines(
+                    staticMesh: effects.staticPipeline, skinned: effects.skinnedPipeline,
+                    morphedSkinned: effects.morphedPipeline
+                ),
                 state: &state
             )
             effects.lastMembraneDraws += 1

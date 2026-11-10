@@ -210,12 +210,12 @@ public final class GPUCullScene {
     /// Resets the slot's draw arguments and encodes one cull dispatch per view. Rooms
     /// cull only the camera view: a hidden room still casts shadows into a seen one.
     func encode(
-        frustums: [Frustum],
-        roomVisibility: RoomVisibility?,
+        views: (frustums: [Frustum], rooms: RoomVisibility?),
         slot: Int,
         resources: GPUCullingResources,
         commandBuffer: any MTL4CommandBuffer
     ) -> Bool {
+        let (frustums, roomVisibility) = views
         guard let encoder = commandBuffer.makeComputeCommandEncoder() else { return false }
         countedGroups[slot] = Array(repeating: [], count: Self.viewCount)
         encoder.label = "GPU Culling"

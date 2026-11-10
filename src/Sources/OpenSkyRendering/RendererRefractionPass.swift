@@ -58,7 +58,7 @@ extension Renderer {
         var boundPipeline: ObjectIdentifier?
         for index in indices {
             encode(
-                group: frameDrawGroups.alphaTested[index], at: index, pipelines: pipelines,
+                (frameDrawGroups.alphaTested[index], index), pipelines: pipelines,
                 boundPipeline: &boundPipeline, state: &state
             )
         }

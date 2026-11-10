@@ -48,16 +48,18 @@ extension Renderer {
         state.materialDepth = .writes
         encode(
             groups: rig.render.opaque,
-            staticPipeline: opaquePipeline,
-            skinnedPipeline: skinnedOpaquePipeline,
-            morphedSkinnedPipeline: morphedSkinnedOpaquePipeline,
+            pipelines: GroupPipelines(
+                staticMesh: opaquePipeline, skinned: skinnedOpaquePipeline,
+                morphedSkinned: morphedSkinnedOpaquePipeline
+            ),
             state: &state
         )
         encode(
             groups: rig.render.alphaTested,
-            staticPipeline: alphaTestPipeline,
-            skinnedPipeline: skinnedAlphaTestPipeline,
-            morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
+            pipelines: GroupPipelines(
+                staticMesh: alphaTestPipeline, skinned: skinnedAlphaTestPipeline,
+                morphedSkinned: morphedSkinnedAlphaTestPipeline
+            ),
             state: &state
         )
         if let blood = effects.bloodyWeapons[.playerWeapon] {

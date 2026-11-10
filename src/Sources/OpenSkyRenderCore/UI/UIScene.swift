@@ -162,8 +162,7 @@ nonisolated public struct UIScene: Sendable {
         )
         for (index, text) in lines.enumerated() {
             emit(
-                line: text,
-                baseline: originY + ascentPixels + Float(index) * lineHeightPixels,
+                line: (text, originY + ascentPixels + Float(index) * lineHeightPixels),
                 context: lineContext,
                 atlas: context.atlas,
                 into: &list
@@ -172,14 +171,14 @@ nonisolated public struct UIScene: Sendable {
     }
 
     private func emit(
-        line: String,
-        baseline: Float,
+        line: (text: String, baseline: Float),
         context: LineContext,
         atlas: UIGlyphAtlas,
         into list: inout UIDrawList
     ) {
+        let baseline = line.baseline
         let shaped = atlas.layouts.shape(
-            line, font: context.font, size: Float(context.pixelSize)
+            line.text, font: context.font, size: Float(context.pixelSize)
         )
         for glyph in shaped.glyphs {
             let entry = atlas.entry(

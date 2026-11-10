@@ -94,8 +94,7 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
         for source in sources {
             result += placements(
                 for: source,
-                land: land,
-                heightField: heightField,
+                on: (land, heightField),
                 quadrants: quadrants,
                 waterHeight: waterHeight
             )
@@ -131,11 +130,11 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
 
     private static func placements(
         for source: Source,
-        land: Land,
-        heightField: TerrainHeightField,
+        on ground: (land: Land, heightField: TerrainHeightField),
         quadrants: [Quadrant],
         waterHeight: Float?
     ) -> [GrassPlacement] {
+        let (land, heightField) = ground
         guard
             let data = source.grass.placement,
             let modelPath = source.grass.modelPath,
@@ -201,12 +200,10 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
             coordinate: context.heightField.coordinate,
             land: context.land.formID,
             grass: context.source.grass.formID,
-            column: column,
-            row: row
+            at: (column, row)
         ))
         let local = candidatePosition(
-            column: column,
-            row: row,
+            at: (column, row),
             spacing: context.spacing,
             jitter: context.jitter,
             random: &random
@@ -247,12 +244,12 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
     }
 
     private static func candidatePosition(
-        column: Int,
-        row: Int,
+        at candidate: (column: Int, row: Int),
         spacing: Float,
         jitter: Float,
         random: inout SplitMix64
     ) -> SIMD2<Float> {
+        let (column, row) = candidate
         let center = SIMD2<Float>(
             (Float(column) + 0.5) * spacing,
             (Float(row) + 0.5) * spacing
@@ -448,12 +445,11 @@ nonisolated extension GrassPlacementBuilder {
         coordinate: CellCoordinate,
         land: FormID,
         grass: FormID,
-        column: Int,
-        row: Int
+        at position: (column: Int, row: Int)
     ) -> UInt64 {
         let cell = UInt64(UInt32(bitPattern: coordinate.x)) << 32
             | UInt64(UInt32(bitPattern: coordinate.y))
-        let candidate = UInt64(row) << 32 | UInt64(column)
+        let candidate = UInt64(position.row) << 32 | UInt64(position.column)
         return cell
             ^ UInt64(land.rawValue) &* 0x9E37_79B9_7F4A_7C15
             ^ UInt64(grass.rawValue) &* 0xD1B5_4A32_D192_ED03

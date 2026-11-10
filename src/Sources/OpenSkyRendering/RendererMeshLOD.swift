@@ -98,8 +98,11 @@ extension Renderer {
         var first: UInt64 = 0
         for (level, count) in counts.enumerated() where count > 0 {
             draw(
-                mesh, indices: 0 ..< mesh.lodIndexCounts[level], instances: count,
-                at: address + first * stride, encoder: state.encoder
+                mesh, indices: 0 ..< mesh.lodIndexCounts[level], instances: (
+                    count,
+                    address + first * stride
+                ),
+                encoder: state.encoder
             )
             first += UInt64(count)
         }
@@ -108,8 +111,8 @@ extension Renderer {
             let extra = mesh.lodIndexCounts[levels.coarser] ..< mesh.lodIndexCounts[levels.finer]
             if !extra.isEmpty {
                 draw(
-                    mesh, indices: extra, instances: count,
-                    at: address + first * stride, encoder: state.encoder
+                    mesh, indices: extra, instances: (count, address + first * stride),
+                    encoder: state.encoder
                 )
             }
             first += UInt64(count)
@@ -119,10 +122,10 @@ extension Renderer {
     private func draw(
         _ mesh: RenderMesh,
         indices: Range<Int>,
-        instances: Int,
-        at address: UInt64,
+        instances run: (count: Int, address: UInt64),
         encoder: any MTL4RenderCommandEncoder
     ) {
+        let (instances, address) = run
         argumentTable.setAddress(address, index: BufferIndex.instanceTransforms.rawValue)
         let offset = indices.lowerBound * MemoryLayout<UInt16>.stride
         encoder.drawIndexedPrimitives(

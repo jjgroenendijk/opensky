@@ -191,11 +191,11 @@ nonisolated public final class UIGlyphAtlas {
     /// Writes one packed cell's coverage into the atlas image.
     public func blit(
         coverage: [UInt8],
-        cellWidth: Int,
-        cellHeight: Int,
-        originX: Int,
-        originY: Int
+        cell: (width: Int, height: Int),
+        origin: (x: Int, y: Int)
     ) {
+        let (cellWidth, cellHeight) = cell
+        let (originX, originY) = origin
         for row in 0 ..< cellHeight {
             let destRow = (originY + row) * width + originX
             for col in 0 ..< cellWidth {

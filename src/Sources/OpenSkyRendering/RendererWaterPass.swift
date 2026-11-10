@@ -70,12 +70,12 @@ extension Renderer {
     }
 
     private func updateWaterDrawUniforms(
-        slot: Int,
-        draw: Int,
+        at cursor: (slot: Int, draw: Int),
         item: WaterDrawItem,
         depthBound: Bool,
         bound: (noise: Bool, flow: Bool)
     ) -> Int {
+        let (slot, draw) = cursor
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         let look = item.look
         let shading = look.shading
@@ -167,7 +167,7 @@ extension Renderer {
         }
         let flowMapped = bindFlowMaps(item)
         let uniformOffset = updateWaterDrawUniforms(
-            slot: state.slot, draw: state.drawCursor, item: item, depthBound: depthBound,
+            at: (state.slot, state.drawCursor), item: item, depthBound: depthBound,
             bound: (noise != nil, flowMapped)
         )
         state.drawCursor += 1

@@ -103,8 +103,7 @@ extension Renderer {
             }
             drawMotion(
                 group,
-                count: placedInstances.count,
-                instances: instances.address(at: first),
+                instances: (placedInstances.count, instances.address(at: first)),
                 encoder: encoder,
                 slot: state.slot
             )
@@ -115,11 +114,11 @@ extension Renderer {
 
     private func drawMotion(
         _ group: DrawGroup,
-        count: Int,
-        instances: UInt64,
+        instances run: (count: Int, address: UInt64),
         encoder: any MTL4RenderCommandEncoder,
         slot: Int
     ) {
+        let (count, instances) = run
         let skinned = group.mesh.isSkinned
         encoder.setRenderPipelineState(
             skinned ? upscale.resources.skinnedMotion : upscale.resources.staticMotion

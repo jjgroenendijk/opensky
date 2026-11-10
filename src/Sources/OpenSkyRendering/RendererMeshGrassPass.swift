@@ -65,8 +65,8 @@ extension Renderer {
             let pipeline = meshGrassPipeline(),
             let meshlets = grassMeshlets(for: group.mesh),
             let uniforms = writeMeshGrassUniforms(
-                meshlets: meshlets, group: group, instanceCount: instanceCount, state: state,
-                groupIndex: groupIndex
+                meshlets: meshlets, group: (group, groupIndex), instanceCount: instanceCount,
+                state: state
             )
         else { return false }
         state.encoder.setRenderPipelineState(pipeline)
@@ -103,9 +103,10 @@ extension Renderer {
     }
 
     private func writeMeshGrassUniforms(
-        meshlets: GrassMeshlets, group: GrassDrawGroup, instanceCount: Int,
-        state: ScenePassState, groupIndex: Int
+        meshlets: GrassMeshlets, group entry: (group: GrassDrawGroup, index: Int),
+        instanceCount: Int, state: ScenePassState
     ) -> UInt64? {
+        let (group, groupIndex) = entry
         let (frustum, slot) = (state.frustum, state.slot)
         guard let buffer = meshGrass.uniforms, groupIndex < meshGrass.uniformCapacity else {
             return nil

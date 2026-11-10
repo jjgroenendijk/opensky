@@ -314,7 +314,7 @@ nonisolated extension PrecipitationVolume {
             }
         }
         return try makeTexture(
-            device: device, width: width, height: height, pixels: pixels, label: "Rain streak"
+            device: device, size: (width, height), pixels: pixels, label: "Rain streak"
         )
     }
 
@@ -334,17 +334,17 @@ nonisolated extension PrecipitationVolume {
             }
         }
         return try makeTexture(
-            device: device, width: size, height: size, pixels: pixels, label: "Snow flake"
+            device: device, size: (size, size), pixels: pixels, label: "Snow flake"
         )
     }
 
     fileprivate static func makeTexture(
         device: any MTLDevice,
-        width: Int,
-        height: Int,
+        size: (width: Int, height: Int),
         pixels: [UInt8],
         label: String
     ) throws -> any MTLTexture {
+        let (width, height) = size
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm,
             width: width,
