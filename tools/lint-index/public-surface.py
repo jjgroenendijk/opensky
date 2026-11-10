@@ -17,7 +17,7 @@ import pathlib
 import re
 import sys
 
-from index_store import (EXTENSION, PROTOCOL, REL_ACCESSOR_OF, REL_CHILD_OF, REL_CONTAINED_BY,
+from index_store import (EXTENSION, PROTOCOL, REL_ACCESSOR_OF, REL_BASE_OF, REL_CHILD_OF, REL_CONTAINED_BY,
                          REL_OVERRIDE_OF, ROLE_DEFINITION, occurrences,
                          open_store, repository_records)
 
@@ -25,8 +25,11 @@ KEYWORD = re.compile(r"(^|[\s)])(public|open)\s")
 SETTER = re.compile(r"\b(?:private|fileprivate|internal)\(set\)")
 NARROWER = re.compile(r"(^|\s)(private|fileprivate|internal)[\s(]")
 EXTENSION_KEYWORD = re.compile(r"(^|\s)public\s+extension\s")
+# The length and start of a projected value's name in a usr, such as `8$current`.
+PROJECTED = re.compile(r"(\d+)\$")
 TESTABLE = re.compile(r"^@testable\s+import\s+(\w+)", re.MULTILINE)
 PARAMETER = 25
+TYPEALIAS = 11
 ENUM_CASE = 15
 ROLE_IMPLICIT = 1 << 8
 
@@ -35,6 +38,24 @@ def module(path):
     """The module or test target of a file under src/Sources or src/Tests."""
     parts = path.split("/")
     return parts[2] if len(parts) > 3 and parts[1] in ("Sources", "Tests") else None
+
+
+def is_generic_parameter(kind, usr):
+    """The index gives a generic parameter the typealias kind and a usr ending in `mfp`; it
+    has no access level of its own, so the `public` before its type is not its keyword."""
+    return kind == TYPEALIAS and usr.endswith("mfp")
+
+
+def projected_base(usr):
+    """The usr of a property wrapper's projected value, such as `$current`, up to its name."""
+    match = PROJECTED.search(usr)
+    return usr[:match.start() + len(match.group(1)) + int(match.group(1))] if match else None
+
+
+def wrapped(usr, projected):
+    """A use of `$name` is a use of the wrapped property `name`. `projected` maps the usr of
+    each projected value, up to its name, to the usr of its property."""
+    return projected.get(projected_base(usr), usr)
 
 
 def is_public(line, column, extension_lines):
@@ -100,7 +121,14 @@ def self_check():
     public[witness] = ("play", "App")
     references.append(("App", set(), [witness], "s:3App5SoundV"))
     public["s:3App5SoundV"] = ("Sound", "App")
-    return unused(public, references, {witness}) == {helper} and keyword == [True, False, True] and in_extension
+    generic = [is_generic_parameter(TYPEALIAS, "s:3App6ScreenC5Eventxmfp"),
+               is_generic_parameter(TYPEALIAS, "s:3App5Countia")]
+    base = "s:3App5LimitV8$current"
+    projected = {base: "s:3App5LimitV7currentvpZ"}
+    unwrapped = [wrapped(base + "vgZ", projected), wrapped("s:3App5LimitV4sizevp", projected)]
+    return (unused(public, references, {witness}) == {helper} and keyword == [True, False, True]
+            and in_extension and generic == [True, False]
+            and unwrapped == ["s:3App5LimitV7currentvpZ", "s:3App5LimitV4sizevp"])
 
 
 def report(public, names):
@@ -118,7 +146,7 @@ def read_store(lib, store, repo):
     """Public definitions under src/Sources as usr -> (name, module, file, line), every
     reference as (module, testable modules, containers, usr), and the witnesses."""
     definitions, extensions, raw, witnesses = [], {}, [], set()
-    on_line, kinds = collections.defaultdict(list), {}
+    on_line, kinds, wrappers = collections.defaultdict(list), {}, {}
     for relative, record in repository_records(lib, store, repo):
         home = module(relative)
         if home is None:
@@ -131,9 +159,12 @@ def read_store(lib, store, repo):
             if any(rel_roles & REL_OVERRIDE_OF for rel_roles, _, _ in relations):
                 witnesses.add(usr)
             if not roles & ROLE_DEFINITION:
+                # A base type counts for the type that inherits it, on any line of the clause.
                 containers = [other for rel_roles, _, other in relations
-                              if rel_roles & REL_CONTAINED_BY]
+                              if rel_roles & (REL_CONTAINED_BY | REL_BASE_OF)]
                 raw.append((home, testable, containers, usr, (relative, line)))
+            if roles & ROLE_DEFINITION and roles & ROLE_IMPLICIT and name.startswith("$"):
+                wrappers[(relative, line, name[1:])] = projected_base(usr)
             if (not roles & ROLE_DEFINITION or roles & ROLE_IMPLICIT
                     or not relative.startswith("src/Sources/")):
                 continue
@@ -141,19 +172,21 @@ def read_store(lib, store, repo):
             source = lines[line - 1] if 0 < line <= len(lines) else ""
             if kind == EXTENSION:
                 extensions[usr] = source
-            elif kind != PARAMETER and not any(rel_roles & REL_ACCESSOR_OF
-                                               for rel_roles, _, _ in relations):
+            elif (kind != PARAMETER and not is_generic_parameter(kind, usr)
+                  and not any(rel_roles & REL_ACCESSOR_OF for rel_roles, _, _ in relations)):
                 parents = [other for rel_roles, _, other in relations
                            if rel_roles & REL_CHILD_OF]
                 definitions.append((usr, name, home, relative, line, column, source, parents))
                 on_line[(relative, line)].append((usr, kind, parents))
-    names = {}
+    names, projected = {}, {}
     for usr, name, home, relative, line, column, source, parents in definitions:
+        if (relative, line, name) in wrappers:
+            projected[wrappers[(relative, line, name)]] = usr
         around = [extensions[parent] for parent in parents if parent in extensions]
         if is_public(source, column, around):
             names[usr] = (name, home, relative, line)
     references = [(home, testable, containers + signature_owners(on_line.get(place, ()),
-                                                                 names, kinds), usr)
+                                                                 names, kinds), wrapped(usr, projected))
                   for home, testable, containers, usr, place in raw]
     return names, references, witnesses
 
