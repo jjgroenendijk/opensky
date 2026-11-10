@@ -57,8 +57,8 @@ final class LockpickingMenuController {
 
     let boardHost: any LockpickingBoardHost
 
-    var board: LockpickingBoardAdapter {
-        LockpickingBoardAdapter(owner: self, game: boardHost)
+    var board: LockpickingMenuController.BoardAdapter {
+        LockpickingMenuController.BoardAdapter(owner: self, game: boardHost)
     }
 
     init(game: some LockpickingMenuHost & LockpickingBoardHost) {

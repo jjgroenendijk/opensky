@@ -55,8 +55,8 @@ final class DialogueMenuController {
 
     let speechHost: any DialogueMenuSpeechHost
 
-    var speech: DialogueMenuSpeechAdapter {
-        DialogueMenuSpeechAdapter(owner: self, game: speechHost)
+    var speech: DialogueMenuController.SpeechAdapter {
+        DialogueMenuController.SpeechAdapter(owner: self, game: speechHost)
     }
 
     init(game: some DialogueMenuHost & DialogueMenuSpeechHost) {

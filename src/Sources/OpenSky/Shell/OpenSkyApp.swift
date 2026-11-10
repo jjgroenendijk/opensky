@@ -20,6 +20,7 @@ enum OpenSkyApp {
 
         let delegate = AppDelegate()
         app.delegate = delegate
+        app.mainMenu = MainMenu.make(target: delegate)
         app.setActivationPolicy(.regular)
         app.run()
     }

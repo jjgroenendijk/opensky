@@ -16,7 +16,7 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-/// What `DialogueMenuSpeechAdapter` reads from the session.
+/// What `DialogueMenuController.SpeechAdapter` reads from the session.
 @MainActor
 protocol DialogueMenuSpeechHost: AnyObject {
     var audio: any AudioPort { get }
@@ -32,13 +32,15 @@ protocol DialogueMenuSpeechHost: AnyObject {
     var subtitles: any SubtitlePort { get }
 }
 
-/// Part of `DialogueMenuController`, over its own narrow host.
-struct DialogueMenuSpeechAdapter {
-    unowned let owner: DialogueMenuController
-    unowned let game: any DialogueMenuSpeechHost
+extension DialogueMenuController {
+    /// Part of `DialogueMenuController`, over its own narrow host.
+    struct SpeechAdapter {
+        unowned let owner: DialogueMenuController
+        unowned let game: any DialogueMenuSpeechHost
+    }
 }
 
-extension DialogueMenuSpeechAdapter {
+extension DialogueMenuController.SpeechAdapter {
     func close() {
         guard owner.isOpen else { return }
         owner.isOpen = false
