@@ -1260,12 +1260,12 @@ targets += composition(
         "OpenSkyWeather", "OpenSkyWorld", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ],
     tests: [
-        "OpenSkyAgentControl", "OpenSkyCombatInterface", "OpenSkyDialogueInterface",
-        "OpenSkyEngineTesting",
+        "OpenSkyActorsInterface", "OpenSkyAgentControl", "OpenSkyAudio", "OpenSkyCombatInterface",
+        "OpenSkyDialogueInterface", "OpenSkyEngineTesting",
         "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyMagicInterface",
-        "OpenSkyMenusInterface", "OpenSkyRenderCore", "OpenSkyScriptingInterface",
-        "OpenSkySessionInterface", "OpenSkySessionTesting", "OpenSkyWorldInterface",
-        "OpenSkyWorldState"
+        "OpenSkyMenusInterface", "OpenSkyPhysics", "OpenSkyRenderCore",
+        "OpenSkyScriptingInterface", "OpenSkySessionInterface", "OpenSkySessionTesting",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 
