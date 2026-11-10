@@ -222,13 +222,12 @@ nonisolated extension TextureFormatSearch {
     public static func pick(
         _ candidates: [ReadyTextureFormat],
         target: TextureQualityTarget,
-        normalMap: Bool,
-        cutoutAlpha: Bool,
+        kind: (normalMap: Bool, cutoutAlpha: Bool),
         measure: (ReadyTextureFormat) throws -> TextureMeasure
     ) rethrows -> ReadyTextureFormat? {
         for format in candidates {
             let result = try measure(format)
-            if target.isMet(by: result, normalMap: normalMap, cutoutAlpha: cutoutAlpha) {
+            if target.isMet(by: result, normalMap: kind.normalMap, cutoutAlpha: kind.cutoutAlpha) {
                 return format
             }
         }

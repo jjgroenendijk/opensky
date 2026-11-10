@@ -52,8 +52,7 @@ nonisolated extension BehaviorGraphInstance {
             mutesClipAnnotations = outerMute || (cycle.leader != nil && index != cycle.leader)
             results[index] = blendChild(
                 entry,
-                weight: weights[index],
-                motionScale: parametric ? weights[index] : 1,
+                weights: (pose: weights[index], motion: parametric ? weights[index] : 1),
                 depth: depth,
                 deltaTime: deltaTime * cycle.rate(of: index)
             )
@@ -131,15 +130,15 @@ nonisolated extension BehaviorGraphInstance {
         return BehaviorSharedCycle(leader: leader, durations: durations, shared: shared)
     }
 
-    /// A child played as a blend input. `motionScale` folds a parametric weight into the
+    /// A child played as a blend input. The motion weight folds a parametric weight into the
     /// root travel, so only the children around the parameter move the actor.
     private func blendChild(
         _ entry: BehaviorBlenderEntry,
-        weight: Float,
-        motionScale: Float,
+        weights: (pose: Float, motion: Float),
         depth: Int,
         deltaTime: Float
     ) -> BehaviorBlendChild {
+        let (weight, motionScale) = (weights.pose, weights.motion)
         let child = entry.child
         return BehaviorBlendChild(
             pose: evaluateGenerator(at: child.generator, depth: depth, deltaTime: deltaTime),

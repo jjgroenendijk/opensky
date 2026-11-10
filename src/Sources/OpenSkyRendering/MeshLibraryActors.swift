@@ -38,17 +38,17 @@ nonisolated extension MeshLibrary {
         skeleton: ActorSkeletonAsset?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
         loadActorModel(
-            path: path, skeleton: skeleton, surface: nil, bodyWeight: nil, keeping: nil
+            path: path, skeleton: skeleton, look: (nil, nil), keeping: nil
         )
     }
 
     public func loadActorModel(
         path: String,
         skeleton: ActorSkeletonAsset?,
-        surface: ModelSurfaceOverride?,
-        bodyWeight: Float?,
+        look: (surface: ModelSurfaceOverride?, bodyWeight: Float?),
         keeping cut: DismemberCut?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
+        let (surface, bodyWeight) = look
         if let bone = rigidParentBone(path: path) {
             return loadActorAttachment(path: path, bone: bone, skeleton: skeleton)
         }
@@ -151,11 +151,11 @@ nonisolated extension MeshLibrary {
     /// paths are spelled as a TXST spells them.
     public func loadActorHeadPart(
         path: String,
-        textures: HeadPartTextures,
-        tint: SIMD3<Float>?,
+        look: (textures: HeadPartTextures, tint: SIMD3<Float>?),
         skeleton: ActorSkeletonAsset?,
         keeping cut: DismemberCut?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
+        let (textures, tint) = look
         let surface = ModelSurfaceOverride(
             diffuseTexture: textures.diffuse.flatMap(NIFShaderTextureSet.vfsKey(for:)),
             normalTexture: textures.normal.flatMap(NIFShaderTextureSet.vfsKey(for:)),

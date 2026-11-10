@@ -45,7 +45,7 @@ nonisolated public enum BehaviorParametricBlend {
             weights[last] = 1
         } else {
             let end = order.firstIndex { positions[$0] > parameter } ?? order.count - 1
-            share(&weights, begin: order[end - 1], end: order[end], at: parameter, in: positions)
+            share(&weights, between: (order[end - 1], order[end]), at: parameter, in: positions)
         }
         return weights
     }
@@ -64,7 +64,7 @@ nonisolated public enum BehaviorParametricBlend {
         }
         wrapped += range.lowerBound
         if let end = order.firstIndex(where: { positions[$0] > wrapped }), end > 0 {
-            share(&weights, begin: order[end - 1], end: order[end], at: wrapped, in: positions)
+            share(&weights, between: (order[end - 1], order[end]), at: wrapped, in: positions)
             return weights
         }
         // Past the last child or before the first: blend across the seam.
@@ -80,11 +80,11 @@ nonisolated public enum BehaviorParametricBlend {
 
     private static func share(
         _ weights: inout [Float],
-        begin: Int,
-        end: Int,
+        between pair: (begin: Int, end: Int),
         at parameter: Float,
         in positions: [Float]
     ) {
+        let (begin, end) = pair
         let width = positions[end] - positions[begin]
         let fraction = width > 0 ? (parameter - positions[begin]) / width : 0
         weights[begin] = 1 - min(max(fraction, 0), 1)

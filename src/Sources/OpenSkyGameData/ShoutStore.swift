@@ -100,8 +100,7 @@ nonisolated public struct ShoutStore: Sendable {
                         shout: shout,
                         sourcePlugin: sourcePlugin,
                         spells: spells,
-                        words: words,
-                        index: index
+                        lookup: (words, index)
                     )
                 )
             }
@@ -141,8 +140,7 @@ nonisolated public struct ShoutStore: Sendable {
             shout: shout,
             sourcePlugin: sourcePlugin,
             spells: spells,
-            words: wordTable,
-            index: index
+            lookup: (wordTable, index)
         )
     }
 
@@ -150,10 +148,10 @@ nonisolated public struct ShoutStore: Sendable {
         shout: Shout,
         sourcePlugin: String,
         spells: SpellStore,
-        words: ResolvedRecordTable<ResolvedWordOfPower>,
-        index: RecordIndex
+        lookup: (words: ResolvedRecordTable<ResolvedWordOfPower>, index: RecordIndex)
     ) -> [ResolvedShoutWord] {
-        shout.words.map { entry in
+        let (words, index) = lookup
+        return shout.words.map { entry in
             ResolvedShoutWord(
                 entry: entry,
                 word: index.resolvedID(entry.word, fromPlugin: sourcePlugin)

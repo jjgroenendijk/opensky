@@ -230,8 +230,7 @@ public final class CrimeReporter: CrimeReporting {
             onCrimeCharged?(event, outcome, witnesses)
             lastCrimeTypes[faction] = event.kind.storyCrimeType
             storyEvents?.reportStoryEvent(.crimeGold(
-                criminal: event.perpetrator,
-                victim: event.victim,
+                (event.perpetrator, event.victim),
                 crimeFaction: faction,
                 gold: outcome.gold,
                 crime: event.kind.storyCrimeType

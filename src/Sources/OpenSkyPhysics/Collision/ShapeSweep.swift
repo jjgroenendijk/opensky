@@ -35,15 +35,14 @@ nonisolated public struct ShapeSweepQuery: Sendable {
     }
 
     public static func capsule(
-        first: SIMD3<Float>,
-        second: SIMD3<Float>,
+        _ segment: (first: SIMD3<Float>, second: SIMD3<Float>),
         radius: Float,
         direction: SIMD3<Float>,
         maximumDistance: Float
     ) -> ShapeSweepQuery {
         ShapeSweepQuery(
-            first: first,
-            second: second,
+            first: segment.first,
+            second: segment.second,
             radius: radius,
             direction: direction,
             maximumDistance: maximumDistance

@@ -81,8 +81,7 @@ nonisolated extension CellSceneBuilder {
         let painted = zip(images, layers).map { mask, layer in
             ChargenTintLayer(
                 mask: ChargenTints.coverage(
-                    rgba: mask.rgba, width: mask.width, height: mask.height,
-                    toWidth: width, toHeight: height
+                    rgba: mask.rgba, size: (mask.width, mask.height), to: (width, height)
                 ),
                 color: layer.1.color, strength: layer.1.strength
             )

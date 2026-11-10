@@ -178,7 +178,7 @@ nonisolated public struct LeveledListRoller: Sendable {
     ) -> [LeveledPick] {
         var random = SplitMix64(seed: LeveledListRoll.seed(seed, UInt64(list.formID.rawValue)))
         return LeveledListRoll.roll(
-            scriptEdits.edited(list), count: count, request: request,
+            scriptEdits.edited(list), asked: (count, request),
             chanceNone: chanceNone(of: list),
             settings: settings.specialLoot, random: &random
         )

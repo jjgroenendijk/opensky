@@ -38,8 +38,9 @@ nonisolated public struct CalendarTexts: Equatable, Sendable {
 
     /// The date line the wait menu and the journal show.
     public func dateLine(
-        weekday: Int, hourOfDay: Float, day: Int, month: Int, year: Int
+        at time: (weekday: Int, hourOfDay: Float), day: Int, month: Int, year: Int
     ) -> String {
+        let (weekday, hourOfDay) = time
         let clamped = hourOfDay.isFinite ? min(max(0, hourOfDay), 23.999) : 0
         let hour = Int(clamped.rounded(.down))
         let minute = min(59, Int(((clamped - Float(hour)) * 60).rounded(.down)))

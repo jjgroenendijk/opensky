@@ -10,8 +10,7 @@ nonisolated extension WeatherSystem {
         settings: SkySettings
     ) -> CelestialSky {
         CelestialSky.resolve(
-            hour: hour,
-            daysPassed: daysPassed,
+            at: (hour, daysPassed),
             climate: climate,
             weathers: blendedWeathers.compactMap { entry in
                 store.weather(entry.weather).map { ($0, entry.weight) }

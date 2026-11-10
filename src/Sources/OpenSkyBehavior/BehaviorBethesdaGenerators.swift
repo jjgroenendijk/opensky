@@ -52,11 +52,10 @@ nonisolated extension BehaviorGraphInstance {
     /// `m_fTransitionDuration` with `m_eBlendCurve` (docs/engine/behavior-runtime.md#generators).
     func evaluateCyclicBlend(
         _ cyclic: BSCyclicBlendTransitionGenerator,
-        at target: HKXPointerTarget,
-        bound: [String: BehaviorVariableValue],
-        depth: Int,
+        _ visit: BehaviorVisit,
         deltaTime: Float
     ) -> BehaviorPose {
+        let (target, bound, depth) = (visit.target, visit.bound, visit.depth)
         var state = nodeStates[target] ?? markReached(target)
         let isHolding = state.frozenBlendParameter != nil || state.crossBlendSource != nil
         let crossBlends = isHolding && events.isActive(id: cyclic.eventToCrossBlend.id)
@@ -95,7 +94,7 @@ nonisolated extension BehaviorGraphInstance {
             let source = runCopy(of: cyclic, at: target, depth: depth, deltaTime: deltaTime)
                 ?? still
             state.elapsed += deltaTime
-            result = blendedCrossFade(source, live, state, cyclic, bound)
+            result = blendedCrossFade(source, live, weight: crossFadeWeight(state, cyclic, bound))
             let duration = bound.float("fTransitionDuration", or: cyclic.transitionDuration)
             if state.elapsed >= duration {
                 state.crossBlendSource = nil
@@ -138,16 +137,21 @@ nonisolated extension BehaviorGraphInstance {
         return pose
     }
 
-    private func blendedCrossFade(
-        _ source: BehaviorPose,
-        _ live: BehaviorPose,
+    private func crossFadeWeight(
         _ state: BehaviorNodeState,
         _ cyclic: BSCyclicBlendTransitionGenerator,
         _ bound: [String: BehaviorVariableValue]
-    ) -> BehaviorPose {
+    ) -> Float {
         let duration = bound.float("fTransitionDuration", or: cyclic.transitionDuration)
-        let weight = duration > 0
+        return duration > 0
             ? BehaviorBlendCurve.weight(state.elapsed / duration, curve: cyclic.blendCurve) : 1
+    }
+
+    private func blendedCrossFade(
+        _ source: BehaviorPose,
+        _ live: BehaviorPose,
+        weight: Float
+    ) -> BehaviorPose {
         var pose = blendFull(source, live, weight: weight)
         pose.rootMotion = live.rootMotion
         return pose
@@ -157,11 +161,10 @@ nonisolated extension BehaviorGraphInstance {
     /// held at the frame `m_fOffsetVariable` picks in the range from start to end.
     func evaluateOffsetAnimation(
         _ offset: BSOffsetAnimationGenerator,
-        at target: HKXPointerTarget,
-        bound: [String: BehaviorVariableValue],
-        depth: Int,
+        _ visit: BehaviorVisit,
         deltaTime: Float
     ) -> BehaviorPose {
+        let (target, bound, depth) = (visit.target, visit.bound, visit.depth)
         let pose = skeleton.absolute(evaluateGenerator(
             at: offset.defaultGenerator, depth: depth, deltaTime: deltaTime
         ))

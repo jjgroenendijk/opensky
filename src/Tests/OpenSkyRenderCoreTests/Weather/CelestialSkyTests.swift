@@ -185,7 +185,7 @@ struct CelestialSkyTests {
         weathers: [(Weather, Float)] = [], settings: SkySettings = .vanilla
     ) -> CelestialSky {
         CelestialSky.resolve(
-            hour: hour, daysPassed: days, climate: climate,
+            at: (hour, days), climate: climate,
             weathers: weathers.map { (weather: $0.0, weight: $0.1) }, settings: settings
         )
     }

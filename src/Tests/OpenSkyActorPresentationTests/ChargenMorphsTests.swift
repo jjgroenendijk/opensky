@@ -77,9 +77,9 @@ struct ChargenMorphsTests {
 
     @Test func coverageTakesTheRedChannelAndScalesByNearestTexel() {
         let mask: [UInt8] = [10, 0, 0, 255, 200, 0, 0, 255]
-        #expect(ChargenTints.coverage(rgba: mask, width: 2, height: 1, toWidth: 4, toHeight: 2)
+        #expect(ChargenTints.coverage(rgba: mask, size: (2, 1), to: (4, 2))
             == [10, 10, 200, 200, 10, 10, 200, 200])
-        #expect(ChargenTints.coverage(rgba: [], width: 2, height: 1, toWidth: 2, toHeight: 1) == [
+        #expect(ChargenTints.coverage(rgba: [], size: (2, 1), to: (2, 1)) == [
             0,
             0
         ])

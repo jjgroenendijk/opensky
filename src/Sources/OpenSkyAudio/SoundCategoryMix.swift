@@ -113,15 +113,15 @@ nonisolated public struct SoundCategoryMix: Sendable {
         let step = max(seconds.isFinite ? seconds : 0, 0)
         menuLevel = Self.ramp(
             menuLevel, to: inputs.menuMode ? 0 : 1, seconds: step,
-            down: timings.menuFadeOutSeconds, up: timings.menuFadeInSeconds
+            spans: (down: timings.menuFadeOutSeconds, up: timings.menuFadeInSeconds)
         )
         dialogueLevel = Self.ramp(
             dialogueLevel, to: inputs.dialogue ? Self.dialogueDuckLevel : 1, seconds: step,
-            down: timings.musicDuckSeconds, up: timings.musicUnduckSeconds
+            spans: (down: timings.musicDuckSeconds, up: timings.musicUnduckSeconds)
         )
         musicLevel = Self.ramp(
             musicLevel, to: inputs.dialogue ? Self.musicDuckLevel : 1, seconds: step,
-            down: timings.musicDuckSeconds, up: timings.musicUnduckSeconds
+            spans: (down: timings.musicDuckSeconds, up: timings.musicUnduckSeconds)
         )
     }
 
@@ -172,16 +172,15 @@ nonisolated public struct SoundCategoryMix: Sendable {
         }
     }
 
-    /// Moves `value` toward `target` at a rate that crosses the full range in `down`
-    /// seconds when falling and `up` seconds when rising.
+    /// Moves `value` toward `target` at a rate that crosses the full range in the
+    /// `down` span's seconds when falling and the `up` span's seconds when rising.
     static func ramp(
         _ value: Float,
         to target: Float,
         seconds: Float,
-        down: Float,
-        up: Float
+        spans: (down: Float, up: Float)
     ) -> Float {
-        let span = target < value ? down : up
+        let span = target < value ? spans.down : spans.up
         guard span > 0 else { return target }
         let step = seconds / span
         return target < value ? max(target, value - step) : min(target, value + step)

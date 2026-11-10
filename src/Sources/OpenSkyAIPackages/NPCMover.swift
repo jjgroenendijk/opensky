@@ -162,7 +162,7 @@ public struct NPCMover {
             plan.horizontalDisplacement = direction * wanted
             if let longBody {
                 plan.horizontalDisplacement += longBody.correction(
-                    feet: state.feetPosition, yaw: yaw, displacement: plan.horizontalDisplacement,
+                    pose: (state.feetPosition, yaw), displacement: plan.horizontalDisplacement,
                     lift: configuration.stepHeight.value, query: query
                 )
             }

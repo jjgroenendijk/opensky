@@ -57,11 +57,10 @@ nonisolated extension BehaviorGraphInstance {
             applyFalseToTrue(modifier, step)
         case let modifier as BSTimerModifier:
             applyTimer(
-                at: step.target,
+                step,
                 alarm: step.bound.float("alarmTimeSeconds", or: modifier.alarmTimeSeconds),
                 event: modifier.alarmEvent,
-                repeating: step.bound.bool("resetAlarm", or: modifier.resetAlarm),
-                deltaTime: step.deltaTime
+                repeating: step.bound.bool("resetAlarm", or: modifier.resetAlarm)
             )
         case let modifier as BSModifyOnceModifier:
             return applyModifyOnce(modifier, step, to: pose)

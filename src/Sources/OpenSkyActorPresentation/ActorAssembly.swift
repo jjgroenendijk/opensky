@@ -29,8 +29,7 @@ nonisolated public protocol ActorAssetProvider {
     func loadActorModel(
         path: String,
         skeleton: Skeleton?,
-        surface: ModelSurfaceOverride?,
-        bodyWeight: Float?,
+        look: (surface: ModelSurfaceOverride?, bodyWeight: Float?),
         keeping cut: DismemberCut?
     ) -> Result<Asset, ActorAssetFailure>
     /// A rigid model rewritten to ride one named skeleton bone. It caches under its
@@ -50,8 +49,7 @@ nonisolated public protocol ActorAssetProvider {
     /// A head part with its texture set and tint applied, cut as `cut` says.
     func loadActorHeadPart(
         path: String,
-        textures: HeadPartTextures,
-        tint: SIMD3<Float>?,
+        look: (textures: HeadPartTextures, tint: SIMD3<Float>?),
         skeleton: Skeleton?,
         keeping cut: DismemberCut?
     ) -> Result<Asset, ActorAssetFailure>
@@ -71,8 +69,7 @@ nonisolated extension ActorAssetProvider {
     /// A provider that cannot retexture loads the plain mesh.
     public func loadActorHeadPart(
         path: String,
-        textures _: HeadPartTextures,
-        tint _: SIMD3<Float>?,
+        look _: (textures: HeadPartTextures, tint: SIMD3<Float>?),
         skeleton: Skeleton?,
         keeping _: DismemberCut?
     ) -> Result<Asset, ActorAssetFailure> {
@@ -83,8 +80,7 @@ nonisolated extension ActorAssetProvider {
     public func loadActorModel(
         path: String,
         skeleton: Skeleton?,
-        surface _: ModelSurfaceOverride?,
-        bodyWeight _: Float?,
+        look _: (surface: ModelSurfaceOverride?, bodyWeight: Float?),
         keeping _: DismemberCut?
     ) -> Result<Asset, ActorAssetFailure> {
         loadActorModel(path: path, skeleton: skeleton)
@@ -207,8 +203,7 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         skips: inout [ActorAssemblySkip]
     ) {
         switch provider.loadActorModel(
-            path: path, skeleton: skeleton, surface: surface, bodyWeight: bodyWeight,
-            keeping: cut
+            path: path, skeleton: skeleton, look: (surface, bodyWeight), keeping: cut
         ) {
         case let .success(asset):
             models.append(AssembledActorModel(role: role, path: path, asset: asset))
@@ -230,11 +225,13 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         let role = ActorModelRole.headPart(part)
         switch provider.loadActorHeadPart(
             path: part.modelPath,
-            textures: HeadPartTextures(
-                diffuse: part.diffuseTexture, normal: part.normalTexture,
-                detail: part.detailTexture, faceTint: part.faceTintTexture
+            look: (
+                HeadPartTextures(
+                    diffuse: part.diffuseTexture, normal: part.normalTexture,
+                    detail: part.detailTexture, faceTint: part.faceTintTexture
+                ),
+                part.tint
             ),
-            tint: part.tint,
             skeleton: skeleton,
             keeping: cut
         ) {

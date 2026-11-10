@@ -65,11 +65,10 @@ nonisolated public enum BehaviorPoseMatchRules {
 nonisolated extension BehaviorGraphInstance {
     func evaluatePoseMatching(
         _ matching: HKBPoseMatchingGenerator,
-        at target: HKXPointerTarget,
-        bound: [String: BehaviorVariableValue],
-        depth: Int,
+        _ visit: BehaviorVisit,
         deltaTime: Float
     ) -> BehaviorPose {
+        let (target, bound, depth) = (visit.target, visit.bound, visit.depth)
         var node = markReached(target)
         var state = node.poseMatch ?? startPoseMatch(matching)
         applyPoseMatchEvents(matching, &state)

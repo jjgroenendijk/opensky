@@ -27,38 +27,35 @@ nonisolated extension BehaviorGraphInstance {
     /// state two blends share advances once.
     func sourcePose(
         of transition: BehaviorTransition,
-        machine: HKBStateMachine,
-        depth: Int,
-        deltaTime: Float,
+        in walk: BehaviorMachineWalk,
         poses: inout [Int: BehaviorPose]
     ) -> BehaviorPose {
         guard let inner = transition.interrupted.first else {
             return sharedStatePose(
-                transition.fromStateId, machine: machine, depth: depth, deltaTime: deltaTime,
-                poses: &poses
+                transition.fromStateId, in: walk, poses: &poses
             )
         }
         let outgoing = sourcePose(
-            of: inner, machine: machine, depth: depth, deltaTime: deltaTime, poses: &poses
+            of: inner, in: walk, poses: &poses
         )
         let incoming = sharedStatePose(
             inner.delayedStateId ?? transition.fromStateId,
-            machine: machine, depth: depth, deltaTime: deltaTime, poses: &poses
+            in: walk, poses: &poses
         )
         return blendFull(outgoing, incoming, weight: inner.weight)
     }
 
     func sharedStatePose(
         _ stateId: Int,
-        machine: HKBStateMachine,
-        depth: Int,
-        deltaTime: Float,
+        in walk: BehaviorMachineWalk,
         poses: inout [Int: BehaviorPose]
     ) -> BehaviorPose {
         if let posed = poses[stateId] {
             return posed
         }
-        let pose = statePose(stateId, machine: machine, depth: depth, deltaTime: deltaTime)
+        let pose = statePose(
+            stateId, machine: walk.machine, depth: walk.depth, deltaTime: walk.deltaTime
+        )
         poses[stateId] = pose
         return pose
     }
@@ -95,4 +92,11 @@ nonisolated extension BehaviorGraphInstance {
                 && isNestedSourceMet(info, machine: machine, state: state)
         }
     }
+}
+
+/// One state machine's place in the pose walk: the machine, how deep it sits, and the step.
+nonisolated struct BehaviorMachineWalk {
+    let machine: HKBStateMachine
+    let depth: Int
+    let deltaTime: Float
 }

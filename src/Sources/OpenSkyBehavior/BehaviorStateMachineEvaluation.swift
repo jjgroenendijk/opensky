@@ -23,13 +23,12 @@ nonisolated public struct BehaviorTransitionCandidate: Sendable {
 nonisolated extension BehaviorGraphInstance {
     /// Runs one state machine: enter, step the crossfade, pick a transition,
     /// then pose the current state and whatever is still blending out.
-    public func evaluateStateMachine(
+    func evaluateStateMachine(
         _ machine: HKBStateMachine,
-        at target: HKXPointerTarget,
-        bound: [String: BehaviorVariableValue],
-        depth: Int,
+        _ visit: BehaviorVisit,
         deltaTime: Float
     ) -> BehaviorPose {
+        let (target, bound, depth) = (visit.target, visit.bound, visit.depth)
         var state = machineStates[target] ?? BehaviorMachineState()
         if !state.isEntered {
             enterStartState(&state, machine: machine, bound: bound)
@@ -132,7 +131,11 @@ nonisolated extension BehaviorGraphInstance {
         let pending = pendingNestedStateIds
         var poses: [Int: BehaviorPose] = [:]
         let outgoing = sourcePose(
-            of: transition, machine: machine, depth: depth, deltaTime: deltaTime, poses: &poses
+            of: transition, in: BehaviorMachineWalk(
+                machine: machine,
+                depth: depth,
+                deltaTime: deltaTime
+            ), poses: &poses
         )
         pendingNestedStateIds = pending
         if transition.synchronizes {
@@ -141,7 +144,8 @@ nonisolated extension BehaviorGraphInstance {
         }
         let incoming = sharedStatePose(
             transition.delayedStateId ?? state.currentStateId,
-            machine: machine, depth: depth, deltaTime: deltaTime, poses: &poses
+            in: BehaviorMachineWalk(machine: machine, depth: depth, deltaTime: deltaTime),
+            poses: &poses
         )
         pendingClipPhase = nil
         return blendFull(outgoing, incoming, weight: transition.weight)

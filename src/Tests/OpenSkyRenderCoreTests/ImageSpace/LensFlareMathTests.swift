@@ -45,7 +45,7 @@ struct LensFlareMathTests {
 
     @Test func theWeatherGlareAndTheSunAlphaScaleTheFlare() {
         var sky = CelestialSky.resolve(
-            hour: 12, daysPassed: 0, climate: nil, weathers: [], settings: SkySettings()
+            at: (12, 0), climate: nil, weathers: [], settings: SkySettings()
         )
         sky.sunAlpha = 1
         sky.weatherGlare = 0.5

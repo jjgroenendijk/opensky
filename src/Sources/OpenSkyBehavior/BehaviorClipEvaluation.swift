@@ -9,7 +9,7 @@ public import OpenSkyFormatsAnimation
 import simd
 
 /// The playing part of a clip, in animation-local seconds.
-nonisolated private struct BehaviorClipWindow {
+nonisolated struct BehaviorClipWindow {
     let start: Float
     let length: Float
 
@@ -47,16 +47,18 @@ nonisolated extension BehaviorGraphInstance {
 
         var state = markReached(target)
         let wasSeeded = state.hasSeeded
-        seedIfNeeded(&state, clip: clip, window: window, generator: generator, bound: bound)
+        let play = BehaviorClipPlay(generator: generator, clip: clip, window: window)
+        seedIfNeeded(&state, play: play, bound: bound)
         let advance = step(generator, bound: bound, window: window, deltaTime: deltaTime)
         state.previousLocalTime = state.localTime
-        var wrapped = advanceTime(
-            &state, by: advance, window: window, bound: bound, generator: generator
-        )
+        var wrapped = advanceTime(&state, by: advance, play: play, bound: bound)
         let jumped = applySyncPhase(&state, window: window, justSeeded: !wasSeeded)
         if jumped {
             wrapped = false
         }
+        let crossing = BehaviorClipCrossing(
+            wrapped: wrapped, jumped: jumped, justSeeded: !wasSeeded
+        )
         state.phase = state.localTime / window.length
 
         let samples = clip.samples(at: window.start + state.localTime)
@@ -77,12 +79,10 @@ nonisolated extension BehaviorGraphInstance {
                 wrapped: wrapped,
                 window: window.start ... window.start + window.length
             )
-        } ?? rootMotion(&state, clip: clip, samples: samples, wrapped: wrapped, jumped: jumped)
+        } ?? rootMotion(&state, clip: clip, samples: samples, crossing: crossing)
         pose.rootMotion = mirror?.mirroring(motion) ?? motion
         fireTriggers(generator, state: state, window: window, wrapped: wrapped)
-        fireAnnotations(
-            clip, state: state, window: window, wrapped: wrapped, justSeeded: !wasSeeded
-        )
+        fireAnnotations(clip, state: state, window: window, crossing: crossing)
         nodeStates[target] = state
         return pose
     }
@@ -124,11 +124,10 @@ nonisolated extension BehaviorGraphInstance {
     /// sword swings author 0.333 but bind `attackIntroLength`, whose starting value is 0.
     private func seedIfNeeded(
         _ state: inout BehaviorNodeState,
-        clip: any BehaviorClip,
-        window: BehaviorClipWindow,
-        generator: HKBClipGenerator,
+        play: BehaviorClipPlay,
         bound: [String: BehaviorVariableValue]
     ) {
+        let (clip, window, generator) = (play.clip, play.window, play.generator)
         // Keyed on `hasSeeded` rather than on a sampled root pose, because a
         // clip that animates no root bone would otherwise reseed every update
         // and never advance.
@@ -151,10 +150,10 @@ nonisolated extension BehaviorGraphInstance {
     private func advanceTime(
         _ state: inout BehaviorNodeState,
         by advance: Float,
-        window: BehaviorClipWindow,
-        bound: [String: BehaviorVariableValue],
-        generator: HKBClipGenerator
+        play: BehaviorClipPlay,
+        bound: [String: BehaviorVariableValue]
     ) -> Bool {
+        let (window, generator) = (play.window, play.generator)
         switch generator.mode {
         case 1, 3:
             // 3 is ping pong, which reverses at each edge. It runs as a loop and is
@@ -217,9 +216,9 @@ nonisolated extension BehaviorGraphInstance {
         _ state: inout BehaviorNodeState,
         clip: any BehaviorClip,
         samples: [HKABoneTransformSample],
-        wrapped: Bool,
-        jumped: Bool
+        crossing: BehaviorClipCrossing
     ) -> BehaviorRootMotion {
+        let (wrapped, jumped) = (crossing.wrapped, crossing.jumped)
         guard
             let current = rootPose(of: samples),
             let previous = state.previousRootPose
@@ -295,9 +294,9 @@ nonisolated extension BehaviorGraphInstance {
         _ clip: any BehaviorClip,
         state: BehaviorNodeState,
         window: BehaviorClipWindow,
-        wrapped: Bool,
-        justSeeded: Bool
+        crossing: BehaviorClipCrossing
     ) {
+        let (wrapped, justSeeded) = (crossing.wrapped, crossing.justSeeded)
         guard !mutesClipAnnotations else { return }
         for annotation in clip.annotations {
             let at = annotation.time - window.start
@@ -341,4 +340,18 @@ nonisolated extension BehaviorGraphInstance {
         guard let target else { return nil }
         return object(at: target, as: HKBStringEventPayload.self)?.data
     }
+}
+
+/// One clip generator's clip, and the part of it that plays.
+nonisolated struct BehaviorClipPlay {
+    let generator: HKBClipGenerator
+    let clip: any BehaviorClip
+    let window: BehaviorClipWindow
+}
+
+/// What one update's step crossed: a window edge, a sync jump, or the seeding.
+nonisolated struct BehaviorClipCrossing {
+    let wrapped: Bool
+    let jumped: Bool
+    let justSeeded: Bool
 }

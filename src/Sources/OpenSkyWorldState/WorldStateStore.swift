@@ -110,8 +110,7 @@ public final class WorldStateStore {
         changeJournal.record(
             key: key,
             kind: value.kind,
-            oldValue: previous,
-            newValue: value,
+            change: (previous, value),
             cell: delta.cell
         )
         if value.kind.affectsCellBuild {
@@ -138,8 +137,7 @@ public final class WorldStateStore {
         changeJournal.record(
             key: key,
             kind: kind,
-            oldValue: previous,
-            newValue: nil,
+            change: (previous, nil),
             cell: cell
         )
         if kind.affectsCellBuild {

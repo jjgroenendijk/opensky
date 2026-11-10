@@ -52,9 +52,9 @@ nonisolated public struct RagdollMotor: Equatable, Sendable {
         _ velocity: SIMD3<Float>,
         error: SIMD3<Float>,
         mass: Float,
-        dt: Float,
-        weight: Float
+        step: (dt: Float, weight: Float)
     ) -> SIMD3<Float> {
+        let (dt, weight) = step
         let amount = min(max(weight, 0), 1)
         guard dt > 0, dt.isFinite, amount > 0 else { return velocity }
         let distance = simd_length(error)

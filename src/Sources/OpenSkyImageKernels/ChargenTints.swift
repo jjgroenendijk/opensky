@@ -52,8 +52,10 @@ nonisolated public enum ChargenTints {
     /// One coverage byte per texel from a mask picture's red channel, scaled to
     /// `width` x `height` by nearest texel; the masks are smaller than the face.
     public static func coverage(
-        rgba: [UInt8], width: Int, height: Int, toWidth: Int, toHeight: Int
+        rgba: [UInt8], size: (width: Int, height: Int), to target: (width: Int, height: Int)
     ) -> [UInt8] {
+        let (width, height) = size
+        let (toWidth, toHeight) = target
         guard width > 0, height > 0, rgba.count >= width * height * 4 else {
             return [UInt8](repeating: 0, count: toWidth * toHeight)
         }

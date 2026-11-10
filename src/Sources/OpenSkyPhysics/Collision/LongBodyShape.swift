@@ -59,9 +59,10 @@ nonisolated public struct LongBodyShape: Equatable, Sendable {
     /// The horizontal change to `displacement` that keeps both ends out of `query`'s shapes.
     /// The ends ride `lift` above the feet, so the ground under them is the capsule's job.
     public func correction(
-        feet: SIMD3<Float>, yaw: Float, displacement: SIMD2<Float>, lift: Float,
+        pose: (feet: SIMD3<Float>, yaw: Float), displacement: SIMD2<Float>, lift: Float,
         query: CapsuleWorldCollider.CandidateQuery
     ) -> SIMD2<Float> {
+        let (feet, yaw) = pose
         let collider = CapsuleWorldCollider(capsule: endCapsule)
         let move = SIMD3(displacement.x, displacement.y, 0)
         var correction = SIMD2<Float>.zero

@@ -317,33 +317,27 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
         _ tracks: [MusicTrack],
         musicStore: MusicRecordStore
     ) -> [MusicTrack] {
-        var visited: Set<UInt32> = []
-        var out: [MusicTrack] = []
+        var expansion = (visited: Set<UInt32>(), out: [MusicTrack]())
         for track in tracks {
-            appendExpanded(
-                track, musicStore: musicStore, depth: 0, visited: &visited, into: &out
-            )
+            appendExpanded(track, musicStore: musicStore, depth: 0, into: &expansion)
         }
-        return out
+        return expansion.out
     }
 
     private static func appendExpanded(
         _ track: MusicTrack,
         musicStore: MusicRecordStore,
         depth: Int,
-        visited: inout Set<UInt32>,
-        into out: inout [MusicTrack]
+        into expansion: inout (visited: Set<UInt32>, out: [MusicTrack])
     ) {
         guard track.trackType == .palette, depth < maximumPaletteDepth else {
-            out.append(track)
+            expansion.out.append(track)
             return
         }
-        guard visited.insert(track.formID.rawValue).inserted else { return }
+        guard expansion.visited.insert(track.formID.rawValue).inserted else { return }
         for childID in track.tracks {
             guard let child = musicStore.musicTrack(childID) else { continue }
-            appendExpanded(
-                child, musicStore: musicStore, depth: depth + 1, visited: &visited, into: &out
-            )
+            appendExpanded(child, musicStore: musicStore, depth: depth + 1, into: &expansion)
         }
     }
 

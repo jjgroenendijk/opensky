@@ -51,8 +51,7 @@ nonisolated public enum MeleeSwing: Sendable {
         let chest = feet + SIMD3(0, 0, capsule.height * 0.5)
         let halfExtent = capsule.height * bladeHalfExtentFraction
         return ShapeSweepQuery.capsule(
-            first: chest + SIMD3(0, 0, halfExtent),
-            second: chest - SIMD3(0, 0, halfExtent),
+            (chest + SIMD3(0, 0, halfExtent), chest - SIMD3(0, 0, halfExtent)),
             radius: capsule.radius * arcRadiusFraction,
             direction: SIMD3(cosf(facing), sinf(facing), 0),
             maximumDistance: max(reach, 0)

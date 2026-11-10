@@ -56,13 +56,11 @@ nonisolated extension BehaviorGraphInstance {
             }
             return result
         case let driven as HKBEventDrivenModifier:
-            return applyEventDriven(
-                driven, at: target, to: pose, deltaTime: step.deltaTime, depth: step.depth
-            )
+            return applyEventDriven(driven, step, to: pose)
         case let timer as HKBTimerModifier:
             applyTimer(
-                at: target, alarm: step.bound.float("alarmTimeSeconds", or: timer.alarmTimeSeconds),
-                event: timer.alarmEvent, repeating: false, deltaTime: step.deltaTime
+                step, alarm: step.bound.float("alarmTimeSeconds", or: timer.alarmTimeSeconds),
+                event: timer.alarmEvent, repeating: false
             )
             return pose
         case is BSEventOnDeactivateModifier:
@@ -94,11 +92,10 @@ nonisolated extension BehaviorGraphInstance {
     /// `m_activeByDefault` sets the state it starts in.
     private func applyEventDriven(
         _ driven: HKBEventDrivenModifier,
-        at target: HKXPointerTarget,
-        to pose: BehaviorPose,
-        deltaTime: Float,
-        depth: Int
+        _ step: BehaviorModifierStep,
+        to pose: BehaviorPose
     ) -> BehaviorPose {
+        let (target, deltaTime, depth) = (step.target, step.deltaTime, step.depth)
         var state = markReached(target)
         if !state.hasSeeded {
             state.hasSeeded = true
@@ -121,14 +118,14 @@ nonisolated extension BehaviorGraphInstance {
     /// seconds have passed since activation. A repeating timer starts again each
     /// time it fires; the other stays quiet until it is reactivated.
     func applyTimer(
-        at target: HKXPointerTarget,
+        _ step: BehaviorModifierStep,
         alarm: Float,
         event: HKBEventProperty,
-        repeating: Bool,
-        deltaTime: Float
+        repeating: Bool
     ) {
+        let target = step.target
         var state = markReached(target)
-        state.elapsed += deltaTime
+        state.elapsed += step.deltaTime
         if !state.hasFiredAlarm, state.elapsed >= alarm {
             state.hasFiredAlarm = !repeating
             state.elapsed = repeating && alarm > 0 ? state.elapsed - alarm : state.elapsed
