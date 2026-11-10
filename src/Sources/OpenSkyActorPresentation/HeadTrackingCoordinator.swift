@@ -111,8 +111,8 @@ public final class HeadTrackingCoordinator {
             }
             let goal = aim.map { withGlance($0, subject: subject.key) } ?? .forward
             let step = HeadTrackingCore.turn(
-                looks[subject.key] ?? .forward, toward: goal,
-                isTurning: turning.contains(subject.key) || aim == nil,
+                (looks[subject.key] ?? .forward, turning.contains(subject.key) || aim == nil),
+                toward: goal,
                 deltaTime: deltaTime, settings: settings
             )
             if step.isTurning {

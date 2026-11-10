@@ -76,7 +76,7 @@ nonisolated extension ActorVisualResolver {
         var pieces: [Armor] = []
         for item in outfit.items {
             var ancestors: Set<UInt32> = []
-            try appendPieces(item: item, count: 1, roll: roll, ancestors: &ancestors, into: &pieces)
+            try appendPieces((item, 1), roll: roll, ancestors: &ancestors, into: &pieces)
         }
         return pieces
     }
@@ -91,12 +91,12 @@ nonisolated extension ActorVisualResolver {
     /// `ancestors` tracks only the active chain so duplicate siblings stay legal
     /// while cycles throw.
     private func appendPieces(
-        item: FormID,
-        count: Int32,
+        _ entry: (item: FormID, count: Int32),
         roll: OutfitRoll,
         ancestors: inout Set<UInt32>,
         into pieces: inout [Armor]
     ) throws {
+        let (item, count) = entry
         if let armor = armors[item.rawValue] {
             pieces.append(armor)
             return
@@ -120,7 +120,7 @@ nonisolated extension ActorVisualResolver {
         let picks = leveling.roll(list, count: count, request: roll.request, seed: roll.seed)
         for pick in picks {
             try appendPieces(
-                item: pick.entry.reference, count: pick.count, roll: roll,
+                (pick.entry.reference, pick.count), roll: roll,
                 ancestors: &ancestors, into: &pieces
             )
         }

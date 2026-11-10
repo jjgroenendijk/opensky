@@ -346,8 +346,7 @@ extension IdleCoordinator {
         var session = sessions[actor] ?? Session()
         let selection = selector(for: actor).select(
             entries: store.idles(of: marker.marker),
-            order: IdleCore.selectionOrder(of: marker.marker.record),
-            startIndex: session.nextEntry,
+            order: (IdleCore.selectionOrder(of: marker.marker.record), session.nextEntry),
             played: IdleCore.isDoOnce(marker.marker.record) ? session.played : [],
             random: random
         )
@@ -419,7 +418,7 @@ extension IdleCoordinator {
                     first: Segment(clip: first, triggers: plan.triggers),
                     followUps: chain, holdsLast: holds
                 ),
-                plan: plan, on: actor, for: seconds, now: now
+                plan: plan, on: actor, at: (now, seconds)
             )
             positions[actor] = plan.position
             if !chain.isEmpty {
@@ -482,8 +481,9 @@ extension IdleCoordinator {
     /// graph; for both, the clip only times the idle.
     private func start(
         _ chain: Chain, plan: IdlePlaybackPlan,
-        on actor: ReferenceKey, for seconds: Float, now: Float
+        on actor: ReferenceKey, at time: (now: Float, seconds: Float)
     ) {
+        let (now, seconds) = time
         let segment = chain.first
         let clip = segment.clip
         leaveState(of: actor, now: now)

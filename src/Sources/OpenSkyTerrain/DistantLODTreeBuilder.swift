@@ -33,9 +33,9 @@ nonisolated extension DistantLODBuilder {
         worldspace: String,
         settings: LODSettings,
         configuration: TerrainLODConfiguration,
-        center: CellCoordinate,
-        hiddenCells: Set<CellCoordinate>
+        around view: (center: CellCoordinate, hiddenCells: Set<CellCoordinate>)
     ) throws -> TreeBuild {
+        let (center, hiddenCells) = view
         let key = worldspace.lowercased()
         let listPath = "meshes\\terrain\\\(key)\\trees\\\(key).lst"
         guard fileSystem.exists(listPath) else {

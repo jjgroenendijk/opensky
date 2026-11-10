@@ -99,7 +99,7 @@ public final class PlayerMountDrive {
         )
         let steer = steerable
             ? MountRules.steer(
-                heading: heading, forward: input.moveForward, right: input.moveRight,
+                heading: heading, push: (input.moveForward, input.moveRight),
                 cameraYaw: cameraYaw, deltaTime: deltaTime, turnRate: turnRate
             )
             : MountSteer(heading: heading, throttle: 0)
@@ -151,7 +151,7 @@ public final class PlayerMountDrive {
         }
         let start = state.feet
         let result = DragonFlightRules.step(
-            state, goal: goal, settings: flightSettings, deltaTime: step,
+            (state, goal), settings: flightSettings, deltaTime: step,
             ground: { world.sampleGround($0)?.height }
         )
         let previousHeading = heading
@@ -171,7 +171,7 @@ public final class PlayerMountDrive {
             )
         }
         bridge.advanceFlying(
-            deltaTime: step, feet: state.feet, motion: motion,
+            deltaTime: step, body: (state.feet, motion),
             events: result.events.compactMap(DragonFlightGraphNames.event(for:)),
             inputs: DragonFlightGraphNames.inputs(state, settings: flightSettings)
         )

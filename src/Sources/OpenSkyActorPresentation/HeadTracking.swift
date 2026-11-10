@@ -68,9 +68,10 @@ nonisolated public enum HeadTrackingCore {
     /// goal is inside the dead zone; a turning head keeps going until it arrives, slowing
     /// down near the goal.
     public static func turn(
-        _ current: HeadLook, toward goal: HeadLook, isTurning: Bool,
+        _ head: (look: HeadLook, isTurning: Bool), toward goal: HeadLook,
         deltaTime: Float, settings: HeadTrackingSettings
     ) -> (look: HeadLook, isTurning: Bool) {
+        let (current, isTurning) = head
         guard isTurning || !settings.isInsideDeadZone(current, goal: goal) else {
             return (current, false)
         }

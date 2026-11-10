@@ -171,7 +171,7 @@ public final class DragonFlightCoordinator {
             homes[key] = hold.feet
         }
         let step = DragonFlightRules.step(
-            state, goal: goal, settings: settings, deltaTime: deltaTime,
+            (state, goal), settings: settings, deltaTime: deltaTime,
             ground: { [weak world] in world?.flightGroundHeight(at: $0) }
         )
         // Stored first, so the landing tree's request conditions read this step.

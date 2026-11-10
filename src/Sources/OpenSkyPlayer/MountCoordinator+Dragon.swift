@@ -39,7 +39,7 @@ extension MountCoordinator {
             $0.caseInsensitiveCompare(DragonFlightGraphNames.breathFire) == .orderedSame
         }
         let breath = dragonOrders.advanceBreath(
-            from: pose.feet, yaw: pose.yaw, at: target, fired: fired, deltaTime: input.dt
+            from: (pose.feet, pose.yaw), at: target, fired: fired, deltaTime: input.dt
         )
         switch breath {
         case .inhale: drive.raiseGraphEvent(DragonFlightGraphNames.breathStart)

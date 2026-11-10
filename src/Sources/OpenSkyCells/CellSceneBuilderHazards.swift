@@ -24,8 +24,7 @@ nonisolated extension CellSceneBuilder {
         parentPool: EnableParentPool = EnableParentPool()
     ) -> [CellHazard] {
         let placed = mergingLater(
-            baseHazards(in: cell.children),
-            later: laterChildren(of: FormID(cell.formID), type: "PHZD"),
+            (baseHazards(in: cell.children), laterChildren(of: FormID(cell.formID), type: "PHZD")),
             formID: \.formID
         ) {
             try $0.record.decode(PlacedProjectile.init(record:))

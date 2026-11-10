@@ -18,7 +18,7 @@ struct CameraShotFactsTests {
 
     @Test func roomIsMeasuredPerSideAndAnUnarmedKillIsMelee() {
         let facts = CameraShotFacts.resolution(
-            weapon: nil, targetBase: FormID(0x1234), targetDistance: 900, yaw: 0
+            weapon: nil, target: (FormID(0x1234), 900), yaw: 0
         ) { offset in
             offset.y < -1 ? 1000 : 40
         }

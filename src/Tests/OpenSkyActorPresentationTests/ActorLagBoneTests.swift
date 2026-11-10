@@ -30,13 +30,12 @@ struct ActorLagBoneTests {
         let pose = SkeletonPose(bones: Self.bones, matrices: [matrix_identity_float4x4])
         _ = state.pose(
             pose,
-            rig: Self.rig,
-            index: Self.index,
+            on: (Self.rig, Self.index),
             placement: Self.at(0),
             deltaTime: 0.1
         )
         let moved = state.pose(
-            pose, rig: Self.rig, index: Self.index, placement: Self.at(100), deltaTime: 0.1
+            pose, on: (Self.rig, Self.index), placement: Self.at(100), deltaTime: 0.1
         )
         // The gap of 100 drops to 15 at once, then closes 15 * 0.1: 13.5 behind.
         let lag = moved.matrices[1].columns.3
@@ -45,7 +44,7 @@ struct ActorLagBoneTests {
         #expect(abs((state.offsets["LagBone"] ?? 0) - 13.5) < 1e-3)
         for _ in 0 ..< 400 {
             _ = state.pose(
-                pose, rig: Self.rig, index: Self.index, placement: Self.at(100), deltaTime: 0.1
+                pose, on: (Self.rig, Self.index), placement: Self.at(100), deltaTime: 0.1
             )
         }
         #expect((state.offsets["LagBone"] ?? 1) < 0.01)

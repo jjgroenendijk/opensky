@@ -52,7 +52,7 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
             plugin.decode {
                 guard
                     let cell = findCell(
-                        in: world, x: gridX, y: gridY, localized: plugin.localized,
+                        in: world, at: (gridX, gridY), localized: plugin.localized,
                         skipped: &skipped
                     )
                 else { return }
@@ -123,11 +123,11 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
 
     private func findCell(
         in group: ESMGroup,
-        x: Int32,
-        y: Int32,
+        at grid: (x: Int32, y: Int32),
         localized: Bool,
         skipped: inout SkippedRecords
     ) -> FoundCell? {
+        let (x, y) = grid
         let children = skipped.children(of: group)
         for (index, child) in children.enumerated() {
             switch child {
@@ -149,7 +149,7 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
             case let .group(sub)
                 where sub.kind == .exteriorCellBlock || sub.kind == .exteriorCellSubBlock:
                 let found = findCell(
-                    in: sub, x: x, y: y, localized: localized, skipped: &skipped
+                    in: sub, at: (x, y), localized: localized, skipped: &skipped
                 )
                 if let found {
                     return found

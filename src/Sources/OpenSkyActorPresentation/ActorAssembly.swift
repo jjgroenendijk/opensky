@@ -90,6 +90,12 @@ nonisolated extension ActorAssetProvider {
 nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
     public let provider: Provider
 
+    /// The models an assembly collects, and what it had to skip.
+    struct Parts {
+        var models: [AssembledActorModel<Provider.Asset>] = []
+        var skips: [ActorAssemblySkip]
+    }
+
     public init(provider: Provider) {
         self.provider = provider
     }
@@ -117,11 +123,10 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         transform: float4x4,
         visual: ResolvedActorVisual
     ) -> ActorAssembly<Provider.Asset> {
-        var skips = visual.skips.map {
+        var parts = Parts(skips: visual.skips.map {
             ActorAssemblySkip(subject: .appearance($0), reason: .appearance)
-        }
-        let skeleton = loadSkeleton(for: visual, skips: &skips)
-        var models: [AssembledActorModel<Provider.Asset>] = []
+        })
+        let skeleton = loadSkeleton(for: visual, skips: &parts.skips)
         for part in visual.parts {
             append(
                 path: part.modelPath,
@@ -130,14 +135,13 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
                 bodyWeight: visual.appearance.weight / 100,
                 cut: part.cut,
                 skeleton: skeleton,
-                models: &models,
-                skips: &skips
+                into: &parts
             )
         }
         if visual.headSource == .assembled, !visual.headParts.parts.isEmpty {
             for part in visual.headParts.parts {
                 appendHeadPart(
-                    part, cut: visual.headCut, skeleton: skeleton, models: &models, skips: &skips
+                    part, cut: visual.headCut, skeleton: skeleton, into: &parts
                 )
             }
         } else if let facePath = visual.faceGenMeshPath {
@@ -147,22 +151,21 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
                 surface: visual.faceGenSurface,
                 cut: visual.headCut,
                 skeleton: skeleton,
-                models: &models,
-                skips: &skips
+                into: &parts
             )
         }
         // Core geometry is decided before attachments join: a floating sword
         // over an actor with no body is exactly as wrong as the floating
         // skeleton-only actor this check already rejects.
-        if models.isEmpty {
-            skips.append(ActorAssemblySkip(
+        if parts.models.isEmpty {
+            parts.skips.append(ActorAssemblySkip(
                 subject: .actor(actor),
                 reason: .noCoreGeometry
             ))
         } else {
             for attachment in visual.attachments {
                 appendAttachment(
-                    attachment, skeleton: skeleton, models: &models, skips: &skips
+                    attachment, skeleton: skeleton, into: &parts
                 )
             }
         }
@@ -170,8 +173,8 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
             actor: actor,
             visual: visual,
             transform: transform,
-            models: models,
-            skips: skips
+            models: parts.models,
+            skips: parts.skips
         )
     }
 
@@ -199,16 +202,15 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         bodyWeight: Float? = nil,
         cut: DismemberCut? = nil,
         skeleton: Provider.Skeleton?,
-        models: inout [AssembledActorModel<Provider.Asset>],
-        skips: inout [ActorAssemblySkip]
+        into parts: inout Parts
     ) {
         switch provider.loadActorModel(
             path: path, skeleton: skeleton, look: (surface, bodyWeight), keeping: cut
         ) {
         case let .success(asset):
-            models.append(AssembledActorModel(role: role, path: path, asset: asset))
+            parts.models.append(AssembledActorModel(role: role, path: path, asset: asset))
         case let .failure(failure):
-            skips.append(ActorAssemblySkip(
+            parts.skips.append(ActorAssemblySkip(
                 subject: .model(role: role, path: path),
                 reason: reason(for: failure)
             ))
@@ -219,8 +221,7 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         _ part: ResolvedHeadPart,
         cut: DismemberCut?,
         skeleton: Provider.Skeleton?,
-        models: inout [AssembledActorModel<Provider.Asset>],
-        skips: inout [ActorAssemblySkip]
+        into parts: inout Parts
     ) {
         let role = ActorModelRole.headPart(part)
         switch provider.loadActorHeadPart(
@@ -236,9 +237,9 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
             keeping: cut
         ) {
         case let .success(asset):
-            models.append(AssembledActorModel(role: role, path: part.modelPath, asset: asset))
+            parts.models.append(AssembledActorModel(role: role, path: part.modelPath, asset: asset))
         case let .failure(failure):
-            skips.append(ActorAssemblySkip(
+            parts.skips.append(ActorAssemblySkip(
                 subject: .model(role: role, path: part.modelPath),
                 reason: reason(for: failure)
             ))
@@ -248,8 +249,7 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
     private func appendAttachment(
         _ attachment: ResolvedAttachment,
         skeleton: Provider.Skeleton?,
-        models: inout [AssembledActorModel<Provider.Asset>],
-        skips: inout [ActorAssemblySkip]
+        into parts: inout Parts
     ) {
         let role = ActorModelRole.attachment(attachment)
         switch provider.loadActorAttachment(
@@ -259,11 +259,11 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
             skeleton: skeleton
         ) {
         case let .success(asset):
-            models.append(
+            parts.models.append(
                 AssembledActorModel(role: role, path: attachment.modelPath, asset: asset)
             )
         case let .failure(failure):
-            skips.append(ActorAssemblySkip(
+            parts.skips.append(ActorAssemblySkip(
                 subject: .model(role: role, path: attachment.modelPath),
                 reason: reason(for: failure)
             ))

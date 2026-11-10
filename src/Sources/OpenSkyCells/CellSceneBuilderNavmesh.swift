@@ -11,7 +11,7 @@ nonisolated extension CellSceneBuilder {
     nonisolated public func collectNavmeshes(in cell: FoundCell) -> [Navmesh] {
         let base = Self.collectNavmeshes(in: cell.children)
         return mergingLater(
-            base, later: laterChildren(of: FormID(cell.formID), type: "NAVM"), formID: \.formID
+            (base, laterChildren(of: FormID(cell.formID), type: "NAVM")), formID: \.formID
         ) {
             try $0.record.decode(Navmesh.init(record:))
         } failed: { child in

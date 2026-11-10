@@ -65,8 +65,7 @@ nonisolated public enum InteractionRaycaster: Sendable {
         case let .triangleSoup(vertices, indices),
              let .convexVertices(vertices, indices):
             triangleDistance(
-                origin: origin,
-                direction: direction,
+                along: (origin, direction),
                 vertices: vertices,
                 indices: indices,
                 maximumDistance: ray.maximumDistance
@@ -80,8 +79,7 @@ nonisolated public enum InteractionRaycaster: Sendable {
             )
         case let .sphere(radius):
             sphereDistance(
-                origin: origin,
-                direction: direction,
+                along: (origin, direction),
                 center: .zero,
                 radius: radius,
                 maximumDistance: ray.maximumDistance
@@ -100,12 +98,12 @@ nonisolated public enum InteractionRaycaster: Sendable {
     }
 
     private static func triangleDistance(
-        origin: SIMD3<Float>,
-        direction: SIMD3<Float>,
+        along line: (origin: SIMD3<Float>, direction: SIMD3<Float>),
         vertices: [SIMD3<Float>],
         indices: [UInt32],
         maximumDistance: Float
     ) -> Float? {
+        let (origin, direction) = line
         var closest: Float?
         let end = indices.count - indices.count % 3
         for offset in stride(from: 0, to: end, by: 3) {
@@ -180,12 +178,12 @@ nonisolated public enum InteractionRaycaster: Sendable {
     }
 
     private static func sphereDistance(
-        origin: SIMD3<Float>,
-        direction: SIMD3<Float>,
+        along line: (origin: SIMD3<Float>, direction: SIMD3<Float>),
         center: SIMD3<Float>,
         radius: Float,
         maximumDistance: Float
     ) -> Float? {
+        let (origin, direction) = line
         guard radius > 0 else { return nil }
         let offset = origin - center
         let quadratic = simd_dot(direction, direction)
@@ -212,8 +210,7 @@ nonisolated public enum InteractionRaycaster: Sendable {
         let axisLengthSquared = simd_dot(axis, axis)
         guard axisLengthSquared > epsilon else {
             return sphereDistance(
-                origin: ray.origin,
-                direction: ray.direction,
+                along: (ray.origin, ray.direction),
                 center: first,
                 radius: radius,
                 maximumDistance: ray.maximumDistance
@@ -233,7 +230,7 @@ nonisolated public enum InteractionRaycaster: Sendable {
         var candidates: [Float] = []
         if
             let distance = sphereDistance(
-                origin: ray.origin, direction: ray.direction, center: first,
+                along: (ray.origin, ray.direction), center: first,
                 radius: radius, maximumDistance: ray.maximumDistance
             ), axisOffset + distance * axisDirection <= 0
         {
@@ -241,7 +238,7 @@ nonisolated public enum InteractionRaycaster: Sendable {
         }
         if
             let distance = sphereDistance(
-                origin: ray.origin, direction: ray.direction, center: second,
+                along: (ray.origin, ray.direction), center: second,
                 radius: radius, maximumDistance: ray.maximumDistance
             ), axisOffset + distance * axisDirection >= axisLengthSquared
         {

@@ -9,9 +9,10 @@ nonisolated extension LocomotionBridge {
     /// Writes the flight inputs and the measured motion, raises `events`, and steps the
     /// graph. The capsule does not move; `feet` is where the flight holds the body.
     public func advanceFlying(
-        deltaTime: Float, feet: SIMD3<Float>, motion: MountMotion, events: [String],
+        deltaTime: Float, body: (feet: SIMD3<Float>, motion: MountMotion), events: [String],
         inputs: [(name: String, value: BehaviorVariableValue)]
     ) {
+        let (feet, motion) = body
         updateStatus { status in
             status.feetPosition = feet
             status.lastPlan = .still

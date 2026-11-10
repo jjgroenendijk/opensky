@@ -84,15 +84,13 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
         let run = float(
             editorID: "fMoveCharRunBase",
             store: store,
-            fallback: 370,
-            fallbackSource: "engine default"
+            fallback: (370, "engine default")
         )
         return PlayerMovementConfiguration(
             walkSpeed: float(
                 editorID: "fMoveCharWalkBase",
                 store: store,
-                fallback: 100,
-                fallbackSource: "engine default"
+                fallback: (100, "engine default")
             ),
             runSpeed: run,
             stepHeight: MovementSetting(
@@ -103,8 +101,7 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
                 editorID: MovementTypeStore.PlayerGait.sprinting,
                 slot: .run,
                 store: movementTypes,
-                fallback: run.value * 1.35,
-                fallbackSource: "OpenSky fallback (no NPC_Sprinting_MT)"
+                fallback: (run.value * 1.35, "OpenSky fallback (no NPC_Sprinting_MT)")
             ),
             // Sneak and swim take the walk slot: both are the slow gait of
             // their movement type, and OpenSky binds no separate "run while
@@ -113,23 +110,20 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
                 editorID: MovementTypeStore.PlayerGait.sneaking,
                 slot: .walk,
                 store: movementTypes,
-                fallback: run.value * 0.6,
-                fallbackSource: "OpenSky fallback (no NPC_Sneaking_MT)"
+                fallback: (run.value * 0.6, "OpenSky fallback (no NPC_Sneaking_MT)")
             ),
             swimSpeed: gait(
                 editorID: MovementTypeStore.PlayerGait.swimming,
                 slot: .walk,
                 store: movementTypes,
-                fallback: run.value,
-                fallbackSource: "OpenSky fallback (no NPC_Swimming_MT)"
+                fallback: (run.value, "OpenSky fallback (no NPC_Swimming_MT)")
             ),
             jumpTakeoffSpeed: jumpTakeoff(store: store),
             travelSpeed: gait(
                 editorID: MovementTypeStore.PlayerGait.walking,
                 slot: .walk,
                 store: movementTypes,
-                fallback: 80,
-                fallbackSource: "OpenSky fallback (no NPC_Default_MT)"
+                fallback: (80, "OpenSky fallback (no NPC_Default_MT)")
             )
         )
     }
@@ -140,8 +134,7 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
         let height = float(
             editorID: "fJumpHeightMin",
             store: store,
-            fallback: 76,
-            fallbackSource: "engine default"
+            fallback: (76, "engine default")
         )
         let speed = (2 * WalkController.gravity * max(height.value, 0)).squareRoot()
         return MovementSetting(
@@ -160,13 +153,12 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
         editorID: String,
         slot: GaitSlot,
         store: MovementTypeStore,
-        fallback: Float,
-        fallbackSource: String
+        fallback: (value: Float, source: String)
     ) -> MovementSetting {
         let speeds = store.forwardSpeeds(editorID: editorID)
         let value = slot == .walk ? speeds?.walk : speeds?.run
         guard let value, value.isFinite, value > 0 else {
-            return MovementSetting(value: fallback, source: fallbackSource)
+            return MovementSetting(value: fallback.value, source: fallback.source)
         }
         return MovementSetting(
             value: value, source: "\(editorID) SPED forward \(slot.rawValue)"
@@ -176,8 +168,7 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
     private static func float(
         editorID: String,
         store: GameSettingStore,
-        fallback: Float,
-        fallbackSource: String
+        fallback: (value: Float, source: String)
     ) -> MovementSetting {
         guard
             let resolved = store.setting(editorID: editorID),
@@ -185,7 +176,7 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
             value.isFinite,
             value > 0
         else {
-            return MovementSetting(value: fallback, source: fallbackSource)
+            return MovementSetting(value: fallback.value, source: fallback.source)
         }
         return MovementSetting(value: value, source: resolved.sourcePlugin)
     }

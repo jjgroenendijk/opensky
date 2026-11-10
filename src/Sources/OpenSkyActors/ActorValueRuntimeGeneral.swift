@@ -193,8 +193,7 @@ extension ActorValueRuntime {
         guard let entry = state.entry(at: index, baseline: base) else { return false }
         return write(
             state.setting(change(entry), at: index, baseline: base),
-            over: state,
-            at: index,
+            over: (state, index),
             derived: baseline.maximums,
             on: holder
         )
@@ -211,8 +210,7 @@ extension ActorValueRuntime {
         let state = state(of: holder)
         return write(
             state.setting(change(state.override(at: index)), at: index),
-            over: state,
-            at: index,
+            over: (state, index),
             derived: baseline(of: holder).maximums,
             on: holder
         )
@@ -222,11 +220,11 @@ extension ActorValueRuntime {
     /// however much its maximum moved.
     private func write(
         _ updated: ActorValueState,
-        over state: ActorValueState,
-        at index: Int32,
+        over slot: (state: ActorValueState, index: Int32),
         derived: ActorValues,
         on holder: ActorValueHolder
     ) -> Bool {
+        let (state, index) = slot
         var updated = updated
         if let kind = ActorValueIdentity.kind(at: index) {
             updated = Self.carryingCurrent(kind, from: state, to: updated, derived: derived)

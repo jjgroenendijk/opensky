@@ -21,7 +21,7 @@ struct DragonFlightRulesTests {
         var events: [DragonFlightEvent] = []
         for _ in 0 ..< Int(seconds / step) {
             let result = DragonFlightRules.step(
-                state, goal: goal, settings: settings, deltaTime: step, ground: ground
+                (state, goal), settings: settings, deltaTime: step, ground: ground
             )
             state = result.state
             events += result.events
@@ -94,7 +94,7 @@ struct DragonFlightRulesTests {
     @Test func aHoverStopsBeforeItsLanding() {
         let hovering = DragonFlightState(feet: SIMD3(0, 0, 700), yaw: 0, phase: .hovering)
         let step = DragonFlightRules.step(
-            hovering, goal: .ground(nil), settings: Self.settings, deltaTime: Self.step,
+            (hovering, .ground(nil)), settings: Self.settings, deltaTime: Self.step,
             ground: { _ in 0 }
         )
         #expect(step.events == [.stopHover, .beginLanding])

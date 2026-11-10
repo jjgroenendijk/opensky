@@ -102,9 +102,10 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
     /// The breath's next graph step. It starts once the cooldown is over and the target
     /// is in range ahead; it casts on the exhale's `Voice_SpellFire_Event` (`fired`).
     public mutating func advanceBreath(
-        from feet: SIMD3<Float>, yaw: Float, at target: SIMD3<Float>?, fired: Bool,
+        from mouth: (feet: SIMD3<Float>, yaw: Float), at target: SIMD3<Float>?, fired: Bool,
         deltaTime: Float
     ) -> RiddenDragonBreathStep? {
+        let (feet, yaw) = mouth
         let delta = max(deltaTime, 0)
         breathCooldown = max(0, breathCooldown - delta)
         switch breath {

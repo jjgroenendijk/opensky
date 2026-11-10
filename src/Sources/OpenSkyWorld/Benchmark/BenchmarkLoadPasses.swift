@@ -49,7 +49,7 @@ nonisolated public enum BenchmarkLoadPasses {
         let started = Stopwatch()
         let loadOrder = try ActiveLoadOrder.open(root: inputs.root)
         let builder = try ColdCellBuilder.makeBuilder(
-            loadOrder: loadOrder, files: VirtualFileSystem(root: inputs.root),
+            data: (loadOrder, VirtualFileSystem(root: inputs.root)),
             device: inputs.device,
             recorder: recorder, terrainLOD: inputs.terrainLOD
         )

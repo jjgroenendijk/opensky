@@ -66,7 +66,7 @@ struct KillCamTriggerTests {
             Self.candidate(Self.near, x: 400, health: 10)
         ]
         let kill = KillCamTrigger.arrowKill(
-            origin: [0, 0, 100], direction: [1, 0, 0], range: 2000, damage: 20,
+            ray: ([0, 0, 100], [1, 0, 0]), range: 2000, damage: 20,
             candidates: candidates
         )
         #expect(kill?.key == Self.near)
@@ -75,7 +75,7 @@ struct KillCamTriggerTests {
     @Test func arrowIgnoresActorsItWouldNotKillOrMisses() {
         let tough = [Self.candidate(Self.near, x: 400, health: 50)]
         #expect(KillCamTrigger.arrowKill(
-            origin: [0, 0, 100], direction: [1, 0, 0], range: 2000, damage: 20, candidates: tough
+            ray: ([0, 0, 100], [1, 0, 0]), range: 2000, damage: 20, candidates: tough
         ) == nil)
         let aside = [KillCamCandidate(
             key: Self.near,
@@ -85,11 +85,11 @@ struct KillCamTriggerTests {
             health: 5
         )]
         #expect(KillCamTrigger.arrowKill(
-            origin: [0, 0, 100], direction: [1, 0, 0], range: 2000, damage: 20, candidates: aside
+            ray: ([0, 0, 100], [1, 0, 0]), range: 2000, damage: 20, candidates: aside
         ) == nil)
         let beyond = [Self.candidate(Self.near, x: 4000, health: 5)]
         #expect(KillCamTrigger.arrowKill(
-            origin: [0, 0, 100], direction: [1, 0, 0], range: 2000, damage: 20, candidates: beyond
+            ray: ([0, 0, 100], [1, 0, 0]), range: 2000, damage: 20, candidates: beyond
         ) == nil)
     }
 

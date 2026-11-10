@@ -39,7 +39,7 @@ nonisolated extension ActorVisualResolver {
         let actorRoll = roll ?? leveling.roll(forActor: appearance.base)
         var items: [FormID] = []
         for entry in carried.entries where entry.count >= 1 {
-            appendCarried(entry.item, count: entry.count, roll: actorRoll, depth: 0, into: &items)
+            appendCarried((entry.item, entry.count), roll: actorRoll, depth: 0, into: &items)
         }
         let preference = carried.combatStyle
             .flatMap { combatStyles[$0.rawValue] }
@@ -52,15 +52,17 @@ nonisolated extension ActorVisualResolver {
     }
 
     private func appendCarried(
-        _ id: FormID, count: Int32, roll: LeveledRoll, depth: Int, into items: inout [FormID]
+        _ entry: (id: FormID, count: Int32), roll: LeveledRoll, depth: Int,
+        into items: inout [FormID]
     ) {
+        let (id, count) = entry
         guard depth < Self.maximumCarriedDepth, let list = leveledItems[id.rawValue] else {
             items.append(id)
             return
         }
         for pick in leveling.roll(list, count: count, request: roll.request, seed: roll.seed) {
             appendCarried(
-                pick.entry.reference, count: pick.count, roll: roll, depth: depth + 1, into: &items
+                (pick.entry.reference, pick.count), roll: roll, depth: depth + 1, into: &items
             )
         }
     }

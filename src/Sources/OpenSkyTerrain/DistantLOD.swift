@@ -73,8 +73,7 @@ nonisolated public enum DistantLODSelection: Sendable {
             blocks.append(contentsOf: blocksForBand(
                 worldspace: name,
                 settings: settings,
-                center: center,
-                hiddenCells: hiddenCells,
+                around: (center, hiddenCells),
                 band: band
             ))
         }
@@ -115,10 +114,10 @@ nonisolated public enum DistantLODSelection: Sendable {
     private static func blocksForBand(
         worldspace: String,
         settings: LODSettings,
-        center: CellCoordinate,
-        hiddenCells: Set<CellCoordinate>,
+        around view: (center: CellCoordinate, hiddenCells: Set<CellCoordinate>),
         band: Band
     ) -> [DistantLODBlock] {
+        let (center, hiddenCells) = view
         let lower = settings.blockOrigin(
             containing: CellCoordinate(
                 x: center.x - band.outerRadius,
@@ -177,8 +176,7 @@ nonisolated public enum DistantLODSelection: Sendable {
         var blocks = [makeBlock(
             kind: .terrain,
             worldspace: context.worldspace,
-            level: band.level,
-            origin: origin,
+            at: (band.level, origin),
             clipMask: mask.isComplete ? nil : mask
         )]
         // BTO atlas geometry cannot yet be clipped safely.
@@ -186,8 +184,7 @@ nonisolated public enum DistantLODSelection: Sendable {
             blocks.append(makeBlock(
                 kind: .objects,
                 worldspace: context.worldspace,
-                level: band.level,
-                origin: origin,
+                at: (band.level, origin),
                 clipMask: nil
             ))
         }
@@ -197,10 +194,10 @@ nonisolated public enum DistantLODSelection: Sendable {
     private static func makeBlock(
         kind: DistantLODBlock.Kind,
         worldspace: String,
-        level: Int32,
-        origin: CellCoordinate,
+        at place: (level: Int32, origin: CellCoordinate),
         clipMask: TerrainLODClipMask?
     ) -> DistantLODBlock {
+        let (level, origin) = place
         let base = "meshes\\terrain\\\(worldspace)\\"
         let folder = kind == .objects ? "objects\\" : ""
         let ext = kind == .objects ? "bto" : "btr"
@@ -452,8 +449,7 @@ nonisolated public final class DistantLODBuilder {
                 worldspace: worldspace,
                 settings: settings,
                 configuration: configuration,
-                center: center,
-                hiddenCells: hiddenCells
+                around: (center, hiddenCells)
             )
         } ?? TreeBuild(placements: [], blockCount: 0, missingBlockCount: 1)
         placements.append(contentsOf: trees.placements)
@@ -469,8 +465,7 @@ nonisolated public final class DistantLODBuilder {
             missingTreeBlockCount: trees.missingBlockCount,
             treeInstanceCount: trees.placements.count,
             largeReferenceCells: ringActive ? LargeReferenceRing.cells(
-                center: center, radius: largeRadius,
-                loadedRadius: configuration.loadedGridRadius,
+                center: center, radii: (largeRadius, configuration.loadedGridRadius),
                 hiddenCells: hiddenCells, blocks: ring.wholeBlocks
             ) : [],
             largeReferencesPending: ringWanted && !largeReferences,

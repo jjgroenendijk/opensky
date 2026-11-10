@@ -70,9 +70,10 @@ nonisolated public enum MountRules: Sendable {
     /// at most `turnRate` radians per second. A ridden mount cannot back up: pushing
     /// back turns it around while it moves.
     public static func steer(
-        heading: Float, forward: Float, right: Float, cameraYaw: Float, deltaTime: Float,
+        heading: Float, push: (forward: Float, right: Float), cameraYaw: Float, deltaTime: Float,
         turnRate: Float = MountSettings.vanilla.turnRate
     ) -> MountSteer {
+        let (forward, right) = push
         let amount = min(simd_length(SIMD2(forward, right)), 1)
         guard
             deltaTime > 0,

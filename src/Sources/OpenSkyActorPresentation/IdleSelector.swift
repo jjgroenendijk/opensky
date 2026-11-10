@@ -45,11 +45,11 @@ nonisolated public struct IdleSelector {
     /// index below it, so a test can pin the choice.
     public func select(
         entries: [ResolvedRecord<IdleAnimation>],
-        order: IdleSelectionOrder,
-        startIndex: Int,
+        order ordering: (kind: IdleSelectionOrder, start: Int),
         played: Set<ResolvedFormID>,
         random: (Int) -> Int
     ) -> IdleSelection {
+        let (order, startIndex) = ordering
         let start = entries.isEmpty ? 0 : ((startIndex % entries.count) + entries.count)
             % entries.count
         let visitOrder = order == .sequence

@@ -39,11 +39,11 @@ nonisolated public enum VehicleWheels {
     /// than three wheels on ground, or wheels on one line.
     static func rest(
         on wheels: [SIMD2<Float>],
-        at origin: SIMD2<Float>,
-        orientation: float4x4,
+        at place: (origin: SIMD2<Float>, orientation: float4x4),
         top: Float,
         ground: (SIMD3<Float>) -> Float?
     ) -> Rest? {
+        let (origin, orientation) = place
         var points: [SIMD3<Float>] = []
         for wheel in wheels {
             let offset = orientation * SIMD4(wheel.x, wheel.y, 0, 0)

@@ -47,8 +47,7 @@ nonisolated extension CellSceneBuilder {
             spawnedBase: base, placement: placement, scale: 1, formID: Self.previewReference
         )
         let build = resolvedBuild(
-            [CollectedActor(actor: actor, isPersistent: false)],
-            malformed: [],
+            ([CollectedActor(actor: actor, isPersistent: false)], []),
             parents: ActorEnableParents(),
             deltas: [:],
             started: Stopwatch()

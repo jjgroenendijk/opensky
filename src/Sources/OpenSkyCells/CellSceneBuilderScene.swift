@@ -243,8 +243,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated public func makeScene(
-        found: FoundCell,
-        grid: (x: Int32, y: Int32),
+        cell: (found: FoundCell, grid: (x: Int32, y: Int32)),
         instances: [ResolvedInstance],
         geometry: CellGeometryBuild,
         counts: BuildCounts
@@ -267,7 +266,7 @@ nonisolated extension CellSceneBuilder {
                 + doors.map(\.playback) + nodes.map(\.playback),
             terrain: geometry.terrain?.items ?? [],
             water: geometry.water.map { [$0.item] } ?? [],
-            sky: found.cell.isInterior ? nil : geometry.sky,
+            sky: cell.found.cell.isInterior ? nil : geometry.sky,
             lighting: geometry.lighting,
             pointLights: geometry.pointLights,
             grass: geometry.grass?.renderPlacements ?? [],
@@ -276,7 +275,7 @@ nonisolated extension CellSceneBuilder {
             rooms: geometry.rooms
         )
         let summary = makeSummary(
-            found: found, grid: grid, instanceCount: instances.count,
+            cell: cell, instanceCount: instances.count,
             geometry: geometry, counts: counts
         )
         var scene = CellScene(
@@ -286,11 +285,11 @@ nonisolated extension CellSceneBuilder {
             location: geometry.location,
             doors: geometry.doors,
             interactions: geometry.interactions,
-            regions: found.cell.regions,
-            acousticSpace: found.cell.acousticSpace,
-            musicType: found.cell.musicType,
-            owner: RecordOwnership(cell: found.cell),
-            locationLink: found.cell.location,
+            regions: cell.found.cell.regions,
+            acousticSpace: cell.found.cell.acousticSpace,
+            musicType: cell.found.cell.musicType,
+            owner: RecordOwnership(cell: cell.found.cell),
+            locationLink: cell.found.cell.location,
             ownerPluginName: pluginName,
             worldspaceMusicType: geometry.world?.worldspace?.musicType,
             worldspace: geometry.world?.formID,
@@ -304,7 +303,7 @@ nonisolated extension CellSceneBuilder {
             references: geometry.referenceIndex,
             stateSequence: geometry.stateSequence
         )
-        Self.applyCellRecord(found, geometry: geometry, to: &scene)
+        Self.applyCellRecord(cell.found, geometry: geometry, to: &scene)
         scene.animatedObjects = objects.map(\.object)
         scene.animatedVehicles = vehicles.map(\.vehicle)
         scene.sequenceDoors = doors.map(\.door)
@@ -372,12 +371,12 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated private func makeSummary(
-        found: FoundCell,
-        grid: (x: Int32, y: Int32),
+        cell: (found: FoundCell, grid: (x: Int32, y: Int32)),
         instanceCount: Int,
         geometry: CellGeometryBuild,
         counts: BuildCounts
     ) -> CellLoadSummary {
+        let (found, grid) = cell
         let actors = geometry.actors
         var summary = CellLoadSummary(
             cellName: found.cell.editorID ?? "cell \(FormID(found.formID).description)",

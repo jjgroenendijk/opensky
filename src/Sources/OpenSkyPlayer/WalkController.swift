@@ -178,8 +178,7 @@ nonisolated public struct WalkController: Sendable {
         isSwimming = plan.isSwimming
         if let surface = plan.swimSurfaceHeight {
             swim(
-                to: surface,
-                wanted: plan.swimVerticalVelocity,
+                to: (surface, plan.swimVerticalVelocity),
                 collider: collider,
                 dt: dt,
                 collisionQuery: collisionQuery
@@ -221,12 +220,12 @@ nonisolated public struct WalkController: Sendable {
     /// surface, or up and down at the swimmer's own request, both clamped to
     /// `maximumSwimVerticalSpeed` so nothing can be flung by a deep step.
     private mutating func swim(
-        to surface: Float,
-        wanted: Float,
+        to depth: (surface: Float, wanted: Float),
         collider: CapsuleWorldCollider,
         dt: Float,
         collisionQuery: CollisionQuery
     ) {
+        let (surface, wanted) = depth
         let floatingZ = surface - capsule.eyeHeight
         let correction = wanted != 0 ? wanted : (floatingZ - feetPosition.z) / dt
         verticalVelocity = min(

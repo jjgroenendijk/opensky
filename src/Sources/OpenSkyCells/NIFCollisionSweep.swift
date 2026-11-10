@@ -49,9 +49,9 @@ nonisolated public enum NIFCollisionSweep: Sendable {
         loadOrder: LoadOrderPlugins,
         fileSystem: any GameFileSource,
         worldspaceEditorID: String,
-        gridX: Int32,
-        gridY: Int32
+        cell: CellCoordinate
     ) throws -> NIFCollisionSweepResult {
+        let (gridX, gridY) = (cell.x, cell.y)
         let paths = try ExteriorCellModelCatalog(loadOrder: loadOrder).modelPaths(
             worldspaceEditorID: worldspaceEditorID,
             gridX: gridX,

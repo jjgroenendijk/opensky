@@ -111,7 +111,7 @@ nonisolated extension CellSceneBuilder {
             zone: cell?.cell.encounterZone ?? world.worldspace?.encounterZone
         )
         return resolvedBuild(
-            collected, malformed: malformed, parents: parents, deltas: deltas, started: started
+            (collected, malformed), parents: parents, deltas: deltas, started: started
         )
     }
 
@@ -132,7 +132,7 @@ nonisolated extension CellSceneBuilder {
         ) + spawnedActors(in: location, deltas: deltas), collision: collision)
         recordLeveledPlacements(collected, location: location, zone: cell?.cell.encounterZone)
         return resolvedBuild(
-            collected, malformed: malformed, parents: parents, deltas: deltas, started: started
+            (collected, malformed), parents: parents, deltas: deltas, started: started
         )
     }
 
@@ -166,12 +166,12 @@ nonisolated extension CellSceneBuilder {
 
     /// Counts, indexes, and resolves the collected actors of one cell build.
     nonisolated func resolvedBuild(
-        _ collected: [CollectedActor],
-        malformed: [String],
+        _ scan: (collected: [CollectedActor], malformed: [String]),
         parents: ActorEnableParents,
         deltas: [ReferenceKey: ReferenceStateDelta],
         started: Stopwatch
     ) -> CellActorBuild {
+        let (collected, malformed) = scan
         var build = CellActorBuild()
         let actors = collected.map(\.actor)
         build.entries = actorEntries(collected, deltas: deltas)

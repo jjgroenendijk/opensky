@@ -254,7 +254,7 @@ nonisolated public final class CellSceneBuilder {
         let location = CellSceneLocation.exterior(coordinate)
         let parents = persistentParentPool(in: world, localized: pluginLocalized)
         let resolved = effectiveReferences(
-            refs: refs, collected: collected, state: state, location: location,
+            (refs, collected), state: state, location: location,
             parentPool: parents, counts: &counts
         )
         let effective = resolved.references
@@ -270,8 +270,7 @@ nonisolated public final class CellSceneBuilder {
         )
         let environment = buildEnvironment(found: found, worldspace: world.worldspace)
         let scene = makeScene(
-            found: found,
-            grid: (x: gridX, y: gridY),
+            cell: (found, (x: gridX, y: gridY)),
             instances: instances,
             geometry: CellGeometryBuild(
                 location: location,
@@ -533,7 +532,7 @@ nonisolated extension CellSceneBuilder {
             let surface = surface(for: resolved)
             if
                 var instance = loadInstance(
-                    ref: ref, modelPath: modelPath, surface: surface,
+                    ref: ref, model: (modelPath, surface),
                     behavior: objectBehavior(recordType: resolved.recordType, modelPath: modelPath),
                     counts: &counts
                 )
@@ -550,11 +549,11 @@ nonisolated extension CellSceneBuilder {
     /// Nil when the mesh fails to load or holds only editor-marker geometry.
     nonisolated private func loadInstance(
         ref: PlacedReference,
-        modelPath: String,
-        surface: ModelSurfaceOverride,
+        model: (path: String, surface: ModelSurfaceOverride),
         behavior: BehaviorProjectAsset?,
         counts: inout BuildCounts
     ) -> ResolvedInstance? {
+        let (modelPath, surface) = model
         do {
             let animated = behavior.flatMap { asset in
                 attempt {

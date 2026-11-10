@@ -30,9 +30,8 @@ nonisolated public enum NavigationFunnel: Sendable {
         graph: RuntimeNavigationGraph
     ) -> NavigationPulledPath {
         var result = NavigationPulledPath(waypoints: [input.start], doorCrossings: [])
-        var portals: [NavigationOrientedPortal] = []
-        portals.reserveCapacity(input.transitions.count)
-        var segmentStart = input.start
+        var segment = (start: input.start, portals: [NavigationOrientedPortal]())
+        segment.portals.reserveCapacity(input.transitions.count)
         for (index, transition) in input.transitions.enumerated() {
             switch transition.portal {
             case let .edge(first, second):
@@ -40,24 +39,21 @@ nonisolated public enum NavigationFunnel: Sendable {
                     let source = graph.triangle(input.corridor[index])?.centroid,
                     let destination = graph.triangle(transition.target)?.centroid
                 else { continue }
-                portals.append(orientedPortal(
-                    first: first,
-                    second: second,
-                    source: source,
-                    destination: destination,
+                segment.portals.append(orientedPortal(
+                    (first, second),
+                    toward: (source, destination),
                     radius: input.radius
                 ))
                 appendDoorMarkers(
                     for: transition.target,
-                    portals: &portals,
-                    segmentStart: &segmentStart,
+                    segment: &segment,
                     result: &result,
                     graph: graph
                 )
             case let .door(reference, sourceDoor, destinationDoor):
                 appendSegment(
-                    from: segmentStart,
-                    through: portals,
+                    from: segment.start,
+                    through: segment.portals,
                     to: sourceDoor,
                     result: &result
                 )
@@ -66,26 +62,35 @@ nonisolated public enum NavigationFunnel: Sendable {
                     door: reference, waypointIndex: crossingIndex
                 ))
                 append(destinationDoor, to: &result.waypoints)
-                segmentStart = destinationDoor
-                portals.removeAll(keepingCapacity: true)
+                segment.start = destinationDoor
+                segment.portals.removeAll(keepingCapacity: true)
             case let .ledge(from, landing):
-                appendSegment(from: segmentStart, through: portals, to: from, result: &result)
+                appendSegment(
+                    from: segment.start,
+                    through: segment.portals,
+                    to: from,
+                    result: &result
+                )
                 result.ledgeCrossings.append(NavigationLedgeCrossing(
                     waypointIndex: result.waypoints.count - 1
                 ))
                 append(landing, to: &result.waypoints)
-                segmentStart = landing
-                portals.removeAll(keepingCapacity: true)
+                segment.start = landing
+                segment.portals.removeAll(keepingCapacity: true)
             }
         }
-        appendSegment(from: segmentStart, through: portals, to: input.target, result: &result)
+        appendSegment(
+            from: segment.start,
+            through: segment.portals,
+            to: input.target,
+            result: &result
+        )
         return result
     }
 
     private static func appendDoorMarkers(
         for node: NavigationTriangleID,
-        portals: inout [NavigationOrientedPortal],
-        segmentStart: inout SIMD3<Float>,
+        segment: inout (start: SIMD3<Float>, portals: [NavigationOrientedPortal]),
         result: inout NavigationPulledPath,
         graph: RuntimeNavigationGraph
     ) {
@@ -93,13 +98,13 @@ nonisolated public enum NavigationFunnel: Sendable {
         for reference in mesh.doorLinksByTriangle[node.triangle] ?? [] {
             guard let door = graph.door(reference), door.destination == nil else { continue }
             appendSegment(
-                from: segmentStart, through: portals, to: door.position, result: &result
+                from: segment.start, through: segment.portals, to: door.position, result: &result
             )
             result.doorCrossings.append(NavigationDoorCrossing(
                 door: reference, waypointIndex: result.waypoints.count - 1
             ))
-            segmentStart = door.position
-            portals.removeAll(keepingCapacity: true)
+            segment.start = door.position
+            segment.portals.removeAll(keepingCapacity: true)
         }
     }
 
@@ -115,12 +120,12 @@ nonisolated public enum NavigationFunnel: Sendable {
     }
 
     private static func orientedPortal(
-        first: SIMD3<Float>,
-        second: SIMD3<Float>,
-        source: SIMD3<Float>,
-        destination: SIMD3<Float>,
+        _ edge: (first: SIMD3<Float>, second: SIMD3<Float>),
+        toward travel: (source: SIMD3<Float>, destination: SIMD3<Float>),
         radius: Float
     ) -> NavigationOrientedPortal {
+        let (first, second) = edge
+        let (source, destination) = travel
         let direction = SIMD2(destination.x - source.x, destination.y - source.y)
         let firstSide = NavigationGeometry.cross(
             direction, SIMD2(first.x - source.x, first.y - source.y)
