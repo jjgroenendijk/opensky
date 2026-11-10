@@ -71,6 +71,12 @@ also changed, for example one that gained `public`, still counts. Example: movin
 `struct Ward { func absorb() }` to an interface module counts nothing; making `absorb()`
 public there counts its first line.
 
+A line that stays in place and only gains or loses an access keyword (`public`, `open`,
+`package`, `internal`, `fileprivate`, `private`, or a `(set)` form) is not a changed line
+either. The check compares it with the lines its hunk removes, with those keywords taken out.
+A smaller public surface adds no code to test. Example: `public func absorb()` becoming
+`func absorb()` counts nothing; `public let cap = 1` becoming `let cap = 2` counts.
+
 The app and the CLI targets are outside both rules: they are not package modules, and the UI
 tests cover them. The modules declared with `composition()` and their interfaces, such as
 `OpenSkyMagicAdapters` and `OpenSkySessionInterface`, are outside too, for the reason the
