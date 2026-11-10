@@ -66,8 +66,9 @@ only the types of its job, and the coordinator uses the parts.
 
 A `public` declaration that no other module uses widens what other modules can come to depend
 on. This is information hiding, after David Parnas. Periphery's redundant-public report finds
-nothing on this package layout (measured 2026-11-08), so `make design-index-report` also runs
-its own check on the index store (`tools/lint-index/public-surface.py`).
+nothing on this package layout (measured 2026-11-08), so `make lint-index` runs its own check
+on the index store and fails on each finding (`tools/lint-index/public-surface.py --gate`). The
+`Index checks` CI job runs it.
 
 - The index store holds no access levels. The check reads the source line at each definition,
   and finds `public` or `open` before the name, or a `public extension` around it.

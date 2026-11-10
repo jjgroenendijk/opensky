@@ -1,4 +1,4 @@
-"""Design rule 3, as a report: public declarations that no other module uses.
+"""Design rule 3: public declarations that no other module uses.
 
 Reads the index store that a build writes, through Xcode's libIndexStore. The store holds
 no access levels, so the check reads the source line at each definition and finds `public`
@@ -7,8 +7,9 @@ another module when code in another module names it. A test file that imports th
 with `@testable` sees internal declarations, so its use does not count. A declaration stays
 needed when another module uses one of its members or names it as a protocol witness, or when a needed declaration of its own
 module names it, such as a type in the signature of a used function. Protocol witnesses and
-overrides take the access their requirement needs, so they are left out. Fails nothing.
-Usage: public-surface.py <DataStore> <repo>. See docs/decisions/design-metrics.md.
+overrides take the access their requirement needs, so they are left out. With --gate it
+fails on any finding; without, it reports and passes.
+Usage: public-surface.py <DataStore> <repo> [--gate]. See docs/decisions/design-metrics.md.
 """
 
 import collections
@@ -131,13 +132,15 @@ def self_check():
             and unwrapped == ["s:3App5LimitV7currentvpZ", "s:3App5LimitV4sizevp"])
 
 
-def report(public, names):
+def report(public, names, gate):
     rows = sorted((names[usr][1], names[usr][2], names[usr][3], names[usr][0])
                   for usr in public)
-    print(f"[INFO] design rule 3, minimal public surface: {len(rows)} public declarations "
+    failed = gate and bool(rows)
+    tag = "[FAIL]" if failed else "[INFO]" if rows else "[ OK ]"
+    print(f"{tag} design rule 3, minimal public surface: {len(rows)} public declarations "
           f"no other module uses ({len(names)} public declarations counted)")
     for _, path, line, name in rows:
-        print(f"  {path}:{line}: {name}")
+        print(f"  {path}:{line}: {name}", file=sys.stderr if failed else sys.stdout)
     for name, count in collections.Counter(row[0] for row in rows).most_common():
         print(f"    {name}: {count}")
 
@@ -216,8 +219,10 @@ def main():
         return 1
     names, references, witnesses = read_store(*opened, repo)
     public = {usr: (name, home) for usr, (name, home, _, _) in names.items()}
-    report(unused(public, references, witnesses), names)
-    return 0
+    rows = unused(public, references, witnesses)
+    gate = "--gate" in sys.argv[3:]
+    report(rows, names, gate)
+    return 1 if gate and rows else 0
 
 
 if __name__ == "__main__":
