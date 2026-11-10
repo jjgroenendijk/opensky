@@ -1151,7 +1151,9 @@ targets += testing(
 targets += composition(
     "OpenSkySession",
     dependencies: [
-        "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRenderCore", "OpenSkyRendering",
+        "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyConditions",
+        "OpenSkyInventoryInterface", "OpenSkyProgressionInterface",
+        "OpenSkyRenderCore", "OpenSkyRendering",
         "OpenSkyWorldState", "OpenSkySessionInterface", "OpenSkyActors", "OpenSkyCombat",
         "OpenSkyCrime", "OpenSkyDialogue", "OpenSkyFactions", "OpenSkyInventory",
         "OpenSkyMagic", "OpenSkyMenus", "OpenSkyPerception", "OpenSkyProgression",

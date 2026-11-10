@@ -136,15 +136,15 @@ extension EffectsBlastsAdapter {
     public func showMuzzleFlash(
         _ visuals: ProjectileVisuals, at position: SIMD3<Float>, along direction: SIMD3<Float>
     ) {
-        game.effects.showMuzzleFlash(
+        let flash = MuzzleFlash(
             model: visuals.muzzleFlashModel,
             light: game.effects.records.resolve(
                 visuals.muzzleFlashLight,
                 fromPlugin: game.combat.explosions.itemPlugin
             ),
-            at: position, along: direction,
             duration: visuals.muzzleFlashDuration
         )
+        game.effects.showMuzzleFlash(flash, at: position, along: direction)
     }
 
     public func showExplosionLight(_ light: ReferenceKey, at position: SIMD3<Float>) {

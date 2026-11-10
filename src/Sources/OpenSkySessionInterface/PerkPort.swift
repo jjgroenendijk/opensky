@@ -17,15 +17,13 @@ public protocol PerkPort: AnyObject {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
-        lock: ReferenceKey,
-        level: UInt8
+        lock: (key: ReferenceKey, level: UInt8)
     ) -> Float
     func modified(
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,
-        subjects: (ReferenceKey) -> PerkEvaluationSubjects,
-        seams: ConditionContext
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float
     func multiplier(
         at entryPoint: PerkEntryPoint,
@@ -40,6 +38,16 @@ public protocol PerkPort: AnyObject {
 
 /// The default arguments a protocol requirement cannot carry.
 extension PerkPort {
+    public func modified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: (ReferenceKey) -> PerkEvaluationSubjects,
+        seams: ConditionContext = ConditionContext()
+    ) -> Float {
+        modified(value, at: entryPoint, on: key, given: (subjects(key), seams))
+    }
+
     @discardableResult public func multiplier(
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,

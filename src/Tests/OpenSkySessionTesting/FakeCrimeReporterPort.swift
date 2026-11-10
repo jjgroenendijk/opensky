@@ -62,16 +62,14 @@ extension FakeCrimeReporterPort {
     }
 
     nonisolated public struct ReportTheftCall: CustomStringConvertible {
-        public let item: FormID
-        public let count: Int32
+        public let stack: (item: FormID, count: Int32)
         public let reference: ReferenceKey
         public let owner: ReferenceOwner?
         public let actor: ReferenceKey
 
         public var description: String {
             [
-                "item: " + String(describing: item),
-                "count: " + String(describing: count),
+                "stack: " + String(describing: stack),
                 "reference: " + String(describing: reference),
                 "owner: " + String(describing: owner),
                 "actor: " + String(describing: actor)
@@ -138,15 +136,13 @@ nonisolated extension FakeCrimeReporterPort {
 
     @discardableResult
     public func reportTheft(
-        of item: FormID,
-        count: Int32,
+        of stack: (item: FormID, count: Int32),
         from reference: ReferenceKey,
         owner: ReferenceOwner?,
         by actor: ReferenceKey
     ) -> CrimeOutcome {
         reportTheftCalls.append(ReportTheftCall(
-            item: item,
-            count: count,
+            stack: stack,
             reference: reference,
             owner: owner,
             actor: actor

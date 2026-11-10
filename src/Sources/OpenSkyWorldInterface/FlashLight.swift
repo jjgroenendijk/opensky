@@ -24,3 +24,16 @@ nonisolated public struct FlashLight: Equatable, Sendable {
         self.elapsed = elapsed
     }
 }
+
+/// A shot's muzzle flash: the `NAM1` model and the muzzle light, shown for `duration` s.
+nonisolated public struct MuzzleFlash: Equatable, Sendable {
+    public var model: String?
+    public var light: ReferenceKey?
+    public var duration: Float
+
+    public init(model: String?, light: ReferenceKey?, duration: Float) {
+        self.model = model
+        self.light = light
+        self.duration = duration
+    }
+}

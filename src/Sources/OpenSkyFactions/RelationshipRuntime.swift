@@ -71,15 +71,14 @@ public struct RelationshipRuntime: RelationshipAccess {
         _ rank: Int8,
         of observer: ReferenceKey,
         toward target: ReferenceKey,
-        in cell: CellSceneLocation? = nil,
-        targetCell: CellSceneLocation? = nil
+        cells: (observer: CellSceneLocation?, target: CellSceneLocation?) = (nil, nil)
     ) -> Bool {
         guard observer != target else { return false }
         let mine = write(
-            state(of: observer).setting(rank, toward: target), for: observer, in: cell
+            state(of: observer).setting(rank, toward: target), for: observer, in: cells.observer
         )
         let theirs = write(
-            state(of: target).setting(rank, toward: observer), for: target, in: targetCell
+            state(of: target).setting(rank, toward: observer), for: target, in: cells.target
         )
         return mine || theirs
     }

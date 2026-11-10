@@ -21,8 +21,8 @@ struct LockAndRefusalAdapterTests {
         let locked = InventoryAdapterFixture.interaction(
             .open, lock: LockData(level: .novice, key: nil)
         )
-        host.fakePerks.modifiedValueAtOnLockLevelResult = 2
-        host.fakePerks.modifiedValueAtOnSubjectsSeamsResult = 1
+        host.fakePerks.modifiedValueAtOnLockResult = 2
+        host.fakePerks.modifiedValueAtOnGivenResult = 1
         host.fakeProgression.reportSkillUseResult = 5
         host.fakeCrime.reportLockpickingResult = 10
         host.fakeInventory.nameResult = "Lockpick"
@@ -41,7 +41,7 @@ struct LockAndRefusalAdapterTests {
         #expect(locks.lockables() == [locked])
         #expect(locks.itemName(FormID(0xA)) == "Lockpick")
         #expect(host.fakeWorldState.incrementMiscStatCalls.map(\.name) == ["Locks Picked"])
-        #expect(host.fakePerks.modifiedValueAtOnLockLevelCalls.map(\.level) == [25])
+        #expect(host.fakePerks.modifiedValueAtOnLockCalls.map(\.lock.level) == [25])
     }
 
     @Test func eachFrameStepsTheLockpickingBoard() {

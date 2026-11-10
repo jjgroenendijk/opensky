@@ -57,8 +57,7 @@ public final class FakeRelationshipAccess: RelationshipAccess {
         _ rank: Int8,
         of observer: ReferenceKey,
         toward target: ReferenceKey,
-        in _: CellSceneLocation?,
-        targetCell _: CellSceneLocation?
+        cells _: (observer: CellSceneLocation?, target: CellSceneLocation?)
     ) -> Bool {
         ranks[[observer, target]] = rank
         return true

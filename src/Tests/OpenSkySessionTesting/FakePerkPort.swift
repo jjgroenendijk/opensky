@@ -13,10 +13,10 @@ nonisolated public final class FakePerkPort: PerkPort {
     public var addResult = false
     public var choicesCalls: [ChoicesCall] = []
     public var choicesResult: [PerkEntryPointChoice] = []
-    public var modifiedValueAtOnLockLevelCalls: [ModifiedValueAtOnLockLevelCall] = []
-    public var modifiedValueAtOnLockLevelResult: Float = 0
-    public var modifiedValueAtOnSubjectsSeamsCalls: [ModifiedValueAtOnSubjectsSeamsCall] = []
-    public var modifiedValueAtOnSubjectsSeamsResult: Float = 0
+    public var modifiedValueAtOnLockCalls: [ModifiedValueAtOnLockCall] = []
+    public var modifiedValueAtOnLockResult: Float = 0
+    public var modifiedValueAtOnGivenCalls: [ModifiedValueAtOnGivenCall] = []
+    public var modifiedValueAtOnGivenResult: Float = 0
     public var multiplierCalls: [MultiplierCall] = []
     public var multiplierResult: Float = 0
     public var ownershipCalls: [ReferenceKey] = []
@@ -43,36 +43,34 @@ extension FakePerkPort {
         }
     }
 
-    nonisolated public struct ModifiedValueAtOnLockLevelCall: CustomStringConvertible {
+    nonisolated public struct ModifiedValueAtOnLockCall: CustomStringConvertible {
         public let value: Float
         public let entryPoint: PerkEntryPoint
         public let holder: ActorValueHolder
-        public let lock: ReferenceKey
-        public let level: UInt8
+        public let lock: (key: ReferenceKey, level: UInt8)
 
         public var description: String {
             [
                 "value: " + String(describing: value),
                 "entryPoint: " + String(describing: entryPoint),
                 "holder: " + String(describing: holder),
-                "lock: " + String(describing: lock),
-                "level: " + String(describing: level)
+                "lock: " + String(describing: lock)
             ].joined(separator: ", ")
         }
     }
 
-    nonisolated public struct ModifiedValueAtOnSubjectsSeamsCall: CustomStringConvertible {
+    nonisolated public struct ModifiedValueAtOnGivenCall: CustomStringConvertible {
         public let value: Float
         public let entryPoint: PerkEntryPoint
         public let key: ReferenceKey
-        public let seams: ConditionContext
+        public let conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
 
         public var description: String {
             [
                 "value: " + String(describing: value),
                 "entryPoint: " + String(describing: entryPoint),
                 "key: " + String(describing: key),
-                "seams: " + String(describing: seams)
+                "conditions: " + String(describing: conditions)
             ].joined(separator: ", ")
         }
     }
@@ -115,33 +113,30 @@ nonisolated extension FakePerkPort {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
-        lock: ReferenceKey,
-        level: UInt8
+        lock: (key: ReferenceKey, level: UInt8)
     ) -> Float {
-        modifiedValueAtOnLockLevelCalls.append(ModifiedValueAtOnLockLevelCall(
+        modifiedValueAtOnLockCalls.append(ModifiedValueAtOnLockCall(
             value: value,
             entryPoint: entryPoint,
             holder: holder,
-            lock: lock,
-            level: level
+            lock: lock
         ))
-        return modifiedValueAtOnLockLevelResult
+        return modifiedValueAtOnLockResult
     }
 
     public func modified(
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,
-        subjects: (ReferenceKey) -> PerkEvaluationSubjects,
-        seams: ConditionContext
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float {
-        modifiedValueAtOnSubjectsSeamsCalls.append(ModifiedValueAtOnSubjectsSeamsCall(
+        modifiedValueAtOnGivenCalls.append(ModifiedValueAtOnGivenCall(
             value: value,
             entryPoint: entryPoint,
             key: key,
-            seams: seams
+            conditions: conditions
         ))
-        return modifiedValueAtOnSubjectsSeamsResult
+        return modifiedValueAtOnGivenResult
     }
 
     public func multiplier(

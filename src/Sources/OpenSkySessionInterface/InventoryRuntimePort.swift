@@ -8,13 +8,6 @@ public protocol InventoryRuntimePort: InventoryAccess, Sendable {
     @discardableResult func add(
         _ item: FormID,
         count: Int32,
-        to holder: InventoryHolder,
-        stolen: Bool,
-        copies: [ItemCopy]
-    ) throws -> ReferenceInventoryState
-    @discardableResult func add(
-        _ item: FormID,
-        count: Int32,
         to holder: InventoryHolder
     ) throws -> ReferenceInventoryState
     var baselines: InventoryBaselineResolver { get }
@@ -35,27 +28,6 @@ public protocol InventoryRuntimePort: InventoryAccess, Sendable {
         _ item: FormID,
         count: Int32,
         from source: InventoryHolder,
-        to destination: InventoryHolder,
-        markingStolen: Bool
-    ) throws
-}
-
-/// The default arguments a protocol requirement cannot carry.
-extension InventoryRuntimePort {
-    @discardableResult public func add(
-        _ item: FormID,
-        count: Int32,
-        to holder: InventoryHolder
-    ) throws -> ReferenceInventoryState {
-        try add(item, count: count, to: holder, stolen: false, copies: [])
-    }
-
-    public func transfer(
-        _ item: FormID,
-        count: Int32,
-        from source: InventoryHolder,
         to destination: InventoryHolder
-    ) throws {
-        try transfer(item, count: count, from: source, to: destination, markingStolen: false)
-    }
+    ) throws
 }

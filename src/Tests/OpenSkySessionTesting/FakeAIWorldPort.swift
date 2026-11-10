@@ -2,7 +2,6 @@
 
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
-public import OpenSkyPhysics
 public import OpenSkySessionInterface
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
@@ -24,7 +23,7 @@ nonisolated public final class FakeAIWorldPort: AIWorldPort {
     public var lightLevelResult: Float = 0
     public var moveActorCalls: [(actor: ReferenceKey, point: SIMD3<Float>)] = []
     public var moveActorResult: NPCMoveCommandResult?
-    public var movePackageActorCalls: [MovePackageActorCall] = []
+    public var movePackageActorCalls: [PackageMove] = []
     public var movePackageActorResult: PackageMoveResult?
     public var packageActorActivityCalls: [ReferenceKey] = []
     public var packageActorActivityResult: PackageActorActivity?
@@ -44,24 +43,6 @@ nonisolated public final class FakeAIWorldPort: AIWorldPort {
 }
 
 extension FakeAIWorldPort {
-    nonisolated public struct MovePackageActorCall: CustomStringConvertible {
-        public let actor: ReferenceKey
-        public let point: SIMD3<Float>
-        public let direct: Bool
-        public let gait: LocomotionGait?
-        public let walkRunBlend: Float?
-
-        public var description: String {
-            [
-                "actor: " + String(describing: actor),
-                "point: " + String(describing: point),
-                "direct: " + String(describing: direct),
-                "gait: " + String(describing: gait),
-                "walkRunBlend: " + String(describing: walkRunBlend)
-            ].joined(separator: ", ")
-        }
-    }
-
     nonisolated public struct IsFurnitureInUseCall: CustomStringConvertible {
         public let furniture: ReferenceKey
         public let marker: Int?
@@ -123,20 +104,8 @@ nonisolated extension FakeAIWorldPort {
         return moveActorResult
     }
 
-    public func movePackageActor(
-        _ actor: ReferenceKey,
-        to point: SIMD3<Float>,
-        direct: Bool,
-        gait: LocomotionGait?,
-        walkRunBlend: Float?
-    ) -> PackageMoveResult {
-        movePackageActorCalls.append(MovePackageActorCall(
-            actor: actor,
-            point: point,
-            direct: direct,
-            gait: gait,
-            walkRunBlend: walkRunBlend
-        ))
+    public func movePackageActor(_ move: PackageMove) -> PackageMoveResult {
+        movePackageActorCalls.append(move)
         guard let movePackageActorResult else {
             preconditionFailure("FakeAIWorldPort.movePackageActor has no result")
         }

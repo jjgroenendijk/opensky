@@ -17,16 +17,14 @@ extension FakeFaceMorphPort {
         public let emotion: TopicInfo.ResponseEmotion
         public let value: UInt32
         public let actor: FormID
-        public let now: Float
-        public let seconds: Float?
+        public let time: (now: Float, seconds: Float?)
 
         public var description: String {
             [
                 "emotion: " + String(describing: emotion),
                 "value: " + String(describing: value),
                 "actor: " + String(describing: actor),
-                "now: " + String(describing: now),
-                "seconds: " + String(describing: seconds)
+                "time: " + String(describing: time)
             ].joined(separator: ", ")
         }
     }
@@ -41,15 +39,13 @@ nonisolated extension FakeFaceMorphPort {
         _ emotion: TopicInfo.ResponseEmotion,
         value: UInt32,
         on actor: FormID,
-        now: Float,
-        seconds: Float?
+        time: (now: Float, seconds: Float?)
     ) {
         showEmotionCalls.append(ShowEmotionCall(
             emotion: emotion,
             value: value,
             actor: actor,
-            now: now,
-            seconds: seconds
+            time: time
         ))
     }
 

@@ -41,14 +41,11 @@ final class FakePackageWorld: PackageWorld {
         location.formID == FormID(0x700) ? PackagePlace(point: Self.place, radius: 0) : nil
     }
 
-    func movePackageActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool, gait: LocomotionGait?,
-        walkRunBlend: Float?
-    ) -> PackageMoveResult {
-        gaits.append(gait)
-        walkRunBlends.append(walkRunBlend)
-        moves.append(point)
-        movers.append(actor)
+    func movePackageActor(_ move: PackageMove) -> PackageMoveResult {
+        gaits.append(move.gait)
+        walkRunBlends.append(move.walkRunBlend)
+        moves.append(move.point)
+        movers.append(move.actor)
         return moverSlotsFull ? .busy : .started
     }
 

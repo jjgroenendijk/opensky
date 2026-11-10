@@ -143,22 +143,21 @@ public final class PerkCoordinator {
         )
     }
 
-    /// `modified` at a lockpicking entry point: `lock` is the locked reference, and
-    /// `GetLockLevel` on it answers `level`, which the Novice to Master Locks perks read.
+    /// `modified` at a lockpicking entry point: `lock.key` is the locked reference, and
+    /// `GetLockLevel` on it answers `lock.level`, which the Novice to Master Locks perks read.
     public func modified(
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
-        lock: ReferenceKey,
-        level: UInt8
+        lock: (key: ReferenceKey, level: UInt8)
     ) -> Float {
         var seams = ConditionContext()
-        seams.locks = LockConditionResolution(levels: [lock: level])
+        seams.locks = LockConditionResolution(levels: [lock.key: lock.level])
         return modified(
             value,
             at: entryPoint,
             on: holder,
-            subjects: PerkEvaluationSubjects(owner: holder.key, lockedReference: lock),
+            subjects: PerkEvaluationSubjects(owner: holder.key, lockedReference: lock.key),
             seams: seams
         )
     }

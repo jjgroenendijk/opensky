@@ -214,17 +214,8 @@ extension AIWorldAdapter {
         packageMoves.packageSandboxActivityEnded(activity, actor: actor)
     }
 
-    public func movePackageActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool, gait: LocomotionGait?,
-        walkRunBlend: Float?
-    ) -> PackageMoveResult {
-        packageMoves.movePackageActor(
-            actor,
-            to: point,
-            direct: direct,
-            gait: gait,
-            walkRunBlend: walkRunBlend
-        )
+    public func movePackageActor(_ move: PackageMove) -> PackageMoveResult {
+        packageMoves.movePackageActor(move)
     }
 
     public func packageAliasStacks() -> [ReferenceKey: PackageAliasStack] {

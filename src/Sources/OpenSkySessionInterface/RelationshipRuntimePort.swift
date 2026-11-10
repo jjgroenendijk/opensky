@@ -8,19 +8,7 @@ public protocol RelationshipRuntimePort {
         _ rank: Int8,
         of observer: ReferenceKey,
         toward target: ReferenceKey,
-        in cell: CellSceneLocation?,
-        targetCell: CellSceneLocation?
+        cells: (observer: CellSceneLocation?, target: CellSceneLocation?)
     ) -> Bool
     func state(of key: ReferenceKey) -> ActorRelationshipState
-}
-
-/// The default arguments a protocol requirement cannot carry.
-extension RelationshipRuntimePort {
-    @discardableResult public func setRank(
-        _ rank: Int8,
-        of observer: ReferenceKey,
-        toward target: ReferenceKey
-    ) -> Bool {
-        setRank(rank, of: observer, toward: target, in: nil, targetCell: nil)
-    }
 }

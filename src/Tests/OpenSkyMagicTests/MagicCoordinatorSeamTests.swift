@@ -33,8 +33,7 @@ struct MagicCoordinatorSeamTests {
             _ value: Float,
             at _: PerkEntryPoint,
             on _: ActorValueHolder,
-            subjects _: PerkEvaluationSubjects?,
-            actorValue _: (Int32) -> Float?
+            reading _: PerkInputs
         ) -> PerkEntryPointOutcome {
             PerkEntryPointOutcome(value: value, input: value, applied: 0, skipped: [])
         }

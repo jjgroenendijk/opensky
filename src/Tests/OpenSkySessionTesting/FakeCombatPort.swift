@@ -91,16 +91,12 @@ extension FakeCombatPort {
         public let amount: Float
         public let target: ReferenceKey
         public let attacker: ReferenceKey?
-        public let kind: CombatHitKind
-        public let canSever: Bool
 
         public var description: String {
             [
                 "amount: " + String(describing: amount),
                 "target: " + String(describing: target),
-                "attacker: " + String(describing: attacker),
-                "kind: " + String(describing: kind),
-                "canSever: " + String(describing: canSever)
+                "attacker: " + String(describing: attacker)
             ].joined(separator: ", ")
         }
     }
@@ -160,16 +156,12 @@ nonisolated extension FakeCombatPort {
     public func applyHealthDamage(
         _ amount: Float,
         to target: ReferenceKey,
-        attacker: ReferenceKey?,
-        kind: CombatHitKind,
-        canSever: Bool
+        attacker: ReferenceKey?
     ) -> Bool {
         applyHealthDamageCalls.append(ApplyHealthDamageCall(
             amount: amount,
             target: target,
-            attacker: attacker,
-            kind: kind,
-            canSever: canSever
+            attacker: attacker
         ))
         return applyHealthDamageResult
     }

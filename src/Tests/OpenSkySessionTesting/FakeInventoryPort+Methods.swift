@@ -200,19 +200,12 @@ extension FakeInventoryPort {
 
     @discardableResult
     public func pickpocket(
-        _ item: FormID,
-        count: Int32,
+        _ stack: (item: FormID, count: Int32),
         named name: String,
         from target: InventoryHolder,
         roll: Float
     ) -> PickpocketOutcome {
-        pickpocketCalls.append(PickpocketCall(
-            item: item,
-            count: count,
-            name: name,
-            target: target,
-            roll: roll
-        ))
+        pickpocketCalls.append(PickpocketCall(stack: stack, name: name, target: target, roll: roll))
         guard let pickpocketResult else {
             preconditionFailure("FakeInventoryPort.pickpocket has no result")
         }
@@ -226,19 +219,12 @@ extension FakeInventoryPort {
 
     @discardableResult
     public func plant(
-        _ item: FormID,
-        count: Int32,
+        _ stack: (item: FormID, count: Int32),
         named name: String,
         into target: InventoryHolder,
         roll: Float
     ) -> PickpocketOutcome {
-        plantCalls.append(PlantCall(
-            item: item,
-            count: count,
-            name: name,
-            target: target,
-            roll: roll
-        ))
+        plantCalls.append(PlantCall(stack: stack, name: name, target: target, roll: roll))
         guard let plantResult else {
             preconditionFailure("FakeInventoryPort.plant has no result")
         }

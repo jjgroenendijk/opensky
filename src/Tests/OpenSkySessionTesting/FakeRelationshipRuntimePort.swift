@@ -20,16 +20,14 @@ extension FakeRelationshipRuntimePort {
         public let rank: Int8
         public let observer: ReferenceKey
         public let target: ReferenceKey
-        public let cell: CellSceneLocation?
-        public let targetCell: CellSceneLocation?
+        public let cells: (observer: CellSceneLocation?, target: CellSceneLocation?)
 
         public var description: String {
             [
                 "rank: " + String(describing: rank),
                 "observer: " + String(describing: observer),
                 "target: " + String(describing: target),
-                "cell: " + String(describing: cell),
-                "targetCell: " + String(describing: targetCell)
+                "cells: " + String(describing: cells)
             ].joined(separator: ", ")
         }
     }
@@ -41,15 +39,13 @@ nonisolated extension FakeRelationshipRuntimePort {
         _ rank: Int8,
         of observer: ReferenceKey,
         toward target: ReferenceKey,
-        in cell: CellSceneLocation?,
-        targetCell: CellSceneLocation?
+        cells: (observer: CellSceneLocation?, target: CellSceneLocation?)
     ) -> Bool {
         setRankCalls.append(SetRankCall(
             rank: rank,
             observer: observer,
             target: target,
-            cell: cell,
-            targetCell: targetCell
+            cells: cells
         ))
         return setRankResult
     }

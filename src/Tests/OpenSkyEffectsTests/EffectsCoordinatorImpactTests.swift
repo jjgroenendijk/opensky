@@ -113,4 +113,16 @@ struct EffectsCoordinatorImpactTests {
         }
         #expect(effects.flashLights.count == EffectsCoordinator.flashLightLimit)
     }
+
+    @Test func aMuzzleFlashShowsItsLightForItsTime() {
+        let effects = EffectsCoordinator()
+        let light = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x901)
+        let flash = MuzzleFlash(model: nil, light: light, duration: 0.5)
+        effects.showMuzzleFlash(flash, at: SIMD3(1, 2, 3), along: SIMD3(0, 1, 0))
+        #expect(effects.flashLights == [FlashLight(
+            light: light,
+            position: SIMD3(1, 2, 3),
+            duration: 0.5
+        )])
+    }
 }

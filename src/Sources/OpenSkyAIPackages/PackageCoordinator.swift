@@ -31,12 +31,7 @@ public protocol PackageWorld: AnyObject {
     func packagePlace(
         of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
     ) -> PackagePlace?
-    /// A `direct` move walks the straight line on the terrain, as a static-pathing
-    /// patrol does.
-    func movePackageActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool, gait: LocomotionGait?,
-        walkRunBlend: Float?
-    ) -> PackageMoveResult
+    func movePackageActor(_ move: PackageMove) -> PackageMoveResult
     /// The packages each filled quest alias adds to its actor.
     func packageAliasStacks() -> [ReferenceKey: PackageAliasStack]
     /// The points a patrol walks, from its start marker along the linked references.

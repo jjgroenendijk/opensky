@@ -69,7 +69,7 @@ struct MagicWorldFactsTests {
     }
 
     @Test func perksModifyAndChooseThroughThePerkPort() {
-        host.fakePerks.modifiedValueAtOnSubjectsSeamsResult = 9
+        host.fakePerks.modifiedValueAtOnGivenResult = 9
         let subjects = PerkEvaluationSubjects(owner: .player)
         let value = adapter.perkModified(
             3, at: .modSpellMagnitude, on: .player, given: (subjects, ConditionContext())

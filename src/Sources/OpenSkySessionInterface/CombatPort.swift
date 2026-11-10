@@ -20,9 +20,7 @@ public protocol CombatPort: AnyObject {
     @discardableResult func applyHealthDamage(
         _ amount: Float,
         to target: ReferenceKey,
-        attacker: ReferenceKey?,
-        kind: CombatHitKind,
-        canSever: Bool
+        attacker: ReferenceKey?
     ) -> Bool
     var archery: ArcheryRuntime? { get }
     func combatActor(key: ReferenceKey) -> CombatActorObservation?
@@ -64,15 +62,4 @@ public protocol CombatPort: AnyObject {
     ) -> [CombatCommand]
     var bowZoomTimeScale: Float { get }
     func combatHostility(of key: ReferenceKey) -> ActorHostility
-}
-
-/// The default arguments a protocol requirement cannot carry.
-extension CombatPort {
-    @discardableResult public func applyHealthDamage(
-        _ amount: Float,
-        to target: ReferenceKey,
-        attacker: ReferenceKey?
-    ) -> Bool {
-        applyHealthDamage(amount, to: target, attacker: attacker, kind: .other, canSever: false)
-    }
 }
