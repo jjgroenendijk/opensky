@@ -1,5 +1,6 @@
 // One host for every Session adapter part, each port a generated fake.
 
+import Foundation
 import OpenSkyAudio
 import OpenSkyGameData
 import OpenSkyMenusInterface
@@ -65,6 +66,7 @@ final class SessionHost: AudioListenerHost, AudioMixHost, AudioWorldHost,
     var gameSession: (any GameSessionPort)?
     var renderer: (any RendererPort)?
     var soundMixTimings = SoundMixTimings()
+    var exportDate = Date(timeIntervalSinceReferenceDate: 0)
     var sessionRecords: (any SessionRecordsPort)?
     private(set) var startedAudioCount = 0
 

@@ -437,6 +437,11 @@ extension SessionPorts {
         scope.runCommand(action)
     }
 
+    /// The wall clock: the app shell is where real time enters the session.
+    var exportDate: Date {
+        Date()
+    }
+
     var runtimeState: any RuntimeStatePort {
         scope.runtimeState
     }

@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 
 // The audio world reads the mix and the listener; the runtime state world reads clocks and facts.
@@ -115,5 +116,14 @@ struct AudioRuntimeStateTests {
         world.referenceMotion.addMountSeams(to: &context)
         #expect(context.mounts.canFlyHere)
         #expect(context.mounts.crashLandRequests.isEmpty)
+    }
+
+    @Test func withoutSoundRecordsTheEngineKeepsItsMix() throws {
+        let format = try #require(AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2))
+        let engine = WorldAudioEngine(manualRenderingFormat: format)
+        let audio = AudioWorldAdapter(game: host, stage: nil)
+        audio.applySoundMix(to: engine)
+        #expect(engine.soundMix == nil)
+        #expect(audio.footstepStore == nil)
     }
 }

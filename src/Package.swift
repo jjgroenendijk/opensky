@@ -1418,8 +1418,9 @@ targets += composition(
     ],
     tests: [
         "OpenSkyActorsInterface", "OpenSkyAudio", "OpenSkyConditions", "OpenSkyFormatsESM",
-        "OpenSkyGameData", "OpenSkyMenusInterface", "OpenSkyRendering", "OpenSkySessionInterface",
-        "OpenSkySessionTesting", "OpenSkyWorldConditionFunctions", "OpenSkyWorldState"
+        "OpenSkyGameData", "OpenSkyMenusInterface", "OpenSkyRendering", "OpenSkySaveInterface",
+        "OpenSkySessionInterface", "OpenSkySessionTesting", "OpenSkyWorldConditionFunctions",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 
