@@ -84,9 +84,18 @@ cyclomatic_complexity:
   warning: 12
   error: 20
 
-# Design rule 1 (docs/decisions/design-metrics.md).
+# Design rule 1 (docs/decisions/design-metrics.md). A parameter with a default value does
+# not count.
 nesting:
   type_level: 1
+
+function_parameter_count:
+  warning: 4
+  error: 4
+
+large_tuple:
+  warning: 2
+  error: 2
 
 # SwiftFormat (--wrapconditions before-first, --enable wrapMultilineStatementBraces)
 # breaks a long `if let a, let b, c > 0 {` onto multiple lines and drops the `{`
