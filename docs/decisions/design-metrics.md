@@ -38,3 +38,26 @@ The nesting limit is a gate in `tools/lint/.swiftlint.yml` since 2026-11-09.
 Example: `func cast(spell: FormID, from caster: ReferenceKey, at target: ReferenceKey,
 hand: SpellHand, cost: Float)` takes 5 parameters. A `SpellCast` value that holds them makes
 the call read as one idea and gives the next field a home.
+
+## Rule 2: fan-out per type
+
+A type that uses many other types does many jobs, and a change in any of them can break it.
+This is coupling between objects, after Chidamber and Kemerer. `make design-index-report`
+builds the index store, as `make lint-index` does, and counts for each type the other types
+it uses (`tools/lint-index/fan-out.py`).
+
+- A type uses another when code inside it names that type or one of its members.
+- Only types declared under `src/Sources/` count. The standard library and Apple's
+  frameworks do not, because every type uses them.
+- A type's nested types, and the type it is nested in, do not count.
+- The composition root and the session scope are left out by name: `GameViewController`,
+  `GameSessionScope`, `GameSessionScopeFactories`, and `SessionPorts`. Building the object
+  graph is their job.
+
+| Limit | Value | Findings when set (2026-11-10) | Reason |
+| --- | --- | --- | --- |
+| Other types one type uses | 40 | 103 of 4322 types | The count spreads widely: 733 types use more than 10, 329 more than 20, and the largest, `CellSceneBuilder`, uses 327. A limit of 40 comes first, so the fixes start with the worst types. The limit tightens in later pull requests, as rule 1 did |
+
+Example: a coordinator that reads records, runs the game rules, and starts effects uses the
+types of all three jobs. When each job moves into its own type behind a port, each part uses
+only the types of its job, and the coordinator uses the parts.

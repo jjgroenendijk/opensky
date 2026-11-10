@@ -92,6 +92,9 @@ lint-index: | $(VENDOR) ## Build the index, then fail on unused code or an adapt
 design-report: ## Report the design-metric findings (docs/decisions/design-metrics.md); fails nothing
 	@./tools/design/size-report.sh
 
+design-index-report: | $(VENDOR) ## Build the index, then report the design rules that read it; fails nothing
+	@./tools/design/index-report.sh
+
 dump-comments: ## Print long comment blocks to rewrite in bulk [ARGS='-r src/Sources/X']
 	@./tools/comment-blocks.sh dump $(ARGS)
 
