@@ -1200,8 +1200,9 @@ targets += composition(
     ],
     tests: [
         "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActorsInterface",
-        "OpenSkyCombatInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
-        "OpenSkyPerception", "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface",
+        "OpenSkyCombatInterface", "OpenSkyEngineTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyGameData", "OpenSkyPerception", "OpenSkyPerceptionInterface",
+        "OpenSkyProgressionInterface",
         "OpenSkyRendering", "OpenSkySessionInterface", "OpenSkySessionTesting",
         "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
