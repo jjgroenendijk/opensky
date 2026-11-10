@@ -7,8 +7,11 @@ import Foundation
 import Synchronization
 
 nonisolated public enum RecordDecodeScope {
+    /// Maps a stored FormID value into the scope's FormID space.
+    public typealias Translate = @Sendable (UInt32) -> UInt32
+
     private struct Context: Sendable {
-        let translation: FormIDTranslation?
+        let translate: Translate?
         let stringPlugin: String?
     }
 
@@ -16,19 +19,18 @@ nonisolated public enum RecordDecodeScope {
     /// Open scopes on any task. Zero keeps `FormID.init` to one atomic load.
     private static let openScopes = Atomic<Int>(0)
 
-    /// Runs `body` with FormIDs read through `translation` and table IDs tagged
+    /// Runs `body` with FormIDs read through `translate` and table IDs tagged
     /// with `stringPlugin`. Nil for either leaves that part as written.
     public static func decoding<Value>(
-        translation: FormIDTranslation?,
+        translate: Translate?,
         stringPlugin: String?,
         _ body: () throws -> Value
     ) rethrows -> Value {
-        let translation = translation?.isIdentity == true ? nil : translation
-        guard translation != nil || stringPlugin != nil else { return try body() }
+        guard translate != nil || stringPlugin != nil else { return try body() }
         openScopes.add(1, ordering: .relaxed)
         defer { openScopes.subtract(1, ordering: .relaxed) }
         return try $context.withValue(
-            Context(translation: translation, stringPlugin: stringPlugin)
+            Context(translate: translate, stringPlugin: stringPlugin)
         ) {
             try body()
         }
@@ -37,9 +39,9 @@ nonisolated public enum RecordDecodeScope {
     static func translated(_ raw: UInt32) -> UInt32 {
         guard
             raw != 0, openScopes.load(ordering: .relaxed) != 0,
-            let translation = context?.translation
+            let translate = context?.translate
         else { return raw }
-        return translation.translate(raw)
+        return translate(raw)
     }
 
     static var stringPlugin: String? {

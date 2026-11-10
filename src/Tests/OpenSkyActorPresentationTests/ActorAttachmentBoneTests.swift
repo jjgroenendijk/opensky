@@ -71,7 +71,7 @@ struct ActorAttachmentBoneTests {
         let visual = try makeResolver().resolve(
             appearance: appearance(outfit: 0x400),
             carried: CarriedItems(
-                entries: [Container.Entry(
+                entries: [ContainerEntry(
                     item: FormID(0x600), count: 1, owner: nil, ownerCondition: nil, condition: nil
                 )],
                 combatStyle: nil

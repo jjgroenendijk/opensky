@@ -126,6 +126,28 @@ nonisolated extension PluginHeader {
 }
 
 nonisolated extension ESMFile {
+    /// The load-order space of opened plugins; each one's TES4 flags or `.esl`
+    /// extension marks it light.
+    public static func loadOrder(_ plugins: [(name: String, file: ESMFile)]) -> FormIDResolver {
+        FormIDResolver.loadOrder(
+            plugins.map(\.name),
+            light: Set(plugins.filter { $0.file.isLight(named: $0.name) }
+                .map { $0.name.lowercased() })
+        )
+    }
+
+    /// The plugin's master list, or none with the TES4 error noted.
+    public func masters(noting skipped: inout SkippedRecords) -> [String] {
+        do {
+            return try pluginHeader().masters
+        } catch {
+            skipped.note("TES4", error: error)
+            return []
+        }
+    }
+}
+
+nonisolated extension ESMFile {
     /// Decodes the TES4 record. Cheap (one small record) but not cached —
     /// callers keep the result.
     public func pluginHeader() throws -> PluginHeader {

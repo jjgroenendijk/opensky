@@ -23,7 +23,7 @@ nonisolated public struct MapMarkerIndex: Sendable {
         for (name, file) in plugins {
             let resolver = FormIDResolver(
                 pluginName: name,
-                masters: skippedRecords.masters(of: file)
+                masters: file.masters(noting: &skippedRecords)
             )
             guard let top = file.topGroup(of: "WRLD") else { continue }
             for case let .group(group) in skippedRecords.children(of: top)

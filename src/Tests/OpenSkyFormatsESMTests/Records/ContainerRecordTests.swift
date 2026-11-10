@@ -38,7 +38,7 @@ struct ContainerRecordTests {
         #expect(container.base.modelPath == "clutter\\chest.nif")
         #expect(container.base.sounds?.activation == FormID(0x0DD))
         #expect(container.entries.count == 2)
-        #expect(container.entries[0] == Container.Entry(
+        #expect(container.entries[0] == ContainerEntry(
             item: FormID(0x0AA), count: 3, owner: nil, ownerCondition: nil, condition: nil
         ))
         // COED attaches to the CNTO immediately before it, not the first.

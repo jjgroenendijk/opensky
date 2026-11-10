@@ -110,16 +110,6 @@ nonisolated public struct FormIDResolver: Equatable, Sendable {
         )
     }
 
-    /// The load-order space of opened plugins; each one's TES4 flags or `.esl`
-    /// extension marks it light.
-    public static func loadOrder(files plugins: [(name: String, file: ESMFile)]) -> FormIDResolver {
-        loadOrder(
-            plugins.map(\.name),
-            light: Set(plugins.filter { $0.file.isLight(named: $0.name) }
-                .map { $0.name.lowercased() })
-        )
-    }
-
     /// Nil for the null FormID. A master index at/above `masters.count`
     /// resolves to the plugin itself — index == count is the normal encoding
     /// for records the plugin defines; anything higher is clamped the same

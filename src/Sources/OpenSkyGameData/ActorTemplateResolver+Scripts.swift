@@ -21,7 +21,7 @@ nonisolated extension ActorTemplateResolver {
 
     /// The `CNTO` items an actor carries, through `useInventory`, the flag that also
     /// carries the default outfit (UESP `NPC_` template flags).
-    public func resolveCarriedItems(base: FormID) throws -> ActorSourcedField<[Container.Entry]> {
+    public func resolveCarriedItems(base: FormID) throws -> ActorSourcedField<[ContainerEntry]> {
         let (npcs, _) = try resolveChain(base: base)
         return resolveField(in: npcs, flag: .useInventory) {
             ActorSourcedField(value: $0.details.inventory, source: $0.formID)

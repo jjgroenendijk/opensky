@@ -45,7 +45,7 @@ nonisolated public struct ActorBaseDetails: Equatable, Sendable {
     var bounds: ObjectBounds?
     var shortName: LString?
     var keywords: [FormID] = []
-    public var inventory: [Container.Entry] = []
+    public var inventory: [ContainerEntry] = []
     var attacks: [RaceAttack] = []
     var destructible: Destructible?
     /// INAM LVLI, ANAM ARMO, ATKR RACE, ZNAM CSTY, GNAM FLST, HCLF CLFM.
