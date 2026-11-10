@@ -12,10 +12,14 @@ LIBRARY = f"{DEVELOPER_DIR}/Toolchains/XcodeDefault.xctoolchain/usr/lib/libIndex
 # indexstore.h: symbol roles and kinds this check reads.
 ROLE_DEFINITION = 1 << 1
 ROLE_REFERENCE = 1 << 2
+REL_CHILD_OF = 1 << 9
 REL_BASE_OF = 1 << 10
+REL_OVERRIDE_OF = 1 << 11
+REL_ACCESSOR_OF = 1 << 15
 REL_CONTAINED_BY = 1 << 16
 TYPE_KINDS = {5, 6, 7, 8}  # enum, struct, class, protocol
 PROTOCOL = 8
+EXTENSION = 9
 INSTANCE_PROPERTY = 19
 # The build cache maps the package folder, src/, to this prefix (docs/tools/build-system.md).
 CACHE_PREFIX = "/^src/"
@@ -58,6 +62,8 @@ def load(path):
                                                                         OCCURRENCE_CALLBACK]),
         "indexstore_occurrence_get_symbol": (VOIDP, [VOIDP]),
         "indexstore_occurrence_get_roles": (ctypes.c_uint64, [VOIDP]),
+        "indexstore_occurrence_get_line_col": (None, [VOIDP, ctypes.POINTER(ctypes.c_uint),
+                                                      ctypes.POINTER(ctypes.c_uint)]),
         "indexstore_occurrence_relations_apply_f": (ctypes.c_bool, [VOIDP, VOIDP,
                                                                    RELATION_CALLBACK]),
         "indexstore_symbol_relation_get_roles": (ctypes.c_uint64, [VOIDP]),
@@ -102,9 +108,10 @@ def record_files(lib, store):
     return {path: record for path, (_, record) in newest.items()}
 
 
-def occurrences(lib, store, record):
+def occurrences(lib, store, record, located=False):
     """Yields (roles, symbol kind, usr, name, relations) for one record. Each relation is
-    (roles, kind, usr) of the related symbol."""
+    (roles, kind, usr) of the related symbol. With `located`, each tuple ends with the
+    1-based (line, column) of the occurrence, the column in UTF-8 bytes."""
     reader = lib.indexstore_record_reader_create(store, record.encode(), None)
     if not reader:
         return []
@@ -122,10 +129,14 @@ def occurrences(lib, store, record):
             return True
 
         lib.indexstore_occurrence_relations_apply_f(item, None, RELATION_CALLBACK(relation))
-        found.append((lib.indexstore_occurrence_get_roles(item),
-                      lib.indexstore_symbol_get_kind(symbol),
-                      lib.indexstore_symbol_get_usr(symbol).text(),
-                      lib.indexstore_symbol_get_name(symbol).text(), relations))
+        row = (lib.indexstore_occurrence_get_roles(item), lib.indexstore_symbol_get_kind(symbol),
+               lib.indexstore_symbol_get_usr(symbol).text(),
+               lib.indexstore_symbol_get_name(symbol).text(), relations)
+        if located:
+            line, column = ctypes.c_uint(), ctypes.c_uint()
+            lib.indexstore_occurrence_get_line_col(item, ctypes.byref(line), ctypes.byref(column))
+            row += ((line.value, column.value),)
+        found.append(row)
         return True
 
     lib.indexstore_record_reader_occurrences_apply_f(reader, None,
