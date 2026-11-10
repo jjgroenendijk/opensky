@@ -155,6 +155,30 @@ struct ParticleNodeAndRibbonTests {
         #expect(generator.segments(at: 0, color: SIMD4(repeating: 1)) == now)
     }
 
+    @Test func aLightningBoltGrowsTheBranchesItAsksFor() throws {
+        let file = try NIFFile(data: NIFFixture.file(
+            blocks: [
+                NIFFixture.Block("NiNode", NIFFixture.niNode(
+                    prefix: NIFFixture.avObjectPrefix(controllerRef: 1)
+                )),
+                NIFFixture.Block(
+                    "BSProceduralLightningController",
+                    NIFParticleParameterFixture.lightningController(
+                        targetRef: 0, subdivisions: 4, branches: 2, length: 512, width: 16
+                    )
+                )
+            ],
+            roots: [0]
+        ))
+        let bolt = try #require(try file.particleSystems().first?.lightning)
+        let generator = LightningBolt(parameters: bolt, seed: 1)
+        let branches = generator.branches(generation: 0)
+        // The main bolt comes first; each branch leaves it with two fewer halvings.
+        #expect(branches.count > 1)
+        #expect(branches.dropFirst().allSatisfy { $0.points.count < branches[0].points.count })
+        #expect(generator.segments(at: 0, color: SIMD4(repeating: 1)).count > 16)
+    }
+
     @Test func aPlayedSequenceSwitchesTheBirthRateAndRestartsItsClock() {
         let timing = ControllerTiming(
             cycle: .loop, frequency: 1, phase: 0, startTime: 0, stopTime: 1

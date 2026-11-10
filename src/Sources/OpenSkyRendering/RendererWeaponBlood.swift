@@ -36,9 +36,10 @@ extension Renderer {
         state.encoder.setDepthStencilState(waterDepthState)
         encode(
             groups: blood,
-            staticPipeline: blendedPipeline,
-            skinnedPipeline: skinnedBlendedPipelines.skinned,
-            morphedSkinnedPipeline: skinnedBlendedPipelines.morphed,
+            pipelines: GroupPipelines(
+                staticMesh: blendedPipeline, skinned: skinnedBlendedPipelines.skinned,
+                morphedSkinned: skinnedBlendedPipelines.morphed
+            ),
             state: &state
         )
         endMaterialDrawState(state: &state)

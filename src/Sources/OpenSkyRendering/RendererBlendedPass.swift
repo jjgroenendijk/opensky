@@ -29,7 +29,7 @@ extension Renderer {
         for index in order where layers.contains(groups[index].layer) {
             let group = groups[index]
             encode(
-                group: group, at: index,
+                (group, index),
                 pipelines: group.material.additiveBlend == nil ? pipelines : additive,
                 boundPipeline: &boundPipeline, state: &state
             )

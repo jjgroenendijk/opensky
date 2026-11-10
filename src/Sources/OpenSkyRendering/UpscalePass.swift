@@ -174,7 +174,7 @@ final class UpscaleTargets {
             _ format: MTLPixelFormat, _ size: SIMD2<Int>, _ usage: MTLTextureUsage, _ label: String
         ) throws -> any MTLTexture {
             try Self.privateTexture(
-                device: device, format: format, size: size, usage: usage, label: label
+                device: device, shape: (format, size), usage: usage, label: label
             )
         }
         color = try texture(colorFormat, input, [.renderTarget, usage.color], "UpscaleInputColor")
@@ -203,9 +203,10 @@ final class UpscaleTargets {
     }
 
     static func privateTexture(
-        device: any MTLDevice, format: MTLPixelFormat, size: SIMD2<Int>, usage: MTLTextureUsage,
-        label: String
+        device: any MTLDevice, shape: (format: MTLPixelFormat, size: SIMD2<Int>),
+        usage: MTLTextureUsage, label: String
     ) throws -> any MTLTexture {
+        let (format, size) = shape
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: format, width: size.x, height: size.y, mipmapped: false
         )

@@ -138,8 +138,7 @@ struct ShadowResidentClampTests {
             cameraToWorld: cameraToWorld,
             tanHalfFovY: tanf(fovY * 0.5),
             aspectRatio: aspect,
-            sliceNear: cascade.splitNear,
-            sliceFar: cascade.splitFar
+            slice: (cascade.splitNear, cascade.splitFar)
         )
         let sphere = ShadowCascadeMath.boundingSphere(corners)
         let lightView = MatrixMath.lookAt(

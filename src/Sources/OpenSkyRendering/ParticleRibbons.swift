@@ -114,7 +114,7 @@ nonisolated public struct LightningBolt: Sendable {
         let levels = min(parameters.subdivisions, 8)
         let length = max(parameters.length + signed(&random) * parameters.lengthVariation, 0)
         let main = bend(
-            from: .zero, to: SIMD3(0, length, 0), levels: levels,
+            (.zero, SIMD3(0, length, 0)), levels: levels,
             amplitude: parameters.arcOffset, random: &random
         )
         var result = [Branch(
@@ -134,7 +134,7 @@ nonisolated public struct LightningBolt: Sendable {
             let direction = simd_normalize(SIMD3<Float>(0, 1, 0) + sideways * 0.6)
             let reach = length * (0.3 + unit(&random) * 0.2)
             let points = bend(
-                from: start, to: start + direction * reach, levels: max(levels - 2, 1),
+                (start, start + direction * reach), levels: max(levels - 2, 1),
                 amplitude: parameters.arcOffset * 0.5, random: &random
             )
             result.append(Branch(
@@ -148,10 +148,10 @@ nonisolated public struct LightningBolt: Sendable {
     /// Midpoint displacement: each level halves every piece and pushes the new point
     /// sideways, by half as much as the level before.
     private func bend(
-        from start: SIMD3<Float>, to end: SIMD3<Float>, levels: Int, amplitude: Float,
+        _ span: (start: SIMD3<Float>, end: SIMD3<Float>), levels: Int, amplitude: Float,
         random: inout SplitMix64
     ) -> [SIMD3<Float>] {
-        var points = [start, end]
+        var points = [span.start, span.end]
         var reach = amplitude
         for _ in 0 ..< levels {
             var next: [SIMD3<Float>] = [points[0]]

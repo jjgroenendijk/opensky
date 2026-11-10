@@ -50,8 +50,7 @@ extension Renderer {
         )
         guard
             cullScene.encode(
-                frustums: viewProjections.map(Frustum.init(viewProjection:)),
-                roomVisibility: roomCulling.visibility,
+                views: (viewProjections.map(Frustum.init(viewProjection:)), roomCulling.visibility),
                 slot: slot,
                 resources: gpuCull.resources,
                 commandBuffer: commandBuffer
@@ -137,10 +136,10 @@ extension Renderer {
     func gpuVisibility(
         of index: Int,
         in list: GPUCullList?,
-        view: Int,
-        slot: Int,
-        frustum: Frustum
+        view seen: (index: Int, frustum: Frustum),
+        slot: Int
     ) -> GPUGroupVisibility {
+        let (view, frustum) = seen
         guard
             let list,
             let cull = gpuCull.active,

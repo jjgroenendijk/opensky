@@ -104,12 +104,12 @@ extension Renderer {
     /// byte offset. Ring stride is the (possibly regrown) slot capacity,
     /// not drawCount. Matrices live per instance (writeVisibleInstances).
     private func updateDrawUniforms(
-        slot: Int,
-        draw: Int,
+        at cursor: (slot: Int, draw: Int),
         group: DrawGroup,
         pointLightCount: Int,
         alphaScale: Float
     ) -> Int {
+        let (slot, draw) = cursor
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         let material = group.material
         let effect = material.effect
@@ -228,16 +228,11 @@ extension Renderer {
     /// blended groups to `encodeBlendedGroups`.
     public func encode(
         groups: [DrawGroup],
-        staticPipeline: any MTLRenderPipelineState,
-        skinnedPipeline: any MTLRenderPipelineState,
-        morphedSkinnedPipeline: any MTLRenderPipelineState,
+        pipelines shipping: GroupPipelines,
         skippingBlended: Bool = false,
         state: inout ScenePassState
     ) {
-        let pipelines = GroupPipelines(
-            staticMesh: staticPipeline, skinned: skinnedPipeline,
-            morphedSkinned: morphedSkinnedPipeline
-        ).resolved(debug: isRenderDebugActive ? debugPipelines : nil)
+        let pipelines = shipping.resolved(debug: isRenderDebugActive ? debugPipelines : nil)
         let layers = effectiveRenderLayers
         // Pipeline bound lazily: an all-culled list encodes nothing. Model
         // ordering is retained, so switch only when rigid/skinned kind does.
@@ -247,7 +242,7 @@ extension Renderer {
                 continue
             }
             encode(
-                group: group, at: index, pipelines: pipelines,
+                (group, index), pipelines: pipelines,
                 boundPipeline: &boundPipeline, state: &state
             )
         }
@@ -255,12 +250,12 @@ extension Renderer {
 
     /// Draws one group; `index` is its place in the list the cull pass saw.
     func encode(
-        group: DrawGroup,
-        at index: Int,
+        _ entry: (group: DrawGroup, index: Int),
         pipelines: GroupPipelines,
         boundPipeline: inout ObjectIdentifier?,
         state: inout ScenePassState
     ) {
+        let (group, index) = entry
         guard
             !group.isWeaponBlood || state.weaponBloodAlpha != nil,
             let visible = visibleInstances(of: group, at: index, state: &state)
@@ -276,8 +271,7 @@ extension Renderer {
             ? writePointLights(near: group.lightingCenter, slot: state.slot, draw: state.drawCursor)
             : PointLightRange()
         let uniformOffset = updateDrawUniforms(
-            slot: state.slot,
-            draw: state.drawCursor,
+            at: (state.slot, state.drawCursor),
             group: group,
             // An effect shape takes no light from a shadow-casting light.
             pointLightCount: group.material.effect == nil
@@ -355,7 +349,7 @@ extension Renderer {
         state: inout ScenePassState
     ) -> VisibleInstances? {
         switch gpuVisibility(
-            of: index, in: state.cullList, view: 0, slot: state.slot, frustum: state.frustum
+            of: index, in: state.cullList, view: (0, state.frustum), slot: state.slot
         ) {
         case .skipped:
             return nil
@@ -444,9 +438,10 @@ extension Renderer {
         let rayTraced = rayTracedPipelines
         encode(
             groups: frameDrawGroups.opaque,
-            staticPipeline: rayTraced?.opaque ?? opaquePipeline,
-            skinnedPipeline: skinnedOpaquePipeline,
-            morphedSkinnedPipeline: morphedSkinnedOpaquePipeline,
+            pipelines: GroupPipelines(
+                staticMesh: rayTraced?.opaque ?? opaquePipeline, skinned: skinnedOpaquePipeline,
+                morphedSkinned: morphedSkinnedOpaquePipeline
+            ),
             state: &state
         )
         endMaterialDrawState(state: &state)
@@ -455,9 +450,11 @@ extension Renderer {
         state.materialDepth = .writes
         encode(
             groups: frameDrawGroups.alphaTested,
-            staticPipeline: rayTraced?.alphaTest ?? alphaTestPipeline,
-            skinnedPipeline: skinnedAlphaTestPipeline,
-            morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
+            pipelines: GroupPipelines(
+                staticMesh: rayTraced?.alphaTest ?? alphaTestPipeline,
+                skinned: skinnedAlphaTestPipeline,
+                morphedSkinned: morphedSkinnedAlphaTestPipeline
+            ),
             skippingBlended: true,
             state: &state
         )
@@ -515,7 +512,7 @@ extension Renderer {
             guard
                 let sceneDepth = descriptor.depthAttachment.texture,
                 let upscaled = encodeUpscale(
-                    upscaleFrame, sceneDepth: sceneDepth, target: target, state: state,
+                    upscaleFrame, into: (target, sceneDepth), state: state,
                     frameOffset: frameOffset
                 )
             else { return false }

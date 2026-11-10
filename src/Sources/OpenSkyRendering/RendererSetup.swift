@@ -357,7 +357,7 @@ extension Renderer {
     ) throws -> ParticlePipelines {
         func make(_ mode: ParticleBlendMode) throws -> any MTLRenderPipelineState {
             try makeParticlePipeline(
-                library: library, compiler: compiler, view: view, mode: mode, names: names
+                library: library, compiler: compiler, view: view, blend: (mode, names)
             )
         }
         return try ParticlePipelines(
@@ -448,9 +448,9 @@ extension Renderer {
         library: any MTLLibrary,
         compiler: PipelineCache,
         view: MTKView,
-        mode: ParticleBlendMode,
-        names: BlendPipelineNames
+        blend: (mode: ParticleBlendMode, names: BlendPipelineNames)
     ) throws -> any MTLRenderPipelineState {
+        let (mode, names) = blend
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = names.vertex

@@ -72,7 +72,7 @@ struct FreeFlyCameraTests {
     func forwardMoveFollowsHeading() {
         var camera = FreeFlyCamera(position: origin, yaw: 0, pitch: 0)
         let dt: Float = 0.5
-        camera.applyMove(forwardAxis: 1, rightAxis: 0, upAxis: 0, boost: false, dt: dt)
+        camera.applyMove((1, 0), up: 0, boost: false, dt: dt)
         // Moves along +X by baseSpeed * dt.
         #expect(abs(camera.position.x - FreeFlyCamera.baseSpeed * dt) < 1e-2)
         #expect(abs(camera.position.y) < 1e-3)
@@ -82,7 +82,7 @@ struct FreeFlyCameraTests {
     @Test
     func strafeFollowsRightVector() {
         var camera = FreeFlyCamera(position: origin, yaw: 0, pitch: 0)
-        camera.applyMove(forwardAxis: 0, rightAxis: 1, upAxis: 0, boost: false, dt: 1)
+        camera.applyMove((0, 1), up: 0, boost: false, dt: 1)
         // Right at yaw 0 = south (-Y).
         #expect(camera.position.y < 0)
         #expect(abs(camera.position.x) < 1e-3)
@@ -92,7 +92,7 @@ struct FreeFlyCameraTests {
     @Test
     func verticalMoveFollowsWorldUp() {
         var camera = FreeFlyCamera(position: origin, yaw: 1.3, pitch: 0.6)
-        camera.applyMove(forwardAxis: 0, rightAxis: 0, upAxis: 1, boost: false, dt: 1)
+        camera.applyMove((0, 0), up: 1, boost: false, dt: 1)
         // World +Z only, independent of heading.
         #expect(abs(camera.position.x) < 1e-3)
         #expect(abs(camera.position.y) < 1e-3)
@@ -103,8 +103,8 @@ struct FreeFlyCameraTests {
     func boostMultipliesSpeed() {
         var plain = FreeFlyCamera(position: origin, yaw: 0, pitch: 0)
         var boosted = FreeFlyCamera(position: origin, yaw: 0, pitch: 0)
-        plain.applyMove(forwardAxis: 1, rightAxis: 0, upAxis: 0, boost: false, dt: 1)
-        boosted.applyMove(forwardAxis: 1, rightAxis: 0, upAxis: 0, boost: true, dt: 1)
+        plain.applyMove((1, 0), up: 0, boost: false, dt: 1)
+        boosted.applyMove((1, 0), up: 0, boost: true, dt: 1)
         let ratio = boosted.position.x / plain.position.x
         #expect(abs(ratio - FreeFlyCamera.boostMultiplier) < 1e-4)
     }
@@ -112,7 +112,7 @@ struct FreeFlyCameraTests {
     @Test
     func diagonalMoveNotFaster() {
         var camera = FreeFlyCamera(position: origin, yaw: 0, pitch: 0)
-        camera.applyMove(forwardAxis: 1, rightAxis: 1, upAxis: 0, boost: false, dt: 1)
+        camera.applyMove((1, 1), up: 0, boost: false, dt: 1)
         // Normalized direction -> total distance is baseSpeed, not sqrt(2) more.
         #expect(abs(simd_length(camera.position) - FreeFlyCamera.baseSpeed) < 1e-1)
     }
@@ -120,7 +120,7 @@ struct FreeFlyCameraTests {
     @Test
     func zeroInputDoesNotMove() {
         var camera = FreeFlyCamera(position: origin, yaw: 0.5, pitch: 0.2)
-        camera.applyMove(forwardAxis: 0, rightAxis: 0, upAxis: 0, boost: false, dt: 1)
+        camera.applyMove((0, 0), up: 0, boost: false, dt: 1)
         #expect(camera.position == origin)
     }
 

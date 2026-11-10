@@ -150,8 +150,7 @@ struct ShadowCascadeMathTests {
             cameraToWorld: Self.cameraToWorld,
             tanHalfFovY: tanf(Self.fovY * 0.5),
             aspectRatio: Self.aspect,
-            sliceNear: cascade.splitNear,
-            sliceFar: cascade.splitFar
+            slice: (cascade.splitNear, cascade.splitFar)
         )
     }
 
@@ -221,8 +220,7 @@ struct ShadowCascadeMathTests {
             cameraToWorld: cameraToWorld,
             tanHalfFovY: tanf(Self.fovY * 0.5),
             aspectRatio: Self.aspect,
-            sliceNear: cascade.splitNear,
-            sliceFar: cascade.splitFar
+            slice: (cascade.splitNear, cascade.splitFar)
         )
         let sphere = ShadowCascadeMath.boundingSphere(corners)
         let lightView = MatrixMath.lookAt(

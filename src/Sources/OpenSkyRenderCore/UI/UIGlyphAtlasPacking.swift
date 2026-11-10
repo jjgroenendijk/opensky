@@ -192,8 +192,7 @@ nonisolated extension UIGlyphAtlas {
         let originX = shelfX
         let originY = shelfY
         blit(
-            coverage: coverage, cellWidth: cellWidth, cellHeight: cellHeight,
-            originX: originX, originY: originY
+            coverage: coverage, cell: (cellWidth, cellHeight), origin: (originX, originY)
         )
         shelfX += cellWidth + Self.padding
         shelfHeight = max(shelfHeight, cellHeight)

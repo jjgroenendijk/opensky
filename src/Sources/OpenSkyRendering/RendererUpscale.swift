@@ -173,11 +173,11 @@ extension Renderer {
     /// `target` with the upscaled frame drawn. Nil when an encoder cannot be made.
     func encodeUpscale(
         _ frame: UpscaleFrame,
-        sceneDepth: any MTLTexture,
-        target: MTL4RenderPassDescriptor,
+        into output: (target: MTL4RenderPassDescriptor, sceneDepth: any MTLTexture),
         state: ScenePassState,
         frameOffset: Int
     ) -> ScenePassState? {
+        let (target, sceneDepth) = output
         switch frame.targets.scaler {
         case let .temporal(scaler):
             state.encoder.endEncoding()

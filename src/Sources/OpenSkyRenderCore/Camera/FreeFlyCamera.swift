@@ -170,13 +170,12 @@ nonisolated public struct FreeFlyCamera: Sendable {
     /// seconds. Combined direction is normalized so diagonal motion is not
     /// faster; Shift applies the boost multiplier.
     public mutating func applyMove(
-        forwardAxis: Float,
-        rightAxis: Float,
-        upAxis: Float,
+        _ axes: (forward: Float, right: Float),
+        up: Float,
         boost: Bool,
         dt: Float
     ) {
-        let direction = forward * forwardAxis + right * rightAxis + Self.worldUp * upAxis
+        let direction = forward * axes.forward + right * axes.right + Self.worldUp * up
         let magnitude = simd_length(direction)
         guard magnitude > .ulpOfOne else { return }
         let speed = Self.baseSpeed * (boost ? Self.boostMultiplier : 1)
@@ -188,9 +187,8 @@ nonisolated public struct FreeFlyCamera: Sendable {
     public mutating func update(_ input: CameraInput) {
         applyLook(lookRight: input.lookRight, lookUp: input.lookUp)
         applyMove(
-            forwardAxis: input.moveForward,
-            rightAxis: input.moveRight,
-            upAxis: input.moveUp,
+            (input.moveForward, input.moveRight),
+            up: input.moveUp,
             boost: input.boost,
             dt: input.dt
         )

@@ -44,8 +44,7 @@ extension Renderer {
         beginMeshGrassFrame(slot: state.slot, groupCount: groups.count)
         for (index, group) in groups.enumerated() {
             encodeGrassGroup(
-                group,
-                index: index,
+                (group, index),
                 filter: &filter,
                 state: &state,
                 stats: &stats
@@ -90,12 +89,12 @@ extension Renderer {
     }
 
     private func encodeGrassGroup(
-        _ group: GrassDrawGroup,
-        index: Int,
+        _ entry: (group: GrassDrawGroup, index: Int),
         filter: inout GrassInstanceFilter,
         state: inout ScenePassState,
         stats: inout GrassDrawStats
     ) {
+        let (group, index) = entry
         let upload = writeGrassInstances(
             group, filter: &filter, state: &state, stats: &stats
         )

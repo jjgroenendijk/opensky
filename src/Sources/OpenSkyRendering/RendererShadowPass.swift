@@ -304,7 +304,7 @@ extension Renderer {
         {
             guard
                 let visible = visibleCasters(
-                    of: group, at: index, list: list, in: context, state: &state
+                    of: (group, index), list: list, in: context, state: &state
                 )
             else { continue }
             let pipeline = shadowPipeline(group: group, alphaTested: alphaTested)
@@ -313,9 +313,8 @@ extension Renderer {
                 boundPipeline = ObjectIdentifier(pipeline)
             }
             drawCasterGroup(
-                group,
+                (group, visible),
                 alphaTested: alphaTested,
-                visible: visible,
                 in: context,
                 state: &state
             )
@@ -324,15 +323,14 @@ extension Renderer {
 
     /// The group's surviving casters for this cascade, or nil when none survive.
     private func visibleCasters(
-        of group: DrawGroup,
-        at index: Int,
+        of entry: (group: DrawGroup, index: Int),
         list: GPUCullList,
         in context: ShadowCascadeContext,
         state: inout ShadowPassState
     ) -> VisibleInstances? {
+        let (group, index) = entry
         let visibility = context.cullView < 0 ? .cpu : gpuVisibility(
-            of: index, in: list, view: context.cullView, slot: state.slot,
-            frustum: context.frustum
+            of: index, in: list, view: (context.cullView, context.frustum), slot: state.slot
         )
         switch visibility {
         case .skipped:
@@ -394,12 +392,12 @@ extension Renderer {
     /// Binds the group's buffers/textures and emits one instanced draw for the
     /// surviving casters of this cascade.
     private func drawCasterGroup(
-        _ group: DrawGroup,
+        _ caster: (group: DrawGroup, visible: VisibleInstances),
         alphaTested: Bool,
-        visible: VisibleInstances,
         in context: ShadowCascadeContext,
         state: inout ShadowPassState
     ) {
+        let (group, visible) = caster
         guard
             let uniformOffset = writeShadowDrawUniforms(
                 state: state,

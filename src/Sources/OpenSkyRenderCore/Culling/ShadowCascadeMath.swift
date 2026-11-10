@@ -115,13 +115,11 @@ nonisolated public enum ShadowCascadeMath: Sendable {
                 cameraToWorld: request.cameraToWorld,
                 tanHalfFovY: tanHalfFovY,
                 aspectRatio: request.aspectRatio,
-                sliceNear: sliceNear,
-                sliceFar: sliceFar
+                slice: (sliceNear, sliceFar)
             )
             let viewProjection = fitCascade(
                 corners: corners,
-                sun: sun,
-                up: up,
+                light: (sun, up),
                 resolution: resolution,
                 casterBackup: request.casterBackup,
                 residentBounds: request.residentBounds
@@ -175,12 +173,11 @@ nonisolated public enum ShadowCascadeMath: Sendable {
         cameraToWorld: simd_float4x4,
         tanHalfFovY: Float,
         aspectRatio: Float,
-        sliceNear: Float,
-        sliceFar: Float
+        slice: (near: Float, far: Float)
     ) -> [SIMD3<Float>] {
         var corners: [SIMD3<Float>] = []
         corners.reserveCapacity(8)
-        for depth in [sliceNear, sliceFar] {
+        for depth in [slice.near, slice.far] {
             let halfHeight = depth * tanHalfFovY
             let halfWidth = halfHeight * aspectRatio
             for signY in [Float(-1), 1] {
@@ -215,12 +212,12 @@ nonisolated public enum ShadowCascadeMath: Sendable {
     /// `casterBackup` so casters between the sun and the slice still render.
     public static func fitCascade(
         corners: [SIMD3<Float>],
-        sun: SIMD3<Float>,
-        up: SIMD3<Float>,
+        light: (sun: SIMD3<Float>, up: SIMD3<Float>),
         resolution: Int,
         casterBackup: Float,
         residentBounds: ModelBounds? = nil
     ) -> simd_float4x4 {
+        let (sun, up) = light
         let sphere = boundingSphere(corners)
         let lightView = MatrixMath.lookAt(
             eye: sphere.center - sun * sphere.radius,
