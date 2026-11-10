@@ -92,11 +92,11 @@ struct PackageAliasStackTests {
     @Test func startAtNearestBeginsAtTheClosestMarker() {
         let points: [SIMD3<Float>] = [[0, 0, 0], [100, 0, 0], [200, 0, 0]]
         let near: SIMD3<Float> = [110, 0, 0]
-        #expect(PackageOverrideExecution.startingAtNearest(points, to: near, loops: false)
+        #expect(PackageProcedureInputs.startingAtNearest(points, to: near, loops: false)
             == [points[1], points[2]])
-        #expect(PackageOverrideExecution.startingAtNearest(points, to: near, loops: true)
+        #expect(PackageProcedureInputs.startingAtNearest(points, to: near, loops: true)
             == [points[1], points[2], points[0]])
-        #expect(PackageOverrideExecution.startingAtNearest([], to: near, loops: true).isEmpty)
+        #expect(PackageProcedureInputs.startingAtNearest([], to: near, loops: true).isEmpty)
     }
 
     /// A sit package walks to its seat, then sits and is done.

@@ -115,30 +115,4 @@ public enum CellStreamingWalkBenchmark {
         }
         return try driver.result(render: render)
     }
-
-    /// Applies the driver's frame mask to every per-frame metric. FrameStats
-    /// summaries cover fixed full-run windows and cannot be remapped to the
-    /// filtered sample, so the derived result deliberately carries none.
-    nonisolated public static func activePhysicsResult(
-        render: OffscreenBenchResult,
-        frameMask: [Bool]
-    ) -> OffscreenBenchResult {
-        OffscreenBenchResult(
-            frameMS: activeSamples(render.frameMS, frameMask: frameMask),
-            windowSummaries: [],
-            animationMS: activeSamples(render.animationMS, frameMask: frameMask),
-            shadowMS: activeSamples(render.shadowMS, frameMask: frameMask),
-            audioUpdateMS: activeSamples(render.audioUpdateMS, frameMask: frameMask),
-            scriptUpdateMS: activeSamples(render.scriptUpdateMS, frameMask: frameMask)
-        )
-    }
-
-    nonisolated private static func activeSamples(
-        _ samples: [Double],
-        frameMask: [Bool]
-    ) -> [Double] {
-        zip(samples, frameMask).compactMap { sample, active in
-            active ? sample : nil
-        }
-    }
 }

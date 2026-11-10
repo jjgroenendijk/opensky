@@ -59,7 +59,7 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
         center: SIMD3<Float> = .zero
     ) -> DynamicCollisionVolume? {
         guard halfExtents.min() > 0, halfExtents.max().isFinite else { return nil }
-        let corners = CapsuleWorldCollider.boxVertices(halfExtents).map { $0 + center }
+        let corners = CollisionBox.vertices(halfExtents).map { $0 + center }
         var planes: [DynamicCollisionPlane] = []
         for axis in 0 ..< 3 {
             var normal = SIMD3<Float>.zero

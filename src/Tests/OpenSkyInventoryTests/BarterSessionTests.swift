@@ -38,9 +38,9 @@ struct BarterSessionTests {
         playerGold: Int32 = 1000
     ) throws -> Trading {
         let harness = try Parent.standardHarness()
-        let container = try harness.runtime.openContainer(Parent.interaction(
+        let container = try ContainerSession.open(Parent.interaction(
             reference: Parent.chestReference, base: Fixture.chest, action: .search
-        )).container
+        ), in: harness.runtime).container
         let inventory = harness.runtime.inventory
         try inventory.add(Fixture.cuirass, count: 2, to: container)
         try inventory.add(Fixture.sword, count: 1, to: .player)

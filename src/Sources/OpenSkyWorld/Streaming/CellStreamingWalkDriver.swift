@@ -97,7 +97,7 @@ public final class CellStreamingWalkDriver {
             throw CellStreamingWalkBenchmarkError.interiorNotCrossed(interiorDistance)
         }
         return CellStreamingWalkBenchmarkResult(
-            physicsRender: CellStreamingWalkBenchmark.activePhysicsResult(
+            physicsRender: Self.activePhysicsResult(
                 render: render,
                 frameMask: physicsFrameMask
             )
@@ -186,5 +186,33 @@ public final class CellStreamingWalkDriver {
             )
         }
         changePhase(.waitInterior)
+    }
+}
+
+extension CellStreamingWalkDriver {
+    /// Applies the driver's frame mask to every per-frame metric. FrameStats
+    /// summaries cover fixed full-run windows and cannot be remapped to the
+    /// filtered sample, so the derived result deliberately carries none.
+    nonisolated public static func activePhysicsResult(
+        render: OffscreenBenchResult,
+        frameMask: [Bool]
+    ) -> OffscreenBenchResult {
+        OffscreenBenchResult(
+            frameMS: activeSamples(render.frameMS, frameMask: frameMask),
+            windowSummaries: [],
+            animationMS: activeSamples(render.animationMS, frameMask: frameMask),
+            shadowMS: activeSamples(render.shadowMS, frameMask: frameMask),
+            audioUpdateMS: activeSamples(render.audioUpdateMS, frameMask: frameMask),
+            scriptUpdateMS: activeSamples(render.scriptUpdateMS, frameMask: frameMask)
+        )
+    }
+
+    nonisolated private static func activeSamples(
+        _ samples: [Double],
+        frameMask: [Bool]
+    ) -> [Double] {
+        zip(samples, frameMask).compactMap { sample, active in
+            active ? sample : nil
+        }
     }
 }

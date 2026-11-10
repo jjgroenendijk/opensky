@@ -398,17 +398,6 @@ nonisolated public final class DistantLODBuilder {
         self.configurationStore = configurationStore
     }
 
-    /// What a second builder needs to build the first ring off the build queue.
-    public func prebuild(worldspace: String) -> DistantLODPrebuild {
-        DistantLODPrebuild(
-            fileSystem: fileSystem,
-            device: meshes.device,
-            cache: textures.assetCache,
-            configurationStore: configurationStore,
-            worldspace: worldspace
-        )
-    }
-
     /// Without `largeReferences`, the object LOD keeps its large-reference shapes.
     /// `terrain` generates a terrain block from the load order; nil, or a block it cannot
     /// make, draws the vanilla file.

@@ -31,6 +31,17 @@ nonisolated public struct DistantLODPrebuild: Sendable {
         self.worldspace = worldspace
     }
 
+    /// What a second builder needs to build `builder`'s first ring off the build queue.
+    public init(of builder: DistantLODBuilder, worldspace: String) {
+        self.init(
+            fileSystem: builder.fileSystem,
+            device: builder.meshes.device,
+            cache: builder.textures.assetCache,
+            configurationStore: builder.configurationStore,
+            worldspace: worldspace
+        )
+    }
+
     @concurrent
     public func build(
         center: CellCoordinate,

@@ -138,7 +138,7 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
             return triangleContacts(
                 segment: segment,
                 motion: motion,
-                mesh: (Self.boxVertices(halfExtents), Self.boxIndices),
+                mesh: (CollisionBox.vertices(halfExtents), CollisionBox.indices),
                 transform: shape.transform
             )
         case let .sphere(radius):
@@ -289,21 +289,6 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
 }
 
 nonisolated extension CapsuleWorldCollider {
-    static let boxIndices: [UInt32] = [
-        0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7,
-        0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5,
-        2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7
-    ]
-
-    public static func boxVertices(_ half: SIMD3<Float>) -> [SIMD3<Float>] {
-        [
-            SIMD3(-half.x, -half.y, -half.z), SIMD3(half.x, -half.y, -half.z),
-            SIMD3(half.x, half.y, -half.z), SIMD3(-half.x, half.y, -half.z),
-            SIMD3(-half.x, -half.y, half.z), SIMD3(half.x, -half.y, half.z),
-            SIMD3(half.x, half.y, half.z), SIMD3(-half.x, half.y, half.z)
-        ]
-    }
-
     fileprivate static func closestSegmentTriangle(
         _ segment: (SIMD3<Float>, SIMD3<Float>),
         _ triangle: CollisionTriangle

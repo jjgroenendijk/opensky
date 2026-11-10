@@ -163,7 +163,7 @@ public final class InventoryCoordinator {
         // container's `isOpen` false.
         session?.close()
         do {
-            let opened = try runtime.openContainer(interaction)
+            let opened = try ContainerSession.open(interaction, in: runtime)
             session = opened
             sessionName = interaction.name
             return note(.opened(container: interaction.name, items: opened.totalCount))

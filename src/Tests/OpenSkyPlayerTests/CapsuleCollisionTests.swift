@@ -56,12 +56,12 @@ struct CapsuleCollisionTests {
     @Test
     func convexSphereAndCapsulePrimitivesBlockMotion() {
         let half = SIMD3<Float>(1, 10, 10)
-        let cubeVertices = CapsuleWorldCollider.boxVertices(half)
+        let cubeVertices = CollisionBox.vertices(half)
         let obstacles = [
             Self.shape(
                 geometry: .convexVertices(
                     vertices: cubeVertices,
-                    hullIndices: CapsuleWorldCollider.boxIndices
+                    hullIndices: CollisionBox.indices
                 ),
                 center: SIMD3(3, 0, 2),
                 localBounds: ModelBounds(min: -half, max: half)

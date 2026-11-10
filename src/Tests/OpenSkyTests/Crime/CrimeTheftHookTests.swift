@@ -183,8 +183,9 @@ struct CrimeTheftHookTests {
     /// goods arrive marked.
     @Test func takingFromAnOwnedContainerIsTheftAndMarksWhatMoves() throws {
         let harness = try Harness()
-        let session = try harness.chain.runtime.openContainer(
-            Chain.search(Chain.chestReference, base: InventoryBaselineFixture.chest)
+        let session = try ContainerSession.open(
+            Chain.search(Chain.chestReference, base: InventoryBaselineFixture.chest),
+            in: harness.chain.runtime
         )
         #expect(session.ownership.isTheft)
         #expect(harness.reporter.runtime.ledger().isEmpty)
@@ -204,8 +205,9 @@ struct CrimeTheftHookTests {
     /// stealing" (same page): an unowned container hands over honest goods.
     @Test func takingFromAnUnownedContainerIsNoCrime() throws {
         let harness = try Harness(owned: false)
-        let session = try harness.chain.runtime.openContainer(
-            Chain.search(Chain.chestReference, base: InventoryBaselineFixture.chest)
+        let session = try ContainerSession.open(
+            Chain.search(Chain.chestReference, base: InventoryBaselineFixture.chest),
+            in: harness.chain.runtime
         )
 
         #expect(!session.ownership.isTheft)

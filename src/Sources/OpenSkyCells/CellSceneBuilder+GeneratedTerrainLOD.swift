@@ -11,53 +11,60 @@ import OpenSkyImageKernels
 import OpenSkyRenderCore
 import OpenSkyTerrain
 
-/// One worldspace's generated terrain, built on the cell build queue.
-nonisolated final class LoadOrderTerrainLOD: TerrainLODGenerating {
-    private unowned let builder: CellSceneBuilder
-    private let world: FoundWorld
-    private let defaultHeight: Float
+nonisolated extension CellSceneBuilder {
+    /// One worldspace's generated terrain, built on the cell build queue.
+    final class LoadOrderTerrainLOD: TerrainLODGenerating {
+        private unowned let builder: CellSceneBuilder
+        private let world: FoundWorld
+        private let defaultHeight: Float
 
-    init(builder: CellSceneBuilder, world: FoundWorld, defaultHeight: Float) {
-        self.builder = builder
-        self.world = world
-        self.defaultHeight = defaultHeight
-    }
-
-    func terrainBlock(_ block: DistantLODBlock) -> GeneratedTerrainBlock? {
-        guard let source = source(for: block) else { return nil }
-        let edge = TerrainLODGenerator.textureEdge(level: block.level)
-        let diffuse = TerrainLODGenerator.diffuse(source) {
-            self.builder.terrainLODTexture($0, edge: edge)
+        init(builder: CellSceneBuilder, world: FoundWorld, defaultHeight: Float) {
+            self.builder = builder
+            self.world = world
+            self.defaultHeight = defaultHeight
         }
-        let normal = TerrainLODGenerator.normalMap(source)
-        let side = TerrainLODGenerator.textureSize
-        return GeneratedTerrainBlock(
-            model: TerrainLODGenerator.model(
-                source, diffuseKey: block.generatedDiffuseKey, normalKey: block.generatedNormalKey
-            ),
-            diffuse: DDSEncoder.rgba8888(DecodedImage(width: side, height: side, rgba: diffuse)),
-            normal: DDSEncoder.rgba8888(DecodedImage(width: side, height: side, rgba: normal))
-        )
-    }
 
-    /// Nil when no cell of the block has land.
-    func source(for block: DistantLODBlock) -> TerrainLODGenerator.Source? {
-        var cells: [TerrainLODLand?] = []
-        cells.reserveCapacity(Int(block.level * block.level))
-        for row in 0 ..< block.level {
-            for column in 0 ..< block.level {
-                let found = builder.findCell(
-                    in: world, gridX: block.origin.x + column, gridY: block.origin.y + row,
-                    localized: builder.pluginLocalized
-                )
-                cells.append(found.flatMap { builder.landRecord(in: $0) }
-                    .flatMap(TerrainLODLand.init(land:)))
+        func terrainBlock(_ block: DistantLODBlock) -> GeneratedTerrainBlock? {
+            guard let source = source(for: block) else { return nil }
+            let edge = TerrainLODGenerator.textureEdge(level: block.level)
+            let diffuse = TerrainLODGenerator.diffuse(source) {
+                self.builder.terrainLODTexture($0, edge: edge)
             }
+            let normal = TerrainLODGenerator.normalMap(source)
+            let side = TerrainLODGenerator.textureSize
+            return GeneratedTerrainBlock(
+                model: TerrainLODGenerator.model(
+                    source, diffuseKey: block.generatedDiffuseKey,
+                    normalKey: block.generatedNormalKey
+                ),
+                diffuse: DDSEncoder.rgba8888(DecodedImage(
+                    width: side,
+                    height: side,
+                    rgba: diffuse
+                )),
+                normal: DDSEncoder.rgba8888(DecodedImage(width: side, height: side, rgba: normal))
+            )
         }
-        guard cells.contains(where: { $0 != nil }) else { return nil }
-        return TerrainLODGenerator.Source(
-            level: block.level, cells: cells, defaultHeight: defaultHeight
-        )
+
+        /// Nil when no cell of the block has land.
+        func source(for block: DistantLODBlock) -> TerrainLODGenerator.Source? {
+            var cells: [TerrainLODLand?] = []
+            cells.reserveCapacity(Int(block.level * block.level))
+            for row in 0 ..< block.level {
+                for column in 0 ..< block.level {
+                    let found = builder.findCell(
+                        in: world, gridX: block.origin.x + column, gridY: block.origin.y + row,
+                        localized: builder.pluginLocalized
+                    )
+                    cells.append(found.flatMap { builder.landRecord(in: $0) }
+                        .flatMap(TerrainLODLand.init(land:)))
+                }
+            }
+            guard cells.contains(where: { $0 != nil }) else { return nil }
+            return TerrainLODGenerator.Source(
+                level: block.level, cells: cells, defaultHeight: defaultHeight
+            )
+        }
     }
 }
 

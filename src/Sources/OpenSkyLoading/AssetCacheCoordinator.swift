@@ -12,14 +12,15 @@ nonisolated public enum AssetCacheConvertersError: Error, Equatable {
     case metalUnavailable
 }
 
-public final class AssetCacheCoordinator {
-    public enum Activity: Equatable, Sendable {
-        case idle
-        case checking
-        case building
-        case clearing
-    }
+/// What the asset cache work is doing now.
+nonisolated public enum AssetCacheActivity: Equatable, Sendable {
+    case idle
+    case checking
+    case building
+    case clearing
+}
 
+public final class AssetCacheCoordinator {
     /// What one build or check needs from outside, so a test can pass fakes.
     public struct Environment: Sendable {
         public let locate: @Sendable () throws -> (files: any GameFileSource, install: URL)
@@ -35,7 +36,7 @@ public final class AssetCacheCoordinator {
     }
 
     public private(set) var settings: AssetCacheSettings
-    public private(set) var activity = Activity.idle
+    public private(set) var activity = AssetCacheActivity.idle
     public private(set) var progress: AssetCacheBuildProgress?
     public private(set) var check: AssetCacheCheck?
     public private(set) var usage: AssetCacheUsage?
@@ -180,7 +181,7 @@ public final class AssetCacheCoordinator {
     /// Runs `work` off the main actor with a builder for the current settings,
     /// then applies its result here. One job runs at a time.
     private func run(
-        _ activity: Activity,
+        _ activity: AssetCacheActivity,
         work: @escaping @Sendable (AssetCacheBuilder) async throws
             -> @Sendable @MainActor (AssetCacheCoordinator) -> Void
     ) {

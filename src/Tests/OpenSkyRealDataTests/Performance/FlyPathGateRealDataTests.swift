@@ -21,7 +21,9 @@ struct FlyPathGateRealDataTests {
             loadOrder: builder.pluginLoadOrder,
             worldspaceEditorID: worldspace
         )
-        let lodPrebuild = builder.distantLODBuilder?.prebuild(worldspace: worldspace)
+        let lodPrebuild = builder.distantLODBuilder.map {
+            DistantLODPrebuild(of: $0, worldspace: worldspace)
+        }
         let provider = BuilderCellSceneProvider(builder: builder, worldspaceEditorID: worldspace)
         let session = try StreamingGateSupport.makeStreamSession()
         StreamingGateSupport.attachEmptyScriptRuntime(to: session)

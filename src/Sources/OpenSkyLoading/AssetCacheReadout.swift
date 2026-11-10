@@ -19,7 +19,7 @@ nonisolated public enum AssetCacheReadout {
 
     static func stateLine(
         _ check: AssetCacheCheck?,
-        activity: AssetCacheCoordinator.Activity
+        activity: AssetCacheActivity
     ) -> String {
         switch activity {
         case .checking: return "State: checking"

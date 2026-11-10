@@ -44,7 +44,7 @@ struct WalkBenchmarkFrameBudgetTests {
             scriptUpdateMS: [10000, 20000, 30000, 40000]
         )
 
-        let active = CellStreamingWalkBenchmark.activePhysicsResult(
+        let active = CellStreamingWalkDriver.activePhysicsResult(
             render: render,
             frameMask: [false, true, false, true]
         )

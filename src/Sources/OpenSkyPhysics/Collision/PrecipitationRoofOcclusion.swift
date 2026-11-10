@@ -45,8 +45,8 @@ nonisolated extension StaticCollisionShape {
             )
         case let .box(halfExtents):
             triangleHit(
-                vertices: CapsuleWorldCollider.boxVertices(halfExtents),
-                indices: CapsuleWorldCollider.boxIndices,
+                vertices: CollisionBox.vertices(halfExtents),
+                indices: CollisionBox.indices,
                 origin: origin,
                 maximumDistance: maximumDistance
             )

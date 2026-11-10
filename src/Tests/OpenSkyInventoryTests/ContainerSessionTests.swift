@@ -23,9 +23,9 @@ struct ContainerSessionTests {
         let harness = try Parent.standardHarness()
         return try Opened(
             harness: harness,
-            session: harness.runtime.openContainer(Parent.interaction(
+            session: ContainerSession.open(Parent.interaction(
                 reference: Parent.chestReference, base: Fixture.chest, action: .search
-            ))
+            ), in: harness.runtime)
         )
     }
 
@@ -47,9 +47,9 @@ struct ContainerSessionTests {
     @Test func openingSomethingThatIsNotAContainerFails() throws {
         let harness = try Parent.standardHarness()
         #expect(throws: WorldItemError.notAContainer(Parent.looseItem)) {
-            try harness.runtime.openContainer(Parent.interaction(
+            try ContainerSession.open(Parent.interaction(
                 reference: Parent.looseItem, base: Fixture.lockpick, action: .take
-            ))
+            ), in: harness.runtime)
         }
     }
 

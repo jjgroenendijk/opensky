@@ -139,8 +139,8 @@ extension LocomotionBridgeTests {
             reference: FormID(1),
             transform: transform,
             geometry: .convexVertices(
-                vertices: CapsuleWorldCollider.boxVertices(half),
-                hullIndices: CapsuleWorldCollider.boxIndices
+                vertices: CollisionBox.vertices(half),
+                hullIndices: CollisionBox.indices
             ),
             bounds: bounds.transformed(by: transform)
         )
