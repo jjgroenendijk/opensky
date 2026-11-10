@@ -47,7 +47,7 @@ public struct HazardWorldDependencies {
 /// Answers `HazardWorld` from the session systems it is given.
 public final class HazardWorldAdapter {
     /// A long frame steps as this, so a stall does not stack several hits.
-    public static let longestStep: Float = 0.25
+    static let longestStep: Float = 0.25
 
     private let dependencies: HazardWorldDependencies
     public private(set) var store: HazardStore?
@@ -71,7 +71,7 @@ public final class HazardWorldAdapter {
         }
     }
 
-    public var hazards: HazardCoordinator {
+    var hazards: HazardCoordinator {
         dependencies.hazards()
     }
 

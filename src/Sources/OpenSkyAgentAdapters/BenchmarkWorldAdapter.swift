@@ -56,7 +56,7 @@ public protocol BenchmarkWorldHost: AnyObject {
 
 /// A finished run and the folder its files went to.
 public struct BenchmarkRun {
-    public let result: BenchmarkTourResult
+    let result: BenchmarkTourResult
     public let folder: URL
     public let writeError: String?
 }
@@ -89,7 +89,7 @@ public final class BenchmarkWorldAdapter {
     public var pendingRequest: BenchmarkRequest?
     /// Measures the app start once, for the first tour after launch.
     public var reportsAppStart = false
-    public private(set) var lastRun: BenchmarkRun?
+    private(set) var lastRun: BenchmarkRun?
     /// Counts finished runs, so a waiting caller sees its own run end.
     public private(set) var runCount = 0
     /// Called when a run starts (true) and when it ends (false).
@@ -102,7 +102,7 @@ public final class BenchmarkWorldAdapter {
     }
 
     private var arrivalStep: AgentWaitStep?
-    public var request: BenchmarkRequest {
+    var request: BenchmarkRequest {
         get { state.request }
         set { state.request = newValue }
     }

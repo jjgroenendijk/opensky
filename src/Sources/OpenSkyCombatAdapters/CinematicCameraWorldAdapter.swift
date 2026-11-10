@@ -22,7 +22,7 @@ import OpenSkyRuntimeState
 public import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldConditions
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 import simd
 
 /// What `CinematicCameraWorldAdapter` reads from the session. `GameViewController` conforms.
@@ -151,7 +151,7 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
         game.gameSession?.locomotion.status.feetPosition
     }
 
-    public func apply(_ frame: CinematicFrame) {
+    func apply(_ frame: CinematicFrame) {
         guard let gameSession = game.gameSession else { return }
         gameSession.worldTimeScale = frame.timeScale
         guard

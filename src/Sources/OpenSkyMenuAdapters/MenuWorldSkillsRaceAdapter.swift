@@ -13,8 +13,8 @@ import OpenSkyMagicInterface
 public import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyPlayer
-public import OpenSkyProgressionInterface
-public import OpenSkyRenderCore
+import OpenSkyProgressionInterface
+import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkySaveInterface
 import OpenSkyScriptingInterface
@@ -42,20 +42,20 @@ public protocol MenuWorldSkillsRaceHost: MenuInputConsumer {
 /// Part of `MenuWorldAdapter`, over its own narrow host.
 public struct MenuWorldSkillsRaceAdapter {
     public let game: any MenuWorldSkillsRaceHost
-    public let state: MenuPartState
+    let state: MenuPartState
 }
 
 extension MenuWorldSkillsRaceAdapter {
     /// Nil until leveling is wired, so the menu does not open on an empty card.
-    public var skillsMenuSource: (any SkillsMenuSource)? {
+    var skillsMenuSource: (any SkillsMenuSource)? {
         game.progression.leveling == nil ? nil : game.progression
     }
 
-    public var menuInputConsumer: (any MenuInputConsumer)? {
+    var menuInputConsumer: (any MenuInputConsumer)? {
         game
     }
 
-    public var isPlayerInBeastForm: Bool {
+    var isPlayerInBeastForm: Bool {
         game.playerBeastForm.isBeast
     }
 
@@ -63,7 +63,7 @@ extension MenuWorldSkillsRaceAdapter {
         game.audio.musicDirector?.playSpecialMusic(.levelUp)
     }
 
-    public var skillsMenuTexts: GameSettingTexts<SkillsMenuText> {
+    var skillsMenuTexts: GameSettingTexts<SkillsMenuText> {
         game.mapWorld.settingTexts()
     }
 
@@ -74,24 +74,24 @@ extension MenuWorldSkillsRaceAdapter {
         return state.perkSky
     }
 
-    public var perkSkySettings: PerkSkySettings {
+    var perkSkySettings: PerkSkySettings {
         let values = game.mapWorld.records?.statsSettings ?? [:]
         return PerkSkySettings { values[$0] }
     }
 
-    public var renderer: (any RendererPort)? {
+    var renderer: (any RendererPort)? {
         game.renderer
     }
 
-    public var gameFiles: (any GameFileSource)? {
+    var gameFiles: (any GameFileSource)? {
         game.swfMovies.fileSystem
     }
 
-    public var viewCamera: FreeFlyCamera? {
+    var viewCamera: FreeFlyCamera? {
         game.gameSession?.freeFlyCamera
     }
 
-    public var uiScene: UIScene {
+    var uiScene: UIScene {
         get { game.gameSession?.uiScene ?? .empty }
         nonmutating set { game.gameSession?.uiScene = newValue }
     }
@@ -100,7 +100,7 @@ extension MenuWorldSkillsRaceAdapter {
         game.worldState.component(PlayerIdentityState.self, for: .player) ?? recordIdentity
     }
 
-    public var playableRaces: [RaceChoice] {
+    var playableRaces: [RaceChoice] {
         (game.mapWorld.records?.playableRaces ?? []).map {
             RaceChoice(
                 formID: $0.formID,
@@ -110,7 +110,7 @@ extension MenuWorldSkillsRaceAdapter {
         }
     }
 
-    public var raceMenuLabels: RaceMenuLabels {
+    var raceMenuLabels: RaceMenuLabels {
         var texts: [String: String] = [:]
         for key in RaceMenuLabels.english.keys {
             texts[key] = game.mapWorld.text(game.mapWorld.records?.menuTexts[key])
@@ -169,7 +169,7 @@ extension MenuWorldSkillsRaceAdapter {
     }
 
     /// The `Player` record's own identity, before the race menu changed it.
-    public var recordIdentity: PlayerIdentityState? {
+    var recordIdentity: PlayerIdentityState? {
         guard let player = game.mapWorld.records?.player else { return nil }
         return PlayerIdentityState(
             record: player, details: player.details,

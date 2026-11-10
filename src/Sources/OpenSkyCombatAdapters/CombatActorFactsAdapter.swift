@@ -50,7 +50,7 @@ public struct CombatActorFactsAdapter {
 }
 
 extension CombatActorFactsAdapter {
-    public var playerAttacker: MeleeAttacker? {
+    var playerAttacker: MeleeAttacker? {
         guard let gameSession = game.gameSession else { return nil }
         return MeleeAttacker(
             key: .player,
@@ -60,7 +60,7 @@ extension CombatActorFactsAdapter {
         )
     }
 
-    public var playerShooter: ProjectileShooter? {
+    var playerShooter: ProjectileShooter? {
         guard let gameSession = game.gameSession else { return nil }
         return ProjectileShooter(
             key: .player,
@@ -138,7 +138,7 @@ extension CombatActorFactsAdapter {
         game.perks.choices(at: entryPoint, on: key, subjects: { _ in subjects }, seams: seams)
     }
 
-    public var isInInterior: Bool {
+    var isInInterior: Bool {
         game.streamer.interiorScene != nil
     }
 

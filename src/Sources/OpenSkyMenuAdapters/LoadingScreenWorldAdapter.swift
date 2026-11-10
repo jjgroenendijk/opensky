@@ -11,7 +11,7 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 public import OpenSkyLoading
-public import OpenSkyMenus
+import OpenSkyMenus
 public import OpenSkyMenusInterface
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
@@ -45,12 +45,12 @@ public final class LoadingScreenWorldAdapter {
     private var startCoverSince: Double?
     /// Where a fast travel lands; the cover waits until the grid is centered there.
     private var moveTarget: SIMD3<Float>?
-    public lazy var movie = MenuMovieOverlay(movies: game.swfMovies) { [weak self] in
+    lazy var movie = MenuMovieOverlay(movies: game.swfMovies) { [weak self] in
         self?.game.renderer
     }
 
     /// A stuck build must not trap the player behind the cover.
-    public static let startCoverLimitSeconds = 60.0
+    static let startCoverLimitSeconds = 60.0
 
     public let presentationHost: any LoadingScreenPresentationHost
 

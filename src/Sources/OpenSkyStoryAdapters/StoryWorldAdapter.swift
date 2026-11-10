@@ -53,7 +53,7 @@ public final class StoryWorldAdapter {
     private var lastPlayerLocation: ResolvedFormID??
     private var framesSinceLocationCheck = 0
     /// Frames between location checks, because each builds a condition context.
-    public static let locationCheckInterval = 30
+    static let locationCheckInterval = 30
 
     public var scenes: any ScenePort {
         game.scenes

@@ -14,10 +14,10 @@ public final class ScriptPartState {
     public var nodeWaits: [ModelNodeWait] = []
     public var nextNodeToken = ModelNodeWait.firstToken
     /// `Sound.PlayAndWait` answers the scheduler has not taken yet.
-    public var soundWaitAnswers: [UInt64: Bool] = [:]
+    var soundWaitAnswers: [UInt64: Bool] = [:]
     public var pathWaits = ScriptPathWaits()
     /// `PathToReference` answers the scheduler has not taken yet.
-    public var pathWaitAnswers: [UInt64: Bool] = [:]
+    var pathWaitAnswers: [UInt64: Bool] = [:]
     /// The session's weather. The composition root sets it, so the host stays port-only.
     public var weather: () -> WeatherSystem? = { nil }
     /// The bridge `makeBridge` built; the script port shows it only as a port.

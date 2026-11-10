@@ -9,7 +9,7 @@ import OpenSkyCells
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyLaunch
 import OpenSkyLoading
@@ -19,7 +19,7 @@ public import OpenSkyMenusInterface
 import OpenSkyPlayer
 import OpenSkyProgressionInterface
 import OpenSkyRenderCore
-public import OpenSkyRendering
+import OpenSkyRendering
 import OpenSkySaveInterface
 public import OpenSkyScriptingInterface
 public import OpenSkySessionInterface
@@ -40,7 +40,7 @@ public final class MenuWorldAdapter {
     public let game: any MenuWorldHost
     public let state: MenuPartState
     /// Built on first use, because it walks the install.
-    public var titleMeshes: MeshLibrary?
+    var titleMeshes: MeshLibrary?
     /// The camera the logo was placed for, while the title backdrop shows.
     public var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
 
@@ -94,7 +94,7 @@ public final class MenuWorldAdapter {
         self.game = game
     }
 
-    public var records: MenuRecordData? {
+    var records: MenuRecordData? {
         game.mapWorld.records
     }
 

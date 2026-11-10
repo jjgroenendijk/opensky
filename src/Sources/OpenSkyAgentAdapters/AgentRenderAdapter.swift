@@ -4,7 +4,7 @@ public import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCombatInterface
 import OpenSkyEffects
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyLoading
@@ -46,7 +46,7 @@ public struct AgentRenderAdapter {
 
 extension AgentRenderAdapter {
     /// Overlays, then the render-debug layers, such as `distantlod`.
-    public static let overlayNames = ["navmesh", "path", "detection", "hud", "ui"]
+    static let overlayNames = ["navmesh", "path", "detection", "hud", "ui"]
         + RenderLayer.ordered.map { $0.identifierFragment.lowercased() }
 
     /// Applies `pairs` over a copy of the saved settings, so nothing is written to disk.
@@ -349,7 +349,7 @@ extension AgentRenderAdapter {
     }
 
     /// The bone each skin decal on `actor` rides, or `feet` for one without a bone.
-    public func skinDecalBones(of actor: ReferenceKey) -> [String] {
+    func skinDecalBones(of actor: ReferenceKey) -> [String] {
         let skin = game.effects.skinDecals
         return skin.owners.filter { $0.value == actor }.keys.sorted()
             .map { skin.bones[$0] ?? "feet" }
@@ -388,7 +388,7 @@ extension AgentRenderAdapter {
         ]
     }
 
-    public func healthCueState() -> AgentJSON {
+    func healthCueState() -> AgentJSON {
         let cues = game.effects.healthCues
         return [
             "heartbeat": cues.heartbeat.map { .string("\($0)") } ?? .null,

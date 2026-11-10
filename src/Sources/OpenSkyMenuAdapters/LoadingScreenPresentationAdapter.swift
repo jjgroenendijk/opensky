@@ -60,7 +60,7 @@ extension LoadingScreenPresentationAdapter {
         }
     }
 
-    public func startMovie(text: String) {
+    func startMovie(text: String) {
         state.movieText = text
         state.movieFadedOut = false
         let content = movieContent(text: text)
@@ -73,7 +73,7 @@ extension LoadingScreenPresentationAdapter {
         )
     }
 
-    public var isMovieLoaded: Bool {
+    var isMovieLoaded: Bool {
         movie.isLoaded
     }
 
@@ -90,7 +90,7 @@ extension LoadingScreenPresentationAdapter {
         )
     }
 
-    public var presentationRecords: PresentationRecordStore? {
+    var presentationRecords: PresentationRecordStore? {
         game.menuRecords?.presentationRecords
     }
 

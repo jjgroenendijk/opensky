@@ -52,7 +52,7 @@ public protocol RuntimeStateWorldHost: AnyObject {
 
 public final class RuntimeStateWorldAdapter {
     public let game: any RuntimeStateWorldHost
-    public let state = RuntimeStatePartState()
+    let state = RuntimeStatePartState()
     public let now: () -> Date
 
     public let sessionClockHost: any RuntimeStateSessionClockHost

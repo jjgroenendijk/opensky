@@ -16,7 +16,7 @@ import OpenSkyWorldState
 import simd
 
 extension ObjectAnimationWorldAdapter {
-    public func advanceTrapContact(_ delta: Float) {
+    func advanceTrapContact(_ delta: Float) {
         let streamer = game.streamer
         guard let runtime = game.scripts.runtime else { return }
         var resident: Set<ReferenceKey> = []

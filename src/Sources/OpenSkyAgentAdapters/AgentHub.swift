@@ -11,7 +11,7 @@ import OpenSkyEffects
 import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyLoading
 import OpenSkyMagicInterface
@@ -34,7 +34,7 @@ import OpenSkyWorldState
 /// reads every part uses. A value, so a part holds no reference back to its owner.
 public struct AgentHub {
     public let game: any AgentWorldHost
-    public let state = AgentPartState()
+    let state = AgentPartState()
     public let now: () -> Date
 
     /// The diff state behind the game events.
@@ -63,19 +63,19 @@ public struct AgentHub {
         AgentRenderAdapter(hub: self, game: renderHost)
     }
 
-    public var actors: AgentActorsAdapter {
+    var actors: AgentActorsAdapter {
         AgentActorsAdapter(hub: self, game: actorsHost)
     }
 
-    public var motion: AgentMotionAdapter {
+    var motion: AgentMotionAdapter {
         AgentMotionAdapter(hub: self, game: motionHost)
     }
 
-    public var behaviour: AgentBehaviourAdapter {
+    var behaviour: AgentBehaviourAdapter {
         AgentBehaviourAdapter(hub: self, game: behaviourHost)
     }
 
-    public var objects: AgentObjectsAdapter {
+    var objects: AgentObjectsAdapter {
         AgentObjectsAdapter(hub: self, game: objectsHost)
     }
 
@@ -87,11 +87,11 @@ public struct AgentHub {
         AgentScreensAdapter(hub: self, game: screensHost)
     }
 
-    public var events: AgentEventsAdapter {
+    var events: AgentEventsAdapter {
         AgentEventsAdapter(hub: self, game: eventsHost)
     }
 
-    public var playerReadout: AgentPlayerReadoutAdapter {
+    var playerReadout: AgentPlayerReadoutAdapter {
         AgentPlayerReadoutAdapter(hub: self, game: playerReadoutHost)
     }
 
@@ -103,7 +103,7 @@ public struct AgentHub {
         AgentActorReadoutAdapter(hub: self, game: actorReadoutHost)
     }
 
-    public var items: AgentItemsAdapter {
+    var items: AgentItemsAdapter {
         AgentItemsAdapter(hub: self, game: itemsHost)
     }
 
@@ -111,11 +111,11 @@ public struct AgentHub {
         AgentViewAdapter(hub: self, game: viewHost)
     }
 
-    public var input: AgentInputAdapter {
+    var input: AgentInputAdapter {
         AgentInputAdapter(hub: self, game: inputHost)
     }
 
-    public var capture: AgentCaptureAdapter {
+    var capture: AgentCaptureAdapter {
         AgentCaptureAdapter(hub: self, game: captureHost)
     }
 
@@ -146,18 +146,18 @@ public struct AgentHub {
         self.game = game
     }
 
-    public var dataRoot: GameDataRoot? {
+    var dataRoot: GameDataRoot? {
         game.dataRoot
     }
 
     /// True once a cell is in the scene and no door transition is loading.
-    public var isWorldReady: Bool {
+    var isWorldReady: Bool {
         isWorldLoaded && !game.loadingScreens.isCovering
     }
 
     /// Cells are in, whether or not a loading screen still covers them. A teleport
     /// that put up the cover waits for this, because it lifts the cover itself.
-    public var isWorldLoaded: Bool {
+    var isWorldLoaded: Bool {
         let streamer = game.streamer
         guard
             game.renderer != nil,
@@ -185,8 +185,8 @@ public struct AgentHub {
 }
 
 /// The diff state the event tap keeps between polls.
-public final class AgentPartState {
-    public var tap = AgentEventTapState()
+final class AgentPartState {
+    var tap = AgentEventTapState()
 
-    public init() {}
+    init() {}
 }

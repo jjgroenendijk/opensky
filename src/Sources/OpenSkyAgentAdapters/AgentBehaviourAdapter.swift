@@ -5,7 +5,7 @@ import OpenSkyAIPackages
 import OpenSkyBehavior
 import OpenSkyConditions
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -38,7 +38,7 @@ public struct AgentBehaviourAdapter {
 }
 
 extension AgentBehaviourAdapter {
-    public func packagesState(reference: String) throws(AgentFailure) -> AgentJSON {
+    func packagesState(reference: String) throws(AgentFailure) -> AgentJSON {
         let key = try hub.resolveReference(reference).key
         let readout = game.packages.readout(for: key)
         let execution = game.packages.executions[key]?.readout
@@ -119,7 +119,7 @@ extension AgentBehaviourAdapter {
         ]
     }
 
-    public func playPaired(
+    func playPaired(
         _ reference: String, target: String, idle editorID: String
     ) throws(AgentFailure) -> AgentJSON {
         let lead = try hub.resolveReference(reference)
@@ -137,7 +137,7 @@ extension AgentBehaviourAdapter {
         ]
     }
 
-    public func pairedState() -> AgentJSON {
+    func pairedState() -> AgentJSON {
         ["pairs": pairsJSON()]
     }
 
@@ -185,7 +185,7 @@ extension AgentBehaviourAdapter {
         }
     }
 
-    public func furnitureState(reference: String) throws(AgentFailure) -> AgentJSON {
+    func furnitureState(reference: String) throws(AgentFailure) -> AgentJSON {
         let target = try hub.resolveReference(reference)
         let furniture = game.furniture
         if let seats = game.aiWorld.furnitureSeats(of: target.key), !seats.isEmpty {
@@ -269,7 +269,7 @@ extension AgentBehaviourAdapter {
         ]
     }
 
-    public func formID(of key: ReferenceKey) -> AgentJSON? {
+    func formID(of key: ReferenceKey) -> AgentJSON? {
         game.streamer.referenceEntry(key: key).map { .formID($0.formID.rawValue) }
     }
 }

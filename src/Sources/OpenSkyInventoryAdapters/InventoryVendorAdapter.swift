@@ -59,7 +59,7 @@ extension InventoryVendorAdapter {
         game.inventory.itemDefinitions?.definition(item)?.keywords
     }
 
-    public var hourOfDay: Float? {
+    var hourOfDay: Float? {
         game.gameSession?.gameClock.hourOfDay
     }
 
@@ -99,11 +99,11 @@ extension InventoryVendorAdapter {
         return evaluator.firstFailure(in: conditions.conditions).map(evaluator.functionName(of:))
     }
 
-    public var totalGameHours: Double? {
+    var totalGameHours: Double? {
         game.gameSession.map { $0.gameClock.totalGameSeconds / GameClock.secondsPerHour }
     }
 
-    public var vendorRestockLedger: VendorRestockLedger {
+    var vendorRestockLedger: VendorRestockLedger {
         get { game.worldState.component(VendorRestockLedger.self, for: .player) ?? .init() }
         nonmutating set { game.worldState.set(newValue, for: .player) }
     }

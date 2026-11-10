@@ -1,4 +1,4 @@
-public import Foundation
+import Foundation
 public import OpenSkyFormatsESM
 
 /// What the parts of `EffectsWorldAdapter` share between frames.
@@ -6,7 +6,7 @@ public import OpenSkyFormatsESM
 public final class EffectsPartState {
     public var cameraPosition: SIMD3<Float>?
     /// When the impulse step last ran, for the splash timer.
-    public var lastImpulseStep: TimeInterval?
+    var lastImpulseStep: TimeInterval?
     /// The heartbeat's script-sound instance; 0 when none plays.
     public var heartbeatSound: Int32 = 0
     private var spawnedHazards: UInt64 = 0

@@ -3,7 +3,7 @@
 // disarms through the same paths a walk or a use-key press takes. No trap rules
 // live here; the shipped scripts decide (docs/engine/traps.md).
 
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyPlayer
@@ -29,7 +29,7 @@ public final class TrapControlAdapter {
     public static let markerSize: Float = 48
 
     private let dependencies: TrapControlDependencies
-    public private(set) var selected: ReferenceKey?
+    private(set) var selected: ReferenceKey?
 
     public init(_ dependencies: TrapControlDependencies) {
         self.dependencies = dependencies

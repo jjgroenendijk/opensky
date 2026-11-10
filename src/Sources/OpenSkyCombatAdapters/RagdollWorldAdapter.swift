@@ -57,7 +57,7 @@ public final class RagdollWorldAdapter {
         RagdollRemainsAdapter(game: remainsHost, poseReads: poseReads)
     }
 
-    public var playerFall: RagdollPlayerFallAdapter {
+    var playerFall: RagdollPlayerFallAdapter {
         RagdollPlayerFallAdapter(game: playerFallHost, recovery: recovery)
     }
 

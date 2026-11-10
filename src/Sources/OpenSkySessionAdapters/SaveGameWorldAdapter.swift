@@ -34,7 +34,7 @@ public protocol SaveGameWorldHost: AnyObject {
 
 @MainActor
 public final class SaveGameWorldAdapter: SaveGameService {
-    public static let thumbnailSize = (width: 192, height: 108)
+    static let thumbnailSize = (width: 192, height: 108)
 
     private let game: any SaveGameWorldHost
     private let saveFiles: any SkyrimSaveExportHost & SkyrimSaveImportHost

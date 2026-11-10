@@ -23,7 +23,7 @@ import OpenSkyWeather
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
-public import simd
+import simd
 
 /// What `AgentObjectsAdapter` reads from the session.
 @MainActor
@@ -46,7 +46,7 @@ public struct AgentObjectsAdapter {
 }
 
 extension AgentObjectsAdapter {
-    public func favorState() -> AgentJSON {
+    func favorState() -> AgentJSON {
         let commands = game.followerCommands
         var json: [String: AgentJSON] = [
             "phase": .string(Self.phaseName(commands.phase)),
@@ -184,7 +184,7 @@ extension AgentObjectsAdapter {
 
     /// The answer to `openskycli game state scripts`: queue, waits, the newest events,
     /// the newest fault, and the natives that are missing most.
-    public func scriptsState(reference: String?) throws(AgentFailure) -> AgentJSON {
+    func scriptsState(reference: String?) throws(AgentFailure) -> AgentJSON {
         let snapshot = game.scripts.scriptsSnapshot
         let owner = try reference.map { text throws(AgentFailure) in try scriptOwner(text) }
         return [
@@ -236,7 +236,7 @@ extension AgentObjectsAdapter {
     }
 
     /// Every running graph, or one with its bone positions in the object's own space.
-    public func objectsState(reference: String?) throws(AgentFailure) -> AgentJSON {
+    func objectsState(reference: String?) throws(AgentFailure) -> AgentJSON {
         let objects = game.objectAnimationWorld.objects
         guard let reference else {
             return ["objects": .array(objects.rows.map(Self.json))]
@@ -252,7 +252,7 @@ extension AgentObjectsAdapter {
     }
 
     /// A swing turns a bone about its own origin, so the rotation shows it.
-    public static func bone(_ matrix: simd_float4x4) -> AgentJSON {
+    static func bone(_ matrix: simd_float4x4) -> AgentJSON {
         let rotation = simd_quatf(simd_float3x3(
             SIMD3(matrix.columns.0.x, matrix.columns.0.y, matrix.columns.0.z),
             SIMD3(matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z),
@@ -320,7 +320,7 @@ extension AgentObjectsAdapter {
     }
 
     /// Every mesh that plays node controllers, or one mesh's driven nodes.
-    public func nodesState(reference: String?) throws(AgentFailure) -> AgentJSON {
+    func nodesState(reference: String?) throws(AgentFailure) -> AgentJSON {
         let nodes = game.nodeControllers
         guard let reference else {
             return ["nodes": .array(nodes.references.map { ["ref": .formID($0)] })]

@@ -67,7 +67,7 @@ extension MenuWorldScriptMenusAdapter {
         game.hud.setCartMode(enabled)
     }
 
-    public var isFastTravelEnabled: Bool {
+    var isFastTravelEnabled: Bool {
         game.mapMenu.fastTravelEnabled
     }
 

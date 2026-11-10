@@ -27,8 +27,8 @@ public final class AgentTeleportJob {
         case settling(untilFrame: Int)
     }
 
-    public static let timeoutSeconds = 120.0
-    public static let settleFrames = 2
+    static let timeoutSeconds = 120.0
+    static let settleFrames = 2
 
     private let hub: AgentHub
     private var phase: Phase

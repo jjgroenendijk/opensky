@@ -37,7 +37,7 @@ public protocol MapQuestsHost: AnyObject {
 
 /// Part of `MapWorldAdapter`, over its own narrow host.
 public struct MapQuestsAdapter {
-    public let game: any MapQuestsHost
+    let game: any MapQuestsHost
 }
 
 extension MapQuestsAdapter {

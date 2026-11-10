@@ -114,7 +114,7 @@ extension MagicSummonedActorsAdapter {
         return game.scripts.bridge?.referenceState(for: key)?.transform.position
     }
 
-    public var shoutKnowledge: ShoutKnowledge {
+    var shoutKnowledge: ShoutKnowledge {
         guard let state = game.scripts.bridge?.scriptedState(of: .player) else {
             return ShoutKnowledge()
         }

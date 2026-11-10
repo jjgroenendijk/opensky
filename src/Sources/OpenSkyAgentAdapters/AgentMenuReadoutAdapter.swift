@@ -8,7 +8,7 @@ import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyLoading
-public import OpenSkyMenusInterface
+import OpenSkyMenusInterface
 import OpenSkyObjectAnimation
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
@@ -40,7 +40,7 @@ public protocol AgentMenuReadoutHost: AnyObject {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentMenuReadoutAdapter {
-    public let hub: AgentHub
+    let hub: AgentHub
     public let game: any AgentMenuReadoutHost
 }
 
@@ -159,7 +159,7 @@ extension AgentMenuReadoutAdapter {
     }
 
     /// The page, the movies, and the perk sky line, such as "812 draws, turned 40°, ring".
-    public func skillsMenuState(_ snapshot: SkillsMenuSnapshot) -> AgentJSON {
+    func skillsMenuState(_ snapshot: SkillsMenuSnapshot) -> AgentJSON {
         [
             "page": .string(snapshot.page),
             "movie": .init(snapshot.movie.state),
@@ -171,14 +171,14 @@ extension AgentMenuReadoutAdapter {
         ]
     }
 
-    public func openRaceMenu(limited: Bool) throws(AgentFailure) -> AgentJSON {
+    func openRaceMenu(limited: Bool) throws(AgentFailure) -> AgentJSON {
         guard game.raceMenu.isOpen || game.raceMenu.open(limited: limited) else {
             throw AgentFailure(.notReady, "the race menu needs a loaded world")
         }
         return ["open": true, "limited": .bool(game.raceMenu.snapshot.isLimited)]
     }
 
-    public func openSkillsMenu(sky: Bool?, levels: Int) throws(AgentFailure) -> AgentJSON {
+    func openSkillsMenu(sky: Bool?, levels: Int) throws(AgentFailure) -> AgentJSON {
         let menu = game.skillsMenu
         if let sky {
             menu.setSkyEnabled(sky)

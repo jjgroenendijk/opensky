@@ -34,7 +34,7 @@ public protocol ScriptReferenceBindingsHost: AnyObject {
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public struct ScriptReferenceBindingsAdapter {
     public let game: any ScriptReferenceBindingsHost
-    public let nodeBindings: ScriptNodeBindingsAdapter
+    let nodeBindings: ScriptNodeBindingsAdapter
 }
 
 extension ScriptReferenceBindingsAdapter {

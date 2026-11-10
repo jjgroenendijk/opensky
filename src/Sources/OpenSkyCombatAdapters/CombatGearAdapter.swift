@@ -13,7 +13,7 @@ import OpenSkyFactionsInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyInventoryInterface
+import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
 import OpenSkyNavigation
 import OpenSkyPerceptionInterface
@@ -43,7 +43,7 @@ public struct CombatGearAdapter {
 }
 
 extension CombatGearAdapter {
-    public var equipment: (any EquipmentAccess)? {
+    var equipment: (any EquipmentAccess)? {
         game.inventory.equipment
     }
 

@@ -31,7 +31,7 @@ public protocol PlayerFirstPersonHost: AnyObject {
 /// Part of `PlayerWorldAdapter`, over its own narrow host.
 public struct PlayerFirstPersonAdapter {
     public let game: any PlayerFirstPersonHost
-    public let state: PlayerPartState
+    let state: PlayerPartState
 }
 
 extension PlayerFirstPersonAdapter {
@@ -45,15 +45,15 @@ extension PlayerFirstPersonAdapter {
         try game.setPlayerFirstPersonRig(rig)
     }
 
-    public var playerFirstPersonRig: PlayerFirstPersonRig? {
+    var playerFirstPersonRig: PlayerFirstPersonRig? {
         state.firstPersonRig()
     }
 
-    public var areFirstPersonArmsVisible: Bool {
+    var areFirstPersonArmsVisible: Bool {
         game.renderer?.areFirstPersonArmsVisible ?? false
     }
 
-    public var firstPersonFOVYRadians: Float? {
+    var firstPersonFOVYRadians: Float? {
         game.gameSession?.firstPersonCamera.fovYRadians
     }
 
@@ -61,7 +61,7 @@ extension PlayerFirstPersonAdapter {
         game.gameSession?.setFirstPersonFOVY(radians: radians)
     }
 
-    public var firstPersonArmsEnabled: Bool? {
+    var firstPersonArmsEnabled: Bool? {
         game.gameSession?.firstPersonArmsEnabled
     }
 

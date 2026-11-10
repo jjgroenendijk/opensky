@@ -1,4 +1,4 @@
-public import OpenSkyAudio
+import OpenSkyAudio
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyPhysics
@@ -12,7 +12,7 @@ public final class ActorGraphPartState {
     /// The movers whose last drive moved them, for their movement loops.
     public var movers: Set<ReferenceKey> = []
     /// Each rolled actor base's sound types, after its audio template.
-    public var actorSounds: [LeveledActorRollKey: ActorSounds] = [:]
+    var actorSounds: [LeveledActorRollKey: ActorSounds] = [:]
     /// Each rolled actor base's race graph project and weight.
     public var graphBases: [LeveledActorRollKey: ActorGraphBase] = [:]
 

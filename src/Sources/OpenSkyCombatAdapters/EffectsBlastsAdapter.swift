@@ -81,7 +81,7 @@ extension EffectsBlastsAdapter {
     }
 
     /// Above every visual effect instance id, so a projectile keeps its own particles.
-    public static let projectileInstanceBase = 1 << 30
+    static let projectileInstanceBase = 1 << 30
     /// The smallest light falloff exponent; at 0 the light would not fade at all.
     private static let flattestFalloff: Float = 0.01
     /// A projectile slower than this, squared, has no direction of its own.

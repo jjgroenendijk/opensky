@@ -31,9 +31,9 @@ public protocol ScriptSoundBindingsHost: AnyObject {
 /// Part of `ScriptWorldAdapter`, over its own narrow host.
 public final class ScriptSoundBindingsAdapter {
     public let game: any ScriptSoundBindingsHost
-    public let state: ScriptPartState
+    let state: ScriptPartState
 
-    public init(game: any ScriptSoundBindingsHost, state: ScriptPartState) {
+    init(game: any ScriptSoundBindingsHost, state: ScriptPartState) {
         self.game = game
         self.state = state
     }
@@ -42,7 +42,7 @@ public final class ScriptSoundBindingsAdapter {
 extension ScriptSoundBindingsAdapter {
     /// Answers each `Sound.PlayAndWait` whose sound ended. An answer the scheduler
     /// cannot take yet waits for the next frame.
-    public func answerSoundWaits() {
+    func answerSoundWaits() {
         if let director = game.gameSession?.soundDirector {
             state.soundWaitAnswers.merge(director.retireScriptSounds()) { first, _ in first }
         }

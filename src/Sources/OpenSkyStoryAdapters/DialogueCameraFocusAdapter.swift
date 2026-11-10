@@ -35,8 +35,8 @@ public protocol DialogueCameraFocusHost: AnyObject {
 }
 
 /// Part of `DialogueWorldAdapter`, over its own narrow host.
-public struct DialogueCameraFocusAdapter {
-    public let game: any DialogueCameraFocusHost
+struct DialogueCameraFocusAdapter {
+    let game: any DialogueCameraFocusHost
 }
 
 extension DialogueCameraFocusAdapter {}

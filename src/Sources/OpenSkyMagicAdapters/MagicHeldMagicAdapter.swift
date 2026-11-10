@@ -171,7 +171,7 @@ extension MagicHeldMagicAdapter {
     }
 
     /// Detect Life's `EFSH` on a painted actor, until the paint ends.
-    public func paintActor(_ actor: ReferenceKey, shader: FormID, plugin: String, shown: Bool) {
+    func paintActor(_ actor: ReferenceKey, shader: FormID, plugin: String, shown: Bool) {
         let effects = game.effectsWorld.effects
         guard let key = effects.records.resolve(shader, fromPlugin: plugin) else { return }
         if shown {
@@ -184,7 +184,7 @@ extension MagicHeldMagicAdapter {
     /// Hands the renderer this frame's spell lights: a self-cast light floats beside its
     /// actor, an aimed one stays where it landed. A casting light floats at the same
     /// place while its caster readies the spell. Projectile and flash lights follow.
-    public func publishMagicLights() {
+    func publishMagicLights() {
         guard let renderer = game.renderer else { return }
         let effects = game.effectsWorld
         let spells = game.magic.magicLights.compactMap { light -> RenderPointLight? in
@@ -212,7 +212,7 @@ extension MagicHeldMagicAdapter {
     }
 
     /// Shows or drops the `MGEF` casting light of `caster`, written in `plugin`.
-    public func showCastingLight(
+    func showCastingLight(
         _ light: FormID, plugin: String, caster: ReferenceKey, shown: Bool
     ) {
         guard shown else {
@@ -237,7 +237,7 @@ extension MagicHeldMagicAdapter {
     }
 
     /// Hands the renderer how far each dismissed summon has faded, by its reference.
-    public func publishSummonFades() {
+    func publishSummonFades() {
         guard let gameSession = game.gameSession else { return }
         let fades = game.magic.summonFades
         guard !fades.isEmpty || !gameSession.instancePoses.fades.isEmpty else { return }

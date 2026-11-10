@@ -6,7 +6,7 @@ import OpenSkyCells
 import OpenSkyConditions
 import OpenSkyCrime
 public import OpenSkyDialogue
-public import OpenSkyDialogueInterface
+import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -40,7 +40,7 @@ public struct StorySceneCastAdapter {
 }
 
 extension StorySceneCastAdapter {
-    public var sceneFragments: (any SceneFragmentDispatching)? {
+    var sceneFragments: (any SceneFragmentDispatching)? {
         game.scripts.bridge
     }
 

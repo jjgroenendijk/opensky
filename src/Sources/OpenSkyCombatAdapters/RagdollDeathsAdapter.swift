@@ -39,7 +39,7 @@ public protocol RagdollDeathsHost: AnyObject {
 /// Part of `RagdollWorldAdapter`, over its own narrow host.
 public struct RagdollDeathsAdapter {
     public let game: any RagdollDeathsHost
-    public let poseReads: RagdollPoseReadsAdapter
+    let poseReads: RagdollPoseReadsAdapter
 }
 
 extension RagdollDeathsAdapter {
@@ -90,7 +90,7 @@ extension RagdollDeathsAdapter {
         game.inventory.grantDeathItem(to: key, actorLevel: values.baseline(of: holder).level)
     }
 
-    public var selectedRagdollActor: ReferenceKey? {
+    var selectedRagdollActor: ReferenceKey? {
         let streamer = game.streamer
         if
             let target = streamer.interactionTarget,
@@ -102,7 +102,7 @@ extension RagdollDeathsAdapter {
         return playerFeetPosition.flatMap { streamer.nearestActorEntry(to: $0)?.key }
     }
 
-    public var playerFeetPosition: SIMD3<Float>? {
+    var playerFeetPosition: SIMD3<Float>? {
         game.gameSession?.walkController.feetPosition
     }
 
