@@ -35,10 +35,10 @@ nonisolated extension OpenSkySaveEncoder {
             return (entry.key, sessions)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.trainingSessions, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.trainingSessions) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (key, sessions) in saved {
-                writeKey(key, into: &payload)
+                payload.writeKey(key)
                 payload.writeUInt32(UInt32(clamping: sessions))
             }
         }
@@ -56,11 +56,11 @@ nonisolated extension OpenSkySaveEncoder {
             return (entry, state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.playerProgress, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.playerProgress) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (entry, state) in saved {
-                writeKey(entry.key, into: &payload)
-                writeCell(entry.delta.cell, into: &payload)
+                payload.writeKey(entry.key)
+                payload.writeCell(entry.delta.cell)
                 writeProgress(state, into: &payload)
             }
         }
@@ -80,10 +80,10 @@ nonisolated extension OpenSkySaveEncoder {
             return (entry.key, counts)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.legendarySkills, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.legendarySkills) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (key, counts) in saved {
-                writeKey(key, into: &payload)
+                payload.writeKey(key)
                 payload.writeUInt32(UInt32(clamping: counts.count))
                 for (skill, count) in counts.sorted(by: { $0.key < $1.key }) {
                     payload.writeUInt32(UInt32(bitPattern: skill))

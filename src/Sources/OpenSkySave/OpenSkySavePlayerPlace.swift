@@ -13,13 +13,13 @@ nonisolated extension OpenSkySaveFormat.ChunkTag {
 
 nonisolated extension OpenSkySaveEncoder {
     static func writePlayerPlace(_ place: SavePlayerPlace, into writer: inout BinaryWriter) {
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.playerPlace, into: &writer) { payload in
-            writeCell(place.cell, into: &payload)
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.playerPlace) { payload in
+            payload.writeCell(place.cell)
             for value in [place.feet.x, place.feet.y, place.feet.z, place.yaw] {
                 payload.writeFloat32(value)
             }
             if let worldspace = place.worldspace {
-                writeString(worldspace, into: &payload)
+                payload.writeString(worldspace)
             }
         }
     }

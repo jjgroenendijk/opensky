@@ -43,11 +43,11 @@ nonisolated enum OpenSkySaveTemperedItems: Sendable {
         }
         guard !saved.isEmpty else { return }
         let tag = OpenSkySaveFormat.ChunkTag.temperedItems
-        OpenSkySaveEncoder.writeChunk(tag: tag, into: &writer) { payload in
+        writer.writeChunk(tag: tag) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (entry, state) in saved {
-                OpenSkySaveEncoder.writeKey(entry.key, into: &payload)
-                OpenSkySaveEncoder.writeCell(entry.delta.cell, into: &payload)
+                payload.writeKey(entry.key)
+                payload.writeCell(entry.delta.cell)
                 let items = state.levels.sorted { $0.key < $1.key }
                 payload.writeUInt32(UInt32(clamping: items.count))
                 for (item, levels) in items {
@@ -95,7 +95,7 @@ nonisolated enum OpenSkySaveTemperedItems: Sendable {
     }
 
     private static func validate(_ count: UInt32, _ size: Int, _ reader: SaveReader) throws {
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: size,
             remaining: reader.bytesRemaining,

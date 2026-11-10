@@ -25,23 +25,23 @@ nonisolated extension OpenSkySaveEncoder {
             return (key: entry.key, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.dialogueStates, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.dialogueStates) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.key, into: &payload)
+                payload.writeKey(each.key)
                 payload.writeUInt32(each.state.saidCount)
             }
         }
         let timed = saved.filter { !$0.state.saidDays.isEmpty }
         guard !timed.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.dialogueSaidDays, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.dialogueSaidDays) { payload in
             payload.writeUInt32(UInt32(clamping: timed.count))
             for each in timed {
-                writeKey(each.key, into: &payload)
+                payload.writeKey(each.key)
                 let speakers = each.state.saidDays.sorted { $0.key < $1.key }
                 payload.writeUInt32(UInt32(clamping: speakers.count))
                 for (speaker, day) in speakers {
-                    writeKey(speaker, into: &payload)
+                    payload.writeKey(speaker)
                     payload.writeUInt64(day.bitPattern)
                 }
             }

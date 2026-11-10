@@ -20,7 +20,7 @@ nonisolated enum OpenSkySaveActiveEffectDecoder: Sendable {
     static func decodeActiveEffects(_ payload: Data) throws -> [SaveActiveEffectEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("AEFF entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumActiveEffectEntrySize,
             remaining: reader.bytesRemaining,
@@ -40,7 +40,7 @@ nonisolated enum OpenSkySaveActiveEffectDecoder: Sendable {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
         let cell = try OpenSkySaveEntryDecoder.decodeCell(&reader)
         let count = try reader.uint32("AEFF effect count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumActiveEffectSize,
             remaining: reader.bytesRemaining,
@@ -93,7 +93,7 @@ nonisolated enum OpenSkySaveActiveEffectDecoder: Sendable {
 
     private static func decodeValues(_ reader: inout SaveReader) throws -> [ActiveEffectValue] {
         let count = try reader.uint32("AEFF value count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.activeEffectValueRecordSize,
             remaining: reader.bytesRemaining,

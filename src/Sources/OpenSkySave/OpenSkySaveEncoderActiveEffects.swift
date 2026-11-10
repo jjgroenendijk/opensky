@@ -32,11 +32,11 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedActiveEffects(entry: entry, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.activeEffects, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.activeEffects) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 payload.writeUInt32(UInt32(clamping: each.state.effects.count))
                 for effect in each.state.effects {
                     writeActiveEffect(effect, into: &payload)
@@ -48,8 +48,8 @@ nonisolated extension OpenSkySaveEncoder {
     private static func writeActiveEffect(_ effect: ActiveEffect, into writer: inout BinaryWriter) {
         writer.writeUInt64(effect.sequence)
         writer.writeUInt32(effect.source.kind.rawValue)
-        writeKey(effect.source.record, into: &writer)
-        writeKey(effect.effect, into: &writer)
+        writer.writeKey(effect.source.record)
+        writer.writeKey(effect.effect)
         writeOptionalKey(effect.caster, into: &writer)
         writer.writeUInt32(effect.mode.rawValue)
         writer.writeUInt8(effect.isDetrimental ? 1 : 0)
@@ -72,6 +72,6 @@ nonisolated extension OpenSkySaveEncoder {
             return
         }
         writer.writeUInt8(1)
-        writeKey(key, into: &writer)
+        writer.writeKey(key)
     }
 }

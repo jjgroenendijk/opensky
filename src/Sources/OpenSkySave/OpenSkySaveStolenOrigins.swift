@@ -19,7 +19,7 @@ nonisolated extension OpenSkySaveEncoder {
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.origins.count))
             for origin in state.origins {
-                writeKey(origin.owner, into: &payload)
+                payload.writeKey(origin.owner)
                 payload.writeUInt32(origin.item.rawValue)
                 payload.writeUInt32(UInt32(bitPattern: origin.count))
             }
@@ -36,7 +36,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
             payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumStolenOriginsEntrySize
         ) { reader in
             let count = try reader.uint32("STOF row count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: count, minimumElementSize: OpenSkySaveFormat.minimumStolenOriginRowSize,
                 remaining: reader.bytesRemaining, chunk: tag
             )

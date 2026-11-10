@@ -24,12 +24,12 @@ nonisolated extension OpenSkySaveEncoder {
             entry.delta.component(ReferenceRelocation.self).map { (entry, $0) }
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.relocations, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.relocations) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (entry, relocation) in saved {
-                writeKey(entry.key, into: &payload)
-                writeCell(entry.delta.cell, into: &payload)
-                writeCell(relocation.location, into: &payload)
+                payload.writeKey(entry.key)
+                payload.writeCell(entry.delta.cell)
+                payload.writeCell(relocation.location)
             }
         }
     }
@@ -39,7 +39,7 @@ nonisolated enum OpenSkySaveRelocationDecoder: Sendable {
     static func decodeRelocations(_ payload: Data) throws -> [SaveRelocationEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RLOC entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumRelocationEntrySize,
             remaining: reader.bytesRemaining,

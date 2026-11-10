@@ -28,13 +28,13 @@ nonisolated extension OpenSkySaveEncoder {
     ) {
         let saved = entries.compactMap(favourRows(of:))
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.relationshipFavour, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.relationshipFavour) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for entry in saved {
-                writeKey(entry.key, into: &payload)
+                payload.writeKey(entry.key)
                 payload.writeUInt32(UInt32(clamping: entry.rows.count))
                 for row in entry.rows {
-                    writeKey(row.other, into: &payload)
+                    payload.writeKey(row.other)
                     payload.writeUInt8(UInt8(bitPattern: row.firstFriendRank))
                 }
             }
@@ -61,7 +61,7 @@ nonisolated extension OpenSkySaveRelationshipDecoder {
     ) throws -> [SaveRelationshipFavourEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RELF entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumRelationshipFavourEntrySize,
             remaining: reader.bytesRemaining,
@@ -72,7 +72,7 @@ nonisolated extension OpenSkySaveRelationshipDecoder {
         for _ in 0 ..< count {
             let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
             let rowCount = try reader.uint32("RELF row count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: rowCount,
                 minimumElementSize: OpenSkySaveFormat.minimumRelationshipFavourRowSize,
                 remaining: reader.bytesRemaining,

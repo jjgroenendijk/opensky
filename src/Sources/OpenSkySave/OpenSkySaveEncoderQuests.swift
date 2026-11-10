@@ -26,10 +26,10 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedQuest(key: entry.key, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.questStates, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.questStates) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.key, into: &payload)
+                payload.writeKey(each.key)
                 writeQuestState(each.state, into: &payload)
             }
         }
@@ -80,17 +80,17 @@ nonisolated extension OpenSkySaveEncoder {
             return (key: entry.key, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.questAliases, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.questAliases) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.key, into: &payload)
+                payload.writeKey(each.key)
                 payload.writeUInt32(UInt32(clamping: each.state.fills.count))
                 // The fills arrive sorted by alias ID from the component's own
                 // invariant, so nothing is sorted here and the bytes stay a
                 // pure function of the state.
                 for fill in each.state.fills {
                     payload.writeUInt32(fill.aliasID)
-                    writeKey(fill.reference, into: &payload)
+                    payload.writeKey(fill.reference)
                 }
             }
         }
@@ -110,17 +110,17 @@ nonisolated extension OpenSkySaveEncoder {
             return (entry.key, state.locationFills)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.questLocationAliases, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.questLocationAliases) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (key, fills) in saved {
-                writeKey(key, into: &payload)
+                payload.writeKey(key)
                 payload.writeUInt32(UInt32(clamping: fills.count))
                 for fill in fills {
                     payload.writeUInt32(fill.aliasID)
-                    writeKey(
-                        .plugin(name: fill.location.plugin, objectID: fill.location.objectID),
-                        into: &payload
-                    )
+                    payload.writeKey(.plugin(
+                        name: fill.location.plugin,
+                        objectID: fill.location.objectID
+                    ))
                 }
             }
         }

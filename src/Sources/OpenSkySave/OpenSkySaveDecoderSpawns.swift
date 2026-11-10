@@ -17,7 +17,7 @@ nonisolated enum OpenSkySaveSpawnDecoder: Sendable {
     static func decodeSpawns(_ payload: Data) throws -> [SaveSpawnEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("SPWN entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumSpawnEntrySize,
             remaining: reader.bytesRemaining,

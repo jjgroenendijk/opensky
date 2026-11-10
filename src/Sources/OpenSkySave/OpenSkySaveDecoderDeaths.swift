@@ -17,7 +17,7 @@ nonisolated enum OpenSkySaveDeathDecoder: Sendable {
     static func decodeDeaths(_ payload: Data) throws -> [SaveDeathEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("DETH entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumDeathEntrySize,
             remaining: reader.bytesRemaining,

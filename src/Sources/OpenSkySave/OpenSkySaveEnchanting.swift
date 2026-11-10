@@ -20,18 +20,18 @@ nonisolated extension OpenSkySaveEncoder {
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.known.count))
             for key in state.known {
-                writeKey(key, into: &payload)
+                payload.writeKey(key)
             }
             let made = state.made.sorted { $0.key.rawValue < $1.key.rawValue }
             payload.writeUInt32(UInt32(clamping: made.count))
             for (id, enchantment) in made {
                 payload.writeUInt32(id.rawValue)
-                writeString(enchantment.name, into: &payload)
+                payload.writeString(enchantment.name)
                 payload.writeFloat32(enchantment.capacity)
                 payload.writeFloat32(enchantment.unskilledCostPerUse)
                 payload.writeUInt32(UInt32(clamping: enchantment.bases.count))
                 for (base, power) in zip(enchantment.bases, enchantment.powers) {
-                    writeKey(base, into: &payload)
+                    payload.writeKey(base)
                     payload.writeFloat32(power)
                 }
             }
@@ -82,7 +82,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
     }
 
     private static func check(_ count: UInt32, _ size: Int, _ reader: SaveReader) throws {
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count, minimumElementSize: size, remaining: reader.bytesRemaining,
             chunk: OpenSkySaveFormat.ChunkTag.enchanting
         )

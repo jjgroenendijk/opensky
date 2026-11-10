@@ -37,14 +37,14 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedLedger(entry: entry, ledger: ledger)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.crimeLedgers, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.crimeLedgers) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 payload.writeUInt32(UInt32(clamping: each.ledger.count))
                 for row in each.ledger.entries {
-                    writeKey(row.faction, into: &payload)
+                    payload.writeKey(row.faction)
                     payload.writeUInt32(UInt32(bitPattern: row.gold))
                     for kind in CrimeKind.counted {
                         payload.writeUInt32(UInt32(bitPattern: row.counts[kind]))
@@ -68,10 +68,10 @@ nonisolated extension OpenSkySaveEncoder {
             return stolen.isEmpty ? nil : SavedStolenGoods(entry: entry, stacks: stolen)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.stolenGoods, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.stolenGoods) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
+                payload.writeKey(each.entry.key)
                 payload.writeUInt32(UInt32(clamping: each.stacks.count))
                 for stack in each.stacks {
                     payload.writeUInt32(stack.item.rawValue)

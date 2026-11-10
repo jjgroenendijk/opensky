@@ -25,17 +25,17 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedDeath(entry: entry, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.deaths, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.deaths) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 payload.writeUInt8(each.state.isDead ? 1 : 0)
                 payload.writeUInt8(each.state.wasLooted ? 1 : 0)
                 writeRestingTransform(each.state.restingTransform, into: &payload)
                 payload.writeUInt8(each.state.severedNode == nil ? 0 : 1)
                 if let node = each.state.severedNode {
-                    writeString(node, into: &payload)
+                    payload.writeString(node)
                 }
                 writeRestingTransform(each.state.severedHeadRest, into: &payload)
             }

@@ -39,7 +39,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
             payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumFavouritesEntrySize
         ) { reader in
             let count = try reader.uint32("FAVS item count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: count, minimumElementSize: 4, remaining: reader.bytesRemaining, chunk: tag
             )
             var items: [FormID] = []
@@ -47,7 +47,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
                 try items.append(FormID(reader.uint32("FAVS item")))
             }
             let slots = try reader.uint32("FAVS hotkey count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: slots, minimumElementSize: OpenSkySaveFormat.favouriteHotkeySize,
                 remaining: reader.bytesRemaining, chunk: tag
             )

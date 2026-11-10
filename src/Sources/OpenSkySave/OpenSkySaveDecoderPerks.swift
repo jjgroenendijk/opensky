@@ -18,7 +18,7 @@ nonisolated enum OpenSkySavePerkDecoder: Sendable {
     static func decodePerks(_ payload: Data) throws -> [SavePerkEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PRKS entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumPerkEntrySize,
             remaining: reader.bytesRemaining,
@@ -38,7 +38,7 @@ nonisolated enum OpenSkySavePerkDecoder: Sendable {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
         let cell = try OpenSkySaveEntryDecoder.decodeCell(&reader)
         let count = try reader.uint32("PRKS owned count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumPerkKeySize,
             remaining: reader.bytesRemaining,

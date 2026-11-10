@@ -105,11 +105,11 @@ nonisolated extension OpenSkySaveEncoder {
         let saved = entries
             .compactMap { entry in entry.delta.component(State.self).map { (entry, $0) } }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: tag, into: &writer) { payload in
+        writer.writeChunk(tag: tag) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (entry, state) in saved {
-                writeKey(entry.key, into: &payload)
-                writeCell(entry.delta.cell, into: &payload)
+                payload.writeKey(entry.key)
+                payload.writeCell(entry.delta.cell)
                 body(state, &payload)
             }
         }
@@ -125,7 +125,7 @@ nonisolated enum OpenSkySaveStoryDecoder: Sendable {
             let phase = try reader.uint32("SCNS phase")
             let entered = try reader.bool("SCNS phase entered")
             let runningCount = try reader.uint32("SCNS running count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: runningCount, minimumElementSize: OpenSkySaveFormat.sceneActionRecordSize,
                 remaining: reader.bytesRemaining, chunk: OpenSkySaveFormat.ChunkTag.scenes
             )
@@ -143,7 +143,7 @@ nonisolated enum OpenSkySaveStoryDecoder: Sendable {
                 ))
             }
             let completedCount = try reader.uint32("SCNS completed count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: completedCount, minimumElementSize: 4,
                 remaining: reader.bytesRemaining, chunk: OpenSkySaveFormat.ChunkTag.scenes
             )
@@ -220,7 +220,7 @@ nonisolated enum OpenSkySaveStoryDecoder: Sendable {
     ) throws -> [SaveStoryEntry<State>] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("\(tag) entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count, minimumElementSize: minimumSize,
             remaining: reader.bytesRemaining, chunk: tag
         )

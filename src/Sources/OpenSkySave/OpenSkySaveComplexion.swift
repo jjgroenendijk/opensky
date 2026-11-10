@@ -29,10 +29,10 @@ nonisolated extension OpenSkySaveEncoder {
                 .map { (entry.key, $0) }
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.playerComplexion, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.playerComplexion) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (key, texture) in saved {
-                writeKey(key, into: &payload)
+                payload.writeKey(key)
                 payload.writeUInt32(texture.rawValue)
             }
         }
@@ -68,7 +68,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
     static func decodeComplexions(_ payload: Data) throws -> [ReferenceKey: FormID] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PCPX entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count, minimumElementSize: OpenSkySaveFormat.minimumComplexionEntrySize,
             remaining: reader.bytesRemaining, chunk: OpenSkySaveFormat.ChunkTag.playerComplexion
         )

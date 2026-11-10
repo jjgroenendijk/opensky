@@ -14,17 +14,17 @@ nonisolated extension OpenSkySaveFormat.ChunkTag {
 
 nonisolated public enum OpenSkySaveSummaryCodec: Sendable {
     public static func write(_ summary: SaveSummary, into writer: inout BinaryWriter) {
-        OpenSkySaveEncoder.writeChunk(tag: OpenSkySaveFormat.ChunkTag.summary, into: &writer) {
-            OpenSkySaveEncoder.writeString(summary.characterName, into: &$0)
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.summary) {
+            $0.writeString(summary.characterName)
             $0.writeUInt16(UInt16(clamping: summary.level))
-            OpenSkySaveEncoder.writeString(summary.raceName, into: &$0)
-            OpenSkySaveEncoder.writeString(summary.locationName, into: &$0)
+            $0.writeString(summary.raceName)
+            $0.writeString(summary.locationName)
             $0.writeUInt64(max(0, summary.playSeconds).bitPattern)
         }
     }
 
     public static func write(_ thumbnail: SaveThumbnail, into writer: inout BinaryWriter) {
-        OpenSkySaveEncoder.writeChunk(tag: OpenSkySaveFormat.ChunkTag.thumbnail, into: &writer) {
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.thumbnail) {
             $0.writeUInt16(UInt16(thumbnail.width))
             $0.writeUInt16(UInt16(thumbnail.height))
             $0.write(thumbnail.rgba)

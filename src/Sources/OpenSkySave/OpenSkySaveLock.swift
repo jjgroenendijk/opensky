@@ -25,11 +25,11 @@ nonisolated extension OpenSkySaveEncoder {
             entry.delta.component(ReferenceLockState.self).map { (entry, $0) }
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.locks, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.locks) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (entry, state) in saved {
-                writeKey(entry.key, into: &payload)
-                writeCell(entry.delta.cell, into: &payload)
+                payload.writeKey(entry.key)
+                payload.writeCell(entry.delta.cell)
                 payload.writeUInt8(state.isLocked ? 1 : 0)
                 payload.writeUInt8(state.level)
                 payload.writeUInt32(state.key?.rawValue ?? 0)
@@ -42,7 +42,7 @@ nonisolated enum OpenSkySaveLockDecoder: Sendable {
     static func decodeLocks(_ payload: Data) throws -> [SaveLockEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("LOCK entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumLockEntrySize,
             remaining: reader.bytesRemaining,

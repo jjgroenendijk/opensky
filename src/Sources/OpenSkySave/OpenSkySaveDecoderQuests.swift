@@ -28,7 +28,7 @@ nonisolated enum OpenSkySaveQuestDecoder: Sendable {
     static func decodeQuestStates(_ payload: Data) throws -> [SaveQuestEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("QSTS entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumQuestEntrySize,
             remaining: reader.bytesRemaining,
@@ -46,7 +46,7 @@ nonisolated enum OpenSkySaveQuestDecoder: Sendable {
     static func decodeQuestAliases(_ payload: Data) throws -> [SaveQuestAliasEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("QALS entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumQuestAliasEntrySize,
             remaining: reader.bytesRemaining,
@@ -65,7 +65,7 @@ nonisolated enum OpenSkySaveQuestDecoder: Sendable {
     ) throws -> [SaveQuestLocationAliasEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("QLOC entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumQuestAliasEntrySize,
             remaining: reader.bytesRemaining,
@@ -76,7 +76,7 @@ nonisolated enum OpenSkySaveQuestDecoder: Sendable {
         for _ in 0 ..< count {
             let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
             let fillCount = try reader.uint32("QLOC fill count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: fillCount,
                 minimumElementSize: OpenSkySaveFormat.minimumQuestAliasFillSize,
                 remaining: reader.bytesRemaining,
@@ -125,7 +125,7 @@ nonisolated enum OpenSkySaveQuestDecoder: Sendable {
     ) throws -> SaveQuestAliasEntry {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
         let count = try reader.uint32("QALS fill count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumQuestAliasFillSize,
             remaining: reader.bytesRemaining,
@@ -163,7 +163,7 @@ nonisolated enum OpenSkySaveQuestDecoder: Sendable {
     /// to the type, and one repeated index is not a reason to fail a whole save.
     private static func decodeStages(_ reader: inout SaveReader) throws -> [UInt16] {
         let count = try reader.uint32("QSTS stage count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.questStageSize,
             remaining: reader.bytesRemaining,
@@ -185,7 +185,7 @@ nonisolated enum OpenSkySaveQuestDecoder: Sendable {
         _ reader: inout SaveReader
     ) throws -> [QuestObjectiveState] {
         let count = try reader.uint32("QSTS objective count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.questObjectiveSize,
             remaining: reader.bytesRemaining,

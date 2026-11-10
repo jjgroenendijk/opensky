@@ -30,11 +30,11 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedSpellbook(entry: entry, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.spellbooks, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.spellbooks) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 writeSpellbook(each.state, into: &payload)
             }
         }
@@ -48,7 +48,7 @@ nonisolated extension OpenSkySaveEncoder {
         let powers = state.powerDays.sorted { $0.key < $1.key }
         writer.writeUInt32(UInt32(clamping: powers.count))
         for (power, day) in powers {
-            writeKey(power, into: &writer)
+            writer.writeKey(power)
             writer.writeUInt32(UInt32(bitPattern: day))
         }
     }
@@ -56,7 +56,7 @@ nonisolated extension OpenSkySaveEncoder {
     private static func writeKeyList(_ keys: [ReferenceKey], into writer: inout BinaryWriter) {
         writer.writeUInt32(UInt32(clamping: keys.count))
         for key in keys {
-            writeKey(key, into: &writer)
+            writer.writeKey(key)
         }
     }
 
@@ -70,6 +70,6 @@ nonisolated extension OpenSkySaveEncoder {
             return
         }
         writer.writeUInt8(1)
-        writeKey(key, into: &writer)
+        writer.writeKey(key)
     }
 }

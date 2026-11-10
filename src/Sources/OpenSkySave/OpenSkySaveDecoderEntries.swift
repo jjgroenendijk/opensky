@@ -12,7 +12,7 @@ nonisolated enum OpenSkySaveEntryDecoder: Sendable {
     static func decodeEntries(_ payload: Data) throws -> [WorldStateSnapshotEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RDLT entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumEntrySize,
             remaining: reader.bytesRemaining,
@@ -30,7 +30,7 @@ nonisolated enum OpenSkySaveEntryDecoder: Sendable {
     static func decodeGlobals(_ payload: Data) throws -> [WorldStateGlobalSnapshotEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("GVAR entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumGlobalEntrySize,
             remaining: reader.bytesRemaining,

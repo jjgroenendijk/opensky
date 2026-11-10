@@ -19,22 +19,22 @@ nonisolated extension OpenSkySaveEncoder {
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.flags.count))
             for (name, flag) in state.flags.sorted(by: { $0.key < $1.key }) {
-                writeString(name, into: &payload)
+                payload.writeString(name)
                 payload.writeUInt8(flag ? 1 : 0)
             }
             payload.writeUInt32(UInt32(clamping: state.values.count))
             for (name, value) in state.values.sorted(by: { $0.key < $1.key }) {
-                writeString(name, into: &payload)
+                payload.writeString(name)
                 payload.writeFloat32(value)
             }
             payload.writeUInt32(UInt32(clamping: state.forms.count))
             for (name, form) in state.forms.sorted(by: { $0.key < $1.key }) {
-                writeString(name, into: &payload)
-                writeKey(form, into: &payload)
+                payload.writeString(name)
+                payload.writeKey(form)
             }
             payload.writeUInt32(UInt32(clamping: state.addedForms.count))
             for form in state.addedForms {
-                writeKey(form, into: &payload)
+                payload.writeKey(form)
             }
         }
     }
@@ -78,7 +78,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
         _ reader: inout SaveReader, _ context: String, tag: String
     ) throws -> UInt32 {
         let count = try reader.uint32(context)
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count, minimumElementSize: 2, remaining: reader.bytesRemaining, chunk: tag
         )
         return count
