@@ -37,12 +37,12 @@ struct LongBodyShapeTests {
         // The box face is 100 units ahead: the nose sphere reaches 63.5 + 52.7.
         let box = DynamicBodyScene.box(center: SIMD3(150, 0, 80), half: SIMD3(50, 50, 80))
         let correction = shape.correction(
-            feet: .zero, yaw: 0, displacement: SIMD2(10, 0), lift: 32,
+            pose: (.zero, 0), displacement: SIMD2(10, 0), lift: 32,
             query: DynamicBodyScene.candidateQuery([box])
         )
         #expect(correction.x < -10, "correction \(correction)")
         let clear = shape.correction(
-            feet: SIMD3(-200, 0, 0), yaw: 0, displacement: SIMD2(10, 0), lift: 32,
+            pose: (SIMD3(-200, 0, 0), 0), displacement: SIMD2(10, 0), lift: 32,
             query: DynamicBodyScene.candidateQuery([box])
         )
         #expect(simd_length(clear) < 0.01)

@@ -73,11 +73,11 @@ nonisolated public enum BehaviorEventProbe {
         )
         instance.references = InstallBehaviorReferenceSource(fileSystem: fileSystem, rootPath: key)
         instance.activate()
-        var steps = [advance(instance, event: nil, accepted: true, idleUpdates, variables)]
+        var steps = [advance(instance, event: (nil, true), idleUpdates, variables)]
         for event in events {
             let accepted = instance.raiseEvent(named: event)
             steps.append(
-                advance(instance, event: event, accepted: accepted, updatesPerEvent, variables)
+                advance(instance, event: (event, accepted), updatesPerEvent, variables)
             )
         }
         instance.deactivate()
@@ -85,9 +85,10 @@ nonisolated public enum BehaviorEventProbe {
     }
 
     private static func advance(
-        _ instance: BehaviorGraphInstance, event: String?, accepted: Bool, _ updates: Int,
-        _ variables: [String: Float]
+        _ instance: BehaviorGraphInstance, event raised: (name: String?, accepted: Bool),
+        _ updates: Int, _ variables: [String: Float]
     ) -> Step {
+        let (event, accepted) = raised
         var fired: [String] = []
         let pairedBefore = Set(instance.pairedClipNames)
         for _ in 0 ..< updates {

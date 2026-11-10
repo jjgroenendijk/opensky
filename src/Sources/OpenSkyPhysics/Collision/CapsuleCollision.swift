@@ -124,24 +124,21 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
             return triangleContacts(
                 segment: segment,
                 motion: motion,
-                vertices: vertices,
-                indices: indices,
+                mesh: (vertices, indices),
                 transform: shape.transform
             )
         case let .convexVertices(vertices, hullIndices):
             return triangleContacts(
                 segment: segment,
                 motion: motion,
-                vertices: vertices,
-                indices: hullIndices,
+                mesh: (vertices, hullIndices),
                 transform: shape.transform
             )
         case let .box(halfExtents):
             return triangleContacts(
                 segment: segment,
                 motion: motion,
-                vertices: Self.boxVertices(halfExtents),
-                indices: Self.boxIndices,
+                mesh: (Self.boxVertices(halfExtents), Self.boxIndices),
                 transform: shape.transform
             )
         case let .sphere(radius):
@@ -170,10 +167,10 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
     private func triangleContacts(
         segment: (first: SIMD3<Float>, second: SIMD3<Float>),
         motion: SIMD3<Float>,
-        vertices: [SIMD3<Float>],
-        indices: [UInt32],
+        mesh: (vertices: [SIMD3<Float>], indices: [UInt32]),
         transform: float4x4
     ) -> [CapsuleCollisionContact] {
+        let (vertices, indices) = mesh
         var result: [CapsuleCollisionContact] = []
         // A triangle outside the segment's box grown by the contact reach cannot touch,
         // so the box test skips the exact test without changing any result.

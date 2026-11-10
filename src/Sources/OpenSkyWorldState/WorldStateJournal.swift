@@ -104,16 +104,15 @@ nonisolated public struct WorldStateJournal: Sendable {
     public mutating func record(
         key: ReferenceKey,
         kind: WorldStateComponentKind,
-        oldValue: WorldStateComponentValue?,
-        newValue: WorldStateComponentValue?,
+        change: (old: WorldStateComponentValue?, new: WorldStateComponentValue?),
         cell: CellSceneLocation?
     ) -> WorldStateJournalEntry {
         let entry = WorldStateJournalEntry(
             sequence: nextSequence,
             key: key,
             kind: kind,
-            oldValue: oldValue,
-            newValue: newValue,
+            oldValue: change.old,
+            newValue: change.new,
             cell: cell
         )
         nextSequence &+= 1

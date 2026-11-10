@@ -149,8 +149,7 @@ public final class StoryWorldAdapter {
             rank = known ?? 0
         }
         storyManager.fire(.kill(
-            killer: killer,
-            victim: victim,
+            (killer, victim),
             location: game.runtimeState.conditionContext().data.currentLocation(of: victim),
             status: game.crime.killStatus(of: victim, by: killer),
             rankBeforeDeath: rank

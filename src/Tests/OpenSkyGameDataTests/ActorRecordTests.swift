@@ -182,7 +182,7 @@ struct ActorRecordDecodeTests {
         let picks = Set((0 ..< 32).compactMap { seed -> UInt32? in
             var random = SplitMix64(seed: UInt64(seed))
             return LeveledListRoll.roll(
-                list, count: 1, request: LeveledRequest(level: 6, playerLevel: 6),
+                list, asked: (1, LeveledRequest(level: 6, playerLevel: 6)),
                 chanceNone: 0, random: &random
             ).first?.entry.reference.rawValue
         })

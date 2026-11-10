@@ -25,11 +25,11 @@ struct CalendarTextsTests {
 
     @Test func theDateLineReadsLikeTheWaitMenu() throws {
         let texts = try Self.english()
-        #expect(texts.dateLine(weekday: 0, hourOfDay: 8, day: 17, month: 8, year: 201)
+        #expect(texts.dateLine(at: (0, 8), day: 17, month: 8, year: 201)
             == "Sundas, 8:00 AM, 17th of Last Seed, 4E 201")
-        #expect(texts.dateLine(weekday: 1, hourOfDay: 0.5, day: 1, month: 1, year: 202)
+        #expect(texts.dateLine(at: (1, 0.5), day: 1, month: 1, year: 202)
             == "Morndas, 12:30 AM, 1st of Morning Star, 4E 202")
-        #expect(texts.dateLine(weekday: 0, hourOfDay: 13.75, day: 22, month: 8, year: 201)
+        #expect(texts.dateLine(at: (0, 13.75), day: 22, month: 8, year: 201)
             == "Sundas, 1:45 PM, 22nd of Last Seed, 4E 201")
     }
 
@@ -42,7 +42,7 @@ struct CalendarTextsTests {
 
     @Test func aMissingWordFallsBackToItsEditorID() {
         #expect(CalendarTexts.vanilla.dateLine(
-            weekday: 0, hourOfDay: 20, day: 3, month: 12, year: 201
+            at: (0, 20), day: 3, month: 12, year: 201
         ) == "sDaySunday, 8:00 sTimePM, 3sThirdOrdSuffixsOfsMonthDecember, 4E 201")
     }
 }

@@ -86,7 +86,7 @@ struct AssetTextureOutputTests {
         let target = try #require(TextureQuality.high.target)
         var tried: [ReadyTextureFormat] = []
         let pick = TextureFormatSearch.pick(
-            TextureFormatSearch.order, target: target, normalMap: false, cutoutAlpha: false
+            TextureFormatSearch.order, target: target, kind: (false, false)
         ) { format in
             tried.append(format)
             let psnr = format == .astc5x5 ? 45.0 : 30
@@ -109,7 +109,7 @@ struct AssetTextureOutputTests {
     @Test func noFormatMeetingTheTargetKeepsTheShippedBlocks() throws {
         let target = try #require(TextureQuality.high.target)
         let pick = TextureFormatSearch.pick(
-            TextureFormatSearch.order, target: target, normalMap: false, cutoutAlpha: false
+            TextureFormatSearch.order, target: target, kind: (false, false)
         ) { _ in TextureMeasure(rgbPSNR: 20, alphaPSNR: 20, normalDegrees: nil) }
         #expect(pick == nil)
     }

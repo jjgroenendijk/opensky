@@ -21,16 +21,16 @@ nonisolated extension BehaviorGraphInstance {
         }
     }
 
-    /// The aim target in model space: the camera position when `useCamera`, else
-    /// `location`. Both are world space.
+    /// The aim target in model space: the camera position when the bound or authored
+    /// `prefix` flag is set, else the target location. Both are world space.
     private func aimTarget(
         _ bound: [String: BehaviorVariableValue],
         prefix: String,
-        useCamera: Bool,
-        camera: SIMD3<Float>,
+        authored: (useCamera: Bool, camera: SIMD3<Float>),
         location: SIMD4<Float>
     ) -> SIMD3<Float> {
-        let world = useCamera
+        let camera = authored.camera
+        let world = bound.bool(prefix, or: authored.useCamera)
             ? SIMD3(
                 bound.float("\(prefix)X", or: camera.x),
                 bound.float("\(prefix)Y", or: camera.y),
@@ -64,11 +64,9 @@ nonisolated extension BehaviorGraphInstance {
     ) -> BehaviorPose {
         let bound = step.bound
         let camera = SIMD3(modifier.lookAtCameraX, modifier.lookAtCameraY, modifier.lookAtCameraZ)
-        let target = aimTarget(
-            bound, prefix: "lookAtCamera",
-            useCamera: bound.bool("lookAtCamera", or: modifier.lookAtCamera),
-            camera: camera, location: modifier.targetLocation
-        )
+        let target = aimTarget(bound, prefix: "lookAtCamera", authored: (
+            modifier.lookAtCamera, camera
+        ), location: modifier.targetLocation)
         var model = BehaviorModelPose(pose, skeleton: skeleton)
         let lookFrom = modifier.bones.last.map(\.index).flatMap { model.contains($0) ? $0 : nil }
         let toTarget = target - (lookFrom.map { model.translations[$0] } ?? SIMD3())
@@ -161,11 +159,9 @@ nonisolated extension BehaviorGraphInstance {
         let camera = SIMD3(
             modifier.directAtCameraX, modifier.directAtCameraY, modifier.directAtCameraZ
         )
-        let target = aimTarget(
-            bound, prefix: "directAtCamera",
-            useCamera: bound.bool("directAtCamera", or: modifier.directAtCamera),
-            camera: camera, location: modifier.targetLocation
-        )
+        let target = aimTarget(bound, prefix: "directAtCamera", authored: (
+            modifier.directAtCamera, camera
+        ), location: modifier.targetLocation)
         var model = BehaviorModelPose(pose, skeleton: skeleton)
         let chain = model.chain(
             from: bound.int("startBoneIndex", or: modifier.startBoneIndex),

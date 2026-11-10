@@ -55,8 +55,7 @@ struct ShapeSweepTests {
         // The segment runs up the Z axis; only its top end is level with the
         // wall readout, which sits above z = 100.
         let query = ShapeSweepQuery.capsule(
-            first: SIMD3(0, 0, 10),
-            second: SIMD3(0, 0, 130),
+            (SIMD3(0, 0, 10), SIMD3(0, 0, 130)),
             radius: 4,
             direction: SIMD3(1, 0, 0),
             maximumDistance: 200

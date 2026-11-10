@@ -245,8 +245,8 @@ struct LeveledListRollTests {
     ) -> [LeveledPick] {
         var random = SplitMix64(seed: UInt64(seed))
         return LeveledListRoll.roll(
-            list, count: count,
-            request: request ?? LeveledRequest(level: level, playerLevel: level),
+            list,
+            asked: (count, request ?? LeveledRequest(level: level, playerLevel: level)),
             chanceNone: chanceNone, random: &random
         )
     }

@@ -110,8 +110,7 @@ nonisolated public struct PerkStore: Sendable {
             editorID: \.editorID,
             resolve: { id, decoded, sourcePlugin in
                 Self.join(
-                    id: id,
-                    record: decoded,
+                    (id, decoded),
                     sourcePlugin: sourcePlugin,
                     index: index,
                     spells: spells
@@ -260,12 +259,12 @@ nonisolated public struct PerkStore: Sendable {
     }
 
     private static func join(
-        id: ResolvedFormID,
-        record: Perk,
+        _ decoded: (id: ResolvedFormID, record: Perk),
         sourcePlugin: String,
         index: RecordIndex,
         spells: SpellStore
     ) -> ResolvedPerk {
+        let (id, record) = decoded
         let effects = record.effects.map { effect in
             ResolvedPerkEffect(
                 effect: effect,

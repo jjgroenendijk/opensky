@@ -69,7 +69,7 @@ nonisolated public final class ASTCTextureConverter: AssetConverting, Sendable {
             let normalMap = AssetTextureClass(path: path) == .normal
             let cutout = !normalMap && top.hasTransparency
             let format = try TextureFormatSearch.pick(
-                candidates, target: target, normalMap: normalMap, cutoutAlpha: cutout
+                candidates, target: target, kind: (normalMap, cutout)
             ) { try Self.measure(top, as: $0, normalMap: normalMap) }
             guard let format else { return source }
             return try Self.encode(levels, of: source, as: format)

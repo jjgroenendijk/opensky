@@ -167,12 +167,12 @@ nonisolated public struct RagdollInstance: Sendable {
             let mass = body.definition.mass
             bodies[index].linearVelocity = motor.driven(
                 body.linearVelocity, error: target.position - body.originPosition,
-                mass: mass, dt: dt, weight: weight
+                mass: mass, step: (dt, weight)
             )
             bodies[index].angularVelocity = motor.driven(
                 body.angularVelocity,
                 error: RagdollMotor.angularError(from: body.orientation, to: target.orientation),
-                mass: mass, dt: dt, weight: weight
+                mass: mass, step: (dt, weight)
             )
         }
     }

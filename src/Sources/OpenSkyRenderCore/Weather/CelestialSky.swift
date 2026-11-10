@@ -88,13 +88,13 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
     public static let minimumLightElevation: Float = 10 * .pi / 180
 
     public static func resolve(
-        hour: Float,
-        daysPassed: Float,
+        at time: (hour: Float, daysPassed: Float),
         climate: Climate?,
         weathers: [(weather: Weather, weight: Float)],
         settings: SkySettings
     ) -> CelestialSky {
-        let hour = wrapHour(hour)
+        let daysPassed = time.daysPassed
+        let hour = wrapHour(time.hour)
         let path = SunPath(hour: hour, timing: climate?.timing, settings: settings)
         let sun = simd_normalize(path.disc)
         let glare = weathers.reduce(Float(0)) { $0 + ($1.weather.data?.sunGlare ?? 0) * $1.weight }

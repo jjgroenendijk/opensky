@@ -17,7 +17,7 @@ struct RagdollMotorTests {
     @Test
     func pullsTowardsTheTarget() {
         let velocity = Self.motor.driven(
-            .zero, error: SIMD3(10, 0, 0), mass: 1, dt: 1 / 60, weight: 1
+            .zero, error: SIMD3(10, 0, 0), mass: 1, step: (1 / 60, 1)
         )
         #expect(velocity.x > 0)
         #expect(velocity.y == 0)
@@ -28,7 +28,7 @@ struct RagdollMotorTests {
     func doesNothingOnceTheSimulationOwnsThePose() {
         let start = SIMD3<Float>(3, -2, 1)
         let velocity = Self.motor.driven(
-            start, error: SIMD3(10, 0, 0), mass: 1, dt: 1 / 60, weight: 0
+            start, error: SIMD3(10, 0, 0), mass: 1, step: (1 / 60, 0)
         )
         #expect(velocity == start)
     }
@@ -38,7 +38,7 @@ struct RagdollMotorTests {
         var motor = Self.motor
         motor.tau = 1
         motor.maxForce = 2
-        let velocity = motor.driven(.zero, error: SIMD3(100, 0, 0), mass: 4, dt: 1, weight: 1)
+        let velocity = motor.driven(.zero, error: SIMD3(100, 0, 0), mass: 4, step: (1, 1))
         #expect(simd_length(velocity) <= 0.5 + 1e-5)
     }
 

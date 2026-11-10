@@ -63,12 +63,12 @@ nonisolated public enum LeveledListRoll {
     /// count; any other list rolls once and multiplies. `chanceNone` is in percent.
     public static func roll(
         _ list: LeveledList,
-        count: Int32,
-        request: LeveledRequest,
+        asked: (count: Int32, request: LeveledRequest),
         chanceNone: Float,
         settings: SpecialLootSettings = SpecialLootSettings(),
         random: inout SplitMix64
     ) -> [LeveledPick] {
+        let (count, request) = asked
         if list.flags.contains(.useAll) {
             guard !isNone(chanceNone, &random) else { return [] }
             return list.entries.map { LeveledPick(entry: $0, count: scaled(count, $0)) }

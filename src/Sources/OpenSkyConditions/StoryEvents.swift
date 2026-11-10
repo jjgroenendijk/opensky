@@ -35,15 +35,14 @@ nonisolated public enum StoryRemoveType: Int, Sendable {
 
 nonisolated extension StoryEventData {
     public static func kill(
-        killer: ReferenceKey?,
-        victim: ReferenceKey,
+        _ actors: (killer: ReferenceKey?, victim: ReferenceKey),
         location: ResolvedFormID?,
         status: StoryKillStatus,
         rankBeforeDeath: Int8
     ) -> StoryEventData {
         var event = StoryEventData(event: "KILL")
-        event.actor1 = killer
-        event.actor2 = victim
+        event.actor1 = actors.killer
+        event.actor2 = actors.victim
         event.location1 = location
         event.value1 = Float(status.rawValue)
         event.value2 = Float(rankBeforeDeath)
@@ -135,15 +134,14 @@ nonisolated extension StoryEventData {
     }
 
     public static func crimeGold(
-        criminal: ReferenceKey,
-        victim: ReferenceKey?,
+        _ actors: (criminal: ReferenceKey, victim: ReferenceKey?),
         crimeFaction: ReferenceKey,
         gold: Int32,
         crime: StoryCrimeType
     ) -> StoryEventData {
         var event = StoryEventData(event: "ADCR")
-        event.actor1 = criminal
-        event.actor2 = victim
+        event.actor1 = actors.criminal
+        event.actor2 = actors.victim
         event.form = form(of: crimeFaction)
         event.value1 = Float(gold)
         event.value2 = Float(crime.rawValue)

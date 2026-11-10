@@ -22,6 +22,14 @@ nonisolated public struct BehaviorBlendChild: Sendable {
     public let boneWeights: [Float]?
 }
 
+/// One node reached in the walk: where it sits, the variable values its bindings
+/// give it, and how deep the walk is.
+nonisolated struct BehaviorVisit {
+    let target: HKXPointerTarget
+    let bound: [String: BehaviorVariableValue]
+    let depth: Int
+}
+
 nonisolated extension BehaviorGraphInstance {
     /// The pose of the generator at `target`, or the reference pose when there
     /// is nothing there to evaluate.
@@ -42,22 +50,20 @@ nonisolated extension BehaviorGraphInstance {
             tally.note(.disabledNode)
             return skeleton.restPose
         }
-        let bound = boundValues(of: node)
-        return evaluate(
-            node.object, at: target, bound: bound, depth: depth, deltaTime: deltaTime
-        )
+        let visit = BehaviorVisit(target: target, bound: boundValues(of: node), depth: depth)
+        return evaluate(node.object, visit, deltaTime: deltaTime)
     }
 
     /// Routes one decoded object to its semantics. Split from the guard clauses
     /// above so neither half runs past the body-length limit.
     private func evaluate(
         _ object: any HKBClass,
-        at target: HKXPointerTarget,
-        bound: [String: BehaviorVariableValue],
-        depth: Int,
+        _ visit: BehaviorVisit,
         deltaTime: Float
     ) -> BehaviorPose {
+        let (target, bound, depth) = (visit.target, visit.bound, visit.depth)
         let next = depth + 1
+        let inner = BehaviorVisit(target: target, bound: bound, depth: next)
         switch object {
         case let clip as HKBClipGenerator:
             return evaluateClip(clip, at: target, bound: bound, deltaTime: deltaTime)
@@ -71,7 +77,7 @@ nonisolated extension BehaviorGraphInstance {
             )
         case let matching as HKBPoseMatchingGenerator:
             return evaluatePoseMatching(
-                matching, at: target, bound: bound, depth: next, deltaTime: deltaTime
+                matching, inner, deltaTime: deltaTime
             )
         case let selector as HKBManualSelectorGenerator:
             return evaluateSelector(
@@ -84,11 +90,11 @@ nonisolated extension BehaviorGraphInstance {
             return applyModifier(at: wrapper.modifier, to: pose, deltaTime: deltaTime)
         case let machine as HKBStateMachine:
             return evaluateStateMachine(
-                machine, at: target, bound: bound, depth: next, deltaTime: deltaTime
+                machine, inner, deltaTime: deltaTime
             )
         default:
             return evaluateBethesda(
-                object, at: target, bound: bound, depth: next, deltaTime: deltaTime
+                object, inner, deltaTime: deltaTime
             )
         }
     }
@@ -97,11 +103,10 @@ nonisolated extension BehaviorGraphInstance {
     /// switch so neither routing function grows past the complexity limit.
     private func evaluateBethesda(
         _ object: any HKBClass,
-        at target: HKXPointerTarget,
-        bound: [String: BehaviorVariableValue],
-        depth: Int,
+        _ visit: BehaviorVisit,
         deltaTime: Float
     ) -> BehaviorPose {
+        let (bound, depth) = (visit.bound, visit.depth)
         switch object {
         case let tagging as BSiStateTaggingGenerator:
             noteStateTag(of: tagging, bound: bound)
@@ -112,11 +117,11 @@ nonisolated extension BehaviorGraphInstance {
             return evaluateBoneSwitch(switcher, depth: depth, deltaTime: deltaTime)
         case let cyclic as BSCyclicBlendTransitionGenerator:
             return evaluateCyclicBlend(
-                cyclic, at: target, bound: bound, depth: depth, deltaTime: deltaTime
+                cyclic, visit, deltaTime: deltaTime
             )
         case let offset as BSOffsetAnimationGenerator:
             return evaluateOffsetAnimation(
-                offset, at: target, bound: bound, depth: depth, deltaTime: deltaTime
+                offset, visit, deltaTime: deltaTime
             )
         case is HKBReferencePoseGenerator:
             return skeleton.restPose

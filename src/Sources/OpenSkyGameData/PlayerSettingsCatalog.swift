@@ -49,228 +49,99 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             + GraphicsOptions.definitions
     )
 
-    private static let unit = PlayerSettingKind.slider(range: 0 ... 1, step: 0.05)
+    static let unit = PlayerSettingKind.slider(range: 0 ... 1, step: 0.05)
 
-    private static func row(
-        _ id: String, _ group: PlayerSettingGroup, _ kind: PlayerSettingKind,
+    static func row(
+        _ key: (id: String, group: PlayerSettingGroup), _ kind: PlayerSettingKind,
         _ title: String, _ value: Double, applied: Bool = false
     ) -> PlayerSettingDefinition {
         PlayerSettingDefinition(
-            id: PlayerSettingID(id), group: group, kind: kind, title: title,
+            id: PlayerSettingID(key.id), group: key.group, kind: kind, title: title,
             defaultValue: value, isApplied: applied
         )
     }
 
     private static let gameplay: [PlayerSettingDefinition] = [
-        row("gameplay.invertY", .gameplay, .toggle, "$Invert Y", 0, applied: true),
-        row("gameplay.lookSensitivity", .gameplay, unit, "$Look Sensitivity", 0.5, applied: true),
-        row("gameplay.vibration", .gameplay, .toggle, "$Vibration", 1),
-        row("gameplay.controller", .gameplay, .toggle, "$360 Controller", 0),
+        row(("gameplay.invertY", .gameplay), .toggle, "$Invert Y", 0, applied: true),
+        row(("gameplay.lookSensitivity", .gameplay), unit, "$Look Sensitivity", 0.5, applied: true),
+        row(("gameplay.vibration", .gameplay), .toggle, "$Vibration", 1),
+        row(("gameplay.controller", .gameplay), .toggle, "$360 Controller", 0),
         row(
-            "gameplay.missingCreationsCheck",
-            .gameplay,
+            ("gameplay.missingCreationsCheck", .gameplay),
             .toggle,
             "$SaveGameMissingCreationsCheck",
             1
         ),
-        row("gameplay.survivalMode", .gameplay, .toggle, "$Survival Mode", 0, applied: true),
+        row(("gameplay.survivalMode", .gameplay), .toggle, "$Survival Mode", 0, applied: true),
         row(
-            "gameplay.difficulty",
-            .gameplay,
+            ("gameplay.difficulty", .gameplay),
             .choice(options: difficultyOptions),
             "$Difficulty",
             2,
             applied: true
         ),
         row(
-            "gameplay.showFloatingMarkers",
-            .gameplay,
+            ("gameplay.showFloatingMarkers", .gameplay),
             .toggle,
             "$Show Floating Markers",
             1,
             applied: true
         ),
-        row("gameplay.saveOnRest", .gameplay, .toggle, "$Save on Rest", 1, applied: true),
-        row("gameplay.saveOnWait", .gameplay, .toggle, "$Save on Wait", 1, applied: true),
-        row("gameplay.saveOnTravel", .gameplay, .toggle, "$Save on Travel", 1, applied: true),
+        row(("gameplay.saveOnRest", .gameplay), .toggle, "$Save on Rest", 1, applied: true),
+        row(("gameplay.saveOnWait", .gameplay), .toggle, "$Save on Wait", 1, applied: true),
+        row(("gameplay.saveOnTravel", .gameplay), .toggle, "$Save on Travel", 1, applied: true),
         row(
-            "gameplay.saveOnPause",
-            .gameplay,
+            ("gameplay.saveOnPause", .gameplay),
             .choice(options: saveOnPauseOptions),
             "$Save on Pause",
             6,
             applied: true
         ),
-        row("gameplay.useKinect", .gameplay, .toggle, "$Use Kinect Commands", 0)
+        row(("gameplay.useKinect", .gameplay), .toggle, "$Use Kinect Commands", 0)
     ]
 
     private static let display: [PlayerSettingDefinition] = [
-        row("display.brightness", .display, unit, "$Brightness", 0.5),
-        row("display.hudOpacity", .display, unit, "$HUD Opacity", 1, applied: true),
-        row("display.actorFade", .display, unit, "$Actor Fade", 0.5),
-        row("display.itemFade", .display, unit, "$Item Fade", 0.5),
-        row("display.objectFade", .display, unit, "$Object Fade", 0.5),
-        row("display.grassFade", .display, unit, "$Grass Fade", 0.5),
-        row("display.shadowFade", .display, unit, "$Shadow Fade", 0.5),
-        row("display.lightFade", .display, unit, "$Light Fade", 0.5),
-        row("display.specularityFade", .display, unit, "$Specularity Fade", 0.5),
-        row("display.treeLODFade", .display, unit, "$Tree LOD Fade", 0.5),
-        row("display.crosshair", .display, .toggle, "$Crosshair", 1, applied: true),
+        row(("display.brightness", .display), unit, "$Brightness", 0.5),
+        row(("display.hudOpacity", .display), unit, "$HUD Opacity", 1, applied: true),
+        row(("display.actorFade", .display), unit, "$Actor Fade", 0.5),
+        row(("display.itemFade", .display), unit, "$Item Fade", 0.5),
+        row(("display.objectFade", .display), unit, "$Object Fade", 0.5),
+        row(("display.grassFade", .display), unit, "$Grass Fade", 0.5),
+        row(("display.shadowFade", .display), unit, "$Shadow Fade", 0.5),
+        row(("display.lightFade", .display), unit, "$Light Fade", 0.5),
+        row(("display.specularityFade", .display), unit, "$Specularity Fade", 0.5),
+        row(("display.treeLODFade", .display), unit, "$Tree LOD Fade", 0.5),
+        row(("display.crosshair", .display), .toggle, "$Crosshair", 1, applied: true),
         row(
-            "display.dialogueSubtitles",
-            .display,
+            ("display.dialogueSubtitles", .display),
             .toggle,
             "$Dialogue Subtitles",
             0,
             applied: true
         ),
-        row("display.generalSubtitles", .display, .toggle, "$General Subtitles", 0, applied: true),
-        row("display.ddofIntensity", .display, unit, "$DDOF Intensity", 1)
+        row(
+            ("display.generalSubtitles", .display),
+            .toggle,
+            "$General Subtitles",
+            0,
+            applied: true
+        ),
+        row(("display.ddofIntensity", .display), unit, "$DDOF Intensity", 1)
     ]
 
     private static let audio: [PlayerSettingDefinition] =
-        [row("audio.master", .audio, unit, "$Master", 1, applied: true)]
+        [row(("audio.master", .audio), unit, "$Master", 1, applied: true)]
             + audioCategoryEditorIDs.map { editorID, title in
                 row(
-                    PlayerSettingID.categoryVolume(editorID).rawValue, .audio, unit, title, 1,
+                    (PlayerSettingID.categoryVolume(editorID).rawValue, .audio),
+                    unit,
+                    title,
+                    1,
                     applied: true
                 )
             }
 
-    /// Rows the vanilla pages do not have. The menu shows none of them.
-    private static let opensky: [PlayerSettingDefinition] = [
-        row("opensky.compass", .opensky, .toggle, "Compass", 1, applied: true),
-        row("opensky.sound", .opensky, .toggle, "Sound", 1, applied: true),
-        row(
-            "opensky.startAtTitleScreen",
-            .opensky,
-            .toggle,
-            "Start at title screen",
-            0,
-            applied: true
-        ),
-        row(
-            "opensky.startupLogo", .opensky, .toggle, "Play the startup logo", 1,
-            applied: true
-        ),
-        row(
-            "opensky.survivalModeAsk", .opensky, .toggle, "Ask about Survival Mode", 0,
-            applied: true
-        ),
-        row(
-            "assetOptimisation.enabled", .opensky, .toggle, "Use optimised files", 1,
-            applied: true
-        ),
-        row(
-            "assetOptimisation.textureQuality",
-            .opensky,
-            .choice(options: textureQualityOptions),
-            "Texture quality",
-            0,
-            applied: true
-        ),
-        row(
-            "assetOptimisation.directLoad",
-            .opensky,
-            .toggle,
-            "Direct GPU loading",
-            1,
-            applied: true
-        ),
-        row(
-            "assetOptimisation.directLoad.textures", .opensky, .toggle,
-            "Direct GPU loading: textures", 1, applied: true
-        ),
-        row(
-            "assetOptimisation.directLoad.meshes", .opensky, .toggle,
-            "Direct GPU loading: meshes", 0, applied: true
-        ),
-        row(
-            "assetOptimisation.directLoad.allDisks", .opensky, .toggle,
-            "Direct GPU loading: all disks", 0, applied: true
-        ),
-        row("pipelineCache.enabled", .opensky, .toggle, "Cache GPU pipelines", 1, applied: true),
-        row(
-            "loading.parallelDecode", .opensky, .toggle, "Decode assets on every core", 1,
-            applied: true
-        ),
-        row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true),
-        row("rendering.roomCulling", .opensky, .toggle, "Cull hidden rooms", 1, applied: true),
-        row("rendering.waterDepth", .opensky, .toggle, "See into shallow water", 1, applied: true),
-        row(
-            "rendering.terrainNormalMaps", .opensky, .toggle, "Terrain normal maps", 1,
-            applied: true
-        ),
-        row("rendering.impactEffects", .opensky, .toggle, "Impact effects", 1, applied: true),
-        row("rendering.screenBlood", .opensky, .toggle, "Screen blood", 1, applied: true),
-        row("rendering.lowHealthPulse", .opensky, .toggle, "Low-health pulse", 1, applied: true),
-        row(
-            "rendering.generatedTerrainLOD", .opensky, .toggle, "Distant land from the load order",
-            1, applied: true
-        ),
-        row("rendering.lightAnimation", .opensky, .toggle, "Flickering lights", 1, applied: true),
-        row("rendering.characterLight", .opensky, .toggle, "Character light", 1, applied: true),
-        row(
-            "rendering.indirectLight", .opensky, .toggle, "Screen-space indirect light", 0,
-            applied: true
-        ),
-        row("rendering.shadowLights", .opensky, .toggle, "Shadows from lights", 1, applied: true),
-        row(
-            "rendering.particleSorting", .opensky, .toggle, "Sort particles far to near", 1,
-            applied: true
-        ),
-        row("rendering.toneMapping", .opensky, .toggle, "HDR tone mapping", 1, applied: true),
-        row(
-            "rendering.textureStreaming",
-            .opensky,
-            .toggle,
-            "Full detail only near the camera",
-            1,
-            applied: true
-        ),
-        row(
-            "rendering.textureBudget",
-            .opensky,
-            .choice(options: TextureBudget.choiceTitles),
-            "Memory for close-up detail",
-            0,
-            applied: true
-        ),
-        row(
-            "rendering.rayTracedShadows", .opensky, .toggle, "Ray-traced sun shadows", 0,
-            applied: true
-        ),
-        row(
-            "rendering.renderScale",
-            .opensky,
-            .choice(options: renderScaleOptions),
-            "Render scale (MetalFX upscaling)",
-            0,
-            applied: true
-        ),
-        row(
-            "rendering.upscaler",
-            .opensky,
-            .choice(options: upscalerOptions),
-            "Upscaler",
-            0,
-            applied: true
-        ),
-        row(
-            "rendering.frameInterpolation", .opensky, .toggle, "Frame interpolation (MetalFX)", 0,
-            applied: true
-        ),
-        row(
-            "rendering.meshShaderGrass", .opensky, .toggle, "Mesh-shader grass", 0, applied: true
-        ),
-        row("window.fullScreen", .opensky, .toggle, "Full screen", 0, applied: true),
-        row("developer.agentControl", .opensky, .toggle, "Agent control", 1, applied: true),
-        row(
-            "window.frameRateCap", .opensky,
-            .choice(options: frameRateCapOptions.map(frameRateCapTitle)),
-            "Frame rate cap", 0, applied: true
-        )
-    ] + assetKindRows + textureFormatRows + characterRows
+    // Rows the vanilla pages do not have. The menu shows none of them.
 }
 
 nonisolated extension PlayerSettingsCatalog {
@@ -284,21 +155,24 @@ nonisolated extension PlayerSettingsCatalog {
 
     /// One switch per optimised asset kind; off reads that kind from the archives.
     /// Audio and animation have none: they are not optimised.
-    private static let assetKindRows = [
+    static let assetKindRows = [
         ("textures", "Optimise textures"), ("meshes", "Optimise meshes"),
         ("collision", "Optimise collision")
     ].map { folder, title in
-        row("assetOptimisation.kind.\(folder)", .opensky, .toggle, title, 1, applied: true)
+        row(("assetOptimisation.kind.\(folder)", .opensky), .toggle, title, 1, applied: true)
     }
 
     /// A format forced per texture group, in `TextureFormatChoice` raw-value order.
-    private static let textureFormatRows = [
+    static let textureFormatRows = [
         ("color", "Colour texture format"), ("normal", "Normal map format"),
         ("data", "Data map format")
     ].map { group, title in
         row(
-            "assetOptimisation.textureFormat.\(group)", .opensky,
-            .choice(options: textureFormatOptions), title, 0, applied: true
+            ("assetOptimisation.textureFormat.\(group)", .opensky),
+            .choice(options: textureFormatOptions),
+            title,
+            0,
+            applied: true
         )
     }
 
@@ -430,40 +304,53 @@ nonisolated extension PlayerSettingID {
 }
 
 nonisolated extension PlayerSettingsCatalog {
-    private static let characterRows: [PlayerSettingDefinition] = [
-        row("characters.blinking", .opensky, .toggle, "Blinking", 1, applied: true),
-        row("characters.eyeMovement", .opensky, .toggle, "Eye movement", 1, applied: true),
+    static let characterRows: [PlayerSettingDefinition] = [
+        row(("characters.blinking", .opensky), .toggle, "Blinking", 1, applied: true),
+        row(("characters.eyeMovement", .opensky), .toggle, "Eye movement", 1, applied: true),
         row(
-            "characters.dialogueExpressions", .opensky, .toggle, "Dialogue expressions", 1,
+            ("characters.dialogueExpressions", .opensky),
+            .toggle,
+            "Dialogue expressions",
+            1,
             applied: true
         ),
-        row("characters.headTracking", .opensky, .toggle, "Head tracking", 1, applied: true),
-        row("world.objectAnimation", .opensky, .toggle, "Animated objects", 1, applied: true),
-        row("world.furniture", .opensky, .toggle, "Sit in furniture", 1, applied: true),
+        row(("characters.headTracking", .opensky), .toggle, "Head tracking", 1, applied: true),
+        row(("world.objectAnimation", .opensky), .toggle, "Animated objects", 1, applied: true),
+        row(("world.furniture", .opensky), .toggle, "Sit in furniture", 1, applied: true),
         row(
-            "combat.temperament", .opensky, .toggle, "Confidence and Assistance", 1,
+            ("combat.temperament", .opensky),
+            .toggle,
+            "Confidence and Assistance",
+            1,
             applied: true
         ),
         row(
-            "combat.gameSettings", .opensky, .toggle, "Game combat settings", 1,
+            ("combat.gameSettings", .opensky),
+            .toggle,
+            "Game combat settings",
+            1,
             applied: true
         ),
         row(
-            "characters.actorGraphs",
-            .opensky,
+            ("characters.actorGraphs", .opensky),
             .toggle,
             "Actor behaviour graphs",
             1,
             applied: true
         ),
         row(
-            "characters.actorGraphFullRateDistance", .opensky,
-            .slider(range: 0 ... 8192, step: 256), "Full-rate graph distance", 2048,
+            ("characters.actorGraphFullRateDistance", .opensky),
+            .slider(range: 0 ... 8192, step: 256),
+            "Full-rate graph distance",
+            2048,
             applied: true
         ),
         row(
-            "characters.actorGraphDistance", .opensky,
-            .slider(range: 0 ... 16384, step: 512), "Graph distance", 6144, applied: true
+            ("characters.actorGraphDistance", .opensky),
+            .slider(range: 0 ... 16384, step: 512),
+            "Graph distance",
+            6144,
+            applied: true
         )
     ]
 }

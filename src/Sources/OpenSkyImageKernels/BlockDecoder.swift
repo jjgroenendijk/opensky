@@ -2,14 +2,14 @@
 
 nonisolated public enum BlockDecoder {
     public static func bc1(_ bytes: [UInt8], width: Int, height: Int) -> [UInt8] {
-        blocks(bytes, width: width, height: height, stride: 8) { block, out in
+        blocks(bytes, size: (width, height), stride: 8) { block, out in
             color(block, offset: 0, alwaysFourColors: false, into: &out)
         }
     }
 
     /// BC3 color blocks always use the four-color mode.
     public static func bc3(_ bytes: [UInt8], width: Int, height: Int) -> [UInt8] {
-        blocks(bytes, width: width, height: height, stride: 16) { block, out in
+        blocks(bytes, size: (width, height), stride: 16) { block, out in
             color(block, offset: 8, alwaysFourColors: true, into: &out)
             alpha(block, into: &out)
         }
@@ -17,9 +17,10 @@ nonisolated public enum BlockDecoder {
 
     /// Walks the 4x4 blocks; `decode` fills 16 RGBA texels for one block.
     private static func blocks(
-        _ bytes: [UInt8], width: Int, height: Int, stride: Int,
+        _ bytes: [UInt8], size: (width: Int, height: Int), stride: Int,
         decode: (ArraySlice<UInt8>, inout [UInt8]) -> Void
     ) -> [UInt8] {
+        let (width, height) = size
         var rgba = [UInt8](repeating: 0, count: width * height * 4)
         let across = (width + 3) / 4
         var texels = [UInt8](repeating: 0, count: 64)

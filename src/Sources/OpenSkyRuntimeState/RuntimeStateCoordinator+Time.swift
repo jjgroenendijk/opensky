@@ -12,7 +12,7 @@ extension RuntimeStateCoordinator {
     /// The date line of `clock` in the install's own words, as the menus and the export show it.
     public func dateLine(of clock: GameClock) -> String {
         calendarTexts.dateLine(
-            weekday: clock.weekday, hourOfDay: clock.hourOfDay,
+            at: (clock.weekday, clock.hourOfDay),
             day: clock.day, month: clock.month, year: clock.year
         )
     }
