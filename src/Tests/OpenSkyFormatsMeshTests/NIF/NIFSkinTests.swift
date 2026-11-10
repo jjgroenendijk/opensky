@@ -50,8 +50,10 @@ struct NIFSkinTests {
                 vertexRecords: records,
                 triangles: [0, 1, 2],
                 bonePalette: [0],
-                weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
-                boneIndices: Array(repeating: .zero, count: 3)
+                skin: (
+                    Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
+                    Array(repeating: .zero, count: 3)
+                )
             )),
             .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
         ]
@@ -180,8 +182,10 @@ struct NIFSkinTests {
                 topLevelVertexRecords: [],
                 triangles: [0, 1, 2],
                 bonePalette: [0],
-                weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
-                boneIndices: Array(repeating: .zero, count: 3)
+                skin: (
+                    Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
+                    Array(repeating: .zero, count: 3)
+                )
             )
         )
 
@@ -218,8 +222,10 @@ struct NIFSkinTests {
                 vertexRecords: records,
                 triangles: [0, 1, 2],
                 bonePalette: [0],
-                weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
-                boneIndices: Array(repeating: .zero, count: 3),
+                skin: (
+                    Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
+                    Array(repeating: .zero, count: 3)
+                ),
                 attributes: attributes,
                 strideDwords: 5
             )
@@ -247,8 +253,7 @@ struct NIFSkinTests {
             vertexRecords: [badRecord],
             triangles: [0, 0, 0],
             bonePalette: [0],
-            weights: [SIMD4(1, 0, 0, 0)],
-            boneIndices: [.zero]
+            skin: ([SIMD4(1, 0, 0, 0)], [.zero])
         )
         var blocks = file.blocks.enumerated().map { index, block in
             NIFFixture.Block(block.typeName, index == 5 ? badPartition : block.data)

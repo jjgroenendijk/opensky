@@ -146,8 +146,7 @@ struct PreviewRealDataTests {
                     transform: matrix_identity_float4x4
                 )]),
                 camera: TexturePreviewScene.camera(),
-                width: 512,
-                height: 512,
+                size: (512, 512),
                 device: device
             )
             guard nonBackgroundFraction(image: image) > 0.3 else { continue }
@@ -183,8 +182,7 @@ struct PreviewRealDataTests {
                     transform: matrix_identity_float4x4
                 )]),
                 camera: SceneCamera.framing(bounds: (bounds.min, bounds.max)),
-                width: 800,
-                height: 600,
+                size: (800, 600),
                 device: device
             )
             guard nonBackgroundFraction(image: image) > 0.01 else { continue }
@@ -200,10 +198,10 @@ struct PreviewRealDataTests {
     private func renderImage(
         scene: RenderScene,
         camera: SceneCamera,
-        width: Int,
-        height: Int,
+        size: (width: Int, height: Int),
         device: any MTLDevice
     ) throws -> CGImage {
+        let (width, height) = (size.width, size.height)
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: width, height: height),
             device: device

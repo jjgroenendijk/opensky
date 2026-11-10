@@ -61,8 +61,7 @@ struct ShoutRealDataTests {
         report(
             shouts: shouts.count,
             words: words.count,
-            leveled: leveled.count,
-            duals: duals.count,
+            spells: (leveled.count, duals.count),
             slots: slots.count
         )
     }
@@ -156,7 +155,8 @@ struct ShoutRealDataTests {
         }
     }
 
-    private func report(shouts: Int, words: Int, leveled: Int, duals: Int, slots: Int) {
+    private func report(shouts: Int, words: Int, spells: (leveled: Int, duals: Int), slots: Int) {
+        let (leveled, duals) = (spells.leveled, spells.duals)
         print(
             "[INFO] shout family — SHOU \(shouts), WOOP \(words), LVSP \(leveled), "
                 + "DUAL \(duals), EQUP \(slots)"

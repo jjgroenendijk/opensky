@@ -251,7 +251,7 @@ private func armor(
 private func arma(
     formID: UInt32,
     race: UInt32,
-    additional: [UInt32],
+    additional: [UInt32] = [],
     slots: UInt32,
     models: (male: String?, female: String?),
     priority: UInt8 = 0,

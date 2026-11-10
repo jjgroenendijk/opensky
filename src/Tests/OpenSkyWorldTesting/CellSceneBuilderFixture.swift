@@ -391,8 +391,8 @@ extension CellSceneBuilderFixture {
         editorID: String,
         grid: (x: Int32, y: Int32),
         flags: UInt16,
-        waterHeightBits: UInt32?,
-        waterType: UInt32?
+        waterHeightBits: UInt32? = nil,
+        waterType: UInt32? = nil
     ) -> Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
         var xclc = Data()

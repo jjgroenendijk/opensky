@@ -71,8 +71,7 @@ struct FirstPersonRenderRealDataTests {
 
         try Self.assertStatesDiffer(
             assembled,
-            gameSession: gameSession,
-            feet: feet,
+            stand: (gameSession, feet),
             idle: idle,
             report: &report
         )
@@ -83,7 +82,7 @@ struct FirstPersonRenderRealDataTests {
             report: &report
         )
         try Self.assertEquipmentReachesTheArms(
-            device: device, root: root, gameSession: gameSession, feet: feet, report: &report
+            device: device, root: root, stand: (gameSession, feet), report: &report
         )
 
         try PlayerBodyFixture.write(
@@ -125,11 +124,11 @@ struct FirstPersonRenderRealDataTests {
     @MainActor
     private static func assertStatesDiffer(
         _ assembled: PlayerBodyFixture.Assembled,
-        gameSession: GameSession,
-        feet: SIMD3<Float>,
+        stand: (gameSession: GameSession, feet: SIMD3<Float>),
         idle: [UInt8],
         report: inout [String]
     ) throws {
+        let (gameSession, feet) = (stand.gameSession, stand.feet)
         let renderer = gameSession.renderer
         var frames: [String: [UInt8]] = ["idle": idle]
         for (name, input) in [
@@ -201,10 +200,10 @@ struct FirstPersonRenderRealDataTests {
     private static func assertEquipmentReachesTheArms(
         device: any MTLDevice,
         root: GameDataRoot,
-        gameSession: GameSession,
-        feet: SIMD3<Float>,
+        stand: (gameSession: GameSession, feet: SIMD3<Float>),
         report: inout [String]
     ) throws {
+        let (gameSession, feet) = (stand.gameSession, stand.feet)
         let renderer = gameSession.renderer
         var frames: [[UInt8]] = []
         for (equipped, handType) in [

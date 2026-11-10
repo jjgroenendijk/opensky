@@ -59,7 +59,7 @@ public enum RagdollSkeletonFixture {
         block: Int,
         index: Int,
         constraints: [NIFCollisionConstraint],
-        filter: NIFCollisionFilter
+        filter: NIFCollisionFilter = NIFCollisionFilter(layer: 1, flags: 0, group: 0)
     ) -> NIFCollisionBody {
         NIFCollisionBody(
             targetBlock: Int32(block),

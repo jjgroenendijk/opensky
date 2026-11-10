@@ -133,8 +133,7 @@ public struct HKXFixture: Sendable {
         out.append(typesSectionHeader(dataStart: dataStart))
         out.append(dataSectionHeader(
             dataStart: dataStart,
-            localOffset: localOffset,
-            globalOffset: globalOffset,
+            offsets: (localOffset, globalOffset),
             virtualOffset: virtualOffset,
             endOffset: endOffset
         ))
@@ -231,11 +230,11 @@ public struct HKXFixture: Sendable {
 
     private func dataSectionHeader(
         dataStart: Int,
-        localOffset: Int,
-        globalOffset: Int,
+        offsets: (localOffset: Int, globalOffset: Int),
         virtualOffset: Int,
         endOffset: Int
     ) -> Data {
+        let (localOffset, globalOffset) = (offsets.localOffset, offsets.globalOffset)
         // Swapping local/global breaks the ascending-order invariant.
         let local = UInt32(nonAscendingFixups ? globalOffset : localOffset)
         let global = UInt32(nonAscendingFixups ? localOffset : globalOffset)

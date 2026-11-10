@@ -260,7 +260,7 @@ extension ActorCommand {
             hasWorld = true
             plugin.decode {
                 collectActors(
-                    world: world, area: area, localized: plugin.localized,
+                    world: (world, plugin.localized), area: area,
                     into: &byID, counting: &collection
                 )
             }
@@ -271,12 +271,12 @@ extension ActorCommand {
     }
 
     private static func collectActors(
-        world: ESMGroup,
+        world: (group: ESMGroup, localized: Bool),
         area: ActorArea,
-        localized: Bool,
         into byID: inout [UInt32: LocatedActor],
         counting collection: inout Collection
     ) {
+        let (world, localized) = (world.group, world.localized)
         let (gridX, gridY, radius) = (area.gridX, area.gridY, area.radius)
         for offsetY in -radius ... radius {
             for offsetX in -radius ... radius {

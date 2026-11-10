@@ -131,7 +131,7 @@ public enum NIFConstraintFixture: Sendable {
         entityA: Int32,
         entityB: Int32,
         pivotA: SIMD3<Float>,
-        pivotB: SIMD3<Float>,
+        pivotB: SIMD3<Float> = .zero,
         length: Float
     ) -> Data {
         var data = ballAndSocket(
@@ -169,7 +169,7 @@ public enum NIFConstraintFixture: Sendable {
         entityB: Int32,
         wrappedType: UInt32,
         wrappedPayload: Data,
-        strength: Float
+        strength: Float = 1
     ) -> Data {
         var data = info(entityA: entityA, entityB: entityB)
         data.appendUInt32(wrappedType)

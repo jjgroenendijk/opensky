@@ -59,7 +59,7 @@ enum AssetCacheCommand {
             )
         case .measure:
             try await AssetCacheMeasure.run(
-                reader: reader, files: files, settings: options.settings,
+                source: (reader, files), settings: options.settings,
                 dataURL: context.root.dataURL, perKind: options.perKind
             )
         }

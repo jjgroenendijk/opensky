@@ -20,7 +20,7 @@ struct SWFBitmapTests {
         characterId: UInt16,
         format: UInt8,
         size: (UInt16, UInt16),
-        colorTableSize: UInt8?,
+        colorTableSize: UInt8? = nil,
         payload: [UInt8]
     ) -> Data {
         var body = Data()

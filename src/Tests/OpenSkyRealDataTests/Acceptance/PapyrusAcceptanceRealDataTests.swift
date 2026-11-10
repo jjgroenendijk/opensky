@@ -61,8 +61,7 @@ struct PapyrusAcceptanceRealDataTests {
 
         let report = Self.report(
             paths: paths,
-            census: census,
-            coverage: coverage,
+            natives: (census, coverage),
             runtime: runtime,
             run: run
         )
@@ -180,11 +179,11 @@ struct PapyrusAcceptanceRealDataTests {
 
     private static func report(
         paths: [String],
-        census: PexNativeCensus,
-        coverage: PexNativeCoverage,
+        natives: (census: PexNativeCensus, coverage: PexNativeCoverage),
         runtime: PapyrusRuntime,
         run: RunEvidence
     ) -> String {
+        let (census, coverage) = (natives.census, natives.coverage)
         let unknown = runtime.tally.rankedUnimplementedNatives.prefix(100)
             .map { "\($0.count)\t\($0.name)" }
             .joined(separator: "\n")

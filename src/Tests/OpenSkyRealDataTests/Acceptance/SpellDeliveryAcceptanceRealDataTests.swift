@@ -276,8 +276,10 @@ struct SpellDeliveryAcceptanceRealDataTests {
             spell: spell,
             trace: trace,
             adjustment: adjustment,
-            magicka: (magickaBefore, values.current(of: .player).magicka),
-            health: (healthBefore, values.current(of: holder).health)
+            pools: (
+                (magickaBefore, values.current(of: .player).magicka),
+                (healthBefore, values.current(of: holder).health)
+            )
         )
     }
 
@@ -289,9 +291,9 @@ struct SpellDeliveryAcceptanceRealDataTests {
         spell: ResolvedSpell,
         trace: ProjectileTrace,
         adjustment: SpellMagnitudeAdjustment,
-        magicka: (Float, Float),
-        health: (Float, Float)
+        pools: (magicka: (Float, Float), health: (Float, Float))
     ) throws {
+        let (magicka, health) = (pools.magicka, pools.health)
         let directory = try RepositoryLogs.directory("spell-delivery-acceptance")
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true

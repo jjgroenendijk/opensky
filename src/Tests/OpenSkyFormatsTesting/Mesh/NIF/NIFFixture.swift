@@ -281,12 +281,12 @@ extension NIFFixture {
         topLevelVertexRecords: [Data]? = nil,
         triangles: [UInt16],
         bonePalette: [UInt16],
-        weights: [SIMD4<Float>],
-        boneIndices: [SIMD4<UInt8>],
+        skin: (weights: [SIMD4<Float>], boneIndices: [SIMD4<UInt8>]),
         attributes: UInt16 = 0x43,
         strideDwords: Int = 8,
         globalVertexBuffer: Bool = false
     ) -> Data {
+        let (weights, boneIndices) = (skin.weights, skin.boneIndices)
         precondition(vertexRecords.count == weights.count)
         precondition(vertexRecords.count == boneIndices.count)
         let topLevelRecords = topLevelVertexRecords ?? vertexRecords

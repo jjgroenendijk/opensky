@@ -50,8 +50,7 @@ struct SpellRealDataTests {
         #expect(costs.mismatches.count * 5 <= costs.autoCalculated)
 
         report(
-            spells: spellDefinitions.count,
-            scrolls: scrollDefinitions.count,
+            counts: (spellDefinitions.count, scrollDefinitions.count),
             store: store,
             tally: tally,
             costs: costs
@@ -106,12 +105,12 @@ struct SpellRealDataTests {
     }
 
     private func report(
-        spells: Int,
-        scrolls: Int,
+        counts: (spells: Int, scrolls: Int),
         store: SpellStore,
         tally: SweepTally,
         costs: CostReconciliation
     ) {
+        let (spells, scrolls) = (counts.spells, counts.scrolls)
         print(
             "[INFO] SPEL definitions \(spells), "
                 + "SCRL definitions \(scrolls), "

@@ -88,7 +88,7 @@ public enum NIFParticleParameterFixture: Sendable {
     /// nif.xml `BSProceduralLightningController` aimed at the block at `targetRef`, with no
     /// interpolators and the given bolt fields.
     public static func lightningController(
-        targetRef: Int32, subdivisions: UInt16, branches: UInt16, length: Float, width: Float
+        targetRef: Int32, subdivisions: UInt16, branches: UInt16, length: Float, width: Float = 16
     ) -> Data {
         var out = Data()
         out.appendUInt32(0xFFFF_FFFF) // Next Controller

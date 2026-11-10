@@ -70,12 +70,12 @@ enum AssetCacheMeasure {
     ]
 
     static func run(
-        reader: AssetCacheReader,
-        files: VirtualFileSystem,
+        source: (reader: AssetCacheReader, files: VirtualFileSystem),
         settings: AssetCacheSettings,
         dataURL: URL,
         perKind: Int
     ) async throws {
+        let (reader, files) = (source.reader, source.files)
         // Kinds the cache no longer stores are measured too, so the decision can be checked again.
         let built = try AssetCacheConverters.make(textureOutput: settings.textureOutput)
         let retired: [any AssetConverting] = [LooseAnimationConverter(), CachedAudioConverter()]

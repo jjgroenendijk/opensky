@@ -76,7 +76,7 @@ struct DynamicBodyRealDataTests {
         let shove = Self.shove(world: &world, scene: scene)
 
         try Self.write(name: "interior", report: Self.report(
-            scene: scene, start: start, settle: settle, shove: shove, world: world
+            scene: scene, start: start, results: (settle, shove), world: world
         ))
 
         #expect(settle.nonFiniteCount == 0, "a body integrated to a non-finite pose")
@@ -278,10 +278,10 @@ extension DynamicBodyRealDataTests {
     private static func report(
         scene: CellScene,
         start: [(key: ReferenceKey, position: SIMD3<Float>)],
-        settle: SettleResult,
-        shove: ShoveResult,
+        results: (settle: SettleResult, shove: ShoveResult),
         world: DynamicBodyWorld
     ) -> String {
+        let (settle, shove) = (results.settle, results.shove)
         var lines = ["OpenSky dynamic-body probe", ""]
         lines.append("## Cell")
         lines.append("interior: \(WalkPathRoute.farmInterior)")

@@ -301,7 +301,7 @@ extension SpellbookFixture {
         editorID: String,
         equipType: UInt32,
         spit: Data,
-        effects: [EffectSpec]
+        effects: [EffectSpec] = []
     ) -> Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
         fields += ESMFixture.field("FULL", ESMFixture.zstring(editorID))

@@ -21,22 +21,19 @@ struct KeywordStoreRealDataTests {
         try expectKeywords(
             ["WeapMaterialIron", "WeapTypeSword", "VendorItemWeapon"],
             on: "IronSword",
-            in: skyrim.file,
-            pluginName: skyrim.name,
+            in: (skyrim.file, skyrim.name),
             store: store
         )
         try expectKeywords(
             ["ArmorHeavy", "ArmorMaterialIron", "ArmorCuirass", "VendorItemArmor"],
             on: "ArmorIronCuirass",
-            in: skyrim.file,
-            pluginName: skyrim.name,
+            in: (skyrim.file, skyrim.name),
             store: store
         )
         try expectKeywords(
             ["VendorItemClutter"],
             on: "Gold001",
-            in: skyrim.file,
-            pluginName: skyrim.name,
+            in: (skyrim.file, skyrim.name),
             store: store
         )
 
@@ -71,10 +68,10 @@ struct KeywordStoreRealDataTests {
     private func expectKeywords(
         _ expected: [String],
         on editorID: String,
-        in file: ESMFile,
-        pluginName: String,
+        in plugin: (file: ESMFile, pluginName: String),
         store: KeywordStore
     ) throws {
+        let (file, pluginName) = (plugin.file, plugin.pluginName)
         let record = try #require(ESMWalk.record(withEditorID: editorID, in: file))
         var list = KeywordList()
         for field in try record.fields() {

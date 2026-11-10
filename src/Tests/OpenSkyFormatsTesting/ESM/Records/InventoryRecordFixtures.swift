@@ -49,7 +49,7 @@ public enum InventoryFixture: Sendable {
 
     /// BOOK DATA: flags, type, 2 unused, teaches union, value, weight.
     public static func bookData(
-        flags: UInt8, kind: UInt8, teaches: UInt32, value: Int32, weight: Float
+        flags: UInt8, kind: UInt8, teaches: UInt32, value: Int32, weight: Float = 0
     ) -> Data {
         var data = Data([flags, kind, 0, 0])
         data.appendUInt32(teaches)
@@ -98,7 +98,7 @@ public enum InventoryFixture: Sendable {
     }
 
     public static func weaponDNAM(
-        animation: UInt8, speed: Float, reach: Float, flags: UInt16, skill: Int32
+        animation: UInt8, speed: Float, reach: Float, flags: UInt16, skill: Int32 = -1
     ) -> Data {
         var data = Data([animation, 0, 0, 0])
         data.appendUInt32(speed.bitPattern)
@@ -128,7 +128,7 @@ public enum InventoryFixture: Sendable {
 
     /// AMMO DATA: projectile, flags, damage, value, and — SSE only — weight.
     public static func ammoData(
-        projectile: UInt32, flags: UInt32, damage: Float, value: Int32, weight: Float?
+        projectile: UInt32, flags: UInt32, damage: Float, value: Int32, weight: Float? = nil
     ) -> Data {
         var data = Data()
         data.appendUInt32(projectile)

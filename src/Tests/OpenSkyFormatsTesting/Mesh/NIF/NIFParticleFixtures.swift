@@ -182,9 +182,9 @@ public enum NIFParticleFixture: Sendable {
         base: Data,
         emitter: Data,
         emitterObjectRef: Int32 = -1,
-        width: Float,
-        height: Float,
-        depth: Float
+        width: Float = 1,
+        height: Float = 1,
+        depth: Float = 1
     ) -> Data {
         var out = base + emitter
         out.appendUInt32(UInt32(bitPattern: emitterObjectRef))
@@ -260,7 +260,7 @@ public enum NIFParticleFixture: Sendable {
         beginDistance: Float,
         endDistance: Float,
         endEmitScale: Float,
-        endSize: Float
+        endSize: Float = 1
     ) -> Data {
         var out = base
         out.appendFloat32(beginDistance)
