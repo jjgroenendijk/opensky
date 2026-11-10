@@ -97,7 +97,7 @@ struct OpeningScriptRealDataTests {
             bridge = PapyrusWorldStateBridge(worldState: worldState)
             world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
                 files: [],
-                nativeDispatch: PapyrusNativeRegistry.standard(
+                nativeDispatch: PapyrusNativeFunctions.standardRegistry(
                     context: PapyrusNativeContext(world: bridge)
                 )
             ))

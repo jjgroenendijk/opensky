@@ -8,9 +8,6 @@ import OpenSkyScriptingInterface
 import simd
 
 extension PapyrusNativeFunctions {
-    /// OpenSky draws the sun at infinity, so a position is this far from the player along it.
-    static let sunDistance: Float = 100_000
-
     static func installSky(into registry: inout PapyrusNativeRegistry) {
         for (axis, name) in ["GetSunPositionX", "GetSunPositionY", "GetSunPositionZ"].enumerated() {
             scriptState("Game", name, into: &registry) { _, bridge, _ in
@@ -52,13 +49,14 @@ nonisolated enum PapyrusSunGaze: Sendable {
 }
 
 extension PapyrusWorldStateBridge {
-    /// The point `sunDistance` from the player's eye toward the sun, or nil while it is down.
+    /// The point `PapyrusWorldStateBridge.sunDistance` from the player's eye toward the sun, or nil
+    /// while it is down.
     func sunPosition() -> SIMD3<Float>? {
         guard
             let toward = sessionNatives.towardSun?(),
             let view = sessionNatives.playerView?()
         else { return nil }
-        return view.eye + simd_normalize(toward) * PapyrusNativeFunctions.sunDistance
+        return view.eye + simd_normalize(toward) * PapyrusWorldStateBridge.sunDistance
     }
 
     /// Whether the player looks at the sun now.

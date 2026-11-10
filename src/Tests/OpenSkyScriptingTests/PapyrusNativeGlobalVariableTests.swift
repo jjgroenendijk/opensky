@@ -200,7 +200,7 @@ struct PapyrusNativeGlobalVariableTests {
     }
 
     @Test func headlessCallsFailInsteadOfGuessing() {
-        let registry = PapyrusNativeRegistry.standard
+        let registry = PapyrusNativeFunctions.standardRegistry
         let receiver = PapyrusObjectHandle(7)
         for functionName in ["GetValue", "GetValueInt", "SetValue", "SetValueInt"] {
             let result = registry.invoke(PapyrusWorldFixture.methodCall(

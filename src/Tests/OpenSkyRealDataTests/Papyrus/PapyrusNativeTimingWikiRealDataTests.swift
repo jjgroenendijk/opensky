@@ -15,7 +15,7 @@ struct PapyrusNativeTimingWikiRealDataTests {
     func everyBoundNativeHasTheWikiTiming() throws {
         let mirror = try #require(CreationKitWikiMirror.directory)
         let pages = try Self.functionPages(in: mirror)
-        let registry = PapyrusNativeRegistry.standard(context: PapyrusNativeContext())
+        let registry = PapyrusNativeFunctions.standardRegistry(context: PapyrusNativeContext())
 
         var unlabelled: [String] = []
         var checked = 0

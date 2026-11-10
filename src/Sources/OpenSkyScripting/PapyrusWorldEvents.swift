@@ -162,7 +162,7 @@ extension PapyrusWorldRuntime {
         _ name: String,
         instance: PapyrusInstance
     ) -> Bool {
-        let interpreter = PapyrusInterpreter(runtime: runtime)
+        let interpreter = PapyrusRuntime.Interpreter(runtime: runtime)
         // `attempt` flattens the throwing call's own optional, so a nil here is
         // either a resolution failure or a name the chain does not declare.
         return attempt { try interpreter.resolveMethod(name, instance: instance) } != nil

@@ -5,7 +5,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
-extension PapyrusInterpreter {
+extension PapyrusRuntime.Interpreter {
     func read(
         _ operand: PexValue,
         frame: PapyrusFrame

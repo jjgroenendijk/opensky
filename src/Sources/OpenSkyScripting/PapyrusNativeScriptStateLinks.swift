@@ -14,13 +14,6 @@ extension PapyrusNativeFunctions {
             ($0.rawValue, [.movement, .fighting, .menu, .activate].contains($0))
         }
 
-    /// The flags `SetInChargen` sets, in argument order.
-    static let chargenFlags = ["chargenNoSaving", "chargenNoWaiting", "chargenMessage"]
-
-    static func controlDisabledName(_ control: String) -> String {
-        "controlDisabled:\(control)"
-    }
-
     /// `SetActorOwner(ActorBase)`, `SetFactionOwner(Faction)`, and their reads, on a
     /// reference or a cell. One owner at a time; a None argument clears it.
     static func installOwnership(into registry: inout PapyrusNativeRegistry) {
@@ -32,7 +25,7 @@ extension PapyrusNativeFunctions {
                 scriptState(script, setter, into: &registry) { call, bridge, key in
                     let owner = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
                     bridge.updateScriptedState(of: key) { state in
-                        state.setFlag(ownerSetName, true)
+                        state.setFlag(PapyrusWorldStateBridge.ownerSetName, true)
                         state.setForm("actorOwner", nil)
                         state.setForm("factionOwner", nil)
                         state.setForm(name, owner)
@@ -77,7 +70,10 @@ extension PapyrusNativeFunctions {
                     for (index, control) in playerControls.enumerated() {
                         let fallback = disables ? control.disabledByDefault : true
                         guard boolean(call, at: index, default: fallback) else { continue }
-                        state.setFlag(controlDisabledName(control.name), disables ? true : nil)
+                        state.setFlag(
+                            PapyrusWorldStateBridge.controlDisabledName(control.name),
+                            disables ? true : nil
+                        )
                     }
                 }
                 return .returned(.none)
@@ -87,12 +83,13 @@ extension PapyrusNativeFunctions {
             let read = "Is\(control.name)ControlsEnabled"
             scriptState("Game", read, into: &registry) { _, bridge, key in
                 let state = bridge.scriptedState(of: key)
-                return .returned(.boolean(state.flag(controlDisabledName(control.name)) != true))
+                return .returned(.boolean(state
+                        .flag(PapyrusWorldStateBridge.controlDisabledName(control.name)) != true))
             }
         }
         scriptState("Game", "SetInChargen", into: &registry) { call, bridge, key in
             bridge.updateScriptedState(of: key) { state in
-                for (index, name) in chargenFlags.enumerated() {
+                for (index, name) in PapyrusWorldStateBridge.chargenFlags.enumerated() {
                     state.setFlag(name, boolean(call, at: index, default: false) ? true : nil)
                 }
             }
@@ -150,8 +147,6 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
     }
-
-    static let ownerSetName = "ownerSet"
 }
 
 extension PapyrusWorldStateBridge {
@@ -159,7 +154,7 @@ extension PapyrusWorldStateBridge {
     /// script cleared it.
     public func scriptedOwner(of key: ReferenceKey) -> ReferenceOwner?? {
         let state = scriptedState(of: key)
-        guard state.flag(PapyrusNativeFunctions.ownerSetName) == true else { return nil }
+        guard state.flag(PapyrusWorldStateBridge.ownerSetName) == true else { return nil }
         if let actor = state.form("actorOwner") {
             return .some(.actor(actor))
         }
@@ -174,10 +169,10 @@ extension PapyrusWorldStateBridge {
     /// form is the shell's to add.
     public var playerControlLocks: PlayerControlLocks {
         let state = scriptedState(of: playerKey)
-        let flags = PapyrusNativeFunctions.chargenFlags.map { state.flag($0) == true }
+        let flags = PapyrusWorldStateBridge.chargenFlags.map { state.flag($0) == true }
         return PlayerControlLocks(
             disabled: Set(PlayerControlGroup.allCases.filter {
-                state.flag(PapyrusNativeFunctions.controlDisabledName($0.rawValue)) == true
+                state.flag(PapyrusWorldStateBridge.controlDisabledName($0.rawValue)) == true
             }),
             savingDisabled: flags[0], waitingDisabled: flags[1], showsChargenMessage: flags[2]
         )
@@ -185,7 +180,7 @@ extension PapyrusWorldStateBridge {
 
     /// False after `DisablePlayerControls` turned movement off; the HUD reads it.
     public var isPlayerMovementEnabled: Bool {
-        let name = PapyrusNativeFunctions.controlDisabledName("Movement")
+        let name = PapyrusWorldStateBridge.controlDisabledName("Movement")
         return scriptedState(of: playerKey).flag(name) != true
     }
 }

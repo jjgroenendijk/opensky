@@ -68,7 +68,7 @@ enum StreamingGateSupport {
     /// An empty VM, so the script budget measures the fixed engine-loop floor.
     static func attachEmptyScriptRuntime(to session: GameSession) {
         let runtime = PapyrusWorldRuntime(runtime: PapyrusRuntime(
-            files: [], nativeDispatch: PapyrusNativeRegistry.standard
+            files: [], nativeDispatch: PapyrusNativeFunctions.standardRegistry
         ))
         session.worldTick.register(.scripts) { [runtime, weak session] delta in
             _ = runtime.advance(delta: delta, gameClock: session?.gameClock)

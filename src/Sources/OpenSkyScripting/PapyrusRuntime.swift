@@ -65,7 +65,7 @@ public final class PapyrusRuntime {
 
     public init(
         files: [PexFile],
-        nativeDispatch: any PapyrusNativeDispatch = PapyrusNativeRegistry.standard,
+        nativeDispatch: any PapyrusNativeDispatch,
         limits: PapyrusLimits = .standard
     ) {
         self.limits = limits
@@ -127,7 +127,7 @@ public final class PapyrusRuntime {
         arguments: [PapyrusValue] = []
     ) -> PapyrusRunOutcome {
         tally.noteRun()
-        return PapyrusInterpreter(runtime: self).invoke(
+        return PapyrusRuntime.Interpreter(runtime: self).invoke(
             functionName, on: handle, arguments: arguments
         )
     }
@@ -138,7 +138,7 @@ public final class PapyrusRuntime {
         to value: PapyrusValue
     ) -> PapyrusRunOutcome {
         tally.noteRun()
-        return PapyrusInterpreter(runtime: self).setProperty(name, on: handle, to: value)
+        return PapyrusRuntime.Interpreter(runtime: self).setProperty(name, on: handle, to: value)
     }
 
     func invokeStatic(
@@ -147,7 +147,7 @@ public final class PapyrusRuntime {
         arguments: [PapyrusValue] = []
     ) -> PapyrusRunOutcome {
         tally.noteRun()
-        return PapyrusInterpreter(runtime: self).invokeStatic(
+        return PapyrusRuntime.Interpreter(runtime: self).invokeStatic(
             functionName, on: scriptName, arguments: arguments
         )
     }

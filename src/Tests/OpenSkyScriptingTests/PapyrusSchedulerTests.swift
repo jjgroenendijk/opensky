@@ -128,7 +128,7 @@ struct PapyrusSchedulerTests {
         )
         return PapyrusTestSupport.runtime(
             objects: [script],
-            nativeDispatch: PapyrusNativeRegistry.standard
+            nativeDispatch: PapyrusNativeFunctions.standardRegistry
         )
     }
 

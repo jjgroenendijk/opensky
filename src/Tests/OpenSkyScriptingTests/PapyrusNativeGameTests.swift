@@ -65,7 +65,7 @@ struct PapyrusNativeGameTests {
 
     @Test func headlessGetPlayerFails() {
         #expect(PapyrusWorldFixture.isInvalidArguments(
-            getPlayer(PapyrusNativeRegistry.standard)
+            getPlayer(PapyrusNativeFunctions.standardRegistry)
         ))
     }
 

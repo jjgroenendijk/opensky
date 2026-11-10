@@ -260,7 +260,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     /// The actor an `AttachAshPile` pile stands for; nil for anything else.
     public func ashPileOwner(of key: ReferenceKey) -> ReferenceKey? {
-        scriptedState(of: key).form(PapyrusNativeFunctions.ashPileOwnerName)
+        scriptedState(of: key).form(PapyrusWorldStateBridge.ashPileOwnerName)
     }
 
     /// Records one activation, queues `OnActivate` on the target's scripts, and

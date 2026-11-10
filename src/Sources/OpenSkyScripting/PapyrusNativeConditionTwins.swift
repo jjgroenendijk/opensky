@@ -107,8 +107,8 @@ extension PapyrusNativeFunctions {
         for twin in conditionTwins {
             scriptState(twin.script, twin.native, into: &registry) { call, bridge, key in
                 guard
-                    let parameter1 = bridge.twinWord(twin.parameter1, call, receiver: key),
-                    let parameter2 = bridge.twinWord(twin.parameter2, call, receiver: key)
+                    let parameter1 = twinWord(twin.parameter1, call, receiver: key, in: bridge),
+                    let parameter2 = twinWord(twin.parameter2, call, receiver: key, in: bridge)
                 else { return failure(call, "\(twin.native) names a form with no FormID") }
                 let subject = twin.subject == .player ? ReferenceKey.player : key
                 switch bridge.conditionValue(
@@ -130,6 +130,28 @@ extension PapyrusNativeFunctions {
         case .boolean: .boolean(value != 0)
         case .integer: .integer(Int32(value.rounded(.towardZero)))
         default: .float(value)
+        }
+    }
+
+    fileprivate static func twinWord(
+        _ parameter: TwinParameter,
+        _ call: PapyrusNativeCall,
+        receiver: ReferenceKey,
+        in bridge: PapyrusWorldStateBridge
+    ) -> UInt32? {
+        switch parameter {
+        case .none:
+            return 0
+        case .receiver:
+            return bridge.loadOrderWord(of: receiver)
+        case let .object(index):
+            guard let handle = objectArgument(call, at: index) else {
+                return 0
+            }
+            return bridge.referenceKey(for: handle).flatMap(bridge.loadOrderWord(of:))
+        case let .integer(index):
+            return integer(call, at: index)
+                .map { UInt32(bitPattern: $0) } ?? 0
         }
     }
 }
@@ -170,27 +192,6 @@ extension PapyrusWorldStateBridge {
             )?.rawValue
         case let generated:
             SpawnedReferenceIdentity.formID(for: generated)?.rawValue
-        }
-    }
-
-    fileprivate func twinWord(
-        _ parameter: PapyrusNativeFunctions.TwinParameter,
-        _ call: PapyrusNativeCall,
-        receiver: ReferenceKey
-    ) -> UInt32? {
-        switch parameter {
-        case .none:
-            return 0
-        case .receiver:
-            return loadOrderWord(of: receiver)
-        case let .object(index):
-            guard let handle = PapyrusNativeFunctions.objectArgument(call, at: index) else {
-                return 0
-            }
-            return referenceKey(for: handle).flatMap(loadOrderWord(of:))
-        case let .integer(index):
-            return PapyrusNativeFunctions.integer(call, at: index)
-                .map { UInt32(bitPattern: $0) } ?? 0
         }
     }
 }

@@ -157,7 +157,7 @@ struct PapyrusNativeSessionRulesTests {
             PapyrusPlayerView(eye: [0, 0, 100], forward: [1, 0, 0])
         }
         #expect(call(fixture, "Game", "GetSunPositionZ", returnType: .float) ==
-            .returned(.float(100 + PapyrusNativeFunctions.sunDistance)))
+            .returned(.float(100 + PapyrusWorldStateBridge.sunDistance)))
     }
 
     @Test func thePlayerSungazesWhileLookingAtTheSun() throws {

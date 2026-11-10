@@ -95,6 +95,6 @@ extension PapyrusWorldStateBridge {
     }
 
     func isActivationBlocked(_ key: ReferenceKey) -> Bool {
-        scriptedState(of: key).flag(PapyrusNativeFunctions.activationBlockedName) == true
+        scriptedState(of: key).flag(PapyrusWorldStateBridge.activationBlockedName) == true
     }
 }

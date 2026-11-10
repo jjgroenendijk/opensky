@@ -67,12 +67,12 @@ struct PexNativeCensusTests {
         #expect(census.coverage(in: .empty) == PexNativeCoverage(
             implemented: 0, referenced: 1
         ))
-        #expect(census.coverage(in: .standard) == PexNativeCoverage(
+        #expect(census.coverage(in: PapyrusNativeFunctions.standardRegistry) == PexNativeCoverage(
             implemented: 1, referenced: 1
         ))
         #expect(census.missing(in: .empty).map(\.name) == ["Utility.Wait"])
         #expect(census.missing(in: .empty).map(\.count) == [1])
-        #expect(census.missing(in: .standard).isEmpty)
+        #expect(census.missing(in: PapyrusNativeFunctions.standardRegistry).isEmpty)
     }
 
     private func callerObject() -> PexObject {

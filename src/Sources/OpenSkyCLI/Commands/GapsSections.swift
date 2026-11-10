@@ -20,7 +20,7 @@ extension GapsGatherer {
         let paths = loader.scriptPaths()
         let files = paths.compactMap { try? loader.load($0) }
         let census = PexNativeCensus(files: files)
-        let registry = PapyrusNativeRegistry.standard
+        let registry = PapyrusNativeFunctions.standardRegistry
         return GapSection(
             title: "Papyrus natives",
             unit: "natives",

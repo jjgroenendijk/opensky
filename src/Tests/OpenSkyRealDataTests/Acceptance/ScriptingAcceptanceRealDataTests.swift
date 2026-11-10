@@ -105,7 +105,7 @@ extension ScriptingAcceptanceRealDataTests {
             worldspaceEditorID: FirstRenderCell.worldspaceEditorID
         )
         let world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
-            files: [], nativeDispatch: PapyrusNativeRegistry.standard
+            files: [], nativeDispatch: PapyrusNativeFunctions.standardRegistry
         ))
         let loader = PexScriptLoader(fileSystem: fileSystem)
         world.scriptProvider = { try? loader.load($0) }

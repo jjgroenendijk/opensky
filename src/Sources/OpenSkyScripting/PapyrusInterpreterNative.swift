@@ -5,7 +5,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
-extension PapyrusInterpreter {
+extension PapyrusRuntime.Interpreter {
     func suspend(
         call: PapyrusNativeCall,
         request: PapyrusNativeSuspension,
@@ -19,7 +19,7 @@ extension PapyrusInterpreter {
             id: id,
             nativeCall: call,
             request: request,
-            continuation: PapyrusContinuation(interpreter: self),
+            continuation: PapyrusContinuation(resume: resume(id:returning:)),
             holdsInstance: holdsInstance
         )
     }
