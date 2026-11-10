@@ -114,8 +114,8 @@ sides use that type, and the cycle is gone.
 ## Rule 5: Law of Demeter
 
 A long chain through objects ties the caller to the inner structure of objects it does not
-own. This is the Law of Demeter, after Lieberherr. `make design-index-report` also lists each
-deep chain (`tools/lint-index/member-chains.py`).
+own. This is the Law of Demeter, after Lieberherr. `make lint-index` fails on each deep chain
+(`tools/lint-index/member-chains.py --gate`), and the `Index checks` CI job runs it.
 
 - A chain is a run of member accesses on one line, such as `game.combat.archery?.projectiles.live`.
 - A step counts when the index store names the member it reaches, and that member belongs to a

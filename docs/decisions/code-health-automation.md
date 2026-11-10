@@ -37,6 +37,7 @@ CI job runs on each pull request.
 | Unused code | Periphery, `make lint-index` | Health, CI | Index build plus about 1.5 min scan |
 | No adapter uses another ([Ports and adapters](/decisions/ports-and-adapters.md)) | `tools/lint-index/adapter-references.py`, `make lint-index` | Health, CI | Seconds after the index build |
 | A port has a second conformer or a test fake ([Ports and adapters](/decisions/ports-and-adapters.md#one-conformer)) | `tools/lint-index/single-conformers.py`, `make lint-index` | Health, CI | Seconds after the index build |
+| No member chain through more than three objects ([Design metrics](/decisions/design-metrics.md#rule-5-law-of-demeter)) | `tools/lint-index/member-chains.py`, `make lint-index` | Health, CI | Seconds after the index build |
 | Module graph (TMA) | `tools/lint/module-graph.sh` | Lint | Seconds, no build |
 | Comment length | `tools/lint/comment-length.sh` | Lint | Under a second |
 | File length | `tools/lint/file-length.sh`, `tools/lint/file-length.sh` | Lint, pre-commit hook | Under a second |
