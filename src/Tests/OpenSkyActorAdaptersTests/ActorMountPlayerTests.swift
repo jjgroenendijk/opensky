@@ -91,4 +91,13 @@ struct ActorMountPlayerTests {
         vehicles.setPlayerAIDriven(true)
         #expect(vehicles.isPlayerAIDriven)
     }
+
+    @Test func aBoneIsFoundOnTheActorsPlayback() {
+        let playback = FakeActorAnimationPlaybackPort()
+        playback.hasBoneResult = true
+        host.playbacks[Self.actor] = playback
+        let vehicles = VehicleWorldAdapter(game: host, stage: nil)
+        #expect(vehicles.vehicleHasBone(Self.actor, named: "SaddleBone"))
+        #expect(playback.hasBoneCalls == ["SaddleBone"])
+    }
 }

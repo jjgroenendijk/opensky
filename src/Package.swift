@@ -1203,7 +1203,7 @@ targets += composition(
         "OpenSkyAIPackages", "OpenSkyActorPresentation", "OpenSkyActorsInterface",
         "OpenSkyCombatInterface", "OpenSkyEngineTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyGameData", "OpenSkyPerception", "OpenSkyPerceptionInterface",
-        "OpenSkyProgressionInterface",
+        "OpenSkyProgressionInterface", "OpenSkyRenderCore",
         "OpenSkyRendering", "OpenSkySessionInterface", "OpenSkySessionTesting",
         "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]

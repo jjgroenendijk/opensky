@@ -5,6 +5,7 @@ import OpenSkyAIAdapters
 import OpenSkyAIPackages
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyRenderCore
 import OpenSkySessionTesting
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -131,5 +132,18 @@ struct AIPackageMovesStateTests {
         movement.hasRoomResult = false
         #expect(adapter.packageMoverHasRoom(for: .player))
         #expect(!adapter.packageMoverHasRoom(for: Self.actor))
+    }
+}
+
+@MainActor
+struct AISessionReadsTests {
+    private let host = AIHost()
+
+    @Test func theCameraComesFromTheSession() {
+        let session = FakeGameSessionPort()
+        session.freeFlyCameraValue = FreeFlyCamera(position: [1, 2, 3], yaw: 0, pitch: 0)
+        host.gameSession = session
+        let adapter = AIWorldAdapter(game: host, stage: nil)
+        #expect(adapter.camera?.position == [1, 2, 3])
     }
 }
