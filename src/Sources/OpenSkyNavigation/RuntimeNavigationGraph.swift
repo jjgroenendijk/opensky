@@ -221,7 +221,11 @@ nonisolated public struct RuntimeNavigationGraph: Sendable {
     public mutating func findPath(_ query: NavigationPathQuery) -> NavigationPathResult {
         var workspace = NavigationQueryScratch()
         swap(&workspace, &scratch)
-        let result = NavigationPathfinder.findPath(query, in: self, scratch: &workspace)
+        let result = RuntimeNavigationGraph.Pathfinder.findPath(
+            query,
+            in: self,
+            scratch: &workspace
+        )
         swap(&workspace, &scratch)
         return result
     }

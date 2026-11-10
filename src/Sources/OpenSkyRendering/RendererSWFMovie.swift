@@ -77,7 +77,7 @@ nonisolated public final class SWFMovieResources {
 
     /// Skips owned by the static shape build, which updates never revisit.
     private let shapeSkipped: Int
-    private let planner: SWFTextPlanner
+    private let planner: SWFMovieResources.TextPlanner
 
     public var residencyAllocations: [any MTLAllocation] {
         var allocations: [any MTLAllocation] = [vertexBuffer, glyphVertexBuffer, uniformBuffer]
@@ -93,16 +93,16 @@ nonisolated public final class SWFMovieResources {
         self.generation = generation
         let flattened = SWFScene.build(movie: scene.movie)
         commands = flattened.commands
-        var builder = SWFMovieShapeBuilder(scene: scene)
+        var builder = SWFMovieResources.ShapeBuilder(scene: scene)
         builder.buildShapes()
         shapes = builder.shapes
         shapeSkipped = builder.skipped
-        planner = SWFTextPlanner(scene: scene, generation: generation)
+        planner = SWFMovieResources.TextPlanner(scene: scene, generation: generation)
         textPlans = planner.plan(commands: flattened.commands)
         gradientRowCount = builder.gradientRows.count
         buildSkipped = builder.skipped + planner.skipped + flattened.skippedPlacements
-        bitmaps = try SWFMovieTextures.makeBitmaps(device: device, movie: scene.movie)
-        gradientTexture = try SWFMovieTextures.makeGradientRamp(
+        bitmaps = try SWFMovieResources.Textures.makeBitmaps(device: device, movie: scene.movie)
+        gradientTexture = try SWFMovieResources.Textures.makeGradientRamp(
             device: device, rows: builder.gradientRows
         )
         let needed = Self.capacities(

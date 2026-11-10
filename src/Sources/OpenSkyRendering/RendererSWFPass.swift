@@ -109,7 +109,7 @@ extension Renderer {
     /// and the bumped revision re-uploads the texture.
     func releaseSWFGlyphs(generation: Int) {
         uiResources.glyphAtlas.releaseSWFGlyphs { fontKey in
-            SWFTextPlanner.generation(forFontKey: fontKey) == generation
+            SWFMovieResources.TextPlanner.generation(forFontKey: fontKey) == generation
         }
     }
 

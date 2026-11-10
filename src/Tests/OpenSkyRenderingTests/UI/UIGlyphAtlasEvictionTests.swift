@@ -11,7 +11,7 @@ struct UIGlyphAtlasEvictionTests {
     /// SWF font keys carry the movie generation in the high bits, which is what
     /// the renderer evicts by; mirror that layout here.
     private static func fontKey(generation: Int, font: Int = 0) -> Int {
-        (generation << SWFTextPlanner.generationShift) | font
+        (generation << SWFMovieResources.TextPlanner.generationShift) | font
     }
 
     private static func squarePath(side: Int) -> CGPath {
@@ -60,7 +60,7 @@ struct UIGlyphAtlasEvictionTests {
         let occupied = atlas.occupancy
 
         let dropped = atlas.releaseSWFGlyphs { key in
-            SWFTextPlanner.generation(forFontKey: key) == 1
+            SWFMovieResources.TextPlanner.generation(forFontKey: key) == 1
         }
         #expect(dropped > 0)
         #expect(atlas.packedGlyphCount == 0)
@@ -82,7 +82,7 @@ struct UIGlyphAtlasEvictionTests {
         ) { Self.squarePath(side: 32) }
         #expect(!survivor.isEmpty)
 
-        atlas.releaseSWFGlyphs { SWFTextPlanner.generation(forFontKey: $0) == 1 }
+        atlas.releaseSWFGlyphs { SWFMovieResources.TextPlanner.generation(forFontKey: $0) == 1 }
         #expect(atlas.packedGlyphCount == 1)
 
         // The survivor keeps its metrics, moves in the atlas, and its coverage
@@ -103,7 +103,7 @@ struct UIGlyphAtlasEvictionTests {
         let atlas = UIGlyphAtlas()
         Self.packSquares(into: atlas, generation: 1, count: 10)
         let revision = atlas.revision
-        atlas.releaseSWFGlyphs { SWFTextPlanner.generation(forFontKey: $0) == 1 }
+        atlas.releaseSWFGlyphs { SWFMovieResources.TextPlanner.generation(forFontKey: $0) == 1 }
         #expect(atlas.revision > revision)
         let whiteX = Int(atlas.whiteUV.x * Float(atlas.width))
         let whiteY = Int(atlas.whiteUV.y * Float(atlas.height))
@@ -115,7 +115,8 @@ struct UIGlyphAtlasEvictionTests {
         Self.packSquares(into: atlas, generation: 1, count: 10)
         let pixels = atlas.pixels
         let revision = atlas.revision
-        let dropped = atlas.releaseSWFGlyphs { SWFTextPlanner.generation(forFontKey: $0) == 9 }
+        let dropped = atlas
+            .releaseSWFGlyphs { SWFMovieResources.TextPlanner.generation(forFontKey: $0) == 9 }
         #expect(dropped == 0)
         #expect(atlas.revision == revision)
         #expect(atlas.pixels == pixels)
@@ -126,7 +127,7 @@ struct UIGlyphAtlasEvictionTests {
             let atlas = UIGlyphAtlas()
             Self.packSquares(into: atlas, generation: 1, count: 30, side: 18)
             Self.packSquares(into: atlas, generation: 2, count: 30, side: 26)
-            atlas.releaseSWFGlyphs { SWFTextPlanner.generation(forFontKey: $0) == 1 }
+            atlas.releaseSWFGlyphs { SWFMovieResources.TextPlanner.generation(forFontKey: $0) == 1 }
             return atlas.pixels
         }
         #expect(atlasAfterRelease() == atlasAfterRelease())

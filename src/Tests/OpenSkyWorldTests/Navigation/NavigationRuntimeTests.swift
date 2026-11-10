@@ -221,10 +221,10 @@ struct NavigationRuntimeTests {
 
     @Test
     func aSwimCostsFourTimesAWalkAndEnteringTheWaterFive() {
-        #expect(NavigationPathfinder.waterFactor(from: false, to: false) == 1)
-        #expect(NavigationPathfinder.waterFactor(from: false, to: true) == 5)
-        #expect(NavigationPathfinder.waterFactor(from: true, to: true) == 4)
-        #expect(NavigationPathfinder.waterFactor(from: true, to: false) == 4)
+        #expect(RuntimeNavigationGraph.Pathfinder.waterFactor(from: false, to: false) == 1)
+        #expect(RuntimeNavigationGraph.Pathfinder.waterFactor(from: false, to: true) == 5)
+        #expect(RuntimeNavigationGraph.Pathfinder.waterFactor(from: true, to: true) == 4)
+        #expect(RuntimeNavigationGraph.Pathfinder.waterFactor(from: true, to: false) == 4)
     }
 
     private static let crossCellQuery = NavigationPathQuery(
