@@ -27,7 +27,7 @@ nonisolated public struct ReferenceLockState: WorldStateComponent, Hashable, Sen
         self.init(isLocked: true, level: lock.level.rawValue, key: lock.key)
     }
 
-    public var difficulty: LockDifficulty {
+    var difficulty: LockDifficulty {
         LockDifficulty(level: level)
     }
 

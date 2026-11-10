@@ -41,17 +41,17 @@ nonisolated public struct DragonFlightSettings: Equatable, Sendable {
     /// Radians per second: `Dragon_Hovering_MT` rotate in place.
     public var hoverTurnRate: Float = .pi / 4
     /// Height above the ground under the dragon while it circles.
-    public var cruiseHeight: Float = 1500
-    public var hoverHeight: Float = 700
+    var cruiseHeight: Float = 1500
+    var hoverHeight: Float = 700
     /// Units per second, up or down.
-    public var climbRate: Float = 500
+    var climbRate: Float = 500
     public var takeOffSeconds: Float = 5
     /// The landing approach clip: the graph lands this long after `FlyStopDefault`.
-    public var approachSeconds: Float = 10 / 3
+    var approachSeconds: Float = 10 / 3
     /// The slowest a landing approach flies, so the last stretch still ends.
     public var landingSpeed: Float = 300
     /// How far ahead of the dragon, in radians round the circle, it steers.
-    public var circleLead: Float = 0.6
+    var circleLead: Float = 0.6
     /// `fCombatLandingSearchDistance`: how far from its target a dragon looks for a perch.
     public var perchSearchDistance: Float = 6000
     /// `fCombatPerchMaxTargetAngle`, in radians: how far off a perch's facing the target may be.
@@ -86,7 +86,7 @@ nonisolated public struct DragonFlightSettings: Equatable, Sendable {
     }
 
     /// Speed gained or lost per second.
-    public var acceleration: Float {
+    var acceleration: Float {
         cruiseSpeed / 2
     }
 }
@@ -109,7 +109,7 @@ nonisolated public struct DragonFlightState: Equatable, Sendable {
     /// The perch it lands on or sits on.
     public var perch: DragonPerch?
     /// The last ground height known, for where the ground has no height.
-    public var lastGround: Float?
+    var lastGround: Float?
 
     public init(feet: SIMD3<Float>, yaw: Float, phase: DragonFlightPhase = .grounded) {
         self.feet = feet
@@ -175,7 +175,7 @@ nonisolated public enum DragonFlightRules {
     }
 
     /// The point on the circle the dragon steers at: ahead of it, counter-clockwise.
-    public static func circlePoint(
+    static func circlePoint(
         from heading: (position: SIMD2<Float>, yaw: Float),
         around circle: (center: SIMD2<Float>, radius: Float),
         lead: Float
@@ -188,7 +188,7 @@ nonisolated public enum DragonFlightRules {
     }
 
     /// The turn from `yaw` toward `target`, at most `limit` either way.
-    public static func turn(from yaw: Float, toward target: Float, limit: Float) -> Float {
+    static func turn(from yaw: Float, toward target: Float, limit: Float) -> Float {
         let wanted = remainder(target - yaw, 2 * Float.pi)
         return remainder(yaw + min(max(wanted, -limit), limit), 2 * Float.pi)
     }

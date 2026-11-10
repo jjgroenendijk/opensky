@@ -119,7 +119,7 @@ nonisolated public struct QuestAliasState: WorldStateComponent, Sendable {
         fills.isEmpty && locationFills.isEmpty
     }
 
-    public var count: Int {
+    var count: Int {
         fills.count + locationFills.count
     }
 

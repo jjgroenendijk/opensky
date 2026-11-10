@@ -31,7 +31,7 @@ nonisolated public struct WeaponEnchantmentHit: Equatable, Sendable {
     }
 
     /// A hit that reaches only the struck actor.
-    public init(profile: ItemEnchantmentProfile, attacker: ReferenceKey, target: ReferenceKey) {
+    init(profile: ItemEnchantmentProfile, attacker: ReferenceKey, target: ReferenceKey) {
         self.init(profile: profile, attacker: attacker, targets: [SpellHitTarget(key: target)])
     }
 
@@ -72,7 +72,7 @@ nonisolated public struct WeaponEnchantmentReport: Equatable, Sendable {
     public let adjustments: [SpellMagnitudeAdjustment]
 
     /// One line for a readout: what fired, on what, and what is left.
-    public var describedLine: String {
+    var describedLine: String {
         guard didFire else {
             return "\(name): out of charge (\(charge.describedLine))"
         }

@@ -8,7 +8,7 @@ nonisolated public struct LockpickingInput: Equatable, Sendable {
     /// True while the player turns the lock.
     public var turning: Bool
 
-    public static let idle = LockpickingInput(pickDelta: 0, turning: false)
+    static let idle = LockpickingInput(pickDelta: 0, turning: false)
 
     public init(pickDelta: Float, turning: Bool) {
         self.pickDelta = pickDelta
@@ -68,7 +68,7 @@ nonisolated public struct LockpickingSession: Equatable, Sendable {
 
     /// How far the lock may turn with the pick at `angle`: 1 in the sweet spot,
     /// falling to 0 across a partial zone, 0 beyond it.
-    public func allowedRotation(at angle: Float) -> Float {
+    func allowedRotation(at angle: Float) -> Float {
         let distance = abs(angle - sweetSpotCenter)
         let halfSweet = parameters.sweetSpotWidth / 2
         if distance <= halfSweet {

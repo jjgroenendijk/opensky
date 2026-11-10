@@ -40,12 +40,12 @@ nonisolated public struct CrimeCounts: Equatable, Sendable {
         self.werewolf = max(0, werewolf)
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         self == CrimeCounts()
     }
 
     /// Every crime of every kind.
-    public var total: Int64 {
+    var total: Int64 {
         CrimeKind.counted.reduce(0) { $0 + Int64(self[$1]) }
     }
 
@@ -169,7 +169,7 @@ nonisolated public struct CrimeLedgerState: WorldStateComponent, Sendable {
 
     /// Every faction this actor owes something to or has offended, in key
     /// order.
-    public var factions: [ReferenceKey] {
+    var factions: [ReferenceKey] {
         entries.map(\.faction)
     }
 

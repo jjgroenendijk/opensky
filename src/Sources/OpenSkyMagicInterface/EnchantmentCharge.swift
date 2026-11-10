@@ -39,7 +39,7 @@ nonisolated public struct EnchantmentCharge: Equatable, Sendable {
     /// How many more hits the enchantment can pay for. `Int.max` when nothing
     /// is metered, which is the honest answer to "how many uses does a
     /// cost-free enchantment have".
-    public var usesRemaining: Int {
+    var usesRemaining: Int {
         guard isMetered else { return .max }
         return Int((remaining / costPerUse).rounded(.down))
     }
@@ -53,7 +53,7 @@ nonisolated public struct EnchantmentCharge: Equatable, Sendable {
 
     /// Fraction of the full charge still held, `0...1`. Zero when the weapon
     /// carries no charge field at all.
-    public var fraction: Float {
+    var fraction: Float {
         guard capacity > 0 else { return 0 }
         return min(max(0, remaining / capacity), 1)
     }

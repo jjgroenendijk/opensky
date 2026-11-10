@@ -49,7 +49,7 @@ nonisolated public struct ReferenceConditionResolution: ConditionResolution, Sen
         self.facts = facts
     }
 
-    public func facts(of key: ReferenceKey) -> ReferenceConditionFacts? {
+    func facts(of key: ReferenceKey) -> ReferenceConditionFacts? {
         facts?[key]
     }
 }

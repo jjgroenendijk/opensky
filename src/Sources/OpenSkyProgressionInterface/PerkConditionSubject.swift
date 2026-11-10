@@ -42,7 +42,7 @@ nonisolated extension PerkEntryPoint {
 nonisolated extension PerkConditionSubject {
     /// Entry-point id to its ordered condition subjects, transcribed from
     /// UESP's "Perk Effect Types" table.
-    public static let table: [UInt8: [PerkConditionSubject]] = [
+    static let table: [UInt8: [PerkConditionSubject]] = [
         0: [.perkOwner, .weapon, .target],
         1: [.perkOwner, .weapon, .target],
         2: [.perkOwner, .weapon, .target],

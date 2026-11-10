@@ -7,7 +7,7 @@ import Foundation
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 nonisolated public struct QuestAliasResolution: Sendable {
     private let defaults: QuestStore
@@ -22,7 +22,7 @@ nonisolated public struct QuestAliasResolution: Sendable {
 
     /// Resolution over a snapshot's alias components, for a consumer running
     /// off the main actor where the live store is unreachable.
-    public init(defaults: QuestStore?, snapshot: WorldStateSnapshot) {
+    init(defaults: QuestStore?, snapshot: WorldStateSnapshot) {
         var tables: [ReferenceKey: QuestAliasState] = [:]
         for entry in snapshot.entries {
             guard let state = entry.delta.component(QuestAliasState.self) else { continue }
@@ -85,7 +85,7 @@ nonisolated public struct QuestAliasResolution: Sendable {
 
     /// Reference filling the alias `name` stands for, which is what a CIS1 or
     /// CIS2 override on a condition resolves to.
-    public func reference(aliasNamed name: String, in id: FormID) -> ReferenceKey? {
+    func reference(aliasNamed name: String, in id: FormID) -> ReferenceKey? {
         guard let aliasID = aliasID(named: name, in: id) else { return nil }
         return reference(alias: aliasID, in: id)
     }

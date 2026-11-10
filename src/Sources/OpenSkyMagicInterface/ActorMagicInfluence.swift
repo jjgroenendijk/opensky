@@ -51,7 +51,7 @@ nonisolated public struct ActorMagicInfluence: Equatable, Sendable {
     }
 
     /// Whether nothing forces any behaviour.
-    public var isNone: Bool {
+    var isNone: Bool {
         self == .none
     }
 }

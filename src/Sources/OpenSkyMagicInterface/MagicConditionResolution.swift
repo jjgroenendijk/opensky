@@ -64,11 +64,11 @@ nonisolated public struct MagicConditionState: Equatable, Sendable {
 
     /// Whether a spell acting on this actor can apply `effect`, as `HasMagicEffect`
     /// asks.
-    public func canApply(_ effect: ReferenceKey) -> Bool {
+    func canApply(_ effect: ReferenceKey) -> Bool {
         activeEffects.contains(effect) || potentialEffects.contains(effect)
     }
 
-    public var isCasting: Bool {
+    var isCasting: Bool {
         !castingHands.isEmpty
     }
 }
@@ -112,7 +112,7 @@ nonisolated public struct MagicConditionResolution: Sendable {
     }
 
     /// Load-order SPEL and SCRL lookup, for the readied spell's SPIT header.
-    public var spells: SpellStore? {
+    var spells: SpellStore? {
         facts.store
     }
 
@@ -122,7 +122,7 @@ nonisolated public struct MagicConditionResolution: Sendable {
 
     /// The record need not exist in either store: `IsSpellTarget` names
     /// potions and enchantments as readily as spells.
-    public func key(of formID: FormID) -> ReferenceKey? {
+    func key(of formID: FormID) -> ReferenceKey? {
         if let key = facts.resolvedKey(of: formID) {
             return key
         }
@@ -135,7 +135,7 @@ nonisolated public struct MagicConditionResolution: Sendable {
 
     /// Nil when no effect store is wired, which keeps "no MGEF records" apart
     /// from "no effect on this actor carries that keyword".
-    public func hasEffectKeyword(_ keyword: ReferenceKey, on state: MagicConditionState) -> Bool? {
+    func hasEffectKeyword(_ keyword: ReferenceKey, on state: MagicConditionState) -> Bool? {
         guard let effects else { return nil }
         return state.activeEffects.union(state.potentialEffects).contains { effect in
             guard let record = effects.effect(key: effect) else { return false }

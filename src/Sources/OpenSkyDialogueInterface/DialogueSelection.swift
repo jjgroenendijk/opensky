@@ -69,7 +69,7 @@ nonisolated public struct DialogueTopicOffer: Equatable, Sendable {
     /// Reasons every considered response could not be answered cleanly, in
     /// evaluation order. Empty when the whole topic evaluated from real
     /// answers, which is what makes coverage measurable rather than assumed.
-    public var failures: [ConditionFailure] {
+    var failures: [ConditionFailure] {
         considered.flatMap { $0.outcome?.failures ?? [] }
     }
 

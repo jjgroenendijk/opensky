@@ -43,12 +43,12 @@ nonisolated public struct DetectionResolution: Sendable {
         return separation.isFinite ? separation : nil
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         pairs.isEmpty && positions.isEmpty
     }
 
     /// Pairs this resolution knows about.
-    public var pairCount: Int {
+    var pairCount: Int {
         pairs.count
     }
 }

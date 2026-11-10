@@ -31,7 +31,7 @@ nonisolated public enum Tempering {
         1 + Float(max(0, level)) / 6
     }
 
-    public static func name(level: Int32) -> String {
+    static func name(level: Int32) -> String {
         guard level > 0 else { return "plain" }
         let index = Int(level) - 1
         return index < names.count ? names[index] : "Legendary +\(index - names.count + 1)"

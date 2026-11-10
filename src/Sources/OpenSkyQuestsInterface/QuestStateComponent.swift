@@ -77,7 +77,7 @@ nonisolated public struct QuestRuntimeState: WorldStateComponent, Sendable {
 
     /// A quest nothing has started: the baseline of every quest whose DNAM does
     /// not say start-game-enabled.
-    public static let dormant = QuestRuntimeState()
+    static let dormant = QuestRuntimeState()
 
     public static var componentKind: WorldStateComponentKind {
         .quest

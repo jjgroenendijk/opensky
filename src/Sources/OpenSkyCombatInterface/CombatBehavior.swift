@@ -51,7 +51,7 @@ nonisolated public enum CombatBehaviorPhase: String, Equatable, Sendable, CaseIt
     ///
     /// A cast counts: a blow that interrupts a swing interrupts a charge too,
     /// and the runtime drops the charging spell when it staggers the actor.
-    public var isAttacking: Bool {
+    var isAttacking: Bool {
         self == .windup || self == .contact || self == .recovery || self == .casting
     }
 }

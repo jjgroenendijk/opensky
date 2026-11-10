@@ -17,7 +17,7 @@ nonisolated public struct BenchmarkScene: Equatable, Sendable, Identifiable {
     /// The plugin the scene needs, such as `Dawnguard.esm`; nil for the base game.
     public let requiredPlugin: String?
 
-    public init(
+    init(
         id: String, title: String, group: BenchmarkSceneGroup, place: BenchmarkPlace,
         streetLevel: Float? = nil, hour: Float, weather: String?, shot: BenchmarkShot,
         requiredPlugin: String? = nil

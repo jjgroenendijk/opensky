@@ -18,7 +18,7 @@ nonisolated public struct InventoryBaselineResolver {
     /// Deepest leveled-list nesting followed before expansion gives up. A list
     /// that points at itself is caught by the visited set; this cap catches the
     /// long chain that is technically acyclic and still nonsense.
-    public static let maximumLeveledDepth = 8
+    static let maximumLeveledDepth = 8
     /// The `Player` NPC_ record, whose outfit the player's body wears.
     public static let playerBase = FormID(0x7)
 

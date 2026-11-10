@@ -6,7 +6,7 @@ import Foundation
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 nonisolated public struct QuestResolution: Sendable {
     private let defaults: QuestStore
@@ -21,7 +21,7 @@ nonisolated public struct QuestResolution: Sendable {
 
     /// Resolution over a snapshot's quest components, for a consumer running
     /// off the main actor where the live store is unreachable.
-    public init(defaults: QuestStore?, snapshot: WorldStateSnapshot) {
+    init(defaults: QuestStore?, snapshot: WorldStateSnapshot) {
         var overrides: [ReferenceKey: QuestRuntimeState] = [:]
         for entry in snapshot.entries {
             guard let state = entry.delta.component(QuestRuntimeState.self) else { continue }
@@ -55,20 +55,20 @@ nonisolated public struct QuestResolution: Sendable {
         defaults.translation(of: id)
     }
 
-    public func state(editorID: String) -> QuestRuntimeState? {
+    func state(editorID: String) -> QuestRuntimeState? {
         guard let id = defaults.formID(editorID: editorID) else { return nil }
         return state(for: id)
     }
 
     /// True when the session has recorded runtime state for `id`, as opposed to
     /// the quest still reading straight from plugin data.
-    public func hasRuntimeState(_ id: FormID) -> Bool {
+    func hasRuntimeState(_ id: FormID) -> Bool {
         guard let key = defaults.key(for: id) else { return false }
         return overrides[key] != nil
     }
 
     /// Quests with runtime state in this resolution.
-    public var runtimeStateCount: Int {
+    var runtimeStateCount: Int {
         overrides.count
     }
 }

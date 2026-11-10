@@ -30,19 +30,19 @@ nonisolated public struct CrimeConditionResolution: Sendable {
         self.situation = situation
     }
 
-    public func key(of formID: FormID) -> ReferenceKey? {
+    func key(of formID: FormID) -> ReferenceKey? {
         formID.isNull ? currentCrimeFaction : facts.key(of: formID)
     }
 
     /// Nil when no crime data is wired. An actor with no ledger owes nothing:
     /// every actor starts there.
-    public func crimeGold(of faction: ReferenceKey, on actor: ReferenceKey) -> Int32? {
+    func crimeGold(of faction: ReferenceKey, on actor: ReferenceKey) -> Int32? {
         guard facts.isAvailable else { return nil }
         return facts.fact(of: actor)?.gold(for: faction) ?? 0
     }
 
     /// One half of the debt, for `GetCrimeGoldViolent` and `GetCrimeGoldNonviolent`.
-    public func crimeGold(
+    func crimeGold(
         of faction: ReferenceKey,
         violent: Bool,
         on actor: ReferenceKey

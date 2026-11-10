@@ -127,7 +127,7 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// Probabilities and distances are untouched: shortening a duration changes
     /// how long a test runs, and changing a probability would change what it
     /// tests.
-    public static let quick = CombatBehaviorSettings(
+    static let quick = CombatBehaviorSettings(
         attackIntervalSeconds: 0.16,
         windupSeconds: 0.045,
         recoverySeconds: 0.035,

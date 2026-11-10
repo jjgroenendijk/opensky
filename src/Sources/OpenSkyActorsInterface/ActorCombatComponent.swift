@@ -18,7 +18,7 @@ nonisolated public enum ActorHostility: UInt8, Equatable, Sendable, CaseIterable
     /// state, and it is what `IsInCombat` and `GetCombatState` read.
     case hostile = 1
 
-    public var displayName: String {
+    var displayName: String {
         switch self {
         case .neutral: "neutral"
         case .hostile: "hostile"
@@ -30,8 +30,8 @@ nonisolated public enum ActorHostility: UInt8, Equatable, Sendable, CaseIterable
 nonisolated public struct ActorCombatState: WorldStateComponent, Equatable, Sendable {
     public var hostility: ActorHostility
 
-    public static let hostile = ActorCombatState(hostility: .hostile)
-    public static let neutral = ActorCombatState(hostility: .neutral)
+    static let hostile = ActorCombatState(hostility: .hostile)
+    static let neutral = ActorCombatState(hostility: .neutral)
 
     public static var componentKind: WorldStateComponentKind {
         .combat

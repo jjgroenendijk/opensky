@@ -72,7 +72,7 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
 
     /// How many times each attribute has been picked, which is what a readout
     /// prints beside the three bars.
-    public func pickCount(of kind: ActorValueKind) -> Int {
+    func pickCount(of kind: ActorValueKind) -> Int {
         attributePicks.count { $0 == kind }
     }
 

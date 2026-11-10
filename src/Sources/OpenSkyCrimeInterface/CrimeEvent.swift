@@ -127,13 +127,13 @@ nonisolated public struct CrimeGoldTable: Equatable, Sendable {
 
     /// Nothing priced, which is what a faction with no `CRVA` charges: zero for
     /// every kind, and the crime is still counted.
-    public static let unpriced = CrimeGoldTable(prices: nil)
+    static let unpriced = CrimeGoldTable(prices: nil)
 
     public init(prices: CrimePrices?) {
         self.prices = prices
     }
 
-    public init(values: Faction.CrimeValues?) {
+    init(values: Faction.CrimeValues?) {
         self.init(prices: values.map {
             CrimePrices(values: $0, defaults: CrimeSettings.vanilla.defaultPrices)
         })

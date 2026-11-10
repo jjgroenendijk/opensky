@@ -80,7 +80,7 @@ nonisolated public enum SpellCastOutcome: Equatable, Sendable {
     /// The hand was idle and the action asked nothing of it.
     case ignored
 
-    public var isCast: Bool {
+    var isCast: Bool {
         if case .cast = self {
             return true
         }

@@ -20,7 +20,7 @@ nonisolated public struct CreatedPotionEffect: Equatable, Sendable {
         self.duration = duration
     }
 
-    public var entry: MagicItemEffect {
+    var entry: MagicItemEffect {
         MagicItemEffect(effect: effect, magnitude: magnitude, area: area, duration: duration)
     }
 }
@@ -28,7 +28,7 @@ nonisolated public struct CreatedPotionEffect: Equatable, Sendable {
 /// A potion or poison made at an alchemy lab. No plugin holds it, so the save does.
 nonisolated public struct CreatedPotion: Equatable, Sendable {
     /// UESP "Skyrim:Alchemy" gives every made potion and poison the weight 0.5.
-    public static let weight: Float = 0.5
+    static let weight: Float = 0.5
 
     public let id: FormID
     public let name: String

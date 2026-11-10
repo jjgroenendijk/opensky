@@ -44,7 +44,7 @@ nonisolated public struct ActorGraphGait: Equatable, Sendable {
     /// Below this many units per second a driven actor is not getting anywhere.
     public static let stallSpeed: Float = 10
     /// How long a driven actor stays below `stallSpeed` before its graph stops.
-    public static let stallDelay: Float = 0.5
+    static let stallDelay: Float = 0.5
     /// Faster than any gait; a teleport would read as a run otherwise.
     public static let maximumSpeed: Float = 1000
 

@@ -72,7 +72,7 @@ nonisolated public enum CombatHandType: Int32, Equatable, Sendable, CaseIterable
     }
 
     /// How the melee readout names it.
-    public var displayName: String {
+    var displayName: String {
         switch self {
         case .handToHand: "empty"
         case .sword: "one-handed sword"

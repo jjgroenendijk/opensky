@@ -57,7 +57,7 @@ nonisolated public struct InventoryItemCard: Equatable, Sendable {
     }
 
     /// The card as readout lines.
-    public var lines: [String] {
+    var lines: [String] {
         var lines = ["\(name) (\(kind))", "Value \(value), weight \(Self.number(weight))"]
         if let damage {
             lines.append("Damage \(damage)")
