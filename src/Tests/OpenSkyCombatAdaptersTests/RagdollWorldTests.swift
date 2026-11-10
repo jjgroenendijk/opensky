@@ -7,6 +7,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkySessionTesting
+import simd
 import Testing
 
 @MainActor
@@ -31,6 +32,11 @@ struct RagdollWorldTests {
         adapter.run([.reportMurder(Self.actor)])
         #expect(host.fakeCrime.reportMurderCalls == [Self.actor])
         #expect(host.fakeCinematicWorld.actorDiedCalls == [Self.actor])
+    }
+
+    @Test func aPlayerRagdollWithoutABodyIsDropped() {
+        adapter.run([.publishPlayerRagdoll(["NPC Head": matrix_identity_float4x4])])
+        #expect(host.fakeCrime.reportMurderCalls.isEmpty)
     }
 
     @Test func bleedoutAndKnockdownRaiseTheActorGraph() {

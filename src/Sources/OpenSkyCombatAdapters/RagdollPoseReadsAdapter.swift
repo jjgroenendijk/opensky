@@ -99,7 +99,7 @@ extension RagdollPoseReadsAdapter {
 
     public func animatedPose(of key: ReferenceKey) -> [String: float4x4]? {
         if key == .player {
-            return game.gameSession?.playerBody?.animation.animatedBonesByName
+            return game.gameSession?.playerAnimation?.animatedBonesByName
         }
         return game.animatedPose(for: key)
     }

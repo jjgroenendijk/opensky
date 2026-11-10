@@ -56,7 +56,7 @@ extension InventoryVendorAdapter {
     }
 
     public func itemKeywords(of item: FormID) -> [FormID]? {
-        game.inventory.runtime?.inventory.baselines.items.definition(item)?.keywords
+        game.inventory.itemDefinitions?.definition(item)?.keywords
     }
 
     public var hourOfDay: Float? {

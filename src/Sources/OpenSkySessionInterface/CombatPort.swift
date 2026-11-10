@@ -63,3 +63,23 @@ public protocol CombatPort: AnyObject {
     var bowZoomTimeScale: Float { get }
     func combatHostility(of key: ReferenceKey) -> ActorHostility
 }
+
+extension CombatPort {
+    /// The projectiles in flight; none before archery starts.
+    public var liveProjectiles: [LiveProjectile] {
+        archery?.projectiles.live ?? []
+    }
+
+    public var projectileImpacts: ArcheryRuntime.ProjectileRuntime.MeleeImpactResolver? {
+        archery?.projectiles.impacts
+    }
+
+    @discardableResult public func removeArrows(stuckIn host: FormID) -> Int {
+        archery?.projectiles.removeArrows(stuckIn: host) ?? 0
+    }
+
+    /// Whether the player's weapon is out; nil before melee starts.
+    public var meleeWeaponInHand: Bool? {
+        melee?.state.drawState.isWeaponInHand
+    }
+}

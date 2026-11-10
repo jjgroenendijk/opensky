@@ -305,7 +305,7 @@ extension AgentRenderAdapter {
     }
 
     public func projectileVisualState() -> AgentJSON {
-        let live = game.combat.archery?.projectiles.live ?? []
+        let live = game.combat.liveProjectiles
         return [
             "flying": .array(live.map { projectile in
                 [

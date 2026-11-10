@@ -1,4 +1,5 @@
 public import OpenSkyAudio
+public import OpenSkyBehavior
 public import OpenSkyGameData
 public import OpenSkyPhysics
 public import OpenSkyRenderCore
@@ -86,5 +87,15 @@ public protocol GameSessionPort: AnyObject {
 extension GameSessionPort {
     public func setCinematicCamera(_ pose: CinematicCameraPose?) {
         setCinematicCamera(pose, shakeOffset: .zero)
+    }
+}
+
+extension GameSessionPort {
+    public var playerGraph: BehaviorGraphInstance? {
+        locomotion.graph
+    }
+
+    public var playerAnimation: PlayerBody.SkinnedPosePlayback? {
+        playerBody?.animation
     }
 }

@@ -48,6 +48,7 @@ struct EffectsBlastsTests {
     @Test func anUnknownLightRendersNothing() {
         #expect(adapter.renderLight(Self.light, at: .zero, strength: 1) == nil)
         #expect(adapter.projectileAndFlashLights().isEmpty)
+        #expect(adapter.blasts.projectileModels().isEmpty)
         adapter.playExplosionImpact(Self.light, at: .zero)
     }
 

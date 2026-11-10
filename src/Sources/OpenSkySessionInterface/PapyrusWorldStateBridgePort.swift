@@ -91,3 +91,9 @@ extension PapyrusWorldStateBridgePort {
         actorFlags(of: key, record: nil)
     }
 }
+
+extension PapyrusWorldStateBridgePort {
+    public func questKey(editorID: String) -> ReferenceKey? {
+        questRuntime?.quests.key(editorID: editorID)
+    }
+}

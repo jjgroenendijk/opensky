@@ -7,6 +7,7 @@ import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkySessionTesting
 import OpenSkyWorldState
+import OpenSkyWorldTesting
 import Testing
 
 @MainActor
@@ -62,6 +63,12 @@ struct ScriptGameNativesTests {
         #expect(natives.clearExtraArrows?(Self.actor) == 0)
         #expect(natives.resetCell?(Self.actor) == false)
         #expect(host.fakeStreamer.referenceEntryKeyCalls == [Self.actor])
+    }
+
+    @Test func clearingArrowsWithoutArcheryRemovesNone() throws {
+        host.fakeStreamer.referenceEntryKeyResult = try FakeRuntimeStateWorld
+            .referenceEntry(objectID: 0x20)
+        #expect(natives.clearExtraArrows?(Self.actor) == 0)
     }
 
     @Test func soundsAndPathsNeedTheirSession() {

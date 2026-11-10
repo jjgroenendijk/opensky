@@ -150,3 +150,10 @@ extension InventoryPort {
         plant((item, count), named: name, into: target, roll: roll)
     }
 }
+
+extension InventoryPort {
+    /// The item records the running inventory reads; nil before a world loads.
+    public var itemDefinitions: ItemDefinitionStore? {
+        runtime?.inventory.baselines.items
+    }
+}

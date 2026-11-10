@@ -100,7 +100,7 @@ public final class MovieWorldAdapter: MoviePlayerWorld {
             letterbox: request.letterbox
         )
         return game.movies.play(movie) { [weak self] _ in
-            self?.game.scripts.runtime?.scheduler.answer(token, returning: .none)
+            self?.game.scripts.answer(token, returning: .none)
         }
     }
 }

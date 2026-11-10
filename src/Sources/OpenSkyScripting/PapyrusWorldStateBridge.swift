@@ -406,3 +406,10 @@ extension PapyrusWorldStateBridge {
         return map[key]
     }
 }
+
+extension PapyrusWorldStateBridge {
+    /// Retires the scripts on the cell's references as the cell leaves the scene.
+    public func detachScripts(from cell: CellSceneLocation) {
+        world?.detach(cell: cell)
+    }
+}

@@ -68,7 +68,7 @@ extension ScriptWorldAdapter {
             )
         }
         streamer.onCellDetached.register(.scripts) { [weak self] location in
-            self?.state.bridge?.world?.detach(cell: location)
+            self?.state.bridge?.detachScripts(from: location)
         }
         gameSession.worldTick.register(.scripts) { [weak self, weak gameSession] delta in
             self?.soundBindings.answerSoundWaits()

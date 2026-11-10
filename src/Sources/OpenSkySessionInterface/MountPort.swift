@@ -32,3 +32,9 @@ extension MountPort {
         mount(key, stealConfirmed: false)
     }
 }
+
+extension MountPort {
+    public func allowRiddenHorseSprint(_ allowed: Bool) {
+        drive?.bridge.isSprintAllowed = allowed
+    }
+}
