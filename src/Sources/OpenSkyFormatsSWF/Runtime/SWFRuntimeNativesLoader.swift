@@ -5,15 +5,15 @@
 import Foundation
 import simd
 
-nonisolated extension SWFRuntimeNatives {
+nonisolated extension SWFMovieRuntime {
     static func installClipGeometry(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Natives.method(runtime, on: prototype, name: "getBounds") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "getBounds") { context in
             boundsObject(context)
         }
-        AS2Natives.method(runtime, on: prototype, name: "localToGlobal") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "localToGlobal") { context in
             try mapPoint(context, toGlobal: true)
         }
-        AS2Natives.method(runtime, on: prototype, name: "globalToLocal") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "globalToLocal") { context in
             try mapPoint(context, toGlobal: false)
         }
     }
@@ -73,7 +73,7 @@ nonisolated extension SWFRuntimeNatives {
     /// same character in the same parent, which is how a vanilla level meter
     /// builds its row of dots.
     static func installDuplicate(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Natives.method(runtime, on: prototype, name: "duplicateMovieClip") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "duplicateMovieClip") { context in
             guard
                 let owner = movieRuntime(context), let node = node(context),
                 let parent = node.parent, let characterId = node.characterId,
@@ -103,17 +103,17 @@ nonisolated extension SWFRuntimeNatives {
     /// `new MovieClipLoader()`: a broadcaster whose `loadClip` shows image slots only.
     public static func installMovieClipLoader(_ runtime: AS2Runtime) {
         let prototype = AS2Object(prototype: runtime.objectPrototype)
-        AS2Natives.constructor(runtime, name: "MovieClipLoader", prototype: prototype) { context in
+        AS2Runtime.constructor(runtime, name: "MovieClipLoader", prototype: prototype) { context in
             guard let instance = context.thisObject else {
                 return .undefined
             }
             installListenerList(context.runtime, on: instance)
             return .undefined
         }
-        AS2Natives.method(runtime, on: prototype, name: "loadClip") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "loadClip") { context in
             loadImage(context) ?? failLoad(context)
         }
-        AS2Natives.method(runtime, on: prototype, name: "onDeferredLoadInit") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "onDeferredLoadInit") { context in
             guard let owner = movieRuntime(context), let loader = context.thisObject else {
                 return .undefined
             }
@@ -122,10 +122,10 @@ nonisolated extension SWFRuntimeNatives {
             }
             return .undefined
         }
-        AS2Natives.method(runtime, on: prototype, name: "unloadClip") { _ in .boolean(true) }
+        AS2Runtime.method(runtime, on: prototype, name: "unloadClip") { _ in .boolean(true) }
         // Deferred failure delivery. Named rather than anonymous because the
         // timer wheel resolves a callback by name at fire time.
-        AS2Natives.method(runtime, on: prototype, name: "onDeferredLoadError") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "onDeferredLoadError") { context in
             guard let owner = movieRuntime(context), let loader = context.thisObject else {
                 return .undefined
             }
@@ -135,7 +135,7 @@ nonisolated extension SWFRuntimeNatives {
             )
             return .undefined
         }
-        AS2Natives.method(runtime, on: prototype, name: "getProgress") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "getProgress") { context in
             let progress = context.runtime.makeObject()
             progress.define(.integer(0), for: "bytesLoaded")
             progress.define(.integer(0), for: "bytesTotal")
@@ -192,14 +192,14 @@ nonisolated extension SWFRuntimeNatives {
     }
 }
 
-nonisolated extension SWFRuntimeNatives {
+nonisolated extension SWFMovieRuntime {
     /// `flash.geom.Point` and the deprecated global `random(n)`. Both are Flash
     /// player built-ins the vanilla level meter in `tweenmenu.swf` leans on: a
     /// probe measured 930 `Point` and 620 `add` misses in a single menu once its
     /// meter started animating.
     public static func installGeometry(_ runtime: AS2Runtime) {
         let prototype = AS2Object(prototype: runtime.objectPrototype)
-        let constructor = AS2Natives.constructor(
+        let constructor = AS2Runtime.constructor(
             runtime, name: "Point", prototype: prototype
         ) { context in
             guard let instance = context.thisObject else {
@@ -216,7 +216,7 @@ nonisolated extension SWFRuntimeNatives {
             ?? runtime.makeObject()
         flash.define(.object(geometry), for: "geom", flags: .dontEnumerate)
         runtime.globalObject.define(.object(flash), for: "flash", flags: .dontEnumerate)
-        AS2Natives.method(runtime, on: runtime.globalObject, name: "random") { context in
+        AS2Runtime.method(runtime, on: runtime.globalObject, name: "random") { context in
             let bound = try context.number(0)
             guard bound.isFinite, bound >= 1 else {
                 return .integer(0)
@@ -226,20 +226,20 @@ nonisolated extension SWFRuntimeNatives {
     }
 
     private static func installPointMethods(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Natives.method(runtime, on: prototype, name: "add") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "add") { context in
             try combine(context, sign: 1)
         }
-        AS2Natives.method(runtime, on: prototype, name: "subtract") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "subtract") { context in
             try combine(context, sign: -1)
         }
-        AS2Natives.method(runtime, on: prototype, name: "clone") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "clone") { context in
             try combine(context, sign: 0)
         }
-        AS2Natives.method(runtime, on: prototype, name: "toString") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "toString") { context in
             let point = try coordinates(context.thisObject, context)
             return .string("(x=\(point.0), y=\(point.1))")
         }
-        AS2Natives.method(runtime, on: prototype, name: "equals") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "equals") { context in
             let lhs = try coordinates(context.thisObject, context)
             let rhs = try coordinates(context.argument(0).objectValue, context)
             return .boolean(lhs == rhs)

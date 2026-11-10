@@ -66,8 +66,11 @@ nonisolated extension SWFMovieRuntime {
             return false
         }
         markDirty()
-        let result = runtime.invoke(
-            .object(function), thisValue: .object(handler), arguments: [details]
+        let result = AS2Interpreter.invoke(
+            in: runtime,
+            .object(function),
+            thisValue: .object(handler),
+            arguments: [details]
         )
         return runtime.coercion.toBoolean(result.value)
     }
@@ -97,8 +100,10 @@ nonisolated extension SWFMovieRuntime {
             focusChain(under: node).filter { definesHandleInput($0) }
                 .map { .object($0.object) }
         )
-        let result = runtime.invoke(
-            .object(function), thisValue: .object(node.object),
+        let result = AS2Interpreter.invoke(
+            in: runtime,
+            .object(function),
+            thisValue: .object(node.object),
             arguments: [details, .object(path)]
         )
         return runtime.coercion.toBoolean(result.value)
@@ -160,7 +165,11 @@ nonisolated extension SWFMovieRuntime {
             let detailsClass = globalPath(["gfx", "ui", "InputDetails"]),
             detailsClass.isFunction
         {
-            let constructed = runtime.construct(detailsClass, arguments: arguments)
+            let constructed = AS2Interpreter.construct(
+                in: runtime,
+                detailsClass,
+                arguments: arguments
+            )
             if constructed.objectValue != nil {
                 return constructed
             }
@@ -193,24 +202,32 @@ nonisolated extension SWFMovieRuntime {
         guard let getter = found.property.getter else {
             return .undefined
         }
-        return runtime.invoke(.object(getter), thisValue: .object(object)).value
+        return AS2Interpreter.invoke(in: runtime, .object(getter), thisValue: .object(object)).value
     }
 }
 
-nonisolated extension AS2Runtime {
+nonisolated extension AS2Interpreter {
     /// `new constructor(arguments)` from Swift, for the engine-side halves of
     /// the framework protocol.
-    func construct(_ constructor: AS2Object, arguments: [AS2Value] = []) -> AS2Value {
+    static func construct(
+        in runtime: AS2Runtime, _ constructor: AS2Object, arguments: [AS2Value] = []
+    ) -> AS2Value {
         guard let function = constructor.lookup("prototype") != nil ? constructor : nil else {
             return .undefined
         }
         let instance = AS2Object(
-            prototype: function.lookup("prototype")?.property.value.objectValue ?? objectPrototype
+            prototype: function.lookup("prototype")?.property.value.objectValue ?? runtime
+                .objectPrototype
         )
         instance.define(
             .object(function), for: "__constructor__", flags: [.dontEnumerate, .dontDelete]
         )
-        let result = invoke(.object(function), thisValue: .object(instance), arguments: arguments)
+        let result = invoke(
+            in: runtime,
+            .object(function),
+            thisValue: .object(instance),
+            arguments: arguments
+        )
         return result.value.objectValue.map(AS2Value.object) ?? .object(instance)
     }
 }

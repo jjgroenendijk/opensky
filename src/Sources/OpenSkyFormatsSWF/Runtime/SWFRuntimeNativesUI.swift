@@ -4,35 +4,35 @@
 
 import Foundation
 
-nonisolated extension SWFRuntimeNatives {
+nonisolated extension SWFMovieRuntime {
     // MARK: - TextField
 
     public static func installTextField(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Natives.constructor(runtime, name: "TextField", prototype: prototype) { _ in .undefined }
-        AS2Natives.method(runtime, on: prototype, name: "SetText") { context in
+        AS2Runtime.constructor(runtime, name: "TextField", prototype: prototype) { _ in .undefined }
+        AS2Runtime.method(runtime, on: prototype, name: "SetText") { context in
             try assignText(context, html: false)
         }
-        AS2Natives.method(runtime, on: prototype, name: "SetTextHTML") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "SetTextHTML") { context in
             try assignText(context, html: true)
         }
-        AS2Natives.method(runtime, on: prototype, name: "toString") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "toString") { context in
             .string(node(context)?.targetPath ?? "[object TextField]")
         }
         // Formatting is accepted and ignored: the text layout path renders one
         // font and color per field, so a format object has nothing to change.
         for name in ["setTextFormat", "setNewTextFormat"] {
-            AS2Natives.method(runtime, on: prototype, name: name) { _ in .undefined }
+            AS2Runtime.method(runtime, on: prototype, name: name) { _ in .undefined }
         }
         for name in ["getTextFormat", "getNewTextFormat"] {
-            AS2Natives.method(runtime, on: prototype, name: name) { context in
+            AS2Runtime.method(runtime, on: prototype, name: name) { context in
                 .object(context.runtime.makeObject())
             }
         }
-        AS2Natives.method(runtime, on: prototype, name: "addListener") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "addListener") { context in
             guard let field = context.thisObject else { return .boolean(false) }
             return addListener(context.argument(0), to: listeners(of: field, context.runtime))
         }
-        AS2Natives.method(runtime, on: prototype, name: "removeListener") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "removeListener") { context in
             guard let field = context.thisObject else { return .boolean(false) }
             return removeListener(context.argument(0), from: listeners(of: field, context.runtime))
         }
@@ -120,13 +120,13 @@ nonisolated extension SWFRuntimeNatives {
 
     public static func installSelection(_ runtime: AS2Runtime) {
         let selection = runtime.makeObject()
-        AS2Natives.method(runtime, on: selection, name: "setFocus") { context in
+        AS2Runtime.method(runtime, on: selection, name: "setFocus") { context in
             guard let owner = movieRuntime(context) else {
                 return .boolean(false)
             }
             return .boolean(owner.setFocus(context.argument(0)))
         }
-        AS2Natives.method(runtime, on: selection, name: "getFocus") { context in
+        AS2Runtime.method(runtime, on: selection, name: "getFocus") { context in
             guard let owner = movieRuntime(context), let focus = owner.focusTarget else {
                 return .null
             }
@@ -136,9 +136,9 @@ nonisolated extension SWFRuntimeNatives {
         // phase 3. Flash reports -1 when nothing has a text focus, so that is
         // what these answer.
         for name in ["getBeginIndex", "getEndIndex", "getCaretIndex"] {
-            AS2Natives.method(runtime, on: selection, name: name) { _ in .integer(-1) }
+            AS2Runtime.method(runtime, on: selection, name: name) { _ in .integer(-1) }
         }
-        AS2Natives.method(runtime, on: selection, name: "setSelection") { _ in .undefined }
+        AS2Runtime.method(runtime, on: selection, name: "setSelection") { _ in .undefined }
         installListenerList(runtime, on: selection)
         installSelectionControllers(runtime, on: selection)
         runtime.globalObject.define(.object(selection), for: "Selection", flags: .dontEnumerate)

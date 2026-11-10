@@ -78,7 +78,7 @@ struct SkillsMenuMovieBridgeTests {
     @Test func activatePlaysTheRootFadeIn() throws {
         let log = try Self.statsMovie()
         let root = log.runtime.root.object
-        AS2Natives.method(log.runtime.runtime, on: root, name: "gotoAndPlay") { context in
+        AS2Runtime.method(log.runtime.runtime, on: root, name: "gotoAndPlay") { context in
             log.sent["gotoAndPlay"] = context.arguments
             return .undefined
         }
@@ -94,7 +94,7 @@ struct SkillsMenuMovieBridgeTests {
         for name in [
             "SetPlayerInfo", "UpdateSkillList", "SetDirection", "SetStatsMode", "SetDescriptionCard"
         ] {
-            AS2Natives.method(runtime.runtime, on: runtime.root.object, name: name) { context in
+            AS2Runtime.method(runtime.runtime, on: runtime.root.object, name: name) { context in
                 log.sent[name] = context.arguments
                 return .undefined
             }

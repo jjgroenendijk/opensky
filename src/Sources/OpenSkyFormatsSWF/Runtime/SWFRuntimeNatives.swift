@@ -6,7 +6,7 @@
 import Foundation
 import simd
 
-nonisolated public enum SWFRuntimeNatives: Sendable {
+nonisolated extension SWFMovieRuntime {
     /// The prototypes a `SWFMovieRuntime` needs back after installation.
     public struct Installed {
         public let movieClipPrototype: AS2Object
@@ -35,7 +35,7 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
 
     /// The movie runtime behind a call, or nil when the host is not ours.
     public static func movieRuntime(_ context: AS2CallContext) -> SWFMovieRuntime? {
-        (context.runtime.host as? SWFRuntimeHost)?.owner
+        (context.runtime.host as? SWFMovieRuntime.Host)?.owner
     }
 
     /// The display object a method was called on.
@@ -47,10 +47,10 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
     public static func installListenerList(_ runtime: AS2Runtime, on object: AS2Object) {
         let listeners = runtime.makeArray()
         object.define(.object(listeners), for: "_listeners", flags: .dontEnumerate)
-        AS2Natives.method(runtime, on: object, name: "addListener") { context in
+        AS2Runtime.method(runtime, on: object, name: "addListener") { context in
             addListener(context.argument(0), to: listeners)
         }
-        AS2Natives.method(runtime, on: object, name: "removeListener") { context in
+        AS2Runtime.method(runtime, on: object, name: "removeListener") { context in
             removeListener(context.argument(0), from: listeners)
         }
     }
@@ -79,39 +79,39 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
     // MARK: - MovieClip
 
     private static func installMovieClip(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Natives.constructor(runtime, name: "MovieClip", prototype: prototype) { _ in .undefined }
+        AS2Runtime.constructor(runtime, name: "MovieClip", prototype: prototype) { _ in .undefined }
         installPlayback(runtime, prototype: prototype)
         installDepths(runtime, prototype: prototype)
         installInstancing(runtime, prototype: prototype)
         installClipGeometry(runtime, prototype: prototype)
         installDuplicate(runtime, prototype: prototype)
-        AS2Natives.method(runtime, on: prototype, name: "toString") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "toString") { context in
             .string(node(context)?.targetPath ?? "[object MovieClip]")
         }
-        AS2Natives.method(runtime, on: prototype, name: "hitTest") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "hitTest") { context in
             .boolean(hitTest(context))
         }
     }
 
     private static func installPlayback(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Natives.method(runtime, on: prototype, name: "play") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "play") { context in
             timeline(context) { owner, node in owner.perform(.play, on: node) }
         }
-        AS2Natives.method(runtime, on: prototype, name: "stop") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "stop") { context in
             timeline(context) { owner, node in owner.perform(.stop, on: node) }
         }
-        AS2Natives.method(runtime, on: prototype, name: "gotoAndPlay") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "gotoAndPlay") { context in
             try goto(context, play: true)
         }
-        AS2Natives.method(runtime, on: prototype, name: "gotoAndStop") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "gotoAndStop") { context in
             try goto(context, play: false)
         }
-        AS2Natives.method(runtime, on: prototype, name: "nextFrame") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "nextFrame") { context in
             timeline(context) { owner, node in
                 owner.gotoFrame(node.currentFrame + 1, of: node, play: false)
             }
         }
-        AS2Natives.method(runtime, on: prototype, name: "prevFrame") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "prevFrame") { context in
             timeline(context) { owner, node in
                 owner.gotoFrame(node.currentFrame - 1, of: node, play: false)
             }
@@ -119,11 +119,11 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
     }
 
     private static func installDepths(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Natives.method(runtime, on: prototype, name: "getDepth") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "getDepth") { context in
             node(context).map { .integer(Int($0.depth) - SWFDisplayObject.scriptDepthBase) }
                 ?? .undefined
         }
-        AS2Natives.method(runtime, on: prototype, name: "getNextHighestDepth") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "getNextHighestDepth") { context in
             guard let node = node(context) else {
                 return .undefined
             }
@@ -131,17 +131,17 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
                 .map { Int($0.depth) - SWFDisplayObject.scriptDepthBase }
             return .integer(max(0, (highest ?? -1) + 1))
         }
-        AS2Natives.method(runtime, on: prototype, name: "getInstanceAtDepth") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "getInstanceAtDepth") { context in
             guard let node = node(context) else {
                 return .undefined
             }
             let depth = try depthValue(context.number(0))
             return node.child(atDepth: depth).map { .object($0.object) } ?? .undefined
         }
-        AS2Natives.method(runtime, on: prototype, name: "swapDepths") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "swapDepths") { context in
             try swapDepths(context)
         }
-        AS2Natives.method(runtime, on: prototype, name: "removeMovieClip") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "removeMovieClip") { context in
             guard
                 let owner = movieRuntime(context), let node = node(context),
                 let parent = node.parent
@@ -155,7 +155,7 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
     }
 
     private static func installInstancing(_ runtime: AS2Runtime, prototype: AS2Object) {
-        AS2Natives.method(runtime, on: prototype, name: "attachMovie") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "attachMovie") { context in
             guard let owner = movieRuntime(context), let node = node(context) else {
                 return .undefined
             }
@@ -171,7 +171,7 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
             }
             return .object(attached.object)
         }
-        AS2Natives.method(runtime, on: prototype, name: "createEmptyMovieClip") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "createEmptyMovieClip") { context in
             guard let owner = movieRuntime(context), let node = node(context) else {
                 return .undefined
             }
@@ -183,7 +183,7 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
             owner.markDirty()
             return .object(created.object)
         }
-        AS2Natives.method(runtime, on: prototype, name: "createTextField") { context in
+        AS2Runtime.method(runtime, on: prototype, name: "createTextField") { context in
             guard let owner = movieRuntime(context), let node = node(context) else {
                 return .undefined
             }

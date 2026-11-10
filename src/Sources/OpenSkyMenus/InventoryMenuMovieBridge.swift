@@ -87,7 +87,7 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
         }
         let global = runtime.runtime.globalObject
         for name in globalSinkFunctions {
-            AS2Natives.method(runtime.runtime, on: global, name: name) { _ in .undefined }
+            AS2Runtime.method(runtime.runtime, on: global, name: name) { _ in .undefined }
         }
     }
 

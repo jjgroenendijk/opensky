@@ -4,7 +4,7 @@
 
 import Foundation
 
-nonisolated extension AS2Natives {
+nonisolated extension AS2Runtime {
     public static func installString(_ runtime: AS2Runtime) {
         let prototype = runtime.stringPrototype
         installStringReaders(runtime, on: prototype)

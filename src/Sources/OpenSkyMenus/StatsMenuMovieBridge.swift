@@ -142,7 +142,12 @@ nonisolated enum StatsMenuMovieBridge: Sendable {
         guard let instance = menuClass.lookup("StatsMenuInstance")?.property.value.objectValue
         else { return }
         let method = instance.lookup("UpdatePerkText")?.property.value ?? .undefined
-        runtime.runtime.invoke(method, thisValue: .object(instance), arguments: [.boolean(show)])
+        AS2Interpreter.invoke(
+            in: runtime.runtime,
+            method,
+            thisValue: .object(instance),
+            arguments: [.boolean(show)]
+        )
     }
 
     static func escaped(_ text: String) -> String {

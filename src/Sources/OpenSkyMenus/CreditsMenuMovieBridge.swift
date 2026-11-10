@@ -37,11 +37,11 @@ nonisolated enum CreditsMenuMovieBridge: Sendable {
             }
             return .undefined
         }
-        AS2Natives.method(runtime.runtime, on: codeObject, name: "requestCredits", body: request)
-        AS2Natives.method(runtime.runtime, on: codeObject, name: "getScrollSpeed") { _ in
+        AS2Runtime.method(runtime.runtime, on: codeObject, name: "requestCredits", body: request)
+        AS2Runtime.method(runtime.runtime, on: codeObject, name: "getScrollSpeed") { _ in
             .number(scrollSpeed)
         }
-        AS2Natives.method(runtime.runtime, on: codeObject, name: "closeMenu") { _ in
+        AS2Runtime.method(runtime.runtime, on: codeObject, name: "closeMenu") { _ in
             MainActor.assumeIsolated { onClose() }
             return .undefined
         }

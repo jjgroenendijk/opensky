@@ -69,7 +69,7 @@ nonisolated extension SWFMovieRuntime {
     }
 }
 
-nonisolated extension SWFRuntimeNatives {
+nonisolated extension SWFMovieRuntime {
     /// `System.capabilities`: the GFx fields vanilla menus read.
     public static func installSystem(_ runtime: AS2Runtime) {
         let capabilities = runtime.makeObject()
@@ -87,16 +87,16 @@ nonisolated extension SWFRuntimeNatives {
             .integer(SWFMovieRuntime.focusGroupCount), for: "numFocusGroups",
             flags: .dontEnumerate
         )
-        AS2Natives.method(runtime, on: selection, name: "getControllerMaskByFocusGroup") {
+        AS2Runtime.method(runtime, on: selection, name: "getControllerMaskByFocusGroup") {
             .integer(movieRuntime($0)?.focusGroupControllerMask ?? 1)
         }
-        AS2Natives.method(runtime, on: selection, name: "getControllerFocusGroup") { _ in
+        AS2Runtime.method(runtime, on: selection, name: "getControllerFocusGroup") { _ in
             .integer(0)
         }
-        AS2Natives.method(runtime, on: selection, name: "setControllerFocusGroup") { _ in
+        AS2Runtime.method(runtime, on: selection, name: "setControllerFocusGroup") { _ in
             .boolean(true)
         }
-        AS2Natives.method(runtime, on: selection, name: "getFocusBitmask") { context in
+        AS2Runtime.method(runtime, on: selection, name: "getFocusBitmask") { context in
             guard
                 let owner = movieRuntime(context),
                 let object = context.argument(0).objectValue,

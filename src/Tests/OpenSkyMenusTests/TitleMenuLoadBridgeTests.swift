@@ -45,7 +45,7 @@ struct TitleMenuLoadBridgeTests {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
         var calls: [String] = []
         for name in ["onFillCharacterListComplete", "onSaveLoadBatchComplete"] {
-            AS2Natives.method(runtime.runtime, on: runtime.root.object, name: name) { context in
+            AS2Runtime.method(runtime.runtime, on: runtime.root.object, name: name) { context in
                 calls.append("\(name)(\(context.arguments.count))")
                 return .undefined
             }

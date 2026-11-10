@@ -20,8 +20,11 @@ nonisolated extension SWFMovieRuntime {
         guard let function = node.object.lookup(handler)?.property.value.functionValue else {
             return false
         }
-        runtime.invoke(
-            .object(function), thisValue: .object(node.object), arguments: arguments
+        AS2Interpreter.invoke(
+            in: runtime,
+            .object(function),
+            thisValue: .object(node.object),
+            arguments: arguments
         )
         markDirty()
         return true
@@ -63,7 +66,7 @@ nonisolated extension SWFMovieRuntime {
                 continue
             }
             let target = node.isButton ? (node.parent ?? node) : node
-            runtime.execute(record.actions, target: target.object)
+            AS2Interpreter.execute(in: runtime, record.actions, target: target.object)
             ran = true
         }
         if ran {
@@ -141,7 +144,12 @@ nonisolated extension SWFMovieRuntime {
             else {
                 continue
             }
-            runtime.invoke(.object(function), thisValue: .object(listener), arguments: arguments)
+            AS2Interpreter.invoke(
+                in: runtime,
+                .object(function),
+                thisValue: .object(listener),
+                arguments: arguments
+            )
             delivered += 1
         }
         if delivered > 0 {

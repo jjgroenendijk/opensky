@@ -39,7 +39,7 @@ struct SWFImageSlotTests {
         let loader = try Self.loader(runtime)
         var initialized = 0
         let listener = runtime.runtime.makeObject()
-        AS2Natives.method(runtime.runtime, on: listener, name: "onLoadInit") { _ in
+        AS2Runtime.method(runtime.runtime, on: listener, name: "onLoadInit") { _ in
             initialized += 1
             return .undefined
         }
@@ -68,7 +68,7 @@ struct SWFImageSlotTests {
         let constructor = try #require(runtime.runtime.globalValue("MovieClipLoader").objectValue)
         let prototype = constructor.lookup("prototype")?.property.value.objectValue
         let loader = AS2Object(prototype: prototype ?? runtime.runtime.objectPrototype)
-        runtime.runtime.invoke(.object(constructor), thisValue: .object(loader))
+        AS2Interpreter.invoke(in: runtime.runtime, .object(constructor), thisValue: .object(loader))
         return loader
     }
 
@@ -77,7 +77,12 @@ struct SWFImageSlotTests {
         _ name: String, on object: AS2Object, _ arguments: [AS2Value], _ runtime: SWFMovieRuntime
     ) -> AS2Value {
         let function = object.lookup(name)?.property.value ?? .undefined
-        return runtime.runtime.invoke(function, thisValue: .object(object), arguments: arguments)
-            .value
+        return AS2Interpreter.invoke(
+            in: runtime.runtime,
+            function,
+            thisValue: .object(object),
+            arguments: arguments
+        )
+        .value
     }
 }

@@ -77,12 +77,13 @@ struct SWFRuntimeTextScrollTests {
     @Test func aScrollChangeTellsTheFieldsListeners() throws {
         let (runtime, field) = try Self.started()
         let listener = runtime.runtime.makeObject()
-        AS2Natives.method(runtime.runtime, on: listener, name: "onScroller") { context in
+        AS2Runtime.method(runtime.runtime, on: listener, name: "onScroller") { context in
             context.thisObject?.assign(context.argument(0), for: "heard")
             return .undefined
         }
         let add = try #require(field.object.lookup("addListener")?.property.value)
-        runtime.runtime.invoke(
+        AS2Interpreter.invoke(
+            in: runtime.runtime,
             add,
             thisValue: .object(field.object),
             arguments: [.object(listener)]

@@ -45,7 +45,7 @@ struct SWFRuntimeFocusPathTests {
         let child = try #require(holder.child(named: "child"))
 
         var receivedPath: [String] = []
-        AS2Natives.method(runtime.runtime, on: menuRoot.object, name: "handleInput") { context in
+        AS2Runtime.method(runtime.runtime, on: menuRoot.object, name: "handleInput") { context in
             receivedPath = context.argument(1).objectValue?.elements.compactMap {
                 SWFDisplayObject.resolve($0.objectValue)?.name
             } ?? []
@@ -53,7 +53,7 @@ struct SWFRuntimeFocusPathTests {
         }
         // `child` defines `handleInput`, so the filter keeps it; `holder`
         // defines none, so the filter drops it.
-        AS2Natives.method(runtime.runtime, on: child.object, name: "handleInput") { _ in
+        AS2Runtime.method(runtime.runtime, on: child.object, name: "handleInput") { _ in
             .boolean(true)
         }
 

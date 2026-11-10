@@ -157,7 +157,10 @@ struct AS2LimitsTests {
     @Test func doInitActionRunsThroughTheSameEntryPoint() {
         let runtime = AS2Runtime()
         let block = AS2Fixture.block(AS2Fixture.setVariable("ready", .boolean(true)))
-        let result = runtime.execute(SWFDoInitAction(spriteId: 3, actions: block))
+        let result = AS2Interpreter.execute(
+            in: runtime,
+            SWFDoInitAction(spriteId: 3, actions: block)
+        )
         #expect(result.completed)
         #expect(runtime.root.ownProperty("ready")?.value == .boolean(true))
     }

@@ -183,21 +183,27 @@ struct SWFRuntimeEventTests {
         let key = try #require(runtime.globalBroadcaster("Key"))
         let listener = runtime.runtime.makeObject()
         var calls = 0
-        AS2Natives.method(runtime.runtime, on: listener, name: "onKeyDown") { _ in
+        AS2Runtime.method(runtime.runtime, on: listener, name: "onKeyDown") { _ in
             calls += 1
             return .undefined
         }
         let add = try #require(key.lookup("addListener")?.property.value.functionValue)
-        runtime.runtime.invoke(
-            .object(add), thisValue: .object(key), arguments: [.object(listener)]
+        AS2Interpreter.invoke(
+            in: runtime.runtime,
+            .object(add),
+            thisValue: .object(key),
+            arguments: [.object(listener)]
         )
         #expect(runtime.handle(.keyDown(code: SWFKeyCode.down, ascii: 0)))
         #expect(calls == 1)
         #expect(runtime.input.isDown(SWFKeyCode.down))
 
         let remove = try #require(key.lookup("removeListener")?.property.value.functionValue)
-        runtime.runtime.invoke(
-            .object(remove), thisValue: .object(key), arguments: [.object(listener)]
+        AS2Interpreter.invoke(
+            in: runtime.runtime,
+            .object(remove),
+            thisValue: .object(key),
+            arguments: [.object(listener)]
         )
         runtime.handle(.keyDown(code: SWFKeyCode.down, ascii: 0))
         #expect(calls == 1)
@@ -210,11 +216,15 @@ struct SWFRuntimeEventTests {
         let getCode = try #require(key.lookup("getCode")?.property.value.functionValue)
         let isDown = try #require(key.lookup("isDown")?.property.value.functionValue)
         #expect(
-            runtime.runtime.invoke(.object(getCode), thisValue: .object(key)).value == .number(13)
+            AS2Interpreter.invoke(in: runtime.runtime, .object(getCode), thisValue: .object(key))
+                .value == .number(13)
         )
         #expect(
-            runtime.runtime.invoke(
-                .object(isDown), thisValue: .object(key), arguments: [.integer(13)]
+            AS2Interpreter.invoke(
+                in: runtime.runtime,
+                .object(isDown),
+                thisValue: .object(key),
+                arguments: [.integer(13)]
             ).value == .boolean(true)
         )
         runtime.handle(.keyUp(code: SWFKeyCode.enter))
@@ -229,7 +239,7 @@ struct SWFRuntimeEventTests {
         let runtime = try startedBroadcastRuntime()
         let target = runtime.runtime.makeObject()
         var calls = 0
-        AS2Natives.method(runtime.runtime, on: target, name: "tick") { _ in
+        AS2Runtime.method(runtime.runtime, on: target, name: "tick") { _ in
             calls += 1
             return .undefined
         }
@@ -250,7 +260,7 @@ struct SWFRuntimeEventTests {
         let runtime = try startedBroadcastRuntime()
         let target = runtime.runtime.makeObject()
         var calls = 0
-        AS2Natives.method(runtime.runtime, on: target, name: "tick") { _ in
+        AS2Runtime.method(runtime.runtime, on: target, name: "tick") { _ in
             calls += 1
             return .undefined
         }

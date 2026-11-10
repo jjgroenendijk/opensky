@@ -105,7 +105,7 @@ nonisolated extension SWFMovieRuntime {
         gotoDepth += 1
         defer { gotoDepth -= 1 }
         for block in frame.actions {
-            runtime.execute(block, target: node.object)
+            AS2Interpreter.execute(in: runtime, block, target: node.object)
         }
     }
 

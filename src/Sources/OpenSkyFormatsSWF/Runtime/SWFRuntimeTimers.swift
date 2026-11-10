@@ -125,7 +125,12 @@ nonisolated extension SWFMovieRuntime {
             return
         }
         let receiver = entry.method == nil ? AS2Value.undefined : entry.callee
-        runtime.invoke(.object(function), thisValue: receiver, arguments: entry.arguments)
+        AS2Interpreter.invoke(
+            in: runtime,
+            .object(function),
+            thisValue: receiver,
+            arguments: entry.arguments
+        )
         markDirty()
     }
 
@@ -149,17 +154,17 @@ nonisolated extension SWFMovieRuntime {
     }
 }
 
-nonisolated extension SWFRuntimeNatives {
+nonisolated extension SWFMovieRuntime {
     /// The four global timer functions.
     public static func installTimers(_ runtime: AS2Runtime) {
-        AS2Natives.method(runtime, on: runtime.globalObject, name: "setInterval") { context in
+        AS2Runtime.method(runtime, on: runtime.globalObject, name: "setInterval") { context in
             try schedule(context, repeats: true)
         }
-        AS2Natives.method(runtime, on: runtime.globalObject, name: "setTimeout") { context in
+        AS2Runtime.method(runtime, on: runtime.globalObject, name: "setTimeout") { context in
             try schedule(context, repeats: false)
         }
         for name in ["clearInterval", "clearTimeout"] {
-            AS2Natives.method(runtime, on: runtime.globalObject, name: name) { context in
+            AS2Runtime.method(runtime, on: runtime.globalObject, name: name) { context in
                 guard let owner = movieRuntime(context) else {
                     return .boolean(false)
                 }

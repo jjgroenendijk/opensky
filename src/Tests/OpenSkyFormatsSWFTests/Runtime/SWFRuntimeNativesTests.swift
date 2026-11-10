@@ -27,8 +27,11 @@ struct SWFRuntimeNativesTests {
         // `AS2Interpreter.getMember` uses.
         let member = node.object.lookup(name)?.property.value ?? runtime.member(name, of: node)
         let function = try #require(member?.functionValue)
-        return runtime.runtime.invoke(
-            .object(function), thisValue: .object(node.object), arguments: arguments
+        return AS2Interpreter.invoke(
+            in: runtime.runtime,
+            .object(function),
+            thisValue: .object(node.object),
+            arguments: arguments
         ).value
     }
 
@@ -157,7 +160,8 @@ struct SWFRuntimeNativesTests {
         let setFocus = try #require(
             selection.lookup("setFocus")?.property.value.functionValue
         )
-        let accepted = runtime.runtime.invoke(
+        let accepted = AS2Interpreter.invoke(
+            in: runtime.runtime,
             .object(setFocus),
             thisValue: .object(selection),
             arguments: [.object(panel.object)]
@@ -165,8 +169,10 @@ struct SWFRuntimeNativesTests {
         #expect(accepted == .boolean(true))
         #expect(runtime.focusTarget === panel)
         let getFocus = try #require(selection.lookup("getFocus")?.property.value.functionValue)
-        let path = runtime.runtime.invoke(
-            .object(getFocus), thisValue: .object(selection)
+        let path = AS2Interpreter.invoke(
+            in: runtime.runtime,
+            .object(getFocus),
+            thisValue: .object(selection)
         ).value
         #expect(path == .string("/panel"))
     }
@@ -189,8 +195,11 @@ struct SWFRuntimeNativesTests {
             let object = try global(runtime, name)
             let add = try #require(object.lookup("addListener")?.property.value.functionValue)
             let listener = runtime.runtime.makeObject()
-            let added = runtime.runtime.invoke(
-                .object(add), thisValue: .object(object), arguments: [.object(listener)]
+            let added = AS2Interpreter.invoke(
+                in: runtime.runtime,
+                .object(add),
+                thisValue: .object(object),
+                arguments: [.object(listener)]
             ).value
             #expect(added == .boolean(true))
             let list = try #require(object.lookup("_listeners")?.property.value.objectValue)
@@ -198,8 +207,11 @@ struct SWFRuntimeNativesTests {
             let remove = try #require(
                 object.lookup("removeListener")?.property.value.functionValue
             )
-            let removed = runtime.runtime.invoke(
-                .object(remove), thisValue: .object(object), arguments: [.object(listener)]
+            let removed = AS2Interpreter.invoke(
+                in: runtime.runtime,
+                .object(remove),
+                thisValue: .object(object),
+                arguments: [.object(listener)]
             ).value
             #expect(removed == .boolean(true))
             #expect(list.elements.isEmpty)
