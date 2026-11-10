@@ -22,7 +22,7 @@ nonisolated public enum MountGraphNames: Sendable {
     public static let forwardJumpStart = "forwardJumpStart"
 
     /// The `iCombatStance` value of a stance.
-    public static func combatStanceValue(_ combat: Bool) -> Int32 {
+    static func combatStanceValue(_ combat: Bool) -> Int32 {
         combat ? 1 : 0
     }
 

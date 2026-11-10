@@ -3,8 +3,8 @@
 // combat, magic, and the camera; the locomotion bridge writes the result.
 
 import Foundation
-public import OpenSkyBehavior
-public import OpenSkyPhysics
+import OpenSkyBehavior
+import OpenSkyPhysics
 public import OpenSkyWorldInterface
 import simd
 
@@ -23,7 +23,7 @@ nonisolated public struct ActorStateGraphInputs: Equatable, Sendable {
     /// The player's weight, 0 (thin) to 100 (heavy).
     public var weight: Float = 50
     /// The player swims, so a get-up uses the swimming pose matcher.
-    public var swimming = false
+    var swimming = false
     public var castingLeft = false
     public var castingRight = false
     /// The player holds the shout key and may shout.
@@ -67,7 +67,7 @@ nonisolated public enum ActorStateGraphCore: Sendable {
     /// attack over a guard, a guard over a drawn bow, a cast over drunk, and drunk over
     /// movement. A guard or a drawn bow takes the perk state the graph tags. Bleedout
     /// has no step yet.
-    public static func state(
+    static func state(
         for inputs: ActorStateGraphInputs, gait: LocomotionGait
     ) -> ActorGraphState {
         if let riding = inputs.riding {
@@ -115,7 +115,7 @@ nonisolated public enum ActorStateGraphCore: Sendable {
 
     /// Every input for one step, in `ActorStateGraphNames.inputs` order. `iState` is
     /// left out when the graph declares no constant for the state.
-    public static func writes(
+    static func writes(
         _ inputs: ActorStateGraphInputs,
         sprintAllowed: Bool,
         wantsBlock: Bool,
@@ -168,13 +168,13 @@ nonisolated public enum ActorStateGraphCore: Sendable {
 
     /// The game writes 1 when a get-up starts and 2 in deep water; 0, the reanimate pose
     /// matcher, is only the graph's start value.
-    public static func getUpType(swimming: Bool) -> Int32 {
+    static func getUpType(swimming: Bool) -> Int32 {
         swimming ? 2 : 1
     }
 
     /// The readout name of an `iState` value: the constant that holds it, or the
     /// number alone when no constant does.
-    public static func stateName(of value: Int32, constants: [ActorGraphState: Int32]) -> String {
+    static func stateName(of value: Int32, constants: [ActorGraphState: Int32]) -> String {
         let named = ActorGraphState.allCases.first { constants[$0] == value }
         return named.map { "\(value) (\($0.displayName))" } ?? String(value)
     }

@@ -36,7 +36,7 @@ nonisolated public struct CinematicAnchors: Equatable, Sendable {
     public var target: CinematicAnchor?
     public var projectile: CinematicAnchor?
 
-    public init(
+    init(
         attacker: CinematicAnchor,
         target: CinematicAnchor?,
         projectile: CinematicAnchor? = nil
@@ -86,17 +86,17 @@ nonisolated public struct CinematicStage: Sendable {
         (shot.record.properties?.flags ?? 0) & 0x02 != 0
     }
 
-    public var timeScale: Float {
+    var timeScale: Float {
         CinematicTimeScale.worldScale(shot.record.properties?.timeMultipliers)
     }
 }
 
 /// The world clock under a shot: the global multiplier times the slower of
 /// the player and target multipliers. OpenSky runs one world clock.
-nonisolated public enum CinematicTimeScale {
-    public static let minimum: Float = 0.01
+nonisolated enum CinematicTimeScale {
+    static let minimum: Float = 0.01
 
-    public static func worldScale(_ multipliers: SIMD3<Float>?) -> Float {
+    static func worldScale(_ multipliers: SIMD3<Float>?) -> Float {
         guard let multipliers else { return 1 }
         let actors = min(multipliers.x, multipliers.y)
         let scale = multipliers.z * (actors > 0 ? actors : 1)
@@ -124,7 +124,7 @@ nonisolated public struct CinematicShotPlayer: Sendable {
         isFinished ? nil : stages[stageIndex]
     }
 
-    public var remainingSeconds: Double {
+    var remainingSeconds: Double {
         guard let stage = currentStage else { return 0 }
         return max(0, stage.duration - stageTime)
             + stages.dropFirst(stageIndex + 1).reduce(0) { $0 + $1.duration }
@@ -147,7 +147,7 @@ nonisolated public struct CinematicShotPlayer: Sendable {
 
     /// The stage's event happened, such as the arrow hitting during the fly
     /// stage. The stage ends once its minimum time has passed.
-    public mutating func endStageEarly() {
+    mutating func endStageEarly() {
         guard let stage = currentStage, stageTime >= stage.minimum else { return }
         nextStage()
     }

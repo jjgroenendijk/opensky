@@ -7,7 +7,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyWorldInterface
 
-nonisolated public enum IdleSelectionOrder: Equatable, Sendable {
+nonisolated enum IdleSelectionOrder: Equatable, Sendable {
     /// Any passing candidate, picked at random.
     case random
     /// The first passing candidate at or after the marker's next index.
@@ -22,19 +22,19 @@ nonisolated public struct IdleSelection: Sendable {
 }
 
 nonisolated public struct IdleSelector {
-    public typealias Children = (ResolvedFormID) -> [ResolvedRecord<IdleAnimation>]
+    typealias Children = (ResolvedFormID) -> [ResolvedRecord<IdleAnimation>]
     /// The failing condition's name, or nil when the conditions pass.
-    public typealias Check = (IdleAnimation) -> String?
+    typealias Check = (IdleAnimation) -> String?
 
     private let children: Children
     private let check: Check
 
-    public init(children: @escaping Children, check: @escaping Check) {
+    init(children: @escaping Children, check: @escaping Check) {
         self.children = children
         self.check = check
     }
 
-    public init(store: IdleStore, check: @escaping Check) {
+    init(store: IdleStore, check: @escaping Check) {
         self.init(
             children: { id in store.forest.children(of: id).compactMap { store.idles.record($0) } },
             check: check
@@ -43,7 +43,7 @@ nonisolated public struct IdleSelector {
 
     /// A marker's IDLA list. `random` gets the passing count and returns an
     /// index below it, so a test can pin the choice.
-    public func select(
+    func select(
         entries: [ResolvedRecord<IdleAnimation>],
         order ordering: (kind: IdleSelectionOrder, start: Int),
         played: Set<ResolvedFormID>,

@@ -1,13 +1,13 @@
 // The pure rules behind the Player & Locomotion and First person readouts.
 
 import Foundation
-public import OpenSkyBehavior
+import OpenSkyBehavior
 import OpenSkyWorldInterface
 
 /// Readout rows built from plain values.
-nonisolated public enum PlayerCore {
+nonisolated enum PlayerCore {
     /// Every gameplay key with its live state, so the readout lists each binding.
-    public static func bindings(
+    static func bindings(
         run: Bool,
         sprint: Bool,
         sneak: Bool,
@@ -23,7 +23,7 @@ nonisolated public enum PlayerCore {
 
     /// A name the graph does not declare gets a nil value, so a spelling
     /// mismatch shows on the readout.
-    public static func variables(of graph: BehaviorGraphInstance?) -> [LocomotionVariableSnapshot] {
+    static func variables(of graph: BehaviorGraphInstance?) -> [LocomotionVariableSnapshot] {
         let names = LocomotionGraphNames.variables + LocomotionGraphNames.perspectiveVariables
         return names.map { name in
             LocomotionVariableSnapshot(
@@ -32,7 +32,7 @@ nonisolated public enum PlayerCore {
         }
     }
 
-    public static func describe(_ value: BehaviorVariableValue) -> String {
+    static func describe(_ value: BehaviorVariableValue) -> String {
         switch value {
         case let .bool(flag): flag ? "true" : "false"
         case let .int(number): String(number)
@@ -44,7 +44,7 @@ nonisolated public enum PlayerCore {
 
     /// Worn pieces the first-person projection dropped for having no MOD4 or
     /// MOD5, counted off the assembly's own skips.
-    public static func droppedPieceCount(of rig: PlayerFirstPersonRig?) -> Int {
+    static func droppedPieceCount(of rig: PlayerFirstPersonRig?) -> Int {
         guard let rig else { return 0 }
         return rig.assembly.skips.count {
             guard case let .appearance(skip) = $0.subject else { return false }

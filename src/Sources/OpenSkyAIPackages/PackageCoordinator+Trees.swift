@@ -159,7 +159,7 @@ extension PackageCoordinator {
 
     /// Picks the actor's package again and starts its tree from the root, as the AI
     /// readout's Reevaluate asks.
-    public func restart(_ actor: ReferenceKey) {
+    func restart(_ actor: ReferenceKey) {
         runtime?.setSuspended(false, actor: actor)
         leaveExecution(of: actor)
         resume(actor)

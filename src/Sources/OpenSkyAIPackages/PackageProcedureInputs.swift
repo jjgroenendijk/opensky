@@ -9,7 +9,7 @@ import simd
 
 /// The world lookups a procedure's parameters need.
 @MainActor
-public protocol PackageInputResolving {
+protocol PackageInputResolving {
     func place(of location: Package.Location) -> PackagePlace?
     func reference(of target: Package.Target) -> ReferenceKey?
     func position(of reference: ReferenceKey) -> SIMD3<Float>?
@@ -63,35 +63,24 @@ nonisolated struct PackageProcedureParameters: Sendable {
 /// A leaf's machine and what the coordinator keeps beside it.
 nonisolated public struct PackageLeafSetup: Equatable, Sendable {
     public var setup: PackageProcedureSetup
-    public var seat: PackageSeat?
+    var seat: PackageSeat?
     /// A static-pathing patrol walks straight between its markers.
-    public var isDirect = false
+    var isDirect = false
 }
 
 /// One leaf's parameter values, with the object lists earlier leaves filled.
 @MainActor
-public struct PackageProcedureInputs {
-    public let leaf: PackageProcedureLeaf
+struct PackageProcedureInputs {
+    let leaf: PackageProcedureLeaf
     /// The package's data inputs by index, its own over its template's.
-    public let values: [Int8: Package.DataValue]
-    public let objectLists: [Int8: [ReferenceKey]]
-    public let start: SIMD3<Float>
-    public let seed: UInt64
-    public var sandboxSettings = SandboxSettings.vanilla
-
-    public init(
-        leaf: PackageProcedureLeaf, values: [Int8: Package.DataValue],
-        objectLists: [Int8: [ReferenceKey]], start: SIMD3<Float>, seed: UInt64
-    ) {
-        self.leaf = leaf
-        self.values = values
-        self.objectLists = objectLists
-        self.start = start
-        self.seed = seed
-    }
+    let values: [Int8: Package.DataValue]
+    let objectLists: [Int8: [ReferenceKey]]
+    let start: SIMD3<Float>
+    let seed: UInt64
+    var sandboxSettings = SandboxSettings.vanilla
 
     /// The data inputs of `package` over those of `template`, by index.
-    nonisolated public static func values(
+    nonisolated static func values(
         of package: Package, template: Package?
     ) -> [Int8: Package.DataValue] {
         var values: [Int8: Package.DataValue] = [:]
@@ -104,7 +93,7 @@ public struct PackageProcedureInputs {
     }
 
     /// The input index of the parameter at `position`, when it has one.
-    public func index(at position: Int?) -> Int8? {
+    func index(at position: Int?) -> Int8? {
         guard let position, leaf.inputIndexes.indices.contains(position) else { return nil }
         return leaf.inputIndexes[position]
     }

@@ -8,7 +8,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyWorldInterface
 
 nonisolated extension PackageProcedureTree {
-    public var leaves: [PackageProcedureLeaf] {
+    var leaves: [PackageProcedureLeaf] {
         nodes.compactMap {
             if case let .procedure(leaf) = $0.content {
                 return leaf

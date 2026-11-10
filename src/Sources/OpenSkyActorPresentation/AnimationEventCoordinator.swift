@@ -93,7 +93,7 @@ public final class AnimationEventCoordinator {
     }
 
     /// One readout line per action kind, in name order.
-    public var readout: [String] {
+    var readout: [String] {
         counts.keys.sorted().map { "\($0): \(counts[$0] ?? 0)" }
     }
 

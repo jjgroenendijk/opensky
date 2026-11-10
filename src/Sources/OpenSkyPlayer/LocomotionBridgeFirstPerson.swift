@@ -47,7 +47,7 @@ nonisolated extension LocomotionBridge {
     /// Steps the first-person graph and publishes its pose. Its root motion is
     /// read and dropped: movement authority belongs to the third-person graph
     /// and the character controller alone.
-    public func advanceFirstPersonGraph(deltaTime: Float) {
+    func advanceFirstPersonGraph(deltaTime: Float) {
         guard let firstPersonGraph else { return }
         let result = firstPersonGraph.update(deltaTime: deltaTime)
         updateStatus { $0.noteFirstPersonGraphUpdate(events: result.firedEvents) }

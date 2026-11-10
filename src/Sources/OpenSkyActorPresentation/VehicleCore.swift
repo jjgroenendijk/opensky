@@ -128,7 +128,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     }
 
     /// The towed follower rests on these wheels from now on.
-    public mutating func setWheels(_ wheels: [SIMD2<Float>], for follower: ReferenceKey) {
+    mutating func setWheels(_ wheels: [SIMD2<Float>], for follower: ReferenceKey) {
         guard case var .towed(tow)? = links[follower]?.seat else { return }
         tow.wheels = wheels
         links[follower]?.seat = .towed(tow)

@@ -8,11 +8,11 @@ public import OpenSkyPhysics
 public import OpenSkyWorldInterface
 import simd
 
-nonisolated public enum PackageLoopClip: String, Equatable, Sendable {
+nonisolated enum PackageLoopClip: String, Equatable, Sendable {
     case eat
 }
 
-nonisolated public enum PackageProcedureState: Equatable, Sendable {
+nonisolated enum PackageProcedureState: Equatable, Sendable {
     case ready
     case moving
     case idleStop(secondsRemaining: Float)
@@ -31,7 +31,7 @@ nonisolated public enum PackageProcedureState: Equatable, Sendable {
     case failed
 }
 
-nonisolated public enum PackageProcedureCommand: Equatable, Sendable {
+nonisolated enum PackageProcedureCommand: Equatable, Sendable {
     case move(to: SIMD3<Float>)
     /// The gait the next moves use, over the package's own; nil gives it back.
     case pace(LocomotionGait?)
@@ -63,39 +63,39 @@ nonisolated public enum PackageProcedureEvent: Equatable, Sendable {
 
 /// What one procedure needs, read from its parameters by `PackageProcedureInputs`.
 nonisolated public struct PackageProcedureSetup: Equatable, Sendable {
-    public var kind: PackageProcedureKind
+    var kind: PackageProcedureKind
     public var center: SIMD3<Float>
     public var destination: SIMD3<Float>?
-    public var radius: Float
+    var radius: Float
     /// Patrol points after the first, in walking order.
-    public var path: [SIMD3<Float>] = []
-    public var repeats = false
-    public var seed: UInt64 = 0
+    var path: [SIMD3<Float>] = []
+    var repeats = false
+    var seed: UInt64 = 0
     /// The references it acts on, in order. Acquire tries the next one when one fails.
-    public var targets: [ReferenceKey] = []
+    var targets: [ReferenceKey] = []
     /// The reference it follows, flees, or greets.
-    public var watched: ReferenceKey?
-    public var topic: FormID?
+    var watched: ReferenceKey?
+    var topic: FormID?
     /// The thing a find, a cast, or a shout selects.
-    public var selector: Package.Target?
+    var selector: Package.Target?
     /// A wait's time; zero waits for ever.
-    public var seconds: Float = 0
+    var seconds: Float = 0
     /// Follow's minimum radius; Escort's follow distance.
-    public var near: Float = 0
+    var near: Float = 0
     /// Follow's maximum radius, Flee's distance, Orbit's outer radius.
-    public var far: Float = 0
-    public var height: Float = 0
+    var far: Float = 0
+    var height: Float = 0
     /// Lock rather than unlock; repeat fire; flee from a reference rather than to a place.
-    public var flag = false
+    var flag = false
     /// UseWeapon's "Allow Combat Start" input.
-    public var startsCombat = false
+    var startsCombat = false
     /// False when the procedure has no place or target to walk to, so it acts where it is.
-    public var walks = true
+    var walks = true
     /// A Guard procedure's warning count and spacing, from the install.
-    public var guardWarnings = GuardWarningSettings.vanilla
+    var guardWarnings = GuardWarningSettings.vanilla
     public var sandbox: PackageSandboxSetup?
 
-    public init(
+    init(
         kind: PackageProcedureKind, center: SIMD3<Float>, destination: SIMD3<Float>? = nil,
         radius: Float = 0
     ) {
@@ -118,11 +118,11 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
 
     public let setup: PackageProcedureSetup
     /// Times a repeatable patrol went back to its first point.
-    public internal(set) var laps = 0
-    public internal(set) var state: PackageProcedureState = .ready
-    public internal(set) var pathIndex = 0
+    var laps = 0
+    var state: PackageProcedureState = .ready
+    var pathIndex = 0
     /// What a find found, for the object list it fills.
-    public internal(set) var found: [ReferenceKey] = []
+    var found: [ReferenceKey] = []
     var random: ConditionRandom
     var timer: Float?
     var targetIndex = 0
@@ -131,9 +131,9 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     /// The gait a follower last asked for.
     var pace: LocomotionGait?
     /// The warnings a guard gave the intruder now in its warn radius.
-    public internal(set) var warnings = 0
+    var warnings = 0
     var warnCooldown: Float = 0
-    public internal(set) var sandbox = SandboxProgress()
+    var sandbox = SandboxProgress()
 
     public var kind: PackageProcedureKind {
         setup.kind
@@ -143,7 +143,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         setup.center
     }
 
-    public var destination: SIMD3<Float>? {
+    var destination: SIMD3<Float>? {
         setup.destination
     }
 
@@ -151,24 +151,24 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         setup.radius
     }
 
-    public var path: [SIMD3<Float>] {
+    var path: [SIMD3<Float>] {
         setup.path
     }
 
-    public var repeats: Bool {
+    var repeats: Bool {
         setup.repeats
     }
 
-    public var isFinished: Bool {
+    var isFinished: Bool {
         state == .complete || state == .failed
     }
 
-    public init(setup: PackageProcedureSetup) {
+    init(setup: PackageProcedureSetup) {
         self.setup = setup
         random = ConditionRandom(seed: setup.seed)
     }
 
-    public init(
+    init(
         kind: PackageProcedureKind,
         center: SIMD3<Float>,
         destination: SIMD3<Float>? = nil,
@@ -186,7 +186,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         self.init(setup: setup)
     }
 
-    public mutating func handle(_ event: PackageProcedureEvent) -> [PackageProcedureCommand] {
+    mutating func handle(_ event: PackageProcedureEvent) -> [PackageProcedureCommand] {
         guard !isFinished else { return [] }
         switch event {
         case .movementFailed:

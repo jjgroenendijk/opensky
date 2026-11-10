@@ -26,7 +26,7 @@ nonisolated public struct CellGridManager: Sendable {
     /// How far inside a crossed border the camera must be before the grid re-centers, so
     /// jitter at the line does not thrash. 128 units (about 1.8 m) is small next to a
     /// 4096-unit cell but larger than positional noise.
-    public static let hysteresisMargin: Float = 128
+    static let hysteresisMargin: Float = 128
 
     /// One exterior cell edge, world units. Shares `TerrainMeshBuilder`'s
     /// constant (docs/decisions/coordinates.md) instead of redefining it.

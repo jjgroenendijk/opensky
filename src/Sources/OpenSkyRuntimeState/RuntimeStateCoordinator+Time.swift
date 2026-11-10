@@ -37,7 +37,7 @@ extension RuntimeStateCoordinator {
 
     /// Year, then month, then day: `GameClock.setDay` clamps into the current
     /// month, so 30 Sun's Dawn must see the new month first.
-    public func setGameClockDate(day: Int, month: Int, year: Int) {
+    func setGameClockDate(day: Int, month: Int, year: Int) {
         setTimeGlobal(.gameYear, value: Float(year)) { $0.setYear(year) }
         setTimeGlobal(.gameMonth, value: Float(month)) { $0.setMonth(month) }
         setTimeGlobal(.gameDay, value: Float(day)) { $0.setDay(day) }
@@ -66,12 +66,12 @@ extension RuntimeStateCoordinator {
     }
 
     @discardableResult
-    public func resetGlobalValue(editorID: String) -> Bool {
+    func resetGlobalValue(editorID: String) -> Bool {
         guard let key = globalStore?.key(editorID: editorID) else { return false }
         return worldState.resetGlobal(for: key)
     }
 
-    public func resetAllGlobalOverrides() {
+    func resetAllGlobalOverrides() {
         worldState.resetAllGlobals()
     }
 

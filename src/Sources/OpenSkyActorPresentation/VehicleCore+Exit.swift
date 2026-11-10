@@ -5,7 +5,7 @@ import simd
 
 nonisolated extension VehicleCore {
     /// The body bone whose place the exit clip moves from the seat to the ground.
-    public static let bodyBone = "NPC COM [COM ]"
+    static let bodyBone = "NPC COM [COM ]"
 
     /// The seat pose moved to where `body` stands, a bone in the rider's root frame, so
     /// the rider stays where the exit clip left it instead of at the cart's centre.
@@ -35,7 +35,7 @@ nonisolated public struct VehicleRiderBody: Equatable, Sendable {
     public let position: SIMD3<Float>
     public let forward: SIMD3<Float>?
 
-    public init(position: SIMD3<Float>, forward: SIMD3<Float>? = nil) {
+    init(position: SIMD3<Float>, forward: SIMD3<Float>? = nil) {
         self.position = position
         self.forward = forward
     }

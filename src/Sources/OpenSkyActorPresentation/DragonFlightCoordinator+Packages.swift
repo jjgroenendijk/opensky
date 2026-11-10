@@ -13,9 +13,9 @@ nonisolated public enum DragonPackageFlight: Equatable, Sendable {
 
 extension DragonFlightCoordinator {
     /// The circle round a package point; close enough to pass a trigger near it.
-    public static let packageCircleRadius: Float = 1024
+    static let packageCircleRadius: Float = 1024
     /// Horizontal distance at which a package point counts as reached.
-    public static let packageArrivalDistance: Float = 1536
+    static let packageArrivalDistance: Float = 1536
 
     /// A perch that is not loaded keeps the dragon circling where it is.
     func goal(

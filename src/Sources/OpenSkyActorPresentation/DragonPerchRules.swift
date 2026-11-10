@@ -3,13 +3,13 @@
 // nearest-first order is OpenSky's. See docs/engine/dragon-flight.md#perches.
 
 import Foundation
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 import simd
 
-nonisolated public enum DragonPerchRules {
+nonisolated enum DragonPerchRules {
     /// The perch closest to the target among those within the search distance of it whose
     /// facing points at the target within the perch angle. Nil when none fits.
-    public static func choose(
+    static func choose(
         _ perches: [DragonPerch], target: SIMD3<Float>, settings: DragonFlightSettings
     ) -> DragonPerch? {
         var best: (perch: DragonPerch, distance: Float)?
@@ -27,7 +27,7 @@ nonisolated public enum DragonPerchRules {
     }
 
     /// The perch closest to `point` within the search distance, whatever it faces.
-    public static func nearest(
+    static func nearest(
         _ perches: [DragonPerch], to point: SIMD3<Float>, settings: DragonFlightSettings
     ) -> DragonPerch? {
         perches

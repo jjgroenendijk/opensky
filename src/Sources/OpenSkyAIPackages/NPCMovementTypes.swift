@@ -9,12 +9,12 @@ import OpenSkyPhysics
 import OpenSkyPlayer
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
-public import simd
+import simd
 
 /// The rigid move from where the cell build drew an actor to where it stands now.
 /// The renderer applies it to the actor's baked instance, so nothing rebuilds.
-nonisolated public enum NPCDrawDelta {
-    public static func from(
+nonisolated enum NPCDrawDelta {
+    static func from(
         drawn: PlacedReference.Placement,
         to current: ReferenceTransformOverride,
         scale: Float

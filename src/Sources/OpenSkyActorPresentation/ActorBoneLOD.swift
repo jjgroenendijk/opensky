@@ -3,22 +3,22 @@
 // The rule: docs/formats/nif-controllers.md#node-controller-rules.
 
 import Foundation
-public import OpenSkyFormatsAnimation
-public import OpenSkyFormatsMesh
+import OpenSkyFormatsAnimation
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated public struct ActorBoneLOD: Equatable, Sendable {
-    public struct Cutoff: Equatable, Sendable {
-        public let distance: Float
+    struct Cutoff: Equatable, Sendable {
+        let distance: Float
         /// Index into the rig's bones.
-        public let bone: Int
+        let bone: Int
     }
 
     /// Nearest first.
-    public let cutoffs: [Cutoff]
+    let cutoffs: [Cutoff]
 
     /// Nil when no entry names a rig bone.
-    public init?(bones: [NIFBoneLODLevels.Bone], rig: HKASkeleton) {
+    init?(bones: [NIFBoneLODLevels.Bone], rig: HKASkeleton) {
         var cutoffs: [Cutoff] = []
         for entry in bones {
             guard
@@ -42,12 +42,12 @@ nonisolated public struct ActorBoneLOD: Equatable, Sendable {
     }
 
     /// The first rig bone that holds its pose at `distance`, or nil when every bone moves.
-    public func firstHeldBone(atDistance distance: Float) -> Int? {
+    func firstHeldBone(atDistance distance: Float) -> Int? {
         cutoffs.filter { distance > $0.distance }.map(\.bone).min()
     }
 
     /// `next`, with every bone from `firstHeld` on taken from `previous`.
-    public static func holding(
+    static func holding(
         _ next: [HKABonePose], previous: [HKABonePose], from firstHeld: Int?
     ) -> [HKABonePose] {
         guard let firstHeld, previous.count == next.count, firstHeld < next.count else {

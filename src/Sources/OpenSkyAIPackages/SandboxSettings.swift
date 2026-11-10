@@ -75,14 +75,14 @@ nonisolated public struct SandboxSettings: Equatable, Sendable {
     public init() {}
 
     /// The game hours one activity lasts, before the random spread.
-    public func baseDuration(of activity: SandboxActivity, energy: Float) -> Float {
+    func baseDuration(of activity: SandboxActivity, energy: Float) -> Float {
         let scale = scales[activity] ?? SandboxActivityScale(duration: 1, energy: 0)
         let duration = durationBase * scale.duration * (1 + energy * energyMult * scale.energy)
         return max(0, duration)
     }
 
     /// `unit` in 0...1 picks a point between `1 - range` and `1 + range` of the base.
-    public func duration(of activity: SandboxActivity, energy: Float, unit: Float) -> Float {
+    func duration(of activity: SandboxActivity, energy: Float, unit: Float) -> Float {
         let spread = 1 - durationRange + 2 * durationRange * min(max(unit, 0), 1)
         return baseDuration(of: activity, energy: energy) * spread
     }

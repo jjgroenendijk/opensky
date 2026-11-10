@@ -170,13 +170,13 @@ extension PackageWorld {
 /// The begin, end, or change of one actor's package, which runs the package's fragment.
 /// A change is the actor leaving the package, whether it completed or not.
 nonisolated public struct PackageScriptEvent: Equatable, Sendable {
-    public enum Kind: Equatable, Sendable {
+    enum Kind: Equatable, Sendable {
         case begin
         case end
         case change
     }
 
-    public let kind: Kind
+    let kind: Kind
     public let actor: ReferenceKey
     public let package: Package
 

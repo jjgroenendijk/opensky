@@ -243,7 +243,7 @@ nonisolated public struct IdlePlanKey: Hashable, Sendable {
     public let variant: Int
 
     /// Few enough that the plan cache stays small; 12 splits evenly into 2, 3, 4, and 6.
-    public static let variants = 12
+    static let variants = 12
 
     public init(
         _ idle: ResolvedRecord<IdleAnimation>,

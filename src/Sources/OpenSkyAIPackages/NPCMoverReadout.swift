@@ -14,7 +14,7 @@ extension NPCMover {
 
     /// Between the last two fixed steps, as the player is drawn. The last step alone
     /// jumps when a frame holds one step and the next holds three.
-    public var drawnTransform: ReferenceTransformOverride {
+    var drawnTransform: ReferenceTransformOverride {
         transform(at: controller.drawnFeetPosition)
     }
 

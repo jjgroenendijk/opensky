@@ -96,7 +96,7 @@ nonisolated extension ConditionFunctionRegistry {
 nonisolated extension ConditionTally {
     /// Unknown function indices ranked by count, named from the whole-game
     /// registry.
-    public func rankedUnknownFunctions() -> [(name: String, count: Int)] {
+    func rankedUnknownFunctions() -> [(name: String, count: Int)] {
         rankedUnknownFunctions(in: .standard)
     }
 }

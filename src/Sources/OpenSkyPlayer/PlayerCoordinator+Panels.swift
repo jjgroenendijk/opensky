@@ -3,14 +3,14 @@
 
 import OpenSkyBehavior
 import OpenSkyFormatsCore
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import OpenSkyRenderCore
 import OpenSkyRendering
 public import OpenSkyWorldInterface
 import simd
 
 extension PlayerCoordinator {
-    public var playerLocomotionSnapshot: PlayerLocomotionSnapshot {
+    var playerLocomotionSnapshot: PlayerLocomotionSnapshot {
         guard let world, let bridge = world.playerLocomotion else { return .unavailable }
         var snapshot = PlayerLocomotionSnapshot(
             rendererAvailable: true,
@@ -44,13 +44,13 @@ extension PlayerCoordinator {
         }
     }
 
-    public var forcedLocomotionGait: LocomotionGait? {
+    var forcedLocomotionGait: LocomotionGait? {
         get { world?.playerLocomotion?.forcedGait }
         set { world?.playerLocomotion?.forcedGait = newValue }
     }
 
     @discardableResult
-    public func raiseLocomotionEvent(named name: String) -> Bool {
+    func raiseLocomotionEvent(named name: String) -> Bool {
         world?.playerLocomotion?.raiseGraphEvent(named: name) ?? false
     }
 
@@ -82,7 +82,7 @@ extension PlayerCoordinator {
         )
     }
 
-    public var firstPersonFOVYDegrees: Float {
+    var firstPersonFOVYDegrees: Float {
         get {
             MatrixMath.degrees(
                 fromRadians: world?.firstPersonFOVYRadians ?? FirstPersonCamera.defaultFOVYRadians
@@ -93,7 +93,7 @@ extension PlayerCoordinator {
         }
     }
 
-    public var firstPersonArmsEnabled: Bool {
+    var firstPersonArmsEnabled: Bool {
         get { world?.firstPersonArmsEnabled ?? true }
         set { world?.setFirstPersonArmsEnabled(newValue) }
     }

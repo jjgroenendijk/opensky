@@ -65,7 +65,7 @@ extension EffectsCoordinator {
 
     /// The last impact at the player's feet, on the ground. False before the first one.
     @discardableResult
-    public func repeatLastImpact() -> Bool {
+    func repeatLastImpact() -> Bool {
         guard let last = lastImpact, let feet = world?.effectTransform(of: .player)?.columns.3
         else { return false }
         showImpact(last.impact, decal: last.decal, at: SIMD3(feet.x, feet.y, feet.z), on: .ground)
@@ -90,7 +90,7 @@ extension EffectsCoordinator {
         }
     }
 
-    public func clearDecals() {
+    func clearDecals() {
         decals.removeAll()
         skinDecals.removeAll()
         decalsChanged = true

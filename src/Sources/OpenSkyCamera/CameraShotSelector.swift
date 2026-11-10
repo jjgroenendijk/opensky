@@ -10,7 +10,7 @@ import OpenSkyWorldInterface
 
 /// One path the selector looked at, and what happened to it.
 nonisolated public struct CameraPathTrace: Equatable, Sendable {
-    nonisolated public enum Verdict: Equatable, Sendable {
+    nonisolated enum Verdict: Equatable, Sendable {
         /// Its shots are the candidates.
         case chosen
         /// Its conditions passed and a child below it was chosen.
@@ -23,9 +23,9 @@ nonisolated public struct CameraPathTrace: Equatable, Sendable {
         case noShots
     }
 
-    public let editorID: String?
-    public let depth: Int
-    public let verdict: Verdict
+    let editorID: String?
+    let depth: Int
+    let verdict: Verdict
 }
 
 nonisolated public struct CameraShotSelection: Sendable {
@@ -37,7 +37,7 @@ nonisolated public struct CameraShotSelection: Sendable {
     public let trace: [CameraPathTrace]
 
     /// The first shot to play.
-    public var chosen: ResolvedRecord<CameraShot>? {
+    var chosen: ResolvedRecord<CameraShot>? {
         sequence.first
     }
 
@@ -159,7 +159,7 @@ nonisolated public struct CameraShotSelector {
 nonisolated extension CameraShotSelector {
     /// The standard check: each path's conditions run on the attacker, with the
     /// target as the Target run-on.
-    public static func conditionCheck(
+    static func conditionCheck(
         context base: ConditionContext,
         attacker: ReferenceKey,
         target: ReferenceKey?

@@ -2,9 +2,9 @@
 // Each trails its rest under the rig bone above it, as the game's lag rule moves it
 // (docs/formats/nif-controllers.md#node-controller-rules).
 
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsMesh
-public import simd
+import simd
 
 nonisolated public struct ActorLagBoneRig: Sendable {
     public struct Bone: Equatable, Sendable {
@@ -34,7 +34,7 @@ nonisolated public struct ActorLagBoneRig: Sendable {
         self.bones = bones
     }
 
-    public init(bones: [Bone]) {
+    init(bones: [Bone]) {
         self.bones = bones
     }
 
@@ -59,16 +59,14 @@ nonisolated public struct ActorLagBoneRig: Sendable {
 }
 
 /// Where each lag bone of one actor was last frame, in the world.
-nonisolated public struct ActorLagBoneState: Sendable {
-    public private(set) var world: [String: NIFNodeTransform] = [:]
+nonisolated struct ActorLagBoneState: Sendable {
+    private(set) var world: [String: NIFNodeTransform] = [:]
     /// How far each lag bone trails its rest, in world units.
-    public private(set) var offsets: [String: Float] = [:]
-
-    public init() {}
+    private(set) var offsets: [String: Float] = [:]
 
     /// `pose` with the lag bones added after its rig bones, stepped `deltaTime` toward
     /// their rests while the actor stands at `placement`.
-    public mutating func pose(
+    mutating func pose(
         _ pose: SkeletonPose, on skeleton: (rig: ActorLagBoneRig, index: SkeletonBoneIndex),
         placement: float4x4, deltaTime: Float
     ) -> SkeletonPose {

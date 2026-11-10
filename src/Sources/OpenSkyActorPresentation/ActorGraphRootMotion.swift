@@ -2,7 +2,7 @@
 // `bAnimationDriven`, as for an attack, an idle, or a turn in place. Walk and run states
 // leave it false, so the mover's speed moves the actor. See docs/engine/actor-graphs.md.
 
-public import OpenSkyBehavior
+import OpenSkyBehavior
 import simd
 
 /// One graph step's root travel in the world: a move on the ground and a heading turn.
@@ -10,20 +10,15 @@ nonisolated public struct ActorRootMotionStep: Equatable, Sendable {
     public let displacement: SIMD2<Float>
     /// Added to the placement's `angleZ`, clockwise from north.
     public let headingTurn: Float
-
-    public init(displacement: SIMD2<Float>, headingTurn: Float) {
-        self.displacement = displacement
-        self.headingTurn = headingTurn
-    }
 }
 
-nonisolated public enum ActorGraphRootMotion {
-    public static let animationDriven = "bAnimationDriven"
-    public static let allowRotation = "bAllowRotation"
+nonisolated enum ActorGraphRootMotion {
+    static let animationDriven = "bAnimationDriven"
+    static let allowRotation = "bAllowRotation"
 
     /// The step a graph's root motion makes, or nil while the mover drives the actor.
     /// With `bAllowRotation` the controller keeps the heading, so only the travel applies.
-    public static func step(
+    static func step(
         _ motion: BehaviorRootMotion?, variables: (String) -> Bool, heading: Float, scale: Float
     ) -> ActorRootMotionStep? {
         guard let motion, motion.isExtracted, variables(animationDriven) else { return nil }

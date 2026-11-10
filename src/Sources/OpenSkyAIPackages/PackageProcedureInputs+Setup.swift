@@ -9,7 +9,7 @@ extension PackageProcedureInputs {
     /// Orbit walks this many points round its circle.
     static let orbitPoints = 8
 
-    public func build(resolver: some PackageInputResolving) -> PackageLeafSetup {
+    func build(resolver: some PackageInputResolving) -> PackageLeafSetup {
         guard !leaf.inputIndexes.isEmpty else { return legacy(resolver: resolver) }
         let parameters = PackageProcedureParameters.table[leaf.kind] ?? PackageProcedureParameters()
         let place = place(at: parameters.place, resolver: resolver)

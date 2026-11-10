@@ -34,7 +34,7 @@ nonisolated public struct ScriptPathWaits: Equatable, Sendable {
         return answers
     }
 
-    public var count: Int {
+    var count: Int {
         actors.count
     }
 

@@ -19,16 +19,16 @@ nonisolated public struct NPCNeighbour: Equatable, Sendable {
     }
 }
 
-nonisolated public enum NPCAvoidance {
+nonisolated enum NPCAvoidance {
     /// Space kept between two capsules, world units.
-    public static let margin: Float = 8
+    static let margin: Float = 8
     /// How far ahead, past touching, a neighbour starts to bend the walk.
-    public static let lookahead: Float = 96
+    static let lookahead: Float = 96
 
     /// The unit walk direction after steering around `neighbours`. A neighbour dead
     /// ahead is passed on the right, so two actors walking at each other both turn right
     /// and pass. Returns `direction` when nothing is in the way.
-    public static func steer(
+    static func steer(
         direction: SIMD2<Float>,
         from position: SIMD2<Float>,
         radius: Float,
@@ -62,7 +62,7 @@ nonisolated public enum NPCAvoidance {
 
     /// True when a neighbour stands on `waypoint` and the mover is as close as it can get.
     /// A marker taken by another actor counts as reached, or both would wait forever.
-    public static func isTaken(
+    static func isTaken(
         _ waypoint: SIMD2<Float>,
         from position: SIMD2<Float>,
         within reach: (radius: Float, tolerance: Float),

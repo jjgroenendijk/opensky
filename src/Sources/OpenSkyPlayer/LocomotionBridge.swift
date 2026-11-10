@@ -57,7 +57,7 @@ nonisolated public final class LocomotionBridge {
     /// A forced gait, or nil. It forces the
     /// graph inputs and gait speed only; water, gravity and collision are untouched, so a
     /// forced `swim` swims on dry floor.
-    public var forcedGait: LocomotionGait?
+    var forcedGait: LocomotionGait?
     /// False while the stamina bar is empty: a held sprint key runs instead.
     public var isSprintAllowed = true
     /// Papyrus `Debug.SetFootIK`.
@@ -194,7 +194,7 @@ nonisolated public final class LocomotionBridge {
 
     /// Attaches or detaches the graph and resets edge state, so a new graph hears no old
     /// transitions. Called once `0_master.hkx` has loaded.
-    public func attach(graph: BehaviorGraphInstance?) {
+    func attach(graph: BehaviorGraphInstance?) {
         self.graph = graph
         reset()
     }
@@ -203,7 +203,7 @@ nonisolated public final class LocomotionBridge {
     /// because the two load independently: an install can ship a usable
     /// third-person set and a broken `_1stperson` one, and that has to leave
     /// the player walking rather than take the whole graph down.
-    public func attachFirstPerson(graph: BehaviorGraphInstance?) {
+    func attachFirstPerson(graph: BehaviorGraphInstance?) {
         firstPersonGraph = graph
         reset()
     }

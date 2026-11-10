@@ -28,7 +28,7 @@ nonisolated public enum LargeReferenceRing {
 
     /// The cell segment `segment` of a block's large-reference shape holds. The segments
     /// run north first, then east (docs/formats/lod.md, "Large references").
-    public static func cell(ofSegment segment: Int, in block: DistantLODBlock) -> CellCoordinate? {
+    static func cell(ofSegment segment: Int, in block: DistantLODBlock) -> CellCoordinate? {
         let level = Int(block.level)
         guard segment >= 0, segment < level * level else { return nil }
         return CellCoordinate(
@@ -39,7 +39,7 @@ nonisolated public enum LargeReferenceRing {
 
     /// A segment whose cell the ring draws with full models. A segment past the block's
     /// cells follows the whole block.
-    public static func hidesSegment(
+    static func hidesSegment(
         _ segment: Int,
         of block: DistantLODBlock,
         center: CellCoordinate,

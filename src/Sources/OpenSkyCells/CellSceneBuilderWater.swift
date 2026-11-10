@@ -3,7 +3,7 @@
 // dev-4.1.6 wbDefinitionsTES5.pas.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRenderCore
@@ -23,9 +23,9 @@ nonisolated struct ResolvedWorldWater {
     let type: FormID?
 }
 
-nonisolated public enum WaterMeshBuilder: Sendable {
+nonisolated enum WaterMeshBuilder: Sendable {
     /// Reusable local-space 4096x4096 quad, CCW from +Z.
-    public static func cellPlane() -> Mesh {
+    static func cellPlane() -> Mesh {
         Mesh(
             name: "cell-water",
             transform: matrix_identity_float4x4,

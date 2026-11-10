@@ -23,15 +23,15 @@ nonisolated public struct PackageAliasStack: Equatable, Sendable {
     }
 }
 
-nonisolated public struct PackageHold: Equatable, Sendable {
+nonisolated struct PackageHold: Equatable, Sendable {
     /// The quest whose aliases the package locations name.
-    public let aliasQuest: FormID?
+    let aliasQuest: FormID?
 }
 
 nonisolated public struct ActorPackageRuntime {
-    public static let maximumReevaluationGameMinutes: Float = 15
+    static let maximumReevaluationGameMinutes: Float = 15
 
-    public var onSelectionChanged: ((PackageActorReadout) -> Void)?
+    var onSelectionChanged: ((PackageActorReadout) -> Void)?
 
     let store: PackageStore
     let conditionFunctions: ConditionFunctionRegistry
@@ -90,7 +90,7 @@ nonisolated public struct ActorPackageRuntime {
         actors[actor]?.isSuspended = suspended
     }
 
-    public func isSuspended(_ actor: ReferenceKey) -> Bool {
+    func isSuspended(_ actor: ReferenceKey) -> Bool {
         actors[actor]?.isSuspended ?? false
     }
 
@@ -124,17 +124,17 @@ nonisolated public struct ActorPackageRuntime {
 
     /// Keeps a "Must Complete" package current until its tree ends, whatever the schedule
     /// and conditions say (<https://ck.uesp.net/wiki/Package_Flags>). Nil lets it go.
-    public mutating func setCompleting(_ package: FormID?, actor: ReferenceKey) {
+    mutating func setCompleting(_ package: FormID?, actor: ReferenceKey) {
         actors[actor]?.completing = package
     }
 
-    public func completing(for actor: ReferenceKey) -> FormID? {
+    func completing(for actor: ReferenceKey) -> FormID? {
         actors[actor]?.completing
     }
 
     /// The actor's own package ended its tree: a "Must Complete" package lets go, and a
     /// "Once Per Day" package is not picked again within its day.
-    public mutating func packageEnded(
+    mutating func packageEnded(
         actor: ReferenceKey, clock: GameClock, context: ConditionContext
     ) {
         actors[actor]?.completing = nil
@@ -149,7 +149,7 @@ nonisolated public struct ActorPackageRuntime {
     }
 
     /// Puts `stack` ahead of the actor's own packages and picks one now when it changed.
-    public mutating func setAliasStack(
+    mutating func setAliasStack(
         _ stack: PackageAliasStack?,
         actor: ReferenceKey,
         clock: GameClock,
@@ -162,7 +162,7 @@ nonisolated public struct ActorPackageRuntime {
 
     /// Set when a scene or a quest alias gave the actor its current package, so its
     /// procedure runs. Nil for a package of the actor's own.
-    public func hold(for actor: ReferenceKey) -> PackageHold? {
+    func hold(for actor: ReferenceKey) -> PackageHold? {
         guard let state = actors[actor], let current = state.current?.package.formID else {
             return nil
         }

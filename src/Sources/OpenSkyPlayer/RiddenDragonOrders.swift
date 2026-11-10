@@ -9,7 +9,7 @@ public import OpenSkyWorldInterface
 import simd
 
 /// What the ridden dragon's breath asks of its graph this step.
-nonisolated public enum RiddenDragonBreathStep: Equatable, Sendable {
+nonisolated enum RiddenDragonBreathStep: Equatable, Sendable {
     /// Raise `shoutStart`: the inhale clip.
     case inhale
     /// Raise `shoutRelease`: the exhale clip, whose `Voice_SpellFire_Event` casts.
@@ -21,18 +21,18 @@ nonisolated public enum RiddenDragonBreathStep: Equatable, Sendable {
 /// The rider's orders and the ridden flight numbers. The radii, the breath range, the
 /// breath aim, and the breath interval are OpenSky's: no setting names them.
 nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
-    public static let circleRadius: Float = 3000
-    public static let attackRadius: Float = 1500
+    static let circleRadius: Float = 3000
+    static let attackRadius: Float = 1500
     /// The farthest a ridden dragon breathes at its target from.
-    public static let breathRange: Float = 3500
+    static let breathRange: Float = 3500
     /// How far off the dragon's heading, in radians, the target may be for a breath: in
     /// front of the wings. A circling dragon has its target about 73 degrees to the side.
-    public static let breathAim: Float = .pi / 2
-    public static let breathInterval: Float = 6
+    static let breathAim: Float = .pi / 2
+    static let breathInterval: Float = 6
     /// The length of `shout_flightinhale.hkx`.
-    public static let inhaleSeconds: Float = 1
+    static let inhaleSeconds: Float = 1
     /// Ours: the breath casts after this long in the exhale when no graph fires the event.
-    public static let exhaleFallbackSeconds: Float = 1
+    static let exhaleFallbackSeconds: Float = 1
 
     public typealias BreathPhase = DragonBreathPhase
 
@@ -42,17 +42,17 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
     /// The target the last Switch Target order picked.
     public var switchedTarget: ReferenceKey?
     /// Where the dragon took off; it circles here without a target.
-    public var home: SIMD3<Float>?
+    var home: SIMD3<Float>?
     public var breathCooldown: Float = 0
     public var breath = BreathPhase.ready
     /// The sneak toggle at the last step: a change is the attack key.
-    public var lastSneak: Bool?
+    var lastSneak: Bool?
 
     public init() {}
 
     /// Lock target (the jump key): locks the target in view, or unlocks when there is
     /// none or it is the one already locked. Unlocking ends the attack.
-    public mutating func lock(_ candidate: ReferenceKey?) {
+    mutating func lock(_ candidate: ReferenceKey?) {
         if candidate == nil || candidate == lockedTarget {
             lockedTarget = nil
             isAttacking = false
@@ -81,7 +81,7 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
     }
 
     /// Attack (the sneak key): needs a locked target. Returns false without one.
-    public mutating func toggleAttack() -> Bool {
+    mutating func toggleAttack() -> Bool {
         guard lockedTarget != nil else { return false }
         isAttacking.toggle()
         return true
@@ -89,7 +89,7 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
 
     /// The flight goal: land when asked, circle the target when attacking, else circle
     /// home. `target` is nil once the target is dead or gone.
-    public func goal(home fallback: SIMD3<Float>, target: SIMD3<Float>?) -> DragonFlightGoal {
+    func goal(home fallback: SIMD3<Float>, target: SIMD3<Float>?) -> DragonFlightGoal {
         if landingRequested {
             return .ground(nil)
         }
@@ -101,7 +101,7 @@ nonisolated public struct RiddenDragonOrders: Equatable, Sendable {
 
     /// The breath's next graph step. It starts once the cooldown is over and the target
     /// is in range ahead; it casts on the exhale's `Voice_SpellFire_Event` (`fired`).
-    public mutating func advanceBreath(
+    mutating func advanceBreath(
         from mouth: (feet: SIMD3<Float>, yaw: Float), at target: SIMD3<Float>?, fired: Bool,
         deltaTime: Float
     ) -> RiddenDragonBreathStep? {

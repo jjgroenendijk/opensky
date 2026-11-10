@@ -37,16 +37,16 @@ nonisolated public enum PackageAction: Equatable, Sendable {
 
 /// Where the actor and the reference its procedure watches stand this tick.
 nonisolated public struct PackageSenses: Equatable, Sendable {
-    public let actor: SIMD3<Float>
-    public let watched: SIMD3<Float>?
+    let actor: SIMD3<Float>
+    let watched: SIMD3<Float>?
     /// How the watched reference moves, so a follower can sprint or sneak with it.
-    public let watchedGait: LocomotionGait?
+    let watchedGait: LocomotionGait?
     /// Where the other followers of the same reference stand, and the room a follower
     /// keeps from them (`fFollowSpaceBetweenFollowers`).
-    public var fellows: [SIMD3<Float>] = []
-    public var followerSpacing: Float = 0
+    var fellows: [SIMD3<Float>] = []
+    var followerSpacing: Float = 0
 
-    public init(
+    init(
         actor: SIMD3<Float>, watched: SIMD3<Float>?, watchedGait: LocomotionGait? = nil
     ) {
         self.actor = actor

@@ -44,7 +44,7 @@ public final class EffectsCoordinator {
     public private(set) var spellHitCount = 0
     public private(set) var lastSpellHit = "No spell hit yet."
     /// Model paths that failed to load, so a bad path is tried once.
-    public private(set) var failedModels: Set<String> = []
+    private(set) var failedModels: Set<String> = []
     /// Marks impacts leave on surfaces.
     public internal(set) var decals = DecalRuntime()
     /// Marks on actors, which move with them.
@@ -122,7 +122,7 @@ public final class EffectsCoordinator {
         return attach(key, to: .actor(actor), cause: .casting, duration: nil) != nil
     }
 
-    public func removeAll(cause: VisualEffectCause? = nil) {
+    func removeAll(cause: VisualEffectCause? = nil) {
         visualEffects.removeAll(cause: cause)
     }
 

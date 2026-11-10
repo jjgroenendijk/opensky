@@ -16,7 +16,7 @@ public final class RuntimeStateCoordinator {
         world?.globalStore
     }
 
-    public private(set) var lastSaveOutcome = RuntimeStateSaveOutcome.none
+    private(set) var lastSaveOutcome = RuntimeStateSaveOutcome.none
     /// The words of the in-game date line.
     public let calendarTexts: CalendarTexts
 
@@ -27,7 +27,7 @@ public final class RuntimeStateCoordinator {
     /// records do not change while the app runs; slots change only on save or load.
     var cachedSlotNames: [String]?
     /// The running save, load, or slot listing; one at a time.
-    public private(set) var saveWork: Task<Void, Never>?
+    private(set) var saveWork: Task<Void, Never>?
     private(set) var slotListing: Task<Void, Never>?
     var globalNamesByKey: [ReferenceKey: String]?
     var conditionSourceFormIDs: [String: FormID]?
@@ -94,7 +94,7 @@ public final class RuntimeStateCoordinator {
 }
 
 extension RuntimeStateCoordinator {
-    public var runtimeStateSnapshot: RuntimeStateSnapshot {
+    var runtimeStateSnapshot: RuntimeStateSnapshot {
         RuntimeStateSnapshot(
             journalTail: RuntimeStateCore.journalTail(
                 entries: worldState.journalEntries,
@@ -109,7 +109,7 @@ extension RuntimeStateCoordinator {
 
     /// A listing failure reads as "no slots": the list is a readout.
     /// Empty until the first listing arrives.
-    public var runtimeStateSaveSlots: [String] {
+    var runtimeStateSaveSlots: [String] {
         if cachedSlotNames == nil, slotListing == nil, let world {
             slotListing = Task {
                 self.cachedSlotNames = await attempt { try await world.saveSlots() } ?? []
@@ -120,14 +120,14 @@ extension RuntimeStateCoordinator {
     }
 
     @discardableResult
-    public func setReferenceEnabled(_ enabled: Bool, target: RuntimeStateTargetSelector) -> Bool {
+    func setReferenceEnabled(_ enabled: Bool, target: RuntimeStateTargetSelector) -> Bool {
         guard let entry = entry(for: target) else { return false }
         return worldState.set(ReferenceEnableState(isEnabled: enabled), for: entry.key)
     }
 
     /// Starts from the resolved transform, so repeated presses accumulate.
     @discardableResult
-    public func nudgeReferenceTransform(target: RuntimeStateTargetSelector) -> Bool {
+    func nudgeReferenceTransform(target: RuntimeStateTargetSelector) -> Bool {
         guard let entry = entry(for: target) else { return false }
         let current = worldState.resolvedState(for: entry).transform
         let moved = ReferenceTransformOverride(
@@ -139,16 +139,16 @@ extension RuntimeStateCoordinator {
     }
 
     @discardableResult
-    public func resetReferenceState(target: RuntimeStateTargetSelector) -> Bool {
+    func resetReferenceState(target: RuntimeStateTargetSelector) -> Bool {
         guard let entry = entry(for: target) else { return false }
         return worldState.reset(entry.key)
     }
 
-    public func saveWorldState(slot: String) {
+    func saveWorldState(slot: String) {
         runSaveOperation("save", slot: slot) { try await $0.saveSession(slot: slot) }
     }
 
-    public func loadWorldState(slot: String) {
+    func loadWorldState(slot: String) {
         runSaveOperation("load", slot: slot) { try await $0.loadSession(slot: slot) }
     }
 
@@ -189,10 +189,10 @@ extension RuntimeStateCoordinator {
     }
 }
 
-nonisolated public enum RuntimeStateSessionError: Error, CustomStringConvertible {
+nonisolated enum RuntimeStateSessionError: Error, CustomStringConvertible {
     case noSession
 
-    public var description: String {
+    var description: String {
         "No game session is attached."
     }
 }

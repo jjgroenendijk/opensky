@@ -16,12 +16,12 @@ nonisolated public enum RuntimeStateTargetSelector: Equatable, Sendable {
 
 /// Fixed magnitudes the mutations use, so the label and the
 /// engine implementation cannot drift apart.
-nonisolated public enum RuntimeStateTuning: Sendable {
+nonisolated enum RuntimeStateTuning: Sendable {
     /// Offset applied by `nudgeReferenceTransform(target:)`, in game units
     /// (roughly 0.014 metres each), along world +X. Ten units is large enough
     /// to be visible on any object the player can look at and small enough
     /// that it never moves a reference out of its cell.
-    public static let transformNudge = SIMD3<Float>(10, 0, 0)
+    static let transformNudge = SIMD3<Float>(10, 0, 0)
 }
 
 /// Everything the runtime-state readout shows, captured in one value.
@@ -30,27 +30,27 @@ nonisolated public enum RuntimeStateTuning: Sendable {
 /// refreshes all of these together, and a single snapshot makes the readout a
 /// pure function of one engine sample instead of several taken at slightly
 /// different times.
-nonisolated public struct RuntimeStateSnapshot: Equatable, Sendable {
+nonisolated struct RuntimeStateSnapshot: Equatable, Sendable {
     /// Journal lines a snapshot carries at most. The readout shows recent
     /// history, not the whole bounded window, which is thousands of entries.
-    public static let journalTailLimit = 8
+    static let journalTailLimit = 8
 
     /// Globals carrying a runtime override.
-    public let overriddenGlobalCount: Int
+    let overriddenGlobalCount: Int
     /// Preformatted journal lines, most recent last, at most
     /// `journalTailLimit` of them. Preformatted because the readout must not
     /// have to know how to render a `WorldStateJournalEntry`.
-    public let journalTail: [String]
+    let journalTail: [String]
     /// Sequence number the next journalled mutation will carry.
-    public let nextJournalSequence: UInt64
+    let nextJournalSequence: UInt64
     /// `ReferenceKey.description` of the current interaction target, or nil
     /// when nothing is targeted. A `String` rather than a `ReferenceKey` so the
     /// readout can display it without formatting logic; `.currentTarget` is how
     /// it mutates that reference.
-    public let currentTargetDescription: String?
+    let currentTargetDescription: String?
 
     /// Explicit, so `overriddenGlobalCount` can default to zero.
-    public init(
+    init(
         journalTail: [String],
         nextJournalSequence: UInt64,
         currentTargetDescription: String?,
@@ -69,7 +69,7 @@ nonisolated public struct RuntimeStateSnapshot: Equatable, Sendable {
 /// a friendlier paraphrase: a save that fails is a data-loss event, and the
 /// exact `OpenSkySaveError` or `OpenSkySaveStoreError` text is what makes it
 /// diagnosable from a screenshot.
-nonisolated public enum RuntimeStateSaveOutcome: Equatable, Sendable {
+nonisolated enum RuntimeStateSaveOutcome: Equatable, Sendable {
     /// Nothing has been saved or loaded this session.
     case none
     /// The file work for `operation` ("save" or "load") has not finished yet.

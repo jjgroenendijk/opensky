@@ -41,7 +41,7 @@ nonisolated extension CellSceneBuilder {
 
     /// The worldspace persistent CELL: the first plugin's, or else the last
     /// later plugin's.
-    nonisolated public func persistentCell(in world: FoundWorld, localized: Bool) -> FoundCell? {
+    nonisolated func persistentCell(in world: FoundWorld, localized: Bool) -> FoundCell? {
         if
             let children = world.children, let base = persistentCell(
                 in: children,

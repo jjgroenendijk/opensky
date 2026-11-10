@@ -2,13 +2,13 @@
 // arguments. The one place OpenSky's yaw (counterclockwise from +X) becomes Havok's
 // `Direction` (radians from facing, positive left).
 
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import OpenSkyWorldInterface
 import simd
 
 nonisolated extension LocomotionBridge {
     /// Speed of one gait, units per second.
-    public func speed(of gait: LocomotionGait) -> Float {
+    func speed(of gait: LocomotionGait) -> Float {
         switch gait {
         case .walk: configuration.walkSpeed.value
         case .run: configuration.runSpeed.value
@@ -36,7 +36,7 @@ nonisolated extension LocomotionBridge {
     /// Movement direction as the graph wants it: the fraction of a turn clockwise from
     /// facing, in [0, 1), so 0.25 is right. Zero when standing still. Source: the
     /// places of `MT_Direction_Blend` (docs/engine/locomotion-graph.md).
-    public static func graphDirection(of direction: SIMD2<Float>, yaw: Float) -> Float {
+    static func graphDirection(of direction: SIMD2<Float>, yaw: Float) -> Float {
         guard direction != SIMD2<Float>() else { return 0 }
         let left = shortestAngle(from: yaw, to: atan2f(direction.y, direction.x))
         let turn = -left / (2 * .pi)
@@ -50,7 +50,7 @@ nonisolated extension LocomotionBridge {
     }
 
     /// Signed angle from one heading to another, in (-pi, pi].
-    public static func shortestAngle(from start: Float, to end: Float) -> Float {
+    static func shortestAngle(from start: Float, to end: Float) -> Float {
         var delta = (end - start).truncatingRemainder(dividingBy: 2 * .pi)
         if delta > .pi {
             delta -= 2 * .pi

@@ -101,7 +101,7 @@ public final class DragonFlightCoordinator {
     }
 
     /// Every actor in the air, for `GetIsFlying`.
-    public var flyingActors: Set<ReferenceKey> {
+    var flyingActors: Set<ReferenceKey> {
         Set(flights.filter(\.value.phase.isFlying).keys)
     }
 
@@ -255,7 +255,7 @@ public final class DragonFlightCoordinator {
     }
 
     /// Lands beside the target rather than on it, on the side the dragon comes from.
-    public static let landingDistance: Float = 600
+    static let landingDistance: Float = 600
 
     static func landingPoint(near target: SIMD3<Float>, from feet: SIMD3<Float>)
         -> SIMD3<Float>

@@ -3,7 +3,7 @@
 public import OpenSkyFormatsESM
 public import OpenSkyWorldInterface
 
-nonisolated public enum AINavigationActionOutcome: Equatable, Sendable {
+nonisolated enum AINavigationActionOutcome: Equatable, Sendable {
     case idle
     case selected(String)
     /// `verb` is the refused control: "set hostility", "move", "stop", "reevaluate".
@@ -19,7 +19,7 @@ nonisolated public enum AINavigationActionOutcome: Equatable, Sendable {
     /// Nil `package` removed the script package.
     case scriptPackage(actor: String, package: String?)
 
-    public var text: String {
+    var text: String {
         switch self {
         case .idle: "Select an actor, then move it, or watch its schedule."
         case let .selected(name): "Selected \(name)."

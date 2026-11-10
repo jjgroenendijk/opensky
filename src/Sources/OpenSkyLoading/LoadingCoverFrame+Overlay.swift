@@ -11,7 +11,7 @@ nonisolated extension LoadingCoverFrame {
     static let coverSize = UISize(width: 16384, height: 16384)
     static let textWidth: Float = 900
 
-    public var overlay: UIScene {
+    var overlay: UIScene {
         overlay(showsText: true)
     }
 

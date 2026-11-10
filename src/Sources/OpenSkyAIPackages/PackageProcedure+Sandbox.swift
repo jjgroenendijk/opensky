@@ -10,38 +10,33 @@ import simd
 nonisolated public struct PackageSandboxSetup: Equatable, Sendable {
     public var settings: SandboxSettings
     /// The Energy parameter, 0 to 100. A lively actor wanders longer and sits less.
-    public var energy: Float = 50
-    public var eats = false
+    var energy: Float = 50
+    var eats = false
     public var usesIdleMarkers = true
     /// Allow Sitting, Allow Sleeping, and Allow Special Furniture.
-    public var sits = true
-    public var sleeps = false
-    public var usesSpecialFurniture = false
+    var sits = true
+    var sleeps = false
+    var usesSpecialFurniture = false
     /// Where the actor stood when the procedure started.
-    public var start: SIMD3<Float>
-
-    public init(settings: SandboxSettings, start: SIMD3<Float>) {
-        self.settings = settings
-        self.start = start
-    }
+    var start: SIMD3<Float>
 }
 
 /// One meal, in game hours since the calendar's start.
-nonisolated public struct SandboxMeal: Equatable, Sendable {
-    public let start: Double
-    public let end: Double
+nonisolated struct SandboxMeal: Equatable, Sendable {
+    let start: Double
+    let end: Double
 }
 
-nonisolated public struct SandboxProgress: Equatable, Sendable {
+nonisolated struct SandboxProgress: Equatable, Sendable {
     /// The clock at the last `clock` event, in game hours.
-    public internal(set) var hours: Double?
+    var hours: Double?
     /// Game hours until the current activity ends.
-    public internal(set) var hoursLeft: Float = 0
+    var hoursLeft: Float = 0
     /// The meals of day `mealDay`, rolled once per day as the wiki describes.
-    public internal(set) var meals: [SandboxMeal] = []
+    var meals: [SandboxMeal] = []
     var mealDay: Int?
     /// The seat the actor walks to or sits in.
-    public internal(set) var seat: PackageSeat?
+    var seat: PackageSeat?
     var lastActivity: SandboxActivity?
 }
 

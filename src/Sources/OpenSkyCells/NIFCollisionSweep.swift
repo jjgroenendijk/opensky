@@ -23,7 +23,7 @@ nonisolated public struct NIFCollisionAssetReport: Sendable {
     public let renderBounds: ModelBounds?
     public let loadFailure: String?
 
-    public var passesAcceptance: Bool {
+    var passesAcceptance: Bool {
         loadFailure == nil
             && unsupportedReachableBlocks.isEmpty
             && decodeFailures.isEmpty

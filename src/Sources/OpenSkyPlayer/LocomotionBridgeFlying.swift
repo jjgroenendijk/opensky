@@ -1,14 +1,14 @@
 // A flying mount's step: the flight rules move the dragon, so its graph only hears how
 // it moves. See docs/engine/dragon-flight.md.
 
-public import OpenSkyBehavior
-public import OpenSkyWorldInterface
+import OpenSkyBehavior
+import OpenSkyWorldInterface
 import simd
 
 nonisolated extension LocomotionBridge {
     /// Writes the flight inputs and the measured motion, raises `events`, and steps the
     /// graph. The capsule does not move; `feet` is where the flight holds the body.
-    public func advanceFlying(
+    func advanceFlying(
         deltaTime: Float, body: (feet: SIMD3<Float>, motion: MountMotion), events: [String],
         inputs: [(name: String, value: BehaviorVariableValue)]
     ) {

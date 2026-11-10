@@ -26,7 +26,7 @@ nonisolated public struct LoadingCoverFrame: Equatable, Sendable {
     /// False during the fade, when the world draws again under a dimming readout.
     public let drawsObject: Bool
 
-    public init(
+    init(
         model: String?, scale: Float, rotationDegrees: SIMD3<Float>, translation: SIMD3<Float>,
         cameraPath: String? = nil, elapsedSeconds: Double = 0,
         text: String?, opacity: Float, drawsObject: Bool
@@ -60,7 +60,7 @@ public final class LoadingScreenCoordinator {
     /// When the cover went up and no screen was picked yet.
     public private(set) var waitingSince: Double?
     public private(set) var forced: ResolvedRecord<LoadScreen>?
-    public private(set) var lastPassingCount = 0
+    private(set) var lastPassingCount = 0
     public private(set) var shownCount = 0
     private var text: String?
     private var loadInFlight = false

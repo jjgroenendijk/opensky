@@ -1,17 +1,17 @@
 // Builds a resident actor's idle playback from its assembly, caching one clip per
 // skeleton and sex on the builder.
 
-public import OpenSkyActorPresentation
+import OpenSkyActorPresentation
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
-public import OpenSkyRendering
-public import OpenSkyWorldInterface
+import OpenSkyRendering
+import OpenSkyWorldInterface
 
 nonisolated extension CellSceneBuilder {
     /// `severedHead` marks the cut head of a decapitated actor, posed apart from its body.
-    nonisolated public func makeAnimationPlayback(
+    nonisolated func makeAnimationPlayback(
         assembly: ActorAssembly<ActorRenderAsset>,
         severedHead: Bool = false
     ) -> Result<ActorAnimationPlayback, ActorAnimationLoadError> {

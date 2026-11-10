@@ -3,14 +3,14 @@
 // drains. Storage is bounded and drops the oldest undrained names, so a stalled consumer
 // costs fixed memory and does not replay stale footsteps.
 
-public import OpenSkyBehavior
+import OpenSkyBehavior
 
 nonisolated public final class LocomotionGraphEventQueue {
     /// How many undrained names the queue holds before it starts dropping the
     /// oldest. A frame at 60 Hz drives 2 fixed steps and a sprinting vanilla
     /// graph fires a handful of events per step, so 64 is several frames of
     /// headroom while staying a fixed, small bound.
-    public static let limit = 64
+    static let limit = 64
 
     /// One consumer's place in the stream, shared by the queue and its owner so it
     /// survives resets. There is no unregister: consumers live for the whole session.
@@ -31,7 +31,7 @@ nonisolated public final class LocomotionGraphEventQueue {
 
     /// How many consumers are registered. Tests assert on it; the engine does
     /// not branch on it.
-    public var consumerCount: Int {
+    var consumerCount: Int {
         consumers.count
     }
 
@@ -49,7 +49,7 @@ nonisolated public final class LocomotionGraphEventQueue {
     /// Appends this step's fired events, then the names the graph declares no event
     /// for, oldest dropped first past the cap. Events the graph reports with no name
     /// carry nothing a consumer could match, so they are not queued.
-    public func enqueue(_ events: [BehaviorEvent], unbound: [String] = []) {
+    func enqueue(_ events: [BehaviorEvent], unbound: [String] = []) {
         guard !events.isEmpty || !unbound.isEmpty else { return }
         names += events.compactMap(\.name) + unbound
         trim()

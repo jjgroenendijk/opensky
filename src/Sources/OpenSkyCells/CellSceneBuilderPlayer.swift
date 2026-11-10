@@ -5,10 +5,10 @@
 
 import Foundation
 import OpenSkyActorPresentation
-public import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyFormatsESM
+import OpenSkyGameData
 public import OpenSkyPlayer
 import OpenSkyRendering
 import OpenSkyRuntimeState
@@ -32,7 +32,7 @@ nonisolated extension CellSceneBuilder {
             }
     }
 
-    public func makePlayerBody(
+    func makePlayerBody(
         skeleton: HKASkeleton,
         pose: SkinnedPoseBuffer,
         equipped: [FormID]?,
@@ -46,7 +46,7 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    public func makePlayerFirstPersonRig(
+    func makePlayerFirstPersonRig(
         skeleton: HKASkeleton,
         pose: SkinnedPoseBuffer,
         equipped: [FormID]?,

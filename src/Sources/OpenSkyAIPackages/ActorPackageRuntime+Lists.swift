@@ -2,12 +2,12 @@
 // override list of a code-driven situation, and the default list
 // (<https://ck.uesp.net/wiki/AI_Packages_Tab>, <https://ck.uesp.net/wiki/AddScriptPackage>).
 
-public import OpenSkyConditions
+import OpenSkyConditions
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 import OpenSkyWorldConditionFunctions
 public import OpenSkyWorldInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// The one package `AddScriptPackage` gave the actor.
 nonisolated struct ScriptPackageSlot: Equatable, Sendable {
@@ -21,7 +21,7 @@ nonisolated extension ActorPackageRuntime {
     /// Gives the actor a package that outranks all others until it is done. A second
     /// call replaces the first; nil removes it. False when the actor or package is unknown.
     @discardableResult
-    public mutating func setScriptPackage(
+    mutating func setScriptPackage(
         _ package: FormID?, actor: ReferenceKey, clock: GameClock, context: ConditionContext
     ) -> Bool {
         guard actors[actor] != nil else { return false }
@@ -39,13 +39,13 @@ nonisolated extension ActorPackageRuntime {
         return true
     }
 
-    public func scriptPackage(for actor: ReferenceKey) -> FormID? {
+    func scriptPackage(for actor: ReferenceKey) -> FormID? {
         actors[actor]?.scriptPackage?.package
     }
 
     /// Enters or leaves a code-driven situation. The actor picks again only when an
     /// override list could change its package.
-    public mutating func setSituation(
+    mutating func setSituation(
         _ situation: PackageSituation?, actor: ReferenceKey, clock: GameClock,
         context: () -> ConditionContext
     ) {
@@ -58,7 +58,7 @@ nonisolated extension ActorPackageRuntime {
         }
     }
 
-    public func situation(for actor: ReferenceKey) -> PackageSituation? {
+    func situation(for actor: ReferenceKey) -> PackageSituation? {
         actors[actor]?.situation
     }
 
@@ -66,7 +66,7 @@ nonisolated extension ActorPackageRuntime {
         actors[actor]?.source
     }
 
-    public func packageLists(for actor: ReferenceKey) -> ActorPackageLists? {
+    func packageLists(for actor: ReferenceKey) -> ActorPackageLists? {
         actors[actor]?.lists
     }
 

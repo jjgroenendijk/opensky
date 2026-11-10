@@ -10,7 +10,7 @@ public import OpenSkyFormatsESM
 nonisolated public enum RuntimeStateConditionRunner: Sendable {
     /// Evaluates `conditions` against `context`, accumulating into `tally` so a
     /// session's counters span every evaluation the readout has run.
-    public static func report(
+    static func report(
         source: String,
         conditions: [Condition],
         context: ConditionContext,
@@ -44,7 +44,7 @@ nonisolated public enum RuntimeStateConditionRunner: Sendable {
     /// The list verdict, reproducing `ConditionEvaluator.evaluate(_ conditions:)`
     /// exactly: an empty list is true, a block closes on the first condition
     /// without the OR flag, and a trailing OR flag closes the last block.
-    public static func combine(conditions: [Condition], outcomes: [Bool]) -> Bool {
+    static func combine(conditions: [Condition], outcomes: [Bool]) -> Bool {
         guard let last = conditions.last, conditions.count == outcomes.count else {
             return true
         }
@@ -96,7 +96,7 @@ nonisolated public enum RuntimeStateConditionRunner: Sendable {
         }
     }
 
-    public static func reason(for outcome: ConditionOutcome) -> String {
+    static func reason(for outcome: ConditionOutcome) -> String {
         guard let failure = outcome.failures.first else {
             return outcome.isTrue ? "true" : "false"
         }
@@ -160,7 +160,7 @@ nonisolated public enum RuntimeStateConditionRunner: Sendable {
     /// The tally counters as readout lines. Buckets that never fired are
     /// omitted so a clean run reads as two lines rather than as a wall of
     /// zeroes.
-    public static func tallyLines(
+    static func tallyLines(
         _ tally: ConditionTally, registry: ConditionFunctionRegistry
     ) -> [String] {
         var lines = [

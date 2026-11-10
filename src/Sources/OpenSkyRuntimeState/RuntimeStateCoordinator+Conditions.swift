@@ -7,11 +7,11 @@ public import OpenSkyConditions
 public import OpenSkyFormatsESM
 
 extension RuntimeStateCoordinator {
-    public var runtimeStateConditionSources: [String] {
+    var runtimeStateConditionSources: [String] {
         conditionSources().keys.sorted()
     }
 
-    public func evaluateConditions(source: String) -> RuntimeStateConditionReport {
+    func evaluateConditions(source: String) -> RuntimeStateConditionReport {
         guard let musicStore = world?.musicStore else {
             return .unavailable(
                 source: source,

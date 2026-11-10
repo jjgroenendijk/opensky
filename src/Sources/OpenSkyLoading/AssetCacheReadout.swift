@@ -2,7 +2,7 @@
 
 import Foundation
 public import OpenSkyAssetCache
-public import OpenSkyRenderResources
+import OpenSkyRenderResources
 
 nonisolated public enum AssetCacheReadout {
     /// `High: no visible loss`, for the texture quality menu.
@@ -17,7 +17,7 @@ nonisolated public enum AssetCacheReadout {
             + " GiB, \(usage.entryCount) files"
     }
 
-    public static func stateLine(
+    static func stateLine(
         _ check: AssetCacheCheck?,
         activity: AssetCacheCoordinator.Activity
     ) -> String {
@@ -37,7 +37,7 @@ nonisolated public enum AssetCacheReadout {
     }
 
     /// `Conversion: 1200 of 98000 files, about 3 min left`, or how the last one ended.
-    public static func buildLine(_ progress: AssetCacheBuildProgress?, isBuilding: Bool) -> String {
+    static func buildLine(_ progress: AssetCacheBuildProgress?, isBuilding: Bool) -> String {
         guard let progress else { return "Conversion: none" }
         if isBuilding {
             let left = progress.estimatedSecondsLeft.map { ", about \(duration($0)) left" } ?? ""
@@ -49,7 +49,7 @@ nonisolated public enum AssetCacheReadout {
     }
 
     /// `Textures: 32918 entries, 4.1 GiB` for a kind's control on the cache page.
-    public static func kindTitle(_ kind: AssetCacheKind, usage: AssetCacheUsage?) -> String {
+    static func kindTitle(_ kind: AssetCacheKind, usage: AssetCacheUsage?) -> String {
         let kindUsage = usage?.kinds[kind] ?? AssetCacheKindUsage()
         let size = unsafe String(format: "%.1f GiB", Double(kindUsage.bytes) / Double(1 << 30))
         return "\(kind.title): \(kindUsage.entryCount) entries, "
@@ -58,7 +58,7 @@ nonisolated public enum AssetCacheReadout {
 
     /// The measured gain of caching `kind`, archive and cache on one disk
     /// (docs/engine/asset-cache.md, "Where the cache helps").
-    public static func kindGain(_ kind: AssetCacheKind) -> String {
+    static func kindGain(_ kind: AssetCacheKind) -> String {
         switch kind {
         case .texture: "Measured: 5x faster warm, 2x faster cold"
         case .mesh: "Measured: 6x faster warm, 2x faster cold"
@@ -78,7 +78,7 @@ nonisolated public enum AssetCacheReadout {
     }
 
     /// `Direct GPU loading: 412 textures, 380 MiB`, the meshes, then the last cell load.
-    public static func directLoadLines(_ stats: FastTextureLoadStats) -> [String] {
+    static func directLoadLines(_ stats: FastTextureLoadStats) -> [String] {
         guard stats.batches > 0 || stats.externalSkips > 0 else {
             return ["Direct GPU loading: no cell loaded yet"]
         }

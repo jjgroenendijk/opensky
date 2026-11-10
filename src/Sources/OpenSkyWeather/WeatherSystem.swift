@@ -22,9 +22,9 @@ nonisolated public final class WeatherSystem {
     // MARK: Tuning constants (documented in docs/engine/weather.md)
 
     /// Reroll cadence in game hours at `baseVolatility`, and for a climate without `TNAM`.
-    public static let rerollGameHours: Float = 6
+    static let rerollGameHours: Float = 6
     /// The `SkyrimClimate` volatility, which keeps the six-hour cadence.
-    public static let baseVolatility: Float = 50
+    static let baseVolatility: Float = 50
 
     // MARK: Selection + transition state
 
@@ -47,7 +47,7 @@ nonisolated public final class WeatherSystem {
     /// Freezes only weather cross-fade progress. Time-of-day resolution and
     /// precipitation particle playback continue, enabling a stable mid-storm
     /// inspection frame in the main app.
-    public var transitionsPaused = false
+    var transitionsPaused = false
     /// Current globals, for the CLMT WLST global on each weather chance. Nil keeps the
     /// authored chances. Replaced by `setGlobalResolution(_:)`.
     public private(set) var globalResolution: GlobalResolution?
@@ -63,7 +63,7 @@ nonisolated public final class WeatherSystem {
 
     /// Convenience: resolve the store + worldspace from an ESM file by editor
     /// ID. Returns nil when the plugin carries no weather data at all.
-    public convenience init?(file: ESMFile, worldspaceEditorID: String) {
+    convenience init?(file: ESMFile, worldspaceEditorID: String) {
         self.init(loadOrder: LoadOrderPlugins(file: file), worldspaceEditorID: worldspaceEditorID)
     }
 

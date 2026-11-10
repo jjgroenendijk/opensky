@@ -10,59 +10,49 @@ public import OpenSkyPhysics
 /// One key binding as the readout presents it. `label` is what the control shows;
 /// `isActive` is whether that input is asserted right now, so a user can press
 /// the key and watch the row light up rather than trusting the label.
-nonisolated public struct LocomotionBindingSnapshot: Equatable, Sendable {
-    public let label: String
-    public let isActive: Bool
-
-    public init(label: String, isActive: Bool) {
-        self.label = label
-        self.isActive = isActive
-    }
+nonisolated struct LocomotionBindingSnapshot: Equatable, Sendable {
+    let label: String
+    let isActive: Bool
 }
 
 /// One graph variable as the readout lists it: the name the bridge writes, the
 /// value the graph currently holds, and whether the graph declared it at all.
 /// A name the graph does not declare is listed rather than dropped, because a
 /// missing binding is the failure the readout exists to make visible.
-nonisolated public struct LocomotionVariableSnapshot: Equatable, Sendable {
-    public let name: String
+nonisolated struct LocomotionVariableSnapshot: Equatable, Sendable {
+    let name: String
     /// The live value, formatted by the graph's own type, or nil when the graph
     /// declares no variable of that name.
-    public let value: String?
-
-    public init(name: String, value: String?) {
-        self.name = name
-        self.value = value
-    }
+    let value: String?
 }
 
 /// What the locomotion readout shows for one refresh.
-nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
+nonisolated struct PlayerLocomotionSnapshot: Equatable, Sendable {
     /// False when there is no renderer at all (no Metal 4 device). Reported
     /// rather than shown as a row of zeros.
-    public let rendererAvailable: Bool
-    public let status: LocomotionStatus
-    public let bindings: [LocomotionBindingSnapshot]
+    let rendererAvailable: Bool
+    let status: LocomotionStatus
+    let bindings: [LocomotionBindingSnapshot]
     /// The state path the third-person graph resolved on its last update, from
     /// the outermost state machine inward.
-    public let activeStates: [BehaviorActiveState]
+    let activeStates: [BehaviorActiveState]
     /// The same for the first-person graph, kept apart so a
     /// perspective that diverges is visible rather than averaged.
-    public let firstPersonActiveStates: [BehaviorActiveState]
+    let firstPersonActiveStates: [BehaviorActiveState]
     /// Every variable the bridge writes, with the value the graph holds.
-    public let variables: [LocomotionVariableSnapshot]
+    let variables: [LocomotionVariableSnapshot]
     /// The gait held by the dev control, or nil while the player's own input
     /// resolves it.
-    public let forcedGait: LocomotionGait?
+    let forcedGait: LocomotionGait?
     /// What the third-person graph could not evaluate, which is the honest
     /// coverage number this destination publishes.
-    public let tally: BehaviorTally?
+    let tally: BehaviorTally?
     /// Why the player has no third-person body, or nil when one is attached.
-    public let bodyFailureReason: String?
+    let bodyFailureReason: String?
     /// `iState` as its constant's name, such as `17 (NPCBlockingShieldCharge)`.
-    public var actorState: String?
+    var actorState: String?
 
-    public static let unavailable = PlayerLocomotionSnapshot(
+    static let unavailable = PlayerLocomotionSnapshot(
         rendererAvailable: false,
         status: LocomotionStatus(),
         bindings: [],
@@ -73,7 +63,7 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
         tally: nil
     )
 
-    public init(
+    init(
         rendererAvailable: Bool,
         status: LocomotionStatus,
         bindings: [LocomotionBindingSnapshot],

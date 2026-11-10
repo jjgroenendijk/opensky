@@ -80,7 +80,7 @@ nonisolated public struct TalkCandidate: Equatable, Sendable {
     /// The capsule's core segment, bottom cap centre to top cap centre — the
     /// same construction `MeleeTarget.segment` makes, so a ray and a swing
     /// agree on where an actor is.
-    public var segment: (first: SIMD3<Float>, second: SIMD3<Float>) {
+    var segment: (first: SIMD3<Float>, second: SIMD3<Float>) {
         MeleeTarget(key: key, feet: feet, capsule: capsule).segment
     }
 }

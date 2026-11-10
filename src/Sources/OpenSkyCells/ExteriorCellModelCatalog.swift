@@ -21,7 +21,7 @@ nonisolated public struct ExteriorCellModelCatalog: Sendable {
     }
 
     /// One plugin read alone, for synthetic test fixtures.
-    public init(file: ESMFile) {
+    init(file: ESMFile) {
         self.init(loadOrder: LoadOrderPlugins(file: file))
     }
 

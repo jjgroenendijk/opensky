@@ -25,7 +25,7 @@ nonisolated public struct DistantLODBlock: Equatable, Hashable, Sendable {
     /// carries a mask: partial object-atlas blocks remain excluded.
     public let clipMask: TerrainLODClipMask?
 
-    public func coversTerrain(_ cell: CellCoordinate) -> Bool {
+    func coversTerrain(_ cell: CellCoordinate) -> Bool {
         guard kind == .terrain else { return false }
         let inside = cell.x >= origin.x && cell.x < origin.x + level
             && cell.y >= origin.y && cell.y < origin.y + level
@@ -384,7 +384,7 @@ nonisolated public final class DistantLODBuilder {
     let textures: TextureLibrary
     public let configurationStore: TerrainLODConfigurationStore
     private var settingsByWorldspace: [String: LODSettings] = [:]
-    public var treeListByWorldspace: [String: TreeLODList] = [:]
+    var treeListByWorldspace: [String: TreeLODList] = [:]
 
     public init(
         fileSystem: any GameFileSource,

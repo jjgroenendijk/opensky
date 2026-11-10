@@ -17,7 +17,7 @@ import OpenSkyRenderCore
 public import OpenSkyRendering
 public import OpenSkyRenderResources
 public import OpenSkyTerrain
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 public import OpenSkyWorldState
 import simd
 
@@ -40,7 +40,7 @@ nonisolated public struct BuildCounts: Sendable {
     public var malformedRefs = 0
     public var unsupportedBases = 0
     public var markers = 0
-    public var modelFailures = 0
+    var modelFailures = 0
     /// Dropped like an initially-disabled record.
     public var runtimeDisabled = 0
     /// Not the header `deleted` flag, which never reaches a build.
@@ -104,7 +104,7 @@ nonisolated public final class CellSceneBuilder {
     public var collisionPartitionCache = CellCollisionPartitionCache()
     /// Whether movable clutter joins the dynamic world. Off only for builds that
     /// want the immutable collision set, such as `openskycli collision`.
-    public var simulatesDynamicBodies = true
+    var simulatesDynamicBodies = true
     /// Splits build time into asset phases for a benchmark; nil in normal play.
     public var loadPhases: LoadPhaseRecorder? {
         didSet {
@@ -127,21 +127,21 @@ nonisolated public final class CellSceneBuilder {
     /// MSTT/TREE/FURN/ACTI/CONT/DOOR; checked when a base is not a STAT.
     public var modelBaseIndex: [UInt32: ModelBase]?
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
-    public var exteriorPersistentRefs: [UInt32: [PlacedReference]] = [:]
+    var exteriorPersistentRefs: [UInt32: [PlacedReference]] = [:]
     var exteriorPersistentPools: [UInt32: EnableParentPool] = [:]
     /// Each worldspace's `RNAM` references by cell, over every plugin.
     var largeReferenceIndex: [UInt32: [CellCoordinate: Set<UInt32>]] = [:]
     /// The cells that hold a temporary Is Full LOD reference, by WRLD FormID.
     var temporaryFullLODCellIndex: [UInt32: Set<CellCoordinate>] = [:]
     /// Keyed by WRLD FormID, with the same ownership rule as the persistent refs.
-    public var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
+    var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
     public var actorTemplateResolver: ActorTemplateResolver?
     public var actorVisualResolver: ActorVisualResolver?
     /// The session's roller; a cell build records its leveled placements here.
     public var leveling = LeveledListRoller()
     var encounterZones: EncounterZoneStore?
     /// Immutable decoded rig/idle assets; playback objects remain cell-owned.
-    public var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
+    var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
     /// Lag bones by skeleton mesh path; nil inside records a skeleton without one.
     var actorLagBoneRigs: [String: ActorLagBoneRig?] = [:]
     /// Decoded expression TRI files by resource path. A file does not change while the
@@ -164,7 +164,7 @@ nonisolated public final class CellSceneBuilder {
     public let pluginLocalized: Bool
     /// Resolves FULL/RNAM interaction text when the builder has a VFS.
     public let localizedStrings: LocalizedStrings?
-    public var worldspaceIndex: [UInt32: Worldspace]?
+    var worldspaceIndex: [UInt32: Worldspace]?
     /// Keyed by WRLD editor ID; holds only lookups made with `pluginLocalized`.
     var worldChildrenGroups: [String: FoundWorld] = [:]
     /// Keyed by WRLD load-order FormID, then by XCLC grid, over every plugin.
@@ -177,10 +177,10 @@ nonisolated public final class CellSceneBuilder {
     var terrainLODTextures: [String: TerrainLODTexture?] = [:]
     /// LOD worldspace editor ID, lowercased, to its fitted terrain LOD curve.
     var terrainLODBrightnessByWorld: [String: TerrainLODBrightness] = [:]
-    public var waterTypeIndex: [UInt32: WaterType]?
-    public var waterPlaneMesh: RenderMesh?
-    public var landTextureIndex: [UInt32: LandTexture]?
-    public var grassIndex: [UInt32: Grass]?
+    var waterTypeIndex: [UInt32: WaterType]?
+    var waterPlaneMesh: RenderMesh?
+    var landTextureIndex: [UInt32: LandTexture]?
+    var grassIndex: [UInt32: Grass]?
     public var lightingTemplateIndex: [UInt32: LightingTemplate]?
     public var lightIndex: [UInt32: LightRecord]?
     /// `ADDN` `DATA` index to the add-on's model path, over the load order.
@@ -442,7 +442,7 @@ nonisolated extension CellSceneBuilder {
 
     /// The worldspace persistent CELL: the one CELL stored directly in the world
     /// children group, not in a block (xEdit names it "<Persistent Worldspace Cell>").
-    nonisolated public func persistentCell(
+    nonisolated func persistentCell(
         in worldChildren: ESMGroup,
         localized: Bool
     ) -> FoundCell? {
@@ -466,7 +466,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     /// The group follows its CELL among the same siblings, labeled with its FormID.
-    nonisolated public func cellChildrenGroup(
+    nonisolated func cellChildrenGroup(
         following index: Int,
         in children: [ESMGroup.Child],
         cellFormID: UInt32

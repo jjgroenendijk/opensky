@@ -239,8 +239,8 @@ nonisolated public struct CellBuildResult: Sendable {
 
 nonisolated public struct CellBuildMetric: Equatable, Sendable {
     public let collisionDurationMS: Double
-    public let collisionShapeCount: Int
-    public let collisionTriangleCount: Int
+    let collisionShapeCount: Int
+    let collisionTriangleCount: Int
     /// Actor phase accounting mirrored off CellLoadSummary so the fly bench
     /// can gate latency + exact accounting per cell (5.5).
     public var actorDurationMS = 0.0
@@ -592,7 +592,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
 
     /// Blocks until every job queued so far has run. Tests use it instead of
     /// a fixed sleep. Never call it on the build queue.
-    public func waitUntilIdle() {
+    func waitUntilIdle() {
         queue.sync {}
     }
 }

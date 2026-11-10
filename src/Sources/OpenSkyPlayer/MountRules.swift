@@ -127,7 +127,7 @@ nonisolated public enum MountRules: Sendable {
 
     /// Where a rider stands after a dismount, from the mount's feet: the race's
     /// dismount offset turned into the world, x to the mount's right, y forward.
-    public static func dismountPosition(offset: SIMD3<Float>, yaw: Float) -> SIMD2<Float> {
+    static func dismountPosition(offset: SIMD3<Float>, yaw: Float) -> SIMD2<Float> {
         let forward = SIMD2(cos(yaw), sin(yaw))
         let right = SIMD2(sin(yaw), -cos(yaw))
         return right * offset.x + forward * offset.y

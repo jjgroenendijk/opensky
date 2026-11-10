@@ -3,7 +3,7 @@
 // unresolved name is reported, not dropped.
 
 import Foundation
-public import OpenSkyBehavior
+import OpenSkyBehavior
 public import OpenSkyPhysics
 public import OpenSkyWorldInterface
 import simd
@@ -14,7 +14,7 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     /// Current gait speed, units per second. Real.
     public static let speed = "Speed"
     /// The damped copy `mt_behavior.hkx` blends its locomotion tree against.
-    public static let speedSampled = "SpeedSampled"
+    static let speedSampled = "SpeedSampled"
     /// Movement direction relative to facing, radians. Real.
     public static let direction = "Direction"
     /// Yaw change over the step, radians. Real.
@@ -63,18 +63,18 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     public static let moveStop = "moveStop"
     public static let sprintStart = "SprintStart"
     public static let sprintStop = "SprintStop"
-    public static let sneakStart = "SneakStart"
-    public static let sneakStop = "SneakStop"
+    static let sneakStart = "SneakStart"
+    static let sneakStop = "SneakStop"
     /// Takeoff. `JumpFall` follows when the capsule starts descending without
     /// having jumped (walking off a ledge), `JumpLand` when it arrives.
-    public static let jumpUp = "JumpUp"
-    public static let jumpFall = "JumpFall"
-    public static let jumpLand = "JumpLand"
-    public static let swimStart = "SwimStart"
-    public static let swimStop = "SwimStop"
+    static let jumpUp = "JumpUp"
+    static let jumpFall = "JumpFall"
+    static let jumpLand = "JumpLand"
+    static let swimStart = "SwimStart"
+    static let swimStop = "SwimStop"
 
     /// Every event the bridge can raise.
-    public static let events = [
+    static let events = [
         moveStart, moveStop, sprintStart, sprintStop, sneakStart, sneakStop,
         jumpUp, jumpFall, jumpLand, swimStart, swimStop
     ]
@@ -100,7 +100,7 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
     /// Water surface height where the capsule stands, when it is over water.
     public var waterSurfaceHeight: Float?
     /// Graph updates this bridge has driven.
-    public var graphUpdates = 0
+    var graphUpdates = 0
     /// Names written and raised successfully, and the ones the graph declares
     /// no home for. Sorted for a stable readout.
     public var boundVariables: [String] = []
@@ -111,34 +111,34 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
     public var recentGraphEvents: [String] = []
     /// The same four tallies for the first-person graph, kept apart so a first-person
     /// miss stays visible.
-    public var firstPersonGraphUpdates = 0
+    var firstPersonGraphUpdates = 0
     public var firstPersonBoundVariables: [String] = []
     public var firstPersonMissingVariables: [String] = []
     public var firstPersonRaisedEvents: [String] = []
     public var firstPersonMissingEvents: [String] = []
-    public var firstPersonRecentGraphEvents: [String] = []
+    var firstPersonRecentGraphEvents: [String] = []
 
     /// Where each motion source has carried the capsule so far, world units.
     /// Two running totals rather than one, because "the graph drove the
     /// character" and "the configured gait drove it" are the two answers the
     /// movement-authority rule allows and a readout that summed them could not
     /// tell them apart.
-    public var rootMotionDistance: Float = 0
-    public var configuredSpeedDistance: Float = 0
+    var rootMotionDistance: Float = 0
+    var configuredSpeedDistance: Float = 0
 
     /// How many recent graph events are kept for the readout.
-    public static let recentEventLimit = 12
+    static let recentEventLimit = 12
 
     public init(graphAvailable: Bool = false, firstPersonGraphAvailable: Bool = false) {
         self.graphAvailable = graphAvailable
         self.firstPersonGraphAvailable = firstPersonGraphAvailable
     }
 
-    public var isSwimming: Bool {
+    var isSwimming: Bool {
         lastPlan.isSwimming
     }
 
-    public var motionSource: LocomotionMotionSource {
+    var motionSource: LocomotionMotionSource {
         lastPlan.motionSource
     }
 
@@ -169,7 +169,7 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
         }
     }
 
-    public mutating func noteGraphUpdate(events: [BehaviorEvent]) {
+    mutating func noteGraphUpdate(events: [BehaviorEvent]) {
         graphUpdates += 1
         guard !events.isEmpty else { return }
         recentGraphEvents += events.map { $0.name ?? "event \($0.id)" }
@@ -194,7 +194,7 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
         Self.insert(name, into: &missingEvents)
     }
 
-    public mutating func noteFirstPersonGraphUpdate(events: [BehaviorEvent]) {
+    mutating func noteFirstPersonGraphUpdate(events: [BehaviorEvent]) {
         firstPersonGraphUpdates += 1
         guard !events.isEmpty else { return }
         firstPersonRecentGraphEvents += events.map { $0.name ?? "event \($0.id)" }

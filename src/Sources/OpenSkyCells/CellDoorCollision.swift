@@ -23,7 +23,7 @@ nonisolated public struct CellDoorCollision: Sendable {
     /// The graph object's nodes, so its bone poses give the leaf deltas. Nil for a door.
     public let movingParts: MovingPartRig?
 
-    public init(
+    init(
         reference: FormID, placement: float4x4, fixed: [StaticCollisionShape],
         leaves: [[StaticCollisionShape]], movingParts: MovingPartRig? = nil
     ) {

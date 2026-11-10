@@ -3,28 +3,16 @@
 import Foundation
 public import OpenSkyFormatsESM
 
-nonisolated public struct FaceMorphControlSnapshot: Equatable, Sendable {
-    public static let empty = FaceMorphControlSnapshot(
+nonisolated struct FaceMorphControlSnapshot: Equatable, Sendable {
+    static let empty = FaceMorphControlSnapshot(
         actor: nil,
         pairedPaths: [],
         associationMisses: [],
         unknownTargetCount: 0
     )
 
-    public let actor: FormID?
-    public let pairedPaths: [String]
-    public let associationMisses: [String]
-    public let unknownTargetCount: Int
-
-    public init(
-        actor: FormID?,
-        pairedPaths: [String],
-        associationMisses: [String],
-        unknownTargetCount: Int
-    ) {
-        self.actor = actor
-        self.pairedPaths = pairedPaths
-        self.associationMisses = associationMisses
-        self.unknownTargetCount = unknownTargetCount
-    }
+    let actor: FormID?
+    let pairedPaths: [String]
+    let associationMisses: [String]
+    let unknownTargetCount: Int
 }

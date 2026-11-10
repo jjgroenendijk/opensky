@@ -3,18 +3,13 @@
 // and docs/engine/story-manager.md.
 
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 
 /// One active plugin and its masters, which give its `.seq` FormIDs their meaning.
 nonisolated public struct StoryPlugin: Equatable, Sendable {
     public let name: String
     public let masters: [String]
-
-    public init(name: String, masters: [String]) {
-        self.name = name
-        self.masters = masters
-    }
 }
 
 nonisolated public struct StoryData: Sendable {
@@ -40,7 +35,7 @@ nonisolated public struct StoryData: Sendable {
     }
 
     /// - Parameter plugins: the active plugins, lowest priority first.
-    public static func load(
+    static func load(
         plugins: [(name: String, file: ESMFile)],
         settings: GameSettingStore? = nil
     ) -> StoryData {

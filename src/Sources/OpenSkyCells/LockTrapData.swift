@@ -23,7 +23,7 @@ nonisolated public struct LockTrapData: Sendable {
         self.hazards = hazards
     }
 
-    public static func load(
+    static func load(
         plugins: [(name: String, file: ESMFile)],
         baseFile: ESMFile,
         baseName: String,

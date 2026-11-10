@@ -19,7 +19,7 @@ nonisolated public struct MotionConditionResolution: ConditionResolution, Sendab
         self.facts = facts
     }
 
-    public func facts(of key: ReferenceKey) -> ReferenceMotionFacts? {
+    func facts(of key: ReferenceKey) -> ReferenceMotionFacts? {
         facts?[key]
     }
 }

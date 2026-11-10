@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyPhysics
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 
 nonisolated extension LocomotionBridge {
     func writeActorState(gait: LocomotionGait) {
@@ -39,7 +39,7 @@ nonisolated extension LocomotionBridge {
 
     /// The value of each `iState_*` constant the graph declares. The third-person
     /// graph holds them; the first-person one stands in when it is the only one.
-    public var actorStateConstants: [ActorGraphState: Int32] {
+    var actorStateConstants: [ActorGraphState: Int32] {
         guard let source = graph ?? firstPersonGraph else { return [:] }
         var constants: [ActorGraphState: Int32] = [:]
         for state in ActorGraphState.allCases {

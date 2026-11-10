@@ -62,7 +62,7 @@ nonisolated extension ActorVisualResolver {
     /// DOFT -> OTFT -> INAM entries, each an ARMO or an LVLI rolled by `roll` (else for
     /// the base), as `InventoryBaselineResolver.outfitStacks` rolls it. Any unusable
     /// link throws: the gate forbids silently rendering the actor naked.
-    public func outfitPieces(
+    func outfitPieces(
         of appearance: ResolvedActorAppearance, roll: LeveledRoll? = nil
     ) throws -> [Armor] {
         guard let outfitID = appearance.defaultOutfit.value else { return [] }
@@ -203,7 +203,7 @@ nonisolated extension ActorVisualResolver {
 
     /// Worn parts in ARMA DNAM draw order: ascending priority, ties in resolve order.
     /// `enumerated()` gives a stable tie-break, since `sorted(by:)` is not stable.
-    public static func inDrawOrder(_ parts: [PrioritizedPart]) -> [ResolvedBodyPart] {
+    static func inDrawOrder(_ parts: [PrioritizedPart]) -> [ResolvedBodyPart] {
         parts.enumerated()
             .sorted { lhs, rhs in
                 (lhs.element.priority, lhs.offset) < (rhs.element.priority, rhs.offset)

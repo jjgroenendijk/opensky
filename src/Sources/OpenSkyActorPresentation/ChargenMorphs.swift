@@ -2,7 +2,7 @@
 // they give. Slider order and the sign of each pair: docs/engine/race-menu.md.
 
 import Foundation
-public import OpenSkyFormatsMesh
+import OpenSkyFormatsMesh
 import simd
 
 nonisolated public enum ChargenMorphs {
@@ -57,7 +57,7 @@ nonisolated public enum ChargenMorphs {
 
     /// Base vertices plus each weighted target's scaled deltas. Unknown names are
     /// skipped; a target with a different vertex count is skipped too.
-    public static func positions(tri: TRIFile, weights: [String: Float]) -> [SIMD3<Float>] {
+    static func positions(tri: TRIFile, weights: [String: Float]) -> [SIMD3<Float>] {
         var result = tri.baseVertices
         for target in tri.morphTargets {
             guard
@@ -73,7 +73,7 @@ nonisolated public enum ChargenMorphs {
     }
 
     /// Body weight blends the thin `_0` and heavy `_1` meshes; 0...100.
-    public static func blend(
+    static func blend(
         thin: [SIMD3<Float>], heavy: [SIMD3<Float>], weight: Float
     ) -> [SIMD3<Float>]? {
         guard thin.count == heavy.count else { return nil }

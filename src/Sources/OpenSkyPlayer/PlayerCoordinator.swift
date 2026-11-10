@@ -51,7 +51,7 @@ public final class PlayerCoordinator {
     public private(set) var failureReason: String?
     /// Kept apart from `failureReason`: an install can have a working
     /// third-person set and a broken `_1stperson` one.
-    public private(set) var firstPersonFailureReason: String?
+    private(set) var firstPersonFailureReason: String?
 
     /// The coordinator is whole without its graphs: `requestBody()` starts
     /// their loads, and a later `drainClipLoads()` attaches them.

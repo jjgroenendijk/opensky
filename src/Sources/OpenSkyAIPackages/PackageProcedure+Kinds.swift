@@ -47,11 +47,11 @@ nonisolated extension PackageProcedureMachine {
         .follow, .followTo, .escort, .flee, .forceGreet, .keepAnEyeOn, .guardArea
     ]
 
-    public var watchesTarget: Bool {
+    var watchesTarget: Bool {
         Self.watchers.contains(kind) && setup.watched != nil
     }
 
-    public mutating func start() -> [PackageProcedureCommand] {
+    mutating func start() -> [PackageProcedureCommand] {
         guard state == .ready || isSearching else { return [] }
         if case .unsupported = kind {
             state = .failed

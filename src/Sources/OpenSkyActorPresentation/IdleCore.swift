@@ -3,8 +3,8 @@
 // See docs/engine/idle-runtime.md.
 
 import Foundation
-public import OpenSkyBehavior
-public import OpenSkyFormatsAnimation
+import OpenSkyBehavior
+import OpenSkyFormatsAnimation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyWorldInterface
@@ -14,11 +14,11 @@ import simd
 nonisolated public struct IdleMarkerPlacement: Sendable {
     public let reference: ReferenceKey
     public let marker: ResolvedRecord<IdleMarker>
-    public let position: SIMD3<Float>
+    let position: SIMD3<Float>
     /// The marker's `angleZ`: the way an actor faces before its idle starts.
-    public let heading: Float
+    let heading: Float
 
-    public init(
+    init(
         reference: ReferenceKey,
         marker: ResolvedRecord<IdleMarker>,
         position: SIMD3<Float>,
@@ -96,28 +96,28 @@ nonisolated public struct IdlePackageList: Equatable, Sendable {
         self.timer = timer
     }
 
-    public var order: IdleSelectionOrder {
+    var order: IdleSelectionOrder {
         flags & 0x01 != 0 ? .sequence : .random
     }
 
-    public var isDoOnce: Bool {
+    var isDoOnce: Bool {
         flags & 0x04 != 0
     }
 }
 
 nonisolated public enum IdleCore {
     /// How far an actor looks for a free marker, in world units (about 15 m).
-    public static let claimRadius: Float = 1024
+    static let claimRadius: Float = 1024
     /// Close enough to the marker to start idling.
-    public static let arrivalRadius: Float = 48
+    static let arrivalRadius: Float = 48
     /// How far from the marker's facing an actor may stand when its idle starts.
-    public static let facingTolerance: Float = .pi / 180
+    static let facingTolerance: Float = .pi / 180
     /// The clip event that kills the actor playing it, as the executionee's chop clip
     /// raises it. OpenSky's reading of the name; no source documents it.
     public static let killEvent = "KillActor"
 
     /// Sandbox and the use-idle-marker procedure send an actor to markers.
-    public static func usesMarkers(_ procedure: PackageProcedureKind?) -> Bool {
+    static func usesMarkers(_ procedure: PackageProcedureKind?) -> Bool {
         switch procedure {
         case .sandbox, .useIdleMarker: true
         default: false
@@ -126,7 +126,7 @@ nonisolated public enum IdleCore {
 
     /// The nearest marker inside `area`, or within `claimRadius` without one, that
     /// nobody holds and that is not in `excluded`. Ties go to the lower reference key.
-    public static func nearestFreeMarker(
+    static func nearestFreeMarker(
         to feet: SIMD3<Float>,
         among markers: [IdleMarkerPlacement],
         claimed: Set<ReferenceKey>,
@@ -144,7 +144,7 @@ nonisolated public enum IdleCore {
 
     /// The clip length times a loop count drawn from DATA's minimum and
     /// maximum. No DATA, or a zero maximum, plays the clip once.
-    public static func playSeconds(
+    static func playSeconds(
         clipDuration: Float,
         properties: IdleAnimation.Properties?,
         random: (Int) -> Int
@@ -158,7 +158,7 @@ nonisolated public enum IdleCore {
 
     /// The marker timer is the shortest stay; a longer clip still finishes. A held
     /// idle waits for the timer alone.
-    public static func nextSelection(
+    static func nextSelection(
         after start: Float,
         playSeconds: Float,
         timer: Float?
@@ -168,7 +168,7 @@ nonisolated public enum IdleCore {
 
     /// A state whose clip loops holds until another idle replaces it, as a cart seat
     /// does. A loop count in the idle's `DATA` still ends it (docs/engine/idle-runtime.md).
-    public static func holds(
+    static func holds(
         _ plan: IdlePlaybackPlan, properties: IdleAnimation.Properties?
     ) -> Bool {
         plan.loops && (properties?.loopMaximum ?? 0) == 0
@@ -176,7 +176,7 @@ nonisolated public enum IdleCore {
 
     /// The project folder above the skeleton's assets folder, such as
     /// `meshes\actors\character\` for `character assets female\skeleton_female.nif`.
-    public static func graphProject(skeletonMeshPath: String) -> String? {
+    static func graphProject(skeletonMeshPath: String) -> String? {
         let path = IdlePlaybackResolver.normalized(skeletonMeshPath)
         let parts = path.split(separator: "\\")
         guard let assets = parts.firstIndex(where: CreatureClipNames.isAssetsFolder) else {
@@ -188,22 +188,22 @@ nonisolated public enum IdleCore {
 
     /// An idle plays only on the graph whose project folder holds its behavior file
     /// (`DNAM`). An idle with no file only groups others, so every graph may use it.
-    public static func idle(behaviorFile: String?, belongsTo project: String) -> Bool {
+    static func idle(behaviorFile: String?, belongsTo project: String) -> Bool {
         guard let behaviorFile, !behaviorFile.isEmpty else { return true }
         return IdlePlaybackResolver.projectFolder(of: behaviorFile) == project
     }
 
-    public static func selectionOrder(of marker: IdleMarker) -> IdleSelectionOrder {
+    static func selectionOrder(of marker: IdleMarker) -> IdleSelectionOrder {
         (marker.flags ?? 0) & 0x01 != 0 ? .sequence : .random
     }
 
-    public static func isDoOnce(_ marker: IdleMarker) -> Bool {
+    static func isDoOnce(_ marker: IdleMarker) -> Bool {
         (marker.flags ?? 0) & 0x04 != 0
     }
 
     /// The clip's annotations over `seconds` of looping, as seconds from the start.
     /// A script hears them as animation events, such as `ExitCartEnd`.
-    public static func annotationEvents(
+    static func annotationEvents(
         _ annotations: [HKAAnnotation], clipDuration: Float, seconds: Float
     ) -> [IdleAnimationEvent] {
         markEvents(
@@ -213,7 +213,7 @@ nonisolated public enum IdleCore {
     }
 
     /// The clip's marks over `seconds` of looping, as seconds from the start.
-    public static func markEvents(
+    static func markEvents(
         _ marks: [IdleAnimationEvent], clipDuration: Float, seconds: Float
     ) -> [IdleAnimationEvent] {
         guard clipDuration > 0, !marks.isEmpty else { return [] }
@@ -229,7 +229,7 @@ nonisolated public enum IdleCore {
     }
 
     /// The clip's annotations and its generator's triggers, in time order inside one loop.
-    public static func clipMarks(
+    static func clipMarks(
         annotations: [HKAAnnotation], triggers: [BehaviorClipTriggerEvent], clipDuration: Float
     ) -> [IdleAnimationEvent] {
         let marks = annotations.map { IdleAnimationEvent(time: $0.time, name: $0.text) }
@@ -245,7 +245,7 @@ nonisolated public enum IdleCore {
 nonisolated extension IdleCore {
     /// The state's enter events at the start, the annotations, then its exit events at
     /// the end, in time order. The game leaves the state when the idle ends.
-    public static func playEvents(
+    static func playEvents(
         marks: [IdleAnimationEvent], notify: BehaviorStateNotify,
         clipDuration: Float, seconds: Float
     ) -> [IdleAnimationEvent] {
@@ -258,7 +258,7 @@ nonisolated extension IdleCore {
 nonisolated extension IdleCore {
     /// What an annotation does to the idle's animation object: `AnimObjDraw` shows a
     /// named one, and the shown object's own unload event takes it off.
-    public static func objectChange(
+    static func objectChange(
         for name: String, objects: [IdleAnimationObject], shown: IdleAnimationObject?
     ) -> IdleObjectChange? {
         if
@@ -276,18 +276,13 @@ nonisolated extension IdleCore {
     }
 }
 
-nonisolated public enum IdleObjectChange: Equatable, Sendable {
+nonisolated enum IdleObjectChange: Equatable, Sendable {
     case show(IdleAnimationObject)
     case remove
 }
 
 /// One clip annotation an idle sends, at seconds from the idle's start.
-nonisolated public struct IdleAnimationEvent: Equatable, Sendable {
-    public let time: Float
-    public let name: String
-
-    public init(time: Float, name: String) {
-        self.time = time
-        self.name = name
-    }
+nonisolated struct IdleAnimationEvent: Equatable, Sendable {
+    let time: Float
+    let name: String
 }
