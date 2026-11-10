@@ -92,8 +92,8 @@ cannot break another module.
 
 When type A uses type B and B uses A, neither can change or be tested alone. A cycle that
 spans files usually means one type or one module is really two. This is the Acyclic
-Dependencies Principle, after Robert C. Martin, applied to types. `make design-index-report`
-also lists each cycle (`tools/lint-index/type-cycles.py`).
+Dependencies Principle, after Robert C. Martin, applied to types. `make lint-index` fails on
+each cycle (`tools/lint-index/type-cycles.py --gate`), and the `Index checks` CI job runs it.
 
 - Type A uses type B when code inside A names B or one of its members, and both are declared
   in the same module under `src/Sources/`.

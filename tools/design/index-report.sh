@@ -10,4 +10,3 @@ cd "$root"
 . "$root/tools/lint-index/build-index.sh"
 python3 tools/lint-index/fan-out.py "$store" .
 python3 tools/lint-index/public-surface.py "$store" .
-python3 tools/lint-index/type-cycles.py "$store" .
