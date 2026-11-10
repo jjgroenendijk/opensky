@@ -73,7 +73,8 @@ the protocol it refines too: `FakeMenuModePort` is a fake of `MenuInputRouting`,
 `MenuModePort` refines it. It reports and passes until its count is zero; then it becomes a
 gate. Measured 2026-11-09: 203 of 233 interface protocols, 185 of them in
 `OpenSkySessionInterface`. Measured 2026-11-10, with the adapter tests of the AI, Actor, and
-earlier modules and fakes of the faction, spellbook, and face morph seams: 40 of 233.
+earlier modules, fakes of the faction, spellbook, and face morph seams, and a fake game
+session: 30 of 233.
 
 A port leaves the list in one of two ways. A test passes a fake of it, or the port goes and its
 caller calls the type that does the work. A seam between two features stays a protocol, because
