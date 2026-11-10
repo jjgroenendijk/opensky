@@ -72,7 +72,7 @@ struct MagicWorldFactsTests {
         host.fakePerks.modifiedValueAtOnSubjectsSeamsResult = 9
         let subjects = PerkEvaluationSubjects(owner: .player)
         let value = adapter.perkModified(
-            3, at: .modSpellMagnitude, on: .player, subjects: subjects, seams: ConditionContext()
+            3, at: .modSpellMagnitude, on: .player, given: (subjects, ConditionContext())
         )
         #expect(value == 9)
         #expect(adapter.perkChoices(

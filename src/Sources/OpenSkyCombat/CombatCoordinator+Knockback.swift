@@ -18,7 +18,7 @@ extension CombatCoordinator {
     @discardableResult
     public func forceKnockBack(_ target: ReferenceKey, damage: Float) -> HitKnock? {
         guard let health = world.health(of: target) else { return nil }
-        return knockBack(target, damage: damage, health: health, attacker: .player, kind: .melee)
+        return knockBack(target, damage: damage, health: health, by: (.player, .melee))
     }
 
     /// Knocks `target` back after a melee hit of `damage` that found it at `health`. A
@@ -26,8 +26,9 @@ extension CombatCoordinator {
     @discardableResult
     func knockBack(
         _ target: ReferenceKey, damage: Float, health: (current: Float, maximum: Float),
-        attacker: ReferenceKey, kind: CombatHitKind
+        by blow: (attacker: ReferenceKey, kind: CombatHitKind)
     ) -> HitKnock? {
+        let (attacker, kind) = blow
         guard
             kind == .melee, meleeBlock(of: target) == nil,
             let impulses, let world = impulses.world, world.isPushable(target),

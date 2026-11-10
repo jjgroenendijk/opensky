@@ -4,7 +4,6 @@ public import OpenSkyCrimeInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
-public import OpenSkySessionInterface
 public import OpenSkyWorldInterface
 
 extension FakeInventoryPort {

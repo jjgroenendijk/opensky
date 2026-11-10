@@ -35,8 +35,11 @@ extension ProjectileRuntime {
         of projectile: LiveProjectile, from previous: SIMD3<Float>, targets: [MeleeTarget]
     ) -> ProjectileImpact? {
         let actor = ProjectileImpactQuery.firstActor(
-            from: previous, to: projectile.position,
-            radius: projectile.profile.collisionRadius, targets: targets,
+            along: ProjectileStep(
+                from: previous, to: projectile.position,
+                radius: projectile.profile.collisionRadius
+            ),
+            targets: targets,
             shooter: projectile.shooter
         )
         if let actor {

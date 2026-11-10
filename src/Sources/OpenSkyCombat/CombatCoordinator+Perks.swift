@@ -112,7 +112,7 @@ extension CombatCoordinator {
         let disarmChance = blow.kind.isBash
             ? staggers.blockDisarmChance : staggers.attackDisarmChance
         return applyChosenSpell(
-            at: entryPoint, owner: blow.attacker, subjects: subjects, caster: blow.attacker,
+            at: entryPoint, perk: (blow.attacker, subjects), caster: blow.attacker,
             on: target, disarmChance: disarmChance
         )
     }
@@ -126,8 +126,7 @@ extension CombatCoordinator {
     ) -> SpellHitReport? {
         applyChosenSpell(
             at: .applyWeaponSwingSpell,
-            owner: target,
-            subjects: defenceSubjects(blow, on: target),
+            perk: (target, defenceSubjects(blow, on: target)),
             caster: target,
             on: target
         )
@@ -141,8 +140,7 @@ extension CombatCoordinator {
         guard isSneaking, !wasPlayerSneaking else { return nil }
         return applyChosenSpell(
             at: .applySneakingSpell,
-            owner: .player,
-            subjects: PerkEvaluationSubjects(owner: .player),
+            perk: (.player, PerkEvaluationSubjects(owner: .player)),
             caster: .player,
             on: .player
         )
@@ -198,12 +196,12 @@ extension CombatCoordinator {
 
     private func applyChosenSpell(
         at entryPoint: PerkEntryPoint,
-        owner: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
+        perk: (owner: ReferenceKey, subjects: PerkEvaluationSubjects),
         caster: ReferenceKey,
         on target: ReferenceKey,
         disarmChance: Int = 100
     ) -> SpellHitReport? {
+        let (owner, subjects) = perk
         guard
             let spell = world.perkChoices(
                 at: entryPoint, on: owner, subjects: subjects, seams: ConditionContext()

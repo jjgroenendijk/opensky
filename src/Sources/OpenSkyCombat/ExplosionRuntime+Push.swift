@@ -23,7 +23,7 @@ extension ExplosionRuntime {
         if spec.force > 0 {
             for body in world.impulseBodies() {
                 guard let impulse = GameplayImpulse.explosion(
-                    blast, on: body, isSource: source == body.reference, spin: nextSpin(),
+                    blast, on: (body, source == body.reference), spin: nextSpin(),
                     settings: settings
                 ) else { continue }
                 world.applyBodyImpulse(impulse)
@@ -40,7 +40,7 @@ extension ExplosionRuntime {
             guard
                 let health = world.actorHealth(of: target.key),
                 GameplayImpulse.explosionKnocksDown(
-                    blast, mode: spec.knockdown, distance: distance,
+                    blast, knockdown: (spec.knockdown, distance),
                     hit: KnockdownHit(
                         damage: ExplosionFalloff.damage(
                             spec.damage,

@@ -58,8 +58,7 @@ public protocol MagicWorld: AnyObject, SkillUseReporting, MagicArchetypeWorld {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
-        seams: ConditionContext
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float
     /// Raises the player's skill at actor value index `skill` by `points` levels, for
     /// a read skill book. Returns how many levels it rose.
@@ -129,10 +128,20 @@ extension MagicWorld {
         _ value: Float,
         at _: PerkEntryPoint,
         on _: ReferenceKey,
-        subjects _: PerkEvaluationSubjects,
-        seams _: ConditionContext
+        given _: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float {
         value
+    }
+
+    /// `key`'s perks applied to `value`, under `subjects` and, unless given, empty seams.
+    public func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext = ConditionContext()
+    ) -> Float {
+        perkModified(value, at: entryPoint, on: key, given: (subjects, seams))
     }
 
     /// A session with no progression raises nothing.

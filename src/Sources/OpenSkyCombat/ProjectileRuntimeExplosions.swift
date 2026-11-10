@@ -53,8 +53,9 @@ extension ProjectileRuntime {
             let impulses = explosions?.impulses, let world = impulses.world,
             let body = world.impulseBodies().first(where: { $0.reference == reference }),
             let push = GameplayImpulse.projectile(
-                impactForce: projectile.profile.impactForce, flight: projectile.state.velocity,
-                at: impact.position, body: body, settings: impulses.settings
+                impactForce: projectile.profile.impactForce,
+                impact: (projectile.state.velocity, impact.position), body: body,
+                settings: impulses.settings
             )
         else { return }
         world.applyBodyImpulse(push)

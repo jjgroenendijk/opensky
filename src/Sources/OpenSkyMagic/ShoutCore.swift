@@ -80,8 +80,9 @@ nonisolated public struct ShoutMachine: Equatable, Sendable {
 
     /// One frame. `fired` is true when the graph raised `Voice_SpellFire_Event`.
     public mutating func advance(
-        held: Bool, delta: Float, unlockedWords: Int, fired: Bool, settings: ShoutSettings
+        input: (held: Bool, fired: Bool), delta: Float, unlockedWords: Int, settings: ShoutSettings
     ) -> ShoutStep {
+        let (held, fired) = input
         cooldown = max(0, cooldown - max(0, delta))
         switch phase {
         case .idle:

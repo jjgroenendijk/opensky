@@ -94,8 +94,7 @@ struct ActiveEffectRealDataTests {
 
         let outcome = try effects.consume(
             potion.formID,
-            from: .player,
-            on: .player,
+            use: (.player, .player),
             inventory: harness.inventory,
             fromPlugin: Self.pluginName
         )

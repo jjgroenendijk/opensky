@@ -50,11 +50,11 @@ struct NPCAvoidanceTests {
     @Test func aMarkerTakenByANeighbourCountsAsReached() {
         let marker = SIMD2<Float>(100, 0)
         #expect(NPCAvoidance.isTaken(
-            marker, from: SIMD2(52, 0), radius: 20, tolerance: 12,
+            marker, from: SIMD2(52, 0), within: (20, 12),
             neighbours: [Self.neighbour(100, 0)]
         ))
         #expect(!NPCAvoidance.isTaken(
-            marker, from: SIMD2(0, 0), radius: 20, tolerance: 12,
+            marker, from: SIMD2(0, 0), within: (20, 12),
             neighbours: [Self.neighbour(100, 0)]
         ))
     }

@@ -25,7 +25,7 @@ extension MagicCoordinator {
         var seams = ConditionContext()
         seams.spellEvaluation = SpellEvaluationResolution(spell: resolved)
         return perkScaled(
-            entries, subject: spells.conditionSubject(of: resolved), seams: seams,
+            entries, spell: (spells.conditionSubject(of: resolved), seams),
             caster: caster, on: target
         )
     }
@@ -48,11 +48,13 @@ extension MagicCoordinator {
         seams.spellEvaluation = SpellEvaluationResolution(spell: nil, potionKeywords: Set(keywords))
         return perkScaled(
             entries,
-            subject: ConditionFormSubject(
-                id: ResolvedFormID(plugin: plugin, objectID: objectID),
-                effectKeywords: Set(keywords)
+            spell: (
+                ConditionFormSubject(
+                    id: ResolvedFormID(plugin: plugin, objectID: objectID),
+                    effectKeywords: Set(keywords)
+                ),
+                seams
             ),
-            seams: seams,
             caster: drinker,
             on: nil
         )
@@ -62,11 +64,11 @@ extension MagicCoordinator {
     /// the Atronach Stone's unconditioned half would halve every drink.
     private func perkScaled(
         _ entries: [MagicItemEffect],
-        subject: ConditionFormSubject,
-        seams: ConditionContext,
+        spell: (subject: ConditionFormSubject, seams: ConditionContext),
         caster: ReferenceKey,
         on target: ReferenceKey?
     ) -> [MagicItemEffect] {
+        let (subject, seams) = spell
         let cast = PerkEvaluationSubjects(owner: caster, target: target ?? caster)
             .binding(.spell, to: subject)
         return entries.map { entry in

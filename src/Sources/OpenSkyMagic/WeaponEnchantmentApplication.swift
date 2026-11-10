@@ -47,8 +47,7 @@ public enum WeaponEnchantmentApplication {
             guard !reaching.isEmpty else { continue }
             let scaled = SpellHitApplication.scale(
                 reaching,
-                fromPlugin: profile.sourcePlugin,
-                ignoresResistance: false,
+                source: (profile.sourcePlugin, false),
                 on: holder,
                 using: runtime,
                 resistances: resistances

@@ -280,7 +280,7 @@ public final class MagicCoordinator {
             let plugin = pluginName
             let outcome = try withEffects { runtime in
                 try runtime.consume(
-                    item, from: .player, on: .player, inventory: inventory, fromPlugin: plugin
+                    item, use: (.player, .player), inventory: inventory, fromPlugin: plugin
                 ) { entries, source in
                     self.perkScaledPotion(
                         entries, of: source, fromPlugin: plugin, drinker: .player
@@ -356,11 +356,11 @@ extension MagicCoordinator: CasterWorld {
 
     public func applyCastEffects(
         _ entries: [MagicItemEffect],
-        fromPlugin pluginName: String,
-        source: ActiveEffectSource,
+        origin: (plugin: String, source: ActiveEffectSource),
         caster: ReferenceKey,
         on target: ActorValueHolder
     ) -> Int {
+        let (pluginName, source) = origin
         let scaled = source.kind == .spell
             ? perkScaled(entries, of: source.record, caster: caster, on: target.key)
             : entries

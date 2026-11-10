@@ -119,7 +119,7 @@ extension MagicCoordinator {
             .contains { $0.caseInsensitiveCompare(ShoutGraphNames.spellFire) == .orderedSame }
         let unlocked = voicedShout.flatMap { shouts[$0] }.map(unlockedWordCount) ?? 0
         switch shoutMachine.advance(
-            held: held, delta: delta, unlockedWords: unlocked, fired: fired, settings: shoutSettings
+            input: (held, fired), delta: delta, unlockedWords: unlocked, settings: shoutSettings
         ) {
         case .none: break
         case .release: pendingCommands.append(.playerGraphEvent(ShoutGraphNames.release))

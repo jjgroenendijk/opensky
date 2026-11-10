@@ -41,7 +41,7 @@ extension MagicCoordinator {
             )).storedCount
         }
         let targets = SpellHitTargeting.targets(
-            of: payload, at: aim.position, struck: aim.target, candidates: aim.candidates,
+            of: payload, landing: (aim.position, aim.target), candidates: aim.candidates,
             excluding: payload.caster
         )
         guard !targets.isEmpty else { return 0 }
@@ -85,7 +85,7 @@ extension MagicCoordinator {
     /// The struck actor takes every entry; others inside an entry's area take theirs.
     private func detonate(_ rune: PlacedRune, struck: ReferenceKey) {
         let targets = SpellHitTargeting.targets(
-            of: rune.payload, at: rune.position, struck: struck,
+            of: rune.payload, landing: (rune.position, struck),
             candidates: world.spellHitCandidates(), excluding: rune.payload.caster
         )
         if !targets.isEmpty {

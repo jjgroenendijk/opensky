@@ -1156,7 +1156,7 @@ targets += composition(
         "OpenSkyCrime", "OpenSkyDialogue", "OpenSkyFactions", "OpenSkyInventory",
         "OpenSkyMagic", "OpenSkyMenus", "OpenSkyPerception", "OpenSkyProgression",
         "OpenSkyQuests", "OpenSkyScripting", "OpenSkyWorld", "OpenSkyQuestsInterface",
-        "OpenSkyInventoryInterface", "OpenSkyWorldInterface", "OpenSkyWeather",
+        "OpenSkyWorldInterface", "OpenSkyWeather",
         "OpenSkyTerrain", "OpenSkyEffects", "OpenSkyCamera", "OpenSkyRuntimeState",
         "OpenSkyActorPresentation", "OpenSkyObjectAnimation", "OpenSkyPlayer",
         "OpenSkyAIPackages", "OpenSkyCells", "OpenSkyLoading", "OpenSkyAssetCache",

@@ -81,7 +81,7 @@ public final class CrimeReporter: CrimeReporting {
         let verdict = verdict(on: reference, item: item, by: actor)
         guard verdict.isTheft else { return 0 }
         return runtime.quote(
-            theftEvent(item, count: count, from: reference, by: actor, owner: verdict.owner)
+            theftEvent((item, count), from: reference, by: actor, owner: verdict.owner)
         )
     }
 
@@ -105,7 +105,7 @@ public final class CrimeReporter: CrimeReporting {
             runtime.recordStolen(item, count: count, from: faction)
         }
         return record(
-            theftEvent(item, count: count, from: reference, by: actor, owner: owner)
+            theftEvent((item, count), from: reference, by: actor, owner: owner)
         )
     }
 
@@ -240,12 +240,12 @@ public final class CrimeReporter: CrimeReporting {
     }
 
     private func theftEvent(
-        _ item: FormID,
-        count: Int32,
+        _ stack: (item: FormID, count: Int32),
         from reference: ReferenceKey,
         by actor: ReferenceKey,
         owner: ReferenceOwner?
     ) -> CrimeEvent {
+        let (item, count) = stack
         let cell = world?.crimeCell(of: reference)
         let unitValue = world?.crimeItemValue(of: item) ?? 0
         var event = CrimeEvent(

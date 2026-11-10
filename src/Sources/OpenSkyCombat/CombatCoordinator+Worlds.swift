@@ -173,7 +173,7 @@ extension CombatCoordinator: MeleeCombatWorld {
         let health = world.health(of: target)
         let landed = world.damageHealth(by: scaled, of: target)
         if landed, let health, let attacker {
-            knockBack(target, damage: scaled, health: health, attacker: attacker, kind: kind)
+            knockBack(target, damage: scaled, health: health, by: (attacker, kind))
         }
         if landed, attacker == .player, target != .player {
             playerStruckTarget = target

@@ -280,12 +280,12 @@ extension CombatCastingChain: CasterWorld {
 
     public func applyCastEffects(
         _ entries: [MagicItemEffect],
-        fromPlugin pluginName: String,
-        source: ActiveEffectSource,
+        origin: (plugin: String, source: ActiveEffectSource),
         caster: ReferenceKey,
         on target: ActorValueHolder
     ) -> Int {
-        effects.apply(
+        let (pluginName, source) = origin
+        return effects.apply(
             entries, fromPlugin: pluginName, source: source, caster: caster, on: target
         ).count
     }
@@ -298,8 +298,7 @@ extension CombatCastingChain: CasterWorld {
         let aim = aimedSpellTarget(within: 0, for: payload.caster)
         let targets = SpellHitTargeting.targets(
             of: payload,
-            at: aim.position,
-            struck: aim.target,
+            landing: (aim.position, aim.target),
             candidates: aim.candidates,
             excluding: payload.caster
         )

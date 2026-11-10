@@ -34,8 +34,9 @@ extension NPCMover {
         guard isSwimming || abs(feet.z - waypoint.z) <= capsule.height else { return false }
         return simd_distance(flatFeet, flatWaypoint) <= NPCMovementRuntime.waypointTolerance
             || NPCAvoidance.isTaken(
-                flatWaypoint, from: flatFeet, radius: capsule.radius,
-                tolerance: NPCMovementRuntime.waypointTolerance, neighbours: neighbours
+                flatWaypoint, from: flatFeet,
+                within: (capsule.radius, NPCMovementRuntime.waypointTolerance),
+                neighbours: neighbours
             )
     }
 

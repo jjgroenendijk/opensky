@@ -160,10 +160,9 @@ extension CombatWorldAdapter {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
-        seams: ConditionContext
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float {
-        actorFacts.perkModified(value, at: entryPoint, on: key, subjects: subjects, seams: seams)
+        actorFacts.perkModified(value, at: entryPoint, on: key, given: conditions)
     }
 
     public func perkChoices(

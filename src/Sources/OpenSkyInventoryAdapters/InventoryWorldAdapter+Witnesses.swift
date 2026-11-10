@@ -99,10 +99,9 @@ extension InventoryWorldAdapter {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
-        seams: ConditionContext
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float {
-        perks.perkModified(value, at: entryPoint, on: key, subjects: subjects, seams: seams)
+        perks.perkModified(value, at: entryPoint, on: key, given: conditions)
     }
 
     public func magicEffectName(_ effect: ResolvedMagicEffect) -> String {

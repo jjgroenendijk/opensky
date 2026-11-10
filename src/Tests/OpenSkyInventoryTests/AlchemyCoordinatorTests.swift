@@ -264,14 +264,13 @@ final class FakeAlchemyWorld: InventoryWorld {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on _: ReferenceKey,
-        subjects _: PerkEvaluationSubjects,
-        seams: ConditionContext
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float {
         if entryPoint == .purifyAlchemyIngredients {
             return purifies ? 1 : value
         }
         if entryPoint == .modAlchemyEffectiveness {
-            alchemySeams.append(seams.alchemy)
+            alchemySeams.append(conditions.seams.alchemy)
         }
         return value * (perkFactors[entryPoint] ?? 1)
     }

@@ -35,12 +35,12 @@ public struct SpellHitDefences {
     /// Runs the defences for one target, changing its actor values as they act.
     /// `entries` are the ones that reach the target, before resistance.
     func defend(
-        _ target: SpellHitTarget,
-        holder: ActorValueHolder,
+        _ struck: (target: SpellHitTarget, holder: ActorValueHolder),
         entries: [MagicItemEffect],
         hit: SpellHit,
         runtime: ActiveEffectRuntime
     ) -> SpellDefenceOutcome {
+        let (target, holder) = struck
         let payload = hit.payload
         if
             !target.isDirect, !payload.areaIgnoresLineOfSight, let impact = hit.impact,

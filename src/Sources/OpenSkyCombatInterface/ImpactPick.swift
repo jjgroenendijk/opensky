@@ -26,10 +26,11 @@ nonisolated public enum ImpactPick {
     ///   - staticHit: the first static collision along the line, with its distance.
     ///   - terrain: the ground height and `MATT` under a point; nil where none is.
     public static func resolve(
-        origin: SIMD3<Float>, direction: SIMD3<Float>, length: Float,
+        along line: (origin: SIMD3<Float>, direction: SIMD3<Float>), length: Float,
         staticHit: (distance: Float, hit: ImpactPickHit)?,
         terrain: (SIMD2<Float>) -> (height: Float, material: FormID?)?
     ) -> ImpactPickHit? {
+        let (origin, direction) = line
         let squared = simd_length_squared(direction)
         guard length.isFinite, length > 0, squared.isFinite, squared > 0 else { return nil }
         let unit = direction / squared.squareRoot()

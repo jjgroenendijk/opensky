@@ -38,9 +38,9 @@ extension ActiveEffectRuntime {
         _ amount: Float,
         at index: Int32,
         on target: ActorValueHolder,
-        effect: ReferenceKey,
-        caster: ReferenceKey?
+        from source: (effect: ReferenceKey, caster: ReferenceKey?)
     ) {
+        let (effect, caster) = source
         let before = values.value(at: index, on: target) ?? 0
         values.restore(at: index, by: amount, on: target)
         guard

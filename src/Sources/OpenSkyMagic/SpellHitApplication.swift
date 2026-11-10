@@ -39,7 +39,7 @@ public enum SpellHitApplication {
             )
             guard !reaching.isEmpty else { continue }
             switch defences.defend(
-                target, holder: holder, entries: reaching, hit: hit, runtime: runtime
+                (target, holder), entries: reaching, hit: hit, runtime: runtime
             ) {
             case .lands: break
             case .landsThroughWard: report.noteFriendlyWardHit(target.key)
@@ -113,8 +113,7 @@ public enum SpellHitApplication {
     ) -> (entries: [MagicItemEffect], adjustments: [SpellMagnitudeAdjustment]) {
         scale(
             entries,
-            fromPlugin: payload.sourcePlugin,
-            ignoresResistance: payload.ignoresResistance,
+            source: (payload.sourcePlugin, payload.ignoresResistance),
             on: holder,
             using: runtime,
             resistances: resistances
@@ -125,12 +124,12 @@ public enum SpellHitApplication {
     /// effects pay the same resistances.
     public static func scale(
         _ entries: [MagicItemEffect],
-        fromPlugin pluginName: String,
-        ignoresResistance: Bool,
+        source: (plugin: String, ignoresResistance: Bool),
         on holder: ActorValueHolder,
         using runtime: ActiveEffectRuntime,
         resistances: ActorResistanceSettings = .documentedDefaults
     ) -> (entries: [MagicItemEffect], adjustments: [SpellMagnitudeAdjustment]) {
+        let (pluginName, ignoresResistance) = source
         guard !ignoresResistance else { return (entries, []) }
         var scaled: [MagicItemEffect] = []
         var adjustments: [SpellMagnitudeAdjustment] = []

@@ -71,8 +71,10 @@ extension CombatLoopRuntime {
         }
         driveAllies(
             among: actors,
-            foes: Self.meleeTargets(driven.filter { behaviors[$0.key]?.isEngaged == true }),
-            budget: Self.maximumEngagedActors - driven.count,
+            engaging: (
+                Self.meleeTargets(driven.filter { behaviors[$0.key]?.isEngaged == true }),
+                Self.maximumEngagedActors - driven.count
+            ),
             influences: influences, world: world
         )
         return hostility
@@ -292,7 +294,7 @@ extension CombatLoopRuntime {
             damage: landed ? damage.applied : 0
         ))
         guard target == world.combatPlayer.key else { return }
-        noteSkillUse(from: actor, weapon: weapon, damage: damage, landed: landed, world: world)
+        noteSkillUse(from: actor, weapon: weapon, result: (damage, landed), world: world)
         if damage.wasBlocked {
             noteBlockRecoil(of: actor.key, blockedBy: target, world: world)
         }
@@ -322,10 +324,10 @@ extension CombatLoopRuntime {
     private func noteSkillUse(
         from actor: CombatActorObservation,
         weapon: MeleeWeaponProfile,
-        damage: MeleeDamageResult,
-        landed: Bool,
+        result: (damage: MeleeDamageResult, landed: Bool),
         world: any CombatLoopWorld
     ) {
+        let (damage, landed) = result
         let blow = MeleeSkillUseBlow(
             attacker: actor.key,
             target: world.combatPlayer.key,

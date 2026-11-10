@@ -151,9 +151,10 @@ nonisolated public enum GameplayImpulse {
     /// the body's kind, its mass under `fGameplayImpulseMinMass`, and the impulse cap.
     /// `spin` is three values in -1...1 for the random turn.
     public static func explosion(
-        _ blast: ImpulseBlast, on body: ImpulseBody, isSource: Bool, spin: SIMD3<Float>,
-        settings: ImpulseSettings
+        _ blast: ImpulseBlast, on target: (body: ImpulseBody, isSource: Bool),
+        spin: SIMD3<Float>, settings: ImpulseSettings
     ) -> BodyImpulse? {
+        let (body, isSource) = target
         guard simd_distance(blast.center, body.position) <= blast.radius else { return nil }
         var direction = direction(from: blast.center, to: body.position)
         if body.kind == .biped {
@@ -177,9 +178,10 @@ nonisolated public enum GameplayImpulse {
     /// Whether `blast` knocks down an actor `distance` away: it must reach past
     /// `fExplosionForceKnockdownMinimum` of its falloff, and pass its knockdown mode.
     public static func explosionKnocksDown(
-        _ blast: ImpulseBlast, mode: ExplosionKnockdown, distance: Float, hit: KnockdownHit,
-        settings: ImpulseSettings
+        _ blast: ImpulseBlast, knockdown: (mode: ExplosionKnockdown, distance: Float),
+        hit: KnockdownHit, settings: ImpulseSettings
     ) -> Bool {
+        let (mode, distance) = knockdown
         guard
             ExplosionFalloff.fraction(radius: blast.radius, distance: distance)
             > settings.explosionKnockdownMinimum
@@ -196,9 +198,10 @@ nonisolated public enum GameplayImpulse {
 
     /// The push a projectile's `PROJ` impact force gives the body it struck, along its flight.
     public static func projectile(
-        impactForce: Float, flight: SIMD3<Float>, at point: SIMD3<Float>, body: ImpulseBody,
-        settings: ImpulseSettings
+        impactForce: Float, impact: (flight: SIMD3<Float>, point: SIMD3<Float>),
+        body: ImpulseBody, settings: ImpulseSettings
     ) -> BodyImpulse? {
+        let (flight, point) = impact
         let amount = impactForce * settings.projectileKnock.value(for: body.kind) * havokScale
             * massScale(body.mass, minimum: settings.projectileKnockMinMass)
         guard amount.isFinite, amount > 0, simd_length(flight) > 0 else { return nil }

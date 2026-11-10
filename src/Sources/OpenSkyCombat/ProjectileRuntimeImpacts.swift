@@ -85,8 +85,7 @@ extension ProjectileRuntime {
         guard let payload = projectile.payload.spell, let world else { return nil }
         let targets = SpellHitTargeting.targets(
             of: payload,
-            at: impact.position,
-            struck: impact.target,
+            landing: (impact.position, impact.target),
             candidates: world.projectileTargets(),
             excluding: projectile.shooter,
             settings: areaSettings

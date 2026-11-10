@@ -146,7 +146,12 @@ extension ActiveEffectRuntime {
         case .absorb:
             guard application.isInstant else { return }
             for value in application.values {
-                absorb(value.magnitude, at: value.index, application.isDetrimental, caster, target)
+                absorb(
+                    value.magnitude,
+                    at: value.index,
+                    application.isDetrimental,
+                    (caster, target)
+                )
             }
         case let .dispel(filter):
             dispelMatching(filter, on: target)
@@ -188,7 +193,7 @@ extension ActiveEffectRuntime {
             } else {
                 restore(
                     value.magnitude, at: value.index, on: target,
-                    effect: application.effect, caster: caster
+                    from: (application.effect, caster)
                 )
             }
         }
@@ -201,9 +206,9 @@ extension ActiveEffectRuntime {
         _ amount: Float,
         at index: Int32,
         _ isDetrimental: Bool,
-        _ caster: ReferenceKey?,
-        _ target: ActorValueHolder
+        _ sides: (caster: ReferenceKey?, target: ActorValueHolder)
     ) {
+        let (caster, target) = sides
         guard ActorValueIdentity.isVanilla(index: index), amount > 0 else { return }
         let casterHolder = caster.flatMap(holderResolver)
         let source = isDetrimental ? target : casterHolder

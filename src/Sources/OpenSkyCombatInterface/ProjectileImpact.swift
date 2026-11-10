@@ -87,7 +87,8 @@ nonisolated public enum ProjectileImpactQuery: Sendable {
         guard distance.isFinite, distance > Float.ulpOfOne else { return nil }
         let radius = step.clampedRadius
         let actorHit = firstActor(
-            from: from, to: to, radius: radius, targets: targets, shooter: shooter
+            along: ProjectileStep(from: from, to: to, radius: radius),
+            targets: targets, shooter: shooter
         )
         let staticHit = sweep(
             ShapeSweepQuery.sphere(
@@ -113,12 +114,11 @@ nonisolated public enum ProjectileImpactQuery: Sendable {
     /// at sampled points along it, so a thin actor cannot slip between two
     /// samples of a fast arrow — which at arrow speeds is not a hypothetical.
     public static func firstActor(
-        from: SIMD3<Float>,
-        to: SIMD3<Float>,
-        radius: Float,
+        along step: ProjectileStep,
         targets: [MeleeTarget],
         shooter: ReferenceKey?
     ) -> ProjectileImpact? {
+        let (from, to, radius) = (step.from, step.to, step.radius)
         var best: ProjectileImpact?
         for target in targets where target.key != shooter {
             let contactRadius = radius + max(target.capsule.radius, 0)

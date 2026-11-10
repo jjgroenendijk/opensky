@@ -99,8 +99,7 @@ public struct NPCMover {
             continueHop(frameTime: frameTime)
         } else if world.hasGround(SIMD2(feet.x, feet.y)) {
             walk(
-                toward: waypoint, step: step, water: (sample, water),
-                frameTime: frameTime, world: world
+                toward: waypoint, pace: (step, frameTime), water: (sample, water), world: world
             )
         } else {
             glide(toward: waypoint, distance: step.speed * max(frameTime, 0))
@@ -128,11 +127,11 @@ public struct NPCMover {
 
     private mutating func walk(
         toward waypoint: SIMD3<Float>,
-        step: NPCMoverStepPlan,
+        pace: (step: NPCMoverStepPlan, frameTime: Float),
         water: (sample: WaterReading?, swimSurface: Float?),
-        frameTime: Float,
         world: NPCMovementWorld
     ) {
+        let (step, frameTime) = pace
         let neighbours = neighbours
         let radius = capsule.radius
         let race = world.waterPushRace(actor)

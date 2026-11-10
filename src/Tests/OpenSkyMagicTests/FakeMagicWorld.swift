@@ -169,8 +169,7 @@ final class FakeMagicWorld: MagicWorld {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,
-        subjects _: PerkEvaluationSubjects,
-        seams _: ConditionContext
+        given _: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float {
         perkOwners[entryPoint] = key
         return perkValues[entryPoint] ?? value * (perkFactors[entryPoint] ?? 1)
