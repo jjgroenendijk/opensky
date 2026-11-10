@@ -83,8 +83,8 @@ nonisolated extension DynamicBodyContacts {
                 of: point,
                 radius: radius,
                 soup: PlacedTriangleSoup(
-                    vertices: CapsuleWorldCollider.boxVertices(halfExtents),
-                    indices: CapsuleWorldCollider.boxIndices,
+                    vertices: CollisionBox.vertices(halfExtents),
+                    indices: CollisionBox.indices,
                     transform: shape.transform
                 ),
                 orientation: orientation

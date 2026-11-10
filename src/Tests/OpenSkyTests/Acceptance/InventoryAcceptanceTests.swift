@@ -132,8 +132,9 @@ struct InventoryAcceptanceTests {
     @discardableResult
     private static func transferThroughTheContainer(_ chain: Chain) throws -> Int32 {
         let inventory = chain.runtime.inventory
-        let session = try chain.runtime.openContainer(
-            Chain.search(Chain.chestReference, base: Fixture.chest)
+        let session = try ContainerSession.open(
+            Chain.search(Chain.chestReference, base: Fixture.chest),
+            in: chain.runtime
         )
         #expect(session.isOpen)
         let chestLockpicks = inventory.count(of: Fixture.lockpick, in: chain.chest)

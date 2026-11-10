@@ -7,6 +7,7 @@ import Foundation
 public import OpenSkyCrimeInterface
 public import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
+public import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 /// A live transfer session between one container and the player.
@@ -133,5 +134,30 @@ public final class ContainerSession {
     /// dismissed and then torn down — writes once.
     public func close() {
         setOpen(false)
+    }
+
+    /// Opens a transfer session on the container behind `interaction`, and records
+    /// the opening in `ReferenceActivationState` so scripts can see it.
+    /// - Throws: `WorldItemError.notAContainer`, `WorldItemError.unknownReference`.
+    public static func open(
+        _ interaction: PlacedInteraction,
+        in runtime: WorldItemRuntime
+    ) throws -> ContainerSession {
+        guard interaction.action == .search else {
+            throw WorldItemError.notAContainer(interaction.reference)
+        }
+        guard let entry = runtime.references?.referenceEntry(formID: interaction.reference) else {
+            throw WorldItemError.unknownReference(interaction.reference)
+        }
+        let session = ContainerSession(
+            runtime: runtime,
+            container: InventoryHolder(
+                key: entry.key,
+                owner: .container(base: interaction.base),
+                cell: runtime.references?.cellLocation(of: entry.key)
+            )
+        )
+        session.setOpen(true)
+        return session
     }
 }

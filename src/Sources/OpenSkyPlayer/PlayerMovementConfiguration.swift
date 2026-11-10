@@ -46,7 +46,7 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
             ?? MovementSetting(value: walkSpeed.value, source: "derived from walk speed")
         self.jumpTakeoffSpeed = jumpTakeoffSpeed
             ?? MovementSetting(
-                value: (2 * WalkController.gravity * 76).squareRoot(),
+                value: (2 * PhysicsStep.gravity * 76).squareRoot(),
                 source: "fJumpHeightMin engine default over gravity"
             )
         self.travelSpeed = travelSpeed
@@ -136,7 +136,7 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
             store: store,
             fallback: (76, "engine default")
         )
-        let speed = (2 * WalkController.gravity * max(height.value, 0)).squareRoot()
+        let speed = (2 * PhysicsStep.gravity * max(height.value, 0)).squareRoot()
         return MovementSetting(
             value: speed.isFinite ? speed : 0,
             source: "fJumpHeightMin \(height.value) [\(height.source)] over gravity"

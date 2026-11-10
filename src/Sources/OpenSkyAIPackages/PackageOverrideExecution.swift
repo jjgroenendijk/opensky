@@ -5,7 +5,6 @@
 public import OpenSkyFormatsESM
 public import OpenSkyPhysics
 public import OpenSkyWorldInterface
-import simd
 
 /// The procedure tree of one actor's current package.
 nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
@@ -83,20 +82,6 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
         case .jog, .run: .run
         case .unknown: nil
         }
-    }
-
-    /// "Start At Nearest?": the walk begins at the point nearest `start`. A
-    /// repeatable patrol keeps the points it skipped for its next lap; a plain one drops them.
-    static func startingAtNearest(
-        _ path: [SIMD3<Float>], to start: SIMD3<Float>, loops: Bool
-    ) -> [SIMD3<Float>] {
-        guard
-            let nearest = path.indices.min(by: {
-                simd_distance_squared(path[$0], start) < simd_distance_squared(path[$1], start)
-            })
-        else { return path }
-        let tail = Array(path[nearest...])
-        return loops ? tail + path[..<nearest] : tail
     }
 }
 

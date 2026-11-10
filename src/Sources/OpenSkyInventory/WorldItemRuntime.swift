@@ -243,28 +243,4 @@ public final class WorldItemRuntime {
             position: eye + offset - SIMD3(0, 0, dropHeight)
         )
     }
-
-    // MARK: - Containers
-
-    /// Opens a transfer session on the container behind `interaction`, and records
-    /// the opening in `ReferenceActivationState` so scripts can see it.
-    /// - Throws: `WorldItemError.notAContainer`, `WorldItemError.unknownReference`.
-    public func openContainer(_ interaction: PlacedInteraction) throws -> ContainerSession {
-        guard interaction.action == .search else {
-            throw WorldItemError.notAContainer(interaction.reference)
-        }
-        guard let entry = references?.referenceEntry(formID: interaction.reference) else {
-            throw WorldItemError.unknownReference(interaction.reference)
-        }
-        let session = ContainerSession(
-            runtime: self,
-            container: InventoryHolder(
-                key: entry.key,
-                owner: .container(base: interaction.base),
-                cell: references?.cellLocation(of: entry.key)
-            )
-        )
-        session.setOpen(true)
-        return session
-    }
 }

@@ -82,7 +82,7 @@ nonisolated extension DynamicBodyContacts {
              let .convexVertices(vertices, indices):
             soup = (vertices, indices)
         case let .box(halfExtents):
-            soup = (CapsuleWorldCollider.boxVertices(halfExtents), CapsuleWorldCollider.boxIndices)
+            soup = (CollisionBox.vertices(halfExtents), CollisionBox.indices)
         case .sphere, .capsule:
             for (index, sample) in samples.enumerated() {
                 answers[index].hit = penetration(

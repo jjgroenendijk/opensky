@@ -92,7 +92,7 @@ extension PackageProcedureInputs {
         var result = base
         let flags = flags.count == 4 ? flags : [false, false, false, false]
         let walk = flags[1]
-            ? PackageOverrideExecution.startingAtNearest(path, to: start, loops: flags[0])
+            ? Self.startingAtNearest(path, to: start, loops: flags[0])
             : path
         result.isDirect = flags[3]
         result.setup.repeats = flags[0]
@@ -159,5 +159,19 @@ extension PackageProcedureInputs {
             result.setup.walks = true
         }
         return result
+    }
+
+    /// "Start At Nearest?": the walk begins at the point nearest `start`. A
+    /// repeatable patrol keeps the points it skipped for its next lap; a plain one drops them.
+    static func startingAtNearest(
+        _ path: [SIMD3<Float>], to start: SIMD3<Float>, loops: Bool
+    ) -> [SIMD3<Float>] {
+        guard
+            let nearest = path.indices.min(by: {
+                simd_distance_squared(path[$0], start) < simd_distance_squared(path[$1], start)
+            })
+        else { return path }
+        let tail = Array(path[nearest...])
+        return loops ? tail + path[..<nearest] : tail
     }
 }

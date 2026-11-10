@@ -48,8 +48,8 @@ nonisolated extension StaticCollisionShape {
             surfaces = (vertices, hullIndices)
         case let .box(halfExtents):
             surfaces = (
-                CapsuleWorldCollider.boxVertices(halfExtents),
-                CapsuleWorldCollider.boxIndices
+                CollisionBox.vertices(halfExtents),
+                CollisionBox.indices
             )
         case .sphere, .capsule:
             return nil

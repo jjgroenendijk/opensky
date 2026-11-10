@@ -45,9 +45,9 @@ struct BarterVendorRulesTests {
     /// keyword.
     private func shop(vendor: Vendor?, hour: Float? = 12) throws -> Shop {
         let harness = try Parent.standardHarness()
-        let merchant = try harness.runtime.openContainer(Parent.interaction(
+        let merchant = try ContainerSession.open(Parent.interaction(
             reference: Parent.chestReference, base: Items.chest, action: .search
-        )).container
+        ), in: harness.runtime).container
         let inventory = harness.runtime.inventory
         try inventory.add(Items.cuirass, count: 2, to: merchant, stolen: true)
         try inventory.add(inventory.goldFormID, count: 5000, to: merchant)
