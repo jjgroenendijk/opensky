@@ -182,7 +182,8 @@ final class GameViewController: NSViewController, GameWindowContent {
             cellRunner: loaded.runner,
             gameSession: gameSession,
             streamer: streamer,
-            services: appServices
+            services: appServices,
+            parts: GameSessionScopeFactories.init(scope:)
         )
         self.session = session
         sessionStart.measure(.systems) {

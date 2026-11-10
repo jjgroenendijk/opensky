@@ -31,7 +31,7 @@ import simd
 
 /// What `AIPerceptionSenseAdapter` reads from the session.
 @MainActor
-public protocol AIPerceptionSenseHost: AnyObject {
+public protocol AIPerceptionSenseHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var crime: any CrimePort { get }

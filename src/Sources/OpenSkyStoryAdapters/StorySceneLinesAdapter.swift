@@ -24,7 +24,7 @@ import OpenSkyWorldState
 
 /// What `StorySceneLinesAdapter` reads from the session.
 @MainActor
-public protocol StorySceneLinesHost: AnyObject {
+public protocol StorySceneLinesHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var dialogue: any DialoguePort { get }
     var dialogueWorld: any DialogueWorldPort { get }

@@ -19,7 +19,7 @@ import simd
 
 /// What `PlayerFaceAdapter` reads from the session.
 @MainActor
-public protocol PlayerFaceHost: AnyObject {
+public protocol PlayerFaceHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

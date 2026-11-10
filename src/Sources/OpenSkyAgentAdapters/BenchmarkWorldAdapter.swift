@@ -42,7 +42,7 @@ public protocol BenchmarkViewPort: AnyObject {
 
 /// What `BenchmarkWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol BenchmarkWorldHost: AnyObject {
+public protocol BenchmarkWorldHost: AnyObject, SendableMetatype {
     var agentWorld: any AgentWorldPort { get }
     var benchmarkLoadPhases: (any LoadPhaseRecorderPort)? { get }
     var benchmarkTour: any BenchmarkTourPort { get }

@@ -20,7 +20,7 @@ import OpenSkyWorldState
 
 /// What `MessageCameraEffectsAdapter` reads from the session.
 @MainActor
-public protocol MessageCameraEffectsHost: AnyObject {
+public protocol MessageCameraEffectsHost: AnyObject, SendableMetatype {
     var cinematicCamera: any CinematicCameraPort { get }
     var cinematicWorld: any CinematicCameraWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }

@@ -22,7 +22,7 @@ import OpenSkyWorldState
 
 /// What `InventoryPerksAdapter` reads from the session.
 @MainActor
-public protocol InventoryPerksHost: AnyObject {
+public protocol InventoryPerksHost: AnyObject, SendableMetatype {
     var inventory: any InventoryPort { get }
     var mapWorld: any MapWorldPort { get }
     var perkActivation: any PerkActivationPort { get }

@@ -23,7 +23,7 @@ import OpenSkyWorldState
 
 /// What `ScriptReferenceBindingsAdapter` reads from the session.
 @MainActor
-public protocol ScriptReferenceBindingsHost: AnyObject {
+public protocol ScriptReferenceBindingsHost: AnyObject, SendableMetatype {
     var combat: any CombatPort { get }
     var combatWorld: any CombatWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }

@@ -21,7 +21,7 @@ import simd
 
 /// What `CrimeActorsAdapter` reads from the session.
 @MainActor
-public protocol CrimeActorsHost: AnyObject {
+public protocol CrimeActorsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var dialogue: any DialoguePort { get }
     var dialogueMenu: any DialogueMenuPort { get }

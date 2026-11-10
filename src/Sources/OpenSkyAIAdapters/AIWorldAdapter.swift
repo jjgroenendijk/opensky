@@ -35,7 +35,7 @@ import simd
 
 /// What `AIWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol AIWorldHost: AnyObject {
+public protocol AIWorldHost: AnyObject, SendableMetatype {
     var followerCommands: any FollowerCommandPort { get }
     var effectsWorld: any EffectsWorldPort { get }
     var actorGraphWorld: any ActorGraphWorldPort { get }

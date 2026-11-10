@@ -24,7 +24,7 @@ import simd
 
 /// What `VehicleWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol VehicleWorldHost: AnyObject {
+public protocol VehicleWorldHost: AnyObject, SendableMetatype {
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var idleWorld: any IdleWorldPort { get }
     var packages: any PackagePort { get }

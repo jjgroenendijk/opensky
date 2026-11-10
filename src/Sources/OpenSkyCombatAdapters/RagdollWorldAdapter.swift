@@ -28,7 +28,7 @@ import simd
 
 /// What `RagdollWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol RagdollWorldHost: AnyObject {
+public protocol RagdollWorldHost: AnyObject, SendableMetatype {
     var audioFileSystem: (any GameFileSource)? { get }
     var cinematicWorld: any CinematicCameraWorldPort { get }
     var crime: any CrimePort { get }

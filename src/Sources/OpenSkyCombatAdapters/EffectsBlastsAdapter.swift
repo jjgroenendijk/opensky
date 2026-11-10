@@ -24,7 +24,7 @@ import simd
 
 /// What `EffectsBlastsAdapter` reads from the session.
 @MainActor
-public protocol EffectsBlastsHost: AnyObject {
+public protocol EffectsBlastsHost: AnyObject, SendableMetatype {
     var effects: any EffectsPort { get }
     var audio: any AudioPort { get }
     var combat: any CombatPort { get }

@@ -12,7 +12,7 @@ import simd
 
 /// What `MountDragonRidingAdapter` reads from the session.
 @MainActor
-public protocol MountDragonRidingHost: AnyObject {
+public protocol MountDragonRidingHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var magic: any MagicPort { get }

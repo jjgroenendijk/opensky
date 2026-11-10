@@ -31,7 +31,7 @@ import simd
 
 /// What `AgentPlayerReadoutAdapter` reads from the session.
 @MainActor
-public protocol AgentPlayerReadoutHost: AnyObject {
+public protocol AgentPlayerReadoutHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

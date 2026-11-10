@@ -18,7 +18,7 @@ import OpenSkyWorldState
 
 /// What `DialogueMenuController.SpeechAdapter` reads from the session.
 @MainActor
-protocol DialogueMenuSpeechHost: AnyObject {
+protocol DialogueMenuSpeechHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var dialogueCamera: any DialogueCameraPort { get }
     var dialogueWorld: any DialogueWorldPort { get }

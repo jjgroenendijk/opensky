@@ -24,7 +24,7 @@ import simd
 
 /// What `IdleWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol IdleWorldHost: AnyObject {
+public protocol IdleWorldHost: AnyObject, SendableMetatype {
     var aiWorld: any AIWorldPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var gameSession: (any GameSessionPort)? { get }

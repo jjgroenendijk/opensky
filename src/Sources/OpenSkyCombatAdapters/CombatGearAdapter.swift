@@ -31,7 +31,7 @@ import simd
 
 /// What `CombatGearAdapter` reads from the session.
 @MainActor
-public protocol CombatGearHost: AnyObject {
+public protocol CombatGearHost: AnyObject, SendableMetatype {
     var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }
     var streamer: any CellStreamerPort { get }

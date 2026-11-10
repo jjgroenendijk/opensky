@@ -24,7 +24,7 @@ import simd
 
 /// What `AudioWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol AudioWorldHost: AnyObject {
+public protocol AudioWorldHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var combat: any CombatPort { get }

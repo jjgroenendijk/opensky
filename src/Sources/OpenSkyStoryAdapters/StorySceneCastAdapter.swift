@@ -24,7 +24,7 @@ import OpenSkyWorldState
 
 /// What `StorySceneCastAdapter` reads from the session.
 @MainActor
-public protocol StorySceneCastHost: AnyObject {
+public protocol StorySceneCastHost: AnyObject, SendableMetatype {
     var combat: any CombatPort { get }
     var dialogue: any DialoguePort { get }
     var gameSession: (any GameSessionPort)? { get }

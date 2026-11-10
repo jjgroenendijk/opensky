@@ -30,7 +30,7 @@ import simd
 
 /// What `AIPackageStateAdapter` reads from the session.
 @MainActor
-public protocol AIPackageStateHost: AnyObject {
+public protocol AIPackageStateHost: AnyObject, SendableMetatype {
     var combat: any CombatPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var perception: any PerceptionPort { get }

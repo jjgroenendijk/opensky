@@ -8,7 +8,7 @@ public import OpenSkySessionInterface
 
 /// What `CombatSpellCastsAdapter` reads from the session.
 @MainActor
-public protocol CombatSpellCastsHost: AnyObject {
+public protocol CombatSpellCastsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var magic: any MagicPort { get }

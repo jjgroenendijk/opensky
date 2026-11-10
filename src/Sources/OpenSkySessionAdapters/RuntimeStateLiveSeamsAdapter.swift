@@ -24,7 +24,7 @@ import OpenSkyWorldState
 
 /// What `RuntimeStateLiveSeamsAdapter` reads from the session.
 @MainActor
-public protocol RuntimeStateLiveSeamsHost: AnyObject {
+public protocol RuntimeStateLiveSeamsHost: AnyObject, SendableMetatype {
     var actorGraphWorld: any ActorGraphWorldPort { get }
     var aiWorld: any AIWorldPort { get }
     var dialogue: any DialoguePort { get }

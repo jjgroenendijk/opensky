@@ -17,7 +17,7 @@ import simd
 
 /// What `AIDetectionSenseAdapter` reads from the session.
 @MainActor
-public protocol AIDetectionSenseHost: AnyObject {
+public protocol AIDetectionSenseHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

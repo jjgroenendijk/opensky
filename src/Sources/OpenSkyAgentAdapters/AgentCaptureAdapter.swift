@@ -31,7 +31,7 @@ import OpenSkyWorldState
 
 /// What `AgentCaptureAdapter` reads from the session.
 @MainActor
-public protocol AgentCaptureHost: AnyObject {
+public protocol AgentCaptureHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var drawableSize: CGSize { get }
 }

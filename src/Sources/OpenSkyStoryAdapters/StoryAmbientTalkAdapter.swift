@@ -16,7 +16,7 @@ import simd
 
 /// What `StoryAmbientTalkAdapter` reads from the session.
 @MainActor
-public protocol StoryAmbientTalkHost: AnyObject {
+public protocol StoryAmbientTalkHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var dialogue: any DialoguePort { get }

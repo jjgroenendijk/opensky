@@ -19,7 +19,7 @@ import simd
 
 /// What `StorySocialSearchAdapter` reads from the session.
 @MainActor
-public protocol StorySocialSearchHost: AnyObject {
+public protocol StorySocialSearchHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var aiWorld: any AIWorldPort { get }
     var dialogue: any DialoguePort { get }

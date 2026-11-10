@@ -26,7 +26,7 @@ import simd
 
 /// What `ScriptActorBindingsAdapter` reads from the session.
 @MainActor
-public protocol ScriptActorBindingsHost: AnyObject {
+public protocol ScriptActorBindingsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var aiWorld: any AIWorldPort { get }

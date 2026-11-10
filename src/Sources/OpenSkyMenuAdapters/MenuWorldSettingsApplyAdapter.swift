@@ -25,7 +25,7 @@ import OpenSkyWorldState
 
 /// What `MenuWorldSettingsApplyAdapter` reads from the session.
 @MainActor
-public protocol MenuWorldSettingsApplyHost: AnyObject {
+public protocol MenuWorldSettingsApplyHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var cameraInput: any CameraInputStatePort { get }
     var combat: any CombatPort { get }

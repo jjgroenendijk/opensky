@@ -22,7 +22,7 @@ import simd
 
 /// What `LoadingScreenPresentationAdapter` reads from the session.
 @MainActor
-public protocol LoadingScreenPresentationHost: MenuInputConsumer {
+public protocol LoadingScreenPresentationHost: MenuInputConsumer, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var hud: any HUDPort { get }
     var journal: any JournalPort { get }

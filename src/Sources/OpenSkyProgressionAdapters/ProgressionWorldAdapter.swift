@@ -19,7 +19,7 @@ public import OpenSkyWorldState
 
 /// What `ProgressionWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol ProgressionWorldHost: AnyObject {
+public protocol ProgressionWorldHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

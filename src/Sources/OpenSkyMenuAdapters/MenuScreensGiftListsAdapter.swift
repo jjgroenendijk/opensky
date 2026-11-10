@@ -10,7 +10,7 @@ public import OpenSkySessionInterface
 
 /// What `MenuScreensGiftListsAdapter` reads from the session.
 @MainActor
-public protocol MenuScreensGiftListsHost: AnyObject {
+public protocol MenuScreensGiftListsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var inventory: any InventoryPort { get }
     var inventoryWorld: any InventoryWorldPort { get }

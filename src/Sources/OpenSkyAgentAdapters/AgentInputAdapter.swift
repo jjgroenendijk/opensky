@@ -34,7 +34,7 @@ import OpenSkyWorldState
 
 /// What `AgentInputAdapter` reads from the session.
 @MainActor
-public protocol AgentInputHost: AnyObject {
+public protocol AgentInputHost: AnyObject, SendableMetatype {
     var cameraInput: any CameraInputStatePort { get }
     var viewBounds: CGRect { get }
     var inventoryMenu: any InventoryMenuPort { get }

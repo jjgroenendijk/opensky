@@ -20,7 +20,7 @@ import simd
 
 /// What `IdlePlacementAdapter` reads from the session.
 @MainActor
-public protocol IdlePlacementHost: AnyObject {
+public protocol IdlePlacementHost: AnyObject, SendableMetatype {
     var actorGraphWorld: any ActorGraphWorldPort { get }
     var actorWorld: any ActorWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }

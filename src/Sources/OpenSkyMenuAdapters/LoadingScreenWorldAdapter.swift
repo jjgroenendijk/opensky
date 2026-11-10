@@ -27,7 +27,7 @@ import simd
 
 /// What `LoadingScreenWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol LoadingScreenWorldHost: MenuInputConsumer {
+public protocol LoadingScreenWorldHost: MenuInputConsumer, SendableMetatype {
     var loadingScreens: any LoadingScreenPort { get }
     var renderer: (any RendererPort)? { get }
     var runtimeStateWorld: any RuntimeStateWorldPort { get }

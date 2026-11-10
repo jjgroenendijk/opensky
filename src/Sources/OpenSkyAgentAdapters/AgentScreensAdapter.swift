@@ -23,7 +23,7 @@ import OpenSkyWorldState
 
 /// What `AgentScreensAdapter` reads from the session.
 @MainActor
-public protocol AgentScreensHost: AnyObject {
+public protocol AgentScreensHost: AnyObject, SendableMetatype {
     var hud: any HUDPort { get }
     var loadingScreens: any LoadingScreenPort { get }
     var loadingWorld: any LoadingScreenWorldPort { get }

@@ -12,7 +12,7 @@ import OpenSkyWorldInterface
 
 /// The menus the bound keys open outside any menu.
 @MainActor
-protocol MenuHotkeyHost: AnyObject {
+protocol MenuHotkeyHost: AnyObject, SendableMetatype {
     var followerCommands: any FollowerCommandPort { get }
     var inventoryMenu: any InventoryMenuPort { get }
     var mapMenu: any MapMenuPort { get }
@@ -25,7 +25,7 @@ protocol MenuHotkeyHost: AnyObject {
 
 /// The menus that advance their movies each frame.
 @MainActor
-protocol MenuTickHost: AnyObject {
+protocol MenuTickHost: AnyObject, SendableMetatype {
     var inventoryMenu: any InventoryMenuPort { get }
     var mapMenu: any MapMenuPort { get }
     var menuMode: any MenuModePort { get }
@@ -41,7 +41,7 @@ protocol MenuTickHost: AnyObject {
 
 /// The menus opened during play, which take keys only.
 @MainActor
-protocol MenuPlayRoutesHost: AnyObject {
+protocol MenuPlayRoutesHost: AnyObject, SendableMetatype {
     var containerMenu: any ContainerMenuPort { get }
     var dialogueMenu: any DialogueMenuPort { get }
     var inventoryMenu: any InventoryMenuPort { get }
@@ -53,7 +53,7 @@ protocol MenuPlayRoutesHost: AnyObject {
 
 /// The menu stack, and the menus of the title and pause screens.
 @MainActor
-protocol MenuFrontRoutesHost: AnyObject {
+protocol MenuFrontRoutesHost: AnyObject, SendableMetatype {
     var mapMenu: any MapMenuPort { get }
     var menuMode: any MenuModePort { get }
     var menuScreens: any MenuScreensPort { get }

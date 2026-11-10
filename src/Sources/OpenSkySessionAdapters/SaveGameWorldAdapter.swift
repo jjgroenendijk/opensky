@@ -18,7 +18,7 @@ import OpenSkyWorld
 
 /// What `SaveGameWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol SaveGameWorldHost: AnyObject {
+public protocol SaveGameWorldHost: AnyObject, SendableMetatype {
     var hud: any HUDPort { get }
     var scripts: any ScriptPort { get }
     var effectsWorld: any EffectsWorldPort { get }

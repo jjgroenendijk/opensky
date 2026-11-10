@@ -21,7 +21,7 @@ import OpenSkyWorld
 
 /// What `InventoryMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
-protocol InventoryMenuHost: MenuInputConsumer {
+protocol InventoryMenuHost: MenuInputConsumer, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var worldData: WorldDataStores? { get }
     var mapWorld: any MapWorldPort { get }

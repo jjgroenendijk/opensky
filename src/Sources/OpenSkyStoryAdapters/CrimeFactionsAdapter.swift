@@ -21,7 +21,7 @@ import simd
 
 /// What `CrimeFactionsAdapter` reads from the session.
 @MainActor
-public protocol CrimeFactionsHost: AnyObject {
+public protocol CrimeFactionsHost: AnyObject, SendableMetatype {
     var factions: any FactionPort { get }
 }
 

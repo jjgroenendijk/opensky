@@ -23,7 +23,7 @@ import OpenSkyWorldState
 
 /// What `JournalMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
-protocol JournalMenuHost: MenuInputConsumer {
+protocol JournalMenuHost: MenuInputConsumer, SendableMetatype {
     var hud: any HUDPort { get }
     var journal: any JournalPort { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }

@@ -8,7 +8,7 @@ import OpenSkySessionInterface
 
 /// What `MenuScreens` reads from the session. `GameViewController` conforms.
 @MainActor
-protocol MenuScreensHost: AnyObject {
+protocol MenuScreensHost: AnyObject, SendableMetatype {
     var journalMenu: any JournalMenuPort { get }
 }
 

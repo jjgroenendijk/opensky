@@ -36,7 +36,7 @@ public struct ModelNodeWait {
 
 /// What `ScriptNodeBindingsAdapter` reads from the session.
 @MainActor
-public protocol ScriptNodeBindingsHost: AnyObject {
+public protocol ScriptNodeBindingsHost: AnyObject, SendableMetatype {
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var aiWorld: any AIWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }

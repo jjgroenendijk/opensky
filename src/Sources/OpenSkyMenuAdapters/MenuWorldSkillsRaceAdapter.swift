@@ -25,7 +25,7 @@ import OpenSkyWorldState
 
 /// What `MenuWorldSkillsRaceAdapter` reads from the session.
 @MainActor
-public protocol MenuWorldSkillsRaceHost: MenuInputConsumer {
+public protocol MenuWorldSkillsRaceHost: MenuInputConsumer, SendableMetatype {
     var audio: any AudioPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var mapWorld: any MapWorldPort { get }

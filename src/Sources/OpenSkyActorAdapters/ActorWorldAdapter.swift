@@ -28,7 +28,7 @@ import simd
 
 /// What `ActorWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol ActorWorldHost: AnyObject {
+public protocol ActorWorldHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var combat: any CombatPort { get }
     var hud: any HUDPort { get }

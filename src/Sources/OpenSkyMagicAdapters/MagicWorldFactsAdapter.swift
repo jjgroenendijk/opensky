@@ -21,7 +21,7 @@ import OpenSkyWorldState
 
 /// What `MagicWorldFactsAdapter` reads from the session.
 @MainActor
-public protocol MagicWorldFactsHost: AnyObject {
+public protocol MagicWorldFactsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var gameSession: (any GameSessionPort)? { get }

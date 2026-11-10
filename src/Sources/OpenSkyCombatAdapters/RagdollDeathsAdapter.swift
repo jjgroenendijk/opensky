@@ -23,7 +23,7 @@ import simd
 
 /// What `RagdollDeathsAdapter` reads from the session.
 @MainActor
-public protocol RagdollDeathsHost: AnyObject {
+public protocol RagdollDeathsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var containerMenu: any ContainerMenuPort { get }
     var gameSession: (any GameSessionPort)? { get }

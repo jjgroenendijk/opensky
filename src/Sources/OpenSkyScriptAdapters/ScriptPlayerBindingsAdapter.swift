@@ -22,7 +22,7 @@ import OpenSkyWorldState
 
 /// What `ScriptPlayerBindingsAdapter` reads from the session.
 @MainActor
-public protocol ScriptPlayerBindingsHost: AnyObject {
+public protocol ScriptPlayerBindingsHost: AnyObject, SendableMetatype {
     var actorGraphs: any ActorGraphPort { get }
     var actorValues: any ActorValuePort { get }
     var crime: any CrimePort { get }

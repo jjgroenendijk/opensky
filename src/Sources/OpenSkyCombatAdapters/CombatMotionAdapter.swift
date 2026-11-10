@@ -31,7 +31,7 @@ import simd
 
 /// What `CombatMotionAdapter` reads from the session.
 @MainActor
-public protocol CombatMotionHost: AnyObject {
+public protocol CombatMotionHost: AnyObject, SendableMetatype {
     var actorGraphs: any ActorGraphPort { get }
     var aiWorld: any AIWorldPort { get }
     var audio: any AudioPort { get }

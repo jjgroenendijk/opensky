@@ -32,7 +32,7 @@ public import OpenSkyWorldState
 
 /// What `RuntimeStateSessionClockAdapter` reads from the session.
 @MainActor
-public protocol RuntimeStateSessionClockHost: AnyObject {
+public protocol RuntimeStateSessionClockHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var hud: any HUDPort { get }
     var scripts: any ScriptPort { get }

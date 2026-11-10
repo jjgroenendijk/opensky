@@ -29,7 +29,7 @@ import OpenSkyWorldState
 
 /// What `StoryWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol StoryWorldHost: AnyObject {
+public protocol StoryWorldHost: AnyObject, SendableMetatype {
     var audioFileSystem: (any GameFileSource)? { get }
     var scenes: any ScenePort { get }
     var storyManager: any StoryManagerPort { get }

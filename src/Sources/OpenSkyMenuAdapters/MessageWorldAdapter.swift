@@ -24,7 +24,7 @@ import OpenSkyWorldState
 
 /// What `MessageWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol MessageWorldHost: MenuInputConsumer {
+public protocol MessageWorldHost: MenuInputConsumer, SendableMetatype {
     var audio: any AudioPort { get }
     var hud: any HUDPort { get }
     var journal: any JournalPort { get }

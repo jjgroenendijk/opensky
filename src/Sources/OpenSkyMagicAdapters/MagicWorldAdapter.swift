@@ -25,7 +25,7 @@ public import OpenSkyWorldState
 
 /// What `MagicWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol MagicWorldHost: AnyObject {
+public protocol MagicWorldHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var inventoryWorld: any InventoryWorldPort { get }
     var combat: any CombatPort { get }

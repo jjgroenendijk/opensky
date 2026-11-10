@@ -33,7 +33,7 @@ import OpenSkyWorldState
 
 /// What `CombatWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol CombatWorldHost: AnyObject {
+public protocol CombatWorldHost: AnyObject, SendableMetatype {
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

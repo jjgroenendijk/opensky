@@ -5,7 +5,7 @@ public import OpenSkySessionInterface
 
 /// What `MapRecordsAdapter` reads from the session.
 @MainActor
-public protocol MapRecordsHost: AnyObject {
+public protocol MapRecordsHost: AnyObject, SendableMetatype {
     var streamer: any CellStreamerPort { get }
     var menuRecords: (any MenuRecordsPort)? { get }
 }

@@ -32,7 +32,7 @@ import simd
 
 /// What `AgentFrameReadoutAdapter` reads from the session.
 @MainActor
-public protocol AgentFrameReadoutHost: AnyObject {
+public protocol AgentFrameReadoutHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var renderControls: any WorldRenderControlsPort { get }
     var renderer: (any RendererPort)? { get }

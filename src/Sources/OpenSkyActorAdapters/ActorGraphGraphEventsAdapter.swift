@@ -20,7 +20,7 @@ import simd
 
 /// What `ActorGraphGraphEventsAdapter` reads from the session.
 @MainActor
-public protocol ActorGraphGraphEventsHost: AnyObject {
+public protocol ActorGraphGraphEventsHost: AnyObject, SendableMetatype {
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var actorWorld: any ActorWorldPort { get }
     var dragonFlight: any DragonFlightPort { get }

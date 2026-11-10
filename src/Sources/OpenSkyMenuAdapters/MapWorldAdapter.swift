@@ -30,7 +30,7 @@ import simd
 
 /// What `MapWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol MapWorldHost: MenuInputConsumer {
+public protocol MapWorldHost: MenuInputConsumer, SendableMetatype {
     var audio: any AudioPort { get }
     var hud: any HUDPort { get }
     var messages: any MessageCoordinatorPort { get }

@@ -10,7 +10,7 @@ public import OpenSkySessionInterface
 
 /// What `MenuScreensCraftingDeskAdapter` reads from the session.
 @MainActor
-public protocol MenuScreensCraftingDeskHost: AnyObject {
+public protocol MenuScreensCraftingDeskHost: AnyObject, SendableMetatype {
     var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }
     var mapWorld: any MapWorldPort { get }

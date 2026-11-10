@@ -21,7 +21,7 @@ import simd
 
 /// What `BenchmarkTourSettingsAdapter` reads from the session.
 @MainActor
-public protocol BenchmarkTourSettingsHost: AnyObject {
+public protocol BenchmarkTourSettingsHost: AnyObject, SendableMetatype {
     var agentWorld: any AgentWorldPort { get }
     var audio: any AudioPort { get }
     var effects: any EffectsPort { get }

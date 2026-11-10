@@ -27,7 +27,7 @@ import simd
 
 /// What `CinematicCameraWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol CinematicCameraWorldHost: AnyObject {
+public protocol CinematicCameraWorldHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var cinematicCamera: any CinematicCameraPort { get }
     var combat: any CombatPort { get }

@@ -70,8 +70,10 @@ final class GameSessionScope {
         cellRunner: SerialCellBuildRunner?,
         gameSession: GameSession?,
         streamer: CellStreamer,
-        services: GameAppServices
+        services: GameAppServices,
+        parts: @escaping (GameSessionScope) -> any GameSessionParts
     ) {
+        makeParts = parts
         self.worldData = worldData
         self.cellRunner = cellRunner
         self.gameSession = gameSession
@@ -81,7 +83,7 @@ final class GameSessionScope {
             worldData.map { SessionStage(gameSession: gameSession, streamer: streamer, data: $0) }
         }
         if let stage {
-            GameSessionScopeBuild(scope: self).build(over: stage)
+            factories.build(over: stage)
         }
     }
 
@@ -110,10 +112,12 @@ final class GameSessionScope {
     lazy var renderControls = WorldRenderControls(runtimeState: runtimeState, world: self)
 
     /// Every adapter's view of this scope.
-    lazy var ports = SessionPorts(scope: self)
-    var factories: GameSessionScopeFactories {
-        GameSessionScopeFactories(scope: self)
+    lazy var ports = factories.makePorts()
+    var factories: any GameSessionParts {
+        makeParts(self)
     }
+
+    private let makeParts: (GameSessionScope) -> any GameSessionParts
 
     /// Actor clips for idles, gaits, and combat reactions, loaded off the main actor.
     lazy var animationClips: ActorClipLoader? = audioFileSystem

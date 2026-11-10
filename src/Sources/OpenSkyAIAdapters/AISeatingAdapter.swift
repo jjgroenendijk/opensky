@@ -19,7 +19,7 @@ import simd
 
 /// What `AISeatingAdapter` reads from the session.
 @MainActor
-public protocol AISeatingHost: AnyObject {
+public protocol AISeatingHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var crime: any CrimePort { get }

@@ -22,7 +22,7 @@ import OpenSkyWorldState
 
 /// What `AgentItemsAdapter` reads from the session.
 @MainActor
-public protocol AgentItemsHost: AnyObject {
+public protocol AgentItemsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var inventory: any InventoryPort { get }
     var inventoryWorld: any InventoryWorldPort { get }

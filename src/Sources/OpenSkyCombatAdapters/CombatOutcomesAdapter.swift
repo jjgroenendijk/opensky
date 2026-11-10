@@ -29,7 +29,7 @@ import OpenSkyWorldState
 
 /// What `CombatOutcomesAdapter` reads from the session.
 @MainActor
-public protocol CombatOutcomesHost: AnyObject {
+public protocol CombatOutcomesHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var effectsWorld: any EffectsWorldPort { get }
     var hud: any HUDPort { get }

@@ -19,7 +19,7 @@ import OpenSkyWorldState
 
 /// What `ActivationRefusalWorldAdapter` reads from the session.
 @MainActor
-public protocol ActivationRefusalWorldHost: AnyObject {
+public protocol ActivationRefusalWorldHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

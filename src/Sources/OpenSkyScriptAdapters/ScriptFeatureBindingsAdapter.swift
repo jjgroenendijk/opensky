@@ -26,7 +26,7 @@ import simd
 
 /// What `ScriptFeatureBindingsAdapter` reads from the session.
 @MainActor
-public protocol ScriptFeatureBindingsHost: AnyObject {
+public protocol ScriptFeatureBindingsHost: AnyObject, SendableMetatype {
     var aiWorld: any AIWorldPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var effectsWorld: any EffectsWorldPort { get }

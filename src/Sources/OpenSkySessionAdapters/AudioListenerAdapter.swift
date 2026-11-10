@@ -22,7 +22,7 @@ import simd
 
 /// What `AudioListenerAdapter` reads from the session.
 @MainActor
-public protocol AudioListenerHost: AnyObject {
+public protocol AudioListenerHost: AnyObject, SendableMetatype {
     var dialogueMenu: any DialogueMenuPort { get }
     var dialogueWorld: any DialogueWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }

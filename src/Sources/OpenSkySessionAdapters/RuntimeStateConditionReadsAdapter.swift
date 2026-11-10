@@ -32,7 +32,7 @@ public import OpenSkyWorldState
 
 /// What `RuntimeStateConditionReadsAdapter` reads from the session.
 @MainActor
-public protocol RuntimeStateConditionReadsHost: AnyObject {
+public protocol RuntimeStateConditionReadsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var crime: any CrimePort { get }
     var factions: any FactionPort { get }

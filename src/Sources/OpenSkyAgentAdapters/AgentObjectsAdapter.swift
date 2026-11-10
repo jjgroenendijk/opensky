@@ -27,7 +27,7 @@ import simd
 
 /// What `AgentObjectsAdapter` reads from the session.
 @MainActor
-public protocol AgentObjectsHost: AnyObject {
+public protocol AgentObjectsHost: AnyObject, SendableMetatype {
     var effectGraphs: any EffectGraphPort { get }
     var effectModelPoser: any EffectModelPoserPort { get }
     var factions: any FactionPort { get }

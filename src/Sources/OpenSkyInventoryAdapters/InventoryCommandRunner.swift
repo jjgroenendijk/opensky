@@ -7,7 +7,7 @@ import OpenSkyWorldInterface
 
 /// What `InventoryCommandRunner` reads from the session.
 @MainActor
-public protocol InventoryCommandsHost: AnyObject {
+public protocol InventoryCommandsHost: AnyObject, SendableMetatype {
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }
     var magic: any MagicPort { get }

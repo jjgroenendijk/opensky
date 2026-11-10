@@ -21,7 +21,7 @@ import simd
 
 /// What `DragonFlightWorldAdapter` reads from the session.
 @MainActor
-public protocol DragonFlightWorldHost: AnyObject {
+public protocol DragonFlightWorldHost: AnyObject, SendableMetatype {
     var actorGraphs: any ActorGraphPort { get }
     var actorWorld: any ActorWorldPort { get }
     var combatWorld: any CombatWorldPort { get }

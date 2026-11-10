@@ -31,7 +31,7 @@ import simd
 
 /// What `DialogueWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol DialogueWorldHost: AnyObject {
+public protocol DialogueWorldHost: AnyObject, SendableMetatype {
     var containerMenu: any ContainerMenuPort { get }
     var dialogueMenu: any DialogueMenuPort { get }
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }

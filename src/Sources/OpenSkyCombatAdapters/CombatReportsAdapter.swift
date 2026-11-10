@@ -30,7 +30,7 @@ import simd
 
 /// What `CombatReportsAdapter` reads from the session.
 @MainActor
-public protocol CombatReportsHost: AnyObject {
+public protocol CombatReportsHost: AnyObject, SendableMetatype {
     var controllerRumble: any ControllerRumblePort { get }
     var crime: any CrimePort { get }
     var dialogue: any DialoguePort { get }

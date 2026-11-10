@@ -17,7 +17,7 @@ import simd
 
 /// What `DragonFlightCandidatesAdapter` reads from the session.
 @MainActor
-public protocol DragonFlightCandidatesHost: AnyObject {
+public protocol DragonFlightCandidatesHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

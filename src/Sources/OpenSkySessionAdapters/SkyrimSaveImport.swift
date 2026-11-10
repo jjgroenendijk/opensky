@@ -16,7 +16,7 @@ public import OpenSkySessionInterface
 
 /// What `SkyrimSaveImport` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol SkyrimSaveImportHost: AnyObject {
+public protocol SkyrimSaveImportHost: AnyObject, SendableMetatype {
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }
     var menuWorld: any MenuWorldPort { get }

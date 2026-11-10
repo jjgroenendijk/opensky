@@ -28,7 +28,7 @@ import simd
 
 /// What `MapTravelAdapter` reads from the session.
 @MainActor
-public protocol MapTravelHost: AnyObject {
+public protocol MapTravelHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var combat: any CombatPort { get }
     var crime: any CrimePort { get }

@@ -23,7 +23,7 @@ import simd
 
 /// What `PlayerWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol PlayerWorldHost: AnyObject {
+public protocol PlayerWorldHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var headTracking: any HeadTrackingPort { get }

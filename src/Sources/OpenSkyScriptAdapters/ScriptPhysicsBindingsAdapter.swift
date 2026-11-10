@@ -14,7 +14,7 @@ import simd
 
 /// What `ScriptPhysicsBindingsAdapter` reads from the session.
 @MainActor
-public protocol ScriptPhysicsBindingsHost: AnyObject {
+public protocol ScriptPhysicsBindingsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var ragdoll: any RagdollPort { get }

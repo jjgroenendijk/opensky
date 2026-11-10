@@ -6,7 +6,7 @@ import simd
 
 /// What `EffectsLocatorAdapter` reads from the session.
 @MainActor
-public protocol EffectsLocatorHost: AnyObject {
+public protocol EffectsLocatorHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var scripts: any ScriptPort { get }
     var streamer: any CellStreamerPort { get }

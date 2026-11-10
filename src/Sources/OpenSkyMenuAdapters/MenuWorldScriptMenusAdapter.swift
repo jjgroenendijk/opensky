@@ -26,7 +26,7 @@ import OpenSkyWorldState
 
 /// What `MenuWorldScriptMenusAdapter` reads from the session.
 @MainActor
-public protocol MenuWorldScriptMenusHost: AnyObject {
+public protocol MenuWorldScriptMenusHost: AnyObject, SendableMetatype {
     var containerMenu: any ContainerMenuPort { get }
     var hud: any HUDPort { get }
     var magic: any MagicPort { get }

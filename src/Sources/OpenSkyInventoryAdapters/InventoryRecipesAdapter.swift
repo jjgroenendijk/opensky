@@ -22,7 +22,7 @@ import OpenSkyWorldState
 
 /// What `InventoryRecipesAdapter` reads from the session.
 @MainActor
-public protocol InventoryRecipesHost: AnyObject {
+public protocol InventoryRecipesHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var inventory: any InventoryPort { get }
