@@ -3,7 +3,8 @@ name: Weekly checks
 # The unit tests under each sanitizer. Each one rebuilds everything with
 # instrumentation, too slow for every push, so they run on a macOS runner once a
 # week and on demand (docs/tools/ci.md). A failed run opens an issue, or comments
-# on the open one, and a green run closes it.
+# on the open one, and a green run closes it. The module metrics report of design
+# rule 6 runs here too, and fails nothing.
 on:
   schedule:
     - cron: "17 3 * * 0"
@@ -68,6 +69,22 @@ jobs:
           path: .logs/
           include-hidden-files: true
           retention-days: 14
+
+  module-metrics:
+    name: Module metrics
+    runs-on: xcode-27
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - run: make module-metrics
+      - name: Upload the report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: module-metrics
+          path: .logs/module-metrics/
+          include-hidden-files: true
+          retention-days: 90
 
   report:
     name: Report
