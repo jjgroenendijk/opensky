@@ -27,7 +27,7 @@ import simd
 
 /// What `DialogueCameraFocusAdapter` reads from the session.
 @MainActor
-public protocol DialogueCameraFocusHost: AnyObject {
+public protocol DialogueCameraFocusHost: AnyObject, SendableMetatype {
     var dialogueCamera: any DialogueCameraPort { get }
     var faceMorphs: any FaceMorphPort { get }
     var headTracking: any HeadTrackingPort { get }

@@ -16,7 +16,7 @@ import simd
 
 /// What `MagicSpellDeliveryAdapter` reads from the session.
 @MainActor
-public protocol MagicSpellDeliveryHost: AnyObject {
+public protocol MagicSpellDeliveryHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var factions: any FactionPort { get }

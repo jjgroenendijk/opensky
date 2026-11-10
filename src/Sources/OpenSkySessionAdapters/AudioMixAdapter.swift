@@ -21,7 +21,7 @@ import simd
 
 /// What `AudioMixAdapter` reads from the session.
 @MainActor
-public protocol AudioMixHost: AnyObject {
+public protocol AudioMixHost: AnyObject, SendableMetatype {
     var dialogueMenu: any DialogueMenuPort { get }
     var loadingScreens: any LoadingScreenPort { get }
     var menuMode: any MenuModePort { get }

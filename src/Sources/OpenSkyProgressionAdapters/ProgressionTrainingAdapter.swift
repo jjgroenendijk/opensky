@@ -11,7 +11,7 @@ public import OpenSkySessionInterface
 
 /// What `ProgressionTrainingAdapter` reads from the session.
 @MainActor
-public protocol ProgressionTrainingHost: AnyObject {
+public protocol ProgressionTrainingHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var dialogueWorld: any DialogueWorldPort { get }
     var hud: any HUDPort { get }

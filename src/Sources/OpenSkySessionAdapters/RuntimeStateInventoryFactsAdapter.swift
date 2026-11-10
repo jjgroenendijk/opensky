@@ -23,7 +23,7 @@ import OpenSkyWorldState
 
 /// What `RuntimeStateInventoryFactsAdapter` reads from the session.
 @MainActor
-public protocol RuntimeStateInventoryFactsHost: AnyObject {
+public protocol RuntimeStateInventoryFactsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }

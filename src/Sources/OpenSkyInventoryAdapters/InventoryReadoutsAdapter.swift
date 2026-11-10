@@ -23,7 +23,7 @@ public import OpenSkyWorldState
 
 /// What `InventoryReadoutsAdapter` reads from the session.
 @MainActor
-public protocol InventoryReadoutsHost: AnyObject {
+public protocol InventoryReadoutsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var crime: any CrimePort { get }

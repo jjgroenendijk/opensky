@@ -20,7 +20,7 @@ import simd
 
 /// What `ObjectAnimationWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol ObjectAnimationWorldHost: AnyObject {
+public protocol ObjectAnimationWorldHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var actorGraphWorld: any ActorGraphWorldPort { get }
     var containerMenu: any ContainerMenuPort { get }

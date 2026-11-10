@@ -31,7 +31,7 @@ import simd
 
 /// What `AIPackageMovesAdapter` reads from the session.
 @MainActor
-public protocol AIPackageMovesHost: AnyObject {
+public protocol AIPackageMovesHost: AnyObject, SendableMetatype {
     var dragonFlightWorld: any DragonFlightWorldPort { get }
     var furniture: any FurniturePort { get }
     var gameSession: (any GameSessionPort)? { get }

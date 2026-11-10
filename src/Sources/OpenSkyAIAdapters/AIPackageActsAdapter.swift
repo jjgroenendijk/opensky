@@ -19,7 +19,7 @@ import simd
 
 /// What `AIPackageActsAdapter` reads from the session.
 @MainActor
-public protocol AIPackageActsHost: AnyObject {
+public protocol AIPackageActsHost: AnyObject, SendableMetatype {
     var actorGraphWorld: any ActorGraphWorldPort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

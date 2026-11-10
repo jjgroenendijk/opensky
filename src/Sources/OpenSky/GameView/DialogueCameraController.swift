@@ -18,7 +18,7 @@ import simd
 
 /// What `DialogueCameraController` reads from the session. `GameViewController` conforms.
 @MainActor
-protocol DialogueCameraHost: AnyObject {
+protocol DialogueCameraHost: AnyObject, SendableMetatype {
     var dialogue: any DialoguePort { get }
     var dialogueMenu: any DialogueMenuPort { get }
     var dialogueWorld: any DialogueWorldPort { get }

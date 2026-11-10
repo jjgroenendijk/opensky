@@ -22,7 +22,7 @@ import OpenSkyWorldState
 
 /// What `InventoryPickpocketAdapter` reads from the session.
 @MainActor
-public protocol InventoryPickpocketHost: AnyObject {
+public protocol InventoryPickpocketHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var magic: any MagicPort { get }

@@ -26,7 +26,7 @@ public import simd
 
 /// What `DialogueSpeakersAdapter` reads from the session.
 @MainActor
-public protocol DialogueSpeakersHost: AnyObject {
+public protocol DialogueSpeakersHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var factions: any FactionPort { get }

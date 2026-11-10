@@ -19,7 +19,7 @@ import simd
 
 /// What `MagicHeldMagicAdapter` reads from the session.
 @MainActor
-public protocol MagicHeldMagicHost: AnyObject {
+public protocol MagicHeldMagicHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var effectsWorld: any EffectsWorldPort { get }

@@ -11,7 +11,7 @@ import OpenSkyWorld
 
 /// What `RagdollPlayerFallAdapter` reads from the session.
 @MainActor
-public protocol RagdollPlayerFallHost: AnyObject {
+public protocol RagdollPlayerFallHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var hud: any HUDPort { get }

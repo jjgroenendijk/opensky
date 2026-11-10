@@ -25,7 +25,7 @@ import simd
 
 /// What `ActorGraphWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol ActorGraphWorldHost: AnyObject {
+public protocol ActorGraphWorldHost: AnyObject, SendableMetatype {
     var actorGraphs: any ActorGraphPort { get }
     var actorWorld: any ActorWorldPort { get }
     var audioFileSystem: (any GameFileSource)? { get }

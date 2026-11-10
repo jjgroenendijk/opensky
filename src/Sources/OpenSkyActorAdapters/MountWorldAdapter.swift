@@ -26,7 +26,7 @@ import simd
 
 /// What `MountWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol MountWorldHost: AnyObject {
+public protocol MountWorldHost: AnyObject, SendableMetatype {
     var actorGraphWorld: any ActorGraphWorldPort { get }
     var actorWorld: any ActorWorldPort { get }
     var aiWorld: any AIWorldPort { get }

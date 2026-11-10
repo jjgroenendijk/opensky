@@ -14,7 +14,7 @@ import OpenSkyWorldState
 
 /// What `ScriptSkyBindingsAdapter` reads from the session.
 @MainActor
-public protocol ScriptSkyBindingsHost: AnyObject {
+public protocol ScriptSkyBindingsHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var renderer: (any RendererPort)? { get }
     var scripts: any ScriptPort { get }

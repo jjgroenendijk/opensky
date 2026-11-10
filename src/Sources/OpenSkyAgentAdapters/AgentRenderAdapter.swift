@@ -25,7 +25,7 @@ import OpenSkyWorldState
 
 /// What `AgentRenderAdapter` reads from the session.
 @MainActor
-public protocol AgentRenderHost: AnyObject {
+public protocol AgentRenderHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var combat: any CombatPort { get }
     var effects: any EffectsPort { get }

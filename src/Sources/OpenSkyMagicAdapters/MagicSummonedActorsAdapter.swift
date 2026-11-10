@@ -17,7 +17,7 @@ import simd
 
 /// What `MagicSummonedActorsAdapter` reads from the session.
 @MainActor
-public protocol MagicSummonedActorsHost: AnyObject {
+public protocol MagicSummonedActorsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var gameSession: (any GameSessionPort)? { get }

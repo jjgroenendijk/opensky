@@ -19,7 +19,7 @@ import simd
 
 /// What `RagdollRecoveryAdapter` reads from the session.
 @MainActor
-public protocol RagdollRecoveryHost: AnyObject {
+public protocol RagdollRecoveryHost: AnyObject, SendableMetatype {
     var actorGraphWorld: any ActorGraphWorldPort { get }
     var actorValues: any ActorValuePort { get }
     var gameSession: (any GameSessionPort)? { get }

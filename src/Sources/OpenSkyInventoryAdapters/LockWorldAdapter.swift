@@ -23,7 +23,7 @@ import OpenSkyWorldState
 
 /// What `LockWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol LockWorldHost: AnyObject {
+public protocol LockWorldHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var crime: any CrimePort { get }
     var inventory: any InventoryPort { get }

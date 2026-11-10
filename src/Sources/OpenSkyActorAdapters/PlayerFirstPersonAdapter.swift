@@ -19,7 +19,7 @@ import simd
 
 /// What `PlayerFirstPersonAdapter` reads from the session.
 @MainActor
-public protocol PlayerFirstPersonHost: AnyObject {
+public protocol PlayerFirstPersonHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var gameSession: (any GameSessionPort)? { get }
     /// The app sees the session's concrete body and rig types.

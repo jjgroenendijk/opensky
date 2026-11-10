@@ -22,7 +22,7 @@ import simd
 
 /// What `CrimeJailAdapter` reads from the session.
 @MainActor
-public protocol CrimeJailHost: AnyObject {
+public protocol CrimeJailHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }
     var inventoryWorld: any InventoryWorldPort { get }

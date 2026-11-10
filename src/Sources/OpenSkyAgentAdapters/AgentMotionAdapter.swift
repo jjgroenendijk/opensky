@@ -17,7 +17,7 @@ import simd
 
 /// What `AgentMotionAdapter` reads from the session.
 @MainActor
-public protocol AgentMotionHost: AnyObject {
+public protocol AgentMotionHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

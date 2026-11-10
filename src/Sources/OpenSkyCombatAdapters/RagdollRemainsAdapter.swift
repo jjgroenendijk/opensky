@@ -17,7 +17,7 @@ public import simd
 
 /// What `RagdollRemainsAdapter` reads from the session.
 @MainActor
-public protocol RagdollRemainsHost: AnyObject {
+public protocol RagdollRemainsHost: AnyObject, SendableMetatype {
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var effects: any EffectsPort { get }

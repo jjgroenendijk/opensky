@@ -24,7 +24,7 @@ public import OpenSkyWorldState
 
 /// What `RuntimeStateReferenceMotionAdapter` reads from the session.
 @MainActor
-public protocol RuntimeStateReferenceMotionHost: AnyObject {
+public protocol RuntimeStateReferenceMotionHost: AnyObject, SendableMetatype {
     var dragonFlight: any DragonFlightPort { get }
     var dragonFlightWorld: any DragonFlightWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }

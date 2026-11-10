@@ -31,7 +31,7 @@ import simd
 
 /// What `AgentActorReadoutAdapter` reads from the session.
 @MainActor
-public protocol AgentActorReadoutHost: AnyObject {
+public protocol AgentActorReadoutHost: AnyObject, SendableMetatype {
     var actorGraphs: any ActorGraphPort { get }
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var actorValues: any ActorValuePort { get }

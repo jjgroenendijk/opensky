@@ -17,7 +17,7 @@ import simd
 
 /// What `EffectsBodyImpulsesAdapter` reads from the session.
 @MainActor
-public protocol EffectsBodyImpulsesHost: AnyObject {
+public protocol EffectsBodyImpulsesHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var audio: any AudioPort { get }
     var combat: any CombatPort { get }

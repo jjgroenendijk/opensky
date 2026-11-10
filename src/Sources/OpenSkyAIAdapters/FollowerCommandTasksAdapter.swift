@@ -19,7 +19,7 @@ import simd
 
 /// What `FollowerCommandTasksAdapter` reads from the session.
 @MainActor
-public protocol FollowerCommandTasksHost: AnyObject {
+public protocol FollowerCommandTasksHost: AnyObject, SendableMetatype {
     var aiWorld: any AIWorldPort { get }
     var crime: any CrimePort { get }
     var furniture: any FurniturePort { get }

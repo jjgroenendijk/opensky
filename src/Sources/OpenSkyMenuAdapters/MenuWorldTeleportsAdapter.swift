@@ -26,7 +26,7 @@ import OpenSkyWorldState
 
 /// What `MenuWorldTeleportsAdapter` reads from the session.
 @MainActor
-public protocol MenuWorldTeleportsHost: AnyObject {
+public protocol MenuWorldTeleportsHost: AnyObject, SendableMetatype {
     var agentWorld: any AgentWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var hud: any HUDPort { get }

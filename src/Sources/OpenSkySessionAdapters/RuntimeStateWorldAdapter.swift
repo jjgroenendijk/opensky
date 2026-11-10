@@ -36,7 +36,7 @@ import OpenSkyWorldState
 
 /// What `RuntimeStateWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol RuntimeStateWorldHost: AnyObject {
+public protocol RuntimeStateWorldHost: AnyObject, SendableMetatype {
     var dragonFlightWorld: any DragonFlightWorldPort { get }
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }

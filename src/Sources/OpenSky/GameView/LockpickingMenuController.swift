@@ -20,7 +20,7 @@ import OpenSkyWorldInterface
 
 /// What `LockpickingMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
-protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
+protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost, SendableMetatype {
     var crime: any CrimePort { get }
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }

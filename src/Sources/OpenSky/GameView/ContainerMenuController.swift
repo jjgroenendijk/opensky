@@ -20,7 +20,7 @@ import OpenSkyWorldInterface
 
 /// What `ContainerMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
-protocol ContainerMenuHost: MenuInputConsumer {
+protocol ContainerMenuHost: MenuInputConsumer, SendableMetatype {
     var worldState: any WorldStateStorePort { get }
     var streamer: any CellStreamerPort { get }
     var mapWorld: any MapWorldPort { get }

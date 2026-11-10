@@ -26,7 +26,7 @@ import simd
 
 /// What `DialogueOutcomesAdapter` reads from the session.
 @MainActor
-public protocol DialogueOutcomesHost: AnyObject {
+public protocol DialogueOutcomesHost: AnyObject, SendableMetatype {
     var dialogue: any DialoguePort { get }
     var inventory: any InventoryPort { get }
     var packages: any PackagePort { get }

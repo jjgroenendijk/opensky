@@ -18,7 +18,7 @@ import OpenSkyWorldInterface
 
 /// What `EffectGraphWorldAdapter` reads from the session. `GameSessionScope` conforms.
 @MainActor
-public protocol EffectGraphWorldHost: AnyObject {
+public protocol EffectGraphWorldHost: AnyObject, SendableMetatype {
     var actorGraphs: any ActorGraphPort { get }
     var actorWorld: any ActorWorldPort { get }
     var effects: any EffectsPort { get }

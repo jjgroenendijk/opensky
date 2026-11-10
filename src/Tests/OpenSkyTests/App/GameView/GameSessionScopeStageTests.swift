@@ -28,7 +28,8 @@ struct GameSessionScopeStageTests {
             cellRunner: nil,
             gameSession: gameSession,
             streamer: CellStreamerFixture.makeStreamer(runner: ManualCellBuildRunner()),
-            services: GameAppServices()
+            services: GameAppServices(),
+            parts: GameSessionScopeFactories.init(scope:)
         )
         #expect(scope.stage != nil)
         scope.start()

@@ -12,7 +12,7 @@ import OpenSkyWorldInterface
 
 /// What `MenuScreensGuidesAdapter` reads from the session.
 @MainActor
-public protocol MenuScreensGuidesHost: AnyObject {
+public protocol MenuScreensGuidesHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var mapWorld: any MapWorldPort { get }
     var messageWorld: any MessageWorldPort { get }

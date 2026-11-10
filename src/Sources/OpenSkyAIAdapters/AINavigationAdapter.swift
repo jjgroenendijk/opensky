@@ -30,7 +30,7 @@ import simd
 
 /// What `AINavigationAdapter` reads from the session.
 @MainActor
-public protocol AINavigationHost: AnyObject {
+public protocol AINavigationHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var factions: any FactionPort { get }
     var gameSession: (any GameSessionPort)? { get }

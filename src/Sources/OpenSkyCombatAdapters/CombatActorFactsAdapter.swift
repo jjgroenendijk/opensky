@@ -31,7 +31,7 @@ import simd
 
 /// What `CombatActorFactsAdapter` reads from the session.
 @MainActor
-public protocol CombatActorFactsHost: AnyObject {
+public protocol CombatActorFactsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var factions: any FactionPort { get }

@@ -31,7 +31,7 @@ import simd
 
 /// What `ScriptWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol ScriptWorldHost: AnyObject {
+public protocol ScriptWorldHost: AnyObject, SendableMetatype {
     /// The leveled-list edits scripts made, saved with the session.
     var worldRecords: (any WorldRecordsPort)? { get }
     var containerMenu: any ContainerMenuPort { get }

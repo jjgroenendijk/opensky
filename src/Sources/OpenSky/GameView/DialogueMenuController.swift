@@ -24,7 +24,7 @@ import OpenSkyWorldState
 
 /// What `DialogueMenuController` reads from the session. `GameViewController` conforms.
 @MainActor
-protocol DialogueMenuHost: MenuInputConsumer {
+protocol DialogueMenuHost: MenuInputConsumer, SendableMetatype {
     var dialogue: any DialoguePort { get }
     var dialogueCamera: any DialogueCameraPort { get }
     var dialogueWorld: any DialogueWorldPort { get }

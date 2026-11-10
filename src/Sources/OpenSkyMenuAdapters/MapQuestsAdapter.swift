@@ -27,7 +27,7 @@ import simd
 
 /// What `MapQuestsAdapter` reads from the session.
 @MainActor
-public protocol MapQuestsHost: AnyObject {
+public protocol MapQuestsHost: AnyObject, SendableMetatype {
     var mapWorld: any MapWorldPort { get }
     var journal: any JournalPort { get }
     var runtimeState: any RuntimeStatePort { get }

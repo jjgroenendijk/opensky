@@ -26,7 +26,7 @@ import simd
 
 /// What `ScriptPerkBindingsAdapter` reads from the session.
 @MainActor
-public protocol ScriptPerkBindingsHost: AnyObject {
+public protocol ScriptPerkBindingsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var containerMenu: any ContainerMenuPort { get }
     var crime: any CrimePort { get }

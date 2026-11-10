@@ -24,7 +24,7 @@ import OpenSkyWorldState
 
 /// What `AgentMenuReadoutAdapter` reads from the session.
 @MainActor
-public protocol AgentMenuReadoutHost: AnyObject {
+public protocol AgentMenuReadoutHost: AnyObject, SendableMetatype {
     var containerMenu: any ContainerMenuPort { get }
     var dialogueMenu: any DialogueMenuPort { get }
     var inventoryMenu: any InventoryMenuPort { get }

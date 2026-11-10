@@ -281,3 +281,13 @@ extension GameSessionScopeFactories {
         ))
     }
 }
+
+extension GameSessionScopeFactories: GameSessionParts {
+    func makePorts() -> any SessionPortSet {
+        SessionPorts(scope: scope)
+    }
+
+    func build(over stage: SessionStage) {
+        GameSessionScopeBuild(scope: scope).build(over: stage)
+    }
+}

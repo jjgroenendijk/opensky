@@ -17,7 +17,7 @@ import OpenSkyWorldState
 
 /// What `ProgressionEffectsAdapter` reads from the session.
 @MainActor
-public protocol ProgressionEffectsHost: AnyObject {
+public protocol ProgressionEffectsHost: AnyObject, SendableMetatype {
     var journalMenu: any JournalMenuPort { get }
     var magic: any MagicPort { get }
     var perks: any PerkPort { get }

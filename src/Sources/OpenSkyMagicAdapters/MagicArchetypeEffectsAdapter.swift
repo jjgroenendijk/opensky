@@ -17,7 +17,7 @@ import simd
 
 /// What `MagicArchetypeEffectsAdapter` reads from the session.
 @MainActor
-public protocol MagicArchetypeEffectsHost: AnyObject {
+public protocol MagicArchetypeEffectsHost: AnyObject, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }

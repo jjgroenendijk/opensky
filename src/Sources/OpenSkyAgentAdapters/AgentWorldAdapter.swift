@@ -35,7 +35,7 @@ import OpenSkyWorldState
 
 /// What `AgentWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol AgentWorldHost: AnyObject {
+public protocol AgentWorldHost: AnyObject, SendableMetatype {
     var runtimeState: any RuntimeStatePort { get }
     var actorWorld: any ActorWorldPort { get }
     var loadingScreens: any LoadingScreenPort { get }

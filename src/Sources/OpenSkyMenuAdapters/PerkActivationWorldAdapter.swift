@@ -16,7 +16,7 @@ import OpenSkyWorldState
 
 /// What `PerkActivationWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol PerkActivationWorldHost: AnyObject {
+public protocol PerkActivationWorldHost: AnyObject, SendableMetatype {
     var magicWorld: any MagicWorldPort { get }
     var mapWorld: any MapWorldPort { get }
     var perkActivation: any PerkActivationPort { get }

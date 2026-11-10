@@ -33,7 +33,7 @@ import OpenSkyWorld
 import OpenSkyWorldInterface
 import simd
 
-final class SessionPorts: SessionRecordPorts {}
+final class SessionPorts: SessionRecordPorts, SessionPortSet {}
 
 extension SessionPorts {
     var actorGraphWorld: any ActorGraphWorldPort {

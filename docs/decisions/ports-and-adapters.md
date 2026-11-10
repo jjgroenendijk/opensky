@@ -114,6 +114,13 @@ setter, and no `<Name>Wiring` type, so the `late_setter_method`, `late_attached_
 `connection_step_type` structural rules hold everywhere, the app included
 ([session scope](/decisions/session-scope.md)).
 
+The scope reaches its ports and factories through two protocols, `SessionPortSet` and
+`GameSessionParts`, so it does not name the types that read it back (design rule 4). The scope
+then holds the ports as `any SessionPortSet`. Swift checks a lazy property's initializer as if a
+conformance could belong to another actor. So each host protocol refines `SendableMetatype`,
+which states that its conformances belong to no actor, and the scope can pass the ports to an
+adapter's `some ...Host` parameter.
+
 ## The game view
 
 The view is AppKit, so no adapter holds it. An adapter gets what it needs as values or ports:

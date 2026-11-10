@@ -19,7 +19,7 @@ import simd
 
 /// What `EffectsTrapControlAdapter` reads from the session.
 @MainActor
-public protocol EffectsTrapControlHost: AnyObject {
+public protocol EffectsTrapControlHost: AnyObject, SendableMetatype {
     var effects: any EffectsPort { get }
     var combat: any CombatPort { get }
     var gameSession: (any GameSessionPort)? { get }

@@ -26,7 +26,7 @@ import OpenSkyWorldState
 
 /// What `MenuScreensWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol MenuScreensWorldHost: MenuInputConsumer {
+public protocol MenuScreensWorldHost: MenuInputConsumer, SendableMetatype {
     var actorValues: any ActorValuePort { get }
     var combat: any CombatPort { get }
     var crime: any CrimePort { get }

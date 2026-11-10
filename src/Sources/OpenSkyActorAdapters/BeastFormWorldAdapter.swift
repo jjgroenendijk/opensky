@@ -16,7 +16,7 @@ import OpenSkyWorldState
 
 /// What `BeastFormWorldAdapter` reads from the session.
 @MainActor
-public protocol BeastFormWorldHost: AnyObject {
+public protocol BeastFormWorldHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var menuWorld: any MenuWorldPort { get }
     var scripts: any ScriptPort { get }

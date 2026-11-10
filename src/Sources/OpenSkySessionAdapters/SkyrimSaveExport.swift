@@ -26,7 +26,7 @@ nonisolated public enum SkyrimSaveExportError: Error, LocalizedError {
 
 /// What `SkyrimSaveExport` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol SkyrimSaveExportHost: AnyObject {
+public protocol SkyrimSaveExportHost: AnyObject, SendableMetatype {
     var hud: any HUDPort { get }
     var inventory: any InventoryPort { get }
     var progression: any ProgressionPort { get }

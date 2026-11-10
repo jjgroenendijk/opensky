@@ -25,7 +25,7 @@ import simd
 
 /// What `CrimeWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol CrimeWorldHost: AnyObject {
+public protocol CrimeWorldHost: AnyObject, SendableMetatype {
     var dialogueWorld: any DialogueWorldPort { get }
     var storyWorld: any StoryWorldPort { get }
     var factions: any FactionPort { get }

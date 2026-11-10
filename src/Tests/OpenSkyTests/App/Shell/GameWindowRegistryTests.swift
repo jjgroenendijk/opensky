@@ -19,7 +19,8 @@ struct GameWindowRegistryTests {
                 cellRunner: nil,
                 gameSession: nil,
                 streamer: CellStreamerFixture.makeStreamer(runner: ManualCellBuildRunner()),
-                services: GameAppServices()
+                services: GameAppServices(),
+                parts: GameSessionScopeFactories.init(scope:)
             ))
         }
     }

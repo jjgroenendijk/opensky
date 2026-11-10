@@ -24,7 +24,7 @@ public import simd
 
 /// What `EffectsEffectPlacementAdapter` reads from the session.
 @MainActor
-public protocol EffectsEffectPlacementHost: AnyObject {
+public protocol EffectsEffectPlacementHost: AnyObject, SendableMetatype {
     var combat: any CombatPort { get }
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var actorValues: any ActorValuePort { get }

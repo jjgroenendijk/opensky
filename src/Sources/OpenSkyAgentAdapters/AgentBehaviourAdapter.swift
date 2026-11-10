@@ -18,7 +18,7 @@ import simd
 
 /// What `AgentBehaviourAdapter` reads from the session.
 @MainActor
-public protocol AgentBehaviourHost: AnyObject {
+public protocol AgentBehaviourHost: AnyObject, SendableMetatype {
     var actorGraphs: any ActorGraphPort { get }
     var aiWorld: any AIWorldPort { get }
     var furniture: any FurniturePort { get }

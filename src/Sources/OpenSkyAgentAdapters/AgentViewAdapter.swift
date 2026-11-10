@@ -17,7 +17,7 @@ import OpenSkyWorldInterface
 
 /// What `AgentViewAdapter` reads from the session.
 @MainActor
-public protocol AgentViewHost: AnyObject {
+public protocol AgentViewHost: AnyObject, SendableMetatype {
     var benchmarkWorld: any BenchmarkWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var runtimeState: any RuntimeStatePort { get }

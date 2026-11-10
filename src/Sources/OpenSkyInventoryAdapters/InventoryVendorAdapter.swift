@@ -22,7 +22,7 @@ import simd
 
 /// What `InventoryVendorAdapter` reads from the session.
 @MainActor
-public protocol InventoryVendorHost: AnyObject {
+public protocol InventoryVendorHost: AnyObject, SendableMetatype {
     var factions: any FactionPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }

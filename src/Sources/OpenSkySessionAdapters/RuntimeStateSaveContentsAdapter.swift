@@ -32,7 +32,7 @@ import OpenSkyWorldState
 
 /// What `RuntimeStateSaveContentsAdapter` reads from the session.
 @MainActor
-public protocol RuntimeStateSaveContentsHost: AnyObject {
+public protocol RuntimeStateSaveContentsHost: AnyObject, SendableMetatype {
     var combat: any CombatPort { get }
     var combatWorld: any CombatWorldPort { get }
     var crime: any CrimePort { get }

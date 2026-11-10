@@ -16,7 +16,7 @@ import OpenSkyWorldInterface
 
 /// What `LockpickingMenuController.BoardAdapter` reads from the session.
 @MainActor
-protocol LockpickingBoardHost: AnyObject {
+protocol LockpickingBoardHost: AnyObject, SendableMetatype {
     var gameSession: (any GameSessionPort)? { get }
     var inventoryWorld: any InventoryWorldPort { get }
     var progression: any ProgressionPort { get }

@@ -29,7 +29,7 @@ import simd
 
 /// What `EffectsWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol EffectsWorldHost: AnyObject {
+public protocol EffectsWorldHost: AnyObject, SendableMetatype {
     var combat: any CombatPort { get }
     var effects: any EffectsPort { get }
     var combatRecords: (any CombatRecordsPort)? { get }

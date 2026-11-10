@@ -22,7 +22,7 @@ import OpenSkyWorldState
 
 /// What `ScriptSessionBindingsAdapter` reads from the session.
 @MainActor
-public protocol ScriptSessionBindingsHost: AnyObject {
+public protocol ScriptSessionBindingsHost: AnyObject, SendableMetatype {
     var effects: any EffectsPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var drawableSize: CGSize { get }

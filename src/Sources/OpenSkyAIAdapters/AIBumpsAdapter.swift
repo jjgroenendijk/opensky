@@ -30,7 +30,7 @@ import simd
 
 /// What `AIBumpsAdapter` reads from the session.
 @MainActor
-public protocol AIBumpsHost: AnyObject {
+public protocol AIBumpsHost: AnyObject, SendableMetatype {
     var actorWorld: any ActorWorldPort { get }
     var combat: any CombatPort { get }
     var dialogue: any DialoguePort { get }

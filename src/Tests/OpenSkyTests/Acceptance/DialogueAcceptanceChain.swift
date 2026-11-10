@@ -51,7 +51,8 @@ final class DialogueAcceptanceChain {
             cellRunner: nil,
             gameSession: nil,
             streamer: streamer,
-            services: GameAppServices()
+            services: GameAppServices(),
+            parts: GameSessionScopeFactories.init(scope:)
         )
         session = try DialogueAcceptanceFixture.session(worldState: controller.worldState)
         controller.scripts = ScriptCoordinator(

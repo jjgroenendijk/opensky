@@ -17,7 +17,7 @@ import OpenSkyWorldState
 
 /// What `AgentActorsAdapter` reads from the session.
 @MainActor
-public protocol AgentActorsHost: AnyObject {
+public protocol AgentActorsHost: AnyObject, SendableMetatype {
     var actorGraphs: any ActorGraphPort { get }
     var actorWorld: any ActorWorldPort { get }
     var beastForms: any BeastFormWorldPort { get }

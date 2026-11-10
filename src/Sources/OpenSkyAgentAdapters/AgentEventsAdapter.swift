@@ -46,7 +46,7 @@ public struct AgentEventTapState {
 
 /// What `AgentEventsAdapter` reads from the session.
 @MainActor
-public protocol AgentEventsHost: AnyObject {
+public protocol AgentEventsHost: AnyObject, SendableMetatype {
     var combat: any CombatPort { get }
     var dialogueWorld: any DialogueWorldPort { get }
     var journalMenu: any JournalMenuPort { get }

@@ -17,7 +17,7 @@ public import simd
 
 /// What `AnimationEventWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol AnimationEventWorldHost: AnyObject {
+public protocol AnimationEventWorldHost: AnyObject, SendableMetatype {
     var objectBehaviors: any ObjectBehaviorPort { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?
     var cinematicCamera: any CinematicCameraPort { get }

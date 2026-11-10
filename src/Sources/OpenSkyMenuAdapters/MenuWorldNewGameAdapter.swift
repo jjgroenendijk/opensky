@@ -26,7 +26,7 @@ import OpenSkyWorldState
 
 /// What `MenuWorldNewGameAdapter` reads from the session.
 @MainActor
-public protocol MenuWorldNewGameHost: AnyObject {
+public protocol MenuWorldNewGameHost: AnyObject, SendableMetatype {
     var effectsWorld: any EffectsWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }
     var inventory: any InventoryPort { get }

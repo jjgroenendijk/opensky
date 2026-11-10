@@ -23,7 +23,7 @@ public import simd
 
 /// What `RagdollPoseReadsAdapter` reads from the session.
 @MainActor
-public protocol RagdollPoseReadsHost: AnyObject {
+public protocol RagdollPoseReadsHost: AnyObject, SendableMetatype {
     func actorPlayback(for key: ReferenceKey) -> (any ActorAnimationPlaybackPort)?
     var actorValues: any ActorValuePort { get }
     func animatedPose(for key: ReferenceKey) -> [String: float4x4]?

@@ -15,7 +15,7 @@ import OpenSkyWorld
 
 /// What `MovieWorldAdapter` reads from the session. `GameSessionScope` conforms.
 @MainActor
-public protocol MovieWorldHost: AnyObject {
+public protocol MovieWorldHost: AnyObject, SendableMetatype {
     var audio: any AudioPort { get }
     var audioFileSystem: (any GameFileSource)? { get }
     var movies: any MoviePlayerPort { get }

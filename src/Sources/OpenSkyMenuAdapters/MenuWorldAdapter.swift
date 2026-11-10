@@ -29,7 +29,7 @@ import OpenSkyWorldState
 
 /// What `MenuWorldAdapter` reads from the session. `GameViewController` conforms.
 @MainActor
-public protocol MenuWorldHost: MenuInputConsumer {
+public protocol MenuWorldHost: MenuInputConsumer, SendableMetatype {
     var loadingScreens: any LoadingScreenPort { get }
     var mapWorld: any MapWorldPort { get }
     var gameSession: (any GameSessionPort)? { get }

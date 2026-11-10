@@ -13,7 +13,7 @@ import simd
 
 /// What `CombatImpactEffectsAdapter` reads from the session.
 @MainActor
-public protocol CombatImpactEffectsHost: AnyObject {
+public protocol CombatImpactEffectsHost: AnyObject, SendableMetatype {
     var cinematicCamera: any CinematicCameraPort { get }
     var effects: any EffectsPort { get }
     var idleWorld: any IdleWorldPort { get }
