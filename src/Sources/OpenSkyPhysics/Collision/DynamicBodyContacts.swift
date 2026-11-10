@@ -95,7 +95,7 @@ nonisolated public struct DynamicContact: Sendable {
     public var surfaceMaterial: FormID?
 }
 
-nonisolated public enum DynamicBodyContacts: Sendable {
+nonisolated enum DynamicBodyContacts: Sendable {
     /// How far behind a surface a contact is still believed, in engine units.
     /// Past it the sample is taken to belong to different geometry rather than
     /// to a deep penetration of this one.
