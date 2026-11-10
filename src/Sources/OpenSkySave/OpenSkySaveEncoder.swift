@@ -2,8 +2,8 @@
 // 64 KiB is truncated at a UTF-8 boundary rather than failing the save.
 
 public import Foundation
-public import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkySaveInterface
 public import OpenSkyScriptingInterface
@@ -35,7 +35,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         if let thumbnail {
             OpenSkySaveSummaryCodec.write(thumbnail, into: &writer)
         }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.allocator, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.allocator) { payload in
             payload.writeUInt64(snapshot.nextGeneratedSequence)
         }
         // Only entries with at least one RDLT-carried component go in RDLT: a
@@ -43,27 +43,27 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         // INVN chunk, and writing it here as a zero-component entry would make
         // an older build restore a dirty reference with nothing in it.
         let deltaEntries = snapshot.entries.filter { !savedKinds(of: $0.delta).isEmpty }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.referenceDeltas, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.referenceDeltas) { payload in
             payload.writeUInt32(UInt32(clamping: deltaEntries.count))
             for entry in deltaEntries {
                 writeEntry(entry, into: &payload)
             }
         }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.globalValues, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.globalValues) { payload in
             payload.writeUInt32(UInt32(clamping: snapshot.globals.count))
             for entry in snapshot.globals {
-                writeKey(entry.key, into: &payload)
+                payload.writeKey(entry.key)
                 payload.writeUInt8(entry.value.type.saveTag)
                 payload.writeFloat32(entry.value.value)
             }
         }
         if let clock {
-            writeChunk(tag: OpenSkySaveFormat.ChunkTag.clock, into: &writer) { payload in
+            writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.clock) { payload in
                 payload.writeUInt64(clock.totalGameSeconds.bitPattern)
             }
         }
         if !scripts.isEmpty {
-            writeChunk(tag: OpenSkySaveFormat.ChunkTag.papyrusScripts, into: &writer) { payload in
+            writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.papyrusScripts) { payload in
                 payload.writeUInt32(UInt32(clamping: scripts.count))
                 for state in scripts {
                     writeScriptInstance(state, into: &payload)
@@ -71,7 +71,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
             }
         }
         if !timers.isEmpty {
-            writeChunk(tag: OpenSkySaveFormat.ChunkTag.papyrusTimers, into: &writer) { payload in
+            writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.papyrusTimers) { payload in
                 payload.writeUInt32(UInt32(clamping: timers.count))
                 for state in timers {
                     writeTimer(state, into: &payload)
@@ -95,7 +95,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         writer.writeUInt32(OpenSkySaveFormat.currentVersion)
         var block = BinaryWriter()
         block.writeUInt64(metadata.creationTimestamp)
-        writeString(metadata.appVersion, into: &block)
+        block.writeString(metadata.appVersion)
         writer.writeUInt32(UInt32(clamping: block.count))
         writer.write(block.data)
     }
@@ -106,25 +106,11 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
     ) {
         writer.writeUInt32(UInt32(clamping: fingerprint.count))
         for plugin in fingerprint {
-            writeString(plugin.name, into: &writer)
+            writer.writeString(plugin.name)
             writer.writeUInt32(plugin.hedrVersion.bitPattern)
             writer.writeUInt32(UInt32(bitPattern: plugin.recordCount))
             writer.writeUInt32(plugin.nextObjectID)
         }
-    }
-
-    /// Writes `tag` plus the length-prefixed bytes `body` produces, so a
-    /// decoder that does not know the tag can skip exactly the right amount.
-    public static func writeChunk(
-        tag: String,
-        into writer: inout BinaryWriter,
-        body: (inout BinaryWriter) -> Void
-    ) {
-        var payload = BinaryWriter()
-        body(&payload)
-        writer.write(Data(tag.utf8))
-        writer.writeUInt32(UInt32(clamping: payload.count))
-        writer.write(payload.data)
     }
 
     // MARK: - Entries
@@ -133,8 +119,8 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         _ entry: WorldStateSnapshotEntry,
         into writer: inout BinaryWriter
     ) {
-        writeKey(entry.key, into: &writer)
-        writeCell(entry.delta.cell, into: &writer)
+        writer.writeKey(entry.key)
+        writer.writeCell(entry.delta.cell)
         let kinds = savedKinds(of: entry.delta)
         writer.writeUInt8(UInt8(clamping: kinds.count))
         for (kind, tag) in kinds {
@@ -154,32 +140,6 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         delta.sortedKinds
             .compactMap { kind in kind.saveTag.map { (kind: kind, tag: $0) } }
             .sorted { $0.tag < $1.tag }
-    }
-
-    public static func writeKey(_ key: ReferenceKey, into writer: inout BinaryWriter) {
-        switch key {
-        case let .plugin(name, objectID):
-            writer.writeUInt8(OpenSkySaveFormat.KeyTag.plugin)
-            writeString(name, into: &writer)
-            writer.writeUInt32(objectID)
-        case let .generated(sequence):
-            writer.writeUInt8(OpenSkySaveFormat.KeyTag.generated)
-            writer.writeUInt64(sequence)
-        }
-    }
-
-    static func writeCell(_ cell: CellSceneLocation?, into writer: inout BinaryWriter) {
-        switch cell {
-        case .none:
-            writer.writeUInt8(OpenSkySaveFormat.CellTag.absent)
-        case let .exterior(coordinate):
-            writer.writeUInt8(OpenSkySaveFormat.CellTag.exterior)
-            writer.writeUInt32(UInt32(bitPattern: coordinate.x))
-            writer.writeUInt32(UInt32(bitPattern: coordinate.y))
-        case let .interior(formID):
-            writer.writeUInt8(OpenSkySaveFormat.CellTag.interior)
-            writer.writeUInt32(formID.rawValue)
-        }
     }
 
     private static func writeComponent(
@@ -202,7 +162,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
             writer.writeUInt8(state.isOpen ? 1 : 0)
             writer.writeUInt8(state.lastActivator == nil ? 0 : 1)
             if let activator = state.lastActivator {
-                writeKey(activator, into: &writer)
+                writer.writeKey(activator)
             }
         } else if let state = value.value(as: ReferenceDeletionState.self) {
             writer.writeUInt8(state.isDeleted ? 1 : 0)
@@ -221,14 +181,14 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         _ state: PapyrusInstanceState,
         into writer: inout BinaryWriter
     ) {
-        writeKey(state.key.reference, into: &writer)
-        writeString(state.key.scriptName, into: &writer)
-        writeString(state.activeState, into: &writer)
+        writer.writeKey(state.key.reference)
+        writer.writeString(state.key.scriptName)
+        writer.writeString(state.activeState)
         writer.writeUInt8(state.hasFiredOnInit ? 1 : 0)
         writer.writeUInt32(UInt32(clamping: state.variables.count))
         for variable in state.variables {
-            writeString(variable.declaringScript, into: &writer)
-            writeString(variable.name, into: &writer)
+            writer.writeString(variable.declaringScript)
+            writer.writeString(variable.name)
             writeScriptValue(variable.value, into: &writer)
         }
     }
@@ -257,7 +217,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
             writer.writeUInt32(number.bitPattern)
         case let .string(text):
             writer.writeUInt8(OpenSkySaveFormat.ValueTag.string)
-            writeString(text, into: &writer)
+            writer.writeString(text)
         }
     }
 
@@ -270,36 +230,10 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         _ state: PapyrusTimerState,
         into writer: inout BinaryWriter
     ) {
-        writeKey(state.key.reference, into: &writer)
-        writeString(state.key.scriptName, into: &writer)
+        writer.writeKey(state.key.reference)
+        writer.writeString(state.key.scriptName)
         writer.writeUInt8(UInt8(clamping: state.slot.rawValue))
         writer.writeUInt64(state.interval.bitPattern)
         writer.writeUInt64(state.remaining.bitPattern)
-    }
-}
-
-// MARK: - Strings
-
-nonisolated extension OpenSkySaveEncoder {
-    /// UInt16 byte length + UTF-8 bytes. Strings longer than `UInt16.max`
-    /// bytes are cut back to the last whole UTF-8 scalar that fits, so the
-    /// decoder still sees valid text.
-    public static func writeString(_ string: String, into writer: inout BinaryWriter) {
-        let bytes = truncatedUTF8(string)
-        writer.writeUInt16(UInt16(clamping: bytes.count))
-        writer.write(bytes)
-    }
-
-    private static func truncatedUTF8(_ string: String) -> Data {
-        let bytes = Data(string.utf8)
-        let limit = Int(UInt16.max)
-        guard bytes.count > limit else { return bytes }
-        var end = limit
-        // 0b10xxxxxx is a UTF-8 continuation byte: back up until the cut lands
-        // on a scalar boundary.
-        while end > 0, bytes[bytes.startIndex + end] & 0xC0 == 0x80 {
-            end -= 1
-        }
-        return Data(bytes.prefix(end))
     }
 }

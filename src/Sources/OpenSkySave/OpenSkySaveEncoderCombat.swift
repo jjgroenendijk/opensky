@@ -25,11 +25,11 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedCombatState(entry: entry, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.combatStates, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.combatStates) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 payload.writeUInt8(each.state.hostility.rawValue)
             }
         }

@@ -29,7 +29,7 @@ nonisolated enum OpenSkySaveCrimeDecoder: Sendable {
     static func decodeCrimeLedgers(_ payload: Data) throws -> [SaveCrimeLedgerEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CRIM entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumCrimeLedgerEntrySize,
             remaining: reader.bytesRemaining,
@@ -48,7 +48,7 @@ nonisolated enum OpenSkySaveCrimeDecoder: Sendable {
     static func decodeStolenGoods(_ payload: Data) throws -> [SaveStolenGoodsEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("STOL entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumStolenGoodsEntrySize,
             remaining: reader.bytesRemaining,
@@ -93,7 +93,7 @@ nonisolated enum OpenSkySaveCrimeDecoder: Sendable {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
         let cell = try OpenSkySaveEntryDecoder.decodeCell(&reader)
         let count = try reader.uint32("CRIM row count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumCrimeLedgerRowSize,
             remaining: reader.bytesRemaining,
@@ -138,7 +138,7 @@ nonisolated enum OpenSkySaveCrimeDecoder: Sendable {
     ) throws -> SaveStolenGoodsEntry {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
         let count = try reader.uint32("STOL row count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.stolenGoodsRowSize,
             remaining: reader.bytesRemaining,

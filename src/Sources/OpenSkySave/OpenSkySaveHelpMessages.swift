@@ -17,7 +17,7 @@ nonisolated extension OpenSkySaveEncoder {
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.records.count))
             for (event, record) in state.records.sorted(by: { $0.key < $1.key }) {
-                writeString(event, into: &payload)
+                payload.writeString(event)
                 payload.writeUInt32(UInt32(clamping: max(0, record.timesShown)))
                 payload.writeUInt8(record.isDone ? 1 : 0)
             }
@@ -34,7 +34,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
             payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumHelpMessageEntrySize
         ) { reader in
             let count = try reader.uint32("HELP record count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: count, minimumElementSize: OpenSkySaveFormat.minimumHelpMessageRecordSize,
                 remaining: reader.bytesRemaining, chunk: tag
             )

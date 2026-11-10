@@ -32,13 +32,13 @@ nonisolated extension OpenSkySaveEncoder {
             return rows.isEmpty ? nil : (entry.key, rows)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.violentCrimeGold, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.violentCrimeGold) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (key, rows) in saved {
-                writeKey(key, into: &payload)
+                payload.writeKey(key)
                 payload.writeUInt32(UInt32(clamping: rows.count))
                 for row in rows {
-                    writeKey(row.faction, into: &payload)
+                    payload.writeKey(row.faction)
                     payload.writeUInt32(UInt32(bitPattern: row.violentGold))
                 }
             }
@@ -50,7 +50,7 @@ nonisolated extension OpenSkySaveCrimeDecoder {
     static func decodeViolentGold(_ payload: Data) throws -> [SaveViolentCrimeGoldEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CRVG entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumViolentCrimeGoldEntrySize,
             remaining: reader.bytesRemaining,
@@ -61,7 +61,7 @@ nonisolated extension OpenSkySaveCrimeDecoder {
         for _ in 0 ..< count {
             let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
             let rowCount = try reader.uint32("CRVG row count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: rowCount,
                 minimumElementSize: OpenSkySaveFormat.minimumViolentCrimeGoldRowSize,
                 remaining: reader.bytesRemaining,

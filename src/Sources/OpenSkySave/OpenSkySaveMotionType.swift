@@ -24,11 +24,11 @@ nonisolated extension OpenSkySaveEncoder {
             entry.delta.component(ReferenceMotionType.self).map { (entry, $0) }
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.motionTypes, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.motionTypes) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (entry, motionType) in saved {
-                writeKey(entry.key, into: &payload)
-                writeCell(entry.delta.cell, into: &payload)
+                payload.writeKey(entry.key)
+                payload.writeCell(entry.delta.cell)
                 payload.writeUInt8(motionType.rawValue)
             }
         }
@@ -39,7 +39,7 @@ nonisolated enum OpenSkySaveMotionTypeDecoder: Sendable {
     static func decodeMotionTypes(_ payload: Data) throws -> [SaveMotionTypeEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RMOT entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumMotionTypeEntrySize,
             remaining: reader.bytesRemaining,

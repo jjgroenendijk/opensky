@@ -26,10 +26,10 @@ nonisolated extension OpenSkySaveEncoder {
             !ledger.stockedAt.isEmpty
         else { return }
         let stocked = ledger.stockedAt.sorted { $0.key < $1.key }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.vendorRestocks, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.vendorRestocks) { payload in
             payload.writeUInt32(UInt32(clamping: stocked.count))
             for (chest, hours) in stocked {
-                writeKey(chest, into: &payload)
+                payload.writeKey(chest)
                 payload.writeUInt64(hours.bitPattern)
             }
         }
@@ -41,7 +41,7 @@ nonisolated enum OpenSkySaveVendorRestockDecoder: Sendable {
     static func decode(_ payload: Data) throws -> SaveVendorRestockLedger {
         var reader = SaveReader(payload)
         let count = try reader.uint32("VRST entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumVendorRestockEntrySize,
             remaining: reader.bytesRemaining,

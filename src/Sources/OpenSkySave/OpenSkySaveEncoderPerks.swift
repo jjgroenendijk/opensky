@@ -28,14 +28,14 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedPerks(entry: entry, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.perks, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.perks) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 payload.writeUInt32(UInt32(clamping: each.state.owned.count))
                 for perk in each.state.owned {
-                    writeKey(perk, into: &payload)
+                    payload.writeKey(perk)
                 }
             }
         }

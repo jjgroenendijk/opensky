@@ -22,7 +22,7 @@ nonisolated extension OpenSkySaveEncoder {
             payload.writeUInt32(UInt32(clamping: state.potions.count))
             for potion in state.potions {
                 payload.writeUInt32(potion.id.rawValue)
-                writeString(potion.name, into: &payload)
+                payload.writeString(potion.name)
                 payload.writeUInt8(potion.isPoison ? 1 : 0)
                 payload.writeUInt32(UInt32(bitPattern: potion.value))
                 payload.writeUInt32(UInt32(clamping: potion.effects.count))
@@ -155,7 +155,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
     private static func validate(
         _ count: UInt32, _ size: Int, _ reader: SaveReader, _ tag: String
     ) throws {
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count, minimumElementSize: size, remaining: reader.bytesRemaining, chunk: tag
         )
     }

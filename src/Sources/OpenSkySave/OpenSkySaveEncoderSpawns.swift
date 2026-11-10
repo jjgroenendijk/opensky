@@ -23,12 +23,12 @@ nonisolated extension OpenSkySaveEncoder {
             return SpawnedObject(key: entry.key, spawn: spawn)
         }
         guard !spawned.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.spawnedReferences, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.spawnedReferences) { payload in
             payload.writeUInt32(UInt32(clamping: spawned.count))
             for each in spawned {
-                writeKey(each.key, into: &payload)
+                payload.writeKey(each.key)
                 payload.writeUInt32(each.spawn.base.rawValue)
-                writeCell(each.spawn.location, into: &payload)
+                payload.writeCell(each.spawn.location)
                 writePlacement(each.spawn, into: &payload)
             }
         }

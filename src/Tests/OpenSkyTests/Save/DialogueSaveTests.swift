@@ -157,7 +157,7 @@ struct DialogueSaveTests {
         var payload = BinaryWriter()
         payload.writeUInt32(0xFFFF_FFFF)
         #expect(throws: OpenSkySaveError.self) {
-            try OpenSkySaveDialogueDecoder.decodeDialogueStates(payload.data)
+            try OpenSkySaveDecoder.DialogueDecoder.decodeDialogueStates(payload.data)
         }
     }
 
@@ -167,9 +167,9 @@ struct DialogueSaveTests {
     @Test func aZeroSaidCountRestoresNoComponent() throws {
         var payload = BinaryWriter()
         payload.writeUInt32(1)
-        OpenSkySaveEncoder.writeKey(spoken, into: &payload)
+        payload.writeKey(spoken)
         payload.writeUInt32(0)
-        let entries = try OpenSkySaveDialogueDecoder.decodeDialogueStates(payload.data)
+        let entries = try OpenSkySaveDecoder.DialogueDecoder.decodeDialogueStates(payload.data)
         #expect(entries.count == 1)
         #expect(OpenSkySaveDeltaMerge.merge(entries, into: []).isEmpty)
     }

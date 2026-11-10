@@ -145,9 +145,9 @@ struct SpawnedReferenceTests {
     @Test func aSpawnEntryWithoutACellIsRejected() {
         var payload = BinaryWriter()
         payload.writeUInt32(1)
-        OpenSkySaveEncoder.writeKey(.generated(4), into: &payload)
+        payload.writeKey(.generated(4))
         payload.writeUInt32(0x100)
-        OpenSkySaveEncoder.writeCell(nil, into: &payload)
+        payload.writeCell(nil)
         for _ in 0 ..< 7 {
             payload.writeFloat32(0)
         }

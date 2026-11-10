@@ -18,7 +18,7 @@ nonisolated enum OpenSkySaveCombatDecoder: Sendable {
     static func decodeCombatStates(_ payload: Data) throws -> [SaveCombatStateEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CBTS entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumCombatStateEntrySize,
             remaining: reader.bytesRemaining,

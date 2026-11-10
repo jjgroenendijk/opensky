@@ -11,7 +11,7 @@ nonisolated enum OpenSkySaveScriptDecoder: Sendable {
     static func decodeScripts(_ payload: Data) throws -> [PapyrusInstanceState] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PSCR instance count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumScriptEntrySize,
             remaining: reader.bytesRemaining,
@@ -44,7 +44,7 @@ nonisolated enum OpenSkySaveScriptDecoder: Sendable {
         _ reader: inout SaveReader
     ) throws -> [PapyrusVariableState] {
         let count = try reader.uint32("PSCR variable count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumScriptVariableSize,
             remaining: reader.bytesRemaining,

@@ -64,7 +64,8 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(actorValues, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.deaths, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.combatStates, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.dialogueWithSaidDays, into: entries)
+        let dialogue = DialogueDecoder.withSaidDays(body.dialogueSaidDays, in: body.dialogue)
+        entries = OpenSkySaveDeltaMerge.merge(dialogue, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.activeEffects, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.spellbooks, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.enchantedItems, into: entries)
@@ -72,9 +73,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(body.factions, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(relationships(of: body), into: entries)
         // `PLGD` and `PTRN` lay onto `PLVL`, the way `AVOV` lays onto `AVAL`.
-        entries = OpenSkySaveDeltaMerge.merge(
-            OpenSkySaveProgressDecoder.progress(of: body), into: entries
-        )
+        entries = OpenSkySaveDeltaMerge.merge(ProgressDecoder.progress(of: body), into: entries)
         // `CRVG` splits the `CRIM` totals before those reach the deltas, the
         // way `AVOV` lays onto `AVAL`.
         let ledgers = OpenSkySaveCrimeDecoder.splittingViolent(
@@ -130,7 +129,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         _ reader: inout SaveReader
     ) throws -> [SavePluginFingerprint] {
         let count = try reader.uint32("fingerprint plugin count")
-        try validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumFingerprintEntrySize,
             remaining: reader.bytesRemaining,
@@ -257,7 +256,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             body.combatStates = try OpenSkySaveCombatDecoder.decodeCombatStates(payload)
         case OpenSkySaveFormat.ChunkTag.dialogueStates,
              OpenSkySaveFormat.ChunkTag.dialogueSaidDays:
-            try OpenSkySaveDialogueDecoder.apply(tag: tag, payload: payload, to: &body)
+            try OpenSkySaveDecoder.DialogueDecoder.apply(tag: tag, payload: payload, to: &body)
         case OpenSkySaveFormat.ChunkTag.activeEffects:
             body.activeEffects = try OpenSkySaveActiveEffectDecoder.decodeActiveEffects(payload)
         case OpenSkySaveFormat.ChunkTag.spellbooks:
@@ -291,13 +290,13 @@ nonisolated extension OpenSkySaveDecoder {
              OpenSkySaveFormat.ChunkTag.relationshipFavour:
             try applyRelationships(tag: tag, payload: payload, to: &body)
         case OpenSkySaveFormat.ChunkTag.playerProgress:
-            body.playerProgress = try OpenSkySaveProgressDecoder
+            body.playerProgress = try OpenSkySaveDecoder.ProgressDecoder
                 .decodePlayerProgress(payload)
         case OpenSkySaveFormat.ChunkTag.legendarySkills:
-            body.legendarySkills = try OpenSkySaveProgressDecoder
+            body.legendarySkills = try OpenSkySaveDecoder.ProgressDecoder
                 .decodeLegendarySkills(payload)
         case OpenSkySaveFormat.ChunkTag.trainingSessions:
-            body.trainingSessions = try OpenSkySaveProgressDecoder
+            body.trainingSessions = try OpenSkySaveDecoder.ProgressDecoder
                 .decodeTrainingSessions(payload)
         case OpenSkySaveFormat.ChunkTag.crimeLedgers:
             body.crimeLedgers = try OpenSkySaveCrimeDecoder.decodeCrimeLedgers(payload)
@@ -334,23 +333,5 @@ nonisolated extension OpenSkySaveDecoder {
             )
         }
         return GameClock(totalGameSeconds: seconds)
-    }
-
-    /// Rejects a declared element count that cannot possibly fit in the bytes
-    /// left, before anything reserves storage for it. Without this a corrupt
-    /// four-byte count is an out-of-memory crash rather than a thrown error.
-    static func validate(
-        count: UInt32,
-        minimumElementSize: Int,
-        remaining: Int,
-        chunk: String
-    ) throws {
-        guard Int(count) <= remaining / minimumElementSize else {
-            throw OpenSkySaveError.invalidCount(
-                chunk: chunk,
-                count: count,
-                remaining: remaining
-            )
-        }
     }
 }

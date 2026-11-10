@@ -31,11 +31,11 @@ nonisolated extension OpenSkySaveEncoder {
             $0.delta.component(ReferenceHarvestState.self)?.isHarvested == true
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.harvests, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.harvests) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for entry in saved {
-                writeKey(entry.key, into: &payload)
-                writeCell(entry.delta.cell, into: &payload)
+                payload.writeKey(entry.key)
+                payload.writeCell(entry.delta.cell)
             }
         }
         let timed = saved.compactMap { entry in
@@ -43,10 +43,10 @@ nonisolated extension OpenSkySaveEncoder {
                 .map { (entry.key, $0) }
         }
         guard !timed.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.harvestDays, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.harvestDays) { payload in
             payload.writeUInt32(UInt32(clamping: timed.count))
             for (key, day) in timed {
-                writeKey(key, into: &payload)
+                payload.writeKey(key)
                 payload.writeFloat32(day)
             }
         }
@@ -57,7 +57,7 @@ nonisolated enum OpenSkySaveHarvestDecoder: Sendable {
     static func decodeHarvests(_ payload: Data) throws -> [SaveHarvestEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("HRVS entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumHarvestEntrySize,
             remaining: reader.bytesRemaining,
@@ -78,7 +78,7 @@ nonisolated enum OpenSkySaveHarvestDecoder: Sendable {
     static func decodeHarvestDays(_ payload: Data) throws -> [SaveHarvestDayEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("HRVD entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumHarvestDayEntrySize,
             remaining: reader.bytesRemaining,

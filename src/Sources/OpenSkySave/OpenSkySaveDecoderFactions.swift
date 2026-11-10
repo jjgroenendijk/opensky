@@ -18,7 +18,7 @@ nonisolated enum OpenSkySaveFactionDecoder: Sendable {
     static func decodeFactionMemberships(_ payload: Data) throws -> [SaveFactionEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("FCTN entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumFactionEntrySize,
             remaining: reader.bytesRemaining,
@@ -38,7 +38,7 @@ nonisolated enum OpenSkySaveFactionDecoder: Sendable {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
         let cell = try OpenSkySaveEntryDecoder.decodeCell(&reader)
         let count = try reader.uint32("FCTN membership count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumFactionMembershipSize,
             remaining: reader.bytesRemaining,

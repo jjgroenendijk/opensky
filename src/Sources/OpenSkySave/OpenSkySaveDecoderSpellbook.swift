@@ -19,7 +19,7 @@ nonisolated enum OpenSkySaveSpellbookDecoder: Sendable {
     static func decodeSpellbooks(_ payload: Data) throws -> [SaveSpellbookEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("SPLB entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumSpellbookEntrySize,
             remaining: reader.bytesRemaining,
@@ -60,7 +60,7 @@ nonisolated enum OpenSkySaveSpellbookDecoder: Sendable {
         label: String
     ) throws -> [ReferenceKey] {
         let count = try reader.uint32(label)
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumSpellbookKeySize,
             remaining: reader.bytesRemaining,
@@ -78,7 +78,7 @@ nonisolated enum OpenSkySaveSpellbookDecoder: Sendable {
         _ reader: inout SaveReader
     ) throws -> [ReferenceKey: Int32] {
         let count = try reader.uint32("SPLB spent power count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumSpellbookPowerSize,
             remaining: reader.bytesRemaining,

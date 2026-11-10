@@ -25,11 +25,11 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedActorValues(entry: entry, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.actorValues, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.actorValues) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 // Health, magicka, stamina — `ActorValueKind`'s own order, and
                 // the order every other surface in this subsystem uses.
                 for kind in ActorValueKind.allCases {
@@ -55,11 +55,11 @@ nonisolated extension OpenSkySaveEncoder {
         }
         guard !saved.isEmpty else { return }
         let tag = OpenSkySaveFormat.ChunkTag.actorValueOverrides
-        writeChunk(tag: tag, into: &writer) { payload in
+        writer.writeChunk(tag: tag) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 // Ascending index order, so one actor's chunk bytes are a pure
                 // function of its state rather than of dictionary iteration.
                 let indices = each.state.overrides.keys.sorted()

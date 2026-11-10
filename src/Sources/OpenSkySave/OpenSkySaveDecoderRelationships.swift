@@ -20,7 +20,7 @@ nonisolated enum OpenSkySaveRelationshipDecoder: Sendable {
     static func decodeRelationshipRanks(_ payload: Data) throws -> [SaveRelationshipEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RELS entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumRelationshipEntrySize,
             remaining: reader.bytesRemaining,
@@ -42,7 +42,7 @@ nonisolated enum OpenSkySaveRelationshipDecoder: Sendable {
         let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
         let cell = try OpenSkySaveEntryDecoder.decodeCell(&reader)
         let count = try reader.uint32("RELS override count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumRelationshipOverrideSize,
             remaining: reader.bytesRemaining,

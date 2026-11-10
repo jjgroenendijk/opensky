@@ -9,7 +9,7 @@ nonisolated enum OpenSkySaveTimerDecoder: Sendable {
     static func decodeTimers(_ payload: Data) throws -> [PapyrusTimerState] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PTMR timer count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumTimerEntrySize,
             remaining: reader.bytesRemaining,

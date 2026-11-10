@@ -19,10 +19,10 @@ nonisolated extension OpenSkySaveEncoder {
             return (entry.key, log)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.questJournalLogs, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.questJournalLogs) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (key, log) in saved {
-                writeKey(key, into: &payload)
+                payload.writeKey(key)
                 payload.writeUInt16(log.stage)
                 payload.writeUInt32(UInt32(clamping: log.items.count))
                 for item in log.items {
@@ -40,7 +40,7 @@ nonisolated extension OpenSkySaveQuestDecoder {
         let tag = OpenSkySaveFormat.ChunkTag.questJournalLogs
         var reader = SaveReader(payload)
         let count = try reader.uint32("QJLG entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumQuestJournalLogEntrySize,
             remaining: reader.bytesRemaining,
@@ -51,7 +51,7 @@ nonisolated extension OpenSkySaveQuestDecoder {
             let key = try OpenSkySaveEntryDecoder.decodeKey(&reader)
             let stage = try reader.uint16("QJLG stage")
             let itemCount = try reader.uint32("QJLG item count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: itemCount,
                 minimumElementSize: OpenSkySaveFormat.questStageSize,
                 remaining: reader.bytesRemaining,

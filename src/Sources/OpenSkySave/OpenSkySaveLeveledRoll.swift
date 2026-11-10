@@ -25,11 +25,11 @@ nonisolated extension OpenSkySaveEncoder {
             entry.delta.component(LeveledRollState.self).map { (entry, $0) }
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.leveledRolls, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.leveledRolls) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for (entry, roll) in saved {
-                writeKey(entry.key, into: &payload)
-                writeCell(entry.delta.cell, into: &payload)
+                payload.writeKey(entry.key)
+                payload.writeCell(entry.delta.cell)
                 payload.writeUInt32(UInt32(clamping: roll.playerLevel))
             }
         }
@@ -41,7 +41,7 @@ nonisolated enum OpenSkySaveLeveledRollDecoder: Sendable {
     static func decodeLeveledRolls(_ payload: Data) throws -> [SaveLeveledRollEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("LVRL entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumLeveledRollEntrySize,
             remaining: reader.bytesRemaining,

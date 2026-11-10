@@ -26,10 +26,10 @@ nonisolated extension OpenSkySaveEncoder {
         let departures = ledger.departures.sorted {
             CellSceneLocation.isOrderedBefore($0.key, $1.key)
         }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.cellResets, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.cellResets) { payload in
             payload.writeUInt32(UInt32(clamping: departures.count))
             for (cell, hours) in departures {
-                writeCell(cell, into: &payload)
+                payload.writeCell(cell)
                 payload.writeUInt64(hours.bitPattern)
             }
         }
@@ -41,7 +41,7 @@ nonisolated enum OpenSkySaveCellResetDecoder: Sendable {
     static func decode(_ payload: Data) throws -> SaveCellResetLedger {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CRST entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumCellResetEntrySize,
             remaining: reader.bytesRemaining,

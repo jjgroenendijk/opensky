@@ -30,11 +30,11 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedEnchantedItems(entry: entry, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.enchantedItems, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.enchantedItems) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 writeEnchantedItems(each.state, into: &payload)
             }
         }

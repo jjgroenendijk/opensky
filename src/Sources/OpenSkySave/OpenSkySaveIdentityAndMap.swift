@@ -40,7 +40,7 @@ nonisolated extension OpenSkySaveEncoder {
         writeStory((PlayerIdentityState.self, identityTag), entries, &writer) { state, payload in
             payload.writeUInt32(state.race.rawValue)
             payload.writeUInt8(state.isFemale ? 1 : 0)
-            writeString(state.name, into: &payload)
+            payload.writeString(state.name)
             writeFace(state.face, into: &payload)
         }
         writeComplexions(entries, into: &writer)
@@ -57,7 +57,7 @@ nonisolated extension OpenSkySaveEncoder {
             }
             payload.writeUInt32(UInt32(clamping: rows.count))
             for (cell, mask) in rows {
-                writeCell(cell, into: &payload)
+                payload.writeCell(cell)
                 payload.writeUInt64(mask)
             }
         }
@@ -67,7 +67,7 @@ nonisolated extension OpenSkySaveEncoder {
             entries,
             &writer
         ) { state, payload in
-            writeString(state.worldspace, into: &payload)
+            payload.writeString(state.worldspace)
             for value in [state.position.x, state.position.y, state.position.z] {
                 payload.writeFloat32(value)
             }
@@ -143,7 +143,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
             payload, tag: tag, minimumSize: OpenSkySaveFormat.minimumFogEntrySize
         ) { reader in
             let count = try reader.uint32("FOGM cell count")
-            try OpenSkySaveDecoder.validate(
+            try SaveCountCheck.validate(
                 count: count, minimumElementSize: OpenSkySaveFormat.minimumFogRowSize,
                 remaining: reader.bytesRemaining, chunk: tag
             )
@@ -209,7 +209,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
         _ element: (inout SaveReader) throws -> Element
     ) throws -> [Element] {
         let count = try reader.uint32("\(context) count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count, minimumElementSize: size, remaining: reader.bytesRemaining,
             chunk: OpenSkySaveFormat.ChunkTag.playerIdentity
         )

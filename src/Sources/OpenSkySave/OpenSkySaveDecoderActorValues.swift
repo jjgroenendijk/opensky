@@ -27,7 +27,7 @@ nonisolated enum OpenSkySaveActorValueDecoder: Sendable {
     static func decodeActorValues(_ payload: Data) throws -> [SaveActorValueEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("AVAL entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumActorValueEntrySize,
             remaining: reader.bytesRemaining,
@@ -48,7 +48,7 @@ nonisolated enum OpenSkySaveActorValueDecoder: Sendable {
     ) throws -> [SaveActorValueOverrideEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("AVOV entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumActorValueOverrideEntrySize,
             remaining: reader.bytesRemaining,
@@ -92,7 +92,7 @@ nonisolated enum OpenSkySaveActorValueDecoder: Sendable {
         // The cell is written for symmetry with AVAL; the merge takes the AVAL cell.
         _ = try OpenSkySaveEntryDecoder.decodeCell(&reader)
         let count = try reader.uint32("AVOV value count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.actorValueOverrideRecordSize,
             remaining: reader.bytesRemaining,

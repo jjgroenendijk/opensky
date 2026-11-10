@@ -29,14 +29,14 @@ nonisolated extension OpenSkySaveEncoder {
             return SavedRelationships(entry: entry, state: state)
         }
         guard !saved.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.relationships, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.relationships) { payload in
             payload.writeUInt32(UInt32(clamping: saved.count))
             for each in saved {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 payload.writeUInt32(UInt32(clamping: each.state.count))
                 for override in each.state.overrides {
-                    writeKey(override.other, into: &payload)
+                    payload.writeKey(override.other)
                     payload.writeUInt8(UInt8(bitPattern: override.rank))
                 }
             }

@@ -213,7 +213,7 @@ struct QuestSaveTests {
     @Test func anImpossibleStageCountIsRejected() throws {
         var payload = BinaryWriter()
         payload.writeUInt32(1)
-        OpenSkySaveEncoder.writeKey(mainQuest, into: &payload)
+        payload.writeKey(mainQuest)
         payload.writeUInt8(OpenSkySaveFormat.QuestFlag.running)
         payload.writeUInt32(0x00FF_FFFF)
         #expect(throws: OpenSkySaveError.self) {
@@ -227,7 +227,7 @@ struct QuestSaveTests {
     @Test func unknownObjectiveFlagBitsAreIgnored() throws {
         var payload = BinaryWriter()
         payload.writeUInt32(1)
-        OpenSkySaveEncoder.writeKey(mainQuest, into: &payload)
+        payload.writeKey(mainQuest)
         payload.writeUInt8(OpenSkySaveFormat.QuestFlag.running)
         payload.writeUInt32(0)
         payload.writeUInt32(1)

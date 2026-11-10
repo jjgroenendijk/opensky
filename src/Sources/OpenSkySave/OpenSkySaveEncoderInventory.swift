@@ -27,11 +27,11 @@ nonisolated extension OpenSkySaveEncoder {
             return OwnedInventory(entry: entry, inventory: inventory)
         }
         guard !owned.isEmpty else { return }
-        writeChunk(tag: OpenSkySaveFormat.ChunkTag.inventories, into: &writer) { payload in
+        writer.writeChunk(tag: OpenSkySaveFormat.ChunkTag.inventories) { payload in
             payload.writeUInt32(UInt32(clamping: owned.count))
             for each in owned {
-                writeKey(each.entry.key, into: &payload)
-                writeCell(each.entry.delta.cell, into: &payload)
+                payload.writeKey(each.entry.key)
+                payload.writeCell(each.entry.delta.cell)
                 writeItems(each.inventory, into: &payload)
             }
         }

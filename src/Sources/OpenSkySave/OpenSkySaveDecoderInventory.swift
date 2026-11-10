@@ -18,7 +18,7 @@ nonisolated enum OpenSkySaveInventoryDecoder: Sendable {
     static func decodeInventories(_ payload: Data) throws -> [SaveInventoryEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("INVN entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumInventoryEntrySize,
             remaining: reader.bytesRemaining,
@@ -53,7 +53,7 @@ nonisolated enum OpenSkySaveInventoryDecoder: Sendable {
     /// reason to fail a whole save.
     private static func decodeStacks(_ reader: inout SaveReader) throws -> [InventoryStack] {
         let count = try reader.uint32("INVN stack count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.inventoryStackSize,
             remaining: reader.bytesRemaining,
@@ -71,7 +71,7 @@ nonisolated enum OpenSkySaveInventoryDecoder: Sendable {
 
     private static func decodeEquipped(_ reader: inout SaveReader) throws -> [FormID] {
         let count = try reader.uint32("INVN equipped count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.inventoryEquippedSize,
             remaining: reader.bytesRemaining,

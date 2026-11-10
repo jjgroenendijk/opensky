@@ -20,7 +20,7 @@ nonisolated enum OpenSkySaveEnchantedItemDecoder: Sendable {
     static func decodeEnchantedItems(_ payload: Data) throws -> [SaveEnchantedItemEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("ECHG entry count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumEnchantedItemEntrySize,
             remaining: reader.bytesRemaining,
@@ -51,7 +51,7 @@ nonisolated enum OpenSkySaveEnchantedItemDecoder: Sendable {
 
     private static func decodeCharges(_ reader: inout SaveReader) throws -> [UInt32: Float] {
         let count = try reader.uint32("ECHG charge count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.enchantedItemChargeRecordSize,
             remaining: reader.bytesRemaining,
@@ -70,7 +70,7 @@ nonisolated enum OpenSkySaveEnchantedItemDecoder: Sendable {
         _ reader: inout SaveReader
     ) throws -> [UInt32: [UInt64]] {
         let count = try reader.uint32("ECHG worn item count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.minimumEnchantedItemWornSize,
             remaining: reader.bytesRemaining,
@@ -87,7 +87,7 @@ nonisolated enum OpenSkySaveEnchantedItemDecoder: Sendable {
 
     private static func decodeSequences(_ reader: inout SaveReader) throws -> [UInt64] {
         let count = try reader.uint32("ECHG worn sequence count")
-        try OpenSkySaveDecoder.validate(
+        try SaveCountCheck.validate(
             count: count,
             minimumElementSize: OpenSkySaveFormat.enchantedItemSequenceSize,
             remaining: reader.bytesRemaining,

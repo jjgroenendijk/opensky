@@ -93,74 +93,76 @@ nonisolated extension ESSPluginIndex {
     }
 }
 
-nonisolated private struct Walk {
-    let resolver: FormIDResolver
-    let wanted: Set<ESSPluginIndex.Key>
-    var forms: [ESSPluginIndex.Key: ESSPluginIndex.Form] = [:]
-    var bases: [ESSPluginIndex.Key: ResolvedFormID] = [:]
-    var placed: [ESSPluginIndex.Key: ESSPluginIndex.Placed] = [:]
+nonisolated extension ESSPluginIndex {
+    private struct Walk {
+        let resolver: FormIDResolver
+        let wanted: Set<ESSPluginIndex.Key>
+        var forms: [ESSPluginIndex.Key: ESSPluginIndex.Form] = [:]
+        var bases: [ESSPluginIndex.Key: ResolvedFormID] = [:]
+        var placed: [ESSPluginIndex.Key: ESSPluginIndex.Placed] = [:]
 
-    private static let cellChildKinds: Set<ESMGroup.Kind> = [
-        .cellChildren, .cellPersistentChildren, .cellTemporaryChildren
-    ]
+        private static let cellChildKinds: Set<ESMGroup.Kind> = [
+            .cellChildren, .cellPersistentChildren, .cellTemporaryChildren
+        ]
 
-    /// `space` is the worldspace of an exterior, or the interior cell, being walked.
-    mutating func visit(_ group: ESMGroup, exterior: Bool, space: ResolvedFormID?) {
-        guard let children = attempt({ try group.children() }) else { return }
-        let isCellChildren = group.kind.map(Self.cellChildKinds.contains) ?? false
-        if isCellChildren, wanted.isEmpty {
-            return
-        }
-        let inWorld = exterior || group.kind == .worldChildren
-        var space = space
-        if group.kind == .worldChildren || (group.kind == .cellChildren && !inWorld) {
-            space = group.parentFormID.flatMap { resolver.resolve(FormID($0)) }
-        }
-        for child in children {
-            switch child {
-            case let .group(sub): visit(sub, exterior: inWorld, space: space)
-            case let .record(record) where isCellChildren: noteReference(record, space: space)
-            case let .record(record): note(record, exterior: inWorld)
+        /// `space` is the worldspace of an exterior, or the interior cell, being walked.
+        mutating func visit(_ group: ESMGroup, exterior: Bool, space: ResolvedFormID?) {
+            guard let children = attempt({ try group.children() }) else { return }
+            let isCellChildren = group.kind.map(Self.cellChildKinds.contains) ?? false
+            if isCellChildren, wanted.isEmpty {
+                return
+            }
+            let inWorld = exterior || group.kind == .worldChildren
+            var space = space
+            if group.kind == .worldChildren || (group.kind == .cellChildren && !inWorld) {
+                space = group.parentFormID.flatMap { resolver.resolve(FormID($0)) }
+            }
+            for child in children {
+                switch child {
+                case let .group(sub): visit(sub, exterior: inWorld, space: space)
+                case let .record(record) where isCellChildren: noteReference(record, space: space)
+                case let .record(record): note(record, exterior: inWorld)
+                }
             }
         }
-    }
 
-    private mutating func note(_ record: ESMRecord, exterior: Bool) {
-        guard
-            ESSPluginIndex.indexedTypes.contains(record.type), !record.isDeleted,
-            let id = resolver.resolve(FormID(record.formID))
-        else { return }
-        var form = ESSPluginIndex.Form(signature: record.type)
-        if record.type == "GLOB", let global = attempt({ try Global(record: record) }) {
-            form.editorID = global.editorID
-            form.globalType = global.valueType
-        } else if
-            record.type == "RACE" || record
-                .type == "WRLD" || (record.type == "CELL" && !exterior)
-        {
-            form.editorID = ESMWalk.editorID(of: record)
+        private mutating func note(_ record: ESMRecord, exterior: Bool) {
+            guard
+                ESSPluginIndex.indexedTypes.contains(record.type), !record.isDeleted,
+                let id = resolver.resolve(FormID(record.formID))
+            else { return }
+            var form = ESSPluginIndex.Form(signature: record.type)
+            if record.type == "GLOB", let global = attempt({ try Global(record: record) }) {
+                form.editorID = global.editorID
+                form.globalType = global.valueType
+            } else if
+                record.type == "RACE" || record
+                    .type == "WRLD" || (record.type == "CELL" && !exterior)
+            {
+                form.editorID = ESMWalk.editorID(of: record)
+            }
+            form.isExteriorCell = record.type == "CELL" && exterior
+            forms[ESSPluginIndex.Key(id)] = form
         }
-        form.isExteriorCell = record.type == "CELL" && exterior
-        forms[ESSPluginIndex.Key(id)] = form
-    }
 
-    private mutating func noteReference(_ record: ESMRecord, space: ResolvedFormID?) {
-        guard
-            let id = resolver.resolve(FormID(record.formID)),
-            wanted.contains(ESSPluginIndex.Key(id))
-        else { return }
-        placed[ESSPluginIndex.Key(id)] = ESSPluginIndex.Placed(
-            signature: record.type, flags: record.flags.rawValue, space: space,
-            lock: attempt { try PlacedReference(record: record) }?.lock
-        )
-        guard
-            let fields = attempt({ try record.fields() }),
-            let name = fields.first(where: { $0.type == "NAME" }), name.data.count >= 4
-        else { return }
-        var reader = BinaryReader(name.data)
-        guard
-            let raw = attempt({ try reader.readUInt32() }),
-            let base = resolver.resolve(FormID(raw)) else { return }
-        bases[ESSPluginIndex.Key(id)] = base
+        private mutating func noteReference(_ record: ESMRecord, space: ResolvedFormID?) {
+            guard
+                let id = resolver.resolve(FormID(record.formID)),
+                wanted.contains(ESSPluginIndex.Key(id))
+            else { return }
+            placed[ESSPluginIndex.Key(id)] = ESSPluginIndex.Placed(
+                signature: record.type, flags: record.flags.rawValue, space: space,
+                lock: attempt { try PlacedReference(record: record) }?.lock
+            )
+            guard
+                let fields = attempt({ try record.fields() }),
+                let name = fields.first(where: { $0.type == "NAME" }), name.data.count >= 4
+            else { return }
+            var reader = BinaryReader(name.data)
+            guard
+                let raw = attempt({ try reader.readUInt32() }),
+                let base = resolver.resolve(FormID(raw)) else { return }
+            bases[ESSPluginIndex.Key(id)] = base
+        }
     }
 }
