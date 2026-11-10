@@ -44,10 +44,10 @@ nonisolated enum CreationClubMenuMovieBridge: Sendable {
         onEvent: @escaping @MainActor @Sendable (CreationClubMovieEvent) -> Void
     ) {
         for name in storeCalls + soundCalls {
-            AS2Natives.method(runtime, on: codeObject, name: name) { _ in .undefined }
+            AS2Runtime.method(runtime, on: codeObject, name: name) { _ in .undefined }
         }
         for name in closeCalls {
-            AS2Natives.method(runtime, on: codeObject, name: name) { _ in
+            AS2Runtime.method(runtime, on: codeObject, name: name) { _ in
                 MainActor.assumeIsolated { onEvent(.close) }
                 return .undefined
             }

@@ -39,7 +39,7 @@ nonisolated public enum SWFKeyCode: Sendable {
     ]
 }
 
-nonisolated extension SWFRuntimeNatives {
+nonisolated extension SWFMovieRuntime {
     /// `Key`: a broadcaster plus the query methods a listener calls back into.
     public static func installKey(_ runtime: AS2Runtime) {
         let key = runtime.makeObject()
@@ -48,13 +48,13 @@ nonisolated extension SWFRuntimeNatives {
                 .integer(constant.value), for: constant.name, flags: [.dontEnumerate, .dontDelete]
             )
         }
-        AS2Natives.method(runtime, on: key, name: "getCode") { context in
+        AS2Runtime.method(runtime, on: key, name: "getCode") { context in
             .integer(movieRuntime(context)?.input.lastKeyCode ?? 0)
         }
-        AS2Natives.method(runtime, on: key, name: "getAscii") { context in
+        AS2Runtime.method(runtime, on: key, name: "getAscii") { context in
             .integer(movieRuntime(context)?.input.lastKeyAscii ?? 0)
         }
-        AS2Natives.method(runtime, on: key, name: "isDown") { context in
+        AS2Runtime.method(runtime, on: key, name: "isDown") { context in
             guard let owner = movieRuntime(context) else {
                 return .boolean(false)
             }
@@ -63,7 +63,7 @@ nonisolated extension SWFRuntimeNatives {
         }
         // Caps and num lock are not modelled: OpenSky injects key events, it
         // does not own a keyboard, so a toggle state would be invented.
-        AS2Natives.method(runtime, on: key, name: "isToggled") { _ in .boolean(false) }
+        AS2Runtime.method(runtime, on: key, name: "isToggled") { _ in .boolean(false) }
         installListenerList(runtime, on: key)
         runtime.globalObject.define(.object(key), for: "Key", flags: .dontEnumerate)
     }
@@ -73,10 +73,10 @@ nonisolated extension SWFRuntimeNatives {
     public static func installMouse(_ runtime: AS2Runtime) {
         let mouse = runtime.makeObject()
         mouse.define(.boolean(true), for: "_visible", flags: .dontEnumerate)
-        AS2Natives.method(runtime, on: mouse, name: "show") { context in
+        AS2Runtime.method(runtime, on: mouse, name: "show") { context in
             setCursorVisible(context, to: true)
         }
-        AS2Natives.method(runtime, on: mouse, name: "hide") { context in
+        AS2Runtime.method(runtime, on: mouse, name: "hide") { context in
             setCursorVisible(context, to: false)
         }
         installListenerList(runtime, on: mouse)

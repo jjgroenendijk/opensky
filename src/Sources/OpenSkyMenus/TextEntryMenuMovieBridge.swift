@@ -42,15 +42,21 @@ nonisolated enum TextEntryMenuMovieBridge: Sendable {
             return
         }
         let listener = runtime.runtime.makeObject()
-        AS2Natives.method(runtime.runtime, on: listener, name: listenerMethod) { context in
+        AS2Runtime.method(runtime.runtime, on: listener, name: listenerMethod) { context in
             let event = context.argument(0).objectValue
             let accepted = event?.lookup("nameChanged")?.property.value == .boolean(true)
             MainActor.assumeIsolated { onResult(accepted) }
             return .undefined
         }
-        runtime.runtime.invoke(
-            .object(add), thisValue: .object(clip),
-            arguments: [.string("nameChange"), .object(listener), .string(listenerMethod)]
+        AS2Interpreter.invoke(
+            in: runtime.runtime,
+            .object(add),
+            thisValue: .object(clip),
+            arguments: [
+                .string("nameChange"),
+                .object(listener),
+                .string(listenerMethod)
+            ]
         )
     }
 

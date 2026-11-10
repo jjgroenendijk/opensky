@@ -97,7 +97,7 @@ struct RaceMenuMovieRealDataTests {
             let list = panels(runtime)?.object.lookup(name)?.property.value.objectValue,
             let getter = list.lookup("__get__entryList")?.property.value
         else { return nil }
-        return runtime.runtime.invoke(getter, thisValue: .object(list)).value
+        return AS2Interpreter.invoke(in: runtime.runtime, getter, thisValue: .object(list)).value
             .objectValue?.arrayLength
     }
 

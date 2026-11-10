@@ -25,7 +25,7 @@ struct SmallMenuMovieTests {
         let runtime = try MenuMovieCallLog.emptyRuntime()
         let clip = runtime.runtime.makeObject()
         var listener: (scope: AS2Object, method: String)?
-        AS2Natives.method(runtime.runtime, on: clip, name: "addEventListener") { context in
+        AS2Runtime.method(runtime.runtime, on: clip, name: "addEventListener") { context in
             if
                 case .string("nameChange") = context.argument(0),
                 let scope = context.argument(1).objectValue,
@@ -43,8 +43,11 @@ struct SmallMenuMovieTests {
             let event = runtime.runtime.makeObject()
             event.define(.string("nameChange"), for: "type")
             event.define(.boolean(accepted), for: "nameChanged")
-            runtime.runtime.invoke(
-                callback, thisValue: .object(found.scope), arguments: [.object(event)]
+            AS2Interpreter.invoke(
+                in: runtime.runtime,
+                callback,
+                thisValue: .object(found.scope),
+                arguments: [.object(event)]
             )
         }
         #expect(results.events == [true, false])
@@ -79,7 +82,12 @@ struct SmallMenuMovieTests {
         }
         for name in ["InitCreationClubMenu", "PurchaseMod", "PlaySound", "confirmCloseManager"] {
             let callee = try #require(Self.function(name, of: codeObject))
-            runtime.runtime.invoke(callee, thisValue: .object(codeObject), arguments: [])
+            AS2Interpreter.invoke(
+                in: runtime.runtime,
+                callee,
+                thisValue: .object(codeObject),
+                arguments: []
+            )
         }
         #expect(events.events == [.close])
     }

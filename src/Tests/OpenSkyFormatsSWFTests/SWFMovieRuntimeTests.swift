@@ -107,7 +107,7 @@ struct SWFMovieRuntimeTests {
         let runtime = try SWFRuntimeFixture.started(tags: Self.threeFrameMovie())
         let made = SWFDisplayObject(content: .clip(nil), frameCount: 1)
         made.name = "made"
-        runtime.root.addChild(made, atDepth: SWFRuntimeNatives.depthValue(0))
+        runtime.root.addChild(made, atDepth: SWFMovieRuntime.depthValue(0))
         runtime.gotoFrame(2, of: runtime.root, play: false)
         runtime.gotoFrame(0, of: runtime.root, play: false)
         #expect(runtime.root.child(named: "made") === made)

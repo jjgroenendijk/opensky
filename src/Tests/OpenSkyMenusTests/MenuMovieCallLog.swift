@@ -16,7 +16,7 @@ final class MenuMovieCallLog {
                 return .undefined
             }
             let target = (node ?? runtime.root).object
-            AS2Natives.method(runtime.runtime, on: target, name: name, body: record)
+            AS2Runtime.method(runtime.runtime, on: target, name: name, body: record)
         }
     }
 

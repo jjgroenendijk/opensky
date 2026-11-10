@@ -7,7 +7,7 @@
 
 import Foundation
 
-nonisolated extension AS2Natives {
+nonisolated extension AS2Runtime {
     /// The sort option bits of `Array.CASEINSENSITIVE` and its siblings.
     struct ArraySortOptions: OptionSet {
         let rawValue: Int
@@ -58,7 +58,7 @@ nonisolated extension AS2Natives {
             let options = ArraySortOptions(rawValue: flags.isFinite ? Int(flags) & 31 : 0)
             return try sorted(array, options: options, context: context) { left, right in
                 if let compare {
-                    let order = try context.interpreter.toNumber(context.interpreter.call(
+                    let order = try context.interpreter.toNumber(context.interpreter.reenter(
                         compare, thisValue: .undefined, arguments: [left, right], offset: 0
                     ))
                     return options.contains(.descending) ? -order : order

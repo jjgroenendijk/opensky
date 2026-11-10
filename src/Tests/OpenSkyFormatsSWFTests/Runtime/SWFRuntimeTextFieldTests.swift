@@ -17,8 +17,11 @@ struct SWFRuntimeTextFieldTests {
     ) throws -> AS2Value {
         let member = node.object.lookup(name)?.property.value ?? runtime.member(name, of: node)
         let function = try #require(member?.functionValue)
-        return runtime.runtime.invoke(
-            .object(function), thisValue: .object(node.object), arguments: arguments
+        return AS2Interpreter.invoke(
+            in: runtime.runtime,
+            .object(function),
+            thisValue: .object(node.object),
+            arguments: arguments
         ).value
     }
 

@@ -43,7 +43,7 @@ struct QuestJournalMovieBridgeTests {
             for method in [
                 QuestJournalMovieBridge.invalidateMethod, QuestJournalMovieBridge.clearMethod
             ] {
-                AS2Natives.method(runtime.runtime, on: list.object, name: method) { _ in
+                AS2Runtime.method(runtime.runtime, on: list.object, name: method) { _ in
                     log.append(method)
                     return .undefined
                 }

@@ -51,7 +51,7 @@ struct SWFRuntimeInputTests {
         into log: RoutingLog,
         returning result: AS2Value = .undefined
     ) -> SWFDisplayObject {
-        AS2Natives.method(runtime.runtime, on: node.object, name: name) { _ in
+        AS2Runtime.method(runtime.runtime, on: node.object, name: name) { _ in
             log.append(name)
             return result
         }
@@ -189,7 +189,7 @@ struct SWFRuntimeInputTests {
         button.object.prototype = prototype
         #expect(runtime.globalMouseHandlerClips == 0)
 
-        AS2Natives.method(runtime.runtime, on: prototype, name: "onMouseMove") { _ in
+        AS2Runtime.method(runtime.runtime, on: prototype, name: "onMouseMove") { _ in
             log.append("onMouseMove")
             return .undefined
         }

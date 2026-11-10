@@ -242,7 +242,7 @@ struct RendererSWFInteractiveAcceptanceTests {
         let target = SWFDisplayObject(content: .clip(nil))
         target.name = "HUDMovieBaseInstance"
         runtime.root.addChild(target, atDepth: 7)
-        AS2Natives.method(runtime.runtime, on: target.object, name: "RevealHUD") { _ in
+        AS2Runtime.method(runtime.runtime, on: target.object, name: "RevealHUD") { _ in
             highlight.colorTransform = .identity
             runtime.markDirty()
             return .boolean(true)

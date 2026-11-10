@@ -12,7 +12,12 @@ struct AS2ArrayOrderTests {
 
     private func call(_ name: String, on array: AS2Object, _ arguments: [AS2Value]) -> AS2Value {
         let method = runtime.arrayPrototype.lookup(name)?.property.value ?? .undefined
-        return runtime.invoke(method, thisValue: .object(array), arguments: arguments).value
+        return AS2Interpreter.invoke(
+            in: runtime,
+            method,
+            thisValue: .object(array),
+            arguments: arguments
+        ).value
     }
 
     private func array(_ values: [AS2Value]) -> AS2Object {

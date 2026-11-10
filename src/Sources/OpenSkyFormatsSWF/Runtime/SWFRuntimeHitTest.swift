@@ -27,7 +27,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// Hit tests the whole tree at a point in stage twips.
     func hitTest(stageTwips point: SIMD2<Float>) -> SWFHitResult {
-        var search = SWFHitSearch(runtime: self, point: point)
+        var search = HitSearch(runtime: self, point: point)
         search.walk(node: root, transform: .identity, depth: 0)
         return SWFHitResult(target: search.target, topmost: search.topmost)
     }
@@ -66,86 +66,88 @@ nonisolated extension SWFClipEventFlags {
 /// Depth-first walk carrying the point down into each node's local space.
 /// Children are visited in reverse paint order so the first mouse-enabled hit
 /// is the topmost one.
-nonisolated private struct SWFHitSearch {
-    let runtime: SWFMovieRuntime
-    /// The probe point, in stage twips.
-    let point: SIMD2<Float>
-    var target: SWFDisplayObject?
-    var topmost: SWFDisplayObject?
+nonisolated extension SWFMovieRuntime {
+    private struct HitSearch {
+        let runtime: SWFMovieRuntime
+        /// The probe point, in stage twips.
+        let point: SIMD2<Float>
+        var target: SWFDisplayObject?
+        var topmost: SWFDisplayObject?
 
-    /// True once both answers are settled and the walk can stop early.
-    private var isSettled: Bool {
-        target != nil && topmost != nil
-    }
-
-    mutating func walk(node: SWFDisplayObject, transform: SWFTransform, depth: Int) {
-        guard depth < SWFDisplayObject.maximumTreeDepth, !isSettled else {
-            return
+        /// True once both answers are settled and the walk can stop early.
+        private var isSettled: Bool {
+            target != nil && topmost != nil
         }
-        let masks = maskRanges(of: node, transform: transform)
-        for child in node.children.reversed() where child.isVisible && child.clipDepth == nil {
-            guard !isMasked(child, by: masks) else {
-                continue
-            }
-            let childTransform = transform
-                .concatenating(SWFTransform(matrix: child.matrix))
-            visit(child, transform: childTransform, depth: depth)
-            if isSettled {
+
+        mutating func walk(node: SWFDisplayObject, transform: SWFTransform, depth: Int) {
+            guard depth < SWFDisplayObject.maximumTreeDepth, !isSettled else {
                 return
             }
+            let masks = maskRanges(of: node, transform: transform)
+            for child in node.children.reversed() where child.isVisible && child.clipDepth == nil {
+                guard !isMasked(child, by: masks) else {
+                    continue
+                }
+                let childTransform = transform
+                    .concatenating(SWFTransform(matrix: child.matrix))
+                visit(child, transform: childTransform, depth: depth)
+                if isSettled {
+                    return
+                }
+            }
         }
-    }
 
-    private mutating func visit(
-        _ child: SWFDisplayObject,
-        transform: SWFTransform,
-        depth: Int
-    ) {
-        if child.isClip {
-            walk(node: child, transform: transform, depth: depth + 1)
-            if isSettled {
+        private mutating func visit(
+            _ child: SWFDisplayObject,
+            transform: SWFTransform,
+            depth: Int
+        ) {
+            if child.isClip {
+                walk(node: child, transform: transform, depth: depth + 1)
+                if isSettled {
+                    return
+                }
+            }
+            guard
+                let inverse = transform.inverted,
+                runtime.containsLocally(child, localPoint: inverse.apply(point))
+            else {
                 return
             }
-        }
-        guard
-            let inverse = transform.inverted,
-            runtime.containsLocally(child, localPoint: inverse.apply(point))
-        else {
-            return
-        }
-        if topmost == nil {
-            topmost = child
-        }
-        if target == nil, runtime.isMouseEnabled(child) {
-            target = child
-        }
-    }
-
-    /// The clip layers active in a node's child list, each as the depth range it
-    /// masks plus the stage-space box the mask covers. A `ClipDepth` layer masks
-    /// depths `(depth, clipDepth]`, which is the same rule the scene generator
-    /// uses to emit `beginClip` / `endClip`.
-    private func maskRanges(
-        of node: SWFDisplayObject,
-        transform: SWFTransform
-    ) -> [(range: ClosedRange<UInt16>, box: SWFBoundsBox)] {
-        node.children.compactMap { child in
-            guard let clipDepth = child.clipDepth, clipDepth >= child.depth else {
-                return nil
+            if topmost == nil {
+                topmost = child
             }
-            let box = runtime.localBounds(of: child).transformed(
-                by: transform.concatenating(SWFTransform(matrix: child.matrix))
-            )
-            return (child.depth ... clipDepth, box)
+            if target == nil, runtime.isMouseEnabled(child) {
+                target = child
+            }
         }
-    }
 
-    private func isMasked(
-        _ child: SWFDisplayObject,
-        by masks: [(range: ClosedRange<UInt16>, box: SWFBoundsBox)]
-    ) -> Bool {
-        masks.contains { mask in
-            mask.range.contains(child.depth) && !mask.box.contains(point)
+        /// The clip layers active in a node's child list, each as the depth range it
+        /// masks plus the stage-space box the mask covers. A `ClipDepth` layer masks
+        /// depths `(depth, clipDepth]`, which is the same rule the scene generator
+        /// uses to emit `beginClip` / `endClip`.
+        private func maskRanges(
+            of node: SWFDisplayObject,
+            transform: SWFTransform
+        ) -> [(range: ClosedRange<UInt16>, box: SWFBoundsBox)] {
+            node.children.compactMap { child in
+                guard let clipDepth = child.clipDepth, clipDepth >= child.depth else {
+                    return nil
+                }
+                let box = runtime.localBounds(of: child).transformed(
+                    by: transform.concatenating(SWFTransform(matrix: child.matrix))
+                )
+                return (child.depth ... clipDepth, box)
+            }
+        }
+
+        private func isMasked(
+            _ child: SWFDisplayObject,
+            by masks: [(range: ClosedRange<UInt16>, box: SWFBoundsBox)]
+        ) -> Bool {
+            masks.contains { mask in
+                mask.range.contains(child.depth) && !mask.box.contains(point)
+            }
         }
     }
 }

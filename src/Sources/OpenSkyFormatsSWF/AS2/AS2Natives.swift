@@ -5,7 +5,7 @@
 
 import Foundation
 
-nonisolated public enum AS2Natives: Sendable {
+nonisolated extension AS2Runtime {
     public static func install(into runtime: AS2Runtime) {
         installObject(runtime)
         installFunction(runtime)
@@ -121,7 +121,7 @@ nonisolated public enum AS2Natives: Sendable {
             guard let function = context.thisValue.functionValue else {
                 return .undefined
             }
-            return try context.interpreter.call(
+            return try context.interpreter.reenter(
                 function,
                 thisValue: context.argument(0),
                 arguments: Array(context.arguments.dropFirst()),
@@ -133,7 +133,7 @@ nonisolated public enum AS2Natives: Sendable {
                 return .undefined
             }
             let list = context.argument(1).objectValue?.elements ?? []
-            return try context.interpreter.call(
+            return try context.interpreter.reenter(
                 function, thisValue: context.argument(0), arguments: list, offset: 0
             )
         }

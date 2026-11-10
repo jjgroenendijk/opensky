@@ -30,7 +30,7 @@ public enum AS2Fixture: Sendable {
         _ actions: [Action],
         runtime: AS2Runtime = AS2Runtime()
     ) -> AS2ExecutionResult {
-        runtime.execute(block(actions + [returnAction]))
+        AS2Interpreter.execute(in: runtime, block(actions + [returnAction]))
     }
 
     /// Runs the actions with no appended `ActionReturn`, for streams that end
@@ -39,7 +39,7 @@ public enum AS2Fixture: Sendable {
         _ actions: [Action],
         runtime: AS2Runtime = AS2Runtime()
     ) -> AS2ExecutionResult {
-        runtime.execute(block(actions))
+        AS2Interpreter.execute(in: runtime, block(actions))
     }
 
     /// The number an expression produced, or NaN when it produced anything else.

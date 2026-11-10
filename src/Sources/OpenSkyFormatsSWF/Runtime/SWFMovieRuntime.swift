@@ -100,7 +100,7 @@ nonisolated public final class SWFMovieRuntime {
 
     public init(movieScene: SWFMovieScene, limits: AS2Limits = .standard) {
         self.movieScene = movieScene
-        let host = SWFRuntimeHost()
+        let host = SWFMovieRuntime.Host()
         runtime = AS2Runtime(
             swfVersion: movieScene.movie.version, host: host, limits: limits
         )
@@ -109,7 +109,7 @@ nonisolated public final class SWFMovieRuntime {
             timeline: movieScene.movie.timeline,
             frameCount: max(1, movieScene.movie.timeline.frames.count)
         )
-        let natives = SWFRuntimeNatives.install(into: runtime, movie: movieScene.movie)
+        let natives = SWFMovieRuntime.install(into: runtime, movie: movieScene.movie)
         movieClipPrototype = natives.movieClipPrototype
         textFieldPrototype = natives.textFieldPrototype
         root.object.prototype = movieClipPrototype
@@ -124,7 +124,7 @@ nonisolated public final class SWFMovieRuntime {
         }
         isStarted = true
         for initAction in movie.initActions {
-            runtime.execute(initAction, target: root.object)
+            AS2Interpreter.execute(in: runtime, initAction, target: root.object)
         }
         enterFrame(0, of: root)
         markDirty()
@@ -170,8 +170,11 @@ nonisolated public final class SWFMovieRuntime {
             return .empty
         }
         markDirty()
-        return runtime.invoke(
-            .object(function), thisValue: .object(receiver.object), arguments: arguments
+        return AS2Interpreter.invoke(
+            in: runtime,
+            .object(function),
+            thisValue: .object(receiver.object),
+            arguments: arguments
         )
     }
 
@@ -266,7 +269,7 @@ nonisolated public final class SWFMovieRuntime {
         node.object.define(
             .object(constructor), for: "__constructor__", flags: [.dontEnumerate, .dontDelete]
         )
-        runtime.invoke(.object(constructor), thisValue: .object(node.object))
+        AS2Interpreter.invoke(in: runtime, .object(constructor), thisValue: .object(node.object))
     }
 
     /// `attachMovie(linkageName, instanceName, depth)`: instantiates an exported

@@ -29,7 +29,7 @@ struct RaceMenuMovieBridgeTests {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
         var sent: [String: [AS2Value]] = [:]
         for name in ["SetCategoriesList", "SetRaceList", "SetOptionSliders", "SetNameText"] {
-            AS2Natives.method(runtime.runtime, on: runtime.root.object, name: name) { context in
+            AS2Runtime.method(runtime.runtime, on: runtime.root.object, name: name) { context in
                 sent[name] = context.arguments
                 return .undefined
             }
@@ -81,7 +81,7 @@ extension RaceMenuMovieBridgeTests {
     @Test func aFinishedChangeHidesTheLoadingIcon() throws {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
         var hidden = 0
-        AS2Natives.method(runtime.runtime, on: runtime.root.object, name: "HideLoadingIcon") { _ in
+        AS2Runtime.method(runtime.runtime, on: runtime.root.object, name: "HideLoadingIcon") { _ in
             hidden += 1
             return .undefined
         }
@@ -95,7 +95,7 @@ extension RaceMenuMovieBridgeTests {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
         var sent: [String] = []
         for name in ["SetCategoriesList", "SetRaceList", "SetOptionSliders", "SetNameText"] {
-            AS2Natives.method(runtime.runtime, on: runtime.root.object, name: name) { _ in
+            AS2Runtime.method(runtime.runtime, on: runtime.root.object, name: name) { _ in
                 sent.append(name)
                 return .undefined
             }

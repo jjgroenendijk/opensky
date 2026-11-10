@@ -18,7 +18,7 @@ struct MapMenuMovieBridgeTests {
             "Init", "SetNumMarkers", "CreateMarkers", "RefreshMarkers", "SetSelectedMarker"
         ]
         for name in names {
-            AS2Natives.method(runtime.runtime, on: map, name: name) { _ in
+            AS2Runtime.method(runtime.runtime, on: map, name: name) { _ in
                 calls.append(name)
                 return .undefined
             }

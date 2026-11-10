@@ -1,7 +1,7 @@
 // The CTDA condition-function table, keyed by the stored function index (the
 // Creation Kit number minus 4096). Only functions OpenSky can answer honestly
 // are registered; `ConditionTally` counts every miss. Family installers live in
-// satellite files, like `AS2Natives`.
+// satellite files, like the AS2 built-ins.
 
 import Foundation
 

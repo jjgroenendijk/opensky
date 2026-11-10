@@ -97,7 +97,7 @@ struct SWFGameDelegateTests {
         hash.define(.boolean(true), for: "7")
         delegate.define(.object(hash), for: "responseHash")
         let responses = CallLog()
-        AS2Natives.method(runtime.runtime, on: delegate, name: "receiveResponse") { context in
+        AS2Runtime.method(runtime.runtime, on: delegate, name: "receiveResponse") { context in
             responses.append(context.arguments)
             return .undefined
         }
@@ -117,7 +117,7 @@ struct SWFGameDelegateTests {
         )
         let delegate = runtime.runtime.makeObject()
         let responses = CallLog()
-        AS2Natives.method(runtime.runtime, on: delegate, name: "receiveResponse") { context in
+        AS2Runtime.method(runtime.runtime, on: delegate, name: "receiveResponse") { context in
             responses.append(context.arguments)
             return .undefined
         }
@@ -163,7 +163,7 @@ struct SWFGameDelegateTests {
         hash.define(.boolean(true), for: "Refresh")
         delegate.define(.object(hash), for: "callBackHash")
         let received = CallLog()
-        AS2Natives.method(runtime.runtime, on: delegate, name: "receiveCall") { context in
+        AS2Runtime.method(runtime.runtime, on: delegate, name: "receiveCall") { context in
             received.append(context.arguments)
             return .string("done")
         }
@@ -182,7 +182,7 @@ struct SWFGameDelegateTests {
     @Test func aMovieWithoutADelegateFallsBackToTheRootFunction() throws {
         let runtime = try SWFRuntimeFixture.started(tags: Self.movie([]))
         let log = CallLog()
-        AS2Natives.method(runtime.runtime, on: runtime.root.object, name: "OnOpen") { context in
+        AS2Runtime.method(runtime.runtime, on: runtime.root.object, name: "OnOpen") { context in
             log.append(context.arguments)
             return .boolean(true)
         }
@@ -198,7 +198,7 @@ struct SWFGameDelegateTests {
         target.name = "HUDMovieBaseInstance"
         runtime.root.addChild(target, atDepth: 7)
         let log = CallLog()
-        AS2Natives.method(runtime.runtime, on: target.object, name: "RefreshHUD") { context in
+        AS2Runtime.method(runtime.runtime, on: target.object, name: "RefreshHUD") { context in
             log.append(context.arguments, receiver: context.thisObject)
             return .string("updated")
         }

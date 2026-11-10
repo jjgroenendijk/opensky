@@ -83,9 +83,14 @@ nonisolated extension SystemMenuMovieBridge {
         guard let object = value?.objectValue else { return }
         if let setter = object.lookup("text")?.property.setter {
             runtime.markDirty()
-            runtime.runtime.invoke(.object(setter), thisValue: .object(object), arguments: [
-                .string(text)
-            ])
+            AS2Interpreter.invoke(
+                in: runtime.runtime,
+                .object(setter),
+                thisValue: .object(object),
+                arguments: [
+                    .string(text)
+                ]
+            )
         } else if let field = SWFDisplayObject.resolve(object) {
             runtime.setText(text, of: field)
         }

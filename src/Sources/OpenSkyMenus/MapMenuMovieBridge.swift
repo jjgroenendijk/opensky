@@ -116,6 +116,11 @@ nonisolated enum MapMenuMovieBridge: Sendable {
             return
         }
         runtime.markDirty()
-        runtime.runtime.invoke(.object(function), thisValue: .object(map), arguments: arguments)
+        AS2Interpreter.invoke(
+            in: runtime.runtime,
+            .object(function),
+            thisValue: .object(map),
+            arguments: arguments
+        )
     }
 }

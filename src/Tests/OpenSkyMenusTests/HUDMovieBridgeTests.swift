@@ -45,7 +45,7 @@ struct HUDMovieBridgeTests {
         target.object.define(.integer(11), for: "CompassMarkerLocations")
         let log = HUDCallLog()
         for name in entryPoints {
-            AS2Natives.method(runtime.runtime, on: target.object, name: name) { context in
+            AS2Runtime.method(runtime.runtime, on: target.object, name: name) { context in
                 log.append(name, arguments: context.arguments)
                 return .undefined
             }

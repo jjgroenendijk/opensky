@@ -22,8 +22,11 @@ nonisolated enum MenuMovieText {
             let function = object.lookup(method)?.property.value.functionValue
         else { return }
         runtime.markDirty()
-        runtime.runtime.invoke(
-            .object(function), thisValue: .object(object), arguments: [.number(percent)]
+        AS2Interpreter.invoke(
+            in: runtime.runtime,
+            .object(function),
+            thisValue: .object(object),
+            arguments: [.number(percent)]
         )
     }
 
@@ -35,8 +38,11 @@ nonisolated enum MenuMovieText {
         guard let node = runtime.node(atPath: path, from: runtime.root) else { return }
         runtime.markDirty()
         if let setter = node.object.lookup(member)?.property.setter {
-            runtime.runtime.invoke(
-                .object(setter), thisValue: .object(node.object), arguments: [value]
+            AS2Interpreter.invoke(
+                in: runtime.runtime,
+                .object(setter),
+                thisValue: .object(node.object),
+                arguments: [value]
             )
         } else {
             node.object.define(value, for: member)

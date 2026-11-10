@@ -101,13 +101,15 @@ nonisolated public struct SWFInvokeLog: Equatable, Sendable {
 /// A host function the movie may call by name. Returning `nil` means the
 /// handler ran but produced no response value; the engine then sends nothing
 /// back through `receiveResponse`.
-public typealias SWFHostFunction = @Sendable (SWFHostCall) -> AS2Value?
+public typealias SWFHostFunction = @Sendable (SWFMovieRuntime.HostCall) -> AS2Value?
 
 /// One movie-to-engine call as a handler sees it.
-nonisolated public struct SWFHostCall {
-    public let arguments: [AS2Value]
-    /// The movie making the call, for a handler that must answer inside it.
-    public unowned let movie: SWFMovieRuntime
+nonisolated extension SWFMovieRuntime {
+    public struct HostCall {
+        public let arguments: [AS2Value]
+        /// The movie making the call, for a handler that must answer inside it.
+        public unowned let movie: SWFMovieRuntime
+    }
 }
 
 nonisolated extension SWFMovieRuntime {
@@ -157,7 +159,7 @@ nonisolated extension SWFMovieRuntime {
             return nil
         }
         lastHostArguments[name] = arguments
-        let result = handler(SWFHostCall(arguments: arguments, movie: self))
+        let result = handler(SWFMovieRuntime.HostCall(arguments: arguments, movie: self))
         noteInvoke(
             SWFInvokeEntry(
                 direction: .movieToEngine, name: name,
@@ -252,7 +254,8 @@ nonisolated extension SWFMovieRuntime {
             return .undefined
         }
         markDirty()
-        let result = runtime.invoke(
+        let result = AS2Interpreter.invoke(
+            in: runtime,
             .object(function),
             thisValue: .object(target.object),
             arguments: arguments
@@ -316,13 +319,16 @@ nonisolated extension SWFMovieRuntime {
             return .undefined
         }
         markDirty()
-        return runtime.invoke(
-            .object(function), thisValue: .object(object), arguments: arguments
+        return AS2Interpreter.invoke(
+            in: runtime,
+            .object(function),
+            thisValue: .object(object),
+            arguments: arguments
         ).value
     }
 }
 
-nonisolated extension SWFRuntimeNatives {
+nonisolated extension SWFMovieRuntime {
     /// `ExternalInterface` and `fscommand`: the two player built-ins a movie can
     /// reach the host through. Installed under both the bare global name and
     /// `flash.external.ExternalInterface`, because AS2 code spells it either way
@@ -330,12 +336,12 @@ nonisolated extension SWFRuntimeNatives {
     public static func installExternalInterface(_ runtime: AS2Runtime) {
         let external = runtime.makeObject()
         external.define(.boolean(true), for: "available", flags: .dontEnumerate)
-        AS2Natives.method(runtime, on: external, name: "call") { context in
+        AS2Runtime.method(runtime, on: external, name: "call") { context in
             movieRuntime(context)?.receiveExternalCall(context.arguments) ?? .undefined
         }
         // A movie may register its own AS2 handlers; recording them keeps the
         // name resolvable without the engine pretending to dispatch to them.
-        AS2Natives.method(runtime, on: external, name: "addCallback") { _ in .boolean(false) }
+        AS2Runtime.method(runtime, on: external, name: "addCallback") { _ in .boolean(false) }
         runtime.globalObject.define(
             .object(external), for: "ExternalInterface", flags: .dontEnumerate
         )
@@ -344,7 +350,7 @@ nonisolated extension SWFRuntimeNatives {
         let flash = runtime.makeObject()
         flash.define(.object(package), for: "external", flags: .dontEnumerate)
         runtime.globalObject.define(.object(flash), for: "flash", flags: .dontEnumerate)
-        AS2Natives.method(runtime, on: runtime.globalObject, name: "fscommand") { context in
+        AS2Runtime.method(runtime, on: runtime.globalObject, name: "fscommand") { context in
             guard let owner = movieRuntime(context) else {
                 return .undefined
             }

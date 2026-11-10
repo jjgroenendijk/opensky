@@ -50,7 +50,7 @@ struct SWFRuntimeControllerTests {
     @Test func setPlatformCarriesTheRuntimePlatformAndIsSentAgain() throws {
         let runtime = try started()
         let log = SWFGameDelegateTests.CallLog()
-        AS2Natives.method(runtime.runtime, on: runtime.root.object, name: "SetPlatform") {
+        AS2Runtime.method(runtime.runtime, on: runtime.root.object, name: "SetPlatform") {
             log.append($0.arguments)
             return .undefined
         }

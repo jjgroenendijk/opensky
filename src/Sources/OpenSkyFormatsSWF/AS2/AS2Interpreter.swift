@@ -259,3 +259,53 @@ nonisolated public final class AS2Interpreter {
         }
     }
 }
+
+extension AS2Interpreter: AS2Caller {
+    public func reenter(
+        _ function: AS2Object,
+        thisValue: AS2Value,
+        arguments: [AS2Value],
+        offset: Int
+    ) throws(AS2Fault) -> AS2Value {
+        try call(function, thisValue: thisValue, arguments: arguments, offset: offset)
+    }
+}
+
+nonisolated extension AS2Interpreter {
+    /// Runs one DoAction (12) or CLIPACTIONS stream.
+    @discardableResult
+    public static func execute(
+        in runtime: AS2Runtime,
+        _ block: SWFActionBlock,
+        target: AS2Object? = nil
+    ) -> AS2ExecutionResult {
+        AS2Interpreter(runtime: runtime).execute(block: block, target: target ?? runtime.root)
+    }
+
+    /// Runs one DoInitAction (59) stream — the class-registration path.
+    @discardableResult
+    public static func execute(
+        in runtime: AS2Runtime,
+        _ initAction: SWFDoInitAction,
+        target: AS2Object? = nil
+    ) -> AS2ExecutionResult {
+        execute(in: runtime, initAction.actions, target: target)
+    }
+
+    /// Calls an ActionScript function from the engine. Anything that is not a
+    /// function is reported as a completed no-op, so a caller invoking a menu
+    /// entry point that a movie never defined does not have to special-case it.
+    @discardableResult
+    public static func invoke(
+        in runtime: AS2Runtime,
+        _ function: AS2Value,
+        thisValue: AS2Value = .undefined,
+        arguments: [AS2Value] = []
+    ) -> AS2ExecutionResult {
+        guard let callable = function.functionValue else {
+            return .empty
+        }
+        return AS2Interpreter(runtime: runtime)
+            .invoke(function: callable, thisValue: thisValue, arguments: arguments)
+    }
+}

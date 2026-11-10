@@ -59,13 +59,13 @@ struct DialogueMenuMovieBridgeTests {
             menu.addChild(field, atDepth: name == "SpeakerName" ? 2 : 3)
         }
         for name in Self.menuEntryPoints {
-            AS2Natives.method(runtime.runtime, on: menu.object, name: name) { context in
+            AS2Runtime.method(runtime.runtime, on: menu.object, name: name) { context in
                 log.append(name, arguments: context.arguments)
                 return .undefined
             }
         }
         for name in Self.listEntryPoints {
-            AS2Natives.method(runtime.runtime, on: list.object, name: name) { context in
+            AS2Runtime.method(runtime.runtime, on: list.object, name: name) { context in
                 log.append(name, arguments: context.arguments)
                 return .undefined
             }
