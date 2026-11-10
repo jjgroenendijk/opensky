@@ -39,7 +39,8 @@ gives a number. `tools/coverage/floor.sh` and `tools/coverage/changed-lines.sh` 
 | Floor | Value | Applies to | Why this value |
 | --- | --- | --- | --- |
 | `COVERAGE_FLOOR` | 80 % | each `OpenSkyFormats*` module | Parsers read untrusted files. The lowest module was 83 % when the floor was set |
-| `RULE_COVERAGE_FLOOR` | 55 % | each feature, interface, and world-domain module, and each adapter module with a test target, except a composition module such as `OpenSkySession` and its interface, which hold ports and wiring | The lowest of these modules on the CI runner, rounded down to a multiple of 5, as for the parsers: `OpenSkyWorld` at 57.9 %. Some of these modules hold Metal and file shells that only the GPU and real-data runs reach |
+| `RULE_COVERAGE_FLOOR` | 55 % | each feature, interface, and world-domain module, except a composition module such as `OpenSkySession` and its interface, which hold ports and wiring | The lowest of these modules on the CI runner, rounded down to a multiple of 5, as for the parsers: `OpenSkyWorld` at 57.9 %. Some of these modules hold Metal and file shells that only the GPU and real-data runs reach |
+| `ADAPTER_COVERAGE_FLOOR` | 15 % | each adapter module with a test target | An adapter forwards port calls between features. Much of its code runs only inside a live game session, which hands out the renderer and the walk controller as concrete classes that a test cannot fake. The lowest tested adapter module on the CI runner, `OpenSkyActorAdapters` at 21.1 %, rounded down to a multiple of 5. The diff-coverage rule still holds for every changed adapter line |
 | `CORE_COVERAGE_FLOOR` | 75 % | each pure core file (`*Core.swift`) | A core is values in, values out, so nearly every line is reachable from a test. The rest are readout sentences of rare outcomes |
 | `DIFF_COVERAGE_FLOOR` | 80 % | the package lines a pull request adds or changes | New code is the cheapest code to test: its author knows what it does |
 
