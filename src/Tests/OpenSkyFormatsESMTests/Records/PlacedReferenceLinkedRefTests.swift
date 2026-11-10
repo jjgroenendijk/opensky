@@ -45,7 +45,7 @@ struct PlacedReferenceLinkedRefTests {
             ref: Self.target.rawValue
         ))
         #expect(refr.linkedReferences == [
-            PlacedReference.LinkedReference(keyword: nil, ref: Self.target)
+            LinkedReference(keyword: nil, ref: Self.target)
         ])
         #expect(refr.linkedReference() == Self.target)
     }

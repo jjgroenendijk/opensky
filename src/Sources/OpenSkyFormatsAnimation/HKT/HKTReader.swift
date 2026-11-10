@@ -6,6 +6,9 @@ import Foundation
 import OpenSkyFormatsCore
 
 nonisolated struct HKTReader {
+    static let magic0: UInt32 = 0xCAB0_0D1E
+    static let magic1: UInt32 = 0xD011_FACE
+
     enum Tag: Int {
         case fileInfo = 1
         case metadata = 2
@@ -37,7 +40,7 @@ nonisolated struct HKTReader {
     mutating func readMagic() throws {
         let first = try readRaw { try $0.readUInt32() }
         let second = try readRaw { try $0.readUInt32() }
-        guard first == HKTagfile.magic0, second == HKTagfile.magic1 else {
+        guard first == Self.magic0, second == Self.magic1 else {
             throw HKTError.badMagic(found0: first, found1: second)
         }
     }

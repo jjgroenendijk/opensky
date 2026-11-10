@@ -176,18 +176,12 @@ nonisolated public struct HKXGapCensus: Sendable {
 
     private mutating func recordAnnotations(_ graph: HKXObjectGraph, path: String) throws {
         for clip in try HKASplineCompressedAnimation.animations(in: graph) {
-            for event in Set(clip.annotations.map { Self.event($0.text) }) {
+            for event in Set(clip.annotations.map { HKXAnnotationHearing.event($0.text) }) {
                 annotations.add(event)
             }
             for annotation in clip.annotations {
                 hearing.addAnnotation(annotation.text, clipPath: path)
             }
         }
-    }
-
-    /// `SoundPlay.NPCFootstep` and `PIE@SGVF|x` keep only their event part.
-    static func event(_ text: String) -> String {
-        guard let cut = text.firstIndex(where: { $0 == "." || $0 == "@" }) else { return text }
-        return text[..<cut] + ".*"
     }
 }

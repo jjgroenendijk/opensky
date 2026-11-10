@@ -120,7 +120,7 @@ struct NIFBillboardTests {
             .init("NiBillboardNode", billboard),
             .init("NiNode", NIFFixture.niNode(prefix: NIFFixture.avObjectPrefix(nameIndex: 2)))
         ], strings: ["Root", "Glow", "Card"]))
-        return try NIFNodeAnimator(animation: NIFNodeAnimation(file: file))
+        return try NIFNodeAnimator(animation: NIFNodeAnimationDecoder.animation(of: file))
     }
 
     @Test func theAnimatorTurnsABillboardAndItsChildFollows() throws {

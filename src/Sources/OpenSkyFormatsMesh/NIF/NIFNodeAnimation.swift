@@ -74,13 +74,27 @@ nonisolated public struct NIFNodeAnimation: Sendable {
         self.boneLOD = boneLOD
     }
 
-    public init(file: NIFFile) throws {
-        var decoder = NIFNodeAnimationDecoder(file: file)
-        try decoder.readNodes()
-        try decoder.readControllers()
-        nodes = decoder.nodes
-        controllers = decoder.controllers
-        boneLOD = decoder.boneLOD()
+    /// The nodes that stop animating with the camera `distance` away: each named bone
+    /// past its distance, and every node below it.
+    public func frozenNodes(atDistance distance: Float) -> Set<Int> {
+        guard let bones = boneLOD?.bones else { return [] }
+        let passed = bones.filter { $0.distance > 0 && distance > $0.distance }
+        let roots = Set(passed.compactMap(\.node))
+        guard !roots.isEmpty else { return [] }
+        var frozen = Set<Int>()
+        for node in nodes.indices {
+            var current: Int? = node
+            var depth = 0
+            while let index = current, depth < 64 {
+                if roots.contains(index) {
+                    frozen.insert(node)
+                    break
+                }
+                current = nodes[index].parent
+                depth += 1
+            }
+        }
+        return frozen
     }
 
     /// Nodes that turn to the camera, parents before children.

@@ -106,8 +106,8 @@ nonisolated public struct ESSExporter {
     }
 
     private func fileContents(_ changeForms: [ESSChangeForm]) throws(ESSError) -> ESSFileContents {
-        var table1 = try ESSGlobalData.group1Types.map(ESSGlobalData.empty)
-        var table3 = try ESSGlobalData.group3Types.map(ESSGlobalData.empty)
+        var table1 = try ESSGlobalData.group1Types.map(ESSEmptyTable.table)
+        var table3 = try ESSGlobalData.group3Types.map(ESSEmptyTable.table)
         let empty = ESSPlayerLocation(
             nextObjectID: 0, worldspace: ESSRefID(raw: 0), cell: .zero,
             space: ESSRefID(raw: 0), position: .zero
@@ -131,7 +131,7 @@ nonisolated public struct ESSExporter {
         return try ESSFileContents(
             header: fileHeader(picture), screenshot: picture, plugins: forms.plugins,
             lightPlugins: forms.lightPlugins, globalData1: table1,
-            globalData2: ESSGlobalData.group2Types.map(ESSGlobalData.empty),
+            globalData2: ESSGlobalData.group2Types.map(ESSEmptyTable.table),
             changeForms: changeForms, globalData3: table3, formIDArray: forms.formIDArray,
             visitedWorldspaces: visitedWorldspaces
         )

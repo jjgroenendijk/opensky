@@ -59,14 +59,14 @@ nonisolated public struct HKXAnnotationHearing: Sendable {
             .formUnion(names.map { $0.lowercased() })
     }
 
-    /// The folded events (`HKXGapCensus.event`), in lower case, that a graph of the
+    /// The folded events (`event(_:)`), in lower case, that a graph of the
     /// clip's own project waits for. A paired clip has its own folder, so no graph hears it.
     public func heardEvents() -> Set<String> {
         var heard = Set<String>()
         for (project, texts) in annotations {
             guard let names = listened[project] else { continue }
             for text in texts.intersection(names) {
-                heard.insert(HKXGapCensus.event(text).lowercased())
+                heard.insert(Self.event(text).lowercased())
             }
         }
         return heard
@@ -75,7 +75,7 @@ nonisolated public struct HKXAnnotationHearing: Sendable {
     /// The folded events, in lower case, that the graphs of `projects` wait for.
     /// An effect's graph hears the events of the actor it is on, whatever their folder.
     public func listenedEvents(inProjects projects: Set<String>) -> Set<String> {
-        Set(projects.flatMap { listened[$0] ?? [] }.map { HKXGapCensus.event($0).lowercased() })
+        Set(projects.flatMap { listened[$0] ?? [] }.map { Self.event($0).lowercased() })
     }
 
     public static func project(of path: String) -> String {
@@ -83,5 +83,11 @@ nonisolated public struct HKXAnnotationHearing: Sendable {
         let cut = parts.firstIndex { $0 == "animations" || $0.hasPrefix("behaviors") }
             ?? max(parts.count - 1, 0)
         return parts[..<cut].map { $0 + "\\" }.joined()
+    }
+
+    /// `SoundPlay.NPCFootstep` and `PIE@SGVF|x` keep only their event part.
+    static func event(_ text: String) -> String {
+        guard let cut = text.firstIndex(where: { $0 == "." || $0 == "@" }) else { return text }
+        return text[..<cut] + ".*"
     }
 }

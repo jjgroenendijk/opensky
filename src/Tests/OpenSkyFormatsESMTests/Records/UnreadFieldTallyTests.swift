@@ -186,7 +186,7 @@ struct UnreadFieldTallyTests {
             fields += ESMFixture.field("INAM", Self.uint32(0))
             fields += ESMFixture.field("PDTO", topic)
         }
-        let package = try Package(record: Self.record("PACK", fields))
+        let package = try PackageDecoder.decode(Self.record("PACK", fields))
         #expect(package.skipped.isEmpty)
         #expect(package.procedureTypes == ["Sit"])
         #expect(package.details.idleAnimations?.animations == [FormID(0x80)])

@@ -49,7 +49,7 @@ nonisolated public struct NIFNodeAnimator: Sendable {
     ) {
         time += max(deltaTime, 0)
         frozen = cameraDistance.flatMap { distance in
-            animation.boneLOD?.frozenNodes(atDistance: distance, in: animation)
+            animation.frozenNodes(atDistance: distance)
         } ?? []
         let controllers = animation.controllers.enumerated().filter {
             $0.element.isActive && !frozen.contains($0.element.node)

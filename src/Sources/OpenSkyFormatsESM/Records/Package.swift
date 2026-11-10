@@ -166,9 +166,3 @@ nonisolated public struct Package: Equatable, Sendable {
     public internal(set) var details = PackageDetails()
     public let skipped: FieldTally
 }
-
-nonisolated extension Package {
-    public init(record: ESMRecord) throws {
-        self = try PackageDecoder.decode(record)
-    }
-}

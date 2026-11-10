@@ -43,7 +43,7 @@ struct NIFNodeAnimatorTests {
 
     private static func animator(_ blocks: [Block], strings: [String]) throws -> NIFNodeAnimator {
         let file = try NIFFile(data: NIFFixture.file(blocks: blocks, strings: strings))
-        return try NIFNodeAnimator(animation: NIFNodeAnimation(file: file))
+        return try NIFNodeAnimator(animation: NIFNodeAnimationDecoder.animation(of: file))
     }
 
     @Test(arguments: [(UInt16(0xC), Float(5)), (UInt16(0x4), Float(0))])
@@ -126,7 +126,7 @@ struct NIFNodeAnimatorTests {
             Block("NiNode", Self.node(name: 1)),
             Block("NiBSBoneLODController", NIFBlockFixture.boneLODController(levels: [[0, 1], [1]]))
         ], strings: ["Root", "Tail"]))
-        let lod = try #require(NIFNodeAnimation(file: file).boneLOD)
+        let lod = try #require(NIFNodeAnimationDecoder.animation(of: file).boneLOD)
         #expect(lod.levels == [[0, 1], [1]])
     }
 

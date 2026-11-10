@@ -88,7 +88,7 @@ nonisolated extension RenderMaterial {
                 specular: surface.specular, emissive: surface.emissive
             )
         }
-        let moved = animation.apply(to: source, at: seconds)
+        let moved = source.animated(by: animation, at: seconds)
         return MaterialScalars(
             uvOffset: moved.uvOffset, uvScale: moved.uvScale, alpha: moved.alpha,
             effectBaseColor: moved.effect?.baseColor ?? .zero,

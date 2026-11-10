@@ -36,18 +36,18 @@ struct ESSFileWriterTests {
             )]
         )
         let stats = [ESSMiscStat(name: "Locations Discovered", category: 0, value: 12)]
-        var table1 = try ESSGlobalData.group1Types.map(ESSGlobalData.empty)
+        var table1 = try ESSGlobalData.group1Types.map(ESSEmptyTable.table)
         table1[0] = try ESSMiscStat.table(stats)
         table1[1] = try location.table()
         table1[3] = try ESSGlobalVariable.table(globals)
-        var table3 = try ESSGlobalData.group3Types.map(ESSGlobalData.empty)
+        var table3 = try ESSGlobalData.group3Types.map(ESSEmptyTable.table)
         table3[1] = try papyrus.table()
         return try ESSFileContents(
             header: header(compression: compression),
             screenshot: ESSScreenshot(width: 2, height: 1, rgba: Data(0 ..< 8)),
             plugins: ["Skyrim.esm", "Update.esm"], lightPlugins: ["ccbgssse001-fish.esm"],
             globalData1: table1,
-            globalData2: ESSGlobalData.group2Types.map(ESSGlobalData.empty),
+            globalData2: ESSGlobalData.group2Types.map(ESSEmptyTable.table),
             changeForms: [ESSTopicChange(
                 form: ESSRefID(kind: .default, value: 0x1234), saidOnce: true
             ).changeForm()],
@@ -90,8 +90,8 @@ struct ESSFileWriterTests {
 
     @Test func everyEmptyTableDecodesAsEmpty() throws {
         var contents = try Self.contents()
-        contents.globalData1 = try ESSGlobalData.group1Types.map(ESSGlobalData.empty)
-        contents.globalData3 = try ESSGlobalData.group3Types.map(ESSGlobalData.empty)
+        contents.globalData1 = try ESSGlobalData.group1Types.map(ESSEmptyTable.table)
+        contents.globalData3 = try ESSGlobalData.group3Types.map(ESSEmptyTable.table)
         let file = try ESSFile(data: contents.encoded())
         #expect(try file.miscStats().isEmpty)
         #expect(try file.globalVariables().isEmpty)

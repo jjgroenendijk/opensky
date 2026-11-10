@@ -5,7 +5,7 @@ import Foundation
 import OpenSkyFormatsCore
 import simd
 
-nonisolated struct NIFNodeAnimationDecoder {
+nonisolated public struct NIFNodeAnimationDecoder {
     let file: NIFFile
     private(set) var nodes: [NIFNodeAnimation.Node] = []
     private(set) var controllers: [NIFNodeAnimation.Controller] = []
@@ -160,5 +160,14 @@ nonisolated struct NIFNodeAnimationDecoder {
             )
         }
         return NIFBoneLODLevels(levels: levels, bones: bones)
+    }
+
+    public static func animation(of file: NIFFile) throws -> NIFNodeAnimation {
+        var decoder = Self(file: file)
+        try decoder.readNodes()
+        try decoder.readControllers()
+        return NIFNodeAnimation(
+            nodes: decoder.nodes, controllers: decoder.controllers, boneLOD: decoder.boneLOD()
+        )
     }
 }

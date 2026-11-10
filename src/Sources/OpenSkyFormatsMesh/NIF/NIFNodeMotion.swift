@@ -47,13 +47,6 @@ nonisolated enum NIFPathOrientation {
         let turn = simd_quatf(target * object.transpose).normalized
         return (turn * simd_quatf(angle: roll, axis: axis)).normalized
     }
-
-    /// Signed change of heading about +Z between two path steps, radians.
-    static func headingChange(from first: SIMD3<Float>, to second: SIMD3<Float>) -> Float {
-        let crossZ = first.x * second.y - first.y * second.x
-        let dot = first.x * second.x + first.y * second.y
-        return atan2(crossZ, dot)
-    }
 }
 
 nonisolated public enum NIFLagBoneMotion {

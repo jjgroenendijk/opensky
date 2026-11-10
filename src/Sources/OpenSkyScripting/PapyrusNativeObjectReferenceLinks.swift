@@ -91,7 +91,7 @@ extension PapyrusNativeFunctions {
     /// as a load-order-relative FormID, so each tag resolves to a `ReferenceKey`
     /// before the compare. A tag that does not resolve never matches.
     private static func linkedReference(
-        in links: [PlacedReference.LinkedReference],
+        in links: [LinkedReference],
         keyword: ReferenceKey?,
         world: any PapyrusWorldBridge
     ) -> FormID? {

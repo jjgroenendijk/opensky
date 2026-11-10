@@ -34,7 +34,7 @@ nonisolated public struct PackageStore: Sendable {
         actorTemplates = ActorTemplateResolver.build(from: loadOrder, leveling: leveling)
         var skipped = SkippedRecords()
         let decoded = loadOrder.indexPluginRecords(of: "PACK", skipped: &skipped) {
-            try (package: Package(record: $0), translation: $1.translation)
+            try (package: PackageDecoder.decode($0), translation: $1.translation)
         }
         packages = decoded.mapValues(\.package)
         // A broken FLST belongs to the catalogue's own count, not the PACK one.

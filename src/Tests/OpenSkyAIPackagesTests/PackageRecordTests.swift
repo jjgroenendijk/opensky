@@ -11,38 +11,9 @@ import Testing
 
 struct PackageRecordTests {
     @Test func decodesBoundedHeaderPublicDataAndProcedureNames() throws {
-        let condition = ConditionEvaluatorFixture.field(
-            comparisonValue: Float(1).bitPattern,
-            functionIndex: 35,
-            runOn: 2,
-            reference: 0x700
-        ).data
-        var fields = PackageFixture.general(
-            flags: 0x2404, kind: 18, interruptOverride: 4, speed: 2, interruptFlags: 0x0102
-        )
-        fields += PackageFixture.schedule(hour: 20, minute: 10, duration: 240)
-        fields += ESMFixture.field("CTDA", condition)
-        fields += ESMFixture.field(
-            "VMAD", VMADFixture.payload(scripts: [VMADFixture.Script(
-                "PackageScript",
-                properties: []
-            )])
-        )
-        fields += PackageFixture.counter(template: 0x200)
-        fields += ESMFixture.field("ANAM", ESMFixture.zstring("Location"))
-        let locationBytes = PackageFixture.location(kind: 0, value: 0x300, radius: 512)
-        fields += ESMFixture.field("PLDT", locationBytes)
-        fields += ESMFixture.field("ANAM", ESMFixture.zstring("SingleRef"))
-        fields += ESMFixture.field(
-            "PTDA", PackageFixture.target(kind: 6, value: 0, tail: 1)
-        )
-        fields += ESMFixture.field("UNAM", Data([3])) + ESMFixture.field("UNAM", Data([7]))
-        fields += ESMFixture.field("XNAM", Data())
-        fields += ESMFixture.field("ANAM", ESMFixture.zstring("Procedure"))
-        fields += ESMFixture.field("PNAM", ESMFixture.zstring("Travel"))
-        fields += ESMFixture.field("POBA", Data())
-
-        let package = try Package(record: PackageFixture.record(formID: 0x100, fields: fields))
+        let fields = Self.travelPackageFields()
+        let record = try PackageFixture.record(formID: 0x100, fields: fields)
+        let package = try PackageDecoder.decode(record)
         #expect(package.formID == FormID(0x100))
         #expect(package.general.flags.contains(.mustComplete))
         #expect(package.general.kind == .package)
@@ -96,7 +67,7 @@ struct PackageRecordTests {
             + ESMFixture.field("ANAM", ESMFixture.zstring("Location"))
             + ESMFixture.field("PLDT", PackageFixture.location(kind: 99, value: 7, radius: 8))
             + ESMFixture.field("XNAM", Data())
-        let package = try Package(record: PackageFixture.record(fields: fields))
+        let package = try PackageDecoder.decode(PackageFixture.record(fields: fields))
         #expect(package.general.kind == .unknown(250))
         #expect(package.general.preferredSpeed == .unknown(249))
         guard case let .location(location) = package.dataInputs[0].value else {
@@ -110,12 +81,12 @@ struct PackageRecordTests {
     @Test func rejectsWrongRecordAndMalformedFixedWidthFields() throws {
         let wrong = ESMFixture.record("NPC_", data: Data())
         #expect(throws: ESMError.self) {
-            _ = try Package(record: PackageFixture.parse(wrong))
+            _ = try PackageDecoder.decode(PackageFixture.parse(wrong))
         }
         for (type, bytes) in [("PKDT", 11), ("PSDT", 11), ("PKCU", 11)] {
             let fields = ESMFixture.field(type, Data(count: bytes))
             #expect(throws: ESMError.self) {
-                _ = try Package(record: PackageFixture.record(fields: fields))
+                _ = try PackageDecoder.decode(PackageFixture.record(fields: fields))
             }
         }
         for (type, bytes) in [("PLDT", 8), ("PTDA", 8)] {
@@ -125,7 +96,7 @@ struct PackageRecordTests {
                 + ESMFixture.field("ANAM", ESMFixture.zstring(valueType))
                 + ESMFixture.field(type, Data(count: bytes))
             #expect(throws: ESMError.self) {
-                _ = try Package(record: PackageFixture.record(fields: fields))
+                _ = try PackageDecoder.decode(PackageFixture.record(fields: fields))
             }
         }
     }
@@ -154,5 +125,39 @@ struct PackageRecordTests {
         morndasMorning.advance(wallDelta: 4320, timescale: 20)
         #expect(sundasOvernight.matches(morndasMorning))
         #expect(!sundasOvernight.matches(GameClock(hour: 1)))
+    }
+
+    private static func travelPackageFields() -> Data {
+        let condition = ConditionEvaluatorFixture.field(
+            comparisonValue: Float(1).bitPattern,
+            functionIndex: 35,
+            runOn: 2,
+            reference: 0x700
+        ).data
+        var fields = PackageFixture.general(
+            flags: 0x2404, kind: 18, interruptOverride: 4, speed: 2, interruptFlags: 0x0102
+        )
+        fields += PackageFixture.schedule(hour: 20, minute: 10, duration: 240)
+        fields += ESMFixture.field("CTDA", condition)
+        fields += ESMFixture.field(
+            "VMAD", VMADFixture.payload(scripts: [VMADFixture.Script(
+                "PackageScript",
+                properties: []
+            )])
+        )
+        fields += PackageFixture.counter(template: 0x200)
+        fields += ESMFixture.field("ANAM", ESMFixture.zstring("Location"))
+        let locationBytes = PackageFixture.location(kind: 0, value: 0x300, radius: 512)
+        fields += ESMFixture.field("PLDT", locationBytes)
+        fields += ESMFixture.field("ANAM", ESMFixture.zstring("SingleRef"))
+        fields += ESMFixture.field(
+            "PTDA", PackageFixture.target(kind: 6, value: 0, tail: 1)
+        )
+        fields += ESMFixture.field("UNAM", Data([3])) + ESMFixture.field("UNAM", Data([7]))
+        fields += ESMFixture.field("XNAM", Data())
+        fields += ESMFixture.field("ANAM", ESMFixture.zstring("Procedure"))
+        fields += ESMFixture.field("PNAM", ESMFixture.zstring("Travel"))
+        fields += ESMFixture.field("POBA", Data())
+        return fields
     }
 }

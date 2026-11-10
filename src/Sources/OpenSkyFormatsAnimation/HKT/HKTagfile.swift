@@ -105,9 +105,6 @@ nonisolated public struct HKTFields: Equatable, Sendable {
 }
 
 nonisolated public struct HKTagfile: Sendable {
-    public static let magic0: UInt32 = 0xCAB0_0D1E
-    public static let magic1: UInt32 = 0xD011_FACE
-
     /// The value of the file-info item: 0 or 3 on the install.
     public let version: Int
     /// Index 0 is unused, as on disk, so a parent index of 0 means none.

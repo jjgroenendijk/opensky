@@ -155,7 +155,7 @@ struct ListSoundPackageDetailTests {
         fields += ESMFixture.field("UNAM", Data([0xFF]))
         fields += ESMFixture.field("POBA", Data())
         fields += ESMFixture.field("INAM", Fixture.uint32(0x60))
-        let package = try Package(record: Fixture.record("PACK", fields))
+        let package = try PackageDecoder.decode(Fixture.record("PACK", fields))
         let details = package.details
         #expect(package.skipped.isEmpty)
         #expect(details.idleAnimations?.flags == 1)

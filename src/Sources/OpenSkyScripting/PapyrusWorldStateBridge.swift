@@ -203,7 +203,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     }
 
     /// An ACHR keeps its links in its details, a REFR in its own field.
-    public func linkedReferences(of key: ReferenceKey) -> [PlacedReference.LinkedReference] {
+    public func linkedReferences(of key: ReferenceKey) -> [LinkedReference] {
         guard let entry = references?.referenceEntry(key: key) else { return [] }
         return entry.placedReference?.linkedReferences
             ?? entry.placedActor?.details.linkedReferences ?? []

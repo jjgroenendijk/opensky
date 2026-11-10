@@ -37,17 +37,6 @@ nonisolated public struct PlacedReference: Sendable {
         static let noAlarm = TeleportDestinationFlags(rawValue: 0x0000_0001)
     }
 
-    /// One XLKR linked-reference entry. A null or absent keyword reads as
-    /// `keyword == nil`. An 8-byte slot 0 is always read as a keyword, as in
-    /// Skyrim.esm. Evidence: docs/formats/placed-references.md.
-    public struct LinkedReference: Equatable, Sendable {
-        /// KYWD tagging the link (`LinkCarryStart`, `LinkCarryEnd`, ...).
-        /// `nil` when the link carries no keyword.
-        public let keyword: FormID?
-        /// The reference this REFR links to — a REFR/ACHR/PLYR in practice.
-        public let ref: FormID
-    }
-
     public let formID: FormID
     /// Record-header flag 0x800: hidden until a script or quest enables it.
     public let isInitiallyDisabled: Bool
@@ -231,7 +220,7 @@ nonisolated public struct PlacedReference: Sendable {
             case "XPRM":
                 primitive = try PlacedReference.decodePrimitive(field, reference: reference)
             case "XLKR":
-                PlacedReference.appendLinkedReference(field.data, to: &linkedReferences)
+                LinkedReference.append(field.data, to: &linkedReferences)
             case "XOWN":
                 owner = try InventoryItemFields.optionalFormID(field)
             case "XRNK":
@@ -280,22 +269,6 @@ nonisolated public struct PlacedReference: Sendable {
         guard data.count >= 4 else { return nil }
         var reader = BinaryReader(data)
         return try FormID(reader.readUInt32())
-    }
-
-    /// Decodes one XLKR payload (8 bytes: keyword, then ref; 4 bytes: ref) and
-    /// appends it. Never throws: a bad payload costs one link, while a bad XTEL
-    /// would move a door. Other lengths are skipped; extra bytes are ignored.
-    static func appendLinkedReference(
-        _ data: Data,
-        to links: inout [LinkedReference]
-    ) {
-        var reader = BinaryReader(data)
-        guard let first = attempt({ try FormID(reader.readUInt32()) }) else { return }
-        if data.count >= 8, let second = attempt({ try FormID(reader.readUInt32()) }) {
-            links.append(LinkedReference(keyword: first.isNull ? nil : first, ref: second))
-        } else {
-            links.append(LinkedReference(keyword: nil, ref: first))
-        }
     }
 
     private static func decodeTeleport(

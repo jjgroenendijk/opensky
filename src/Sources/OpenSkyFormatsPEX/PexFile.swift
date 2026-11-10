@@ -1,7 +1,7 @@
 // Compiled Papyrus script container (big-endian PEX 3.2).
 // Layout and sources: docs/formats/pex.md.
 
-public import Foundation
+import Foundation
 
 nonisolated public enum PexError: Error, Equatable, Sendable {
     case truncated(offset: Int, expected: Int, available: Int)
@@ -53,11 +53,6 @@ nonisolated public struct PexFile: Equatable, Sendable {
     public let debugInfo: PexDebugInfo?
     public let userFlags: [PexUserFlag]
     public let objects: [PexObject]
-
-    public init(data: Data) throws {
-        var decoder = PexDecoder(data: data)
-        self = try decoder.decode()
-    }
 
     public init(
         header: PexHeader,
