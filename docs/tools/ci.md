@@ -125,9 +125,20 @@ cannot reuse the cached build of Build & test. It builds uncached on its own run
 time as Build & test. It also builds `OpenSkyRealDataTests`, which no other job compiles.
 
 Measured 2026-11-08 on #1885: the job takes 17 to 19 minutes, of which `make lint-index` is about 16.
-Build & test takes 22 minutes with a cold compilation cache and 10.5 with a warm one. So the job
-adds up to 8.5 minutes to a run, and it costs a fourth macOS runner. #1887 tracks an incremental
-index build. On the development Mac the same uncached build takes about 9 minutes.
+Build & test takes 22 minutes with a cold compilation cache and 10.5 with a warm one. On the
+development Mac the same uncached build takes about 9 minutes.
+
+So the job builds incrementally. A push to `main` saves its whole index tree, and every run
+restores the newest one before it builds:
+
+1. The restored tree holds `source-commit`, the commit it was built from.
+2. A checkout gives every file the current time, so the build would compile all of it.
+   `tools/ci/source-times.sh` therefore sets every tracked file to one fixed old time, then gives
+   the current time only to the files that differ from `source-commit`.
+3. The build then compiles the changed files and the files that depend on them.
+
+The tree is 4.4 GB on disk and about 1.1 GB compressed (measured 2026-11-09), so only a push to
+`main` saves it, and `tools/ci/cache-prune.sh` deletes the older trees after each save.
 
 ## Caches
 
@@ -138,6 +149,7 @@ A repository keeps 10 GB of caches. When it is full, GitHub drops the least rece
 | Vendored ffmpeg | hash of `tools/vendor-ffmpeg.sh` | any run that missed it |
 | SDK modules (`ModuleCache.noindex`, `SDKStatCaches.noindex`) | Xcode build version | a push to `main` that missed it |
 | Compilation cache (`CompilationCache.noindex`) | `cas2-<arch>-<scope>-<run>`, where scope is `main` or `pr-<number>` | every run that was not cancelled |
+| Index tree (`DerivedData-index`, SDK modules) | `index1-<arch>-<Xcode build>-<commit>` | every push to `main` |
 
 The compilation cache roughly halves the build:
 

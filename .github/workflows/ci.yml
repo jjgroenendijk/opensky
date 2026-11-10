@@ -319,17 +319,40 @@ jobs:
 
   # The checks that read the index store: unused code and the adapter rule. A build
   # replayed from the compilation cache writes almost no index data, so this job builds
-  # uncached on its own runner, beside Build & test (docs/tools/ci.md#index-checks).
+  # uncached on its own runner, beside Build & test. It starts from the index tree of
+  # the last push to main, so it compiles only what changed (docs/tools/ci.md#index-checks).
   index-checks:
     name: Index checks
     needs: changes
     if: needs.changes.outputs.build == 'true'
     runs-on: xcode-27
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: write
     env:
       BUILD_FLAGS: CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= -skipPackagePluginValidation -skipMacroValidation
+      GH_TOKEN: ${{ github.token }}
+      INDEX_TREE: .cache/DerivedData-index
     steps:
       - uses: actions/checkout@v7
+      - name: Cache keys
+        id: keys
+        run: |
+          xcode="$(xcodebuild -version | awk '/Build version/ { print $3 }')"
+          echo "index=index1-$RUNNER_ARCH-$xcode-" >>"$GITHUB_OUTPUT"
+      # Only a push to main saves the tree, because it is about 1.1 GB.
+      - uses: actions/cache/restore@v6
+        id: index
+        with:
+          path: |
+            .cache/DerivedData-index
+            .cache/DerivedData/SDKExplicitPrecompiledModules
+          key: ${{ steps.keys.outputs.index }}${{ github.sha }}
+          restore-keys: ${{ steps.keys.outputs.index }}
+      # A checkout writes every file now, which would make the build compile all of it.
+      - name: Give the sources the times the restored tree expects
+        run: tools/ci/source-times.sh "$(cat "$INDEX_TREE/source-commit" 2>/dev/null || true)"
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
       - uses: actions/cache/restore@v6
@@ -348,6 +371,23 @@ jobs:
       - name: Wait for the Metal Toolchain
         run: tools/ci/metal-toolchain.sh wait
       - run: make lint-index XCODEBUILD_FLAGS="$BUILD_FLAGS"
+      # Saved after failed checks too, because the build itself is still valid.
+      - name: Record the commit the tree was built from
+        if: ${{ !cancelled() && github.event_name == 'push' && steps.index.outputs.cache-hit != 'true' }}
+        run: git rev-parse HEAD >"$INDEX_TREE/source-commit"
+      - if: ${{ !cancelled() && github.event_name == 'push' && steps.index.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            .cache/DerivedData-index
+            .cache/DerivedData/SDKExplicitPrecompiledModules
+          key: ${{ steps.index.outputs.cache-primary-key }}
+      - name: Delete superseded index trees
+        if: ${{ !cancelled() && github.event_name == 'push' && steps.index.outputs.cache-hit != 'true' }}
+        env:
+          PREFIX: ${{ steps.keys.outputs.index }}
+          KEEP: ${{ steps.index.outputs.cache-primary-key }}
+        run: tools/ci/cache-prune.sh "$GITHUB_REF" "$PREFIX" "$KEEP"
       - name: Upload logs
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
