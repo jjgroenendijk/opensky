@@ -70,11 +70,9 @@ row in `/engine/unverified-values.md`.
 `Index checks` CI job. It lists each protocol in an interface module that has one conformer in
 `src/Sources` and none in `src/Tests`. A type that conforms to a refining protocol counts for
 the protocol it refines too: `FakeMenuModePort` is a fake of `MenuInputRouting`, because
-`MenuModePort` refines it. It reports and passes until its count is zero; then it becomes a
-gate. Measured 2026-11-09: 203 of 233 interface protocols, 185 of them in
-`OpenSkySessionInterface`. Measured 2026-11-10, with the adapter tests of the AI, Actor, and
-earlier modules, fakes of the faction, spellbook, and face morph seams, and a fake game
-session: 30 of 233.
+`MenuModePort` refines it. A protocol on the list fails the check. Measured 2026-11-09, when
+the check only reported: 203 of 233 interface protocols, 185 of them in
+`OpenSkySessionInterface`. Measured 2026-11-10, with a test fake for each: 0 of 233.
 
 A port leaves the list in one of two ways. A test passes a fake of it, or the port goes and its
 caller calls the type that does the work. A seam between two features stays a protocol, because

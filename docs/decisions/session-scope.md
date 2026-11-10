@@ -242,4 +242,8 @@ Two more checks keep the design:
 The glue is the session, the session interface, and the adapter modules: the code that connects
 the features to the running game. Measured 2026-11-09, before the adapter tests and the port
 collapse of the single-conformer report ([Ports and adapters](/decisions/ports-and-adapters.md#one-conformer)):
-32,789 lines of glue, against 33,336 lines in the interface modules it connects.
+32,789 lines of glue, against 33,336 lines in the interface modules it connects. Measured
+2026-11-10, after both: 32,967 lines of glue, against 33,325 lines in the interface modules.
+The tests and fakes live in `src/Tests`, so they add no glue. Removing the ports with one
+conformer took lines from the interface modules, and taking clocks and loaders through the
+adapters' inits added a few lines to the glue.
