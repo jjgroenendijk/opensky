@@ -3,20 +3,14 @@
 // `wbDefinitionsTES5.pas` (`DSTD`). See docs/engine/papyrus-destruction.md.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 
-nonisolated public struct DestructionProgress: Equatable, Sendable {
+nonisolated struct DestructionProgress: Equatable, Sendable {
     /// Damage taken since the last `ClearDestruction`.
-    public var damage: Float = 0
+    var damage: Float = 0
     /// The `DSTD` index of the stage reached, 0 while intact.
-    public var stage = 0
-    public var isDestroyed = false
-
-    public init(damage: Float = 0, stage: Int = 0, isDestroyed: Bool = false) {
-        self.damage = damage
-        self.stage = stage
-        self.isDestroyed = isDestroyed
-    }
+    var stage = 0
+    var isDestroyed = false
 
     static let capDamage: UInt8 = 0x01
     static let disable: UInt8 = 0x02
@@ -29,7 +23,7 @@ nonisolated public struct DestructionProgress: Equatable, Sendable {
 
     /// Adds `amount` of damage. A stage with the cap flag holds health at its percent,
     /// so later damage stops there. True in the result when the reached stage disables.
-    public mutating func apply(damage amount: Float, to data: Destructible) -> Bool {
+    mutating func apply(damage amount: Float, to data: Destructible) -> Bool {
         guard amount > 0, amount.isFinite, data.health > 0, !isDestroyed else { return false }
         let health = Float(data.health)
         var newDamage = damage + amount
@@ -53,7 +47,7 @@ nonisolated public struct DestructionProgress: Equatable, Sendable {
     }
 
     /// `SetDestroyed(true)` jumps to the last stage; false makes the object whole again.
-    public static func destroyed(_ isDestroyed: Bool, data: Destructible?) -> DestructionProgress {
+    static func destroyed(_ isDestroyed: Bool, data: Destructible?) -> DestructionProgress {
         guard isDestroyed else { return DestructionProgress() }
         let last = data?.stages.map { Int($0.index) }.max() ?? 0
         let health = Float(data?.health ?? 0)

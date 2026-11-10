@@ -2,7 +2,7 @@
 // `PerkState.init` sets, so an unchanged set re-encodes identically.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyProgressionInterface
 public import OpenSkyWorldState
 
@@ -16,7 +16,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `PRKS` chunk: every snapshot entry carrying owned perks, in the
     /// snapshot's `ReferenceKey` order. A session in which nobody owns a perk
     /// writes no chunk.
-    public static func writePerks(
+    static func writePerks(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

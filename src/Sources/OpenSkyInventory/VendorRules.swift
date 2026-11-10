@@ -5,8 +5,8 @@
 // list. No list means no keyword gate. See docs/engine/vendor-factions.md.
 
 import Foundation
-public import OpenSkyFactionsInterface
-public import OpenSkyFormatsESM
+import OpenSkyFactionsInterface
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
 
@@ -16,13 +16,13 @@ nonisolated public struct VendorResolver: Sendable {
     public let formLists: FormListStore
 
     /// The first vendor faction in membership order, or nil.
-    public func vendor(memberships: ActorFactionState) -> Vendor? {
+    func vendor(memberships: ActorFactionState) -> Vendor? {
         vendors(memberships: memberships).first
     }
 
     /// Every vendor faction in membership order. An actor with two trades as the
     /// first one whose hours, place, and conditions hold now.
-    public func vendors(memberships: ActorFactionState) -> [Vendor] {
+    func vendors(memberships: ActorFactionState) -> [Vendor] {
         memberships.memberships.compactMap { membership in
             guard
                 let resolved = factions.faction(key: membership.faction),
@@ -58,7 +58,7 @@ nonisolated public struct VendorResolver: Sendable {
     }
 
     /// An item's keywords as the same identities the list resolves to.
-    public func keywords(_ raw: [FormID], fromPlugin pluginName: String) -> Set<ReferenceKey> {
+    func keywords(_ raw: [FormID], fromPlugin pluginName: String) -> Set<ReferenceKey> {
         Set(raw.compactMap {
             formLists.resolvedID($0, fromPlugin: pluginName).map(ReferenceKey.init(resolved:))
         })

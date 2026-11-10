@@ -7,7 +7,7 @@ import OpenSkyFormatsSWF
 import OpenSkyMenusInterface
 
 public class ItemListMenuScreen: MenuScreen<ItemListMovieEvent> {
-    public private(set) var model = ItemListMenuModel(categories: [])
+    private(set) var model = ItemListMenuModel(categories: [])
     let moviePath: String
     let title: String
     let hint: String

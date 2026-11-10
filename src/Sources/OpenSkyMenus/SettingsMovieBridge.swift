@@ -4,27 +4,27 @@
 // and its list rows carry `text`, `movieType`, `value`, and stepper `options`.
 
 import Foundation
-public import OpenSkyFormatsSWF
-public import OpenSkyGameData
+import OpenSkyFormatsSWF
+import OpenSkyGameData
 
-nonisolated public enum SettingsMovieBridge: Sendable {
-    public static let optionsListPath =
+nonisolated enum SettingsMovieBridge: Sendable {
+    static let optionsListPath =
         "\(SystemMenuMovieBridge.systemPagePath)/OptionsListsPanel/OptionsLists/List_mc"
 
-    public static let requestNames: [String: PlayerSettingGroup] = [
+    static let requestNames: [String: PlayerSettingGroup] = [
         "RequestGameplayOptions": .gameplay,
         "RequestDisplayOptions": .display,
         "RequestAudioOptions": .audio
     ]
 
     /// `SystemPage` state constants this bridge starts by name.
-    public static let categoryState = "SETTINGS_CATEGORY_STATE"
-    public static let optionsState = "OPTIONS_LISTS_STATE"
-    public static let mainState = "MAIN_STATE"
+    static let categoryState = "SETTINGS_CATEGORY_STATE"
+    static let optionsState = "OPTIONS_LISTS_STATE"
+    static let mainState = "MAIN_STATE"
 
     /// The movie's requests are answered by the engine's own publish, because the
     /// options list takes no key input in this runtime. The handler only reports.
-    public static func register(
+    static func register(
         runtime: SWFMovieRuntime,
         onRequest: @escaping @MainActor @Sendable (PlayerSettingGroup) -> Void
     ) {
@@ -40,7 +40,7 @@ nonisolated public enum SettingsMovieBridge: Sendable {
 
     /// The `value` a row shows: checkbox 0 or 1, stepper option index, slider 0 to 1.
     /// The settings store keeps every value in these units already.
-    public static func movieValue(
+    static func movieValue(
         _ value: Double,
         for definition: PlayerSettingDefinition
     ) -> Double {
@@ -50,7 +50,7 @@ nonisolated public enum SettingsMovieBridge: Sendable {
     // MARK: - Publishing
 
     /// Replaces the option rows, selects one, and rebuilds the list.
-    public static func publish(
+    static func publish(
         _ rows: [(definition: PlayerSettingDefinition, value: Double)],
         selected: Int,
         runtime: SWFMovieRuntime
@@ -75,7 +75,7 @@ nonisolated public enum SettingsMovieBridge: Sendable {
 
     /// Starts a `SystemPage` state by its constant name. The movie focuses the
     /// state's list itself.
-    public static func startState(_ name: String, runtime: SWFMovieRuntime) {
+    static func startState(_ name: String, runtime: SWFMovieRuntime) {
         guard
             let value = runtime.runtime.registeredClass(named: "SystemPage")?
                 .lookup(name)?.property.value

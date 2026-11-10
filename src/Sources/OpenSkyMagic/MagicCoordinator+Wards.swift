@@ -8,18 +8,18 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyConditions
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
 extension MagicCoordinator {
     /// Ward strength restored per second. OpenSky's choice: Lesser Ward's magnitude,
     /// so a ward refills in about a second, as it charges.
-    public static let wardRecoveryPerSecond: Float = 40
+    static let wardRecoveryPerSecond: Float = 40
     /// How long a broken ward answers `IsWardState` 2.
-    public static let brokenWardSeconds: Float = 1
+    static let brokenWardSeconds: Float = 1
     /// The stagger a broken ward gives its holder.
-    public static let wardBreakStagger: Float = 1
+    static let wardBreakStagger: Float = 1
 
     /// `IsWardState` values. Taken from the `OnWardHit` statuses; the condition's own
     /// page gives none.
@@ -74,7 +74,7 @@ extension MagicCoordinator {
     }
 
     /// The most ward power `holder` may use: a share of its strongest running ward.
-    public func wardPowerCap(of holder: ActorValueHolder) -> Float {
+    func wardPowerCap(of holder: ActorValueHolder) -> Float {
         guard let effects else { return .infinity }
         let strongest = effects.active(on: holder)
             .filter { effects.rule(of: $0) == .accumulate }

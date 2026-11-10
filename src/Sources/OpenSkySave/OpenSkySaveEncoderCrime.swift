@@ -4,7 +4,7 @@
 
 import Foundation
 public import OpenSkyCrimeInterface
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 public import OpenSkyWorldState
@@ -25,7 +25,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `CRIM` chunk, in key order: per row the faction, the gold, then one count per
     /// kind in `CrimeKind.counted` order. Counts travel because an unwitnessed crime
     /// moves a count and not the gold.
-    public static func writeCrimeLedgers(
+    static func writeCrimeLedgers(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -56,7 +56,7 @@ nonisolated extension OpenSkySaveEncoder {
 
     /// The `STOL` chunk: per owner, one row per item with its stolen count. The partner
     /// of `INVN`'s totals. Nothing stolen writes no chunk.
-    public static func writeStolenGoods(
+    static func writeStolenGoods(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

@@ -23,7 +23,7 @@ extension CombatLoopRuntime {
     }
 
     /// The allies of `commander`, in key order.
-    public func allies(of commander: ReferenceKey) -> [ReferenceKey] {
+    func allies(of commander: ReferenceKey) -> [ReferenceKey] {
         commanders.filter { $0.value == commander }.keys.sorted()
     }
 

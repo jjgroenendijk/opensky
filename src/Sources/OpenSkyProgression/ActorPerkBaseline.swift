@@ -20,7 +20,7 @@ nonisolated public struct ActorPerkBaselineResolver: Sendable {
         return copy
     }
 
-    public init(templates: ActorTemplateResolver) {
+    init(templates: ActorTemplateResolver) {
         self.templates = templates
     }
 

@@ -1,20 +1,20 @@
 // CRST chunk: the game hour the player last left each cell, for the cell reset.
 // Merged into the player's `RDLT` delta. Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import Foundation
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyGameData
 public import OpenSkyWorldState
 
 /// The saved departures, before they are merged back into the player's delta.
-nonisolated public struct SaveCellResetLedger: Equatable, Sendable {
-    public let ledger: CellResetLedger
+nonisolated struct SaveCellResetLedger: Equatable, Sendable {
+    let ledger: CellResetLedger
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// The player's departures, ordered by cell. No departure writes no chunk.
-    public static func writeCellResets(
+    static func writeCellResets(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -36,9 +36,9 @@ nonisolated extension OpenSkySaveEncoder {
     }
 }
 
-nonisolated public enum OpenSkySaveCellResetDecoder: Sendable {
+nonisolated enum OpenSkySaveCellResetDecoder: Sendable {
     /// A non-finite hour or an absent cell is dropped, so that cell does not reset.
-    public static func decode(_ payload: Data) throws -> SaveCellResetLedger {
+    static func decode(_ payload: Data) throws -> SaveCellResetLedger {
         var reader = SaveReader(payload)
         let count = try reader.uint32("CRST entry count")
         try OpenSkySaveDecoder.validate(
@@ -60,15 +60,15 @@ nonisolated public enum OpenSkySaveCellResetDecoder: Sendable {
 }
 
 nonisolated extension SaveCellResetLedger: SaveDeltaComponentEntry {
-    public var key: ReferenceKey {
+    var key: ReferenceKey {
         .player
     }
 
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         nil
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         ledger.departures.isEmpty ? nil : ledger.erased
     }
 }

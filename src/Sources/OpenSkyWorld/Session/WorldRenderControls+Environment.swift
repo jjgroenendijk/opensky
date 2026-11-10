@@ -11,7 +11,7 @@ public import OpenSkyWorldInterface
 import simd
 
 extension WorldRenderControls {
-    public var weatherEnabled: Bool {
+    var weatherEnabled: Bool {
         get { gameSession?.weatherEnabled ?? true }
         set { gameSession?.weatherEnabled = newValue }
     }
@@ -30,30 +30,30 @@ extension WorldRenderControls {
         weather.forceWeather(match?.formID, transition: transition)
     }
 
-    public var currentWeatherName: String? {
+    var currentWeatherName: String? {
         gameSession?.weather?.currentWeatherEditorID
     }
 
-    public var weatherTransitionFraction: Float {
+    var weatherTransitionFraction: Float {
         gameSession?.weather?.transitionFraction ?? 1
     }
 
     /// The same scrub as the Runtime State readout's hour control.
-    public var timeOfDay: Float {
+    var timeOfDay: Float {
         get { gameSession?.timeOfDay ?? TimeOfDaySettings.load() }
         set { runtimeState.setGameClockHour(newValue) }
     }
 }
 
 extension WorldRenderControls {
-    public var particleEmissionScale: Float {
+    var particleEmissionScale: Float {
         get { renderer?.particleEmissionScale ?? 1 }
         set { renderer?.particleEmissionScale = simd_clamp(newValue, 0, 2) }
     }
 }
 
 extension WorldRenderControls {
-    public var grassDrawDistance: Float {
+    var grassDrawDistance: Float {
         get { renderer?.grassDrawDistance ?? GrassRenderPolicy.defaultDrawDistance }
         set {
             renderer?.grassDrawDistance = simd_clamp(

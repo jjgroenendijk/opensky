@@ -41,7 +41,7 @@ nonisolated public enum CombatFortifyBonus: Sendable {
     }
 
     /// The multiplier a bow shot earns.
-    public static func archery(reading value: (Int32) -> Float?) -> Float {
+    static func archery(reading value: (Int32) -> Float?) -> Float {
         multiplier(of: archeryIndices, reading: value)
     }
 

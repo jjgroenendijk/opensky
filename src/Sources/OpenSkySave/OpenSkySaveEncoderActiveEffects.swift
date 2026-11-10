@@ -4,7 +4,7 @@
 // reload reports the same total duration.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyMagicInterface
 public import OpenSkyWorldState
@@ -20,7 +20,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// snapshot's `ReferenceKey` order. A session in which nothing was applied
     /// writes no chunk, so its bytes match what this encoder produced before
     /// the chunk existed.
-    public static func writeActiveEffects(
+    static func writeActiveEffects(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

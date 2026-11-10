@@ -13,7 +13,7 @@ extension CellStreamer {
     /// Longest teleport, in capsule radii, that is still sampled for volumes
     /// crossed on the way. Past this the sweep samples evenly at coarser
     /// spacing, so a very long jump stays O(1) rather than O(distance).
-    public static let maximumTriggerSweepSamples = 16
+    static let maximumTriggerSweepSamples = 16
 
     /// Registers `triggerLog` in the readout step, from `init`.
     ///
@@ -49,7 +49,7 @@ extension CellStreamer {
 
     /// One frame's occupancy test and diff. A nil state (fly mode) freezes occupancy, so
     /// switching modes inside a volume fakes no leave.
-    public func updateTriggerOccupancy(_ state: PlayerCapsuleState?) {
+    func updateTriggerOccupancy(_ state: PlayerCapsuleState?) {
         guard let state else {
             lastTriggerFeetPosition = nil
             return
@@ -109,7 +109,7 @@ extension CellStreamer {
 
     /// Capsule poses between two frames' feet, about one radius apart, so a teleport
     /// cannot skip a volume. Endpoints excluded. A normal step gives no samples.
-    public static func sweepSamples(
+    static func sweepSamples(
         from origin: SIMD3<Float>,
         to destination: SIMD3<Float>,
         radius: Float

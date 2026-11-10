@@ -9,281 +9,281 @@ nonisolated extension OpenSkySaveFormat {
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero
     /// component count (1). Used to reject an impossible entry count before
     /// any array is reserved.
-    public static let minimumEntrySize = 9
+    static let minimumEntrySize = 9
     /// Smallest number of bytes a single `GVAR` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the declared-type tag (1) and the
     /// float32 value (4).
-    public static let minimumGlobalEntrySize = 12
+    static let minimumGlobalEntrySize = 12
     /// Smallest number of bytes one fingerprint plugin entry can occupy: an
     /// empty name (2) plus the three stats fields (12).
-    public static let minimumFingerprintEntrySize = 14
+    static let minimumFingerprintEntrySize = 14
     /// Smallest number of bytes a single `PSCR` instance entry can occupy: a
     /// plugin key with an empty name (1 + 2 + 4), an empty script name (2), an
     /// empty active-state name (2), the `OnInit`-fired flag (1) and a zero
     /// variable count (4).
-    public static let minimumScriptEntrySize = 16
+    static let minimumScriptEntrySize = 16
     /// Smallest number of bytes a single `PSCR` variable can occupy: an empty
     /// declaring-script name (2), an empty variable name (2) and the value tag
     /// (1), which is the whole entry when the value is `none`.
-    public static let minimumScriptVariableSize = 5
+    static let minimumScriptVariableSize = 5
     /// Smallest number of bytes a single `INVN` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1), a zero stack
     /// count (4) and a zero equipped count (4).
-    public static let minimumInventoryEntrySize = 16
+    static let minimumInventoryEntrySize = 16
     /// Bytes one `INVN` stack occupies: item FormID plus count, both `UInt32`.
     /// Fixed width, so this is the exact size rather than a lower bound.
-    public static let inventoryStackSize = 8
+    static let inventoryStackSize = 8
     /// Bytes one `INVN` equipped entry occupies: a single `UInt32` FormID.
-    public static let inventoryEquippedSize = 4
+    static let inventoryEquippedSize = 4
     /// Smallest number of bytes a single `SPWN` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the base FormID (4), an interior cell
     /// tag (1 + 4), six placement floats (24), the scale (4) and the count (4).
     /// A real entry carries a generated key and may name an exterior cell, both
     /// of which are longer, so this is a lower bound rather than the size.
-    public static let minimumSpawnEntrySize = 48
+    static let minimumSpawnEntrySize = 48
     /// Smallest number of bytes a single `PTMR` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), an empty script name (2), the slot byte
     /// (1) and the two `Float64` bit patterns (8 + 8). Nothing in the entry is
     /// optional, so this is also the size of every entry whose names are
     /// empty.
-    public static let minimumTimerEntrySize = 26
+    static let minimumTimerEntrySize = 26
     /// Smallest number of bytes a single `QSTS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the running/completed flag byte (1), a
     /// zero stage count (4) and a zero objective count (4).
-    public static let minimumQuestEntrySize = 16
+    static let minimumQuestEntrySize = 16
     /// Bytes one `QSTS` reached stage occupies: a single `UInt16` index. Fixed
     /// width, so this is the exact size rather than a lower bound.
-    public static let questStageSize = 2
+    static let questStageSize = 2
     /// Bytes one `QSTS` objective occupies: a `UInt16` index plus its flag
     /// byte. Fixed width, like the stage entry.
-    public static let questObjectiveSize = 3
+    static let questObjectiveSize = 3
     /// Smallest number of bytes a single `QALS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4) naming the quest, and a zero fill count
     /// (4).
-    public static let minimumQuestAliasEntrySize = 11
+    static let minimumQuestAliasEntrySize = 11
     /// Smallest `QJLG` entry: a plugin key with an empty name (1 + 2 + 4), the stage (2),
     /// and a zero item count (4).
-    public static let minimumQuestJournalLogEntrySize = 13
+    static let minimumQuestJournalLogEntrySize = 13
     /// Smallest number of bytes one `QALS` fill can occupy: the alias ID (4)
     /// and a plugin key with an empty name (1 + 2 + 4). A generated key is
     /// longer, so this is a lower bound rather than the size.
-    public static let minimumQuestAliasFillSize = 11
+    static let minimumQuestAliasFillSize = 11
     /// Smallest number of bytes a single `AVAL` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and the three
     /// current-value floats (12). A generated key or a named cell is longer, so
     /// this is a lower bound.
-    public static let minimumActorValueEntrySize = 20
+    static let minimumActorValueEntrySize = 20
     /// Smallest number of bytes a single `AVOV` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero value
     /// count (4). An entry with values is longer, so this is a lower bound.
-    public static let minimumActorValueOverrideEntrySize = 12
+    static let minimumActorValueOverrideEntrySize = 12
     /// Bytes one `AVOV` value record occupies: the actor-value index and the
     /// base-offset, permanent and damage floats.
-    public static let actorValueOverrideRecordSize = 16
+    static let actorValueOverrideRecordSize = 16
     /// Smallest number of bytes a single `DETH` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1), the dead and
     /// looted flags (2), the "no resting transform" tag (1), the "no severed node" tag
     /// (1) and the "no head rest" tag (1). A generated key, a named cell or a
     /// recorded transform is longer, so this is a lower bound.
-    public static let minimumDeathEntrySize = 13
+    static let minimumDeathEntrySize = 13
     /// Smallest `HRVS` entry: a plugin key with an empty name (1 + 2 + 4) and the
     /// "no cell" tag (1).
-    public static let minimumHarvestEntrySize = 8
+    static let minimumHarvestEntrySize = 8
     /// Smallest `HRVD` entry: a plugin key with an empty name (7) and the day (4).
-    public static let minimumHarvestDayEntrySize = 11
+    static let minimumHarvestDayEntrySize = 11
     /// Smallest `LOCK` entry: the smallest key and cell (8), the locked byte, the
     /// level byte, and the key FormID (4).
-    public static let minimumLockEntrySize = 14
+    static let minimumLockEntrySize = 14
     /// Smallest `CRST` entry: an interior cell (5) and the hour (8).
-    public static let minimumCellResetEntrySize = 13
+    static let minimumCellResetEntrySize = 13
     /// Smallest `VRST` entry: a plugin key with an empty name (7) and the hour (8).
-    public static let minimumVendorRestockEntrySize = 15
+    static let minimumVendorRestockEntrySize = 15
     /// Smallest `RLOC` entry: the smallest key and cell (8) and an interior target (5).
-    public static let minimumRelocationEntrySize = 13
+    static let minimumRelocationEntrySize = 13
     /// Smallest `RMOT` entry: the smallest key and cell (8) and the motion byte.
-    public static let minimumMotionTypeEntrySize = 9
+    static let minimumMotionTypeEntrySize = 9
     /// Smallest `LVRL` entry: the smallest key and cell (8) and the level (4).
-    public static let minimumLeveledRollEntrySize = 12
+    static let minimumLeveledRollEntrySize = 12
     /// Smallest `SCNS` entry: the smallest key and cell (8), the phase (4), the
     /// entered byte, and the two empty list counts (8).
-    public static let minimumSceneEntrySize = 21
+    static let minimumSceneEntrySize = 21
     /// Smallest `MSTS` entry: the smallest key and cell (8) and the stat count (4).
-    public static let minimumMiscStatsEntrySize = 12
+    static let minimumMiscStatsEntrySize = 12
     /// Smallest `MSTS` stat: the empty name's length (2) and the value (4).
-    public static let minimumMiscStatRecordSize = 6
+    static let minimumMiscStatRecordSize = 6
     /// `QTRK` entry: the smallest key and cell (8) and the tracked byte.
-    public static let questTrackingEntrySize = 9
+    static let questTrackingEntrySize = 9
     /// `SCNP` entry: the smallest key and cell (8) and the pause time (8).
-    public static let scenePauseEntrySize = 16
+    static let scenePauseEntrySize = 16
     /// One `SCNS` running action: index (4), start (8), timed byte, duration (4).
-    public static let sceneActionRecordSize = 17
+    static let sceneActionRecordSize = 17
     /// `SMQS` entry: the smallest key and cell (8), the start time (8), the count (4).
-    public static let minimumStoryManagerQuestEntrySize = 20
+    static let minimumStoryManagerQuestEntrySize = 20
     /// `DLBS` entry: the smallest key and cell (8) and the branch FormID (4).
-    public static let minimumDialogueBranchEntrySize = 12
+    static let minimumDialogueBranchEntrySize = 12
     /// `SCRS` entry: the smallest key and cell (8) and four counts (16).
-    public static let minimumScriptedStateEntrySize = 24
+    static let minimumScriptedStateEntrySize = 24
     /// `HELP` entry: the smallest key and cell (8) and the record count (4).
-    public static let minimumHelpMessageEntrySize = 12
+    static let minimumHelpMessageEntrySize = 12
     /// One `HELP` record: an empty event name (2), the count (4), the done byte.
-    public static let minimumHelpMessageRecordSize = 7
+    static let minimumHelpMessageRecordSize = 7
     /// `PRUL` entry: the smallest key and cell (8) and two switch bytes.
-    public static let playerRulesEntrySize = 10
+    static let playerRulesEntrySize = 10
     /// Smallest number of bytes a single `CBTS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and the hostility
     /// byte (1). A generated key or a named cell is longer, so this is a lower
     /// bound.
-    public static let minimumCombatStateEntrySize = 9
+    static let minimumCombatStateEntrySize = 9
     /// Smallest number of bytes a single `DLGS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4) naming the INFO, and the said count (4).
     /// A generated key is longer, so this is a lower bound rather than the
     /// size. No cell tag travels with the entry: an INFO is a base record that
     /// belongs to no cell, so the byte could only ever hold one value.
-    public static let minimumDialogueEntrySize = 11
+    static let minimumDialogueEntrySize = 11
     /// `DLGT` entry: the smallest INFO key (7) and the speaker count (4).
-    public static let minimumDialogueSaidDayEntrySize = 11
+    static let minimumDialogueSaidDayEntrySize = 11
     /// One `DLGT` speaker: the smallest key (7) and the float64 day (8).
-    public static let minimumDialogueSaidDaySpeakerSize = 15
+    static let minimumDialogueSaidDaySpeakerSize = 15
     /// Smallest number of bytes a single `AEFF` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero effect
     /// count (4). An entry with effects is longer, so this is a lower bound.
-    public static let minimumActiveEffectEntrySize = 12
+    static let minimumActiveEffectEntrySize = 12
     /// Smallest number of bytes one `AEFF` effect can occupy: the sequence (8),
     /// the source kind (4), a plugin key with an empty name for the source
     /// record and for the MGEF (7 each), the "no caster" and "no keyword" tags
     /// (1 each), the mode (4), the detrimental byte (1), duration, elapsed and
     /// paid-seconds words (4 each) and a zero value count (4).
-    public static let minimumActiveEffectSize = 49
+    static let minimumActiveEffectSize = 49
     /// Bytes one `AEFF` value record occupies: the actor-value index, the
     /// magnitude and the applied modifier amount.
-    public static let activeEffectValueRecordSize = 12
+    static let activeEffectValueRecordSize = 12
     /// Smallest number of bytes a single `SPLB` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1), zero counts for
     /// the known, read-book and spent-power lists (4 each) and the two "no
     /// readied spell" tags (1 each). An entry with contents is longer, so this
     /// is a lower bound.
-    public static let minimumSpellbookEntrySize = 21
+    static let minimumSpellbookEntrySize = 21
     /// Smallest number of bytes one `SPLB` list member can occupy: a plugin key
     /// with an empty name. A generated key is longer, so this is a lower bound.
-    public static let minimumSpellbookKeySize = 7
+    static let minimumSpellbookKeySize = 7
     /// Smallest number of bytes one `SPLB` spent-power record can occupy: the
     /// key lower bound plus the whole game day it was spent on.
-    public static let minimumSpellbookPowerSize = 11
+    static let minimumSpellbookPowerSize = 11
     /// Smallest number of bytes a single `ECHG` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and zero counts for
     /// the charge and worn-item lists (4 each). An entry with contents is
     /// longer, so this is a lower bound.
-    public static let minimumEnchantedItemEntrySize = 16
+    static let minimumEnchantedItemEntrySize = 16
     /// Bytes one `ECHG` charge record occupies: the item FormID and the
     /// remaining charge.
-    public static let enchantedItemChargeRecordSize = 8
+    static let enchantedItemChargeRecordSize = 8
     /// Smallest number of bytes one `ECHG` worn-item record can occupy: the item
     /// FormID (4) and a zero sequence count (4).
-    public static let minimumEnchantedItemWornSize = 8
+    static let minimumEnchantedItemWornSize = 8
     /// Bytes one `ECHG` worn-effect sequence occupies.
-    public static let enchantedItemSequenceSize = 8
+    static let enchantedItemSequenceSize = 8
     /// Smallest number of bytes a single `PRKS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero owned
     /// count (4). An entry with contents is longer, so this is a lower bound.
-    public static let minimumPerkEntrySize = 12
+    static let minimumPerkEntrySize = 12
     /// Smallest number of bytes one `PRKS` owned perk can occupy: a plugin key
     /// with an empty name. A generated key is longer, so this is a lower bound.
-    public static let minimumPerkKeySize = 7
+    static let minimumPerkKeySize = 7
     /// Smallest number of bytes a single `FCTN` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero
     /// membership count (4). An entry with contents is longer, so this is a
     /// lower bound.
-    public static let minimumFactionEntrySize = 12
+    static let minimumFactionEntrySize = 12
     /// Smallest number of bytes one `FCTN` membership can occupy: a plugin key
     /// with an empty name (7) and the signed rank byte. A generated key is
     /// longer, so this is a lower bound.
-    public static let minimumFactionMembershipSize = 8
+    static let minimumFactionMembershipSize = 8
     /// Smallest number of bytes a single `RELS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero
     /// override count (4). An entry with contents is longer, so this is a lower
     /// bound.
-    public static let minimumRelationshipEntrySize = 12
+    static let minimumRelationshipEntrySize = 12
     /// Smallest number of bytes one `RELS` override can occupy: a plugin key
     /// with an empty name (7) and the signed rank byte. A generated key is
     /// longer, so this is a lower bound.
-    public static let minimumRelationshipOverrideSize = 8
+    static let minimumRelationshipOverrideSize = 8
     /// Smallest number of bytes a single `PLVL` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the level, experience, perk points,
     /// pending picks and skill increases (4 each) and a zero pick-history count
     /// (4). Nothing but the key and the history is variable, so this is a lower
     /// bound only because a generated key is longer.
-    public static let minimumPlayerProgressEntrySize = 31
+    static let minimumPlayerProgressEntrySize = 31
     /// Bytes one `PLVL` attribute pick occupies: the vanilla actor-value index
     /// it names. Fixed width, so this is the exact size.
-    public static let playerProgressPickSize = 4
+    static let playerProgressPickSize = 4
     /// Smallest `PLGD` entry: a plugin key with an empty name (1 + 2 + 4) and a zero
     /// skill count (4).
-    public static let minimumLegendaryEntrySize = 11
+    static let minimumLegendaryEntrySize = 11
     /// One `PLGD` skill row: the actor-value index and the count, 4 bytes each.
-    public static let legendarySkillRowSize = 8
+    static let legendarySkillRowSize = 8
     /// One `PTRN` entry at its smallest: a plugin key with an empty name (1 + 2 + 4)
     /// and the session count (4).
-    public static let minimumTrainingEntrySize = 11
+    static let minimumTrainingEntrySize = 11
     /// Smallest number of bytes a single `CRIM` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero row
     /// count (4). An entry with contents is longer, so this is a lower bound.
-    public static let minimumCrimeLedgerEntrySize = 12
+    static let minimumCrimeLedgerEntrySize = 12
     /// Smallest number of bytes one `CRIM` row can occupy: a plugin key with an
     /// empty name (7), the gold (4) and one count per `CrimeKind` (4 each). A
     /// generated key is longer, so this is a lower bound.
-    public static let minimumCrimeLedgerRowSize = 39
+    static let minimumCrimeLedgerRowSize = 39
     /// Smallest number of bytes a single `STOL` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4) and a zero row count (4). There is no
     /// cell tag — the stolen split belongs to the goods, not to a placement.
-    public static let minimumStolenGoodsEntrySize = 11
+    static let minimumStolenGoodsEntrySize = 11
     /// Bytes one `STOL` row occupies: the item FormID and the stolen count.
     /// Fixed width, so this is the exact size.
-    public static let stolenGoodsRowSize = 8
+    static let stolenGoodsRowSize = 8
     /// Smallest number of bytes a single `CRVG` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4) and a zero row count (4).
-    public static let minimumViolentCrimeGoldEntrySize = 11
+    static let minimumViolentCrimeGoldEntrySize = 11
     /// Smallest number of bytes one `CRVG` row can occupy: a plugin key with an
     /// empty name (7) and the violent gold (4).
-    public static let minimumViolentCrimeGoldRowSize = 11
+    static let minimumViolentCrimeGoldRowSize = 11
     /// Smallest number of bytes a single `RELF` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4) and a zero row count (4).
-    public static let minimumRelationshipFavourEntrySize = 11
+    static let minimumRelationshipFavourEntrySize = 11
     /// Smallest number of bytes one `RELF` row can occupy: a plugin key with an
     /// empty name (7) and the rank byte.
-    public static let minimumRelationshipFavourRowSize = 8
+    static let minimumRelationshipFavourRowSize = 8
     /// Smallest `STOF` entry: the smallest key and cell (8) and a zero row count (4).
-    public static let minimumStolenOriginsEntrySize = 12
+    static let minimumStolenOriginsEntrySize = 12
     /// Smallest `STOF` row: a plugin key with an empty name (7), the item, and the count.
-    public static let minimumStolenOriginRowSize = 15
+    static let minimumStolenOriginRowSize = 15
     /// Smallest `TMPR` entry: a plugin key with an empty name (7), the "no cell"
     /// tag (1), and a zero item count (4).
-    public static let minimumTemperedEntrySize = 12
+    static let minimumTemperedEntrySize = 12
     /// Smallest `TMPR` item: the FormID and a zero level count.
-    public static let minimumTemperedItemSize = 8
+    static let minimumTemperedItemSize = 8
     /// Bytes one `TMPR` level occupies.
-    public static let temperedLevelSize = 4
+    static let temperedLevelSize = 4
     /// Smallest `ICPY` copy: the level, the soul, and the flags byte.
-    public static let minimumItemCopySize = 6
+    static let minimumItemCopySize = 6
     /// Smallest `CPOT`, `INGK`, or `WPSN` entry: the smallest key and cell (8) and a
     /// zero row count (4).
-    public static let minimumAlchemyEntrySize = 12
+    static let minimumAlchemyEntrySize = 12
     /// Smallest `CPOT` potion: FormID, an empty name (2), the poison byte, the value,
     /// and a zero effect count.
-    public static let minimumCreatedPotionSize = 15
+    static let minimumCreatedPotionSize = 15
     /// Smallest `ENCK` entry: the smallest key and cell (8) and two zero counts (8).
-    public static let minimumEnchantingEntrySize = 16
+    static let minimumEnchantingEntrySize = 16
     /// Smallest `ENCK` made enchantment: id, an empty name (2), capacity, cost per use,
     /// and a zero base count.
-    public static let minimumMadeEnchantmentSize = 18
+    static let minimumMadeEnchantmentSize = 18
     /// One `CPOT` effect: MGEF, magnitude, area, and duration.
-    public static let createdPotionEffectSize = 16
+    static let createdPotionEffectSize = 16
     /// One `INGK` row: the ingredient and its effect bits.
-    public static let ingredientKnowledgeRowSize = 5
+    static let ingredientKnowledgeRowSize = 5
     /// One `WPSN` row: weapon, poison, and doses.
-    public static let weaponPoisonRowSize = 12
+    static let weaponPoisonRowSize = 12
     /// Smallest `FAVS` entry: the smallest key and cell (8), a zero item count (4), and
     /// a zero hotkey count (4).
-    public static let minimumFavouritesEntrySize = 16
+    static let minimumFavouritesEntrySize = 16
     /// One `FAVS` hotkey row: the slot byte and the item.
-    public static let favouriteHotkeySize = 5
+    static let favouriteHotkeySize = 5
 }

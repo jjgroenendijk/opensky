@@ -2,10 +2,10 @@
 // See docs/engine/papyrus-vm.md#native-timing.
 
 import Foundation
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 
 /// How long a native call takes before the script goes on.
-nonisolated public enum PapyrusNativeTiming: String, Equatable, Sendable, CaseIterable {
+nonisolated enum PapyrusNativeTiming: String, Equatable, Sendable, CaseIterable {
     /// Returns in the same frame.
     case nonDelayed
     /// Returns on the next frame.
@@ -22,17 +22,17 @@ nonisolated public enum PapyrusNativeTimingMode: Equatable, Sendable {
     case runToEnd
 }
 
-nonisolated public enum PapyrusNativeTimingTable {
+nonisolated enum PapyrusNativeTimingTable {
     /// The timing class of one native. A native no list names is delayed, as the wiki
     /// says of every native outside the non-delayed category.
-    public static func timing(of key: PapyrusNativeKey) -> PapyrusNativeTiming {
+    static func timing(of key: PapyrusNativeKey) -> PapyrusNativeTiming {
         if nonDelayed.contains(key) {
             return .nonDelayed
         }
         return latent.contains(key) ? .latent : .delayed
     }
 
-    public static func timing(scriptName: String, functionName: String) -> PapyrusNativeTiming {
+    static func timing(scriptName: String, functionName: String) -> PapyrusNativeTiming {
         timing(of: PapyrusNativeKey(scriptName: scriptName, functionName: functionName))
     }
 

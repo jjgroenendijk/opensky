@@ -2,16 +2,16 @@
 
 import Foundation
 import OpenSkyDialogueInterface
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     private typealias SavedState = (key: ReferenceKey, state: DialogueRuntimeState)
 
     /// The `DLGS` chunk: every non-baseline dialogue component, in key order. The
     /// untouched state is skipped, because the decoder restores it for any unnamed INFO.
-    public static func writeDialogueStates(
+    static func writeDialogueStates(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

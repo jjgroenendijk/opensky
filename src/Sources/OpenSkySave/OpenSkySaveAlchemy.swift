@@ -2,16 +2,16 @@
 // poisons, each merged into the `RDLT` deltas by key. Rows ascend by FormID, so equal
 // state gives equal bytes. Layout: docs/formats/opensky-save-actor-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-public import OpenSkyInventoryInterface
-public import OpenSkyWorldState
+import OpenSkyInventoryInterface
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Per potion: FormID, name, poison byte, value, then each effect's MGEF,
     /// magnitude, area, and duration.
-    public static func writeCreatedPotions(
+    static func writeCreatedPotions(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -37,7 +37,7 @@ nonisolated extension OpenSkySaveEncoder {
     }
 
     /// Per ingredient: its FormID and one byte with a bit per known effect.
-    public static func writeIngredientKnowledge(
+    static func writeIngredientKnowledge(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -55,7 +55,7 @@ nonisolated extension OpenSkySaveEncoder {
     }
 
     /// Per weapon: its FormID, the poison's FormID, and the doses left.
-    public static func writeWeaponPoisons(
+    static func writeWeaponPoisons(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -75,7 +75,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
-    public static func decodeCreatedPotions(
+    static func decodeCreatedPotions(
         _ payload: Data
     ) throws -> [SaveStoryEntry<CreatedPotionState>] {
         let tag = OpenSkySaveFormat.ChunkTag.createdPotions
@@ -92,7 +92,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
         }
     }
 
-    public static func decodeIngredientKnowledge(
+    static func decodeIngredientKnowledge(
         _ payload: Data
     ) throws -> [SaveStoryEntry<IngredientKnowledgeState>] {
         let tag = OpenSkySaveFormat.ChunkTag.ingredientKnowledge
@@ -110,7 +110,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
         }
     }
 
-    public static func decodeWeaponPoisons(
+    static func decodeWeaponPoisons(
         _ payload: Data
     ) throws -> [SaveStoryEntry<WeaponPoisonState>] {
         let tag = OpenSkySaveFormat.ChunkTag.weaponPoisons

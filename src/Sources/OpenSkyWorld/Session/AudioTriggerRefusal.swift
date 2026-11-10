@@ -4,7 +4,7 @@
 public import OpenSkyFormatsESM
 public import OpenSkyWorldInterface
 
-nonisolated public enum AudioTriggerRefusal: Equatable, Sendable {
+nonisolated enum AudioTriggerRefusal: Equatable, Sendable {
     case engineNotRunning
     case audioNotEnabled
     case noGameData
@@ -17,7 +17,7 @@ nonisolated public enum AudioTriggerRefusal: Equatable, Sendable {
     /// `reason` is the thrown error's or the failed load's description.
     case playFailed(reason: String)
 
-    public var text: String {
+    var text: String {
         switch self {
         case .engineNotRunning: "audio engine is not running"
         case .audioNotEnabled: "audio is not enabled"

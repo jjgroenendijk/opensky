@@ -106,7 +106,7 @@ nonisolated public struct DialogueMenuModel: Equatable, Sendable {
 
     /// True when the speaker has nothing to offer, which is the one case the
     /// menu shows a line and no list.
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         topics.isEmpty
     }
 

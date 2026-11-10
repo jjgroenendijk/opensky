@@ -8,7 +8,7 @@ import OpenSkySaveInterface
 
 nonisolated extension OpenSkySaveFormat.ChunkTag {
     /// The player's cell, feet position, and facing.
-    public static let playerPlace = "PLOC"
+    static let playerPlace = "PLOC"
 }
 
 nonisolated extension OpenSkySaveEncoder {

@@ -5,7 +5,7 @@
 import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyGameData
-public import OpenSkyMenusInterface
+import OpenSkyMenusInterface
 
 /// What the settings change in the running game. The app answers it.
 public protocol PlayerSettingsWorld: AnyObject {
@@ -52,7 +52,7 @@ public final class PlayerSettingsCoordinator {
     }
 
     @discardableResult
-    public func rebind(_ action: GameInputAction, to scanCode: UInt32) -> InputRebindResult {
+    func rebind(_ action: GameInputAction, to scanCode: UInt32) -> InputRebindResult {
         var next = bindings
         let result = next.rebind(action, to: scanCode)
         store.replaceKeyBindings(next.overrides.mapValues(Int.init))
@@ -73,7 +73,7 @@ public final class PlayerSettingsCoordinator {
         return keyName(scanCode)
     }
 
-    public func resetBindings() {
+    func resetBindings() {
         store.replaceKeyBindings([:])
     }
 

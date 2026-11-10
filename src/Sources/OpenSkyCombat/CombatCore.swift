@@ -5,7 +5,7 @@
 public import OpenSkyActorsInterface
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyProgressionInterface
 
 /// One item the player wears, as the hand rules see it.
@@ -20,12 +20,7 @@ nonisolated public struct ReadiedHands: Equatable, Sendable {
     public var right: Bool
     public var left: Bool
 
-    public static let none = ReadiedHands(right: false, left: false)
-
-    public init(right: Bool, left: Bool) {
-        self.right = right
-        self.left = left
-    }
+    static let none = ReadiedHands(right: false, left: false)
 }
 
 /// Both hands as the behavior graph counts them.
@@ -137,7 +132,7 @@ nonisolated public enum CombatCore {
     }
 
     /// The equipped arrow, else the first carried arrow that flies in stable stack order.
-    public static func arrow(
+    static func arrow(
         equipped: [FormID] = [],
         carried: [FormID],
         resolve: (FormID) -> ArcheryAmmunition?

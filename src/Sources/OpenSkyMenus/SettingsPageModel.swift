@@ -4,9 +4,9 @@
 
 import Foundation
 public import OpenSkyGameData
-public import OpenSkyMenusInterface
+import OpenSkyMenusInterface
 
-nonisolated public enum SettingsPageAction: Equatable, Sendable {
+nonisolated enum SettingsPageAction: Equatable, Sendable {
     case adjust(PlayerSettingID, direction: Int)
     /// Leave the Settings page.
     case back
@@ -16,10 +16,10 @@ nonisolated public struct SettingsPageModel: Equatable, Sendable {
     public static let categories: [PlayerSettingGroup] = [.gameplay, .display, .audio]
 
     public let catalog: [PlayerSettingGroup: [PlayerSettingID]]
-    public private(set) var categoryIndex = 0
+    private(set) var categoryIndex = 0
     /// Nil while the category list shows.
-    public private(set) var openGroup: PlayerSettingGroup?
-    public private(set) var rowIndex = 0
+    private(set) var openGroup: PlayerSettingGroup?
+    private(set) var rowIndex = 0
 
     public init(catalog: PlayerSettingsCatalog) {
         var rows: [PlayerSettingGroup: [PlayerSettingID]] = [:]
@@ -29,19 +29,19 @@ nonisolated public struct SettingsPageModel: Equatable, Sendable {
         self.catalog = rows
     }
 
-    public var rows: [PlayerSettingID] {
+    var rows: [PlayerSettingID] {
         openGroup.flatMap { catalog[$0] } ?? []
     }
 
-    public var selectedRow: PlayerSettingID? {
+    var selectedRow: PlayerSettingID? {
         rows.indices.contains(rowIndex) ? rows[rowIndex] : nil
     }
 
-    public var selectedCategory: PlayerSettingGroup {
+    var selectedCategory: PlayerSettingGroup {
         Self.categories[categoryIndex]
     }
 
-    public mutating func openCategory(_ group: PlayerSettingGroup) {
+    mutating func openCategory(_ group: PlayerSettingGroup) {
         guard let index = Self.categories.firstIndex(of: group) else { return }
         categoryIndex = index
         openGroup = group
@@ -49,7 +49,7 @@ nonisolated public struct SettingsPageModel: Equatable, Sendable {
     }
 
     @discardableResult
-    public mutating func handle(_ event: MenuInputEvent) -> SettingsPageAction? {
+    mutating func handle(_ event: MenuInputEvent) -> SettingsPageAction? {
         if openGroup == nil {
             return handleCategories(event)
         }

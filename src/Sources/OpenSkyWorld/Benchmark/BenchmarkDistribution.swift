@@ -4,11 +4,11 @@
 import Foundation
 
 nonisolated public struct BenchmarkDistribution: Codable, Equatable, Sendable {
-    public let frames: Int
+    let frames: Int
     public let averageMS: Double
-    public let percentile50MS: Double
-    public let percentile95MS: Double
-    public let percentile99MS: Double
+    let percentile50MS: Double
+    let percentile95MS: Double
+    let percentile99MS: Double
     public let worstMS: Double
     /// Frames per second from the average frame time.
     public let averageFPS: Double
@@ -16,7 +16,7 @@ nonisolated public struct BenchmarkDistribution: Codable, Equatable, Sendable {
     public let onePercentLowFPS: Double
 
     /// Nil for an empty list, so a scene without samples reports no numbers.
-    public init?(milliseconds values: [Double]) {
+    init?(milliseconds values: [Double]) {
         guard !values.isEmpty else { return nil }
         let sorted = values.sorted()
         let average = values.reduce(0, +) / Double(values.count)
@@ -40,12 +40,12 @@ nonisolated public struct BenchmarkDistribution: Codable, Equatable, Sendable {
 }
 
 /// The average and the worst of one per-frame quantity, such as a CPU subsystem.
-nonisolated public struct BenchmarkSpread: Codable, Equatable, Sendable {
-    public let averageMS: Double
-    public let percentile95MS: Double
-    public let worstMS: Double
+nonisolated struct BenchmarkSpread: Codable, Equatable, Sendable {
+    let averageMS: Double
+    let percentile95MS: Double
+    let worstMS: Double
 
-    public init?(milliseconds values: [Double]) {
+    init?(milliseconds values: [Double]) {
         guard let distribution = BenchmarkDistribution(milliseconds: values) else { return nil }
         averageMS = distribution.averageMS
         percentile95MS = distribution.percentile95MS

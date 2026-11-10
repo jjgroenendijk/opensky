@@ -19,13 +19,13 @@ public protocol QuestStarting: AnyObject {
 
 @MainActor
 public struct StoryManagerRuntime {
-    public let store: WorldStateStore
-    public let quests: QuestRuntime
+    let store: WorldStateStore
+    let quests: QuestRuntime
     public let story: StoryManagerStore
-    public var context: ConditionContext
-    public weak var starter: (any QuestStarting)?
+    var context: ConditionContext
+    weak var starter: (any QuestStarting)?
 
-    public init(
+    init(
         store: WorldStateStore,
         quests: QuestRuntime,
         story: StoryManagerStore,
@@ -40,7 +40,7 @@ public struct StoryManagerRuntime {
     }
 
     /// What the story manager remembers about `quest`, or nil when it never started it.
-    public func state(of quest: FormID) -> StoryManagerQuestState? {
+    func state(of quest: FormID) -> StoryManagerQuestState? {
         quests.quests.key(for: quest)
             .flatMap { store.component(StoryManagerQuestState.self, for: $0) }
     }

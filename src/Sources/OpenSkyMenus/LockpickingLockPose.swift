@@ -8,8 +8,8 @@ public import simd
 /// One frame of the 3D lock, from the menu's presentation and its clock.
 nonisolated public struct LockpickingLockPose: Equatable, Sendable {
     /// The lock, its cylinder (`LockPickLockTumble`), and the shiv that turns it.
-    public static let lockPath = "meshes\\interface\\lockpicking\\lockpickshiv01.nif"
-    public static let pickPath = "meshes\\interface\\lockpicking\\lockpick01.nif"
+    static let lockPath = "meshes\\interface\\lockpicking\\lockpickshiv01.nif"
+    static let pickPath = "meshes\\interface\\lockpicking\\lockpick01.nif"
     /// The node the engine turns about the keyhole by the pick angle.
     public static let pickNode = "LockPick01"
     public static let introSequence = "Intro"
@@ -17,7 +17,7 @@ nonisolated public struct LockpickingLockPose: Equatable, Sendable {
     public static let strainSequence = "PickDamage"
     public static let breakSequence = "PickBreak"
     /// `Rotate` turns the cylinder a quarter turn, clockwise on screen, by the open lock.
-    public static let cylinderTurnDegrees: Float = 90
+    static let cylinderTurnDegrees: Float = 90
     /// The part of `PickBreak` in which the broken pick flies off; it rests after that.
     public static let breakSeconds: Float = 0.7
 

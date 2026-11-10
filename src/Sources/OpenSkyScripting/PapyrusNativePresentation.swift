@@ -10,7 +10,7 @@ import OpenSkyScriptingInterface
 extension PapyrusNativeFunctions {
     /// `Game.ShakeCamera` defaults: "afStrength = 0.5", and "afDuration = 0.0",
     /// which means "use the game setting".
-    public static let defaultShakeStrength: Float = 0.5
+    static let defaultShakeStrength: Float = 0.5
 
     public static func installPresentation(into registry: inout PapyrusNativeRegistry) {
         installMessageNatives(into: &registry)

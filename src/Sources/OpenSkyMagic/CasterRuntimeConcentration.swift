@@ -11,7 +11,7 @@ public import OpenSkyMagicInterface
 extension CasterRuntime {
     /// One frame of a maintained cast: drain, apply the whole seconds that
     /// elapsed, and stop when the magicka runs out or the release is due.
-    public func maintain(
+    func maintain(
         _ hand: SpellHand,
         spell: ResolvedSpell,
         delta: Float,
@@ -49,7 +49,7 @@ extension CasterRuntime {
     }
 
     /// One application of a maintained spell's effect list.
-    public func applyOnce(
+    func applyOnce(
         _ hand: SpellHand,
         spell: ResolvedSpell,
         caster: ActorValueHolder

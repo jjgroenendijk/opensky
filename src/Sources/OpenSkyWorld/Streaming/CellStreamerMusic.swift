@@ -12,16 +12,16 @@ import OpenSkyTerrain
 /// Cheap identity for diff: only the fields that drive `MusicSelection.resolve`.
 /// Equal keys never re-resolve, so a steady-state frame costs one comparison.
 nonisolated public struct MusicKey: Hashable, Sendable {
-    public let isInterior: Bool
-    public let interiorFormID: UInt32?
-    public let exteriorCenter: CellCoordinate?
-    public let cellMusicType: UInt32?
-    public let regions: [UInt32]
-    public let worldspaceMusicType: UInt32?
+    let isInterior: Bool
+    let interiorFormID: UInt32?
+    let exteriorCenter: CellCoordinate?
+    let cellMusicType: UInt32?
+    let regions: [UInt32]
+    let worldspaceMusicType: UInt32?
     /// False until the center cell is built, so its location is looked up once it is.
-    public let isResident: Bool
+    let isResident: Bool
     /// Looked up only when the other fields change, so a steady frame skips it.
-    public var locationMusicType: UInt32?
+    var locationMusicType: UInt32?
 
     var withoutLocation: MusicKey {
         var key = self

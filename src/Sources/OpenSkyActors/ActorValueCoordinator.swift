@@ -2,7 +2,7 @@
 // and runs the Combat readout's actor-value controls. The rules live in
 // `ActorValueRuntime`. See docs/engine/coordinators.md.
 
-public import OpenSkyActorsInterface
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyWorldState
@@ -15,17 +15,17 @@ public final class ActorValueCoordinator {
     /// Nil without stat indexes in the load order.
     public let runtime: ActorValueRuntime?
     /// Which target the readout's controls act on.
-    public var target = ActorValueTargetSelector.player
+    var target = ActorValueTargetSelector.player
     /// Which actor value they act on, by vanilla table index. Health first.
-    public var selection: Int32 = 24
-    public internal(set) var lastAction = ActorValueActionOutcome.idle
+    var selection: Int32 = 24
+    var lastAction = ActorValueActionOutcome.idle
     /// Kept here, not in the runtime: the runtime is a struct over a shared
     /// store, and a per-copy accumulator would split the simulation.
     private var regenAccumulator: Double = 0
     /// Regeneration walks holders in key order; this keeps that order between frames.
     private var holderOrder = ReferenceKeyOrder()
     /// The over-encumbered state last sent to the world, so the HUD message shows once.
-    public private(set) var isPlayerOverencumbered = false
+    private(set) var isPlayerOverencumbered = false
     /// What sprinting costs.
     public let stamina: StaminaSettings
 
@@ -92,7 +92,7 @@ public final class ActorValueCoordinator {
 
     /// UESP "Skyrim:Carry Weight": past the `CarryWeight` actor value the player
     /// can only walk. Unknown weight or capacity is never over.
-    public static func isOverencumbered(carried: Float?, capacity: Float?) -> Bool {
+    static func isOverencumbered(carried: Float?, capacity: Float?) -> Bool {
         guard let carried, let capacity, carried.isFinite, capacity.isFinite else { return false }
         return carried > capacity
     }

@@ -22,7 +22,7 @@ public final class CrimeReporter: CrimeReporting {
     /// Takes `ADCR` and `ASSU`.
     public weak var storyEvents: (any StoryEventReporting)?
     /// The kind of the last crime that cost gold in each crime faction, for `ARRT`.
-    public private(set) var lastCrimeTypes: [ReferenceKey: StoryCrimeType] = [:]
+    private(set) var lastCrimeTypes: [ReferenceKey: StoryCrimeType] = [:]
     /// The crime faction and the gold, each time a crime by the player costs gold.
     public var onPlayerBounty: ((ReferenceKey, Int32) -> Void)?
     /// Each crime that cost gold, with who saw it, so the report can wait for a guard.
@@ -192,7 +192,7 @@ public final class CrimeReporter: CrimeReporting {
     /// Leaving jail early, charged to the hold that jailed the player at its `CRVA`
     /// escape price. The guards know at once, so it needs no witness.
     @discardableResult
-    public func reportEscape(from faction: ReferenceKey, by actor: ReferenceKey = .player)
+    func reportEscape(from faction: ReferenceKey, by actor: ReferenceKey = .player)
         -> CrimeOutcome
     {
         recordAsIs(CrimeEvent(

@@ -27,7 +27,7 @@ public final class MenuMovieDriver<Event> {
         session.isLoaded
     }
 
-    public var error: String? {
+    var error: String? {
         session.error
     }
 

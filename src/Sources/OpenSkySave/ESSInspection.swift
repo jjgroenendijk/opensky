@@ -5,9 +5,9 @@
 import Foundation
 public import OpenSkyFormatsESS
 
-nonisolated public struct ESSInspectionSection: Equatable, Sendable {
-    public let title: String
-    public let lines: [String]
+nonisolated struct ESSInspectionSection: Equatable, Sendable {
+    let title: String
+    let lines: [String]
 }
 
 nonisolated public struct ESSInspection: Sendable {
@@ -40,7 +40,7 @@ nonisolated public struct ESSInspection: Sendable {
         report = records.map { ESSImporter.run(file, records: $0, appVersion: "inspector").report }
     }
 
-    public var sections: [ESSInspectionSection] {
+    var sections: [ESSInspectionSection] {
         [
             ESSInspectionSection(title: "Header", lines: headerLines),
             ESSInspectionSection(title: "Plugins", lines: pluginLines),

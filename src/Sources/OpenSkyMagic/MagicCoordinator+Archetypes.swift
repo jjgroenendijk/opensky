@@ -11,13 +11,13 @@ import OpenSkyProgressionInterface
 extension MagicCoordinator {
     /// How often a cloak casts its spell on the actors around it. An OpenSky
     /// number: the wiki names no rate, and a per-second effect pays on whole seconds.
-    public static let cloakPulseSeconds: Float = 1
+    static let cloakPulseSeconds: Float = 1
     /// A cloak's magnitude is a radius in feet (<https://ck.uesp.net/wiki/Magic_Effect>),
     /// and 128 units are 6 feet (<https://ck.uesp.net/wiki/Unit>).
-    public static let unitsPerFoot: Float = 128.0 / 6.0
+    static let unitsPerFoot: Float = 128.0 / 6.0
 
     /// The keyword Turn Undead requires on its target.
-    public static let undeadKeyword = "ActorTypeUndead"
+    static let undeadKeyword = "ActorTypeUndead"
 
     /// Gives the runtime the lookups it cannot make itself.
     func prepareArchetypeLookups() {

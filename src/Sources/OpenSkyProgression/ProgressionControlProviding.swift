@@ -98,43 +98,21 @@ nonisolated public struct PerkTreeNodeReadout: Equatable, Sendable {
 /// The selected box's resolved PERK record: what a user checks a perk's
 /// numbers against without leaving the readout.
 nonisolated public struct PerkInspection: Equatable, Sendable {
-    public let name: String
-    public let editorID: String
-    public let formID: String
+    let name: String
+    let editorID: String
+    let formID: String
     /// The record's own `DATA` flags, which are what decide whether a tree can
     /// ever offer the perk.
-    public let isPlayable: Bool
-    public let isTrait: Bool
-    public let isHidden: Bool
-    public let isOwned: Bool
+    let isPlayable: Bool
+    let isTrait: Bool
+    let isHidden: Bool
+    let isOwned: Bool
     /// The record-level `CTDA` run — a perk's skill requirement lives here
     /// rather than in its header — one line per condition.
-    public let conditions: [String]
+    let conditions: [String]
     /// One line per effect: its type, its rank, and the entry point, ability
     /// or quest stage it carries.
-    public let effects: [String]
-
-    public init(
-        name: String,
-        editorID: String,
-        formID: String,
-        isPlayable: Bool,
-        isTrait: Bool,
-        isHidden: Bool,
-        isOwned: Bool,
-        conditions: [String],
-        effects: [String]
-    ) {
-        self.name = name
-        self.editorID = editorID
-        self.formID = formID
-        self.isPlayable = isPlayable
-        self.isTrait = isTrait
-        self.isHidden = isHidden
-        self.isOwned = isOwned
-        self.conditions = conditions
-        self.effects = effects
-    }
+    let effects: [String]
 }
 
 /// One observation of the progression runtime.
@@ -176,7 +154,7 @@ nonisolated public struct ProgressionControlSnapshot: Equatable, Sendable {
     public let experienceRate: Float
 
     /// The reading with no runtime attached.
-    public static let unavailable = ProgressionControlSnapshot(
+    static let unavailable = ProgressionControlSnapshot(
         isAvailable: false,
         level: 1,
         experience: 0,
@@ -197,7 +175,7 @@ nonisolated public struct ProgressionControlSnapshot: Equatable, Sendable {
 
     /// The selected skill's line, or nil when the load order carries no AVIF
     /// record for it.
-    public var selectedSkillReadout: SkillProgressReadout? {
+    var selectedSkillReadout: SkillProgressReadout? {
         skills.first { $0.index == selectedSkill }
     }
 

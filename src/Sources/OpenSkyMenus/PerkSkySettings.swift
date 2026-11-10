@@ -17,7 +17,7 @@ nonisolated public struct PerkSkySettings: Equatable, Sendable {
     public var lineScale: Float = 0.1175
     /// The factor on the up and depth steps, measured on vanilla screenshots; no
     /// setting names it.
-    public var rowScale: Float = 0.43
+    var rowScale: Float = 0.43
     /// `fStatsRotationSpeedMax` in turns per second: the binary's 0.5 is the 180 degrees a
     /// second seen on footage. `fStatsRotationRampTime` in milliseconds; 250 is ours, as
     /// the binary's 2000 would turn one slot in 0.67 s, not the 0.2 s seen.
@@ -25,11 +25,11 @@ nonisolated public struct PerkSkySettings: Equatable, Sendable {
     public var rotationRampTime: Float = 250
 
     /// The turn speed in degrees per second, and the ramp in seconds.
-    public var rotationDegreesPerSecond: Float {
+    var rotationDegreesPerSecond: Float {
         rotationSpeedMax * 360
     }
 
-    public var rotationRampSeconds: Float {
+    var rotationRampSeconds: Float {
         rotationRampTime / 1000
     }
 
@@ -40,7 +40,7 @@ nonisolated public struct PerkSkySettings: Equatable, Sendable {
     public var starLookAt: SIMD3<Float> = [0, 95, 15]
     public var starCameraOffset: SIMD3<Float> = [0, 45, 12]
 
-    public init() {}
+    init() {}
 
     /// Values from the load order where it has them.
     public init(setting: (String) -> Float?) {

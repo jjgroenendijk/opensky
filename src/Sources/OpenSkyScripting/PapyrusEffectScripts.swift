@@ -27,12 +27,6 @@ nonisolated public struct PapyrusActiveEffectRun: Equatable, Sendable {
     /// The `MGEF` record.
     public let effect: ReferenceKey
     public let caster: ReferenceKey?
-
-    public init(id: PapyrusActiveEffectID, effect: ReferenceKey, caster: ReferenceKey?) {
-        self.id = id
-        self.effect = effect
-        self.caster = caster
-    }
 }
 
 /// The running effects and the instances that serve them. Each run has its own
@@ -58,7 +52,7 @@ nonisolated public struct PapyrusEffectScripts: Equatable, Sendable {
         runsByInstance[instance] != nil || finishing.contains(instance)
     }
 
-    public mutating func begin(_ run: PapyrusActiveEffectRun) {
+    mutating func begin(_ run: PapyrusActiveEffectRun) {
         runs[run.id] = run
         serials[run.id] = nextSerial
         nextSerial &+= 1
@@ -66,7 +60,7 @@ nonisolated public struct PapyrusEffectScripts: Equatable, Sendable {
 
     /// Records that `instance` serves the run `id`. False when the run already ended.
     @discardableResult
-    public mutating func attach(
+    mutating func attach(
         _ instance: PapyrusInstanceKey,
         to id: PapyrusActiveEffectID
     ) -> Bool {
@@ -100,7 +94,7 @@ nonisolated public struct PapyrusEffectScripts: Equatable, Sendable {
     }
 
     /// The oldest run `instance` serves, which its natives answer for.
-    public func run(servedBy instance: PapyrusInstanceKey) -> PapyrusActiveEffectRun? {
+    func run(servedBy instance: PapyrusInstanceKey) -> PapyrusActiveEffectRun? {
         runsByInstance[instance]?.first.flatMap { runs[$0] }
     }
 

@@ -1,15 +1,15 @@
 // SCRS chunk: flags, values, and form links scripts set on a form, and the forms a
 // script added to a list. Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
-public import OpenSkyWorldState
+import OpenSkyScriptingInterface
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// Names in sorted order, so the same state writes the same bytes.
-    public static func writeScriptedStates(
+    static func writeScriptedStates(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -41,7 +41,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
-    public static func decodeScriptedStates(
+    static func decodeScriptedStates(
         _ payload: Data
     ) throws -> [SaveStoryEntry<ScriptedReferenceState>] {
         let tag = OpenSkySaveFormat.ChunkTag.scriptedStates

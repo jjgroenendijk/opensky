@@ -3,26 +3,26 @@
 // fixed layout. A pair with no `RELS` row is dropped: `RELS` says which pairs exist.
 // See docs/formats/opensky-save-actor-chunks.md.
 
-public import Foundation
+import Foundation
 import OpenSkyFactionsInterface
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's first-friend ranks, before they lay onto its `RELS` overrides.
-nonisolated public struct SaveRelationshipFavourEntry: Equatable, Sendable {
-    public struct Row: Equatable, Sendable {
-        public let other: ReferenceKey
-        public let firstFriendRank: Int8
+nonisolated struct SaveRelationshipFavourEntry: Equatable, Sendable {
+    struct Row: Equatable, Sendable {
+        let other: ReferenceKey
+        let firstFriendRank: Int8
     }
 
-    public let key: ReferenceKey
-    public let rows: [Row]
+    let key: ReferenceKey
+    let rows: [Row]
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// The `RELF` chunk, in the snapshot's `ReferenceKey` order.
-    public static func writeRelationshipFavour(
+    static func writeRelationshipFavour(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -56,7 +56,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveRelationshipDecoder {
-    public static func decodeRelationshipFavour(
+    static func decodeRelationshipFavour(
         _ payload: Data
     ) throws -> [SaveRelationshipFavourEntry] {
         var reader = SaveReader(payload)
@@ -91,7 +91,7 @@ nonisolated extension OpenSkySaveRelationshipDecoder {
     }
 
     /// The `RELS` entries with each pair's first-friend rank laid on.
-    public static func layingFavour(
+    static func layingFavour(
         _ favours: [SaveRelationshipFavourEntry],
         onto relationships: [SaveRelationshipEntry]
     ) -> [SaveRelationshipEntry] {

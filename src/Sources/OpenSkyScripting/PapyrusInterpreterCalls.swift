@@ -2,11 +2,11 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsPEX
+import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
-    public func callOp(
+    func callOp(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {

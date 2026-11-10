@@ -3,19 +3,19 @@
 // the selection; see docs/engine/skills-menu.md.
 
 import Foundation
-public import OpenSkyFormatsSWF
-public import OpenSkyGameData
+import OpenSkyFormatsSWF
+import OpenSkyGameData
 
-nonisolated public enum LevelUpMenuMovieBridge: Sendable {
-    public static let moviePath = "interface\\levelupmenu.swf"
-    public static let menuPath = "/LevelUpMenu_mc"
-    public static let sinkHostFunctions = ["PlaySound", "myLog"]
+nonisolated enum LevelUpMenuMovieBridge: Sendable {
+    static let moviePath = "interface\\levelupmenu.swf"
+    static let menuPath = "/LevelUpMenu_mc"
+    static let sinkHostFunctions = ["PlaySound", "myLog"]
     /// The host call each button makes when pressed.
-    public static let choiceFunctions: [String: ActorValueKind] = [
+    static let choiceFunctions: [String: ActorValueKind] = [
         "addHealth": .health, "addMagicka": .magicka, "addStamina": .stamina
     ]
 
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime,
         onChoice: @escaping @MainActor @Sendable (ActorValueKind) -> Void
     ) {
@@ -31,7 +31,7 @@ nonisolated public enum LevelUpMenuMovieBridge: Sendable {
     }
 
     /// `InitExtensions` wires the buttons' press listeners.
-    public static func activate(runtime: SWFMovieRuntime) {
+    static func activate(runtime: SWFMovieRuntime) {
         runtime.callMovie(
             "SetPlatform", arguments: [.number(SystemMenuMovieBridge.pcPlatform), .boolean(false)]
         )
@@ -39,11 +39,11 @@ nonisolated public enum LevelUpMenuMovieBridge: Sendable {
     }
 
     /// Moves the movie's focus to the button of `kind`, which draws its highlight.
-    public static func highlight(_ kind: ActorValueKind, runtime: SWFMovieRuntime) {
+    static func highlight(_ kind: ActorValueKind, runtime: SWFMovieRuntime) {
         runtime.focus(runtime.node(atPath: buttonPath(kind), from: runtime.root))
     }
 
-    public static func buttonPath(_ kind: ActorValueKind) -> String {
+    static func buttonPath(_ kind: ActorValueKind) -> String {
         switch kind {
         case .health: "\(menuPath)/HealthButton"
         case .magicka: "\(menuPath)/MagickaButton"
@@ -52,7 +52,7 @@ nonisolated public enum LevelUpMenuMovieBridge: Sendable {
     }
 
     /// True when the three buttons exist, so the movie can show the choice.
-    public static func buttonsBuilt(runtime: SWFMovieRuntime) -> Bool {
+    static func buttonsBuilt(runtime: SWFMovieRuntime) -> Bool {
         ActorValueKind.allCases.allSatisfy {
             runtime.node(atPath: buttonPath($0), from: runtime.root) != nil
         }

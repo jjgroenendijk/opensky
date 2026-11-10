@@ -3,14 +3,14 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
     /// Decoded view for CONT, the carryable item records, ARMA, and PROJ. Nil for anything else, so
     /// the caller falls through to the raw
     /// field list.
-    public static func itemSummary(
+    static func itemSummary(
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?,

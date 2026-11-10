@@ -1,15 +1,15 @@
 // FAVS chunk: the player's favourite items in the order they were marked, then the
 // hotkeys by ascending slot. Layout: docs/formats/opensky-save-actor-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-public import OpenSkyInventoryInterface
-public import OpenSkyWorldState
+import OpenSkyInventoryInterface
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// The item count and FormIDs, then the hotkey count and each slot byte and item.
-    public static func writeFavourites(
+    static func writeFavourites(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -31,7 +31,7 @@ nonisolated extension OpenSkySaveEncoder {
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
-    public static func decodeFavourites(
+    static func decodeFavourites(
         _ payload: Data
     ) throws -> [SaveStoryEntry<FavouritesState>] {
         let tag = OpenSkySaveFormat.ChunkTag.favourites

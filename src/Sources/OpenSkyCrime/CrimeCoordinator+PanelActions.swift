@@ -4,16 +4,16 @@
 // through `joinFaction` (`Actor.AddToFaction`), resisting through
 // `resistArrest`, and a barter through `openBarter` (`Actor.ShowBarterMenu`).
 
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension CrimeCoordinator {
-    public var bountyFactionSelection: ReferenceKey? {
+    var bountyFactionSelection: ReferenceKey? {
         get { panel.bountyFaction }
         set { panel.bountyFaction = newValue }
     }
 
-    public var membershipFactionSelection: ReferenceKey? {
+    var membershipFactionSelection: ReferenceKey? {
         get { panel.membershipFaction }
         set { panel.membershipFaction = newValue }
     }
@@ -21,7 +21,7 @@ extension CrimeCoordinator {
     // MARK: - Bounty
 
     @discardableResult
-    public func modifySelectedBounty(by gold: Int32, violent: Bool) -> CrimeFactionActionOutcome {
+    func modifySelectedBounty(by gold: Int32, violent: Bool) -> CrimeFactionActionOutcome {
         guard let runtime = reporter?.runtime else { return notePanel(.unavailable) }
         guard let faction = effectiveBountyFaction else { return notePanel(.noCrimeFaction) }
         let total = runtime.modifyCrimeGold(by: gold, violent: violent, of: faction)
@@ -32,7 +32,7 @@ extension CrimeCoordinator {
     }
 
     @discardableResult
-    public func clearSelectedBounty() -> CrimeFactionActionOutcome {
+    func clearSelectedBounty() -> CrimeFactionActionOutcome {
         guard let runtime = reporter?.runtime else { return notePanel(.unavailable) }
         guard let faction = effectiveBountyFaction else { return notePanel(.noCrimeFaction) }
         let owed = runtime.clearCrimeGold(of: faction)
@@ -41,7 +41,7 @@ extension CrimeCoordinator {
     }
 
     @discardableResult
-    public func resistArrestWithSelectedFaction() -> CrimeFactionActionOutcome {
+    func resistArrestWithSelectedFaction() -> CrimeFactionActionOutcome {
         guard reporter != nil else { return notePanel(.unavailable) }
         guard let faction = effectiveBountyFaction else { return notePanel(.noCrimeFaction) }
         resistArrest(with: faction)
@@ -51,7 +51,7 @@ extension CrimeCoordinator {
     // MARK: - Subject and memberships
 
     @discardableResult
-    public func joinSelectedFaction(rank: Int8) -> CrimeFactionActionOutcome {
+    func joinSelectedFaction(rank: Int8) -> CrimeFactionActionOutcome {
         guard world.hasFactionData else { return notePanel(.unavailable) }
         guard let faction = effectiveMembershipFaction else { return notePanel(.noFactions) }
         let key = panel.subject ?? .player
@@ -62,7 +62,7 @@ extension CrimeCoordinator {
     }
 
     @discardableResult
-    public func leaveSelectedFaction() -> CrimeFactionActionOutcome {
+    func leaveSelectedFaction() -> CrimeFactionActionOutcome {
         guard world.hasFactionData else { return notePanel(.unavailable) }
         guard let faction = effectiveMembershipFaction else { return notePanel(.noFactions) }
         let key = panel.subject ?? .player

@@ -13,7 +13,7 @@ public final class PapyrusRecordingNativeDispatch: PapyrusNativeDispatch {
     public var queuedResults: Deque<PapyrusNativeResult>
 
     /// Oldest first, at most `callLimit` of them.
-    public var calls: [PapyrusNativeCall] {
+    var calls: [PapyrusNativeCall] {
         Array(callRing)
     }
 

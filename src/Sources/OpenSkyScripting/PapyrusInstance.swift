@@ -42,7 +42,7 @@ public final class PapyrusInstance {
         self.generation = generation
     }
 
-    public func value(named name: String, declaredBy scriptName: String) -> PapyrusValue? {
+    func value(named name: String, declaredBy scriptName: String) -> PapyrusValue? {
         variablesByScript[Self.key(scriptName)]?[Self.key(name)]
     }
 
@@ -62,7 +62,7 @@ public final class PapyrusInstance {
         return true
     }
 
-    public func applyInitialValue(
+    func applyInitialValue(
         _ value: PapyrusValue,
         named name: String,
         scriptChain: [PexObject]
@@ -111,7 +111,7 @@ public final class PapyrusInstance {
     /// script or the variable does not exist on this instance, so a caller
     /// can skip and count unknown save data instead of crashing.
     @discardableResult
-    public func restore(_ state: PapyrusVariableState) -> Bool {
+    func restore(_ state: PapyrusVariableState) -> Bool {
         setValue(state.value, named: state.name, declaredBy: state.declaringScript)
     }
 
@@ -120,20 +120,20 @@ public final class PapyrusInstance {
     }
 }
 
-public struct PapyrusResolvedFunction {
-    public let owner: PapyrusScriptIndex
-    public let compiled: PapyrusCompiledFunction
+struct PapyrusResolvedFunction {
+    let owner: PapyrusScriptIndex
+    let compiled: PapyrusCompiledFunction
 
-    public var script: PexObject {
+    var script: PexObject {
         owner.script
     }
 
-    public var function: PexFunction {
+    var function: PexFunction {
         compiled.function
     }
 }
 
-nonisolated public struct PapyrusResolvedProperty: Sendable {
-    public let script: PexObject
-    public let property: PexProperty
+nonisolated struct PapyrusResolvedProperty: Sendable {
+    let script: PexObject
+    let property: PexProperty
 }

@@ -3,7 +3,7 @@
 
 import Foundation
 public import OpenSkyFactionsInterface
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
@@ -16,7 +16,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `FCTN` chunk: every snapshot entry carrying faction memberships, in
     /// the snapshot's `ReferenceKey` order. A session in which nobody joined
     /// anything and nobody was asked writes no chunk.
-    public static func writeFactionMemberships(
+    static func writeFactionMemberships(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

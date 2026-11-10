@@ -21,7 +21,7 @@ nonisolated public struct SceneActorStatus: OptionSet, Equatable, Sendable {
     public static let inCombat = SceneActorStatus(rawValue: 0x02)
     /// In the dialogue menu with the player.
     public static let inPlayerDialogue = SceneActorStatus(rawValue: 0x04)
-    public static let observingCombat = SceneActorStatus(rawValue: 0x08)
+    static let observingCombat = SceneActorStatus(rawValue: 0x08)
 }
 
 @MainActor

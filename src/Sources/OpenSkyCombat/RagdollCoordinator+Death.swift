@@ -14,10 +14,10 @@ import simd
 
 /// How many of each death effect happened since the session started, for the readout.
 nonisolated public struct DeathEffectCounts: Equatable, Sendable {
-    public var pushedBodies = 0
-    public var droppedWeapons = 0
+    var pushedBodies = 0
+    var droppedWeapons = 0
     public var dismemberments = 0
-    public var removedBodies = 0
+    var removedBodies = 0
 
     public init() {}
 }
@@ -192,8 +192,8 @@ extension RagdollCoordinator {
 }
 
 /// Which bodies the excess-dead rule removes. Pure, so a test can drive it.
-nonisolated public enum ExcessDeadRule {
-    public static func removals(
+nonisolated enum ExcessDeadRule {
+    static func removals(
         dead: [(key: ReferenceKey, diedAt: Float)],
         kept: (ReferenceKey) -> Bool,
         now: Float,

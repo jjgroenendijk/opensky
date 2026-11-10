@@ -31,8 +31,8 @@ public final class CombatCoordinator {
     let world: any CombatWorld
     /// What this step asked of the app. A frame step returns and empties it.
     var pendingCommands: [CombatCommand] = []
-    public internal(set) var lastMeleeAction = MeleeActionOutcome.idle
-    public internal(set) var lastArcheryAction = ArcheryActionOutcome.idle
+    var lastMeleeAction = MeleeActionOutcome.idle
+    var lastArcheryAction = ArcheryActionOutcome.idle
     /// The stuck arrows this coordinator spawned, so a reset removes only those.
     var stuckKeys: Set<ReferenceKey> = []
     /// The Difficulty setting; the app sets it from the settings store.
@@ -195,7 +195,7 @@ public final class CombatCoordinator {
 
     /// Turning casting off drops every cast in flight, so no charge is left
     /// that nothing will release.
-    public func setActorCasting(_ allowed: Bool) {
+    func setActorCasting(_ allowed: Bool) {
         allowsActorCasting = allowed
         guard !allowed, let loop else { return }
         for key in loop.behaviors.keys.sorted() {
@@ -205,7 +205,7 @@ public final class CombatCoordinator {
     }
 
     /// Sets hostility on the readout's selected actor and records the outcome.
-    public func setSelectedActorHostile(_ hostile: Bool) {
+    func setSelectedActorHostile(_ hostile: Bool) {
         guard let loop else { return }
         guard let key = world.selectedActor() else {
             loop.record(.noHostilityTarget)

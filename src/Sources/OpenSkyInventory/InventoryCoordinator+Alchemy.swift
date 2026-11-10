@@ -11,20 +11,14 @@ import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// What the chosen ingredients would make.
-nonisolated public struct AlchemyPreview: Equatable, Sendable {
+nonisolated struct AlchemyPreview: Equatable, Sendable {
     /// Nil when the ingredients share no effect.
-    public let name: String?
-    public let value: Int32
+    let name: String?
+    let value: Int32
     /// One line per effect: name, magnitude, and duration.
-    public let effects: [String]
+    let effects: [String]
 
-    public init(name: String?, value: Int32, effects: [String]) {
-        self.name = name
-        self.value = value
-        self.effects = effects
-    }
-
-    public var text: String {
+    var text: String {
         guard let name else { return "No shared effect: the brew fails." }
         return "Makes \(name), worth \(value) gold: \(effects.joined(separator: "; "))."
     }
@@ -32,7 +26,7 @@ nonisolated public struct AlchemyPreview: Equatable, Sendable {
 
 extension InventoryCoordinator {
     /// The Alchemy skill's actor-value index.
-    public static let alchemySkill: Int32 = 16
+    static let alchemySkill: Int32 = 16
     public static let alchemyIngredientLimit = 3
 
     public var createdPotions: CreatedPotionState {
@@ -106,7 +100,7 @@ extension InventoryCoordinator {
     }
 
     /// What the chosen ingredients make now. Nil with fewer than two chosen.
-    public var alchemyPreview: AlchemyPreview? {
+    var alchemyPreview: AlchemyPreview? {
         guard let chosen = alchemySelection, chosen.count >= 2 else { return nil }
         guard let brew = brew(chosen) else {
             return AlchemyPreview(name: nil, value: 0, effects: [])

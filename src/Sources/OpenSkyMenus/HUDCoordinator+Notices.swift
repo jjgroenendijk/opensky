@@ -12,7 +12,7 @@ extension HUDCoordinator {
     }
 
     /// A plain notice line with its sound.
-    public func showNotification(_ text: String, sound: String) {
+    func showNotification(_ text: String, sound: String) {
         showNotification(text)
         renderer?.swfSoundPlayer?(sound)
     }

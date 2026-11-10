@@ -1,11 +1,11 @@
 // One-dimensional Papyrus array opcodes.
 
 import Foundation
-public import OpenSkyFormatsPEX
+import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
-    public func arrayOp(
+    func arrayOp(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {

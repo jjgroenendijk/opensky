@@ -32,7 +32,7 @@ nonisolated public struct BountyReadout: Equatable, Sendable {
     /// The crime names the counts are spelled with.
     public let crimeTexts: CrimeTexts
 
-    public var gold: Int32 {
+    var gold: Int32 {
         Int32(clamping: Int64(nonViolentGold) + Int64(violentGold))
     }
 
@@ -156,10 +156,10 @@ nonisolated public struct CrimeFactionControlSnapshot: Equatable, Sendable {
     public let lastGuardText: String
     public let lastActionText: String
     /// The jail stay, the trespass watch, and the open crime reports, or empty.
-    public var statusText = ""
+    var statusText = ""
 
     /// The reading with no runtime attached.
-    public static let unavailable = CrimeFactionControlSnapshot(
+    static let unavailable = CrimeFactionControlSnapshot(
         isAvailable: false,
         bounties: [],
         currentCrimeFaction: nil,

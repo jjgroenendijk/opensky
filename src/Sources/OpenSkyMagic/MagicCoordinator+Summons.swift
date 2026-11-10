@@ -19,7 +19,7 @@ extension MagicCoordinator {
     }
 
     /// How many actors `caster` may command at once.
-    public func commandLimit(of caster: ReferenceKey) -> Int {
+    func commandLimit(of caster: ReferenceKey) -> Int {
         let limit = world.perkModified(
             SummonCore.baseCommandLimit, at: .modCommandedActorLimit, on: caster,
             subjects: PerkEvaluationSubjects(owner: caster), seams: ConditionContext()

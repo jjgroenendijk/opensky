@@ -54,13 +54,8 @@ nonisolated public enum SceneStep: Equatable, Sendable {
 }
 
 nonisolated public struct SceneEvent: Equatable, Sendable {
-    public let scene: FormID
-    public let step: SceneStep
-
-    public init(scene: FormID, step: SceneStep) {
-        self.scene = scene
-        self.step = step
-    }
+    let scene: FormID
+    let step: SceneStep
 }
 
 nonisolated public enum SceneError: Error, Equatable, Sendable {

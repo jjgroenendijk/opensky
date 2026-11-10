@@ -16,16 +16,16 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
     static let saveLoadStates: Set = ["CharacterSelection", "SaveLoad"]
     public static let mainState = "Main"
     /// Ticks the list needs to lay out its rows after `sendMenuProperties`.
-    public static let activationTicks = 20
+    static let activationTicks = 20
 
     /// Movie-to-engine calls that only report sounds, logs, and state names.
-    public static let sinkHostFunctions = [
+    static let sinkHostFunctions = [
         "myLog", "PlaySound", "StartState", "currentState", "fadeOutStarted"
     ]
-    public static let globalSinkFunctions = ["gfxProcessSound"]
+    static let globalSinkFunctions = ["gfxProcessSound"]
 
     /// The movie's calls when the player picks a main row.
-    public enum Request: String, CaseIterable, Sendable {
+    enum Request: String, CaseIterable, Sendable {
         case resume = "CONTINUE"
         case new = "NEW"
         case credits = "OpenCreditsMenu"
@@ -33,7 +33,7 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
     }
 
     /// The 14 flags of `sendMenuProperties`. Flag 9 set skips the login screen.
-    public static func menuProperties(hasSaves: Bool, version: String) -> [AS2Value] {
+    static func menuProperties(hasSaves: Bool, version: String) -> [AS2Value] {
         var flags = [AS2Value](repeating: .boolean(false), count: 14)
         flags[0] = .boolean(true)
         flags[1] = .boolean(hasSaves)
@@ -43,7 +43,7 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
     }
 
     /// Runs before `start()`, because bring-up already calls the host.
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime,
         onRequest: @escaping @MainActor @Sendable (Request) -> Void
     ) {
@@ -66,7 +66,7 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
 
     /// Opens the movie on its Main state with the list focused. The movie focuses
     /// `Menu_mc`, where keys move nothing; the game routes them to the list.
-    public static func activate(runtime: SWFMovieRuntime, hasSaves: Bool, version: String) {
+    static func activate(runtime: SWFMovieRuntime, hasSaves: Bool, version: String) {
         runtime.callMovie("SetPlatform", arguments: [.number(0), .boolean(false)])
         runtime.callMovie("InitExtensions")
         runtime.callMovie(
@@ -93,7 +93,7 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
     }
 
     /// Leaves a row OpenSky does not draw yet, such as the credits.
-    public static func returnToMain(runtime: SWFMovieRuntime) {
+    static func returnToMain(runtime: SWFMovieRuntime) {
         runtime.callMovie("StartState", atPath: menuPath, arguments: [.string(mainState)])
         runtime.focus(runtime.node(atPath: listPath, from: runtime.root))
     }
@@ -125,7 +125,7 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
     }
 
     /// The main row the movie has selected, or nil when it has none.
-    public static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
+    static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
         guard
             let list = runtime.node(atPath: listPath, from: runtime.root),
             case let .number(index) = list.object.lookup("iSelectedIndex")?.property.value,
@@ -134,7 +134,7 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
         return Int(index)
     }
 
-    public static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
+    static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
         MenuMovieEntryList.labels(atPath: listPath, runtime: runtime)
     }
 

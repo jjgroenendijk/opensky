@@ -4,22 +4,22 @@
 // where the stars land on screen. See docs/engine/skills-menu.md.
 
 import Foundation
-public import OpenSkyFormatsSWF
+import OpenSkyFormatsSWF
 import OpenSkyProgressionInterface
 
-nonisolated public enum StatsMenuMovieBridge: Sendable {
-    public static let moviePath = "interface\\statsmenu.swf"
-    public static let className = "StatsMenu"
-    public static let sinkHostFunctions = ["SetFadedIn", "PlaySound", "myLog"]
+nonisolated enum StatsMenuMovieBridge: Sendable {
+    static let moviePath = "interface\\statsmenu.swf"
+    static let className = "StatsMenu"
+    static let sinkHostFunctions = ["SetFadedIn", "PlaySound", "myLog"]
     /// Degrees between two skills on the ring (`SKILL_ANGLE`).
-    public static let skillAngle = 20.0
+    static let skillAngle = 20.0
     /// Values per skill in `SkillStatsA`: level, name, meter, colour, legendary count.
-    public static let skillStride = 5
+    static let skillStride = 5
     /// The root rests on `FadedOut`; this label plays its fade to the `SetFadedIn` frame.
-    public static let fadeInLabel = "FadeIn"
+    static let fadeInLabel = "FadeIn"
 
     /// `onCamera` gets `MoveCamera`'s 0 to 1 progress through the opening move.
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime, onCamera: @escaping @MainActor @Sendable (Float) -> Void
     ) {
         for name in sinkHostFunctions {
@@ -33,7 +33,7 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
         }
     }
 
-    public static func activate(runtime: SWFMovieRuntime) {
+    static func activate(runtime: SWFMovieRuntime) {
         runtime.callMovie(
             "SetPlatform", arguments: [.number(SystemMenuMovieBridge.pcPlatform), .boolean(false)]
         )
@@ -43,14 +43,14 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
     }
 
     /// The `StatsMenu` class, or nil when the movie did not define it.
-    public static func menuClass(runtime: SWFMovieRuntime) -> AS2Object? {
+    static func menuClass(runtime: SWFMovieRuntime) -> AS2Object? {
         runtime.runtime.globalValue(className).objectValue
     }
 
     /// Sends the whole model: the card, the ring, the tree's names, and the mode. The
     /// level-up page uses the movie's `LEVEL_UP` state, under the level-up movie.
     /// `namePoints` holds each star's place on screen, 0 to 1 with y down.
-    public static func publish(
+    static func publish(
         _ model: SkillsMenuModel, namePoints: [UInt32: SIMD2<Float>] = [:],
         runtime: SWFMovieRuntime
     ) {
@@ -113,7 +113,7 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
     }
 
     /// `PerkNamesA` alone, sent again each frame the tree camera moves.
-    public static func publishPerkNames(
+    static func publishPerkNames(
         _ model: SkillsMenuModel, points: [UInt32: SIMD2<Float>], runtime: SWFMovieRuntime
     ) {
         guard let menuClass = menuClass(runtime: runtime) else { return }

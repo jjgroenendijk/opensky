@@ -3,7 +3,7 @@ public import OpenSkyCrimeInterface
 // What the last crime or faction action did, as a value. Only `text`
 // builds the line.
 
-nonisolated public enum CrimeFactionActionOutcome: Equatable, Sendable {
+nonisolated enum CrimeFactionActionOutcome: Equatable, Sendable {
     case idle
     case unavailable
     case noCrimeFaction
@@ -29,7 +29,7 @@ nonisolated public enum CrimeFactionActionOutcome: Equatable, Sendable {
     /// The barter session's own line.
     case barter(String)
 
-    public var text: String {
+    var text: String {
         switch self {
         case .idle: "No crime or faction action yet."
         case .unavailable: "Crime and factions unavailable: no game data loaded."

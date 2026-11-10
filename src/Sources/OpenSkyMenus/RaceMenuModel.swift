@@ -30,13 +30,13 @@ nonisolated public enum RaceMenuAction: Equatable, Sendable {
 
 nonisolated public struct RaceMenuModel: Equatable, Sendable {
     /// English names of the `NAM9` sliders, nose long or short first, for the readout.
-    public static let sliderLabels = [
+    static let sliderLabels = [
         "Nose Length", "Nose Height", "Jaw Height", "Jaw Width", "Jaw Forward",
         "Cheekbone Height", "Cheekbone Width", "Eye Height", "Eye Width", "Brow Height",
         "Brow Width", "Brow Forward", "Mouth Height", "Mouth Forward", "Chin Width",
         "Chin Length", "Chin Forward", "Eye Depth"
     ]
-    public static let morphCount = 19
+    static let morphCount = 19
     /// Measured: the female chargen TRI has 30 nose, 28 eye, and 30 lip targets. Used
     /// when the race's own TRI was not read; the morph count settings narrow either.
     public static let partRanges: [Int: ClosedRange<Int32>] = [
@@ -125,12 +125,12 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
     }
 
     /// Picks a race by its place in `races`. A limited menu keeps the race once left.
-    public mutating func selectRace(at index: Int) {
+    mutating func selectRace(at index: Int) {
         guard races.indices.contains(index), !raceLocked else { return }
         identity.race = races[index].formID
     }
 
-    public mutating func setName(_ name: String) {
+    mutating func setName(_ name: String) {
         guard !isLimited else { return }
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
@@ -139,7 +139,7 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
 
     /// New options after a race or sex change. The face takes the race's first
     /// preset, so no head part of the old race stays on it.
-    public mutating func setOptions(_ options: RaceMenuOptions) {
+    mutating func setOptions(_ options: RaceMenuOptions) {
         self.options = options
         presetIndex = 0
         if let preset = options.presets.first {
@@ -184,7 +184,7 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         return face
     }
 
-    public func label(_ row: RaceMenuRow) -> String {
+    func label(_ row: RaceMenuRow) -> String {
         if row == .name {
             return labels.text("sRSMName")
         }

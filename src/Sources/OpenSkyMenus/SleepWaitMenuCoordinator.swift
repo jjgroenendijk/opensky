@@ -20,7 +20,7 @@ public final class SleepWaitMenuCoordinator: MenuScreen<SleepWaitMovieEvent> {
     public static let identifier: MenuIdentifier = "Sleep/Wait Menu"
     /// The slider's range in the vanilla movie.
     public static let hours = 1 ... 24
-    public static let hint = "A/D: hours   E or Enter: wait   Esc: cancel"
+    static let hint = "A/D: hours   E or Enter: wait   Esc: cancel"
 
     public private(set) var isSleeping = false
     /// The hours the text panel shows; the movie keeps its own slider.

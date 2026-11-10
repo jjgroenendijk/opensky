@@ -4,18 +4,18 @@ import OpenSkyRenderCore
 public import OpenSkyRendering
 import OpenSkyWeather
 
-nonisolated public struct LivingEnvironmentFlyEvidence: Sendable {
-    public var grassDrawStats = GrassDrawStats()
-    public var shadowDrawStats = ShadowDrawStats()
-    public var animationUpdatedBoneCount = 0
-    public var particleSystemCount = 0
-    public var particleLiveCount = 0
-    public var rainLiveCount = 0
-    public var weatherName: String?
-    public var windSpeed: Float = 0
+nonisolated struct LivingEnvironmentFlyEvidence: Sendable {
+    var grassDrawStats = GrassDrawStats()
+    var shadowDrawStats = ShadowDrawStats()
+    var animationUpdatedBoneCount = 0
+    var particleSystemCount = 0
+    var particleLiveCount = 0
+    var rainLiveCount = 0
+    var weatherName: String?
+    var windSpeed: Float = 0
 
     @MainActor
-    public mutating func capture(_ gameSession: GameSession) {
+    mutating func capture(_ gameSession: GameSession) {
         let renderer = gameSession.renderer
         grassDrawStats.formMaximum(renderer.lastGrassDrawStats)
         shadowDrawStats.formMaximum(renderer.combinedShadowDrawStats)
@@ -36,7 +36,7 @@ nonisolated public struct LivingEnvironmentFlyEvidence: Sendable {
         windSpeed = max(windSpeed, gameSession.wind.speed)
     }
 
-    public func validated(animatedActorCount: Int) throws -> LivingEnvironmentFlyEvidence {
+    func validated(animatedActorCount: Int) throws -> LivingEnvironmentFlyEvidence {
         guard weatherName != nil else {
             throw CellStreamingFlyBenchmarkError.noWeatherRendered
         }

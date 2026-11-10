@@ -74,7 +74,7 @@ extension WorldAudioSoundDirector {
     }
 
     /// How many animation loops play, for the readout and tests.
-    public var animationLoopCount: Int {
+    var animationLoopCount: Int {
         animationLoopSourceIDs.count
     }
 

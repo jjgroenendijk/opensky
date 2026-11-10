@@ -6,16 +6,16 @@
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 
 nonisolated public enum RecordTextDump: Sendable {
     /// Big records (Tamriel WRLD carries thousands of RNAMs) get capped in the preview
     /// pane so it stays readable; the tail is summarized per field type.
-    public static var fieldPrintCap: Int {
+    static var fieldPrintCap: Int {
         DumpLimits.current.fields
     }
 
-    public static func dump(record: ESMRecord, localized: Bool) -> String {
+    static func dump(record: ESMRecord, localized: Bool) -> String {
         dump(
             record: record,
             localized: localized,
@@ -24,7 +24,7 @@ nonisolated public enum RecordTextDump: Sendable {
         )
     }
 
-    public static func dump(
+    static func dump(
         record: ESMRecord,
         localized: Bool,
         keywordStore: KeywordStore,
@@ -38,7 +38,7 @@ nonisolated public enum RecordTextDump: Sendable {
         )
     }
 
-    public static func dump(
+    static func dump(
         record: ESMRecord,
         localized: Bool,
         stores: (keyword: KeywordStore, formList: FormListStore),

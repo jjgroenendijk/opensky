@@ -28,7 +28,7 @@ nonisolated public struct CombatAwareness: Equatable, Sendable {
     }
 
     /// Whether the observer has the target right now.
-    public var isDetected: Bool {
+    var isDetected: Bool {
         state == .detected
     }
 
@@ -119,37 +119,37 @@ nonisolated public struct CombatCastingProfile: Equatable, Sendable {
 /// A flat value rather than a world handle, for the reason
 /// `CombatActorObservation` is one: the machine cannot then reach past what it
 /// was given, and a test hands it a literal.
-nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
+nonisolated struct CombatBehaviorInputs: Equatable, Sendable {
     /// Where the acting actor is standing, world space.
-    public var actorPosition: SIMD3<Float>
+    var actorPosition: SIMD3<Float>
     /// Where its target is standing, world space.
-    public var targetPosition: SIMD3<Float>
+    var targetPosition: SIMD3<Float>
     /// What the actor currently makes of that target.
-    public var awareness: CombatAwareness
+    var awareness: CombatAwareness
     /// The actor's own weapon reach, world units, already scaled.
-    public var reach: Float
+    var reach: Float
     /// Current health over maximum, 0 through 1.
-    public var healthFraction: Float
+    var healthFraction: Float
     /// False once the target is dead, which ends the fight whatever else is
     /// true.
-    public var isTargetAlive: Bool
+    var isTargetAlive: Bool
     /// True when a script called `StartCombat`, which engages the actor without
     /// waiting for it to perceive anything and keeps it engaged while it cannot.
-    public var isForced: Bool
+    var isForced: Bool
     /// What the actor could cast and what it can pay for.
-    public var casting: CombatCastingProfile
+    var casting: CombatCastingProfile
     /// What running magic effects force on the actor, such as fear.
-    public var influence: ActorMagicInfluence
+    var influence: ActorMagicInfluence
     /// The actor's Confidence beside its target. Nil keeps the health-fraction rule.
-    public var temperament: CombatTemperament?
+    var temperament: CombatTemperament?
     /// Radians between where the actor faces and the target, for aiming a shout.
-    public var facingError: Float = 0
+    var facingError: Float = 0
     /// The actor's race flies (`RACE` flag 0x80).
-    public var flies = false
+    var flies = false
     /// The actor swings a one-handed weapon, whose attacks can chain.
-    public var canChain = false
+    var canChain = false
 
-    public init(
+    init(
         actorPosition: SIMD3<Float>,
         targetPosition: SIMD3<Float>,
         awareness: CombatAwareness = .unaware,
@@ -178,7 +178,7 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
     /// Planar rather than solid, because reach is compared against it and an
     /// actor standing on a table is not out of sword range for being two
     /// metres up.
-    public var distance: Float {
+    var distance: Float {
         let offset = targetPosition - actorPosition
         return simd_length(SIMD2(offset.x, offset.y))
     }
@@ -189,7 +189,7 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
 /// Positions rather than directions, because the NPC mover takes a point
 /// and paths to it: a direction would need a second authority to turn it into
 /// somewhere the navmesh actually reaches.
-nonisolated public enum CombatMovementCommand: Equatable, Sendable {
+nonisolated enum CombatMovementCommand: Equatable, Sendable {
     /// Close on the target.
     case approach(SIMD3<Float>)
     /// Go and look at the last place the target was perceived.
@@ -200,7 +200,7 @@ nonisolated public enum CombatMovementCommand: Equatable, Sendable {
     case hold
 
     /// The point this command paths to, or nil for `hold`.
-    public var destination: SIMD3<Float>? {
+    var destination: SIMD3<Float>? {
         switch self {
         case let .approach(point), let .investigate(point), let .flee(point): point
         case .hold: nil
@@ -209,37 +209,37 @@ nonisolated public enum CombatMovementCommand: Equatable, Sendable {
 }
 
 /// What one advanced step of one machine did.
-nonisolated public struct CombatBehaviorStep: Equatable, Sendable {
+nonisolated struct CombatBehaviorStep: Equatable, Sendable {
     /// The phase after the step.
-    public var phase = CombatBehaviorPhase.idle
+    var phase = CombatBehaviorPhase.idle
     /// True on the step the fight began, which is the step combat entry is
     /// recorded on.
-    public var startedFight = false
+    var startedFight = false
     /// True on the step an attack began, which is the step the attack clip is
     /// asked for.
-    public var startedAttack = false
+    var startedAttack = false
     /// True on the contact step, which is the step the hit volume runs on.
-    public var reachedContact = false
+    var reachedContact = false
     /// True on the step a guard went up.
-    public var raisedBlock = false
+    var raisedBlock = false
     /// True on the step a search began.
-    public var startedSearch = false
+    var startedSearch = false
     /// The spell whose cast began this step, or nil when none did. Carries the
     /// option rather than a flag so the runtime casts what the machine chose
     /// rather than re-choosing for itself.
-    public var startedCast: CombatSpellOption?
+    var startedCast: CombatSpellOption?
     /// The spell whose cast the machine let go of this step, which is the step
     /// the magicka is spent and the delivery happens on.
-    public var releasedCast: CombatSpellOption?
+    var releasedCast: CombatSpellOption?
     /// True on the step a cast in flight was dropped without being released —
     /// the actor broke off, lost its target or gave up mid-charge.
-    public var cancelledCast = false
+    var cancelledCast = false
     /// True on the step pursuit ended, which is the step the 16.5 package is
     /// resumed on.
-    public var endedPursuit = false
+    var endedPursuit = false
     /// Where the actor should be heading, or nil when this step asked for no
     /// change in movement.
-    public var command: CombatMovementCommand?
+    var command: CombatMovementCommand?
     /// True when the command's approach walks rather than runs.
-    public var walks = false
+    var walks = false
 }

@@ -19,14 +19,14 @@ nonisolated public struct InputBindingSlot: Equatable, Sendable {
     public let action: GameInputAction
     public let context: InputContext
     public let event: String
-    public let remappable: Bool
+    let remappable: Bool
 
     public var key: String {
         "\(context.rawValue)|\(event)"
     }
 }
 
-nonisolated public enum InputRebindResult: Equatable, Sendable {
+nonisolated enum InputRebindResult: Equatable, Sendable {
     case bound
     /// The key was taken in the same context; that action got the old key.
     case swapped(with: GameInputAction)
@@ -138,7 +138,7 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         return overrides[slot.key] ?? defaults[slot.key]
     }
 
-    public func isRemapped(_ action: GameInputAction) -> Bool {
+    func isRemapped(_ action: GameInputAction) -> Bool {
         Self.slot(for: action).map { overrides[$0.key] != nil } ?? false
     }
 
@@ -167,7 +167,7 @@ nonisolated public struct InputBindings: Equatable, Sendable {
     /// Binds `scanCode` to `action`. A key already used in the same context moves
     /// to the action's old key, so no action is left without one.
     @discardableResult
-    public mutating func rebind(
+    mutating func rebind(
         _ action: GameInputAction,
         to scanCode: UInt32
     ) -> InputRebindResult {
@@ -188,7 +188,7 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         return .swapped(with: holder.action)
     }
 
-    public mutating func reset() {
+    mutating func reset() {
         overrides = [:]
     }
 

@@ -2,11 +2,11 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsPEX
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsPEX
+import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
-    public func suspend(
+    func suspend(
         call: PapyrusNativeCall,
         request: PapyrusNativeSuspension,
         target: PapyrusResumeTarget,
@@ -40,7 +40,7 @@ extension PapyrusInterpreter {
         )
     }
 
-    public func nativeFlow(
+    func nativeFlow(
         _ call: PapyrusNativeCall,
         destination: PexValue
     ) throws(PapyrusFault) -> PapyrusFlow {
@@ -68,7 +68,7 @@ extension PapyrusInterpreter {
         return .next
     }
 
-    public func nativeOutcome(
+    func nativeOutcome(
         _ call: PapyrusNativeCall,
         target: PapyrusResumeTarget
     ) -> PapyrusRunOutcome {

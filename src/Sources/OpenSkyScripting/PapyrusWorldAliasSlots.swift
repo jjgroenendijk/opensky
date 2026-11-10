@@ -7,22 +7,17 @@ import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 
 /// One alias of one quest: the QUST key and the `ALST` or `ALLS` alias ID.
 nonisolated public struct PapyrusAliasSlot: Hashable, Sendable {
-    public let quest: ReferenceKey
-    public let aliasID: UInt32
-
-    public init(quest: ReferenceKey, aliasID: UInt32) {
-        self.quest = quest
-        self.aliasID = aliasID
-    }
+    let quest: ReferenceKey
+    let aliasID: UInt32
 }
 
 extension PapyrusWorldRuntime {
     /// The session-stable handle naming `slot`.
-    public func aliasSlotHandle(_ slot: PapyrusAliasSlot) -> PapyrusObjectHandle {
+    func aliasSlotHandle(_ slot: PapyrusAliasSlot) -> PapyrusObjectHandle {
         if let existing = aliasSlotHandles[slot] {
             return existing
         }
@@ -34,7 +29,7 @@ extension PapyrusWorldRuntime {
 
     /// The slot behind a slot handle, or behind the handle of an alias script, which is
     /// `Self` inside that script.
-    public func aliasSlot(for handle: PapyrusObjectHandle) -> PapyrusAliasSlot? {
+    func aliasSlot(for handle: PapyrusObjectHandle) -> PapyrusAliasSlot? {
         aliasSlotsByHandle[handle] ?? keysByHandle[handle].flatMap { aliasSlotsByInstance[$0] }
     }
 
@@ -57,7 +52,7 @@ extension PapyrusWorldRuntime {
     /// Retires the alias scripts of `slot` that no longer sit on its filled reference,
     /// so a new fill attaches fresh ones. Returns how many went.
     @discardableResult
-    public func retireAliasScripts(of slot: PapyrusAliasSlot) -> Int {
+    func retireAliasScripts(of slot: PapyrusAliasSlot) -> Int {
         let current = aliasReference(in: slot)
         let stale = aliasSlotsByInstance
             .filter { $0.value == slot && $0.key.reference != current }

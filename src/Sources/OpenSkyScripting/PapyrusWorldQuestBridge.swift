@@ -8,7 +8,7 @@ public import OpenSkyQuestsInterface
 
 /// Failures the seam itself reports, as opposed to the `QuestError`s the quest
 /// layer throws once a quest has been named.
-nonisolated public enum PapyrusQuestBridgeError: Error, Equatable {
+nonisolated enum PapyrusQuestBridgeError: Error, Equatable {
     /// The session has no quest index behind it — a synthetic scene, or an
     /// install whose plugins carry no QUST group. Distinct from
     /// `QuestError.unknownQuest`, which means the index exists and does not

@@ -8,8 +8,8 @@
 import Foundation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
-public import OpenSkyQuestsInterface
+import OpenSkyGameData
+import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
@@ -18,7 +18,7 @@ extension PapyrusWorldRuntime {
     /// - Parameter key: the QUST's session-stable identity.
     /// - Returns: instances created by this call.
     @discardableResult
-    public func attachQuest(
+    func attachQuest(
         _ quest: Quest,
         key: ReferenceKey,
         formIDResolver: FormIDResolver,
@@ -145,12 +145,12 @@ extension PapyrusWorldRuntime {
     }
 
     /// Quests holding at least one live script instance.
-    public var questCount: Int {
+    var questCount: Int {
         Set(questInstanceKeys.map(\.reference)).count
     }
 
     /// Alias script instances live across every running quest.
-    public var questAliasInstanceCount: Int {
+    var questAliasInstanceCount: Int {
         questAliasInstanceKeys.values.reduce(0) { $0 + $1.count }
     }
 

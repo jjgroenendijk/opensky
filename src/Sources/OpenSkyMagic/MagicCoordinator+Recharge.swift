@@ -14,7 +14,7 @@ import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// What one recharge did.
-nonisolated public enum RechargeOutcome: Equatable, Sendable {
+nonisolated enum RechargeOutcome: Equatable, Sendable {
     case recharged(item: FormID, gem: FormID, charge: EnchantmentCharge)
     /// The player has no equipped enchanted weapon that is short of charge.
     case nothingToRecharge
@@ -26,7 +26,7 @@ extension MagicCoordinator {
     /// Recharges the player's equipped weapon from the smallest filled gem that fills
     /// it, or the largest gem when none does.
     @discardableResult
-    public func rechargeEquippedWeapon() -> RechargeOutcome {
+    func rechargeEquippedWeapon() -> RechargeOutcome {
         guard let runtime = effects, let inventory = world.inventory else {
             return .unavailable
         }

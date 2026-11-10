@@ -2,10 +2,10 @@
 // record, so the cell is always absent.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyQuestsInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// One quest's runtime state paired with the snapshot entry it came from.
@@ -17,7 +17,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `QSTS` chunk: every snapshot entry carrying a quest component, in
     /// the snapshot's `ReferenceKey` order. A session that touched no quest
     /// writes no chunk.
-    public static func writeQuestStates(
+    static func writeQuestStates(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -66,7 +66,7 @@ nonisolated extension OpenSkySaveEncoder {
 
     /// The `QALS` chunk: every non-empty alias table, in key order. An empty table is
     /// skipped, because the decoder restores it for any quest the chunk does not name.
-    public static func writeQuestAliases(
+    static func writeQuestAliases(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -98,7 +98,7 @@ nonisolated extension OpenSkySaveEncoder {
 
     /// `QLOC`: location targets are a sibling chunk because QALS entries are
     /// not individually length-delimited and cannot be extended compatibly.
-    public static func writeQuestLocationAliases(
+    static func writeQuestLocationAliases(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

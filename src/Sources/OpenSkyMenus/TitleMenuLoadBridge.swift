@@ -2,19 +2,19 @@
 // saves with their pictures, then a confirmed load. The calls were measured with the
 // action disassembler; docs/engine/main-menu.md lists them.
 
-public import Foundation
-public import OpenSkyFormatsSWF
-public import OpenSkyMenusInterface
+import Foundation
+import OpenSkyFormatsSWF
+import OpenSkyMenusInterface
 
 nonisolated public enum TitleMenuLoadBridge: Sendable {
     /// The `img://` name the save list loads its picture from.
-    public static let screenshotSlot = "BGSSaveLoadHeader_Screenshot"
-    public static let screenshotWidth = 192
-    public static let screenshotHeight = 108
+    static let screenshotSlot = "BGSSaveLoadHeader_Screenshot"
+    static let screenshotWidth = 192
+    static let screenshotHeight = 108
     static let unknownCharacter = "Unknown"
 
     /// Movie-to-engine calls of the Load list.
-    public enum Request: String, CaseIterable, Sendable {
+    enum Request: String, CaseIterable, Sendable {
         case characters = "PopulateCharacterList"
         case characterSelected = "CharacterSelected"
         case screenshot = "PrepSaveGameScreenshot"
@@ -27,22 +27,22 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
 
     /// One call, answered after the movie event that made it. A list the call passed
     /// stays in the runtime's `lastHostArguments`.
-    public struct Call: Equatable, Sendable {
-        public let request: Request
+    struct Call: Equatable, Sendable {
+        let request: Request
         /// The list index the call names: its first number.
-        public let index: Int?
+        let index: Int?
 
-        public init(request: Request, index: Int?) {
+        init(request: Request, index: Int?) {
             self.request = request
             self.index = index
         }
 
-        public init(request: Request, arguments: [AS2Value]) {
+        init(request: Request, arguments: [AS2Value]) {
             self.init(request: request, index: TitleMenuLoadBridge.index(arguments))
         }
     }
 
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime,
         onCall: @escaping @MainActor @Sendable (Call) -> Void
     ) {
@@ -58,7 +58,7 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
     // MARK: - Rows
 
     /// Character names, the one with the newest save first.
-    public static func characters(_ rows: [SaveSlotRow]) -> [String] {
+    static func characters(_ rows: [SaveSlotRow]) -> [String] {
         var newest: [String: Date] = [:]
         for row in rows {
             let name = row.character?.name ?? unknownCharacter
@@ -67,7 +67,7 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
         return newest.sorted { ($0.value, $1.key) > ($1.value, $0.key) }.map(\.key)
     }
 
-    public static func saves(of character: String, in rows: [SaveSlotRow]) -> [SaveSlotRow] {
+    static func saves(of character: String, in rows: [SaveSlotRow]) -> [SaveSlotRow] {
         SaveLoadPageModel
             .sorted(rows.filter { ($0.character?.name ?? unknownCharacter) == character })
     }
@@ -84,7 +84,7 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
     // MARK: - Answers
 
     /// `PopulateCharacterList([entryList, batchSize])`.
-    public static func fillCharacters(
+    static func fillCharacters(
         _ names: [String], runtime: SWFMovieRuntime,
         listPath: String = TitleMenuMovieBridge.saveLoadListPath
     ) {
@@ -98,7 +98,7 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
     }
 
     /// `CharacterSelected([id, flags, isSaving, entryList, batchSize])`.
-    public static func fillSaves(
+    static func fillSaves(
         _ saves: [SaveSlotRow], runtime: SWFMovieRuntime,
         listPath: String = TitleMenuMovieBridge.saveLoadListPath
     ) {
@@ -110,7 +110,7 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
     }
 
     /// Fills the movie's `entryList` and tells the save readout the batch is done.
-    public static func fillSaves(
+    static func fillSaves(
         _ saves: [SaveSlotRow], list: AS2Value?, listPath: String, runtime: SWFMovieRuntime
     ) {
         let entries = saves.enumerated().map { entry(index: $0.offset, row: $0.element) }
@@ -156,7 +156,7 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
     }
 
     /// The picture scaled to the slot by nearest pixel, or mid grey without one.
-    public static func screenshotPixels(_ picture: SaveSlotPicture?) -> Data {
+    static func screenshotPixels(_ picture: SaveSlotPicture?) -> Data {
         let width = screenshotWidth, height = screenshotHeight
         guard
             let picture, picture.width > 0, picture.height > 0,

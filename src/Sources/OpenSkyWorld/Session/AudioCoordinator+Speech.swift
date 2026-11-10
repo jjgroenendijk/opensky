@@ -76,12 +76,12 @@ extension AudioCoordinator {
     }
 
     /// Whether `speaker` is saying or loading a line.
-    public func isSpeaking(_ speaker: ReferenceKey) -> Bool {
+    func isSpeaking(_ speaker: ReferenceKey) -> Bool {
         speech.channels[speaker] != nil
     }
 
     /// One row per speaking actor, for the Voice section.
-    public var speechDescription: String {
+    var speechDescription: String {
         let rows = speech.channels.keys.sorted().compactMap { speaker -> String? in
             guard let channel = speech.channels[speaker], let path = channel.queue.current else {
                 return nil
@@ -99,7 +99,7 @@ extension AudioCoordinator {
         return lines.joined(separator: "\n")
     }
 
-    public var lastSpeechError: String? {
+    var lastSpeechError: String? {
         speech.lastError
     }
 

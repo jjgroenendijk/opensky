@@ -2,12 +2,12 @@
 // without a window. See docs/engine/ragdoll.md.
 
 import Foundation
-public import OpenSkyPhysics
+import OpenSkyPhysics
 
-nonisolated public enum RagdollReadout: Sendable {
+nonisolated enum RagdollReadout: Sendable {
     /// What the biped filter admitted and what touches now, so "nothing touching" differs
     /// from "nothing allowed".
-    public static func selfCollisionText(for snapshot: RagdollStatsSnapshot) -> String {
+    static func selfCollisionText(for snapshot: RagdollStatsSnapshot) -> String {
         guard snapshot.isSelfCollisionEnabled else {
             return "Bone collision: off"
         }

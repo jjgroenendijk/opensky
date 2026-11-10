@@ -1,7 +1,7 @@
 // The pure rules of the journal readouts: which quests the readout lists and how
 // it words an objective. Values in, values out. See docs/engine/journal.md.
 
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyQuestsInterface
 
 public enum JournalCore {
@@ -12,13 +12,13 @@ public enum JournalCore {
 
     /// Every objective the quest declares, touched or not. An untouched
     /// objective explains a running quest with an empty page.
-    public static func objectiveLines(_ entry: JournalQuestStatus) -> [String] {
+    static func objectiveLines(_ entry: JournalQuestStatus) -> [String] {
         entry.quest.objectives.map { objective in
             "\(objective.index) \(objectiveWord(entry.state.objective(objective.index)))"
         }
     }
 
-    public static func objectiveWord(_ objective: QuestObjectiveState) -> String {
+    static func objectiveWord(_ objective: QuestObjectiveState) -> String {
         if objective.isFailed {
             "failed"
         } else if objective.isCompleted {
@@ -30,7 +30,7 @@ public enum JournalCore {
         }
     }
 
-    public static func declaredStages(of quest: Quest) -> [UInt16] {
+    static func declaredStages(of quest: Quest) -> [UInt16] {
         Array(Set(quest.stages.map(\.index))).sorted()
     }
 }

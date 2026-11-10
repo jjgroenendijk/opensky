@@ -2,11 +2,11 @@
 // them without a window. See docs/engine/magic.md.
 
 import Foundation
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 
-nonisolated public enum MagicEffectControlReadout: Sendable {
+nonisolated enum MagicEffectControlReadout: Sendable {
     /// What the player's and the nearest actor's effects force on them.
-    public static func influenceText(for snapshot: MagicEffectControlSnapshot) -> String {
+    static func influenceText(for snapshot: MagicEffectControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Forced behaviour: unavailable" }
         let player = words(of: snapshot.playerInfluence)
         let nearest = snapshot.nearestActorName.map { name in
@@ -16,7 +16,7 @@ nonisolated public enum MagicEffectControlReadout: Sendable {
     }
 
     /// The influence as words, such as "calmed, paralysed", or "none".
-    public static func words(of influence: ActorMagicInfluence) -> String {
+    static func words(of influence: ActorMagicInfluence) -> String {
         let flags: [(Bool, String)] = [
             (influence.isCalmed, "calmed"), (influence.isFrenzied, "frenzied"),
             (influence.isFrightened, "frightened"), (influence.isRallied, "rallied"),

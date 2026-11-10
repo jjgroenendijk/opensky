@@ -28,8 +28,8 @@ nonisolated public struct GamepadSnapshot: Equatable, Sendable {
 /// direction repeats, as a held arrow key does.
 nonisolated public struct GamepadMenuInput: Sendable {
     /// How far the stick must lean to move, and how far back it must come to stop.
-    public static let stickPress: Float = 0.5
-    public static let stickRelease: Float = 0.3
+    static let stickPress: Float = 0.5
+    static let stickRelease: Float = 0.3
     public static let repeatDelay = 0.5
     public static let repeatInterval = 0.12
 

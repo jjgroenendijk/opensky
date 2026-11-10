@@ -14,7 +14,7 @@ public import OpenSkyQuestsInterface
 @MainActor
 public final class JournalCoordinator {
     /// As typed into the readout.
-    public var editorID = ""
+    var editorID = ""
     /// Kept across readout refreshes, so the user sees what they just did.
     public var lastOutcome: String?
     private var cachedStrings: LocalizedStrings?
@@ -43,7 +43,7 @@ public final class JournalCoordinator {
         editorID.trimmingCharacters(in: .whitespaces)
     }
 
-    public var questEditorIDs: [String] {
+    var questEditorIDs: [String] {
         runtime?.quests.journalQuests().compactMap(\.editorID) ?? []
     }
 
@@ -57,7 +57,7 @@ public final class JournalCoordinator {
         }
     }
 
-    public func selectedEntry() -> JournalQuestStatus? {
+    func selectedEntry() -> JournalQuestStatus? {
         let editorID = selectedEditorID
         guard
             !editorID.isEmpty,
@@ -75,7 +75,7 @@ public final class JournalCoordinator {
     /// Each returns true when the change ran, refused or not, so the caller
     /// rebuilds the page.
     @discardableResult
-    public func startSelectedQuest() -> Bool {
+    func startSelectedQuest() -> Bool {
         applyChange("start") { runtime, formID in
             let state = try runtime.startQuest(formID)
             return "started, stage \(state.currentStage.map(String.init) ?? "none")"
@@ -83,7 +83,7 @@ public final class JournalCoordinator {
     }
 
     @discardableResult
-    public func stopSelectedQuest() -> Bool {
+    func stopSelectedQuest() -> Bool {
         applyChange("stop") { runtime, formID in
             _ = try runtime.stopQuest(formID)
             return "stopped, aliases cleared"
@@ -91,7 +91,7 @@ public final class JournalCoordinator {
     }
 
     @discardableResult
-    public func setSelectedQuestStage(_ index: Int) -> Bool {
+    func setSelectedQuestStage(_ index: Int) -> Bool {
         guard let stage = UInt16(exactly: index) else {
             lastOutcome = "stage \(index) is not a stage index"
             return false
@@ -103,7 +103,7 @@ public final class JournalCoordinator {
     }
 
     @discardableResult
-    public func setSelectedQuestObjective(_ index: Int, displayed: Bool) -> Bool {
+    func setSelectedQuestObjective(_ index: Int, displayed: Bool) -> Bool {
         guard let objective = UInt16(exactly: index) else {
             lastOutcome = "objective \(index) is not an objective index"
             return false

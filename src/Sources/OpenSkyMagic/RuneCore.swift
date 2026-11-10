@@ -3,10 +3,10 @@
 // surface and triggered like a proximity mine". See docs/engine/spell-delivery.md.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
-public import OpenSkyPhysics
+import OpenSkyPhysics
 
 nonisolated public struct RuneSettings: Equatable, Sendable {
     /// `iMaxPlayerRunes`: how many runes the player keeps at once.
@@ -48,30 +48,24 @@ nonisolated public struct SummonSettings: Equatable, Sendable {
 }
 
 /// A rune waiting on the ground.
-nonisolated public struct PlacedRune: Equatable, Sendable {
-    public let payload: SpellPayload
-    public let position: SIMD3<Float>
+nonisolated struct PlacedRune: Equatable, Sendable {
+    let payload: SpellPayload
+    let position: SIMD3<Float>
     /// How near an actor must come, world units.
-    public let proximity: Float
+    let proximity: Float
     /// Seconds since it was placed.
-    public var age: Float = 0
-
-    public init(payload: SpellPayload, position: SIMD3<Float>, proximity: Float) {
-        self.payload = payload
-        self.position = position
-        self.proximity = proximity
-    }
+    var age: Float = 0
 }
 
-nonisolated public enum RuneCore {
+nonisolated enum RuneCore {
     /// The keyword vanilla rune effects carry.
-    public static let keyword = "MagicRune"
+    static let keyword = "MagicRune"
     /// `explosionProximity` of `RuneFireProjectile`, for a rune whose PROJ gives none.
-    public static let defaultProximity: Float = 150
+    static let defaultProximity: Float = 150
 
     /// A target-location spell's reach in world units. [WARNING] `SPIT` range is read as
     /// feet here: Fire Rune's range is 20, and 20 world units would be at the caster's feet.
-    public static func reach(range: Float, settings: MagicAreaSettings = .documentedDefaults)
+    static func reach(range: Float, settings: MagicAreaSettings = .documentedDefaults)
         -> Float
     {
         max(0, range) * max(0, settings.worldUnitsPerAreaUnit)
@@ -79,7 +73,7 @@ nonisolated public enum RuneCore {
 
     /// `runes` with `rune` added. Past the player's limit the oldest player rune goes.
     /// UESP names no limit for NPCs, so theirs is not capped.
-    public static func placing(
+    static func placing(
         _ rune: PlacedRune, in runes: [PlacedRune], settings: RuneSettings
     ) -> [PlacedRune] {
         var placed = runes + [rune]
@@ -95,7 +89,7 @@ nonisolated public enum RuneCore {
     }
 
     /// Whether an entry's effect carries `keyword`, the `MagicRune` keyword.
-    public static func isRune(
+    static func isRune(
         _ payload: SpellPayload, store: MagicEffectStore, keyword: ReferenceKey
     ) -> Bool {
         payload.entries.contains { entry in
@@ -105,7 +99,7 @@ nonisolated public enum RuneCore {
     }
 
     /// The rune's proximity: the projectile's, or the default, and farther outdoors.
-    public static func proximity(_ projectile: Float, outdoors: Bool, settings: RuneSettings)
+    static func proximity(_ projectile: Float, outdoors: Bool, settings: RuneSettings)
         -> Float
     {
         let base = projectile > 0 ? projectile : defaultProximity
@@ -114,7 +108,7 @@ nonisolated public enum RuneCore {
 
     /// The nearest of `triggers` inside the rune's proximity, or nil. An unarmed rune
     /// waits, and the caster sets off its own rune only when the setting allows it.
-    public static func trigger(
+    static func trigger(
         of rune: PlacedRune, among triggers: [MeleeTarget], settings: RuneSettings = .vanilla
     ) -> MeleeTarget? {
         guard rune.age >= settings.armSeconds else { return nil }

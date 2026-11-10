@@ -6,16 +6,16 @@ import Foundation
 public import OpenSkyInventoryInterface
 
 /// One equipped item as the readout spells it.
-nonisolated public struct EquippedItemReadout: Equatable, Sendable {
-    public let name: String
+nonisolated struct EquippedItemReadout: Equatable, Sendable {
+    let name: String
     /// Biped slots and hands it occupies, preformatted — the readout has no
     /// business knowing how to render a `BodySlots` bitfield.
-    public let occupancy: String
+    let occupancy: String
     /// The item's enchantment and what it has left, preformatted, or nil when it has
     /// none or the session has no ENCH index.
-    public let enchantment: String?
+    let enchantment: String?
 
-    public init(name: String, occupancy: String, enchantment: String? = nil) {
+    init(name: String, occupancy: String, enchantment: String? = nil) {
         self.name = name
         self.occupancy = occupancy
         self.enchantment = enchantment
@@ -23,27 +23,16 @@ nonisolated public struct EquippedItemReadout: Equatable, Sendable {
 }
 
 /// One observation of the world-item runtime.
-nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
+nonisolated struct ItemControlSnapshot: Equatable, Sendable {
     /// The player's stacks, in the component's FormID order.
-    public let playerStacks: [ItemStackReadout]
+    let playerStacks: [ItemStackReadout]
     /// The open container's name, or nil when no session is live.
-    public let containerName: String?
+    let containerName: String?
     /// Human-readable result of the last control action.
-    public let lastActionText: String
-
-    /// Written out so the equipment members can trail the list with defaults.
-    public init(
-        playerStacks: [ItemStackReadout],
-        containerName: String?,
-        lastActionText: String
-    ) {
-        self.playerStacks = playerStacks
-        self.containerName = containerName
-        self.lastActionText = lastActionText
-    }
+    let lastActionText: String
 
     /// The reading with no runtime attached.
-    public static let unavailable = ItemControlSnapshot(
+    static let unavailable = ItemControlSnapshot(
         playerStacks: [],
         containerName: nil,
         lastActionText: "World items unavailable: no game data loaded."

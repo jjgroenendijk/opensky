@@ -94,7 +94,7 @@ extension SystemMenuCoordinator {
         return true
     }
 
-    public var isWaitingForKey: Bool {
+    var isWaitingForKey: Bool {
         model.isOpen && model.page == .controls && controlsPage.waitingForKey
     }
 
@@ -129,7 +129,7 @@ extension SystemMenuCoordinator {
     }
 
     /// Asks before deleting the selected save, as the Delete key does in vanilla.
-    public func requestDeleteSelectedSave() {
+    func requestDeleteSelectedSave() {
         saveLoadPage?.requestDelete()
     }
 

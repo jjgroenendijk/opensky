@@ -99,7 +99,7 @@ public struct ActorValueRuntime: ActorValueAccess {
 
     /// Whether `holder` has been touched at runtime, as opposed to still
     /// reading a full baseline.
-    public func hasRuntimeState(_ holder: ActorValueHolder) -> Bool {
+    func hasRuntimeState(_ holder: ActorValueHolder) -> Bool {
         store.component(ActorValueState.self, for: holder.key) != nil
     }
 
@@ -253,7 +253,7 @@ public struct ActorValueRuntime: ActorValueAccess {
     ///
     /// - Returns: true when runtime state was actually removed.
     @discardableResult
-    public func reset(_ holder: ActorValueHolder) -> Bool {
+    func reset(_ holder: ActorValueHolder) -> Bool {
         store.reset(.actorValues, for: holder.key)
     }
 

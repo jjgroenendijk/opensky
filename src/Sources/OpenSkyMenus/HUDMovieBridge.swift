@@ -11,7 +11,7 @@ nonisolated public struct HUDMeterValues: Equatable, Sendable {
     public var magicka: Float
     public var stamina: Float
 
-    public static let full = HUDMeterValues(health: 1, magicka: 1, stamina: 1)
+    static let full = HUDMeterValues(health: 1, magicka: 1, stamina: 1)
 }
 
 nonisolated public enum HUDCompassMarkerKind: Equatable, Sendable {
@@ -62,7 +62,7 @@ nonisolated public enum HUDMovieError: Error, Equatable {
 nonisolated public enum HUDMovieBridge: Sendable {
     public static let moviePath = "interface\\hudmenu.swf"
     public static let targetPath = "/HUDMovieBaseInstance"
-    public static let requiredEntryPoints = [
+    static let requiredEntryPoints = [
         "SetCompassAngle",
         "SetCompassMarkers",
         "SetCrosshairEnabled",
@@ -85,7 +85,7 @@ nonisolated public enum HUDMovieBridge: Sendable {
         "/HUDMovieBaseInstance/SubtitleTextHolder"
     ]
 
-    public static func validate(runtime: SWFMovieRuntime) throws {
+    static func validate(runtime: SWFMovieRuntime) throws {
         guard let target = runtime.node(atPath: targetPath, from: runtime.root) else {
             throw HUDMovieError.missingDisplayObject(targetPath)
         }
@@ -96,7 +96,7 @@ nonisolated public enum HUDMovieBridge: Sendable {
         }
     }
 
-    public static func initialize(
+    static func initialize(
         runtime: SWFMovieRuntime,
         meters: HUDMeterValues = .full,
         headingDegrees: Float = 0,
@@ -112,7 +112,7 @@ nonisolated public enum HUDMovieBridge: Sendable {
         setAuthoredPlaceholderTextEnabled(false, runtime: runtime)
     }
 
-    public static func setCrosshairEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
+    static func setCrosshairEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
         call("SetCrosshairEnabled", [.boolean(enabled)], runtime: runtime)
     }
 
@@ -146,12 +146,12 @@ nonisolated public enum HUDMovieBridge: Sendable {
         )
     }
 
-    public static func setMetersEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
+    static func setMetersEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
         setMetersVisible(enabled ? [.health, .magicka, .stamina] : [], runtime: runtime)
     }
 
     /// Shows the meters in `visible` and hides the rest.
-    public static func setMetersVisible(_ visible: Set<HUDModeClip>, runtime: SWFMovieRuntime) {
+    static func setMetersVisible(_ visible: Set<HUDModeClip>, runtime: SWFMovieRuntime) {
         for (clip, path) in meterPaths {
             guard let meter = runtime.node(atPath: path, from: runtime.root) else {
                 continue
@@ -163,7 +163,7 @@ nonisolated public enum HUDMovieBridge: Sendable {
     /// The vanilla movie ships visible authoring samples in the item info, its
     /// divider bar, and the subtitles. Keep them inspectable without leaking them
     /// into normal gameplay before OpenSky publishes item info and subtitles.
-    public static func setAuthoredPlaceholderTextEnabled(
+    static func setAuthoredPlaceholderTextEnabled(
         _ enabled: Bool,
         runtime: SWFMovieRuntime
     ) {
@@ -177,7 +177,7 @@ nonisolated public enum HUDMovieBridge: Sendable {
 
     /// Pushes `mode` onto the movie's mode stack, or takes it off. Each element shows
     /// only when the top mode is among its modes.
-    public static func showElements(_ mode: HUDMode, _ show: Bool, runtime: SWFMovieRuntime) {
+    static func showElements(_ mode: HUDMode, _ show: Bool, runtime: SWFMovieRuntime) {
         call("ShowElements", [.string(mode.rawValue), .boolean(show)], runtime: runtime)
     }
 

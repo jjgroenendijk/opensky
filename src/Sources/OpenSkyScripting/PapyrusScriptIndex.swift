@@ -3,15 +3,15 @@
 // the script library changes.
 
 import Foundation
-public import OpenSkyFormatsPEX
+import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
-public final class PapyrusScriptIndex {
-    public typealias DeclaredVariable = (owner: PexObject, variable: PexVariable)
+final class PapyrusScriptIndex {
+    typealias DeclaredVariable = (owner: PexObject, variable: PexVariable)
 
-    public let script: PexObject
+    let script: PexObject
     /// The folded script name, the script half of a native key.
-    public let key: String
+    let key: String
 
     /// Folded state name, then folded function name. The first state and the first
     /// function of a name win, as in a lookup by name.
@@ -25,7 +25,7 @@ public final class PapyrusScriptIndex {
     private var variablesBySpelling: [String: DeclaredVariable?] = [:]
     private var variablesGeneration: Int?
 
-    public init(_ script: PexObject) {
+    init(_ script: PexObject) {
         self.script = script
         key = PapyrusName.key(script.name)
         nativeFunctions = Set(script.states.flatMap { state in
@@ -54,7 +54,7 @@ public final class PapyrusScriptIndex {
         writeHandlers = writes
     }
 
-    public func function(named name: String, state: String) -> PapyrusCompiledFunction? {
+    func function(named name: String, state: String) -> PapyrusCompiledFunction? {
         if let known = functionsBySpelling[state]?[name] {
             return known
         }
@@ -64,7 +64,7 @@ public final class PapyrusScriptIndex {
     }
 
     /// Whether any state declares a native function spelled `name`.
-    public func declaresNative(_ name: String) -> Bool {
+    func declaresNative(_ name: String) -> Bool {
         if let known = nativeBySpelling[name] {
             return known
         }
@@ -74,13 +74,13 @@ public final class PapyrusScriptIndex {
     }
 
     /// The handler of the first property named `name`, as `PexProperty` holds it.
-    public func handler(ofProperty name: String, writing: Bool) -> PapyrusCompiledFunction? {
+    func handler(ofProperty name: String, writing: Bool) -> PapyrusCompiledFunction? {
         (writing ? writeHandlers : readHandlers)[PapyrusName.key(name)]
     }
 
     /// The first variable named `name` in this script, then in each parent. `generation`
     /// is the library's, because a parent loaded later can change the answer.
-    public func declaredVariable(
+    func declaredVariable(
         _ name: String,
         generation: Int,
         parents: () throws(PapyrusFault) -> [PexObject]

@@ -4,13 +4,13 @@
 
 import Foundation
 
-nonisolated public struct ESSExportCategory: Equatable, Sendable {
-    public let name: String
-    public internal(set) var written = 0
+nonisolated struct ESSExportCategory: Equatable, Sendable {
+    let name: String
+    var written = 0
     /// Left out, by reason.
-    public internal(set) var dropped: [String: Int] = [:]
+    var dropped: [String: Int] = [:]
 
-    public var droppedCount: Int {
+    var droppedCount: Int {
         dropped.values.reduce(0, +)
     }
 
@@ -21,9 +21,9 @@ nonisolated public struct ESSExportCategory: Equatable, Sendable {
 }
 
 nonisolated public struct ESSExportReport: Equatable, Sendable {
-    public internal(set) var categories: [ESSExportCategory]
+    var categories: [ESSExportCategory]
 
-    public static let categoryNames = [
+    static let categoryNames = [
         "globals", "clock", "player", "references", "inventories", "quests", "aliases",
         "dialogue", "scripts", "created forms", "other state"
     ]
@@ -32,7 +32,7 @@ nonisolated public struct ESSExportReport: Equatable, Sendable {
         categories = Self.categoryNames.map { ESSExportCategory(name: $0) }
     }
 
-    public func category(_ name: String) -> ESSExportCategory? {
+    func category(_ name: String) -> ESSExportCategory? {
         categories.first { $0.name == name }
     }
 

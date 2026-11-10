@@ -27,7 +27,7 @@ public final class ArcheryRuntime {
     public private(set) var lastDrawFraction: Float = 1
     /// Draws the engine asked for, and shots the graph actually loosed. The two
     /// differ by every draw that was cancelled.
-    public private(set) var drawRequestCount = 0
+    private(set) var drawRequestCount = 0
 
     /// The bow the player is holding, as a swing profile — the same value melee
     /// resolves, because a bow is a WEAP and its `damage` and `speed` are the
@@ -50,7 +50,7 @@ public final class ArcheryRuntime {
     private var wasDrawing = false
     private var wasPressed = false
 
-    public init(
+    init(
         settings: ArcherySettings,
         projectiles: ProjectileRuntime,
         world: (any ProjectileWorld)? = nil
@@ -87,7 +87,7 @@ public final class ArcheryRuntime {
 
     /// Abandons the draw in progress, raising `bowReset`. What a sheath or a
     /// stagger calls, and what the readout's cancel control calls.
-    public func cancelDraw() {
+    func cancelDraw() {
         guard state.phase.isDrawing || wasDrawing else { return }
         wasDrawing = false
         heldSeconds = 0
@@ -152,7 +152,7 @@ public final class ArcheryRuntime {
     /// Forgets the draw and everything in the air. Called when the bridge
     /// resets, so a teleport cannot land an arrow fired in the cell that was
     /// just left.
-    public func reset() {
+    func reset() {
         state.reset()
         heldSeconds = 0
         lastHeldSeconds = 0

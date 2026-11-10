@@ -7,7 +7,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyGameData
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 public import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
@@ -251,7 +251,7 @@ extension PapyrusNativeFunctions {
 
     /// Argument `index` as a casting source, or nil when it is missing or names
     /// no documented source.
-    public static func castingSource(
+    static func castingSource(
         _ call: PapyrusNativeCall,
         at index: Int
     ) -> CastingSource? {
@@ -270,7 +270,7 @@ extension PapyrusNativeFunctions {
     /// The single failure a spell native returns when the session runs no
     /// spellbook — a synthetic scene with no SPEL index, where inventing an
     /// empty spellbook would read as an actor who has learned nothing.
-    public static func needsSpellbook(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
+    static func needsSpellbook(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         failure(
             call,
             "\(call.functionName) needs a session with a spellbook runtime"

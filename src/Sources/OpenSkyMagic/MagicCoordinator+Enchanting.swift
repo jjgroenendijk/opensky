@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 public import OpenSkyMagicInterface
@@ -14,7 +14,7 @@ import OpenSkyProgressionInterface
 import OpenSkyWorldState
 
 /// Why the enchanter refused.
-nonisolated public enum EnchantingRefusal: Error, Equatable, Sendable {
+nonisolated enum EnchantingRefusal: Error, Equatable, Sendable {
     case notCarried
     case notEnchanted
     /// A staff, or an item with `MagicDisallowEnchanting`.
@@ -32,7 +32,7 @@ nonisolated public enum EnchantingRefusal: Error, Equatable, Sendable {
     case emptyGem
 }
 
-nonisolated public enum EnchantingOutcome: Equatable, Sendable {
+nonisolated enum EnchantingOutcome: Equatable, Sendable {
     case idle
     case learned(item: String, base: String)
     case enchanted(item: String, name: String, charge: EnchantmentCharge)
@@ -41,12 +41,12 @@ nonisolated public enum EnchantingOutcome: Equatable, Sendable {
 }
 
 extension MagicCoordinator {
-    public var enchantingState: EnchantingState {
+    var enchantingState: EnchantingState {
         effects?.store.component(EnchantingState.self, for: .player) ?? EnchantingState()
     }
 
     /// Entry point 80: Extra Effect sets 2.
-    public var appliedEnchantmentsAllowed: Int {
+    var appliedEnchantmentsAllowed: Int {
         let allowed = world.perkModified(
             1, at: .modAppliedEnchantmentsAllowed, on: .player,
             subjects: PerkEvaluationSubjects(owner: .player), seams: ConditionContext()
@@ -56,7 +56,7 @@ extension MagicCoordinator {
 
     /// Destroys one `item` and teaches the root of its enchantment's base chain.
     @discardableResult
-    public func disenchant(_ item: FormID) -> EnchantingOutcome {
+    func disenchant(_ item: FormID) -> EnchantingOutcome {
         guard let store = enchantmentStore, let inventory = world.inventory else {
             return noteEnchanting(.unavailable)
         }
@@ -84,7 +84,7 @@ extension MagicCoordinator {
 
     /// Puts `bases` on the best plain copy of `item`, spending `gem`.
     @discardableResult
-    public func enchant(
+    func enchant(
         _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, name: String? = nil
     ) -> EnchantingOutcome {
         guard let inventory = world.inventory else { return noteEnchanting(.unavailable) }
@@ -114,7 +114,7 @@ extension MagicCoordinator {
     }
 
     /// What enchanting `item` with `bases` and `gem` would make, or why it cannot.
-    public func preview(
+    func preview(
         _ item: FormID, with bases: [ReferenceKey], gem: SoulGemCandidate, name: String? = nil
     ) -> Result<MadeEnchantment, EnchantingRefusal> {
         guard let store = enchantmentStore, let inventory = world.inventory, inventory.count(

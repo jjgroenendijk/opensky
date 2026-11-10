@@ -3,7 +3,7 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
@@ -17,7 +17,7 @@ nonisolated extension RecordTextDump {
         public let sourcePlugin: String
     }
 
-    public static func referenceRecordSummary(
+    static func referenceRecordSummary(
         record: ESMRecord,
         localized: Bool,
         keywordContext: KeywordContext?,

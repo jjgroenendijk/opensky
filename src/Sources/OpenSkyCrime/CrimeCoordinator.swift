@@ -14,13 +14,13 @@ import simd
 
 /// What the readout has selected. A nil selection falls back to the first
 /// option the snapshot offers, which is what the popups show.
-public struct CrimeFactionPanelState {
-    public var bountyFaction: ReferenceKey?
-    public var membershipFaction: ReferenceKey?
-    public var vendorOverride: ReferenceKey?
+struct CrimeFactionPanelState {
+    var bountyFaction: ReferenceKey?
+    var membershipFaction: ReferenceKey?
+    var vendorOverride: ReferenceKey?
     /// The actor the membership and vendor controls act on; nil is the player.
-    public var subject: ReferenceKey?
-    public var lastAction = CrimeFactionActionOutcome.idle
+    var subject: ReferenceKey?
+    var lastAction = CrimeFactionActionOutcome.idle
     /// Built once per load order.
     var options: CrimeFactionOptions?
 }
@@ -89,7 +89,7 @@ public final class CrimeCoordinator {
     /// Blows between actors other than the player: who struck whom first.
     var actorFirstStrikes: Set<ActorStrike> = []
     /// Per crime faction, the actors whose guards fight them.
-    public internal(set) var actorCriminals: [ReferenceKey: Set<ReferenceKey>] = [:]
+    var actorCriminals: [ReferenceKey: Set<ReferenceKey>] = [:]
     /// The player stands in a cell whose owner they may not use.
     public internal(set) var isPlayerTrespassing = false {
         didSet { conditionRevision &+= 1 }
@@ -100,7 +100,7 @@ public final class CrimeCoordinator {
         didSet { conditionRevision &+= 1 }
     }
 
-    public internal(set) var guards = GuardResponseState() {
+    var guards = GuardResponseState() {
         didSet { conditionRevision &+= 1 }
     }
 
@@ -124,7 +124,7 @@ public final class CrimeCoordinator {
     /// The crime names the bounty readout uses.
     public let crimeTexts: CrimeTexts
     public internal(set) var lastGuard = GuardNote.idle
-    public var panel = CrimeFactionPanelState()
+    var panel = CrimeFactionPanelState()
 
     let world: any CrimeSessionWorld
     /// What crime asked of the app. The guard step returns and empties it.
@@ -177,7 +177,7 @@ public final class CrimeCoordinator {
 
     // MARK: - Reading
 
-    public func crimeGold(of faction: ReferenceKey) -> Int32 {
+    func crimeGold(of faction: ReferenceKey) -> Int32 {
         reporter?.runtime.crimeGold(of: faction) ?? 0
     }
 

@@ -10,16 +10,16 @@ import OpenSkyGameData
 public import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
-nonisolated public enum SlowTimeRule {
+nonisolated enum SlowTimeRule {
     /// The player's share of normal speed while time is slow, before entry point 70.
-    public static let playerShare: Float = 0.7
+    static let playerShare: Float = 0.7
     /// Ours: a magnitude of 0 would stop the world and every clock that follows it.
-    public static let minimumWorldShare: Float = 0.01
+    static let minimumWorldShare: Float = 0.01
 
     /// Each running effect, as its world share and the player's share. UESP "Skyrim:Block":
     /// Quick Reflexes "appears to stack with" Slow Time, so the shares multiply. The player
     /// never runs slower than the world.
-    public static func scales(_ effects: [(world: Float, player: Float)]) -> MagicTimeScales {
+    static func scales(_ effects: [(world: Float, player: Float)]) -> MagicTimeScales {
         var scales = MagicTimeScales.normal
         for effect in effects {
             let world = effect.world.isFinite ? min(max(effect.world, minimumWorldShare), 1) : 1

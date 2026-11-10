@@ -5,7 +5,7 @@
 // default is substituted. See docs/engine/crime.md.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 
 /// Resolves the responsible crime faction for a place.
@@ -21,7 +21,7 @@ nonisolated public struct CrimeFactionResolver: Sendable {
     ///
     /// `pluginName` is the plugin the cell's `XLCN` is spelled against, which
     /// is the plugin the cell record was read from.
-    public func crimeFaction(in cell: Cell, fromPlugin pluginName: String) -> ResolvedFaction? {
+    func crimeFaction(in cell: Cell, fromPlugin pluginName: String) -> ResolvedFaction? {
         guard
             let location = locations.location(containing: cell, fromPlugin: pluginName)
         else { return nil }
@@ -39,7 +39,7 @@ nonisolated public struct CrimeFactionResolver: Sendable {
     }
 
     /// The same answer as the runtime identity the crime ledger is keyed by.
-    public func crimeFactionKey(in cell: Cell, fromPlugin pluginName: String) -> ReferenceKey? {
+    func crimeFactionKey(in cell: Cell, fromPlugin pluginName: String) -> ReferenceKey? {
         crimeFaction(in: cell, fromPlugin: pluginName).map { ReferenceKey(resolved: $0.id) }
     }
 

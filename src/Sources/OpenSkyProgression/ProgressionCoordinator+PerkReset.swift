@@ -4,15 +4,15 @@
 // skill. See docs/engine/character-leveling.md.
 
 import OpenSkyActorsInterface
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 public import OpenSkyProgressionInterface
 
 nonisolated public struct PerkTreeResetReport: Equatable, Sendable {
     /// One per rank, so a perk with three ranks refunds three points.
     public let refundedPoints: Int
-    public let perkPoints: Int
-    public let legendaryCount: Int
+    let perkPoints: Int
+    let legendaryCount: Int
 }
 
 public typealias PerkTreeResetResult = Result<PerkTreeResetReport, PerkTreeResetRefusal>
@@ -51,7 +51,7 @@ extension ProgressionCoordinator {
 
     /// The Dragonborn altar: one dragon soul clears one tree and refunds its points.
     @discardableResult
-    public func resetPerkTree(_ index: Int32) -> PerkTreeResetResult {
+    func resetPerkTree(_ index: Int32) -> PerkTreeResetResult {
         guard ActorValueIdentity.isSkill(index: index) else { return .failure(.notASkill) }
         guard let leveling, perks.runtime != nil else { return .failure(.noProgression) }
         guard !ownedTreePerks(ofSkill: index).isEmpty else { return .failure(.noPerksInTree) }
@@ -66,7 +66,7 @@ extension ProgressionCoordinator {
     }
 
     /// Every owned rank of every box in the tree, rank by rank.
-    public func ownedTreePerks(ofSkill index: Int32) -> [ReferenceKey] {
+    func ownedTreePerks(ofSkill index: Int32) -> [ReferenceKey] {
         guard let runtime = perks.runtime else { return [] }
         let owned = Set(runtime.state(of: .player).owned)
         return perkKeys(forSkill: index).flatMap { head -> [ReferenceKey] in

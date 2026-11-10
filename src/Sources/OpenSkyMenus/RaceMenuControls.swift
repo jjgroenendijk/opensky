@@ -22,10 +22,10 @@ nonisolated public enum RaceMenuRow: Equatable, Hashable, Sendable {
 }
 
 /// The movie's category tabs. Each value is the filter flag its controls carry.
-nonisolated public enum RaceMenuCategory: Int, CaseIterable, Sendable {
+nonisolated enum RaceMenuCategory: Int, CaseIterable, Sendable {
     case race = 1, body = 2, head = 4, face = 8, eyes = 16, brow = 32, mouth = 64
 
-    public var labelKey: String {
+    var labelKey: String {
         switch self {
         case .race: "sRSMRace"
         case .body: "sRSMBody"
@@ -38,11 +38,11 @@ nonisolated public enum RaceMenuCategory: Int, CaseIterable, Sendable {
     }
 }
 
-nonisolated public struct RaceMenuControl: Equatable, Sendable {
-    public let row: RaceMenuRow
-    public let category: RaceMenuCategory
+nonisolated struct RaceMenuControl: Equatable, Sendable {
+    let row: RaceMenuRow
+    let category: RaceMenuCategory
     /// The `sRSM` game setting that names it.
-    public let labelKey: String
+    let labelKey: String
 }
 
 nonisolated extension RaceMenuModel {
@@ -52,7 +52,7 @@ nonisolated extension RaceMenuModel {
     /// Types whose masks the player picks one of, with a colour for the pick.
     static let choiceTintTypes: Set<UInt16> = [paintType, dirtType]
 
-    public static let layout: [RaceMenuControl] = race + body + head + face + eyes + brow
+    static let layout: [RaceMenuControl] = race + body + head + face + eyes + brow
         + mouth
 
     private static func control(
@@ -109,7 +109,7 @@ nonisolated extension RaceMenuModel {
         control(.slider(13), .mouth, "MouthForward"), control(.tintColor(1), .mouth, "LipColor")
     ]
 
-    public static func control(for row: RaceMenuRow) -> RaceMenuControl? {
+    static func control(for row: RaceMenuRow) -> RaceMenuControl? {
         layout.first { $0.row == row }
     }
 }

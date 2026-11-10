@@ -1,21 +1,21 @@
 // PRKS chunk: perk lists, merged into the `RDLT` deltas by `ReferenceKey`.
 // A perk the load order lost is kept, so removing a plugin keeps progress.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyProgressionInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's saved perks, before they are merged back into the delta.
-nonisolated public struct SavePerkEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: PerkState
+nonisolated struct SavePerkEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: PerkState
 }
 
-nonisolated public enum OpenSkySavePerkDecoder: Sendable {
-    public static func decodePerks(_ payload: Data) throws -> [SavePerkEntry] {
+nonisolated enum OpenSkySavePerkDecoder: Sendable {
+    static func decodePerks(_ payload: Data) throws -> [SavePerkEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PRKS entry count")
         try OpenSkySaveDecoder.validate(
@@ -54,11 +54,11 @@ nonisolated public enum OpenSkySavePerkDecoder: Sendable {
 }
 
 nonisolated extension SavePerkEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.isEmpty ? nil : state.erased
     }
 }

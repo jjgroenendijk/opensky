@@ -5,7 +5,7 @@ import Foundation
 
 nonisolated extension MagicArchetypeRule {
     /// A few words on what the rule does to the actor or the world.
-    public var summary: String {
+    var summary: String {
         switch self {
         case .actorValues: "changes actor values"
         case .heldFlag: "holds a flag actor value at 1"

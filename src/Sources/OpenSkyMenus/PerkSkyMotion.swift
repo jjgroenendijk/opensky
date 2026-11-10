@@ -3,24 +3,24 @@
 
 import Foundation
 
-nonisolated public struct PerkSkyMotion: Equatable, Sendable {
+nonisolated struct PerkSkyMotion: Equatable, Sendable {
     /// Seconds for the move between the ring and a tree.
-    public static let treeSeconds: Float = 0.5
+    static let treeSeconds: Float = 0.5
 
-    public private(set) var yawDegrees: Float
-    public private(set) var treeBlend: Float = 0
+    private(set) var yawDegrees: Float
+    private(set) var treeBlend: Float = 0
     /// 0 to 1 through the dome's `CameraIntro`; the movie's `MoveCamera` sets it.
-    public var introAlpha: Float = 0
+    var introAlpha: Float = 0
     private var turnStarted: Double?
     private var lastTick: Double?
 
-    public init(slot: Int) {
+    init(slot: Int) {
         yawDegrees = Float(slot) * PerkSkyLayout.slotDegrees
     }
 
     /// Steps toward `slot` and the ring or tree view. The turn speeds up to
     /// `fStatsRotationSpeedMax` over `fStatsRotationRampTime`, and takes the short way.
-    public mutating func update(
+    mutating func update(
         now: Double, ring: (slot: Int, slotCount: Int), inTree: Bool, settings: PerkSkySettings
     ) {
         let (slot, slotCount) = ring

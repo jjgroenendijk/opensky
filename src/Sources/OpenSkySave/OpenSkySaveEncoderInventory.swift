@@ -2,7 +2,7 @@
 // `writeChunk`, `writeKey` and `writeCell` are internal on the encoder for files like this.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyInventoryInterface
 public import OpenSkyWorldState
@@ -16,7 +16,7 @@ nonisolated extension OpenSkySaveEncoder {
 
     /// The `INVN` chunk: every entry with an inventory, in key order. Each repeats its key
     /// and cell, because an inventory-only owner has no `RDLT` entry.
-    public static func writeInventories(
+    static func writeInventories(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

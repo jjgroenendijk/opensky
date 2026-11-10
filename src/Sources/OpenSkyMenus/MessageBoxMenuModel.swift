@@ -28,7 +28,7 @@ nonisolated public struct MessageBoxMenuModel: Equatable, Sendable {
 
     /// Queues a box. Returns true when it opened now, so the caller pauses the world.
     @discardableResult
-    public mutating func enqueue(_ request: MessageBoxRequest) -> Bool {
+    mutating func enqueue(_ request: MessageBoxRequest) -> Bool {
         queue.append(request)
         if queue.count == 1 {
             selection = 0

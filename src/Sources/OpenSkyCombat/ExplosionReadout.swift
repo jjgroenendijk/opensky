@@ -2,14 +2,14 @@
 // unit test can pin it.
 
 import Foundation
-public import OpenSkyCombatInterface
-public import OpenSkyPhysics
+import OpenSkyCombatInterface
+import OpenSkyPhysics
 
-nonisolated public enum ExplosionReadout {
+nonisolated enum ExplosionReadout {
     /// Rows shown per list; the rest are counted.
-    public static let listedRows = 6
+    static let listedRows = 6
 
-    public static func text(for snapshot: ExplosionControlSnapshot) -> String {
+    static func text(for snapshot: ExplosionControlSnapshot) -> String {
         var lines = [
             "Detonations: \(snapshot.detonationTotal) · debris \(snapshot.debrisCount)"
                 + " · skipped placements \(snapshot.skippedPlacements)"
@@ -25,7 +25,7 @@ nonisolated public enum ExplosionReadout {
         return lines.joined(separator: "\n")
     }
 
-    public static func line(_ report: ExplosionReport) -> String {
+    static func line(_ report: ExplosionReport) -> String {
         let damage = report.damaged.values.reduce(0, +)
         let modifier = report.imageSpaceStrength.map { ", screen \(number($0))" } ?? ""
         let hazard = report.hazardPlaced ? ", hazard placed" : ""
@@ -34,7 +34,7 @@ nonisolated public enum ExplosionReadout {
             + " \(report.soundsPlayed) sounds\(modifier)\(hazard)"
     }
 
-    public static func line(_ row: TrapHazardRow) -> String {
+    static func line(_ row: TrapHazardRow) -> String {
         let lifetime = row.remainingLifetime.map { "\(number($0)) s left" } ?? "stays with cell"
         let position = "at \(Int(row.position.x)) \(Int(row.position.y)) \(Int(row.position.z))"
         return "\(row.name) \(position), \(lifetime), \(row.tickCount) ticks"

@@ -4,13 +4,13 @@
 
 import Foundation
 import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// Registers, or with a nil `mode` unregisters, the instance behind `handle`. False
     /// when `handle` names no script instance.
     @discardableResult
-    public func registerLineOfSight(
+    func registerLineOfSight(
         handle: PapyrusObjectHandle, pair: LineOfSightWatch.Pair, mode: LineOfSightWatch.Mode?
     ) -> Bool {
         guard let key = keysByHandle[handle] else { return false }

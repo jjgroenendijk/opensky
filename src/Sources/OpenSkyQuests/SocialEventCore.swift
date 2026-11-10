@@ -30,12 +30,12 @@ nonisolated public struct SocialActor: Equatable, Sendable {
     }
 
     /// `PKDT` interrupt flag 0x02: the package allows random conversations.
-    public var allowsRandomConversation: Bool {
+    var allowsRandomConversation: Bool {
         (interruptFlags ?? 0) & 0x02 != 0
     }
 
     /// `PKDT` interrupt flag 0x08: greet corpse behaviour.
-    public var greetsCorpses: Bool {
+    var greetsCorpses: Bool {
         (interruptFlags ?? 0) & 0x08 != 0
     }
 

@@ -5,6 +5,7 @@
 import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
@@ -154,5 +155,23 @@ struct RuneTests {
         let aim = SpellAim(target: nil, position: SIMD3(300, 0, 0), candidates: [])
         coordinator.land(Self.payload(), at: aim)
         #expect(coordinator.runes.isEmpty)
+    }
+
+    @Test func runeAndSummonSettingsReadTheirGameSettings() throws {
+        let file = try GameSettingFixture.plugin(settings: [
+            "iMaxPlayerRunes": .integer(3),
+            "fMinesDelayMin": .float(0.5),
+            "fMineExteriorRadiusMult": .float(2),
+            "iProjectileMineShooterCanTrigger": .integer(1),
+            "fSummonedCreatureFadeOutSeconds": .float(4)
+        ])
+        let store = GameSettingStore(plugins: [("Runes.esp", file)])
+        let runes = RuneSettings.resolve(store: store)
+        #expect(runes.maximumPlayerRunes == 3)
+        #expect(runes.armSeconds == 0.5)
+        #expect(runes.exteriorProximityMult == 2)
+        #expect(runes.casterCanTrigger == 1)
+        #expect(SummonSettings.resolve(store: store).fadeOutSeconds == 4)
+        #expect(RuneSettings.resolve(store: GameSettingStore(plugins: [])) == .vanilla)
     }
 }

@@ -24,14 +24,14 @@ extension CasterRuntime {
         return dual ? single * max(0, costSettings.dualCastTimeMult) : single
     }
 
-    public static let canDualCastEntryPoint = PerkEntryPoint.canDualCastSpell
+    static let canDualCastEntryPoint = PerkEntryPoint.canDualCastSpell
     /// How long after the first hand the second may begin and still join it.
     /// OpenSky's choice: no record states a window.
-    public static let dualCastWindowSeconds: Float = 0.25
+    static let dualCastWindowSeconds: Float = 0.25
 
     /// Whether `caster` may dual cast `spell`: a spell rather than a power, and a
     /// perk whose `Can Dual Cast Spell` entry passes for it.
-    public func canDualCast(_ spell: ResolvedSpell, caster: ActorValueHolder) -> Bool {
+    func canDualCast(_ spell: ResolvedSpell, caster: ActorValueHolder) -> Bool {
         guard
             spell.spellType == .spell, spell.data?.castingType != .constantEffect,
             var perks
@@ -84,7 +84,7 @@ extension CasterRuntime {
     }
 
     /// The cost of one cast or one second of `spell`, dual or single.
-    public func castCost(of spell: ResolvedSpell, dual: Bool, caster: ActorValueHolder) -> Float {
+    func castCost(of spell: ResolvedSpell, dual: Bool, caster: ActorValueHolder) -> Float {
         let single = cost(of: spell, caster: caster)
         return dual ? single * max(0, costSettings.dualCastCostMult) : single
     }

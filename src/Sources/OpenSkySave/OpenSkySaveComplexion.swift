@@ -2,16 +2,16 @@
 // A sibling of PIDN, whose entries have no length, so appending a field there would
 // break older readers. Layout: docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyActorsInterface
+import Foundation
+import OpenSkyActorsInterface
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveFormat.ChunkTag {
     /// The complexion texture set (`FTST`) per identity holder.
-    public static let playerComplexion = "PCPX"
+    static let playerComplexion = "PCPX"
 }
 
 nonisolated extension OpenSkySaveFormat {
@@ -65,7 +65,7 @@ nonisolated extension OpenSkySaveDecoder {
 }
 
 nonisolated extension OpenSkySaveStoryDecoder {
-    public static func decodeComplexions(_ payload: Data) throws -> [ReferenceKey: FormID] {
+    static func decodeComplexions(_ payload: Data) throws -> [ReferenceKey: FormID] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("PCPX entry count")
         try OpenSkySaveDecoder.validate(
@@ -81,7 +81,7 @@ nonisolated extension OpenSkySaveStoryDecoder {
     }
 
     /// Lays each complexion onto its `PIDN` identity; one without an identity is dropped.
-    public static func mergeComplexions(
+    static func mergeComplexions(
         _ complexions: [ReferenceKey: FormID],
         into identities: [SaveStoryEntry<PlayerIdentityState>]
     ) -> [SaveStoryEntry<PlayerIdentityState>] {

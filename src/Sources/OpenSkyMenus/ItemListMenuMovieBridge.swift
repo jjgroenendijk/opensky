@@ -3,7 +3,7 @@
 // `ItemSelect` acts on the row its list has selected. See docs/engine/inventory-menu.md.
 
 import Foundation
-public import OpenSkyFormatsSWF
+import OpenSkyFormatsSWF
 
 /// A call a list menu's movie makes.
 nonisolated public enum ItemListMovieEvent: Equatable, Sendable {
@@ -13,29 +13,29 @@ nonisolated public enum ItemListMovieEvent: Equatable, Sendable {
 }
 
 /// Where a list movie keeps its category list and its item list.
-nonisolated public struct ItemListMovieLayout: Equatable, Sendable {
-    public let categoryListPath: String
-    public let itemListPath: String
+nonisolated struct ItemListMovieLayout: Equatable, Sendable {
+    let categoryListPath: String
+    let itemListPath: String
 
-    public init(listsPath: String) {
+    init(listsPath: String) {
         categoryListPath = "\(listsPath)/CategoriesListHolder/List_mc"
         itemListPath = "\(listsPath)/ItemsListHolder/List_mc"
     }
 
-    public static let inventory = ItemListMovieLayout(listsPath: InventoryMenuMovieBridge.listsPath)
+    static let inventory = ItemListMovieLayout(listsPath: InventoryMenuMovieBridge.listsPath)
 }
 
 nonisolated public enum ItemListMenuMovieBridge: Sendable {
     public static let magicMoviePath = "interface\\magicmenu.swf"
     public static let giftMoviePath = "interface\\giftmenu.swf"
     /// Calls the two movies make that change nothing in OpenSky.
-    public static let sinkHostFunctions = [
+    static let sinkHostFunctions = [
         "ZoomItemModel", "StartMouseRotation", "StopMouseRotation", "SaveIndices",
         "QuantitySliderOpen", "DisabledItemSelect", "ShowTweenMenu", "CloseTweenMenu",
         "ShowShoutFail"
     ]
 
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime,
         onEvent: @escaping @MainActor @Sendable (ItemListMovieEvent) -> Void
     ) {
@@ -53,20 +53,20 @@ nonisolated public enum ItemListMenuMovieBridge: Sendable {
         }
     }
 
-    public static func activate(runtime: SWFMovieRuntime) {
+    static func activate(runtime: SWFMovieRuntime) {
         runtime.callMovie("SetPlatform", arguments: [.number(SystemMenuMovieBridge.pcPlatform)])
         runtime.callMovie("InitExtensions")
         InventoryMenuMovieBridge.focusItemList(runtime: runtime)
     }
 
     /// The row the movie's item list has selected, or nil before it has one.
-    public static func selectedRow(
+    static func selectedRow(
         layout: ItemListMovieLayout = .inventory, runtime: SWFMovieRuntime
     ) -> Int? {
         InventoryMenuMovieBridge.selectedIndex(runtime: runtime, atPath: layout.itemListPath)
     }
 
-    public static func publish(
+    static func publish(
         _ model: ItemListMenuModel,
         layout: ItemListMovieLayout = .inventory,
         runtime: SWFMovieRuntime

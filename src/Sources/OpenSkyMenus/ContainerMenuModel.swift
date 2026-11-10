@@ -113,7 +113,7 @@ nonisolated public struct ContainerMenuModel: Equatable, Sendable {
     /// Whether the price of the selected row can actually be paid, so the menu
     /// can disable a row rather than offer a transaction that will be refused.
     /// True in container mode, where nothing is paid for.
-    public var canAffordSelection: Bool {
+    var canAffordSelection: Bool {
         guard mode == .barter, let entry = selectedEntry, let price = price(for: entry) else {
             return true
         }

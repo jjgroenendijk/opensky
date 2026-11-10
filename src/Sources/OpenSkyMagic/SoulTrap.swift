@@ -40,12 +40,6 @@ nonisolated public struct SoulGemCandidate: Equatable, Sendable {
     public let gem: SoulGem
     public let copy: ItemCopy
 
-    public init(item: FormID, gem: SoulGem, copy: ItemCopy) {
-        self.item = item
-        self.gem = gem
-        self.copy = copy
-    }
-
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.item == rhs.item && lhs.copy == rhs.copy
     }
@@ -76,7 +70,7 @@ nonisolated public enum SoulTrap {
     }
 
     /// The charge a soul gives, from UESP "Skyrim:Souls": 250 petty up to 3000 grand.
-    public static func charge(of soul: SoulLevel) -> Float {
+    static func charge(of soul: SoulLevel) -> Float {
         switch soul {
         case .petty: 250
         case .lesser: 500

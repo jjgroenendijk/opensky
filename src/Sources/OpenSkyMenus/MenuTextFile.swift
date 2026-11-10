@@ -3,12 +3,12 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyGameData
+import OpenSkyGameData
 
-nonisolated public enum MenuTextFile {
+nonisolated enum MenuTextFile {
     /// The file's text, or nil when the install lacks it.
     @concurrent
-    public static func load(_ path: String, from files: any GameFileSource) async -> String? {
+    static func load(_ path: String, from files: any GameFileSource) async -> String? {
         guard let data = attempt({ try files.contents(forPath: path) }) else { return nil }
         return GameText.decode(data)
     }

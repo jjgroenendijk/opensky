@@ -19,33 +19,33 @@ nonisolated public enum BenchmarkSceneStatus: String, Codable, Sendable {
 nonisolated public struct BenchmarkSceneResult: Codable, Equatable, Sendable {
     public let id: String
     public let title: String
-    public let group: BenchmarkSceneGroup
-    public let shot: String
-    public let place: String
+    let group: BenchmarkSceneGroup
+    let shot: String
+    let place: String
     public var status: BenchmarkSceneStatus
-    public var note: String?
-    public var hour: Float?
-    public var weather: String?
+    var note: String?
+    var hour: Float?
+    var weather: String?
     /// From the teleport to the end of streaming.
-    public var arrivalMS: Double?
+    var arrivalMS: Double?
     /// The arrival's cell builds split into asset phases; nil when no recorder was attached.
-    public var arrivalPhases: LoadPhaseTimes?
+    var arrivalPhases: LoadPhaseTimes?
     public var frameTime: BenchmarkDistribution?
-    public var gpuTime: BenchmarkDistribution?
+    var gpuTime: BenchmarkDistribution?
     /// GPU time per render pass, keyed by `GPUPass`.
-    public var passes: [String: BenchmarkSpread] = [:]
+    var passes: [String: BenchmarkSpread] = [:]
     /// CPU time per subsystem, keyed by `BenchmarkCPUProbe`.
-    public var cpu: [String: BenchmarkSpread] = [:]
-    public var averageDrawCalls: Int?
-    public var averageDrawnInstances: Int?
-    public var gpuMemory: BenchmarkGPUMemory?
+    var cpu: [String: BenchmarkSpread] = [:]
+    var averageDrawCalls: Int?
+    var averageDrawnInstances: Int?
+    var gpuMemory: BenchmarkGPUMemory?
     /// Nil when every frame was encoded and every command buffer finished without error.
-    public var gpuFaults: BenchmarkGPUFaults?
-    public var capturePath: String?
+    var gpuFaults: BenchmarkGPUFaults?
+    var capturePath: String?
     /// The PNGs of the start, middle, and end of the shot, when the run saved them.
-    public var screenshots: [String]?
+    var screenshots: [String]?
 
-    public init(scene: BenchmarkScene, status: BenchmarkSceneStatus, note: String? = nil) {
+    init(scene: BenchmarkScene, status: BenchmarkSceneStatus, note: String? = nil) {
         id = scene.id
         title = scene.title
         group = scene.group
@@ -56,7 +56,7 @@ nonisolated public struct BenchmarkSceneResult: Codable, Equatable, Sendable {
     }
 
     /// The pass with the largest average GPU time.
-    public var slowestPass: (name: String, averageMS: Double)? {
+    var slowestPass: (name: String, averageMS: Double)? {
         passes.max { $0.value.averageMS < $1.value.averageMS }
             .map { (name: $0.key, averageMS: $0.value.averageMS) }
     }
@@ -64,9 +64,9 @@ nonisolated public struct BenchmarkSceneResult: Codable, Equatable, Sendable {
 
 nonisolated public struct BenchmarkTourResult: Codable, Equatable, Sendable {
     /// 2: the tour. 1 was the single-view benchmark this replaced.
-    public static let currentSchemaVersion = 2
+    static let currentSchemaVersion = 2
 
-    public var schemaVersion = Self.currentSchemaVersion
+    var schemaVersion = Self.currentSchemaVersion
     public var startedAt: Date
     public var durationSeconds: Double = 0
     public var machine: BenchmarkMachine
@@ -88,8 +88,8 @@ nonisolated public struct BenchmarkTourResult: Codable, Equatable, Sendable {
     public var scenes: [BenchmarkSceneResult] = []
     /// Every measured frame of every scene.
     public var frameTime: BenchmarkDistribution?
-    public var gpuTime: BenchmarkDistribution?
-    public var gpuMemory: BenchmarkGPUMemory?
+    var gpuTime: BenchmarkDistribution?
+    var gpuMemory: BenchmarkGPUMemory?
     /// True when the user stopped the tour before its last scene.
     public var stopped = false
     /// Writing a PNG takes main-actor time inside the measured frames.

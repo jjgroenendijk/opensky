@@ -94,7 +94,7 @@ public final class WorldItemRuntime {
 
     /// The same holder for an entry already in hand, so a caller that resolved
     /// one (the nearest-actor lookup) does not resolve it twice.
-    public func actorHolder(entry: RuntimeReferenceEntry, base: FormID) -> InventoryHolder {
+    func actorHolder(entry: RuntimeReferenceEntry, base: FormID) -> InventoryHolder {
         InventoryHolder(
             key: entry.key,
             owner: .actor(base: base),

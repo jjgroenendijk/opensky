@@ -4,16 +4,16 @@
 
 import Foundation
 import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 
-nonisolated public enum FlyingMountSpellRules {
+nonisolated enum FlyingMountSpellRules {
     /// Effects that need the ground, a body nearby, or the caster's hands free.
     static let refusedArchetypes: [MagicEffectArchetype] = [
         .summonCreature, .reanimate, .boundWeapon, .spawnHazard, .cloak, .telekinesis,
         .detectLife, .guide, .invisibility
     ]
 
-    public static func allows(_ spell: ResolvedSpell) -> Bool {
+    static func allows(_ spell: ResolvedSpell) -> Bool {
         let delivery = spell.data?.delivery ?? .selfTarget
         if delivery == .targetLocation {
             return false

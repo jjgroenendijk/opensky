@@ -24,7 +24,7 @@ extension CombatCoordinator {
     }
 
     @discardableResult
-    public func requestMeleeAttack() -> MeleeActionOutcome {
+    func requestMeleeAttack() -> MeleeActionOutcome {
         requestMelee(power: false)
     }
 
@@ -55,7 +55,7 @@ extension CombatCoordinator {
     /// Fires through the same `loose` the graph's `arrowRelease` uses, so a
     /// forced shot is the same downstream as a player shot.
     @discardableResult
-    public func spawnDevProjectile() -> ArcheryActionOutcome {
+    func spawnDevProjectile() -> ArcheryActionOutcome {
         guard let archery else { return .unavailable }
         archery.arrow = selectedArrow()
         guard archery.arrow != nil else {
@@ -94,12 +94,12 @@ extension CombatCoordinator {
         appliesCombatGameSettings = store.bool(.combatGameSettings)
     }
 
-    public var usesCombatTemperament: Bool {
+    var usesCombatTemperament: Bool {
         get { usesTemperament }
         set { usesTemperament = newValue }
     }
 
-    public var selectedActorIsHostile: Bool {
+    var selectedActorIsHostile: Bool {
         get {
             guard let loop, let key = world.selectedActor() else { return false }
             return loop.hostility(of: key) == .hostile
@@ -107,7 +107,7 @@ extension CombatCoordinator {
         set { setSelectedActorHostile(newValue) }
     }
 
-    public var isActorCastingEnabled: Bool {
+    var isActorCastingEnabled: Bool {
         get { allowsActorCasting }
         set { setActorCasting(newValue) }
     }

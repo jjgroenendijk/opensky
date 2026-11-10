@@ -4,14 +4,14 @@
 // See docs/engine/detection.md.
 
 import Foundation
-public import OpenSkyPerceptionInterface
+import OpenSkyPerceptionInterface
 import simd
 
-nonisolated public enum PerceptionSight: Sendable {
+nonisolated enum PerceptionSight: Sendable {
     /// Whether `target` lies in the yaw cone of half-angle `cosine` about the
     /// observer's heading. Height is ignored, because no actor here pitches its head.
     /// A target with zero horizontal offset is inside every cone.
-    public static func isInViewCone(
+    static func isInViewCone(
         observer: PerceptionObserver,
         target: PerceptionTarget,
         cosine: Float
@@ -26,7 +26,7 @@ nonisolated public enum PerceptionSight: Sendable {
 
     /// Straight-line distance between a pair, world units. Feet to feet, so a
     /// crouching target is not reported as further away than a standing one.
-    public static func distance(observer: PerceptionObserver, target: PerceptionTarget) -> Float {
+    static func distance(observer: PerceptionObserver, target: PerceptionTarget) -> Float {
         let separation = simd_distance(observer.feet, target.feet)
         return separation.isFinite ? separation : .greatestFiniteMagnitude
     }

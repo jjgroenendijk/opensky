@@ -24,7 +24,7 @@ nonisolated public struct PerkAbilityReport: Equatable, Sendable {
 
     /// Whether anything moved, which is what tells a caller to refresh a
     /// readout.
-    public var didChange: Bool {
+    var didChange: Bool {
         !granted.isEmpty || !revoked.isEmpty
     }
 }

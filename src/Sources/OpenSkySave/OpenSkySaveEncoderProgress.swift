@@ -2,11 +2,11 @@
 // component chunk, so a levelling follower needs no format change.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
     /// The `PLVL` chunk: every snapshot entry carrying character-level
@@ -23,7 +23,7 @@ nonisolated extension OpenSkySaveEncoder {
 
     /// The `PTRN` chunk: training sessions since the last level-up. Written only
     /// when the player trained this level.
-    public static func writeTrainingSessions(
+    static func writeTrainingSessions(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -44,7 +44,7 @@ nonisolated extension OpenSkySaveEncoder {
         }
     }
 
-    public static func writePlayerProgress(
+    static func writePlayerProgress(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -68,7 +68,7 @@ nonisolated extension OpenSkySaveEncoder {
 
     /// The `PLGD` chunk: legendary counts per skill, in actor-value order. Written
     /// only when a skill was made legendary.
-    public static func writeLegendarySkills(
+    static func writeLegendarySkills(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

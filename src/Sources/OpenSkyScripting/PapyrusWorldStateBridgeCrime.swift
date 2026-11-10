@@ -47,14 +47,14 @@ extension PapyrusWorldStateBridge {
     /// (<https://ck.uesp.net/wiki/SendWereWolfTransformation_-_Game>).
     /// - Returns: the bounty accrued, zero when nobody saw, or nil without a crime runtime.
     @discardableResult
-    public func sendWerewolfTransformation() -> Int? {
+    func sendWerewolfTransformation() -> Int? {
         guard let reporter = crimeNatives.crimeReporter?() else { return nil }
         return Int(reporter.reportWerewolfTransformation(by: playerKey)?.gold ?? 0)
     }
 
     /// The thief taking `reference` as a witnessed theft. Zero when the thief may take it.
     @discardableResult
-    public func sendStealAlarm(on reference: ReferenceKey, thief: ReferenceKey) -> Int? {
+    func sendStealAlarm(on reference: ReferenceKey, thief: ReferenceKey) -> Int? {
         guard
             let reporter = crimeNatives.crimeReporter?(),
             let world = reporter.world else { return nil }

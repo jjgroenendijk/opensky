@@ -47,7 +47,7 @@ extension CrimeCoordinator {
     }
 
     /// Hands the player's bounties to the hostility derivation.
-    public func refreshGuardHostility() {
+    func refreshGuardHostility() {
         guard let runtime = reporter?.runtime else { return }
         pendingCommands.append(.applyGuardHostility(CrimeCore.guardHostility(
             ledger: runtime.ledger(), factions: runtime.factions, resisted: guards.resisted,
@@ -57,7 +57,7 @@ extension CrimeCoordinator {
 
     /// Every guard of `faction` turns hostile. The readout's resist control and
     /// a closed arrest conversation both come through here.
-    public func resistArrest(with faction: ReferenceKey) {
+    func resistArrest(with faction: ReferenceKey) {
         if case let .confront(guardKey, _, _) = guards.active {
             world.resumePackage(for: guardKey)
         }

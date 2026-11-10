@@ -101,7 +101,7 @@ nonisolated public enum MessageFormat {
     }
 
     /// True when text still holds a `<...>` tag or a `%` token after building.
-    public static func hasUnresolvedToken(_ text: String) -> Bool {
+    static func hasUnresolvedToken(_ text: String) -> Bool {
         if let open = text.firstIndex(of: "<"), text[open...].contains(">") {
             return true
         }

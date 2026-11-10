@@ -178,7 +178,7 @@ public final class CellStreamer {
     /// Feet position of the previous walk-mode trigger test, so a frame that
     /// moved further than a capsule radius can be swept rather than sampled
     /// only at its destination. Nil outside walk mode.
-    public var lastTriggerFeetPosition: SIMD3<Float>?
+    var lastTriggerFeetPosition: SIMD3<Float>?
     /// Automatic doors whose area held the player's feet last frame. Nil until the first
     /// frame in a scene, so arriving inside a door's area does not send the player back.
     public var automaticDoorOccupancy: Set<FormID>?

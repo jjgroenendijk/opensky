@@ -23,7 +23,7 @@ public final class ExplosionRuntime {
     public private(set) var debris: [DebrisPiece] = []
     public private(set) var detonationTotal = 0
     /// Placed objects that were neither a hazard nor debris.
-    public private(set) var skippedPlacements = 0
+    private(set) var skippedPlacements = 0
     var seed: UInt64 = 0x0E5D_1A57
     /// The push settings and the readout log. Nil pushes nothing.
     public var impulses: ImpulseRuntime?
@@ -99,7 +99,7 @@ public final class ExplosionRuntime {
 
     /// Throws `count` pieces of one DEBR record at `position`, for a forced test.
     @discardableResult
-    public func throwDebris(_ key: ReferenceKey, at position: SIMD3<Float>, force: Float) -> Int {
+    func throwDebris(_ key: ReferenceKey, at position: SIMD3<Float>, force: Float) -> Int {
         guard let record = records.debris.record(key)?.record else { return 0 }
         seed &+= 1
         let pieces = DebrisSelection.launch(record.models, from: position, force: force, seed: seed)

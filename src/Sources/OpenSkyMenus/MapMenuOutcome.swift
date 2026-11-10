@@ -19,7 +19,7 @@ nonisolated public enum MapMenuOutcome: Equatable, Sendable {
     case playerMarkerAnswered(String)
     case playerMarkerNeedsWorldMap
 
-    public func text(refusal: (FastTravelRefusal) -> String) -> String {
+    func text(refusal: (FastTravelRefusal) -> String) -> String {
         switch self {
         case let .markersRevealed(count): "Markers revealed: \(count)"
         case .fogReset: "Fog reset"

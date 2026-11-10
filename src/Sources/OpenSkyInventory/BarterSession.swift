@@ -56,12 +56,6 @@ nonisolated public struct BarterRules {
         }
         return vendor.trades(keywords: keywords(item)) ? nil : .vendorDoesNotTrade(item: item)
     }
-
-    public init(vendor: Vendor?, hour: Float?, keywords: @escaping (FormID) -> Set<ReferenceKey>) {
-        self.vendor = vendor
-        self.hour = hour
-        self.keywords = keywords
-    }
 }
 
 /// What one completed transaction moved.
@@ -115,12 +109,12 @@ public final class BarterSession {
     }
 
     /// What the player would pay for the next one of `item`, the merchant's lowest copy.
-    public func buyPrice(of item: FormID) -> Int32 {
+    func buyPrice(of item: FormID) -> Int32 {
         Int32(clamping: price(of: item, count: 1, from: merchant, buying: true))
     }
 
     /// What the merchant would pay for the next one of `item`, the player's lowest copy.
-    public func sellPrice(of item: FormID) -> Int32 {
+    func sellPrice(of item: FormID) -> Int32 {
         Int32(clamping: price(of: item, count: 1, from: player, buying: false))
     }
 

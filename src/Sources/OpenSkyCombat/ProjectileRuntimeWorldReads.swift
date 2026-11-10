@@ -2,7 +2,7 @@
 // plays, and the eviction of stuck arrows whose cell is gone. A satellite of
 // `ProjectileRuntime`, which is at its body-length cap.
 
-public import OpenSkyCombatInterface
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import simd
@@ -11,7 +11,7 @@ extension ProjectileRuntime {
     /// The IPCT chain for a hit, played where the world can play it.
     /// Internal rather than private so it can live here while `resolve` in the
     /// main file calls it.
-    public func playImpact(of impact: ProjectileImpact, payload: ProjectilePayload) {
+    func playImpact(of impact: ProjectileImpact, payload: ProjectilePayload) {
         guard let world, let impacts else { return }
         // A spell shows its MGEF impact data set. An arrow resolves through the
         // ammunition's chain; AMMO has no INAM, so it carries the unarmed profile's

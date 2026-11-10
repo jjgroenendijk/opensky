@@ -31,7 +31,7 @@ nonisolated public struct CombatTemperament: Equatable, Sendable {
 
     /// Cowardly "will always flee", foolhardy "will never flee". Between them the actor
     /// breaks off below its `breakOffStrength`: 0.375 cautious, 0.15 average, 0.0375 brave.
-    public var breaksOff: Bool {
+    var breaksOff: Bool {
         if confidence >= 4 {
             return false
         }

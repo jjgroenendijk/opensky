@@ -7,7 +7,7 @@ import OpenSkyGameData
 public import OpenSkyProgressionInterface
 
 extension ProgressionCoordinator {
-    public var snapshot: ProgressionControlSnapshot {
+    var snapshot: ProgressionControlSnapshot {
         guard let leveling, let skills else { return .unavailable }
         let state = leveling.state
         // Built first: it fills the count cache that `perkTreeCache` describes.
@@ -50,7 +50,7 @@ extension ProgressionCoordinator {
     }
 
     @discardableResult
-    public func changePerkPoints(by delta: Int) -> ProgressionActionOutcome {
+    func changePerkPoints(by delta: Int) -> ProgressionActionOutcome {
         guard let points = modifyPerkPoints(by: delta) else { return .unavailable }
         return record(.perkPointsChanged(delta: delta, unspent: points))
     }
@@ -58,7 +58,7 @@ extension ProgressionCoordinator {
     // MARK: - Perks
 
     @discardableResult
-    public func spendPointOnSelectedPerk() -> ProgressionActionOutcome {
+    func spendPointOnSelectedPerk() -> ProgressionActionOutcome {
         guard leveling != nil else { return .unavailable }
         guard let key = selectedPerkKey() else { return record(.noPerk) }
         return switch spendPerkPoint(on: key) {
@@ -70,17 +70,17 @@ extension ProgressionCoordinator {
     }
 
     @discardableResult
-    public func grantSelectedPerk() -> ProgressionActionOutcome {
+    func grantSelectedPerk() -> ProgressionActionOutcome {
         changeSelectedPerk(granting: true)
     }
 
     @discardableResult
-    public func revokeSelectedPerk() -> ProgressionActionOutcome {
+    func revokeSelectedPerk() -> ProgressionActionOutcome {
         changeSelectedPerk(granting: false)
     }
 
     /// The readout line of `lastAction`, with the load order's training notices.
-    public var lastActionText: String {
+    var lastActionText: String {
         lastAction.text(training: training)
     }
 

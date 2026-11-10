@@ -4,10 +4,10 @@
 
 import Foundation
 public import OpenSkyActorsInterface
-public import OpenSkyCombatInterface
+import OpenSkyCombatInterface
 
 nonisolated extension MeleeCombatState {
-    public var actionFacts: ActorActionFacts {
+    var actionFacts: ActorActionFacts {
         ActorActionFacts(
             attackState: attackState,
             isBlocking: isBlocking,
@@ -16,7 +16,7 @@ nonisolated extension MeleeCombatState {
     }
 
     /// After contact, an open combo window reads as the next attack.
-    public var attackState: ActorAttackState {
+    var attackState: ActorAttackState {
         isChainWindowOpen && attackPhase == .recovery ? .nextAttack : attackPhase.attackState
     }
 }
@@ -24,7 +24,7 @@ nonisolated extension MeleeCombatState {
 extension MeleeCombatRuntime {
     /// The graph state plus the strike in progress, which `IsPowerAttacking` and
     /// `IsAttackType` read.
-    public var actionFacts: ActorActionFacts {
+    var actionFacts: ActorActionFacts {
         var facts = state.actionFacts
         guard state.attackPhase != .idle else { return facts }
         if strikeKind.isBash {
@@ -43,7 +43,7 @@ extension MeleeCombatRuntime {
 nonisolated extension MeleePowerDirection {
     /// The vanilla attack-type keyword of a power attack this way. A sideways
     /// attack is one keyword for both sides.
-    public var attackTypeKeyword: String {
+    var attackTypeKeyword: String {
         switch self {
         case .inPlace: "PowerAttackTypeStanding"
         case .forward: "PowerAttackTypeForward"
@@ -55,7 +55,7 @@ nonisolated extension MeleePowerDirection {
 
 nonisolated extension MeleeAttackPhase {
     /// Wind-up is the draw of the swing, and recovery its follow-through.
-    public var attackState: ActorAttackState {
+    var attackState: ActorAttackState {
         switch self {
         case .idle: .none
         case .windup: .draw
@@ -68,7 +68,7 @@ nonisolated extension MeleeAttackPhase {
 
 nonisolated extension CombatBehaviorPhase {
     /// A blocking NPC both wants to block and has its guard up.
-    public var actionFacts: ActorActionFacts {
+    var actionFacts: ActorActionFacts {
         let attack: ActorAttackState = switch self {
         case .windup: .draw
         case .contact: .hit
@@ -97,7 +97,7 @@ nonisolated extension CombatBehaviorMachine {
 
 nonisolated extension ArcheryShotPhase {
     /// The wiki has no nock code, so nocking counts as drawing.
-    public var attackState: ActorAttackState {
+    var attackState: ActorAttackState {
         switch self {
         case .idle: .none
         case .nocked, .drawing: .drawingBow

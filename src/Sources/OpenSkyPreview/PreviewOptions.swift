@@ -84,7 +84,7 @@ nonisolated public struct PreviewOptions: Equatable, Sendable {
 }
 
 /// The kinds of preview target, in a fixed order.
-nonisolated public enum PreviewTargetKind: String, CaseIterable, Sendable {
+nonisolated enum PreviewTargetKind: String, CaseIterable, Sendable {
     case record
     case reference
     case mesh
@@ -94,7 +94,7 @@ nonisolated public enum PreviewTargetKind: String, CaseIterable, Sendable {
 nonisolated extension PreviewOptions {
     /// The input fields: one target text of `kind`, and an optional cell text
     /// that names the cell a record, reference, or mesh stands in.
-    public init(kind: PreviewTargetKind, target: String, inCell: String) throws(PreviewError) {
+    init(kind: PreviewTargetKind, target: String, inCell: String) throws(PreviewError) {
         self.init()
         let target = target.trimmingCharacters(in: .whitespaces)
         switch kind {
@@ -109,7 +109,7 @@ nonisolated extension PreviewOptions {
     }
 
     /// An editor ID, or a worldspace and a grid: `Tamriel 8 25`.
-    public mutating func setCell(_ text: String) throws(PreviewError) {
+    mutating func setCell(_ text: String) throws(PreviewError) {
         let words = text.split(separator: " ").map(String.init)
         switch words.count {
         case 0:

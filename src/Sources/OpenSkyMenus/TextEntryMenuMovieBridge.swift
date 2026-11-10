@@ -3,19 +3,19 @@
 // the `nameChange` event. See docs/engine/text-entry.md.
 
 import Foundation
-public import OpenSkyFormatsSWF
+import OpenSkyFormatsSWF
 
-nonisolated public enum TextEntryMenuMovieBridge: Sendable {
-    public static let moviePath = "interface\\textentry.swf"
-    public static let linkage = "TextEntryClip"
-    public static let clipName = "TextEntry_mc"
-    public static let clipPath = "/\(clipName)"
+nonisolated enum TextEntryMenuMovieBridge: Sendable {
+    static let moviePath = "interface\\textentry.swf"
+    static let linkage = "TextEntryClip"
+    static let clipName = "TextEntry_mc"
+    static let clipPath = "/\(clipName)"
     /// `TextField_txt` names this child, a CLIK `TextInput`.
-    public static let inputPath = "\(clipPath)/TextInputInstance"
+    static let inputPath = "\(clipPath)/TextInputInstance"
     static let listenerMethod = "onNameChange"
 
     /// Attaches the field and listens for its result: true for accept, false for cancel.
-    public static func activate(
+    static func activate(
         runtime: SWFMovieRuntime,
         onResult: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
@@ -54,12 +54,12 @@ nonisolated public enum TextEntryMenuMovieBridge: Sendable {
         )
     }
 
-    public static func publish(text: String, runtime: SWFMovieRuntime) {
+    static func publish(text: String, runtime: SWFMovieRuntime) {
         MenuMovieText.assign(.string(text), member: "text", atPath: inputPath, runtime: runtime)
     }
 
     /// The buttons' own handlers, so the movie's rule that an empty name is refused holds.
-    public static func press(accept: Bool, runtime: SWFMovieRuntime) {
+    static func press(accept: Bool, runtime: SWFMovieRuntime) {
         runtime.callMovie(accept ? "onAccept" : "onCancel", atPath: clipPath)
     }
 }

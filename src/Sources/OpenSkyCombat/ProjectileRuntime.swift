@@ -19,7 +19,7 @@ public final class ProjectileRuntime {
     public static let traceLimit = 16
     /// How many arrows may stay stuck in the world at once; the oldest despawns. It
     /// applies to every stuck arrow, because arrow retrieval is not modeled.
-    public static let stuckLimit = CombatTransientLimits.standard.stuckProjectiles
+    static let stuckLimit = CombatTransientLimits.standard.stuckProjectiles
     /// Ceiling on fixed steps run for one frame, so a long stall costs bounded
     /// time. The same bound `PhysicsStep.maximumFrameTime` puts on the
     /// capsule.
@@ -28,12 +28,12 @@ public final class ProjectileRuntime {
     public let settings: ArcherySettings
     /// How an EFIT area becomes a radius in world units. Settable, because the
     /// conversion is uncertain; see `MagicAreaSettings`.
-    public var areaSettings = MagicAreaSettings.documentedDefaults
+    var areaSettings = MagicAreaSettings.documentedDefaults
     /// Stick depth, time in an actor, and recovery; the coordinator sets them.
     public var arrows = ArrowSettings.vanilla
     /// The cone look-ahead distance and timer; the coordinator sets them.
-    public var magicWorld = MagicWorldSettings.vanilla
-    public internal(set) var attached = AttachedArrows()
+    var magicWorld = MagicWorldSettings.vanilla
+    var attached = AttachedArrows()
     /// Projectiles in the air, in id order.
     public private(set) var live: [LiveProjectile] = []
     /// The most recent finished shots, oldest first.
@@ -42,13 +42,13 @@ public final class ProjectileRuntime {
     /// spawned under.
     public private(set) var stuck: [(arrow: StuckProjectile, key: ReferenceKey?)] = []
     public private(set) var firedCount = 0
-    public private(set) var impactCount = 0
+    private(set) var impactCount = 0
 
     /// Resolves the IPCT chain for a landed arrow. Nil in a synthetic session,
     /// and then impacts are silent rather than absent.
     public var impacts: MeleeImpactResolver?
     /// Detonates a PROJ explosion link. Nil in a synthetic session, and then nothing explodes.
-    public var explosions: ExplosionRuntime?
+    var explosions: ExplosionRuntime?
 
     /// `private(set)` rather than `private` so the satellite files can read it.
     /// Weak, because the world owns this runtime.
@@ -56,7 +56,7 @@ public final class ProjectileRuntime {
     private var nextID = 1
     private var accumulatedTime: Float = 0
 
-    public init(settings: ArcherySettings, world: (any ProjectileWorld)? = nil) {
+    init(settings: ArcherySettings, world: (any ProjectileWorld)? = nil) {
         self.settings = settings
         self.world = world
     }
@@ -148,7 +148,7 @@ public final class ProjectileRuntime {
     }
 
     /// Pulls every stuck arrow back out of the world, as a full reset does.
-    public func clearStuckArrows() {
+    func clearStuckArrows() {
         removeStuckArrows(Array(stuck.indices))
     }
 

@@ -5,7 +5,7 @@
 import Foundation
 public import OpenSkyCombatInterface
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
 
@@ -27,7 +27,7 @@ nonisolated public enum ExplosionFalloff {
 
     /// Modifier strength for a viewer `distance` away: 1 at the center, 0 at the
     /// image-space radius. A zero radius plays at full strength, as for a spell hit.
-    public static func imageSpaceStrength(radius: Float, distance: Float) -> Float {
+    static func imageSpaceStrength(radius: Float, distance: Float) -> Float {
         guard radius.isFinite, radius > 0 else { return 1 }
         guard distance.isFinite else { return 0 }
         return min(max(1 - max(distance, 0) / radius, 0), 1)
@@ -36,15 +36,15 @@ nonisolated public enum ExplosionFalloff {
 
 nonisolated public enum DebrisSelection {
     /// Seconds a piece stays before it is removed.
-    public static let lifetime: Float = 6
+    static let lifetime: Float = 6
     /// Units per second squared, roughly 9.8 m/s² at 70 units per meter.
     public static let gravity: Float = 686
     /// Pieces one detonation throws.
-    public static let pieceCount = 6
+    static let pieceCount = 6
 
     /// `count` models drawn by their DEBR percentage, with replacement. The same seed
     /// draws the same models in the same order. A zero total weight draws evenly.
-    public static func pick(_ models: [Debris.Model], count: Int, seed: UInt64) -> [Debris.Model] {
+    static func pick(_ models: [Debris.Model], count: Int, seed: UInt64) -> [Debris.Model] {
         guard !models.isEmpty, count > 0 else { return [] }
         var random = SplitMix64(seed: seed)
         let weights = models.map { Double($0.percentage) }
@@ -64,7 +64,7 @@ nonisolated public enum DebrisSelection {
     }
 
     /// Throws the picked models outward and up from `center`, faster for a larger force.
-    public static func launch(
+    static func launch(
         _ models: [Debris.Model],
         from center: SIMD3<Float>,
         force: Float,

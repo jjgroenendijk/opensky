@@ -3,13 +3,13 @@
 
 import Foundation
 import OpenSkyActorsInterface
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension MagicCoordinator {
     /// Teaches and unlocks every word, the way the Greybeards' words arrive unlocked.
     @discardableResult
-    public func learnShout(_ shout: ReferenceKey) -> ShoutOutcome {
+    func learnShout(_ shout: ReferenceKey) -> ShoutOutcome {
         guard let resolved = shouts[shout] else { return noteShout(.refused(.unknownShout)) }
         world.changeShoutKnowledge(.addShout(shout))
         for word in wordKeys(of: resolved).compactMap(\.self) {
@@ -20,7 +20,7 @@ extension MagicCoordinator {
     }
 
     @discardableResult
-    public func equipShout(_ shout: ReferenceKey) -> ShoutOutcome {
+    func equipShout(_ shout: ReferenceKey) -> ShoutOutcome {
         guard let resolved = shouts[shout] else { return noteShout(.refused(.unknownShout)) }
         world.changeShoutKnowledge(.equip(shout))
         return noteShout(.equipped(shout: resolved.displayName))
@@ -28,7 +28,7 @@ extension MagicCoordinator {
 
     /// Spends one dragon soul on the first learned word that is still locked.
     @discardableResult
-    public func unlockNextWord(of shout: ReferenceKey) -> ShoutOutcome {
+    func unlockNextWord(of shout: ReferenceKey) -> ShoutOutcome {
         guard let resolved = shouts[shout] else { return noteShout(.refused(.unknownShout)) }
         let knowledge = world.shoutKnowledge
         let unlocked = unlockedWordCount(of: resolved)

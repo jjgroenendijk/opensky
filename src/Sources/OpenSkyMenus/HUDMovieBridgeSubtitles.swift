@@ -32,14 +32,14 @@ nonisolated extension HUDMovieBridge {
     /// Clears the subtitle. Named rather than folded into a nil argument
     /// because "the line ended" is a different intent from "here is the line",
     /// and the caller reads better for saying which one it means.
-    public static func clearSubtitleText(runtime: SWFMovieRuntime) {
+    static func clearSubtitleText(runtime: SWFMovieRuntime) {
         setSubtitleText(nil, runtime: runtime)
     }
 
     /// The line the movie's own field currently holds, which is what proves a
     /// publish reached the movie rather than only the engine model. Nil when
     /// the movie has no such field.
-    public static func subtitleText(runtime: SWFMovieRuntime) -> String? {
+    static func subtitleText(runtime: SWFMovieRuntime) -> String? {
         guard let field = runtime.node(atPath: subtitleTextPath, from: runtime.root) else {
             return nil
         }
@@ -47,7 +47,7 @@ nonisolated extension HUDMovieBridge {
     }
 
     /// Whether the holder is currently drawn.
-    public static func isSubtitleVisible(runtime: SWFMovieRuntime) -> Bool {
+    static func isSubtitleVisible(runtime: SWFMovieRuntime) -> Bool {
         runtime.node(atPath: subtitleHolderPath, from: runtime.root)?.isVisible ?? false
     }
 

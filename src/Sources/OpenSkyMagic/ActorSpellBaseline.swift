@@ -35,7 +35,7 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
     /// visited set catches a list that points at itself; this cap catches the
     /// long chain that is technically acyclic and still nonsense. The same
     /// number and the same reason as `InventoryBaselineResolver`.
-    public static let maximumLeveledDepth = 8
+    static let maximumLeveledDepth = 8
 
     /// Template-chain resolution, which supplies the NPC_ list, the race and
     /// the LVSP index an entry may route through.
@@ -57,7 +57,7 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
         races = actorValues.races
     }
 
-    public init(templates: ActorTemplateResolver, races: [UInt32: Race]) {
+    init(templates: ActorTemplateResolver, races: [UInt32: Race]) {
         self.templates = templates
         self.races = races
     }

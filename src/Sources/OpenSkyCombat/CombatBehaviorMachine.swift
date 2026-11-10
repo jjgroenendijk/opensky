@@ -17,18 +17,18 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
 
     public private(set) var phase = CombatBehaviorPhase.idle
     /// Seconds spent in the current phase.
-    public private(set) var phaseSeconds: Float = 0
+    private(set) var phaseSeconds: Float = 0
     /// Fights entered, attacks started, contact steps reached, guards raised and
     /// searches begun since construction. The readout reads all five; the first
     /// two differ only by an attack a stagger interrupted before it connected.
     public private(set) var fightCount = 0
-    public private(set) var attackCount = 0
-    public private(set) var contactCount = 0
-    public private(set) var blockCount = 0
-    public private(set) var searchCount = 0
+    private(set) var attackCount = 0
+    private(set) var contactCount = 0
+    private(set) var blockCount = 0
+    private(set) var searchCount = 0
     /// Casts begun since construction, which differs from casts released by the
     /// ones a stagger or a retreat interrupted.
-    public private(set) var castCount = 0
+    private(set) var castCount = 0
 
     /// The spell being charged right now, or nil when nothing is. Readable so
     /// the runtime can drop the cast behind a stagger or a park, which happen
@@ -46,11 +46,11 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     /// The air, perch, and ground stages of a flying actor's fight.
     public internal(set) var flight = CombatFlightCycle()
     /// Seconds until the actor may shout again.
-    public internal(set) var shoutCooldown: Float = 0
+    var shoutCooldown: Float = 0
     /// True through a recovery whose next swing follows at once: `GetAttackState` 4.
-    public private(set) var chainsNextAttack = false
+    private(set) var chainsNextAttack = false
     /// Swings so far in the current chain.
-    public private(set) var comboSwings = 0
+    private(set) var comboSwings = 0
 
     public init(settings: CombatBehaviorSettings = .standard, seed: UInt64) {
         self.settings = settings
@@ -74,7 +74,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
     /// left the casting phase without releasing. Fleeing, losing the target and
     /// giving up all reach that line, so no exit has to remember to clean up
     /// after a charge it did not start.
-    public mutating func step(seconds: Float, inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
+    mutating func step(seconds: Float, inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
         guard seconds > 0, seconds.isFinite else { return unchanged() }
         phaseSeconds += seconds
         secondsSinceCommand += seconds
@@ -118,7 +118,7 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
 
     /// Drops a charge the world refused to start, without ending the fight:
     /// the actor lands in the gap between attacks and decides again from there.
-    public mutating func abandonCast() {
+    mutating func abandonCast() {
         guard phase == .casting else { return }
         pendingCast = nil
         enter(.spacing)

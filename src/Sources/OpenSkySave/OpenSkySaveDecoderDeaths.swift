@@ -1,20 +1,20 @@
 // DETH chunk: death state, merged into the `RDLT` deltas by `ReferenceKey`.
 
-public import Foundation
+import Foundation
 public import OpenSkyActorsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's saved death, before it is merged back into the delta.
-nonisolated public struct SaveDeathEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: ActorDeathState
+nonisolated struct SaveDeathEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: ActorDeathState
 }
 
-nonisolated public enum OpenSkySaveDeathDecoder: Sendable {
-    public static func decodeDeaths(_ payload: Data) throws -> [SaveDeathEntry] {
+nonisolated enum OpenSkySaveDeathDecoder: Sendable {
+    static func decodeDeaths(_ payload: Data) throws -> [SaveDeathEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("DETH entry count")
         try OpenSkySaveDecoder.validate(
@@ -77,11 +77,11 @@ nonisolated public enum OpenSkySaveDeathDecoder: Sendable {
 }
 
 nonisolated extension SaveDeathEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.erased
     }
 }

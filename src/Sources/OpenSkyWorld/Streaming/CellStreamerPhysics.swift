@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyGameData
 import OpenSkyPhysics
-public import OpenSkyPlayer
+import OpenSkyPlayer
 import OpenSkyWorldState
 import simd
 
@@ -15,7 +15,7 @@ extension CellStreamer {
     /// One frame of dynamic simulation: reconcile residency, shove whatever the
     /// player walked into, step the solver, then hand any newly-settled resting
     /// transform to the world state.
-    public func advancePhysics(frameTime: Float, player: PlayerCapsuleState?) {
+    func advancePhysics(frameTime: Float, player: PlayerCapsuleState?) {
         reconcileDynamicBodies()
         pushDynamicBodies(player: player, frameTime: frameTime)
         dynamicBodies.advance(
@@ -53,7 +53,7 @@ extension CellStreamer {
 
     /// Adds the bodies of every newly resident or rebuilt cell and drops the
     /// bodies of every cell that left.
-    public func reconcileDynamicBodies() {
+    func reconcileDynamicBodies() {
         let resident = residentDynamicBodyScenes()
         dynamicBodies.retainBodies(occupying: Set(resident.keys))
         for location in dynamicBodies.installedCells.keys where resident[location] == nil {
@@ -113,5 +113,5 @@ extension CellStreamer {
     /// Faster than this and the capsule was teleported, not walked, so the
     /// frame contributes no shove. Engine units per second; a sprint is a few
     /// hundred.
-    public static let maximumPushSpeed: Float = 3000
+    static let maximumPushSpeed: Float = 3000
 }

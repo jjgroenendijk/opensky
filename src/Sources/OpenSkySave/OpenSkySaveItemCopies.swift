@@ -2,13 +2,13 @@
 // `ReferenceKey` after `TMPR`, so it replaces the level-only state for that owner.
 // `ItemCopyState.init` drops plain copies, so no content error fails a load.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
-nonisolated public enum OpenSkySaveItemCopies: Sendable {
+nonisolated enum OpenSkySaveItemCopies: Sendable {
     private static let hasCharge: UInt8 = 1
     private static let hasEnchantment: UInt8 = 2
 
@@ -16,7 +16,7 @@ nonisolated public enum OpenSkySaveItemCopies: Sendable {
     /// copy an int32 level, a soul byte, a flags byte, then the charge and the
     /// enchantment FormID the flags name. Items ascend, so equal state gives equal bytes.
     /// Only owners with a copy `TMPR` cannot hold are written.
-    public static func write(
+    static func write(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -45,7 +45,7 @@ nonisolated public enum OpenSkySaveItemCopies: Sendable {
         }
     }
 
-    public static func decode(_ payload: Data) throws -> [SaveTemperedItemEntry] {
+    static func decode(_ payload: Data) throws -> [SaveTemperedItemEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("ICPY entry count")
         try validate(count, OpenSkySaveFormat.minimumTemperedEntrySize, reader)

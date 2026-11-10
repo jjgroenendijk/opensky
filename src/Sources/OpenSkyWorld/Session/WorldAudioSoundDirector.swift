@@ -5,7 +5,7 @@
 
 public import Foundation
 public import OpenSkyAudio
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyWorldInterface
@@ -32,7 +32,7 @@ private struct PendingSound {
 
 @MainActor
 public final class WorldAudioSoundDirector {
-    public static let logger = EngineLogger(
+    static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "WorldAudioDirector"
     )
@@ -52,9 +52,9 @@ public final class WorldAudioSoundDirector {
     /// Source ids of the region one-shots that may still play.
     var ambienceOneShotSources: [Int] = []
     /// The weather the region sounds follow; no weather lets every entry play.
-    public var currentWeather: () -> Weather.Precipitation = { .none }
+    var currentWeather: () -> Weather.Precipitation = { .none }
     /// Whether a sound's CTDA conditions pass for the player. Unwired, they pass.
-    public var soundConditionsPass: ([Condition]) -> Bool = { _ in true }
+    var soundConditionsPass: ([Condition]) -> Bool = { _ in true }
     /// The request each interaction loop is for. A loop that arrives after its door
     /// closed finds another token, or none, and does not start.
     private var interactionLoopTokens: [FormID: Int] = [:]
@@ -96,16 +96,16 @@ public final class WorldAudioSoundDirector {
     private var interactionLoopSourceIDs: [FormID: Int] = [:]
 
     /// Most recent SFX outcome, surfaced through the audio readout.
-    public private(set) var lastSFXDescription: String?
+    private(set) var lastSFXDescription: String?
     public internal(set) var lastSFXError: String?
     /// Resolves an SNDR's raw `ONAM` link; nil leaves the channel-count rule in charge.
     public let outputModels: ((FormID) -> OutputModelProfile?)?
     /// Resolves an ASPC's raw `BNAM` link to its `REVB` record.
     public let reverbs: ((FormID) -> ReverbParameters?)?
     /// The reverb the current acoustic space asked for.
-    public private(set) var currentReverb = ReverbSetting.off
+    private(set) var currentReverb = ReverbSetting.off
 
-    public init(
+    init(
         engine: WorldAudioEngine,
         soundStore: SoundRecordStore?,
         weatherStore: WeatherStore?,
@@ -323,7 +323,7 @@ extension WorldAudioSoundDirector {
 
     /// This frame's rumble bus levels: each rumbling sound's send times the level the
     /// listener hears of it now. Ended sources drop out.
-    public func rumbleLevels() -> SoundRumble {
+    func rumbleLevels() -> SoundRumble {
         guard !rumbleSends.isEmpty else { return .silent }
         var small: Float = 0
         var big: Float = 0

@@ -8,7 +8,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyGameData
 
 /// What one catalog row selects.
-nonisolated public enum PreviewSelection: Sendable {
+nonisolated enum PreviewSelection: Sendable {
     case file(VFSEntry)
     case record(PreviewRecord)
 }
@@ -35,13 +35,13 @@ nonisolated public struct PreviewRecord: Sendable {
 
 /// One catalog row. `searchKey` is the lowercase haystack the filter matches
 /// (files: the canonical VFS key itself; records: lowercased display text).
-nonisolated public struct PreviewItem: Sendable {
-    public let display: String
-    public let searchKey: String
-    public let selection: PreviewSelection
+nonisolated struct PreviewItem: Sendable {
+    let display: String
+    let searchKey: String
+    let selection: PreviewSelection
 }
 
-nonisolated public enum PreviewCategory: CaseIterable, Sendable {
+nonisolated enum PreviewCategory: CaseIterable, Sendable {
     case meshes
     case textures
     case records
@@ -49,11 +49,11 @@ nonisolated public enum PreviewCategory: CaseIterable, Sendable {
     case allFiles
 }
 
-nonisolated public struct PreviewCatalog: Sendable {
-    public let fileCount: Int
-    public let recordCount: Int
+nonisolated struct PreviewCatalog: Sendable {
+    let fileCount: Int
+    let recordCount: Int
     /// Load problems worth surfacing in the UI (missing esm, ...).
-    public let notes: [String]
+    let notes: [String]
 
     private let meshes: [PreviewItem]
     private let textures: [PreviewItem]
@@ -61,7 +61,7 @@ nonisolated public struct PreviewCatalog: Sendable {
     private let allFiles: [PreviewItem]
 
     /// One plugin's records, as a synthetic test fixture lists them.
-    public init(
+    init(
         files: [VFSEntry],
         records: [ESMRecord],
         recordSourcePlugin: String = "Skyrim.esm",
@@ -86,7 +86,7 @@ nonisolated public struct PreviewCatalog: Sendable {
 
     /// Every record of every plugin, each under its load-order FormID and plugin,
     /// so an override shows beside the record it replaces.
-    public init(files: [VFSEntry], loadOrder: LoadOrderPlugins, notes: [String] = []) {
+    init(files: [VFSEntry], loadOrder: LoadOrderPlugins, notes: [String] = []) {
         var rows: [PreviewItem] = []
         for plugin in loadOrder.plugins {
             ESMWalk.forEachRecord(in: plugin.file) { record in
@@ -124,11 +124,11 @@ nonisolated public struct PreviewCatalog: Sendable {
     }
 
     /// "STAT 0001A2B3" — record type + zero-padded hex FormID.
-    public static func recordDisplay(_ record: ESMRecord) -> String {
+    static func recordDisplay(_ record: ESMRecord) -> String {
         "\(record.type) \(FormID(record.formID))"
     }
 
-    public func items(for category: PreviewCategory) -> [PreviewItem] {
+    func items(for category: PreviewCategory) -> [PreviewItem] {
         switch category {
         case .meshes: meshes
         case .textures: textures
@@ -141,7 +141,7 @@ nonisolated public struct PreviewCatalog: Sendable {
     /// Case-insensitive substring filter; "/" in the query matches the
     /// canonical "\" separator so either spelling finds a path. Empty or
     /// whitespace query -> everything.
-    public static func filter(_ items: [PreviewItem], query: String) -> [PreviewItem] {
+    static func filter(_ items: [PreviewItem], query: String) -> [PreviewItem] {
         let needle = query.lowercased()
             .replacingOccurrences(of: "/", with: "\\")
             .trimmingCharacters(in: .whitespaces)
@@ -153,7 +153,7 @@ nonisolated public struct PreviewCatalog: Sendable {
     /// archive — seconds on a full install; callers run this off the main
     /// thread) plus a headers-only walk of every plugin's records. A load order
     /// that did not open degrades to file browsing with a note, never a crash.
-    public static func load(
+    static func load(
         fileSystem: any GameFileSource,
         loadOrder: Result<LoadOrderPlugins, any Error>
     ) -> PreviewCatalog {

@@ -2,21 +2,21 @@
 // restock. Merged into the player's `RDLT` delta. Layout:
 // docs/formats/opensky-save-world-chunks.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import Foundation
+import OpenSkyFormatsCore
+import OpenSkyFormatsESM
+import OpenSkyGameData
 public import OpenSkyInventoryInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// The saved stocking hours, before they are merged back into the player's delta.
-nonisolated public struct SaveVendorRestockLedger: Equatable, Sendable {
-    public let ledger: VendorRestockLedger
+nonisolated struct SaveVendorRestockLedger: Equatable, Sendable {
+    let ledger: VendorRestockLedger
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// The player's stocking hours, ordered by chest. No entry writes no chunk.
-    public static func writeVendorRestocks(
+    static func writeVendorRestocks(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -36,9 +36,9 @@ nonisolated extension OpenSkySaveEncoder {
     }
 }
 
-nonisolated public enum OpenSkySaveVendorRestockDecoder: Sendable {
+nonisolated enum OpenSkySaveVendorRestockDecoder: Sendable {
     /// A non-finite hour is dropped, so that chest counts as stocked on the next barter.
-    public static func decode(_ payload: Data) throws -> SaveVendorRestockLedger {
+    static func decode(_ payload: Data) throws -> SaveVendorRestockLedger {
         var reader = SaveReader(payload)
         let count = try reader.uint32("VRST entry count")
         try OpenSkySaveDecoder.validate(
@@ -60,15 +60,15 @@ nonisolated public enum OpenSkySaveVendorRestockDecoder: Sendable {
 }
 
 nonisolated extension SaveVendorRestockLedger: SaveDeltaComponentEntry {
-    public var key: ReferenceKey {
+    var key: ReferenceKey {
         .player
     }
 
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         nil
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         ledger.stockedAt.isEmpty ? nil : ledger.erased
     }
 }

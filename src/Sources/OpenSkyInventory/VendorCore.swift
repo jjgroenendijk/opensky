@@ -2,7 +2,7 @@
 // vendors and counterparties out. `VendorCoordinator` is the shell that reads
 // the world. See docs/engine/coordinators.md.
 
-public import OpenSkyFactionsInterface
+import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyInventoryInterface
@@ -11,11 +11,6 @@ public import OpenSkyInventoryInterface
 nonisolated public struct VendorStock: Equatable, Sendable {
     public let owner: InventoryOwner
     public let cell: CellSceneLocation?
-
-    public init(owner: InventoryOwner, cell: CellSceneLocation?) {
-        self.owner = owner
-        self.cell = cell
-    }
 }
 
 /// The vendor rules over loaded plugin data. It reads no world state.
@@ -30,7 +25,7 @@ nonisolated public struct VendorCore: Sendable {
     }
 
     /// Nil for no memberships, which is an actor that is not streamed in.
-    public func vendor(memberships: ActorFactionState?) -> Vendor? {
+    func vendor(memberships: ActorFactionState?) -> Vendor? {
         memberships.flatMap(resolver.vendor(memberships:))
     }
 
@@ -60,7 +55,7 @@ nonisolated public struct VendorCore: Sendable {
     }
 
     /// The first vendor that trades now, else the first one with why it does not.
-    public static func trading(
+    static func trading(
         _ vendors: [Vendor],
         unavailability: (Vendor) -> VendorUnavailability?
     ) -> (vendor: Vendor, refusal: VendorUnavailability?)? {
@@ -106,7 +101,7 @@ nonisolated public struct VendorCore: Sendable {
     }
 
     /// An item's raw `KWDA` keywords as the identities a vendor list holds.
-    public func keywords(_ raw: [FormID]?) -> Set<ReferenceKey> {
+    func keywords(_ raw: [FormID]?) -> Set<ReferenceKey> {
         guard let itemPluginName, let raw else { return [] }
         return resolver.keywords(raw, fromPlugin: itemPluginName)
     }

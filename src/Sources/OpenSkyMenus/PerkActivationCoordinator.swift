@@ -33,7 +33,7 @@ nonisolated public struct PerkChoiceRun: Equatable, Sendable {
     public let ranFragment: Bool
     public let castSpell: Bool
 
-    public var text: String {
+    var text: String {
         let parts = [ranFragment ? "fragment" : nil, castSpell ? "spell" : nil].compactMap(\.self)
         return "\(label): " + (parts.isEmpty ? "nothing ran" : parts.joined(separator: " and "))
     }

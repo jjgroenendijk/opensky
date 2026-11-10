@@ -15,7 +15,7 @@ public final class MenuRouteTable {
         self.fallback = fallback
     }
 
-    public var identifiers: Set<MenuIdentifier> {
+    var identifiers: Set<MenuIdentifier> {
         Set(routes.keys)
     }
 

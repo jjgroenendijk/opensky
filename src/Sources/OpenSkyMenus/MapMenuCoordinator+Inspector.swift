@@ -4,7 +4,7 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyMenusInterface
-public import OpenSkyWorldInterface
+import OpenSkyWorldInterface
 
 /// A worldspace that has map markers, for the inspector's picker.
 nonisolated public struct MapWorldspaceChoice: Equatable, Sendable {
@@ -25,7 +25,7 @@ nonisolated public enum MapMarkerAction: String, CaseIterable, Sendable {
     /// Gone from the map and compass, as before the player heard of it.
     case hide
 
-    public var state: MapMarkerState {
+    var state: MapMarkerState {
         switch self {
         case .reveal: MapMarkerState(isVisible: true, isDiscovered: false, canTravelTo: false)
         case .discover: MapMarkerState(isVisible: true, isDiscovered: true, canTravelTo: true)
@@ -35,7 +35,7 @@ nonisolated public enum MapMarkerAction: String, CaseIterable, Sendable {
 }
 
 extension MapMenuCoordinator {
-    public func inspectWorldspace(offset: Int) {
+    func inspectWorldspace(offset: Int) {
         guard let worldspaces = world?.mapMarkerWorldspaces, !worldspaces.isEmpty else { return }
         inspection.worldspace = Self.step(
             inspection.worldspace,
@@ -45,13 +45,13 @@ extension MapMenuCoordinator {
         inspection.marker = 0
     }
 
-    public func inspectMarker(offset: Int) {
+    func inspectMarker(offset: Int) {
         let count = inspectedSites().count
         guard count > 0 else { return }
         inspection.marker = Self.step(inspection.marker, by: offset, count: count)
     }
 
-    public func apply(_ action: MapMarkerAction) {
+    func apply(_ action: MapMarkerAction) {
         let sites = inspectedSites()
         guard let world, sites.indices.contains(inspection.marker) else { return }
         let site = sites[inspection.marker]
@@ -60,7 +60,7 @@ extension MapMenuCoordinator {
     }
 
     /// "Name (worldspace): state", or nil without markers.
-    public var inspectedMarkerLine: String? {
+    var inspectedMarkerLine: String? {
         let sites = inspectedSites()
         guard
             let worldspace = inspectedWorldspace,

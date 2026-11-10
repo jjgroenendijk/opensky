@@ -31,7 +31,7 @@ public final class LockpickingLockSource {
         )
     }
 
-    public var failure: String? {
+    var failure: String? {
         loader.failure
     }
 

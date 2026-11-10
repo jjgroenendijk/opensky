@@ -82,7 +82,7 @@ nonisolated public struct WalkBenchmarkFrameBudget: Equatable, Sendable {
         )
     }
 
-    public static func strict(frameIntervalMS: Double) -> Self {
+    static func strict(frameIntervalMS: Double) -> Self {
         Self(averageMS: frameIntervalMS, percentile95MS: frameIntervalMS)
     }
 

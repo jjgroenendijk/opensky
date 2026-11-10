@@ -3,7 +3,7 @@
 
 import Foundation
 public import OpenSkyActorsInterface
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
@@ -16,7 +16,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `DETH` chunk: every snapshot entry carrying a death component, in
     /// the snapshot's `ReferenceKey` order. A session in which nothing died
     /// writes no chunk.
-    public static func writeDeaths(
+    static func writeDeaths(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

@@ -2,22 +2,22 @@
 // `ReferenceKey`. A rank outside -4...4 is kept, because clamping would invent a
 // rank the script did not set.
 
-public import Foundation
+import Foundation
 public import OpenSkyFactionsInterface
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One actor's saved relationship overrides, before they are merged back into
 /// the delta.
-nonisolated public struct SaveRelationshipEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: ActorRelationshipState
+nonisolated struct SaveRelationshipEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: ActorRelationshipState
 }
 
-nonisolated public enum OpenSkySaveRelationshipDecoder: Sendable {
-    public static func decodeRelationshipRanks(_ payload: Data) throws -> [SaveRelationshipEntry] {
+nonisolated enum OpenSkySaveRelationshipDecoder: Sendable {
+    static func decodeRelationshipRanks(_ payload: Data) throws -> [SaveRelationshipEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("RELS entry count")
         try OpenSkySaveDecoder.validate(
@@ -64,11 +64,11 @@ nonisolated public enum OpenSkySaveRelationshipDecoder: Sendable {
 }
 
 nonisolated extension SaveRelationshipEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.isEmpty ? nil : state.erased
     }
 }

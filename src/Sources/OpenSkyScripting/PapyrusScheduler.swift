@@ -35,7 +35,7 @@ public final class PapyrusScheduler {
     public private(set) var tickCount = 0
     /// Fixed steps of world time plus fixed steps of menu time.
     public private(set) var menuAwareTickCount = 0
-    public private(set) var elapsedGameHours = 0.0
+    private(set) var elapsedGameHours = 0.0
     public private(set) var pendingCount = 0
 
     private var lastGameSeconds: Double?
@@ -59,7 +59,7 @@ public final class PapyrusScheduler {
         pendingCount = entries.count
     }
 
-    public func schedule(_ outcome: PapyrusRunOutcome) {
+    func schedule(_ outcome: PapyrusRunOutcome) {
         route(outcome)
     }
 
@@ -78,7 +78,7 @@ public final class PapyrusScheduler {
     }
 
     /// The tokens calls wait on, oldest first.
-    public var waitingTokens: [UInt64] {
+    var waitingTokens: [UInt64] {
         entries.compactMap { entry in
             if case let .external(token) = entry.wake {
                 token

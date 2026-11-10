@@ -4,20 +4,20 @@
 // early but never late. See docs/engine/melee-combat.md.
 
 import OpenSkyActorsInterface
-public import OpenSkyCombatInterface
+import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import simd
 
-nonisolated public enum MeleeSwing: Sendable {
+nonisolated enum MeleeSwing: Sendable {
     /// How far a swing reaches, in world units.
     ///
     /// A non-finite or non-positive scale is treated as 1: an actor whose scale
     /// failed to resolve must still be able to swing, and a zero reach would
     /// make every attack silently miss.
-    public static func reach(
+    static func reach(
         weapon: MeleeWeaponProfile,
         settings: CombatSettings,
         actorScale: Float = 1
@@ -31,18 +31,18 @@ nonisolated public enum MeleeSwing: Sendable {
 
     /// The blade's vertical half-extent as a fraction of capsule height, centred on the
     /// chest. Our choice: it hits a target on the same floor, not one on a table.
-    public static let bladeHalfExtentFraction: Float = 0.25
+    static let bladeHalfExtentFraction: Float = 0.25
 
     /// The swing's radius, as a fraction of the attacker capsule radius.
     ///
     /// Also an OpenSky decision. The blade itself is thin, but a swing is an
     /// arc and the capsule is its hull, so the radius stands in for the arc's
     /// horizontal width rather than for the steel.
-    public static let arcRadiusFraction: Float = 0.75
+    static let arcRadiusFraction: Float = 0.75
 
     /// The swing volume as a sweep query. `facing` is yaw in radians (`cos` on x, `sin` on
     /// y); `reach` comes from `reach(weapon:settings:)`.
-    public static func volume(
+    static func volume(
         feet: SIMD3<Float>,
         capsule: PlayerCapsule,
         facing: Float,

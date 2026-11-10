@@ -2,22 +2,22 @@
 // leveled lists. Merged into the `RDLT` deltas by key. Layout:
 // docs/formats/opensky-save.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One saved frozen level, before it is merged back into the delta.
-nonisolated public struct SaveLeveledRollEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let playerLevel: Int
+nonisolated struct SaveLeveledRollEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let playerLevel: Int
 }
 
 nonisolated extension OpenSkySaveEncoder {
     /// Every reference with a frozen level, in snapshot order. None writes no chunk.
-    public static func writeLeveledRolls(
+    static func writeLeveledRolls(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {
@@ -36,9 +36,9 @@ nonisolated extension OpenSkySaveEncoder {
     }
 }
 
-nonisolated public enum OpenSkySaveLeveledRollDecoder: Sendable {
+nonisolated enum OpenSkySaveLeveledRollDecoder: Sendable {
     /// A level below 1 is dropped, so that reference rolls at the live level.
-    public static func decodeLeveledRolls(_ payload: Data) throws -> [SaveLeveledRollEntry] {
+    static func decodeLeveledRolls(_ payload: Data) throws -> [SaveLeveledRollEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("LVRL entry count")
         try OpenSkySaveDecoder.validate(
@@ -61,11 +61,11 @@ nonisolated public enum OpenSkySaveLeveledRollDecoder: Sendable {
 }
 
 nonisolated extension SaveLeveledRollEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         LeveledRollState(playerLevel: playerLevel).erased
     }
 }

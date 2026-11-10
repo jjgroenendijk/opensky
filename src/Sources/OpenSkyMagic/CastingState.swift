@@ -9,7 +9,7 @@ public import OpenSkyFormatsESM
 public import OpenSkyMagicInterface
 
 /// The two hands of one dual cast.
-nonisolated public enum DualCastRole: String, Equatable, Sendable {
+nonisolated enum DualCastRole: String, Equatable, Sendable {
     case lead
     case partner
 }
@@ -31,7 +31,7 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
     /// happened. Counted rather than derived from `held`, for the reason
     /// `ActiveEffect.paidSeconds` is: repeated small steps must not round into
     /// an extra application.
-    public private(set) var appliedSeconds: UInt32 = 0
+    private(set) var appliedSeconds: UInt32 = 0
     /// Magicka this cast has taken so far, which for a concentration spell
     /// grows for as long as it runs.
     public private(set) var magickaSpent: Float = 0
@@ -40,13 +40,13 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
     public private(set) var isReleasing = false
     /// The hand's part in a dual cast, nil for a single cast. The lead hand runs the
     /// cast; the partner only holds the spell, so the cast pays and applies once.
-    public private(set) var dualRole: DualCastRole?
+    private(set) var dualRole: DualCastRole?
 
     public var isDualCast: Bool {
         dualRole != nil
     }
 
-    public mutating func joinDualCast(as role: DualCastRole) {
+    mutating func joinDualCast(as role: DualCastRole) {
         dualRole = role
     }
 
@@ -58,36 +58,36 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
     }
 
     /// Moves a fully charged fire-and-forget cast to the release window.
-    public mutating func makeReady() {
+    mutating func makeReady() {
         phase = .ready
     }
 
     /// Moves a fully charged concentration cast to maintenance.
-    public mutating func beginConcentration() {
+    mutating func beginConcentration() {
         phase = .concentrating
     }
 
     /// Seconds since the cast began, whatever its phase. A dual cast may join only a
     /// young one.
-    public private(set) var age: Float = 0
+    private(set) var age: Float = 0
 
-    public mutating func addAge(_ delta: Float) {
+    mutating func addAge(_ delta: Float) {
         age += delta
     }
 
-    public mutating func addCharge(_ delta: Float) {
+    mutating func addCharge(_ delta: Float) {
         charged += delta
     }
 
-    public mutating func addHeld(_ delta: Float) {
+    mutating func addHeld(_ delta: Float) {
         held += delta
     }
 
-    public mutating func noteApplied() {
+    mutating func noteApplied() {
         appliedSeconds += 1
     }
 
-    public mutating func spend(_ magicka: Float) {
+    mutating func spend(_ magicka: Float) {
         magickaSpent += magicka
     }
 
@@ -98,11 +98,11 @@ nonisolated public struct SpellCastState: Equatable, Sendable {
     /// How close to a whole second counts as one. Sixty 1/60 s steps sum to just
     /// under one second in binary floating point; without this tolerance a
     /// maintained spell would skip an application.
-    public static let secondTolerance: Float = 0.001
+    static let secondTolerance: Float = 0.001
 
     /// Applications that are due, capped at the steps one advance may run. One at
     /// entry plus one per whole second held, hence `elapsed + 1`.
-    public func pendingApplications(limit: Int) -> Int {
+    func pendingApplications(limit: Int) -> Int {
         let elapsed = UInt32(max(0, held + Self.secondTolerance).rounded(.down))
         let due = elapsed &+ 1
         guard due > appliedSeconds else { return 0 }

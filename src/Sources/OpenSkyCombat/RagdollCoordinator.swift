@@ -6,7 +6,7 @@ public import OpenSkyActorsInterface
 import OpenSkyBehavior
 public import OpenSkyCombatInterface
 import OpenSkyConditions
-public import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
@@ -17,7 +17,7 @@ import simd
 /// Owns the ragdoll runtime and reads the world through `RagdollSessionWorld`.
 public final class RagdollCoordinator {
     /// Decodes the ragdoll one skeleton `.nif` carries, at one scale.
-    public typealias DefinitionLoader = (
+    typealias DefinitionLoader = (
         _ skeletonMeshPath: String, _ skeleton: HKASkeleton, _ scale: Float
     ) -> RagdollDefinition?
 
@@ -55,7 +55,7 @@ public final class RagdollCoordinator {
     var deathTimes: [ReferenceKey: Float] = [:]
     var deathRandom = ConditionRandom()
     /// Essential and protected actors kneeling at zero health.
-    public internal(set) var bleedout = BleedoutTracker()
+    var bleedout = BleedoutTracker()
     public internal(set) var deathEffects = DeathEffectCounts()
     /// The player's own zero health. The app steps it each world tick.
     public var playerDeath = PlayerDeath()

@@ -12,7 +12,7 @@ nonisolated public struct PexNativeTarget: Equatable, Hashable, Sendable {
         "\(scriptName).\(functionName)"
     }
 
-    public var key: PapyrusNativeKey {
+    var key: PapyrusNativeKey {
         PapyrusNativeKey(scriptName: scriptName, functionName: functionName)
     }
 }
@@ -21,15 +21,15 @@ nonisolated public struct PexNativeCoverage: Equatable, Sendable {
     public let implemented: Int
     public let referenced: Int
 
-    public var percentage: Double {
+    var percentage: Double {
         guard referenced > 0 else { return 100 }
         return Double(implemented) / Double(referenced) * 100
     }
 }
 
 nonisolated public struct PexNativeCensus: Equatable, Sendable {
-    public private(set) var declarationTotal = 0
-    public private(set) var declarations: [PapyrusNativeKey: PexNativeTarget] = [:]
+    private(set) var declarationTotal = 0
+    private(set) var declarations: [PapyrusNativeKey: PexNativeTarget] = [:]
     public private(set) var referenceCounts: [PexNativeTarget: Int] = [:]
 
     /// - Parameter callers: script names whose calls count, lowercased; nil counts
@@ -54,7 +54,7 @@ nonisolated public struct PexNativeCensus: Equatable, Sendable {
         referenceCounts.values.reduce(0, +)
     }
 
-    public var rankedReferences: [(name: String, count: Int)] {
+    var rankedReferences: [(name: String, count: Int)] {
         referenceCounts
             .sorted {
                 $0.value == $1.value

@@ -159,7 +159,7 @@ extension PapyrusWorldRuntime {
     /// attach on first use and stay. A later cell attach keeps them and fires no
     /// second `OnInit`. Returns the instances created.
     @discardableResult
-    public func attachUnloaded(
+    func attachUnloaded(
         _ entry: RuntimeReferenceEntry,
         formIDResolver: FormIDResolver
     ) -> Int {

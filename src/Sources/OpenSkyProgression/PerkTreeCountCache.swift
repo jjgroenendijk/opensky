@@ -10,15 +10,15 @@ public import OpenSkyFormatsESM
 /// One session's per-skill perk-tree counts.
 nonisolated public struct PerkTreeCountCache: Sendable {
     /// How much of one skill's tree the player owns.
-    public struct Counts: Equatable, Sendable {
+    struct Counts: Equatable, Sendable {
         /// Boxes of the tree whose perk the player owns.
-        public let owned: Int
+        let owned: Int
         /// Boxes the tree has a resolvable perk for, which is what `owned`
         /// counts out of.
-        public let total: Int
+        let total: Int
 
         /// What a skill with no AVIF record reads.
-        public static let none = Counts(owned: 0, total: 0)
+        static let none = Counts(owned: 0, total: 0)
     }
 
     /// Every resolvable perk of one skill's tree, in node order, for each skill
@@ -42,18 +42,18 @@ nonisolated public struct PerkTreeCountCache: Sendable {
     public private(set) var reuseCount = 0
 
     /// How many skills the cache holds a resolved tree for.
-    public var skillCount: Int {
+    var skillCount: Int {
         keys.count
     }
 
     /// Whether nothing has been asked for since the last wiring.
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         keys.isEmpty
     }
 
     /// How much of `index`'s tree `owned` covers. `tree` runs at most once per skill
     /// per wiring. `owned` is compared as given, so pass `PerkState.owned` (sorted).
-    public mutating func counts(
+    mutating func counts(
         forSkill index: Int32,
         owned: [ReferenceKey],
         tree: (Int32) -> [ReferenceKey]
@@ -95,7 +95,7 @@ nonisolated public struct PerkTreeCountCache: Sendable {
 
     /// What the Skills section shows, which is the reading that makes the reuse
     /// visible without a profiler.
-    public var readout: PerkTreeCacheReadout {
+    var readout: PerkTreeCacheReadout {
         PerkTreeCacheReadout(
             skillCount: skillCount,
             treeCount: treeCount,
@@ -117,7 +117,7 @@ nonisolated public struct PerkTreeCountCache: Sendable {
         return resolved
     }
 
-    public init(
+    init(
         keys: [Int32: [ReferenceKey]] = [:],
         counts: [Int32: Counts] = [:],
         ownedWhenCounted: [ReferenceKey] = [],
@@ -150,7 +150,7 @@ nonisolated public struct PerkTreeCacheReadout: Equatable, Sendable {
     )
 
     /// One line for a readout.
-    public var describedLine: String {
+    var describedLine: String {
         "Perk tree cache: \(skillCount) skill(s), \(treeCount) tree(s) resolved, "
             + "\(countCount) counted, \(reuseCount) reused"
     }

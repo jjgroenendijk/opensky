@@ -2,12 +2,12 @@
 // plain read off `ActorValueRuntime`.
 
 import Foundation
-public import OpenSkyActorsInterface
+import OpenSkyActorsInterface
 import OpenSkyGameData
 import OpenSkyWorldState
 
 extension ActorValueCoordinator {
-    public var snapshot: ActorValueControlSnapshot {
+    var snapshot: ActorValueControlSnapshot {
         guard runtime != nil else { return .unavailable }
         let nearest = world?.nearestActorValueHolder()
         return ActorValueControlSnapshot(
@@ -19,21 +19,21 @@ extension ActorValueCoordinator {
     }
 
     @discardableResult
-    public func damageSelected(by amount: Float) -> ActorValueActionOutcome {
+    func damageSelected(by amount: Float) -> ActorValueActionOutcome {
         applyToSelection(verb: "Damaged") { runtime, holder, index in
             runtime.damage(at: index, by: amount, on: holder)
         }
     }
 
     @discardableResult
-    public func setSelectedValue(to value: Float) -> ActorValueActionOutcome {
+    func setSelectedValue(to value: Float) -> ActorValueActionOutcome {
         applyToSelection(verb: "Set") { runtime, holder, index in
             runtime.setValue(at: index, to: value, on: holder)
         }
     }
 
     @discardableResult
-    public func restoreSelectedFully() -> ActorValueActionOutcome {
+    func restoreSelectedFully() -> ActorValueActionOutcome {
         guard let runtime else { return .unavailable }
         guard let holder = selectedHolder() else { return .noTarget(target) }
         let state = runtime.restoreAll(on: holder)
@@ -46,7 +46,7 @@ extension ActorValueCoordinator {
     }
 
     @discardableResult
-    public func resetSelected() -> ActorValueActionOutcome {
+    func resetSelected() -> ActorValueActionOutcome {
         guard let runtime else { return .unavailable }
         guard let holder = selectedHolder() else { return .noTarget(target) }
         return record(.reset(actor: holder.readoutName, changed: runtime.reset(holder)))

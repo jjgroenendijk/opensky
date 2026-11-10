@@ -1,11 +1,11 @@
 // Integer, floating-point, string, and comparison opcodes.
 
 import Foundation
-public import OpenSkyFormatsPEX
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsPEX
+import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
-    public func mathOp(
+    func mathOp(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {
@@ -87,7 +87,7 @@ extension PapyrusInterpreter {
         }
     }
 
-    public func comparisonOp(
+    func comparisonOp(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {
@@ -212,7 +212,7 @@ extension PapyrusInterpreter {
         return float
     }
 
-    public func equal(_ left: PapyrusValue, _ right: PapyrusValue) -> Bool {
+    func equal(_ left: PapyrusValue, _ right: PapyrusValue) -> Bool {
         switch (left, right) {
         case let (.integer(leftValue), .float(rightValue)):
             approximatelyEqual(Float(leftValue), rightValue)

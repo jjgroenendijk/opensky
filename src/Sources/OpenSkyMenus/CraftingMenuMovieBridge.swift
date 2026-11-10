@@ -4,22 +4,22 @@
 // `CraftButtonPress` to craft and `CloseMenu` to leave. See docs/engine/crafting.md.
 
 import Foundation
-public import OpenSkyFormatsSWF
+import OpenSkyFormatsSWF
 
 nonisolated public enum CraftingMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\craftingmenu.swf"
-    public static let menuPath = "/Menu"
-    public static let layout = ItemListMovieLayout(listsPath: "\(menuPath)/InventoryLists")
-    public static let menuNamePath = "\(menuPath)/MenuNameHolder/MenuName"
+    static let menuPath = "/Menu"
+    static let layout = ItemListMovieLayout(listsPath: "\(menuPath)/InventoryLists")
+    static let menuNamePath = "\(menuPath)/MenuNameHolder/MenuName"
     /// Calls that change nothing in OpenSky: the 3D item view, renaming, and the
     /// enchanting charge slider.
-    public static let sinkHostFunctions = [
+    static let sinkHostFunctions = [
         "PlaySound", "myLog", "SetSelectedItem", "SetSelectedCategory", "ChooseItem",
         "ShowItem3D", "StartMouseRotation", "StopMouseRotation", "AuxButtonPress",
         "CanFadeItemInfo", "EndItemRename", "CalculateCharge", "SliderClose"
     ]
 
-    public static func prepare(
+    static func prepare(
         runtime: SWFMovieRuntime,
         onEvent: @escaping @MainActor @Sendable (ItemListMovieEvent) -> Void
     ) {
@@ -39,7 +39,7 @@ nonisolated public enum CraftingMenuMovieBridge: Sendable {
     }
 
     /// `Initialize` builds the lists and the bottom bar; `bCanCraft` labels the button.
-    public static func activate(station: String, runtime: SWFMovieRuntime) {
+    static func activate(station: String, runtime: SWFMovieRuntime) {
         runtime.callMovie("Initialize", atPath: menuPath)
         runtime.callMovie(
             "SetPlatform",

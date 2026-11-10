@@ -4,17 +4,17 @@
 // See docs/engine/creation-club.md.
 
 import Foundation
-public import OpenSkyFormatsSWF
+import OpenSkyFormatsSWF
 
 /// A call the Creation Club movie makes that the engine acts on.
 nonisolated public enum CreationClubMovieEvent: Equatable, Sendable {
     case close
 }
 
-nonisolated public enum CreationClubMenuMovieBridge: Sendable {
-    public static let moviePath = "interface\\creationclubmenu.swf"
-    public static let menuPath = "/CreationClub_mc"
-    public static let language = "en"
+nonisolated enum CreationClubMenuMovieBridge: Sendable {
+    static let moviePath = "interface\\creationclubmenu.swf"
+    static let menuPath = "/CreationClub_mc"
+    static let language = "en"
     /// Store, login, and download calls. Offline, they do nothing.
     static let storeCalls = [
         "AcceptLegalDoc", "DownloadAll", "DownloadCreation", "EnterCreditsScreen",
@@ -27,7 +27,7 @@ nonisolated public enum CreationClubMenuMovieBridge: Sendable {
     static let soundCalls = ["PlaySound", "PlayOKSound"]
 
     /// Fills `codeObj`, then tells the movie it is ready, which starts its `Init`.
-    public static func activate(
+    static func activate(
         runtime: SWFMovieRuntime,
         onEvent: @escaping @MainActor @Sendable (CreationClubMovieEvent) -> Void
     ) {
@@ -55,7 +55,7 @@ nonisolated public enum CreationClubMenuMovieBridge: Sendable {
     }
 
     /// The movie drops its login screen and `codeObj` before it goes.
-    public static func release(runtime: SWFMovieRuntime) {
+    static func release(runtime: SWFMovieRuntime) {
         runtime.callMovie("ReleaseCodeObject", atPath: menuPath)
     }
 }

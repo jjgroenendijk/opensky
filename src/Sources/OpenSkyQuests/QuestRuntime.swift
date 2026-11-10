@@ -45,7 +45,7 @@ public struct QuestRuntime: QuestAccess {
 
     /// Whether the quest has been touched at runtime, as opposed to still
     /// reading straight from plugin data.
-    public func hasRuntimeState(_ id: FormID) -> Bool {
+    func hasRuntimeState(_ id: FormID) -> Bool {
         guard let key = quests.key(for: id) else { return false }
         return store.component(QuestRuntimeState.self, for: key) != nil
     }
@@ -122,7 +122,7 @@ public struct QuestRuntime: QuestAccess {
     /// Starts the quest and sets its start-up stage, as the game does on a real
     /// start. A quest with no start-up stage only starts.
     @discardableResult
-    public func startQuestWithStartUpStage(
+    func startQuestWithStartUpStage(
         _ id: FormID,
         event: StoryEventData?
     ) throws -> QuestRuntimeState {
@@ -267,7 +267,7 @@ public struct QuestRuntime: QuestAccess {
     /// Drops the quest's runtime state and alias table, so it re-derives from
     /// plugin data. Returns true when state was removed.
     @discardableResult
-    public func reset(_ id: FormID) -> Bool {
+    func reset(_ id: FormID) -> Bool {
         guard let key = quests.key(for: id) else { return false }
         let clearedAliases = clearAliases(key: key)
         return store.reset(.quest, for: key) || clearedAliases

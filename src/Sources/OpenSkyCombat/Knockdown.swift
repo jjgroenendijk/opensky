@@ -8,9 +8,9 @@ public import OpenSkyFormatsESM
 import simd
 
 /// What one step of the knockdowns changed.
-nonisolated public struct KnockdownStep: Equatable, Sendable {
-    public var gettingUp: [ReferenceKey] = []
-    public var stood: [ReferenceKey] = []
+nonisolated struct KnockdownStep: Equatable, Sendable {
+    var gettingUp: [ReferenceKey] = []
+    var stood: [ReferenceKey] = []
 }
 
 nonisolated public struct KnockdownTracker: Equatable, Sendable {
@@ -27,13 +27,13 @@ nonisolated public struct KnockdownTracker: Equatable, Sendable {
         phases[key] = .down(remaining: max(downTime.isFinite ? downTime : 0, 0))
     }
 
-    public mutating func remove(_ key: ReferenceKey) {
+    mutating func remove(_ key: ReferenceKey) {
         phases[key] = nil
     }
 
     /// Down actors get up once `isStill` or their time is out; getting-up actors stand once
     /// their blend of `getUpDuration` ends. Keys come back in ascending order.
-    public mutating func advance(
+    mutating func advance(
         by delta: Float, getUpDuration: (ReferenceKey) -> Float, isStill: (ReferenceKey) -> Bool
     ) -> KnockdownStep {
         let delta = max(delta.isFinite ? delta : 0, 0)
@@ -67,7 +67,7 @@ nonisolated public struct KnockdownTracker: Equatable, Sendable {
 
     /// How much of the drawn pose the ragdoll owns: all of it while down, fading to none
     /// while getting up. Nil when the actor is not knocked down.
-    public func ragdollWeight(of key: ReferenceKey) -> Float? {
+    func ragdollWeight(of key: ReferenceKey) -> Float? {
         switch phases[key] {
         case .down: 1
         case let .gettingUp(elapsed, duration): duration > 0 ? max(0, 1 - elapsed / duration) : 0
@@ -95,7 +95,7 @@ nonisolated public enum KnockdownPush {
 
     /// The direction a knocked-down actor faces when it gets up: from its pelvis to its
     /// neck, along the ground, as a yaw counter-clockwise from +X.
-    public static func getUpYaw(pelvis: SIMD3<Float>, neck: SIMD3<Float>) -> Float? {
+    static func getUpYaw(pelvis: SIMD3<Float>, neck: SIMD3<Float>) -> Float? {
         let along = SIMD2(neck.x - pelvis.x, neck.y - pelvis.y)
         guard simd_length_squared(along) > 1e-6 else { return nil }
         return atan2(along.y, along.x)

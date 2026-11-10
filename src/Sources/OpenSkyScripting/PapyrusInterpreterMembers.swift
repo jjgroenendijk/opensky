@@ -1,11 +1,11 @@
 // PEX property access opcodes.
 
 import Foundation
-public import OpenSkyFormatsPEX
+import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
-    public func memberOp(
+    func memberOp(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {

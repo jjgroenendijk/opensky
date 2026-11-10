@@ -27,15 +27,15 @@ public final class BenchmarkTourCoordinator {
     /// A scene between its arrival and its first measured frame.
     public struct Settling: Equatable {
         /// Taken again once streaming settles, when the ground under it is resident.
-        public var origin: SIMD3<Float>
-        public let started: Double
-        public let arrived: Double
+        var origin: SIMD3<Float>
+        let started: Double
+        let arrived: Double
         /// Nil until streaming settles, then the warm-up frames run so far.
-        public var settledSteps: Int?
+        var settledSteps: Int?
     }
 
     public private(set) var phase = Phase.idle
-    public private(set) var lastResult: BenchmarkTourResult?
+    private(set) var lastResult: BenchmarkTourResult?
 
     private weak var world: (any BenchmarkTourWorld)?
     private(set) var request = BenchmarkRequest()

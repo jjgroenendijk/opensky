@@ -21,7 +21,7 @@ public enum SceneCore {
         }
     }
 
-    public static func playingRow(
+    static func playingRow(
         _ entry: CatalogScene,
         state: SceneRuntimeState
     ) -> ScenePlayingRow {
@@ -35,13 +35,13 @@ public enum SceneCore {
         )
     }
 
-    public static func text(_ event: SceneEvent, catalog: SceneCatalog) -> String {
+    static func text(_ event: SceneEvent, catalog: SceneCatalog) -> String {
         let name = catalog.scene(event.scene)?.editorID ?? event.scene.description
         return "\(name): \(text(step: event.step))"
     }
 
     /// Phases read 1-based, as the Creation Kit numbers them.
-    public static func text(step: SceneStep) -> String {
+    static func text(step: SceneStep) -> String {
         switch step {
         case .began: "began"
         case let .phaseSkipped(phase): "phase \(phase + 1) skipped"
@@ -75,7 +75,7 @@ public enum SceneCore {
         }
     }
 
-    public static func text(line: SceneLine) -> String {
+    static func text(line: SceneLine) -> String {
         let secondsText = unsafe String(format: "%.1f s", line.seconds)
         return "\(line.speaker) says \(line.info) in topic \(line.topic) for "
             + secondsText

@@ -5,13 +5,13 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsCore
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRuntimeState
 import OpenSkyWorldConditions
 
 nonisolated extension RecordTextDump {
-    public static func progressionSummary(
+    static func progressionSummary(
         _ record: ESMRecord,
         _ localized: Bool,
         _ context: MagicContext?
@@ -61,7 +61,7 @@ nonisolated extension RecordTextDump {
     /// A localizable name as the dumps print it: the text when the plugin
     /// stores it inline, the table id when it does not. Shared with the FACT
     /// summary, which prints one per rank title.
-    public static func nameText(_ value: LString?) -> String {
+    static func nameText(_ value: LString?) -> String {
         switch value {
         case let .inline(text): "\"\(text)\""
         case let .tableID(id), let .pluginTableID(id, _): "string #\(id)"

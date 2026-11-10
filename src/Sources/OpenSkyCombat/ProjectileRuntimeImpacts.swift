@@ -4,15 +4,15 @@
 
 import Foundation
 import OpenSkyActorsInterface
-public import OpenSkyCombatInterface
+import OpenSkyCombatInterface
 import OpenSkyGameData
-public import OpenSkyMagicInterface
+import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 import simd
 
 extension ProjectileRuntime {
     /// One landed arrow's health damage, or zero for anything else.
-    public func applyArrow(_ projectile: LiveProjectile, impact: ProjectileImpact) -> Float {
+    func applyArrow(_ projectile: LiveProjectile, impact: ProjectileImpact) -> Float {
         guard let arrow = projectile.payload.arrow, let target = impact.target, let world
         else { return 0 }
         // Read before the damage: the hit itself makes the target aware.
@@ -53,7 +53,7 @@ extension ProjectileRuntime {
     /// enchantment fires. An arrow that hit geometry applies and spends nothing.
     /// - Returns: what the enchantment did; discardable, because the readout shows it.
     @discardableResult
-    public func applyBowEnchantment(
+    func applyBowEnchantment(
         _ arrow: ArrowPayload,
         projectile: LiveProjectile,
         impact: ProjectileImpact,
@@ -78,7 +78,7 @@ extension ProjectileRuntime {
     /// A spell that struck geometry rather than an actor still applies: its
     /// area entries reach whoever was standing near the wall. One that reaches
     /// nobody reports nil, which is what an area of zero against a wall is.
-    public func applySpell(
+    func applySpell(
         _ projectile: LiveProjectile,
         impact: ProjectileImpact
     ) -> SpellHitReport? {

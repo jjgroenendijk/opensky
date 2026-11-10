@@ -143,7 +143,7 @@ public final class MapMenuCoordinator {
     }
 
     /// Shows, discovers, and opens travel to every marker, for testing travel.
-    public func revealAll() {
+    func revealAll() {
         guard let world else { return }
         let open = MapMarkerState(isVisible: true, isDiscovered: true, canTravelTo: true)
         let sites = world.mapMarkerSites().filter {
@@ -156,7 +156,7 @@ public final class MapMenuCoordinator {
     }
 
     /// Forgets every explored square, so the local map shows fog again.
-    public func resetFog() {
+    func resetFog() {
         world?.localMapFog = LocalMapFogState()
         lastOutcome = .fogReset
     }
@@ -214,7 +214,7 @@ public final class MapMenuCoordinator {
         }
     }
 
-    public func zoom(by amount: Float) {
+    func zoom(by amount: Float) {
         camera?.zoom(by: amount)
         refreshSelection()
         applyView()

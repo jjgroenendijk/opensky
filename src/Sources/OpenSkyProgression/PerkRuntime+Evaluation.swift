@@ -57,7 +57,7 @@ extension PerkRuntime {
 
     /// The multiplier form: `modify(1, ...)`. Combat folds perks in as a factor:
     /// `damage * (1 + perk effects) * (1 + item effects)` (UESP "Skyrim:Weapons").
-    public mutating func multiplier(
+    mutating func multiplier(
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
         subjects: PerkEvaluationSubjects? = nil,

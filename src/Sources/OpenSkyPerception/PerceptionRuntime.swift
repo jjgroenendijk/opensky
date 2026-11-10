@@ -22,17 +22,17 @@ public final class PerceptionRuntime {
     /// Most pairs tracked at once. Eight movers is `NPCMovementRuntime`'s named
     /// crowd cap and a handful of targets is all 16.6 produces, so 64 leaves
     /// room above anything the milestone creates while still bounding the work.
-    public static let maximumPairs = 64
+    static let maximumPairs = 64
 
     /// Pairs re-evaluated per fixed step. At the cap this spreads a full sweep
     /// over eight steps, or about an eighth of a second — far below the time a
     /// detection level takes to cross a threshold.
-    public static let pairsPerStep = 8
+    static let pairsPerStep = 8
 
     public let settings: DetectionSettings
     public let stealthPoints: StealthPointSettings
     /// Each target's stealth points.
-    public private(set) var pools: [ReferenceKey: StealthPointPool] = [:]
+    private(set) var pools: [ReferenceKey: StealthPointPool] = [:]
     /// Pairs whose observer has the target detected through the pool.
     private var detectedPairs: Set<DetectionPairKey> = []
 
@@ -48,7 +48,7 @@ public final class PerceptionRuntime {
     /// in the one unit that matters.
     public private(set) var lineOfSightQueryCount = 0
     /// Whole fixed steps run since construction.
-    public private(set) var stepCount = 0
+    private(set) var stepCount = 0
 
     private weak var world: (any PerceptionWorld)?
     private var accumulator: Double = 0
@@ -143,7 +143,7 @@ public final class PerceptionRuntime {
     }
 
     /// Forgets every tracked pair and every counter.
-    public func reset() {
+    func reset() {
         pairs = [:]
         pools = [:]
         detectedPairs = []

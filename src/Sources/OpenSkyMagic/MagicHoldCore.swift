@@ -11,24 +11,24 @@ import simd
 
 /// One running hold. A concentration spell lands once a second, and each landing
 /// renews its hold; a hold no landing renews ends.
-nonisolated public struct MagicHold: Equatable, Sendable {
-    public enum Kind: Equatable, Sendable {
+nonisolated struct MagicHold: Equatable, Sendable {
+    enum Kind: Equatable, Sendable {
         case detectLife
         case telekinesis
         case grabActor
         case guide
     }
 
-    public let kind: Kind
+    let kind: Kind
     /// Who cast it. Detect Life paints around it; a hold sits in front of it.
-    public let caster: ReferenceKey
+    let caster: ReferenceKey
     /// The MGEF, whose conditions, shader, or hazard the hold reads.
-    public let effect: ReferenceKey
-    public var remaining: Float
+    let effect: ReferenceKey
+    var remaining: Float
     /// The painted actors, the held body, or the grabbed actor.
-    public var held: [ReferenceKey]
+    var held: [ReferenceKey]
 
-    public init(
+    init(
         kind: Kind, caster: ReferenceKey, effect: ReferenceKey, remaining: Float,
         held: [ReferenceKey] = []
     ) {
@@ -43,23 +43,23 @@ nonisolated public struct MagicHold: Equatable, Sendable {
 nonisolated public enum MagicHoldCore {
     /// A concentration effect lands once a second, so a hold lives a little longer
     /// than that. An OpenSky number; the wiki only says the paint "will update".
-    public static let renewalSeconds: Float = 1.5
+    static let renewalSeconds: Float = 1.5
     /// How far in front of the caster a held object floats. An OpenSky number: the
     /// game settings give only the nearest distance.
-    public static let telekinesisHoldDistance: Float = 150
+    static let telekinesisHoldDistance: Float = 150
     /// How fast a released object leaves, world units per second. An OpenSky number.
-    public static let telekinesisThrowSpeed: Float = 1200
+    static let telekinesisThrowSpeed: Float = 1200
     /// How quickly a held object closes on its hold point, seconds.
-    public static let telekinesisSteerSeconds: Float = 0.15
+    static let telekinesisSteerSeconds: Float = 0.15
 
     /// How long one landing keeps a hold: its duration, or until the next landing.
-    public static func lifetime(duration: Float) -> Float {
+    static func lifetime(duration: Float) -> Float {
         max(duration, renewalSeconds)
     }
 
     /// `holds` with `hold` renewed in place, or added when no hold of its kind and
     /// caster runs.
-    public static func renewing(_ hold: MagicHold, in holds: [MagicHold]) -> [MagicHold] {
+    static func renewing(_ hold: MagicHold, in holds: [MagicHold]) -> [MagicHold] {
         var holds = holds
         if
             let index = holds
@@ -72,7 +72,7 @@ nonisolated public enum MagicHoldCore {
     }
 
     /// Ages every hold by `delta`. Returns the ones still running and the ones that ended.
-    public static func advancing(_ holds: [MagicHold], by delta: Float)
+    static func advancing(_ holds: [MagicHold], by delta: Float)
         -> (running: [MagicHold], ended: [MagicHold])
     {
         let aged = holds.map { hold in
@@ -97,7 +97,7 @@ nonisolated public enum MagicHoldCore {
 
     /// The impulse that steers a held body toward `point` this frame and carries its
     /// weight, so it floats there.
-    public static func steeringImpulse(
+    static func steeringImpulse(
         _ body: MagicHeldBody, toward point: SIMD3<Float>, delta: Float, gravity: Float
     ) -> SIMD3<Float> {
         guard body.mass > 0, delta > 0 else { return .zero }
@@ -108,7 +108,7 @@ nonisolated public enum MagicHoldCore {
 
     /// Points along `path` every `spacing` units, at most `limit` of them, starting
     /// one spacing from its first point.
-    public static func trail(along path: [SIMD3<Float>], spacing: Float, limit: Int)
+    static func trail(along path: [SIMD3<Float>], spacing: Float, limit: Int)
         -> [SIMD3<Float>]
     {
         guard spacing > 0, limit > 0, path.count > 1 else { return [] }

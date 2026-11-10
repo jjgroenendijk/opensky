@@ -2,22 +2,22 @@
 // `EnchantedItemState.init` normalizes bad charges and stale sequences, so no
 // content error fails a load.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// One owner's saved enchanted-item state, before it is merged back into the
 /// delta.
-nonisolated public struct SaveEnchantedItemEntry: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let cell: CellSceneLocation?
-    public let state: EnchantedItemState
+nonisolated struct SaveEnchantedItemEntry: Equatable, Sendable {
+    let key: ReferenceKey
+    let cell: CellSceneLocation?
+    let state: EnchantedItemState
 }
 
-nonisolated public enum OpenSkySaveEnchantedItemDecoder: Sendable {
-    public static func decodeEnchantedItems(_ payload: Data) throws -> [SaveEnchantedItemEntry] {
+nonisolated enum OpenSkySaveEnchantedItemDecoder: Sendable {
+    static func decodeEnchantedItems(_ payload: Data) throws -> [SaveEnchantedItemEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("ECHG entry count")
         try OpenSkySaveDecoder.validate(
@@ -103,11 +103,11 @@ nonisolated public enum OpenSkySaveEnchantedItemDecoder: Sendable {
 }
 
 nonisolated extension SaveEnchantedItemEntry: SaveDeltaComponentEntry {
-    public var deltaCell: CellSceneLocation? {
+    var deltaCell: CellSceneLocation? {
         cell
     }
 
-    public var deltaComponent: WorldStateComponentValue? {
+    var deltaComponent: WorldStateComponentValue? {
         state.isEmpty ? nil : state.erased
     }
 }

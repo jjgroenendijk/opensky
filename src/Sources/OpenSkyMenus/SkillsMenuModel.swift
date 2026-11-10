@@ -29,20 +29,20 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
 
     /// The constellations around the ring, magic first, in the order the Dragonborn
     /// altar numbers them (`DLC2MiraakAltarScript`).
-    public static let ringOrder: [Int32] = [
+    static let ringOrder: [Int32] = [
         21, 19, 20, 22, 18, 23, 10, 11, 9, 7, 6, 8, 12, 15, 14, 13, 17, 16
     ]
     /// Left to right, as the three buttons of `levelupmenu.swf` stand.
-    public static let attributes: [ActorValueKind] = [.magicka, .health, .stamina]
+    static let attributes: [ActorValueKind] = [.magicka, .health, .stamina]
 
     public private(set) var page: Page
     public private(set) var player: SkillsMenuPlayer
     /// In ring order.
     public private(set) var skills: [SkillsMenuSkill]
     public private(set) var perks: [SkillsMenuPerk] = []
-    public private(set) var skillPosition = 0
+    private(set) var skillPosition = 0
     public private(set) var perkPosition = 0
-    public private(set) var attributePosition = 1
+    private(set) var attributePosition = 1
     /// The last spend's answer, or why a key did nothing.
     public var message: String?
     public var texts = GameSettingTexts<SkillsMenuText>.vanilla
@@ -64,14 +64,14 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
     }
 
     /// The perk tree stays in view while its question is open.
-    public var isInTree: Bool {
+    var isInTree: Bool {
         if case .perkConfirm = page {
             return true
         }
         return page == .perks
     }
 
-    public var selectedSkill: SkillsMenuSkill? {
+    var selectedSkill: SkillsMenuSkill? {
         skills.indices.contains(skillPosition) ? skills[skillPosition] : nil
     }
 
@@ -79,12 +79,12 @@ nonisolated public struct SkillsMenuModel: Equatable, Sendable {
         perks.indices.contains(perkPosition) ? perks[perkPosition] : nil
     }
 
-    public var selectedAttribute: ActorValueKind {
+    var selectedAttribute: ActorValueKind {
         Self.attributes[attributePosition]
     }
 
     /// Fresh values after a spend. The selection stays on the same skill and box.
-    public mutating func refresh(player: SkillsMenuPlayer, skills: [SkillsMenuSkill]) {
+    mutating func refresh(player: SkillsMenuPlayer, skills: [SkillsMenuSkill]) {
         let skill = selectedSkill?.index
         self.player = player
         self.skills = Self.ringOrdered(skills)

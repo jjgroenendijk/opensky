@@ -68,7 +68,7 @@ public enum WornEnchantmentApplication {
     /// Takes every worn enchantment off `holder` and forgets them, which is what
     /// an `unequipAll` and a dev control mean.
     @discardableResult
-    public static func removeAll(
+    static func removeAll(
         on holder: ActorValueHolder,
         using runtime: inout ActiveEffectRuntime
     ) -> WornEnchantmentReport {

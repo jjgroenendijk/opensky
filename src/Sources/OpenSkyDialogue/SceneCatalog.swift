@@ -12,7 +12,7 @@ nonisolated extension SceneCatalog {
         byFormID[id.rawValue]
     }
 
-    public func scene(editorID: String) -> CatalogScene? {
+    func scene(editorID: String) -> CatalogScene? {
         byEditorID[editorID.lowercased()].flatMap { byFormID[$0] }
     }
 
@@ -23,7 +23,7 @@ nonisolated extension SceneCatalog {
 }
 
 nonisolated extension SceneCatalog {
-    public var count: Int {
+    var count: Int {
         byFormID.count
     }
 }

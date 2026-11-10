@@ -5,9 +5,9 @@
 import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 
-nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
+nonisolated enum ReferenceRecordType: String, CaseIterable, Sendable {
     case keyword = "KYWD"
     case formList = "FLST"
     case location = "LCTN"
@@ -43,7 +43,7 @@ nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
     case message = "MESG"
     case loadScreen = "LSCR"
 
-    public var fourCC: FourCC {
+    var fourCC: FourCC {
         switch self {
         case .keyword: "KYWD"
         case .formList: "FLST"
@@ -89,11 +89,11 @@ nonisolated public struct ReferenceRecordCatalog: Sendable {
     ]
 
     /// Every type the browse list offers, for the index the app builds.
-    public static let browsedTypes = Set(ReferenceRecordType.allCases.map(\.fourCC))
+    static let browsedTypes = Set(ReferenceRecordType.allCases.map(\.fourCC))
 
     private let itemsByType: [ReferenceRecordType: [PreviewItem]]
 
-    public init(index: RecordIndex) {
+    init(index: RecordIndex) {
         var grouped: [ReferenceRecordType: [PreviewItem]] = [:]
         for type in ReferenceRecordType.allCases {
             grouped[type] = Self.items(type: type, index: index)
@@ -101,7 +101,7 @@ nonisolated public struct ReferenceRecordCatalog: Sendable {
         itemsByType = grouped
     }
 
-    public func items(for type: ReferenceRecordType, winningPlugin: String?) -> [PreviewItem] {
+    func items(for type: ReferenceRecordType, winningPlugin: String?) -> [PreviewItem] {
         let items = itemsByType[type, default: []]
         guard let winningPlugin else { return items }
         return items.filter { item in

@@ -18,10 +18,10 @@ nonisolated public struct PerkRuntimeTally: Equatable, Sendable {
     /// Condition tabs skipped because no reference was bound for their subject, by
     /// subject. This is the one documented over-application: the effect then applies
     /// more widely than the record asks.
-    public private(set) var unboundConditionSubjects: [PerkConditionSubject: Int] = [:]
+    private(set) var unboundConditionSubjects: [PerkConditionSubject: Int] = [:]
     /// Condition tabs that were evaluated and came out false, which is a perk
     /// correctly not applying rather than a gap.
-    public private(set) var conditionsFailed = 0
+    private(set) var conditionsFailed = 0
     /// Effects skipped because an actor-value function had no value to read.
     public private(set) var unavailableActorValues = 0
 
@@ -33,11 +33,11 @@ nonisolated public struct PerkRuntimeTally: Equatable, Sendable {
         evaluations += 1
     }
 
-    public mutating func noteConditionFailed() {
+    mutating func noteConditionFailed() {
         conditionsFailed += 1
     }
 
-    public mutating func noteUnboundSubject(_ subject: PerkConditionSubject) {
+    mutating func noteUnboundSubject(_ subject: PerkConditionSubject) {
         unboundConditionSubjects[subject, default: 0] += 1
     }
 

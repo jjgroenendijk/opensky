@@ -6,23 +6,23 @@
 public import OpenSkyActorsInterface
 public import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
-public import OpenSkyProgressionInterface
+import OpenSkyProgressionInterface
 
 /// One resolved blow, as its skill uses read it.
-nonisolated public struct MeleeSkillUseBlow: Equatable, Sendable {
-    public var attacker: ReferenceKey
-    public var target: ReferenceKey
-    public var handType: CombatHandType
-    public var kind: MeleeStrikeKind
-    public var damage: MeleeDamageResult
+nonisolated struct MeleeSkillUseBlow: Equatable, Sendable {
+    var attacker: ReferenceKey
+    var target: ReferenceKey
+    var handType: CombatHandType
+    var kind: MeleeStrikeKind
+    var damage: MeleeDamageResult
     /// Whether the blow reached health that can be damaged.
-    public var landed: Bool
+    var landed: Bool
     /// Whether the attacker bashed with a shield, which teaches more than a weapon bash.
-    public var bashedWithShield: Bool
+    var bashedWithShield: Bool
     /// The swung weapon, for `EPModSkillUsage_AdvanceObjectHasKeyword`.
-    public var weapon: ResolvedFormID?
+    var weapon: ResolvedFormID?
 
-    public init(
+    init(
         attacker: ReferenceKey,
         target: ReferenceKey,
         handType: CombatHandType,
@@ -43,11 +43,11 @@ nonisolated public struct MeleeSkillUseBlow: Equatable, Sendable {
     }
 }
 
-nonisolated public enum MeleeSkillUses {
+nonisolated enum MeleeSkillUses {
     /// The attacker's weapon skill, or Block for a bash; the blocker's Block for the
     /// absorbed damage; the target's armour skill for the raw strike
     /// (<https://en.uesp.net/wiki/Skyrim:Heavy_Armor>).
-    public static func events(
+    static func events(
         for blow: MeleeSkillUseBlow, settings: MeleeSkillUseSettings
     ) -> [SkillUseEvent] {
         let damage = blow.damage

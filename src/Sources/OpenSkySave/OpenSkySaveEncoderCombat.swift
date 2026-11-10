@@ -3,7 +3,7 @@
 
 import Foundation
 public import OpenSkyActorsInterface
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveEncoder {
@@ -16,7 +16,7 @@ nonisolated extension OpenSkySaveEncoder {
     /// The `CBTS` chunk: every snapshot entry carrying a combat component, in
     /// the snapshot's `ReferenceKey` order. A session in which nothing was
     /// provoked writes no chunk.
-    public static func writeCombatStates(
+    static func writeCombatStates(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
     ) {

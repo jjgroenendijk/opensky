@@ -19,7 +19,7 @@ public protocol SceneWorld: SceneHost {
 @MainActor
 public final class SceneCoordinator {
     /// Steps and lines the readout keeps.
-    public static let historyLimit = 40
+    static let historyLimit = 40
     /// Ticks between full scans for scenes a save load started.
     static let rescanInterval = 60
 
@@ -27,8 +27,8 @@ public final class SceneCoordinator {
     let conditionCache = RevisionCache<UInt64, SceneConditionBase>()
     let playingCache = RevisionCache<ScenePlayingRevision, [CatalogScene]>()
 
-    public private(set) var trace: [SceneEvent] = []
-    public private(set) var lines: [SceneLine] = []
+    private(set) var trace: [SceneEvent] = []
+    private(set) var lines: [SceneLine] = []
     /// The wait before a repeating scene plays again.
     public let repeatPause: ClosedRange<Float>
     /// Scenes known to be playing, so a frame with none builds no runtime.

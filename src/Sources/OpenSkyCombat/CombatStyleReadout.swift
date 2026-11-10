@@ -4,19 +4,14 @@
 import Foundation
 public import OpenSkyCombatInterface
 
-nonisolated public struct CombatStyleReadout: Equatable, Sendable {
-    public let tuning: CombatStyleTuning?
-    public let base: CombatBehaviorSettings
-
-    public init(tuning: CombatStyleTuning?, base: CombatBehaviorSettings) {
-        self.tuning = tuning
-        self.base = base
-    }
+nonisolated struct CombatStyleReadout: Equatable, Sendable {
+    let tuning: CombatStyleTuning?
+    let base: CombatBehaviorSettings
 }
 
 nonisolated extension CombatStyleReadout {
     /// The game settings this actor's style picks, or that they are off.
-    public func gameSettingsText(_ combatAI: CombatAISettings, isOn: Bool) -> String {
+    func gameSettingsText(_ combatAI: CombatAISettings, isOn: Bool) -> String {
         guard isOn else { return "Game combat settings: off (OpenSky's numbers)" }
         let settings = combatAI.applyingRanges(to: base, tuning: tuning)
         let flight = settings.flight

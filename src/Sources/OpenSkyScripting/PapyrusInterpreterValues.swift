@@ -2,11 +2,11 @@
 
 import Foundation
 import OpenSkyFormatsCore
-public import OpenSkyFormatsPEX
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsPEX
+import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
-    public func read(
+    func read(
         _ operand: PexValue,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusValue {
@@ -26,7 +26,7 @@ extension PapyrusInterpreter {
         }
     }
 
-    public func write(
+    func write(
         _ value: PapyrusValue,
         to destination: PexValue,
         frame: PapyrusFrame
@@ -64,7 +64,7 @@ extension PapyrusInterpreter {
         )
     }
 
-    public func destinationType(
+    func destinationType(
         _ destination: PexValue,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusType {
@@ -86,7 +86,7 @@ extension PapyrusInterpreter {
         )
     }
 
-    public func cast(
+    func cast(
         _ value: PapyrusValue,
         to type: PapyrusType
     ) throws(PapyrusFault) -> PapyrusValue {
@@ -144,7 +144,7 @@ extension PapyrusInterpreter {
         }
     }
 
-    public func declaredType(
+    func declaredType(
         of operand: PexValue,
         frame: PapyrusFrame
     ) -> PapyrusType? {
@@ -162,7 +162,7 @@ extension PapyrusInterpreter {
         return declared.map { PapyrusType(name: $0.variable.typeName) }
     }
 
-    public func resolveMethod(
+    func resolveMethod(
         _ name: String,
         instance: PapyrusInstance,
         startingAt scriptName: String? = nil
@@ -178,7 +178,7 @@ extension PapyrusInterpreter {
         return nil
     }
 
-    public func resolveProperty(
+    func resolveProperty(
         _ name: String,
         instance: PapyrusInstance
     ) throws(PapyrusFault) -> PapyrusResolvedProperty? {
@@ -195,7 +195,7 @@ extension PapyrusInterpreter {
     }
 
     /// The empty-state function `name` of the library script `script`.
-    public func staticFunction(_ name: String, script: String) -> PapyrusResolvedFunction? {
+    func staticFunction(_ name: String, script: String) -> PapyrusResolvedFunction? {
         guard
             let owner = runtime.index(named: script),
             let compiled = owner.function(named: name, state: "")
@@ -203,7 +203,7 @@ extension PapyrusInterpreter {
         return PapyrusResolvedFunction(owner: owner, compiled: compiled)
     }
 
-    public func propertyHandler(
+    func propertyHandler(
         of resolved: PapyrusResolvedProperty,
         writing: Bool
     ) -> PapyrusResolvedFunction? {

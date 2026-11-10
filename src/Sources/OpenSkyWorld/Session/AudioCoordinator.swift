@@ -92,7 +92,7 @@ public final class AudioCoordinator {
     }
 
     /// Empty until the list is built; the readout refreshes and then shows it.
-    public var selectableAudioFileNames: [String] {
+    var selectableAudioFileNames: [String] {
         if let musicFileNames {
             return musicFileNames
         }
@@ -114,7 +114,7 @@ public final class AudioCoordinator {
     }
 
     /// Nil when the play started or waits for its file; else the reason.
-    public func playAudioFile(named name: String) -> AudioTriggerRefusal? {
+    func playAudioFile(named name: String) -> AudioTriggerRefusal? {
         guard let engine, engine.isRunning, let assets else { return .engineNotRunning }
         var reason: AudioTriggerRefusal?
         let position = triggerPosition()

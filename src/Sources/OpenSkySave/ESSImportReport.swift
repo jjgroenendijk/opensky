@@ -8,19 +8,15 @@ nonisolated public struct ESSImportCategory: Equatable, Sendable {
     public let name: String
     public internal(set) var imported = 0
     /// Decoded but not brought over, by reason.
-    public internal(set) var dropped: [String: Int] = [:]
+    var dropped: [String: Int] = [:]
     /// Present in the save but not decoded, by reason.
-    public internal(set) var notDecoded: [String: Int] = [:]
+    var notDecoded: [String: Int] = [:]
 
-    public init(name: String) {
-        self.name = name
-    }
-
-    public var droppedCount: Int {
+    var droppedCount: Int {
         dropped.values.reduce(0, +)
     }
 
-    public var notDecodedCount: Int {
+    var notDecodedCount: Int {
         notDecoded.values.reduce(0, +)
     }
 
@@ -38,18 +34,18 @@ nonisolated public struct ESSImportCategory: Equatable, Sendable {
 nonisolated public struct ESSImportReport: Equatable, Sendable {
     /// Categories in a fixed order, so two imports of one save print the same.
     public internal(set) var categories: [ESSImportCategory]
-    public let loadOrder: ESSLoadOrderComparison
+    let loadOrder: ESSLoadOrderComparison
     /// Running and suspended stacks, which are dropped, by the script they run.
-    public internal(set) var droppedStacks: [String: Int] = [:]
+    var droppedStacks: [String: Int] = [:]
 
-    public static let categoryNames = [
+    static let categoryNames = [
         "globals", "clock", "player", "references", "inventories", "actors", "quests",
         "aliases", "dialogue", "scripts", "created forms"
     ]
 
     init(loadOrder: ESSLoadOrderComparison) {
         self.loadOrder = loadOrder
-        categories = Self.categoryNames.map(ESSImportCategory.init(name:))
+        categories = Self.categoryNames.map { ESSImportCategory(name: $0) }
     }
 
     public func category(_ name: String) -> ESSImportCategory? {
@@ -70,7 +66,7 @@ nonisolated public struct ESSImportReport: Equatable, Sendable {
     }
 
     /// One line per category, then the dropped and undecoded reasons indented.
-    public var lines: [String] {
+    var lines: [String] {
         var lines: [String] = []
         for category in categories {
             lines.append(

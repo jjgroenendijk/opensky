@@ -74,11 +74,11 @@ nonisolated public struct PerkTreeIndex: Sendable {
     /// Where `perk` sits, or nil when no tree in this load order grants it —
     /// which is every quest perk, every ability the game hands out directly,
     /// and every perk in a session with no AVIF records.
-    public func placement(of perk: ReferenceKey) -> PerkTreePlacement? {
+    func placement(of perk: ReferenceKey) -> PerkTreePlacement? {
         placements[perk]
     }
 
-    public var count: Int {
+    var count: Int {
         placements.count
     }
 }

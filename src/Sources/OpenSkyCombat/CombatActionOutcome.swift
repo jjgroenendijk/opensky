@@ -5,14 +5,14 @@ import Foundation
 public import OpenSkyActorsInterface
 public import OpenSkyFormatsESM
 
-nonisolated public enum MeleeActionOutcome: Equatable, Sendable {
+nonisolated enum MeleeActionOutcome: Equatable, Sendable {
     case idle
     case unavailable
     case cannotAttack(WeaponDrawState)
     case requested(power: Bool)
     case clearedTrace
 
-    public var text: String {
+    var text: String {
         switch self {
         case .idle: "No melee action yet."
         case .unavailable: "Melee unavailable: no game data loaded."
@@ -24,7 +24,7 @@ nonisolated public enum MeleeActionOutcome: Equatable, Sendable {
     }
 }
 
-nonisolated public enum ArcheryActionOutcome: Equatable, Sendable {
+nonisolated enum ArcheryActionOutcome: Equatable, Sendable {
     case idle
     case unavailable
     case noAmmunition
@@ -34,7 +34,7 @@ nonisolated public enum ArcheryActionOutcome: Equatable, Sendable {
     case clearedStuck
     case clearedTrace
 
-    public var text: String {
+    var text: String {
         switch self {
         case .idle: "No shot taken yet."
         case .unavailable: "Archery unavailable: no game data loaded."
@@ -58,7 +58,7 @@ nonisolated public enum CombatLoopOutcome: Equatable, Sendable {
     case scriptStopped(ReferenceKey)
     case assisted(ReferenceKey, ally: ReferenceKey)
 
-    public var text: String {
+    var text: String {
         switch self {
         case .idle: "No fight yet."
         case .castingDisallowed: "Combat: fighters may not cast their spells."

@@ -47,14 +47,14 @@ nonisolated public enum ScenePackageState: Equatable, Sendable {
 /// Lines whose voice file still loads. Kept outside the saved scene state: a save
 /// loaded during the wait ends the line at once.
 @MainActor
-public final class ScenePendingLines {
+final class ScenePendingLines {
     var lines: [ScenePackageOwner: SceneLine] = [:]
     /// When each repeating scene may play again, in scene seconds.
     var repeatsAt: [FormID: Double] = [:]
 
-    public init() {}
+    init() {}
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         lines.isEmpty
     }
 }
@@ -64,25 +64,25 @@ public struct SceneRuntime {
     public let catalog: SceneCatalog
     /// Selection, said-state, and result scripts of dialogue actions.
     public let dialogue: DialogueRuntime
-    public var fragments: (any SceneFragmentDispatching)?
-    public weak var host: (any SceneHost)?
-    public let pendingLines: ScenePendingLines
+    var fragments: (any SceneFragmentDispatching)?
+    weak var host: (any SceneHost)?
+    let pendingLines: ScenePendingLines
     /// The playing scenes, kept until a scene state changes: a frame asks several times,
     /// and each ask scanned every scene record.
     let playingCache: RevisionCache<ScenePlayingRevision, [CatalogScene]>
     /// Scene seconds: game seconds divided by the time scale.
-    public var now: Double
+    var now: Double
     /// The pause after a looping line, between the action's minimum and maximum. Tests fix it.
-    public var loopPause: @MainActor (ClosedRange<Float>) -> Float = {
+    var loopPause: @MainActor (ClosedRange<Float>) -> Float = {
         let stream = RandomStream(seed: 0x4C4F_4F50)
         return { stream.float(in: $0) }
     }()
 
     /// `fRandomSceneAgainMinTime` to `...MaxTime`: the wait before a scene flagged
     /// "Repeat while true" plays again. Drawn through `loopPause`.
-    public var repeatPause: ClosedRange<Float> = 10 ... 30
+    var repeatPause: ClosedRange<Float> = 10 ... 30
 
-    public init(
+    init(
         catalog: SceneCatalog,
         dialogue: DialogueRuntime,
         fragments: (any SceneFragmentDispatching)? = nil,
@@ -155,7 +155,7 @@ public struct SceneRuntime {
 
     /// Advances every playing scene: stops those whose quest stopped, completes
     /// timed actions, and moves phases on.
-    public func tick() -> [SceneEvent] {
+    func tick() -> [SceneEvent] {
         advance(playingScenes())
     }
 

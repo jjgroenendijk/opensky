@@ -270,12 +270,12 @@ extension ScriptCoordinator {
     }
 
     /// Freezes only the VM, not the world, so a mid-event VM can be inspected.
-    public func setScriptsPaused(_ paused: Bool) {
+    func setScriptsPaused(_ paused: Bool) {
         runtime?.isPaused = paused
     }
 
     /// The runtime clamps `ticks`, so a stray value cannot stall the frame.
-    public func stepScripts(ticks: Int) {
+    func stepScripts(ticks: Int) {
         runtime?.burst(ticks: ticks, gameClock: world?.gameClock)
     }
 }

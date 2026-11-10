@@ -50,7 +50,7 @@ public struct FactionRuntime: FactionAccess {
         self.pluginName = pluginName
     }
 
-    public var store: WorldStateStore {
+    var store: WorldStateStore {
         worldState
     }
 
@@ -73,7 +73,7 @@ public struct FactionRuntime: FactionAccess {
     /// Every faction `key` belongs to that this load order can still resolve,
     /// in key order. A membership the load order dropped stays in the component
     /// and is simply absent from this listing.
-    public func resolvedFactions(of key: ReferenceKey) -> [ResolvedFaction] {
+    func resolvedFactions(of key: ReferenceKey) -> [ResolvedFaction] {
         state(of: key).factions.compactMap { factions.faction(key: $0) }
     }
 

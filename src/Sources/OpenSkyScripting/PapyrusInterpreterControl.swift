@@ -1,11 +1,11 @@
 // Relative branch opcodes.
 
 import Foundation
-public import OpenSkyFormatsPEX
+import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 extension PapyrusInterpreter {
-    public func controlOp(
+    func controlOp(
         _ instruction: PexInstruction,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {

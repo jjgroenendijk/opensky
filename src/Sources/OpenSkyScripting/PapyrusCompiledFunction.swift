@@ -2,44 +2,44 @@
 // script is indexed, so the interpreter reads a local without folding its name.
 
 import Foundation
-public import OpenSkyFormatsPEX
-public import OpenSkyScriptingInterface
+import OpenSkyFormatsPEX
+import OpenSkyScriptingInterface
 
 /// What one identifier spelling names inside a function.
-nonisolated public struct PapyrusNameBinding: Equatable, Sendable {
+nonisolated struct PapyrusNameBinding: Equatable, Sendable {
     /// `::NoneVar` or `None`: a read gives `None` and a write is dropped.
-    public let isDiscard: Bool
+    let isDiscard: Bool
     /// `self` or `_self`.
-    public let isSelf: Bool
+    let isSelf: Bool
     /// The parameter or local slot the name stands for.
-    public let slot: Int?
+    let slot: Int?
 }
 
 /// The names one call instruction names, folded when the script is indexed.
-nonisolated public struct PapyrusCallNameKeys: Equatable, Sendable {
-    public let functionSpelling: String
-    public let function: String
+nonisolated struct PapyrusCallNameKeys: Equatable, Sendable {
+    let functionSpelling: String
+    let function: String
     /// The script a static call names; nil for a method or parent call.
-    public let script: String?
+    let script: String?
 }
 
-nonisolated public final class PapyrusCompiledFunction: Sendable {
-    public let function: PexFunction
-    public let slotTypes: [PapyrusType]
+nonisolated final class PapyrusCompiledFunction: Sendable {
+    let function: PexFunction
+    let slotTypes: [PapyrusType]
     /// Each slot's starting value, the default of its type.
-    public let slotDefaults: [PapyrusValue]
+    let slotDefaults: [PapyrusValue]
     /// The slot each argument fills. Nil when a later declaration of the same name hides
     /// the parameter, because that declaration's value wins.
-    public let argumentSlots: [Int?]
-    public let defaultReturnValue: PapyrusValue
+    let argumentSlots: [Int?]
+    let defaultReturnValue: PapyrusValue
     /// One entry per instruction; nil for an instruction that is not a call.
-    public let callNameKeys: [PapyrusCallNameKeys?]
+    let callNameKeys: [PapyrusCallNameKeys?]
 
     private let slotsByKey: [String: Int]
     /// Every identifier spelling the instructions use, so the run loop never folds one.
     private let bindingsBySpelling: [String: PapyrusNameBinding]
 
-    public init(_ function: PexFunction) {
+    init(_ function: PexFunction) {
         self.function = function
         let declarations = function.parameters + function.localVariables
         var slotsByKey: [String: Int] = [:]
@@ -76,7 +76,7 @@ nonisolated public final class PapyrusCompiledFunction: Sendable {
     }
 
     /// The folded names of the call at `index`, when its function is spelled `spelling`.
-    public func callNameKeys(at index: Int, spelling: String) -> PapyrusCallNameKeys? {
+    func callNameKeys(at index: Int, spelling: String) -> PapyrusCallNameKeys? {
         guard callNameKeys.indices.contains(index), let keys = callNameKeys[index] else {
             return nil
         }
@@ -107,7 +107,7 @@ nonisolated public final class PapyrusCompiledFunction: Sendable {
         }
     }
 
-    public func binding(for name: String) -> PapyrusNameBinding {
+    func binding(for name: String) -> PapyrusNameBinding {
         bindingsBySpelling[name] ?? Self.binding(name, slotsByKey: slotsByKey)
     }
 

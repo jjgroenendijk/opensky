@@ -4,9 +4,9 @@
 
 import Foundation
 
-nonisolated public enum MenuMovieBridges: Sendable {
+nonisolated enum MenuMovieBridges: Sendable {
     /// Lowercased archive paths.
-    public static let moviePaths: Set<String> = [
+    static let moviePaths: Set<String> = [
         BookMenuBarMovieBridge.moviePath,
         BookMenuMovieBridge.moviePath,
         ContainerMenuMovieBridge.barterMoviePath,

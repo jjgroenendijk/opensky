@@ -6,12 +6,12 @@
 
 import Foundation
 import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 import OpenSkyMagicInterface
 
 extension ActiveEffectRuntime {
     /// How often the entry conditions of a stored effect are checked.
-    public static let conditionCheckSeconds: Float = 1
+    static let conditionCheckSeconds: Float = 1
 
     /// Counts `seconds` toward the next check and runs it once a second passes.
     mutating func advanceConditionClock(by seconds: Float, over holders: [ActorValueHolder]) {
@@ -28,7 +28,7 @@ extension ActiveEffectRuntime {
     /// resumes every suspended one whose conditions now pass.
     /// - Returns: how many effects changed.
     @discardableResult
-    public mutating func recheckConditions(on holder: ActorValueHolder) -> Int {
+    mutating func recheckConditions(on holder: ActorValueHolder) -> Int {
         let state = state(of: holder)
         let applying = application
         defer { application = applying }

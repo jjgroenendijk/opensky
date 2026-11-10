@@ -14,7 +14,7 @@ nonisolated public enum BookMenuMovieBridge: Sendable {
     }
 
     /// A book turns a spread of two pages; a note turns one.
-    public static func turnPage(forward: Bool, isNote: Bool, runtime: SWFMovieRuntime) {
+    static func turnPage(forward: Bool, isNote: Bool, runtime: SWFMovieRuntime) {
         let step = isNote ? 1 : 2
         runtime.callMovie("TurnPage", arguments: [.integer(forward ? step : -step)])
     }

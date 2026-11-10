@@ -4,34 +4,32 @@
 // Sources: UESP "Skyrim:Essential NPCs" and "Skyrim:Protected NPCs", and the Creation
 // Kit wiki "Class". See docs/engine/ragdoll.md#bleedout.
 
-public import OpenSkyCombatInterface
+import OpenSkyCombatInterface
 public import OpenSkyFormatsESM
 
 /// The actors in bleedout and how long each has knelt.
-nonisolated public struct BleedoutTracker: Equatable, Sendable {
-    public private(set) var seconds: [ReferenceKey: Float] = [:]
+nonisolated struct BleedoutTracker: Equatable, Sendable {
+    private(set) var seconds: [ReferenceKey: Float] = [:]
 
-    public init() {}
-
-    public func contains(_ key: ReferenceKey) -> Bool {
+    func contains(_ key: ReferenceKey) -> Bool {
         seconds[key] != nil
     }
 
     /// False when the actor already bleeds out.
-    public mutating func enter(_ key: ReferenceKey) -> Bool {
+    mutating func enter(_ key: ReferenceKey) -> Bool {
         guard seconds[key] == nil else { return false }
         seconds[key] = 0
         return true
     }
 
-    public mutating func remove(_ key: ReferenceKey) {
+    mutating func remove(_ key: ReferenceKey) {
         seconds[key] = nil
     }
 
     /// Ages every actor and returns, in key order, those who stand up. They leave the
     /// tracker. A `held` actor keeps kneeling. `recovered` says whose health is back
     /// above its kneel ratio by `fBleedoutRecover`; it counts after `fBleedoutMin`.
-    public mutating func advance(
+    mutating func advance(
         by delta: Float, settings: DeathSettings, held: (ReferenceKey) -> Bool = { _ in false },
         recovered healthBack: (ReferenceKey) -> Bool = { _ in false }
     ) -> [ReferenceKey] {

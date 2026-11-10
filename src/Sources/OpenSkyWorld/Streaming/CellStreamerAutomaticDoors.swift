@@ -10,7 +10,7 @@ import simd
 extension CellStreamer {
     /// Activates each automatic door whose area the feet entered this frame. A door
     /// fires once per entry and again only after the player leaves its area.
-    public func updateAutomaticDoors(feet: SIMD3<Float>?) {
+    func updateAutomaticDoors(feet: SIMD3<Float>?) {
         guard let feet, transitionInFlight == nil else {
             automaticDoorOccupancy = nil
             return

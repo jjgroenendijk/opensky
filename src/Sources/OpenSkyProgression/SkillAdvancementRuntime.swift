@@ -62,7 +62,7 @@ public struct SkillAdvancementRuntime {
     /// guessing a skill.
     public var wornArmor: @MainActor (ReferenceKey) -> WornArmorProfile = { _ in .none }
     /// The 0 to 5 roll that picks the armour skill a blow credits.
-    public var armorRoll: @MainActor ()
+    var armorRoll: @MainActor ()
         -> Int = { [stream = RandomStream(seed: 0x4152_4D52)] in
             stream.int(below: WornArmorProfile.rollSides)
         }
@@ -77,7 +77,7 @@ public struct SkillAdvancementRuntime {
 
     /// The player's stored progress, or a fresh one when this session runs no
     /// character leveling.
-    public var progress: PlayerProgressState {
+    var progress: PlayerProgressState {
         leveling?.state ?? PlayerProgressState()
     }
 

@@ -60,7 +60,7 @@ extension InventoryCoordinator {
     }
 
     /// What `target` wears. Empty without equipment or without a target.
-    public func equippedReadout(on target: EquipmentTargetSelector) -> [EquippedItemReadout] {
+    func equippedReadout(on target: EquipmentTargetSelector) -> [EquippedItemReadout] {
         guard let equipment, let holder = holder(for: target) else { return [] }
         return equipment.equipped(on: holder).map { item in
             EquippedItemReadout(
@@ -73,7 +73,7 @@ extension InventoryCoordinator {
 
     /// The nearest resident ACHR as a holder. The readout and the actions
     /// share it, so they agree on which actor "nearest" means.
-    public func nearestActorHolder() -> InventoryHolder? {
+    func nearestActorHolder() -> InventoryHolder? {
         guard
             let runtime,
             let entry = world.nearestActorEntry(),

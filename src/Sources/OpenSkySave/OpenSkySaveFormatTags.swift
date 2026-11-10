@@ -4,13 +4,13 @@
 import Foundation
 public import OpenSkyFormatsESM
 import OpenSkySaveInterface
-public import OpenSkyWorldState
+import OpenSkyWorldState
 
 /// On-disk tag of a component slot inside `RDLT`, written case by case. Nil for slots
 /// carried by their own chunk (inventory, spawn, quests, actor values, death, combat,
 /// dialogue): the encoder leaves them out, and the decoder still errors on unknown kinds.
 nonisolated extension WorldStateComponentKind {
-    public var saveTag: UInt8? {
+    var saveTag: UInt8? {
         switch self {
         case .enableState: 0
         case .transform: 1
@@ -20,7 +20,7 @@ nonisolated extension WorldStateComponentKind {
         }
     }
 
-    public init?(saveTag: UInt8) {
+    init?(saveTag: UInt8) {
         switch saveTag {
         case 0: self = .enableState
         case 1: self = .transform
@@ -45,7 +45,7 @@ nonisolated extension Global.ValueType {
         }
     }
 
-    public init?(saveTag: UInt8) {
+    init?(saveTag: UInt8) {
         switch saveTag {
         case 0: self = .short
         case 1: self = .long
@@ -84,13 +84,13 @@ nonisolated public struct SavePluginFingerprint: Equatable, Sendable {
     }
 
     /// Whether two fingerprints name the same plugin, ignoring file-name case.
-    public func namesSamePlugin(as other: Self) -> Bool {
+    func namesSamePlugin(as other: Self) -> Bool {
         name.lowercased() == other.name.lowercased()
     }
 
     /// Whether the three HEDR stats are identical, which is the "the plugin
     /// has not been edited since the save" test.
-    public func hasSameStats(as other: Self) -> Bool {
+    func hasSameStats(as other: Self) -> Bool {
         hedrVersion.bitPattern == other.hedrVersion.bitPattern
             && recordCount == other.recordCount
             && nextObjectID == other.nextObjectID

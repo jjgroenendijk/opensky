@@ -48,7 +48,7 @@ nonisolated extension SystemMenuMovieBridge {
     }
 
     /// The movie's highlighted row on a topic page. `SystemPage` keeps each list as a member.
-    public static func selectedTopicRow(
+    static func selectedTopicRow(
         _ page: SystemMenuPage, runtime: SWFMovieRuntime
     ) -> Int? {
         let member = page == .help ? "HelpList" : "CreationsList"

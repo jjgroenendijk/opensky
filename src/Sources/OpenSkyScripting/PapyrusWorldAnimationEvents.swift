@@ -4,12 +4,12 @@
 
 import Foundation
 public import OpenSkyFormatsESM
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// False when `handle` names no script instance.
     @discardableResult
-    public func registerAnimationEvent(
+    func registerAnimationEvent(
         handle: PapyrusObjectHandle, sender: ReferenceKey, name: String
     ) -> Bool {
         guard let key = keysByHandle[handle] else { return false }
@@ -21,7 +21,7 @@ extension PapyrusWorldRuntime {
         return true
     }
 
-    public func unregisterAnimationEvent(
+    func unregisterAnimationEvent(
         handle: PapyrusObjectHandle, sender: ReferenceKey, name: String
     ) {
         guard let key = keysByHandle[handle] else { return }

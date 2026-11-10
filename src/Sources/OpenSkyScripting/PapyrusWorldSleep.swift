@@ -3,12 +3,12 @@
 // Kit wiki "RegisterForSleep - Form"). See docs/engine/papyrus-registrations.md#sleep.
 
 import Foundation
-public import OpenSkyScriptingInterface
+import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {
     /// False when `handle` names no script instance.
     @discardableResult
-    public func registerSleep(handle: PapyrusObjectHandle, _ isRegistered: Bool) -> Bool {
+    func registerSleep(handle: PapyrusObjectHandle, _ isRegistered: Bool) -> Bool {
         guard let key = keysByHandle[handle] else { return false }
         if isRegistered {
             sleepListeners.insert(key)

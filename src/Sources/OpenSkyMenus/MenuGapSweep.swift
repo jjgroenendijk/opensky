@@ -13,11 +13,11 @@ nonisolated public struct MenuGapSweep {
     public private(set) var movieCount = 0
     public private(set) var loadFailures: [String] = []
     /// Menu movie path -> GameDelegate names it registers or calls.
-    public private(set) var engineMovies: [String: Set<String>] = [:]
+    private(set) var engineMovies: [String: Set<String>] = [:]
     /// AS2 names the runtime does not provide -> hits over all movies.
-    public private(set) var missingNames: [String: Int] = [:]
-    public private(set) var unimplementedOpcodes: [String: Int] = [:]
-    public private(set) var faultKinds: [String: Int] = [:]
+    private(set) var missingNames: [String: Int] = [:]
+    private(set) var unimplementedOpcodes: [String: Int] = [:]
+    private(set) var faultKinds: [String: Int] = [:]
 
     public init() {}
 
@@ -42,7 +42,7 @@ nonisolated public struct MenuGapSweep {
 
     /// A movie directly in `interface\`. One in a subfolder, such as
     /// `inventory components\`, is a part another menu loads.
-    public static func isMenuMovie(_ path: String) -> Bool {
+    static func isMenuMovie(_ path: String) -> Bool {
         path.split(separator: "\\").count == 2
     }
 

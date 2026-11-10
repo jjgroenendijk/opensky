@@ -31,7 +31,7 @@ nonisolated public struct SaveReader: Sendable {
         }
     }
 
-    public mutating func uint8(_ context: String) throws -> UInt8 {
+    mutating func uint8(_ context: String) throws -> UInt8 {
         do {
             return try reader.readUInt8()
         } catch {
@@ -63,7 +63,7 @@ nonisolated public struct SaveReader: Sendable {
         }
     }
 
-    public mutating func float32(_ context: String) throws -> Float {
+    mutating func float32(_ context: String) throws -> Float {
         do {
             return try reader.readFloat32()
         } catch {
@@ -85,7 +85,7 @@ nonisolated public struct SaveReader: Sendable {
     /// A byte the format defines as 0 or 1. Anything else is corruption, not
     /// a truthy value: silently treating 0x7F as `true` would hide a decoder
     /// or writer bug behind a plausible-looking world.
-    public mutating func bool(_ context: String) throws -> Bool {
+    mutating func bool(_ context: String) throws -> Bool {
         let value = try uint8(context)
         switch value {
         case 0:

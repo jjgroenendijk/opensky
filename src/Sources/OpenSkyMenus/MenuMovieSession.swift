@@ -39,10 +39,10 @@ public struct MenuMovie {
 }
 
 /// A movie the menu refused after bring-up, with the readout text.
-public struct MenuMovieRefusal: Error, CustomStringConvertible {
-    public let description: String
+struct MenuMovieRefusal: Error, CustomStringConvertible {
+    let description: String
 
-    public init(_ description: String) {
+    init(_ description: String) {
         self.description = description
     }
 }
@@ -81,7 +81,7 @@ public final class MenuMovieSession {
         isLoaded ? renderer() : nil
     }
 
-    public var runtime: SWFMovieRuntime? {
+    var runtime: SWFMovieRuntime? {
         loadedRenderer?.swfRuntime
     }
 

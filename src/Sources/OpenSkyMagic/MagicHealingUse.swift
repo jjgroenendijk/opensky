@@ -9,22 +9,16 @@ public import OpenSkyFormatsESM
 import OpenSkyGameData
 
 /// Health one healing effect gave back, already scaled by the effect's skill usage factor.
-nonisolated public struct MagicHealingUse: Equatable, Sendable {
-    public let caster: ReferenceKey
-    public let skill: Int32
-    public let amount: Float
-
-    public init(caster: ReferenceKey, skill: Int32, amount: Float) {
-        self.caster = caster
-        self.skill = skill
-        self.amount = amount
-    }
+nonisolated struct MagicHealingUse: Equatable, Sendable {
+    let caster: ReferenceKey
+    let skill: Int32
+    let amount: Float
 }
 
 nonisolated extension MagicEffectData {
     /// A healing effect: a beneficial value modifier on Health in a magic school. It
     /// earns experience by the health it restores, not by the magicka it costs.
-    public var isHealing: Bool {
+    var isHealing: Bool {
         archetype == .valueModifier
             && relatedActorValue == ActorValueIdentity.index(named: "Health")
             && !flags.contains(.detrimental)

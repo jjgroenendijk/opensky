@@ -46,7 +46,7 @@ extension CellStreamer {
         grid.desiredCells.count
     }
 
-    public var distantLODBlockCount: Int {
+    var distantLODBlockCount: Int {
         composition.distantLOD?.blockCount ?? 0
     }
 
@@ -74,7 +74,7 @@ extension CellStreamer {
         composition.cellCount
     }
 
-    public var isCoverageTransitionActive: Bool {
+    var isCoverageTransitionActive: Bool {
         coverageTransitionActive
     }
 

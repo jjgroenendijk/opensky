@@ -15,7 +15,7 @@ nonisolated extension LockpickingMenuPresentation {
     static let pickDots = 12
     static let keyholeDots = 5
     static let barWidth: Float = 240
-    public static let hint = "Mouse or A/D: move pick   W: turn lock   Esc: leave"
+    static let hint = "Mouse or A/D: move pick   W: turn lock   Esc: leave"
 
     private static let dim = SIMD4<Float>(0.45, 0.48, 0.55, 1)
     private static let bright = SIMD4<Float>(0.95, 0.90, 0.75, 1)
