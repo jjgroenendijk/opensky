@@ -68,18 +68,6 @@ public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
         PapyrusNativeRegistry()
     }
 
-    public static var standard: PapyrusNativeRegistry {
-        standard(context: PapyrusNativeContext())
-    }
-
-    /// The standard registry over a caller-supplied context, so a world-aware session
-    /// installs the same natives with `PapyrusNativeContext.world` set.
-    public static func standard(context: PapyrusNativeContext) -> PapyrusNativeRegistry {
-        var registry = PapyrusNativeRegistry(context: context)
-        PapyrusNativeFunctions.install(into: &registry)
-        return registry
-    }
-
     private static let logger = EngineLogger(
         subsystem: Bundle.main.bundleIdentifier ?? "OpenSky",
         category: "PapyrusNatives"

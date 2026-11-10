@@ -124,3 +124,17 @@ public enum PapyrusNativeFunctions {
         return value
     }
 }
+
+extension PapyrusNativeFunctions {
+    public static var standardRegistry: PapyrusNativeRegistry {
+        standardRegistry(context: PapyrusNativeContext())
+    }
+
+    /// The standard registry over a caller-supplied context, so a world-aware session
+    /// installs the same natives with `PapyrusNativeContext.world` set.
+    public static func standardRegistry(context: PapyrusNativeContext) -> PapyrusNativeRegistry {
+        var registry = PapyrusNativeRegistry(context: context)
+        install(into: &registry)
+        return registry
+    }
+}

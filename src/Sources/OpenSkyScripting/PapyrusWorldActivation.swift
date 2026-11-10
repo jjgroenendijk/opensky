@@ -40,7 +40,7 @@ extension PapyrusWorldRuntime {
     }
 
     /// The session-stable handle for `key`: its live instance handle when scripted, else
-    /// an opaque handle that `PapyrusInterpreter` dispatches by declared type. A reference
+    /// an opaque handle that `PapyrusRuntime.Interpreter` dispatches by declared type. A reference
     /// scripted later keeps both handles; both resolve to the same `ReferenceKey`.
     public func objectHandle(for key: ReferenceKey) -> PapyrusObjectHandle {
         if let existing = instanceHandle(for: key) {

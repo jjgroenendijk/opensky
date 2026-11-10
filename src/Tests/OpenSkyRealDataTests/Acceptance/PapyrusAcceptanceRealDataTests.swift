@@ -30,7 +30,7 @@ struct PapyrusAcceptanceRealDataTests {
         let loader = PexScriptLoader(fileSystem: VirtualFileSystem(root: root))
         let paths = loader.scriptPaths()
         let files = try paths.map(loader.load)
-        let registry = PapyrusNativeRegistry.standard
+        let registry = PapyrusNativeFunctions.standardRegistry
         let census = PexNativeCensus(files: files)
         let coverage = census.coverage(in: registry)
         let (runtime, run) = try executeEntryPoints(files: files, registry: registry)
@@ -156,7 +156,7 @@ struct PapyrusAcceptanceRealDataTests {
         let files = try loader.scriptPaths().map(loader.load)
         let (runtime, run) = try executeEntryPoints(
             files: files,
-            registry: .standard
+            registry: PapyrusNativeFunctions.standardRegistry
         )
         let rate = Self.instructionRate(runtime: runtime, run: run)
         print("Papyrus instructions per second\t\(Int(rate))")

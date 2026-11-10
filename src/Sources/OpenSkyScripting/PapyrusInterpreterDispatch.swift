@@ -4,7 +4,7 @@ import Foundation
 import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
-extension PapyrusInterpreter {
+extension PapyrusRuntime.Interpreter {
     func requireOperands(
         _ count: Int,
         instruction: PexInstruction

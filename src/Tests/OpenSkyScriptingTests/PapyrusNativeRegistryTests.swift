@@ -11,7 +11,7 @@ import Testing
 @MainActor
 struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
-        let standard = PapyrusNativeRegistry.standard
+        let standard = PapyrusNativeFunctions.standardRegistry
         // Pinned so an added or lost native is a visible change.
         #expect(standard.count == 593)
         #expect(standard.contains(
@@ -163,7 +163,7 @@ struct PapyrusNativeRegistryTests {
     }
 
     @Test func mathAndAnimationDeviationReturnHonestValues() {
-        let registry = PapyrusNativeRegistry.standard
+        let registry = PapyrusNativeFunctions.standardRegistry
         let sqrtCall = call(
             "Math", "Sqrt", arguments: [.float(81)], returnType: .float
         )

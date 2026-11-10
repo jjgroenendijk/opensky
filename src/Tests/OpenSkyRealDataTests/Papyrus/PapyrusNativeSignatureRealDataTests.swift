@@ -83,7 +83,7 @@ struct PapyrusNativeSignatureRealDataTests {
             lines.append(Self.describe(expected, function))
         }
 
-        let registry = PapyrusNativeRegistry.standard(context: PapyrusNativeContext())
+        let registry = PapyrusNativeFunctions.standardRegistry(context: PapyrusNativeContext())
         for expected in Self.unregistered {
             let stale = "\(expected.script).\(expected.function) is registered now — "
                 + "move it out of the unregistered list"

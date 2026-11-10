@@ -19,7 +19,7 @@ struct TrapScriptCensusRealDataTests {
         let names = files.flatMap(\.objects).map(\.name)
         let callers = Set(names.filter(TrapScriptFamily.contains).map { $0.lowercased() })
         let census = PexNativeCensus(files: files, callers: callers)
-        let registry = PapyrusNativeRegistry.standard
+        let registry = PapyrusNativeFunctions.standardRegistry
         let missing = census.rankedReferences.filter { reference in
             let parts = reference.name.split(separator: ".", maxSplits: 1).map(String.init)
             return parts.count == 2

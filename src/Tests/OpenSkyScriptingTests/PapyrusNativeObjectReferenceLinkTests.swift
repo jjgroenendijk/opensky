@@ -165,7 +165,7 @@ struct PapyrusNativeObjectReferenceLinkTests {
     /// reason. The interpreter turns that into the call's declared default, so
     /// a headless script still runs to completion.
     @Test func headlessCallsFailInsteadOfGuessing() {
-        let registry = PapyrusNativeRegistry.standard
+        let registry = PapyrusNativeFunctions.standardRegistry
         let receiver = PapyrusObjectHandle(7)
         for functionName in [
             "Enable", "Disable", "IsEnabled", "Delete",

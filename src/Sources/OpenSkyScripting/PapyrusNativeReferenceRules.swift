@@ -10,9 +10,6 @@ import OpenSkyWorldState
 import simd
 
 extension PapyrusNativeFunctions {
-    static let stolenValueCrimeName = "stolenValueCrime"
-    static let stolenValueNoCrimeName = "stolenValueNoCrime"
-
     static func installReferenceRules(into registry: inout PapyrusNativeRegistry) {
         installNodes(into: &registry)
         // "Flags this cell for reset on next load", even in a no-reset zone.
@@ -55,8 +52,8 @@ extension PapyrusNativeFunctions {
             return .returned(.boolean(play(impacts, pick)))
         }
         for (name, valueName) in [
-            ("GetStolenItemValueCrime", stolenValueCrimeName),
-            ("GetStolenItemValueNoCrime", stolenValueNoCrimeName)
+            ("GetStolenItemValueCrime", PapyrusWorldStateBridge.stolenValueCrimeName),
+            ("GetStolenItemValueNoCrime", PapyrusWorldStateBridge.stolenValueNoCrimeName)
         ] {
             scriptState("Faction", name, into: &registry) { _, bridge, key in
                 let value = bridge.scriptedState(of: key).value(valueName) ?? 0
@@ -109,8 +106,8 @@ extension PapyrusWorldStateBridge {
     /// The player stole `value` from `faction`, seen or unseen.
     public func noteStolenValue(_ value: Int64, from faction: ReferenceKey, witnessed: Bool) {
         let name = witnessed
-            ? PapyrusNativeFunctions.stolenValueCrimeName
-            : PapyrusNativeFunctions.stolenValueNoCrimeName
+            ? PapyrusWorldStateBridge.stolenValueCrimeName
+            : PapyrusWorldStateBridge.stolenValueNoCrimeName
         updateScriptedState(of: faction) { state in
             state.setValue(name, (state.value(name) ?? 0) + Float(value))
         }

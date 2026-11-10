@@ -22,12 +22,13 @@ extension PapyrusNativeFunctions {
         scriptState("ObjectReference", "BlockActivation", into: &registry) { call, bridge, key in
             let blocked = boolean(call, at: 0, default: true)
             bridge.updateScriptedState(of: key) {
-                $0.setFlag(activationBlockedName, blocked ? true : nil)
+                $0.setFlag(PapyrusWorldStateBridge.activationBlockedName, blocked ? true : nil)
             }
             return .returned(.none)
         }
         scriptState("ObjectReference", "IsActivationBlocked", into: &registry) { _, bridge, key in
-            .returned(.boolean(bridge.scriptedState(of: key).flag(activationBlockedName) == true))
+            .returned(.boolean(bridge.scriptedState(of: key)
+                    .flag(PapyrusWorldStateBridge.activationBlockedName) == true))
         }
         // `MoveToMyEditorLocation()`: drops the script's moves, so the plugin placement shows.
         let moveBack = "MoveToMyEditorLocation"
@@ -37,8 +38,6 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         }
     }
-
-    static let activationBlockedName = "activationBlocked"
 
     /// `SetOpen(bool abOpen = true)` and `int GetOpenState()`. Opening also unlocks,
     /// per <https://ck.uesp.net/wiki/SetOpen_-_ObjectReference>.

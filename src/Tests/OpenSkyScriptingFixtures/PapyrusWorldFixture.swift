@@ -32,7 +32,7 @@ public final class PapyrusWorldProbeDispatch: PapyrusNativeDispatch {
     /// - Parameter context: pass a context carrying a `PapyrusWorldBridge` to
     ///   give both the standard natives and `probeHandler` world access.
     public init(context: PapyrusNativeContext = PapyrusNativeContext()) {
-        registry = .standard(context: context)
+        registry = PapyrusNativeFunctions.standardRegistry(context: context)
     }
 
     public func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
@@ -255,7 +255,7 @@ public enum PapyrusWorldFixture {
     /// compiled bytecode.
     @MainActor
     public static func registry(for session: Session) -> PapyrusNativeRegistry {
-        .standard(context: PapyrusNativeContext(
+        PapyrusNativeFunctions.standardRegistry(context: PapyrusNativeContext(
             world: session.bridge
         ))
     }

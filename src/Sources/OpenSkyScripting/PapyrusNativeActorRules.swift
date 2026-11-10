@@ -136,13 +136,14 @@ extension PapyrusNativeFunctions {
                 return failure(call, "AttachAshPile could not place the pile")
             }
             bridge.updateScriptedState(of: key) { $0.setForm(ashPileName, pile) }
-            bridge.updateScriptedState(of: pile) { $0.setForm(ashPileOwnerName, key) }
+            bridge.updateScriptedState(of: pile) {
+                $0.setForm(PapyrusWorldStateBridge.ashPileOwnerName, key)
+            }
             return .returned(.none)
         }
     }
 
     static let ashPileName = "ashPile"
-    static let ashPileOwnerName = "ashPileOwner"
     /// `DefaultAshPile1`. Its ID is below 0x800, the range the engine itself names.
     static let defaultAshPile = ReferenceKey.plugin(name: "Skyrim.esm", objectID: 0x1B)
 

@@ -70,7 +70,7 @@ public final class ScriptCoordinator {
     ) {
         let runtime = PapyrusWorldRuntime(runtime: PapyrusRuntime(
             files: [],
-            nativeDispatch: PapyrusNativeRegistry.standard(
+            nativeDispatch: PapyrusNativeFunctions.standardRegistry(
                 context: PapyrusNativeContext(world: bridge)
             )
         ))

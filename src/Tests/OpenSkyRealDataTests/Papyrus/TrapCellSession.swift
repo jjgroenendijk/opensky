@@ -50,7 +50,7 @@ final class TrapCellSession {
         bridge = PapyrusWorldStateBridge(worldState: worldState, references: references)
         world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
             files: [],
-            nativeDispatch: PapyrusNativeRegistry.standard(
+            nativeDispatch: PapyrusNativeFunctions.standardRegistry(
                 context: PapyrusNativeContext(world: bridge)
             )
         ))

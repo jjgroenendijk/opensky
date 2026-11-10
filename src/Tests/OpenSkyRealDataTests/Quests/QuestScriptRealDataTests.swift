@@ -30,7 +30,7 @@ struct QuestScriptRealDataTests {
         let bridge = PapyrusWorldStateBridge(worldState: worldState)
         let world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
             files: [],
-            nativeDispatch: PapyrusNativeRegistry.standard(
+            nativeDispatch: PapyrusNativeFunctions.standardRegistry(
                 context: PapyrusNativeContext(world: bridge)
             )
         ))
