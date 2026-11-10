@@ -65,16 +65,16 @@ extension PapyrusWorldRuntime {
     public func queueSceneFragment(
         of scene: Scene,
         key: ReferenceKey,
-        scriptName: String,
-        functionName: String,
+        fragment: (scriptName: String, functionName: String),
         formIDResolver: FormIDResolver
     ) -> Bool {
+        let (scriptName, functionName) = fragment
         guard !scriptName.isEmpty else { return false }
         let target = PapyrusInstanceKey(reference: key, scriptName: scriptName)
         if instancesByKey[target] == nil, scriptsLoading([scriptName]) {
             deferUntilScriptsLoad { [weak self] in
                 self?.queueSceneFragment(
-                    of: scene, key: key, scriptName: scriptName, functionName: functionName,
+                    of: scene, key: key, fragment: fragment,
                     formIDResolver: formIDResolver
                 )
             }

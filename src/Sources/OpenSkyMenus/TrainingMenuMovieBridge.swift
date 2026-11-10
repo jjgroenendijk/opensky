@@ -89,7 +89,7 @@ nonisolated public enum TrainingMenuMovieBridge: Sendable {
             MenuMovieText.set(line, atPath: "\(menuPath)/\(name)", runtime: runtime)
         }
         MenuMovieText.callMeter(
-            "SetPercent", meter: "SkillMeter", ofPath: menuPath,
+            "SetPercent", meter: ("SkillMeter", menuPath),
             percent: Double(card.skillProgress) * 100, runtime: runtime
         )
     }

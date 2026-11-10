@@ -37,7 +37,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         let identityTag = OpenSkySaveFormat.ChunkTag.playerIdentity
-        writeStory(PlayerIdentityState.self, tag: identityTag, entries, &writer) { state, payload in
+        writeStory((PlayerIdentityState.self, identityTag), entries, &writer) { state, payload in
             payload.writeUInt32(state.race.rawValue)
             payload.writeUInt8(state.isFemale ? 1 : 0)
             writeString(state.name, into: &payload)
@@ -45,13 +45,13 @@ nonisolated extension OpenSkySaveEncoder {
         }
         writeComplexions(entries, into: &writer)
         let markerTag = OpenSkySaveFormat.ChunkTag.mapMarkers
-        writeStory(MapMarkerState.self, tag: markerTag, entries, &writer) { state, payload in
+        writeStory((MapMarkerState.self, markerTag), entries, &writer) { state, payload in
             let flags = (state.isVisible ? 1 : 0) | (state.isDiscovered ? 2 : 0)
                 | (state.canTravelTo ? 4 : 0)
             payload.writeUInt8(UInt8(flags))
         }
         let fogTag = OpenSkySaveFormat.ChunkTag.localMapFog
-        writeStory(LocalMapFogState.self, tag: fogTag, entries, &writer) { state, payload in
+        writeStory((LocalMapFogState.self, fogTag), entries, &writer) { state, payload in
             let rows = state.explored.sorted {
                 $0.key.saveOrder.lexicographicallyPrecedes($1.key.saveOrder)
             }
@@ -63,8 +63,7 @@ nonisolated extension OpenSkySaveEncoder {
         }
         let playerMarkerTag = OpenSkySaveFormat.ChunkTag.playerSetMarker
         writeStory(
-            PlayerSetMapMarker.self,
-            tag: playerMarkerTag,
+            (PlayerSetMapMarker.self, playerMarkerTag),
             entries,
             &writer
         ) { state, payload in

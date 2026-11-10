@@ -114,8 +114,7 @@ enum SWFContainerMenuCommand {
             container: container,
             session: BarterSession(runtime: items, merchant: container, pricing: pricing),
             model: ContainerMenuModel.build(
-                container: container,
-                containerName: "Probe merchant",
+                container: (container, "Probe merchant"),
                 mode: mode,
                 pricing: pricing,
                 runtime: inventory
@@ -163,8 +162,7 @@ enum SWFContainerMenuCommand {
             print("[INFO] menu container refused: \(String(describing: error))")
         }
         var rebuilt = ContainerMenuModel.build(
-            container: world.container,
-            containerName: model.containerName,
+            container: (world.container, model.containerName),
             mode: model.mode,
             pricing: model.pricing,
             runtime: world.items.inventory

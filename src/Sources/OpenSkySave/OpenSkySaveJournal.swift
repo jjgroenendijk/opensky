@@ -30,7 +30,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            MiscStatsState.self, tag: OpenSkySaveFormat.ChunkTag.miscStats, entries, &writer
+            (MiscStatsState.self, OpenSkySaveFormat.ChunkTag.miscStats), entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.values.count))
             for (name, value) in state.values.sorted(by: { $0.key < $1.key }) {
@@ -45,7 +45,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            QuestTrackingState.self, tag: OpenSkySaveFormat.ChunkTag.questTracking,
+            (QuestTrackingState.self, OpenSkySaveFormat.ChunkTag.questTracking),
             entries, &writer
         ) { state, payload in
             payload.writeUInt8(state.isTracked ? 1 : 0)

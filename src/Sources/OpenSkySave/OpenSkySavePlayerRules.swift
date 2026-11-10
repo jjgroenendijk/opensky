@@ -12,7 +12,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            PlayerRuleSwitches.self, tag: OpenSkySaveFormat.ChunkTag.playerRules, entries, &writer
+            (PlayerRuleSwitches.self, OpenSkySaveFormat.ChunkTag.playerRules), entries, &writer
         ) { state, payload in
             payload.writeUInt8(state.godMode ? 1 : 0)
             payload.writeUInt8(state.reportsCrime ? 1 : 0)

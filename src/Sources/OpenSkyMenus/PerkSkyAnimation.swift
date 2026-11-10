@@ -55,9 +55,10 @@ nonisolated public struct PerkSkyAnimator<Key: Hashable & Sendable>: Sendable {
     /// The playback for `key` in steady state `state`. `transition` names the sequence
     /// from the last state; `duration` gives a sequence's length, nil when missing.
     public mutating func playback(
-        _ key: Key, state: String, transition: (String) -> String?, now: Double,
-        duration: (String) -> Float?
+        _ key: Key, state: String, transition: (String) -> String?,
+        at time: (now: Double, duration: (String) -> Float?)
     ) -> PerkSkyPlayback {
+        let (now, duration) = time
         let previous = steady[key]
         steady[key] = state
         if previous != state {

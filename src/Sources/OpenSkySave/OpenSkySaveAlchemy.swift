@@ -16,7 +16,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            CreatedPotionState.self, tag: OpenSkySaveFormat.ChunkTag.createdPotions,
+            (CreatedPotionState.self, OpenSkySaveFormat.ChunkTag.createdPotions),
             entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.potions.count))
@@ -42,7 +42,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            IngredientKnowledgeState.self, tag: OpenSkySaveFormat.ChunkTag.ingredientKnowledge,
+            (IngredientKnowledgeState.self, OpenSkySaveFormat.ChunkTag.ingredientKnowledge),
             entries, &writer
         ) { state, payload in
             let rows = state.known.sorted { $0.key.rawValue < $1.key.rawValue }
@@ -60,7 +60,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            WeaponPoisonState.self, tag: OpenSkySaveFormat.ChunkTag.weaponPoisons,
+            (WeaponPoisonState.self, OpenSkySaveFormat.ChunkTag.weaponPoisons),
             entries, &writer
         ) { state, payload in
             let rows = state.poisons.sorted { $0.key.rawValue < $1.key.rawValue }

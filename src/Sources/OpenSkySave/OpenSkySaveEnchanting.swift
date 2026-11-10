@@ -16,7 +16,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            EnchantingState.self, tag: OpenSkySaveFormat.ChunkTag.enchanting, entries, &writer
+            (EnchantingState.self, OpenSkySaveFormat.ChunkTag.enchanting), entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.known.count))
             for key in state.known {

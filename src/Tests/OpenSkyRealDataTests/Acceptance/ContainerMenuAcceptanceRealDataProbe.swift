@@ -33,8 +33,7 @@ extension ContainerMenuAcceptanceRealDataTests {
 
         func rebuild(mode: ContainerMenuModel.Mode) -> ContainerMenuModel {
             ContainerMenuModel.build(
-                container: container,
-                containerName: model.containerName,
+                container: (container, model.containerName),
                 mode: mode,
                 pricing: pricing,
                 runtime: inventory
@@ -71,8 +70,7 @@ extension ContainerMenuAcceptanceRealDataTests {
             container: container,
             session: BarterSession(runtime: items, merchant: container, pricing: pricing),
             model: ContainerMenuModel.build(
-                container: container,
-                containerName: "Probe merchant",
+                container: (container, "Probe merchant"),
                 mode: mode,
                 pricing: pricing,
                 runtime: inventory
@@ -92,7 +90,7 @@ extension ContainerMenuAcceptanceRealDataTests {
         )
         try inventory.add(InventoryBaselineFixture.sword, count: 1, to: container)
         let model = ContainerMenuModel.build(
-            container: container, containerName: "Chest", mode: .barter,
+            container: (container, "Chest"), mode: .barter,
             pricing: .vanilla, runtime: inventory
         )
         #expect(model.selectedEntry?.name == "IronSword")

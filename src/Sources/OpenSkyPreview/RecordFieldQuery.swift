@@ -22,14 +22,15 @@ nonisolated public enum RecordFields {
     /// The leaves of a decoded value. A FormID reads through `resolve`; nil fields are left out.
     public static func flatten(_ value: Any, resolve: DecodedValueDump.Resolve) -> [RecordField] {
         var fields: [RecordField] = []
-        append(value, path: "", depth: 0, resolve: resolve, into: &fields)
+        append(value, at: ("", 0), resolve: resolve, into: &fields)
         return fields
     }
 
     private static func append(
-        _ value: Any, path: String, depth: Int, resolve: DecodedValueDump.Resolve,
+        _ value: Any, at place: (path: String, depth: Int), resolve: DecodedValueDump.Resolve,
         into fields: inout [RecordField]
     ) {
+        let (path, depth) = place
         guard let value = DecodedValueDump.unwrapped(value) else { return }
         if let leaf = leafText(value, resolve: resolve) {
             fields.append(RecordField(path: path, value: leaf))
@@ -47,7 +48,7 @@ nonisolated public enum RecordFields {
             } else {
                 join(path, child.label ?? "\(index)")
             }
-            append(child.value, path: childPath, depth: depth + 1, resolve: resolve, into: &fields)
+            append(child.value, at: (childPath, depth + 1), resolve: resolve, into: &fields)
         }
     }
 

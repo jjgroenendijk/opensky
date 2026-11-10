@@ -40,8 +40,7 @@ extension PapyrusWorldStateBridge: SceneFragmentDispatching {
         return world.queueSceneFragment(
             of: scene,
             key: key,
-            scriptName: scriptName,
-            functionName: functionName,
+            fragment: (scriptName, functionName),
             formIDResolver: formIDResolver ?? FormIDResolver(pluginName: "", masters: [])
         )
     }

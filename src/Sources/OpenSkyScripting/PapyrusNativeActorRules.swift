@@ -187,7 +187,7 @@ extension PapyrusNativeFunctions {
             guard let trapWorld = bridge.trapWorld else { return .deviated(.none, .stubbed) }
             let knock = min(max(magnitude, 0), 1) * knockAreaMagnitude
             let actors = findCandidates(
-                bridge, filter: .actors, bases: [], around: centre, radius: radius
+                bridge, filter: .actors, bases: [], around: (centre, radius)
             )
             for actor in actors.map(\.key).sorted() where actor != key {
                 _ = trapWorld.knockDownActor(actor, awayFrom: key, magnitude: knock)

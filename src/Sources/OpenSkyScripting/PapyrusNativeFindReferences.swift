@@ -39,8 +39,7 @@ extension PapyrusNativeFunctions {
                         return failure(call, "\(name) needs a base form")
                     }
                     let found = findCandidates(
-                        bridge, filter: filter, bases: bases, around: SIMD3(x, y, z),
-                        radius: radius
+                        bridge, filter: filter, bases: bases, around: (SIMD3(x, y, z), radius)
                     )
                     let pick = closest
                         ? found.min { ($0.distance, $0.key) < ($1.distance, $1.key) }
@@ -70,8 +69,9 @@ extension PapyrusNativeFunctions {
 
     static func findCandidates(
         _ bridge: PapyrusWorldStateBridge, filter: FindFilter, bases: Set<ReferenceKey>,
-        around centre: SIMD3<Float>, radius: Float
+        around sphere: (centre: SIMD3<Float>, radius: Float)
     ) -> [(key: ReferenceKey, distance: Float)] {
+        let (centre, radius) = sphere
         let entries = bridge.references?.residentEntries() ?? []
         var keys = entries.compactMap { entry -> ReferenceKey? in
             switch filter {

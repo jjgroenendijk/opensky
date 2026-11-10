@@ -48,8 +48,7 @@ extension PapyrusInterpreter {
         if
             let intrinsic = try intrinsic(
                 functionName,
-                receiver: handle,
-                arguments: arguments,
+                call: (handle, arguments),
                 destination: operands[2],
                 frame: frame
             )
@@ -60,8 +59,7 @@ extension PapyrusInterpreter {
             return try externalMethodFlow(
                 function,
                 operands: operands,
-                receiver: handle,
-                arguments: arguments,
+                call: (handle, arguments),
                 frame: frame
             )
         }
@@ -69,8 +67,7 @@ extension PapyrusInterpreter {
             return try resolvedMethodFlow(
                 resolved,
                 function: function,
-                receiver: handle,
-                arguments: arguments,
+                call: (handle, arguments),
                 destination: operands[2]
             )
         }
@@ -78,7 +75,7 @@ extension PapyrusInterpreter {
         return try nativeFlow(
             nativeCall(
                 kind: .method, script: (root, runtime.index(named: root)?.key), function: function,
-                receiver: handle, arguments: arguments
+                call: (handle, arguments)
             ),
             destination: operands[2]
         )
@@ -120,8 +117,7 @@ extension PapyrusInterpreter {
                     kind: .parent,
                     script: (resolved.script.name, resolved.owner.key),
                     function: function,
-                    receiver: handle,
-                    arguments: arguments
+                    call: (handle, arguments)
                 ),
                 destination: operands[1]
             )
@@ -131,8 +127,7 @@ extension PapyrusInterpreter {
                 kind: .parent,
                 script: (parentName, runtime.index(named: parentName)?.key),
                 function: function,
-                receiver: handle,
-                arguments: arguments
+                call: (handle, arguments)
             ),
             destination: operands[1]
         )
@@ -167,8 +162,7 @@ extension PapyrusInterpreter {
                 kind: .staticFunction,
                 script: (scriptName, function.scriptKey),
                 function: function,
-                receiver: nil,
-                arguments: arguments
+                call: (nil, arguments)
             ),
             destination: operands[2]
         )
@@ -207,11 +201,11 @@ extension PapyrusInterpreter {
 
     private func intrinsic(
         _ functionName: String,
-        receiver: PapyrusObjectHandle,
-        arguments: [PapyrusValue],
+        call: (receiver: PapyrusObjectHandle, arguments: [PapyrusValue]),
         destination: PexValue,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {
+        let (receiver, arguments) = call
         if PapyrusRuntime.matches(functionName, "GotoState") {
             guard let instance = runtime.instance(for: receiver) else {
                 throw .missingInstance(receiver)
@@ -276,9 +270,9 @@ extension PapyrusInterpreter {
         kind: PapyrusNativeCallKind,
         script: (name: String, key: String?),
         function: CallName,
-        receiver: PapyrusObjectHandle?,
-        arguments: [PapyrusValue]
+        call: (receiver: PapyrusObjectHandle?, arguments: [PapyrusValue])
     ) -> PapyrusNativeCall {
+        let (receiver, arguments) = call
         let key = script.key.flatMap { scriptKey in
             function.key.map {
                 PapyrusNativeKey(foldedScriptName: scriptKey, foldedFunctionName: $0)
@@ -307,10 +301,10 @@ extension PapyrusInterpreter {
     private func externalMethodCall(
         _ function: CallName,
         receiverOperand: PexValue,
-        receiver: PapyrusObjectHandle,
-        arguments: [PapyrusValue],
+        call: (receiver: PapyrusObjectHandle, arguments: [PapyrusValue]),
         frame: PapyrusFrame
     ) -> PapyrusNativeCall {
+        let (receiver, arguments) = call
         let declared = receiverScriptName(receiverOperand, frame: frame)
         let owner = nativeOwner(of: function.spelling, from: declared)
         return nativeCall(
@@ -320,8 +314,7 @@ extension PapyrusInterpreter {
                 owner?.key ?? runtime.index(named: declared)?.key
             ),
             function: function,
-            receiver: receiver,
-            arguments: arguments
+            call: (receiver, arguments)
         )
     }
 
@@ -330,10 +323,10 @@ extension PapyrusInterpreter {
     private func externalMethodFlow(
         _ function: CallName,
         operands: [PexValue],
-        receiver: PapyrusObjectHandle,
-        arguments: [PapyrusValue],
+        call: (receiver: PapyrusObjectHandle, arguments: [PapyrusValue]),
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow {
+        let (receiver, arguments) = call
         if
             let wrapper = try externalWrapper(
                 function.spelling,
@@ -342,15 +335,13 @@ extension PapyrusInterpreter {
             )
         {
             return try resolvedMethodFlow(
-                wrapper, function: function, receiver: receiver,
-                arguments: arguments, destination: operands[2]
+                wrapper, function: function, call: (receiver, arguments), destination: operands[2]
             )
         }
         let call = externalMethodCall(
             function,
             receiverOperand: operands[1],
-            receiver: receiver,
-            arguments: arguments,
+            call: (receiver, arguments),
             frame: frame
         )
         return try nativeFlow(call, destination: operands[2])
@@ -389,10 +380,10 @@ extension PapyrusInterpreter {
     private func resolvedMethodFlow(
         _ resolved: PapyrusResolvedFunction,
         function: CallName,
-        receiver: PapyrusObjectHandle,
-        arguments: [PapyrusValue],
+        call: (receiver: PapyrusObjectHandle, arguments: [PapyrusValue]),
         destination: PexValue
     ) throws(PapyrusFault) -> PapyrusFlow {
+        let (receiver, arguments) = call
         if !resolved.function.flags.contains(.native) {
             try pushFrame(
                 resolved,
@@ -406,8 +397,7 @@ extension PapyrusInterpreter {
             kind: .method,
             script: (resolved.script.name, resolved.owner.key),
             function: function,
-            receiver: receiver,
-            arguments: arguments
+            call: (receiver, arguments)
         )
         return try nativeFlow(call, destination: destination)
     }

@@ -19,8 +19,7 @@ nonisolated public enum RecordTextDump: Sendable {
         dump(
             record: record,
             localized: localized,
-            keywordContext: nil,
-            formListContext: nil,
+            lists: (nil, nil),
             magicContext: nil
         )
     }
@@ -34,8 +33,7 @@ nonisolated public enum RecordTextDump: Sendable {
         dump(
             record: record,
             localized: localized,
-            keywordContext: KeywordContext(store: keywordStore, sourcePlugin: sourcePlugin),
-            formListContext: nil,
+            lists: (KeywordContext(store: keywordStore, sourcePlugin: sourcePlugin), nil),
             magicContext: nil
         )
     }
@@ -43,15 +41,16 @@ nonisolated public enum RecordTextDump: Sendable {
     public static func dump(
         record: ESMRecord,
         localized: Bool,
-        keywordStore: KeywordStore,
-        formListStore: FormListStore,
+        stores: (keyword: KeywordStore, formList: FormListStore),
         sourcePlugin: String
     ) -> String {
         dump(
             record: record,
             localized: localized,
-            keywordContext: KeywordContext(store: keywordStore, sourcePlugin: sourcePlugin),
-            formListContext: FormListContext(store: formListStore, sourcePlugin: sourcePlugin),
+            lists: (
+                KeywordContext(store: stores.keyword, sourcePlugin: sourcePlugin),
+                FormListContext(store: stores.formList, sourcePlugin: sourcePlugin)
+            ),
             magicContext: nil
         )
     }
@@ -59,8 +58,7 @@ nonisolated public enum RecordTextDump: Sendable {
     public static func dump(
         record: ESMRecord,
         localized: Bool,
-        keywordContext: KeywordContext?,
-        formListContext: FormListContext?,
+        lists: (keyword: KeywordContext?, formList: FormListContext?),
         magicContext: MagicContext?
     ) -> String {
         var lines = [headerLine(record: record)]
@@ -69,8 +67,7 @@ nonisolated public enum RecordTextDump: Sendable {
                 let decoded = try decodedSummary(
                     record: record,
                     localized: localized,
-                    keywordContext: keywordContext,
-                    formListContext: formListContext,
+                    lists: lists,
                     magicContext: magicContext
                 )
             {
@@ -94,8 +91,7 @@ nonisolated public enum RecordTextDump: Sendable {
     private static func decodedSummary(
         record: ESMRecord,
         localized: Bool,
-        keywordContext: KeywordContext?,
-        formListContext: FormListContext?,
+        lists: (keyword: KeywordContext?, formList: FormListContext?),
         magicContext: MagicContext?
     ) throws -> String? {
         switch record.type {
@@ -115,25 +111,24 @@ nonisolated public enum RecordTextDump: Sendable {
             try magicSummary(
                 record: record,
                 localized: localized,
-                keywordContext: keywordContext,
-                formListContext: formListContext,
+                lists: lists,
                 magicContext: magicContext
             )
                 ?? referenceRecordSummary(
                     record: record,
                     localized: localized,
-                    keywordContext: keywordContext,
-                    formListContext: formListContext
+                    keywordContext: lists.keyword,
+                    formListContext: lists.formList
                 )
                 ?? itemSummary(
                     record: record,
                     localized: localized,
-                    keywordContext: keywordContext,
+                    keywordContext: lists.keyword,
                     magicContext: magicContext
                 )
                 ?? progressionSummary(record, localized, magicContext)
                 ?? factionSummary(record, localized) ?? relationshipSummary(record)
-                ?? craftingSummary(record, localized, keywordContext)
+                ?? craftingSummary(record, localized, lists.keyword)
                 ?? trapSummary(record, localized) ?? storySummary(record)
                 ?? characterSummary(record, localized)
         }

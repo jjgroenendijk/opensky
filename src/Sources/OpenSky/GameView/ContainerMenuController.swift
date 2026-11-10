@@ -162,8 +162,7 @@ final class ContainerMenuController {
             return
         }
         var refreshed = ContainerMenuModel.build(
-            container: container,
-            containerName: containerName ?? "Container",
+            container: (container, containerName ?? "Container"),
             mode: mode,
             pricing: game.inventory.barterPricing(with: merchant),
             runtime: inventory,

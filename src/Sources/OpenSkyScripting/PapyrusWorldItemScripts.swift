@@ -12,18 +12,18 @@ extension PapyrusWorldRuntime {
     /// use. A script still loading queues the event once it loads. Returns the count queued now.
     @discardableResult
     public func queueItemEvent(
-        _ name: String,
+        _ event: (name: String, arguments: [PapyrusValue]),
         base: ReferenceKey,
         scripts: [AttachedScript],
-        arguments: [PapyrusValue],
         formIDResolver: FormIDResolver
     ) -> Int {
+        let (name, arguments) = event
         let live = scripts.filter { !$0.isRemoved }
         guard !live.isEmpty else { return 0 }
         if scriptsLoading(live.map(\.name)) {
             deferUntilScriptsLoad { [weak self] in
                 self?.queueItemEvent(
-                    name, base: base, scripts: live, arguments: arguments,
+                    event, base: base, scripts: live,
                     formIDResolver: formIDResolver
                 )
             }

@@ -27,7 +27,7 @@ extension PapyrusInterpreter {
         let propertyName = try propertyName(operands[0])
         if
             let flow = try instancelessAccess(
-                propertyName, receiver: operands[1], setting: nil, destination: operands[2],
+                propertyName, receiver: operands[1], access: (nil, operands[2]),
                 frame: frame
             )
         {
@@ -85,8 +85,8 @@ extension PapyrusInterpreter {
         let value = try read(operands[2], frame: frame)
         if
             let flow = try instancelessAccess(
-                propertyName, receiver: operands[1], setting: value,
-                destination: .identifier("::NoneVar"), frame: frame
+                propertyName, receiver: operands[1],
+                access: (value, .identifier("::NoneVar")), frame: frame
             )
         {
             return flow
@@ -201,10 +201,10 @@ extension PapyrusInterpreter {
     private func instancelessAccess(
         _ name: String,
         receiver operand: PexValue,
-        setting value: PapyrusValue?,
-        destination: PexValue,
+        access: (setting: PapyrusValue?, destination: PexValue),
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow? {
+        let (value, destination) = access
         guard
             case let .object(handle) = try read(operand, frame: frame),
             runtime.instance(for: handle) == nil,

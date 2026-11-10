@@ -12,8 +12,7 @@ struct HelpMessageLedgerTests {
             event: "Jump",
             text: "Press Jump",
             duration: 5,
-            interval: 30,
-            maxTimes: 2
+            repeats: (30, 2)
         )
         #expect(shown)
         let changed = ledger.advance(to: 0)
@@ -34,15 +33,14 @@ struct HelpMessageLedgerTests {
             event: "jump",
             text: "Press Jump",
             duration: 5,
-            interval: 30,
-            maxTimes: 2
+            repeats: (30, 2)
         )
         #expect(!shown2)
     }
 
     @Test func theEventEndsTheMessageForGood() {
         var ledger = HelpMessageLedger()
-        ledger.show(event: "Sneak", text: "Press Sneak", duration: 0, interval: 0, maxTimes: 0)
+        ledger.show(event: "Sneak", text: "Press Sneak", duration: 0, repeats: (0, 0))
         _ = ledger.advance(to: 0)
         _ = ledger.advance(to: 100)
         #expect(ledger.visibleText == "Press Sneak")
@@ -53,8 +51,7 @@ struct HelpMessageLedgerTests {
             event: "Sneak",
             text: "Press Sneak",
             duration: 0,
-            interval: 0,
-            maxTimes: 0
+            repeats: (0, 0)
         )
         #expect(!shown)
     }
@@ -70,8 +67,7 @@ struct HelpMessageLedgerTests {
             event: "Sneak",
             text: "Press Sneak",
             duration: 1,
-            interval: 1,
-            maxTimes: 1
+            repeats: (1, 1)
         )
         #expect(shown)
     }

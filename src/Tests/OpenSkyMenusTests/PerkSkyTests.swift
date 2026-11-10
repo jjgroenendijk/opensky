@@ -38,7 +38,7 @@ struct PerkSkyTests {
                 Self.perk(2, x: 3, y: 1, to: [3]),
                 Self.perk(3, x: 1, y: 2)
             ],
-            slot: 0, anchor: [0, 100, 0], selected: nil, settings: settings
+            at: (0, [0, 100, 0]), selected: nil, settings: settings
         )
         let row = settings.rowScale
         #expect(Self.close(stars[0].position, [0, 95, 0]), "column 2 is the centre of 1 to 3")
@@ -52,7 +52,7 @@ struct PerkSkyTests {
     @Test func aBoxWithoutAParentIsReachableAndTheSelectionWins() {
         let stars = PerkSkyLayout.stars(
             [Self.perk(4, x: 2, y: 0), Self.perk(5, x: 2, y: 1, owned: true)],
-            slot: 3, anchor: .zero, selected: 5, settings: PerkSkySettings()
+            at: (3, .zero), selected: 5, settings: PerkSkySettings()
         )
         #expect(stars.map(\.state) == [.unlocked, .selected])
     }
@@ -63,7 +63,7 @@ struct PerkSkyTests {
             Self.perk(3, x: 2, y: 2)
         ]
         let stars = PerkSkyLayout.stars(
-            perks, slot: 0, anchor: .zero, selected: nil, settings: PerkSkySettings()
+            perks, at: (0, .zero), selected: nil, settings: PerkSkySettings()
         )
         let lines = PerkSkyLayout.lines(perks, stars: stars)
         #expect(lines.map(\.state) == [.unlocked, .locked])
@@ -89,13 +89,13 @@ struct PerkSkyTests {
         settings.rotationSpeedMax = 100.0 / 360
         settings.rotationRampTime = 1000
         var motion = PerkSkyMotion(slot: 0)
-        motion.update(now: 0, slot: 17, slotCount: 18, inTree: false, settings: settings)
-        motion.update(now: 0.1, slot: 17, slotCount: 18, inTree: false, settings: settings)
+        motion.update(now: 0, ring: (17, 18), inTree: false, settings: settings)
+        motion.update(now: 0.1, ring: (17, 18), inTree: false, settings: settings)
         #expect(motion.yawDegrees < 0, "slot 17 is one step left of slot 0")
         #expect(motion.yawDegrees > -2, "the turn starts slow")
         for tick in 2 ... 40 {
             motion.update(
-                now: Double(tick) * 0.1, slot: 17, slotCount: 18, inTree: true, settings: settings
+                now: Double(tick) * 0.1, ring: (17, 18), inTree: true, settings: settings
             )
         }
         #expect(motion.yawDegrees == 340)
@@ -123,20 +123,20 @@ struct PerkSkyTests {
             PerkStarState(rawValue: $0)?.transition(to: .owned)
         }
         let first = animator.playback(
-            1, state: "Unlocked", transition: { _ in nil }, now: 0, duration: duration
+            1, state: "Unlocked", transition: { _ in nil }, at: (0, duration)
         )
         #expect(first.sequence == "Unlocked")
         let buy = animator.playback(
-            1, state: "Owned", transition: transition, now: 1, duration: duration
+            1, state: "Owned", transition: transition, at: (1, duration)
         )
         #expect(buy.sequence == "Own")
         #expect(buy.next == "Owned")
         let held = animator.playback(
-            1, state: "Owned", transition: transition, now: 1.2, duration: duration
+            1, state: "Owned", transition: transition, at: (1.2, duration)
         )
         #expect(held.sequence == "Own")
         let settled = animator.playback(
-            1, state: "Owned", transition: transition, now: 1.6, duration: duration
+            1, state: "Owned", transition: transition, at: (1.6, duration)
         )
         #expect(settled.sequence == "Owned")
         #expect(PerkStarState.selected.transition(to: .owned) == "Deselect")

@@ -21,8 +21,9 @@ nonisolated public struct PerkSkyMotion: Equatable, Sendable {
     /// Steps toward `slot` and the ring or tree view. The turn speeds up to
     /// `fStatsRotationSpeedMax` over `fStatsRotationRampTime`, and takes the short way.
     public mutating func update(
-        now: Double, slot: Int, slotCount: Int, inTree: Bool, settings: PerkSkySettings
+        now: Double, ring: (slot: Int, slotCount: Int), inTree: Bool, settings: PerkSkySettings
     ) {
+        let (slot, slotCount) = ring
         let seconds = Float(max(0, min(0.25, now - (lastTick ?? now))))
         lastTick = now
         let full = Float(max(1, slotCount)) * PerkSkyLayout.slotDegrees

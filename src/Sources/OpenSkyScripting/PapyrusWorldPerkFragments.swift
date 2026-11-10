@@ -13,10 +13,10 @@ extension PapyrusWorldRuntime {
     public func queuePerkFragment(
         of perk: Perk,
         key: ReferenceKey,
-        index: UInt16,
-        activation: PerkFragmentActivation,
+        fragment slot: (index: UInt16, activation: PerkFragmentActivation),
         formIDResolver: FormIDResolver
     ) -> Bool {
+        let (index, activation) = slot
         guard
             let fragment = perk.script.recordFragments?.fragment(slot: UInt32(index)),
             !fragment.scriptName.isEmpty
@@ -25,7 +25,7 @@ extension PapyrusWorldRuntime {
         if instancesByKey[target] == nil, scriptsLoading([fragment.scriptName]) {
             deferUntilScriptsLoad { [weak self] in
                 self?.queuePerkFragment(
-                    of: perk, key: key, index: index, activation: activation,
+                    of: perk, key: key, fragment: (index, activation),
                     formIDResolver: formIDResolver
                 )
             }
@@ -56,7 +56,7 @@ extension PapyrusWorldStateBridge {
     ) -> Bool {
         guard let world, let formIDResolver else { return false }
         return world.queuePerkFragment(
-            of: perk, key: key, index: index, activation: activation,
+            of: perk, key: key, fragment: (index, activation),
             formIDResolver: formIDResolver
         )
     }

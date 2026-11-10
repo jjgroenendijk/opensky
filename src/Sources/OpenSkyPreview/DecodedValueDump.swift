@@ -24,7 +24,7 @@ nonisolated public enum DecodedValueDump {
 
     public static func lines(_ value: Any, resolve: Resolve) -> [String] {
         var lines: [String] = []
-        append(value, label: nil, depth: 0, resolve: resolve, into: &lines)
+        append(value, at: (nil, 0), resolve: resolve, into: &lines)
         if lines.count > lineCap {
             let dropped = lines.count - lineCap
             lines = Array(lines.prefix(lineCap)) + ["[INFO] \(dropped) more lines not shown"]
@@ -47,11 +47,11 @@ nonisolated public enum DecodedValueDump {
 
     private static func append(
         _ value: Any,
-        label: String?,
-        depth: Int,
+        at level: (label: String?, depth: Int),
         resolve: Resolve,
         into lines: inout [String]
     ) {
+        let (label, depth) = level
         let indent = String(repeating: "  ", count: depth + 1)
         let prefix = label.map { "\(indent)\($0): " } ?? indent
         guard let value = unwrapped(value) else {
@@ -73,8 +73,7 @@ nonisolated public enum DecodedValueDump {
             for (index, child) in mirror.children.prefix(collectionCap).enumerated() {
                 append(
                     child.value,
-                    label: "[\(index)]",
-                    depth: depth + 1,
+                    at: ("[\(index)]", depth + 1),
                     resolve: resolve,
                     into: &lines
                 )
@@ -90,8 +89,7 @@ nonisolated public enum DecodedValueDump {
             for child in mirror.children {
                 append(
                     child.value,
-                    label: child.label,
-                    depth: childDepth,
+                    at: (child.label, childDepth),
                     resolve: resolve,
                     into: &lines
                 )
