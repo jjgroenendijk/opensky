@@ -8,7 +8,8 @@ if [ "${1:-}" = --self-check ]; then
     tree="$(self_check_tree)"
     mkdir -p "$tree/src/Sources/OpenSkyX"
     printf 'let value = optional!\n' >"$tree/src/Sources/OpenSkyX/A.swift"
-    expect_failure "$0" "$tree" "force_unwrapping"
+    printf 'func cast(a: Int, b: Int, c: Int, d: Int, e: Int) {}\n' >"$tree/src/Sources/OpenSkyX/B.swift"
+    expect_failure "$0" "$tree" "force_unwrapping" "function_parameter_count"
 fi
 config="$OPENSKY_TOOLS/lint/.swiftlint.yml"
 cd "$(git rev-parse --show-toplevel)"

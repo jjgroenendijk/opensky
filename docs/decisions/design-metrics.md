@@ -17,17 +17,17 @@ records each value and its reason.
 Each rule starts at zero, as every check here does
 ([code-health automation](/decisions/code-health-automation.md)):
 
-1. The rule lands as a report in `make design-report`. The report prints each finding and the
-   count per module, and it fails nothing.
+1. The rule lands as a report, such as `make design-index-report` for the rules that read the
+   index store. The report prints each finding and the count per module, and it fails nothing.
 2. The findings are fixed per module, one module or a group of modules per pull request.
 3. The limit moves into the lint config, and the rule becomes a gate, when the count on `main`
    is zero. There is no exception list.
 
 ## Rule 1: size limits
 
-SwiftLint checks the size of a function's parameter list, a tuple, and nested types. The
-report reads `tools/design/size.swiftlint.yml`, which holds the limits that are not a gate yet.
-The nesting limit is a gate in `tools/lint/.swiftlint.yml` since 2026-11-09.
+SwiftLint checks the size of a function's parameter list, a tuple, and nested types. All three
+limits are gates in `tools/lint/.swiftlint.yml`: nesting since 2026-11-09, parameters and tuples
+since 2026-11-10.
 
 | Limit | Value | Before | Findings when set (2026-11-09) | Reason |
 | --- | --- | --- | --- | --- |

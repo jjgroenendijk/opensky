@@ -89,9 +89,6 @@ fakes: ## Regenerate the port fakes in OpenSkySessionTesting from OpenSkySession
 lint-index: | $(VENDOR) ## Build the index, then fail on unused code or an adapter that uses another
 	@./tools/lint-index.sh
 
-design-report: ## Report the design-metric findings (docs/decisions/design-metrics.md); fails nothing
-	@./tools/design/size-report.sh
-
 design-index-report: | $(VENDOR) ## Build the index, then report the design rules that read it; fails nothing
 	@./tools/design/index-report.sh
 
