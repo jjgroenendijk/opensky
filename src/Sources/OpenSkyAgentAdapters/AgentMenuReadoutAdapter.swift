@@ -128,12 +128,12 @@ extension AgentMenuReadoutAdapter {
             "open": .array(game.menuMode.stack.identifiers.map { .string($0.name) }),
             "top": .init(game.menuMode.topMenu?.name),
             "worldPaused": .bool(game.menuMode.isWorldSimPaused),
-            "hud": hub.screens.hudState,
-            "loading": hub.screens.loadingState,
-            "movie": hub.screens.movieFocusState,
-            "bink": hub.screens.binkState,
-            "titles": hub.screens.titlesState,
-            "map": hub.screens.mapState
+            "hud": screens.hudState,
+            "loading": screens.loadingState,
+            "movie": screens.movieFocusState,
+            "bink": screens.binkState,
+            "titles": screens.titlesState,
+            "map": screens.mapState
         ]
         if let rows = menuRows() {
             result["rows"] = .array(rows.rows.map { .string($0) })
@@ -226,5 +226,11 @@ extension AgentMenuReadoutAdapter {
             fills[name] = table?.reference(forAlias: alias.id).map { .string("\($0)") } ?? .null
         }
         return .object(fills)
+    }
+}
+
+extension AgentMenuReadoutAdapter {
+    private var screens: AgentScreensAdapter {
+        AgentScreensAdapter(hub: hub, game: hub.screensHost)
     }
 }

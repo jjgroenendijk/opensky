@@ -40,11 +40,19 @@ public protocol AgentRenderHost: AnyObject, SendableMetatype {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentRenderAdapter {
-    public let hub: AgentHub
+    let hub: AgentHub
     public let game: any AgentRenderHost
 }
 
 extension AgentRenderAdapter {
+    public func screenFadeState() -> AgentJSON {
+        guard let fade = game.gameSession?.imageSpace.screenFade else { return .null }
+        return [
+            "colour": .string(fade.colour == .zero ? "black" : "white"),
+            "cover": .init(fade.cover), "running": .bool(fade.isRunning)
+        ]
+    }
+
     /// Overlays, then the render-debug layers, such as `distantlod`.
     static let overlayNames = ["navmesh", "path", "detection", "hud", "ui"]
         + RenderLayer.ordered.map { $0.identifierFragment.lowercased() }
@@ -91,7 +99,7 @@ extension AgentRenderAdapter {
         case .skipBink:
             [
                 "skipped": .bool(game.movies.skip(force: true)),
-                "bink": hub.screens.binkState
+                "bink": screens.binkState
             ]
         case let .titles(step): try driveTitles(step)
         case let .loadScreen(editorID): try forceLoadScreen(editorID)
@@ -155,14 +163,14 @@ extension AgentRenderAdapter {
             fadingOut: request.fadingOut, black: request.black,
             secondsBeforeFade: request.delay, duration: request.duration
         ))
-        return ["screenFade": hub.frameReadout.screenFadeState()]
+        return ["screenFade": screenFadeState()]
     }
 
     private func playBink(_ request: MovieRequest) throws(AgentFailure) -> AgentJSON {
         guard game.movies.play(request, onEnd: { _ in }) else {
             throw AgentFailure(.invalidArgument, "a movie plays already, or no game files")
         }
-        return ["bink": hub.screens.binkState]
+        return ["bink": screens.binkState]
     }
 
     /// Goes through the script hooks, as `fade` does.
@@ -177,7 +185,7 @@ extension AgentRenderAdapter {
             }
             natives.startTitleSequence?(step)
         }
-        return ["titles": hub.screens.titlesState]
+        return ["titles": screens.titlesState]
     }
 
     /// The screen holds until a call with no ID, which starts its fade.
@@ -185,19 +193,19 @@ extension AgentRenderAdapter {
         let now = hub.now().timeIntervalSinceReferenceDate
         guard let editorID else {
             game.loadingScreens.releaseForced(at: now)
-            return ["loading": hub.screens.loadingState]
+            return ["loading": screens.loadingState]
         }
         guard game.loadingScreens.force(editorID: editorID, at: now) else {
             throw AgentFailure(.notFound, "no loading screen \(editorID)")
         }
-        return ["loading": hub.screens.loadingState]
+        return ["loading": screens.loadingState]
     }
 
     /// Goes through the script hook, as `fade` does.
     private func setCartMode(_ enabled: Bool) throws(AgentFailure) -> AgentJSON {
         guard let menus = game.scripts.bridge?.menus else { throw hub.notReady() }
         menus.setHUDCartMode(enabled)
-        return ["hud": hub.screens.hudState]
+        return ["hud": screens.hudState]
     }
 
     private func setShadowQuality(_ name: String) throws(AgentFailure) -> AgentJSON {
@@ -398,5 +406,11 @@ extension AgentRenderAdapter {
             "lastPulseStrength": cues.lastPulseStrength.map { .init($0) } ?? .null,
             "modifierFound": .bool(game.effects.records.lowHealthModifier != nil)
         ]
+    }
+}
+
+extension AgentRenderAdapter {
+    private var screens: AgentScreensAdapter {
+        AgentScreensAdapter(hub: hub, game: hub.screensHost)
     }
 }

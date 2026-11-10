@@ -49,7 +49,7 @@ public protocol AgentInputHost: AnyObject, SendableMetatype {
 
 /// Part of `AgentWorldAdapter`, over its own narrow host.
 public struct AgentInputAdapter {
-    public let hub: AgentHub
+    let hub: AgentHub
     public let game: any AgentInputHost
 }
 
@@ -104,7 +104,7 @@ extension AgentInputAdapter {
     }
 
     public func selectMenuRow(label: String) throws(AgentFailure) -> AgentJSON {
-        guard let start = hub.menuReadout.menuRows() else {
+        guard let start = menuReadout.menuRows() else {
             throw AgentFailure(.notFound, "no open menu has a row list")
         }
         guard let target = Self.rowIndex(of: label, in: start.rows) else {
@@ -115,7 +115,7 @@ extension AgentInputAdapter {
             let action: GameInputAction = target > current ? .menuDown : .menuUp
             dispatcher.apply(action, .press)
             dispatcher.apply(action, .release)
-            guard let next = hub.menuReadout.menuRows()?.selected, next != current else { break }
+            guard let next = menuReadout.menuRows()?.selected, next != current else { break }
             current = next
         }
         guard current == target else {
@@ -164,5 +164,11 @@ extension AgentInputAdapter {
         return lowered.firstIndex(of: wanted)
             ?? lowered.firstIndex { $0.hasPrefix(wanted) }
             ?? lowered.firstIndex { $0.contains(wanted) }
+    }
+}
+
+extension AgentInputAdapter {
+    private var menuReadout: AgentMenuReadoutAdapter {
+        AgentMenuReadoutAdapter(hub: hub, game: hub.menuReadoutHost)
     }
 }

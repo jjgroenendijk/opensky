@@ -72,7 +72,7 @@ extension AgentMotionAdapter {
         return [
             "flying": .array(flying.map { key in
                 var json = flightJSON(of: key)
-                json["ref"] = hub.behaviour.formID(of: key) ?? .string("\(key)")
+                json["ref"] = behaviour.formID(of: key) ?? .string("\(key)")
                 return .object(json)
             }),
             "eventsHandled": .init(game.dragonFlight.handledEvents)
@@ -84,13 +84,13 @@ extension AgentMotionAdapter {
         guard let drive = mounts.drive else {
             return [
                 "riding": .bool(false),
-                "lastMount": mounts.lastMount.flatMap(hub.behaviour.formID) ?? .null
+                "lastMount": mounts.lastMount.flatMap(behaviour.formID) ?? .null
             ]
         }
         let orders = mounts.dragonOrders
         return [
             "riding": .bool(true),
-            "ref": hub.behaviour.formID(of: drive.mount) ?? .string("\(drive.mount)"),
+            "ref": behaviour.formID(of: drive.mount) ?? .string("\(drive.mount)"),
             "kind": .string("\(drive.kind)"),
             "phase": .string("\(mounts.phase)"),
             "speed": .init(drive.motion.speed),
@@ -101,8 +101,8 @@ extension AgentMotionAdapter {
             "flight": drive.flight.map { .object(Self.flightJSON($0)) } ?? .null,
             "orders": drive.kind == .dragon ? [
                 "landingRequested": .bool(orders.landingRequested),
-                "lockedTarget": orders.lockedTarget.flatMap(hub.behaviour.formID) ?? .null,
-                "switchedTarget": orders.switchedTarget.flatMap(hub.behaviour.formID) ?? .null,
+                "lockedTarget": orders.lockedTarget.flatMap(behaviour.formID) ?? .null,
+                "switchedTarget": orders.switchedTarget.flatMap(behaviour.formID) ?? .null,
                 "attacking": .bool(orders.isAttacking),
                 "breath": .string("\(orders.breath)"),
                 "breathCooldown": .init(orders.breathCooldown)
@@ -127,8 +127,8 @@ extension AgentMotionAdapter {
             var json = Self.flightJSON(flight)
             json["ridden"] = .bool(true)
             json["rider"] = [
-                "lockedTarget": orders.lockedTarget.flatMap(hub.behaviour.formID) ?? .null,
-                "switchedTarget": orders.switchedTarget.flatMap(hub.behaviour.formID) ?? .null,
+                "lockedTarget": orders.lockedTarget.flatMap(behaviour.formID) ?? .null,
+                "switchedTarget": orders.switchedTarget.flatMap(behaviour.formID) ?? .null,
                 "attacking": .bool(orders.isAttacking)
             ]
             return json
@@ -138,7 +138,7 @@ extension AgentMotionAdapter {
         json["order"] = game.dragonFlight.orders[key].map { .string($0.rawValue) } ?? .null
         json["landingEvent"] = game.dragonFlight.landingEvents[key].map(AgentJSON.string) ?? .null
         if let perch = game.dragonFlight.flights[key]?.perch {
-            json["perch"] = hub.behaviour
+            json["perch"] = behaviour
                 .formID(of: perch.reference) ?? .string("\(perch.reference)")
         }
         json["getIsFlying"] = .bool(game.dragonFlightWorld.isFlying(key))
@@ -284,6 +284,12 @@ extension AgentMotionAdapter {
     }
 
     private func reference(_ key: ReferenceKey) -> AgentJSON {
-        key == .player ? .string("player") : hub.behaviour.formID(of: key) ?? .string("\(key)")
+        key == .player ? .string("player") : behaviour.formID(of: key) ?? .string("\(key)")
+    }
+}
+
+extension AgentMotionAdapter {
+    private var behaviour: AgentBehaviourAdapter {
+        AgentBehaviourAdapter(hub: hub, game: hub.behaviourHost)
     }
 }

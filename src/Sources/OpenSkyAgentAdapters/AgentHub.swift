@@ -59,66 +59,6 @@ public struct AgentHub {
     public let inputHost: any AgentInputHost
     public let captureHost: any AgentCaptureHost
 
-    public var render: AgentRenderAdapter {
-        AgentRenderAdapter(hub: self, game: renderHost)
-    }
-
-    var actors: AgentActorsAdapter {
-        AgentActorsAdapter(hub: self, game: actorsHost)
-    }
-
-    var motion: AgentMotionAdapter {
-        AgentMotionAdapter(hub: self, game: motionHost)
-    }
-
-    var behaviour: AgentBehaviourAdapter {
-        AgentBehaviourAdapter(hub: self, game: behaviourHost)
-    }
-
-    var objects: AgentObjectsAdapter {
-        AgentObjectsAdapter(hub: self, game: objectsHost)
-    }
-
-    public var menuReadout: AgentMenuReadoutAdapter {
-        AgentMenuReadoutAdapter(hub: self, game: menuReadoutHost)
-    }
-
-    public var screens: AgentScreensAdapter {
-        AgentScreensAdapter(hub: self, game: screensHost)
-    }
-
-    var events: AgentEventsAdapter {
-        AgentEventsAdapter(hub: self, game: eventsHost)
-    }
-
-    var playerReadout: AgentPlayerReadoutAdapter {
-        AgentPlayerReadoutAdapter(hub: self, game: playerReadoutHost)
-    }
-
-    public var frameReadout: AgentFrameReadoutAdapter {
-        AgentFrameReadoutAdapter(hub: self, game: frameReadoutHost)
-    }
-
-    public var actorReadout: AgentActorReadoutAdapter {
-        AgentActorReadoutAdapter(hub: self, game: actorReadoutHost)
-    }
-
-    var items: AgentItemsAdapter {
-        AgentItemsAdapter(hub: self, game: itemsHost)
-    }
-
-    public var view: AgentViewAdapter {
-        AgentViewAdapter(hub: self, game: viewHost)
-    }
-
-    var input: AgentInputAdapter {
-        AgentInputAdapter(hub: self, game: inputHost)
-    }
-
-    var capture: AgentCaptureAdapter {
-        AgentCaptureAdapter(hub: self, game: captureHost)
-    }
-
     public init(
         game: some AgentWorldHost & AgentRenderHost & AgentActorsHost & AgentMotionHost &
             AgentBehaviourHost & AgentObjectsHost & AgentMenuReadoutHost & AgentScreensHost &
@@ -163,10 +103,6 @@ public struct AgentHub {
             game.renderer != nil,
             streamer.transitionInFlight == nil else { return false }
         return streamer.interiorScene != nil || !streamer.composition.cells.isEmpty
-    }
-
-    public func viewJob(_ target: AgentViewTarget) throws(AgentFailure) -> AgentTeleportJob {
-        try view.viewJob(target)
     }
 
     public func notReady() -> AgentFailure {
