@@ -4,7 +4,7 @@
 import Foundation
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 
 nonisolated extension BinaryWriter {
     /// Writes `tag` plus the length-prefixed bytes `body` produces, so a
@@ -29,7 +29,7 @@ nonisolated extension BinaryWriter {
         }
     }
 
-    public mutating func writeCell(_ cell: CellSceneLocation?) {
+    mutating func writeCell(_ cell: CellSceneLocation?) {
         switch cell {
         case .none:
             writeUInt8(OpenSkySaveFormat.CellTag.absent)
