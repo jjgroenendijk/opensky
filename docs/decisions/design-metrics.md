@@ -61,3 +61,29 @@ it uses (`tools/lint-index/fan-out.py`).
 Example: a coordinator that reads records, runs the game rules, and starts effects uses the
 types of all three jobs. When each job moves into its own type behind a port, each part uses
 only the types of its job, and the coordinator uses the parts.
+
+## Rule 3: minimal public surface
+
+A `public` declaration that no other module uses widens what other modules can come to depend
+on. This is information hiding, after David Parnas. Periphery's redundant-public report finds
+nothing on this package layout (measured 2026-11-08), so `make design-index-report` also runs
+its own check on the index store (`tools/lint-index/public-surface.py`).
+
+- The index store holds no access levels. The check reads the source line at each definition,
+  and finds `public` or `open` before the name, or a `public extension` around it.
+- Another module uses a declaration when its code names it. A test file that imports the module
+  with `@testable` sees internal declarations, so its use does not count.
+- A declaration also stays public when another module uses one of its members, or when a
+  public declaration that is needed names it, such as a type in the signature of a used
+  function. A name on the line of a declaration counts as part of its signature. An enum case
+  or a protocol requirement is public with its type, so the names on its line count for that
+  type.
+- A protocol witness and an override stay public, because their requirement needs it.
+
+| Limit | Value | Findings when set (2026-11-10) | Reason |
+| --- | --- | --- | --- |
+| Public declarations no other module uses | 0 | 7151 of 39799 | The rule has no tolerance: a declaration is needed outside its module or it is not. Most findings are record fields and coordinator members that only the module and its `@testable` tests read |
+
+Example: a parser module marks a record's raw `unknownNAM5` field `public`, but only the parser
+and its tests read it. Without the keyword, the field is internal, and a later change to it
+cannot break another module.
