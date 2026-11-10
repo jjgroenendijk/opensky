@@ -4,13 +4,13 @@
 // groups instead. See docs/engine/dynamic-body-drawing.md.
 
 import OpenSkyFormatsCore
-public import simd
+import simd
 
 nonisolated extension DrawInstance {
     /// This instance carried through a rigid transform: matrices recomposed and
     /// the culling AABB moved with them, so a body that has left its baked
     /// bounds is still drawn.
-    public func moved(by delta: float4x4) -> DrawInstance {
+    func moved(by delta: float4x4) -> DrawInstance {
         let matrix = delta * modelMatrix
         return DrawInstance(
             modelMatrix: matrix,
@@ -29,7 +29,7 @@ nonisolated extension DrawInstance {
 extension Renderer {
     /// The instance as this frame draws it: baked, or moved when a body owns it. An
     /// identity check skips the map lookup, and a body at rest is absent from the map.
-    public func drawn(_ instance: DrawInstance) -> DrawInstance {
+    func drawn(_ instance: DrawInstance) -> DrawInstance {
         guard
             instance.referenceFormID != 0, !instanceDeltas.isEmpty,
             let delta = instanceDeltas[instance.referenceFormID]

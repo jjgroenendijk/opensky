@@ -17,9 +17,9 @@ nonisolated public enum AgentEventKind {
     public static let scriptError = "script.error"
     public static let log = "log"
     public static let paused = "time.paused"
-    public static let resumed = "time.resumed"
+    static let resumed = "time.resumed"
 
-    public static let all = [
+    static let all = [
         cellLoaded, cellUnloaded, activation, activationRefused, menuOpened, menuClosed,
         combatHit, actorDeath, questStage, scriptError, log, paused, resumed
     ]
@@ -66,7 +66,7 @@ nonisolated public struct AgentEventLog: Sendable {
     }
 
     /// Events newer than `seq`, oldest first, optionally limited to `kinds`.
-    public func events(after seq: Int, kinds: Set<String> = []) -> [AgentEvent] {
+    func events(after seq: Int, kinds: Set<String> = []) -> [AgentEvent] {
         events.filter { $0.seq > seq && (kinds.isEmpty || kinds.contains($0.kind)) }
     }
 }

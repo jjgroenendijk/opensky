@@ -18,7 +18,7 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
     public private(set) var unevaluatedGeneratorTotal = 0
 
     /// Modifier class name -> times it passed its input through unmodified.
-    public private(set) var passthroughModifiers: [String: Int] = [:]
+    private(set) var passthroughModifiers: [String: Int] = [:]
     public private(set) var passthroughModifierTotal = 0
 
     /// Clip animation name -> times a clip generator could not find its clip.
@@ -50,7 +50,7 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
     public private(set) var featureGaps: [String: Int] = [:]
     public private(set) var featureGapTotal = 0
     /// `slug: text` -> times a gap came from that authored text, such as a condition.
-    public private(set) var gapTexts: [String: Int] = [:]
+    private(set) var gapTexts: [String: Int] = [:]
 
     public private(set) var generatorsEvaluated = 0
     public private(set) var modifiersEvaluated = 0
@@ -117,21 +117,21 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         generatorsEvaluated += 1
     }
 
-    public mutating func noteModifier() {
+    mutating func noteModifier() {
         modifiersEvaluated += 1
     }
 
-    public mutating func noteUnevaluatedGenerator(_ className: String) {
+    mutating func noteUnevaluatedGenerator(_ className: String) {
         unevaluatedGeneratorTotal += 1
         Self.bump(&unevaluatedGenerators, className, limit: nameLimit)
     }
 
-    public mutating func notePassthroughModifier(_ className: String) {
+    mutating func notePassthroughModifier(_ className: String) {
         passthroughModifierTotal += 1
         Self.bump(&passthroughModifiers, className, limit: nameLimit)
     }
 
-    public mutating func noteUnresolvedClip(_ animationName: String?) {
+    mutating func noteUnresolvedClip(_ animationName: String?) {
         unresolvedClipTotal += 1
         Self.bump(&unresolvedClips, animationName ?? "<unnamed>", limit: nameLimit)
     }
@@ -157,7 +157,7 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
     }
 
     /// Notes `gap` and the text that caused it, so a report can name the text.
-    public mutating func note(_ gap: Gap, text: String?) {
+    mutating func note(_ gap: Gap, text: String?) {
         note(gap)
         Self.bump(&gapTexts, "\(gap.rawValue): \(text ?? "<none>")", limit: nameLimit)
     }
@@ -187,11 +187,11 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
             + featureGapTotal
     }
 
-    public var rankedUnevaluatedGenerators: [(name: String, count: Int)] {
+    var rankedUnevaluatedGenerators: [(name: String, count: Int)] {
         Self.ranked(unevaluatedGenerators)
     }
 
-    public var rankedPassthroughModifiers: [(name: String, count: Int)] {
+    var rankedPassthroughModifiers: [(name: String, count: Int)] {
         Self.ranked(passthroughModifiers)
     }
 
@@ -203,7 +203,7 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         Self.ranked(unappliedBindings)
     }
 
-    public var rankedUndecodableObjects: [(name: String, count: Int)] {
+    var rankedUndecodableObjects: [(name: String, count: Int)] {
         Self.ranked(undecodableObjects)
     }
 
@@ -215,13 +215,13 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         Self.ranked(gapTexts)
     }
 
-    public var rankedBoundMemberPaths: [(name: String, count: Int)] {
+    var rankedBoundMemberPaths: [(name: String, count: Int)] {
         Self.ranked(boundMemberPaths)
     }
 
     /// Merges another instance's tally into this one, so a probe over many
     /// graphs reports one ledger. Totals add; capped tables stay capped.
-    public mutating func merge(_ other: BehaviorTally) {
+    mutating func merge(_ other: BehaviorTally) {
         unevaluatedGeneratorTotal += other.unevaluatedGeneratorTotal
         passthroughModifierTotal += other.passthroughModifierTotal
         unresolvedClipTotal += other.unresolvedClipTotal

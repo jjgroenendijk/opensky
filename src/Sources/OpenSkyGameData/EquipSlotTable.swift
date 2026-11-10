@@ -8,12 +8,12 @@ public import OpenSkyFormatsESM
 
 nonisolated public enum EquipSlotHands: Sendable {
     /// Editor ID of the leaf slot meaning the right hand.
-    public static let rightHandEditorID = "righthand"
+    static let rightHandEditorID = "righthand"
     /// Editor ID of the leaf slot meaning the left hand.
-    public static let leftHandEditorID = "lefthand"
+    static let leftHandEditorID = "lefthand"
     /// Bounds a parent chain a mod has made cyclic. Vanilla chains are one
     /// link deep; eight is far past anything meaningful.
-    public static let parentDepthCap = 8
+    static let parentDepthCap = 8
 
     /// The hands `slot` occupies, following its parents through `lookup`.
     public static func hands(of slot: EquipSlot, lookup: (FormID) -> EquipSlot?) -> HandSlots {
@@ -31,7 +31,7 @@ nonisolated public enum EquipSlotHands: Sendable {
     }
 
     /// The hands the leaf slot named by `editorID` occupies.
-    public static func leafHands(editorID: String?) -> HandSlots {
+    static func leafHands(editorID: String?) -> HandSlots {
         switch editorID?.lowercased() {
         case rightHandEditorID: .rightHand
         case leftHandEditorID: .leftHand
@@ -110,7 +110,7 @@ nonisolated public struct EquipSlotTable: Equatable, Sendable {
         self.skippedRecords = skippedRecords
     }
 
-    public init(file: ESMFile) {
+    init(file: ESMFile) {
         self.init(loadOrder: LoadOrderPlugins(file: file))
     }
 

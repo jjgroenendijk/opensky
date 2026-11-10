@@ -4,8 +4,8 @@
 
 import Foundation
 
-nonisolated public struct AssetCacheEntryInspection: Equatable, Sendable {
-    public enum State: Equatable, Sendable {
+nonisolated struct AssetCacheEntryInspection: Equatable, Sendable {
+    enum State: Equatable, Sendable {
         case current(payloadBytes: Int)
         /// An empty entry: no converter stores this file, so the original loads.
         case original
@@ -14,12 +14,12 @@ nonisolated public struct AssetCacheEntryInspection: Equatable, Sendable {
         case missing
     }
 
-    public let state: State
+    let state: State
 }
 
 nonisolated extension AssetCacheKind {
     /// The kinds a source path can be cached as; a mesh also has a collision entry.
-    public static func kinds(forPath path: String) -> [Self] {
+    static func kinds(forPath path: String) -> [Self] {
         switch (path as NSString).pathExtension.lowercased() {
         case "dds": [.texture]
         case "nif": [.mesh, .collision]
@@ -29,7 +29,7 @@ nonisolated extension AssetCacheKind {
         }
     }
 
-    public var converterVersion: UInt32 {
+    var converterVersion: UInt32 {
         switch self {
         case .texture: AssetConverterVersion.texture
         case .mesh: AssetConverterVersion.mesh
@@ -42,7 +42,7 @@ nonisolated extension AssetCacheKind {
 
 nonisolated extension AssetCacheReader {
     /// Nil when no file provides `path`. Reads entries without touching their use date.
-    public func inspect(path: String) -> [AssetCacheEntryInspection]? {
+    func inspect(path: String) -> [AssetCacheEntryInspection]? {
         guard let source = stamp(forPath: path) else { return nil }
         return AssetCacheKind.kinds(forPath: source.path).map { kind in
             let request = AssetCacheRequest(

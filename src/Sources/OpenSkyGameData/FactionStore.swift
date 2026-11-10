@@ -11,7 +11,7 @@ nonisolated public struct ResolvedFaction: Equatable, Sendable {
     public let faction: Faction
     public let sourcePlugin: String
 
-    public var editorID: String? {
+    var editorID: String? {
         faction.editorID
     }
 
@@ -28,11 +28,11 @@ nonisolated public struct ResolvedFactionMembership: Equatable, Sendable {
     public let faction: ResolvedFaction?
     public let rank: Int8
 
-    public var isResolved: Bool {
+    var isResolved: Bool {
         faction != nil
     }
 
-    public var displayName: String {
+    var displayName: String {
         faction?.displayName ?? "[UNRESOLVED] \(rawFaction)"
     }
 }
@@ -42,7 +42,7 @@ nonisolated public struct FactionStore: Sendable {
     private let table: ResolvedRecordTable<ResolvedFaction>
     private let factionsByKey: [ReferenceKey: ResolvedFaction]
 
-    public var factions: [ResolvedFormID: ResolvedFaction] {
+    var factions: [ResolvedFormID: ResolvedFaction] {
         table.values
     }
 
@@ -65,11 +65,11 @@ nonisolated public struct FactionStore: Sendable {
         }
     }
 
-    public var vendorFactions: [ResolvedFaction] {
+    var vendorFactions: [ResolvedFaction] {
         sortedFactions.filter(\.faction.isVendor)
     }
 
-    public var crimeFactions: [ResolvedFaction] {
+    var crimeFactions: [ResolvedFaction] {
         sortedFactions.filter(\.faction.tracksCrime)
     }
 
@@ -108,7 +108,7 @@ nonisolated public struct FactionStore: Sendable {
         table.value(id)
     }
 
-    public func faction(editorID: String) -> ResolvedFaction? {
+    func faction(editorID: String) -> ResolvedFaction? {
         table.value(editorID: editorID)
     }
 
@@ -148,7 +148,7 @@ nonisolated public struct FactionStore: Sendable {
     /// A faction link as text: its name when the load order carries the record,
     /// and an explicit unresolved marker when it does not, so a missing record
     /// never reads as a name.
-    public func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
+    func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
         resolve(id, fromPlugin: pluginName)?.displayName ?? "[UNRESOLVED] \(id)"
     }
 
@@ -181,7 +181,7 @@ nonisolated public struct FactionStore: Sendable {
 
     /// The rank title one membership shows, or nil when the faction does not
     /// resolve or names no title for that rank.
-    public func rankTitle(
+    func rankTitle(
         of membership: ResolvedFactionMembership,
         female: Bool
     ) -> LString? {
@@ -190,8 +190,8 @@ nonisolated public struct FactionStore: Sendable {
     }
 }
 
-nonisolated public enum FactionStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> FactionStore {
+nonisolated enum FactionStoreLoader: Sendable {
+    static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> FactionStore {
         FactionStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

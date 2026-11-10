@@ -10,12 +10,7 @@ import Synchronization
 /// Where a streamed texture's bytes come from, so its levels can be read again.
 nonisolated public struct TextureStreamSource: Hashable, Sendable {
     public let path: String
-    public let usage: TextureUsage
-
-    public init(path: String, usage: TextureUsage) {
-        self.path = path
-        self.usage = usage
-    }
+    let usage: TextureUsage
 }
 
 /// The bytes of some levels of one texture, smallest last.
@@ -94,7 +89,7 @@ nonisolated public struct TextureStreamingLoadSettings: Equatable, Sendable {
     /// A texture streams only if its long side is at least this many texels.
     public var minimumSize = 512
     /// A new texture starts with levels no larger than this on the long side.
-    public var initialSize = 512
+    var initialSize = 512
 
     public init() {}
 }
@@ -115,7 +110,7 @@ nonisolated public final class TextureStreamMailbox: Sendable {
         set { state.withLock { $0.settings = newValue } }
     }
 
-    public func post(_ seed: StreamedTextureSeed) {
+    func post(_ seed: StreamedTextureSeed) {
         state.withLock { $0.seeds.append(seed) }
     }
 

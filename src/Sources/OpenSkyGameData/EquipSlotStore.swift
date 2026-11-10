@@ -22,7 +22,7 @@ nonisolated public struct EquipSlotStore: Sendable {
     private let table: ResolvedRecordTable<ResolvedEquipSlot>
 
     /// Every winning EQUP identity in the load order.
-    public var slots: [ResolvedFormID: ResolvedEquipSlot] {
+    var slots: [ResolvedFormID: ResolvedEquipSlot] {
         table.values
     }
 
@@ -41,7 +41,7 @@ nonisolated public struct EquipSlotStore: Sendable {
         )
     }
 
-    public init(plugins: [(name: String, file: ESMFile)]) {
+    init(plugins: [(name: String, file: ESMFile)]) {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["EQUP"]))
     }
 
@@ -49,7 +49,7 @@ nonisolated public struct EquipSlotStore: Sendable {
         table.value(id)
     }
 
-    public func slot(editorID: String) -> ResolvedEquipSlot? {
+    func slot(editorID: String) -> ResolvedEquipSlot? {
         table.value(editorID: editorID)
     }
 

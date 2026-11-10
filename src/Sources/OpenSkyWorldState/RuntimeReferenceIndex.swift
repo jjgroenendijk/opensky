@@ -94,7 +94,7 @@ nonisolated public struct RuntimeReferenceIndex: Sendable {
         entriesByKey.count
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         entriesByKey.isEmpty
     }
 

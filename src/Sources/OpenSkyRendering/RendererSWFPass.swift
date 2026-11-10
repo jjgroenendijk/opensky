@@ -69,7 +69,7 @@ extension Renderer {
     }
 
     /// The movie package assigned via `setSWFMovie`; nil -> no SWF draws.
-    public var swfScene: SWFMovieScene? {
+    var swfScene: SWFMovieScene? {
         swf.movie?.scene
     }
 
@@ -234,41 +234,41 @@ extension Renderer {
 }
 
 /// One encoded draw of the SWF layer.
-nonisolated public struct SWFDrawOp: Sendable {
-    public enum Kind: Sendable {
+nonisolated struct SWFDrawOp: Sendable {
+    enum Kind: Sendable {
         case content(clipCount: Int)
         case maskIncrement
         case maskDecrement
     }
 
-    public let kind: Kind
-    public let usesGlyphBuffer: Bool
-    public let vertexStart: Int
-    public let vertexCount: Int
-    public let uniformIndex: Int
-    public let bitmapId: UInt16?
-    public let glyphCount: Int
+    let kind: Kind
+    let usesGlyphBuffer: Bool
+    let vertexStart: Int
+    let vertexCount: Int
+    let uniformIndex: Int
+    let bitmapId: UInt16?
+    let glyphCount: Int
 }
 
 /// Per-frame CPU pass: walks the flattened command stream, producing draw ops
 /// with their uniforms and the glyph-quad vertices for text draws.
-nonisolated public struct SWFFrameBuilder {
-    public let movie: SWFMovieResources
-    public let glyphAtlas: UIGlyphAtlas
+nonisolated struct SWFFrameBuilder {
+    let movie: SWFMovieResources
+    let glyphAtlas: UIGlyphAtlas
     /// Character-local twips -> framebuffer pixels for the stage.
     private let stageToPixels: SWFTransform
     /// Framebuffer pixels -> NDC.
     private let pixelsToClip: SWFTransform
 
-    public private(set) var ops: [SWFDrawOp] = []
-    public private(set) var uniforms: [SWFDrawUniforms] = []
-    public private(set) var glyphVertices: [SWFVertex] = []
-    public private(set) var skipped = 0
+    private(set) var ops: [SWFDrawOp] = []
+    private(set) var uniforms: [SWFDrawUniforms] = []
+    private(set) var glyphVertices: [SWFVertex] = []
+    private(set) var skipped = 0
     private var glyphQuadCount = 0
     /// Multiplies every draw's alpha: the HUD Opacity setting.
-    public var opacity: Float = 1
+    var opacity: Float = 1
 
-    public init(
+    init(
         movie: SWFMovieResources,
         viewport: SIMD2<Float>,
         contentScale: Float,
@@ -284,7 +284,7 @@ nonisolated public struct SWFFrameBuilder {
         pixelsToClip = SWFViewportMapping.pixelsToClip(viewportPixels: viewport)
     }
 
-    public mutating func build() {
+    mutating func build() {
         for (index, command) in movie.commands.enumerated() {
             switch command {
             case let .beginClip(masks):

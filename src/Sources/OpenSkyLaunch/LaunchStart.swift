@@ -56,7 +56,7 @@ nonisolated public struct LaunchStartForm: Equatable, Sendable {
     }
 
     /// A grid bound wide enough for Tamriel, with room to spare.
-    public static let gridRange: ClosedRange<Int32> = -64 ... 64
+    static let gridRange: ClosedRange<Int32> = -64 ... 64
 
     public var kind: Kind
     public var cell: String

@@ -45,7 +45,7 @@ nonisolated public struct SettingsStore {
         value.write(key.name, to: defaults)
     }
 
-    public func isOverridden(_ key: SettingKey<some SettingValue>) -> Bool {
+    func isOverridden(_ key: SettingKey<some SettingValue>) -> Bool {
         defaults.object(forKey: key.name) != nil
     }
 

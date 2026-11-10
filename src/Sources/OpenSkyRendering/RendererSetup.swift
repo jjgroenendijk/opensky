@@ -17,9 +17,9 @@ nonisolated public struct SkinnedBlendedPipelines: Sendable {
 
 /// Shapes whose blend adds light, such as glow cards, by mesh kind.
 nonisolated public struct AdditivePipelines: Sendable {
-    public let staticMesh: any MTLRenderPipelineState
-    public let skinned: any MTLRenderPipelineState
-    public let morphed: any MTLRenderPipelineState
+    let staticMesh: any MTLRenderPipelineState
+    let skinned: any MTLRenderPipelineState
+    let morphed: any MTLRenderPipelineState
 }
 
 /// The scene pass's pipeline states, built together from one library.
@@ -49,12 +49,12 @@ nonisolated public struct RenderPipelines: Sendable {
 }
 
 nonisolated public struct ParticlePipelines: Sendable {
-    public let alpha: any MTLRenderPipelineState
-    public let additive: any MTLRenderPipelineState
-    public let additiveOne: any MTLRenderPipelineState
-    public let multiply: any MTLRenderPipelineState
+    let alpha: any MTLRenderPipelineState
+    let additive: any MTLRenderPipelineState
+    let additiveOne: any MTLRenderPipelineState
+    let multiply: any MTLRenderPipelineState
 
-    public func pipeline(for mode: ParticleBlendMode) -> any MTLRenderPipelineState {
+    func pipeline(for mode: ParticleBlendMode) -> any MTLRenderPipelineState {
         switch mode {
         case .alpha: alpha
         case .additive: additive
@@ -67,14 +67,14 @@ nonisolated public struct ParticlePipelines: Sendable {
 /// Sun-shadow depth pipelines, no color attachment. `alphaTest` discards; `skinned`
 /// covers opaque and alpha-tested skinned casters, which cast a solid shadow.
 nonisolated public struct ShadowPipelines: Sendable {
-    public let staticCaster: any MTLRenderPipelineState
-    public let alphaTest: any MTLRenderPipelineState
-    public let skinned: any MTLRenderPipelineState
-    public let morphedSkinned: any MTLRenderPipelineState
+    let staticCaster: any MTLRenderPipelineState
+    let alphaTest: any MTLRenderPipelineState
+    let skinned: any MTLRenderPipelineState
+    let morphedSkinned: any MTLRenderPipelineState
     /// Skinned cutouts, such as hair and fur cards: sample the texture and discard.
-    public let skinnedAlphaTest: any MTLRenderPipelineState
-    public let morphedSkinnedAlphaTest: any MTLRenderPipelineState
-    public let terrain: any MTLRenderPipelineState
+    let skinnedAlphaTest: any MTLRenderPipelineState
+    let morphedSkinnedAlphaTest: any MTLRenderPipelineState
+    let terrain: any MTLRenderPipelineState
 }
 
 /// Every long-lived sun-shadow GPU object, built + stored as a unit so the
@@ -106,29 +106,29 @@ extension Renderer {
 
     /// Low-quality sun-shadow far bound: 2 exterior cells. Shorter range +
     /// fewer cascades (see shadowCascadeCount) trade shadow reach for cost.
-    nonisolated public static var shadowDistanceLow: Float {
+    nonisolated static var shadowDistanceLow: Float {
         8192
     }
 
     /// Light near plane extended backwards (toward the sun) by this many world
     /// units so casters between the sun and a cascade slice still render.
-    nonisolated public static var shadowCasterBackup: Float {
+    nonisolated static var shadowCasterBackup: Float {
         12288
     }
 
     /// Blend between uniform + logarithmic cascade splits (0 = uniform).
-    nonisolated public static var shadowSplitLambda: Float {
+    nonisolated static var shadowSplitLambda: Float {
         0.7
     }
 
     /// Raster depth bias for the shadow pre-pass: constant + slope-scaled,
     /// no clamp. Trades a little peter-panning for acne removal; tune against
     /// the real install if either shows.
-    nonisolated public static var shadowDepthBias: Float {
+    nonisolated static var shadowDepthBias: Float {
         2
     }
 
-    nonisolated public static var shadowSlopeScale: Float {
+    nonisolated static var shadowSlopeScale: Float {
         3
     }
 
@@ -226,7 +226,7 @@ extension Renderer {
         )
     }
 
-    public static func makeFrameUniformBuffer(device: any MTLDevice) throws -> any MTLBuffer {
+    static func makeFrameUniformBuffer(device: any MTLDevice) throws -> any MTLBuffer {
         try GPUFactory.makeUniformBuffer(
             device: device,
             length: alignedFrameUniformsSize * GPUFactory.maxFramesInFlight,
@@ -497,7 +497,7 @@ extension Renderer {
     }
 
     /// Water tests opaque depth but does not write depth while blending.
-    public static func makeWaterDepthState(device: any MTLDevice) throws
+    static func makeWaterDepthState(device: any MTLDevice) throws
         -> any MTLDepthStencilState
     {
         let descriptor = MTLDepthStencilDescriptor()

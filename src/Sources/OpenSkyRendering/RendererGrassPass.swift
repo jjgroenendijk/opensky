@@ -17,7 +17,7 @@ extension Renderer {
         var remaining: Int
     }
 
-    public func encodeGrass(groups: [GrassDrawGroup], state: inout ScenePassState) {
+    func encodeGrass(groups: [GrassDrawGroup], state: inout ScenePassState) {
         var stats = GrassDrawStats(
             sceneInstances: groups.reduce(0) { $0 + $1.instances.count }
         )

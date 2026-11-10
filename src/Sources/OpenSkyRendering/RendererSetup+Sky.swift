@@ -6,8 +6,8 @@ import MetalKit
 import OpenSkyRenderResources
 
 nonisolated public struct SkyObjectPipelines: Sendable {
-    public let mesh: any MTLRenderPipelineState
-    public let card: any MTLRenderPipelineState
+    let mesh: any MTLRenderPipelineState
+    let card: any MTLRenderPipelineState
 }
 
 nonisolated public struct SkyLayerPipelines: Sendable {

@@ -313,7 +313,7 @@ nonisolated public struct DynamicBody: Sendable {
     /// The surface of the last contact, for the collision sound.
     public var lastSurface: DynamicSurfaceTouch?
     /// The impulses of the last substep's contacts, to start the next one from.
-    public var warmImpulses: [DynamicWarmImpulse] = []
+    var warmImpulses: [DynamicWarmImpulse] = []
 
     public init(
         key: ReferenceKey,
@@ -357,7 +357,7 @@ nonisolated public struct DynamicBody: Sendable {
     /// The rigid transform from the built pose to the live one. The build bakes
     /// `T * R * S`, so `delta * baked` is the live matrix for every mesh. Nil when
     /// nothing moved, which keeps the renderer's map empty at rest.
-    public func instanceDelta(
+    func instanceDelta(
         fromPlacedPosition placed: SIMD3<Float>,
         orientation placedOrientation: simd_quatf
     ) -> float4x4? {
@@ -430,7 +430,7 @@ nonisolated public struct DynamicBody: Sendable {
     }
 
     /// Contact samples of every volume, paired with the skin each carries.
-    public func contactSamples() -> [(point: SIMD3<Float>, radius: Float)] {
+    func contactSamples() -> [(point: SIMD3<Float>, radius: Float)] {
         definition.volumes.flatMap { volume in
             volume.contactSamples(position: position, orientation: orientation)
                 .map { (point: $0, radius: volume.skinRadius) }

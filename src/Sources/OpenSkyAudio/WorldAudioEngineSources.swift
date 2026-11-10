@@ -4,7 +4,7 @@
 // file-size limits; gain ramps live in WorldAudioEngineFades.swift.
 
 public import AVFAudio
-public import Foundation
+import Foundation
 public import OpenSkyFormatsAudio
 public import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
@@ -66,7 +66,7 @@ public final class ActiveAudioSource {
     /// by WorldAudioEngineFades.swift.
     public var activeFade: GainFade?
     /// A one-shot buffer on a pooled node: ending it hands the node back.
-    public var returnsToPool = false
+    var returnsToPool = false
     /// Nonisolated snapshot read by one actor's LipSyncPlayback. Voice sources
     /// attach it after adoption; every other audio source leaves it nil.
     public var voiceClock: VoicePlaybackClock?
@@ -152,7 +152,7 @@ extension WorldAudioEngine {
     /// runs on the decode queue; this only builds and wires the player node.
     /// Returns the new source's id so the caller can retire exactly it later.
     @discardableResult
-    public func playPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
+    func playPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
         return try playPositional(asset: AudioFileAsset(data: fileData), request: request)
     }
@@ -242,7 +242,7 @@ extension WorldAudioEngine {
     /// never pans, never attenuates with distance, and is exempt from both the
     /// concurrent-source cap and the cell purge.
     @discardableResult
-    public func playNonPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
+    func playNonPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
         return try playNonPositional(asset: AudioFileAsset(data: fileData), request: request)
     }
@@ -323,7 +323,7 @@ extension WorldAudioEngine {
         }
     }
 
-    public func stopAllSources() {
+    func stopAllSources() {
         while let source = sources.first {
             stop(source)
         }
@@ -412,7 +412,7 @@ extension WorldAudioEngine {
     /// Re-applies the node-level gain product to every player node. Folding the
     /// fade in here is what keeps a volume-slider move from stomping an
     /// in-flight ramp.
-    public func applyVolumesToSources() {
+    func applyVolumesToSources() {
         for source in sources {
             applyVolume(to: source)
         }

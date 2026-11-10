@@ -15,9 +15,9 @@ import simd
 /// alone.
 nonisolated public struct GainFade: Equatable, Sendable {
     /// Fade gain when the ramp started.
-    public let start: Float
+    let start: Float
     /// Fade gain the ramp is heading for, clamped to [0, 1].
-    public let target: Float
+    let target: Float
     /// Ramp length in seconds. Never negative; zero completes immediately.
     public let duration: Float
     /// Seconds advanced so far.
@@ -25,7 +25,7 @@ nonisolated public struct GainFade: Equatable, Sendable {
     /// Retire the source once the ramp completes (fade out and stop).
     public let stopsAtEnd: Bool
 
-    public init(start: Float, target: Float, duration: Float, stopsAtEnd: Bool) {
+    init(start: Float, target: Float, duration: Float, stopsAtEnd: Bool) {
         self.start = simd_clamp(start, 0, 1)
         self.target = simd_clamp(target, 0, 1)
         self.duration = max(duration, 0)
@@ -37,7 +37,7 @@ nonisolated public struct GainFade: Equatable, Sendable {
     /// that lands within a millisecond of its duration counts as done and snaps
     /// to the target — otherwise a fade-out could hover just above silence and
     /// never retire its source.
-    public static let completionEpsilon: Float = 1e-3
+    static let completionEpsilon: Float = 1e-3
 
     public var isComplete: Bool {
         elapsed + Self.completionEpsilon >= duration
@@ -80,13 +80,13 @@ extension WorldAudioEngine {
     }
 
     /// True while a ramp is in flight on that source.
-    public func isFading(id: Int) -> Bool {
+    func isFading(id: Int) -> Bool {
         sources.first { $0.id == id }?.activeFade != nil
     }
 
     /// Current fade multiplier of a source, or nil when there is no such
     /// source. 1 means "not faded".
-    public func fadeGain(of id: Int) -> Float? {
+    func fadeGain(of id: Int) -> Float? {
         sources.first { $0.id == id }?.fadeGain
     }
 

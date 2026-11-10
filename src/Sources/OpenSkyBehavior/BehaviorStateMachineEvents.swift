@@ -3,14 +3,14 @@
 // fires), and the four machine-level event ids, which vanilla barely uses.
 
 import Foundation
-public import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 
 nonisolated extension BehaviorGraphInstance {
     // MARK: - Notify events
 
     /// Raises a state's `m_enterNotifyEvents` or `m_exitNotifyEvents`, in
     /// authored order.
-    public func raiseNotifyEvents(of stateId: Int, machine: HKBStateMachine, entering: Bool) {
+    func raiseNotifyEvents(of stateId: Int, machine: HKBStateMachine, entering: Bool) {
         guard let entry = stateInfo(of: machine, id: stateId) else { return }
         let target = entering
             ? entry.info.enterNotifyEvents
@@ -28,14 +28,14 @@ nonisolated extension BehaviorGraphInstance {
 
     /// Raises one `hkbEventProperty`, payload included. An id of -1 is Havok's
     /// "no event" and is dropped by the queue.
-    public func raise(_ event: HKBEventProperty) {
+    func raise(_ event: HKBEventProperty) {
         events.raise(id: event.id, payload: payload(at: event.payload))
     }
 
     /// The deactivation half of a machine's lifecycle: the state it was in
     /// raises its exit events, and the machine forgets that it was entered
     /// while keeping `currentStateId` for `m_startStateMode` 2.
-    public func noteMachineDeactivation(of machine: HKBStateMachine, at target: HKXPointerTarget) {
+    func noteMachineDeactivation(of machine: HKBStateMachine, at target: HKXPointerTarget) {
         guard var state = machineStates[target], state.isEntered else { return }
         raiseNotifyEvents(of: state.currentStateId, machine: machine, entering: false)
         state.isEntered = false
@@ -49,7 +49,7 @@ nonisolated extension BehaviorGraphInstance {
     /// True when a transition's condition permits it. `FLAG_DISABLE_CONDITION` marks
     /// "no condition" and is checked first. An unparsable condition or unknown variable
     /// blocks and is tallied.
-    public func isConditionMet(_ info: HKBStateMachineTransitionInfo) -> Bool {
+    func isConditionMet(_ info: HKBStateMachineTransitionInfo) -> Bool {
         guard
             info.flags & BehaviorTransitionFlag.disableCondition == 0,
             let target = info.condition else { return true }
@@ -89,7 +89,7 @@ nonisolated extension BehaviorGraphInstance {
     /// `m_exitEventId` is. `m_enterTime` and `m_exitTime` are zero on every
     /// transition in the vanilla player graph, so a non-zero one is tallied
     /// rather than acted on.
-    public func isIntervalOpen(_ info: HKBStateMachineTransitionInfo) -> Bool {
+    func isIntervalOpen(_ info: HKBStateMachineTransitionInfo) -> Bool {
         if info.flags & BehaviorTransitionFlag.useTriggerInterval != 0 {
             guard isOpen(info.triggerInterval) else { return false }
         }
@@ -119,7 +119,7 @@ nonisolated extension BehaviorGraphInstance {
     /// The four event ids a machine carries itself, checked only when no
     /// transition-info candidate fired. Each one cuts instantly: none of them
     /// names a transition effect.
-    public func selectMachineEventTransition(
+    func selectMachineEventTransition(
         _ state: inout BehaviorMachineState,
         machine: HKBStateMachine
     ) {
@@ -207,7 +207,7 @@ nonisolated extension BehaviorGraphInstance {
 
     /// Publishes what this machine is doing, in names, in the order the walk
     /// reached the machines.
-    public func recordActiveState(_ machine: HKBStateMachine, state: BehaviorMachineState) {
+    func recordActiveState(_ machine: HKBStateMachine, state: BehaviorMachineState) {
         let current = stateInfo(of: machine, id: state.currentStateId)?.info.name
         let outgoing = state.transition
             .flatMap { stateInfo(of: machine, id: $0.fromStateId)?.info.name }
@@ -224,33 +224,33 @@ nonisolated extension BehaviorGraphInstance {
 }
 
 /// `m_startStateMode` values.
-nonisolated public enum BehaviorStartStateMode {
-    public static let sync = 1
-    public static let random = 2
+nonisolated enum BehaviorStartStateMode {
+    static let sync = 1
+    static let random = 2
 }
 
 /// The state machines' random source: a 32-bit linear congruential generator.
 /// [WARNING] The seed is OpenSky's choice; the game seeds one per character.
-nonisolated public struct BehaviorStateMachineRandom: Equatable, Sendable {
+nonisolated struct BehaviorStateMachineRandom: Equatable, Sendable {
     private var state: UInt32
 
-    public init(seed: UInt32 = 0x5EED) {
+    init(seed: UInt32 = 0x5EED) {
         state = seed
     }
 
     /// A value in [0, 1).
-    public mutating func next() -> Float {
+    mutating func next() -> Float {
         state = state &* 1_664_525 &+ 1_013_904_223
         return Float(Double(state) / 4_294_967_296)
     }
 
     /// The id whose share of the summed probability covers the drawn value.
-    public mutating func pick(_ weighted: [(id: Int, probability: Float)]) -> Int? {
+    mutating func pick(_ weighted: [(id: Int, probability: Float)]) -> Int? {
         Self.pick(weighted, roll: next())
     }
 
     /// The entry whose share of the summed weights holds `roll`, a value in 0..<1.
-    public static func pick(_ weighted: [(id: Int, probability: Float)], roll: Float) -> Int? {
+    static func pick(_ weighted: [(id: Int, probability: Float)], roll: Float) -> Int? {
         let total = weighted.reduce(Float(0)) { $0 + max($1.probability, 0) }
         guard total > 0 else { return weighted.first?.id }
         let drawn = roll * total

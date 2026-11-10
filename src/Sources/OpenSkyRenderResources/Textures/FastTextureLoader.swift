@@ -45,23 +45,23 @@ nonisolated public final class FastTextureLoadControl: Sendable {
     }
 
     /// External disks too. Off by default: there it saves no time and keeps scratch memory.
-    public var readsExternalDisks: Bool {
+    var readsExternalDisks: Bool {
         get { externalEnabled.load(ordering: .relaxed) }
         set { externalEnabled.store(newValue, ordering: .relaxed) }
     }
 
-    public var isEnabled: Bool {
+    var isEnabled: Bool {
         get { enabled.load(ordering: .relaxed) }
         set { enabled.store(newValue, ordering: .relaxed) }
     }
 
     /// Cached meshes also load this way. Off by default: see docs/engine/asset-cache.md.
-    public var loadsMeshes: Bool {
+    var loadsMeshes: Bool {
         get { meshesEnabled.load(ordering: .relaxed) }
         set { meshesEnabled.store(newValue, ordering: .relaxed) }
     }
 
-    public var snapshot: FastTextureLoadStats {
+    var snapshot: FastTextureLoadStats {
         stats.withLock { $0 }
     }
 
@@ -106,7 +106,7 @@ nonisolated public final class FastTextureLoader {
     /// The IO queue keeps the memory of each scratch buffer it used. From an
     /// external disk it saves no time, so it reads only from internal volumes.
     /// See docs/engine/asset-cache.md, "Direct GPU loading".
-    public func reads(from file: URL) -> Bool {
+    func reads(from file: URL) -> Bool {
         if control.readsExternalDisks {
             return true
         }
@@ -128,7 +128,7 @@ nonisolated public final class FastTextureLoader {
 
     /// Queues the levels of `entry` into a new texture. The texture holds no
     /// data until `flush` returns.
-    public func enqueue(
+    func enqueue(
         _ entry: AssetCacheEntryRead<ReadyTexture>, usage: TextureUsage, label: String
     ) throws -> any MTLTexture {
         let ready = entry.value

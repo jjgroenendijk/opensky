@@ -5,45 +5,45 @@ import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct ReferenceBridgeState: Codable, Equatable, Sendable {
-    public var version: Int
+    var version: Int
     /// The name of the last command batch the game ran.
     public var batch: String
     public var mainMenu: Bool
-    public var loading: Bool
+    var loading: Bool
     public var position: [Float]?
     /// The console's angles: positive pitch looks down; heading 0 is north, clockwise.
-    public var pitchDegrees: Float?
-    public var headingDegrees: Float?
-    public var cellFormID: UInt32?
+    var pitchDegrees: Float?
+    var headingDegrees: Float?
+    var cellFormID: UInt32?
     /// The cell's editor ID; an exterior cell often has none.
     public var cell: String?
     public var interior: Bool?
     public var grid: [Int32]?
-    public var location: ReferenceLocation?
+    var location: ReferenceLocation?
     public var worldspace: String?
-    public var worldspaceFormID: UInt32?
-    public var hour: Float?
+    var worldspaceFormID: UInt32?
+    var hour: Float?
     /// Days since the game's start, with the hour as the fraction; the moon phase follows it.
-    public var daysPassed: Float?
-    public var weatherFormID: UInt32?
+    var daysPassed: Float?
+    var weatherFormID: UInt32?
     /// The `fov` console value, the horizontal angle at a 4:3 view.
-    public var worldFOV: Float?
-    public var firstPersonFOV: Float?
-    public var firstPerson: Bool?
+    var worldFOV: Float?
+    var firstPersonFOV: Float?
+    var firstPerson: Bool?
     /// The open message box. The game waits until one of its buttons is pressed.
     public var dialog: ReferenceDialog?
     /// The reference `prid` picked. Later lines without a target act on it.
-    public var selected: ReferenceSelection?
+    var selected: ReferenceSelection?
     /// The playing scenes, while the player stands in the world.
-    public var scenes: [ReferenceScene]?
-    public var condition: ReferenceConditionAnswer?
+    var scenes: [ReferenceScene]?
+    var condition: ReferenceConditionAnswer?
     /// Each setting an `ini` line named, by `name:section`; nil when the game has none.
-    public var settings: [String: ReferenceSettingValue?]?
+    var settings: [String: ReferenceSettingValue?]?
     /// The sun, moons, clouds, and wind, while the player stands in the world.
-    public var sky: ReferenceSky?
+    var sky: ReferenceSky?
     /// The playing music type and the queue under it.
-    public var music: ReferenceMusic?
-    public var marker: ReferenceMarker?
+    var music: ReferenceMusic?
+    var marker: ReferenceMarker?
 
     /// True once the player stands in a loaded cell, outside the main menu and loading.
     public var inWorld: Bool {

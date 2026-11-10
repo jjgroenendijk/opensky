@@ -60,7 +60,7 @@ nonisolated public enum PluginsTextLocator: Sendable {
 
     /// Steam application id for Skyrim Special Edition, used to find the
     /// Proton compatibility prefix beside the install.
-    public static let steamAppID = "489830"
+    static let steamAppID = "489830"
 
     /// Defaults store holding the setting: the same shared domain as the data
     /// root, so app and CLI agree.

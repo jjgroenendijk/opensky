@@ -17,12 +17,12 @@ nonisolated public final class WMADecoder {
     private var resampler: FFmpegResampler?
 
     /// Sample rate of the PCM this decoder produces, equal to the container's rate.
-    public var outputSampleRate: Int {
+    var outputSampleRate: Int {
         parameters.sampleRate
     }
 
     /// Channel count of the PCM this decoder produces, equal to the container's count.
-    public var outputChannelCount: Int {
+    var outputChannelCount: Int {
         parameters.channelCount
     }
 
@@ -49,7 +49,7 @@ nonisolated public final class WMADecoder {
     }
 
     /// Drops buffered state so the same decoder can restart at another packet.
-    public func reset() {
+    func reset() {
         session.reset()
     }
 

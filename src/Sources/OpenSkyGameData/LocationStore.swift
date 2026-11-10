@@ -101,7 +101,7 @@ nonisolated public struct LocationStore: Sendable {
         table.value(id)
     }
 
-    public func location(editorID: String) -> ResolvedLocation? {
+    func location(editorID: String) -> ResolvedLocation? {
         table.value(editorID: editorID)
     }
 
@@ -152,7 +152,7 @@ nonisolated public struct LocationStore: Sendable {
         return false
     }
 
-    public func hasKeyword(editorID: String, in locationID: ResolvedFormID) -> Bool {
+    func hasKeyword(editorID: String, in locationID: ResolvedFormID) -> Bool {
         guard let keyword = keywordStore.keyword(editorID: editorID)?.id else { return false }
         return hasKeyword(keyword, in: locationID)
     }
@@ -275,8 +275,8 @@ nonisolated public struct LocationStore: Sendable {
     }
 }
 
-nonisolated public enum LocationStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> LocationStore {
+nonisolated enum LocationStoreLoader: Sendable {
+    static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> LocationStore {
         LocationStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

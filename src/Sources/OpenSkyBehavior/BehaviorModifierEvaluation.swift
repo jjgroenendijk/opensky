@@ -4,13 +4,13 @@
 // semantics passes the pose through with a `BehaviorTally.passthroughModifiers` entry.
 
 import Foundation
-public import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 
 nonisolated extension BehaviorGraphInstance {
     /// Runs the modifier at `target` over `pose`. Modifiers that only touch
     /// variables and events return the pose unchanged, which is not a
     /// pass-through and is not tallied as one.
-    public func applyModifier(
+    func applyModifier(
         at target: HKXPointerTarget?,
         to pose: BehaviorPose,
         deltaTime: Float,
@@ -188,7 +188,7 @@ nonisolated extension BehaviorGraphInstance {
 
     /// Runs a node's deactivation: `BSEventOnDeactivateModifier` raises its event, and
     /// `hkbStateMachine` leaves its state, and a behavior reference stops its graph.
-    public func noteDeactivation(of object: any HKBClass, at target: HKXPointerTarget) {
+    func noteDeactivation(of object: any HKBClass, at target: HKXPointerTarget) {
         if let machine = object as? HKBStateMachine {
             noteMachineDeactivation(of: machine, at: target)
             return

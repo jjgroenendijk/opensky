@@ -4,13 +4,13 @@
 import Metal
 
 /// One render target of the frame.
-nonisolated public struct RenderTargetEntry: Equatable, Sendable {
-    public let name: String
+nonisolated struct RenderTargetEntry: Equatable, Sendable {
+    let name: String
     /// Zero for a memoryless target.
-    public let bytes: Int
-    public let isMemoryless: Bool
+    let bytes: Int
+    let isMemoryless: Bool
 
-    public init(name: String, bytes: Int, isMemoryless: Bool) {
+    init(name: String, bytes: Int, isMemoryless: Bool) {
         self.name = name
         self.bytes = bytes
         self.isMemoryless = isMemoryless
@@ -27,14 +27,14 @@ nonisolated public struct RenderTargetEntry: Equatable, Sendable {
 }
 
 /// The frame's render targets. A target that does not exist is left out.
-nonisolated public struct RenderTargetMemory: Equatable, Sendable {
-    public let entries: [RenderTargetEntry]
+nonisolated struct RenderTargetMemory: Equatable, Sendable {
+    let entries: [RenderTargetEntry]
 
-    public init(entries: [RenderTargetEntry] = []) {
+    init(entries: [RenderTargetEntry] = []) {
         self.entries = entries
     }
 
-    public var totalBytes: Int {
+    var totalBytes: Int {
         entries.reduce(0) { $0 + $1.bytes }
     }
 }
@@ -44,7 +44,7 @@ extension Renderer {
     /// image-space grade, the water depth copy, and the upscaler's and interpolator's targets. The
     /// drawables belong
     /// to the view and are not counted.
-    public func renderTargetMemory() -> RenderTargetMemory {
+    func renderTargetMemory() -> RenderTargetMemory {
         let owned: [(String, any MTLTexture?)] = [
             ("Shadow maps", shadow.map),
             ("Grade copy", imageSpacePass.sceneCopy),

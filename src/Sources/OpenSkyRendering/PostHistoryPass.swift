@@ -27,7 +27,7 @@ struct PostHistoryKernels {
 }
 
 /// One pass's kernels, their binding table, and the targets they keep between frames.
-public final class PostHistoryPass {
+final class PostHistoryPass {
     let kernels: PostHistoryKernels
     let trace: any MTLComputePipelineState
     let blurs: (horizontal: any MTLComputePipelineState, vertical: any MTLComputePipelineState)?

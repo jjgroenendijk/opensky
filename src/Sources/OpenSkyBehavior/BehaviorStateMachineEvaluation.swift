@@ -9,13 +9,13 @@ import Foundation
 public import OpenSkyFormatsAnimation
 
 /// One transition the update may fire, with where it was found.
-nonisolated public struct BehaviorTransitionCandidate: Sendable {
-    public let info: HKBStateMachineTransitionInfo
-    public let isWildcard: Bool
+nonisolated struct BehaviorTransitionCandidate: Sendable {
+    let info: HKBStateMachineTransitionInfo
+    let isWildcard: Bool
 
     /// Higher sorts first. A state's own transition outranks a wildcard of the
     /// same priority.
-    public var rank: (Int, Int) {
+    var rank: (Int, Int) {
         (info.priority, isWildcard ? 0 : 1)
     }
 }
@@ -95,7 +95,7 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// The enabled state with `id`, and where it lives.
-    public func stateInfo(
+    func stateInfo(
         of machine: HKBStateMachine,
         id: Int
     ) -> (target: HKXPointerTarget, info: HKBStateMachineStateInfo)? {
@@ -285,7 +285,7 @@ nonisolated extension BehaviorGraphInstance {
 
     /// The common half of every state change: exit events, the id swap, enter
     /// events, and the machine's own change event.
-    public func switchState(
+    func switchState(
         _ state: inout BehaviorMachineState,
         to stateId: Int,
         machine: HKBStateMachine,

@@ -114,7 +114,7 @@ nonisolated public struct StaticCollisionSet: Sendable {
         stats: StaticCollisionStats()
     )
 
-    public var indexNodeCount: Int {
+    var indexNodeCount: Int {
         index.nodeCount
     }
 

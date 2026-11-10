@@ -35,7 +35,7 @@ nonisolated public struct AgentArguments: Sendable {
         return number
     }
 
-    public func optionalInt(_ name: String) throws(AgentFailure) -> Int? {
+    func optionalInt(_ name: String) throws(AgentFailure) -> Int? {
         has(name) ? try int(name) : nil
     }
 
@@ -58,7 +58,7 @@ nonisolated public struct AgentArguments: Sendable {
     }
 
     /// A list given as a JSON array or as one comma-separated string.
-    public func list(_ name: String) throws(AgentFailure) -> [String] {
+    func list(_ name: String) throws(AgentFailure) -> [String] {
         guard has(name), let value = values[name] else { return [] }
         switch value {
         case let .string(text):
@@ -74,7 +74,7 @@ nonisolated public struct AgentArguments: Sendable {
     }
 
     /// A position given as `[x, y, z]` or as `"x,y,z"`.
-    public func vector(_ name: String) throws(AgentFailure) -> SIMD3<Float> {
+    func vector(_ name: String) throws(AgentFailure) -> SIMD3<Float> {
         guard let value = values[name] else { throw missing(name) }
         let point: SIMD3<Float>? = switch value {
         case let .array(items): Self.point(from: items.map(\.doubleValue))

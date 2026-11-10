@@ -47,7 +47,7 @@ nonisolated public struct ConditionDataResolution: Sendable {
     }
 
     /// Whether the cell that holds `reference` is an interior; nil when it is not loaded.
-    public func isInInterior(_ reference: ReferenceKey) -> Bool? {
+    func isInInterior(_ reference: ReferenceKey) -> Bool? {
         interiors[reference]
     }
 

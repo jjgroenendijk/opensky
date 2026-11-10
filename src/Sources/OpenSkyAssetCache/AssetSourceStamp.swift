@@ -32,7 +32,7 @@ nonisolated public struct AssetSourceStamp: Hashable, Sendable {
 
     /// True when `other` names the same file in the same state. A zero hash on
     /// either side means "unknown" and does not count.
-    public func matches(_ other: Self) -> Bool {
+    func matches(_ other: Self) -> Bool {
         guard
             origin == other.origin, path == other.path, size == other.size,
             modified == other.modified

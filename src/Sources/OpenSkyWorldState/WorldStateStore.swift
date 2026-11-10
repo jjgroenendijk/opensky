@@ -232,7 +232,7 @@ public final class WorldStateStore {
     }
 
     /// Global journal entries dropped because the window was full.
-    public var droppedGlobalJournalEntryCount: Int {
+    var droppedGlobalJournalEntryCount: Int {
         changeJournal.droppedGlobalCount
     }
 
@@ -320,12 +320,12 @@ public final class WorldStateStore {
     }
 
     /// Retained entry cap, as configured at construction.
-    public var journalCapacity: Int {
+    var journalCapacity: Int {
         changeJournal.capacity
     }
 
     /// Entries dropped because the window was full.
-    public var droppedJournalEntryCount: Int {
+    var droppedJournalEntryCount: Int {
         changeJournal.droppedCount
     }
 
@@ -342,7 +342,7 @@ public final class WorldStateStore {
     }
 
     /// Empties the retained window without touching state or sequence numbers.
-    public func clearJournal() {
+    func clearJournal() {
         changeJournal.removeAll()
     }
 
@@ -356,7 +356,7 @@ public final class WorldStateStore {
     }
 
     /// The allocator's next sequence number, which is the whole of its state.
-    public var nextGeneratedSequence: UInt64 {
+    var nextGeneratedSequence: UInt64 {
         allocator.nextSequence
     }
 

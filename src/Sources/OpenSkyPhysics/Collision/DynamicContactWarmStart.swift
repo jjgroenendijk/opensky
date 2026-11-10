@@ -6,7 +6,7 @@ public import OpenSkyFormatsESM
 import simd
 
 /// One contact's impulses, kept on its body between substeps.
-nonisolated public struct DynamicWarmImpulse: Sendable {
+nonisolated struct DynamicWarmImpulse: Sendable {
     /// The contact point in the body's own frame.
     let localPoint: SIMD3<Float>
     let other: ReferenceKey?

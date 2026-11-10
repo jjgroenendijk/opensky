@@ -48,7 +48,7 @@ nonisolated public struct EnchantmentStore: Sendable {
     private let table: ResolvedRecordTable<ResolvedEnchantment>
 
     /// Every winning ENCH identity in the load order.
-    public var enchantments: [ResolvedFormID: ResolvedEnchantment] {
+    var enchantments: [ResolvedFormID: ResolvedEnchantment] {
         table.values
     }
 
@@ -73,7 +73,7 @@ nonisolated public struct EnchantmentStore: Sendable {
         self.init(index: index, effects: MagicEffectStore(index: index))
     }
 
-    public init(plugins: [(name: String, file: ESMFile)]) {
+    init(plugins: [(name: String, file: ESMFile)]) {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["MGEF", "ENCH"]))
     }
 
@@ -81,7 +81,7 @@ nonisolated public struct EnchantmentStore: Sendable {
         table.value(id)
     }
 
-    public func enchantment(editorID: String) -> ResolvedEnchantment? {
+    func enchantment(editorID: String) -> ResolvedEnchantment? {
         table.value(editorID: editorID)
     }
 

@@ -18,7 +18,7 @@ public final class Renderer: NSObject {
     /// Uniform slots are 256-byte aligned so every ring offset satisfies
     /// Metal's buffer-offset alignment requirement. The per-draw ring is
     /// shared by static and terrain draws, so its slot fits either struct.
-    public static let alignedFrameUniformsSize =
+    static let alignedFrameUniformsSize =
         (MemoryLayout<FrameUniforms>.size + 0xFF) & -0x100
     public static let alignedDrawUniformsSize =
         (max(
@@ -62,7 +62,7 @@ public final class Renderer: NSObject {
     /// Whether an offscreen frame honours `renderDebug`. Off by default so
     /// screenshots and bench runs render the shipping frame however the dev
     /// shell is currently set; the device-gated debug-view tests turn it on.
-    public var renderDebugAppliesOffscreen = false
+    var renderDebugAppliesOffscreen = false
     /// The colour an offscreen frame clears to; the sky, when drawn, covers it.
     public var offscreenBackground = SIMD3<Double>(0, 0, 0)
     public let waterDepthState: any MTLDepthStencilState
@@ -164,7 +164,7 @@ public final class Renderer: NSObject {
     public var regionEmittance: [UInt32: SIMD3<Float>] = [:]
 
     /// The scene's caster bounds, built once per scene for the shadow pass.
-    public private(set) lazy var shadowCasters = ShadowCasterBounds(scene: scene)
+    private(set) lazy var shadowCasters = ShadowCasterBounds(scene: scene)
     /// Each actor's own draw groups, built once per scene for its membranes.
     private(set) lazy var actorGroupsByOwner = DrawGroup.actorGroupsByOwner(in: scene)
     /// Injected framing camera — source of the sun/ambient light and the
@@ -187,28 +187,28 @@ public final class Renderer: NSObject {
     public var recordTextures: RecordTextures?
     /// The rings splashes and waders leave on the water (`RendererWaterRipples.swift`).
     public var waterRipples = WaterRippleField()
-    public var cloudsEnabled = true
+    var cloudsEnabled = true
     /// The sun, moons, stars, and aurora models and textures; nil draws none of them.
     public var skyCelestial: SkyCelestial?
     /// The exposure the eye has adapted to, fed back from the GPU each frame.
     public var eyeAdaptation = EyeAdaptation()
     public let precipitation: PrecipitationVolume
-    public var precipitationEnabled = true
+    var precipitationEnabled = true
     public var particlesEnabled = true
-    public var particlesFrozen = false
+    var particlesFrozen = false
     /// Blended particles and their systems draw far to near.
     public var particleSortingEnabled = true
     public var particleEmissionScale: Float = 1
     /// Placed and effect systems the last scene pass skipped as outside the view.
-    public internal(set) var offscreenParticleSystemCount = 0
+    var offscreenParticleSystemCount = 0
     /// Live grass controls. Values clamp at encode so
     /// tests/CLI callers cannot bypass renderer safety policy.
-    public var grassEnabled = true
-    public var grassDensityScale: Float = 1
+    var grassEnabled = true
+    var grassDensityScale: Float = 1
     public var grassDrawDistance = GrassRenderPolicy.defaultDrawDistance
-    public var grassWindScale: Float = 1
+    var grassWindScale: Float = 1
     /// Test/diagnostic override stays bounded by production hard cap.
-    public var grassInstanceBudget = GrassRenderPolicy.maximumInstancesPerFrame
+    var grassInstanceBudget = GrassRenderPolicy.maximumInstancesPerFrame
     /// World-space AI/debug overlays default off and are independently gated.
     /// Their source closures remain registered while disabled, so a toggle does
     /// not rebuild subsystem plumbing.
@@ -243,7 +243,7 @@ public final class Renderer: NSObject {
     /// The time source every frame clock reads.
     public let wallClock: any WallClock
     /// Wall-clock delta source for the animation clock, paused in menu mode.
-    public var animationClock = FrameSimClock()
+    var animationClock = FrameSimClock()
     public var lastAnimationUpdateMS = 0.0
     public var lastAnimationUpdatedBoneCount = 0
     /// CPU wall time of last shadow pass; idle/off frames record near-zero cost.
@@ -299,7 +299,7 @@ public final class Renderer: NSObject {
     /// GPU frustum culling for the scene's static groups (RendererGPUCulling.swift).
     public var gpuCull: GPUCullState
     /// Interior room-and-portal culling (RendererRoomCulling.swift).
-    public var roomCulling = RoomCullingState()
+    var roomCulling = RoomCullingState()
     /// Large textures keep only the levels the camera needs (TextureStreaming/).
     public var textureStreaming: TextureStreamingState
     public var rayTracedShadows: RayTracedShadowState
@@ -447,7 +447,7 @@ extension Renderer {
     }
 
     /// The scene's own depth state: test and write.
-    public var depthState: any MTLDepthStencilState {
+    var depthState: any MTLDepthStencilState {
         materialDepthStates.state(test: true, write: true)
     }
 

@@ -136,7 +136,7 @@ nonisolated public enum ShadowCascadeMath: Sendable {
     /// Cascade lookup mirrored by the MSL shader: first `i` in `0..<cascadeCount`
     /// with `viewDepth <= splits[i]`, else the last cascade. Written as a plain
     /// descending scan (no break) so the shader can mirror it verbatim.
-    public static func cascadeIndex(
+    static func cascadeIndex(
         viewDepth: Float,
         splits: SIMD4<Float>,
         cascadeCount: Int

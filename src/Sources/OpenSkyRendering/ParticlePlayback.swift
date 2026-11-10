@@ -22,12 +22,12 @@ nonisolated public enum ParticleBlendMode: Equatable, Hashable, Sendable {
     case multiply
 
     /// The blend adds to the frame, so fog takes the added light away instead.
-    public var addsLight: Bool {
+    var addsLight: Bool {
         self == .additive || self == .additiveOne
     }
 
     /// Additive blends sum, so their draw order does not change the image.
-    public var dependsOnOrder: Bool {
+    var dependsOnOrder: Bool {
         self == .alpha || self == .multiply
     }
 
@@ -54,25 +54,25 @@ nonisolated public enum ParticleBlendMode: Equatable, Hashable, Sendable {
 /// One active particle, wholly CPU-owned. Position + velocity are world-space
 /// after birth, so static placed emitters need no later transform work.
 nonisolated public struct SimulatedParticle: Equatable, Sendable {
-    public var position: SIMD3<Float>
-    public var velocity: SIMD3<Float>
-    public let initialColor: SIMD4<Float>
-    public var color: SIMD4<Float>
-    public let initialRadius: Float
-    public var radius: Float
-    public var age: Float
-    public var lifetime: Float
-    public var atlasIndex: Int
+    var position: SIMD3<Float>
+    var velocity: SIMD3<Float>
+    let initialColor: SIMD4<Float>
+    var color: SIMD4<Float>
+    let initialRadius: Float
+    var radius: Float
+    var age: Float
+    var lifetime: Float
+    var atlasIndex: Int
     /// Radians the billboard is turned, and radians per second.
-    public var rotation: Float = 0
-    public var rotationSpeed: Float = 0
+    var rotation: Float = 0
+    var rotationSpeed: Float = 0
     /// The axis a mesh particle spins about, unit length. A billboard turns in the screen
     /// plane and ignores it.
-    public var axis = SIMD3<Float>(0, 0, 1)
+    var axis = SIMD3<Float>(0, 0, 1)
     /// The number of spawns before this particle.
-    public var generation: UInt16 = 0
+    var generation: UInt16 = 0
     /// The sub-texture start frame, loop start frame, and frame count this particle drew.
-    public var frames = SIMD3<Float>.zero
+    var frames = SIMD3<Float>.zero
 }
 
 /// Pure simulation. An emitter with a `NiPSysEmitterCtlr` births at its keyed rate.
@@ -87,7 +87,7 @@ nonisolated public struct ParticleSimulator: Sendable {
     public private(set) var particles: [SimulatedParticle] = []
     /// Scales new particles' speed and size. A faster particle lives shorter, so it
     /// still crosses the same distance. Existing particles keep their values.
-    public var spawnScale = PrecipitationScale.identity
+    var spawnScale = PrecipitationScale.identity
     /// Seconds simulated since the last reset or sequence switch; the controllers' clock.
     public private(set) var elapsed: Float = 0
     /// The controllers that play now: the default sequence's, or the played sequence's.
@@ -140,7 +140,7 @@ nonisolated public struct ParticleSimulator: Sendable {
 
     /// Re-centers a camera-following emitter and its existing particles by
     /// the same world-space delta. Placed NIF emitters never call this path.
-    public mutating func translate(by delta: SIMD3<Float>) {
+    mutating func translate(by delta: SIMD3<Float>) {
         placementTransform.columns.3 += SIMD4(delta, 0)
         for index in particles.indices {
             particles[index].position += delta
@@ -393,11 +393,11 @@ nonisolated extension ParticleSimulator {
 
 /// Layout mirrored by ParticleInstance in ShaderTypes.h.
 nonisolated public struct ParticleGPUInstance: Sendable {
-    public let positionSize: SIMD4<Float>
-    public let color: SIMD4<Float>
-    public let uvRect: SIMD4<Float>
+    let positionSize: SIMD4<Float>
+    let color: SIMD4<Float>
+    let uvRect: SIMD4<Float>
     /// The cosine and sine of the billboard turn in x and y.
-    public let rotation: SIMD4<Float>
+    let rotation: SIMD4<Float>
 }
 
 nonisolated public final class ParticlePlayback: Sendable {
@@ -484,7 +484,7 @@ nonisolated public final class ParticlePlayback: Sendable {
     static let effectStride = (MemoryLayout<ParticleEffectUniforms>.size + 0xFF) & -0x100
 
     /// The buffers and textures a draw of this system reads.
-    public var residencyAllocations: [any MTLAllocation] {
+    var residencyAllocations: [any MTLAllocation] {
         [instanceBuffer, effectBuffer, texture] + (effect.palette.map { [$0] } ?? [])
     }
 
@@ -508,14 +508,14 @@ nonisolated public final class ParticlePlayback: Sendable {
         return effectBuffer.gpuAddress + UInt64(offset)
     }
 
-    public func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
+    func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
         state.withLock {
             $0.simulator.advance(deltaTime: deltaTime, wind: wind, emissionScale: emissionScale)
             $0.simulationTime += max(deltaTime, 0)
         }
     }
 
-    public func translate(by delta: SIMD3<Float>) {
+    func translate(by delta: SIMD3<Float>) {
         state.withLock { $0.simulator.translate(by: delta) }
     }
 
@@ -533,7 +533,7 @@ nonisolated public final class ParticlePlayback: Sendable {
         state.withLock { $0.simulator.play(sequence: name) }
     }
 
-    public func setSpawnScale(_ scale: PrecipitationScale) {
+    func setSpawnScale(_ scale: PrecipitationScale) {
         state.withLock { $0.simulator.spawnScale = scale }
     }
 
@@ -544,12 +544,12 @@ nonisolated public final class ParticlePlayback: Sendable {
     }
 
     /// Seconds played since the last reset; a lightning bolt grows on this clock.
-    public var playbackTime: Float {
+    var playbackTime: Float {
         state.withLock { $0.simulationTime }
     }
 
     /// True when this system draws ribbon bands instead of square billboards.
-    public var drawsRibbons: Bool {
+    var drawsRibbons: Bool {
         let definition = simulator.definition
         return lightning != nil || definition.isStrip || state.withLock { $0.streakAspect > 0 }
     }
@@ -558,7 +558,7 @@ nonisolated public final class ParticlePlayback: Sendable {
         state.withLock { $0.streakAspect }
     }
 
-    public func reset() {
+    func reset() {
         state.withLock {
             $0.simulator.reset(seed: seed)
             $0.simulationTime = 0
@@ -581,7 +581,7 @@ nonisolated public final class ParticlePlayback: Sendable {
     }
 
     /// The emitter's world origin, the point systems are sorted by.
-    public var origin: SIMD3<Float> {
+    var origin: SIMD3<Float> {
         let simulator = simulator
         let origin = (simulator.placementTransform * simulator.definition.worldTransform).columns.3
         return SIMD3(origin.x, origin.y, origin.z)

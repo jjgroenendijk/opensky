@@ -106,32 +106,32 @@ nonisolated public struct RenderPlacement: Sendable {
 nonisolated public struct DrawInstance: Sendable {
     public let modelMatrix: float4x4
     /// Inverse-transpose of modelMatrix (world-space normals).
-    public let normalMatrix: float4x4
+    let normalMatrix: float4x4
     /// World-space AABB for frustum culling. Model-level bounds pushed
     /// through the instance transform — shared by every mesh of the
     /// instance, so conservative per mesh. nil -> never culled.
-    public let bounds: ModelBounds?
-    public let castsShadows: Bool
-    public let receivesPointLights: Bool
-    public let receivesShadows: Bool
+    let bounds: ModelBounds?
+    let castsShadows: Bool
+    let receivesPointLights: Bool
+    let receivesShadows: Bool
     /// The REFR a simulated rigid body moves, or zero. The upload passes substitute
     /// the live pose for the baked one (`Renderer.drawn(_:)`), which is cheaper than
     /// rebuilding draw groups every frame.
     public var referenceFormID: UInt32 = 0
     /// The placement's scene role, so the layer filter and the `layerCategory` debug
     /// channel agree.
-    public var layer: RenderLayer = .statics
+    var layer: RenderLayer = .statics
     /// See `RenderPlacement.owner`.
     public var owner: UInt32 = 0
     /// The interior room this static instance sits in, or `RoomPortalGraph.noRoom`.
     public var room = RoomPortalGraph.noRoom
     /// See `RenderPlacement.emittance`.
-    public var emittance: EmittanceSource?
+    var emittance: EmittanceSource?
     /// See `RenderPlacement.treeMotion`.
-    public var treeMotion: TreeMotion?
+    var treeMotion: TreeMotion?
 
     /// The `InstanceTransform.instanceColor` of a static, with this frame's region colours.
-    public func instanceColor(regions: [UInt32: SIMD3<Float>]) -> SIMD4<Float> {
+    func instanceColor(regions: [UInt32: SIMD3<Float>]) -> SIMD4<Float> {
         EmittanceSource.colour(of: emittance, regions: regions)
     }
 }
@@ -140,8 +140,8 @@ nonisolated public struct DrawInstance: Sendable {
 /// one model with one material per slot, so equal meshes mean equal material scalars.
 nonisolated public struct DrawGroup: Sendable {
     public let mesh: RenderMesh
-    public let material: RenderMaterial
-    public let faceMorph: FaceMorphBuffer?
+    let material: RenderMaterial
+    let faceMorph: FaceMorphBuffer?
     /// Mutable only during scene construction (GroupAccumulator).
     public private(set) var instances: [DrawInstance]
     /// Kept with `instances`, so the lighting center costs no per-frame pass.
@@ -180,15 +180,15 @@ nonisolated public struct DrawGroup: Sendable {
 
     /// Mean instance origin at the baked pose: the point the nearest lights are
     /// picked for.
-    public var lightingCenter: SIMD3<Float> {
+    var lightingCenter: SIMD3<Float> {
         originSum / Float(max(1, instances.count))
     }
 
-    public var castsShadows: Bool {
+    var castsShadows: Bool {
         instances.first?.castsShadows == true
     }
 
-    public var receivesShadows: Bool {
+    var receivesShadows: Bool {
         instances.first?.receivesShadows == true
     }
 
@@ -198,12 +198,12 @@ nonisolated public struct DrawGroup: Sendable {
         instances.first?.layer ?? .statics
     }
 
-    public var drawsBlended: Bool {
+    var drawsBlended: Bool {
         Self.drawsBlended(material)
     }
 
     /// Blood on a weapon, drawn only while the weapon is bloody.
-    public var isWeaponBlood: Bool {
+    var isWeaponBlood: Bool {
         material.effect?.weaponBlood ?? false
     }
 
@@ -217,7 +217,7 @@ nonisolated public struct DrawGroup: Sendable {
     }
 
     /// A refraction shape reads the scene drawn before it, so it draws in its own pass.
-    public var drawsRefraction: Bool {
+    var drawsRefraction: Bool {
         Self.drawsRefraction(material)
     }
 

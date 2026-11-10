@@ -3,7 +3,7 @@
 // compressed depth range `[0, FirstPersonCamera.depthSlice]`. That keeps
 // self-occlusion without a second pass or depth clear (docs/engine/first-person.md).
 
-public import Metal
+import Metal
 import OpenSkyFormatsCore
 import OpenSkyRenderCore
 import simd
@@ -30,7 +30,7 @@ extension Renderer {
     /// Encodes the arms into the near depth slice, then restores the full
     /// viewport so everything encoded after them (the SWF layer, the dev UI)
     /// is unaffected.
-    public func encodeFirstPersonArms(
+    func encodeFirstPersonArms(
         descriptor: MTL4RenderPassDescriptor,
         state: inout ScenePassState
     ) {

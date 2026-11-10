@@ -2,28 +2,28 @@
 // see docs/engine/water-physics.md#floating-bodies.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import simd
 
-nonisolated public enum WaterBuoyancy {
+nonisolated enum WaterBuoyancy {
     /// Bodies farther than this from the player do not float.
-    public static let playerRange: Float = 3213
+    static let playerRange: Float = 3213
     /// Bodies whose bottom is this far above the surface do not float.
-    public static let surfaceGate: Float = 48
+    static let surfaceGate: Float = 48
     static let havokScale = NIFCollisionModel.havokToEngineScale
     /// Below this horizontal speed the water does not slow a body.
-    public static let horizontalDampingFloor: Float = 2 * havokScale
+    static let horizontalDampingFloor: Float = 2 * havokScale
 
     /// How deep a box is in water: 0 with a quarter of it under the surface, 1 at 85%.
-    public static func fill(bounds: ModelBounds, surface: Float) -> Float {
+    static func fill(bounds: ModelBounds, surface: Float) -> Float {
         let height = bounds.max.z - bounds.min.z
         guard height > 0 else { return surface >= bounds.min.z ? 1 : 0 }
         return (surface - (bounds.min.z + 0.25 * height)) / (0.6 * height)
     }
 
     /// The share of `buoyancy` that acts at `fill`: none up to half, then a ramp to full.
-    public static func lift(fill: Float, buoyancy: Float) -> Float {
+    static func lift(fill: Float, buoyancy: Float) -> Float {
         if fill <= 0.5 {
             return 0
         }
@@ -35,7 +35,7 @@ nonisolated public enum WaterBuoyancy {
 
     /// One step of water on a body's velocity. `gravity` is the acceleration the
     /// body already took this step.
-    public static func apply(
+    static func apply(
         to body: inout DynamicBody, immersion: WaterImmersion, gravity: SIMD3<Float>, dt: Float
     ) {
         let fill = immersion.fill, current = immersion.current
@@ -60,14 +60,9 @@ nonisolated public enum WaterBuoyancy {
 }
 
 /// How deep a body sits, and the current there in game units per second.
-nonisolated public struct WaterImmersion: Equatable, Sendable {
-    public var fill: Float
-    public var current: SIMD3<Float>
-
-    public init(fill: Float, current: SIMD3<Float>) {
-        self.fill = fill
-        self.current = current
-    }
+nonisolated struct WaterImmersion: Equatable, Sendable {
+    var fill: Float
+    var current: SIMD3<Float>
 }
 
 /// What the body solver needs to float bodies.

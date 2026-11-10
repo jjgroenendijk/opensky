@@ -5,36 +5,20 @@
 public import OpenSkyFormatsESM
 
 /// One trap trigger or trap reference with a trap-family script.
-nonisolated public struct TrapTriggerRow: Equatable, Sendable {
-    public let key: ReferenceKey
-    public let name: String
+nonisolated struct TrapTriggerRow: Equatable, Sendable {
+    let key: ReferenceKey
+    let name: String
     /// Each trap script with its current Papyrus state, such as `tripwire: Disarmed`.
-    public let scripts: [String]
-    public let occupants: Int
-    public let isEnabled: Bool
-
-    public init(
-        key: ReferenceKey, name: String, scripts: [String], occupants: Int, isEnabled: Bool
-    ) {
-        self.key = key
-        self.name = name
-        self.scripts = scripts
-        self.occupants = occupants
-        self.isEnabled = isEnabled
-    }
+    let scripts: [String]
+    let occupants: Int
+    let isEnabled: Bool
 }
 
 /// One step of an `XESP` chain, the selected reference first.
-nonisolated public struct TrapChainLink: Equatable, Sendable {
-    public let name: String
-    public let isEnabled: Bool
-    public let isOppositeOfParent: Bool
-
-    public init(name: String, isEnabled: Bool, isOppositeOfParent: Bool) {
-        self.name = name
-        self.isEnabled = isEnabled
-        self.isOppositeOfParent = isOppositeOfParent
-    }
+nonisolated struct TrapChainLink: Equatable, Sendable {
+    let name: String
+    let isEnabled: Bool
+    let isOppositeOfParent: Bool
 }
 
 nonisolated public struct TrapHazardRow: Equatable, Sendable {
@@ -64,45 +48,27 @@ nonisolated public struct TrapHazardRow: Equatable, Sendable {
     }
 }
 
-nonisolated public struct TrapControlSnapshot: Equatable, Sendable {
-    public let isAvailable: Bool
-    public let triggers: [TrapTriggerRow]
-    public let selected: ReferenceKey?
-    public let chain: [TrapChainLink]
-    public let hazards: [TrapHazardRow]
-    public let hazardHits: Int
-    public let lastText: String
+nonisolated struct TrapControlSnapshot: Equatable, Sendable {
+    let isAvailable: Bool
+    let triggers: [TrapTriggerRow]
+    let selected: ReferenceKey?
+    let chain: [TrapChainLink]
+    let hazards: [TrapHazardRow]
+    let hazardHits: Int
+    let lastText: String
 
-    public static let unavailable = TrapControlSnapshot(
+    static let unavailable = TrapControlSnapshot(
         isAvailable: false, triggers: [], selected: nil, chain: [], hazards: [], hazardHits: 0,
         lastText: "No scripts running."
     )
-
-    public init(
-        isAvailable: Bool,
-        triggers: [TrapTriggerRow],
-        selected: ReferenceKey?,
-        chain: [TrapChainLink],
-        hazards: [TrapHazardRow],
-        hazardHits: Int,
-        lastText: String
-    ) {
-        self.isAvailable = isAvailable
-        self.triggers = triggers
-        self.selected = selected
-        self.chain = chain
-        self.hazards = hazards
-        self.hazardHits = hazardHits
-        self.lastText = lastText
-    }
 }
 
 /// The section readout, kept here so a package test can pin it.
-nonisolated public enum TrapReadout {
+nonisolated enum TrapReadout {
     /// Rows past this many are counted, not listed.
-    public static let listedRows = 10
+    static let listedRows = 10
 
-    public static func text(for snapshot: TrapControlSnapshot) -> String {
+    static func text(for snapshot: TrapControlSnapshot) -> String {
         guard snapshot.isAvailable else { return snapshot.lastText }
         var lines = ["Traps: \(snapshot.triggers.count)"]
         lines += listed(snapshot.triggers.map(line))

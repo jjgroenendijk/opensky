@@ -8,10 +8,10 @@ import OpenSkyFormatsCore
 /// Reads Steam's own logs: `console_log.txt` gets the start-up line once the client is up,
 /// and `connection_log.txt` gets the logon line once the account is logged on.
 nonisolated public struct ReferenceSteamReadiness: Equatable, Sendable {
-    public static let startedLine = "System startup time:"
-    public static let loggedOnLine = "RecvMsgClientLogOnResponse() : processing complete"
+    static let startedLine = "System startup time:"
+    static let loggedOnLine = "RecvMsgClientLogOnResponse() : processing complete"
     /// A game 2 s after both lines restarted through Steam; one 13 s after started.
-    public static let settleSeconds = 10
+    static let settleSeconds = 10
 
     /// The byte length of each log before Steam starts, so only this start's lines count.
     public var consoleOffset: UInt64
@@ -23,7 +23,7 @@ nonisolated public struct ReferenceSteamReadiness: Equatable, Sendable {
     }
 
     /// `console` and `connection` are the text each log gained since its offset.
-    public static func isReady(console: String, connection: String) -> Bool {
+    static func isReady(console: String, connection: String) -> Bool {
         console.contains(startedLine) && connection.contains(loggedOnLine)
     }
 
@@ -44,7 +44,7 @@ nonisolated public struct ReferenceSteamReadiness: Equatable, Sendable {
     }
 
     /// True once Steam wrote both lines after `mark`.
-    public func isReady(_ prefix: ReferencePrefix) -> Bool {
+    func isReady(_ prefix: ReferencePrefix) -> Bool {
         Self.isReady(
             console: Self.text(Self.consoleLog(prefix), after: consoleOffset),
             connection: Self.text(Self.connectionLog(prefix), after: connectionOffset)

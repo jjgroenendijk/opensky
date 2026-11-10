@@ -24,7 +24,7 @@ nonisolated public struct TerrainLODClipMask: Equatable, Hashable, Sendable {
         })
     }
 
-    public var visibleCellCount: Int {
+    var visibleCellCount: Int {
         visibleCellIndexes.count
     }
 

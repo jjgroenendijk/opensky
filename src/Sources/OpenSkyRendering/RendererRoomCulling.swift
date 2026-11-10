@@ -5,9 +5,9 @@ public import OpenSkyRenderCore
 import simd
 
 /// The renderer's room-and-portal culling state.
-public struct RoomCullingState {
+struct RoomCullingState {
     /// Off draws every room.
-    public var enabled = true
+    var enabled = true
     /// This frame's camera visibility; nil draws every room.
     var visibility: RoomVisibility?
 }

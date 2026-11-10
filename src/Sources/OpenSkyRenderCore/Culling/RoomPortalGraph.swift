@@ -33,7 +33,7 @@ nonisolated public struct OrientedBox: Equatable, Sendable {
         return all(local.min .<= halfExtents) && all(local.max .>= -halfExtents)
     }
 
-    public var corners: [SIMD3<Float>] {
+    var corners: [SIMD3<Float>] {
         ModelBounds(min: -halfExtents, max: halfExtents).corners.map { corner in
             let world = transform * SIMD4(corner, 1)
             return SIMD3(world.x, world.y, world.z)
@@ -199,7 +199,7 @@ nonisolated public struct RoomVisibility: Equatable, Sendable {
     public let words: [UInt32]
     public let visibleCount: Int
 
-    public init(visible: [Bool]) {
+    init(visible: [Bool]) {
         var words = [UInt32](repeating: 0, count: (visible.count + 31) / 32)
         for (index, isVisible) in visible.enumerated() where isVisible {
             words[index / 32] |= 1 << UInt32(index % 32)

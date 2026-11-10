@@ -21,7 +21,7 @@ nonisolated public struct PrecipitationBase: Equatable, Sendable {
 nonisolated public struct PrecipitationScale: Equatable, Sendable {
     public static let identity = PrecipitationScale(speed: 1, size: 1, density: 1)
     /// A ratio stays inside this range, so an odd record cannot empty or flood the volume.
-    public static let range: ClosedRange<Float> = 0.25 ... 4
+    static let range: ClosedRange<Float> = 0.25 ... 4
 
     public let speed: Float
     public let size: Float
@@ -114,7 +114,7 @@ nonisolated public struct PrecipitationTuning: Equatable, Sendable {
 
 nonisolated extension PrecipitationTuning {
     /// One readout line per volume: each hand-tuned value next to the value in use.
-    public var readoutLines: [String] {
+    var readoutLines: [String] {
         [
             "Source: \(source ?? "fallback")",
             Self.line("Rain", base: PrecipitationBase.rain, scale: rain),

@@ -6,7 +6,7 @@ public import OpenSkyFormatsESM
 nonisolated extension KeywordList {
     /// Tests by editor ID after resolving both the requested keyword and this
     /// record's raw KWDA links through the same load order.
-    public func contains(
+    func contains(
         editorID: String,
         fromPlugin pluginName: String,
         using store: KeywordStore

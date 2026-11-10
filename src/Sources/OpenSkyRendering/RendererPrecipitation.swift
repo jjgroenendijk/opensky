@@ -14,7 +14,7 @@ extension Renderer {
         return try (scene, PrecipitationVolume(device: device))
     }
 
-    public func updatePrecipitation(deltaTime: Float) {
+    func updatePrecipitation(deltaTime: Float) {
         precipitation.update(PrecipitationUpdate(
             cameraPosition: frameInput.view.position,
             state: frameInput.weather?.precipitation ?? .none,

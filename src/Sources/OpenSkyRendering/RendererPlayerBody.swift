@@ -11,14 +11,14 @@ extension Renderer {
     /// Scene opaque groups plus the player's, so the scene pass cannot forget the body.
     /// Order is for stable grouping only; depth decides visibility. The first-person arms
     /// are drawn separately (`RendererFirstPersonArms.swift`).
-    public var opaqueDrawGroups: [DrawGroup] {
+    var opaqueDrawGroups: [DrawGroup] {
         let body = isPlayerBodyVisible ? frameInput.rigs.body?.render.opaque : nil
         return Self.joined(
             scene.opaque, body ?? [], effects.scene.opaque, effects.loadingCover?.opaque ?? []
         )
     }
 
-    public var alphaTestedDrawGroups: [DrawGroup] {
+    var alphaTestedDrawGroups: [DrawGroup] {
         let body = isPlayerBodyVisible ? frameInput.rigs.body?.render.alphaTested : nil
         return Self.joined(
             scene.alphaTested, body ?? [], effects.scene.alphaTested,
@@ -29,13 +29,13 @@ extension Renderer {
     /// What the shadow pass rasterizes: the scene plus the player's body in
     /// every mode a player exists in, whether or not the eye can see it. The
     /// reasoning is on `PlayerRigVisibility`.
-    public var shadowOpaqueDrawGroups: [DrawGroup] {
+    var shadowOpaqueDrawGroups: [DrawGroup] {
         let body = frameInput.rigs.visibility.castsBodyShadow ? frameInput.rigs.body?.render
             .opaque : nil
         return Self.joined(scene.opaque, body ?? [])
     }
 
-    public var shadowAlphaTestedDrawGroups: [DrawGroup] {
+    var shadowAlphaTestedDrawGroups: [DrawGroup] {
         let body = frameInput.rigs.visibility.castsBodyShadow
             ? frameInput.rigs.body?.render.alphaTested : nil
         return Self.joined(scene.alphaTested, body ?? [])
@@ -64,7 +64,7 @@ extension Renderer {
     }
 
     /// Whether the third-person body is drawn to the camera this frame.
-    public var isPlayerBodyVisible: Bool {
+    var isPlayerBodyVisible: Bool {
         frameInput.rigs.visibility.drawsBody
     }
 

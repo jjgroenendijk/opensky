@@ -1,23 +1,23 @@
 // Fonts, shaped lines and wrapped text kept across frames, so a HUD string that
 // stays the same is shaped once. It lives on the glyph atlas and follows its threading.
 
-public import CoreText
+import CoreText
 
-nonisolated public final class UITextLayoutCache {
+nonisolated final class UITextLayoutCache {
     /// Entries each table may hold. A full table is emptied, because the HUD shows
     /// far fewer strings than this, so only a long run of changing text fills it.
-    public static let entryLimit = 2048
+    static let entryLimit = 2048
 
     /// Lines shaped by CoreText since the cache was made, for tests and readouts.
-    public private(set) var shapedLineCount = 0
+    private(set) var shapedLineCount = 0
     private var fonts: [UITextFontKey: CTFont] = [:]
     private var lines: [UITextLineKey: UIShapedLine] = [:]
     private var wraps: [UITextWrapKey: [String]] = [:]
 
-    public init() {}
+    init() {}
 
     /// `font` at `size`, in points for measurement or pixels for rasterising.
-    public func ctFont(_ font: UIFont, size: Float) -> CTFont {
+    func ctFont(_ font: UIFont, size: Float) -> CTFont {
         let key = UITextFontKey(weight: font.weight, size: size)
         if let cached = fonts[key] {
             return cached
@@ -27,7 +27,7 @@ nonisolated public final class UITextLayoutCache {
         return made
     }
 
-    public func shape(_ text: String, font: UIFont, size: Float) -> UIShapedLine {
+    func shape(_ text: String, font: UIFont, size: Float) -> UIShapedLine {
         let key = UITextLineKey(text: text, font: UITextFontKey(weight: font.weight, size: size))
         if let cached = lines[key] {
             return cached
@@ -38,7 +38,7 @@ nonisolated public final class UITextLayoutCache {
         return shaped
     }
 
-    public func wrap(_ text: String, font: UIFont, maxWidth: Float) -> [String] {
+    func wrap(_ text: String, font: UIFont, maxWidth: Float) -> [String] {
         let key = UITextWrapKey(
             text: text,
             font: UITextFontKey(weight: font.weight, size: font.pointSize),

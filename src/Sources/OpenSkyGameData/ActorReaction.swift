@@ -46,7 +46,7 @@ nonisolated public enum ActorReaction: UInt8, Comparable, CaseIterable, Sendable
         lhs.rawValue < rhs.rawValue
     }
 
-    public var displayName: String {
+    var displayName: String {
         switch self {
         case .ally: "ally"
         case .friend: "friend"

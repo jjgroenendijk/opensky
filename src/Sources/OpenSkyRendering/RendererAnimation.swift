@@ -23,7 +23,7 @@ extension Renderer {
     }
 
     @discardableResult
-    public func updateAnimationsFromWallClock() -> Float {
+    func updateAnimationsFromWallClock() -> Float {
         // Returned delta also drives particles + precipitation this frame, so a
         // paused (zero) delta freezes all three together.
         let delta = animationClock
@@ -32,7 +32,7 @@ extension Renderer {
         return delta
     }
 
-    public func updateParticles(deltaTime: Float) {
+    func updateParticles(deltaTime: Float) {
         guard particlesEnabled, !particlesFrozen else { return }
         for playback in scene.particles + effects.particles {
             playback.advance(

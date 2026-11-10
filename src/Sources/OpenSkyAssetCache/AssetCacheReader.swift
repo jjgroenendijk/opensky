@@ -8,15 +8,13 @@ import OpenSkyFormatsCore
 public import OpenSkyGameData
 import Synchronization
 
-nonisolated public struct AssetCacheReadCounts: Equatable, Sendable {
-    public var hits = 0
-    public var misses = 0
-    public var stale = 0
-    public var unreadable = 0
+nonisolated struct AssetCacheReadCounts: Equatable, Sendable {
+    var hits = 0
+    var misses = 0
+    var stale = 0
+    var unreadable = 0
     /// Entries that say the original file loads, because no converter stores it.
-    public var original = 0
-
-    public init() {}
+    var original = 0
 }
 
 /// One asset kind's converter, as the read path sees it.
@@ -45,9 +43,9 @@ nonisolated public struct AssetCacheEntryRead<Value> {
 
 nonisolated extension AssetCacheEntryRead: Sendable where Value: Sendable {}
 
-nonisolated public struct AssetCacheRebuildItem: Hashable, Sendable {
-    public let kind: AssetCacheKind
-    public let path: String
+nonisolated struct AssetCacheRebuildItem: Hashable, Sendable {
+    let kind: AssetCacheKind
+    let path: String
 }
 
 nonisolated public final class AssetCacheReader: Sendable {
@@ -81,7 +79,7 @@ nonisolated public final class AssetCacheReader: Sendable {
     }
 
     /// Off means every load reads the original files, for comparison.
-    public var isEnabled: Bool {
+    var isEnabled: Bool {
         get { state.withLock { $0.isEnabled } }
         set { state.withLock { $0.isEnabled = newValue } }
     }
@@ -97,12 +95,12 @@ nonisolated public final class AssetCacheReader: Sendable {
         set { state.withLock { $0.kinds = newValue } }
     }
 
-    public func counts(for kind: AssetCacheKind) -> AssetCacheReadCounts {
+    func counts(for kind: AssetCacheKind) -> AssetCacheReadCounts {
         state.withLock { $0.counts[kind] ?? AssetCacheReadCounts() }
     }
 
     /// Entries a lookup found stale or broken since the last call.
-    public func takeRebuildItems() -> Set<AssetCacheRebuildItem> {
+    func takeRebuildItems() -> Set<AssetCacheRebuildItem> {
         state.withLock { state in
             defer { state.rebuild.removeAll() }
             return state.rebuild

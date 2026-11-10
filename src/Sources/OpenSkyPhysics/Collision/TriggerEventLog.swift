@@ -16,7 +16,7 @@ nonisolated public struct TriggerTransitionRecord: Equatable, Sendable {
     public let formID: FormID?
 
     /// One readout line: what happened, to which reference, and its FormID.
-    public var line: String {
+    var line: String {
         let phase = event.phase == .enter ? "enter" : "leave"
         let form = formID.map { "0x\($0.description)" } ?? "unloaded"
         return "\(phase) \(event.reference.description) \(form)"
@@ -44,13 +44,13 @@ public final class TriggerEventLog {
         recordedCount += 1
     }
 
-    public func clear() {
+    func clear() {
         records.removeAll()
         recordedCount = 0
     }
 
     /// Readout lines, oldest first.
-    public var lines: [String] {
+    var lines: [String] {
         records.map(\.line)
     }
 

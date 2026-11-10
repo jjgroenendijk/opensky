@@ -90,19 +90,19 @@ extension Renderer {
     /// Cascades to render: 2 for low (cheaper), 3 for high. The shadow map
     /// keeps all ShadowConstantCascadeCount slices allocated either way; low
     /// simply renders fewer and the shader pads the unused splits.
-    public var shadowCascadeCount: Int {
+    var shadowCascadeCount: Int {
         shadowQuality == .low ? 2 : ShadowConstant.cascadeCount.rawValue
     }
 
     /// Sun-shadow far bound for the active quality.
-    public var activeShadowDistance: Float {
+    var activeShadowDistance: Float {
         let distance = shadowSettings.distance ?? Self.shadowDistance
         return shadowQuality == .low ? min(distance, Self.shadowDistanceLow) : distance
     }
 
     /// PCF kernel radius bound into FrameUniforms: 0 -> single compare tap
     /// (low), 1 -> the 3x3 kernel (high). Read by sunShadowFactor.
-    public var shadowSampleRadius: UInt32 {
+    var shadowSampleRadius: UInt32 {
         shadowQuality == .low ? 0 : 1
     }
 
@@ -122,14 +122,14 @@ extension Renderer {
 
     /// This frame's cascade `index` world->light-clip matrix for FrameUniforms;
     /// identity pads slots past the produced cascade count.
-    public func shadowCascadeMatrix(_ index: Int) -> float4x4 {
+    func shadowCascadeMatrix(_ index: Int) -> float4x4 {
         index < shadowCascades.count ? shadowCascades[index].viewProjection
             : matrix_identity_float4x4
     }
 
     /// Per-cascade far bounds packed for the shader, padded with the last real
     /// bound (mirrors ShadowCascadeMath.cascadeIndex padding).
-    public func shadowCascadeSplitBounds() -> SIMD4<Float> {
+    func shadowCascadeSplitBounds() -> SIMD4<Float> {
         let lastFar = shadowCascades.last?.splitFar ?? activeShadowDistance
         func far(_ index: Int) -> Float {
             index < shadowCascades.count ? shadowCascades[index].splitFar : lastFar

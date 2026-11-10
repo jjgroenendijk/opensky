@@ -31,10 +31,10 @@ nonisolated public struct ReadyMeshLayout: Equatable, Sendable {
 nonisolated public struct ReadyModelLayout: Equatable, Sendable {
     public let materials: [Material]
     public let skippedShapeCount: Int
-    public let editorMarkerShapeCount: Int
+    let editorMarkerShapeCount: Int
     public let meshes: [ReadyMeshLayout]
     /// Where the whole model lies in the payload.
-    public let modelRange: Range<Int>
+    let modelRange: Range<Int>
 
     /// True when every mesh can load from its ready bytes.
     public var isReady: Bool {

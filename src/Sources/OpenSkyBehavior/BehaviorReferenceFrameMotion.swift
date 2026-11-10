@@ -3,12 +3,12 @@
 // (docs/formats/hka-animation.md).
 
 import Foundation
-public import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 import simd
 
 nonisolated extension HKADefaultAnimatedReferenceFrame {
     /// The frame at `time` seconds, linear between the two nearest samples.
-    public func pose(at time: Float) -> HKABonePose? {
+    func pose(at time: Float) -> HKABonePose? {
         guard let first = samples.first else { return nil }
         var sample = first
         if samples.count > 1, duration > 0 {
@@ -30,7 +30,7 @@ nonisolated extension HKADefaultAnimatedReferenceFrame {
 
     /// The travel from `start` to `end`, through the clip's end and start when it
     /// wrapped. `window` bounds the played part of the clip.
-    public func motion(
+    func motion(
         from start: Float, to end: Float, wrapped: Bool, window: ClosedRange<Float>
     ) -> BehaviorRootMotion {
         guard let from = pose(at: start), let to = pose(at: end) else {

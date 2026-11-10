@@ -7,13 +7,13 @@ public import OpenSkyFormatsMesh
 import simd
 
 /// One band of a ribbon, in world space. `along` is the texture coordinate at each end.
-nonisolated public struct RibbonSegment: Equatable, Sendable {
-    public var start: SIMD3<Float>
-    public var end: SIMD3<Float>
-    public var startWidth: Float
-    public var endWidth: Float
-    public var color: SIMD4<Float>
-    public var along: SIMD2<Float>
+nonisolated struct RibbonSegment: Equatable, Sendable {
+    var start: SIMD3<Float>
+    var end: SIMD3<Float>
+    var startWidth: Float
+    var endWidth: Float
+    var color: SIMD4<Float>
+    var along: SIMD2<Float>
 
     /// Packed into the billboard layout; the ribbon vertex shader reads it back.
     func instance(alongTextureV: Bool) -> ParticleGPUInstance {
@@ -25,10 +25,10 @@ nonisolated public struct RibbonSegment: Equatable, Sendable {
     }
 }
 
-nonisolated public enum ParticleRibbons {
+nonisolated enum ParticleRibbons {
     /// A strip system's particles in birth order, oldest first, joined into one band. The
     /// texture runs from the oldest end (0) to the newest (1).
-    public static func strip(_ particles: [SimulatedParticle]) -> [RibbonSegment] {
+    static func strip(_ particles: [SimulatedParticle]) -> [RibbonSegment] {
         let ordered = particles.sorted { $0.age > $1.age }
         guard ordered.count > 1 else { return [] }
         let last = Float(ordered.count - 1)
@@ -46,7 +46,7 @@ nonisolated public enum ParticleRibbons {
 
     /// Each drop as a streak along its velocity. `aspect` is length over width; the area
     /// stays that of the square billboard.
-    public static func streaks(_ particles: [SimulatedParticle], aspect: Float) -> [RibbonSegment] {
+    static func streaks(_ particles: [SimulatedParticle], aspect: Float) -> [RibbonSegment] {
         let ratio = max(aspect, 1).squareRoot()
         return particles.compactMap { particle in
             let speed = simd_length(particle.velocity)
@@ -67,7 +67,7 @@ nonisolated public enum ParticleRibbons {
 /// seed, and the bolt blends from one to the next, so it crawls rather than jumps.
 nonisolated public struct LightningBolt: Sendable {
     /// Seconds between two grown bolts; OpenSky's choice.
-    public static let period: Float = 0.1
+    static let period: Float = 0.1
     /// Segments of every branch together, at most.
     public static let segmentCapacity = 1024
 
@@ -80,7 +80,7 @@ nonisolated public struct LightningBolt: Sendable {
     }
 
     /// The bolt at `time` in the shape's own space, along +Y.
-    public func segments(at time: Float, color: SIMD4<Float>) -> [RibbonSegment] {
+    func segments(at time: Float, color: SIMD4<Float>) -> [RibbonSegment] {
         let step = max(time, 0) / Self.period
         let index = UInt64(step.rounded(.down))
         let blend = step - step.rounded(.down)

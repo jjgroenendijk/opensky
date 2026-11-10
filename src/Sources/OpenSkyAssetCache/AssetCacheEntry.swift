@@ -19,16 +19,6 @@ nonisolated public struct AssetCacheEntryHeader: Equatable, Sendable {
     public let converterVersion: UInt32
     /// Which texture output built it (`AssetTextureOutput.variant`); 0 for other kinds.
     public let output: UInt8
-
-    public init(
-        kind: AssetCacheKind, source: AssetSourceStamp, converterVersion: UInt32,
-        output: UInt8
-    ) {
-        self.kind = kind
-        self.source = source
-        self.converterVersion = converterVersion
-        self.output = output
-    }
 }
 
 nonisolated public enum AssetCacheEntryCodec {

@@ -48,7 +48,7 @@ nonisolated public struct BehaviorPose: Equatable, Sendable {
     /// True when `bones` hold changes from an additive clip, to add to another pose.
     public var isAdditive: Bool
 
-    public init(
+    init(
         bones: [HKABonePose], rootMotion: BehaviorRootMotion = .identity, isAdditive: Bool = false
     ) {
         self.bones = bones
@@ -99,12 +99,12 @@ nonisolated public struct BehaviorSkeleton: Equatable, Sendable {
     }
 
     /// The bone of this skeleton a ragdoll bone stands for, or -1.
-    public func bone(forRagdollBone index: Int) -> Int {
+    func bone(forRagdollBone index: Int) -> Int {
         ragdollBones.indices.contains(index) ? ragdollBones[index] : -1
     }
 
     /// The parent of `bone`, or -1 for a root or an index out of range.
-    public func parent(of bone: Int) -> Int {
+    func parent(of bone: Int) -> Int {
         parentIndices.indices.contains(bone) ? parentIndices[bone] : -1
     }
 
@@ -126,7 +126,7 @@ nonisolated public enum BehaviorPoseMath: Sendable {
     /// Blends `lhs` toward `rhs` by `weight`, clamped to [0, 1]. Rotation takes the
     /// shortest arc. When bone counts differ, the extra bones of the longer pose are
     /// kept as they are.
-    public static func blend(_ lhs: BehaviorPose, _ rhs: BehaviorPose, weight: Float)
+    static func blend(_ lhs: BehaviorPose, _ rhs: BehaviorPose, weight: Float)
         -> BehaviorPose
     {
         let amount = clamped(weight)
@@ -145,7 +145,7 @@ nonisolated public enum BehaviorPoseMath: Sendable {
         )
     }
 
-    public static func blend(_ lhs: HKABonePose, _ rhs: HKABonePose, weight: Float)
+    static func blend(_ lhs: HKABonePose, _ rhs: HKABonePose, weight: Float)
         -> HKABonePose
     {
         let amount = clamped(weight)
@@ -156,7 +156,7 @@ nonisolated public enum BehaviorPoseMath: Sendable {
         )
     }
 
-    public static func blend(
+    static func blend(
         _ lhs: BehaviorRootMotion,
         _ rhs: BehaviorRootMotion,
         weight: Float
@@ -175,7 +175,7 @@ nonisolated public enum BehaviorPoseMath: Sendable {
     /// Normalized weight blend of any number of children, folded left to right: the
     /// next child of weight w enters at w / (W + w). Non-positive weights are dropped;
     /// with no weight left the result is `fallback`.
-    public static func blend(
+    static func blend(
         children: [(pose: BehaviorPose, weight: Float)],
         fallback: BehaviorPose
     ) -> BehaviorPose {
@@ -194,16 +194,16 @@ nonisolated public enum BehaviorPoseMath: Sendable {
     /// One child of a per-bone blend: its pose, its whole-pose weight, and the
     /// per-bone mask that scales that weight bone by bone (`hkbBoneWeightArray`).
     /// A nil mask means the child contributes at full weight everywhere.
-    nonisolated public struct MaskedChild: Sendable {
-        public let pose: BehaviorPose
-        public let weight: Float
-        public let boneWeights: [Float]?
+    nonisolated struct MaskedChild: Sendable {
+        let pose: BehaviorPose
+        let weight: Float
+        let boneWeights: [Float]?
 
         /// This child's effective weight on one bone. Bones past the end of the
         /// mask contribute at full weight: a mask shorter than the skeleton is
         /// ordinary in modded data, and treating the tail as zero would silently
         /// drop every bone the author did not reach.
-        public func weight(ofBone index: Int) -> Float {
+        func weight(ofBone index: Int) -> Float {
             guard let boneWeights, boneWeights.indices.contains(index) else {
                 return weight
             }
@@ -214,7 +214,7 @@ nonisolated public enum BehaviorPoseMath: Sendable {
     /// Weight blend of any number of children, each masked per bone by its
     /// `hkbBoneWeightArray`. The vanilla upper-body blend needs this. Same fold as
     /// `blend(children:fallback:)`, run per bone.
-    public static func blend(
+    static func blend(
         masked children: [MaskedChild], fallback: BehaviorPose, referenceThreshold: Float = 0
     ) -> BehaviorPose {
         let contributing = children.filter { $0.weight > 0 && $0.weight.isFinite }
@@ -271,7 +271,7 @@ nonisolated public enum BehaviorPoseMath: Sendable {
 
     /// Overwrites the bones a clip sampled onto a copy of `base`, dropping
     /// samples that name a bone the skeleton does not have.
-    public static func applying(
+    static func applying(
         _ samples: [HKABoneTransformSample],
         to base: [HKABonePose]
     ) -> [HKABonePose] {
@@ -284,7 +284,7 @@ nonisolated public enum BehaviorPoseMath: Sendable {
 
     /// The travel between two samples of the same root bone, in the earlier sample's
     /// frame. `isExtracted` is the caller's to state.
-    public static func rootMotion(
+    static func rootMotion(
         from previous: HKABonePose,
         to current: HKABonePose,
         isExtracted: Bool = false
@@ -299,7 +299,7 @@ nonisolated public enum BehaviorPoseMath: Sendable {
     /// Adds `next` after `first`, which is how a clip that looped mid-update
     /// reports its travel: the run to the end of the clip, then the run from
     /// the start.
-    public static func concatenating(
+    static func concatenating(
         _ first: BehaviorRootMotion,
         _ next: BehaviorRootMotion
     ) -> BehaviorRootMotion {

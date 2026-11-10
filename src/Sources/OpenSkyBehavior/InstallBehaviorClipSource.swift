@@ -72,7 +72,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
 
     /// Indexes every archived character animation, which is the path list the
     /// running player graph needs when nothing narrower is supplied.
-    public convenience init(fileSystem: any GameFileSource, limit: Int = 512) {
+    convenience init(fileSystem: any GameFileSource, limit: Int = 512) {
         self.init(
             fileSystem: fileSystem,
             paths: Self.animationPaths(in: fileSystem),

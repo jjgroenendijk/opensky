@@ -7,10 +7,10 @@ public import OpenSkyFormatsESM
 
 nonisolated public struct HazardLinks: Equatable, Sendable {
     public let spell: RecordLink?
-    public let light: RecordLink?
-    public let impactDataSet: RecordLink?
-    public let sound: RecordLink?
-    public let imageSpaceModifier: RecordLink?
+    let light: RecordLink?
+    let impactDataSet: RecordLink?
+    let sound: RecordLink?
+    let imageSpaceModifier: RecordLink?
 
     public var all: [RecordLink] {
         [spell, light, impactDataSet, sound, imageSpaceModifier].compactMap(\.self)

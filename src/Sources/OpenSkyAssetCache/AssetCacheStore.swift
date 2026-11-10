@@ -224,7 +224,7 @@ nonisolated public final class AssetCacheStore: Sendable {
     }
 
     /// True when a whole, current entry exists. Reads only the header.
-    public func isCurrent(_ request: AssetCacheRequest) -> Bool {
+    func isCurrent(_ request: AssetCacheRequest) -> Bool {
         entryState(request) == .current
     }
 
@@ -246,7 +246,7 @@ nonisolated public final class AssetCacheStore: Sendable {
     }
 
     /// Deletes one entry, so the next build makes it again.
-    public func remove(kind: AssetCacheKind, source: AssetSourceStamp) {
+    func remove(kind: AssetCacheKind, source: AssetSourceStamp) {
         try? FileManager.default.removeItem(at: entryURL(kind: kind, source: source))
     }
 

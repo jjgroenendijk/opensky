@@ -10,18 +10,6 @@ nonisolated public struct AgentControlSnapshot: Equatable, Sendable {
     public var socketPath: String
     public var connections: Int
     public var timeline: AgentTimeline?
-
-    public init(
-        enabled: Bool,
-        socketPath: String,
-        connections: Int,
-        timeline: AgentTimeline?
-    ) {
-        self.enabled = enabled
-        self.socketPath = socketPath
-        self.connections = connections
-        self.timeline = timeline
-    }
 }
 
 @MainActor
@@ -31,7 +19,7 @@ public final class AgentControlCoordinator {
         var active: (id: Int, wait: AgentWait)?
     }
 
-    public static let recentCommandLimit = 12
+    static let recentCommandLimit = 12
 
     public let router: AgentCommandRouter
     public let socketPath: String
@@ -39,7 +27,7 @@ public final class AgentControlCoordinator {
     /// The app's version string for the hello line.
     public var appVersion = "dev"
     /// Host seconds, injectable so a test can move time.
-    public var now: () -> Double = { ProcessInfo.processInfo.systemUptime }
+    var now: () -> Double = { ProcessInfo.processInfo.systemUptime }
     /// Called after the server starts or stops, so the host can start or stop polling.
     private let enabledChanged: (Bool) -> Void
 
@@ -62,7 +50,7 @@ public final class AgentControlCoordinator {
         server != nil
     }
 
-    public var connectionCount: Int {
+    var connectionCount: Int {
         server?.connectionCount ?? 0
     }
 
@@ -84,7 +72,7 @@ public final class AgentControlCoordinator {
         }
     }
 
-    public var snapshot: AgentControlSnapshot {
+    var snapshot: AgentControlSnapshot {
         AgentControlSnapshot(
             enabled: isEnabled,
             socketPath: socketPath,

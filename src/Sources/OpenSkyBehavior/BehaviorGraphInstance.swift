@@ -37,57 +37,57 @@ nonisolated public struct BehaviorNodeState: Equatable, Sendable {
     /// that stopped reaching it.
     public var isActivated = false
     /// Seconds into the clip window, for a clip generator.
-    public var localTime: Float = 0
+    var localTime: Float = 0
     /// `localTime` before the update in progress advanced it.
-    public var previousLocalTime: Float = 0
+    var previousLocalTime: Float = 0
     /// How many times the clip has wrapped since activation, so an acyclic
     /// trigger can fire on the first cycle only.
-    public var cycleCount = 0
+    var cycleCount = 0
     /// Root bone at `previousLocalTime`, and at the two edges of the clip
     /// window, so a wrap can report the travel across the seam.
-    public var previousRootPose: HKABonePose?
-    public var windowStartRootPose: HKABonePose?
-    public var windowEndRootPose: HKABonePose?
+    var previousRootPose: HKABonePose?
+    var windowStartRootPose: HKABonePose?
+    var windowEndRootPose: HKABonePose?
     /// Seconds since activation, for a timer modifier.
-    public var elapsed: Float = 0
+    var elapsed: Float = 0
     /// True once a timer modifier has raised its alarm.
-    public var hasFiredAlarm = false
+    var hasFiredAlarm = false
     /// Events counted, for the every-N-events modifier.
-    public var eventCount = 0
+    var eventCount = 0
     /// Whether an event-driven modifier is currently running its wrapped one.
-    public var isModifierRunning = false
+    var isModifierRunning = false
     /// True once the node has run its one-time activation setup, which is not
     /// the same as `isActivated`: activation marks the node reachable, seeding
     /// is what each class does with its first update.
-    public var hasSeeded = false
+    var hasSeeded = false
     /// `localTime` as a fraction of the clip window, for a clip generator. This
     /// is what clip synchronization reads and writes, and it is kept beside
     /// `localTime` rather than derived because the window length lives in the
     /// generator rather than in the state.
-    public var phase: Float = 0
+    var phase: Float = 0
     /// PID error terms, for a damping modifier. A scalar uses `x`.
-    public var errorSum = SIMD4<Float>()
-    public var previousError = SIMD4<Float>()
+    var errorSum = SIMD4<Float>()
+    var previousError = SIMD4<Float>()
     /// Last seen truth per slot, for edge detectors and expression event modes.
-    public var flags: [Bool] = []
+    var flags: [Bool] = []
     /// Per slot: true once the slot has sent its event since activation.
-    public var sentFlags: [Bool] = []
+    var sentFlags: [Bool] = []
     /// Per-bone or per-axis blend weights, for the aiming and IK modifiers.
-    public var weights: [Float] = []
+    var weights: [Float] = []
     /// The band an events-from-range modifier was in last update.
-    public var rangeIndex: Int?
+    var rangeIndex: Int?
     /// Events to count before the next send, for the every-N-events modifier.
-    public var eventThreshold = 0
+    var eventThreshold = 0
     /// The pose a cyclic blend crossfades away from, while it does.
-    public var crossBlendSource: BehaviorPose?
+    var crossBlendSource: BehaviorPose?
     /// The blend parameter a cyclic blend transition holds while frozen.
-    public var frozenBlendParameter: Float?
+    var frozenBlendParameter: Float?
     /// The offset clip pose a `BSOffsetAnimationGenerator` holds, and where it was taken.
-    public var offsetLayer: BehaviorPose?
-    public var offsetFrame: Int?
-    public var offsetFraction: Float = 0
+    var offsetLayer: BehaviorPose?
+    var offsetFrame: Int?
+    var offsetFraction: Float = 0
     /// What an `hkbPoseMatchingGenerator` keeps between updates.
-    public var poseMatch: BehaviorPoseMatchState?
+    var poseMatch: BehaviorPoseMatchState?
 }
 
 /// What one update produced: the pose, the root travel kept beside it, and the
@@ -122,7 +122,7 @@ nonisolated public final class BehaviorGraphInstance {
     public var references: (any BehaviorReferenceSource)?
     /// Child instances by reference key, built on first reach. The optional is
     /// stored so a name that will not resolve is looked up once.
-    public var referencedGraphs: [String: BehaviorGraphInstance?] = [:]
+    var referencedGraphs: [String: BehaviorGraphInstance?] = [:]
     /// What each referenced graph produced during the update in progress, so a
     /// reference reached twice advances its child's clock once.
     public var referencedResults: [String: BehaviorUpdateResult] = [:]
@@ -134,7 +134,7 @@ nonisolated public final class BehaviorGraphInstance {
     /// Reference keys of this instance and everything above it, so a modded
     /// graph that references its own ancestor is refused by name rather than
     /// recursed into.
-    public var referenceAncestry: Set<String> = []
+    var referenceAncestry: Set<String> = []
 
     /// The clip source, shared with any graph this one references.
     public var clipSource: any BehaviorClipSource {
@@ -156,13 +156,13 @@ nonisolated public final class BehaviorGraphInstance {
 
     /// Per-state-machine runtime state. Not cleared by `deactivate()`:
     /// `m_startStateMode` 2 re-enters the state that was current when it stopped.
-    public var machineStates: [HKXPointerTarget: BehaviorMachineState] = [:]
+    var machineStates: [HKXPointerTarget: BehaviorMachineState] = [:]
     /// Update index at which each event id was last active, so a transition's
     /// trigger and initiate intervals can be read as event windows.
     public var eventLastSeen: [Int: Int] = [:]
     /// Parsed transition conditions, keyed by the condition object. The
     /// optional is stored so a string that will not parse is parsed once.
-    public var conditionCache: [HKXPointerTarget: BehaviorConditionExpression?] = [:]
+    var conditionCache: [HKXPointerTarget: BehaviorConditionExpression?] = [:]
     /// The playback phase a sync master or a synchronizing transition is
     /// imposing on the clips below the node being evaluated. `seedOnly` marks
     /// a transition's one-shot alignment apart from a blender's continuous one.
@@ -171,7 +171,7 @@ nonisolated public final class BehaviorGraphInstance {
     /// first. Each machine that enters below it takes the first one.
     public var pendingNestedStateIds: [Int] = []
     /// Global wildcard routes per machine, built on first reach.
-    public var globalWildcardRouteCache: [HKXPointerTarget: [BehaviorGlobalWildcardRoute]] = [:]
+    var globalWildcardRouteCache: [HKXPointerTarget: [BehaviorGlobalWildcardRoute]] = [:]
 
     /// Seconds the animated-to-simulated blend takes, from the last evaluated
     /// `hkbRigidBodyRagdollControlsModifier`. Nil until one has run. Internal, because
@@ -189,22 +189,22 @@ nonisolated public final class BehaviorGraphInstance {
     /// does not overwrite what a newly active one just wrote.
     public var variablesWrittenThisUpdate: Set<Int> = []
     /// Parsed `hkbEvaluateExpressionModifier` statements per expression array.
-    public var statementCache: [HKXPointerTarget: [BehaviorExpressionStatement?]] = [:]
+    var statementCache: [HKXPointerTarget: [BehaviorExpressionStatement?]] = [:]
     /// Mean ankle correction of the last foot IK solve, model space.
-    public var footIkError = SIMD3<Float>()
+    var footIkError = SIMD3<Float>()
     /// The pose each cyclic blend generator produced last, so a crossfade can start from it.
-    public var cyclicLastPoses: [HKXPointerTarget: BehaviorPose] = [:]
+    var cyclicLastPoses: [HKXPointerTarget: BehaviorPose] = [:]
     /// The held blender each cyclic blend fades away from, which keeps running.
-    public var cyclicCopies: [HKXPointerTarget: BehaviorCyclicCopy] = [:]
+    var cyclicCopies: [HKXPointerTarget: BehaviorCyclicCopy] = [:]
     /// True while a synced blender runs a follower, whose annotations repeat the leader's.
-    public var mutesClipAnnotations = false
+    var mutesClipAnnotations = false
     /// The blend parameter a cyclic blend generator hands its blender, by blender.
-    public var blendParameterOverrides: [HKXPointerTarget: Float] = [:]
+    var blendParameterOverrides: [HKXPointerTarget: Float] = [:]
     /// The source of every random choice the graph makes. Seeded the same for
     /// every instance, so two runs with the same input stay identical.
-    public var random = BehaviorRandom()
+    var random = BehaviorRandom()
     /// The state machines' own random source, for random start states and transitions.
-    public var stateMachineRandom = BehaviorStateMachineRandom()
+    var stateMachineRandom = BehaviorStateMachineRandom()
 
     /// What every state machine the last update reached is doing, in walk
     /// order. This is the state path items 14.5 and 14.6 read, and what the
@@ -247,7 +247,7 @@ nonisolated public final class BehaviorGraphInstance {
     }
 
     /// The character's mirror, built when its properties arrive.
-    public private(set) var mirror: BehaviorMirror?
+    private(set) var mirror: BehaviorMirror?
     public let characterPropertyNames: [String?]
 
     /// Compiled nodes, cached so a DAG node shared by ten parents decodes
@@ -411,7 +411,7 @@ nonisolated public final class BehaviorGraphInstance {
     }
 
     /// The clip a generator names, or nil: a wait while it loads, else one tally entry.
-    public func clip(named name: String?, bindingIndex: Int) -> (any BehaviorClip)? {
+    func clip(named name: String?, bindingIndex: Int) -> (any BehaviorClip)? {
         guard let found = clips.clip(named: name, bindingIndex: bindingIndex) else {
             if clips.isLoading(named: name, bindingIndex: bindingIndex) {
                 isWaitingForClip = true
@@ -473,7 +473,7 @@ nonisolated public final class BehaviorGraphInstance {
     /// `selectedGeneratorIndex`, `startStateId` — while the decoders name their
     /// fields after the Havok members, which do. Both spellings normalize to
     /// the unprefixed one so a lookup written either way resolves.
-    public static func normalizedMemberPath(_ path: String) -> String {
+    static func normalizedMemberPath(_ path: String) -> String {
         path.hasPrefix("m_") ? String(path.dropFirst(2)) : path
     }
 
@@ -522,12 +522,12 @@ nonisolated extension BehaviorGraphInstance {
 nonisolated extension [String: BehaviorVariableValue] {
     /// The bound float for `path`, or `fallback` when nothing is bound there.
     /// `path` may be spelled with or without the Havok `m_` prefix.
-    public func float(_ path: String, or fallback: Float) -> Float {
+    func float(_ path: String, or fallback: Float) -> Float {
         value(path)?.realValue ?? fallback
     }
 
     /// The bound integer for `path`, or `fallback`.
-    public func int(_ path: String, or fallback: Int) -> Int {
+    func int(_ path: String, or fallback: Int) -> Int {
         value(path)?.intValue ?? fallback
     }
 
@@ -552,7 +552,7 @@ nonisolated extension BehaviorGraphInstance {
 
     /// Writes a variable by index from inside the graph. A non-negative `bit`
     /// sets or clears that bit of the stored word.
-    public func writeVariable(_ value: BehaviorVariableValue, at index: Int, bit: Int = -1) {
+    func writeVariable(_ value: BehaviorVariableValue, at index: Int, bit: Int = -1) {
         guard let current = variables.value(at: index) else { return }
         variablesWrittenThisUpdate.insert(index)
         guard bit >= 0 else {
@@ -575,7 +575,7 @@ nonisolated extension BehaviorGraphInstance {
 nonisolated extension BehaviorGraphInstance {
     /// Packfile order: section first, then offset. Only used to make the
     /// deactivation sweep deterministic.
-    public static func isOrderedBefore(_ lhs: HKXPointerTarget, _ rhs: HKXPointerTarget) -> Bool {
+    static func isOrderedBefore(_ lhs: HKXPointerTarget, _ rhs: HKXPointerTarget) -> Bool {
         lhs.sectionIndex == rhs.sectionIndex
             ? lhs.dataOffset < rhs.dataOffset
             : lhs.sectionIndex < rhs.sectionIndex

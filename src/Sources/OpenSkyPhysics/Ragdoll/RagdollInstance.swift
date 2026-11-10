@@ -12,7 +12,7 @@ public import OpenSkyGameData
 public import simd
 
 /// How a ragdoll is currently driven.
-nonisolated public enum RagdollPhase: Equatable, Sendable {
+nonisolated enum RagdollPhase: Equatable, Sendable {
     /// Bodies exist and are simulating, but the skeleton is still partly
     /// animated. The associated value is how far through the blend it is,
     /// `0 ... 1`.
@@ -52,7 +52,7 @@ nonisolated public struct RagdollInstance: Sendable {
     /// rest again is projected again.
     private var hasProjectedAtRest = false
 
-    public var phase: RagdollPhase {
+    var phase: RagdollPhase {
         if bodies.allSatisfy(\.isSleeping) {
             return .settled
         }
@@ -66,7 +66,7 @@ nonisolated public struct RagdollInstance: Sendable {
         return min(max(blendElapsed / blendDuration, 0), 1)
     }
 
-    public var isSettled: Bool {
+    var isSettled: Bool {
         bodies.allSatisfy(\.isSleeping)
     }
 
@@ -124,19 +124,19 @@ nonisolated public struct RagdollInstance: Sendable {
     /// How long the whole-ragdoll settling test watches, in seconds, and how far the
     /// root may travel in that time and still count as at rest. It checks
     /// displacement, so one marginal bone on uneven ground cannot delay rest.
-    public static let settleWindow: Float = 1
-    public static let settleDistance: Float = 3
-    public static let settleJointSeparation: Float = 2
-    public static let settleAngularViolation: Float = 0.06
+    static let settleWindow: Float = 1
+    static let settleDistance: Float = 3
+    static let settleJointSeparation: Float = 2
+    static let settleAngularViolation: Float = 0.06
     /// Pose-only projections made on arrival at rest. One pass closes only part of a
     /// joint's error. Measured on the vanilla left elbow, 32 passes close a 3.11-unit
     /// gap to 0.10 units; it runs once per rest, so the cost is negligible.
-    public static let restProjectionCount = 32
+    static let restProjectionCount = 32
     /// How far inside the settling thresholds the projection drives the joints
     /// before it stops. Half, so a corpse rests clear of the boundary rather
     /// than on it: the vanilla humanoid's worst joint stops at 0.024 radians
     /// against a 0.06 threshold instead of at 0.058.
-    public static let restProjectionMargin: Float = 0.5
+    static let restProjectionMargin: Float = 0.5
 
     /// Advances the ragdoll by one fixed step of the 15.2 clock.
     @discardableResult
@@ -310,7 +310,7 @@ nonisolated public struct RagdollInstance: Sendable {
         bodies.first?.originPosition
     }
 
-    public var restingRootOrientation: simd_quatf? {
+    var restingRootOrientation: simd_quatf? {
         bodies.first?.orientation
     }
 }

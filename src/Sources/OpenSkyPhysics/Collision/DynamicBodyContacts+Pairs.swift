@@ -7,7 +7,7 @@ import simd
 nonisolated extension DynamicBodyContacts {
     /// Friction is the geometric mean of the pair and restitution the larger one, the
     /// usual pairing rules.
-    public static func pairContacts(
+    static func pairContacts(
         first: DynamicPairBody,
         second: DynamicPairBody
     ) -> [DynamicContact] {

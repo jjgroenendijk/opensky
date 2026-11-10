@@ -19,11 +19,11 @@ nonisolated public enum AudioCategory: String, CaseIterable, Sendable {
     }
 
     /// SNCT.FULL's English labels, without the translation `$` marker.
-    public var displayName: String {
+    var displayName: String {
         rawValue.prefix(1).uppercased() + rawValue.dropFirst()
     }
 
-    public init?(soundCategoryEditorID: String?) {
+    init?(soundCategoryEditorID: String?) {
         guard
             let wanted = soundCategoryEditorID?.lowercased(),
             let category = Self.allCases.first(where: {

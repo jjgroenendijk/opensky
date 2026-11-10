@@ -4,7 +4,7 @@
 // `BehaviorGraphInstance.pendingClipPhase` (docs/engine/behavior-clips.md).
 
 import Foundation
-public import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 
 nonisolated extension BehaviorGraphInstance {
     /// The paired clips this graph played, as the track prefix, `|`, and the clip.
@@ -16,7 +16,7 @@ nonisolated extension BehaviorGraphInstance {
     /// run, as a fraction of its own clip window, or nil when the subtree holds
     /// none. Depth first in declared order, so the answer is the same on every
     /// run over the same graph.
-    public func clipPhase(under target: HKXPointerTarget?) -> Float? {
+    func clipPhase(under target: HKXPointerTarget?) -> Float? {
         firstClip(under: target) { clipTarget, _ in
             nodeStates[clipTarget].flatMap { $0.hasSeeded ? $0.phase : nil }
         }
@@ -68,7 +68,7 @@ nonisolated extension BehaviorGraphInstance {
     /// `BSSynchronizedClipGenerator`: runs its wrapped clip on this actor's tracks of a
     /// paired clip (`m_SyncAnimPrefix`, BehaviorPairedClip.swift). The alignment of the
     /// two actors (`m_fGetToMarkTime`) needs the other actor, so it is tallied instead.
-    public func evaluateSynchronizedClip(
+    func evaluateSynchronizedClip(
         _ generator: BSSynchronizedClipGenerator,
         depth: Int,
         deltaTime: Float

@@ -96,7 +96,7 @@ nonisolated public enum LeveledListRoll {
     /// level at or below its level. Very hard steps one entry level above the hard
     /// choice when both would match. A list with no entry low enough gives its
     /// lowest entries; no source says what the game does then.
-    public static func actorEntry(
+    static func actorEntry(
         _ list: LeveledList,
         encounterLevel: Int,
         difficulty: LeveledActorDifficulty,

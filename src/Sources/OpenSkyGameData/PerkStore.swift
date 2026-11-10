@@ -79,7 +79,7 @@ nonisolated public struct PerkStore: Sendable {
     private var translations: [String: FormIDTranslation] = [:]
 
     /// Every winning PERK identity in the load order.
-    public var records: [ResolvedFormID: ResolvedPerk] {
+    var records: [ResolvedFormID: ResolvedPerk] {
         table.values
     }
 
@@ -93,7 +93,7 @@ nonisolated public struct PerkStore: Sendable {
 
     /// How many effects hook each entry point, most-used first. What scopes
     /// which entry points the perk runtime has to implement.
-    public var entryPointHistogram: [(entryPoint: PerkEntryPoint, count: Int)] {
+    var entryPointHistogram: [(entryPoint: PerkEntryPoint, count: Int)] {
         entryPointIndex
             .map { (PerkEntryPoint(rawValue: $0.key), $0.value.count) }
             .sorted {
@@ -122,11 +122,11 @@ nonisolated public struct PerkStore: Sendable {
         }
     }
 
-    public init(index: RecordIndex) {
+    init(index: RecordIndex) {
         self.init(index: index, spells: SpellStore(index: index))
     }
 
-    public init(plugins: [(name: String, file: ESMFile)]) {
+    init(plugins: [(name: String, file: ESMFile)]) {
         self.init(index: RecordIndex(
             plugins: plugins,
             recordTypes: ["MGEF", "SPEL", "SCRL", "PERK"]
@@ -292,8 +292,8 @@ nonisolated public struct PerkStore: Sendable {
     }
 }
 
-nonisolated public enum PerkStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> PerkStore {
+nonisolated enum PerkStoreLoader: Sendable {
+    static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> PerkStore {
         PerkStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

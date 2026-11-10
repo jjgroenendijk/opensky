@@ -4,7 +4,7 @@
 // auto-calculated cost is computed once.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 /// One effect of a spell or scroll, joined against the effect store.
@@ -36,7 +36,7 @@ nonisolated public struct ResolvedSpell: Sendable {
         record.data
     }
 
-    public var recordType: FourCC {
+    var recordType: FourCC {
         record.recordType
     }
 
@@ -62,7 +62,7 @@ nonisolated public struct ResolvedSpell: Sendable {
     }
 
     /// True when the record carries the SPIT "PC Start Spell" flag.
-    public var isPlayerStartSpell: Bool {
+    var isPlayerStartSpell: Bool {
         data?.flags.contains(.pcStartSpell) ?? false
     }
 
@@ -83,7 +83,7 @@ nonisolated public struct SpellStore: Sendable {
     private let recordsByKey: [ReferenceKey: ResolvedSpell]
 
     /// Every winning SPEL and SCRL identity in the load order.
-    public var records: [ResolvedFormID: ResolvedSpell] {
+    var records: [ResolvedFormID: ResolvedSpell] {
         table.values
     }
 
@@ -91,7 +91,7 @@ nonisolated public struct SpellStore: Sendable {
         table.skipped
     }
 
-    public var spells: [ResolvedSpell] {
+    var spells: [ResolvedSpell] {
         records.values.filter { $0.recordType == "SPEL" }
     }
 
@@ -101,7 +101,7 @@ nonisolated public struct SpellStore: Sendable {
     /// SPIT "PC Start Spell" only on `PCHealRateCombat` (`CasterRealDataTests`) and
     /// grants these from a quest script. Editor IDs, so a load order without them
     /// grants nothing.
-    public static let vanillaStartSpellEditorIDs = ["Flames", "Healing"]
+    static let vanillaStartSpellEditorIDs = ["Flames", "Healing"]
 
     /// The records `vanillaStartSpellEditorIDs` names that this load order
     /// actually carries, in that order.
@@ -109,7 +109,7 @@ nonisolated public struct SpellStore: Sendable {
         Self.vanillaStartSpellEditorIDs.compactMap { spell(editorID: $0) }
     }
 
-    public var scrolls: [ResolvedSpell] {
+    var scrolls: [ResolvedSpell] {
         records.values.filter { $0.recordType == "SCRL" }
     }
 
@@ -142,7 +142,7 @@ nonisolated public struct SpellStore: Sendable {
         table.value(id)
     }
 
-    public func spell(editorID: String) -> ResolvedSpell? {
+    func spell(editorID: String) -> ResolvedSpell? {
         table.value(editorID: editorID)
     }
 

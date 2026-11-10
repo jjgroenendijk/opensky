@@ -165,7 +165,7 @@ nonisolated public struct DynamicBodyWorld: Sendable {
 
     /// Registers one body outside a cell build — the path a dropped inventory
     /// item takes, which has a spawn state but no placed reference yet.
-    public mutating func add(_ placement: DynamicBodyPlacement, in location: CellSceneLocation) {
+    mutating func add(_ placement: DynamicBodyPlacement, in location: CellSceneLocation) {
         bodies.removeAll { $0.key == placement.key }
         bodies.append(DynamicBody(
             key: placement.key,
@@ -208,7 +208,7 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     }
 
     /// Returns every body to its placed pose, at rest and awake.
-    public mutating func reset() {
+    mutating func reset() {
         for index in bodies.indices {
             guard let pose = placedPoses[bodies[index].key] else { continue }
             bodies[index] = DynamicBody(

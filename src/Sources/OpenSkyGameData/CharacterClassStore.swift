@@ -11,11 +11,11 @@ nonisolated public struct ResolvedCharacterClass: Equatable, Sendable {
     public let characterClass: CharacterClass
     public let sourcePlugin: String
 
-    public var editorID: String? {
+    var editorID: String? {
         characterClass.editorID
     }
 
-    public var displayName: String {
+    var displayName: String {
         switch characterClass.name {
         case let .inline(value): value
         case .tableID, .pluginTableID: characterClass.editorID ?? id.description
@@ -32,7 +32,7 @@ nonisolated public struct CharacterClassStore: Equatable, Sendable {
         table.values
     }
 
-    public var skippedRecords: SkippedRecords {
+    var skippedRecords: SkippedRecords {
         table.skipped
     }
 
@@ -60,11 +60,11 @@ nonisolated public struct CharacterClassStore: Equatable, Sendable {
 
     /// One plugin's classes, which is what a caller holding a single file has —
     /// the derivation's own tests and `openskycli` among them.
-    public init(file: ESMFile, pluginName: String) {
+    init(file: ESMFile, pluginName: String) {
         self.init(plugins: [(name: pluginName, file: file)])
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         classes.isEmpty
     }
 
@@ -72,7 +72,7 @@ nonisolated public struct CharacterClassStore: Equatable, Sendable {
         classes[id]
     }
 
-    public func characterClass(editorID: String) -> ResolvedCharacterClass? {
+    func characterClass(editorID: String) -> ResolvedCharacterClass? {
         table.value(editorID: editorID)
     }
 
@@ -89,7 +89,7 @@ nonisolated public struct CharacterClassStore: Equatable, Sendable {
 
     /// A class link as text: its name when the load order carries it, and an
     /// explicit unresolved marker when it does not.
-    public func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
+    func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
         resolve(id, fromPlugin: pluginName)?.displayName ?? "[UNRESOLVED] \(id)"
     }
 

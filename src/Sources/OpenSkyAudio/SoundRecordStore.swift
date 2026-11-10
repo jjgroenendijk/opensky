@@ -12,7 +12,7 @@ nonisolated public enum SoundResolveError: Error, Equatable {
 }
 
 nonisolated public struct ResolvedSound: Sendable {
-    public let sound: SoundMarker
+    let sound: SoundMarker
     public let descriptor: SoundDescriptor
     public let audioCategory: AudioCategory?
     public let filePaths: [String]
@@ -52,7 +52,7 @@ nonisolated public final class SoundRecordStore {
         descriptors[id.rawValue]
     }
 
-    public func category(_ id: FormID) -> SoundCategory? {
+    func category(_ id: FormID) -> SoundCategory? {
         categories[id.rawValue]
     }
 
@@ -84,7 +84,7 @@ nonisolated public final class SoundRecordStore {
     /// Walks SNCT.PNAM until it reaches one of vanilla's four menu categories.
     /// A visited set makes malformed mod cycles terminate without inventing a
     /// category; callers choose their own fallback.
-    public func audioCategory(for descriptor: SoundDescriptor) -> AudioCategory? {
+    func audioCategory(for descriptor: SoundDescriptor) -> AudioCategory? {
         var current = descriptor.category
         var visited: Set<UInt32> = []
         while let id = current, visited.insert(id.rawValue).inserted {

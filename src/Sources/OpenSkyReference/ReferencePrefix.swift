@@ -8,7 +8,7 @@ import OpenSkyFormatsCore
 nonisolated public struct ReferencePrefix: Equatable, Sendable {
     public static let appID = "489830"
     public static let gameFolderName = "Skyrim Special Edition"
-    public static let gameExecutableName = "SkyrimSE.exe"
+    static let gameExecutableName = "SkyrimSE.exe"
 
     public let root: URL
 
@@ -57,7 +57,7 @@ nonisolated public struct ReferencePrefix: Equatable, Sendable {
         runtimeDirectory.appending(path: "steam-support/steamwebhelper-wrapper.exe")
     }
 
-    public var steamApps: URL {
+    var steamApps: URL {
         steamDirectory.appending(path: "steamapps", directoryHint: .isDirectory)
     }
 

@@ -125,7 +125,7 @@ nonisolated public enum MusicPlaylistAdvance: String, Equatable, Sendable {
 
 /// One MUST track reduced to what playback needs.
 nonisolated public struct PlayableMusicTrack: Equatable, Sendable {
-    public let editorID: String?
+    let editorID: String?
     /// Canonical VFS key of the ANAM stream.
     public let path: String
 }
@@ -137,7 +137,7 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
     /// Crossfade used when the MUSC authors no WNAM fade duration.
     public static let defaultCrossfadeSeconds: Float = 2
     /// Depth bound on palette (MUST-of-MUSTs) expansion.
-    public static let maximumPaletteDepth = 4
+    static let maximumPaletteDepth = 4
 
     public let state: MusicState
     /// The MUSC that won; nil when nothing was selectable.

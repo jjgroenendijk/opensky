@@ -212,11 +212,11 @@ public final class AssetLoader<Key: Hashable & Sendable, Value: Sendable> {
         inFlight.count
     }
 
-    public var readyCount: Int {
+    var readyCount: Int {
         ready.count
     }
 
-    public var failureCount: Int {
+    var failureCount: Int {
         failures.count
     }
 

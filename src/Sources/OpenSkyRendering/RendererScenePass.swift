@@ -3,7 +3,7 @@ import MetalKit
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 public import OpenSkyRenderCore
-public import OpenSkyRenderResources
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 public import simd
 
@@ -15,14 +15,14 @@ extension Renderer {
     public struct ScenePassState {
         public let encoder: any MTL4RenderCommandEncoder
         public let slot: Int
-        public let frustum: Frustum
+        let frustum: Frustum
         /// The fill mode this frame's geometry draws under — `.lines` in the
         /// wireframe debug view. Encoded once at the top of the pass; the
         /// billboard layer forces `.fill` and restores this value, because a
         /// wireframed particle quad is noise rather than diagnosis.
-        public var fillMode = MTLTriangleFillMode.fill
-        public var drawCursor = 0
-        public var instanceCursor = 0
+        var fillMode = MTLTriangleFillMode.fill
+        var drawCursor = 0
+        var instanceCursor = 0
         public var stats = SceneDrawStats()
         /// The scene list `encode(groups:)` draws, so the GPU-culled groups take the
         /// indirect path. Nil for lists outside the scene.
@@ -201,10 +201,10 @@ extension Renderer {
     }
 
     /// The pipelines one `encode(groups:)` call picks from, by mesh kind.
-    public struct GroupPipelines {
-        public let staticMesh: any MTLRenderPipelineState
-        public let skinned: any MTLRenderPipelineState
-        public let morphedSkinned: any MTLRenderPipelineState
+    struct GroupPipelines {
+        let staticMesh: any MTLRenderPipelineState
+        let skinned: any MTLRenderPipelineState
+        let morphedSkinned: any MTLRenderPipelineState
 
         /// Debug channels replace the shaded surface for every geometry path at
         /// once, so the shipping set is swapped here rather than at each caller.
@@ -226,7 +226,7 @@ extension Renderer {
     /// the ring at the group offset, draw once. Empty groups encode nothing. Internal,
     /// so the first-person arms use the same path. `skippingBlended` leaves the
     /// blended groups to `encodeBlendedGroups`.
-    public func encode(
+    func encode(
         groups: [DrawGroup],
         pipelines shipping: GroupPipelines,
         skippingBlended: Bool = false,
@@ -388,7 +388,7 @@ extension Renderer {
     /// the shadow and scene passes both bind skinned casters, but the CPU
     /// palette is identical across both within one frame, so a second copy is
     /// pure waste. frameBonePrepared resets at the top of each frame's encode.
-    public func prepareBoneMatricesOnce(for mesh: RenderMesh, slot: Int) {
+    func prepareBoneMatricesOnce(for mesh: RenderMesh, slot: Int) {
         guard frameBonePrepared.insert(ObjectIdentifier(mesh)).inserted else { return }
         mesh.prepareBoneMatrices(slot: slot)
     }

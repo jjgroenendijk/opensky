@@ -24,8 +24,8 @@ nonisolated public enum RenderMeshError: Error, Equatable {
 /// bytes (16-byte float4, 8-byte ushort4, tail padding); descriptor uses the
 /// same MemoryLayout stride so CPU/GPU packing cannot drift.
 nonisolated public struct SkinVertex: Sendable {
-    public let weights: SIMD4<Float>
-    public let boneIndices: SIMD4<UInt16>
+    let weights: SIMD4<Float>
+    let boneIndices: SIMD4<UInt16>
 }
 
 nonisolated public enum SkinVertexLayout: Sendable {
@@ -159,7 +159,7 @@ nonisolated public final class RenderMesh: Sendable {
     private let boneMatrices: Mutex<[float4x4]>
     /// The skeleton this mesh last bound to and where each palette bone reads from it.
     private let skeletonBinding = Mutex<(bones: SkeletonBoneIndex, indices: [Int])?>(nil)
-    public var currentBoneMatrices: [float4x4] {
+    var currentBoneMatrices: [float4x4] {
         boneMatrices.withLock { $0 }
     }
 
@@ -351,7 +351,7 @@ nonisolated public final class RenderMesh: Sendable {
     /// Refreshes CPU palette from an animated skeleton world pose. Unmatched
     /// helper/NIF-only bones keep their verified bind matrix.
     @discardableResult
-    public func updateSkinningPose(_ transformsByName: [String: float4x4]) -> Int {
+    func updateSkinningPose(_ transformsByName: [String: float4x4]) -> Int {
         guard let palette = skinningPalette else { return 0 }
         let posed = palette.posed(by: transformsByName)
         boneMatrices.withLock { $0 = posed.matrices }

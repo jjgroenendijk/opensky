@@ -2,24 +2,24 @@
 // interior lighting or a cover. The weather advance runs in the session
 // (`GameSession+Weather.swift`).
 
-public import Metal
-public import OpenSkyRenderCore
+import Metal
+import OpenSkyRenderCore
 import simd
 
 extension Renderer {
     /// The frame's fog uniforms: active exterior weather fog wins, else the
     /// interior CELL/LGTM fog, else disabled (matches the pre-weather default).
-    public struct FrameFog {
-        public let nearColor: SIMD3<Float>
-        public let farColor: SIMD3<Float>
-        public let distances: SIMD4<Float>
-        public let enabled: UInt32
+    struct FrameFog {
+        let nearColor: SIMD3<Float>
+        let farColor: SIMD3<Float>
+        let distances: SIMD4<Float>
+        let enabled: UInt32
     }
 
     /// Where no sky draws, as in an interior or Blackreach, a gap in the geometry shows
     /// the far fog colour instead of black (docs/rendering/metal4-renderer.md). A
     /// loading or menu cover stands on black, as in the game.
-    public static func background(
+    static func background(
         fog: FrameFog, drawsSky: Bool, covered: Bool = false
     ) -> MTLClearColor {
         guard !drawsSky, !covered, fog.enabled != 0 else {
@@ -45,7 +45,7 @@ extension Renderer {
         return frameInput.interiorFog?.fog(for: lighting) ?? lighting?.fog
     }
 
-    public static func resolvedFog(
+    static func resolvedFog(
         weatherLight: ResolvedWeather?,
         interior: FogParameters?
     ) -> FrameFog {

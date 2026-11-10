@@ -37,7 +37,7 @@ nonisolated public enum TimeOfDaySettings: Sendable {
     }
 
     /// Removes the explicit choice so subsequent launches use the fallback.
-    public static func clearOverride(
+    static func clearOverride(
         from defaults: UserDefaults = GameDataLocator.settingsDefaults
     ) {
         SettingsStore(defaults: defaults).reset(key)

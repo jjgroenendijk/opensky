@@ -31,11 +31,11 @@ nonisolated public struct ActorValueInformationStore: Sendable {
     private let table: ResolvedRecordTable<ResolvedActorValueInformation>
     private var informationByActorValueIndex: [Int32: ResolvedActorValueInformation] = [:]
 
-    public var information: [ResolvedFormID: ResolvedActorValueInformation] {
+    var information: [ResolvedFormID: ResolvedActorValueInformation] {
         table.values
     }
 
-    public var skippedRecords: SkippedRecords {
+    var skippedRecords: SkippedRecords {
         table.skipped
     }
 
@@ -57,7 +57,7 @@ nonisolated public struct ActorValueInformationStore: Sendable {
         }
     }
 
-    public init(plugins: [(name: String, file: ESMFile)]) {
+    init(plugins: [(name: String, file: ESMFile)]) {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["AVIF"]))
     }
 
@@ -80,14 +80,14 @@ nonisolated public struct ActorValueInformationStore: Sendable {
 
     /// The eighteen skills: the perk-tree records that join to an index inside
     /// the skill range of the vanilla actor-value table.
-    public var skills: [ResolvedActorValueInformation] {
+    var skills: [ResolvedActorValueInformation] {
         perkTreeRecords.filter { record in
             guard let index = record.actorValueIndex else { return false }
             return ActorValueIdentity.isSkill(index: index)
         }
     }
 
-    public func information(_ id: ResolvedFormID) -> ResolvedActorValueInformation? {
+    func information(_ id: ResolvedFormID) -> ResolvedActorValueInformation? {
         table.value(id)
     }
 
@@ -101,11 +101,11 @@ nonisolated public struct ActorValueInformationStore: Sendable {
         informationByActorValueIndex[actorValueIndex]
     }
 
-    public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
+    func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
         index.resolvedID(id, fromPlugin: pluginName)
     }
 
-    public func resolve(
+    func resolve(
         _ id: FormID,
         fromPlugin pluginName: String
     ) -> ResolvedActorValueInformation? {
@@ -113,7 +113,7 @@ nonisolated public struct ActorValueInformationStore: Sendable {
         return information(resolvedID)
     }
 
-    public func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
+    func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
         resolve(id, fromPlugin: pluginName)?.displayName ?? "[UNRESOLVED] \(id)"
     }
 
@@ -122,8 +122,8 @@ nonisolated public struct ActorValueInformationStore: Sendable {
     }
 }
 
-nonisolated public enum ActorValueInformationStoreLoader: Sendable {
-    public static func load(
+nonisolated enum ActorValueInformationStoreLoader: Sendable {
+    static func load(
         root: GameDataRoot,
         baseFile: ESMFile? = nil
     ) -> ActorValueInformationStore {

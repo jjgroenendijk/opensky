@@ -26,7 +26,7 @@ nonisolated public struct BehaviorCharacterContext {
     public var footIk: Bool
     /// The bones as physics holds them, such as a ragdoll's, in this graph's
     /// skeleton. Nil means the pose the graph showed last.
-    public var livePose: [HKABonePose]?
+    var livePose: [HKABonePose]?
 
     public init(
         worldPosition: SIMD3<Float> = SIMD3(),
@@ -40,11 +40,11 @@ nonisolated public struct BehaviorCharacterContext {
         self.footIk = footIk
     }
 
-    public func modelPoint(fromWorld point: SIMD3<Float>) -> SIMD3<Float> {
+    func modelPoint(fromWorld point: SIMD3<Float>) -> SIMD3<Float> {
         worldRotation.inverse.act(point - worldPosition)
     }
 
-    public func worldPoint(fromModel point: SIMD3<Float>) -> SIMD3<Float> {
+    func worldPoint(fromModel point: SIMD3<Float>) -> SIMD3<Float> {
         worldRotation.act(point) + worldPosition
     }
 }
@@ -53,19 +53,19 @@ nonisolated public struct BehaviorCharacterContext {
 /// no running modifier asked.
 nonisolated public struct BehaviorPhysicsRequests: Equatable, Sendable {
     /// `hkbKeyframeBonesModifier`: bones the ragdoll should follow the animation for.
-    public var keyframedBones: [Int]?
+    var keyframedBones: [Int]?
     /// `hkbGetUpModifier`: blend from the ragdoll back to animation over
     /// `duration`, aligning with `groundNormal` over `alignDuration`.
     public var getUp: BehaviorGetUpRequest?
     /// `hkbFootIkControlsModifier`: the foot IK gains, by Havok member name.
-    public var footIkGains: [String: Float]?
+    var footIkGains: [String: Float]?
 
     public init() {}
 }
 
 nonisolated public struct BehaviorGetUpRequest: Equatable, Sendable {
-    public let groundNormal: SIMD3<Float>
+    let groundNormal: SIMD3<Float>
     public let duration: Float
-    public let alignDuration: Float
-    public let rootBoneIndex: Int
+    let alignDuration: Float
+    let rootBoneIndex: Int
 }

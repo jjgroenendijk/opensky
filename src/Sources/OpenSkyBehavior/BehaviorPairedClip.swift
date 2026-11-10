@@ -13,7 +13,7 @@ nonisolated public struct PairedTrackMap: Equatable, Sendable {
 
     /// Maps the tracks that belong to the actor with `prefix`. An empty prefix takes
     /// the tracks with no actor prefix: a prefix is digits and an underscore.
-    public init(trackNames: [String?], prefix: String, boneNames: [String]) {
+    init(trackNames: [String?], prefix: String, boneNames: [String]) {
         var byName: [String: Int] = [:]
         for (index, name) in boneNames.enumerated() where byName[name] == nil {
             byName[name] = index
@@ -52,7 +52,7 @@ nonisolated public struct PairedBehaviorClip: BehaviorClip {
     public let map: PairedTrackMap
     public let annotations: [HKAAnnotation]
 
-    public init(_ base: any BehaviorClip, map: PairedTrackMap) {
+    init(_ base: any BehaviorClip, map: PairedTrackMap) {
         self.base = base
         self.map = map
         annotations = base.annotations(onTracks: Set(map.bones.keys))

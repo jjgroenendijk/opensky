@@ -12,7 +12,7 @@ extension WorldAudioEngine {
     /// `AVAudioEnvironmentNode` spatializes mono inputs and passes stereo
     /// through unspatialized (the same rule `AudioSourceStreamer.monoDownmix`
     /// follows for streamed sources).
-    nonisolated public static func makeBuffer(
+    nonisolated static func makeBuffer(
         wav data: Data,
         downmixToMono: Bool
     ) throws -> AVAudioPCMBuffer {

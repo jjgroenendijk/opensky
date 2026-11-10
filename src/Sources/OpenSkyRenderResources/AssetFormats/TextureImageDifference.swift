@@ -23,7 +23,7 @@ nonisolated public enum TextureImageDifferenceError: Error, Equatable, Sendable 
 
 nonisolated public struct TextureImageDifference: Codable, Equatable, Sendable {
     /// The PSNR reported for identical pixels, so the value stays a finite JSON number.
-    public static let losslessPSNR = 100.0
+    static let losslessPSNR = 100.0
 
     /// Peak signal-to-noise ratio over R, G, and B, in dB. Higher is closer.
     public let rgbPSNR: Double

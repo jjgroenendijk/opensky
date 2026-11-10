@@ -50,11 +50,11 @@ nonisolated public struct FirstPersonCamera: Equatable, Sendable {
         fovYRadians = min(max(radians, Self.fovYRange.lowerBound), Self.fovYRange.upperBound)
     }
 
-    public mutating func reset() {
+    mutating func reset() {
         fovYRadians = Self.defaultFOVYRadians
     }
 
-    public var isOverridden: Bool {
+    var isOverridden: Bool {
         fovYRadians != Self.defaultFOVYRadians
     }
 

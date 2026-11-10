@@ -35,7 +35,7 @@ nonisolated public struct FrameStatsSnapshot: Equatable, Sendable {
 
     /// True once a window has closed, so a readout can distinguish "measuring"
     /// from "genuinely zero frames per second".
-    public var hasMeasurement: Bool {
+    var hasMeasurement: Bool {
         sampleCount > 0
     }
 }
@@ -220,13 +220,13 @@ nonisolated public final class FrameStats {
 
 /// One closed 120-frame stats window. `text` is the line the log keeps.
 nonisolated public struct FrameStatsWindow: Equatable, Sendable {
-    public var intervalMS: Double
-    public var maxMS: Double
-    public var encodeMS: Double
+    var intervalMS: Double
+    var maxMS: Double
+    var encodeMS: Double
     /// Nil when no GPU span reached the window.
-    public var gpuMS: Double?
+    var gpuMS: Double?
 
-    public var fps: Double {
+    var fps: Double {
         intervalMS > 0 ? 1000 / intervalMS : 0
     }
 

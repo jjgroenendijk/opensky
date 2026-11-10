@@ -26,7 +26,7 @@ nonisolated public struct MeshletMesh: Equatable, Sendable {
     /// Three meshlet-local vertex indices per triangle, from `triangleOffset`.
     public var triangleIndices: [UInt8] = []
 
-    public var triangleCount: Int {
+    var triangleCount: Int {
         triangleIndices.count / 3
     }
 }
@@ -34,8 +34,8 @@ nonisolated public struct MeshletMesh: Equatable, Sendable {
 nonisolated public enum MeshletBuilder {
     /// Apple's limits allow more. The GPU reserves this much output for every mesh
     /// threadgroup an object threadgroup starts, and 124 triangles ran out of memory.
-    public static let maximumVertices = 64
-    public static let maximumTriangles = 64
+    static let maximumVertices = 64
+    static let maximumTriangles = 64
 
     /// Greedy in index order: a triangle that would overflow either limit starts a new
     /// meshlet. Triangles that name a vertex past `positions` are dropped.

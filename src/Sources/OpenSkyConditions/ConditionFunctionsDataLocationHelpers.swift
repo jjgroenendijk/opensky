@@ -6,11 +6,11 @@ public import OpenSkyGameData
 import OpenSkyWorldState
 
 nonisolated extension ConditionFunctions {
-    public typealias ConditionLocationLookup = @Sendable (ConditionCall) -> Result<
+    typealias ConditionLocationLookup = @Sendable (ConditionCall) -> Result<
         (LocationStore, ResolvedFormID), ConditionFailure
     >
 
-    public static func currentLocation(
+    static func currentLocation(
         _ call: ConditionCall
     ) -> Result<(LocationStore, ResolvedFormID), ConditionFailure> {
         guard let store = call.context.data.locations else {
@@ -40,7 +40,7 @@ nonisolated extension ConditionFunctions {
         }
     }
 
-    public static func locationParameterFunction(
+    static func locationParameterFunction(
         index: UInt16,
         name: String,
         location: @escaping ConditionLocationLookup = { call in currentLocation(call) },
@@ -64,7 +64,7 @@ nonisolated extension ConditionFunctions {
         }
     }
 
-    public static func locationAliasFunction(
+    static func locationAliasFunction(
         index: UInt16,
         name: String,
         location: @escaping ConditionLocationLookup = { call in currentLocation(call) },

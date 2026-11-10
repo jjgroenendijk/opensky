@@ -11,11 +11,11 @@ nonisolated public struct ResolvedWordOfPower: Equatable, Sendable {
     public let id: ResolvedFormID
     public let word: WordOfPower
 
-    public var editorID: String? {
+    var editorID: String? {
         word.editorID
     }
 
-    public var displayName: String {
+    var displayName: String {
         switch word.name {
         case let .inline(value): value
         case let .tableID(tableID), let .pluginTableID(tableID, _):
@@ -68,7 +68,7 @@ nonisolated public struct ShoutStore: Sendable {
     }
 
     /// Every winning WOOP identity in the load order.
-    public var words: [ResolvedFormID: ResolvedWordOfPower] {
+    var words: [ResolvedFormID: ResolvedWordOfPower] {
         wordTable.values
     }
 
@@ -111,7 +111,7 @@ nonisolated public struct ShoutStore: Sendable {
         self.init(index: index, spells: SpellStore(index: index))
     }
 
-    public init(plugins: [(name: String, file: ESMFile)]) {
+    init(plugins: [(name: String, file: ESMFile)]) {
         self.init(
             index: RecordIndex(
                 plugins: plugins,
@@ -120,7 +120,7 @@ nonisolated public struct ShoutStore: Sendable {
         )
     }
 
-    public func shout(editorID: String) -> ResolvedShout? {
+    func shout(editorID: String) -> ResolvedShout? {
         shoutTable.value(editorID: editorID)
     }
 
@@ -170,8 +170,8 @@ nonisolated public struct ShoutStore: Sendable {
     }
 }
 
-nonisolated public enum ShoutStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> ShoutStore {
+nonisolated enum ShoutStoreLoader: Sendable {
+    static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> ShoutStore {
         ShoutStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

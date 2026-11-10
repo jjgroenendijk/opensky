@@ -2,15 +2,15 @@
 // passes. One guard spans both passes so an actor-local stream is copied once.
 
 import Metal
-public import OpenSkyRenderResources
+import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 extension Renderer {
-    public func bindFaceMorph(_ morph: FaceMorphBuffer?, slot: Int) {
+    func bindFaceMorph(_ morph: FaceMorphBuffer?, slot: Int) {
         bindMorph(morph, slot: slot)
     }
 
-    public func bindShadowMorph(_ morph: FaceMorphBuffer?, slot: Int) {
+    func bindShadowMorph(_ morph: FaceMorphBuffer?, slot: Int) {
         bindMorph(morph, slot: slot)
     }
 

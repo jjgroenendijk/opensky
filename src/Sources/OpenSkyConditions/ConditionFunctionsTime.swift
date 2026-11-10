@@ -37,14 +37,14 @@ nonisolated extension ConditionFunctions {
         return .success(hour)
     }
 
-    public static let vanillaStartWeekday = GameClock.vanillaStartWeekday
+    static let vanillaStartWeekday = GameClock.vanillaStartWeekday
 
     public static func dayOfWeek(of clock: GameClock) -> Int {
         clock.weekday
     }
 
     /// The seven day names, in `dayOfWeek(of:)` order (UESP `Lore:Calendar`).
-    public static let weekdayNames = [
+    static let weekdayNames = [
         "Sundas", "Morndas", "Tirdas", "Middas", "Turdas", "Fredas", "Loredas"
     ]
 }

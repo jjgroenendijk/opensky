@@ -5,7 +5,7 @@
 // and an ancestor cycle is refused by name. See docs/engine/behavior-clips.md.
 
 import Foundation
-public import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 
 /// Where a named behavior file comes from. The engine answers by loading it out
 /// of the install; a test answers from a table it built in code.
@@ -22,7 +22,7 @@ nonisolated public protocol BehaviorReferenceSource {
 nonisolated extension BehaviorGraphInstance {
     /// Evaluates one behavior reference, or the reference pose with a tally
     /// entry when the name cannot be resolved.
-    public func evaluateBehaviorReference(
+    func evaluateBehaviorReference(
         _ generator: HKBBehaviorReferenceGenerator,
         deltaTime: Float
     ) -> BehaviorPose {

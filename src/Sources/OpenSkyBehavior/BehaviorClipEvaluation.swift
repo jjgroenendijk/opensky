@@ -27,7 +27,7 @@ nonisolated extension BehaviorGraphInstance {
     static let syncPhaseTolerance: Float = 0.002
 
     /// Advances one clip generator and returns its pose.
-    public func evaluateClip(
+    func evaluateClip(
         _ generator: HKBClipGenerator,
         at target: HKXPointerTarget,
         bound: [String: BehaviorVariableValue],
@@ -336,7 +336,7 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// The string an event payload carries, if it carries one.
-    public func payload(at target: HKXPointerTarget?) -> String? {
+    func payload(at target: HKXPointerTarget?) -> String? {
         guard let target else { return nil }
         return object(at: target, as: HKBStringEventPayload.self)?.data
     }

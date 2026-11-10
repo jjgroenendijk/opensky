@@ -10,7 +10,7 @@ import OpenSkyRenderResources
 import OpenSkyShaderTypes
 
 /// The motion and composite pipelines, built once with the renderer.
-public final class UpscaleResources {
+final class UpscaleResources {
     let cameraMotion: any MTLRenderPipelineState
     let staticMotion: any MTLRenderPipelineState
     let skinnedMotion: any MTLRenderPipelineState

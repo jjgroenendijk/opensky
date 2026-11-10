@@ -185,7 +185,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         placedRoll ?? leveling.roll(forActor: base)
     }
 
-    public static func build(from file: ESMFile, localized _: Bool) -> ActorTemplateResolver {
+    static func build(from file: ESMFile, localized _: Bool) -> ActorTemplateResolver {
         build(from: LoadOrderPlugins(file: file))
     }
 

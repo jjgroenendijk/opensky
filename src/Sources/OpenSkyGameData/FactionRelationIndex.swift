@@ -12,11 +12,11 @@ nonisolated public struct FactionRelationIndex: Sendable {
     /// XNAM entries whose combat-reaction word is none of the four the spec
     /// names. Counted rather than guessed at, and reported so a load order that
     /// carries one is a fact somebody can see rather than a silent neutral.
-    public private(set) var unnamedReactionCount = 0
+    private(set) var unnamedReactionCount = 0
     /// Reactions scripts set with `Faction.SetEnemy` and its siblings. They win over XNAM.
     private var scripted: [ReferenceKey: [ReferenceKey: ActorReaction]] = [:]
 
-    public var count: Int {
+    var count: Int {
         reactions.values.reduce(0) { $0 + $1.count }
     }
 

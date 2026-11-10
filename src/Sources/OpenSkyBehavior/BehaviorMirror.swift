@@ -3,11 +3,11 @@
 // (docs/engine/behavior-runtime.md#mirrored-clips).
 
 import Foundation
-public import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 public import simd
 
 /// The per-bone rotations that reflect a pose of one skeleton onto its mirror side.
-nonisolated public struct BehaviorMirror: Sendable {
+nonisolated struct BehaviorMirror: Sendable {
     /// A rotation this close to an axis-aligned one is snapped to it.
     static let snapThreshold: Float = 0.9
 
@@ -18,7 +18,7 @@ nonisolated public struct BehaviorMirror: Sendable {
     /// `I(-1)`: the 180 degree turn about the mirror axis.
     private let axisTurn: simd_quatf
 
-    public init(_ info: HKBMirroredSkeletonInfo, skeleton: BehaviorSkeleton) {
+    init(_ info: HKBMirroredSkeletonInfo, skeleton: BehaviorSkeleton) {
         let count = skeleton.referencePose.count
         let axis = SIMD3(info.mirrorAxis.x, info.mirrorAxis.y, info.mirrorAxis.z)
         axisTurn = simd_quatf(ix: axis.x, iy: axis.y, iz: axis.z, r: 0)
@@ -35,7 +35,7 @@ nonisolated public struct BehaviorMirror: Sendable {
     }
 
     /// Writes each sample to its partner bone in the mirrored frame.
-    public func mirroring(
+    func mirroring(
         _ samples: [HKABoneTransformSample], isAdditive: Bool
     ) -> [HKABoneTransformSample] {
         samples.map { sample in
@@ -56,7 +56,7 @@ nonisolated public struct BehaviorMirror: Sendable {
     }
 
     /// Root travel reflected through the mirror plane.
-    public func mirroring(_ motion: BehaviorRootMotion) -> BehaviorRootMotion {
+    func mirroring(_ motion: BehaviorRootMotion) -> BehaviorRootMotion {
         BehaviorRootMotion(
             translation: -axisTurn.act(motion.translation),
             rotation: simd_normalize(axisTurn * motion.rotation * axisTurn.conjugate),

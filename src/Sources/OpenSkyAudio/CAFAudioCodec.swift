@@ -57,7 +57,7 @@ nonisolated public enum CAFAudioCodec {
     }
 
     /// Decodes the whole file to interleaved Float samples at its own rate.
-    public static func read(_ url: URL) throws -> DecodedAudio {
+    static func read(_ url: URL) throws -> DecodedAudio {
         var file: ExtAudioFileRef?
         try unsafe check("open", ExtAudioFileOpenURL(url as CFURL, &file))
         guard let file = unsafe file else { throw CAFAudioCodecError.status(

@@ -48,7 +48,7 @@ nonisolated public struct ReferenceView: Codable, Equatable, Sendable {
     }
 
     /// OpenSky's view when the game has not set one.
-    public static let defaultFOVYDegrees: Float = 65
+    static let defaultFOVYDegrees: Float = 65
 
     /// Skyrim's `setangle z`: 0 looks north (+Y) and turns clockwise.
     public var skyrimHeadingDegrees: Float {
@@ -56,7 +56,7 @@ nonisolated public struct ReferenceView: Codable, Equatable, Sendable {
     }
 
     /// The inverse of `skyrimHeadingDegrees`, in (-180, 180].
-    public static func yaw(fromHeading heading: Float) -> Float {
+    static func yaw(fromHeading heading: Float) -> Float {
         let yaw = wrapped(90 - heading)
         return yaw > 180 ? yaw - 360 : yaw
     }
@@ -72,7 +72,7 @@ nonisolated public struct ReferenceView: Codable, Equatable, Sendable {
     }
 
     /// The reference window's shape: the launch default of 1280 x 720.
-    public static let windowAspect: Float = 16 / 9
+    static let windowAspect: Float = 16 / 9
 
     /// The console's `fov` is the horizontal angle across the whole window
     /// (docs/tools/reference-game.md#field-of-view).
@@ -82,7 +82,7 @@ nonisolated public struct ReferenceView: Codable, Equatable, Sendable {
     }
 
     /// The inverse of `skyrimFOVDegrees`.
-    public static func fovY(fromSkyrimFOV fov: Float) -> Float {
+    static func fovY(fromSkyrimFOV fov: Float) -> Float {
         let halfX = fov * .pi / 360
         return 2 * atan(tan(halfX) / windowAspect) * 180 / .pi
     }

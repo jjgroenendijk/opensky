@@ -18,7 +18,7 @@ nonisolated extension RuntimeReferenceEntry {
 /// Resolves effective enabled state. Pure: entries and deltas in, a flag out.
 nonisolated public struct EnableParentResolver {
     /// A chain longer than this is treated as broken. Vanilla chains are short.
-    public static let maximumDepth = 16
+    static let maximumDepth = 16
 
     private let parent: (FormID) -> RuntimeReferenceEntry?
     private let delta: (ReferenceKey) -> ReferenceStateDelta?

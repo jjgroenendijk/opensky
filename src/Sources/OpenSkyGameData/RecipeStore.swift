@@ -26,11 +26,11 @@ nonisolated public struct RecipeStore: Sendable {
     private let idsByWorkbenchKeyword: [ResolvedFormID: [ResolvedFormID]]
     private let idsByCreatedObject: [ResolvedFormID: [ResolvedFormID]]
 
-    public var recipes: [ResolvedFormID: ResolvedRecipe] {
+    var recipes: [ResolvedFormID: ResolvedRecipe] {
         table.values
     }
 
-    public var skippedRecords: SkippedRecords {
+    var skippedRecords: SkippedRecords {
         table.skipped
     }
 
@@ -77,11 +77,11 @@ nonisolated public struct RecipeStore: Sendable {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["COBJ"]))
     }
 
-    public func recipe(_ id: ResolvedFormID) -> ResolvedRecipe? {
+    func recipe(_ id: ResolvedFormID) -> ResolvedRecipe? {
         table.value(id)
     }
 
-    public func recipe(editorID: String) -> ResolvedRecipe? {
+    func recipe(editorID: String) -> ResolvedRecipe? {
         table.value(editorID: editorID)
     }
 
@@ -91,13 +91,13 @@ nonisolated public struct RecipeStore: Sendable {
     }
 
     /// Recipes that make this item, in load order.
-    public func recipes(creating object: ResolvedFormID) -> [ResolvedRecipe] {
+    func recipes(creating object: ResolvedFormID) -> [ResolvedRecipe] {
         idsByCreatedObject[object, default: []].compactMap { table.value($0) }
     }
 }
 
-nonisolated public enum RecipeStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> RecipeStore {
+nonisolated enum RecipeStoreLoader: Sendable {
+    static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> RecipeStore {
         RecipeStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

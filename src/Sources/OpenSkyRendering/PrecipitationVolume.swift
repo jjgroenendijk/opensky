@@ -29,15 +29,15 @@ nonisolated public struct PrecipitationRuntimeSnapshot: Equatable, Sendable {
 /// True when something solid is above the point, so no rain falls there.
 public typealias PrecipitationRoofCheck = (SIMD3<Float>) -> Bool
 
-nonisolated public struct PrecipitationUpdate {
-    public let cameraPosition: SIMD3<Float>
-    public let state: PrecipitationState
-    public let wind: WindState
-    public let deltaTime: Float
-    public let exterior: Bool
-    public let enabled: Bool
+nonisolated struct PrecipitationUpdate {
+    let cameraPosition: SIMD3<Float>
+    let state: PrecipitationState
+    let wind: WindState
+    let deltaTime: Float
+    let exterior: Bool
+    let enabled: Bool
     /// Nil when nothing hides rain under a roof, or when the occlusion map does it per drop.
-    public let roofAbove: PrecipitationRoofCheck?
+    let roofAbove: PrecipitationRoofCheck?
 }
 
 nonisolated public final class PrecipitationVolume {
@@ -47,13 +47,13 @@ nonisolated public final class PrecipitationVolume {
     private let generatedSnowTexture: any MTLTexture
     /// The `SPGD` look the snow draws with; nil for the generated flake.
     public private(set) var snowLook: PrecipitationLook?
-    public private(set) var anchor: SIMD3<Float>?
+    private(set) var anchor: SIMD3<Float>?
     public private(set) var snapshot = PrecipitationRuntimeSnapshot(
         state: .none, roofOccluded: false, rainLiveCount: 0, snowLiveCount: 0
     )
-    public private(set) var drawItems: [ParticlePlayback] = []
+    private(set) var drawItems: [ParticlePlayback] = []
     /// Unit direction the stronger of rain and snow falls, for the roof occlusion view.
-    public private(set) var fallDirection = SIMD3<Float>(0, 0, -1)
+    private(set) var fallDirection = SIMD3<Float>(0, 0, -1)
     /// The active weather's `SPGD` scales; the hand-tuned look when it names none.
     public var tuning = PrecipitationTuning.fallback {
         didSet {
@@ -101,7 +101,7 @@ nonisolated public final class PrecipitationVolume {
 
     /// Draws snow with `look`'s texture and cells, or the generated flake for nil. The
     /// falling flakes start over. Returns the allocations the swap retired and added.
-    public func setSnowLook(
+    func setSnowLook(
         _ look: PrecipitationLook?, texture: any MTLTexture?
     ) throws -> (retired: [any MTLAllocation], added: [any MTLAllocation]) {
         let look = texture == nil ? nil : look
@@ -120,7 +120,7 @@ nonisolated public final class PrecipitationVolume {
         return (retired, snow.residencyAllocations)
     }
 
-    public func update(_ update: PrecipitationUpdate) {
+    func update(_ update: PrecipitationUpdate) {
         guard update.exterior, update.enabled else {
             clear()
             return

@@ -27,7 +27,7 @@ nonisolated extension ActorValueIdentity {
     }
 
     /// The stored value `name` spells, by the same rule as `kind(at:)`.
-    public static func kind(named name: String) -> ActorValueKind? {
+    static func kind(named name: String) -> ActorValueKind? {
         guard let index = index(named: name) else { return nil }
         return kind(at: index)
     }

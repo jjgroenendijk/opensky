@@ -61,7 +61,7 @@ nonisolated public struct Decal: Equatable, Sendable {
     /// Origin and extent of the texture cell it shows.
     public let uvRect: SIMD4<Float>
 
-    public var normal: SIMD3<Float> {
+    var normal: SIMD3<Float> {
         simd_normalize(simd_cross(axisU, axisV))
     }
 }

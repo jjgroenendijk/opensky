@@ -23,7 +23,7 @@ nonisolated public struct FlattenedFormList: Equatable, Sendable {
 nonisolated public struct FormListStore: Sendable {
     /// Higher than the measured vanilla maximum while still bounding hostile
     /// acyclic mods. A branch at the cap is omitted and logged.
-    public static let depthCap = 32
+    static let depthCap = 32
 
     private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
@@ -33,7 +33,7 @@ nonisolated public struct FormListStore: Sendable {
     private let index: RecordIndex
     private let table: ResolvedRecordTable<ResolvedFormList>
 
-    public var formLists: [ResolvedFormID: ResolvedFormList] {
+    var formLists: [ResolvedFormID: ResolvedFormList] {
         table.values
     }
 
@@ -63,7 +63,7 @@ nonisolated public struct FormListStore: Sendable {
         table.value(id)
     }
 
-    public func formList(editorID: String) -> ResolvedFormList? {
+    func formList(editorID: String) -> ResolvedFormList? {
         table.value(editorID: editorID)
     }
 

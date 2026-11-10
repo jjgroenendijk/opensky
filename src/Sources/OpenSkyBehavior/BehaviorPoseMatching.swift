@@ -7,34 +7,34 @@ import OpenSkyFormatsAnimation
 public import simd
 
 /// What one pose matcher keeps between updates.
-nonisolated public struct BehaviorPoseMatchState: Equatable, Sendable {
-    public var isMatching: Bool
-    public var current: Int?
+nonisolated struct BehaviorPoseMatchState: Equatable, Sendable {
+    var isMatching: Bool
+    var current: Int?
     /// The best child of the last update, and how long it has stayed best.
-    public var best: Int?
-    public var bestTime: Float = 0
-    public var weights: [Float]
+    var best: Int?
+    var bestTime: Float = 0
+    var weights: [Float]
     /// The orientation of each child's start pose, nil where it has none.
-    public var signatures: [simd_quatf?]
-    public var previousPelvis: SIMD3<Float>?
+    var signatures: [simd_quatf?]
+    var previousPelvis: SIMD3<Float>?
 }
 
 /// The pure rules: errors, the switch test, and the weight steps.
-nonisolated public enum BehaviorPoseMatchRules {
+nonisolated enum BehaviorPoseMatchRules {
     /// `1 - |dot|`, so 0 is a perfect match and 1 the worst. No signature is worst.
-    public static func errors(live: simd_quatf, signatures: [simd_quatf?]) -> [Float] {
+    static func errors(live: simd_quatf, signatures: [simd_quatf?]) -> [Float] {
         signatures.map { signature in
             signature.map { 1 - abs(simd_dot($0.vector, live.vector)) } ?? 1
         }
     }
 
     /// The time the same best child must stay best before a switch.
-    public static func switchTime(error: Float, noError: Float, fullError: Float) -> Float {
+    static func switchTime(error: Float, noError: Float, fullError: Float) -> Float {
         (1 - error) * noError + error * fullError
     }
 
     /// The current child rises to 1 at `blendSpeed` per second, the others fall to 0.
-    public static func stepped(
+    static func stepped(
         _ weights: [Float], toward current: Int, by amount: Float
     ) -> [Float] {
         weights.enumerated().map { index, weight in
@@ -43,7 +43,7 @@ nonisolated public enum BehaviorPoseMatchRules {
     }
 
     /// The orientation of the frame three bones span; heading about up is removed.
-    public static func frame(
+    static func frame(
         root: SIMD3<Float>, other: SIMD3<Float>, another: SIMD3<Float>
     ) -> simd_quatf? {
         let axis = other - root

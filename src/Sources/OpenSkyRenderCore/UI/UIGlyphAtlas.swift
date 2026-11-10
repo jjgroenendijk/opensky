@@ -4,7 +4,7 @@
 // in UIGlyphAtlasPacking.swift.
 
 public import CoreGraphics
-public import CoreText
+import CoreText
 import simd
 
 /// Cache key: glyph source namespace + font discriminator + glyph id + integer
@@ -86,16 +86,16 @@ nonisolated public final class UIGlyphAtlas {
     /// eviction. Non-zero means text is missing from the rendered frame.
     public var packFailures = 0
     /// Atlas texels occupied by packed glyph cells (the white block excluded).
-    public var usedTexels = 0
+    var usedTexels = 0
     /// Shaped HUD text, kept across frames beside the glyphs it uses.
-    public let layouts = UITextLayoutCache()
+    let layouts = UITextLayoutCache()
 
     /// Internal, not private: the packing extension lives in another file so
     /// this type stays inside the strict-lint type-body limit.
     public var cache: [UIGlyphKey: PackedGlyph] = [:]
-    public var shelfX = 0
+    var shelfX = 0
     public var shelfY: Int
-    public var shelfHeight = 0
+    var shelfHeight = 0
 
     public init() {
         pixels = [UInt8](repeating: 0, count: Self.dimension * Self.dimension)
@@ -113,14 +113,14 @@ nonisolated public final class UIGlyphAtlas {
     }
 
     /// Occupied fraction of the atlas, 0...1, for diagnostics readouts.
-    public var occupancy: Float {
+    var occupancy: Float {
         Float(usedTexels) / Float(width * height)
     }
 
     /// Returns the cached entry for a system-font glyph, rasterizing + packing
     /// on first use. `ctFont` must be built at `pixelSize` (same font `fontKey`
     /// identifies).
-    public func entry(
+    func entry(
         fontKey: Int,
         glyphID: CGGlyph,
         pixelSize: Int,
@@ -189,7 +189,7 @@ nonisolated public final class UIGlyphAtlas {
     }
 
     /// Writes one packed cell's coverage into the atlas image.
-    public func blit(
+    func blit(
         coverage: [UInt8],
         cell: (width: Int, height: Int),
         origin: (x: Int, y: Int)

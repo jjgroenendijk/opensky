@@ -21,7 +21,7 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
 
     /// Speech is capped at 100 in the formula: "skill levels over 100 have no
     /// effect".
-    public static let maximumSpeechSkill: Double = 100
+    static let maximumSpeechSkill: Double = 100
 
     /// The Speech value prices use without a live skill: 15, the vanilla start. UESP gives it as a
     /// worked
@@ -131,11 +131,11 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
     /// Per-unit rather than per-stack deliberately: vanilla shows one row one
     /// price, and pricing the stack whole would round once instead of `count`
     /// times and disagree with the row the player is looking at.
-    public func buyPrice(value: Int32, count: Int32) -> Int64 {
+    func buyPrice(value: Int32, count: Int32) -> Int64 {
         Int64(buyPrice(value: value)) * Int64(max(count, 0))
     }
 
-    public func sellPrice(value: Int32, count: Int32) -> Int64 {
+    func sellPrice(value: Int32, count: Int32) -> Int64 {
         Int64(sellPrice(value: value)) * Int64(max(count, 0))
     }
 

@@ -289,7 +289,7 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
 }
 
 nonisolated extension CapsuleWorldCollider {
-    public static let boxIndices: [UInt32] = [
+    static let boxIndices: [UInt32] = [
         0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7,
         0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5,
         2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7
@@ -367,7 +367,7 @@ nonisolated extension CapsuleWorldCollider {
         return u >= 0 && v >= 0 && u + v <= 1
     }
 
-    public static func closestPoint(
+    static func closestPoint(
         on triangle: CollisionTriangle,
         to point: SIMD3<Float>
     ) -> SIMD3<Float> {

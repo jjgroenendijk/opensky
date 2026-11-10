@@ -11,7 +11,7 @@ public struct SparseTile: Hashable {
 }
 
 public final class SparseTilePool {
-    public static let heapBytes = 16 << 20
+    static let heapBytes = 16 << 20
 
     public let device: any MTLDevice
     public let pageSize: MTLSparsePageSize

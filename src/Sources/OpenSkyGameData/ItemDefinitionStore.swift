@@ -11,7 +11,7 @@ public import OpenSkyFormatsESM
 /// a resolver was supplied.
 nonisolated public struct ItemEnchantment: Equatable, Sendable {
     /// EITM exactly as the record writes it, relative to its own plugin.
-    public let link: FormID
+    let link: FormID
     /// EAMT, the fully charged value. Weapons only: ARMO has no charge field.
     public let charge: UInt16?
     /// The winning ENCH identity, or nil when no resolver was supplied or the
@@ -27,7 +27,7 @@ nonisolated public struct ItemEnchantmentResolver: Sendable {
     /// The plugin the records being indexed came from; EITM is relative to it.
     public let pluginName: String
 
-    public func resolve(_ link: FormID?, charge: UInt16?) -> ItemEnchantment? {
+    func resolve(_ link: FormID?, charge: UInt16?) -> ItemEnchantment? {
         guard let link else { return nil }
         return ItemEnchantment(
             link: link,
@@ -114,7 +114,7 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
 
     /// v1 stacking key: the base FormID. See the file header for why this is
     /// provisional.
-    public var stackKey: UInt32 {
+    var stackKey: UInt32 {
         formID.rawValue
     }
 }

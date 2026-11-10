@@ -9,34 +9,34 @@ public import simd
 
 /// Placed triangle geometry a penetration query runs against, bundled so the
 /// query stays inside the strict parameter cap.
-nonisolated public struct PlacedTriangleSoup: Sendable {
-    public let vertices: [SIMD3<Float>]
-    public let indices: [UInt32]
-    public let transform: float4x4
+nonisolated struct PlacedTriangleSoup: Sendable {
+    let vertices: [SIMD3<Float>]
+    let indices: [UInt32]
+    let transform: float4x4
 }
 
 /// One body's contact samples in a placed shape's local space, with the box that
 /// bounds them at full reach. Testing each triangle against the box first turns
 /// many rejects into one. `recovery` sizes the box; see
 /// `DynamicBodyContacts.recoveryDepth(of:)`.
-nonisolated public struct DynamicLocalSamples: Sendable {
-    public let points: [SIMD3<Float>]
+nonisolated struct DynamicLocalSamples: Sendable {
+    let points: [SIMD3<Float>]
     /// Each sample's skin, with `contactMargin` added and the shape's scale
     /// divided out, so every length below is in the shape's own units.
-    public let radii: [Float]
+    let radii: [Float]
     /// How this shape's triangles are turned into surface normals, in the same
     /// local space the samples are in.
-    public let orientation: DynamicSurfaceOrientation
+    let orientation: DynamicSurfaceOrientation
     /// `recoveryDepth` in the shape's units.
-    public let recovery: Float
+    let recovery: Float
     /// Sample AABB grown by the largest sample reach.
-    public let lower: SIMD3<Float>
-    public let upper: SIMD3<Float>
+    let lower: SIMD3<Float>
+    let upper: SIMD3<Float>
 
     /// Nil where the shape's placement will not invert or a sample does not
     /// survive the transform, which leaves the shape contributing no contact
     /// rather than a nonsense one.
-    public init?(
+    init?(
         samples: [(point: SIMD3<Float>, radius: Float)],
         shape: StaticCollisionShape,
         recovery worldRecovery: Float
@@ -66,20 +66,15 @@ nonisolated public struct DynamicLocalSamples: Sendable {
 }
 
 /// One body of a touching pair, with its place in the solver's array.
-nonisolated public struct DynamicPairBody: Sendable {
-    public let body: DynamicBody
-    public let index: Int
-
-    public init(body: DynamicBody, index: Int) {
-        self.body = body
-        self.index = index
-    }
+nonisolated struct DynamicPairBody: Sendable {
+    let body: DynamicBody
+    let index: Int
 }
 
 /// The friction and restitution a pair of bodies contributes to its contacts.
-nonisolated public struct DynamicContactMaterial: Sendable {
-    public let friction: Float
-    public let restitution: Float
+nonisolated struct DynamicContactMaterial: Sendable {
+    let friction: Float
+    let restitution: Float
 }
 
 /// One resolved touch. `normal` always points away from the obstacle and toward
@@ -91,11 +86,11 @@ nonisolated public struct DynamicContact: Sendable {
     public let other: Int?
     /// World-space contact point.
     public let point: SIMD3<Float>
-    public let normal: SIMD3<Float>
+    let normal: SIMD3<Float>
     /// Positive overlap along `normal`.
-    public let depth: Float
-    public let friction: Float
-    public let restitution: Float
+    let depth: Float
+    let friction: Float
+    let restitution: Float
     /// The `MATT` of what `body` touches: the static shape's, or the other body's.
     public var surfaceMaterial: FormID?
 }
@@ -110,11 +105,11 @@ nonisolated public enum DynamicBodyContacts: Sendable {
     /// How far behind a surface a contact is still believed, in engine units.
     /// Past it the sample is taken to belong to different geometry rather than
     /// to a deep penetration of this one.
-    public static let recoveryDepth: Float = 48
+    static let recoveryDepth: Float = 48
 
     /// The same bound for one body: the smaller of `recoveryDepth` and the body's own
     /// reach. Scaling it down for small clutter was the largest saving in the step.
-    public static func recoveryDepth(of body: DynamicBody) -> Float {
+    static func recoveryDepth(of body: DynamicBody) -> Float {
         min(recoveryDepth, max(contactMargin * 4, body.definition.boundingRadius))
     }
 }

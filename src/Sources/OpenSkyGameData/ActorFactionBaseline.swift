@@ -31,7 +31,7 @@ nonisolated public struct ActorFactionBaselineResolver: Sendable {
         return copy
     }
 
-    public init(templates: ActorTemplateResolver) {
+    init(templates: ActorTemplateResolver) {
         self.templates = templates
     }
 
@@ -59,7 +59,7 @@ nonisolated public struct ActorFactionBaselineResolver: Sendable {
     /// The player has no NPC_ record in this engine and therefore no authored
     /// memberships: every faction the player is in was joined at runtime, which
     /// is exactly what the component records.
-    public func baseline(for subject: ActorValueSubject) -> ActorFactionBaseline {
+    func baseline(for subject: ActorValueSubject) -> ActorFactionBaseline {
         switch subject {
         case let .actor(base): baseline(for: base)
         case .player, .generated: .none

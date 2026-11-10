@@ -96,7 +96,7 @@ extension DrawInstance {
 
 extension Renderer {
     /// Steps every reference fade by this frame's simulated seconds.
-    public func advanceReferenceFades(deltaTime: Float) {
+    func advanceReferenceFades(deltaTime: Float) {
         fadeTimers.advance(seconds: deltaTime)
         advanceViewTimers(seconds: deltaTime)
     }

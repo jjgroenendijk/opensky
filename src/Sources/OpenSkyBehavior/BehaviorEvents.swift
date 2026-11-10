@@ -104,7 +104,7 @@ nonisolated public struct BehaviorEventQueue: Equatable, Sendable {
     }
 
     /// True when `id` was raised before the update in progress began.
-    public func isActive(id: Int) -> Bool {
+    func isActive(id: Int) -> Bool {
         guard id >= 0 else { return false }
         return active.contains { $0.id == id }
     }

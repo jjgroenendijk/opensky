@@ -124,14 +124,9 @@ nonisolated public struct AgentReplyContext: Equatable, Sendable {
 }
 
 /// One line the server streams before the final reply of `events --follow`.
-nonisolated public struct AgentStreamLine: Codable, Equatable, Sendable {
-    public var id: Int
-    public var event: AgentEvent
-
-    public init(id: Int, event: AgentEvent) {
-        self.id = id
-        self.event = event
-    }
+nonisolated struct AgentStreamLine: Codable, Equatable, Sendable {
+    var id: Int
+    var event: AgentEvent
 }
 
 /// Pure encode and decode of single lines, so tests need no socket.

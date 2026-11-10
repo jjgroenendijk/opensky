@@ -18,7 +18,7 @@ nonisolated public struct AgentScriptStep: Equatable, Sendable {
 
 nonisolated public enum AgentScript {
     /// Two numbers this close count as equal, so a float round trip passes.
-    public static let numberTolerance = 1e-4
+    static let numberTolerance = 1e-4
 
     /// Blank lines and lines starting with `#` are skipped.
     public static func parse(_ text: String) throws(AgentFailure) -> [AgentScriptStep] {

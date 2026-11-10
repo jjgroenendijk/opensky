@@ -16,7 +16,7 @@ nonisolated public struct AudioCodecParameters: Equatable, Sendable {
     /// `WAVEFORMATEX.nAvgBytesPerSec`, used only to reconstruct the nominal bit rate.
     public let averageBytesPerSecond: Int
     /// `WAVEFORMATEX.cbSize` bytes of codec-private data following the fixed header.
-    public let extradata: Data
+    let extradata: Data
 }
 
 /// Decoded PCM: interleaved 32-bit float, native endianness, one canonical shape whatever

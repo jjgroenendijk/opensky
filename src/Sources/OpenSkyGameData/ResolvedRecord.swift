@@ -74,7 +74,7 @@ nonisolated public struct TypedRecordStore<Record: Sendable>: Sendable {
         table.orderedValues
     }
 
-    public var skippedRecords: SkippedRecords {
+    var skippedRecords: SkippedRecords {
         table.skipped
     }
 

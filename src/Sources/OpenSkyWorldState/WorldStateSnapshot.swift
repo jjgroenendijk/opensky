@@ -5,7 +5,7 @@
 
 import Foundation
 public import OpenSkyFormatsESM
-public import OpenSkyGameData
+import OpenSkyGameData
 
 /// One dirty reference in a snapshot: its key and the deltas recorded for it.
 nonisolated public struct WorldStateSnapshotEntry: Equatable, Sendable {
@@ -69,21 +69,21 @@ nonisolated public struct WorldStateSnapshot: Equatable, Sendable {
     }
 
     /// Number of dirty references.
-    public var dirtyCount: Int {
+    var dirtyCount: Int {
         entries.count
     }
 
     /// Number of overridden globals.
-    public var dirtyGlobalCount: Int {
+    var dirtyGlobalCount: Int {
         globals.count
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         entries.isEmpty && globals.isEmpty
     }
 
     /// Dirty keys, in the same total order as `entries`.
-    public var keys: [ReferenceKey] {
+    var keys: [ReferenceKey] {
         entries.map(\.key)
     }
 
@@ -94,7 +94,7 @@ nonisolated public struct WorldStateSnapshot: Equatable, Sendable {
     /// Runtime override recorded for a global, nil when it still matches the
     /// plugin. A linear scan, like `subscript(key:)`; a consumer resolving many
     /// globals builds a `GlobalResolution` from this snapshot instead.
-    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
+    func globalValue(for key: ReferenceKey) -> GlobalValue? {
         globals.first { $0.key == key }?.value
     }
 
@@ -113,12 +113,12 @@ nonisolated public struct WorldStateSnapshot: Equatable, Sendable {
     }
 
     /// Dirty references last mutated under `cell`.
-    public func entries(in cell: CellSceneLocation) -> [WorldStateSnapshotEntry] {
+    func entries(in cell: CellSceneLocation) -> [WorldStateSnapshotEntry] {
         entries.filter { $0.delta.cell == cell }
     }
 
     /// Dirty reference count for `cell`.
-    public func dirtyCount(in cell: CellSceneLocation) -> Int {
+    func dirtyCount(in cell: CellSceneLocation) -> Int {
         entries.count { $0.delta.cell == cell }
     }
 

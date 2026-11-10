@@ -8,7 +8,7 @@ import OpenSkyFormatsAnimation
 nonisolated public enum BehaviorVariableRoles: Sendable {
     /// The variables the game exposes to Papyrus through `GetAnimationVariable*`,
     /// from https://ck.uesp.net/wiki/List_of_Animation_Variables.
-    public static let engineVariables: Set = [
+    static let engineVariables: Set = [
         "bMotionDriven", "IsBeastRace", "IsSneaking", "IsBleedingOut", "IsCastingDual",
         "Is1HM", "IsCastingRight", "IsCastingLeft", "IsBlockHit", "IsPlayer", "IsNPC",
         "bIsSynced", "bVoiceReady", "IsShouting", "bWantCastLeft", "bWantCastRight",

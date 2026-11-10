@@ -2,21 +2,16 @@
 // block size Metal samples and at a chosen encoder effort.
 
 import CASTCEncoder
-public import Foundation
-public import Metal
+import Foundation
+import Metal
 
 /// A 2D ASTC block footprint. Larger blocks store fewer bits per texel.
-nonisolated public struct ASTCBlockSize: Codable, Hashable, Sendable {
-    public let width: Int
-    public let height: Int
-
-    public init(width: Int, height: Int) {
-        self.width = width
-        self.height = height
-    }
+nonisolated struct ASTCBlockSize: Codable, Hashable, Sendable {
+    let width: Int
+    let height: Int
 
     /// The linear LDR pixel format, or nil for a footprint Metal does not sample.
-    public var pixelFormat: MTLPixelFormat? {
+    var pixelFormat: MTLPixelFormat? {
         Self.formats[[width, height]]
     }
 
@@ -31,7 +26,7 @@ nonisolated public struct ASTCBlockSize: Codable, Hashable, Sendable {
 
 /// astcenc's search effort presets: more effort, better quality, same size.
 /// Exhaustive is left out: it takes minutes on a 4096 texture.
-nonisolated public enum ASTCEffort: String, CaseIterable, Codable, Sendable {
+nonisolated enum ASTCEffort: String, CaseIterable, Codable, Sendable {
     case fastest
     case fast
     case medium
@@ -48,14 +43,14 @@ nonisolated public enum ASTCEffort: String, CaseIterable, Codable, Sendable {
     }
 }
 
-nonisolated public enum ASTCEncoderError: Error, Equatable, Sendable {
+nonisolated enum ASTCEncoderError: Error, Equatable, Sendable {
     case unsupportedBlock(width: Int, height: Int)
     case encodeFailed(String)
 }
 
-nonisolated public enum ASTCEncoder {
+nonisolated enum ASTCEncoder {
     /// The blocks of one image, rows of blocks top first.
-    public static func encode(
+    static func encode(
         _ pixels: TexturePixels,
         block: ASTCBlockSize,
         effort: ASTCEffort
@@ -90,7 +85,7 @@ nonisolated public enum ASTCEncoder {
 nonisolated extension ASTCEncoder {
     /// RGBA8 pixels from the blocks of one image, as astcenc decodes them. The
     /// format search uses it to measure a candidate without a GPU round trip.
-    public static func decode(
+    static func decode(
         _ blocks: Data, width: Int, height: Int, block: ASTCBlockSize
     ) throws -> TexturePixels {
         guard block.pixelFormat != nil else {

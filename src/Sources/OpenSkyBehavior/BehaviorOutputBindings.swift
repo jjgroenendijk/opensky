@@ -8,7 +8,7 @@ import OpenSkyFormatsAnimation
 nonisolated extension BehaviorGraphInstance {
     /// Copies each computed member in `outputs` back to every graph variable a
     /// binding of `node` ties it to. Keys are member paths without the `m_` prefix.
-    public func writeOutputs(
+    func writeOutputs(
         _ outputs: [String: BehaviorVariableValue],
         of node: BehaviorCompiledNode
     ) {
@@ -26,7 +26,7 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// The variable indexes `node` writes `path` to.
-    public func outputIndexes(of node: BehaviorCompiledNode, path: String) -> [Int] {
+    func outputIndexes(of node: BehaviorCompiledNode, path: String) -> [Int] {
         guard let compiled = node.bindings else { return [] }
         return compiled.bindings.indices.compactMap { index in
             compiled.paths[index] == path && compiled.bindings[index].bindingType == 0

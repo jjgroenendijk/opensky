@@ -20,11 +20,11 @@ nonisolated public struct TerrainLODBrightness: Equatable, Sendable {
     /// Leaves the texture as it is, for when the noise term is off.
     public static let identity = Self(gain: 1, exponent: 1)
 
-    public func brightened(_ source: Float) -> Float {
+    func brightened(_ source: Float) -> Float {
         min(gain * pow(max(source, 0), exponent), 1)
     }
 
-    public func darkened(_ brightened: Float) -> Float {
+    func darkened(_ brightened: Float) -> Float {
         pow(max(brightened, 0) / gain, 1 / exponent)
     }
 

@@ -16,8 +16,6 @@ nonisolated public struct MembraneAlphaEnvelope: Equatable, Sendable {
     public var pulseAmplitude: Float = 0
     public var pulseFrequency: Float = 0
 
-    public init() {}
-
     /// Seconds until the curve settles at its persistent level.
     public var settleTime: Float {
         fadeIn + full + fadeOut
@@ -61,7 +59,7 @@ nonisolated public struct MembraneLook: Equatable, Sendable {
         edge = Self.envelope(shader, fill: false)
     }
 
-    public init(
+    init(
         fillColor: SIMD3<Float>,
         edgeColor: SIMD3<Float> = .zero,
         edgeFalloff: Float = 1,

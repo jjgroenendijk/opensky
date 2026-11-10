@@ -206,7 +206,7 @@ nonisolated public struct ConditionTally: Equatable, Sendable {
     // MARK: - Reporting
 
     /// True when every condition evaluated produced a real answer.
-    public var isClean: Bool {
+    var isClean: Bool {
         failureTotal == 0
     }
 

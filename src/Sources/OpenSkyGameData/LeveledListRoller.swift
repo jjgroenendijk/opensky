@@ -67,9 +67,9 @@ nonisolated public struct LeveledRoll: Hashable, Sendable {
     public let encounterLevel: Int
     public let difficulty: LeveledActorDifficulty
     /// The `LeveledScriptEdits` revision the roll saw.
-    public let revision: Int
+    let revision: Int
 
-    public init(
+    init(
         seed: UInt64, playerLevel: Int, encounterLevel: Int,
         difficulty: LeveledActorDifficulty = .none, revision: Int = 0
     ) {
@@ -185,7 +185,7 @@ nonisolated public struct LeveledListRoller: Sendable {
     }
 
     /// The `LVLN` entry an actor walk takes for the owner of `roll`.
-    public func actorEntry(_ list: LeveledList, roll: LeveledRoll) -> LeveledList.Entry? {
+    func actorEntry(_ list: LeveledList, roll: LeveledRoll) -> LeveledList.Entry? {
         var random = SplitMix64(seed: LeveledListRoll.seed(roll.seed, UInt64(list.formID.rawValue)))
         return LeveledListRoll.actorEntry(
             scriptEdits.edited(list),

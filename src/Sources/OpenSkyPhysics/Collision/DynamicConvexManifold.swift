@@ -265,7 +265,7 @@ nonisolated enum DynamicConvexManifold {
 
 nonisolated extension DynamicCollisionMath {
     /// The closest points of two segments, first on `first`, then on `second`.
-    public static func closestPoints(
+    static func closestPoints(
         _ first: (SIMD3<Float>, SIMD3<Float>), _ second: (SIMD3<Float>, SIMD3<Float>)
     ) -> (SIMD3<Float>, SIMD3<Float>) {
         let firstDelta = first.1 - first.0

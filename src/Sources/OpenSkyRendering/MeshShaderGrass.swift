@@ -70,7 +70,7 @@ final class GrassMeshlets {
 /// The renderer's mesh-shader grass switch, pipeline, and meshlet cache.
 public struct MeshShaderGrassState {
     /// Off by default: on the M1 it measured no faster than the classic path.
-    public var enabled = false
+    var enabled = false
     /// What the pipeline is built from when the path is first used.
     let library: any MTLLibrary
     let colorFormat: MTLPixelFormat
@@ -86,9 +86,9 @@ public struct MeshShaderGrassState {
     var uniforms: any MTLBuffer?
     var uniformCapacity = 0
     /// The last counts read back, a few frames late.
-    public internal(set) var lastCounts = MeshletCounts()
+    var lastCounts = MeshletCounts()
     /// What the last frame sent to the object stage.
-    public internal(set) var submitted = MeshletCounts()
+    var submitted = MeshletCounts()
 
     init(library: any MTLLibrary, view: MTKView) {
         self.library = library

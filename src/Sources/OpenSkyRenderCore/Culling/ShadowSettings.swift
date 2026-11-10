@@ -6,7 +6,7 @@ nonisolated public struct ShadowSettings: Equatable, Sendable {
     public static let defaultResolution = 2048
     /// The game sets no top; 16384 is the largest Metal texture. The map costs
     /// 12 bytes a texel, so 16384 takes 3 GB.
-    public static let resolutionRange = 512 ... 16384
+    static let resolutionRange = 512 ... 16384
 
     /// Nil keeps the renderer's own range.
     public let distance: Float?

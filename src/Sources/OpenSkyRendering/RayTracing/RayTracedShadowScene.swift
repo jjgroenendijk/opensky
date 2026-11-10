@@ -14,9 +14,9 @@ struct RayTracedInstance {
 
 /// The size of the built structures.
 nonisolated public struct RayTracedShadowStats: Equatable, Sendable {
-    public var meshes = 0
-    public var instances = 0
-    public var bytes = 0
+    var meshes = 0
+    var instances = 0
+    var bytes = 0
 
     public init() {}
 }
