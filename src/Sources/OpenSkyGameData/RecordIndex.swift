@@ -88,7 +88,7 @@ nonisolated public struct RecordIndex: Sendable {
             }
         }
         decodedResolvers[FormIDResolver.loadOrderSpaceName.lowercased()] =
-            FormIDResolver.loadOrder(files: plugins)
+            ESMFile.loadOrder(plugins)
         resolvers = decodedResolvers
         skippedRecords = skippedHeaders
 

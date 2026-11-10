@@ -17,7 +17,7 @@ nonisolated struct PluginDialogue {
 
     init(file: ESMFile, localized: Bool?, skipped: inout SkippedRecords) {
         let isLocalized = localized ?? file.isLocalized
-        masters = skipped.masters(of: file)
+        masters = file.masters(noting: &skipped)
         if let top = file.topGroup(of: "DIAL") {
             for child in skipped.children(of: top) {
                 decode(child, localized: isLocalized, skipped: &skipped)
@@ -126,7 +126,7 @@ nonisolated private struct LoadOrderDialogue {
 nonisolated extension DialogueStore {
     /// Every active plugin's dialogue records, lowest priority first.
     public convenience init(plugins: [(name: String, file: ESMFile)], localized: Bool? = nil) {
-        let space = FormIDResolver.loadOrder(files: plugins)
+        let space = ESMFile.loadOrder(plugins)
         var merged = LoadOrderDialogue()
         var skipped = SkippedRecords()
         for plugin in plugins {

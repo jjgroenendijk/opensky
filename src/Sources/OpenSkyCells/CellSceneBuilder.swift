@@ -213,7 +213,7 @@ nonisolated public final class CellSceneBuilder {
         var skipped = SkippedRecords()
         formIDResolver = plugins.count > 1
             ? FormIDResolver.loadOrder(plugins.map(\.name))
-            : FormIDResolver(pluginName: pluginName, masters: skipped.masters(of: file))
+            : FormIDResolver(pluginName: pluginName, masters: file.masters(noting: &skipped))
         skippedRecords = skipped
         localizedStrings = fileSystem.map {
             LocalizedStrings(vfs: $0, pluginName: pluginName, language: localizationLanguage)

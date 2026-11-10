@@ -13,10 +13,10 @@ import OpenSkyWorldInterface
 nonisolated public struct CarriedItems: Sendable {
     public static let none = CarriedItems(entries: [], combatStyle: nil)
 
-    public let entries: [Container.Entry]
+    public let entries: [ContainerEntry]
     public let combatStyle: FormID?
 
-    public init(entries: [Container.Entry], combatStyle: FormID?) {
+    public init(entries: [ContainerEntry], combatStyle: FormID?) {
         self.entries = entries
         self.combatStyle = combatStyle
     }

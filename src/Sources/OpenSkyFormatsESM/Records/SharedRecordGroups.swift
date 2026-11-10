@@ -79,9 +79,9 @@ nonisolated extension RecordFields {
     }
 
     /// Every CNTO with the COED that follows it. A COCT that differs is tallied.
-    mutating func inventory() -> [Container.Entry] {
+    mutating func inventory() -> [ContainerEntry] {
         let declared = uint32("COCT")
-        var entries: [Container.Entry] = []
+        var entries: [ContainerEntry] = []
         for index in fields.indices where !isUsed(at: index) {
             switch fields[index].type {
             case "CNTO":
@@ -123,8 +123,8 @@ nonisolated extension RecordFields {
         return stage
     }
 
-    private static func inventoryEntry(_ reader: inout BinaryReader) throws -> Container.Entry {
-        try Container.Entry(
+    private static func inventoryEntry(_ reader: inout BinaryReader) throws -> ContainerEntry {
+        try ContainerEntry(
             item: reader.readFormID(), count: reader.readInt32(),
             owner: nil, ownerCondition: nil, condition: nil
         )
@@ -132,11 +132,11 @@ nonisolated extension RecordFields {
 
     private static func extraData(
         _ reader: inout BinaryReader,
-        for entry: Container.Entry
-    ) throws -> Container.Entry {
+        for entry: ContainerEntry
+    ) throws -> ContainerEntry {
         let owner = try reader.readFormID().nonNull
         let ownerCondition = try reader.readUInt32()
-        return try Container.Entry(
+        return try ContainerEntry(
             item: entry.item, count: entry.count,
             owner: owner, ownerCondition: owner == nil ? nil : ownerCondition,
             condition: reader.readFloat32()

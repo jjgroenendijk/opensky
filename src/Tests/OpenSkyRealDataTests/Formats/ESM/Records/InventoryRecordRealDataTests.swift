@@ -63,7 +63,7 @@ struct InventoryRecordRealDataTests {
 
     private static func summary(
         store: ItemDefinitionStore,
-        contents: [Container.Entry],
+        contents: [ContainerEntry],
         ownership: (owner: Int, count: Int)
     ) -> String {
         let perFamily = ItemDefinition.Family.allCases

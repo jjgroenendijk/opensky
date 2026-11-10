@@ -48,7 +48,7 @@ nonisolated public final class QuestStore: Sendable {
     ///   does not record its own name and `ReferenceKey` is built from it.
     public convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
         var skipped = SkippedRecords()
-        let masters = skipped.masters(of: file)
+        let masters = file.masters(noting: &skipped)
         let decoded = Self.decodeQuests(in: file, localized: localized, skipped: &skipped)
         self.init(
             quests: decoded,
@@ -59,14 +59,14 @@ nonisolated public final class QuestStore: Sendable {
 
     /// Every active plugin's QUST records, lowest priority first.
     public convenience init(plugins: [(name: String, file: ESMFile)]) {
-        let space = FormIDResolver.loadOrder(files: plugins)
+        let space = ESMFile.loadOrder(plugins)
         var byFormID: [UInt32: Quest] = [:]
         var sources: [UInt32: FormIDResolver] = [:]
         var skipped = SkippedRecords()
         for plugin in plugins {
             let local = FormIDResolver(
                 pluginName: plugin.name,
-                masters: skipped.masters(of: plugin.file)
+                masters: plugin.file.masters(noting: &skipped)
             )
             for quest in Self.decodeQuests(in: plugin.file, skipped: &skipped) {
                 guard

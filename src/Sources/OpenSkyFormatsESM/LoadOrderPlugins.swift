@@ -26,8 +26,13 @@ nonisolated public struct LoadOrderPlugin: Sendable {
     /// Runs a decode of this plugin's records in the load-order space. A table ID
     /// of a later plugin remembers the plugin, because its string tables hold the text.
     public func decode<Value>(_ body: () throws -> Value) rethrows -> Value {
-        try RecordDecodeScope.decoding(
-            translation: translation, stringPlugin: position > 0 ? name : nil, body
+        var translate: RecordDecodeScope.Translate?
+        if !translation.isIdentity {
+            let translation = translation
+            translate = { raw in translation.translate(raw) }
+        }
+        return try RecordDecodeScope.decoding(
+            translate: translate, stringPlugin: position > 0 ? name : nil, body
         )
     }
 }
@@ -66,10 +71,10 @@ nonisolated public struct LoadOrderPlugins: Sendable {
     public init(_ plugins: [(name: String, file: ESMFile)], space: FormIDResolver? = nil) {
         var skipped = SkippedRecords()
         let resolvers = plugins.map {
-            FormIDResolver(pluginName: $0.name, masters: skipped.masters(of: $0.file))
+            FormIDResolver(pluginName: $0.name, masters: $0.file.masters(noting: &skipped))
         }
         let space = space ?? (plugins.count == 1
-            ? resolvers[0] : FormIDResolver.loadOrder(files: plugins))
+            ? resolvers[0] : ESMFile.loadOrder(plugins))
         self.space = space
         self.plugins = zip(plugins, resolvers).enumerated().map { position, pair in
             LoadOrderPlugin(

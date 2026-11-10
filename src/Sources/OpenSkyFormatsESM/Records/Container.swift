@@ -6,24 +6,24 @@
 import Foundation
 public import OpenSkyFormatsCore
 
-nonisolated public struct Container: Sendable {
-    /// One CNTO entry with the COED extra data that followed it, if any.
-    public struct Entry: Equatable, Sendable {
-        /// The item placed in the container: a carryable item or an LVLI, which
-        /// the inventory runtime expands.
-        public let item: FormID
-        /// Stack count. Signed on disk; vanilla never writes a negative.
-        public let count: Int32
-        /// COED owner — an NPC_ or FACT. Nil when the entry is unowned.
-        let owner: FormID?
-        /// COED union word: a GLOB FormID for an NPC_ owner, a required
-        /// faction rank for a FACT owner. Raw because the decoder cannot tell
-        /// which without resolving `owner`'s record type.
-        let ownerCondition: UInt32?
-        /// COED item condition (health fraction).
-        let condition: Float?
-    }
+/// One CNTO entry with the COED extra data that followed it, if any.
+nonisolated public struct ContainerEntry: Equatable, Sendable {
+    /// The item placed in the container: a carryable item or an LVLI, which
+    /// the inventory runtime expands.
+    public let item: FormID
+    /// Stack count. Signed on disk; vanilla never writes a negative.
+    public let count: Int32
+    /// COED owner — an NPC_ or FACT. Nil when the entry is unowned.
+    let owner: FormID?
+    /// COED union word: a GLOB FormID for an NPC_ owner, a required
+    /// faction rank for a FACT owner. Raw because the decoder cannot tell
+    /// which without resolving `owner`'s record type.
+    let ownerCondition: UInt32?
+    /// COED item condition (health fraction).
+    let condition: Float?
+}
 
+nonisolated public struct Container: Sendable {
     public struct Flags: OptionSet, Equatable, Sendable {
         public let rawValue: UInt8
 
@@ -40,7 +40,7 @@ nonisolated public struct Container: Sendable {
     /// The shared MSTT/TREE/FURN/ACTI/CONT/DOOR decode — name, model, sounds.
     public let base: ModelBase
     /// CNTO entries in file order.
-    public let entries: [Entry]
+    public let entries: [ContainerEntry]
     /// COCT as written; nil when absent. Diagnostics only.
     public let declaredEntryCount: UInt32?
     /// DATA flags byte. The float that follows it in the struct is documented
@@ -79,7 +79,7 @@ nonisolated public struct Container: Sendable {
     /// Accumulator for the contents run; separate so the CNTO/COED pairing
     /// logic reads as one unit instead of being spread through `init`.
     private struct Contents {
-        var entries: [Entry] = []
+        var entries: [ContainerEntry] = []
         var declaredEntryCount: UInt32?
         var flags = Flags()
 
@@ -94,7 +94,7 @@ nonisolated public struct Container: Sendable {
                 // container — mod-quirk rule, same as XLKR on REFR.
                 guard field.data.count >= 8 else { break }
                 try entries.append(
-                    Entry(
+                    ContainerEntry(
                         item: FormID(reader.readUInt32()),
                         count: Int32(bitPattern: reader.readUInt32()),
                         owner: nil,
@@ -121,7 +121,7 @@ nonisolated public struct Container: Sendable {
             let owner = try FormID(reader.readUInt32())
             let ownerCondition = try reader.readUInt32()
             let condition = try reader.readFloat32()
-            entries[entries.count - 1] = Entry(
+            entries[entries.count - 1] = ContainerEntry(
                 item: last.item,
                 count: last.count,
                 owner: owner.isNull ? nil : owner,

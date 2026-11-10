@@ -74,7 +74,7 @@ struct ESMFileDecodeTests {
     @Test func mastersNotesAHeaderWithoutHEDR() throws {
         let file = try ESMFile(data: ESMFixture.record("TES4", flags: 0x80, data: Data()))
         var skipped = SkippedRecords()
-        let masters = skipped.masters(of: file)
+        let masters = file.masters(noting: &skipped)
         #expect(masters.isEmpty)
         #expect(skipped.count(of: "TES4") == 1)
         // The localized flag lives in the record header, so it still reads.
@@ -84,7 +84,7 @@ struct ESMFileDecodeTests {
     @Test func mastersReadsAValidHeader() throws {
         let file = try ESMFile(data: ESMFixture.tes4(masters: ["Skyrim.esm"]))
         var skipped = SkippedRecords()
-        let masters = skipped.masters(of: file)
+        let masters = file.masters(noting: &skipped)
         #expect(masters == ["Skyrim.esm"])
         #expect(skipped.isEmpty)
         #expect(!file.isLocalized)
