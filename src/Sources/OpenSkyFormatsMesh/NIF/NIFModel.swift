@@ -57,7 +57,7 @@ nonisolated extension NIFFile {
 
         public init(file: NIFFile, skeleton: NIFSkeleton?, keepingRoot: Bool = false) throws {
             self.file = file
-            hierarchy = try NIFNodeHierarchy(file: file, keepingRoot: keepingRoot)
+            hierarchy = try file.nodeHierarchy(keepingRoot: keepingRoot)
             self.skeleton = skeleton
             self.keepingRoot = keepingRoot
         }
@@ -111,7 +111,7 @@ nonisolated extension NIFFile {
 
         /// The node a traversed block contributes, or `nil` for a subtree the
         /// flatten deliberately drops.
-        private func drawableNode(_ block: NIFFile.Block) throws -> NIFNode? {
+        private func drawableNode(_ block: NIFBlock) throws -> NIFNode? {
             if block.typeName == NIFSwitchNode.typeName {
                 return try NIFSwitchNode(data: block.data, header: file.header).activeNode
             }
@@ -126,11 +126,11 @@ nonisolated extension NIFFile {
         }
 
         private mutating func appendShape(
-            block: NIFFile.Block,
+            block: NIFBlock,
             index: Int,
             parent: float4x4
         ) throws {
-            guard let shape = try NIFTriShape.decode(block, in: file) else { return }
+            guard let shape = try file.triShape(of: block) else { return }
             guard !Self.isEditorMarker(shape.object.name) else {
                 editorMarkerShapeCount += 1
                 return
@@ -291,7 +291,7 @@ nonisolated extension NIFFile.Flattener {
     }
 
     private func lightingShader(
-        _ block: NIFFile.Block
+        _ block: NIFBlock
     ) throws -> (NIFLightingShaderProperty, NIFShaderTextureSet?) {
         let property = try NIFLightingShaderProperty(data: block.data, header: file.header)
         guard property.textureSetRef >= 0 else { return (property, nil) }
@@ -347,7 +347,7 @@ nonisolated extension NIFFile.Flattener {
     /// The static path draws an effect shape with its source texture, palette, and
     /// alpha property, additive blends included.
     func effectMaterial(
-        block: NIFFile.Block, alphaBlock: Int?, animation: MaterialAnimation? = nil
+        block: NIFBlock, alphaBlock: Int?, animation: MaterialAnimation? = nil
     ) throws -> Material {
         let effect = try NIFEffectShaderProperty(data: block.data, header: file.header)
         let alpha = try alphaProperty(at: alphaBlock)

@@ -109,7 +109,7 @@ nonisolated extension NIFFile {
     /// Every controller sequence in the file, in block order.
     public func sequences() throws -> [NIFSequence] {
         try blocks.indices
-            .filter { blocks[$0].typeName == NIFControllerSequenceDecoder.sequenceType }
-            .map { try NIFSequenceDecoder(file: self).sequence(blocks[$0]) }
+            .filter { blocks[$0].typeName == NIFFile.ControllerSequenceDecoder.sequenceType }
+            .map { try NIFFile.SequenceDecoder(file: self).sequence(blocks[$0]) }
     }
 }

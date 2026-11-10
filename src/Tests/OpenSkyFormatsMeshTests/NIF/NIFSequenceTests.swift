@@ -58,7 +58,7 @@ struct NIFSequenceTests {
     /// Blocks: 0 root, 1 star, 2 and 3 its transform, 4 and 5 a float, 6 the shader
     /// controller, 7 text keys, 8 the controlled property, 9 the sequence.
     private static func file() -> Data {
-        let invalid = NIFParticleControllerDecoder.invalidFloat
+        let invalid = NIFFloat.invalid
         var transform = Data()
         for value in [invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid] {
             transform.appendFloat32(value)

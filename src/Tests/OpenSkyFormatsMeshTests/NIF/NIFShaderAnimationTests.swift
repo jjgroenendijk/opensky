@@ -44,7 +44,7 @@ struct NIFShaderAnimationTests {
         controller.appendUInt32(3)
         controller.appendUInt32(20)
         var float = Data()
-        float.appendFloat32(NIFParticleControllerDecoder.invalidFloat)
+        float.appendFloat32(NIFFloat.invalid)
         float.appendUInt32(4)
         var floatData = Data()
         floatData.appendUInt32(2)

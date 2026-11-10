@@ -155,7 +155,7 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
         return try NIFTransformData(data: data.data)
     }
 
-    private static func block(_ ref: Int32, _ file: NIFFile, type: String) -> NIFFile.Block? {
+    private static func block(_ ref: Int32, _ file: NIFFile, type: String) -> NIFBlock? {
         guard ref >= 0, Int(ref) < file.blocks.count else { return nil }
         let block = file.blocks[Int(ref)]
         return block.typeName == type ? block : nil

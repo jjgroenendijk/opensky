@@ -47,7 +47,7 @@ nonisolated extension NIFFile {
         return parents
     }
 
-    private func nodeChildren(_ block: Block) -> [Int32] {
+    private func nodeChildren(_ block: NIFBlock) -> [Int32] {
         if block.typeName == NIFSwitchNode.typeName {
             return attempt { try NIFSwitchNode(data: block.data, header: header).children } ?? []
         }

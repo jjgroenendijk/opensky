@@ -76,9 +76,9 @@ nonisolated public enum NIFShaderAnimation {
         let base = controller.base.controller
         let interpolator = controller.base.interpolatorRef
         let values: [NIFKey<SIMD3<Float>>] = if controller.kind.isColor {
-            try interpolator >= 0 ? NIFSequenceDecoder(file: file).pointKeys(interpolator) : []
+            try interpolator >= 0 ? NIFFile.SequenceDecoder(file: file).pointKeys(interpolator) : []
         } else {
-            try NIFParticleControllerDecoder.floatKeys(interpolator, file: file)
+            try NIFFile.ParticleControllerDecoder.floatKeys(interpolator, file: file)
                 .map { NIFKey(time: $0.time, value: SIMD3($0.value, 0, 0)) }
         }
         let target = NIFShaderVariable.target(controller.kind, controller.variable)

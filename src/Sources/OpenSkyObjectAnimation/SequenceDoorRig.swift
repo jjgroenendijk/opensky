@@ -36,7 +36,7 @@ nonisolated public struct SequenceDoorRig: Sendable {
             sequences.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
         }
         guard let open = named("Open"), let close = named("Close") else { return nil }
-        let hierarchy = try NIFNodeHierarchy(file: file)
+        let hierarchy = try file.nodeHierarchy()
         let parentOf = file.nodeParents()
         var blockOf: [String: Int] = [:]
         for (block, name) in hierarchy.names.sorted(by: { $0.key < $1.key })

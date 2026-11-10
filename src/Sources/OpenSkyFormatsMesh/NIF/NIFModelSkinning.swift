@@ -210,7 +210,7 @@ nonisolated extension NIFFile.Flattener {
         }
     }
 
-    private func typedBlock(ref: Int32, type: String) throws -> NIFFile.Block {
+    private func typedBlock(ref: Int32, type: String) throws -> NIFBlock {
         guard ref >= 0 else {
             throw NIFError.malformed("missing \(type) ref")
         }
@@ -221,7 +221,7 @@ nonisolated extension NIFFile.Flattener {
         return result
     }
 
-    func block(at index: Int) throws -> NIFFile.Block {
+    func block(at index: Int) throws -> NIFBlock {
         guard index < file.blocks.count else {
             throw NIFError.malformed(
                 "block ref \(index) out of range (\(file.blocks.count) blocks)"

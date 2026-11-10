@@ -8,7 +8,7 @@ import OpenSkyFormatsCore
 nonisolated extension NIFFile {
     /// The segments of a large-reference `BSSubIndexTriShape`; empty for any other shape.
     func largeReferenceSegments(
-        of block: NIFFile.Block,
+        of block: NIFBlock,
         at index: Int
     ) throws -> [NIFSubIndexTriShape.Segment] {
         guard block.typeName == "BSSubIndexTriShape" else { return [] }

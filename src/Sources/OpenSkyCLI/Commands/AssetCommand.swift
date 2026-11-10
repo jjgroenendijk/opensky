@@ -57,7 +57,7 @@ enum AssetCommand {
 
     private static func decodedNode(
         _ index: Int,
-        _ block: NIFFile.Block,
+        _ block: NIFBlock,
         header: NIFHeader
     ) -> NIFNode? {
         guard NIFNode.traversedTypes.contains(block.typeName) else { return nil }
@@ -66,15 +66,15 @@ enum AssetCommand {
 
     private static func decodedShape(
         _ index: Int,
-        _ block: NIFFile.Block,
+        _ block: NIFBlock,
         file: NIFFile
     ) -> NIFTriShape? {
-        decodedOrWarn(index, block) { try NIFTriShape.decode(block, in: file) }.flatMap(\.self)
+        decodedOrWarn(index, block) { try file.triShape(of: block) }.flatMap(\.self)
     }
 
     private static func decodedOrWarn<Value>(
         _ index: Int,
-        _ block: NIFFile.Block,
+        _ block: NIFBlock,
         _ decode: () throws -> Value
     ) -> Value? {
         do {

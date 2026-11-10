@@ -64,7 +64,7 @@ nonisolated struct NIFBlendInterpolator: Equatable, Sendable {
     }
 
     static func float(_ value: Float) -> Float? {
-        value.isFinite && value != NIFParticleControllerDecoder.invalidFloat ? value : nil
+        value.isFinite && value != NIFFloat.invalid ? value : nil
     }
 
     static func bool(_ value: UInt8) -> Bool? {

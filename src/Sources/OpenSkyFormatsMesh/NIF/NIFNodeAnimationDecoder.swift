@@ -62,7 +62,7 @@ nonisolated public struct NIFNodeAnimationDecoder {
     }
 
     private mutating func read(
-        _ block: NIFFile.Block, base: NIFTimeController, reader: inout BinaryReader, node: Int
+        _ block: NIFBlock, base: NIFTimeController, reader: inout BinaryReader, node: Int
     ) throws {
         switch block.typeName {
         case NIFCameraTrack.controllerTypeName:
@@ -99,7 +99,7 @@ nonisolated public struct NIFNodeAnimationDecoder {
     private func motion(_ ref: Int32) throws -> NIFNodeAnimation.Motion? {
         guard ref >= 0, Int(ref) < file.blocks.count else { return nil }
         let block = file.blocks[Int(ref)]
-        let sequences = NIFSequenceDecoder(file: file)
+        let sequences = NIFFile.SequenceDecoder(file: file)
         switch block.typeName {
         case NIFCameraTrack.interpolatorTypeName:
             return try sequences.transform(ref).map(NIFNodeAnimation.Motion.keys)
@@ -116,11 +116,11 @@ nonisolated public struct NIFNodeAnimationDecoder {
                 target: target, axis: lookAt.lookAxis,
                 translation: lookAt.translationInterpolatorRef >= 0
                     ? sequences.pointKeys(lookAt.translationInterpolatorRef) : [],
-                roll: NIFParticleControllerDecoder.floatKeys(
+                roll: NIFFile.ParticleControllerDecoder.floatKeys(
                     lookAt.rollInterpolatorRef,
                     file: file
                 ),
-                scale: NIFParticleControllerDecoder.floatKeys(
+                scale: NIFFile.ParticleControllerDecoder.floatKeys(
                     lookAt.scaleInterpolatorRef,
                     file: file
                 )

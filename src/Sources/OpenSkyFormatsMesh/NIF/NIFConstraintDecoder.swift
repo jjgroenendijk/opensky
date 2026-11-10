@@ -26,7 +26,7 @@ nonisolated enum NIFConstraintDecoder: Sendable {
     /// Throws `NIFError.unsupported` for a constraint class this decoder does not
     /// read, so the caller tallies it by block type and keeps the body.
     static func decodeAll(
-        block: NIFFile.Block,
+        block: NIFBlock,
         index: Int
     ) throws -> [NIFCollisionConstraint] {
         var reader = BinaryReader(block.data)

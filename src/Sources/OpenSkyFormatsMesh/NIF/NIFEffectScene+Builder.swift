@@ -64,8 +64,8 @@ nonisolated extension NIFEffectScene {
             return nodes.count - 1
         }
 
-        private mutating func appendShape(_ block: NIFFile.Block, parent: Int?) throws {
-            guard let shape = try NIFTriShape.decode(block, in: file) else { return }
+        private mutating func appendShape(_ block: NIFBlock, parent: Int?) throws {
+            guard let shape = try file.triShape(of: block) else { return }
             let node = append(shape.object, parent: parent, billboard: nil)
             // The game draws no shape without a shader property (docs/formats/nif.md).
             guard
@@ -90,7 +90,7 @@ nonisolated extension NIFEffectScene {
         private func material(shader: Int?, alpha alphaRef: Int32) throws -> NIFEffectMaterial {
             var material = NIFEffectMaterial()
             if alphaRef >= 0 {
-                let block = try NIFParticleControllerDecoder.block(alphaRef, file)
+                let block = try NIFFile.ParticleControllerDecoder.block(alphaRef, file)
                 if block.typeName == "NiAlphaProperty" {
                     let alpha = try NIFAlphaProperty(data: block.data, header: file.header)
                     material.blend = alpha.blendEnabled
@@ -103,7 +103,7 @@ nonisolated extension NIFEffectScene {
                 }
             }
             guard let shader else { return material }
-            let block = try NIFParticleControllerDecoder.block(Int32(shader), file)
+            let block = try NIFFile.ParticleControllerDecoder.block(Int32(shader), file)
             switch block.typeName {
             case NIFFile.effectShaderType:
                 let effect = try NIFEffectShaderProperty(data: block.data, header: file.header)
@@ -117,7 +117,7 @@ nonisolated extension NIFEffectScene {
                 material.uvScale = lit.uvScale
                 material.shading.baseColor.w = lit.alpha
                 if lit.textureSetRef >= 0 {
-                    let set = try NIFParticleControllerDecoder.block(lit.textureSetRef, file)
+                    let set = try NIFFile.ParticleControllerDecoder.block(lit.textureSetRef, file)
                     material.sourceTexture = set.typeName == "BSShaderTextureSet"
                         ? try NIFShaderTextureSet(data: set.data, header: file.header).diffusePath
                         : nil

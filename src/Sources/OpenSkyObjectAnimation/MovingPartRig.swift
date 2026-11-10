@@ -12,7 +12,7 @@ nonisolated public struct MovingPartRig: Sendable {
 
     /// Nil when no bone names a node of the mesh.
     public init?(file: NIFFile, boneNames: [String]) throws {
-        let hierarchy = try NIFNodeHierarchy(file: file)
+        let hierarchy = try file.nodeHierarchy()
         var blockOf: [String: Int] = [:]
         for (block, name) in hierarchy.names.sorted(by: { $0.key < $1.key })
             where blockOf[name.lowercased()] == nil && hierarchy.worldTransforms[block] != nil

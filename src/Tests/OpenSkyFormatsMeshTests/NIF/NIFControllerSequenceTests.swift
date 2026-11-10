@@ -42,12 +42,10 @@ struct NIFControllerSequenceTests {
     }
 
     @Test func defaultSequencePrefersIdleThenLoopThenFirst() {
-        func sequence(_ name: String, _ cycle: ControllerCycle) -> NIFControllerSequenceDecoder
-            .DecodedSequence
-        {
+        func sequence(_ name: String, _ cycle: ControllerCycle) -> NIFFile.DecodedSequence {
             .init(name: name, cycle: cycle, feeds: [:])
         }
-        let pick = NIFControllerSequenceDecoder.defaultSequence
+        let pick = NIFFile.ControllerSequenceDecoder.defaultSequence
         #expect(pick([sequence("Fire", .clamp), sequence("mIdle", .clamp)])?.name == "mIdle")
         #expect(pick([sequence("mBegin", .clamp), sequence("mLoop", .loop)])?.name == "mLoop")
         #expect(pick([sequence("Wait", .clamp), sequence("Shoot", .clamp)])?.name == "Wait")

@@ -49,7 +49,7 @@ nonisolated extension NIFFile {
             else { return nil }
             let target = Int(controller.base.targetRef)
             guard let transform = modelTransform(of: target, parents: parents) else { return nil }
-            let shape = attempt { try NIFTriShape.decode(blocks[target], in: self) }
+            let shape = attempt { try triShape(of: blocks[target]) }
             var system = ParticleSystemDefinition(
                 name: shape?.object.name, worldTransform: transform, worldSpace: false,
                 maxParticles: 0, emitters: [], modifiers: [], subtextureOffsets: [],
@@ -64,7 +64,7 @@ nonisolated extension NIFFile {
         }
     }
 
-    private static func lightningController(_ block: Block) -> NIFLightningController? {
+    private static func lightningController(_ block: NIFBlock) -> NIFLightningController? {
         guard block.typeName == NIFLightningController.typeName else { return nil }
         var reader = BinaryReader(block.data)
         return attempt { try NIFLightningController(reader: &reader) }

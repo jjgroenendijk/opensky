@@ -36,7 +36,7 @@ nonisolated public enum NIFBillboard {
     }
 
     /// The mode is the last 2 bytes of the block, after the `NiNode` fields.
-    static func mode(of block: NIFFile.Block) -> UInt16? {
+    static func mode(of block: NIFBlock) -> UInt16? {
         guard block.typeName == typeName, block.data.count >= 2 else { return nil }
         let end = block.data.endIndex
         return UInt16(block.data[end - 2]) | UInt16(block.data[end - 1]) << 8
