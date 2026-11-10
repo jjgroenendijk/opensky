@@ -46,7 +46,7 @@ public protocol PapyrusWorldBridge:
     func placedReference(for key: ReferenceKey) -> PlacedReference?
 
     /// The `XLKR` links of the placed reference or placed actor behind `key`.
-    func linkedReferences(of key: ReferenceKey) -> [PlacedReference.LinkedReference]
+    func linkedReferences(of key: ReferenceKey) -> [LinkedReference]
 
     /// The reference's XLOC with this session's lock delta on top, or nil when it has
     /// neither.
@@ -109,10 +109,4 @@ public protocol PapyrusWorldBridge:
 
     /// The base form of a placed reference or a placed actor.
     func baseObject(of key: ReferenceKey) -> FormID?
-}
-
-extension PapyrusWorldBridge {
-    public func linkedReferences(of key: ReferenceKey) -> [PlacedReference.LinkedReference] {
-        placedReference(for: key)?.linkedReferences ?? []
-    }
 }

@@ -21,7 +21,7 @@ nonisolated public struct PlacedProjectile: Sendable {
     /// XOWN.
     public let owner: FormID?
     public let encounterZone: FormID?
-    public let linkedReferences: [PlacedReference.LinkedReference]
+    public let linkedReferences: [LinkedReference]
     public let scriptData: ScriptData
     public let skipped: FieldTally
 
@@ -43,7 +43,7 @@ nonisolated public struct PlacedProjectile: Sendable {
         enableParent = fields.read("XESP") { try EnableParent(&$0) }
         owner = fields.formID("XOWN")
         encounterZone = fields.formID("XEZN")
-        linkedReferences = fields.readAll("XLKR") { try PlacedReference.LinkedReference(&$0) }
+        linkedReferences = fields.readAll("XLKR") { try LinkedReference(&$0) }
         var scriptData = ScriptData(ownerType: record.type)
         for index in fields.fields.indices where fields.fields[index].type == "VMAD" {
             let field = fields.fields[index]
@@ -61,7 +61,7 @@ nonisolated extension PlacedReference.Placement {
     }
 }
 
-nonisolated extension PlacedReference.LinkedReference {
+nonisolated extension LinkedReference {
     /// XLKR: keyword then reference, or a lone 4-byte reference.
     init(_ reader: inout BinaryReader) throws {
         let first = try reader.readFormID()

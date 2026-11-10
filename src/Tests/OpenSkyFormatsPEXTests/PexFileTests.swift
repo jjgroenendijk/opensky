@@ -10,7 +10,7 @@ import Testing
 struct PexFileTests {
     @Test("decodes header, strings, debug info, flags, objects and functions")
     func decodesContainer() throws {
-        let file = try PexFile(data: PexFixture.file())
+        let file = try PexDecoder.file(from: PexFixture.file())
 
         #expect(file.header.majorVersion == 3)
         #expect(file.header.minorVersion == 2)
@@ -76,7 +76,7 @@ struct PexFileTests {
 
     @Test("decodes every Skyrim instruction encoding")
     func decodesEveryInstruction() throws {
-        let file = try PexFile(data: PexFixture.file())
+        let file = try PexDecoder.file(from: PexFixture.file())
         let instructions = try #require(
             file.objects.first?.states.first?.functions.first?.function.instructions
         )
@@ -91,7 +91,7 @@ struct PexFileTests {
 
     @Test("preserves an unknown opcode for inventory")
     func preservesUnknownOpcode() throws {
-        let file = try PexFile(data: PexFixture.file(
+        let file = try PexDecoder.file(from: PexFixture.file(
             instructions: [.init(opcode: 0xFE, operands: [])]
         ))
         let instruction = try #require(
@@ -107,7 +107,7 @@ struct PexFileTests {
             index: .max,
             count: PexFixture.strings.count
         )) {
-            try PexFile(data: PexFixture.file(objectNameIndex: .max))
+            try PexDecoder.file(from: PexFixture.file(objectNameIndex: .max))
         }
     }
 
@@ -116,7 +116,7 @@ struct PexFileTests {
         let full = PexFixture.file()
         for count in [0, 1, 15, full.count - 1] {
             #expect(throws: PexError.self) {
-                try PexFile(data: Data(full.prefix(count)))
+                try PexDecoder.file(from: Data(full.prefix(count)))
             }
         }
     }
@@ -124,16 +124,16 @@ struct PexFileTests {
     @Test("rejects wrong magic, game and newer format revisions")
     func rejectsUnsupportedHeaders() {
         #expect(throws: PexError.invalidMagic(0x1234_5678)) {
-            try PexFile(data: PexFixture.file(magic: 0x1234_5678))
+            try PexDecoder.file(from: PexFixture.file(magic: 0x1234_5678))
         }
         #expect(throws: PexError.unsupportedGameID(2)) {
-            try PexFile(data: PexFixture.file(gameID: 2))
+            try PexDecoder.file(from: PexFixture.file(gameID: 2))
         }
         #expect(throws: PexError.unsupportedVersion(major: 3, minor: 3)) {
-            try PexFile(data: PexFixture.file(minorVersion: 3))
+            try PexDecoder.file(from: PexFixture.file(minorVersion: 3))
         }
         #expect(throws: PexError.unsupportedVersion(major: 4, minor: 0)) {
-            try PexFile(data: PexFixture.file(majorVersion: 4, minorVersion: 0))
+            try PexDecoder.file(from: PexFixture.file(majorVersion: 4, minorVersion: 0))
         }
     }
 
@@ -149,7 +149,7 @@ struct PexFileTests {
             ]
         )
         #expect(throws: PexError.invalidVarargCount(.integer(-1))) {
-            try PexFile(data: PexFixture.file(instructions: [call]))
+            try PexDecoder.file(from: PexFixture.file(instructions: [call]))
         }
     }
 }

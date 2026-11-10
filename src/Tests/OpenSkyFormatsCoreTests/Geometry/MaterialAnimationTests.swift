@@ -24,7 +24,7 @@ struct MaterialAnimationTests {
             target: .uOffset, clock: clock(.loop), times: [0, 2], values: [.zero, SIMD3(1, 0, 0)]
         )
         let animation = MaterialAnimation(tracks: [track])
-        let moved = animation.apply(to: .fallback, at: 3)
+        let moved = Material.fallback.animated(by: animation, at: 3)
         #expect(moved.uvOffset == SIMD2(0.5, 0))
         #expect(moved.uvScale == Material.fallback.uvScale)
     }
@@ -52,7 +52,7 @@ struct MaterialAnimationTests {
                 values: [SIMD3(0.5, 0, 0)]
             )
         ]
-        let moved = MaterialAnimation(tracks: tracks).apply(to: base, at: 1)
+        let moved = base.animated(by: MaterialAnimation(tracks: tracks), at: 1)
         #expect(moved.effect?.baseColor == SIMD4(1, 0, 0, 0.25))
         #expect(moved.effect?.falloff == SIMD4(1, 0, 1, 0.5))
         #expect(moved.alpha == 1, "an effect keeps its alpha in the base colour")

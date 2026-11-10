@@ -116,7 +116,7 @@ nonisolated public struct ESSPapyrus: Equatable, Sendable {
         _ = try reader.uint32("papyrus next active id")
         activeScripts = try Self.readActiveScripts(&reader)
         try readData(&reader, context)
-        stackStatus = ESSPapyrusStacks.read(&reader, context, into: &self)
+        stackStatus = Self.readStacks(&reader, context, into: &self)
     }
 
     func instances(on form: ESSRefID) -> [ESSPapyrusInstance] {

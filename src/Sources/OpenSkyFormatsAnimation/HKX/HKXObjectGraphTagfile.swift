@@ -23,7 +23,7 @@ nonisolated extension HKXObjectGraph {
             let second = unsafe raw.loadUnaligned(fromByteOffset: 4, as: UInt32.self).littleEndian
             return (first, second)
         }
-        return words.0 == HKTagfile.magic0 && words.1 == HKTagfile.magic1
+        return words.0 == HKTReader.magic0 && words.1 == HKTReader.magic1
     }
 
     func tagObject(at target: HKXPointerTarget) -> HKTFields? {

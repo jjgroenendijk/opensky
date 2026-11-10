@@ -9,7 +9,7 @@ enum NIFControllerReport {
         printShaderControllers(file: file)
         let animation: NIFNodeAnimation
         do {
-            animation = try NIFNodeAnimation(file: file)
+            animation = try NIFNodeAnimationDecoder.animation(of: file)
         } catch {
             printError("[WARNING] node controllers failed: \(String(describing: error))")
             return

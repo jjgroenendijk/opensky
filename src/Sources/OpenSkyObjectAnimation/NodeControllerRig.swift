@@ -27,7 +27,7 @@ nonisolated public struct NodeControllerRig: Sendable {
     /// A `lagOnly` rig also poses the nodes the mesh's sequences move.
     public init?(file: NIFFile, lagOnly: Bool = false) throws {
         try self.init(
-            animation: NIFNodeAnimation(file: file), lagOnly: lagOnly,
+            animation: NIFNodeAnimationDecoder.animation(of: file), lagOnly: lagOnly,
             sequences: lagOnly ? file.sequences() : []
         )
     }

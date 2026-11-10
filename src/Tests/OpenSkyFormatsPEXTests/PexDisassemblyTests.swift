@@ -10,7 +10,7 @@ import Testing
 struct PexDisassemblyTests {
     @Test("prints the object, its members, and each instruction with its operands")
     func printsTheWholeScript() throws {
-        let lines = try PexDisassembly.lines(of: PexFile(data: PexFixture.file()))
+        let lines = try PexDisassembly.lines(of: PexDecoder.file(from: PexFixture.file()))
         let strings = PexFixture.strings.count
         #expect(lines.first == "script FixtureObject.psc (PEX 3.2, \(strings) strings)")
         #expect(lines.contains("object FixtureObject extends ParentObject"))
@@ -29,7 +29,7 @@ struct PexDisassemblyTests {
 
     @Test("keeps only the named function, without case")
     func filtersOneFunction() throws {
-        let file = try PexFile(data: PexFixture.file())
+        let file = try PexDecoder.file(from: PexFixture.file())
         let lines = PexDisassembly.lines(of: file, function: "FUNCTION")
         #expect(lines.contains("  state \"state\""))
         #expect(!lines.contains { $0.hasPrefix("  property ") })

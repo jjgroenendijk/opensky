@@ -1,5 +1,4 @@
-// Typed hkArray element readers for HKXObjectCursor, split out of
-// HKXObjectCursor.swift to stay under the file-size lint cap. Element strides
+// Typed hkArray element readers for HKXObjectCursor. Element strides
 // are the Havok class sizes: 8 for a pointer or hkStringPtr, 4 for i32/u32/
 // float, 2 for i16, 1 for a byte. See HKXObjectGraph.swift for the layout
 // rules and the miss-logging contract.

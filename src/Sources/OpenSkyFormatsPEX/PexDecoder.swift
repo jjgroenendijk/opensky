@@ -12,6 +12,12 @@ nonisolated public struct PexDecoder: Sendable {
         reader = PexReader(data)
     }
 
+    /// The whole file in `data`.
+    public static func file(from data: Data) throws -> PexFile {
+        var decoder = PexDecoder(data: data)
+        return try decoder.decode()
+    }
+
     public mutating func decode() throws -> PexFile {
         let header = try decodeHeader()
         strings = try decodeStrings()

@@ -29,7 +29,7 @@ nonisolated public struct SkyMeshGeometry: Sendable {
             guard let animated, let animation = animated.animation else {
                 return (effect, uvTransform)
             }
-            let moved = animation.apply(to: animated, at: seconds)
+            let moved = animated.animated(by: animation, at: seconds)
             return (moved.effect ?? effect, SIMD4(lowHalf: moved.uvOffset, highHalf: moved.uvScale))
         }
     }

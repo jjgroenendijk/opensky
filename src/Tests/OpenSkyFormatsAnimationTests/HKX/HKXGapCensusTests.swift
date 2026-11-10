@@ -53,9 +53,9 @@ struct HKXGapCensusTests {
     }
 
     @Test func annotationPayloadsFoldIntoTheirEvent() {
-        #expect(HKXGapCensus.event("SoundPlay.NPCFootstep") == "SoundPlay.*")
-        #expect(HKXGapCensus.event("PIE@SGVF|x") == "PIE.*")
-        #expect(HKXGapCensus.event("HitFrame") == "HitFrame")
+        #expect(HKXAnnotationHearing.event("SoundPlay.NPCFootstep") == "SoundPlay.*")
+        #expect(HKXAnnotationHearing.event("PIE@SGVF|x") == "PIE.*")
+        #expect(HKXAnnotationHearing.event("HitFrame") == "HitFrame")
     }
 
     @Test func expressionAssignmentsNameTheirVariable() {

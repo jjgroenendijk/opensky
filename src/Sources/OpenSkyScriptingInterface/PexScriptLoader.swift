@@ -39,7 +39,7 @@ nonisolated public final class PexScriptLoader {
         guard let path = canonicalScriptPath(name) else {
             throw VFSError.invalidPath(name)
         }
-        return try PexFile(data: load(path))
+        return try PexDecoder.file(from: load(path))
     }
 
     /// Bare `NAME`, `scripts\NAME`, `data\scripts\NAME.pex` and

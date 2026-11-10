@@ -98,7 +98,8 @@ nonisolated struct LoadedActorGraphProject: Sendable {
         let nifPath = String(asset.rigPath.dropLast(4)) + ".nif"
         guard
             let data = attempt({ try files.contents(forPath: nifPath) }),
-            let bones = attempt({ try NIFNodeAnimation(file: NIFFile(data: data)) })?.boneLOD?.bones
+            let bones = attempt({ try NIFNodeAnimationDecoder.animation(of: NIFFile(data: data)) })?
+                .boneLOD?.bones
         else { return nil }
         return ActorBoneLOD(bones: bones, rig: asset.skeleton)
     }

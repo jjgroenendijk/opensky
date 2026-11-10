@@ -75,7 +75,7 @@ nonisolated extension NIFPath {
         else { return 0 }
         let distance = simd_distance(from, to)
         guard distance > 1e-6 else { return 0 }
-        return NIFPathOrientation.headingChange(from: behind, to: ahead) / distance
+        return Self.headingChange(from: behind, to: ahead) / distance
     }
 
     /// The largest bend along the path, the scale a bank is measured against.
@@ -107,5 +107,12 @@ nonisolated extension NIFPath {
         else { return nil }
         let direction = ahead - behind
         return simd_length_squared(direction) > 1e-12 ? simd_normalize(direction) : nil
+    }
+
+    /// Signed change of heading about +Z between two path steps, radians.
+    static func headingChange(from first: SIMD3<Float>, to second: SIMD3<Float>) -> Float {
+        let crossZ = first.x * second.y - first.y * second.x
+        let dot = first.x * second.x + first.y * second.y
+        return atan2(crossZ, dot)
     }
 }

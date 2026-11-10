@@ -16,8 +16,8 @@ struct NIFShaderAnimationTests {
         let material = try #require(file.model().materials.first)
         let animation = try #require(material.animation)
         #expect(animation.tracks.map(\.target) == [.uOffset])
-        #expect(animation.apply(to: material, at: 1).uvOffset.x == 0.5)
-        #expect(animation.apply(to: material, at: 3).uvOffset.x == 0.5, "the loop wraps at 2 s")
+        #expect(material.animated(by: animation, at: 1).uvOffset.x == 0.5)
+        #expect(material.animated(by: animation, at: 3).uvOffset.x == 0.5, "the loop wraps at 2 s")
 
         let entry = try #require(NIFShaderAnimation.controllers(in: file).first)
         #expect(entry.variableName == "U Offset")

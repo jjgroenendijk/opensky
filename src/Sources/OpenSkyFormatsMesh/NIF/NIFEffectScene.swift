@@ -74,7 +74,7 @@ nonisolated public struct NIFEffectScene: Sendable {
     static let maxDepth = 64
 
     public init(file: NIFFile) throws {
-        var builder = NIFEffectSceneBuilder(file: file)
+        var builder = Builder(file: file)
         for root in file.roots {
             try builder.walk(from: root)
         }

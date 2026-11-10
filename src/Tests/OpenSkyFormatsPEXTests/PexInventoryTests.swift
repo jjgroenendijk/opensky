@@ -18,7 +18,7 @@ struct PexInventoryTests {
                 .integer(0)
             ])
         ]
-        let file = try PexFile(data: PexFixture.file(instructions: instructions))
+        let file = try PexDecoder.file(from: PexFixture.file(instructions: instructions))
         var inventory = PexInventory()
         inventory.record(file)
 
@@ -42,7 +42,7 @@ struct PexInventoryTests {
 
     @Test("caps names but preserves totals")
     func boundedNames() throws {
-        let file = try PexFile(data: PexFixture.file())
+        let file = try PexDecoder.file(from: PexFixture.file())
         var inventory = PexInventory(nameLimit: 1)
         inventory.record(file)
         inventory.noteDecodeFailure(path: "scripts\\one.pex")
@@ -59,14 +59,14 @@ struct PexInventoryTests {
     @Test("lists the scripts a static call names once each")
     func listsStaticCallScripts() throws {
         let staticCall = PexFixture.everyInstruction.filter { $0.opcode == 0x19 }
-        let file = try PexFile(data: PexFixture.file(instructions: staticCall + staticCall))
+        let file = try PexDecoder.file(from: PexFixture.file(instructions: staticCall + staticCall))
         let object = try #require(file.objects.first)
         #expect(object.staticCallScripts == ["StaticClass"])
     }
 
     @Test("counts preserved unknown opcodes")
     func countsUnknownOpcodes() throws {
-        let file = try PexFile(data: PexFixture.file(
+        let file = try PexDecoder.file(from: PexFixture.file(
             instructions: [
                 .init(opcode: 0xFE, operands: []),
                 .init(opcode: 0xFE, operands: [])

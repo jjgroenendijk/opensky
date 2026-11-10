@@ -175,7 +175,7 @@ nonisolated extension PlacedReferenceDetails {
         _ reader: inout BinaryReader
     ) throws -> Bool {
         switch field.type {
-        case "XLKR": PlacedReference.appendLinkedReference(field.data, to: &linkedReferences)
+        case "XLKR": LinkedReference.append(field.data, to: &linkedReferences)
         case "XRNK": ownerRank = try reader.readInt32()
         case "XCNT": count = try reader.readInt32()
         case "XRDS": radius = try reader.readFloat32()

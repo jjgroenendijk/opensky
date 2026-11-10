@@ -4,8 +4,8 @@
 
 import Foundation
 
-nonisolated enum ESSPapyrusStacks {
-    static func read(
+nonisolated extension ESSPapyrus {
+    static func readStacks(
         _ reader: inout ESSReader, _ context: ESSPapyrusContext, into papyrus: inout ESSPapyrus
     ) -> ESSDecodeStatus {
         do throws(ESSError) {

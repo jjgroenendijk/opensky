@@ -143,7 +143,7 @@ nonisolated public struct PlacedReferenceDetails: Equatable, Sendable {
     /// XATR, XHOR, XMRC, and on ACHR XOWN and XEMI.
     public var links: [String: FormID] = [:]
     /// ACHR XLKR, XRNK, XCNT, and XRDS, which REFR reads itself.
-    public var linkedReferences: [PlacedReference.LinkedReference] = []
+    public var linkedReferences: [LinkedReference] = []
     var ownerRank: Int32?
     var count: Int32?
     var radius: Float?
