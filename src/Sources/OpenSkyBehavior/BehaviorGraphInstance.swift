@@ -119,7 +119,7 @@ nonisolated public final class BehaviorGraphInstance {
 
     /// Where `hkbBehaviorReferenceGenerator` names resolve. Nil leaves every
     /// reference unresolved and tallied.
-    public var references: (any BehaviorReferenceSource)?
+    public var references: (any ReferenceSource)?
     /// Child instances by reference key, built on first reach. The optional is
     /// stored so a name that will not resolve is looked up once.
     var referencedGraphs: [String: BehaviorGraphInstance?] = [:]
@@ -468,15 +468,6 @@ nonisolated public final class BehaviorGraphInstance {
         return values
     }
 
-    /// Binding member paths as the vanilla files spell them carry no `m_`
-    /// prefix — the probe over the install reports `blendParameter`,
-    /// `selectedGeneratorIndex`, `startStateId` — while the decoders name their
-    /// fields after the Havok members, which do. Both spellings normalize to
-    /// the unprefixed one so a lookup written either way resolves.
-    static func normalizedMemberPath(_ path: String) -> String {
-        path.hasPrefix("m_") ? String(path.dropFirst(2)) : path
-    }
-
     /// The current value of one binding, or nil with a tally entry when it
     /// cannot be applied.
     private func resolve(_ binding: HKBVariableBinding) -> BehaviorVariableValue? {
@@ -532,7 +523,7 @@ nonisolated extension [String: BehaviorVariableValue] {
     }
 
     private func value(_ path: String) -> BehaviorVariableValue? {
-        self[BehaviorGraphInstance.normalizedMemberPath(path)]
+        self[BehaviorCompiledBindings.normalizedMemberPath(path)]
     }
 }
 

@@ -139,7 +139,7 @@ nonisolated public struct MagicConditionResolution: Sendable {
         guard let effects else { return nil }
         return state.activeEffects.union(state.potentialEffects).contains { effect in
             guard let record = effects.effect(key: effect) else { return false }
-            return record.keywordKeys(in: effects).contains(keyword)
+            return effects.keywordKeys(of: record).contains(keyword)
         }
     }
 }

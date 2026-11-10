@@ -16,14 +16,6 @@ nonisolated public struct ResolvedMagicEffect: Equatable, Sendable {
         ReferenceKey(resolved: id)
     }
 
-    /// This effect's KWDA entries as runtime identities. A keyword the load
-    /// order does not carry is dropped, so the answer is never a superset.
-    public func keywordKeys(in store: MagicEffectStore) -> Set<ReferenceKey> {
-        Set(effect.keywords.keywords.compactMap { keyword in
-            store.resolvedID(keyword, fromPlugin: sourcePlugin).map(ReferenceKey.init(resolved:))
-        })
-    }
-
     public var displayName: String {
         switch effect.name {
         case let .inline(value): value
@@ -34,6 +26,14 @@ nonisolated public struct ResolvedMagicEffect: Equatable, Sendable {
 }
 
 nonisolated public struct MagicEffectStore: Sendable {
+    /// The effect's KWDA entries as runtime identities. A keyword the load
+    /// order does not carry is dropped, so the answer is never a superset.
+    public func keywordKeys(of effect: ResolvedMagicEffect) -> Set<ReferenceKey> {
+        Set(effect.effect.keywords.keywords.compactMap { keyword in
+            resolvedID(keyword, fromPlugin: effect.sourcePlugin).map(ReferenceKey.init(resolved:))
+        })
+    }
+
     private let index: RecordIndex
     private let table: ResolvedRecordTable<ResolvedMagicEffect>
     /// The same records under the identity the active-effect component keys them by.

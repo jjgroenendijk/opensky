@@ -12,8 +12,20 @@ nonisolated public enum AudioFileAsset: Sendable {
     case xwm(XWMFile)
 
     public init(data: Data) throws {
-        self = WorldAudioEngine
-            .isWAV(data) ? try .wav(WAVFile(data: data)) : try .xwm(XWMFile(data: data))
+        self = Self.isWAV(data) ? try .wav(WAVFile(data: data)) : try .xwm(XWMFile(data: data))
+    }
+
+    /// True when `data` is a RIFF/WAVE form rather than a RIFF/XWMA one. The
+    /// two share the RIFF header and differ in the form type at byte 8, so a
+    /// twelve-byte peek decides which player path a file takes without parsing
+    /// either container.
+    static func isWAV(_ data: Data) -> Bool {
+        guard data.count >= 12 else { return false }
+        let start = data.startIndex
+        let magic = data[start ..< start + 4]
+        let form = data[(start + 8) ..< (start + 12)]
+        return magic.elementsEqual(Array("RIFF".utf8))
+            && form.elementsEqual(Array("WAVE".utf8))
     }
 
     public var channelCount: Int {

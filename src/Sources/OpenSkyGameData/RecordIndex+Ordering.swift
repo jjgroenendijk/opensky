@@ -6,18 +6,14 @@
 // write into such a map is the definition the load order prefers.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 
-nonisolated public enum RecordStoreOrdering: Sendable {
-    public static func precedes(
-        _ left: ResolvedFormID,
-        _ right: ResolvedFormID,
-        index: RecordIndex
-    ) -> Bool {
-        let leftSource = index.records[left]?.sourcePlugin ?? left.plugin
-        let rightSource = index.records[right]?.sourcePlugin ?? right.plugin
-        let leftPriority = index.priority(ofPlugin: leftSource)
-        let rightPriority = index.priority(ofPlugin: rightSource)
+nonisolated extension RecordIndex {
+    func precedes(_ left: ResolvedFormID, _ right: ResolvedFormID) -> Bool {
+        let leftSource = records[left]?.sourcePlugin ?? left.plugin
+        let rightSource = records[right]?.sourcePlugin ?? right.plugin
+        let leftPriority = priority(ofPlugin: leftSource)
+        let rightPriority = priority(ofPlugin: rightSource)
         if leftPriority != rightPriority {
             return leftPriority < rightPriority
         }

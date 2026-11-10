@@ -99,12 +99,7 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
         in fileSystem: any GameFileSource,
         folder: String = animationPrefix
     ) -> [String] {
-        clipPaths(fileSystem.archiveEntries().map(\.path), in: folder)
-    }
-
-    /// The clips under `folder`.
-    public static func clipPaths(_ paths: [String], in folder: String) -> [String] {
-        paths.filter { $0.hasPrefix(folder) && $0.hasSuffix(".hkx") }
+        BehaviorProjectAsset.clipPaths(fileSystem.archiveEntries().map(\.path), in: folder)
     }
 
     /// The `animations` folder beside a graph's `behaviors` folder. Clips are keyed by file

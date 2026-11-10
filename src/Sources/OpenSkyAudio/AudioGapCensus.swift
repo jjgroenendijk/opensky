@@ -38,7 +38,7 @@ nonisolated public struct AudioGapCensus: Sendable {
 
     private static func variant(of data: Data, container: String) -> String {
         do {
-            if WorldAudioEngine.isWAV(data) {
+            if AudioFileAsset.isWAV(data) {
                 let format = try WAVFile(data: data).format
                 return "\(container) wav format \(hex(format.formatTag)) "
                     + "\(format.bitsPerSample)-bit"

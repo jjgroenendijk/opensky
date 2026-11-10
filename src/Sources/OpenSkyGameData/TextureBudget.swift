@@ -5,9 +5,12 @@
 import Foundation
 
 nonisolated public enum TextureBudget {
+    /// The fixed choices after Automatic, in MiB.
+    static let options = [128, 256, 512, 1024, 2048]
+
     /// The menu: Automatic, then the fixed choices kept for testing.
     public static var choiceTitles: [String] {
-        ["Automatic"] + PlayerSettingsCatalog.textureBudgetOptions.map { "\($0) MiB" }
+        ["Automatic"] + options.map { "\($0) MiB" }
     }
 
     public static let smallestBytes = 256 << 20
@@ -24,7 +27,7 @@ nonisolated public enum TextureBudget {
 
     /// The bytes for the stored choice; index 0 is Automatic.
     public static func bytes(choice: Int, workingSetBytes: UInt64, allocatedBytes: UInt64) -> Int {
-        let options = PlayerSettingsCatalog.textureBudgetOptions
+        let options = options
         guard choice > 0 else {
             return automaticBytes(workingSetBytes: workingSetBytes, allocatedBytes: allocatedBytes)
         }

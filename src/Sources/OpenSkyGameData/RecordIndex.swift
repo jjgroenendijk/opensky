@@ -145,7 +145,7 @@ nonisolated public struct RecordIndex: Sendable {
     public func orderedRecordIDs(of types: Set<FourCC>) -> [ResolvedFormID] {
         records.keys
             .filter { records[$0].map { types.contains($0.record.type) } ?? false }
-            .sorted { RecordStoreOrdering.precedes($0, $1, index: self) }
+            .sorted(by: precedes)
     }
 
     /// The master list of a loaded plugin, or nil for a plugin not in the index.

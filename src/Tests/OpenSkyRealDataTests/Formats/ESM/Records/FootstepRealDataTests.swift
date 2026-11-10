@@ -58,7 +58,7 @@ struct FootstepRealDataTests {
                     let data = try vfs.contents(forPath: path)
                     // The chain ends at RIFF/WAVE, not xWMA, so a PCM reader
                     // is needed.
-                    #expect(WorldAudioEngine.isWAV(data), "\(path) is not RIFF/WAVE")
+                    #expect(AudioFileAsset.isWAV(data), "\(path) is not RIFF/WAVE")
                     _ = try WorldAudioEngine.makeBuffer(wav: data, downmixToMono: true)
                 }
             }

@@ -23,9 +23,18 @@ nonisolated public struct BehaviorCompiledBindings {
         bindings = set.bindings
         paths = set.bindings.map { binding in
             guard let path = binding.memberPath, !path.isEmpty else { return nil }
-            return BehaviorGraphInstance.normalizedMemberPath(path)
+            return Self.normalizedMemberPath(path)
         }
         enableIndex = set.bindings.indices.contains(set.indexOfBindingToEnable)
             ? set.indexOfBindingToEnable : nil
+    }
+
+    /// Binding member paths as the vanilla files spell them carry no `m_`
+    /// prefix — the probe over the install reports `blendParameter`,
+    /// `selectedGeneratorIndex`, `startStateId` — while the decoders name their
+    /// fields after the Havok members, which do. Both spellings normalize to
+    /// the unprefixed one so a lookup written either way resolves.
+    static func normalizedMemberPath(_ path: String) -> String {
+        path.hasPrefix("m_") ? String(path.dropFirst(2)) : path
     }
 }

@@ -19,7 +19,7 @@ nonisolated public enum ModelCacheCodec {
             ranges.append(ReadyMeshRanges(vertices: vertices, indices: indices))
         }
         let whole = encodeModel(model)
-        let layout = ReadyModelLayoutCodec.encode(
+        let layout = ReadyLayout.encode(
             model, ranges: ranges, modelRange: blocks.count ..< blocks.count + whole.count
         )
         var out = BinaryWriter()
@@ -44,7 +44,7 @@ nonisolated public enum ModelCacheCodec {
             throw CachePayloadError.truncated
         }
         let block = head[(head.startIndex + 8) ..< (head.startIndex + count)]
-        return try ReadyModelLayoutCodec.decode(block, dataStart: count + padding(after: count))
+        return try ReadyLayout.decode(block, dataStart: count + padding(after: count))
     }
 
     /// Payload bytes from its start to the end of the layout block; nil before 8 bytes.

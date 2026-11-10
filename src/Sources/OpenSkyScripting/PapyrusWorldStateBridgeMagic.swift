@@ -171,7 +171,7 @@ extension PapyrusWorldStateBridge {
         guard let store = magicEffectStore else { return [] }
         return Set(effects).reduce(into: []) { keywords, effect in
             guard let record = store.effect(key: effect) else { return }
-            keywords.formUnion(record.keywordKeys(in: store))
+            keywords.formUnion(store.keywordKeys(of: record))
         }
     }
 }

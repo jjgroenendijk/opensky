@@ -8,8 +8,8 @@ import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 import Testing
 
-/// A `BehaviorReferenceSource` backed by instances the test already built.
-private struct BehaviorReferenceTable: BehaviorReferenceSource {
+/// A `BehaviorGraphInstance.ReferenceSource` backed by instances the test already built.
+private struct BehaviorReferenceTable: BehaviorGraphInstance.ReferenceSource {
     let graphs: [String: BehaviorGraphInstance]
 
     func behavior(
@@ -80,7 +80,7 @@ struct BehaviorReferenceTests {
 
     /// A graph whose whole content is one reference to `child.hkx`.
     private static func parent(
-        references: some BehaviorReferenceSource
+        references: some BehaviorGraphInstance.ReferenceSource
     ) -> BehaviorGraphInstance {
         var table = BehaviorObjectTable()
         let root = table.add(

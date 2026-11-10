@@ -56,7 +56,7 @@ nonisolated extension ResolvedSpell {
     }
 
     func hasEffectKeyword(_ keyword: ReferenceKey, in store: MagicEffectStore) -> Bool {
-        effects.contains { $0.effect?.keywordKeys(in: store).contains(keyword) == true }
+        effects.contains { $0.effect.map { store.keywordKeys(of: $0).contains(keyword) } == true }
     }
 }
 
@@ -148,7 +148,7 @@ nonisolated extension ConditionFunctions {
                 let store = call.context.magic.effects,
                 let keyword = call.parameter1.flatMap({ call.context.magic.key(of: $0.asFormID) })
             else { return .failure(.unavailableData(.alchemy)) }
-            return .success(Self.isTrue(effect.keywordKeys(in: store).contains(keyword)))
+            return .success(Self.isTrue(store.keywordKeys(of: effect).contains(keyword)))
         })
     }
 

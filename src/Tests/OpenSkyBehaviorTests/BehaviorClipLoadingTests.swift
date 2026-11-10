@@ -159,8 +159,8 @@ struct BehaviorClipLoadingTests {
             "meshes\\actors\\character\\animations\\mt_idle.hkx",
             "meshes\\actors\\character\\_1stperson\\animations\\mt_idle.hkx"
         ]
-        #expect(InstallBehaviorClipSource.clipPaths(archive, in: first) == [archive[1]])
-        #expect(InstallBehaviorClipSource.clipPaths(archive, in: third) == [archive[0]])
+        #expect(BehaviorProjectAsset.clipPaths(archive, in: first) == [archive[1]])
+        #expect(BehaviorProjectAsset.clipPaths(archive, in: third) == [archive[0]])
     }
 }
 

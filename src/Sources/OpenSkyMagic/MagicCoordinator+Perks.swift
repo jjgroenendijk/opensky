@@ -42,7 +42,7 @@ extension MagicCoordinator {
             return entries
         }
         let keywords = entries.flatMap { entry in
-            store.resolve(entry.effect, fromPlugin: pluginName)?.keywordKeys(in: store) ?? []
+            store.resolve(entry.effect, fromPlugin: pluginName).map(store.keywordKeys(of:)) ?? []
         }
         var seams = ConditionContext()
         seams.spellEvaluation = SpellEvaluationResolution(spell: nil, potionKeywords: Set(keywords))
