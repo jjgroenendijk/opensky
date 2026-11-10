@@ -13,7 +13,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            HelpMessageState.self, tag: OpenSkySaveFormat.ChunkTag.helpMessages, entries, &writer
+            (HelpMessageState.self, OpenSkySaveFormat.ChunkTag.helpMessages), entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.records.count))
             for (event, record) in state.records.sorted(by: { $0.key < $1.key }) {

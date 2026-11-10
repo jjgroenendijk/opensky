@@ -34,8 +34,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            SceneRuntimeState.self,
-            tag: OpenSkySaveFormat.ChunkTag.scenes,
+            (SceneRuntimeState.self, OpenSkySaveFormat.ChunkTag.scenes),
             entries,
             &writer
         ) { state, payload in
@@ -62,7 +61,7 @@ nonisolated extension OpenSkySaveEncoder {
     ) {
         let paused = entries.filter { $0.delta.component(SceneRuntimeState.self)?.pausedAt != nil }
         writeStory(
-            SceneRuntimeState.self, tag: OpenSkySaveFormat.ChunkTag.scenePauses,
+            (SceneRuntimeState.self, OpenSkySaveFormat.ChunkTag.scenePauses),
             paused, &writer
         ) { state, payload in
             payload.writeUInt64((state.pausedAt ?? 0).bitPattern)
@@ -75,7 +74,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            StoryManagerQuestState.self, tag: OpenSkySaveFormat.ChunkTag.storyManagerQuests,
+            (StoryManagerQuestState.self, OpenSkySaveFormat.ChunkTag.storyManagerQuests),
             entries, &writer
         ) { state, payload in
             payload.writeUInt64(state.lastStartSeconds.bitPattern)
@@ -89,7 +88,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            DialogueBranchState.self, tag: OpenSkySaveFormat.ChunkTag.dialogueBranches,
+            (DialogueBranchState.self, OpenSkySaveFormat.ChunkTag.dialogueBranches),
             entries, &writer
         ) { state, payload in
             payload.writeUInt32(state.exclusiveBranch.rawValue)
@@ -97,12 +96,12 @@ nonisolated extension OpenSkySaveEncoder {
     }
 
     static func writeStory<State: WorldStateComponent>(
-        _: State.Type,
-        tag: String,
+        _ chunk: (type: State.Type, tag: String),
         _ entries: [WorldStateSnapshotEntry],
         _ writer: inout BinaryWriter,
         body: (State, inout BinaryWriter) -> Void
     ) {
+        let tag = chunk.tag
         let saved = entries
             .compactMap { entry in entry.delta.component(State.self).map { (entry, $0) } }
         guard !saved.isEmpty else { return }

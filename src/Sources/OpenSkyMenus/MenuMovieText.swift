@@ -12,9 +12,10 @@ nonisolated enum MenuMovieText {
 
     /// Calls `meter.<method>(percent)` on the meter object the clip at `path` holds.
     static func callMeter(
-        _ method: String, meter: String, ofPath path: String, percent: Double,
+        _ method: String, meter place: (name: String, path: String), percent: Double,
         runtime: SWFMovieRuntime
     ) {
+        let (meter, path) = place
         guard
             let owner = runtime.node(atPath: path, from: runtime.root),
             let object = owner.object.lookup(meter)?.property.value.objectValue,

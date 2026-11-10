@@ -17,7 +17,7 @@ nonisolated extension MessageBoxPresentation {
     }
 
     private func label(_ string: String, y: Float, size: Float, color: SIMD4<Float>) -> UINode {
-        MenuTextPanel.label(string, y: y, size: size, color: color, panelWidth: Self.width)
+        MenuTextPanel.label(string, y: y, style: (size, color), panelWidth: Self.width)
     }
 
     public var scene: UIScene {

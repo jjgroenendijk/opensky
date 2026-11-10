@@ -48,7 +48,7 @@ extension PapyrusWorldStateBridge {
             let scripts = sessionNatives.itemScripts?(base), !scripts.isEmpty
         else { return 0 }
         return world.queueItemEvent(
-            name, base: base, scripts: scripts, arguments: arguments,
+            (name, arguments), base: base, scripts: scripts,
             formIDResolver: formIDResolver
         )
     }
@@ -109,7 +109,7 @@ extension PapyrusWorldStateBridge {
                 $0.holder != change.holder && $0.countDeltas[item] == -delta
             }
             let name = added ? PapyrusEngineEvents.onItemAdded : PapyrusEngineEvents.onItemRemoved
-            queued += queueInventoryEvent(name, on: change.holder, item: item, in: world, [
+            queued += queueInventoryEvent(name, on: (change.holder, item), in: world, [
                 formValue(item, in: world), .integer(abs(delta)), .none,
                 other.map { .object(world.objectHandle(for: $0.holder)) } ?? .none
             ])
@@ -127,7 +127,7 @@ extension PapyrusWorldStateBridge {
         ] {
             for item in items.sorted(by: { $0.rawValue < $1.rawValue }) {
                 queued += queueInventoryEvent(
-                    name, on: change.holder, item: nil, in: world, [
+                    name, on: (change.holder, nil), in: world, [
                         formValue(item, in: world),
                         .none
                     ]
@@ -140,9 +140,11 @@ extension PapyrusWorldStateBridge {
     /// Queues on each instance on `holder` that handles `name`. An item event also needs
     /// the item to pass the instance's filters.
     private func queueInventoryEvent(
-        _ name: String, on holder: ReferenceKey, item: FormID?, in world: PapyrusWorldRuntime,
+        _ name: String, on target: (holder: ReferenceKey, item: FormID?),
+        in world: PapyrusWorldRuntime,
         _ arguments: [PapyrusValue]
     ) -> Int {
+        let (holder, item) = target
         let itemKey = item.flatMap(itemKey)
         var queued = 0
         for key in world.instanceKeys(on: holder) where world.definesFunction(name, key: key) {

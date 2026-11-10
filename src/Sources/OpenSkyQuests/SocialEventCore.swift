@@ -121,7 +121,7 @@ nonisolated public enum SocialEventCore {
         let radius = frame.isInterior ? settings.interiorRadius : settings.radius
         var events = bodies(actors, radius: radius, state: &state, canSee: canSee)
         guard !frame.playerInConversation else { return events }
-        events += hellos(actors, moving: moving, frame: frame, settings: settings, state: &state)
+        events += hellos(actors, moving: moving, in: (frame, settings), state: &state)
         events += conversations(actors, frame: frame, settings: settings, state: &state)
         return events
     }
@@ -156,10 +156,10 @@ nonisolated public enum SocialEventCore {
     static func hellos(
         _ actors: [SocialActor],
         moving: Set<ReferenceKey>,
-        frame: SocialFrame,
-        settings: SocialSettings,
+        in context: (frame: SocialFrame, settings: SocialSettings),
         state: inout SocialState
     ) -> [StoryEventData] {
+        let (frame, settings) = context
         var events: [StoryEventData] = []
         for walker in actors
             where walker.isFree && walker.allowsRandomConversation && moving.contains(walker.key)

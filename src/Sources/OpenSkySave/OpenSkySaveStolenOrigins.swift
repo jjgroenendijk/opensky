@@ -15,7 +15,7 @@ nonisolated extension OpenSkySaveEncoder {
         into writer: inout BinaryWriter
     ) {
         writeStory(
-            StolenOriginsState.self, tag: OpenSkySaveFormat.ChunkTag.stolenOrigins, entries, &writer
+            (StolenOriginsState.self, OpenSkySaveFormat.ChunkTag.stolenOrigins), entries, &writer
         ) { state, payload in
             payload.writeUInt32(UInt32(clamping: state.origins.count))
             for origin in state.origins {

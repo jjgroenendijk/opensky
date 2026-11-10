@@ -57,14 +57,15 @@ nonisolated public struct MenuTextPanel: Equatable, Sendable {
     }
 
     package func label(_ string: String, y: Float, size: Float, color: SIMD4<Float>) -> UINode {
-        Self.label(string, y: y, size: size, color: color, panelWidth: Self.width)
+        Self.label(string, y: y, style: (size, color), panelWidth: Self.width)
     }
 
     /// One centred line inside a panel `panelWidth` wide.
     package static func label(
-        _ string: String, y: Float, size: Float, color: SIMD4<Float>, panelWidth: Float
+        _ string: String, y: Float, style: (size: Float, color: SIMD4<Float>), panelWidth: Float
     ) -> UINode {
-        UINode(
+        let (size, color) = style
+        return UINode(
             anchor: .center,
             offset: UIPoint(x: 0, y: y),
             content: .label(UILabel(

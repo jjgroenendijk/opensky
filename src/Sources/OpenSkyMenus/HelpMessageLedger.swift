@@ -35,8 +35,9 @@ nonisolated public struct HelpMessageLedger: Equatable, Sendable {
     /// done or the message already reached its limit.
     @discardableResult
     public mutating func show(
-        event: String, text: String, duration: Double, interval: Double, maxTimes: Int
+        event: String, text: String, duration: Double, repeats: (interval: Double, maxTimes: Int)
     ) -> Bool {
+        let (interval, maxTimes) = repeats
         let key = Self.key(event)
         let record = records[key] ?? HelpMessageRecord()
         guard !record.isDone, !Self.reachedLimit(record, maxTimes) else { return false }

@@ -49,7 +49,7 @@ nonisolated public enum PerkSkyLayout {
     /// The stars of one tree, grown up from its anchor. `selected` is the box the
     /// tree page has on; nil on the ring.
     public static func stars(
-        _ perks: [SkillsMenuPerk], slot: Int, anchor: SIMD3<Float>, selected: UInt32?,
+        _ perks: [SkillsMenuPerk], at place: (slot: Int, anchor: SIMD3<Float>), selected: UInt32?,
         settings: PerkSkySettings
     ) -> [PerkSkyStar] {
         let parents = parentMap(perks)
@@ -69,7 +69,7 @@ nonisolated public enum PerkSkyLayout {
             return PerkSkyStar(
                 node: perk.node,
                 position: position(
-                    perk, centre: centre, slot: slot, anchor: anchor, settings: settings
+                    perk, centre: centre, at: place, settings: settings
                 ),
                 state: state
             )
@@ -99,9 +99,10 @@ nonisolated public enum PerkSkyLayout {
     /// the left and +Z toward the camera, so a higher column sits further left and
     /// `fStatsStarZIncrement` (-9) leans the tree back. `centre` is the column under the anchor.
     static func position(
-        _ perk: SkillsMenuPerk, centre: Float, slot: Int, anchor: SIMD3<Float>,
+        _ perk: SkillsMenuPerk, centre: Float, at place: (slot: Int, anchor: SIMD3<Float>),
         settings: PerkSkySettings
     ) -> SIMD3<Float> {
+        let (slot, anchor) = place
         let step = settings.starIncrement
         let local = SIMD3<Float>(
             (centre - perk.gridX) * step.x,

@@ -34,8 +34,7 @@ struct RecordTextDumpStoreTests {
         let dump = RecordTextDump.dump(
             record: record,
             localized: false,
-            keywordStore: KeywordStore(index: index),
-            formListStore: FormListStore(index: index),
+            stores: (KeywordStore(index: index), FormListStore(index: index)),
             sourcePlugin: "Base.esm"
         )
 

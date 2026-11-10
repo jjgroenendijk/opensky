@@ -134,7 +134,7 @@ extension SkillsMenuCoordinator {
         let clock = introSeconds > 0 ? Float(elapsed / introSeconds) : 1
         motion.introAlpha = min(1, max(0, sky.movieAlpha ?? clock))
         motion.update(
-            now: now, slot: model.skillPosition, slotCount: model.skills.count,
+            now: now, ring: (model.skillPosition, model.skills.count),
             inTree: model.isInTree, settings: settings
         )
         sky.motion = motion
@@ -207,7 +207,7 @@ extension SkillsMenuCoordinator {
             let isOpenTree = slot == model.skillPosition && model.isInTree
             let perks = isOpenTree ? model.perks : sky.trees[skill.index] ?? []
             let stars = PerkSkyLayout.stars(
-                perks, slot: slot, anchor: sky.anchors[slot],
+                perks, at: (slot, sky.anchors[slot]),
                 selected: isOpenTree ? model.selectedPerk?.node : nil, settings: frame.settings
             )
             if isOpenTree {
@@ -237,7 +237,7 @@ extension SkillsMenuCoordinator {
         let playback = sky.stars.playback(
             key, state: star.state.rawValue,
             transition: { PerkStarState(rawValue: $0)?.transition(to: star.state) },
-            now: now, duration: { mesh.sequence($0)?.duration }
+            at: (now, { mesh.sequence($0)?.duration })
         )
         guard let sequence = mesh.sequence(playback.sequence) else { return [] }
         playSounds(sequence, playback: playback, now: now)
@@ -257,7 +257,7 @@ extension SkillsMenuCoordinator {
         let playback = sky.lines.playback(
             key, state: line.state.rawValue,
             transition: { PerkLineState(rawValue: $0)?.transition(to: line.state) },
-            now: now, duration: { mesh.sequence($0)?.duration }
+            at: (now, { mesh.sequence($0)?.duration })
         )
         guard let sequence = mesh.sequence(playback.sequence), length > 0 else { return [] }
         let placement = Self.lineBasis(

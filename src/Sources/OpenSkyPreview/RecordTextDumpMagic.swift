@@ -44,13 +44,9 @@ nonisolated extension RecordTextDump {
         dump(
             record: record,
             localized: localized,
-            keywordContext: KeywordContext(
-                store: context.keywordStore,
-                sourcePlugin: context.sourcePlugin
-            ),
-            formListContext: FormListContext(
-                store: context.formListStore,
-                sourcePlugin: context.sourcePlugin
+            lists: (
+                KeywordContext(store: context.keywordStore, sourcePlugin: context.sourcePlugin),
+                FormListContext(store: context.formListStore, sourcePlugin: context.sourcePlugin)
             ),
             magicContext: MagicContext(
                 effects: context.magicEffectStore,
@@ -67,11 +63,11 @@ nonisolated extension RecordTextDump {
     public static func magicSummary(
         record: ESMRecord,
         localized: Bool,
-        keywordContext: KeywordContext?,
-        formListContext: FormListContext?,
+        lists: (keyword: KeywordContext?, formList: FormListContext?),
         magicContext: MagicContext?
     ) throws -> String? {
-        switch record.type {
+        let (keywordContext, formListContext) = (lists.keyword, lists.formList)
+        return switch record.type {
         case "MGEF": try magicEffectSummary(record, localized, keywordContext, magicContext)
         case "SPEL": try spellSummary(record, localized, magicContext)
         case "SCRL": try scrollSummary(record, localized, magicContext)

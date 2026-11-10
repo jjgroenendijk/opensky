@@ -161,14 +161,14 @@ extension ContainerMenuModel {
     /// owns both inventories. Both panes use the inventory builder, so both
     /// sort, name, and split gold the same way.
     public static func build(
-        container: InventoryHolder,
-        containerName: String,
+        container named: (holder: InventoryHolder, name: String),
         mode: Mode,
         pricing: BarterPricing,
         runtime: any InventoryAccess,
         categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder
     ) -> ContainerMenuModel {
-        ContainerMenuModel(
+        let (container, containerName) = named
+        return ContainerMenuModel(
             mode: mode,
             container: InventoryMenuModel.build(
                 holder: container, runtime: runtime, categories: categories

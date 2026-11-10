@@ -304,8 +304,7 @@ extension MessageCoordinator: PapyrusPresenting {
             event: request.event,
             text: built.text,
             duration: Double(request.duration),
-            interval: Double(request.interval),
-            maxTimes: request.maxTimes
+            repeats: (Double(request.interval), request.maxTimes)
         )
     }
 
