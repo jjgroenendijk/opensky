@@ -357,7 +357,7 @@ struct DDSUncompressedFileTests {
     }
 
     private func rgb24File(
-        width: UInt32, height: UInt32, flags: UInt32, size: UInt32, mipCount: UInt32 = 0,
+        width: UInt32, height: UInt32, flags: UInt32 = 0x100F, size: UInt32, mipCount: UInt32 = 0,
         redMask: UInt32 = 0x00FF_0000, blueMask: UInt32 = 0x0000_00FF, payload: Data
     ) -> Data {
         DDSFixture.file(

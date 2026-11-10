@@ -100,8 +100,7 @@ struct RagdollRealDataTests {
             report: Self.report(
                 definition: definition,
                 instance: instance,
-                settledStep: settledStep,
-                ordinarySleepStep: ordinarySleepStep,
+                steps: (settledStep, ordinarySleepStep),
                 worstSeparation: worstSeparation
             )
         )
@@ -202,10 +201,10 @@ struct RagdollRealDataTests {
     private static func report(
         definition: RagdollDefinition,
         instance: RagdollInstance,
-        settledStep: Int?,
-        ordinarySleepStep: Int?,
+        steps: (settledStep: Int?, ordinarySleepStep: Int?),
         worstSeparation: Float
     ) -> String {
+        let (settledStep, ordinarySleepStep) = (steps.settledStep, steps.ordinarySleepStep)
         var lines = ["# Vanilla humanoid ragdoll (issue #197, item 15.6)", ""]
         lines.append("bones: \(definition.boneCount)")
         lines.append("joints: \(definition.jointCount)")

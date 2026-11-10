@@ -120,8 +120,7 @@ struct NavmeshRealDataTests {
             var found: [TargetCell] = []
             collectExteriorCells(
                 in: identity.group,
-                world: identity.formID,
-                span: world.span,
+                area: (identity.formID, world.span),
                 localized: localized,
                 into: &found
             )
@@ -161,11 +160,11 @@ struct NavmeshRealDataTests {
     /// with their children groups.
     private func collectExteriorCells(
         in group: ESMGroup,
-        world: UInt32,
-        span: Int32,
+        area: (world: UInt32, span: Int32),
         localized: Bool,
         into cells: inout [TargetCell]
     ) {
+        let (world, span) = (area.world, area.span)
         guard let children = try? group.children() else { return }
         for (offset, child) in children.enumerated() {
             switch child {
@@ -186,7 +185,7 @@ struct NavmeshRealDataTests {
             case let .group(sub)
                 where sub.kind == .exteriorCellBlock || sub.kind == .exteriorCellSubBlock:
                 collectExteriorCells(
-                    in: sub, world: world, span: span, localized: localized, into: &cells
+                    in: sub, area: (world, span), localized: localized, into: &cells
                 )
             default:
                 break

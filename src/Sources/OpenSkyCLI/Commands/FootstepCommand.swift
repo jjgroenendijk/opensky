@@ -31,7 +31,7 @@ enum FootstepCommand {
         let material = try resolveMaterial(materialName, in: materials, loadOrder: loadOrder)
         print("material: " + (material.map(materials.describe) ?? "none (representative impact)"))
         for gait in FootstepGait.allCases {
-            report(gait: gait, set: set, store: store, sounds: sounds, material: material)
+            report(gait: gait, set: set, records: (store, sounds), material: material)
         }
     }
 
@@ -93,10 +93,10 @@ enum FootstepCommand {
     private static func report(
         gait: FootstepGait,
         set: FootstepSet,
-        store: FootstepStore,
-        sounds: SoundRecordStore,
+        records: (store: FootstepStore, sounds: SoundRecordStore),
         material: FormID?
     ) {
+        let (store, sounds) = (records.store, records.sounds)
         let footsteps = set.footsteps(for: gait)
         print("\(gait) — \(footsteps.count) footstep(s)")
         for id in footsteps {

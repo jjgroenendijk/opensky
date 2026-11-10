@@ -65,8 +65,7 @@ struct ScriptingAcceptanceRealDataTests {
             setup: setup,
             candidate: candidate,
             chain: chain,
-            changedPixels: proxy.changedPixels,
-            runtimeDisabled: proxy.runtimeDisabled
+            counts: (proxy.changedPixels, proxy.runtimeDisabled)
         )
     }
 }
@@ -248,9 +247,9 @@ extension ScriptingAcceptanceRealDataTests {
         setup: Setup,
         candidate: Candidate,
         chain: ScriptedWorldChain,
-        changedPixels: Int,
-        runtimeDisabled: Int
+        counts: (changedPixels: Int, runtimeDisabled: Int)
     ) throws {
+        let (changedPixels, runtimeDisabled) = (counts.changedPixels, counts.runtimeDisabled)
         let gridTally = setup.world.runtime.tally
         let activationTally = chain.session.world.runtime.tally
         let report = """

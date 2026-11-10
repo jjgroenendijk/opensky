@@ -99,8 +99,7 @@ enum RenderCommand {
         let cellScenes = buildCellScenes(
             builder: builder,
             worldspace: options.worldspace,
-            gridX: options.gridX,
-            gridY: options.gridY,
+            grid: (options.gridX, options.gridY),
             neighbors: options.neighbors
         )
         guard !cellScenes.isEmpty else {
@@ -121,10 +120,10 @@ enum RenderCommand {
     private static func buildCellScenes(
         builder: CellSceneBuilder,
         worldspace: String,
-        gridX: Int32,
-        gridY: Int32,
+        grid: (gridX: Int32, gridY: Int32),
         neighbors: Bool
     ) -> [CellScene] {
+        let (gridX, gridY) = (grid.gridX, grid.gridY)
         let offsets = neighbors ? neighborOffsets : [(dx: 0, dy: 0)]
         return offsets.compactMap { offset in
             let x = gridX + offset.dx

@@ -78,8 +78,7 @@ struct ContainerMenuAcceptanceRealDataTests {
                 ("empty", empty), ("brought-up", broughtUp),
                 ("published", published), ("traded", traded)
             ],
-            runtime: runtime,
-            stats: renderer.lastSWFDrawStats,
+            movie: (runtime, renderer.lastSWFDrawStats),
             measurement: ContainerMenuEvidence.Measurement(
                 diagnostics: diagnostics,
                 nodes: runtime.nodeCount,
@@ -238,10 +237,10 @@ private enum ContainerMenuEvidence {
     static func write(
         mode: ContainerMenuModel.Mode,
         frames: [(String, (texture: any MTLTexture, pixels: [UInt8]))],
-        runtime: SWFMovieRuntime,
-        stats: SWFDrawStats,
+        movie: (runtime: SWFMovieRuntime, stats: SWFDrawStats),
         measurement: Measurement
     ) throws {
+        let (runtime, stats) = (movie.runtime, movie.stats)
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         for (name, frame) in frames {
             try FrameScreenshot.write(

@@ -44,7 +44,7 @@ extension RenderCommand {
         scene: RenderScene,
         camera: SceneCamera,
         size: (width: Int, height: Int),
-        timeOfDay: Float,
+        timeOfDay: Float = 13,
         uiScene: UIScene = .empty,
         navigationOverlayGraph: RuntimeNavigationGraph? = nil,
         detectionOverlay: PerceptionRuntime? = nil,

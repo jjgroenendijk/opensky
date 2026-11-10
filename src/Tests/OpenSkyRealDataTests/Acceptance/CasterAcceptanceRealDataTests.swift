@@ -186,8 +186,7 @@ struct CasterAcceptanceRealDataTests {
             tome: tome.editorID ?? "-",
             spell: spell.editorID ?? "-",
             cost: spell.cost.cost,
-            magicka: (magickaBefore, magickaAfter),
-            health: (healthBefore, healthAfter)
+            pools: ((magickaBefore, magickaAfter), (healthBefore, healthAfter))
         )
     }
 
@@ -197,9 +196,9 @@ struct CasterAcceptanceRealDataTests {
         tome: String,
         spell: String,
         cost: UInt32,
-        magicka: (Float, Float),
-        health: (Float, Float)
+        pools: (magicka: (Float, Float), health: (Float, Float))
     ) throws {
+        let (magicka, health) = (pools.magicka, pools.health)
         // Resolved through `RepositoryLogs` rather than the working directory,
         // which in a test host is `/` — the same rule the other real-data
         // suites that leave artifacts behind follow.

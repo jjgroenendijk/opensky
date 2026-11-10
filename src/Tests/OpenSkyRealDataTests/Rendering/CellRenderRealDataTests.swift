@@ -104,7 +104,7 @@ struct CellRenderRealDataTests {
         var series: [String] = []
         var singleDrawCount = 0
         try pumpStreaming(
-            harness, cameraPosition: center, label: "fill", series: &series,
+            harness, at: (center, "fill"), series: &series,
             settled: {
                 if streamer.residentCellCount == 1, singleDrawCount == 0 {
                     singleDrawCount = renderer.scene.drawCount
@@ -136,7 +136,7 @@ struct CellRenderRealDataTests {
             of: CellCoordinate(x: FirstRenderCell.gridX + 12, y: FirstRenderCell.gridY)
         )
         try pumpStreaming(
-            harness, cameraPosition: far, label: "recenter", series: &series,
+            harness, at: (far, "recenter"), series: &series,
             settled: {
                 streamer.resolvedCellCount == 25 && streamer.pendingCompletionCount == 0
             }
@@ -206,11 +206,11 @@ extension CellRenderRealDataTests {
     @MainActor
     private func pumpStreaming(
         _ harness: StreamHarness,
-        cameraPosition: SIMD3<Float>,
-        label: String,
+        at stop: (cameraPosition: SIMD3<Float>, label: String),
         series: inout [String],
         settled: () -> Bool
     ) throws {
+        let (cameraPosition, label) = (stop.cameraPosition, stop.label)
         let streamer = harness.streamer
         var lastResident = -1
         _ = try harness.renderer.pumpOffscreen(width: 64, height: 64, maxFrames: 18000) {

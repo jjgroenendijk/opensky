@@ -412,7 +412,10 @@ extension WeatherRuntimeTests {
     }
 
     private static func region(
-        formID: UInt32, world: UInt32, priority: UInt8, override: Bool, list: [(UInt32, UInt32)]
+        formID: UInt32, world: UInt32, priority: UInt8, override: Bool = false, list: [(
+            UInt32,
+            UInt32
+        )]
     ) -> Data {
         var wnam = Data()
         wnam.appendUInt32(world)

@@ -50,8 +50,7 @@ struct SystemMenuAcceptanceRealDataTests {
         let activated = try render(renderer)
         let systemStats = renderer.lastSWFDrawStats
         let system = verifySystemPage(
-            runtime: runtime,
-            stats: systemStats,
+            movie: (runtime, systemStats),
             empty: empty.pixels,
             broughtUp: broughtUp.pixels,
             activated: activated.pixels
@@ -101,12 +100,12 @@ struct SystemMenuAcceptanceRealDataTests {
     }
 
     private func verifySystemPage(
-        runtime: SWFMovieRuntime,
-        stats: SWFDrawStats,
+        movie: (runtime: SWFMovieRuntime, stats: SWFDrawStats),
         empty: [UInt8],
         broughtUp: [UInt8],
         activated: [UInt8]
     ) -> SystemPageMeasurement {
+        let (runtime, stats) = (movie.runtime, movie.stats)
         // These rows belong to the journal movie's real `SystemPage`, not the
         // title screen and not the engine-side fallback selector.
         let rows = SystemMenuMovieBridge.entryLabels(runtime: runtime)

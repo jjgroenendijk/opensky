@@ -45,8 +45,7 @@ enum SWFActionRunCommand {
             runtime,
             path: path,
             ticks: ticks,
-            missingLimit: missingLimit,
-            treeDepth: treeDepth
+            limits: (missingLimit, treeDepth)
         )
         for target in dumpPath?.split(separator: ",") ?? [] {
             printDump(runtime, path: String(target))
@@ -67,9 +66,9 @@ extension SWFActionRunCommand {
         _ runtime: SWFMovieRuntime,
         path: String,
         ticks: Int,
-        missingLimit: Int,
-        treeDepth: Int
+        limits: (missingLimit: Int, treeDepth: Int)
     ) {
+        let (missingLimit, treeDepth) = (limits.missingLimit, limits.treeDepth)
         let tally = runtime.tally
         print(
             "[INFO] swf action-run \(path): \(ticks) ticks, \(runtime.nodeCount) nodes, "

@@ -118,22 +118,22 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         baseline: [UInt8]
     ) throws -> ExteriorDeltas {
         let renderer = gameSession.renderer
-        let animation = try toggledDelta(renderer, baseline: baseline, time: 1.25) {
+        let animation = try toggledDelta(renderer, against: (baseline, 1.25)) {
             renderer.actorAnimationsEnabled = false
         } restore: { renderer.actorAnimationsEnabled = true }
-        let shadow = try toggledDelta(renderer, baseline: baseline, time: 1.25) {
+        let shadow = try toggledDelta(renderer, against: (baseline, 1.25)) {
             renderer.shadowQuality = .off
         } restore: { renderer.shadowQuality = .high }
-        let weather = try toggledDelta(renderer, baseline: baseline, time: 1.25) {
+        let weather = try toggledDelta(renderer, against: (baseline, 1.25)) {
             gameSession.weatherEnabled = false
         } restore: { gameSession.weatherEnabled = true }
-        let particles = try toggledDelta(renderer, baseline: baseline, time: 1.25) {
+        let particles = try toggledDelta(renderer, against: (baseline, 1.25)) {
             renderer.particlesEnabled = false
         } restore: { renderer.particlesEnabled = true }
-        let precipitation = try toggledDelta(renderer, baseline: baseline, time: 1.25) {
+        let precipitation = try toggledDelta(renderer, against: (baseline, 1.25)) {
             renderer.precipitationEnabled = false
         } restore: { renderer.precipitationEnabled = true }
-        let grass = try toggledDelta(renderer, baseline: baseline, time: 1.25) {
+        let grass = try toggledDelta(renderer, against: (baseline, 1.25)) {
             renderer.grassEnabled = false
         } restore: { renderer.grassEnabled = true }
         renderer.actorAnimationsEnabled = false
@@ -212,11 +212,11 @@ struct LivingEnvironmentAcceptanceRealDataTests {
     @MainActor
     private func toggledDelta(
         _ renderer: Renderer,
-        baseline: [UInt8],
-        time: Float,
+        against: (baseline: [UInt8], time: Float),
         toggle: () -> Void,
         restore: () -> Void
     ) throws -> Int {
+        let (baseline, time) = (against.baseline, against.time)
         toggle()
         let pixels = try frame(renderer, time: time).pixels
         restore()

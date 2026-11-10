@@ -110,7 +110,8 @@ public enum EnchantingFixture {
     }
 
     private static func effect(
-        _ id: UInt32, _ editorID: String, flags: MagicEffectFlags, cast: UInt32, delivery: UInt32
+        _ id: UInt32, _ editorID: String, flags: MagicEffectFlags, cast: UInt32,
+        delivery: UInt32 = 0
     ) -> Data {
         ESMFixture.record(
             "MGEF", formID: id,

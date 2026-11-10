@@ -61,7 +61,8 @@ public enum AlchemyFixture {
     }
 
     private static func effect(
-        _ id: FormID, _ editorID: String, _ name: String, _ cost: Float, _ flags: MagicEffectFlags
+        _ id: FormID, _ editorID: String, _ name: String, _ cost: Float,
+        _ flags: MagicEffectFlags = []
     ) -> Data {
         ESMFixture.record(
             "MGEF",

@@ -60,8 +60,10 @@ struct LocomotionAcceptanceRenderTests {
 
         try Self.assertStateChangeIsVisibleAndReproducible(
             assembled,
-            install: LocomotionRenderInstall(device: cell.device, root: cell.root),
-            stage: LocomotionRenderStage(gameSession: gameSession, feet: feet),
+            scene: (
+                LocomotionRenderInstall(device: cell.device, root: cell.root),
+                LocomotionRenderStage(gameSession: gameSession, feet: feet)
+            ),
             idle: idle,
             report: &report
         )
@@ -83,11 +85,11 @@ struct LocomotionAcceptanceRenderTests {
     @MainActor
     private static func assertStateChangeIsVisibleAndReproducible(
         _ assembled: PlayerBodyFixture.Assembled,
-        install: LocomotionRenderInstall,
-        stage: LocomotionRenderStage,
+        scene: (install: LocomotionRenderInstall, stage: LocomotionRenderStage),
         idle: [UInt8],
         report: inout [String]
     ) throws {
+        let (install, stage) = (scene.install, scene.stage)
         let gameSession = stage.gameSession
         let feet = stage.feet
         let sprinting = try Self.drive(

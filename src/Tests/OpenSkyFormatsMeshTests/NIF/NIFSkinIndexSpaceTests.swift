@@ -37,8 +37,10 @@ struct NIFSkinIndexSpaceTests {
                 topLevelVertexRecords: [],
                 triangles: [0, 1, 2],
                 bonePalette: [0],
-                weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
-                boneIndices: [SIMD4(1, 0, 0, 0), .zero, .zero]
+                skin: (
+                    Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
+                    [SIMD4(1, 0, 0, 0), .zero, .zero]
+                )
             )
         )
         let malformed = try NIFFile(data: NIFFixture.file(blocks: blocks))
@@ -164,8 +166,7 @@ struct NIFSkinIndexSpaceTests {
                 vertexRecords: records,
                 triangles: [0, 1, 2],
                 bonePalette: bonePalette,
-                weights: weights,
-                boneIndices: boneIndices,
+                skin: (weights, boneIndices),
                 globalVertexBuffer: true
             )),
             .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
@@ -178,8 +179,10 @@ struct NIFSkinIndexSpaceTests {
             vertexRecords: records,
             triangles: [0, 1, 2],
             bonePalette: [0],
-            weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
-            boneIndices: Array(repeating: .zero, count: 3),
+            skin: (
+                Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
+                Array(repeating: .zero, count: 3)
+            ),
             globalVertexBuffer: true
         )
         let header = try NIFFile(data: NIFFixture.file(blocks: [

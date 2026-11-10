@@ -20,8 +20,8 @@ struct LocationTests {
         fields += ESMFixture.field("ACUN", words([11, 12, 13]))
         fields += ESMFixture.field("LCUN", words([14, 15, 16]))
         fields += ESMFixture.field("RCUN", words([17]))
-        fields += ESMFixture.field("ACSR", special(18, 19, 20, -21, 22))
-        fields += ESMFixture.field("LCSR", special(23, 24, 25, 26, -27))
+        fields += ESMFixture.field("ACSR", special(18, persistent(19, 20, -21, 22)))
+        fields += ESMFixture.field("LCSR", special(23, persistent(24, 25, 26, -27)))
         fields += ESMFixture.field("RCSR", words([28]))
         fields += ESMFixture.field("ACEC", worldCells(29, [(30, 31)]))
         fields += ESMFixture.field("LCEC", worldCells(32, [(33, 34), (35, 36)]))
@@ -84,7 +84,7 @@ struct LocationTests {
     func dropsAndTalliesEveryPartialArrayTail() throws {
         let fields = ESMFixture.field("ACPR", persistent(1, 2, 3, 4) + Data([0xAA]))
             + ESMFixture.field("ACUN", words([5, 6, 7]) + Data([0xBB, 0xCC]))
-            + ESMFixture.field("ACSR", special(8, 9, 10, 11, 12) + Data([0xDD]))
+            + ESMFixture.field("ACSR", special(8, persistent(9, 10, 11, 12)) + Data([0xDD]))
             + ESMFixture.field("RCPR", words([13]) + Data([1, 2, 3]))
             + ESMFixture.field("ACEC", worldCells(14, [(15, 16)]) + Data([1, 2]))
             + ESMFixture.field("ACEP", enableParent(17, 18, 0) + Data([1]))
@@ -153,14 +153,9 @@ struct LocationTests {
         words([ref, cell]) + signedWords([y, x])
     }
 
-    private func special(
-        _ type: UInt32,
-        _ ref: UInt32,
-        _ cell: UInt32,
-        _ y: Int16,
-        _ x: Int16
-    ) -> Data {
-        words([type, ref, cell]) + signedWords([y, x])
+    /// A special reference: its location-reference type, then a persistent entry.
+    private func special(_ type: UInt32, _ entry: Data) -> Data {
+        words([type]) + entry
     }
 
     private func worldCells(_ world: UInt32, _ cells: [(Int16, Int16)]) -> Data {

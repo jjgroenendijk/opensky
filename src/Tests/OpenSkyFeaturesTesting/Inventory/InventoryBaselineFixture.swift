@@ -133,7 +133,7 @@ public enum InventoryBaselineFixture {
         _ editorID: String,
         value: Int32,
         weight: Float,
-        slots: UInt32
+        slots: UInt32 = 1 << 2
     ) -> Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
         var bod2 = Data()
@@ -153,7 +153,7 @@ public enum InventoryBaselineFixture {
         formID: UInt32,
         editorID: String,
         value: Int32,
-        weight: Float
+        weight: Float = 0
     ) -> Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
         fields += ESMFixture.field(

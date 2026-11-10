@@ -187,7 +187,7 @@ extension SWFActionFixture {
         name: String,
         parameters: [(UInt8, String)],
         registerCount: UInt8,
-        flags: SWFDefineFunctionFlags,
+        flags: SWFDefineFunctionFlags = [],
         bodySize: UInt16
     ) -> Action {
         var writer = SWFBitWriter()

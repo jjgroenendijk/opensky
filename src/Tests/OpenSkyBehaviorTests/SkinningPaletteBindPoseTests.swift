@@ -203,8 +203,10 @@ struct SkinningPaletteBindPoseTests {
             vertexRecords: positions.map { NIFFixture.skinnedVertex(position: $0) },
             triangles: [0, 1, 2],
             bonePalette: [0, 1, 2],
-            weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
-            boneIndices: [SIMD4(0, 0, 0, 0), SIMD4(1, 0, 0, 0), SIMD4(2, 0, 0, 0)]
+            skin: (
+                Array(repeating: SIMD4(1, 0, 0, 0), count: 3),
+                [SIMD4(0, 0, 0, 0), SIMD4(1, 0, 0, 0), SIMD4(2, 0, 0, 0)]
+            )
         )))
         blocks.append(.init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty()))
         let file = try NIFFile(data: NIFFixture.file(
