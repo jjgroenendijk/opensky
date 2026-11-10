@@ -50,6 +50,10 @@ struct AgentDebugTests {
         #expect(host.fakeRuntimeState.setGameClockHourCalls == [9])
     }
 
+    @Test func aTeleportBeforeTheWorldLoadsIsRefused() {
+        #expect(throws: AgentFailure.self) { try world.perform(.teleport(.position([0, 0, 0]))) }
+    }
+
     @Test func anUnknownInputIsRefused() {
         #expect(throws: AgentFailure.self) { try world.applyInput("no such input", phase: .press) }
     }

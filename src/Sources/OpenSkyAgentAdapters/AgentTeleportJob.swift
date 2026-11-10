@@ -53,9 +53,7 @@ public final class AgentTeleportJob {
     public init(hub: AgentHub, target: AgentTeleportTarget) throws(AgentFailure) {
         self.hub = hub
         let streamer = hub.game.streamer
-        guard let gameSession = hub.game.gameSession else {
-            throw hub.notReady()
-        }
+        guard let gameSession = hub.game.gameSession else { throw hub.notReady() }
         guard streamer.transitionInFlight == nil else {
             throw AgentFailure(.notReady, "a door transition is still loading")
         }
@@ -108,9 +106,7 @@ public final class AgentTeleportJob {
     ) throws(AgentFailure) {
         self.hub = hub
         let streamer = hub.game.streamer
-        guard hub.game.renderer != nil else {
-            throw hub.notReady()
-        }
+        guard hub.game.renderer != nil else { throw hub.notReady() }
         guard streamer.transitionInFlight == nil else {
             throw AgentFailure(.notReady, "a door transition is still loading")
         }
@@ -180,7 +176,8 @@ public final class AgentTeleportJob {
                 game.simulationClock.frame >= untilFrame else { return .wait }
             // Boots on the ground: a placed height above the floor must not end in a fall.
             game.gameSession?.settlePlayerOnGround()
-            return try .done(.success(playerReadout.playerState()))
+            let readout = AgentPlayerReadoutAdapter(hub: hub, game: hub.playerReadoutHost)
+            return try .done(.success(readout.playerState()))
         }
         return .wait
     }
@@ -397,9 +394,3 @@ extension AgentTeleportJob {
 }
 
 extension AgentTeleportJob: AgentTeleportJobPort {}
-
-extension AgentTeleportJob {
-    private var playerReadout: AgentPlayerReadoutAdapter {
-        AgentPlayerReadoutAdapter(hub: hub, game: hub.playerReadoutHost)
-    }
-}
