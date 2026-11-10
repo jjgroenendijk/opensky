@@ -12,9 +12,9 @@ import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
-import OpenSkyFormatsESM
+public import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
-import OpenSkyGameData
+public import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyNavigation
@@ -51,16 +51,29 @@ extension AIWorldAdapter {
         registerAIOverlay(stage: stage)
     }
 
-    private func registerAIBodyShapes(stage: SessionStage) {
-        let streamer = stage.streamer
-        guard let fileSystem = game.aiRecords?.scriptFileSystem else { return }
-        let bounds = AssetLoader<String, SIMD3<Float>> { path in
+    /// Loads each skeleton's BBX half extents; nil when the script files are not loaded.
+    public func bodyBoundsLoader() -> AssetLoader<String, SIMD3<Float>>? {
+        guard let fileSystem = game.aiRecords?.scriptFileSystem else { return nil }
+        return AssetLoader<String, SIMD3<Float>> { path in
             let file = try NIFFile(data: fileSystem.contents(forPath: path))
             for case let .bound(_, halfExtents) in file.rootExtraData.map(\.value) {
                 return halfExtents
             }
             throw AssetLoadFailure(reason: "\(path) has no BBX bound")
         }
+    }
+
+    /// The speeds of the movement type the actor's graph is in.
+    public func movementSpeeds(of actor: ReferenceKey) -> MovementType.Speeds? {
+        guard let name = game.actorGraphWorld.graphs.movementStateName(of: actor) else {
+            return nil
+        }
+        return game.aiRecords?.movementTypes.type(named: name)?.speeds
+    }
+
+    private func registerAIBodyShapes(stage: SessionStage) {
+        let streamer = stage.streamer
+        guard let bounds = bodyBoundsLoader() else { return }
         streamer.npcBodyHalfExtents = { [weak game = self.game] actor in
             guard let skeleton = game?.effectsWorld.race(of: actor)?.maleSkeletonPath else {
                 return nil
@@ -72,12 +85,7 @@ extension AIWorldAdapter {
 
     private func registerAIMovementTypes(stage: SessionStage) {
         let streamer = stage.streamer
-        streamer.npcMovementSpeeds = { [weak game = self.game] actor in
-            guard
-                let game, let name = game.actorGraphWorld.graphs.movementStateName(of: actor)
-            else { return nil }
-            return game.aiRecords?.movementTypes.type(named: name)?.speeds
-        }
+        streamer.npcMovementSpeeds = { [weak self] actor in self?.movementSpeeds(of: actor) }
     }
 
     private func registerAINPCMovement(stage: SessionStage) {

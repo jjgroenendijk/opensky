@@ -108,7 +108,7 @@ extension AIPackageActsAdapter {
             guard let spell = selector.flatMap(selectedForm) else { return .failed }
             return bridge.castSpell(spell, from: actor, at: target, blame: nil) ? .done : .failed
         case let .shout(selector, target):
-            guard let spell = selector.flatMap(shoutSpell) else { return .failed }
+            guard let spell = shoutSpell(for: selector) else { return .failed }
             return bridge.castSpell(spell, from: actor, at: target, blame: nil) ? .done : .failed
         default:
             return .failed
@@ -128,9 +128,13 @@ extension AIPackageActsAdapter {
     }
 
     /// The spell of the first word of the shout a selector names.
-    private func shoutSpell(_ selector: Package.Target) -> ReferenceKey? {
+    public func shoutSpell(for selector: Package.Target?) -> ReferenceKey? {
+        selector.flatMap(selectedForm).flatMap(shoutSpell(of:))
+    }
+
+    /// The spell of the shout's first word; nil when the shouts are not loaded.
+    public func shoutSpell(of key: ReferenceKey) -> ReferenceKey? {
         guard
-            let key = selectedForm(selector),
             let shouts = game.aiRecords?.shoutStore,
             let shout = shouts.shouts.values.first(where: { ReferenceKey(resolved: $0.id) == key }),
             let spell = shout.words.first?.spell

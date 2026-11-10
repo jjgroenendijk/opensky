@@ -123,4 +123,23 @@ struct AIActsSensesTests {
         adapter.bumps.advanceBumps()
         #expect(adapter.bumps.standingActors().map(\.key) == [Self.actor])
     }
+
+    @Test func withoutRecordsNoShoutSpellBoundsOrSpeeds() throws {
+        let graphs = try #require(host.fakeActorGraphWorld.graphs as? FakeActorGraphPort)
+        graphs.movementStateNameResult = "NPC_Walk_MT"
+        #expect(adapter.packageActs.shoutSpell(of: Self.other) == nil)
+        #expect(adapter.packageActs.shoutSpell(for: nil) == nil)
+        #expect(adapter.bodyBoundsLoader() == nil)
+        #expect(adapter.movementSpeeds(of: Self.actor) == nil)
+        #expect(graphs.movementStateNameCalls == [Self.actor])
+    }
+
+    @Test func withScriptFilesBodyBoundsLoadAndAnUnknownGaitHasNoSpeeds() throws {
+        host.aiRecords = FakeAIRecords()
+        #expect(adapter.bodyBoundsLoader() != nil)
+        #expect(adapter.movementSpeeds(of: Self.actor) == nil)
+        let graphs = try #require(host.fakeActorGraphWorld.graphs as? FakeActorGraphPort)
+        graphs.movementStateNameResult = "NPC_Walk_MT"
+        #expect(adapter.movementSpeeds(of: Self.actor) == nil)
+    }
 }
