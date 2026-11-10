@@ -12,14 +12,14 @@ nonisolated public struct FactionConditionResolution: Sendable {
     public let facts: ActorConditionFacts<FactionStore, ActorSocialProfile>
     /// The same derivation the combat loop uses, so a condition and combat
     /// never disagree about hostility.
-    public let derivation: (any HostilityDeriving)?
+    public let derivation: HostilityDerivation?
 
     public static let empty = FactionConditionResolution()
 
     public init(
         factions: FactionStore? = nil,
         sourcePlugin: String? = nil,
-        derivation: (any HostilityDeriving)? = nil,
+        derivation: HostilityDerivation? = nil,
         profiles: [ReferenceKey: ActorSocialProfile] = [:]
     ) {
         facts = ActorConditionFacts(store: factions, sourcePlugin: sourcePlugin, facts: profiles)

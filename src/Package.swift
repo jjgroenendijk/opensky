@@ -746,7 +746,8 @@ targets += testing(
         "OpenSkyGameData", "OpenSkyAudio", "OpenSkyPhysics", "OpenSkyWorldState",
         "OpenSkyConditions", "OpenSkyWorldInterface", "OpenSkyInventoryInterface",
         "OpenSkyActorsInterface", "OpenSkyCrimeInterface", "OpenSkyDialogueInterface",
-        "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface", "OpenSkyQuestsInterface"
+        "OpenSkyFactionsInterface", "OpenSkyMagicInterface", "OpenSkyPerceptionInterface",
+        "OpenSkyQuestsInterface"
     ]
 )
 
@@ -966,7 +967,7 @@ targets += testing(
         "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyRendering", "OpenSkyWorldState",
         "OpenSkyConditions", "OpenSkyAudio", "OpenSkyWorldConditions", "OpenSkyTerrain",
         "OpenSkyRuntimeState", "OpenSkyActorPresentation", "OpenSkyCells",
-        "OpenSkyRenderResources"
+        "OpenSkyRenderResources", "OpenSkyWorldInterface"
     ]
 )
 

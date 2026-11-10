@@ -5,7 +5,7 @@ public import OpenSkyGameData
 
 /// Resolves what one actor makes of another from factions, relationships,
 /// crime and explicit overrides.
-nonisolated public struct HostilityDerivation: HostilityDeriving {
+nonisolated public struct HostilityDerivation: Sendable {
     public var relations: FactionRelationIndex
     public let relationships: RelationshipStore
     /// The crime seam. Assignable rather than injected at init, so the session can
