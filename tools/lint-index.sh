@@ -11,3 +11,4 @@ cd "$root"
 tools/lint-index/unused-code.sh tools/lint-index/.periphery.yml "$store"
 python3 tools/lint-index/adapter-references.py "$store" .
 python3 tools/lint-index/single-conformers.py "$store" . --gate
+python3 tools/lint-index/member-chains.py "$store" . --gate

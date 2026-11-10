@@ -1,12 +1,12 @@
-"""Design rule 5, as a report: member chains that reach through more than 3 reference types.
+"""Design rule 5: member chains that reach through more than 3 reference types.
 
 Reads the index store that a build writes, through Xcode's libIndexStore, and the source
 line of each chain. A chain is a run of member accesses on one line, such as
 `game.world.cells.loaded.first`. A step counts when the index store names the member it
 reaches and that member belongs to a class, an actor, or a protocol limited to classes
 declared under src/Sources. Steps through structs and enums, such as fields of a parsed
-record, do not count. Fails nothing.
-Usage: member-chains.py <DataStore> <repo>. See docs/decisions/design-metrics.md.
+record, do not count. With --gate it fails on any chain; without, it reports and passes.
+Usage: member-chains.py <DataStore> <repo> [--gate]. See docs/decisions/design-metrics.md.
 """
 
 import collections
@@ -111,11 +111,13 @@ def self_check():
     return [(row[0], row[2]) for row in rows] == [("Deep.swift", 4)] and "s:3App4PortP" in bound
 
 
-def report(rows):
-    print(f"[INFO] design rule 5, Law of Demeter: {len(rows)} chains reach through more than "
+def report(rows, gate):
+    failed = gate and bool(rows)
+    tag = "[FAIL]" if failed else "[INFO]" if rows else "[ OK ]"
+    print(f"{tag} design rule 5, Law of Demeter: {len(rows)} chains reach through more than "
           f"{LIMIT} reference types")
     for path, line, steps, text in rows:
-        print(f"  {path}:{line}: {steps} steps: {text[:100]}")
+        print(f"  {path}:{line}: {steps} steps: {text[:100]}", file=sys.stderr if failed else sys.stdout)
     for module, count in collections.Counter(row[0].split("/")[2] for row in rows).most_common():
         print(f"    {module}: {count}")
 
@@ -144,8 +146,10 @@ def main():
             else:
                 located[(line, column)] = usr
         files[relative] = (lines, located)
-    report(findings(definitions, files))
-    return 0
+    rows = findings(definitions, files)
+    gate = "--gate" in sys.argv[3:]
+    report(rows, gate)
+    return 1 if gate and rows else 0
 
 
 if __name__ == "__main__":
