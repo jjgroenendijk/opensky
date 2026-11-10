@@ -23,7 +23,7 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
     /// Defensive floor for malformed zero/negative Position Range. This also
     /// caps one grass type at 128x128 candidates per cell before density and
     /// texture coverage reject most candidates.
-    public static let minimumSpacing: Float = 32
+    static let minimumSpacing: Float = 32
     private static let maximumAxisCandidates = 128
 
     private struct Source {

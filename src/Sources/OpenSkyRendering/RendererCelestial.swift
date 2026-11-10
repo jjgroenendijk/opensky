@@ -19,12 +19,12 @@ extension Renderer {
     }
 
     /// The direction sunlight travels outdoors: the sun path when there is one.
-    public var exteriorSunTravelDirection: SIMD3<Float> {
+    var exteriorSunTravelDirection: SIMD3<Float> {
         frameCelestial?.lightDirection ?? camera.sunDirection
     }
 
     /// Drains finished sky object loads and requests what this frame needs.
-    public func prepareCelestial() {
+    func prepareCelestial() {
         guard let skyCelestial, let sky = frameCelestial else { return }
         let added = skyCelestial.prepare(sky)
         guard !added.isEmpty else { return }

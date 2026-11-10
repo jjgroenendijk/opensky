@@ -32,7 +32,7 @@ nonisolated public struct StoryEventData: Equatable, Sendable {
     public var keyword: FormID?
     public var location1: ResolvedFormID?
     public var location2: ResolvedFormID?
-    public var quest: FormID?
+    var quest: FormID?
     public var value1: Float = 0
     public var value2: Float = 0
 
@@ -50,7 +50,7 @@ nonisolated public struct StoryEventData: Equatable, Sendable {
     }
 
     /// A form member as a FormID: the created object, keyword, form, or quest.
-    public func formID(_ member: Member) -> FormID? {
+    func formID(_ member: Member) -> FormID? {
         switch member {
         case .createdObject: createdObject
         case .form: form

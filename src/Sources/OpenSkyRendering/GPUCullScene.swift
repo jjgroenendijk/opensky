@@ -36,9 +36,9 @@ nonisolated public struct CullCounts: Equatable, Sendable {
 }
 
 /// The cull kernel and its binding table, built once with the renderer.
-public struct GPUCullingResources {
-    public let pipeline: any MTLComputePipelineState
-    public let argumentTable: any MTL4ArgumentTable
+struct GPUCullingResources {
+    let pipeline: any MTLComputePipelineState
+    let argumentTable: any MTL4ArgumentTable
 
     init(library: any MTLLibrary, compiler: PipelineCache) throws {
         let function = MTL4LibraryFunctionDescriptor()

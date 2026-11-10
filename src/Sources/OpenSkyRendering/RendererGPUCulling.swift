@@ -18,7 +18,7 @@ public struct GPUCullState {
     /// This frame's cull, when the GPU path draws.
     var active: GPUCullScene?
     /// The GPU path's counts, a few frames old because they are read after the GPU ran.
-    public internal(set) var lastCounts = CullCounts()
+    var lastCounts = CullCounts()
 
     init(resources: GPUCullingResources) {
         self.resources = resources

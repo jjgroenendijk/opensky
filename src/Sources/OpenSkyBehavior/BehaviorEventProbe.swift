@@ -40,7 +40,7 @@ nonisolated public enum BehaviorEventProbe {
         }
     }
 
-    public static let timestep: Float = 1.0 / 30.0
+    static let timestep: Float = 1.0 / 30.0
 
     /// Runs `idleUpdates`, then each event followed by `updatesPerEvent` updates.
     /// `variables` are written before every update.

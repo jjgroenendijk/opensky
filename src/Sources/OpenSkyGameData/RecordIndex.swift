@@ -52,7 +52,7 @@ nonisolated public struct RecordIndex: Sendable {
     )
 
     public private(set) var records: [ResolvedFormID: IndexedRecord] = [:]
-    public private(set) var collectedRecordCounts: [FourCC: Int] = [:]
+    private(set) var collectedRecordCounts: [FourCC: Int] = [:]
     /// Records whose fields do not decode, and malformed groups, by record type.
     public private(set) var skippedRecords = SkippedRecords()
     private var candidates: [ResolvedFormID: [IndexedRecord]] = [:]
@@ -113,7 +113,7 @@ nonisolated public struct RecordIndex: Sendable {
 
     /// Decodes highest priority first, keeping an earlier valid definition when
     /// a later body is malformed. `.undecodable` carries the winner's error.
-    public func decode<Value>(
+    func decode<Value>(
         _ id: ResolvedFormID,
         using decodeRecord: (ESMRecord) throws -> Value
     ) -> RecordIndexDecodeResult<Value> {
@@ -160,7 +160,7 @@ nonisolated public struct RecordIndex: Sendable {
         return resolved
     }
 
-    public func count(of type: FourCC) -> Int {
+    func count(of type: FourCC) -> Int {
         records.values.count { $0.record.type == type }
     }
 
@@ -169,7 +169,7 @@ nonisolated public struct RecordIndex: Sendable {
     }
 
     /// Structurally readable records seen before override identities collapse.
-    public func collectedCount(of type: FourCC) -> Int {
+    func collectedCount(of type: FourCC) -> Int {
         collectedRecordCounts[type, default: 0]
     }
 
@@ -243,8 +243,8 @@ nonisolated public struct RecordIndex: Sendable {
     }
 }
 
-nonisolated public enum RecordIndexLoader: Sendable {
-    public static func load(
+nonisolated enum RecordIndexLoader: Sendable {
+    static func load(
         root: GameDataRoot,
         baseFile: ESMFile? = nil,
         recordTypes: Set<FourCC> = RecordIndex.referenceRecordTypes

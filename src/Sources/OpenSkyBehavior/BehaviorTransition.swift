@@ -5,7 +5,7 @@
 // the player graph never sets are named but not acted on.
 
 import Foundation
-public import OpenSkyFormatsAnimation
+import OpenSkyFormatsAnimation
 
 /// `hkbStateMachineTransitionInfo::TransitionFlags`, as far as the vanilla
 /// player graph exercises them.
@@ -42,10 +42,10 @@ nonisolated public enum BehaviorTransitionFlag: Sendable {
 
 /// `hkbBlendingTransitionEffect::FlagBits`. Only the sync bit is acted on; the others
 /// describe root motion across the blend, which the locomotion bridge owns.
-nonisolated public enum BehaviorTransitionEffectFlag: Sendable {
-    public static let ignoreFromGenerator = 0x1
+nonisolated enum BehaviorTransitionEffectFlag: Sendable {
+    static let ignoreFromGenerator = 0x1
     /// Align the incoming generator's clip time with the outgoing one's.
-    public static let sync = 0x2
+    static let sync = 0x2
 }
 
 /// `hkbBlendCurveUtils::BlendCurve`, from a clean-room read of the game
@@ -69,60 +69,60 @@ nonisolated public enum BehaviorBlendCurve: Sendable {
         }
     }
 
-    public static func isKnown(_ curve: Int) -> Bool {
+    static func isKnown(_ curve: Int) -> Bool {
         (smooth ... smoothToLinear).contains(curve)
     }
 }
 
 /// One crossfade in progress inside a state machine. Built when the transition
 /// starts and stepped by every update until it is finished.
-nonisolated public struct BehaviorTransition: Equatable, Sendable {
+nonisolated struct BehaviorTransition: Equatable, Sendable {
     /// The state the machine is blending out of. The machine's own
     /// `currentStateId` is already the destination: the state change happens
     /// when the transition starts and the effect only fades the old pose.
-    public var fromStateId: Int
-    public var elapsed: Float
-    public var duration: Float
-    public var blendCurve: Int
+    var fromStateId: Int
+    var elapsed: Float
+    var duration: Float
+    var blendCurve: Int
     /// `hkbBlendingTransitionEffect::m_flags`.
-    public var effectFlags: Int
+    var effectFlags: Int
     /// `hkbStateMachineTransitionInfo::m_flags` of the transition that started
     /// this blend, so the interruption rules can read them back.
-    public var transitionFlags: Int
+    var transitionFlags: Int
 
     /// How much of the destination pose is showing.
-    public var weight: Float {
+    var weight: Float {
         guard duration > 0 else { return 1 }
         return BehaviorBlendCurve.weight(elapsed / duration, curve: blendCurve)
     }
 
-    public var isFinished: Bool {
+    var isFinished: Bool {
         !(elapsed < duration)
     }
 
-    public var ignoresFromGenerator: Bool {
+    var ignoresFromGenerator: Bool {
         effectFlags & BehaviorTransitionEffectFlag.ignoreFromGenerator != 0
     }
 
-    public var synchronizes: Bool {
+    var synchronizes: Bool {
         effectFlags & BehaviorTransitionEffectFlag.sync != 0
     }
 
     /// The transition's `m_priority`: a new one needs at least as much to replace it.
-    public var priority = 0
+    var priority = 0
     /// The transition that was running when this one started. It keeps running as this
     /// one's source pose until it ends.
-    public var interrupted: [BehaviorTransition] = []
+    var interrupted: [BehaviorTransition] = []
     /// With `FLAG_DELAY_STATE_CHANGE`, the destination. The machine stays in
     /// `fromStateId` until the blend ends.
-    public var delayedStateId: Int?
+    var delayedStateId: Int?
 
-    public var isUninterruptibleWhilePlaying: Bool {
+    var isUninterruptibleWhilePlaying: Bool {
         transitionFlags & BehaviorTransitionFlag.uninterruptibleWhilePlaying != 0
     }
 
     /// True when this transition keeps a new one with `info` from replacing it.
-    public func refuses(_ info: HKBStateMachineTransitionInfo) -> Bool {
+    func refuses(_ info: HKBStateMachineTransitionInfo) -> Bool {
         if isUninterruptibleWhilePlaying || info.priority < priority {
             return true
         }
@@ -131,7 +131,7 @@ nonisolated public struct BehaviorTransition: Equatable, Sendable {
     }
 
     /// Steps this transition and every one it interrupted; a finished inner one ends.
-    public mutating func advance(by deltaTime: Float) {
+    mutating func advance(by deltaTime: Float) {
         elapsed += max(deltaTime, 0)
         interrupted = interrupted.compactMap { inner in
             var inner = inner
@@ -141,7 +141,7 @@ nonisolated public struct BehaviorTransition: Equatable, Sendable {
     }
 
     /// Keeps at most `limit` transitions in the chain; the oldest end first.
-    public mutating func trim(to limit: Int) {
+    mutating func trim(to limit: Int) {
         guard limit > 1 else {
             interrupted = []
             return
@@ -158,13 +158,13 @@ nonisolated public struct BehaviorTransition: Equatable, Sendable {
 /// `BehaviorNodeState` because it outlives deactivation: `m_startStateMode` 2
 /// re-enters the state that was current when the machine stopped, and 121 of
 /// the 1,963 machines in the vanilla player graph are authored that way.
-nonisolated public struct BehaviorMachineState: Equatable, Sendable {
-    public var currentStateId = -1
+nonisolated struct BehaviorMachineState: Equatable, Sendable {
+    var currentStateId = -1
     /// The state before the current one, for `m_returnToPreviousStateEventId`.
-    public var previousStateId = -1
+    var previousStateId = -1
     /// True between entering the start state and deactivation.
-    public var isEntered = false
-    public var transition: BehaviorTransition?
+    var isEntered = false
+    var transition: BehaviorTransition?
 }
 
 /// What one machine is doing now, in names rather than ids. Published per update, so a

@@ -23,8 +23,8 @@ nonisolated public struct CameraConditionResolution: Equatable, Sendable {
     /// xEdit's projectile type: 0 missile, 2 beam, 6 arrow.
     public var projectileType: UInt32?
     /// Magic delivery and casting type, as the MGEF stores them.
-    public var delivery: UInt32?
-    public var castingType: UInt32?
+    var delivery: UInt32?
+    var castingType: UInt32?
     /// Free room beside the attacker in game units; paths ask for `>= 150`.
     public var freeDistance: [Side: Float] = [:]
     /// Units from attacker to target; paths ask for `>= 768`.

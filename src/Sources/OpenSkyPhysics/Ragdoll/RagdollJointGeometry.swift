@@ -4,7 +4,7 @@
 // reading is the uncertain one, but any reading only makes a joint stiffer or
 // looser. See docs/engine/ragdoll-solver.md.
 
-public import simd
+import simd
 
 /// One body's end of a joint, in world space at the current pose.
 nonisolated public struct RagdollWorldFrame: Sendable {
@@ -203,7 +203,7 @@ nonisolated extension RagdollJointFrame {
 /// written to return nothing rather than a NaN on degenerate input.
 nonisolated public enum RagdollMath: Sendable {
     /// The cross-product matrix of `vector`, so that `skew(v) * w == cross(v, w)`.
-    public static func skew(_ vector: SIMD3<Float>) -> float3x3 {
+    static func skew(_ vector: SIMD3<Float>) -> float3x3 {
         float3x3(
             SIMD3(0, vector.z, -vector.y),
             SIMD3(-vector.z, 0, vector.x),
@@ -230,7 +230,7 @@ nonisolated public enum RagdollMath: Sendable {
     /// over `-pi ... pi`. Both inputs are projected perpendicular to the axis
     /// first, because a roll is only defined for the components that are free to
     /// roll.
-    public static func signedAngle(
+    static func signedAngle(
         from first: SIMD3<Float>,
         to second: SIMD3<Float>,
         about axis: SIMD3<Float>
@@ -246,7 +246,7 @@ nonisolated public enum RagdollMath: Sendable {
 
     /// Some unit vector perpendicular to `axis`, for the antiparallel case where
     /// a cross product carries no direction at all.
-    public static func anyPerpendicular(_ axis: SIMD3<Float>) -> SIMD3<Float>? {
+    static func anyPerpendicular(_ axis: SIMD3<Float>) -> SIMD3<Float>? {
         guard let normal = unit(axis) else { return nil }
         let reference = abs(normal.z) < 0.9
             ? SIMD3<Float>(0, 0, 1) : SIMD3<Float>(1, 0, 0)

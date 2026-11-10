@@ -36,9 +36,9 @@ nonisolated public struct LoadPhaseTimes: Codable, Equatable, Sendable {
     /// still decodes.
     public var gpuReadMS: Double?
     public var recordIndexMS: Double?
-    public var actorIndexMS: Double?
-    public var cellLookupMS: Double?
-    public var lodBrightnessMS: Double?
+    var actorIndexMS: Double?
+    var cellLookupMS: Double?
+    var lodBrightnessMS: Double?
     public var otherMS: Double
 
     public init(

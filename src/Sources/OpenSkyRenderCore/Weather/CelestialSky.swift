@@ -24,7 +24,7 @@ nonisolated public enum MoonPhase: Int, CaseIterable, Sendable {
     }
 
     /// Each phase lasts the climate's phase length; a length of 0 holds the full moon.
-    public static func at(daysPassed: Float, phaseLengthDays: Int) -> MoonPhase {
+    static func at(daysPassed: Float, phaseLengthDays: Int) -> MoonPhase {
         guard phaseLengthDays > 0, daysPassed.isFinite else { return .full }
         let step = Int((daysPassed / Float(phaseLengthDays)).rounded(.down))
         let count = allCases.count
@@ -85,7 +85,7 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
     public static let moonShadowTexture = "sky\\moonshadow.dds"
 
     /// The light never comes from lower than this, so shadows stay finite at the horizon.
-    public static let minimumLightElevation: Float = 10 * .pi / 180
+    static let minimumLightElevation: Float = 10 * .pi / 180
 
     public static func resolve(
         at time: (hour: Float, daysPassed: Float),
@@ -216,7 +216,7 @@ nonisolated public struct CelestialSky: Equatable, Sendable {
     }
 
     /// 0 by day, 1 by night, with linear fades in the evening and the morning.
-    public static func auroraFade(hour: Float, settings: SkySettings) -> Float {
+    static func auroraFade(hour: Float, settings: SkySettings) -> Float {
         let hour = wrapHour(hour)
         if let time = progress(hour, settings.auroraFadeInStart, settings.auroraFadeIn) {
             return time

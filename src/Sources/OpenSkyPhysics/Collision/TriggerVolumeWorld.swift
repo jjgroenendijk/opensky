@@ -36,7 +36,7 @@ nonisolated public struct TriggerVolumeStats: Equatable, Sendable {
     /// `ReferenceKey`, so no script instance could ever be addressed.
     public var unkeyedReferenceCount = 0
 
-    public var volumeCount: Int {
+    var volumeCount: Int {
         meshVolumeCount + primitiveVolumeCount
     }
 
@@ -82,7 +82,7 @@ nonisolated public struct TriggerVolumeSet: Sendable {
 
     public static let empty = TriggerVolumeSet(location: nil, volumes: [])
 
-    public var indexNodeCount: Int {
+    var indexNodeCount: Int {
         index.nodeCount
     }
 

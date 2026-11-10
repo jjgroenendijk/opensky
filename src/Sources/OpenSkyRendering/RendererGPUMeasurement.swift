@@ -2,7 +2,7 @@
 // same commit feedback `FrameStats` reads; memory comes from the device and the
 // renderer's residency set.
 
-public import Metal
+import Metal
 import Synchronization
 
 /// What the GPU reported since the last take: the busy time of each finished frame,
@@ -34,12 +34,12 @@ nonisolated public final class GPUFrameLog: Sendable {
     public init() {}
 
     /// Host times in seconds, as `MTL4CommitFeedback` reports them.
-    public func record(start: CFTimeInterval, end: CFTimeInterval) {
+    func record(start: CFTimeInterval, end: CFTimeInterval) {
         guard end > start else { return }
         report.withLock { $0.spansMS.append((end - start) * 1000) }
     }
 
-    public func recordFailure(_ error: any Error) {
+    func recordFailure(_ error: any Error) {
         let text = String(describing: error)
         report.withLock { report in
             report.failedCommits += 1
@@ -47,7 +47,7 @@ nonisolated public final class GPUFrameLog: Sendable {
         }
     }
 
-    public func recordSkippedFrame() {
+    func recordSkippedFrame() {
         report.withLock { $0.skippedFrames += 1 }
     }
 

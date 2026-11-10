@@ -34,24 +34,24 @@ nonisolated public struct UIRect: Equatable, Sendable {
     public var width: Float
     public var height: Float
 
-    public var minX: Float {
+    var minX: Float {
         x
     }
 
-    public var minY: Float {
+    var minY: Float {
         y
     }
 
-    public var maxX: Float {
+    var maxX: Float {
         x + width
     }
 
-    public var maxY: Float {
+    var maxY: Float {
         y + height
     }
 
     /// Shrinks the rect by `insets`; degenerate results clamp to zero extent.
-    public func inset(by insets: UIInsets) -> UIRect {
+    func inset(by insets: UIInsets) -> UIRect {
         UIRect(
             x: x + insets.left,
             y: y + insets.top,
@@ -69,20 +69,20 @@ nonisolated public struct UIRect: Equatable, Sendable {
 }
 
 /// Edge padding in UI points.
-nonisolated public struct UIInsets: Equatable, Sendable {
-    public var top: Float
-    public var left: Float
-    public var bottom: Float
-    public var right: Float
+nonisolated struct UIInsets: Equatable, Sendable {
+    var top: Float
+    var left: Float
+    var bottom: Float
+    var right: Float
 
-    public init(top: Float, left: Float, bottom: Float, right: Float) {
+    init(top: Float, left: Float, bottom: Float, right: Float) {
         self.top = top
         self.left = left
         self.bottom = bottom
         self.right = right
     }
 
-    public init(all value: Float) {
+    init(all value: Float) {
         self.init(top: value, left: value, bottom: value, right: value)
     }
 }
@@ -95,7 +95,7 @@ nonisolated public enum UIAnchor: CaseIterable, Sendable {
     case bottomLeft, bottom, bottomRight
 
     /// Horizontal unit position: 0 left, 0.5 center, 1 right.
-    public var unitX: Float {
+    var unitX: Float {
         switch self {
         case .topLeft, .left, .bottomLeft: 0
         case .top, .center, .bottom: 0.5
@@ -104,7 +104,7 @@ nonisolated public enum UIAnchor: CaseIterable, Sendable {
     }
 
     /// Vertical unit position: 0 top, 0.5 center, 1 bottom.
-    public var unitY: Float {
+    var unitY: Float {
         switch self {
         case .topLeft, .top, .topRight: 0
         case .left, .center, .right: 0.5
@@ -114,7 +114,7 @@ nonisolated public enum UIAnchor: CaseIterable, Sendable {
 
     /// Positions a child of `size` inside `container`: the child's anchor point
     /// lands on the container's anchor point, shifted by `offset`.
-    public func rect(ofSize size: UISize, in container: UIRect, offset: UIPoint) -> UIRect {
+    func rect(ofSize size: UISize, in container: UIRect, offset: UIPoint) -> UIRect {
         let anchorX = container.x + container.width * unitX
         let anchorY = container.y + container.height * unitY
         return UIRect(
@@ -139,12 +139,12 @@ nonisolated public struct UIScale: Equatable, Sendable {
     }
 
     /// Points -> nearest whole pixel.
-    public func snap(_ points: Float) -> Float {
+    func snap(_ points: Float) -> Float {
         (points * factor).rounded()
     }
 
     /// Converts a point rect to a pixel rect, snapping each edge independently.
-    public func snapRect(_ rect: UIRect) -> UIRect {
+    func snapRect(_ rect: UIRect) -> UIRect {
         let minX = snap(rect.minX)
         let minY = snap(rect.minY)
         let maxX = snap(rect.maxX)

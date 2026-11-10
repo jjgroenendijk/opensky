@@ -6,12 +6,12 @@
 import Foundation
 
 /// One parsed statement.
-nonisolated public enum BehaviorExpressionStatement: Equatable, Sendable {
+nonisolated enum BehaviorExpressionStatement: Equatable, Sendable {
     case assignment(variable: String, value: BehaviorExpression)
     case event(name: String, condition: BehaviorExpression)
 
     /// Parses `source`, or nil when it fits neither statement form.
-    public static func parse(_ source: String) -> BehaviorExpressionStatement? {
+    static func parse(_ source: String) -> BehaviorExpressionStatement? {
         guard
             let tokens = BehaviorExpressionLexer.tokens(of: source), tokens.count >= 3,
             case let .name(target) = tokens[0] else { return nil }
@@ -28,7 +28,7 @@ nonisolated public enum BehaviorExpressionStatement: Equatable, Sendable {
 }
 
 /// One parsed arithmetic expression.
-indirect nonisolated public enum BehaviorExpression: Equatable, Sendable {
+indirect nonisolated enum BehaviorExpression: Equatable, Sendable {
     case number(Float)
     case variable(String)
     case unary(String, BehaviorExpression)
@@ -42,7 +42,7 @@ indirect nonisolated public enum BehaviorExpression: Equatable, Sendable {
     }
 
     /// The value, or nil when a name does not resolve or a function is unknown.
-    public func evaluate(_ lookup: (String) -> Float?) -> Float? {
+    func evaluate(_ lookup: (String) -> Float?) -> Float? {
         switch self {
         case let .number(value):
             return value
@@ -284,14 +284,14 @@ nonisolated struct BehaviorExpressionParser {
 }
 
 /// SplitMix64: small, fast, and the same sequence on every machine.
-nonisolated public struct BehaviorRandom: Equatable, Sendable {
+nonisolated struct BehaviorRandom: Equatable, Sendable {
     private var state: UInt64
 
-    public init(seed: UInt64 = 0x5EED) {
+    init(seed: UInt64 = 0x5EED) {
         state = seed
     }
 
-    public mutating func next() -> UInt64 {
+    mutating func next() -> UInt64 {
         state &+= 0x9E37_79B9_7F4A_7C15
         var value = state
         value = (value ^ (value >> 30)) &* 0xBF58_476D_1CE4_E5B9
@@ -300,7 +300,7 @@ nonisolated public struct BehaviorRandom: Equatable, Sendable {
     }
 
     /// A whole number in `range`.
-    public mutating func next(in range: ClosedRange<Int>) -> Int {
+    mutating func next(in range: ClosedRange<Int>) -> Int {
         let span = UInt64(range.upperBound - range.lowerBound + 1)
         return range.lowerBound + Int(next() % span)
     }

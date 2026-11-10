@@ -7,21 +7,21 @@ public import OpenSkyFormatsAnimation
 import simd
 
 /// What one modifier run gets beside the pose.
-nonisolated public struct BehaviorModifierStep {
-    public let target: HKXPointerTarget
-    public let node: BehaviorCompiledNode
+nonisolated struct BehaviorModifierStep {
+    let target: HKXPointerTarget
+    let node: BehaviorCompiledNode
     /// Bound member values, keyed by member path without the `m_` prefix.
-    public let bound: [String: BehaviorVariableValue]
-    public let deltaTime: Float
-    public let depth: Int
+    let bound: [String: BehaviorVariableValue]
+    let deltaTime: Float
+    let depth: Int
 }
 
 nonisolated extension [String: BehaviorVariableValue] {
-    public func bool(_ path: String, or fallback: Bool) -> Bool {
+    func bool(_ path: String, or fallback: Bool) -> Bool {
         self[BehaviorGraphInstance.normalizedMemberPath(path)]?.boolValue ?? fallback
     }
 
-    public func quad(_ path: String, or fallback: SIMD4<Float>) -> SIMD4<Float> {
+    func quad(_ path: String, or fallback: SIMD4<Float>) -> SIMD4<Float> {
         switch self[BehaviorGraphInstance.normalizedMemberPath(path)] {
         case let .quad(value): value
         case let .some(other): SIMD4(other.realValue, 0, 0, 0)

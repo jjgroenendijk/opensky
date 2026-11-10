@@ -233,7 +233,7 @@ nonisolated extension BehaviorGraphInstance {
 }
 
 /// The node states and held parameter of a cyclic blend's running copy.
-nonisolated public struct BehaviorCyclicCopy: Equatable, Sendable {
-    public var states: [HKXPointerTarget: BehaviorNodeState]
-    public let parameter: Float
+nonisolated struct BehaviorCyclicCopy: Equatable, Sendable {
+    var states: [HKXPointerTarget: BehaviorNodeState]
+    let parameter: Float
 }

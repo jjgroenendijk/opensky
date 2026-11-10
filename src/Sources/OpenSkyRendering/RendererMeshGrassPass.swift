@@ -22,7 +22,7 @@ extension Renderer {
     }
 
     /// Why the mesh path cannot draw; nil when it can.
-    public var meshShaderGrassUnavailableReason: String? {
+    var meshShaderGrassUnavailableReason: String? {
         MeshShaderSupport.unsupportedReason(device) ?? meshGrass.pipelineFailure
     }
 
@@ -34,7 +34,7 @@ extension Renderer {
     }
 
     /// Debug views keep the classic path, which has their pipelines.
-    public var drawsGrassWithMeshShaders: Bool {
+    var drawsGrassWithMeshShaders: Bool {
         meshGrass.enabled && meshShaderGrassUnavailableReason == nil && !isRenderDebugActive
     }
 

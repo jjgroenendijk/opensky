@@ -32,9 +32,9 @@ nonisolated public struct AssetCacheBuildProgress: Equatable, Sendable {
     /// Entries written by this run.
     public var converted = 0
     /// Entries that were current already.
-    public var alreadyCurrent = 0
+    var alreadyCurrent = 0
     /// Sources a converter does not store; they load from the original file.
-    public var notStored = 0
+    var notStored = 0
     public var failures: [AssetCacheBuildFailure] = []
     public var elapsedSeconds: Double = 0
     public var isCancelled = false

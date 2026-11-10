@@ -4,7 +4,7 @@
 
 public import OpenSkyFormatsAnimation
 import OpenSkyFormatsMesh
-public import simd
+import simd
 
 /// The motor settings of one `hkbPoweredRagdollControlsModifier`, in engine units.
 nonisolated public struct RagdollMotor: Equatable, Sendable {
@@ -48,7 +48,7 @@ nonisolated public struct RagdollMotor: Equatable, Sendable {
 
     /// The velocity after one step of pulling towards a target `error` away.
     /// `weight` is how much the motor still drives, `0 ... 1`.
-    public func driven(
+    func driven(
         _ velocity: SIMD3<Float>,
         error: SIMD3<Float>,
         mass: Float,
@@ -78,7 +78,7 @@ nonisolated public struct RagdollMotor: Equatable, Sendable {
 
     /// The rotation that turns `current` into `target`, as axis times angle, along
     /// the shorter way round.
-    public static func angularError(
+    static func angularError(
         from current: simd_quatf,
         to target: simd_quatf
     ) -> SIMD3<Float> {

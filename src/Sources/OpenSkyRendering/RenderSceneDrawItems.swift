@@ -89,7 +89,7 @@ nonisolated public struct WaterDrawItem: Sendable {
         self.bounds = bounds
     }
 
-    public init(
+    init(
         mesh: RenderMesh,
         modelMatrix: float4x4,
         shallowColor: SIMD3<Float>,

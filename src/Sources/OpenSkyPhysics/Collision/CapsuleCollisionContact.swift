@@ -20,7 +20,7 @@ nonisolated public struct CapsuleCollisionContact: Sendable {
     /// The same contact attributed to a shape's material. Narrowphase works in
     /// geometry and has no shape to ask, so the material is attached once,
     /// where the shape is still in hand.
-    public func naming(_ material: FormID?) -> CapsuleCollisionContact {
+    func naming(_ material: FormID?) -> CapsuleCollisionContact {
         CapsuleCollisionContact(normal: normal, depth: depth, material: material)
     }
 }
@@ -43,8 +43,8 @@ nonisolated public struct CapsuleMoveResult: Sendable {
 
 /// Three world-space points. The dynamic-body narrowphase runs the same closest-point
 /// query against the same static geometry.
-nonisolated public struct CollisionTriangle: Sendable {
-    public let first: SIMD3<Float>
-    public let second: SIMD3<Float>
-    public let third: SIMD3<Float>
+nonisolated struct CollisionTriangle: Sendable {
+    let first: SIMD3<Float>
+    let second: SIMD3<Float>
+    let third: SIMD3<Float>
 }

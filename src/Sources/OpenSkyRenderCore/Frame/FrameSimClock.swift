@@ -32,7 +32,7 @@ nonisolated public struct FrameSimClock: Sendable {
 
     /// Forgets the reference mark so the next `advance` returns zero. Used when a
     /// scene swap or camera reseed should not carry a stale delta forward.
-    public mutating func reset() {
+    mutating func reset() {
         lastTick = nil
     }
 }

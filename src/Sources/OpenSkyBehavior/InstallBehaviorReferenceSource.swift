@@ -57,7 +57,7 @@ nonisolated public final class InstallBehaviorReferenceSource: BehaviorReference
 
     /// How many behavior files the folder offered, so a run can report that the
     /// index is empty rather than that every reference happened to miss.
-    public var indexedCount: Int {
+    var indexedCount: Int {
         pathsByName.count
     }
 

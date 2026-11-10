@@ -9,13 +9,13 @@ public import OpenSkyGameData
 
 nonisolated public struct BehaviorGapSweep {
     public static let actorsPrefix = "meshes\\actors\\"
-    public static let idleUpdates = 30
-    public static let updatesPerEvent = 3
-    public static let timestep: Float = 1.0 / 30.0
+    static let idleUpdates = 30
+    static let updatesPerEvent = 3
+    static let timestep: Float = 1.0 / 30.0
 
     /// Node class -> objects of it in the swept graphs.
-    public private(set) var classCounts: [String: Int] = [:]
-    public private(set) var reachedClasses: Set<String> = []
+    private(set) var classCounts: [String: Int] = [:]
+    private(set) var reachedClasses: Set<String> = []
     public private(set) var tally = BehaviorTally(nameLimit: 4096)
     public private(set) var graphCount = 0
     public private(set) var eventsFired = 0
@@ -29,7 +29,7 @@ nonisolated public struct BehaviorGapSweep {
     public init() {}
 
     /// A class the evaluator runs as a node, by Havok's naming.
-    public static func isNodeClass(_ name: String) -> Bool {
+    static func isNodeClass(_ name: String) -> Bool {
         name.hasSuffix("Generator") || name.hasSuffix("Modifier")
             || name == "hkbStateMachine" || name == "hkbModifierList"
     }
@@ -37,7 +37,7 @@ nonisolated public struct BehaviorGapSweep {
     // MARK: - Classification
 
     /// Node class -> why the evaluator does not fully run it. The first reason wins.
-    public var gapReasons: [String: String] {
+    var gapReasons: [String: String] {
         let gaps = tally.unevaluatedGenerators.keys.map { ($0, "not evaluated") }
             + tally.passthroughModifiers.keys.map { ($0, "passed through") }
             + tally.undecodableObjects.keys.map { ($0, "not decoded") }

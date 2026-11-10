@@ -4,7 +4,7 @@
 // <https://ck.uesp.net/wiki/LeveledCharacter>). See docs/engine/leveled-lists.md.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 
 /// The Leveled Actor tab's difficulty: ACHR `XLCM`, 0 easy to 3 very hard. A
 /// reference without `XLCM` is `none`.
@@ -20,11 +20,11 @@ nonisolated public enum LeveledActorDifficulty: Int32, CaseIterable, Sendable {
     }
 }
 
-nonisolated public enum EncounterLevel {
+nonisolated enum EncounterLevel {
     /// The encounter level of a place in `zone`. No zone gives the player level.
     /// A zone raises a lower player to its minimum, unless it matches the player
     /// below it, and caps at its maximum when that is above 0.
-    public static func level(
+    static func level(
         playerLevel: Int,
         zone: EncounterZone?,
         settings: LeveledListSettings = .fallback
@@ -45,7 +45,7 @@ nonisolated public enum EncounterLevel {
     }
 
     /// The level a leveled actor of `difficulty` picks its list entry against.
-    public static func actorListLevel(
+    static func actorListLevel(
         encounterLevel: Int,
         difficulty: LeveledActorDifficulty,
         settings: LeveledListSettings = .fallback

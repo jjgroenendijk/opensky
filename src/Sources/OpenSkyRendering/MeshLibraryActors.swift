@@ -6,7 +6,7 @@
 import Foundation
 import Metal
 public import OpenSkyFormatsCore
-public import OpenSkyFormatsMesh
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import simd
 
@@ -189,7 +189,7 @@ nonisolated extension MeshLibrary {
         }
     }
 
-    public func characterSkeleton() -> NIFSkeleton? {
+    func characterSkeleton() -> NIFSkeleton? {
         if triedCharacterSkeleton {
             return cachedCharacterSkeleton
         }

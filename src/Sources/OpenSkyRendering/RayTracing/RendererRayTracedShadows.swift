@@ -21,7 +21,7 @@ public struct RayTracedShadowState {
     /// The player's choice; it applies only where the GPU is available.
     public var enabled = false
     /// Draws the traced shadow alone, white where lit.
-    public var showOnly = false
+    var showOnly = false
     /// Nil on a GPU without hardware ray tracing.
     let shaded: RayTracedPipelines?
     let shadowView: RayTracedPipelines?
@@ -37,7 +37,7 @@ public struct RayTracedShadowState {
         shadowView = pipelines?.1
     }
 
-    public var isActive: Bool {
+    var isActive: Bool {
         enabled && shaded != nil
     }
 

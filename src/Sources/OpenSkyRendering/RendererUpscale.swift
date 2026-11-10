@@ -13,8 +13,8 @@ public import simd
 /// The renderer's upscaling state.
 public struct UpscaleState {
     let resources: UpscaleResources
-    public var renderScale = RenderScale.off
-    public var upscaler = UpscalerKind.temporal
+    var renderScale = RenderScale.off
+    var upscaler = UpscalerKind.temporal
     /// Set when MetalFX refused the last scaler request; cleared by a new choice.
     var creationFailure: String?
     var targets: UpscaleTargets?
@@ -23,7 +23,7 @@ public struct UpscaleState {
     var frame = 0
     var resetPending = true
     /// History resets since launch: scene swaps, camera cuts, and size changes.
-    public internal(set) var historyResets = 0
+    var historyResets = 0
     var previousViewProjection: float4x4?
     var previousView: float4x4?
     var previousModels: [MotionKey: float4x4] = [:]
@@ -38,7 +38,7 @@ public struct UpscaleState {
         self.resources = resources
     }
 
-    public var unavailableReason: String? {
+    var unavailableReason: String? {
         if let creationFailure {
             return creationFailure
         }
@@ -49,12 +49,12 @@ public struct UpscaleState {
     }
 
     /// The sizes of the last upscaled frame; nil while upscaling is off.
-    public var sizes: (input: SIMD2<Int>, output: SIMD2<Int>)? {
+    var sizes: (input: SIMD2<Int>, output: SIMD2<Int>)? {
         targets.map { ($0.inputSize, $0.outputSize) }
     }
 
     /// True while MetalFX builds the scaler the current settings ask for.
-    public var isBuildingScaler: Bool {
+    var isBuildingScaler: Bool {
         renderScale.isOn && scalerBuild.map { $0.scalers == nil } ?? false
     }
 
@@ -111,7 +111,7 @@ extension Renderer {
     }
 
     /// Drops the upscaler's history, so the next frame shows nothing from earlier ones.
-    public func resetUpscaleHistory() {
+    func resetUpscaleHistory() {
         upscale.resetPending = true
     }
 

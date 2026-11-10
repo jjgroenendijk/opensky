@@ -43,7 +43,7 @@ nonisolated public struct ConditionFunction: Sendable {
     }
 
     /// Creation Kit spelling of the index, 4096 higher than the stored one.
-    public var creationKitIndex: Int {
+    var creationKitIndex: Int {
         Int(index) + ConditionFunctionRegistry.creationKitOffset
     }
 }
@@ -72,16 +72,16 @@ nonisolated public struct ConditionFunctionRegistry: Sendable {
         functions[index]
     }
 
-    public var count: Int {
+    var count: Int {
         functions.count
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         functions.isEmpty
     }
 
     /// Implemented indices in ascending order.
-    public var indices: [UInt16] {
+    var indices: [UInt16] {
         functions.keys.sorted()
     }
 
@@ -92,7 +92,7 @@ nonisolated public struct ConditionFunctionRegistry: Sendable {
     }
 
     /// Implemented functions in index order, for inspection surfaces.
-    public func sortedFunctions() -> [ConditionFunction] {
+    func sortedFunctions() -> [ConditionFunction] {
         indices.compactMap { functions[$0] }
     }
 }

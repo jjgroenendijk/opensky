@@ -41,7 +41,7 @@ nonisolated public struct FaceMorphCounts: Equatable, Sendable {
 
     /// One line per group whose count differs from the types the chargen TRI holds: the
     /// base type 0 plus every numbered target in `targetNames`.
-    public func mismatches(targetNames: [String]) -> [String] {
+    func mismatches(targetNames: [String]) -> [String] {
         Self.groups.compactMap { group in
             guard let count = count(partIndex: group.partIndex) else { return nil }
             let held = Self.highestType(group.targetPrefix, in: targetNames) + 1

@@ -11,7 +11,7 @@ nonisolated public struct EyeAdaptation: Equatable, Sendable {
     public static let speedScale: Float = 2
     public static let strengthScale: Float = 0.4
     /// No step is smaller than this, so the eye always reaches the scene.
-    public static let minimumStep: Float = 1 / 256
+    static let minimumStep: Float = 1 / 256
     /// Every lit pixel and the sky end times this scale (the shaders' `litOutputScale`).
     public static let sceneScale: Float = 1 / 1.2
 

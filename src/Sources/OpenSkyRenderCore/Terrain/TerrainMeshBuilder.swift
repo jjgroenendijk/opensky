@@ -26,7 +26,7 @@ nonisolated public enum TerrainMeshBuilder: Sendable {
     /// texture repeat spans `uvQuadsPerRepeat` quads. The exact vanilla tiling
     /// density is UNCONFIRMED (community lore varies) — this constant is a
     /// verifiable starting point, tuned visually against real data.
-    public static let uvQuadsPerRepeat: Float = 2
+    static let uvQuadsPerRepeat: Float = 2
 
     /// One ATXT splat layer of a quadrant, opacities baked dense.
     public struct Layer: Sendable {

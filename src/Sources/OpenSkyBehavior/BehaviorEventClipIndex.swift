@@ -34,15 +34,9 @@ nonisolated public struct BehaviorEventClip: Equatable, Sendable {
 
 /// One state of one machine in one behavior file, as a reference spells the file.
 nonisolated public struct BehaviorStatePosition: Hashable, Sendable {
-    public let file: String
-    public let machine: HKXPointerTarget
-    public let state: Int
-
-    public init(file: String, machine: HKXPointerTarget, state: Int) {
-        self.file = file
-        self.machine = machine
-        self.state = state
-    }
+    let file: String
+    let machine: HKXPointerTarget
+    let state: Int
 }
 
 /// A clip that a chain plays after the first one.

@@ -15,19 +15,19 @@ public import simd
 
 /// The composite pipelines, their uniform ring, and the scratch targets of the split pass.
 public final class ImageSpacePassResources {
-    public let pipeline: any MTLRenderPipelineState
+    let pipeline: any MTLRenderPipelineState
     /// Grades the pixel in tile memory, so the scene pass needs no copy and no stored depth.
-    public let tilePipeline: any MTLRenderPipelineState
+    let tilePipeline: any MTLRenderPipelineState
     public let uniformBuffer: any MTLBuffer
     /// The `PostEffectUniforms` per frame slot.
-    public let postUniformBuffer: any MTLBuffer
+    let postUniformBuffer: any MTLBuffer
     /// The tone-mapping luminance sum and sample count per frame slot.
     public let luminanceBuffer: any MTLBuffer
     /// Sized to the last target; replaced when the target size or format changes.
-    public private(set) var sceneCopy: any MTLTexture?
+    private(set) var sceneCopy: any MTLTexture?
     /// The depth the split pass stores between its two encoders. The scene depth is
     /// memoryless, so it cannot outlive one encoder.
-    public private(set) var storedDepth: any MTLTexture?
+    private(set) var storedDepth: any MTLTexture?
     /// Last frame's view-projection, for the motion blur and the occlusion history.
     var previousViewProjection: float4x4?
     /// Last frame's camera, for the occlusion history.

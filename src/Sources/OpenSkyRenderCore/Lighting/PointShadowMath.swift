@@ -23,7 +23,7 @@ nonisolated public enum PointShadowMath {
     ]
 
     /// The face whose axis is the largest component of `offset`, from the light.
-    public static func face(of offset: SIMD3<Float>) -> Int {
+    static func face(of offset: SIMD3<Float>) -> Int {
         let axis = abs(offset)
         if axis.x >= axis.y, axis.x >= axis.z {
             return offset.x > 0 ? 0 : 1

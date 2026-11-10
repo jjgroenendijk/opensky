@@ -2,13 +2,13 @@
 // inside one placed collision shape, and which way that shape's surface faces.
 // See docs/engine/dynamic-narrowphase.md.
 
-public import OpenSkyFormatsMesh
-public import simd
+import OpenSkyFormatsMesh
+import simd
 
 /// How a triangle's plane normal becomes a surface normal. The surface decides,
 /// not the body: some vanilla clutter has its decoded center of mass below every
 /// collider vertex, so orienting toward the center fails.
-nonisolated public enum DynamicSurfaceOrientation: Sendable {
+nonisolated enum DynamicSurfaceOrientation: Sendable {
     /// Trust the winding the file carries. Vanilla wound its collision
     /// triangles front face outward, which the probe confirms over a whole
     /// interior's architecture and furniture: reading the winding straight took
@@ -24,7 +24,7 @@ nonisolated public enum DynamicSurfaceOrientation: Sendable {
 
     /// The rule one placed shape's triangles are read under, in that shape's
     /// own local space.
-    public static func of(_ geometry: NIFCollisionGeometry) -> Self {
+    static func of(_ geometry: NIFCollisionGeometry) -> Self {
         switch geometry {
         case let .convexVertices(vertices, _):
             .outward(from: Self.centroid(of: vertices))
@@ -37,7 +37,7 @@ nonisolated public enum DynamicSurfaceOrientation: Sendable {
 
     /// The same rule expressed in world space, for the query that places a
     /// shape's triangles before testing them.
-    public func transformed(by matrix: float4x4) -> Self {
+    func transformed(by matrix: float4x4) -> Self {
         switch self {
         case .winding:
             .winding
@@ -47,7 +47,7 @@ nonisolated public enum DynamicSurfaceOrientation: Sendable {
     }
 
     /// Turns a triangle's raw winding normal into its surface normal.
-    public func oriented(_ normal: SIMD3<Float>, at vertex: SIMD3<Float>) -> SIMD3<Float> {
+    func oriented(_ normal: SIMD3<Float>, at vertex: SIMD3<Float>) -> SIMD3<Float> {
         guard case let .outward(interior) = self else { return normal }
         return simd_dot(normal, interior - vertex) > 0 ? -normal : normal
     }
@@ -60,7 +60,7 @@ nonisolated public enum DynamicSurfaceOrientation: Sendable {
 
 nonisolated extension DynamicBodyContacts {
     /// How deep a world sphere sits inside one placed static shape.
-    public static func penetration(
+    static func penetration(
         of point: SIMD3<Float>,
         radius: Float,
         shape: StaticCollisionShape
@@ -187,15 +187,15 @@ nonisolated struct LocalReach {
 /// One triangle with its bounds and oriented surface normal worked out in
 /// advance. Hoisting this out of the per-sample loop is most of the measured
 /// speedup.
-nonisolated public struct DynamicSurfaceTriangle: Sendable {
-    public let triangle: CollisionTriangle
+nonisolated struct DynamicSurfaceTriangle: Sendable {
+    let triangle: CollisionTriangle
     /// The surface normal, already facing the way the shape's own rule says.
-    public let normal: SIMD3<Float>
-    public let lower: SIMD3<Float>
-    public let upper: SIMD3<Float>
+    let normal: SIMD3<Float>
+    let lower: SIMD3<Float>
+    let upper: SIMD3<Float>
 
     /// Nil for a degenerate triangle, which has no surface to speak of.
-    public init?(_ triangle: CollisionTriangle, orientation: DynamicSurfaceOrientation) {
+    init?(_ triangle: CollisionTriangle, orientation: DynamicSurfaceOrientation) {
         let raw = simd_cross(
             triangle.second - triangle.first,
             triangle.third - triangle.first
@@ -213,7 +213,7 @@ nonisolated public struct DynamicSurfaceTriangle: Sendable {
     ///   a cheap lower bound, so a triangle that cannot win is skipped exactly.
     /// - Returns: nil when out of range or not nearest. A non-nil answer with no
     ///   penetration lets a near "outside" veto a far "deep inside".
-    public func surface(
+    func surface(
         of point: SIMD3<Float>,
         radius: Float,
         recovery: Float,

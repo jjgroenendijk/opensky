@@ -126,11 +126,11 @@ public final class SkyCelestial {
     }
 
     /// A record names its textures relative to `textures\` and its models to `meshes\`.
-    nonisolated public static func textureKey(_ relative: String) -> String? {
+    nonisolated static func textureKey(_ relative: String) -> String? {
         key("textures\\" + relative)
     }
 
-    nonisolated public static func meshKey(_ relative: String) -> String? {
+    nonisolated static func meshKey(_ relative: String) -> String? {
         key("meshes\\" + relative)
     }
 

@@ -32,7 +32,7 @@ nonisolated public struct AttenuationCurve: Equatable, Sendable {
 
     /// Full gain inside the minimum distance, the last point past the maximum, and
     /// linear between neighbouring points.
-    public func gain(atDistance distance: Float) -> Float {
+    func gain(atDistance distance: Float) -> Float {
         guard let first = points.first, let last = points.last else { return 1 }
         let distance = distance.isFinite ? distance : maximumDistance
         guard distance > minimumDistance else { return first }

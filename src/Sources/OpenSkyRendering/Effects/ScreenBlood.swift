@@ -54,7 +54,7 @@ nonisolated public struct ScreenBloodTextures {
 /// The two pipelines, the vertex ring, and this frame's quads.
 public final class ScreenBloodLayer {
     /// At most this many quads draw in one frame; the rest wait.
-    nonisolated public static let quadLimit = 128
+    nonisolated static let quadLimit = 128
     nonisolated static let verticesPerQuad = 6
 
     let splatterPipeline: any MTLRenderPipelineState
@@ -62,7 +62,7 @@ public final class ScreenBloodLayer {
     let vertexBuffer: any MTLBuffer
     public internal(set) var splats: [ScreenBloodSplat] = []
     public internal(set) var textures: ScreenBloodTextures?
-    public internal(set) var lastQuads = 0
+    var lastQuads = 0
 
     init(
         device: any MTLDevice,

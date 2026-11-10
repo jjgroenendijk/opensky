@@ -21,7 +21,7 @@ nonisolated public struct CloudDomeGeometry: Sendable {
     /// Ranges into `indices`, one per shape.
     public var shapes: [Range<Int>] = []
 
-    public init() {}
+    init() {}
 
     /// Positions and normals are already in model space after the shape transform.
     public init(model: Model) {
@@ -95,8 +95,8 @@ public final class SkyClouds {
     private var uniformsResident = false
     let uniforms: any MTLBuffer
     /// Layers drawn in the last frame.
-    public internal(set) var drawnLayerCount = 0
-    public private(set) var failedPaths: [String] = []
+    var drawnLayerCount = 0
+    private(set) var failedPaths: [String] = []
 
     /// `immediate` loads inside the request, for offscreen frames and tests.
     public init(
@@ -123,7 +123,7 @@ public final class SkyClouds {
     }
 
     /// The record spells a layer texture relative to `textures\`.
-    public static func texturePath(_ texture: String) -> String {
+    static func texturePath(_ texture: String) -> String {
         let path = "textures\\" + texture
         return attempt { try VirtualFileSystem.normalize(path) } ?? path.lowercased()
     }

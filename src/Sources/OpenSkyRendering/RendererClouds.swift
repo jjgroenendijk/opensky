@@ -13,7 +13,7 @@ extension Renderer {
     }
 
     /// Drains finished cloud loads and requests the layers the weather needs now.
-    public func prepareClouds() {
+    func prepareClouds() {
         guard let skyClouds else { return }
         let added = skyClouds.prepare(frameCloudLayers)
         guard !added.isEmpty else { return }

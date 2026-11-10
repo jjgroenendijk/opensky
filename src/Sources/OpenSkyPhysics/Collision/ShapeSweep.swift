@@ -96,7 +96,7 @@ nonisolated public enum ShapeSweeper: Sendable {
     /// on the touch distance to well inside the solver's penetration slop.
     public static let sampleCount = 24
     /// Bisection rounds after the first touching sample.
-    public static let refinementCount = 12
+    static let refinementCount = 12
     private static let epsilon: Float = 1e-5
 
     /// First hit along `query`, or nil where the sweep is clear.

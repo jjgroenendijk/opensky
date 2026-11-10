@@ -13,7 +13,7 @@ nonisolated public struct TopicSubtypeTexts: Equatable, Sendable {
 
     public init() {}
 
-    public func name(of subtype: FourCC?) -> String? {
+    func name(of subtype: FourCC?) -> String? {
         subtype.map { names[$0] ?? $0.description }
     }
 

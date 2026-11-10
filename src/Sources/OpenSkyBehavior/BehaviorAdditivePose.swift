@@ -12,7 +12,7 @@ nonisolated extension BehaviorPoseMath {
     )
 
     /// An additive pose with no change on any of `count` bones.
-    public static func unchanged(boneCount count: Int) -> BehaviorPose {
+    static func unchanged(boneCount count: Int) -> BehaviorPose {
         BehaviorPose(bones: Array(repeating: unchangedBone, count: count), isAdditive: true)
     }
 

@@ -61,7 +61,7 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
         }
     }
 
-    public var textures: [any MTLTexture] {
+    var textures: [any MTLTexture] {
         [
             glow, detail, environment, environmentMask, innerLayer, backLight,
             projected?.diffuse, projected?.noise

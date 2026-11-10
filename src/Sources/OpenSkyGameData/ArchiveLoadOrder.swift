@@ -15,7 +15,7 @@ nonisolated public enum ArchiveLoadOrder: Sendable {
     /// Vanilla `[Archive]` resource lists (Skyrim_Default.ini, SSE 1.6):
     /// sResourceArchiveList followed by sResourceArchiveList2. Fallback when
     /// no ini in the install root is readable.
-    public static let vanillaResourceArchives = [
+    static let vanillaResourceArchives = [
         "Skyrim - Misc.bsa",
         "Skyrim - Shaders.bsa",
         "Skyrim - Interface.bsa",

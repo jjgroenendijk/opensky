@@ -34,11 +34,11 @@ nonisolated public struct ResolvedRelationship: Equatable, Sendable {
     /// separates them.
     public let associationType: ResolvedAssociationType?
 
-    public var editorID: String? {
+    var editorID: String? {
         relationship.editorID
     }
 
-    public var rawAssociationType: FormID? {
+    var rawAssociationType: FormID? {
         relationship.associationType
     }
 
@@ -46,13 +46,13 @@ nonisolated public struct ResolvedRelationship: Equatable, Sendable {
         relationship.rank
     }
 
-    public var isSecret: Bool {
+    var isSecret: Bool {
         relationship.isSecret
     }
 
     /// The title the named side carries, or nil when no association type
     /// resolved or it authored no title for that side.
-    public func title(ofParent isParent: Bool, female: Bool) -> String? {
+    func title(ofParent isParent: Bool, female: Bool) -> String? {
         guard let associationType = associationType?.associationType else { return nil }
         return isParent
             ? associationType.parentTitle(female: female)
@@ -66,29 +66,29 @@ nonisolated public struct RelationshipStore: Sendable {
     private let associationTypeTable: ResolvedRecordTable<ResolvedAssociationType>
     /// How many pairs were named by more than one record. Vanilla authors each
     /// pair once; the load-order winner is the one kept.
-    public private(set) var duplicatePairCount = 0
+    private(set) var duplicatePairCount = 0
     private var byPair: [String: ResolvedRelationship] = [:]
     private var byActor: [ReferenceKey: [ResolvedRelationship]] = [:]
 
-    public var relationships: [ResolvedFormID: ResolvedRelationship] {
+    var relationships: [ResolvedFormID: ResolvedRelationship] {
         relationshipTable.values
     }
 
-    public var associationTypes: [ResolvedFormID: ResolvedAssociationType] {
+    var associationTypes: [ResolvedFormID: ResolvedAssociationType] {
         associationTypeTable.values
     }
 
-    public var skippedRecords: SkippedRecords {
+    var skippedRecords: SkippedRecords {
         relationshipTable.skipped.merging(associationTypeTable.skipped)
     }
 
     /// Every relationship the load order carries, ordered by identity so a
     /// caller that prints or counts them gets the same answer on every run.
-    public var sortedRelationships: [ResolvedRelationship] {
+    var sortedRelationships: [ResolvedRelationship] {
         relationships.values.sorted { Self.precedes($0.id, $1.id) }
     }
 
-    public var sortedAssociationTypes: [ResolvedAssociationType] {
+    var sortedAssociationTypes: [ResolvedAssociationType] {
         associationTypes.values.sorted { Self.precedes($0.id, $1.id) }
     }
 
@@ -131,15 +131,15 @@ nonisolated public struct RelationshipStore: Sendable {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["RELA", "ASTP"]))
     }
 
-    public func relationship(_ id: ResolvedFormID) -> ResolvedRelationship? {
+    func relationship(_ id: ResolvedFormID) -> ResolvedRelationship? {
         relationshipTable.value(id)
     }
 
-    public func relationship(editorID: String) -> ResolvedRelationship? {
+    func relationship(editorID: String) -> ResolvedRelationship? {
         relationshipTable.value(editorID: editorID)
     }
 
-    public func associationType(editorID: String) -> ResolvedAssociationType? {
+    func associationType(editorID: String) -> ResolvedAssociationType? {
         associationTypeTable.value(editorID: editorID)
     }
 
@@ -172,14 +172,14 @@ nonisolated public struct RelationshipStore: Sendable {
         index.resolvedID(id, fromPlugin: pluginName)
     }
 
-    public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedRelationship? {
+    func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedRelationship? {
         guard let resolved = resolvedID(id, fromPlugin: pluginName) else { return nil }
         return relationship(resolved)
     }
 
     /// A relationship link as text: its editor ID when the load order carries
     /// the record, and an explicit unresolved marker when it does not.
-    public func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
+    func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
         guard let resolved = resolve(id, fromPlugin: pluginName) else {
             return "[UNRESOLVED] \(id)"
         }
@@ -223,8 +223,8 @@ nonisolated public struct RelationshipStore: Sendable {
     }
 }
 
-nonisolated public enum RelationshipStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> RelationshipStore {
+nonisolated enum RelationshipStoreLoader: Sendable {
+    static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> RelationshipStore {
         RelationshipStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

@@ -116,7 +116,7 @@ nonisolated public struct ConditionOutcome: Equatable, Sendable {
     public let failures: [ConditionFailure]
 
     public static let `true` = ConditionOutcome(isTrue: true, failures: [])
-    public static let `false` = ConditionOutcome(isTrue: false, failures: [])
+    static let `false` = ConditionOutcome(isTrue: false, failures: [])
 
     public init(isTrue: Bool, failures: [ConditionFailure] = []) {
         self.isTrue = isTrue
@@ -125,7 +125,7 @@ nonisolated public struct ConditionOutcome: Equatable, Sendable {
 
     /// True when the outcome came from real answers rather than from a
     /// fallback.
-    public var isConclusive: Bool {
+    var isConclusive: Bool {
         failures.isEmpty
     }
 }
@@ -268,7 +268,7 @@ nonisolated public struct ConditionEvaluator: Sendable {
 
     /// Exact float comparison — see the file header on why no epsilon. Nil for
     /// the two undefined operator encodings.
-    public static func compare(
+    static func compare(
         _ left: Float,
         _ comparison: Condition.ComparisonOperator,
         _ right: Float

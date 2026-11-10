@@ -10,7 +10,7 @@ nonisolated public struct PlayerRuleSwitches: WorldStateComponent, Hashable, Sen
     /// Witnesses report the player's crimes. Off, a crime costs the player nothing.
     public var reportsCrime: Bool
 
-    public static let standard = Self()
+    static let standard = Self()
 
     public static var componentKind: WorldStateComponentKind {
         .playerRules
@@ -23,7 +23,7 @@ nonisolated public struct PlayerRuleSwitches: WorldStateComponent, Hashable, Sen
 }
 
 nonisolated extension WorldStateComponentKind {
-    public static let playerRules = Self(
+    static let playerRules = Self(
         rawValue: "playerRules", order: 45, affectsCellBuild: false
     )
 }

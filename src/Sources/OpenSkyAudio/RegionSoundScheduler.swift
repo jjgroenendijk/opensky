@@ -33,7 +33,7 @@ nonisolated public struct RegionSoundCommands: Equatable, Sendable {
 nonisolated public struct RegionSoundScheduler: Equatable, Sendable {
     /// Seconds between two rolls. [WARNING] Provisional: no open source gives Skyrim's
     /// interval, so this is Morrowind's, from OpenMW's fallback settings.
-    public static let rollInterval: ClosedRange<Float> = 1 ... 5
+    static let rollInterval: ClosedRange<Float> = 1 ... 5
 
     public private(set) var sounds: [RegionSound] = []
     /// The loops asked to play, in bed order.

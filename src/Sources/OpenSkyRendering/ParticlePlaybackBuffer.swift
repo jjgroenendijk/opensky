@@ -2,7 +2,7 @@
 // or ribbon bands for strips, rain streaks, and lightning (docs/rendering/particles.md).
 
 import Metal
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyRenderCore
 import simd
@@ -10,7 +10,7 @@ import simd
 nonisolated extension ParticlePlayback {
     /// Writes the live particles into the slot's range. With a `viewer`, a blend that
     /// depends on order gets its particles far to near.
-    public func prepareBuffer(slot: Int, viewer: SIMD3<Float>? = nil) -> (offset: Int, count: Int) {
+    func prepareBuffer(slot: Int, viewer: SIMD3<Float>? = nil) -> (offset: Int, count: Int) {
         let simulator = simulator
         let offset = slot * max(capacity, 1) * MemoryLayout<ParticleGPUInstance>.stride
         guard simulator.isVisible, meshModel == nil else { return (offset, 0) }
@@ -79,7 +79,7 @@ nonisolated extension ParticlePlayback {
 
     /// The box around the live particles and their radii, nil with none alive. Mesh
     /// bounds are not used, because mod meshes often store wrong ones.
-    public var liveBounds: ModelBounds? {
+    var liveBounds: ModelBounds? {
         if let lightning {
             return lightningBounds(lightning.parameters)
         }

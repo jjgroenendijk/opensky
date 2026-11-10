@@ -123,21 +123,21 @@ nonisolated extension RagdollDefinition {
 
 /// Where one decoded body ended up, which is all the joint pass needs to carry
 /// an entity-space pivot into the body's own centre-of-mass-local frame.
-nonisolated public struct RagdollBodyPlacement: Sendable {
+nonisolated struct RagdollBodyPlacement: Sendable {
     /// Entity space to model space, at the actor's scale.
-    public let matrix: float4x4
+    let matrix: float4x4
     /// The body's centre of mass in model space.
-    public let center: SIMD3<Float>
+    let center: SIMD3<Float>
 
     /// A pivot authored in entity space, in the body's own frame.
-    public func localPivot(_ pivot: SIMD3<Float>) -> SIMD3<Float> {
+    func localPivot(_ pivot: SIMD3<Float>) -> SIMD3<Float> {
         DynamicCollisionMath.transform(pivot, by: matrix) - center
     }
 
     /// An axis authored in entity space, in the body's own frame. Rotation
     /// only: a direction picks up no translation, and the uniform scale a
     /// placement may carry is divided back out by normalizing.
-    public func localAxis(_ axis: SIMD3<Float>, fallback: SIMD3<Float>) -> SIMD3<Float> {
+    func localAxis(_ axis: SIMD3<Float>, fallback: SIMD3<Float>) -> SIMD3<Float> {
         let rotated = matrix.upperLeft * axis
         let length = simd_length(rotated)
         guard length > Float.ulpOfOne, rotated.isFiniteVector else { return fallback }
@@ -148,7 +148,7 @@ nonisolated public struct RagdollBodyPlacement: Sendable {
 nonisolated extension RagdollJointDefinition {
     /// One decoded joint in solver terms, or nil for a class without limits.
     /// `primaryAxis` is the twist or hinge axis; `secondaryAxis` is the zero reference.
-    public init?(
+    init?(
         data: NIFConstraintData,
         bodyA: Int,
         bodyB: Int,
@@ -217,7 +217,7 @@ nonisolated extension RagdollJointDefinition {
 
 nonisolated extension RagdollBodyPlacement {
     /// A hinge-family end in solver terms.
-    public func frame(_ hinge: NIFConstraintHingeFrame) -> RagdollJointFrame {
+    func frame(_ hinge: NIFConstraintHingeFrame) -> RagdollJointFrame {
         RagdollJointFrame(
             pivot: localPivot(hinge.pivot),
             primaryAxis: localAxis(hinge.axis, fallback: SIMD3(1, 0, 0)),
@@ -226,7 +226,7 @@ nonisolated extension RagdollBodyPlacement {
     }
 
     /// A ragdoll-cone end in solver terms.
-    public func frame(_ ragdoll: NIFConstraintRagdollFrame) -> RagdollJointFrame {
+    func frame(_ ragdoll: NIFConstraintRagdollFrame) -> RagdollJointFrame {
         RagdollJointFrame(
             pivot: localPivot(ragdoll.pivot),
             primaryAxis: localAxis(ragdoll.twist, fallback: SIMD3(1, 0, 0)),
@@ -236,7 +236,7 @@ nonisolated extension RagdollBodyPlacement {
 
     /// An end that carries a pivot and no axes, whose axes stay at the identity
     /// basis because nothing reads them.
-    public func pointFrame(_ pivot: SIMD3<Float>) -> RagdollJointFrame {
+    func pointFrame(_ pivot: SIMD3<Float>) -> RagdollJointFrame {
         RagdollJointFrame(
             pivot: localPivot(pivot),
             primaryAxis: RagdollJointFrame.identity.primaryAxis,
@@ -247,7 +247,7 @@ nonisolated extension RagdollBodyPlacement {
 
 nonisolated extension NIFConstraintType {
     /// The `bhk` class name, for the skip tally the acceptance gate reads.
-    public var className: String {
+    var className: String {
         switch self {
         case .ballAndSocket: "bhkBallAndSocketConstraint"
         case .hinge: "bhkHingeConstraint"
@@ -263,7 +263,7 @@ nonisolated extension NIFConstraintType {
 nonisolated extension float4x4 {
     /// The rotation-and-scale block, for carrying a direction through a
     /// placement without picking up its translation.
-    public var upperLeft: float3x3 {
+    var upperLeft: float3x3 {
         float3x3(columns.0.xyz, columns.1.xyz, columns.2.xyz)
     }
 }

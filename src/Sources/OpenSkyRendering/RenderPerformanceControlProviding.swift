@@ -48,8 +48,8 @@ nonisolated public struct UpscaleStatus: Equatable, Sendable {
 
 /// Readout text for the Rendering Performance sections, kept apart from AppKit so the
 /// wording is unit-testable.
-nonisolated public enum RenderPerformanceReadout: Sendable {
-    public static func renderTargetText(_ memory: RenderTargetMemory) -> String {
+nonisolated enum RenderPerformanceReadout: Sendable {
+    static func renderTargetText(_ memory: RenderTargetMemory) -> String {
         var lines = ["Render targets: \(megabytes(memory.totalBytes))"]
         for entry in memory.entries {
             let value = entry.isMemoryless ? "memoryless" : megabytes(entry.bytes)
@@ -58,7 +58,7 @@ nonisolated public enum RenderPerformanceReadout: Sendable {
         return lines.joined(separator: "\n")
     }
 
-    public static func upscalingText(scale: RenderScale, status: UpscaleStatus) -> String {
+    static func upscalingText(scale: RenderScale, status: UpscaleStatus) -> String {
         if let reason = status.unavailableReason {
             return "Upscaling: unavailable\n\(reason)"
         }

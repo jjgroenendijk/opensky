@@ -52,7 +52,7 @@ nonisolated public struct ImageSpaceAdapterSample: Equatable, Sendable {
 
 nonisolated extension ImageSpaceAdapter {
     /// The shortest duration a modifier plays, so a zero `DNAM` duration still shows a frame.
-    public static let minimumDuration: Float = 0.1
+    static let minimumDuration: Float = 0.1
 
     /// An animatable modifier spells key times as a fraction of its duration; one that is
     /// not animatable spells them in seconds. Read from the install's key times.

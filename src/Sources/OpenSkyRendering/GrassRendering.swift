@@ -13,11 +13,11 @@ public import simd
 nonisolated public enum GrassRenderPolicy: Sendable {
     /// Hard per-frame upload/draw cap. Scene data remains resident; overflow
     /// is skipped for that frame and reported through GrassDrawStats.
-    public static let maximumInstancesPerFrame = 16384
+    static let maximumInstancesPerFrame = 16384
     public static let defaultDrawDistance: Float = 8192
     public static let minimumDrawDistance: Float = 512
     public static let maximumDrawDistance: Float = 16384
-    public static let maximumWindScale: Float = 2
+    static let maximumWindScale: Float = 2
     /// Shader displacement at full weather wind + maximum UI wind scale.
     public static let maximumSwayDisplacement: Float = 192
     /// Grass starts to thin out at this share of the draw distance.

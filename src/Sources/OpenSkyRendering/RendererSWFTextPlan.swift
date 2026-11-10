@@ -94,11 +94,11 @@ nonisolated public final class SWFTextPlanner {
     }
 
     /// Bit position of the movie generation inside an atlas font key.
-    public static let generationShift = 18
+    static let generationShift = 18
 
     /// The movie generation an atlas font key belongs to, so a released movie's glyphs
     /// can be evicted.
-    public static func generation(forFontKey key: Int) -> Int {
+    static func generation(forFontKey key: Int) -> Int {
         key >> generationShift
     }
 
@@ -125,7 +125,7 @@ nonisolated public final class SWFTextPlanner {
         return key
     }
 
-    public static func straightColor(_ color: SWFColor) -> SIMD4<Float> {
+    static func straightColor(_ color: SWFColor) -> SIMD4<Float> {
         SIMD4(
             Float(color.red) / 255,
             Float(color.green) / 255,

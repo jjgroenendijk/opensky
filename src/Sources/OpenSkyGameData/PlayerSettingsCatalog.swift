@@ -32,11 +32,11 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
     ]
 
     /// Difficulty options in menu order. Level 2, Normal (Adept), is the default.
-    public static let difficultyOptions = [
+    static let difficultyOptions = [
         "$Very Easy", "$Easy", "$Normal", "$Hard", "$Very Hard", "$Legendary"
     ]
 
-    public static let saveOnPauseOptions = [
+    static let saveOnPauseOptions = [
         "$5 Mins", "$10 Mins", "$15 Mins", "$30 Mins", "$45 Mins", "$60 Mins", "$Disabled"
     ]
 
@@ -186,15 +186,15 @@ nonisolated extension PlayerSettingsCatalog {
     public static let upscalerOptions = ["Temporal", "Spatial"]
 
     /// In `TextureQuality` raw-value order.
-    public static let textureQualityOptions = ["Original", "High", "Medium", "Low"]
+    static let textureQualityOptions = ["Original", "High", "Medium", "Low"]
 
     /// In `TextureFormatChoice` raw-value order.
-    public static let textureFormatOptions = [
+    static let textureFormatOptions = [
         "Automatic", "Shipped", "ASTC 4x4", "ASTC 5x5", "ASTC 6x6", "ASTC 8x8"
     ]
 
     /// Ids a later version renamed. Old files are read with the new names.
-    public static let renamedIDs: [String: String] = [
+    static let renamedIDs: [String: String] = [
         "assetCache.enabled": "assetOptimisation.enabled",
         "assetCache.folder": "assetOptimisation.folder",
         "assetCache.fastLoad": "assetOptimisation.directLoad.textures",

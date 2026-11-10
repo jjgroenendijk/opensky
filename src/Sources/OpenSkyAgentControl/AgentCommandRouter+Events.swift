@@ -4,7 +4,7 @@ import Foundation
 
 extension AgentCommandRouter {
     /// How many events a plain listing returns at most.
-    public static let eventListLimit = 200
+    static let eventListLimit = 200
 
     func events(_ args: AgentArguments, now: Double) throws(AgentFailure) -> AgentHandling {
         let follow = try args.bool("follow", default: false)

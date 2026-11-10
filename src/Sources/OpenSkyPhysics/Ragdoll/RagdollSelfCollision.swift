@@ -22,7 +22,7 @@ nonisolated public struct RagdollBonePair: Hashable, Sendable, Comparable {
 nonisolated public struct RagdollSelfCollision: Sendable, Equatable {
     /// Admitted pairs, ascending. Sorted rather than a bare set so anything that
     /// reports or iterates them is deterministic.
-    public let pairs: [RagdollBonePair]
+    let pairs: [RagdollBonePair]
     private let admitted: Set<RagdollBonePair>
 
     /// Nothing collides with anything: the 15.6 behaviour, and what a ragdoll
@@ -34,11 +34,11 @@ nonisolated public struct RagdollSelfCollision: Sendable, Equatable {
         admitted = Set(pairs)
     }
 
-    public var pairCount: Int {
+    var pairCount: Int {
         pairs.count
     }
 
-    public func admits(_ one: Int, _ other: Int) -> Bool {
+    func admits(_ one: Int, _ other: Int) -> Bool {
         one != other && admitted.contains(RagdollBonePair(one, other))
     }
 

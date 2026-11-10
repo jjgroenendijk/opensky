@@ -89,7 +89,7 @@ nonisolated public struct EquippableItem: Equatable, Sendable {
     }
 
     /// A WEAP: held in a hand, with a world model of its own.
-    public var isWeapon: Bool {
+    var isWeapon: Bool {
         !occupancy.hands.isEmpty && modelPath != nil
     }
 }
@@ -129,7 +129,7 @@ nonisolated public struct EquipmentCatalog: Sendable {
         self.skippedRecords = skippedRecords.merging(equipSlots.skippedRecords)
     }
 
-    public static func build(from file: ESMFile) -> EquipmentCatalog {
+    static func build(from file: ESMFile) -> EquipmentCatalog {
         build(from: LoadOrderPlugins(file: file))
     }
 

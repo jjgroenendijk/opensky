@@ -16,7 +16,7 @@ nonisolated public struct EncounterZoneStore: Sendable {
     private let index: RecordIndex
     private let table: ResolvedRecordTable<ResolvedEncounterZone>
 
-    public var zones: [ResolvedFormID: ResolvedEncounterZone] {
+    var zones: [ResolvedFormID: ResolvedEncounterZone] {
         table.values
     }
 
@@ -43,7 +43,7 @@ nonisolated public struct EncounterZoneStore: Sendable {
         table.value(id)
     }
 
-    public func zone(editorID: String) -> ResolvedEncounterZone? {
+    func zone(editorID: String) -> ResolvedEncounterZone? {
         table.value(editorID: editorID)
     }
 
@@ -51,14 +51,14 @@ nonisolated public struct EncounterZoneStore: Sendable {
         index.resolvedID(id, fromPlugin: pluginName).flatMap { zone($0) }
     }
 
-    public func encounterZone(containing cell: Cell, fromPlugin pluginName: String)
+    func encounterZone(containing cell: Cell, fromPlugin pluginName: String)
         -> ResolvedEncounterZone?
     {
         guard let raw = cell.encounterZone else { return nil }
         return resolve(raw, fromPlugin: pluginName)
     }
 
-    public func encounterZone(for worldspace: Worldspace, fromPlugin pluginName: String)
+    func encounterZone(for worldspace: Worldspace, fromPlugin pluginName: String)
         -> ResolvedEncounterZone?
     {
         guard let raw = worldspace.encounterZone else { return nil }
@@ -77,7 +77,7 @@ nonisolated public struct CollisionLayerStore: Sendable {
     private let index: RecordIndex
     private let table: ResolvedRecordTable<ResolvedCollisionLayer>
 
-    public var layers: [ResolvedFormID: ResolvedCollisionLayer] {
+    var layers: [ResolvedFormID: ResolvedCollisionLayer] {
         table.values
     }
 
@@ -105,7 +105,7 @@ nonisolated public struct CollisionLayerStore: Sendable {
         )
     }
 
-    public init(plugins: [(name: String, file: ESMFile)]) {
+    init(plugins: [(name: String, file: ESMFile)]) {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["COLL"]))
     }
 
@@ -113,15 +113,15 @@ nonisolated public struct CollisionLayerStore: Sendable {
         table.value(id)
     }
 
-    public func layer(editorID: String) -> ResolvedCollisionLayer? {
+    func layer(editorID: String) -> ResolvedCollisionLayer? {
         table.value(editorID: editorID)
     }
 
-    public func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedCollisionLayer? {
+    func resolve(_ id: FormID, fromPlugin pluginName: String) -> ResolvedCollisionLayer? {
         index.resolvedID(id, fromPlugin: pluginName).flatMap { layer($0) }
     }
 
-    public func collisionLayer(for projectile: Projectile, fromPlugin pluginName: String)
+    func collisionLayer(for projectile: Projectile, fromPlugin pluginName: String)
         -> ResolvedCollisionLayer?
     {
         guard let raw = projectile.collisionLayer else { return nil }
@@ -168,11 +168,11 @@ nonisolated public struct DefaultObjectStore: Sendable {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["DOBJ"]))
     }
 
-    public func defaultObjects(_ id: ResolvedFormID) -> ResolvedDefaultObjects? {
+    func defaultObjects(_ id: ResolvedFormID) -> ResolvedDefaultObjects? {
         table.value(id)
     }
 
-    public func defaultObjects(editorID: String) -> ResolvedDefaultObjects? {
+    func defaultObjects(editorID: String) -> ResolvedDefaultObjects? {
         table.value(editorID: editorID)
     }
 

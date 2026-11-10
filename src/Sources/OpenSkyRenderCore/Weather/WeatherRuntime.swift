@@ -20,8 +20,8 @@ nonisolated public struct TimeOfDayWeights: Equatable, Sendable {
     /// Default windows (hours) when a climate has no TNAM timing: sunrise
     /// 05:00-07:00, sunset 17:00-19:00. Chosen as sane vanilla-like midpoints;
     /// real timing overrides them per climate.
-    public static let defaultSunrise: (begin: Float, end: Float) = (5, 7)
-    public static let defaultSunset: (begin: Float, end: Float) = (17, 19)
+    static let defaultSunrise: (begin: Float, end: Float) = (5, 7)
+    static let defaultSunset: (begin: Float, end: Float) = (17, 19)
 
     public init(sunrise: Float, day: Float, sunset: Float, night: Float) {
         self.sunrise = sunrise
@@ -65,7 +65,7 @@ nonisolated public struct TimeOfDayWeights: Equatable, Sendable {
 
     /// 0-1 daylight amount for the day/night-only fog pairs: full day counts 1,
     /// the twilight ramps count half, night counts 0.
-    public var daylight: Float {
+    var daylight: Float {
         day + 0.5 * sunrise + 0.5 * sunset
     }
 
@@ -85,7 +85,7 @@ nonisolated public struct TimeOfDayWeights: Equatable, Sendable {
     }
 
     /// The hours the sun crosses the horizon: the middle of the sunrise and sunset windows.
-    public static func horizonHours(timing: Climate.Timing?) -> (rise: Float, set: Float) {
+    static func horizonHours(timing: Climate.Timing?) -> (rise: Float, set: Float) {
         let windows = windows(timing: timing)
         return (
             (windows.sunriseBegin + windows.sunriseEnd) / 2,

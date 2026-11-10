@@ -27,7 +27,7 @@ public final class AgentSocketServer {
         self.path = path
     }
 
-    public var connectionCount: Int {
+    var connectionCount: Int {
         clients.count
     }
 

@@ -43,7 +43,7 @@ nonisolated public enum AudioSpace: Sendable {
 
     /// Distance between two world positions, in meters — what the attenuation
     /// model sees for a source/listener pair.
-    public static func distanceMeters(
+    static func distanceMeters(
         fromWorld first: SIMD3<Float>,
         toWorld second: SIMD3<Float>
     ) -> Float {

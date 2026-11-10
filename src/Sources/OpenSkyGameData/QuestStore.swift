@@ -35,7 +35,7 @@ nonisolated public final class QuestStore: Sendable {
     /// Keys of `questsInOrder` that resolve, in the same order.
     public let sortedKeys: [ReferenceKey]
 
-    public var skippedRecordCount: Int {
+    var skippedRecordCount: Int {
         skippedRecords.total
     }
 
@@ -143,11 +143,11 @@ nonisolated public final class QuestStore: Sendable {
         self.skippedRecords = skippedRecords
     }
 
-    public var count: Int {
+    var count: Int {
         questsByFormID.count
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         questsByFormID.isEmpty
     }
 

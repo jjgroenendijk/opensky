@@ -13,7 +13,7 @@ public import OpenSkyFormatsESM
 /// zero starting attributes and zero class weights, which is what a record that
 /// names neither should produce. Only a chain that cannot be walked at all
 /// fails, and that failure already has a type.
-nonisolated public enum ActorValueResolveError: Error, Equatable {
+nonisolated enum ActorValueResolveError: Error, Equatable {
     /// The template chain could not be walked; carries the underlying failure.
     case unresolvedChain(ActorResolveError)
 }
@@ -68,7 +68,7 @@ nonisolated public struct ActorValueResolver: Sendable {
     public let playerLevelSource: PlayerLevelSource
     private let raceSkips: SkippedRecords
 
-    public var skippedRecords: SkippedRecords {
+    var skippedRecords: SkippedRecords {
         templates.skippedRecords.merging(raceSkips).merging(classes.skippedRecords)
     }
 
@@ -103,7 +103,7 @@ nonisolated public struct ActorValueResolver: Sendable {
     }
 
     /// Builds every index this resolver needs from one plugin file.
-    public static func build(
+    static func build(
         from file: ESMFile,
         localized _: Bool,
         pluginName: String,

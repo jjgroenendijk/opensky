@@ -57,8 +57,8 @@ nonisolated public final class MeshLibrary {
     // MeshLibraryActors.swift (split for the type-body length cap) and a Swift
     // extension in another file cannot reach `private` members. Still
     // build-queue confined; nothing outside this type writes them.
-    public var cachedCharacterSkeleton: NIFSkeleton?
-    public var triedCharacterSkeleton = false
+    var cachedCharacterSkeleton: NIFSkeleton?
+    var triedCharacterSkeleton = false
     public var actorSkeletons: [String: NIFSkeleton] = [:]
 
     /// Distinct mesh paths successfully parsed + uploaded.
@@ -282,13 +282,13 @@ nonisolated public final class MeshLibrary {
 
     /// Shapes dropped during flatten for an already-loaded path (nil if the
     /// path was never successfully loaded).
-    public func skippedShapeCount(forPath path: String) -> Int? {
+    func skippedShapeCount(forPath path: String) -> Int? {
         guard let key = attempt({ try meshKey(for: path) }) else { return nil }
         return skippedShapes[key]
     }
 
     /// Total shapes dropped across every loaded model.
-    public var totalSkippedShapeCount: Int {
+    var totalSkippedShapeCount: Int {
         skippedShapes.values.reduce(0, +)
     }
 

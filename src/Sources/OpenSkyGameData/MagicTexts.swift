@@ -27,7 +27,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         return word(setting) ?? type.description
     }
 
-    public func name(of casting: MagicEffectCastingType) -> String {
+    func name(of casting: MagicEffectCastingType) -> String {
         let setting: String? = switch casting {
         case .constantEffect: "sMagicConstantEffect"
         case .fireAndForget: "sMagicFireAndForget"
@@ -37,7 +37,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         return word(setting) ?? casting.description
     }
 
-    public func name(of delivery: MagicEffectDelivery) -> String {
+    func name(of delivery: MagicEffectDelivery) -> String {
         let setting: String? = switch delivery {
         case .selfTarget: "sMagicDeliverySelf"
         case .touch: "sMagicDeliveryTouch"
@@ -50,7 +50,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
     }
 
     /// The school a magic skill names, or nil for a skill that is not a school.
-    public func school(of skill: Int32) -> String? {
+    func school(of skill: Int32) -> String? {
         guard
             let name = ActorValueIdentity.name(at: skill),
             Self.schools.contains(name)
@@ -59,7 +59,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
     }
 
     /// Novice below 25, Apprentice below 50, Adept below 75, Expert below 100, then Master.
-    public func level(minimumSkill: UInt32) -> String {
+    func level(minimumSkill: UInt32) -> String {
         let index = min(Int(minimumSkill) / 25, Self.levels.count - 1)
         let (setting, fallback) = Self.levels[index]
         return word("s\(setting)DisplayName") ?? fallback

@@ -61,10 +61,10 @@ nonisolated public final class SWFPassResources {
     /// Mirrored by `Renderer.swfMainMovieHidden`.
     public var mainMovieHidden = false
     /// Centered scale multiplier over the fit-to-viewport mapping.
-    public var scale: Float = 1
-    public var opacity: Float = 1
-    public var textTranslator: ((String) -> String)?
-    public var soundPlayer: (@MainActor (String?) -> Void)?
+    var scale: Float = 1
+    var opacity: Float = 1
+    var textTranslator: ((String) -> String)?
+    var soundPlayer: (@MainActor (String?) -> Void)?
     public var gamepadCount = 0
     public var movie: SWFMovieResources?
     /// The AS2 runtime driving `movie`, when one was started. nil keeps the
@@ -100,7 +100,7 @@ nonisolated public final class SWFPassResources {
 
 extension Renderer {
     /// 256-byte-aligned per-draw slot in the SWF uniform ring.
-    nonisolated public static let alignedSWFUniformsSize = (MemoryLayout<SWFDrawUniforms>
+    nonisolated static let alignedSWFUniformsSize = (MemoryLayout<SWFDrawUniforms>
         .size + 0xFF) &
         -0x100
 

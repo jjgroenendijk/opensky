@@ -6,12 +6,12 @@ import Foundation
 import OpenSkyFormatsAnimation
 public import simd
 
-nonisolated public struct BehaviorModelPose: Sendable {
-    public private(set) var rotations: [simd_quatf]
-    public private(set) var translations: [SIMD3<Float>]
-    public let parents: [Int]
+nonisolated struct BehaviorModelPose: Sendable {
+    private(set) var rotations: [simd_quatf]
+    private(set) var translations: [SIMD3<Float>]
+    let parents: [Int]
 
-    public init(_ pose: BehaviorPose, skeleton: BehaviorSkeleton) {
+    init(_ pose: BehaviorPose, skeleton: BehaviorSkeleton) {
         let count = pose.bones.count
         parents = (0 ..< count).map { skeleton.parent(of: $0) }
         rotations = [simd_quatf](repeating: BehaviorPoseMath.identityRotation, count: count)
@@ -19,13 +19,13 @@ nonisolated public struct BehaviorModelPose: Sendable {
         compose(pose)
     }
 
-    public func contains(_ bone: Int) -> Bool {
+    func contains(_ bone: Int) -> Bool {
         rotations.indices.contains(bone)
     }
 
     /// Recomposes every bone. Parents come before children in every Havok
     /// skeleton; a parent index that does not is treated as a root.
-    public mutating func compose(_ pose: BehaviorPose) {
+    mutating func compose(_ pose: BehaviorPose) {
         for index in pose.bones.indices where rotations.indices.contains(index) {
             let local = pose.bones[index]
             let parent = parents[index]
@@ -41,7 +41,7 @@ nonisolated public struct BehaviorModelPose: Sendable {
 
     /// Turns `bone` by `delta`, given in model space, and recomposes, so the
     /// bone's children follow it.
-    public mutating func rotate(_ bone: Int, by delta: simd_quatf, in pose: inout BehaviorPose) {
+    mutating func rotate(_ bone: Int, by delta: simd_quatf, in pose: inout BehaviorPose) {
         guard contains(bone), pose.bones.indices.contains(bone) else { return }
         let parent = parents[bone]
         let parentRotation = parent >= 0 && parent < bone
@@ -57,7 +57,7 @@ nonisolated public struct BehaviorModelPose: Sendable {
 
     /// The bones from `start` down to `end`, start first, or empty when `end`
     /// does not descend from `start`.
-    public func chain(from start: Int, to end: Int) -> [Int] {
+    func chain(from start: Int, to end: Int) -> [Int] {
         guard contains(start), contains(end) else { return [] }
         var chain = [end]
         var current = end
@@ -70,7 +70,7 @@ nonisolated public struct BehaviorModelPose: Sendable {
     }
 
     /// The shortest rotation that turns direction `from` onto `to`.
-    public static func rotation(from: SIMD3<Float>, to: SIMD3<Float>) -> simd_quatf {
+    static func rotation(from: SIMD3<Float>, to: SIMD3<Float>) -> simd_quatf {
         let lhs = simd_normalize(from)
         let rhs = simd_normalize(to)
         guard lhs.x.isFinite, rhs.x.isFinite else { return BehaviorPoseMath.identityRotation }
@@ -85,12 +85,12 @@ nonisolated public struct BehaviorModelPose: Sendable {
         return simd_quatf(from: lhs, to: rhs)
     }
 
-    public static func vector3(_ vector: SIMD4<Float>) -> SIMD3<Float> {
+    static func vector3(_ vector: SIMD4<Float>) -> SIMD3<Float> {
         SIMD3(vector.x, vector.y, vector.z)
     }
 
     /// `rotation` scaled to `fraction` of its angle.
-    public static func partial(_ rotation: simd_quatf, _ fraction: Float) -> simd_quatf {
+    static func partial(_ rotation: simd_quatf, _ fraction: Float) -> simd_quatf {
         BehaviorPoseMath.slerp(BehaviorPoseMath.identityRotation, rotation, fraction)
     }
 }

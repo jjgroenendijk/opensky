@@ -41,10 +41,10 @@ nonisolated public final class SWFMovieResources {
     /// One text draw planned for the current command stream: resolved font,
     /// atlas key, and the twip-space glyph placements (viewport-independent).
     public struct PlannedTextRun: Sendable {
-        public let font: SWFFontDefinition
-        public let fontKey: Int
-        public let emTwips: Float
-        public let color: SIMD4<Float>
+        let font: SWFFontDefinition
+        let fontKey: Int
+        let emTwips: Float
+        let color: SIMD4<Float>
         public let glyphs: [SWFGlyphPlacement]
     }
 
@@ -121,7 +121,7 @@ nonisolated public final class SWFMovieResources {
     /// the new stream needs more slots than the old one. Returns the buffers
     /// the caller must retire (empty when nothing grew), so the renderer can
     /// keep them alive until in-flight frames drain.
-    public func update(
+    func update(
         scene newScene: SWFScene,
         device: any MTLDevice
     ) throws -> [any MTLAllocation] {

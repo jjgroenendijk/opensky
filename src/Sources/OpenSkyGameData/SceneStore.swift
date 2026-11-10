@@ -6,9 +6,9 @@ import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 /// A scene actor and the quest alias it names. `alias` is nil when the quest has no such alias.
-nonisolated public struct SceneActorAlias: Equatable, Sendable {
-    public let actor: SceneActor
-    public let alias: Quest.Alias?
+nonisolated struct SceneActorAlias: Equatable, Sendable {
+    let actor: SceneActor
+    let alias: Quest.Alias?
 }
 
 nonisolated public struct SceneStore: Sendable {
@@ -33,19 +33,19 @@ nonisolated public struct SceneStore: Sendable {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["SCEN"]))
     }
 
-    public func scenes(forQuest quest: ResolvedFormID) -> [ResolvedRecord<Scene>] {
+    func scenes(forQuest quest: ResolvedFormID) -> [ResolvedRecord<Scene>] {
         (scenesByQuest[quest] ?? []).compactMap { scenes.record($0) }
     }
 
     /// The DIAL of each dialogue action, in action order.
-    public func dialogueTopics(of scene: ResolvedRecord<Scene>) -> [ResolvedFormID] {
+    func dialogueTopics(of scene: ResolvedRecord<Scene>) -> [ResolvedFormID] {
         scene.record.actions.compactMap { action in
             guard case let .dialogue(dialogue) = action.payload else { return nil }
             return scenes.index.resolvedID(dialogue.topic, fromPlugin: scene.sourcePlugin)
         }
     }
 
-    public func actorAliases(
+    func actorAliases(
         of scene: ResolvedRecord<Scene>,
         in quest: Quest
     ) -> [SceneActorAlias] {

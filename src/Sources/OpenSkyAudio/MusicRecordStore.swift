@@ -60,7 +60,7 @@ nonisolated public final class MusicRecordStore {
     /// Canonical VFS keys for a track's audio files: the ANAM stream first,
     /// then the BNAM finale when present. Entries that fail the path rules are
     /// dropped rather than substituted.
-    public func audioPaths(for track: MusicTrack) -> [String] {
+    func audioPaths(for track: MusicTrack) -> [String] {
         [track.trackFileName, track.finaleFileName]
             .compactMap(\.self)
             .compactMap(Self.canonicalMusicPath)
@@ -68,7 +68,7 @@ nonisolated public final class MusicRecordStore {
 
     /// Normalizes a MUST ANAM/BNAM filename into a `music\...` VFS key. A leading
     /// `\Data\` is stripped (209 of 242 vanilla tracks use it); a `:` is rejected.
-    public static func canonicalMusicPath(_ track: String) -> String? {
+    static func canonicalMusicPath(_ track: String) -> String? {
         guard
             let normalized = attempt({ try VirtualFileSystem.normalize(track) }),
             !normalized.contains(":")

@@ -53,7 +53,7 @@ nonisolated public struct RagdollJointFrame: Sendable {
     /// This is the axis a twist angle is measured from.
     public let secondaryAxis: SIMD3<Float>
 
-    public static let identity = RagdollJointFrame(
+    static let identity = RagdollJointFrame(
         pivot: .zero,
         primaryAxis: SIMD3<Float>(1, 0, 0),
         secondaryAxis: SIMD3<Float>(0, 1, 0)
@@ -140,11 +140,11 @@ nonisolated public struct RagdollDefinition: Sendable {
     /// graph. Derived once, because none of it moves.
     public let selfCollision: RagdollSelfCollision
 
-    public var boneCount: Int {
+    var boneCount: Int {
         bones.count
     }
 
-    public var jointCount: Int {
+    var jointCount: Int {
         joints.count
     }
 

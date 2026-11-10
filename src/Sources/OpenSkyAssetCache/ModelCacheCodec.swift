@@ -31,7 +31,7 @@ nonisolated public enum ModelCacheCodec {
         return out.data
     }
 
-    public static func decode(_ data: Data) throws -> Model {
+    static func decode(_ data: Data) throws -> Model {
         let layout = try decodeLayout(data)
         let (base, range) = (data.startIndex, layout.modelRange)
         guard range.upperBound <= data.count else { throw CachePayloadError.truncated }
@@ -39,7 +39,7 @@ nonisolated public enum ModelCacheCodec {
     }
 
     /// The layout block, from the first `layoutByteCount(head:)` bytes of the payload.
-    public static func decodeLayout(_ head: Data) throws -> ReadyModelLayout {
+    static func decodeLayout(_ head: Data) throws -> ReadyModelLayout {
         guard let count = layoutByteCount(head: head), count <= head.count else {
             throw CachePayloadError.truncated
         }

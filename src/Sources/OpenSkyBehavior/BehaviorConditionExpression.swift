@@ -9,9 +9,9 @@ import Foundation
 
 /// One parsed transition condition. Immutable, so the evaluator parses each
 /// authored string once and reuses the tree.
-nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
+nonisolated struct BehaviorConditionExpression: Equatable, Sendable {
     /// The comparisons the authored strings use.
-    public enum Comparison: String, Equatable, Sendable {
+    enum Comparison: String, Equatable, Sendable {
         case equal = "=="
         case notEqual = "!="
         case greaterOrEqual = ">="
@@ -20,9 +20,9 @@ nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
         case less = "<"
 
         /// Longest first, so `>=` is not read as `>` followed by `=`.
-        public static let allSpellings = ["==", "!=", ">=", "<=", ">", "<"]
+        static let allSpellings = ["==", "!=", ">=", "<=", ">", "<"]
 
-        public func holds(_ lhs: Float, _ rhs: Float) -> Bool {
+        func holds(_ lhs: Float, _ rhs: Float) -> Bool {
             switch self {
             case .equal: lhs == rhs
             case .notEqual: lhs != rhs
@@ -34,7 +34,7 @@ nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
         }
     }
 
-    indirect public enum Node: Equatable, Sendable {
+    indirect enum Node: Equatable, Sendable {
         case number(Float)
         case variable(String)
         case negation(Node)
@@ -43,18 +43,18 @@ nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
         case disjunction(Node, Node)
     }
 
-    public let root: Node
+    let root: Node
     /// Every variable the text names, kept so a test does not walk the tree twice.
-    public let variableNames: [String]
+    let variableNames: [String]
 
-    public init(root: Node) {
+    init(root: Node) {
         self.root = root
         variableNames = Self.names(in: root)
     }
 
     /// Parses `source`, or returns nil when it is empty or does not fit the
     /// grammar above. Never throws and never traps: the text is external input.
-    public static func parse(_ source: String) -> BehaviorConditionExpression? {
+    static func parse(_ source: String) -> BehaviorConditionExpression? {
         guard let tokens = BehaviorConditionLexer.tokens(of: source) else { return nil }
         var parser = BehaviorConditionParser(tokens: tokens)
         guard let root = parser.parseDisjunction(), parser.isAtEnd else { return nil }
@@ -64,7 +64,7 @@ nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
     /// True or false when every name resolves, nil when one does not.
     /// The game compiles a condition all or nothing, so one undeclared name fails
     /// it even where `||` or `&&` would never read that name.
-    public func evaluate(in variables: BehaviorVariableStore) -> Bool? {
+    func evaluate(in variables: BehaviorVariableStore) -> Bool? {
         guard variableNames.allSatisfy({ variables.index(of: $0) != nil }) else {
             return nil
         }
@@ -120,7 +120,7 @@ nonisolated public struct BehaviorConditionExpression: Equatable, Sendable {
 
 /// One lexed token. Split out so the parser reads as grammar rather than as
 /// character handling.
-nonisolated public enum BehaviorConditionToken: Equatable, Sendable {
+nonisolated enum BehaviorConditionToken: Equatable, Sendable {
     case number(Float)
     case name(String)
     case comparison(BehaviorConditionExpression.Comparison)
@@ -133,8 +133,8 @@ nonisolated public enum BehaviorConditionToken: Equatable, Sendable {
 
 /// Text to tokens. Returns nil on any character the grammar has no place for,
 /// so an unexpected authored form is reported rather than half-read.
-nonisolated public enum BehaviorConditionLexer: Sendable {
-    public static func tokens(of source: String) -> [BehaviorConditionToken]? {
+nonisolated enum BehaviorConditionLexer: Sendable {
+    static func tokens(of source: String) -> [BehaviorConditionToken]? {
         var tokens: [BehaviorConditionToken] = []
         let characters = Array(source)
         var index = 0
@@ -231,19 +231,19 @@ nonisolated public enum BehaviorConditionLexer: Sendable {
 
 /// Recursive descent over the token list. Every rule returns nil rather than
 /// throwing, because a malformed condition is data, not a programming error.
-nonisolated public struct BehaviorConditionParser: Sendable {
-    public let tokens: [BehaviorConditionToken]
+nonisolated struct BehaviorConditionParser: Sendable {
+    let tokens: [BehaviorConditionToken]
     private var index = 0
 
-    public init(tokens: [BehaviorConditionToken]) {
+    init(tokens: [BehaviorConditionToken]) {
         self.tokens = tokens
     }
 
-    public var isAtEnd: Bool {
+    var isAtEnd: Bool {
         index >= tokens.count
     }
 
-    public mutating func parseDisjunction() -> BehaviorConditionExpression.Node? {
+    mutating func parseDisjunction() -> BehaviorConditionExpression.Node? {
         guard var node = parseConjunction() else { return nil }
         while match(.or) {
             guard let right = parseConjunction() else { return nil }

@@ -14,7 +14,7 @@ nonisolated public struct ResolvedGameSetting: Equatable, Sendable {
 
 nonisolated public struct GameSettingStore: Sendable {
     public private(set) var values: [String: ResolvedGameSetting] = [:]
-    public private(set) var skippedRecords = SkippedRecords()
+    private(set) var skippedRecords = SkippedRecords()
     /// Notes every editor ID a reader asks for, so `openskycli gaps` can list the
     /// settings no code reads. Nil in play.
     public var readLog: GameSettingReadLog?

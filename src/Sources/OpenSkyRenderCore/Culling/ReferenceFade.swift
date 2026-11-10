@@ -113,7 +113,7 @@ nonisolated public struct ReferenceFadeState: Equatable, Sendable {
     }
 
     /// Faded out completely, so not drawn.
-    public var isGone: Bool {
+    var isGone: Bool {
         fadingOut && amount >= 1
     }
 

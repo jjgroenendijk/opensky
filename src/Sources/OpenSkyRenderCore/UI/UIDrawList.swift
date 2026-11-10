@@ -56,7 +56,7 @@ nonisolated public struct UIDrawList: Sendable {
     public let whiteUV: SIMD2<Float>
 
     /// Appends one axis-aligned quad in pixel space with the given uv corners.
-    public mutating func addQuad(
+    mutating func addQuad(
         rect: UIRect,
         uvMin: SIMD2<Float>,
         uvMax: SIMD2<Float>,
@@ -80,13 +80,13 @@ nonisolated public struct UIDrawList: Sendable {
     }
 
     /// Filled rect: samples the white texel for full coverage.
-    public mutating func fillRect(_ rect: UIRect, color: SIMD4<Float>) {
+    mutating func fillRect(_ rect: UIRect, color: SIMD4<Float>) {
         guard rect.width > 0, rect.height > 0, color.w > 0 else { return }
         addQuad(rect: rect, uvMin: whiteUV, uvMax: whiteUV, color: color)
     }
 
     /// Inset border: four filled edge rects of `lineWidth` pixels.
-    public mutating func strokeRect(_ rect: UIRect, lineWidth: Float, color: SIMD4<Float>) {
+    mutating func strokeRect(_ rect: UIRect, lineWidth: Float, color: SIMD4<Float>) {
         guard lineWidth > 0, color.w > 0, rect.width > 0, rect.height > 0 else { return }
         let line = min(lineWidth, min(rect.width, rect.height) / 2)
         fillRect(UIRect(x: rect.minX, y: rect.minY, width: rect.width, height: line), color: color)
@@ -105,7 +105,7 @@ nonisolated public struct UIDrawList: Sendable {
     }
 
     /// Text glyph quad: samples its coverage cell.
-    public mutating func addGlyphQuad(
+    mutating func addGlyphQuad(
         rect: UIRect,
         uvMin: SIMD2<Float>,
         uvMax: SIMD2<Float>,

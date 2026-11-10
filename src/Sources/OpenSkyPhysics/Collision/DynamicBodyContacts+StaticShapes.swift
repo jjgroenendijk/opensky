@@ -21,7 +21,7 @@ nonisolated extension DynamicBodyContacts {
     /// Shapes are visited in the order the broadphase returned them, which is
     /// source-shape order and therefore stable, so the contact list is
     /// deterministic for a given pose.
-    public static func staticContacts(
+    static func staticContacts(
         body: DynamicBody,
         index: Int,
         samples: [(point: SIMD3<Float>, radius: Float)],

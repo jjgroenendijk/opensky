@@ -45,11 +45,11 @@ final class InterpolationTargets {
 /// The renderer's frame interpolation switch and counters.
 public struct FrameInterpolationState {
     /// Off by default: the real frame shows later, so input lags more.
-    public var enabled = false
+    var enabled = false
     /// Frames the interpolator built since launch.
-    public internal(set) var interpolatedFrames = 0
+    var interpolatedFrames = 0
     /// Whether the last frame built an interpolated frame.
-    public internal(set) var lastFrameInterpolated = false
+    var lastFrameInterpolated = false
     /// Seconds between the last two real frames; offscreen frames use the fixed step.
     var deltaTime: Float = 1 / 30
     var lastLiveFrameTime: CFTimeInterval?
@@ -63,7 +63,7 @@ public struct FrameInterpolationState {
     /// Set when MetalFX refused the interpolator; cleared by switching it again.
     var creationFailure: String?
     /// The offscreen target of the interpolated frame, for tests and the benchmark.
-    public internal(set) var offscreenFrame: any MTLTexture?
+    var offscreenFrame: any MTLTexture?
     let latency = PresentLatencyInbox()
 }
 
@@ -141,7 +141,7 @@ nonisolated public struct PresentPacing: Equatable, Sendable {
     public var hitches: Int
 
     /// Nil without a gap. `gapsMS` are in present order.
-    public init?(gapsMS: [Double]) {
+    init?(gapsMS: [Double]) {
         guard !gapsMS.isEmpty else { return nil }
         let median = gapsMS.sorted()[gapsMS.count / 2]
         averageGapMS = gapsMS.reduce(0, +) / Double(gapsMS.count)

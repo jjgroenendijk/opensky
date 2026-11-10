@@ -63,11 +63,11 @@ nonisolated public struct BehaviorCharacterProperties: Sendable {
         Dictionary(map.map { ($0.key.lowercased(), $0.value) }) { first, _ in first }
     }
 
-    public func value(named name: String) -> BehaviorVariableValue? {
+    func value(named name: String) -> BehaviorVariableValue? {
         values[name.lowercased()]
     }
 
-    public func boneWeights(named name: String) -> [Float]? {
+    func boneWeights(named name: String) -> [Float]? {
         boneWeights[name.lowercased()]
     }
 

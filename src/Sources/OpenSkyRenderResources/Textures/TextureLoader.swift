@@ -82,7 +82,7 @@ nonisolated public final class TextureLoader {
     }
 
     /// Missing file (VFS lookup failed upstream): log + placeholder.
-    public func missingTexture(usage: TextureUsage, label: String) -> any MTLTexture {
+    func missingTexture(usage: TextureUsage, label: String) -> any MTLTexture {
         Self.logger.error("texture \(label, privacy: .public) missing, using placeholder")
         return placeholder(usage: usage)
     }
@@ -151,7 +151,7 @@ nonisolated public final class TextureLoader {
     }
 
     /// A cached texture: the same levels the DDS path uploads, without the parse.
-    public func texture(ready: ReadyTexture, usage: TextureUsage, label: String) -> any MTLTexture {
+    func texture(ready: ReadyTexture, usage: TextureUsage, label: String) -> any MTLTexture {
         do {
             return try upload(ready: ready, usage: usage, label: label)
         } catch {
@@ -254,7 +254,7 @@ nonisolated public final class TextureLoader {
 
     /// BCn -> MTLPixelFormat. A color usage picks the sRGB view; BC4/BC5
     /// have no sRGB variants (single/dual channel data formats).
-    public static func pixelFormat(
+    static func pixelFormat(
         for format: DDSPixelFormat,
         usage: TextureUsage
     ) -> MTLPixelFormat {

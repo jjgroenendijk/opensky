@@ -63,7 +63,7 @@ nonisolated public enum GameDataLocator: Sendable {
     /// Defaults domain holding the data-root setting. One shared domain so
     /// every tool (app, preview, CLI) sees the same setting regardless of its
     /// own bundle id.
-    public static let settingsDomain = "nl.jjgroenendijk.opensky"
+    static let settingsDomain = "nl.jjgroenendijk.opensky"
 
     /// Defaults store for the data-root setting. `UserDefaults(suiteName:)`
     /// rejects the current app's own bundle id, so the main app (whose domain

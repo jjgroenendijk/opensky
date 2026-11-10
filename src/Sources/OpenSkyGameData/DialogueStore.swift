@@ -35,11 +35,11 @@ nonisolated public final class DialogueStore: Sendable {
     /// DIAL, INFO or VTYP records that failed to decode.
     public let skippedRecords: SkippedRecords
 
-    public var skippedRecordCount: Int {
+    var skippedRecordCount: Int {
         skippedRecords.total
     }
 
-    public static let empty = DialogueStore(
+    static let empty = DialogueStore(
         topics: [],
         infosByTopic: [:],
         voiceTypes: [],
@@ -123,7 +123,7 @@ nonisolated public final class DialogueStore: Sendable {
         infoTranslations = FormIDTranslation.table(infoSources, into: resolver)
     }
 
-    public var topicCount: Int {
+    var topicCount: Int {
         topicsByFormID.count
     }
 
@@ -131,11 +131,11 @@ nonisolated public final class DialogueStore: Sendable {
         infosByFormID.count
     }
 
-    public var voiceTypeCount: Int {
+    var voiceTypeCount: Int {
         voicesByFormID.count
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         topicCount == 0 && infoCount == 0 && voiceTypeCount == 0
     }
 
@@ -143,7 +143,7 @@ nonisolated public final class DialogueStore: Sendable {
         topicsByFormID[id.rawValue]
     }
 
-    public func topic(editorID: String) -> DialogueTopic? {
+    func topic(editorID: String) -> DialogueTopic? {
         topicFormIDsByEditorID[editorID.lowercased()].flatMap { topicsByFormID[$0] }
     }
 
@@ -198,18 +198,18 @@ nonisolated public final class DialogueStore: Sendable {
     }
 
     /// DLBR records of one quest, in file order.
-    public func branches(forQuest quest: FormID) -> [DialogueBranch] {
+    func branches(forQuest quest: FormID) -> [DialogueBranch] {
         branchIndex.branchIDsByQuest[quest.rawValue, default: []]
             .compactMap { branchIndex.branchesByFormID[$0] }
     }
 
     /// The DLBR a topic's BNAM names.
-    public func branch(ofTopic topic: FormID) -> DialogueBranch? {
+    func branch(ofTopic topic: FormID) -> DialogueBranch? {
         self.topic(topic)?.owningBranch.flatMap { branch($0) }
     }
 
     /// The DIAL records whose BNAM names this branch, in file order.
-    public func topics(inBranch branch: FormID) -> [DialogueTopic] {
+    func topics(inBranch branch: FormID) -> [DialogueTopic] {
         branchIndex.topicIDsByBranch[branch.rawValue, default: []]
             .compactMap { topicsByFormID[$0] }
     }
@@ -219,11 +219,11 @@ nonisolated public final class DialogueStore: Sendable {
         branchIndex.blockingBranches
     }
 
-    public func views(forQuest quest: FormID) -> [DialogueView] {
+    func views(forQuest quest: FormID) -> [DialogueView] {
         branchIndex.viewsByQuest[quest.rawValue] ?? []
     }
 
-    public var branchCount: Int {
+    var branchCount: Int {
         branchIndex.branchesByFormID.count
     }
 
@@ -242,7 +242,7 @@ nonisolated public final class DialogueStore: Sendable {
         voicesByFormID[id.rawValue]
     }
 
-    public func voiceType(editorID: String) -> VoiceType? {
+    func voiceType(editorID: String) -> VoiceType? {
         voiceFormIDsByEditorID[editorID.lowercased()].flatMap { voicesByFormID[$0] }
     }
 }

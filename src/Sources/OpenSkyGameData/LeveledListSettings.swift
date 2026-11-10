@@ -46,7 +46,7 @@ nonisolated public struct LeveledListSettings: Equatable, Sendable {
     }
 
     /// The multiplier a placed leveled actor's difficulty applies to its encounter level.
-    public func actorMult(_ difficulty: LeveledActorDifficulty) -> Double {
+    func actorMult(_ difficulty: LeveledActorDifficulty) -> Double {
         switch difficulty {
         case .easy: actorMultEasy
         case .medium: actorMultMedium

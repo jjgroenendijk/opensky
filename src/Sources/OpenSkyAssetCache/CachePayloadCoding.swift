@@ -34,7 +34,7 @@ nonisolated public struct CachePayloadWriter: Sendable {
         writer.writeUInt64(UInt64(bitPattern: Int64(value)))
     }
 
-    public mutating func bool(_ value: Bool) {
+    mutating func bool(_ value: Bool) {
         writer.writeUInt8(value ? 1 : 0)
     }
 
@@ -101,7 +101,7 @@ nonisolated public struct CachePayloadReader: Sendable {
         try Int(Int64(bitPattern: Self.wrap { try reader.readUInt64() }))
     }
 
-    public mutating func bool() throws -> Bool {
+    mutating func bool() throws -> Bool {
         try Self.wrap { try reader.readUInt8() } != 0
     }
 

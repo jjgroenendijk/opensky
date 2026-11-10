@@ -113,7 +113,7 @@ nonisolated public final class LocalizedStrings: Sendable {
 
 nonisolated extension StringTable.Kind {
     /// File extension of a table of this kind, lowercase.
-    public var fileExtension: String {
+    var fileExtension: String {
         switch self {
         case .strings: "strings"
         case .dlstrings: "dlstrings"

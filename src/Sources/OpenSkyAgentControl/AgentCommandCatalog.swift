@@ -5,7 +5,7 @@
 import Foundation
 
 nonisolated public struct AgentCommandSpec: Sendable {
-    nonisolated public enum OptionKind: Equatable, Sendable {
+    nonisolated enum OptionKind: Equatable, Sendable {
         /// `--name <value>`.
         case value(String)
         /// `--name` turns it on; it is off when left out.
@@ -16,31 +16,31 @@ nonisolated public struct AgentCommandSpec: Sendable {
         case toggle
     }
 
-    nonisolated public struct Option: Sendable {
+    nonisolated struct Option: Sendable {
         /// The request key, in camel case. The command line spells it in kebab case.
-        public let key: String
-        public let kind: OptionKind
-        public let help: String
+        let key: String
+        let kind: OptionKind
+        let help: String
     }
 
     nonisolated public struct Positional: Sendable {
         public let key: String
         public let optional: Bool
-        public let help: String
+        let help: String
     }
 
     /// The protocol name, such as `state.av`.
     public let name: String
-    public let summary: String
+    let summary: String
     public let positionals: [Positional]
-    public let options: [Option]
+    let options: [Option]
 
     /// Every request key the command reads.
     public var keys: Set<String> {
         Set(positionals.map(\.key) + options.map(\.key))
     }
 
-    public func option(_ key: String) -> Option? {
+    func option(_ key: String) -> Option? {
         options.first { $0.key == key }
     }
 }

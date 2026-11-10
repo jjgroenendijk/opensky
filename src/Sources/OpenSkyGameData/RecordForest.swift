@@ -22,11 +22,11 @@ nonisolated public struct RecordForest<ID: Hashable & Sendable>: Sendable {
     /// Nodes that name a parent which is not in the forest. They stay roots.
     public private(set) var orphans: [ID] = []
     /// Nodes no root reaches, because they sit on or below a parent cycle.
-    public private(set) var unreachable: [ID] = []
+    private(set) var unreachable: [ID] = []
     /// Child groups whose previous-sibling chain is split or loops. They keep input order.
     public private(set) var brokenSiblingChains = 0
     /// Levels below the roots plus one; 0 for an empty forest.
-    public private(set) var maximumDepth = 0
+    private(set) var maximumDepth = 0
     private var childrenByParent: [ID: [ID]] = [:]
     private var parents: [ID: ID] = [:]
 
@@ -68,7 +68,7 @@ nonisolated public struct RecordForest<ID: Hashable & Sendable>: Sendable {
     }
 
     /// The root first, `id` last. Stops at a cycle instead of looping.
-    public func path(to id: ID) -> [ID] {
+    func path(to id: ID) -> [ID] {
         var path: [ID] = []
         var seen: Set<ID> = []
         var current: ID? = id

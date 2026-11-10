@@ -3,15 +3,15 @@
 
 public import OpenSkyFormatsCore
 
-nonisolated public struct ShadowCasterBounds: Sendable {
+nonisolated struct ShadowCasterBounds: Sendable {
     /// Union of every caster no body or NPC can move, terrain included.
-    public let fixed: ModelBounds?
+    let fixed: ModelBounds?
     /// Casters with a reference a live pose can move; they merge at that pose.
-    public let movable: [DrawInstance]
+    let movable: [DrawInstance]
     /// Some caster has no bounds, so the union cannot clamp anything.
-    public let isUnbounded: Bool
+    let isUnbounded: Bool
 
-    public init(scene: RenderScene) {
+    init(scene: RenderScene) {
         var fixed: ModelBounds?
         var movable: [DrawInstance] = []
         var isUnbounded = false

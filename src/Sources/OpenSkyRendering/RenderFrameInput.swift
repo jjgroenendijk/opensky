@@ -90,7 +90,7 @@ public struct RenderInstancePoses {
     /// How far each reference has faded out, 0 to 1. Read every frame, so it takes no revision.
     public var fades: [UInt32: Float] = [:]
 
-    public private(set) var revision = PoseRevision.unchanged
+    private(set) var revision = PoseRevision.unchanged
 
     /// Shared by the copies of one value, so a change in any copy takes a new count.
     private let revisions = PoseRevisionSource()
@@ -105,7 +105,7 @@ public struct PoseRevision: Equatable {
     fileprivate let count: Int
 
     /// A value nothing changed yet.
-    public static let unchanged = PoseRevision(source: nil, count: 0)
+    static let unchanged = PoseRevision(source: nil, count: 0)
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.source === rhs.source && lhs.count == rhs.count

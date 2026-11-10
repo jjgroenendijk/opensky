@@ -126,7 +126,7 @@ nonisolated public struct SoundCategoryMix: Sendable {
     }
 
     /// The category with `editorID`, for a sound that names none.
-    public func category(editorID: String) -> FormID? {
+    func category(editorID: String) -> FormID? {
         categories.values.first { $0.editorID?.caseInsensitiveCompare(editorID) == .orderedSame }?
             .formID
     }

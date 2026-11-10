@@ -79,7 +79,7 @@ public final class EffectLayer {
     public internal(set) var decalBatches: [DecalBatch] = []
     var decalBuffer: any MTLBuffer?
     /// Decals the last frame drew, for the readout.
-    public internal(set) var lastDecalDraws = 0
+    var lastDecalDraws = 0
 
     /// The unlit scene a menu draws in place of the world, such as the perk sky.
     public let menuScene: MenuSceneResources

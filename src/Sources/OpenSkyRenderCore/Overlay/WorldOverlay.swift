@@ -51,7 +51,7 @@ nonisolated public struct WorldOverlayBudgetResult: Sendable {
 nonisolated public struct WorldOverlayDrawList: Sendable {
     public private(set) var primitives: [WorldOverlayPrimitive] = []
 
-    public var primitiveCount: Int {
+    var primitiveCount: Int {
         primitives.count
     }
 
@@ -186,7 +186,7 @@ public final class WorldOverlaySourceRegistry {
 
     private var entries: [Entry] = []
 
-    public var sourceCount: Int {
+    var sourceCount: Int {
         entries.count
     }
 
@@ -198,7 +198,7 @@ public final class WorldOverlaySourceRegistry {
         }
     }
 
-    public func remove(identifier: String) {
+    func remove(identifier: String) {
         entries.removeAll { $0.identifier == identifier }
     }
 

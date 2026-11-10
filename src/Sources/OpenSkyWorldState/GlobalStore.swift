@@ -59,11 +59,11 @@ nonisolated public final class GlobalStore: Sendable {
         keysByFormID = keys
     }
 
-    public var count: Int {
+    var count: Int {
         globalsByFormID.count
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         globalsByFormID.isEmpty
     }
 
@@ -122,7 +122,7 @@ nonisolated public struct GlobalResolution: Sendable {
 
     /// Resolution over a snapshot's globals, for a consumer running off the
     /// main actor where the live store is unreachable.
-    public init(defaults: GlobalStore?, snapshot: WorldStateSnapshot, clock: GameClock? = nil) {
+    init(defaults: GlobalStore?, snapshot: WorldStateSnapshot, clock: GameClock? = nil) {
         var overrides: [ReferenceKey: GlobalValue] = [:]
         overrides.reserveCapacity(snapshot.globals.count)
         for entry in snapshot.globals {

@@ -3,8 +3,8 @@
 // vertices). A triangle-soup body falls back to its box. Both answer `contactSamples`
 // and `penetration`. See docs/engine/dynamic-bodies.md.
 
-public import OpenSkyFormatsCore
-public import OpenSkyFormatsMesh
+import OpenSkyFormatsCore
+import OpenSkyFormatsMesh
 public import simd
 
 /// An outward-facing half-space bounding a hull: points inside satisfy
@@ -37,7 +37,7 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
     ///
     /// A triangle soup becomes its own axis-aligned box. That is the one lossy
     /// conversion here and it is deliberate — see the file header.
-    public static func make(from geometry: NIFCollisionGeometry) -> DynamicCollisionVolume? {
+    static func make(from geometry: NIFCollisionGeometry) -> DynamicCollisionVolume? {
         switch geometry {
         case let .sphere(radius):
             radius > 0 ? .radial(first: .zero, second: .zero, radius: radius) : nil
@@ -79,7 +79,7 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
     /// a cloud that leaves fewer than four distinct planes cannot bound a
     /// volume and produces nil rather than a hull the solver would read as
     /// infinitely thin.
-    public static func hull(points: [SIMD3<Float>], indices: [UInt32]) -> DynamicCollisionVolume? {
+    static func hull(points: [SIMD3<Float>], indices: [UInt32]) -> DynamicCollisionVolume? {
         guard points.count >= 4 else { return nil }
         let center = points.reduce(SIMD3<Float>.zero, +) / Float(points.count)
         var planes: [DynamicCollisionPlane] = []
@@ -124,7 +124,7 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
     /// World-space points the solver tests against everything else, given the
     /// body's pose. A hull reports its vertices; a radial volume reports its two
     /// segment ends, whose skin radius carries the rest of the shape.
-    public func contactSamples(position: SIMD3<Float>, orientation: simd_quatf) -> [SIMD3<Float>] {
+    func contactSamples(position: SIMD3<Float>, orientation: simd_quatf) -> [SIMD3<Float>] {
         switch self {
         case let .radial(first, second, _):
             first == second
@@ -137,7 +137,7 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
 
     /// The skin every contact sample carries. Zero for a hull, whose vertices
     /// are the surface itself.
-    public var skinRadius: Float {
+    var skinRadius: Float {
         switch self {
         case let .radial(_, _, radius): radius
         case .hull: 0
@@ -178,7 +178,7 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
     }
 
     /// Local-space AABB, skin included.
-    public var localBounds: ModelBounds {
+    var localBounds: ModelBounds {
         switch self {
         case let .radial(first, second, radius):
             let extent = SIMD3<Float>(repeating: radius)
@@ -205,7 +205,7 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
 
     /// The same volume with every point moved by `offset`, used to re-express a
     /// body's shapes relative to its centre of mass.
-    public func translated(by offset: SIMD3<Float>) -> DynamicCollisionVolume {
+    func translated(by offset: SIMD3<Float>) -> DynamicCollisionVolume {
         switch self {
         case let .radial(first, second, radius):
             .radial(first: first + offset, second: second + offset, radius: radius)
@@ -226,7 +226,7 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
     /// apply to points; the radius of a radial volume takes the transform's
     /// largest axis scale, matching how the static narrowphase scales a placed
     /// sphere or capsule.
-    public func transformed(by matrix: float4x4) -> DynamicCollisionVolume? {
+    func transformed(by matrix: float4x4) -> DynamicCollisionVolume? {
         let scale = DynamicCollisionMath.maximumScale(of: matrix)
         switch self {
         case let .radial(first, second, radius):
@@ -258,7 +258,7 @@ nonisolated public enum DynamicCollisionVolume: Sendable {
 }
 
 nonisolated extension DynamicCollisionPlane {
-    public func isNear(_ other: DynamicCollisionPlane, epsilon: Float) -> Bool {
+    func isNear(_ other: DynamicCollisionPlane, epsilon: Float) -> Bool {
         simd_length(normal - other.normal) <= epsilon && abs(offset - other.offset) <= epsilon
     }
 }

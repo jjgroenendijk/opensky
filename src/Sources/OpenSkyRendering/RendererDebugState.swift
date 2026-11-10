@@ -43,7 +43,7 @@ nonisolated public struct RenderLayer: OptionSet, Hashable, Sendable {
         .statics, .actors, .distantLOD, .terrain, .grass, .water, .sky, .particles
     ]
 
-    public var title: String {
+    var title: String {
         switch self {
         case .statics: "Statics"
         case .actors: "Actors"
@@ -79,7 +79,7 @@ nonisolated public struct RenderLayer: OptionSet, Hashable, Sendable {
     /// Solo is derived rather than stored precisely so that it cannot drift out
     /// of step with the per-layer toggles: unchecking a second layer by hand is
     /// the same act as pressing solo on the first.
-    public var soloedLayer: RenderLayer? {
+    var soloedLayer: RenderLayer? {
         rawValue.nonzeroBitCount == 1 ? self : nil
     }
 }
@@ -97,7 +97,7 @@ nonisolated public enum RenderDebugMode: UInt32, CaseIterable, Sendable {
     case shadowCascade = 5
     case layerCategory = 6
 
-    public var title: String {
+    var title: String {
         switch self {
         case .off: "Off"
         case .wireframe: "Wireframe"
@@ -119,25 +119,25 @@ nonisolated public struct RenderDebugState: Equatable, Sendable {
     /// What a shipping frame renders, and what an offscreen frame falls back to.
     public static let production = RenderDebugState()
 
-    public var isDefault: Bool {
+    var isDefault: Bool {
         self == .production
     }
 
     /// True while a debug pipeline is bound, which is also what decides whether
     /// the frame is safe to screenshot as engine output.
-    public var isDebugViewActive: Bool {
+    var isDebugViewActive: Bool {
         mode != .off
     }
 
-    public var soloedLayer: RenderLayer? {
+    var soloedLayer: RenderLayer? {
         layers.soloedLayer
     }
 }
 
 /// Visibility is the AND of a subsystem switch (`grassEnabled`, persisted) and the
 /// layer mask (transient, dev-only), folded once per frame, so neither overrides the other.
-nonisolated public enum RenderLayerPolicy: Sendable {
-    public static func effective(
+nonisolated enum RenderLayerPolicy: Sendable {
+    static func effective(
         mask: RenderLayer,
         grassEnabled: Bool,
         particlesEnabled: Bool,
@@ -162,7 +162,7 @@ extension Renderer {
     /// Read by both the scene pass and the shadow pass, so hiding statics also
     /// removes the shadows they were casting — a mask that hid the geometry and
     /// kept its shadow would be actively misleading.
-    public var effectiveRenderLayers: RenderLayer {
+    var effectiveRenderLayers: RenderLayer {
         guard effects.loadingCover == nil else { return .loadingCover }
         return RenderLayerPolicy.effective(
             mask: renderDebug.layers,
@@ -173,13 +173,13 @@ extension Renderer {
     }
 
     /// Whether the scene pass binds the debug pipelines this frame.
-    public var isRenderDebugActive: Bool {
+    var isRenderDebugActive: Bool {
         renderDebug.isDebugViewActive
     }
 
     /// Isolates one layer, or restores all of them when it is already the only
     /// one drawn — the readout's solo button toggles rather than latches.
-    public func soloRenderLayer(_ layer: RenderLayer) {
+    func soloRenderLayer(_ layer: RenderLayer) {
         renderDebug.layers = renderDebug.soloedLayer == layer ? .all : layer
     }
 }

@@ -26,7 +26,7 @@ nonisolated public enum ReferenceBridgeError: Error, Equatable, Sendable, Locali
 }
 
 nonisolated public struct ReferenceBridge: Sendable {
-    public static let folderName = "OpenSkyBridge"
+    static let folderName = "OpenSkyBridge"
     /// The plugin rewrites the state every 0.25 s, so an older file means the game is gone.
     public static let liveSeconds: TimeInterval = 3
 

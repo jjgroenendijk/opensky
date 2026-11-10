@@ -32,7 +32,7 @@ public final class RecordTextures {
     }
 
     /// The record writes `Data\Textures\...`; the file system starts below `Data\`.
-    nonisolated public static func filePath(_ recordPath: String) -> String? {
+    nonisolated static func filePath(_ recordPath: String) -> String? {
         var path = recordPath.replacingOccurrences(of: "/", with: "\\")
         guard !path.isEmpty else { return nil }
         if path.lowercased().hasPrefix("data\\") {
@@ -85,7 +85,7 @@ public final class RecordTextures {
 
 extension Renderer {
     /// Drains finished noise map loads and requests the maps of the water in the scene.
-    public func prepareWaterTextures() {
+    func prepareWaterTextures() {
         guard let recordTextures, !scene.water.isEmpty else { return }
         let paths = Set(scene.water.flatMap { item in
             item.look.shading.noiseTextures + [item.look.shading.flowNoiseTexture]

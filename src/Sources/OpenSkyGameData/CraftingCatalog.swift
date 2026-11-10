@@ -115,17 +115,10 @@ nonisolated public struct CraftingStationInfo: Equatable, Sendable {
 
 /// A FURN base with `WBDT` in the item plugin, for opening a session without walking there.
 nonisolated public struct CraftingStationChoice: Equatable, Sendable {
-    public let base: FormID
-    public let editorID: String
+    let base: FormID
+    let editorID: String
     public let workbench: Workbench
     public let keywords: [FormID]
-
-    public init(base: FormID, editorID: String, workbench: Workbench, keywords: [FormID]) {
-        self.base = base
-        self.editorID = editorID
-        self.workbench = workbench
-        self.keywords = keywords
-    }
 }
 
 nonisolated public struct CraftingCatalog: Sendable {
@@ -149,7 +142,7 @@ nonisolated public struct CraftingCatalog: Sendable {
         self.formLists = formLists
     }
 
-    public init(
+    init(
         recipes: RecipeStore, itemPlugin: FormIDResolver, file: ESMFile,
         formLists: FormListStore? = nil
     ) {

@@ -50,7 +50,7 @@ extension Renderer {
     }
 
     /// The cover's systems run on wall time, because the menu over them pauses the world.
-    public func advanceLoadingCoverParticles(deltaTime: Float) {
+    func advanceLoadingCoverParticles(deltaTime: Float) {
         guard particlesEnabled, !particlesFrozen, let cover = effects.loadingCover else { return }
         for playback in cover.particles {
             playback.advance(

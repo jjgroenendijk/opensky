@@ -7,12 +7,12 @@ import simd
 nonisolated extension RagdollInstance {
     /// The get-up test: the faster of the two key bodies moves slower than 0.025 m²/s² in
     /// Havok units, about 11 units a second.
-    public static let getUpSpeedSquared: Float = 0.025 * NIFCollisionModel.havokToEngineScale
+    static let getUpSpeedSquared: Float = 0.025 * NIFCollisionModel.havokToEngineScale
         * NIFCollisionModel.havokToEngineScale
 
     /// The squared speed of the faster of the first two bodies, the pelvis and the spine
     /// on a person.
-    public var keyBodySpeedSquared: Float {
+    var keyBodySpeedSquared: Float {
         bodies.prefix(2).map { simd_length_squared($0.linearVelocity) }.max() ?? 0
     }
 

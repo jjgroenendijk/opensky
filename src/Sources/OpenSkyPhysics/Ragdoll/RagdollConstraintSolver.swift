@@ -35,7 +35,7 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
     public static let angularSlop: Float = 0.004
     /// Ceiling on how far one substep may turn a body to recover a limit, in
     /// radians. The angular counterpart of `maximumPositionCorrection`.
-    public static let maximumLimitCorrection: Float = 0.15
+    static let maximumLimitCorrection: Float = 0.15
     /// Ceiling on how far one substep may move a body to fix joint drift, in
     /// engine units. The same guard `maximumCorrectionDistance` gives contacts,
     /// for the same reason.
@@ -46,7 +46,7 @@ nonisolated public enum RagdollConstraintSolver: Sendable {
     /// - Returns: how many limit constraints were found violated on the final
     ///   iteration, which is the convergence readout.
     @discardableResult
-    public static func solve(
+    static func solve(
         joints: [RagdollJointDefinition],
         bodies: inout [DynamicBody],
         dt: Float

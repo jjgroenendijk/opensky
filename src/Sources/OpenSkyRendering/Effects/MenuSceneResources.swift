@@ -8,13 +8,13 @@ import OpenSkyShaderTypes
 
 public final class MenuSceneResources {
     /// At most this many shapes draw in one frame; the rest are dropped.
-    public static let drawLimit = 4096
+    static let drawLimit = 4096
     static let uniformStride = (MemoryLayout<MenuSceneUniforms>.size + 0xFF) & -0x100
 
     /// Set each frame by the open menu; nil draws nothing.
     public internal(set) var scene: MenuScene?
     /// Shapes the last frame drew, for the readout.
-    public internal(set) var lastDraws = 0
+    var lastDraws = 0
     /// Buffers and textures added to the residency set, by object.
     var resident: [ObjectIdentifier: any MTLAllocation] = [:]
 

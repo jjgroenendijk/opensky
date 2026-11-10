@@ -12,9 +12,9 @@ import Synchronization
 nonisolated public final class AudioSourceStreamer: Sendable {
     /// At vanilla music rates one packet decodes to about 46 ms of PCM, so a
     /// chunk is about 0.75 s.
-    public static let packetsPerChunk = 16
+    static let packetsPerChunk = 16
     /// Refill starts when one buffer finishes, so about 1.5 s of margin remains.
-    public static let maxChunksInFlight = 3
+    static let maxChunksInFlight = 3
 
     /// Decode state. Only the decode queue locks it, so the lock never waits.
     nonisolated private struct DecodeState {
@@ -91,7 +91,7 @@ nonisolated public final class AudioSourceStreamer: Sendable {
 
     /// The engine also stops the node, which drops scheduled buffers and fires
     /// their completions; this flag stops the queue from scheduling more.
-    public func requestStop() {
+    func requestStop() {
         queue.async { [self] in
             state.withLock { $0.stopped = true }
             markFinished()
@@ -196,12 +196,12 @@ nonisolated public final class AudioSourceStreamer: Sendable {
     // MARK: - Policy + PCM packing (pure, unit-tested)
 
     /// Kept pure so a unit test can check it: no WMA fixture may enter the repo.
-    public static func shouldRewind(loops: Bool, passProducedSamples: Bool, stopped: Bool) -> Bool {
+    static func shouldRewind(loops: Bool, passProducedSamples: Bool, stopped: Bool) -> Bool {
         loops && passProducedSamples && !stopped
     }
 
     /// Averages interleaved multi-channel PCM into one mono channel.
-    public static func monoDownmix(_ interleaved: [Float], channelCount: Int) -> [Float] {
+    static func monoDownmix(_ interleaved: [Float], channelCount: Int) -> [Float] {
         guard channelCount > 1 else { return interleaved }
         let frameCount = interleaved.count / channelCount
         var mono = [Float](repeating: 0, count: frameCount)
@@ -219,7 +219,7 @@ nonisolated public final class AudioSourceStreamer: Sendable {
     /// Packs interleaved decoder output into a deinterleaved float PCM buffer
     /// matching `format`. Returns nil when the sample count does not fill whole
     /// frames or allocation fails.
-    public static func makeBuffer(
+    static func makeBuffer(
         samples: [Float],
         sourceChannelCount: Int,
         downmixToMono: Bool,

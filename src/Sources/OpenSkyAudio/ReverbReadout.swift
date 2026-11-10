@@ -2,10 +2,10 @@
 // unit test can pin it.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 
-nonisolated public enum ReverbReadout {
-    public static func text(record: ReverbParameters?, ramp: ReverbRamp) -> String {
+nonisolated enum ReverbReadout {
+    static func text(record: ReverbParameters?, ramp: ReverbRamp) -> String {
         let target = ramp.target
         let room = target.room.map(\.rawValue) ?? "off"
         let override = ramp.wetOverride.map { ", override \(decibels($0))" } ?? ""

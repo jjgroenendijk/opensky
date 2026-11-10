@@ -11,7 +11,7 @@ nonisolated public enum PlayerSettingsOverrides {
         values.withLock { $0 }
     }
 
-    public static var isActive: Bool {
+    static var isActive: Bool {
         !current.isEmpty
     }
 

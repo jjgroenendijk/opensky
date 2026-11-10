@@ -67,7 +67,7 @@ nonisolated public struct GameInstallSummary: Equatable, Sendable {
     }
 
     /// Plugins that are neither the base game, an official DLC, nor Creation Club.
-    public var modPlugins: Int {
+    var modPlugins: Int {
         let missing = problems.filter { $0.kind == .missingMaster }.count
         let base = GameInstallCheck.requiredMasters.count - missing
         return max(0, plugins - base - dlc.count - creationClubPlugins)

@@ -28,7 +28,7 @@ extension Renderer {
     }
 
     /// Why interpolation cannot run now; nil while it runs or is off.
-    public var frameInterpolationUnavailableReason: String? {
+    var frameInterpolationUnavailableReason: String? {
         guard upscale.interpolation.enabled else { return nil }
         if
             let reason = upscale.resources.interpolatorUnavailableReason
@@ -45,7 +45,7 @@ extension Renderer {
         return upscale.unavailableReason ?? upscale.interpolation.pacingPause
     }
 
-    public var isFrameInterpolationRunning: Bool {
+    var isFrameInterpolationRunning: Bool {
         upscale.interpolation.enabled && frameInterpolationUnavailableReason == nil
     }
 

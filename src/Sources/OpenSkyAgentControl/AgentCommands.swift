@@ -446,11 +446,4 @@ nonisolated public struct AgentRagdollLink: Equatable, Sendable {
     public let node: String
     public let other: String
     public let otherNode: String
-
-    public init(reference: String, node: String, other: String, otherNode: String) {
-        self.reference = reference
-        self.node = node
-        self.other = other
-        self.otherNode = otherNode
-    }
 }

@@ -56,7 +56,7 @@ nonisolated public struct IdleStore: Sendable {
     }
 
     /// The top idles of each tree: a root idle, or a child of an action.
-    public var rootIdles: [ResolvedFormID] {
+    var rootIdles: [ResolvedFormID] {
         forest.roots.flatMap { actions.contains($0) ? forest.children(of: $0) : [$0] }
     }
 
@@ -90,7 +90,7 @@ nonisolated public struct IdleStore: Sendable {
     }
 
     /// Root idles whose DATA names this animation group section, in sibling order.
-    public func roots(inAnimationGroup section: UInt8) -> [ResolvedRecord<IdleAnimation>] {
+    func roots(inAnimationGroup section: UInt8) -> [ResolvedRecord<IdleAnimation>] {
         rootIdles.compactMap { idles.record($0) }
             .filter { $0.record.properties?.animationGroupSection == section }
     }
@@ -130,7 +130,7 @@ nonisolated public struct CameraPathStore: Sendable {
             .count(where: \.isDangling)
     }
 
-    public init(plugins: [(name: String, file: ESMFile)]) {
+    init(plugins: [(name: String, file: ESMFile)]) {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: Self.types))
     }
 
@@ -190,17 +190,17 @@ nonisolated public struct StoryManagerStore: Sendable {
     }
 
     /// Event codes with at least one event node, in text order.
-    public var events: [FourCC] {
+    var events: [FourCC] {
         rootsByEvent.keys.sorted { $0.description < $1.description }
     }
 
     /// The quest nodes that can start `quest`.
-    public func nodes(startingQuest quest: ResolvedFormID) -> [ResolvedRecord<StoryManagerNode>] {
+    func nodes(startingQuest quest: ResolvedFormID) -> [ResolvedRecord<StoryManagerNode>] {
         (nodesByQuest[quest] ?? []).compactMap { nodes.record($0) }
     }
 
     /// The event the node hangs under, or nil when no node on its path is an event node.
-    public func event(of node: ResolvedFormID) -> FourCC? {
+    func event(of node: ResolvedFormID) -> FourCC? {
         forest.path(to: node).lazy.compactMap { nodes.record($0)?.record.event }.first
     }
 }

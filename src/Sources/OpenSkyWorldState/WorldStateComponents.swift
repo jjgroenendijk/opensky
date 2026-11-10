@@ -187,7 +187,7 @@ nonisolated public struct ReferenceActivationState: WorldStateComponent, Hashabl
         .activation
     }
 
-    public var wasActivated: Bool {
+    var wasActivated: Bool {
         activationCount > 0
     }
 

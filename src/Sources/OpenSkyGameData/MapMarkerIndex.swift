@@ -11,7 +11,7 @@ nonisolated public struct MapMarkerEntry: Equatable, Sendable {
     public let marker: MapMarker
     public let name: LString?
     public let position: SIMD3<Float>
-    public let sourcePlugin: String
+    let sourcePlugin: String
 }
 
 nonisolated public struct MapMarkerIndex: Sendable {
@@ -39,7 +39,7 @@ nonisolated public struct MapMarkerIndex: Sendable {
         }
     }
 
-    public var count: Int {
+    var count: Int {
         entries.count
     }
 
@@ -60,7 +60,7 @@ nonisolated public struct MapMarkerIndex: Sendable {
     }
 
     /// Marker count per type name; an unnamed type shows as its number.
-    public var typeHistogram: [String: Int] {
+    var typeHistogram: [String: Int] {
         entries.values.reduce(into: [:]) { histogram, entry in
             let type = entry.marker.type
             histogram[type?.name ?? type.map { "\($0.rawValue)" } ?? "none", default: 0] += 1

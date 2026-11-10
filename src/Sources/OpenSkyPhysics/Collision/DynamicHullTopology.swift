@@ -8,11 +8,11 @@ import simd
 nonisolated public struct DynamicHullTopology: Sendable {
     /// Per plane of the hull, the indices of the points on it, wound counter-clockwise
     /// about the plane's normal. A plane with fewer than three points has an empty face.
-    public let faces: [[Int]]
+    let faces: [[Int]]
     /// Each edge as a pair of point indices, once.
-    public let edges: [SIMD2<Int32>]
+    let edges: [SIMD2<Int32>]
     /// Unit edge directions with the parallel ones merged: a box has three.
-    public let edgeDirections: [SIMD3<Float>]
+    let edgeDirections: [SIMD3<Float>]
 
     /// How far a point may sit from a plane and still be on its face, as a share of
     /// the hull's size. A decoded hull's points are rounded.
@@ -20,7 +20,7 @@ nonisolated public struct DynamicHullTopology: Sendable {
     /// Two directions this close to parallel are one direction.
     private static let parallelCosine: Float = 0.9995
 
-    public init?(points: [SIMD3<Float>], planes: [DynamicCollisionPlane]) {
+    init?(points: [SIMD3<Float>], planes: [DynamicCollisionPlane]) {
         guard points.count >= 4, planes.count >= 4 else { return nil }
         let low = points.reduce(points[0], simd_min)
         let high = points.reduce(points[0], simd_max)

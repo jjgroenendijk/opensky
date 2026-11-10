@@ -39,7 +39,7 @@ nonisolated public struct MagicEffectStore: Sendable {
     /// The same records under the identity the active-effect component keys them by.
     private let effectsByKey: [ReferenceKey: ResolvedMagicEffect]
 
-    public var effects: [ResolvedFormID: ResolvedMagicEffect] {
+    var effects: [ResolvedFormID: ResolvedMagicEffect] {
         table.values
     }
 
@@ -77,7 +77,7 @@ nonisolated public struct MagicEffectStore: Sendable {
         effectsByKey[key]
     }
 
-    public func effect(editorID: String) -> ResolvedMagicEffect? {
+    func effect(editorID: String) -> ResolvedMagicEffect? {
         table.value(editorID: editorID)
     }
 
@@ -131,7 +131,7 @@ nonisolated public struct MagicEffectStore: Sendable {
 }
 
 nonisolated extension MagicItemEffect {
-    public func resolved(
+    func resolved(
         fromPlugin pluginName: String,
         using store: MagicEffectStore
     ) -> ResolvedMagicEffect? {
@@ -139,8 +139,8 @@ nonisolated extension MagicItemEffect {
     }
 }
 
-nonisolated public enum MagicEffectStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> MagicEffectStore {
+nonisolated enum MagicEffectStoreLoader: Sendable {
+    static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> MagicEffectStore {
         MagicEffectStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
     }
 }

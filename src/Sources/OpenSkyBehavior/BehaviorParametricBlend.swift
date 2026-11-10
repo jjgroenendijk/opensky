@@ -6,23 +6,23 @@ import Foundation
 
 /// `hkbBlenderGenerator::BlenderFlags`, from the class reflection data.
 nonisolated public enum BehaviorBlenderFlag {
-    public static let sync = 0x1
+    static let sync = 0x1
     public static let smoothGeneratorWeights = 0x4
-    public static let dontDeactivateChildrenWithZeroWeights = 0x8
+    static let dontDeactivateChildrenWithZeroWeights = 0x8
     public static let parametricBlend = 0x10
-    public static let isParametricBlendCyclic = 0x20
+    static let isParametricBlendCyclic = 0x20
 }
 
-nonisolated public enum BehaviorParametricBlend {
+nonisolated enum BehaviorParametricBlend {
     /// The smooth-generator-weights flag eases each weight with a smoothstep on every
     /// evaluation; it does not smooth over time.
-    public static func smoothed(_ weight: Float) -> Float {
+    static func smoothed(_ weight: Float) -> Float {
         3 * weight * weight - 2 * weight * weight * weight
     }
 
     /// One weight per child, summing to 1. `positions` are the children's places on the
     /// parameter axis; `cyclic` wraps the axis, such as a direction from 0 to 360.
-    public static func weights(
+    static func weights(
         positions: [Float],
         parameter: Float,
         cyclic: ClosedRange<Float>? = nil

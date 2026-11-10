@@ -29,7 +29,7 @@ nonisolated public enum CollisionCacheCodec {
         return out.data
     }
 
-    public static func decode(_ data: Data) throws -> NIFCollisionModel {
+    static func decode(_ data: Data) throws -> NIFCollisionModel {
         var input = CachePayloadReader(data)
         let names = try input.strings()
         let counts = try input.array(Int64.self)

@@ -41,27 +41,27 @@ nonisolated public final class VoicePlaybackClock: Sendable, Equatable {
 
 /// Provisional distance-attenuation defaults, in meters. Tuned only so the audio checks
 /// is audibly direction- and distance-dependent until sound descriptors supply values.
-nonisolated public enum ProvisionalAttenuation: Sendable {
+nonisolated enum ProvisionalAttenuation: Sendable {
     /// Distance at which a source plays at full gain (~2 m).
-    public static let referenceDistanceMeters: Float = 2
+    static let referenceDistanceMeters: Float = 2
     /// Attenuation stops growing past this distance (~one exterior cell).
-    public static let maximumDistanceMeters: Float = 60
-    public static let rolloffFactor: Float = 1
+    static let maximumDistanceMeters: Float = 60
+    static let rolloffFactor: Float = 1
 }
 
 @MainActor
 public final class WorldAudioEngine {
     /// Concurrent-source budget. Provisional; the eviction rule is FIFO — see
     /// `makeRoomForNewSource()` in WorldAudioEngineSources.swift.
-    public static let maxConcurrentSources = 8
+    static let maxConcurrentSources = 8
     /// Sources bound to a cell farther than this (Chebyshev rings) from the
     /// listener's cell are stopped on the audio tick — cleanup when the world
     /// streams away. One ring beyond the streamer's default 5x5 residency.
     public static let defaultCellPurgeRadius: Int32 = 3
 
-    public let engine = AVAudioEngine()
+    let engine = AVAudioEngine()
     public let environment = AVAudioEnvironmentNode()
-    public private(set) var categoryMixers: [AudioCategory: AVAudioMixerNode] = [:]
+    private(set) var categoryMixers: [AudioCategory: AVAudioMixerNode] = [:]
     /// Serial owner of every WMADecoder and all streaming state.
     public let decodeQueue = DispatchQueue(
         label: "nl.jjgroenendijk.opensky.audio-decode",
@@ -75,7 +75,7 @@ public final class WorldAudioEngine {
     /// The sound category mix; nil plays every category at full level.
     public var soundMix: SoundCategoryMix?
     /// Next source id; taken only by WorldAudioEngineSources.swift.
-    public var nextSourceID = 1
+    var nextSourceID = 1
     /// Idle player nodes for one-shot buffers (WorldAudioEngineNodePool.swift).
     var bufferNodePool = AudioBufferNodePool()
     /// Live half of the playback clock: seconds accumulated from the audio

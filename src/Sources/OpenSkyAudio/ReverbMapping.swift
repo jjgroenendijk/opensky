@@ -3,7 +3,7 @@
 // reverb has no decay or delay controls, so a preset stands in for them.
 // See docs/formats/sound-output-reverb.md, section "Reverb".
 
-public import AVFAudio
+import AVFAudio
 import Foundation
 public import OpenSkyFormatsESM
 
@@ -23,7 +23,7 @@ nonisolated public enum ReverbRoom: String, Equatable, Sendable, CaseIterable {
         }
     }
 
-    public var preset: AVAudioUnitReverbPreset {
+    var preset: AVAudioUnitReverbPreset {
         switch self {
         case .smallRoom: .smallRoom
         case .mediumRoom: .mediumRoom
@@ -77,7 +77,7 @@ nonisolated public struct ReverbSetting: Equatable, Sendable {
         )
     }
 
-    public var isOff: Bool {
+    var isOff: Bool {
         room == nil
     }
 }

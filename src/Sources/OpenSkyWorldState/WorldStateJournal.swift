@@ -52,7 +52,7 @@ nonisolated public struct WorldStateGlobalJournalEntry: Equatable, Sendable {
     public let newValue: GlobalValue?
 
     /// True when this entry restored the global to its plugin default.
-    public var isReset: Bool {
+    var isReset: Bool {
         newValue == nil
     }
 }
@@ -94,7 +94,7 @@ nonisolated public struct WorldStateJournal: Sendable {
     }
 
     /// Component entries dropped because the window was full.
-    public var droppedCount: Int {
+    var droppedCount: Int {
         components.droppedCount
     }
 
@@ -123,12 +123,12 @@ nonisolated public struct WorldStateJournal: Sendable {
     // MARK: - Global entries
 
     /// Retained global entries, oldest first.
-    public var globalEntries: [WorldStateGlobalJournalEntry] {
+    var globalEntries: [WorldStateGlobalJournalEntry] {
         globals.entries
     }
 
     /// Global entries dropped because the window was full.
-    public var droppedGlobalCount: Int {
+    var droppedGlobalCount: Int {
         globals.droppedCount
     }
 

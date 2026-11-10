@@ -3,33 +3,33 @@
 // docs/formats/body-parts.md.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import OpenSkyFormatsESM
 
 /// A head part with its extra parts, depth first. `cycles` counts links back to a part already
 /// seen.
-nonisolated public struct ExpandedHeadParts: Sendable {
-    public let parts: [ResolvedRecord<HeadPart>]
-    public let cycles: Int
-    public let danglingLinks: Int
+nonisolated struct ExpandedHeadParts: Sendable {
+    let parts: [ResolvedRecord<HeadPart>]
+    let cycles: Int
+    let danglingLinks: Int
 }
 
 /// BPTD node names checked against the node names of a skeleton.
-nonisolated public struct BodyPartNodeResolution: Equatable, Sendable {
-    public let hits: [String]
-    public let misses: [String]
+nonisolated struct BodyPartNodeResolution: Equatable, Sendable {
+    let hits: [String]
+    let misses: [String]
 }
 
-nonisolated public struct CharacterPartStore: Sendable {
-    public static let types: Set<FourCC> = ["HDPT", "CLFM", "EYES", "BPTD"]
+nonisolated struct CharacterPartStore: Sendable {
+    static let types: Set<FourCC> = ["HDPT", "CLFM", "EYES", "BPTD"]
 
-    public let headParts: TypedRecordStore<HeadPart>
-    public let colors: TypedRecordStore<ColorForm>
-    public let eyes: TypedRecordStore<Eyes>
-    public let bodyParts: TypedRecordStore<BodyPartData>
+    let headParts: TypedRecordStore<HeadPart>
+    let colors: TypedRecordStore<ColorForm>
+    let eyes: TypedRecordStore<Eyes>
+    let bodyParts: TypedRecordStore<BodyPartData>
     private let partsByType: [HeadPart.PartType: [ResolvedFormID]]
 
-    public init(index: RecordIndex) {
+    init(index: RecordIndex) {
         headParts = TypedRecordStore(
             index: index, types: ["HDPT"],
             decode: { try HeadPart(record: $0.record, localized: $0.localized) },
@@ -58,15 +58,15 @@ nonisolated public struct CharacterPartStore: Sendable {
         self.partsByType = partsByType
     }
 
-    public init(plugins: [(name: String, file: ESMFile)]) {
+    init(plugins: [(name: String, file: ESMFile)]) {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: Self.types))
     }
 
-    public func headParts(ofType type: HeadPart.PartType) -> [ResolvedRecord<HeadPart>] {
+    func headParts(ofType type: HeadPart.PartType) -> [ResolvedRecord<HeadPart>] {
         (partsByType[type] ?? []).compactMap { headParts.record($0) }
     }
 
-    public func expandedParts(_ id: ResolvedFormID) -> ExpandedHeadParts {
+    func expandedParts(_ id: ResolvedFormID) -> ExpandedHeadParts {
         var parts: [ResolvedRecord<HeadPart>] = []
         var seen: Set<ResolvedFormID> = []
         var cycles = 0
@@ -91,12 +91,12 @@ nonisolated public struct CharacterPartStore: Sendable {
     }
 
     /// The CLFM of a head part's CNAM.
-    public func color(of part: ResolvedRecord<HeadPart>) -> ResolvedRecord<ColorForm>? {
+    func color(of part: ResolvedRecord<HeadPart>) -> ResolvedRecord<ColorForm>? {
         colors.resolve(part.record.color, fromPlugin: part.sourcePlugin)
     }
 
     /// The CLFM of an NPC_ HCLF, read from the plugin that authored the actor.
-    public func hairColor(
+    func hairColor(
         of actor: ActorBase,
         fromPlugin pluginName: String
     ) -> ResolvedRecord<ColorForm>? {
@@ -104,7 +104,7 @@ nonisolated public struct CharacterPartStore: Sendable {
     }
 
     /// Compares node names without case, as the game's skeleton lookup does.
-    public static func resolveNodes(
+    static func resolveNodes(
         of data: BodyPartData,
         skeletonNodes: Set<String>
     ) -> BodyPartNodeResolution {
@@ -119,7 +119,7 @@ nonisolated public struct CharacterPartStore: Sendable {
 
 nonisolated extension BodyPartData {
     /// The parts whose BPND names this body-part type.
-    public func parts(ofType type: UInt8) -> [BodyPart] {
+    func parts(ofType type: UInt8) -> [BodyPart] {
         parts.filter { $0.nodeData?.partType == type }
     }
 }

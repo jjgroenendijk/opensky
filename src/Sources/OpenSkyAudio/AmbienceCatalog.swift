@@ -18,7 +18,7 @@ nonisolated public struct AmbienceContext: Equatable, Sendable {
     public let acousticSpace: FormID?
     public let isInterior: Bool
 
-    public static let empty = AmbienceContext(regions: [], acousticSpace: nil, isInterior: false)
+    static let empty = AmbienceContext(regions: [], acousticSpace: nil, isInterior: false)
 
     public init(regions: [FormID], acousticSpace: FormID?, isInterior: Bool) {
         self.regions = regions

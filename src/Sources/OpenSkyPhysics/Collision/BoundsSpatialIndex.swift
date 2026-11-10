@@ -10,7 +10,7 @@ import simd
 nonisolated public struct BoundsSpatialIndex: Sendable {
     /// Elements per leaf. Small enough that a leaf test is cheap, large enough
     /// that a cell with a handful of shapes does not build a deep tree.
-    public static let maximumElementsPerLeaf = 4
+    static let maximumElementsPerLeaf = 4
 
     private struct Node {
         let bounds: ModelBounds
@@ -28,7 +28,7 @@ nonisolated public struct BoundsSpatialIndex: Sendable {
         nodes = builder.nodes
     }
 
-    public var nodeCount: Int {
+    var nodeCount: Int {
         nodes.count
     }
 

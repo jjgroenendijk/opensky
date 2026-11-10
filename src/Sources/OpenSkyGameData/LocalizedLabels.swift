@@ -17,7 +17,7 @@ nonisolated public final class LocalizedLabels: Sendable {
     /// Merged `$key` -> value across every discovered file.
     private let entries: [String: String]
 
-    public var keyCount: Int {
+    var keyCount: Int {
         entries.count
     }
 
@@ -33,7 +33,7 @@ nonisolated public final class LocalizedLabels: Sendable {
     }
 
     /// Looks up one value by full key (leading `$` included). Nil when absent.
-    public func value(forKey key: String) -> String? {
+    func value(forKey key: String) -> String? {
         entries[key]
     }
 

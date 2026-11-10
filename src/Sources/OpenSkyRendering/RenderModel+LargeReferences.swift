@@ -5,7 +5,7 @@ import OpenSkyRenderResources
 
 nonisolated extension RenderModel {
     /// The suffix of the merged shapes that hold an object LOD block's large references.
-    public static let largeReferenceShapeSuffix = "-largeref"
+    static let largeReferenceShapeSuffix = "-largeref"
 
     /// The model without the large-reference pieces whose segment `hides` names. A
     /// large-reference shape without segments goes whole.

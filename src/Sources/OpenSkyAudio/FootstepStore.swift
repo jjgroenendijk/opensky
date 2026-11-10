@@ -47,7 +47,7 @@ nonisolated public final class FootstepStore {
     /// Nil when the plugin has no set named `defaultSetEditorID`.
     public private(set) var defaultSet: FootstepSet?
 
-    public convenience init(file: ESMFile) {
+    convenience init(file: ESMFile) {
         self.init(loadOrder: LoadOrderPlugins(file: file))
     }
 
@@ -76,7 +76,7 @@ nonisolated public final class FootstepStore {
     }
 
     /// Test seam: built from decoded values rather than from a file.
-    public init(
+    init(
         sets: [FootstepSet],
         footsteps: [Footstep],
         impactDataSets: [ImpactDataSet],

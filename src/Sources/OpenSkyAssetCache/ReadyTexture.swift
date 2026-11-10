@@ -27,13 +27,13 @@ nonisolated public enum ReadyTextureFormat: UInt8, Sendable, CaseIterable {
     }
 
     /// `3.56` for ASTC 6x6, `8` for BC3.
-    public var bitsPerPixelText: String {
+    var bitsPerPixelText: String {
         let value = bitsPerPixel
         return unsafe value == value.rounded() ? String(Int(value)) : String(format: "%.2f", value)
     }
 
     /// `BC1`, `ASTC 6x6`.
-    public var title: String {
+    var title: String {
         switch self {
         case .bc1: "BC1"
         case .bc2: "BC2"

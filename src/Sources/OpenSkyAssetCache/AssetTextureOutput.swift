@@ -89,12 +89,6 @@ nonisolated public struct TextureQualityTarget: Equatable, Sendable {
     /// Holes and ragged edges show where cut-out alpha is wrong, so it is stricter.
     public let cutoutAlphaPSNR: Double
 
-    public init(psnr: Double, normalDegrees: Double, cutoutAlphaPSNR: Double) {
-        self.psnr = psnr
-        self.normalDegrees = normalDegrees
-        self.cutoutAlphaPSNR = cutoutAlphaPSNR
-    }
-
     public func isMet(by measure: TextureMeasure, normalMap: Bool, cutoutAlpha: Bool) -> Bool {
         let colour = normalMap
             ? (measure.normalDegrees ?? .infinity) <= normalDegrees

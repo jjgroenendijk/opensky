@@ -8,11 +8,11 @@ public import OpenSkyFormatsAnimation
 
 /// A global wildcard as one ancestor machine sees it: which of its own states
 /// to enter, then the start state of each machine below, outermost first.
-nonisolated public struct BehaviorGlobalWildcardRoute: Sendable {
-    public let stateId: Int
-    public let nestedStateIds: [Int]
-    public let owner: HKBStateMachine
-    public let info: HKBStateMachineTransitionInfo
+nonisolated struct BehaviorGlobalWildcardRoute: Sendable {
+    let stateId: Int
+    let nestedStateIds: [Int]
+    let owner: HKBStateMachine
+    let info: HKBStateMachineTransitionInfo
 }
 
 nonisolated extension BehaviorGraphInstance {

@@ -200,7 +200,7 @@ nonisolated public struct ImageSpaceRadialBlur: Equatable, Sendable {
     }
 
     /// The share of the full blur at `radius`, the centre-to-corner share.
-    public func weight(atRadius radius: Float) -> Float {
+    func weight(atRadius radius: Float) -> Float {
         let rising = simd_clamp((radius - start) * rampUp, 0, 1)
         guard downStart > start else { return rising }
         return rising * simd_clamp(1 - (radius - downStart) * rampDown, 0, 1)

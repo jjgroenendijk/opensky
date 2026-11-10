@@ -10,7 +10,7 @@ import OpenSkyShaderTypes
 extension Renderer {
     /// Draws each system as one six-vertex instanced billboard call. Depth
     /// tests opaque geometry but never writes, matching effect blend pipelines.
-    public func encodeParticles(
+    func encodeParticles(
         items: [ParticlePlayback],
         enabled: Bool,
         sorted: Bool = false,

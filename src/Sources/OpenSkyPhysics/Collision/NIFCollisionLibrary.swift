@@ -97,7 +97,7 @@ nonisolated public final class NIFCollisionLibrary {
         }
     }
 
-    public var loadedCount: Int {
+    var loadedCount: Int {
         cache.count
     }
 

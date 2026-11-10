@@ -85,7 +85,7 @@ nonisolated public struct CharacterLevelOutcome: Equatable, Sendable {
     /// Never negative.
     public let carriedExperience: Float
 
-    public var didAdvance: Bool {
+    var didAdvance: Bool {
         levelsGained > 0
     }
 }
@@ -116,7 +116,7 @@ nonisolated public enum CharacterLeveling: Sendable {
     /// The total experience needed from level 1 to reach `level`: the sum of the
     /// thresholds below it. Summed, not closed-form, so changed settings apply;
     /// `CharacterLevelingTests` checks it against `12.5 * N^2 + 62.5 * N - 75`.
-    public static func cumulativeExperience(
+    static func cumulativeExperience(
         toLevel level: Int,
         settings: CharacterLevelSettings = .documentedDefaults
     ) -> Float {

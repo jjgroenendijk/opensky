@@ -4,7 +4,7 @@
 import AVFAudio
 
 extension WorldAudioEngine {
-    public func statsSnapshot() -> AudioStatsSnapshot {
+    func statsSnapshot() -> AudioStatsSnapshot {
         AudioStatsSnapshot(
             enabled: isEnabled,
             engineRunning: isRunning,

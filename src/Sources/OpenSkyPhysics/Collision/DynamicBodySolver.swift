@@ -39,7 +39,7 @@ nonisolated public struct DynamicStepStats: Equatable, Sendable {
     public var substepCount = 0
     /// Bodies whose integrated pose came back non-finite and were reset. Always
     /// zero on well-formed input; a non-zero value is a bug, not a tolerance.
-    public var recoveredBodyCount = 0
+    var recoveredBodyCount = 0
     /// Joint limits still violated after the last iteration of the last substep. Zero
     /// means converged; the readout shows it and the stability gate bounds it.
     public var jointViolationCount = 0
@@ -51,34 +51,34 @@ nonisolated public enum DynamicBodySolver: Sendable {
     public static let iterationCount = 4
     /// Ceiling on substeps per step, so an absurd velocity costs bounded time.
     /// Motion beyond what these substeps cover is discarded — see the header.
-    public static let maximumSubstepCount = 8
+    static let maximumSubstepCount = 8
     /// Penetration left unresolved, in engine units. Resolving to exactly zero
     /// makes resting contacts flicker in and out.
-    public static let penetrationSlop: Float = 0.5
+    static let penetrationSlop: Float = 0.5
     /// Fraction of the remaining penetration pushed out of the positions per
     /// substep. Below one so a deep recovery is spread over several substeps
     /// rather than snapping.
-    public static let correctionRate: Float = 0.4
+    static let correctionRate: Float = 0.4
     /// Ceiling on how far one substep may move a body to recover penetration,
     /// in engine units. Vanilla authors clutter *inside* the shelf it stands on,
     /// so a body's first contacts are routinely tens of units deep; without a
     /// ceiling the recovery reads as a launch and the body leaves the world.
-    public static let maximumCorrectionDistance: Float = 1.5
+    static let maximumCorrectionDistance: Float = 1.5
     /// Below this closing speed a contact is treated as resting and gets no
     /// bounce, whatever the body's restitution. Engine units per second.
-    public static let restitutionThreshold: Float = 120
+    static let restitutionThreshold: Float = 120
     /// Sleep thresholds and the step count under them. The angular one is per body: the
     /// spin at which the collider's outer point moves at `sleepLinearSpeed`, because one
     /// constant suits neither a cup nor a table.
-    public static let sleepLinearSpeed: Float = 6
+    static let sleepLinearSpeed: Float = 6
     /// Ceiling on the derived angular threshold, so a body with an implausibly
     /// small collider is not allowed to sleep while visibly spinning.
-    public static let maximumSleepAngularSpeed: Float = 0.7
-    public static let sleepStepCount = 60
+    static let maximumSleepAngularSpeed: Float = 0.7
+    static let sleepStepCount = 60
 
     /// The spin at which the farthest point of `body`'s collider moves at
     /// `sleepLinearSpeed`.
-    public static func sleepAngularSpeed(of body: DynamicBody) -> Float {
+    static func sleepAngularSpeed(of body: DynamicBody) -> Float {
         let radius = body.definition.boundingRadius
         guard radius > Float.ulpOfOne else { return maximumSleepAngularSpeed }
         return min(sleepLinearSpeed / radius, maximumSleepAngularSpeed)
@@ -199,7 +199,7 @@ nonisolated public enum DynamicBodySolver: Sendable {
     /// How far a body may move in one substep before a wall could be crossed
     /// without ever being sampled: half the collision margin plus a fraction of
     /// the body's own size, so a large crate substeps less often than a coin.
-    public static func substepDistance(of body: DynamicBody) -> Float {
+    static func substepDistance(of body: DynamicBody) -> Float {
         max(
             DynamicBodyContacts.contactMargin,
             body.definition.boundingRadius * 0.5

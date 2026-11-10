@@ -14,11 +14,11 @@ nonisolated public struct TextureStreamingStats: Equatable, Sendable {
     public var reservedBytes = 0
     /// Heap memory mapped to texture levels.
     public var usedBytes = 0
-    public var budgetBytes = 0
-    public var pendingReads = 0
+    var budgetBytes = 0
+    var pendingReads = 0
     /// Levels copied in and levels dropped since launch.
-    public var levelsLoaded = 0
-    public var levelsDropped = 0
+    var levelsLoaded = 0
+    var levelsDropped = 0
 
     public init() {}
 }
