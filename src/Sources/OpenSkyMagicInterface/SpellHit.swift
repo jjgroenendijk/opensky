@@ -241,16 +241,14 @@ nonisolated public enum SpellHitTargeting: Sendable {
     ///   catches it.
     public static func targets(
         of payload: SpellPayload,
-        at position: SIMD3<Float>,
-        struck: ReferenceKey?,
+        landing: (position: SIMD3<Float>, struck: ReferenceKey?),
         candidates: [MeleeTarget],
         excluding shooter: ReferenceKey?,
         settings: MagicAreaSettings = .documentedDefaults
     ) -> [SpellHitTarget] {
         targets(
             of: payload.entries,
-            at: position,
-            struck: struck,
+            landing: landing,
             candidates: candidates,
             excluding: shooter,
             settings: settings
@@ -261,12 +259,12 @@ nonisolated public enum SpellHitTargeting: Sendable {
     /// contact enchantment.
     public static func targets(
         of entries: [MagicItemEffect],
-        at position: SIMD3<Float>,
-        struck: ReferenceKey?,
+        landing: (position: SIMD3<Float>, struck: ReferenceKey?),
         candidates: @autoclosure () -> [MeleeTarget],
         excluding shooter: ReferenceKey?,
         settings: MagicAreaSettings = .documentedDefaults
     ) -> [SpellHitTarget] {
+        let (position, struck) = landing
         var targets: [SpellHitTarget] = []
         if let struck, struck != shooter {
             targets.append(SpellHitTarget(key: struck, distance: 0, isDirect: true))

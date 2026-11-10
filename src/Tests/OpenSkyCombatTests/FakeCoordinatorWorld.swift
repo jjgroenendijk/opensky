@@ -102,10 +102,9 @@ final class FakeCoordinatorWorld: CombatWorld {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on _: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
-        seams _: ConditionContext
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float {
-        perkQuestions[entryPoint] = subjects
+        perkQuestions[entryPoint] = conditions.subjects
         return value * (perkFactors[entryPoint] ?? 1) + (perkAddends[entryPoint] ?? 0)
     }
 

@@ -97,8 +97,7 @@ struct MagicItemConsumptionTests {
 
         let outcome = try effects.consume(
             potion,
-            from: .player,
-            on: .player,
+            use: (.player, .player),
             inventory: harness.inventory,
             fromPlugin: ActiveEffectFixture.pluginName
         )
@@ -119,8 +118,7 @@ struct MagicItemConsumptionTests {
 
         let outcome = try effects.consume(
             ingredient,
-            from: .player,
-            on: .player,
+            use: (.player, .player),
             inventory: harness.inventory,
             fromPlugin: ActiveEffectFixture.pluginName
         )
@@ -140,8 +138,7 @@ struct MagicItemConsumptionTests {
         #expect(throws: MagicItemConsumeError.notConsumable(sword)) {
             try effects.consume(
                 sword,
-                from: .player,
-                on: .player,
+                use: (.player, .player),
                 inventory: harness.inventory,
                 fromPlugin: ActiveEffectFixture.pluginName
             )
@@ -156,8 +153,7 @@ struct MagicItemConsumptionTests {
         #expect(throws: MagicItemConsumeError.noneCarried(potion)) {
             try effects.consume(
                 potion,
-                from: .player,
-                on: .player,
+                use: (.player, .player),
                 inventory: harness.inventory,
                 fromPlugin: ActiveEffectFixture.pluginName
             )
@@ -197,8 +193,7 @@ struct MagicItemConsumptionTests {
 
         let outcome = try effects.consume(
             laterPotion,
-            from: .player,
-            on: .player,
+            use: (.player, .player),
             inventory: inventory,
             fromPlugin: ActiveEffectFixture.pluginName
         )

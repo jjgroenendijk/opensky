@@ -250,8 +250,7 @@ struct SpellHitTests {
 
         let targets = SpellHitTargeting.targets(
             of: payload,
-            at: SIMD3(),
-            struck: struck,
+            landing: (SIMD3(), struck),
             candidates: candidates,
             excluding: .player
         )
@@ -270,8 +269,7 @@ struct SpellHitTests {
 
         let targets = SpellHitTargeting.targets(
             of: payload,
-            at: SIMD3(),
-            struck: nil,
+            landing: (SIMD3(), nil),
             candidates: [MeleeTarget(key: Self.victim, feet: SIMD3(10, 0, 0))],
             excluding: .player
         )

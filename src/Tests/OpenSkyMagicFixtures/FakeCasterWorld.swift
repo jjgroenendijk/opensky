@@ -63,11 +63,11 @@ public final class FakeCasterWorld: CasterWorld {
 
     public func applyCastEffects(
         _ entries: [MagicItemEffect],
-        fromPlugin pluginName: String,
-        source: ActiveEffectSource,
+        origin: (plugin: String, source: ActiveEffectSource),
         caster: ReferenceKey,
         on target: ActorValueHolder
     ) -> Int {
+        let source = origin.source
         appliedEntries.append(entries)
         applications.append(Application(
             source: source,

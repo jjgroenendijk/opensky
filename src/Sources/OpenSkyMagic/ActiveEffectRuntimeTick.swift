@@ -96,13 +96,13 @@ extension ActiveEffectRuntime {
         for value in effect.values where ActorValueIdentity.isVanilla(index: value.index) {
             let amount = value.magnitude * Float(owed)
             if absorbs {
-                absorb(amount, at: value.index, effect.isDetrimental, effect.caster, holder)
+                absorb(amount, at: value.index, effect.isDetrimental, (effect.caster, holder))
             } else if effect.isDetrimental {
                 values.damage(at: value.index, by: amount, on: holder)
             } else {
                 restore(
                     amount, at: value.index, on: holder,
-                    effect: effect.effect, caster: effect.caster
+                    from: (effect.effect, effect.caster)
                 )
             }
         }

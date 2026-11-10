@@ -40,15 +40,14 @@ extension InventoryPerksAdapter {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
-        seams: ConditionContext
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float {
         game.perks.modified(
             value,
             at: entryPoint,
             on: key,
-            subjects: { _ in subjects },
-            seams: seams
+            subjects: { _ in conditions.subjects },
+            seams: conditions.seams
         )
     }
 

@@ -83,14 +83,13 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
     private func expand(_ list: [FormID], for base: FormID) -> [FormID] {
         let roll = templates.roll(for: base)
         return list.flatMap {
-            expand($0, request: roll.request, seed: roll.seed, depth: 0, visiting: [])
+            expand($0, roll: roll, depth: 0, visiting: [])
         }
     }
 
     private func expand(
         _ id: FormID,
-        request: LeveledRequest,
-        seed: UInt64,
+        roll: LeveledRoll,
         depth: Int,
         visiting: Set<UInt32>
     ) -> [FormID] {
@@ -99,10 +98,10 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
             let list = templates.leveledSpells[id.rawValue],
             !visiting.contains(id.rawValue)
         else { return [id] }
-        let picks = templates.leveling.roll(list, count: 1, request: request, seed: seed)
+        let picks = templates.leveling.roll(list, count: 1, request: roll.request, seed: roll.seed)
         return picks.flatMap {
             expand(
-                $0.entry.reference, request: request, seed: seed,
+                $0.entry.reference, roll: roll,
                 depth: depth + 1, visiting: visiting.union([id.rawValue])
             )
         }

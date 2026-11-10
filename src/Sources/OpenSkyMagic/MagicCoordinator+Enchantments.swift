@@ -77,7 +77,7 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
     ) -> Int {
         let (potion, id, plugin) = (dose.potion, dose.id, dose.plugin)
         let scaled = SpellHitApplication.scale(
-            potion.effects, fromPlugin: plugin, ignoresResistance: false,
+            potion.effects, source: (plugin, false),
             on: target, using: runtime, resistances: .documentedDefaults
         )
         return runtime.apply(

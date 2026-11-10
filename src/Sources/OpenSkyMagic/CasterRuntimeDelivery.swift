@@ -6,7 +6,7 @@
 // See docs/engine/spell-delivery.md.
 
 import Foundation
-public import OpenSkyFormatsESM
+import OpenSkyFormatsESM
 public import OpenSkyGameData
 public import OpenSkyMagicInterface
 import OpenSkyPhysics
@@ -19,10 +19,10 @@ extension CasterRuntime {
     public func deliverAway(
         _ payload: SpellPayload,
         spell: ResolvedSpell,
-        delivery: MagicEffectDelivery,
         caster: ActorValueHolder,
         world: any CasterWorld
     ) -> Int {
+        let delivery = spell.data?.delivery ?? .selfTarget
         switch delivery {
         case .aimed where spell.data?.castingType != .concentration:
             guard world.fireSpellProjectile(payload) else { return 0 }
@@ -62,8 +62,7 @@ extension CasterRuntime {
         let aim = world.aimedSpellTarget(within: range, for: caster)
         let targets = SpellHitTargeting.targets(
             of: payload,
-            at: aim.position,
-            struck: aim.target,
+            landing: (aim.position, aim.target),
             candidates: aim.candidates,
             excluding: payload.caster
         )
@@ -87,8 +86,7 @@ extension CasterRuntime {
         if !onCaster.isEmpty {
             stored = world.applyCastEffects(
                 onCaster,
-                fromPlugin: spell.sourcePlugin,
-                source: ActiveEffectSource(kind: .spell, record: spell.key),
+                origin: (spell.sourcePlugin, ActiveEffectSource(kind: .spell, record: spell.key)),
                 caster: caster.key,
                 on: caster
             )
@@ -98,7 +96,7 @@ extension CasterRuntime {
         guard let centre = candidates.first(where: { $0.key == caster.key }) else { return stored }
         let position = centre.feet + SIMD3(0, 0, centre.capsule.height / 2)
         let targets = SpellHitTargeting.targets(
-            of: payload, at: position, struck: nil, candidates: candidates, excluding: caster.key
+            of: payload, landing: (position, nil), candidates: candidates, excluding: caster.key
         )
         guard !targets.isEmpty else { return stored }
         let report = world.applySpellHit(SpellHit(

@@ -71,10 +71,10 @@ struct ImpulseRulesTests {
     @Test func anExplosionPushesAwayWithTheSameForceAtAnyDistance() throws {
         let blast = ImpulseBlast(force: 6, radius: 320, center: .zero)
         let near = try #require(GameplayImpulse.explosion(
-            blast, on: crate(), isSource: false, spin: .zero, settings: settings
+            blast, on: (crate(), false), spin: .zero, settings: settings
         ))
         let far = try #require(GameplayImpulse.explosion(
-            blast, on: crate(position: SIMD3(300, 0, 0)), isSource: false, spin: .zero,
+            blast, on: (crate(position: SIMD3(300, 0, 0)), false), spin: .zero,
             settings: settings
         ))
         #expect(near.linear.x > 0)
@@ -87,7 +87,7 @@ struct ImpulseRulesTests {
     @Test func anExplosionLiftsABipedBody() throws {
         let blast = ImpulseBlast(force: 6, radius: 320, center: .zero)
         let push = try #require(GameplayImpulse.explosion(
-            blast, on: crate(kind: .biped), isSource: false, spin: .zero, settings: settings
+            blast, on: (crate(kind: .biped), false), spin: .zero, settings: settings
         ))
         #expect(abs(push.linear.z / push.linear.x - 0.5) < 0.001)
     }
@@ -95,13 +95,13 @@ struct ImpulseRulesTests {
     @Test func thePropAndSourceSettingsScaleTheExplosionPush() throws {
         let blast = ImpulseBlast(force: 6, radius: 320, center: .zero)
         let clutter = try #require(GameplayImpulse.explosion(
-            blast, on: crate(), isSource: false, spin: .zero, settings: settings
+            blast, on: (crate(), false), spin: .zero, settings: settings
         ))
         let prop = try #require(GameplayImpulse.explosion(
-            blast, on: crate(kind: .prop), isSource: false, spin: .zero, settings: settings
+            blast, on: (crate(kind: .prop), false), spin: .zero, settings: settings
         ))
         let source = try #require(GameplayImpulse.explosion(
-            blast, on: crate(), isSource: true, spin: .zero, settings: settings
+            blast, on: (crate(), true), spin: .zero, settings: settings
         ))
         #expect(abs(simd_length(prop.linear) / simd_length(clutter.linear) - 0.1) < 0.001)
         #expect(abs(simd_length(source.linear) / simd_length(clutter.linear) - 3) < 0.001)
@@ -110,7 +110,7 @@ struct ImpulseRulesTests {
     @Test func anExplosionPushStopsAtTheImpulseCap() throws {
         let blast = ImpulseBlast(force: 100, radius: 320, center: .zero)
         let push = try #require(GameplayImpulse.explosion(
-            blast, on: crate(), isSource: false, spin: SIMD3(1, -1, 0.5), settings: settings
+            blast, on: (crate(), false), spin: SIMD3(1, -1, 0.5), settings: settings
         ))
         #expect(abs(simd_length(push.linear) - 8000) < 0.1)
         #expect(abs(push.angular.x - 8000 * GameplayImpulse.havokScale) < 1)
@@ -120,10 +120,10 @@ struct ImpulseRulesTests {
     @Test func aLightBodyMovesAsTheMinimumMass() throws {
         let blast = ImpulseBlast(force: 6, radius: 320, center: .zero)
         let light = try #require(GameplayImpulse.explosion(
-            blast, on: crate(mass: 1), isSource: false, spin: .zero, settings: settings
+            blast, on: (crate(mass: 1), false), spin: .zero, settings: settings
         ))
         let heavy = try #require(GameplayImpulse.explosion(
-            blast, on: crate(mass: 10), isSource: false, spin: .zero, settings: settings
+            blast, on: (crate(mass: 10), false), spin: .zero, settings: settings
         ))
         // A 1 kg body changes speed as a 5 kg one does, so its impulse is a fifth.
         #expect(abs(simd_length(light.linear) / simd_length(heavy.linear) - 0.2) < 0.001)
@@ -132,7 +132,7 @@ struct ImpulseRulesTests {
     @Test func anExplosionOutsideItsRadiusPushesNothing() {
         let blast = ImpulseBlast(force: 6, radius: 50, center: .zero)
         #expect(GameplayImpulse.explosion(
-            blast, on: crate(), isSource: false, spin: .zero, settings: settings
+            blast, on: (crate(), false), spin: .zero, settings: settings
         ) == nil)
     }
 
@@ -148,26 +148,26 @@ struct ImpulseRulesTests {
         let health: (current: Float, maximum: Float) = (100, 100)
         // The falloff 1 - (d / R)^2 must pass 0.15: 90 units gives 0.19, 95 gives 0.0975.
         #expect(GameplayImpulse.explosionKnocksDown(
-            blast, mode: .always, distance: 90,
+            blast, knockdown: (.always, 90),
             hit: KnockdownHit(damage: 0, health: health, roll: 1), settings: settings
         ))
         #expect(!GameplayImpulse.explosionKnocksDown(
-            blast, mode: .always, distance: 95,
+            blast, knockdown: (.always, 95),
             hit: KnockdownHit(damage: 0, health: health, roll: 1), settings: settings
         ))
         #expect(!GameplayImpulse.explosionKnocksDown(
-            blast, mode: .never, distance: 0,
+            blast, knockdown: (.never, 0),
             hit: KnockdownHit(damage: 0, health: health, roll: 0), settings: settings
         ))
         #expect(GameplayImpulse.explosionKnocksDown(
-            blast, mode: .byFormula, distance: 0,
+            blast, knockdown: (.byFormula, 0),
             hit: KnockdownHit(damage: 80, health: health, roll: 1), settings: settings
         ))
     }
 
     @Test func aProjectilePushesAlongItsFlight() throws {
         let push = try #require(GameplayImpulse.projectile(
-            impactForce: 1, flight: SIMD3(0, 3600, 0), at: SIMD3(100, 0, 0), body: crate(),
+            impactForce: 1, impact: (SIMD3(0, 3600, 0), SIMD3(100, 0, 0)), body: crate(),
             settings: settings
         ))
         #expect(push.linear.y > 0)

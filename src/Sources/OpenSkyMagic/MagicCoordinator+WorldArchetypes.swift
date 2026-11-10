@@ -182,8 +182,8 @@ extension MagicCoordinator {
         return withEffects { runtime in
             enchantments.reduce(0) { stored, enchantment in
                 let scaled = SpellHitApplication.scale(
-                    enchantment.record.effects, fromPlugin: enchantment.sourcePlugin,
-                    ignoresResistance: false, on: victim, using: runtime,
+                    enchantment.record.effects, source: (enchantment.sourcePlugin, false),
+                    on: victim, using: runtime,
                     resistances: .documentedDefaults
                 )
                 return stored + runtime.apply(

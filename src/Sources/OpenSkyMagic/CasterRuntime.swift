@@ -31,8 +31,7 @@ public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
     /// - Returns: how many timed effects were stored.
     func applyCastEffects(
         _ entries: [MagicItemEffect],
-        fromPlugin pluginName: String,
-        source: ActiveEffectSource,
+        origin: (plugin: String, source: ActiveEffectSource),
         caster: ReferenceKey,
         on target: ActorValueHolder
     ) -> Int
@@ -406,7 +405,7 @@ public final class CasterRuntime {
         guard delivery != .selfTarget else {
             return applyFromSelf(payload, spell: spell, caster: caster, world: world)
         }
-        return deliverAway(payload, spell: spell, delivery: delivery, caster: caster, world: world)
+        return deliverAway(payload, spell: spell, caster: caster, world: world)
     }
 
     private func notePowerSpent(_ spell: ResolvedSpell, caster: ActorValueHolder) {

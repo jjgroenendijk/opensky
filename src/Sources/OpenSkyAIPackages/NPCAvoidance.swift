@@ -65,11 +65,11 @@ nonisolated public enum NPCAvoidance {
     public static func isTaken(
         _ waypoint: SIMD2<Float>,
         from position: SIMD2<Float>,
-        radius: Float,
-        tolerance: Float,
+        within reach: (radius: Float, tolerance: Float),
         neighbours: [NPCNeighbour]
     ) -> Bool {
-        neighbours.contains { neighbour in
+        let (radius, tolerance) = reach
+        return neighbours.contains { neighbour in
             let reach = radius + neighbour.radius + margin
             return simd_distance(neighbour.position, waypoint) < reach
                 && simd_distance(position, waypoint) <= reach + tolerance

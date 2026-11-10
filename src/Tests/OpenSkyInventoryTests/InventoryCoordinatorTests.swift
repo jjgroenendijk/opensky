@@ -184,14 +184,14 @@ struct InventoryCoordinatorTests {
         let chest = try #require(coordinator.containerHolder(for: Self.chest))
         let inventory = try #require(coordinator.runtime?.inventory)
         try inventory.add(Fixture.sword, count: 1, to: .player)
-        let stored = try coordinator.transfer(
-            .store, item: Fixture.sword, named: "Sword", container: chest, vendor: nil
-        )
+        let stored = try coordinator.transfer(ContainerTransferRequest(
+            .store, item: Fixture.sword, name: "Sword", container: chest, vendor: nil
+        ))
         #expect(stored.text(texts: .vanilla) == "Stored Sword.")
         #expect(inventory.count(of: Fixture.sword, in: chest) == 1)
-        let taken = try coordinator.transfer(
-            .take, item: Fixture.sword, named: "Sword", container: chest, vendor: nil
-        )
+        let taken = try coordinator.transfer(ContainerTransferRequest(
+            .take, item: Fixture.sword, name: "Sword", container: chest, vendor: nil
+        ))
         #expect(taken.text(texts: .vanilla) == "Took Sword.")
         #expect(inventory.count(of: Fixture.sword, in: .player) == 1)
         #expect(coordinator.takeAll(from: chest).text.hasPrefix("Took all:"))
@@ -453,10 +453,9 @@ extension InventoryCoordinatorTests {
             _ value: Float,
             at entryPoint: PerkEntryPoint,
             on _: ReferenceKey,
-            subjects: PerkEvaluationSubjects,
-            seams _: ConditionContext
+            given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
         ) -> Float {
-            perkTargets[entryPoint] = subjects[.target]
+            perkTargets[entryPoint] = conditions.subjects[.target]
             return value * (perkFactors[entryPoint] ?? 1)
         }
     }

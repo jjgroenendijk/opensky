@@ -149,8 +149,9 @@ nonisolated public struct SpellReleaseLatch: Equatable, Sendable {
 
     /// The hold the caster runtime gets for `hand`: still held while the release waits.
     public mutating func hold(
-        _ hand: SpellHand, pressed: Bool, phase: SpellCastPhase, fired: Bool, delta: Float
+        _ hand: SpellHand, state: (pressed: Bool, phase: SpellCastPhase), fired: Bool, delta: Float
     ) -> Bool {
+        let (pressed, phase) = state
         if let wait = waited[hand] {
             let total = wait + max(0, delta)
             guard phase == .ready, !fired, total < Self.fireWithoutGraphAfter else {

@@ -67,7 +67,7 @@ extension ScriptReferenceBindingsAdapter {
             )
         }
         return ImpactPick.resolve(
-            origin: origin, direction: direction, length: pick.length, staticHit: solid
+            along: (origin, direction), length: pick.length, staticHit: solid
         ) { point in
             streamer.sampleTerrain(at: point).map { (height: $0.height, material: $0.material) }
         }

@@ -18,8 +18,7 @@ extension MagicCoordinator {
                 : [SpellFireGraphNames.event(of: hand), SpellFireGraphNames.staff]
             let held = releaseLatch.hold(
                 hand,
-                pressed: intent.isHeld(hand),
-                phase: caster.phase(of: hand),
+                state: (intent.isHeld(hand), caster.phase(of: hand)),
                 fired: events.contains { event in
                     names.contains { $0.caseInsensitiveCompare(event) == .orderedSame }
                 },

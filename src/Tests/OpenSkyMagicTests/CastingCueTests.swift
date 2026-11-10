@@ -73,20 +73,20 @@ struct CastingCueTests {
 
     @Test func aReleaseWaitsForItsHandsSpellFireEvent() {
         var latch = SpellReleaseLatch()
-        let released = latch.hold(.right, pressed: false, phase: .ready, fired: false, delta: 0.05)
+        let released = latch.hold(.right, state: (false, .ready), fired: false, delta: 0.05)
         #expect(released && latch.isWaiting(.right))
-        let waiting = latch.hold(.right, pressed: false, phase: .ready, fired: false, delta: 0.05)
+        let waiting = latch.hold(.right, state: (false, .ready), fired: false, delta: 0.05)
         #expect(waiting)
-        let fired = latch.hold(.right, pressed: false, phase: .ready, fired: true, delta: 0.05)
+        let fired = latch.hold(.right, state: (false, .ready), fired: true, delta: 0.05)
         #expect(!fired && !latch.isWaiting(.right))
     }
 
     @Test func aReleaseWithoutAGraphFiresAfterTheWait() {
         var latch = SpellReleaseLatch()
-        var held = latch.hold(.left, pressed: false, phase: .ready, fired: false, delta: 0)
+        var held = latch.hold(.left, state: (false, .ready), fired: false, delta: 0)
         var frames = 0
         while held, frames < 100 {
-            held = latch.hold(.left, pressed: false, phase: .ready, fired: false, delta: 0.1)
+            held = latch.hold(.left, state: (false, .ready), fired: false, delta: 0.1)
             frames += 1
         }
         #expect(frames == 4)
@@ -94,7 +94,7 @@ struct CastingCueTests {
 
     @Test func aChargingHandIsNotHeldBack() {
         var latch = SpellReleaseLatch()
-        let held = latch.hold(.right, pressed: false, phase: .charging, fired: false, delta: 0.1)
+        let held = latch.hold(.right, state: (false, .charging), fired: false, delta: 0.1)
         #expect(!held && !latch.isWaiting(.right))
     }
 }

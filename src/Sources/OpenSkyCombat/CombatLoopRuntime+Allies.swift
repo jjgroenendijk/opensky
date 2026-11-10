@@ -30,13 +30,13 @@ extension CombatLoopRuntime {
     /// One fixed step of every ally. `budget` is what is left of the engagement cap.
     func driveAllies(
         among actors: [CombatActorObservation],
-        foes: [MeleeTarget],
-        budget: Int,
+        engaging: (foes: [MeleeTarget], budget: Int),
         influences: [ReferenceKey: ActorMagicInfluence],
         world: any CombatLoopWorld
     ) {
         let player = world.combatPlayer
-        var budget = budget
+        let foes = engaging.foes
+        var budget = engaging.budget
         for actor in actors where !actor.isDead {
             guard
                 let commander = commanders[actor.key],

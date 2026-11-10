@@ -30,16 +30,15 @@ extension InventoryCoordinator {
     /// Moves `count` of `item` in the direction `transfer` names. A new session per
     /// call, so a merchant nominated again mid-menu leaves nothing stale.
     /// `acceptingLess` lets a sale go through for the merchant's last gold.
-    public func transfer(
-        _ transfer: ContainerTransfer,
-        item: FormID,
-        count: Int32 = 1,
-        named name: String,
-        container: InventoryHolder,
-        vendor: Vendor?,
-        merchant: ReferenceKey? = nil,
-        acceptingLess: Bool = false
-    ) throws -> TradeOutcome {
+    public func transfer(_ request: ContainerTransferRequest) throws -> TradeOutcome {
+        let (transfer, item, count, name) = (
+            request.transfer,
+            request.item,
+            request.count,
+            request.name
+        )
+        let (container, vendor) = (request.container, request.vendor)
+        let (merchant, acceptingLess) = (request.merchant, request.acceptingLess)
         guard let runtime else { return .unavailable }
         if transfer == .store || transfer == .sell, isQuestItem(item) {
             return .questItem

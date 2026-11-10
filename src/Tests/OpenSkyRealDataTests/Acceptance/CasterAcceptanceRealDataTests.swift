@@ -32,12 +32,12 @@ struct CasterAcceptanceRealDataTests {
 
         func applyCastEffects(
             _ entries: [MagicItemEffect],
-            fromPlugin pluginName: String,
-            source: ActiveEffectSource,
+            origin: (plugin: String, source: ActiveEffectSource),
             caster: ReferenceKey,
             on target: ActorValueHolder
         ) -> Int {
-            effects.apply(
+            let (pluginName, source) = origin
+            return effects.apply(
                 entries,
                 fromPlugin: pluginName,
                 source: source,

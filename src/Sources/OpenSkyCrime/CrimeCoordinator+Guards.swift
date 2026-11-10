@@ -95,14 +95,13 @@ extension CrimeCoordinator {
         case let .pursue(guardKey, faction):
             pursue(guardKey, crimeFaction: faction)
         case let .confront(guardKey, faction, bounty):
-            confront(guardKey, crimeFaction: faction, bounty: bounty, action: action, now: now)
+            confront(guardKey, crime: (faction, bounty), action: action, now: now)
         }
     }
 
     private func confront(
         _ guardKey: ReferenceKey,
-        crimeFaction faction: ReferenceKey,
-        bounty: Int32,
+        crime: (faction: ReferenceKey, bounty: Int32),
         action: GuardAction,
         now: Double
     ) {
@@ -118,7 +117,7 @@ extension CrimeCoordinator {
             lastGuard = .conversationFailed(reason: world.lastDialogueOutcome)
             return
         }
-        lastGuard = .confronted(bounty: bounty, faction: factionName(faction))
+        lastGuard = .confronted(bounty: crime.bounty, faction: factionName(crime.faction))
     }
 
     private func pursue(_ guardKey: ReferenceKey, crimeFaction faction: ReferenceKey) {

@@ -47,8 +47,7 @@ nonisolated public struct WeaponEnchantmentHit: Equatable, Sendable {
     ) {
         self.init(profile: profile, attacker: attacker, targets: SpellHitTargeting.targets(
             of: profile.entries,
-            at: position,
-            struck: struck,
+            landing: (position, struck),
             candidates: candidates(),
             excluding: attacker,
             settings: settings

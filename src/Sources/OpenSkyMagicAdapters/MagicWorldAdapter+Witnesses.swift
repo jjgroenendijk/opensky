@@ -262,9 +262,8 @@ extension MagicWorldAdapter {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on key: ReferenceKey,
-        subjects: PerkEvaluationSubjects,
-        seams: ConditionContext
+        given conditions: (subjects: PerkEvaluationSubjects, seams: ConditionContext)
     ) -> Float {
-        worldFacts.perkModified(value, at: entryPoint, on: key, subjects: subjects, seams: seams)
+        worldFacts.perkModified(value, at: entryPoint, on: key, given: conditions)
     }
 }

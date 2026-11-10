@@ -34,12 +34,12 @@ extension ActiveEffectRuntime {
     @discardableResult
     public mutating func consume(
         _ item: FormID,
-        from holder: InventoryHolder,
-        on target: ActorValueHolder,
+        use: (from: InventoryHolder, on: ActorValueHolder),
         inventory: any InventoryAccess,
         fromPlugin pluginName: String,
         scaling: ([MagicItemEffect], ReferenceKey) -> [MagicItemEffect] = { entries, _ in entries }
     ) throws -> MagicItemConsumeOutcome {
+        let (holder, target) = use
         guard let use = inventory.baselines.items.magicItemUse(item) else {
             throw MagicItemConsumeError.notConsumable(item)
         }
