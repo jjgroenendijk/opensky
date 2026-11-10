@@ -171,7 +171,7 @@ public final class MagicWorldAdapter {
                 ),
                 isPlayerControlled: isPlayerControlled,
                 events: events,
-                weaponsDrawn: self?.game.combat.melee?.state.drawState.isWeaponInHand
+                weaponsDrawn: self?.game.combat.meleeWeaponInHand
             )
             self?.archetypeEffects.run(commands)
             self?.archetypeEffects.run(coordinator.advanceShout(

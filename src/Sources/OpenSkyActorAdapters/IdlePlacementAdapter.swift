@@ -147,9 +147,9 @@ extension IdlePlacementAdapter {
 
     public func synchronizedMark(of actor: ReferenceKey) -> BehaviorSynchronizedMark? {
         guard actor != .player else {
-            return game.gameSession?.locomotion.graph?.synchronizedMark
+            return game.gameSession?.playerGraph?.synchronizedMark
         }
-        return game.actorGraphWorld.graphs.instance(of: actor)?.synchronizedMark
+        return game.actorGraphWorld.graphInstance(of: actor)?.synchronizedMark
     }
 
     public func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) -> Bool {

@@ -89,7 +89,7 @@ extension EffectsBlastsAdapter {
 
     /// Each live projectile's model along its velocity.
     public func projectileModels() -> [VisualEffectModel] {
-        (game.combat.archery?.projectiles.live ?? []).compactMap { projectile in
+        game.combat.liveProjectiles.compactMap { projectile in
             guard let model = projectile.profile.visuals.model else { return nil }
             let along = simd_length_squared(projectile.state.velocity) > Self.stillSpeedSquared
                 ? projectile.state.velocity : projectile.launchDirection
@@ -105,7 +105,7 @@ extension EffectsBlastsAdapter {
     public func projectileAndFlashLights() -> [RenderPointLight] {
         let plugin = game.combat.explosions.itemPlugin
         let records = game.effects.records
-        let flying = (game.combat.archery?.projectiles.live ?? []).compactMap { projectile in
+        let flying = game.combat.liveProjectiles.compactMap { projectile in
             records.resolve(projectile.profile.visuals.light, fromPlugin: plugin).flatMap {
                 renderLight($0, at: projectile.position, strength: 1)
             }
@@ -159,7 +159,7 @@ extension EffectsBlastsAdapter {
     public func playExplosionImpact(_ dataSet: ReferenceKey, at position: SIMD3<Float>) {
         guard
             let id = game.effects.records.loadOrderFormID(dataSet),
-            let resolved = game.combat.archery?.projectiles.impacts?
+            let resolved = game.combat.projectileImpacts?
                 .resolve(dataSet: id, material: nil)
         else { return }
         game.combatWorld.playImpact(resolved, at: position)

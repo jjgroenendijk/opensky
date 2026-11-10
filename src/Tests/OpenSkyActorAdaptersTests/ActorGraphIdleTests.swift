@@ -54,6 +54,7 @@ struct ActorGraphIdleTests {
         #expect(idles.turnActor(Self.actor, toHeading: 1, within: 0.1) == 0.5)
         #expect(host.fakeStreamer.turnActorCalls.map(\.actor) == [Self.actor])
         #expect(idles.synchronizedMark(of: .player) == nil)
+        #expect(idles.synchronizedMark(of: Self.actor) == nil)
     }
 
     @Test func anObjectEventFallsBackToTheActorGraph() throws {

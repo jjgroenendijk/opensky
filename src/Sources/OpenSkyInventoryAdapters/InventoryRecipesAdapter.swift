@@ -58,7 +58,7 @@ extension InventoryRecipesAdapter {
     }
 
     public func temperingFactor(for item: FormID) -> Float {
-        let subject = game.inventory.runtime?.inventory.baselines.items.conditionSubject(of: item)
+        let subject = game.inventory.itemDefinitions?.conditionSubject(of: item)
         let subjects = PerkEvaluationSubjects(owner: .player).binding(.item, to: subject)
         return game.perks.modified(
             1, at: .modTemperingHealth, on: .player, subjects: { _ in subjects },

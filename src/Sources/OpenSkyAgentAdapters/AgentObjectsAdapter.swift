@@ -203,7 +203,7 @@ extension AgentObjectsAdapter {
 
     /// A quest editor ID, else a reference as `resolveReference` reads it.
     private func scriptOwner(_ text: String) throws(AgentFailure) -> ReferenceKey {
-        if let quest = game.scripts.bridge?.questRuntime?.quests.key(editorID: text) {
+        if let quest = game.scripts.bridge?.questKey(editorID: text) {
             return quest
         }
         return try hub.resolveReference(text).key

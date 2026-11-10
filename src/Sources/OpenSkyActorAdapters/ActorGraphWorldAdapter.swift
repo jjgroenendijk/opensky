@@ -85,7 +85,7 @@ public final class ActorGraphWorldAdapter {
 
     /// Every running graph's variables, the player's included.
     public func graphVariableResolution() -> GraphVariableResolution {
-        graphs.variableResolution(player: game.gameSession?.locomotion.graph?.variables)
+        graphs.variableResolution(player: game.gameSession?.playerGraph?.variables)
     }
 }
 

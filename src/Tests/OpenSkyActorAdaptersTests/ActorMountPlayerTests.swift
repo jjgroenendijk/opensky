@@ -18,6 +18,7 @@ struct ActorMountPlayerTests {
         #expect(!actors.isCasting(Self.actor))
         #expect(actors.combatActor(key: Self.actor) == nil)
         #expect(actors.riddenHorse() == nil)
+        actors.setRiddenHorseSprintAllowed(true)
         #expect(!actors.isRiddenHorseSprinting())
         #expect(actors.playerCarriedWeight() == nil)
         #expect(host.fakeStreamer.residentActorEntryCalls == [Self.actor])

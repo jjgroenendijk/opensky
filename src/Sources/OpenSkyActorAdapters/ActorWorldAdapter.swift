@@ -272,7 +272,7 @@ extension ActorWorldAdapter: ActorValueWorld {
     }
 
     public func setRiddenHorseSprintAllowed(_ allowed: Bool) {
-        game.mounts.drive?.bridge.isSprintAllowed = allowed
+        game.mounts.allowRiddenHorseSprint(allowed)
     }
 
     public func playerCarriedWeight() -> Float? {

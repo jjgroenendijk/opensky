@@ -13,3 +13,10 @@ public protocol ScriptPort: AnyObject {
     var scriptsSnapshot: ScriptsSnapshot { get }
     func advanceMenuTime(delta: Float)
 }
+
+extension ScriptPort {
+    /// Ends the wait of the script call behind `token`; false without a running script world.
+    @discardableResult public func answer(_ token: UInt64, returning value: PapyrusValue) -> Bool {
+        runtime?.scheduler.answer(token, returning: value) ?? false
+    }
+}

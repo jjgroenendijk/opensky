@@ -99,7 +99,7 @@ public final class RagdollWorldAdapter {
             case let .publishPoses(poses):
                 game.renderer?.scene.ragdollPoses = poses
             case let .publishPlayerRagdoll(bones):
-                game.gameSession?.playerBody?.animation.setRagdollBones(bones)
+                game.gameSession?.playerAnimation?.setRagdollBones(bones)
             case let .publishSeveredHeads(poses):
                 game.renderer?.scene.severedHeadPoses = poses
             case let .enterBleedout(key):

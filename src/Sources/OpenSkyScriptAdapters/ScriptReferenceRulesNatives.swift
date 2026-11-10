@@ -30,7 +30,7 @@ extension ScriptReferenceBindingsAdapter {
             guard let game, let host = game.streamer.referenceEntry(key: actor)?.formID else {
                 return 0
             }
-            return game.combat.archery?.projectiles.removeArrows(stuckIn: host) ?? 0
+            return game.combat.removeArrows(stuckIn: host)
         }
         hooks.playImpact = { dataSet, pick in
             guard

@@ -157,7 +157,7 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     public func itemValue(of item: FormID) -> Int64 {
-        Int64(game.inventory.runtime?.inventory.baselines.items.gameValue(of: item) ?? 0)
+        Int64(game.inventory.itemDefinitions?.gameValue(of: item) ?? 0)
     }
 
     public func actorName(_ key: ReferenceKey) -> String {
