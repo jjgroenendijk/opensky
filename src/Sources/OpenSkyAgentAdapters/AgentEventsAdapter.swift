@@ -68,7 +68,7 @@ extension AgentEventsAdapter {
     public func pollEvents(_ emit: (String, [String: AgentJSON]) -> Void) {
         wireEventCallbacks()
         diffMenus()
-        let now = ProcessInfo.processInfo.systemUptime
+        let now = hub.now().timeIntervalSinceReferenceDate
         if now >= hub.tap.nextSlowPoll {
             hub.tap.nextSlowPoll = now + Self.slowPollSeconds
             diffDeaths()

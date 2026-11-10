@@ -182,7 +182,7 @@ extension AgentRenderAdapter {
 
     /// The screen holds until a call with no ID, which starts its fade.
     private func forceLoadScreen(_ editorID: String?) throws(AgentFailure) -> AgentJSON {
-        let now = Date().timeIntervalSinceReferenceDate
+        let now = hub.now().timeIntervalSinceReferenceDate
         guard let editorID else {
             game.loadingScreens.releaseForced(at: now)
             return ["loading": hub.screens.loadingState]

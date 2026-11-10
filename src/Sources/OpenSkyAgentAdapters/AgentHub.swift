@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 import MetalKit
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
@@ -35,6 +35,7 @@ import OpenSkyWorldState
 public struct AgentHub {
     public let game: any AgentWorldHost
     public let state = AgentPartState()
+    public let now: () -> Date
 
     /// The diff state behind the game events.
     public var tap: AgentEventTapState {
@@ -118,11 +119,15 @@ public struct AgentHub {
         AgentCaptureAdapter(hub: self, game: captureHost)
     }
 
-    public init(game: some AgentWorldHost & AgentRenderHost & AgentActorsHost & AgentMotionHost &
-        AgentBehaviourHost & AgentObjectsHost & AgentMenuReadoutHost & AgentScreensHost &
-        AgentEventsHost & AgentPlayerReadoutHost & AgentFrameReadoutHost & AgentActorReadoutHost &
-        AgentItemsHost & AgentViewHost & AgentInputHost & AgentCaptureHost)
-    {
+    public init(
+        game: some AgentWorldHost & AgentRenderHost & AgentActorsHost & AgentMotionHost &
+            AgentBehaviourHost & AgentObjectsHost & AgentMenuReadoutHost & AgentScreensHost &
+            AgentEventsHost & AgentPlayerReadoutHost & AgentFrameReadoutHost &
+            AgentActorReadoutHost &
+            AgentItemsHost & AgentViewHost & AgentInputHost & AgentCaptureHost,
+        now: @escaping () -> Date
+    ) {
+        self.now = now
         renderHost = game
         actorsHost = game
         motionHost = game

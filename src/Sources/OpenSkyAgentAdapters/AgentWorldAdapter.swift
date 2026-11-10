@@ -1,7 +1,7 @@
 // App side of agent control: answers the router from the game view, its
 // coordinators, and the streamer (docs/tools/agent-control.md).
 
-import Foundation
+public import Foundation
 import MetalKit
 import OpenSkyActorPresentation
 import OpenSkyActorsInterface
@@ -61,12 +61,15 @@ public final class AgentWorldAdapter {
     /// How long a quit waits, so the reply leaves the socket before the app exits.
     private static let replyDrainSeconds = 0.2
 
-    public init(game: some AgentWorldHost & AgentRenderHost & AgentActorsHost & AgentMotionHost &
-        AgentBehaviourHost & AgentObjectsHost & AgentMenuReadoutHost & AgentScreensHost &
-        AgentEventsHost & AgentPlayerReadoutHost & AgentFrameReadoutHost & AgentActorReadoutHost &
-        AgentItemsHost & AgentViewHost & AgentInputHost & AgentCaptureHost)
-    {
-        hub = AgentHub(game: game)
+    public init(
+        game: some AgentWorldHost & AgentRenderHost & AgentActorsHost & AgentMotionHost &
+            AgentBehaviourHost & AgentObjectsHost & AgentMenuReadoutHost & AgentScreensHost &
+            AgentEventsHost & AgentPlayerReadoutHost & AgentFrameReadoutHost &
+            AgentActorReadoutHost &
+            AgentItemsHost & AgentViewHost & AgentInputHost & AgentCaptureHost,
+        now: @escaping () -> Date
+    ) {
+        hub = AgentHub(game: game, now: now)
     }
 
     public var render: AgentRenderAdapter {

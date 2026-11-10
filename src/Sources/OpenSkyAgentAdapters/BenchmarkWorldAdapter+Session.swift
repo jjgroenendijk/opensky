@@ -1,6 +1,7 @@
 // `BenchmarkWorldAdapter` built over the started session: it registers its frame steps and
 // session events as it is built (docs/decisions/session-scope.md).
 
+public import Foundation
 import Metal
 import OpenSkyAgentControl
 import OpenSkyCells
@@ -26,9 +27,11 @@ extension BenchmarkWorldAdapter {
     /// Without a stage, as in a test, it registers nothing.
     public convenience init(
         game: some BenchmarkWorldHost & BenchmarkTourSettingsHost,
-        stage: SessionStage?
+        stage: SessionStage?,
+        mediaClock: @escaping () -> Double,
+        wallClock: @escaping () -> Date
     ) {
-        self.init(game: game)
+        self.init(game: game, mediaClock: mediaClock, wallClock: wallClock)
         guard let stage else { return }
         registerBenchmark(stage: stage)
     }
