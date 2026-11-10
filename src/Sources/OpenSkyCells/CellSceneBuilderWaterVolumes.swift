@@ -86,8 +86,8 @@ nonisolated extension CellSceneBuilder {
             else { continue }
             let waterType = bases[ref.base.rawValue]?.details.waterType
             if let waterType, let water = placedWater(
-                ref, model: model, transform: placement.transform, type: waterType,
-                record: types[waterType.rawValue]
+                ref, model: model, transform: placement.transform,
+                water: (waterType, types[waterType.rawValue])
             ) {
                 volumes.append(water)
             }
@@ -101,9 +101,10 @@ nonisolated extension CellSceneBuilder {
     /// A water activator: the root collision shape at the reference, its surface the
     /// reference's z. The phantom's own offset in the mesh is not used.
     private func placedWater(
-        _ ref: PlacedReference, model: NIFCollisionModel, transform: float4x4, type: FormID,
-        record: WaterType?
+        _ ref: PlacedReference, model: NIFCollisionModel, transform: float4x4,
+        water: (type: FormID, record: WaterType?)
     ) -> WaterVolume? {
+        let (type, record) = water
         guard
             let shape = model.bodies.first?.shapes.first,
             let local = NIFCollisionModel.bounds(of: shape.geometry)

@@ -51,7 +51,7 @@ nonisolated public struct HeadPartResolver: Sendable {
         }
         var result = Accumulator(misses: misses)
         for (part, origin) in chosen {
-            expand(part, origin: origin, race: race, hairColor: hairColor, into: &result)
+            expand(part, origin: origin, look: (race, hairColor), into: &result)
         }
         return HeadPartSet(parts: result.parts, misses: result.misses)
     }
@@ -85,10 +85,10 @@ nonisolated public struct HeadPartResolver: Sendable {
     private func expand(
         _ part: HeadPart,
         origin: HeadPartOrigin,
-        race: FormID,
-        hairColor: FormID?,
+        look: (race: FormID, hairColor: FormID?),
         into result: inout Accumulator
     ) {
+        let (race, hairColor) = look
         guard result.taken.insert(part.formID.rawValue).inserted else {
             if origin == .extraPart {
                 result.misses.append(HeadPartMiss(reason: .cycle))
@@ -103,7 +103,7 @@ nonisolated public struct HeadPartResolver: Sendable {
         }
         for extra in part.extraParts {
             guard let next = accepted(extra, race: race, misses: &result.misses) else { continue }
-            expand(next, origin: .extraPart, race: race, hairColor: hairColor, into: &result)
+            expand(next, origin: .extraPart, look: (race, hairColor), into: &result)
         }
     }
 

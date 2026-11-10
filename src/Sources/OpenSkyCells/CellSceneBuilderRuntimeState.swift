@@ -56,13 +56,13 @@ nonisolated extension CellSceneBuilder {
     /// `applyRuntimeState`, so a moved or hidden drop follows the same rules.
     /// `parentPool` holds references outside the cell an `XESP` link may name.
     nonisolated public func effectiveReferences(
-        refs: [PlacedReference],
-        collected: [CollectedReference],
+        _ references: (refs: [PlacedReference], collected: [CollectedReference]),
         state: WorldStateSnapshot,
         location: CellSceneLocation,
         parentPool: EnableParentPool = EnableParentPool(),
         counts: inout BuildCounts
     ) -> EffectiveReferences {
+        let (refs, collected) = references
         let spawned = spawnedReferences(in: location, state: state, counts: &counts)
         let deltas = state.deltasByKey()
         let placed = relocating(refs, into: location, deltas: deltas)

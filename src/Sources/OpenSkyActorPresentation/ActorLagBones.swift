@@ -69,9 +69,10 @@ nonisolated public struct ActorLagBoneState: Sendable {
     /// `pose` with the lag bones added after its rig bones, stepped `deltaTime` toward
     /// their rests while the actor stands at `placement`.
     public mutating func pose(
-        _ pose: SkeletonPose, rig: ActorLagBoneRig, index: SkeletonBoneIndex,
+        _ pose: SkeletonPose, on skeleton: (rig: ActorLagBoneRig, index: SkeletonBoneIndex),
         placement: float4x4, deltaTime: Float
     ) -> SkeletonPose {
+        let (rig, index) = skeleton
         var matrices = pose.matrices
         let toActor = placement.inverse
         for bone in rig.bones {

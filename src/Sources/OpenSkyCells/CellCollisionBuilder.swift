@@ -387,8 +387,7 @@ nonisolated extension CellSceneBuilder {
                         reference: placement.reference
                     ),
                     materialTypes: materialTypes,
-                    into: &accumulator.shapes,
-                    stats: &accumulator.stats
+                    into: &accumulator
                 )
             }
         }
@@ -441,14 +440,13 @@ nonisolated extension CellSceneBuilder {
         shape: NIFCollisionShape,
         placement: ShapePlacement,
         materialTypes: MaterialTypeIndex,
-        into shapes: inout [StaticCollisionShape],
-        stats: inout StaticCollisionStats
+        into accumulator: inout CellCollisionAccumulator
     ) {
         let partitioning = collisionPartitionCache.partitions(
             key: placement.key,
             geometry: shape.geometry
         )
-        stats.decodeFailureCount += partitioning.failureCount
+        accumulator.stats.decodeFailureCount += partitioning.failureCount
         guard !partitioning.partitions.isEmpty else { return }
         let placed = StaticCollisionShape.placed(
             reference: placement.reference,
@@ -456,10 +454,10 @@ nonisolated extension CellSceneBuilder {
             partitions: partitioning.partitions,
             material: shape.material.flatMap(materialTypes.material(forHavokMaterial:))
         )
-        shapes.append(contentsOf: placed)
-        stats.shapeCount += 1
-        stats.triangleCount += placed.reduce(0) { $0 + $1.triangleCount }
-        stats.estimatedBytes += Self.estimatedBytes(of: shape.geometry)
+        accumulator.shapes.append(contentsOf: placed)
+        accumulator.stats.shapeCount += 1
+        accumulator.stats.triangleCount += placed.reduce(0) { $0 + $1.triangleCount }
+        accumulator.stats.estimatedBytes += Self.estimatedBytes(of: shape.geometry)
     }
 
     nonisolated public func evictCollisionPartitions(dropping keys: Set<String>) {

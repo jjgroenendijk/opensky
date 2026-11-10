@@ -123,7 +123,7 @@ nonisolated extension CellSceneBuilder {
         let refs = collected.map(\.reference)
         let location = CellSceneLocation.interior(cellFormID)
         let resolved = effectiveReferences(
-            refs: refs, collected: collected, state: state, location: location, counts: &counts
+            (refs, collected), state: state, location: location, counts: &counts
         )
         let effective = resolved.references
         let collision = buildCollision(resolved: resolved, location: location)
@@ -135,8 +135,7 @@ nonisolated extension CellSceneBuilder {
         )
         let lighting = buildInteriorLighting(cell: found.cell, references: effective)
         var scene = makeScene(
-            found: found,
-            grid: (x: 0, y: 0),
+            cell: (found, (x: 0, y: 0)),
             instances: instances,
             geometry: CellGeometryBuild(
                 location: location,
@@ -263,8 +262,7 @@ nonisolated extension CellSceneBuilder {
             findInteriorCell(
                 in: top,
                 formID: formID.rawValue,
-                expectedBlock: block,
-                expectedSubBlock: subBlock,
+                expected: (block, subBlock),
                 localized: localized
             )
         }
@@ -276,8 +274,7 @@ nonisolated extension CellSceneBuilder {
     nonisolated private func findInteriorCell(
         in group: ESMGroup,
         formID: UInt32,
-        expectedBlock: Int32,
-        expectedSubBlock: Int32,
+        expected: (block: Int32, subBlock: Int32),
         localized: Bool
     ) -> FoundCell? {
         guard let children = childrenOrSkip(group) else { return nil }
@@ -307,10 +304,10 @@ nonisolated extension CellSceneBuilder {
         }
         let prioritized = groups.sorted { lhs, rhs in
             let lhsMatch = interiorLabelMatches(
-                lhs, block: expectedBlock, subBlock: expectedSubBlock
+                lhs, block: expected.block, subBlock: expected.subBlock
             )
             let rhsMatch = interiorLabelMatches(
-                rhs, block: expectedBlock, subBlock: expectedSubBlock
+                rhs, block: expected.block, subBlock: expected.subBlock
             )
             return lhsMatch && !rhsMatch
         }
@@ -318,8 +315,7 @@ nonisolated extension CellSceneBuilder {
             let found = findInteriorCell(
                 in: child,
                 formID: formID,
-                expectedBlock: expectedBlock,
-                expectedSubBlock: expectedSubBlock,
+                expected: expected,
                 localized: localized
             )
             if let found {

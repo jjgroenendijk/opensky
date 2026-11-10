@@ -142,8 +142,8 @@ struct IdleRuntimeRealDataTests {
             else { continue }
             let selection = Self.selector(store: store, context: context, actor: actor.key).select(
                 entries: store.idles(of: marker),
-                order: IdleCore.selectionOrder(of: marker.record),
-                startIndex: 0, played: [], random: { _ in 0 }
+                order: (IdleCore.selectionOrder(of: marker.record), 0), played: [],
+                random: { _ in 0 }
             )
             #expect(selection.trace.count >= store.idles(of: marker).count)
             let plan = selection.chosen.map { resolver.plan(for: $0) }

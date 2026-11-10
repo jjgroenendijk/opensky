@@ -44,8 +44,7 @@ struct CameraShotSelectionRealDataTests {
             var context = ConditionContext()
             context.camera = CameraShotFacts.resolution(
                 weapon: weapon,
-                targetBase: nil,
-                targetDistance: 900,
+                target: (nil, 900),
                 yaw: 0
             ) { _ in 1000 }
             let check = CameraShotSelector.conditionCheck(

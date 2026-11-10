@@ -303,7 +303,7 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
         return state.withLock { state in
             let index = Self.lagIndex(for: pose.bones, lagBones, &state.lagIndices)
             let trailed = state.lag.pose(
-                pose, rig: lagBones, index: index, placement: state.placement,
+                pose, on: (lagBones, index), placement: state.placement,
                 deltaTime: state.frameTime
             )
             state.frameTime = 0

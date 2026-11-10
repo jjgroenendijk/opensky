@@ -20,8 +20,7 @@ nonisolated public enum CameraShotFacts {
     /// how far a camera could move along it. `yaw` follows `FreeFlyCamera`.
     public static func resolution(
         weapon: Weapon?,
-        targetBase: FormID?,
-        targetDistance: Float?,
+        target: (base: FormID?, distance: Float?),
         yaw: Float,
         room: (SIMD3<Float>) -> Float
     ) -> CameraConditionResolution {
@@ -30,8 +29,8 @@ nonisolated public enum CameraShotFacts {
         facts.weapon = weapon?.formID
         facts.weaponType = weapon?.animationType.map { UInt32($0.rawValue) }
         facts.action = isRanged(weapon) ? rangedAction : meleeAction
-        facts.targetBase = targetBase
-        facts.targetDistance = targetDistance
+        facts.targetBase = target.base
+        facts.targetDistance = target.distance
         if isRanged(weapon) {
             facts.projectileType = 6
         }

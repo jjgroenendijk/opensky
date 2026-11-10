@@ -199,7 +199,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         let equippedSlots = Self.slotMask(of: worn.armors, skips: &skips)
         var seenArmatures: Set<UInt32> = []
         let wornSplit = heldArmour(wornParts(
-            worn.armors, race: raceID, female: female, seen: &seenArmatures, skips: &skips
+            worn.armors, for: (raceID, female), seen: &seenArmatures, skips: &skips
         ))
         var parts = wornSplit.parts
 
@@ -271,11 +271,11 @@ nonisolated public struct ActorVisualResolver: Sendable {
     /// Every worn piece's race-compatible armatures, in ARMA DNAM draw order.
     private func wornParts(
         _ armors: [Armor],
-        race: FormID,
-        female: Bool,
+        for wearer: (race: FormID, female: Bool),
         seen: inout Set<UInt32>,
         skips: inout [AppearanceSkip]
     ) -> [ResolvedBodyPart] {
+        let (race, female) = wearer
         var candidates: [PrioritizedPart] = []
         for armor in armors {
             let selection = PartSelection(

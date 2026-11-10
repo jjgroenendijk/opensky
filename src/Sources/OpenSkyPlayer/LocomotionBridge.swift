@@ -162,7 +162,7 @@ nonisolated public final class LocomotionBridge {
         }
         raiseEdgeEvents(
             moving: moving, gait: gait, swimming: swim != nil || gait == .swim,
-            jumping: jumpImpulse != nil, grounded: state.isGrounded
+            footing: (jumping: jumpImpulse != nil, grounded: state.isGrounded)
         )
         let rootMotion = advanceGraph(deltaTime: state.dt)
 
@@ -353,9 +353,9 @@ nonisolated public final class LocomotionBridge {
         moving: Bool,
         gait: LocomotionGait,
         swimming: Bool,
-        jumping: Bool,
-        grounded: Bool
+        footing: (jumping: Bool, grounded: Bool)
     ) {
+        let (jumping, grounded) = footing
         if moving != wasMoving {
             raise(moving ? LocomotionGraphNames.moveStart : LocomotionGraphNames.moveStop)
         }

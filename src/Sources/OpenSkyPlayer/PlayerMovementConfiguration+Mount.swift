@@ -12,11 +12,11 @@ nonisolated extension PlayerMovementConfiguration {
     ) -> PlayerMovementConfiguration {
         let walk = gait(
             editorID: MountMovementTypes.walking, slot: .walk, store: movementTypes,
-            fallback: 125, fallbackSource: "OpenSky fallback (no Horse_Default_MT)"
+            fallback: (125, "OpenSky fallback (no Horse_Default_MT)")
         )
         let run = gait(
             editorID: MountMovementTypes.walking, slot: .run, store: movementTypes,
-            fallback: 450, fallbackSource: "OpenSky fallback (no Horse_Default_MT)"
+            fallback: (450, "OpenSky fallback (no Horse_Default_MT)")
         )
         return PlayerMovementConfiguration(
             walkSpeed: walk,
@@ -24,7 +24,7 @@ nonisolated extension PlayerMovementConfiguration {
             stepHeight: rider.stepHeight,
             sprintSpeed: gait(
                 editorID: MountMovementTypes.sprinting, slot: .run, store: movementTypes,
-                fallback: 600, fallbackSource: "OpenSky fallback (no Horse_Sprint_MT)"
+                fallback: (600, "OpenSky fallback (no Horse_Sprint_MT)")
             ),
             sneakSpeed: walk,
             swimSpeed: walk,

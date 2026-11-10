@@ -46,7 +46,7 @@ struct IdleSelectorTests {
             Self.idle(3, "Wipe", event: "IdleWipeBrow")
         ]
         let selection = Self.selector(failing: ["Pray"]).select(
-            entries: entries, order: .sequence, startIndex: 1, played: [], random: { _ in 0 }
+            entries: entries, order: (.sequence, 1), played: [], random: { _ in 0 }
         )
         #expect(selection.chosen?.record.editorID == "Wipe")
         #expect(selection.chosenEntry == 2)
@@ -62,7 +62,7 @@ struct IdleSelectorTests {
         ]
         var asked: [Int] = []
         let selection = Self.selector().select(
-            entries: entries, order: .random, startIndex: 0,
+            entries: entries, order: (.random, 0),
             played: [entries[0].id], random: { asked.append($0)
                 return 1
             }
@@ -75,7 +75,7 @@ struct IdleSelectorTests {
     @Test func nothingPassesGivesNoChoiceAndAFullTrace() throws {
         let entries = try [Self.idle(1, "Lean", event: "IdleLean")]
         let selection = Self.selector(failing: ["Lean"]).select(
-            entries: entries, order: .random, startIndex: 0, played: [], random: { _ in 0 }
+            entries: entries, order: (.random, 0), played: [], random: { _ in 0 }
         )
         #expect(selection.chosen == nil)
         #expect(selection.chosenEntry == nil)

@@ -218,7 +218,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
             let level = turn * VehicleWheels.levelled(tow.orientation)
             if
                 let rest = VehicleWheels.rest(
-                    on: wheels, at: spot, orientation: level, top: top, ground: ground
+                    on: wheels, at: (spot, level), top: top, ground: ground
                 )
             {
                 tow.position = SIMD3(spot.x, spot.y, rest.height)

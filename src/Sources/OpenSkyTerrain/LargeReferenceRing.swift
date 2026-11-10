@@ -59,11 +59,11 @@ nonisolated public enum LargeReferenceRing {
     /// its own.
     public static func cells(
         center: CellCoordinate,
-        radius: Int32,
-        loadedRadius: Int32,
+        radii: (radius: Int32, loadedRadius: Int32),
         hiddenCells: Set<CellCoordinate>,
         blocks: [DistantLODBlock]
     ) -> Set<CellCoordinate> {
+        let (radius, loadedRadius) = radii
         var cells: Set<CellCoordinate> = []
         guard radius > loadedRadius else { return cells }
         func add(x: Int32, y: Int32) {

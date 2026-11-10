@@ -156,9 +156,11 @@ nonisolated public enum DragonFlightRules {
     public static let arrivalDistance: Float = 8
 
     public static func step(
-        _ state: DragonFlightState, goal: DragonFlightGoal, settings: DragonFlightSettings,
+        _ now: (state: DragonFlightState, goal: DragonFlightGoal),
+        settings: DragonFlightSettings,
         deltaTime: Float, ground: @escaping DragonGroundHeight
     ) -> DragonFlightStep {
+        let (state, goal) = now
         guard deltaTime.isFinite, deltaTime > 0 else {
             return DragonFlightStep(state: state, events: [])
         }
@@ -174,9 +176,12 @@ nonisolated public enum DragonFlightRules {
 
     /// The point on the circle the dragon steers at: ahead of it, counter-clockwise.
     public static func circlePoint(
-        from position: SIMD2<Float>, yaw: Float, center: SIMD2<Float>, radius: Float,
+        from heading: (position: SIMD2<Float>, yaw: Float),
+        around circle: (center: SIMD2<Float>, radius: Float),
         lead: Float
     ) -> SIMD2<Float> {
+        let (position, yaw) = heading
+        let (center, radius) = circle
         let offset = position - center
         let angle = simd_length(offset) > 1 ? atan2(offset.y, offset.x) : yaw
         return center + SIMD2(cos(angle + lead), sin(angle + lead)) * max(radius, 0)
@@ -251,8 +256,8 @@ nonisolated private struct Flight {
         case .hover: enter(.hovering, raising: .startHover)
         case let .circle(center, radius):
             let point = DragonFlightRules.circlePoint(
-                from: position, yaw: state.yaw, center: SIMD2(center.x, center.y),
-                radius: radius, lead: settings.circleLead
+                from: (position, state.yaw), around: (SIMD2(center.x, center.y), radius),
+                lead: settings.circleLead
             )
             let height = max(groundHeight(at: position), center.z) + settings.cruiseHeight
             move(toward: point, speed: settings.cruiseSpeed, height: height)

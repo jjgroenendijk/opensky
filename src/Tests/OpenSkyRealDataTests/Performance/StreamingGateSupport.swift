@@ -39,8 +39,8 @@ enum StreamingGateSupport {
         let device = try #require(RealDataEnvironment.device)
         let root = try #require(RealDataEnvironment.dataRoot)
         return try ColdCellBuilder.makeBuilder(
-            root: root, loadOrder: ActiveLoadOrder.open(root: root),
-            files: VirtualFileSystem(root: root), device: device, recorder: nil
+            root: root, data: (ActiveLoadOrder.open(root: root), VirtualFileSystem(root: root)),
+            device: device, recorder: nil
         )
     }
 

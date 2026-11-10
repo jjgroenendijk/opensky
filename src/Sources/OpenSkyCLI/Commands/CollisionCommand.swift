@@ -26,8 +26,7 @@ enum CollisionCommand {
             loadOrder: loadOrder,
             fileSystem: context.makeFileSystem(),
             worldspaceEditorID: worldspace,
-            gridX: gridX,
-            gridY: gridY
+            cell: CellCoordinate(x: gridX, y: gridY)
         )
         print("[INFO] collision sweep \(worldspace) (\(gridX),\(gridY)): "
             + "\(result.modelPaths.count) unique models")

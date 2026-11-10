@@ -107,8 +107,7 @@ nonisolated public enum NavigationPathfinder: Sendable {
             if entry.node == target.triangle {
                 return makePath(
                     endpoints: NavigationProjectedEndpoints(start: start, target: target),
-                    query: query,
-                    expanded: expanded,
+                    asked: (query, expanded),
                     graph: graph,
                     scratch: &scratch
                 )
@@ -199,11 +198,11 @@ nonisolated public enum NavigationPathfinder: Sendable {
 
     private static func makePath(
         endpoints: NavigationProjectedEndpoints,
-        query: NavigationPathQuery,
-        expanded: Int,
+        asked: (query: NavigationPathQuery, expanded: Int),
         graph: RuntimeNavigationGraph,
         scratch: inout NavigationQueryScratch
     ) -> NavigationPathResult {
+        let (query, expanded) = asked
         scratch.corridor.append(endpoints.target.triangle)
         var current = endpoints.target.triangle
         while current != endpoints.start.triangle {

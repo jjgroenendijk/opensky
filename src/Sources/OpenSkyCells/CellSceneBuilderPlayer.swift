@@ -20,22 +20,16 @@ nonisolated extension CellSceneBuilder {
     public func assemblePlayerRig(
         _ request: PlayerRigRequest
     ) -> Result<PlayerRenderRig, PlayerBodyError> {
-        assemblePlayer(
-            equipped: request.equipped,
-            appearance: request.appearance,
-            eyeTextureSet: request.eyeTextureSet,
-            firstPerson: request.firstPerson,
-            label: request.firstPerson ? "player arms" : "player body"
-        )
-        .map { assembly in
-            let morphs = request.firstPerson ? nil : request.appearance
-            return PlayerRigAssembly(
-                assembly: assembly,
-                faceMorphs: morphs.map {
-                    assembledHeadMorphs(assembly: assembly, face: $0).bindings
-                } ?? [:]
-            )
-        }
+        assemblePlayer(request)
+            .map { assembly in
+                let morphs = request.firstPerson ? nil : request.appearance
+                return PlayerRigAssembly(
+                    assembly: assembly,
+                    faceMorphs: morphs.map {
+                        assembledHeadMorphs(assembly: assembly, face: $0).bindings
+                    } ?? [:]
+                )
+            }
     }
 
     public func makePlayerBody(
@@ -69,14 +63,13 @@ nonisolated extension CellSceneBuilder {
     /// Resolves the player's appearance once and assembles both rigs. The arms are the
     /// third-person answer through `firstPersonProjection`, so the rigs cannot disagree.
     private func assemblePlayer(
-        equipped: [FormID]?,
-        appearance override: PlayerAppearanceOverride?,
-        eyeTextureSet: FormID?,
-        firstPerson: Bool,
-        label: String
+        _ request: PlayerRigRequest
     ) -> Result<ActorAssembly<ActorRenderAsset>, PlayerBodyError> {
+        let (equipped, eyeTextureSet) = (request.equipped, request.eyeTextureSet)
+        let firstPerson = request.firstPerson
+        let label = firstPerson ? "player arms" : "player body"
         let resolvers = actorResolversBuildingIfNeeded()
-        let override = override.map(withSkinTone)
+        let override = request.appearance.map(withSkinTone)
         let assembly: ActorAssembly<ActorRenderAsset>
         do {
             var appearance = try resolvers.template.resolve(base: PlayerBody.baseFormID)

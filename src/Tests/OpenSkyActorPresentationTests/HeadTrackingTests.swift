@@ -56,7 +56,7 @@ struct HeadTrackingTests {
         let degree: Float = .pi / 180
         let near = HeadLook(yaw: 5 * degree, pitch: 0)
         let rest = HeadTrackingCore.turn(
-            .forward, toward: near, isTurning: false, deltaTime: 0.1, settings: settings
+            (.forward, false), toward: near, deltaTime: 0.1, settings: settings
         )
         #expect(rest.look == .forward && !rest.isTurning)
         let far = HeadLook(yaw: 20 * degree, pitch: 0)
@@ -64,7 +64,7 @@ struct HeadTrackingTests {
         var frames = 0
         repeat {
             state = HeadTrackingCore.turn(
-                state.look, toward: far, isTurning: state.isTurning, deltaTime: 1 / 60,
+                state, toward: far, deltaTime: 1 / 60,
                 settings: settings
             )
             frames += 1

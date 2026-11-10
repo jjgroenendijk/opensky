@@ -110,8 +110,7 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
             .map { simd_distance($0.position, anchor.position) }
         var facts = CameraShotFacts.resolution(
             weapon: attacker == .player ? game.combat.playerWeapon() : nil,
-            targetBase: targetBase,
-            targetDistance: targetDistance,
+            target: (targetBase, targetDistance),
             yaw: anchor.yaw
         ) { offset in
             DialogueCamera.collisionProbe.resolve(

@@ -30,7 +30,7 @@ nonisolated extension CellSceneBuilder {
     ) -> [CollectedReference] {
         var failures = 0
         let later = laterChildren(of: cell, type: "REFR")
-        let merged = mergingLater(base, later: later, formID: \.reference.formID) {
+        let merged = mergingLater((base, later), formID: \.reference.formID) {
             try CollectedReference(
                 reference: $0.record.decode(PlacedReference.init(record:)),
                 isPersistent: $0.isPersistent
@@ -53,7 +53,7 @@ nonisolated extension CellSceneBuilder {
     ) -> [CollectedActor] {
         var failed: [String] = []
         let later = laterChildren(of: cell, type: "ACHR")
-        let merged = mergingLater(base, later: later, formID: \.actor.formID) {
+        let merged = mergingLater((base, later), formID: \.actor.formID) {
             try CollectedActor(
                 actor: $0.record.decode(PlacedActor.init(record:)),
                 isPersistent: $0.isPersistent
@@ -71,12 +71,12 @@ nonisolated extension CellSceneBuilder {
     /// joins the end, and a deleted one removes it. An override that does not
     /// decode keeps the earlier version.
     nonisolated func mergingLater<Item>(
-        _ items: [Item],
-        later: [CellChildRecord],
+        _ layers: (items: [Item], later: [CellChildRecord]),
         formID: (Item) -> FormID,
         decode: (CellChildRecord) throws -> Item,
         failed: (CellChildRecord) -> Void
     ) -> [Item] {
+        let (items, later) = layers
         guard !later.isEmpty else { return items }
         var order = items.map(formID)
         var known = Set(order)

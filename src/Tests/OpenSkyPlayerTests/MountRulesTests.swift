@@ -50,16 +50,16 @@ struct MountRulesTests {
 
     @Test func steeringTurnsAtTheTurnRateAndNeverBacksUp() {
         let ahead = MountRules.steer(
-            heading: 0, forward: 1, right: 0, cameraYaw: 0, deltaTime: 0.1, turnRate: 1
+            heading: 0, push: (1, 0), cameraYaw: 0, deltaTime: 0.1, turnRate: 1
         )
         #expect(ahead == MountSteer(heading: 0, throttle: 1))
         let back = MountRules.steer(
-            heading: 0, forward: -1, right: 0, cameraYaw: 0, deltaTime: 0.1, turnRate: 1
+            heading: 0, push: (-1, 0), cameraYaw: 0, deltaTime: 0.1, turnRate: 1
         )
         #expect(abs(abs(back.heading) - 0.1) < 0.0001)
         #expect(back.throttle == 1)
         let still = MountRules.steer(
-            heading: 0.5, forward: 0, right: 0, cameraYaw: 2, deltaTime: 0.1, turnRate: 1
+            heading: 0.5, push: (0, 0), cameraYaw: 2, deltaTime: 0.1, turnRate: 1
         )
         #expect(still == MountSteer(heading: 0.5, throttle: 0))
     }

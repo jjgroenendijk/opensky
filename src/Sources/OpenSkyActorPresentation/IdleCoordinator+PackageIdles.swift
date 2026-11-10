@@ -32,8 +32,7 @@ extension IdleCoordinator {
         }
         let selection = selector(for: actor.key).select(
             entries: list.idles.compactMap { store.idles.record($0) },
-            order: list.order,
-            startIndex: session.nextEntry,
+            order: (list.order, session.nextEntry),
             played: list.isDoOnce ? session.played : [],
             random: random
         )

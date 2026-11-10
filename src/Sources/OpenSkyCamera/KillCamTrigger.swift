@@ -71,12 +71,12 @@ nonisolated public enum KillCamTrigger {
 
     /// The nearest actor the arrow ray meets whose health the damage covers.
     public static func arrowKill(
-        origin: SIMD3<Float>,
-        direction: SIMD3<Float>,
+        ray: (origin: SIMD3<Float>, direction: SIMD3<Float>),
         range: Float,
         damage: Float,
         candidates: [KillCamCandidate]
     ) -> KillCamCandidate? {
+        let (origin, direction) = ray
         let length = simd_length(direction)
         guard length > 0, range > 0 else { return nil }
         let unit = direction / length

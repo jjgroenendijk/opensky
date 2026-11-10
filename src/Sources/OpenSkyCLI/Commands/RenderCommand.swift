@@ -224,7 +224,7 @@ enum RenderCommand {
         settings: [PlayerSettingID: Double] = [:]
     ) throws -> CellSceneBuilder {
         try ColdCellBuilder.makeBuilder(
-            loadOrder: context.loadOrder(), files: context.makeFileSystem(),
+            data: (context.loadOrder(), context.makeFileSystem()),
             device: device, recorder: nil,
             terrainLOD: ColdCellBuilder.terrainLODStore(
                 root: context.root,

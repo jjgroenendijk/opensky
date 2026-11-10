@@ -50,7 +50,7 @@ private final class RealKillCamWorld: CinematicCameraWorld {
         target: ReferenceKey?
     ) -> CameraConditionResolution {
         CameraShotFacts
-            .resolution(weapon: bow, targetBase: nil, targetDistance: 900, yaw: 0) { _ in 1000 }
+            .resolution(weapon: bow, target: (nil, 900), yaw: 0) { _ in 1000 }
     }
 
     func cameraTrack(model: String) -> NIFCameraTrack? {

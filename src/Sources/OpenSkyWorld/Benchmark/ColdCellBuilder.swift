@@ -12,20 +12,21 @@ import OpenSkyRenderResources
 public enum ColdCellBuilder {
     /// A builder with empty caches. A `recorder` gets every file read and asset phase.
     public static func makeBuilder(
-        root: GameDataRoot, loadOrder: ActiveLoadOrder, files: any GameFileSource,
+        root: GameDataRoot, data: (loadOrder: ActiveLoadOrder, files: any GameFileSource),
         device: any MTLDevice, recorder: LoadPhaseRecorder?
     ) throws -> CellSceneBuilder {
         try makeBuilder(
-            loadOrder: loadOrder, files: files, device: device, recorder: recorder,
+            data: data, device: device, recorder: recorder,
             terrainLOD: terrainLODStore(root: root, settings: PlayerSettingsFile.savedData())
         )
     }
 
     /// The same builder off the main actor, with the terrain LOD settings read by the caller.
     nonisolated public static func makeBuilder(
-        loadOrder: ActiveLoadOrder, files: any GameFileSource, device: any MTLDevice,
+        data: (loadOrder: ActiveLoadOrder, files: any GameFileSource), device: any MTLDevice,
         recorder: LoadPhaseRecorder?, terrainLOD: TerrainLODConfigurationStore
     ) throws -> CellSceneBuilder {
+        let (loadOrder, files) = data
         let fileSystem: any GameFileSource = recorder
             .map { PhaseTimedFileSource(base: files, recorder: $0) } ?? files
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)

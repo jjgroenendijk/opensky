@@ -58,7 +58,7 @@ struct LargeReferenceRingTests {
     @Test func cellsCoverTheRingAndHiddenBlocksButNotTheLoadedGrid() {
         let center = CellCoordinate(x: 0, y: 0)
         let cells = LargeReferenceRing.cells(
-            center: center, radius: 5, loadedRadius: 2,
+            center: center, radii: (5, 2),
             hiddenCells: [CellCoordinate(x: 3, y: 0)],
             blocks: [objects(at: .init(x: 4, y: 0)), objects(at: .init(x: 12, y: 0))]
         )
@@ -72,7 +72,7 @@ struct LargeReferenceRingTests {
 
     @Test func aRingNoWiderThanTheLoadedGridHasNoCells() {
         let cells = LargeReferenceRing.cells(
-            center: .init(x: 0, y: 0), radius: 2, loadedRadius: 2,
+            center: .init(x: 0, y: 0), radii: (2, 2),
             hiddenCells: [], blocks: [objects(at: .init(x: 0, y: 0))]
         )
         #expect(cells.isEmpty)

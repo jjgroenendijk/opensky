@@ -37,11 +37,11 @@ nonisolated public enum PerceptionOverlay: Sendable {
     /// the observer holds about anything; `settings` gives the cone's angle and range.
     public static func append(
         observer: PerceptionObserver,
-        state: DetectionState,
-        investigatePosition: SIMD3<Float>?,
+        regard: (state: DetectionState, investigatePosition: SIMD3<Float>?),
         settings: DetectionSettings,
         to list: inout WorldOverlayDrawList
     ) {
+        let (state, investigatePosition) = regard
         let range = DetectionFormula.maximumDistance(
             settings: settings, isExterior: observer.isExterior
         )
@@ -93,8 +93,7 @@ extension PerceptionRuntime {
             }
             PerceptionOverlay.append(
                 observer: observer,
-                state: strongest,
-                investigatePosition: investigatePosition,
+                regard: (strongest, investigatePosition),
                 settings: settings,
                 to: &list
             )

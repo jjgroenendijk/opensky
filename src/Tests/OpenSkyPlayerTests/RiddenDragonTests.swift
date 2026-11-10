@@ -174,7 +174,7 @@ struct RiddenDragonTests {
             -> RiddenDragonBreathStep?
         {
             orders.advanceBreath(
-                from: .zero, yaw: 0, at: target, fired: fired, deltaTime: delta
+                from: (.zero, 0), at: target, fired: fired, deltaTime: delta
             )
         }
         #expect(step(behind) == nil, "the target must be ahead")
