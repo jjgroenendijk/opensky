@@ -24,7 +24,7 @@ nonisolated public struct WalkController: Sendable {
         public let plan: StepPlanner?
     }
 
-    public static let gravity = PhysicsStep.gravity
+    static let gravity = PhysicsStep.gravity
     static let maximumSlopeDegrees = PhysicsStep.maximumSlopeDegrees
     public static let fixedTimeStep = PhysicsStep.fixedTimeStep
     public static let maximumFrameTime = PhysicsStep.maximumFrameTime
