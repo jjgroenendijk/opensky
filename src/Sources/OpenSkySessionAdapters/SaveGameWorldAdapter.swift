@@ -104,11 +104,7 @@ public final class SaveGameWorldAdapter: SaveGameService {
         )
         lastSkyrimExport = .running
         do {
-            let (url, report) = try await SkyrimSaveExport.export(
-                contents,
-                game: saveFiles,
-                savedAt: now()
-            )
+            let (url, report) = try await SkyrimSaveExport.export(contents, game: saveFiles)
             lastSkyrimExport = .exported(url.lastPathComponent, report.lines)
             await refreshSaveRows()
             return url.lastPathComponent

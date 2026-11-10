@@ -69,6 +69,22 @@ public final class AudioWorldAdapter {
     }
 }
 
+extension AudioWorldAdapter {
+    /// Gives the engine the loaded sound categories; without them it keeps its own mix.
+    /// The footstep records, which name the decal each impact leaves.
+    public var footstepStore: FootstepStore? {
+        game.sessionRecords?.footstepStore
+    }
+
+    public func applySoundMix(to engine: WorldAudioEngine) {
+        guard let store = game.sessionRecords?.soundStore else { return }
+        engine.soundMix = SoundCategoryMix(
+            categories: store.categories, roles: store.categoryRoles,
+            timings: game.soundMixTimings
+        )
+    }
+}
+
 extension AudioWorldAdapter: AudioWorld {
     public var audioWorldData: (any AudioRecordsPort)? {
         game.sessionRecords
@@ -84,15 +100,9 @@ extension AudioWorldAdapter: AudioWorld {
         music: WorldMusicDirector,
         footsteps: WorldAudioFootstepDirector
     ) {
-        game.takeStartedAudio(
-            StartedAudio(engine: engine, sounds: sounds, music: music, footsteps: footsteps)
-        )
-        if let store = game.sessionRecords?.soundStore {
-            engine.soundMix = SoundCategoryMix(
-                categories: store.categories, roles: store.categoryRoles,
-                timings: game.soundMixTimings
-            )
-        }
+        let audio = StartedAudio(engine: engine, sounds: sounds, music: music, footsteps: footsteps)
+        game.takeStartedAudio(audio)
+        applySoundMix(to: engine)
         game.gameSession?.soundRumble = { [weak self] levels in
             guard let self else { return }
             let melee = game.combat.melee
@@ -103,7 +113,7 @@ extension AudioWorldAdapter: AudioWorld {
         }
         game.gameSession?
             .soundMixInputs = { [weak self] in self?.mix.soundMixInputs() ?? SoundMixInputs() }
-        let store = game.sessionRecords?.footstepStore
+        let store = footstepStore
         footsteps.onImpact = { [weak game] impact, position in
             game?.effects.showImpact(
                 impact, decal: store?.decal(of: impact), at: position, on: .ground
