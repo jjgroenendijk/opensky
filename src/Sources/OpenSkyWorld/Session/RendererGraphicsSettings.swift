@@ -59,7 +59,7 @@ extension Renderer {
         waterDepth.enabled = store.bool(.waterDepth)
         waterDepth.screenSpaceReflections = store.bool(.screenSpaceReflections)
         terrainNormalMapsEnabled = store.bool(.terrainNormalMaps)
-        shadingTerms = SurfaceShadingSetting.terms(store: store)
+        shadingTerms = store.surfaceShadingTerms
         lightAnimationEnabled = store.bool(.lightAnimation)
         characterLightEnabled = store.bool(.characterLight)
         pointLightShadowsEnabled = store.bool(.shadowLights)

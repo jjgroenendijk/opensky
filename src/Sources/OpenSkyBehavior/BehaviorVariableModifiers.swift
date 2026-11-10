@@ -18,11 +18,11 @@ nonisolated struct BehaviorModifierStep {
 
 nonisolated extension [String: BehaviorVariableValue] {
     func bool(_ path: String, or fallback: Bool) -> Bool {
-        self[BehaviorGraphInstance.normalizedMemberPath(path)]?.boolValue ?? fallback
+        self[BehaviorCompiledBindings.normalizedMemberPath(path)]?.boolValue ?? fallback
     }
 
     func quad(_ path: String, or fallback: SIMD4<Float>) -> SIMD4<Float> {
-        switch self[BehaviorGraphInstance.normalizedMemberPath(path)] {
+        switch self[BehaviorCompiledBindings.normalizedMemberPath(path)] {
         case let .quad(value): value
         case let .some(other): SIMD4(other.realValue, 0, 0, 0)
         case .none: fallback

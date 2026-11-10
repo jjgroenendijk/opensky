@@ -105,13 +105,13 @@ struct WAVFileTests {
     }
 
     @Test func formSniffSeparatesWAVEFromXWMA() {
-        #expect(WorldAudioEngine.isWAV(
+        #expect(AudioFileAsset.isWAV(
             WAVFixture.file(channels: 1, sampleRate: 8000, bits: 16, samples: [0])
         ))
         var xwma = Data("RIFF".utf8)
         xwma.appendUInt32(4)
         xwma.append(Data("XWMA".utf8))
-        #expect(!WorldAudioEngine.isWAV(xwma))
-        #expect(!WorldAudioEngine.isWAV(Data(count: 4)))
+        #expect(!AudioFileAsset.isWAV(xwma))
+        #expect(!AudioFileAsset.isWAV(Data(count: 4)))
     }
 }

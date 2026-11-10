@@ -70,8 +70,8 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
         }
         let listed = character.animationNames.compactMap(\.self).map { join(folder, $0) }
         let listedSet = Set(listed)
-        let extra = folderClips ? InstallBehaviorClipSource.animationPaths(
-            in: fileSystem, folder: join(folder, "animations") + "\\"
+        let extra = folderClips ? clipPaths(
+            fileSystem.archiveEntries().map(\.path), in: join(folder, "animations") + "\\"
         ).filter { !listedSet.contains($0) } : []
         return BehaviorProjectAsset(
             projectPath: projectPath,
@@ -107,6 +107,11 @@ nonisolated public struct BehaviorProjectAsset: Sendable {
     public static func folder(of path: String) -> String {
         guard let cut = path.lastIndex(of: "\\") else { return "" }
         return String(path[..<cut])
+    }
+
+    /// The clips under `folder`.
+    static func clipPaths(_ paths: [String], in folder: String) -> [String] {
+        paths.filter { $0.hasPrefix(folder) && $0.hasSuffix(".hkx") }
     }
 
     /// `folder\name`, with forward slashes turned, the case folded, and `.` and `..` resolved.

@@ -93,8 +93,8 @@ nonisolated enum RuneCore {
         _ payload: SpellPayload, store: MagicEffectStore, keyword: ReferenceKey
     ) -> Bool {
         payload.entries.contains { entry in
-            store.resolve(entry.effect, fromPlugin: payload.sourcePlugin)?
-                .keywordKeys(in: store).contains(keyword) == true
+            store.resolve(entry.effect, fromPlugin: payload.sourcePlugin)
+                .map(store.keywordKeys(of:))?.contains(keyword) == true
         }
     }
 

@@ -176,9 +176,6 @@ nonisolated extension PlayerSettingsCatalog {
         )
     }
 
-    /// The texture streaming budget choices, in MiB.
-    public static let textureBudgetOptions = [128, 256, 512, 1024, 2048]
-
     /// In `RenderScale.percentOptions` order.
     public static let renderScaleOptions = ["Off", "50%", "59%", "67%", "75%", "85%", "100%"]
 

@@ -26,7 +26,6 @@ nonisolated public enum ReferenceBridgeError: Error, Equatable, Sendable, Locali
 }
 
 nonisolated public struct ReferenceBridge: Sendable {
-    static let folderName = "OpenSkyBridge"
     /// The plugin rewrites the state every 0.25 s, so an older file means the game is gone.
     public static let liveSeconds: TimeInterval = 3
 
@@ -116,9 +115,11 @@ nonisolated public struct ReferenceBridge: Sendable {
 }
 
 nonisolated extension ReferencePrefix {
+    private static let bridgeFolderName = "OpenSkyBridge"
+
     /// The folder the bridge plugin and OpenSky share, beside `SkyrimSE.exe`.
     public var bridgeDirectory: URL {
-        gameDirectory.appending(path: ReferenceBridge.folderName, directoryHint: .isDirectory)
+        gameDirectory.appending(path: Self.bridgeFolderName, directoryHint: .isDirectory)
     }
 }
 

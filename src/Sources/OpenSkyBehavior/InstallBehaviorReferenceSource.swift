@@ -1,4 +1,4 @@
-// The install-backed `BehaviorReferenceSource`. A reference resolves by file name,
+// The install-backed `BehaviorGraphInstance.ReferenceSource`. A reference resolves by file name,
 // case-insensitively, in the root behavior's own folder, so first- and third-person
 // sets stay apart. Read-only external input (AGENTS.md "Legal & IP boundary").
 
@@ -7,7 +7,9 @@ public import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 public import OpenSkyGameData
 
-nonisolated public final class InstallBehaviorReferenceSource: BehaviorReferenceSource {
+nonisolated public final class InstallBehaviorReferenceSource: BehaviorGraphInstance
+    .ReferenceSource
+{
     private let fileSystem: any GameFileSource
     /// Lowercased file name -> archive path, for every behavior file in the
     /// folder the root behavior came from.

@@ -93,7 +93,7 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         /// A blender subtracted-last-child blend was run as an ordinary blend.
         case blenderSubtractLastChild
         /// A `hkbBehaviorReferenceGenerator` names a behavior file no source
-        /// could supply (`BehaviorReferenceSource`).
+        /// could supply (`BehaviorGraphInstance.ReferenceSource`).
         case unresolvedBehaviorReference
         /// A generator's `m_enable`-equivalent binding disabled it, which the
         /// evaluator honours by returning the reference pose.

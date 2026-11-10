@@ -37,7 +37,7 @@ nonisolated public struct CachedAudioConverter: AssetConverting {
     ]
 
     public static func decode(_ bytes: Data) throws -> DecodedAudio {
-        if WorldAudioEngine.isWAV(bytes) {
+        if AudioFileAsset.isWAV(bytes) {
             let file = try WAVFile(data: bytes)
             return DecodedAudio(
                 sampleRate: file.format.sampleRate, channelCount: file.format.channelCount,

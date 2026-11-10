@@ -7,16 +7,18 @@
 import Foundation
 import OpenSkyFormatsAnimation
 
-/// Where a named behavior file comes from. The engine answers by loading it out
-/// of the install; a test answers from a table it built in code.
-nonisolated public protocol BehaviorReferenceSource {
-    /// The graph `name` refers to, built over `skeleton` and `clips`, or nil
-    /// when this source cannot supply it.
-    func behavior(
-        named name: String,
-        skeleton: BehaviorSkeleton,
-        clips: any BehaviorClipSource
-    ) -> BehaviorGraphInstance?
+nonisolated extension BehaviorGraphInstance {
+    /// Where a named behavior file comes from. The engine answers by loading it out
+    /// of the install; a test answers from a table it built in code.
+    public protocol ReferenceSource {
+        /// The graph `name` refers to, built over `skeleton` and `clips`, or nil
+        /// when this source cannot supply it.
+        func behavior(
+            named name: String,
+            skeleton: BehaviorSkeleton,
+            clips: any BehaviorClipSource
+        ) -> BehaviorGraphInstance?
+    }
 }
 
 nonisolated extension BehaviorGraphInstance {

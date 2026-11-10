@@ -2,7 +2,7 @@
 // is read into one buffer and scheduled once; long `.xwm` tracks stream instead.
 
 public import AVFAudio
-public import Foundation
+import Foundation
 public import OpenSkyFormatsAudio
 
 extension WorldAudioEngine {
@@ -71,18 +71,5 @@ extension WorldAudioEngine {
             }
         }
         return buffer
-    }
-
-    /// True when `data` is a RIFF/WAVE form rather than a RIFF/XWMA one. The
-    /// two share the RIFF header and differ in the form type at byte 8, so a
-    /// twelve-byte peek decides which player path a file takes without parsing
-    /// either container.
-    nonisolated public static func isWAV(_ data: Data) -> Bool {
-        guard data.count >= 12 else { return false }
-        let start = data.startIndex
-        let magic = data[start ..< start + 4]
-        let form = data[(start + 8) ..< (start + 12)]
-        return magic.elementsEqual(Array("RIFF".utf8))
-            && form.elementsEqual(Array("WAVE".utf8))
     }
 }
