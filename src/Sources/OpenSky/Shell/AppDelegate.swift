@@ -45,7 +45,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The shell is a committed dark design (Theme.swift): forcing dark
         // appearance keeps every system control on the charcoal palette.
         NSApplication.shared.appearance = NSAppearance(named: .darkAqua)
-        NSApplication.shared.mainMenu = MainMenu.make(target: self)
         agentControl = AgentControlHost(currentGame: { [weak self] in self?.gameWindows.game })
         benchmarkHost.onLauncherRunFinished = { [weak self] in
             self?.launcher?.showPage(id: "benchmark")

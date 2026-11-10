@@ -14,7 +14,7 @@ import OpenSkySessionInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 
-/// What `LockpickingBoardAdapter` reads from the session.
+/// What `LockpickingMenuController.BoardAdapter` reads from the session.
 @MainActor
 protocol LockpickingBoardHost: AnyObject {
     var gameSession: (any GameSessionPort)? { get }
@@ -24,13 +24,15 @@ protocol LockpickingBoardHost: AnyObject {
     var worldData: WorldDataStores? { get }
 }
 
-/// Part of `LockpickingMenuController`, over its own narrow host.
-struct LockpickingBoardAdapter {
-    unowned let owner: LockpickingMenuController
-    unowned let game: any LockpickingBoardHost
+extension LockpickingMenuController {
+    /// Part of `LockpickingMenuController`, over its own narrow host.
+    struct BoardAdapter {
+        unowned let owner: LockpickingMenuController
+        unowned let game: any LockpickingBoardHost
+    }
 }
 
-extension LockpickingBoardAdapter {
+extension LockpickingMenuController.BoardAdapter {
     /// Steps the session by the wall-clock time since the last frame. The world is
     /// paused under the menu, so its clock does not move.
     func tick(now: Date = Date()) {
