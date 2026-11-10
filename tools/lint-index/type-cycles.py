@@ -1,12 +1,12 @@
-"""Design rule 4, as a report: cycles between types declared in different files.
+"""Design rule 4: cycles between types declared in different files.
 
 Reads the index store that a build writes, through Xcode's libIndexStore. Type A uses type B
 when code inside A names B or one of its members, and both are declared in the same module
 under src/Sources. A cycle is a group of types where each one reaches every other through
 such uses. A cycle whose types sit in one file is allowed, such as a tree node and its
 parent, or an owner and its delegate. A type's nested types, and the type it is nested in,
-do not count as uses. Fails nothing.
-Usage: type-cycles.py <DataStore> <repo>. See docs/decisions/design-metrics.md.
+do not count as uses. With --gate it fails on any cycle; without, it reports and passes.
+Usage: type-cycles.py <DataStore> <repo> [--gate]. See docs/decisions/design-metrics.md.
 """
 
 import collections
@@ -116,12 +116,15 @@ def self_check():
     return [row[2] for row in rows] == [["A", "B"]]
 
 
-def report(rows):
+def report(rows, gate):
+    failed = gate and bool(rows)
+    tag = "[FAIL]" if failed else "[INFO]" if rows else "[ OK ]"
     types = sum(len(names) for _, _, names in rows)
-    print(f"[INFO] design rule 4, cycles across files: {len(rows)} cycles, {types} types")
+    print(f"{tag} design rule 4, cycles across files: {len(rows)} cycles, {types} types")
     for module, files, names in rows:
         shown = ", ".join(names[:8]) + (", ..." if len(names) > 8 else "")
-        print(f"  {module}: {len(names)} types in {len(files)} files: {shown}")
+        print(f"  {module}: {len(names)} types in {len(files)} files: {shown}",
+              file=sys.stderr if failed else sys.stdout)
     for module, count in collections.Counter(row[0] for row in rows).most_common():
         print(f"    {module}: {count}")
 
@@ -148,8 +151,10 @@ def main():
                 containers = [other for rel_roles, _, other in relations
                               if rel_roles & REL_CONTAINED_BY]
                 references.append((containers, usr))
-    report(findings(definitions, uses(definitions, references)))
-    return 0
+    rows = findings(definitions, uses(definitions, references))
+    gate = "--gate" in sys.argv[3:]
+    report(rows, gate)
+    return 1 if gate and rows else 0
 
 
 if __name__ == "__main__":
