@@ -18,8 +18,7 @@ public protocol CrimeReporting: AnyObject {
     /// Reports a theft, run past the witnesses.
     @discardableResult
     func reportTheft(
-        of item: FormID,
-        count: Int32,
+        of stack: (item: FormID, count: Int32),
         from reference: ReferenceKey,
         owner: ReferenceOwner?,
         by actor: ReferenceKey
@@ -68,14 +67,15 @@ extension CrimeReporting {
         verdict(on: reference, item: nil, by: actor)
     }
 
-    /// Reports a theft by the player.
+    /// Reports a theft, by the player unless `actor` names someone else.
     @discardableResult
     public func reportTheft(
         of item: FormID,
         count: Int32,
         from reference: ReferenceKey,
-        owner: ReferenceOwner?
+        owner: ReferenceOwner?,
+        by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
-        reportTheft(of: item, count: count, from: reference, owner: owner, by: .player)
+        reportTheft(of: (item, count), from: reference, owner: owner, by: actor)
     }
 }

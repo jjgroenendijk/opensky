@@ -16,16 +16,14 @@ extension FakeWorldAudioFootstepDirectorPort {
         public let names: [String]
         public let gait: LocomotionGait
         public let position: SIMD3<Float>
-        public let armatures: [FormID]
-        public let material: FormID?
+        public let surface: (armatures: [FormID], material: FormID?)
 
         public var description: String {
             [
                 "names: " + String(describing: names),
                 "gait: " + String(describing: gait),
                 "position: " + String(describing: position),
-                "armatures: " + String(describing: armatures),
-                "material: " + String(describing: material)
+                "surface: " + String(describing: surface)
             ].joined(separator: ", ")
         }
     }
@@ -36,15 +34,13 @@ nonisolated extension FakeWorldAudioFootstepDirectorPort {
         _ names: [String],
         gait: LocomotionGait,
         position: SIMD3<Float>,
-        armatures: [FormID],
-        material: FormID?
+        surface: (armatures: [FormID], material: FormID?)
     ) {
         handleActorGraphEventsCalls.append(HandleActorGraphEventsCall(
             names: names,
             gait: gait,
             position: position,
-            armatures: armatures,
-            material: material
+            surface: surface
         ))
     }
 }

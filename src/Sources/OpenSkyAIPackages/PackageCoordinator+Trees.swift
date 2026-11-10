@@ -189,12 +189,12 @@ extension PackageCoordinator {
         let walker = mounts[actor] ?? actor
         let result = world.map { world in
             world.packageMoverHasRoom(for: walker)
-                ? world.movePackageActor(
+                ? world.movePackageActor(PackageMove(
                     walker, to: point,
                     direct: execution?.isDirect ?? false,
                     gait: paces[actor] ?? execution?.gait,
                     walkRunBlend: paces[actor] == nil ? execution?.walkRunBlend : nil
-                )
+                ))
                 : .busy
         }
         if result == .busy {

@@ -49,16 +49,12 @@ extension FakeInventoryRuntimePort {
         public let item: FormID
         public let count: Int32
         public let holder: InventoryHolder
-        public let stolen: Bool
-        public let copies: [ItemCopy]
 
         public var description: String {
             [
                 "item: " + String(describing: item),
                 "count: " + String(describing: count),
-                "holder: " + String(describing: holder),
-                "stolen: " + String(describing: stolen),
-                "copies: " + String(describing: copies)
+                "holder: " + String(describing: holder)
             ].joined(separator: ", ")
         }
     }
@@ -82,15 +78,13 @@ extension FakeInventoryRuntimePort {
         public let count: Int32
         public let source: InventoryHolder
         public let destination: InventoryHolder
-        public let markingStolen: Bool
 
         public var description: String {
             [
                 "item: " + String(describing: item),
                 "count: " + String(describing: count),
                 "source: " + String(describing: source),
-                "destination: " + String(describing: destination),
-                "markingStolen: " + String(describing: markingStolen)
+                "destination: " + String(describing: destination)
             ].joined(separator: ", ")
         }
     }
@@ -115,17 +109,9 @@ extension FakeInventoryRuntimePort {
     public func add(
         _ item: FormID,
         count: Int32,
-        to holder: InventoryHolder,
-        stolen: Bool,
-        copies: [ItemCopy]
+        to holder: InventoryHolder
     ) throws -> ReferenceInventoryState {
-        addCalls.append(AddCall(
-            item: item,
-            count: count,
-            holder: holder,
-            stolen: stolen,
-            copies: copies
-        ))
+        addCalls.append(AddCall(item: item, count: count, holder: holder))
         if let addError {
             throw addError
         }
@@ -218,15 +204,13 @@ extension FakeInventoryRuntimePort {
         _ item: FormID,
         count: Int32,
         from source: InventoryHolder,
-        to destination: InventoryHolder,
-        markingStolen: Bool
+        to destination: InventoryHolder
     ) throws {
         transferCalls.append(TransferCall(
             item: item,
             count: count,
             source: source,
-            destination: destination,
-            markingStolen: markingStolen
+            destination: destination
         ))
         if let transferError {
             throw transferError

@@ -124,13 +124,13 @@ struct InventoryWorldAdapterTests {
     }
 
     @Test func perksModifyValuesAndLabels() throws {
-        host.fakePerks.modifiedValueAtOnSubjectsSeamsResult = 1.5
+        host.fakePerks.modifiedValueAtOnGivenResult = 1.5
         let subjects = PerkEvaluationSubjects(owner: .player)
         #expect(adapter.perkModified(
             1, at: .modBuyPrices, on: .player, given: (subjects, ConditionContext())
         ) == 1.5)
         #expect(adapter.temperingFactor(for: Self.item) == 1.5)
-        #expect(host.fakePerks.modifiedValueAtOnSubjectsSeamsCalls.map(\.entryPoint)
+        #expect(host.fakePerks.modifiedValueAtOnGivenCalls.map(\.entryPoint)
             == [.modBuyPrices, .modTemperingHealth])
         #expect(adapter.perkActivateLabel(for: Self.item) == nil)
         host.fakeStreamer.referenceEntryFormIDResult = try InventoryAdapterFixture.referenceEntry()

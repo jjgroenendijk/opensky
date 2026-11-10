@@ -41,6 +41,9 @@ struct PerkCoordinatorTests {
         let coordinator = PerkCoordinator(world: FakeProgressionWorld(), runtime: nil)
 
         #expect(coordinator.modified(10, at: PerkRuntimeFixture.percentBlocked, on: .player) == 10)
+        #expect(coordinator.modified(
+            10, at: PerkRuntimeFixture.percentBlocked, on: .player, lock: (bandit, 25)
+        ) == 10)
         #expect(coordinator.multiplier(at: PerkRuntimeFixture.percentBlocked, on: .player) == 1)
         #expect(coordinator.ownership(of: .player) == nil)
         #expect(!coordinator.add(blocking, to: .player))

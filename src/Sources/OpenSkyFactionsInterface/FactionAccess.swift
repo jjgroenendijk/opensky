@@ -83,7 +83,20 @@ public protocol RelationshipAccess {
         _ rank: Int8,
         of observer: ReferenceKey,
         toward target: ReferenceKey,
-        in cell: CellSceneLocation?,
-        targetCell: CellSceneLocation?
+        cells: (observer: CellSceneLocation?, target: CellSceneLocation?)
     ) -> Bool
+}
+
+/// The default arguments a protocol requirement cannot carry.
+extension RelationshipAccess {
+    @discardableResult
+    public func setRank(
+        _ rank: Int8,
+        of observer: ReferenceKey,
+        toward target: ReferenceKey,
+        in cell: CellSceneLocation? = nil,
+        targetCell: CellSceneLocation? = nil
+    ) -> Bool {
+        setRank(rank, of: observer, toward: target, cells: (cell, targetCell))
+    }
 }

@@ -148,16 +148,14 @@ public final class FakeInventoryPort: InventoryPort {
 
 extension FakeInventoryPort {
     nonisolated public struct PickpocketCall: CustomStringConvertible {
-        public let item: FormID
-        public let count: Int32
+        public let stack: (item: FormID, count: Int32)
         public let name: String
         public let target: InventoryHolder
         public let roll: Float
 
         public var description: String {
             [
-                "item: " + String(describing: item),
-                "count: " + String(describing: count),
+                "stack: " + String(describing: stack),
                 "name: " + String(describing: name),
                 "target: " + String(describing: target),
                 "roll: " + String(describing: roll)
@@ -166,16 +164,14 @@ extension FakeInventoryPort {
     }
 
     nonisolated public struct PlantCall: CustomStringConvertible {
-        public let item: FormID
-        public let count: Int32
+        public let stack: (item: FormID, count: Int32)
         public let name: String
         public let target: InventoryHolder
         public let roll: Float
 
         public var description: String {
             [
-                "item: " + String(describing: item),
-                "count: " + String(describing: count),
+                "stack: " + String(describing: stack),
                 "name: " + String(describing: name),
                 "target: " + String(describing: target),
                 "roll: " + String(describing: roll)

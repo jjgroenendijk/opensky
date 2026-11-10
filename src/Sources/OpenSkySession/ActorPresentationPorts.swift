@@ -1,4 +1,5 @@
 public import OpenSkyActorPresentation
+public import OpenSkyFormatsESM
 import OpenSkyPlayer
 public import OpenSkySessionInterface
 import OpenSkyWorldInterface
@@ -10,7 +11,17 @@ extension AnimationEventCoordinator: AnimationEventPort {}
 extension CellAnimatedVehicle: CellAnimatedVehiclePort {}
 extension DragonFlightCoordinator: DragonFlightPort {}
 extension DragonFlightState: DragonFlightStatePort {}
-extension FaceMorphCoordinator: FaceMorphPort {}
+extension FaceMorphCoordinator: FaceMorphPort {
+    public func showEmotion(
+        _ emotion: TopicInfo.ResponseEmotion,
+        value: UInt32,
+        on actor: FormID,
+        time: (now: Float, seconds: Float?)
+    ) {
+        showEmotion(emotion, value: value, on: actor, now: time.now, seconds: time.seconds)
+    }
+}
+
 extension HeadTrackingCoordinator: HeadTrackingPort {}
 extension IdleCoordinator: IdlePort {}
 extension NPCAnimationCoordinator: NPCAnimationPort {}

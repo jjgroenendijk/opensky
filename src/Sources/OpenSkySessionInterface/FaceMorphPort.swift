@@ -7,8 +7,7 @@ public protocol FaceMorphPort: AnyObject {
         _ emotion: TopicInfo.ResponseEmotion,
         value: UInt32,
         on actor: FormID,
-        now: Float,
-        seconds: Float?
+        time: (now: Float, seconds: Float?)
     )
     func tick(now: Float)
 }
@@ -19,8 +18,9 @@ extension FaceMorphPort {
         _ emotion: TopicInfo.ResponseEmotion,
         value: UInt32,
         on actor: FormID,
-        now: Float
+        now: Float,
+        seconds: Float? = nil
     ) {
-        showEmotion(emotion, value: value, on: actor, now: now, seconds: nil)
+        showEmotion(emotion, value: value, on: actor, time: (now, seconds))
     }
 }

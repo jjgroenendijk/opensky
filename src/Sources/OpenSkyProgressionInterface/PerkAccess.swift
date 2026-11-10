@@ -27,7 +27,38 @@ public protocol PerkAccess {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
-        subjects: PerkEvaluationSubjects?,
-        actorValue: (Int32) -> Float?
+        reading inputs: PerkInputs
     ) -> PerkEntryPointOutcome
+}
+
+/// What an entry-point evaluation reads besides the perks: the bound condition
+/// subjects, nil for the owner alone, and each actor value by its index.
+public struct PerkInputs {
+    public var subjects: PerkEvaluationSubjects?
+    public var actorValue: (Int32) -> Float?
+
+    public init(
+        subjects: PerkEvaluationSubjects? = nil,
+        actorValue: @escaping (Int32) -> Float? = { _ in nil }
+    ) {
+        self.subjects = subjects
+        self.actorValue = actorValue
+    }
+}
+
+/// The default arguments a protocol requirement cannot carry.
+extension PerkAccess {
+    @discardableResult
+    public mutating func modify(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on holder: ActorValueHolder,
+        subjects: PerkEvaluationSubjects? = nil,
+        actorValue: @escaping (Int32) -> Float? = { _ in nil }
+    ) -> PerkEntryPointOutcome {
+        modify(
+            value, at: entryPoint, on: holder,
+            reading: PerkInputs(subjects: subjects, actorValue: actorValue)
+        )
+    }
 }

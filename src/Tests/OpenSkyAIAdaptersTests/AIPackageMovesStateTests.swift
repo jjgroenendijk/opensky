@@ -78,37 +78,14 @@ struct AIPackageMovesStateTests {
 
     @Test func aMoveIsRecordedAndMapped() {
         host.fakeStreamer.moveActorResult = .started
-        #expect(adapter.movePackageActor(
-            Self.actor,
-            to: .one,
-            direct: false,
-            gait: nil,
-            walkRunBlend: nil
-        ) == .started)
+        #expect(adapter
+            .movePackageActor(PackageMove(Self.actor, to: .one, direct: false)) == .started)
         host.fakeStreamer.moveActorResult = .moverCapReached
-        #expect(adapter.movePackageActor(
-            Self.actor,
-            to: .one,
-            direct: true,
-            gait: nil,
-            walkRunBlend: nil
-        ) == .busy)
+        #expect(adapter.movePackageActor(PackageMove(Self.actor, to: .one, direct: true)) == .busy)
         #expect(host.fakePackages.recordMoveCalls.map(\.actor) == [Self.actor, Self.actor])
         host.fakeFurniture.isLeavingSeatResult = true
-        #expect(adapter.movePackageActor(
-            Self.actor,
-            to: .one,
-            direct: true,
-            gait: nil,
-            walkRunBlend: nil
-        ) == .busy)
-        #expect(adapter.movePackageActor(
-            .player,
-            to: .one,
-            direct: true,
-            gait: nil,
-            walkRunBlend: nil
-        ) == .failed)
+        #expect(adapter.movePackageActor(PackageMove(Self.actor, to: .one, direct: true)) == .busy)
+        #expect(adapter.movePackageActor(PackageMove(.player, to: .one, direct: true)) == .failed)
     }
 
     @Test func withoutScriptsOrSessionPackageReadsAreEmpty() {

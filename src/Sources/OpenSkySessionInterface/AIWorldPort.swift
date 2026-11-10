@@ -1,6 +1,5 @@
 public import OpenSkyConditions
 public import OpenSkyFormatsESM
-public import OpenSkyPhysics
 public import OpenSkyScriptingInterface
 public import OpenSkyWorldInterface
 public import OpenSkyWorldState
@@ -15,13 +14,7 @@ public protocol AIWorldPort: AnyObject, PapyrusFurnitureBridge {
     func isWithin(_ location: Package.Location, actor: ReferenceKey) -> Bool
     func lightLevel(at position: SIMD3<Float>) -> Float
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
-    func movePackageActor(
-        _ actor: ReferenceKey,
-        to point: SIMD3<Float>,
-        direct: Bool,
-        gait: LocomotionGait?,
-        walkRunBlend: Float?
-    ) -> PackageMoveResult
+    func movePackageActor(_ move: PackageMove) -> PackageMoveResult
     func packageActorActivity(_ actor: ReferenceKey) -> PackageActorActivity
     func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>?
     func packageConditionContext(clock: GameClock) -> ConditionContext

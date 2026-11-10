@@ -59,16 +59,14 @@ extension FakeEffectsPort {
         public let key: ReferenceKey
         public let anchor: EffectAnchor
         public let cause: VisualEffectCause
-        public let duration: Float?
-        public let facing: ReferenceKey?
+        public let placement: (duration: Float?, facing: ReferenceKey?)
 
         public var description: String {
             [
                 "key: " + String(describing: key),
                 "anchor: " + String(describing: anchor),
                 "cause: " + String(describing: cause),
-                "duration: " + String(describing: duration),
-                "facing: " + String(describing: facing)
+                "placement: " + String(describing: placement)
             ].joined(separator: ", ")
         }
     }
@@ -106,16 +104,14 @@ extension FakeEffectsPort {
     nonisolated public struct StartModifierCall: CustomStringConvertible {
         public let key: ReferenceKey
         public let strength: Float
-        public let looping: Bool
-        public let fadeIn: Float
+        public let fade: (looping: Bool, fadeIn: Float)
         public let imageSpace: ImageSpaceState
 
         public var description: String {
             [
                 "key: " + String(describing: key),
                 "strength: " + String(describing: strength),
-                "looping: " + String(describing: looping),
-                "fadeIn: " + String(describing: fadeIn),
+                "fade: " + String(describing: fade),
                 "imageSpace: " + String(describing: imageSpace)
             ].joined(separator: ", ")
         }
@@ -184,19 +180,15 @@ extension FakeEffectsPort {
     }
 
     nonisolated public struct ShowMuzzleFlashCall: CustomStringConvertible {
-        public let model: String?
-        public let light: ReferenceKey?
+        public let flash: MuzzleFlash
         public let position: SIMD3<Float>
         public let direction: SIMD3<Float>
-        public let duration: Float
 
         public var description: String {
             [
-                "model: " + String(describing: model),
-                "light: " + String(describing: light),
+                "flash: " + String(describing: flash),
                 "position: " + String(describing: position),
-                "direction: " + String(describing: direction),
-                "duration: " + String(describing: duration)
+                "direction: " + String(describing: direction)
             ].joined(separator: ", ")
         }
     }
@@ -244,16 +236,9 @@ nonisolated extension FakeEffectsPort {
         _ key: ReferenceKey,
         to anchor: EffectAnchor,
         cause: VisualEffectCause,
-        duration: Float?,
-        facing: ReferenceKey?
+        placement: (duration: Float?, facing: ReferenceKey?)
     ) -> Int? {
-        attachCalls.append(AttachCall(
-            key: key,
-            anchor: anchor,
-            cause: cause,
-            duration: duration,
-            facing: facing
-        ))
+        attachCalls.append(AttachCall(key: key, anchor: anchor, cause: cause, placement: placement))
         return attachResult
     }
 
@@ -329,15 +314,13 @@ nonisolated extension FakeEffectsPort {
     public func startModifier(
         _ key: ReferenceKey,
         strength: Float,
-        looping: Bool,
-        fadeIn: Float,
+        fade: (looping: Bool, fadeIn: Float),
         on imageSpace: inout ImageSpaceState
     ) -> Bool {
         startModifierCalls.append(StartModifierCall(
             key: key,
             strength: strength,
-            looping: looping,
-            fadeIn: fadeIn,
+            fade: fade,
             imageSpace: imageSpace
         ))
         return startModifierResult
@@ -428,18 +411,14 @@ nonisolated extension FakeEffectsPort {
     }
 
     public func showMuzzleFlash(
-        model: String?,
-        light: ReferenceKey?,
+        _ flash: MuzzleFlash,
         at position: SIMD3<Float>,
-        along direction: SIMD3<Float>,
-        duration: Float
+        along direction: SIMD3<Float>
     ) {
         showMuzzleFlashCalls.append(ShowMuzzleFlashCall(
-            model: model,
-            light: light,
+            flash: flash,
             position: position,
-            direction: direction,
-            duration: duration
+            direction: direction
         ))
     }
 

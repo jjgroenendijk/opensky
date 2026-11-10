@@ -194,11 +194,14 @@ extension ContainerMenuController {
             return
         }
         do {
-            let outcome = try game.inventory.transfer(
-                transfer, item: entry.item, count: count, named: entry.name,
-                container: container, vendor: vendor, merchant: merchant,
-                acceptingLess: acceptingLess
+            var request = ContainerTransferRequest(
+                transfer, item: entry.item, name: entry.name, container: container,
+                vendor: vendor
             )
+            request.count = count
+            request.merchant = merchant
+            request.acceptingLess = acceptingLess
+            let outcome = try game.inventory.transfer(request)
             if case .merchantShort = outcome {
                 pendingSale = (entry, count)
                 note(outcome.text(texts: game.inventory.tradeTexts)

@@ -56,16 +56,14 @@ public protocol InventoryPort: AnyObject, Sendable {
     var menuTexts: InventoryMenuTexts { get }
     func name(of item: FormID) -> String
     @discardableResult func pickpocket(
-        _ item: FormID,
-        count: Int32,
+        _ stack: (item: FormID, count: Int32),
         named name: String,
         from target: InventoryHolder,
         roll: Float
     ) -> PickpocketOutcome
     func pickpocketRefused(by target: ReferenceKey) -> Bool
     @discardableResult func plant(
-        _ item: FormID,
-        count: Int32,
+        _ stack: (item: FormID, count: Int32),
         named name: String,
         into target: InventoryHolder,
         roll: Float
@@ -132,22 +130,23 @@ public protocol InventoryPort: AnyObject, Sendable {
 
 /// The default arguments a protocol requirement cannot carry.
 extension InventoryPort {
-    public func transfer(
-        _ transfer: ContainerTransfer,
-        item: FormID,
+    @discardableResult public func pickpocket(
+        _ item: FormID,
         count: Int32 = 1,
         named name: String,
-        container: InventoryHolder,
-        vendor: Vendor?,
-        merchant: ReferenceKey? = nil,
-        acceptingLess: Bool = false
-    ) throws -> TradeOutcome {
-        var request = ContainerTransferRequest(
-            transfer, item: item, name: name, container: container, vendor: vendor
-        )
-        request.count = count
-        request.merchant = merchant
-        request.acceptingLess = acceptingLess
-        return try self.transfer(request)
+        from target: InventoryHolder,
+        roll: Float
+    ) -> PickpocketOutcome {
+        pickpocket((item, count), named: name, from: target, roll: roll)
+    }
+
+    @discardableResult public func plant(
+        _ item: FormID,
+        count: Int32 = 1,
+        named name: String,
+        into target: InventoryHolder,
+        roll: Float
+    ) -> PickpocketOutcome {
+        plant((item, count), named: name, into: target, roll: roll)
     }
 }

@@ -25,14 +25,14 @@ extension FakePerkRuntimePort {
         public let value: Float
         public let entryPoint: PerkEntryPoint
         public let holder: ActorValueHolder
-        public let subjects: PerkEvaluationSubjects?
+        public let inputs: PerkInputs
 
         public var description: String {
             [
                 "value: " + String(describing: value),
                 "entryPoint: " + String(describing: entryPoint),
                 "holder: " + String(describing: holder),
-                "subjects: " + String(describing: subjects)
+                "inputs: " + String(describing: inputs)
             ].joined(separator: ", ")
         }
     }
@@ -71,14 +71,13 @@ nonisolated extension FakePerkRuntimePort {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
-        subjects: PerkEvaluationSubjects?,
-        actorValue: (Int32) -> Float?
+        reading inputs: PerkInputs
     ) -> PerkEntryPointOutcome {
         modifyCalls.append(ModifyCall(
             value: value,
             entryPoint: entryPoint,
             holder: holder,
-            subjects: subjects
+            inputs: inputs
         ))
         guard let modifyResult else {
             preconditionFailure("FakePerkRuntimePort.modify has no result")

@@ -28,15 +28,14 @@ extension PerkRuntime {
         _ value: Float,
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
-        subjects: PerkEvaluationSubjects? = nil,
-        actorValue: (Int32) -> Float? = { _ in nil }
+        reading inputs: PerkInputs
     ) -> PerkEntryPointOutcome {
         tally.noteEvaluation()
-        let bound = subjects ?? PerkEvaluationSubjects(owner: holder.key)
+        let bound = inputs.subjects ?? PerkEvaluationSubjects(owner: holder.key)
         let outcome = PerkEntryPointEvaluator.evaluate(
             value,
             through: operands(at: entryPoint, on: holder, subjects: bound),
-            actorValue: actorValue
+            actorValue: inputs.actorValue
         )
         for skip in outcome.skipped {
             // Once per distinct function, which is what the transition from
@@ -62,7 +61,7 @@ extension PerkRuntime {
         at entryPoint: PerkEntryPoint,
         on holder: ActorValueHolder,
         subjects: PerkEvaluationSubjects? = nil,
-        actorValue: (Int32) -> Float? = { _ in nil }
+        actorValue: @escaping (Int32) -> Float? = { _ in nil }
     ) -> Float {
         modify(1, at: entryPoint, on: holder, subjects: subjects, actorValue: actorValue).value
     }

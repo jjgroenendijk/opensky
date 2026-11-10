@@ -7,10 +7,6 @@ public protocol WorldAudioFootstepDirectorPort: AnyObject {
         _ names: [String],
         gait: LocomotionGait,
         position: SIMD3<Float>,
-        armatures: [FormID],
-        material: FormID?
+        surface: (armatures: [FormID], material: FormID?)
     )
 }
-
-/// The default arguments a protocol requirement cannot carry.
-extension WorldAudioFootstepDirectorPort {}

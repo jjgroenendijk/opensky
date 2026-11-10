@@ -65,7 +65,7 @@ extension LockWorldAdapter: LockWorld {
     public func perkValue(
         _ value: Float, at entryPoint: PerkEntryPoint, lock: ReferenceKey, level: UInt8
     ) -> Float {
-        game.perks.modified(value, at: entryPoint, on: .player, lock: lock, level: level)
+        game.perks.modified(value, at: entryPoint, on: .player, lock: (lock, level))
     }
 
     public func activationFilter(of reference: ReferenceKey) -> Float {

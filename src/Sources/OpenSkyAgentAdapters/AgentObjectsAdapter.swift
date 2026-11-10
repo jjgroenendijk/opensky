@@ -116,7 +116,7 @@ extension AgentObjectsAdapter {
     ) throws(AgentFailure) -> AgentJSON {
         let resolved = try hub.resolveReference(reference)
         guard let relationships = game.factions.relationships else { throw hub.notReady() }
-        relationships.setRank(rank, of: resolved.key, toward: .player)
+        relationships.setRank(rank, of: resolved.key, toward: .player, cells: (nil, nil))
         let state = relationships.state(of: .player)
         return [
             "ref": .string(reference),

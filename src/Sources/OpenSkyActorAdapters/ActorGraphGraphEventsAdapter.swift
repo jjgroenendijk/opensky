@@ -52,8 +52,10 @@ extension ActorGraphGraphEventsAdapter {
         else { return }
         footsteps.handleActorGraphEvents(
             [name], gait: state.gaits[actor] ?? .walk, position: feet,
-            armatures: game.actorPlayback(for: actor)?.armorAddons.footstepArmatures ?? [],
-            material: state.groundMaterials[actor]
+            surface: (
+                game.actorPlayback(for: actor)?.armorAddons.footstepArmatures ?? [],
+                state.groundMaterials[actor]
+            )
         )
     }
 

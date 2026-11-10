@@ -5,7 +5,7 @@ import Foundation
 public import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
-import OpenSkyWorldInterface
+public import OpenSkyWorldInterface
 import simd
 
 extension EffectsCoordinator {
@@ -22,17 +22,16 @@ extension EffectsCoordinator {
 
     /// The `NAM1` model along the shot, and the muzzle light, for the flash's time.
     public func showMuzzleFlash(
-        model: String?, light: ReferenceKey?,
-        at position: SIMD3<Float>, along direction: SIMD3<Float>, duration: Float
+        _ flash: MuzzleFlash, at position: SIMD3<Float>, along direction: SIMD3<Float>
     ) {
-        if let model {
+        if let model = flash.model {
             showModel(
                 model, at: .facing(position, forward: direction), cause: .casting,
-                duration: duration
+                duration: flash.duration
             )
         }
-        if let key = light {
-            addFlashLight(key, at: position, duration: duration)
+        if let key = flash.light {
+            addFlashLight(key, at: position, duration: flash.duration)
         }
     }
 

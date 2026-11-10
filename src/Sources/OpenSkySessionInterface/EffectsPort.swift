@@ -15,8 +15,7 @@ public protocol EffectsPort: AnyObject {
         _ key: ReferenceKey,
         to anchor: EffectAnchor,
         cause: VisualEffectCause,
-        duration: Float?,
-        facing: ReferenceKey?
+        placement: (duration: Float?, facing: ReferenceKey?)
     ) -> Int?
     func bloodyWeapon(of holder: ReferenceKey)
     func clearTemporaryBlood()
@@ -37,8 +36,7 @@ public protocol EffectsPort: AnyObject {
     @discardableResult func startModifier(
         _ key: ReferenceKey,
         strength: Float,
-        looping: Bool,
-        fadeIn: Float,
+        fade: (looping: Bool, fadeIn: Float),
         on imageSpace: inout ImageSpaceState
     ) -> Bool
     func stepHealthCues(
@@ -70,11 +68,9 @@ public protocol EffectsPort: AnyObject {
         duration: Float
     )
     func showMuzzleFlash(
-        model: String?,
-        light: ReferenceKey?,
+        _ flash: MuzzleFlash,
         at position: SIMD3<Float>,
-        along direction: SIMD3<Float>,
-        duration: Float
+        along direction: SIMD3<Float>
     )
     func step(_ seconds: Float, extraModels: [VisualEffectModel], renderer: Renderer) throws
     func stopModifier(_ key: ReferenceKey, fadeOut: Float, on imageSpace: inout ImageSpaceState)
@@ -86,9 +82,10 @@ extension EffectsPort {
         _ key: ReferenceKey,
         to anchor: EffectAnchor,
         cause: VisualEffectCause,
-        duration: Float?
+        duration: Float?,
+        facing: ReferenceKey? = nil
     ) -> Int? {
-        attach(key, to: anchor, cause: cause, duration: duration, facing: nil)
+        attach(key, to: anchor, cause: cause, placement: (duration, facing))
     }
 
     public func showModel(_ path: String, at anchor: EffectAnchor, cause: VisualEffectCause) {
@@ -98,8 +95,10 @@ extension EffectsPort {
     @discardableResult public func startModifier(
         _ key: ReferenceKey,
         strength: Float,
+        looping: Bool = false,
+        fadeIn: Float = 0,
         on imageSpace: inout ImageSpaceState
     ) -> Bool {
-        startModifier(key, strength: strength, looping: false, fadeIn: 0, on: &imageSpace)
+        startModifier(key, strength: strength, fade: (looping, fadeIn), on: &imageSpace)
     }
 }

@@ -13,7 +13,7 @@ public struct ContainerTransferRequest {
 
     public init(
         _ transfer: ContainerTransfer, item: FormID, name: String,
-        container: InventoryHolder, vendor: Vendor?
+        container: InventoryHolder, vendor: Vendor? = nil
     ) {
         self.transfer = transfer
         self.item = item

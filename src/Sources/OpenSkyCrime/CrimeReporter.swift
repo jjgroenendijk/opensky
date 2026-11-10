@@ -95,18 +95,15 @@ public final class CrimeReporter: CrimeReporting {
     /// two chances for the world to have moved in between.
     @discardableResult
     public func reportTheft(
-        of item: FormID,
-        count: Int32,
+        of stack: (item: FormID, count: Int32),
         from reference: ReferenceKey,
         owner: ReferenceOwner?,
-        by actor: ReferenceKey = .player
+        by actor: ReferenceKey
     ) -> CrimeOutcome {
         if actor == .player, case let .faction(faction, _) = owner {
-            runtime.recordStolen(item, count: count, from: faction)
+            runtime.recordStolen(stack.item, count: stack.count, from: faction)
         }
-        return record(
-            theftEvent((item, count), from: reference, by: actor, owner: owner)
-        )
+        return record(theftEvent(stack, from: reference, by: actor, owner: owner))
     }
 
     /// Reports riding `horse`, which `owner` owns: a theft of `iCrimeGoldStealHorse`.

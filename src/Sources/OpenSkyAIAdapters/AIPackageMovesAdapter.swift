@@ -14,7 +14,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyNavigation
 import OpenSkyPerceptionInterface
-public import OpenSkyPhysics
+import OpenSkyPhysics
 import OpenSkyPlayer
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
@@ -109,20 +109,19 @@ extension AIPackageMovesAdapter {
         }
     }
 
-    public func movePackageActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool, gait: LocomotionGait?,
-        walkRunBlend: Float?
-    ) -> PackageMoveResult {
+    public func movePackageActor(_ move: PackageMove) -> PackageMoveResult {
+        let actor = move.actor
         if actor == .player {
-            return walkPlayer(to: point, direct: direct) ? .started : .failed
+            return walkPlayer(to: move.point, direct: move.direct) ? .started : .failed
         }
         // The exit clip carries the actor out of its seat first.
         if game.furniture.isLeavingSeat(actor) {
             return .busy
         }
         let result = game.streamer.moveActor(
-            actor, to: point, direct: direct, gait: gait,
-            runSlowdown: game.packages.followRunSlowdown(for: actor), walkRunBlend: walkRunBlend
+            actor, to: move.point, direct: move.direct, gait: move.gait,
+            runSlowdown: game.packages.followRunSlowdown(for: actor),
+            walkRunBlend: move.walkRunBlend
         )
         game.packages.recordMove(result, for: actor)
         switch result {
