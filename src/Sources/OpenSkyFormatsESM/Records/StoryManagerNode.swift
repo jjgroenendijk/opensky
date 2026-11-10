@@ -21,7 +21,7 @@ nonisolated public struct StoryManagerNode: Equatable, Sendable {
         }
 
         public static let random = Flags(rawValue: 0x01)
-        public static let warnIfNoChildQuestStarted = Flags(rawValue: 0x02)
+        static let warnIfNoChildQuestStarted = Flags(rawValue: 0x02)
         public static let doAllBeforeRepeating = Flags(rawValue: 0x0001_0000)
         public static let sharesEvent = Flags(rawValue: 0x0002_0000)
         public static let numberOfQuestsToRun = Flags(rawValue: 0x0004_0000)
@@ -31,7 +31,7 @@ nonisolated public struct StoryManagerNode: Equatable, Sendable {
     public struct QuestEntry: Equatable, Sendable {
         public let quest: FormID
         /// FNAM: the reset timer runs for a full day.
-        public var resetsAfterFullDay: Bool?
+        var resetsAfterFullDay: Bool?
         /// RNAM, in game hours.
         public var hoursUntilReset: Float?
     }

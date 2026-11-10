@@ -102,7 +102,7 @@ nonisolated public struct FootstepSet: Equatable, Sendable {
     }
 
     /// Test seam and the shape the store hands back for a set it synthesized.
-    public init(formID: FormID, editorID: String?, lists: [FootstepGait: [FormID]]) {
+    init(formID: FormID, editorID: String?, lists: [FootstepGait: [FormID]]) {
         self.formID = formID
         self.editorID = editorID
         self.lists = FootstepGait.allCases.map { lists[$0] ?? [] }

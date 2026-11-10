@@ -51,7 +51,7 @@ nonisolated public struct SWFScene: Equatable, Sendable {
     public let skippedPlacements: Int
 
     /// Sprite recursion is bounded defensively; vanilla nesting is shallow.
-    public static let maximumSpriteDepth = 16
+    static let maximumSpriteDepth = 16
 
     public static func build(movie: SWFMovie) -> SWFScene {
         var builder = SceneBuilder(movie: movie)

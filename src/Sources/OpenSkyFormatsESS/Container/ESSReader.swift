@@ -58,15 +58,15 @@ nonisolated public struct ESSReader: Sendable {
         do { return try reader.readUInt32() } catch { throw .truncated(context: context) }
     }
 
-    public mutating func uint64(_ context: String) throws(ESSError) -> UInt64 {
+    mutating func uint64(_ context: String) throws(ESSError) -> UInt64 {
         do { return try reader.readUInt64() } catch { throw .truncated(context: context) }
     }
 
-    public mutating func int8(_ context: String) throws(ESSError) -> Int8 {
+    mutating func int8(_ context: String) throws(ESSError) -> Int8 {
         try Int8(bitPattern: uint8(context))
     }
 
-    public mutating func int16(_ context: String) throws(ESSError) -> Int16 {
+    mutating func int16(_ context: String) throws(ESSError) -> Int16 {
         try Int16(bitPattern: uint16(context))
     }
 
@@ -112,7 +112,7 @@ nonisolated public struct ESSReader: Sendable {
     }
 
     /// A `uint32` count checked like `count(_:minimumElementSize:)`.
-    public mutating func count32(
+    mutating func count32(
         _ context: String, minimumElementSize: Int = 1
     ) throws(ESSError) -> Int {
         try checked(Int(uint32(context)), context, minimumElementSize: minimumElementSize)

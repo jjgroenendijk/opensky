@@ -25,7 +25,7 @@ nonisolated public struct HKXGapCensus: Sendable {
 
     public static let assignedUse = "expression assignment"
     /// A condition or an expression reads the variable.
-    public static let expressionReadUse = "expression read"
+    static let expressionReadUse = "expression read"
     /// A state machine writes its current state to its `m_syncVariableIndex`.
     public static let syncUse = "hkbStateMachine.syncVariable"
 

@@ -48,11 +48,11 @@ nonisolated public struct HKBBlenderFields: Equatable, Sendable {
         )
     }
 
-    public var references: [HKBReference] {
+    var references: [HKBReference] {
         HKBReference.each("m_children", children)
     }
 
-    public var summary: String {
+    var summary: String {
         "\(children.count) children, blend parameter \(blendParameter), flags \(flags)"
     }
 }

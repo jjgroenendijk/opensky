@@ -55,19 +55,7 @@ nonisolated public struct ParticleEmitterController: Equatable, Sendable {
     /// Births per second: keys from `NiFloatData`, or one pose value.
     public let birthRate: [NIFKey<Float>]
     /// Emitter on or off: keys from `NiBoolData`, or one pose value. Empty means on.
-    public let active: [NIFKey<Bool>]
-
-    public init(
-        modifierName: String?,
-        timing: ControllerTiming,
-        birthRate: [NIFKey<Float>],
-        active: [NIFKey<Bool>]
-    ) {
-        self.modifierName = modifierName
-        self.timing = timing
-        self.birthRate = birthRate
-        self.active = active
-    }
+    let active: [NIFKey<Bool>]
 
     /// Births per second at `seconds` of playback; zero while the emitter is off.
     /// Nil when the controller has no birth rate, so the caller keeps its own rate.
@@ -111,7 +99,7 @@ nonisolated public struct ParticleModifierController: Equatable, Sendable {
     public let floatKeys: [NIFKey<Float>]
     public let boolKeys: [NIFKey<Bool>]
 
-    public init(
+    init(
         parameter: Parameter, modifierName: String?, timing: ControllerTiming,
         floatKeys: [NIFKey<Float>] = [], boolKeys: [NIFKey<Bool>] = []
     ) {
@@ -137,11 +125,6 @@ nonisolated public struct ParticleModifierController: Equatable, Sendable {
 nonisolated public struct ParticleVisibilityTrack: Equatable, Sendable {
     public let timing: ControllerTiming
     public let keys: [NIFKey<Bool>]
-
-    public init(timing: ControllerTiming, keys: [NIFKey<Bool>]) {
-        self.timing = timing
-        self.keys = keys
-    }
 
     public func isVisible(at seconds: Float) -> Bool {
         NIFKeySampler.step(keys, at: timing.controllerTime(at: seconds)) ?? true

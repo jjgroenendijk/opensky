@@ -45,7 +45,7 @@ nonisolated public struct HKXObjectCursor: Sendable {
     /// True when `length` bytes at the section-local `offset` lie inside the
     /// payload. Written without `offset + length` so a hostile length cannot
     /// overflow the sum past the check.
-    public func containsSectionRange(_ offset: Int, _ length: Int) -> Bool {
+    func containsSectionRange(_ offset: Int, _ length: Int) -> Bool {
         offset >= 0 && length >= 0 && length <= payload.count && offset <= payload.count - length
     }
 

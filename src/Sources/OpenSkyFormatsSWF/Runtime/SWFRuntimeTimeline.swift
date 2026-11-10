@@ -144,7 +144,7 @@ nonisolated extension SWFMovieRuntime {
         placeSubtree(node)
     }
 
-    public func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
+    func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
         if let matrix = placement.matrix {
             node.matrix = matrix
         }

@@ -9,16 +9,16 @@ public import OpenSkyFormatsCore
 nonisolated public struct Impact: Equatable, Sendable {
     /// DATA. The first four members are required; the rest arrived later.
     public struct Effect: Equatable, Sendable {
-        public let duration: Float
+        let duration: Float
         /// 0 surface normal, 1 projectile vector, 2 projectile reflection.
         public let orientation: UInt32
-        public let angleThreshold: Float
-        public let placementRadius: Float
-        public let soundLevel: UInt32?
+        let angleThreshold: Float
+        let placementRadius: Float
+        let soundLevel: UInt32?
         /// Bit 0: no decal data.
         public let flags: UInt8?
         /// 0 default, 1 destroy, 2 bounce, 3 impale, 4 stick.
-        public let result: UInt8?
+        let result: UInt8?
 
         init(_ reader: inout BinaryReader) throws {
             duration = try reader.readFloat32()
@@ -114,7 +114,7 @@ nonisolated public struct ImpactDataSet: Equatable, Sendable {
     }
 
     /// Test seam.
-    public init(formID: FormID, editorID: String?, entries: [Entry]) {
+    init(formID: FormID, editorID: String?, entries: [Entry]) {
         self.formID = formID
         self.editorID = editorID
         self.entries = entries
@@ -124,7 +124,7 @@ nonisolated public struct ImpactDataSet: Equatable, Sendable {
     /// The impact for `material`, or the representative one when the surface is
     /// unknown: the most frequent IPCT in the table, ties broken by record
     /// order. Footsteps use it until collision materials exist.
-    public func impact(for material: FormID?) -> FormID? {
+    func impact(for material: FormID?) -> FormID? {
         impact(forFirstOf: material.map { [$0] } ?? [])
     }
 

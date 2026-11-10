@@ -32,7 +32,7 @@ nonisolated public struct NIFNodeAnimation: Sendable {
         case lag(NIFLagBone)
 
         /// False for keys that hold one pose, such as a skeleton's leftover export controllers.
-        public var moves: Bool {
+        var moves: Bool {
             guard case let .keys(channel) = self else { return true }
             guard let keys = channel.keys else { return false }
             let euler = keys.eulerRotations.map(\.count).max() ?? 0
@@ -140,7 +140,7 @@ nonisolated public struct NIFNodeTransform: Equatable, Sendable {
         )
     }
 
-    public var inverse: Self {
+    var inverse: Self {
         let rotation = rotation.inverse
         let scale = scale != 0 ? 1 / scale : 0
         return Self(
@@ -154,12 +154,12 @@ nonisolated public struct NIFLookAt: Equatable, Sendable {
     /// Index into `NIFNodeAnimation.nodes`; nil when the target is not in the mesh.
     public let target: Int?
     public let axis: SIMD3<Float>
-    public let translation: [NIFKey<SIMD3<Float>>]
+    let translation: [NIFKey<SIMD3<Float>>]
     /// Radians about the look axis.
     public let roll: [NIFKey<Float>]
-    public let scale: [NIFKey<Float>]
+    let scale: [NIFKey<Float>]
 
-    public init(
+    init(
         target: Int?, axis: SIMD3<Float>, translation: [NIFKey<SIMD3<Float>>] = [],
         roll: [NIFKey<Float>] = [], scale: [NIFKey<Float>] = []
     ) {

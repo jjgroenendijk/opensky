@@ -224,7 +224,7 @@ nonisolated public enum SWFShapeParser: Sendable {
 
     /// Bare SHAPE (DefineFont glyphs): index bit widths + records, no style
     /// arrays. Fill indices pass through unresolved (glyph on/off convention).
-    public static func parseGlyphShape(_ bits: inout SWFBitReader) throws -> [SWFShapeSegment] {
+    static func parseGlyphShape(_ bits: inout SWFBitReader) throws -> [SWFShapeSegment] {
         var walker = ShapeRecordWalker(bits: bits, version: nil)
         try walker.readIndexBits()
         try walker.walkRecords()

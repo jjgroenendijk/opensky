@@ -44,7 +44,7 @@ nonisolated public struct Condition: Equatable, Sendable {
         public static let useAliases = Flags(rawValue: 0x02)
         /// Comparison value is a GLOB FormID rather than a float.
         public static let useGlobal = Flags(rawValue: 0x04)
-        public static let usePackData = Flags(rawValue: 0x08)
+        static let usePackData = Flags(rawValue: 0x08)
         public static let swapSubjectAndTarget = Flags(rawValue: 0x10)
     }
 

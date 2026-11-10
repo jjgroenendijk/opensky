@@ -78,7 +78,7 @@ nonisolated public struct ESMGroup: Sendable {
 
     /// Exterior cell (sub-)block: grid coordinates. The label stores Y in the
     /// low int16 and X in the high int16 (reversed, per spec).
-    public var grid: (x: Int16, y: Int16)? {
+    var grid: (x: Int16, y: Int16)? {
         switch kind {
         case .exteriorCellBlock, .exteriorCellSubBlock:
             (

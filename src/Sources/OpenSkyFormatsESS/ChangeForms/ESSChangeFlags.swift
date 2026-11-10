@@ -13,54 +13,54 @@ nonisolated public enum ESSChangeFlag: Sendable {
         public static let cellChanged: UInt32 = 0x0000_0008
         public static let scale: UInt32 = 0x0000_0010
         public static let inventory: UInt32 = 0x0000_0020
-        public static let extraOwnership: UInt32 = 0x0000_0040
+        static let extraOwnership: UInt32 = 0x0000_0040
         public static let baseObject: UInt32 = 0x0000_0080
         public static let promoted: UInt32 = 0x0200_0000
-        public static let extraActivatingChildren: UInt32 = 0x0400_0000
-        public static let leveledInventory: UInt32 = 0x0800_0000
-        public static let animation: UInt32 = 0x1000_0000
-        public static let extraEncounterZone: UInt32 = 0x2000_0000
-        public static let extraCreatedOnly: UInt32 = 0x4000_0000
+        static let extraActivatingChildren: UInt32 = 0x0400_0000
+        static let leveledInventory: UInt32 = 0x0800_0000
+        static let animation: UInt32 = 0x1000_0000
+        static let extraEncounterZone: UInt32 = 0x2000_0000
+        static let extraCreatedOnly: UInt32 = 0x4000_0000
         public static let extraGameOnly: UInt32 = 0x8000_0000
     }
 
     /// Every reference type except ACHR.
     public enum Object: Sendable {
-        public static let extraItemData: UInt32 = 0x0000_0400
-        public static let extraAmmo: UInt32 = 0x0000_0800
+        static let extraItemData: UInt32 = 0x0000_0400
+        static let extraAmmo: UInt32 = 0x0000_0800
         public static let extraLock: UInt32 = 0x0000_1000
-        public static let doorExtraTeleport: UInt32 = 0x0002_0000
-        public static let empty: UInt32 = 0x0020_0000
-        public static let openDefaultState: UInt32 = 0x0040_0000
-        public static let openState: UInt32 = 0x0080_0000
+        static let doorExtraTeleport: UInt32 = 0x0002_0000
+        static let empty: UInt32 = 0x0020_0000
+        static let openDefaultState: UInt32 = 0x0040_0000
+        static let openState: UInt32 = 0x0080_0000
     }
 
     public enum Actor: Sendable {
         public static let lifeState: UInt32 = 0x0000_0400
-        public static let extraPackageData: UInt32 = 0x0000_0800
-        public static let extraMerchantContainer: UInt32 = 0x0000_1000
-        public static let extraDismemberedLimbs: UInt32 = 0x0002_0000
-        public static let leveledActor: UInt32 = 0x0004_0000
-        public static let dispositionModifiers: UInt32 = 0x0008_0000
-        public static let tempModifiers: UInt32 = 0x0010_0000
-        public static let damageModifiers: UInt32 = 0x0020_0000
-        public static let overrideModifiers: UInt32 = 0x0040_0000
-        public static let permanentModifiers: UInt32 = 0x0080_0000
+        static let extraPackageData: UInt32 = 0x0000_0800
+        static let extraMerchantContainer: UInt32 = 0x0000_1000
+        static let extraDismemberedLimbs: UInt32 = 0x0002_0000
+        static let leveledActor: UInt32 = 0x0004_0000
+        static let dispositionModifiers: UInt32 = 0x0008_0000
+        static let tempModifiers: UInt32 = 0x0010_0000
+        static let damageModifiers: UInt32 = 0x0020_0000
+        static let overrideModifiers: UInt32 = 0x0040_0000
+        static let permanentModifiers: UInt32 = 0x0080_0000
     }
 
     /// The `NPC_` base record.
     public enum ActorBase: Sendable {
         public static let baseData: UInt32 = 0x0000_0002
-        public static let attributes: UInt32 = 0x0000_0004
-        public static let aiData: UInt32 = 0x0000_0008
+        static let attributes: UInt32 = 0x0000_0004
+        static let aiData: UInt32 = 0x0000_0008
         public static let spellList: UInt32 = 0x0000_0010
         public static let fullName: UInt32 = 0x0000_0020
         public static let factions: UInt32 = 0x0000_0040
         public static let skills: UInt32 = 0x0000_0200
-        public static let npcClass: UInt32 = 0x0000_0400
-        public static let face: UInt32 = 0x0000_0800
-        public static let defaultOutfit: UInt32 = 0x0000_1000
-        public static let sleepOutfit: UInt32 = 0x0000_2000
+        static let npcClass: UInt32 = 0x0000_0400
+        static let face: UInt32 = 0x0000_0800
+        static let defaultOutfit: UInt32 = 0x0000_1000
+        static let sleepOutfit: UInt32 = 0x0000_2000
         public static let gender: UInt32 = 0x0100_0000
         public static let race: UInt32 = 0x0200_0000
     }
@@ -69,8 +69,8 @@ nonisolated public enum ESSChangeFlag: Sendable {
         public static let flags: UInt32 = 0x0000_0002
         public static let scriptDelay: UInt32 = 0x0000_0004
         public static let alreadyRun: UInt32 = 0x0400_0000
-        public static let instances: UInt32 = 0x0800_0000
-        public static let runData: UInt32 = 0x1000_0000
+        static let instances: UInt32 = 0x0800_0000
+        static let runData: UInt32 = 0x1000_0000
         public static let objectives: UInt32 = 0x2000_0000
         public static let script: UInt32 = 0x4000_0000
         public static let stages: UInt32 = 0x8000_0000

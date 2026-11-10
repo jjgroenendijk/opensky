@@ -19,7 +19,7 @@ nonisolated public struct NavmeshInfo: Sendable {
         /// The navmesh is an island: reachable only through its edge links.
         public static let isIsland = Flags(rawValue: 1 << 5)
         /// Untouched since generation.
-        public static let notEdited = Flags(rawValue: 1 << 6)
+        static let notEdited = Flags(rawValue: 1 << 6)
     }
 
     public let navmesh: FormID

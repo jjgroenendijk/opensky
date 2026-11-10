@@ -33,11 +33,11 @@ nonisolated public struct ESSWriter: Sendable {
         writer.writeUInt32(value)
     }
 
-    public mutating func uint64(_ value: UInt64) {
+    mutating func uint64(_ value: UInt64) {
         writer.writeUInt64(value)
     }
 
-    public mutating func int8(_ value: Int8) {
+    mutating func int8(_ value: Int8) {
         uint8(UInt8(bitPattern: value))
     }
 

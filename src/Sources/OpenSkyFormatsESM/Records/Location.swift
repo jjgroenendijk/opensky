@@ -32,45 +32,45 @@ nonisolated public struct LocationDecodeTally: Equatable, RankedSkipReport {
         ])
     }
 
-    public private(set) var malformedFields: [FourCC: Int] = [:]
+    private(set) var malformedFields: [FourCC: Int] = [:]
     /// Number of bytes dropped after the last whole packed-array element.
-    public private(set) var trailingArrayBytes: [FourCC: Int] = [:]
-    public private(set) var unknownFields: [FourCC: Int] = [:]
+    private(set) var trailingArrayBytes: [FourCC: Int] = [:]
+    private(set) var unknownFields: [FourCC: Int] = [:]
 
-    public mutating func noteMalformed(_ type: FourCC) {
+    mutating func noteMalformed(_ type: FourCC) {
         malformedFields[type, default: 0] += 1
     }
 
-    public mutating func noteTail(_ type: FourCC, bytes: Int) {
+    mutating func noteTail(_ type: FourCC, bytes: Int) {
         guard bytes > 0 else { return }
         trailingArrayBytes[type, default: 0] += bytes
     }
 
-    public mutating func noteUnknown(_ type: FourCC) {
+    mutating func noteUnknown(_ type: FourCC) {
         unknownFields[type, default: 0] += 1
     }
 }
 
 nonisolated public struct Location: Equatable, Sendable {
     public struct PersistentReference: Equatable, Sendable {
-        public let reference: FormID
-        public let worldOrCell: FormID
-        public let gridY: Int16
-        public let gridX: Int16
+        let reference: FormID
+        let worldOrCell: FormID
+        let gridY: Int16
+        let gridX: Int16
     }
 
     public struct UniqueActor: Equatable, Sendable {
         public let actorBase: FormID
         public let actorReference: FormID
-        public let location: FormID
+        let location: FormID
     }
 
     public struct SpecialReference: Equatable, Sendable {
         public let type: FormID
         public let reference: FormID
-        public let worldOrCell: FormID
-        public let gridY: Int16
-        public let gridX: Int16
+        let worldOrCell: FormID
+        let gridY: Int16
+        let gridX: Int16
     }
 
     public struct WorldspaceCells: Equatable, Sendable {
@@ -84,9 +84,9 @@ nonisolated public struct Location: Equatable, Sendable {
     }
 
     public struct EnableParent: Equatable, Sendable {
-        public let reference: FormID
-        public let parent: FormID
-        public let flags: UInt8
+        let reference: FormID
+        let parent: FormID
+        let flags: UInt8
     }
 
     public let formID: FormID

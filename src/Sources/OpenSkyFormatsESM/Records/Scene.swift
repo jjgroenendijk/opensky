@@ -10,16 +10,16 @@ nonisolated public struct ScenePhase: Equatable, Sendable {
     public var startConditions: [Condition] = []
     public var completionConditions: [Condition] = []
     /// WNAM, the editor width.
-    public var editorWidth: UInt32?
+    var editorWidth: UInt32?
 }
 
 nonisolated public struct SceneActor: Equatable, Sendable {
     /// ALID, a quest alias ID.
     public let aliasID: Int32
     /// LNAM: 0x01 no player activation, 0x02 optional.
-    public var flags: UInt32?
+    var flags: UInt32?
     /// DNAM: pause and end bits for death, combat, dialogue, and observed combat.
-    public var behaviorFlags: UInt32?
+    var behaviorFlags: UInt32?
 }
 
 nonisolated public struct SceneDialogue: Equatable, Sendable {
@@ -30,8 +30,8 @@ nonisolated public struct SceneDialogue: Equatable, Sendable {
     public var loopingMax: Float?
     public var loopingMin: Float?
     /// DEMO, the emotion type index.
-    public var emotionType: UInt32?
-    public var emotionValue: UInt32?
+    var emotionType: UInt32?
+    var emotionValue: UInt32?
 }
 
 nonisolated public enum SceneActionPayload: Equatable, Sendable {
@@ -47,10 +47,10 @@ nonisolated public enum SceneActionPayload: Equatable, Sendable {
 nonisolated public struct SceneAction: Equatable, Sendable {
     /// ANAM type: 0 dialogue, 1 package, 2 timer. Others are kept.
     public let type: UInt16
-    public var name: String?
+    var name: String?
     public var aliasID: Int32?
     /// LNAM. xEdit leaves it unnamed, so it stays raw.
-    public var unknownLNAM: Data?
+    var unknownLNAM: Data?
     public var index: UInt32?
     /// FNAM: 0x8000 face target, 0x10000 looping, 0x20000 headtrack player.
     public var flags: UInt32?
@@ -64,10 +64,10 @@ nonisolated public struct SceneAction: Equatable, Sendable {
 
 /// VNAM: per-event behavior for all actors. Each value is 0 normal, 1 pause, 2 end, 3 don't set.
 nonisolated public struct SceneActorBehavior: Equatable, Sendable {
-    public let death: UInt32
-    public let combat: UInt32
-    public let dialogue: UInt32
-    public let observeCombat: UInt32
+    let death: UInt32
+    let combat: UInt32
+    let dialogue: UInt32
+    let observeCombat: UInt32
 }
 
 nonisolated public struct Scene: Equatable, Sendable {
@@ -80,7 +80,7 @@ nonisolated public struct Scene: Equatable, Sendable {
 
         public static let beginOnQuestStart = Flags(rawValue: 0x01)
         public static let stopQuestOnEnd = Flags(rawValue: 0x02)
-        public static let showAllText = Flags(rawValue: 0x04)
+        static let showAllText = Flags(rawValue: 0x04)
         public static let repeatConditionsWhileTrue = Flags(rawValue: 0x08)
         public static let interruptible = Flags(rawValue: 0x10)
     }

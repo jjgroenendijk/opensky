@@ -15,7 +15,7 @@ nonisolated extension BinaryReader {
     }
 
     /// nif.xml `SizedString`: a uint32 length, then the bytes with no null.
-    public mutating func readNIFSizedString() throws -> String {
+    mutating func readNIFSizedString() throws -> String {
         let length = try Int(readUInt32())
         guard length <= bytesRemaining else {
             throw NIFError.malformed("string length \(length) exceeds block size")
@@ -35,7 +35,7 @@ nonisolated extension BinaryReader {
     }
 
     /// A uint16 count whose items of `stride` bytes must fit in the block.
-    public mutating func readNIFShortCount(stride: Int, label: String) throws -> Int {
+    mutating func readNIFShortCount(stride: Int, label: String) throws -> Int {
         try checkNIFCount(Int(readUInt16()), stride: stride, label: label)
     }
 
@@ -50,15 +50,15 @@ nonisolated extension BinaryReader {
 /// nif.xml `NiTimeController`: next controller, flags, timing, and target.
 nonisolated public struct NIFTimeController: Equatable, Sendable {
     /// Next controller, flags, frequency, phase, start, stop, target.
-    public static let size = 4 + 2 + 4 * 4 + 4
+    static let size = 4 + 2 + 4 * 4 + 4
 
-    public let nextControllerRef: Int32
+    let nextControllerRef: Int32
     /// nif.xml `TimeControllerFlags`.
-    public let flags: UInt16
-    public let timing: ControllerTiming
+    let flags: UInt16
+    let timing: ControllerTiming
     public let targetRef: Int32
 
-    public init(reader: inout BinaryReader) throws {
+    init(reader: inout BinaryReader) throws {
         nextControllerRef = try reader.readNIFRef()
         flags = try reader.readUInt16()
         let frequency = try reader.readFloat32()
@@ -73,22 +73,22 @@ nonisolated public struct NIFTimeController: Equatable, Sendable {
     }
 
     /// Flag bit 3. An inactive controller leaves its target alone.
-    public var isActive: Bool {
+    var isActive: Bool {
         flags & 0x8 != 0
     }
 
     /// Flag bit 5: a controller manager's sequences feed it.
-    public var isManagerControlled: Bool {
+    var isManagerControlled: Bool {
         flags & 0x20 != 0
     }
 }
 
 /// nif.xml `NiSingleInterpController`: a time controller and one interpolator.
-nonisolated public struct NIFInterpolatedController: Equatable, Sendable {
-    public let controller: NIFTimeController
-    public let interpolatorRef: Int32
+nonisolated struct NIFInterpolatedController: Equatable, Sendable {
+    let controller: NIFTimeController
+    let interpolatorRef: Int32
 
-    public init(reader: inout BinaryReader) throws {
+    init(reader: inout BinaryReader) throws {
         controller = try NIFTimeController(reader: &reader)
         interpolatorRef = try reader.readNIFRef()
     }

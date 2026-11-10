@@ -62,7 +62,7 @@ nonisolated public struct HKBBehaviorCensus: Equatable, Sendable {
     public let contentPaths: [String]
     public let unresolved: [HKXUnresolvedReference]
 
-    public var variableNames: [String] {
+    var variableNames: [String] {
         variables.compactMap(\.name)
     }
 

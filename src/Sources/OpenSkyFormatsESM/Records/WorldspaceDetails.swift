@@ -26,9 +26,9 @@ nonisolated public struct WorldspaceMapData: Equatable, Sendable {
 }
 
 /// ONAM: how the world map image lines up with the world.
-nonisolated public struct WorldspaceMapOffset: Equatable, Sendable {
-    public let scale: Float
-    public let offset: SIMD3<Float>
+nonisolated struct WorldspaceMapOffset: Equatable, Sendable {
+    let scale: Float
+    let offset: SIMD3<Float>
 }
 
 /// One RNAM cell: the large references that load with it.
@@ -38,7 +38,7 @@ nonisolated public struct WorldspaceLargeReferenceCell: Equatable, Sendable {
         public let cell: SIMD2<Int16>
     }
 
-    public let cell: SIMD2<Int16>
+    let cell: SIMD2<Int16>
     public let references: [Reference]
 
     init(_ reader: inout BinaryReader) throws {
@@ -64,37 +64,37 @@ nonisolated public struct WorldspaceLargeReferenceCell: Equatable, Sendable {
 }
 
 nonisolated public struct WorldspaceDetails: Equatable, Sendable {
-    public var largeReferences: [WorldspaceLargeReferenceCell] = []
+    var largeReferences: [WorldspaceLargeReferenceCell] = []
     /// MHDT: min and max cell, then four uint8 heights per cell. Kept raw.
-    public var maxHeightData: Data?
+    var maxHeightData: Data?
     /// WCTR.
-    public var fixedCenter: SIMD2<Int16>?
+    var fixedCenter: SIMD2<Int16>?
     /// LTMP, an LGTM.
-    public var interiorLighting: FormID?
+    var interiorLighting: FormID?
     /// XLCN, an LCTN.
-    public var location: FormID?
+    var location: FormID?
     /// NAM3, a WATR, and NAM4.
     public var lodWater: FormID?
     public var lodWaterHeight: Float?
     /// ICON.
-    public var mapImage: String?
-    public var cloudModel: ModelData?
+    var mapImage: String?
+    var cloudModel: ModelData?
     public var map: WorldspaceMapData?
-    public var mapOffset: WorldspaceMapOffset?
+    var mapOffset: WorldspaceMapOffset?
     /// NAMA.
-    public var distantLODMultiplier: Float?
+    var distantLODMultiplier: Float?
     /// NAM0 and NAM9, in game units.
-    public var boundsMin: SIMD2<Float>?
-    public var boundsMax: SIMD2<Float>?
+    var boundsMin: SIMD2<Float>?
+    var boundsMax: SIMD2<Float>?
     /// NNAM, unused by the game.
-    public var canopyShadow: String?
-    public var waterNoiseTexture: String?
-    public var waterEnvironmentMap: String?
+    var canopyShadow: String?
+    var waterNoiseTexture: String?
+    var waterEnvironmentMap: String?
     /// TNAM and UNAM.
-    public var hdLODDiffuseTexture: String?
-    public var hdLODNormalTexture: String?
+    var hdLODDiffuseTexture: String?
+    var hdLODNormalTexture: String?
     /// OFST, one uint32 per cell. Kept raw.
-    public var offsets: Data?
+    var offsets: Data?
 
     static func decode(record: ESMRecord) throws -> (Self, FieldTally) {
         var fields = try RecordFields(record: record, type: "WRLD")

@@ -10,11 +10,6 @@ nonisolated public struct ConstructibleObject: Equatable, Sendable {
     public struct Component: Equatable, Sendable {
         public let item: FormID
         public let count: Int32
-
-        public init(item: FormID, count: Int32) {
-            self.item = item
-            self.count = count
-        }
     }
 
     public let formID: FormID

@@ -2,22 +2,22 @@
 // HKASplineCompressedAnimation.swift + docs/formats/hka-animation.md for
 // clean-room sources, probe evidence, scope, and unsupported variants.
 
-public import Foundation
+import Foundation
 import simd
 
-nonisolated public struct HKASplineBlockLayout: Sendable {
-    public let blockIndex: Int
-    public let start: Int
-    public let end: Int
-    public let transformByteCount: Int
-    public let transformTrackCount: Int
-    public let floatTrackCount: Int
+nonisolated struct HKASplineBlockLayout: Sendable {
+    let blockIndex: Int
+    let start: Int
+    let end: Int
+    let transformByteCount: Int
+    let transformTrackCount: Int
+    let floatTrackCount: Int
 }
 
 nonisolated public struct HKASplineBlock: Sendable {
     private let tracks: [HKASplineTransformTrack]
 
-    public static func decode(
+    static func decode(
         data: Data,
         layout: HKASplineBlockLayout
     ) throws -> HKASplineBlock {

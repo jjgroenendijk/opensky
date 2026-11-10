@@ -19,7 +19,7 @@ nonisolated public struct DefaultObjectTag: Hashable, Sendable, CustomStringConv
         )
     }
 
-    public init(code: FourCC) {
+    init(code: FourCC) {
         self.code = code
     }
 
@@ -27,11 +27,11 @@ nonisolated public struct DefaultObjectTag: Hashable, Sendable, CustomStringConv
         code.description
     }
 
-    public var meaning: String? {
+    var meaning: String? {
         Self.knownMeanings[code]
     }
 
-    public var isKnown: Bool {
+    var isKnown: Bool {
         meaning != nil
     }
 }

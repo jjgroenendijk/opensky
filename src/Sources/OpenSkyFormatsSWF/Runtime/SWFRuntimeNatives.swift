@@ -276,7 +276,7 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
 
     /// An ActionScript depth as a SWF depth, clamped into the `UI16` domain, so script
     /// depths above 49151 share the top slot.
-    public static func depthValue(_ number: Double) -> UInt16 {
+    static func depthValue(_ number: Double) -> UInt16 {
         guard number.isFinite else {
             return UInt16(SWFDisplayObject.scriptDepthBase)
         }

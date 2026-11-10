@@ -14,9 +14,9 @@ nonisolated public struct Book: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let teachesSkill = Flags(rawValue: 0x01)
-        public static let cannotBeTaken = Flags(rawValue: 0x02)
-        public static let teachesSpell = Flags(rawValue: 0x04)
+        static let teachesSkill = Flags(rawValue: 0x01)
+        static let cannotBeTaken = Flags(rawValue: 0x02)
+        static let teachesSpell = Flags(rawValue: 0x04)
     }
 
     /// What reading the book grants, decoded from DATA flags + teaches word.
@@ -35,7 +35,7 @@ nonisolated public struct Book: Sendable {
         case note
         case unknown(UInt8)
 
-        public init(rawValue: UInt8) {
+        init(rawValue: UInt8) {
             switch rawValue {
             case 0: self = .book
             case 255: self = .note

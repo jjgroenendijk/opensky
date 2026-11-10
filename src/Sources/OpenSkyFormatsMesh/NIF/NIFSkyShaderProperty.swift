@@ -2,14 +2,14 @@
 // the stars, or a moon. Layout: docs/formats/nif-materials.md#sky-shader.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import simd
 
-nonisolated public struct NIFSkyShaderProperty: Equatable, Sendable {
-    public static let typeName = "BSSkyShaderProperty"
+nonisolated struct NIFSkyShaderProperty: Equatable, Sendable {
+    static let typeName = "BSSkyShaderProperty"
 
     /// nif.xml `SkyObjectType`: what part of the sky the shape is.
-    public enum SkyObject: UInt32, Equatable, Sendable {
+    enum SkyObject: UInt32, Equatable, Sendable {
         case texture = 0
         case sunGlare = 1
         case sky = 2
@@ -18,17 +18,17 @@ nonisolated public struct NIFSkyShaderProperty: Equatable, Sendable {
         case moonStarsMask = 7
     }
 
-    public let name: String?
-    public let shaderFlags1: UInt32
-    public let shaderFlags2: UInt32
-    public let uvOffset: SIMD2<Float>
-    public let uvScale: SIMD2<Float>
+    let name: String?
+    let shaderFlags1: UInt32
+    let shaderFlags2: UInt32
+    let uvOffset: SIMD2<Float>
+    let uvScale: SIMD2<Float>
     /// The texture path as the file names it, under `textures\`.
-    public let sourceTexture: String
+    let sourceTexture: String
     /// Nil for a value nif.xml does not name.
-    public let skyObject: SkyObject?
+    let skyObject: SkyObject?
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         let net = try NIFObjectNET(reader: &reader, header: header)
         name = net.name
         shaderFlags1 = try reader.readUInt32()
@@ -39,12 +39,12 @@ nonisolated public struct NIFSkyShaderProperty: Equatable, Sendable {
         skyObject = try SkyObject(rawValue: reader.readUInt32())
     }
 
-    public var sourceTexturePath: String? {
+    var sourceTexturePath: String? {
         sourceTexture.isEmpty ? nil : NIFShaderTextureSet.vfsKey(for: sourceTexture)
     }
 
     /// Sky meshes are drawn unlit, coloured by their texture and vertex colours.
-    public var material: Material {
+    var material: Material {
         let fallback = Material.fallback
         return Material(
             diffuseTexture: sourceTexturePath,

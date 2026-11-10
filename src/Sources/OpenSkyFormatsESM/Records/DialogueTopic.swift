@@ -17,7 +17,7 @@ nonisolated public struct DialogueTopic: Sendable {
         case miscellaneous
         case unknown(UInt8)
 
-        public init(rawValue: UInt8) {
+        init(rawValue: UInt8) {
             switch rawValue {
             case 0: self = .player
             case 1: self = .favor

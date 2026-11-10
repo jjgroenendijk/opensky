@@ -23,41 +23,41 @@ nonisolated public enum SWFInputEvent: Equatable, Sendable {
 /// through the host.
 nonisolated public final class SWFRuntimeInputState {
     /// Pointer position in stage twips.
-    public var pointer = SIMD2<Float>.zero
-    public var isPointerDown = false
+    var pointer = SIMD2<Float>.zero
+    var isPointerDown = false
     /// `Key.getCode()` / `Key.getAscii()`: the most recent key event.
     public var lastKeyCode = 0
     public var lastKeyAscii = 0
     /// Codes currently held, for `Key.isDown`.
     public private(set) var downKeys: Set<Int> = []
     /// Node under the pointer, for rollover and rollout transitions.
-    public weak var hoverTarget: SWFDisplayObject?
+    weak var hoverTarget: SWFDisplayObject?
     /// Node the press started on, for release and release-outside routing.
-    public weak var pressTarget: SWFDisplayObject?
+    weak var pressTarget: SWFDisplayObject?
     /// Events accepted.
-    public private(set) var pointerEvents = 0
-    public private(set) var keyEvents = 0
+    private(set) var pointerEvents = 0
+    private(set) var keyEvents = 0
 
     /// Held keys kept. A stuck key from a dropped key-up must not grow the set
     /// without bound; the AS2 key domain is a byte anyway.
-    public static let maximumHeldKeys = 256
+    static let maximumHeldKeys = 256
 
-    public func notePointerEvent() {
+    func notePointerEvent() {
         pointerEvents += 1
     }
 
-    public func noteKeyEvent() {
+    func noteKeyEvent() {
         keyEvents += 1
     }
 
-    public func hold(_ code: Int) {
+    func hold(_ code: Int) {
         guard downKeys.count < SWFRuntimeInputState.maximumHeldKeys else {
             return
         }
         downKeys.insert(code)
     }
 
-    public func release(_ code: Int) {
+    func release(_ code: Int) {
         downKeys.remove(code)
     }
 
@@ -93,7 +93,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// The pointer in a node's local space, in pixels — `_xmouse` / `_ymouse`.
-    public func mousePosition(in node: SWFDisplayObject) -> SIMD2<Float> {
+    func mousePosition(in node: SWFDisplayObject) -> SIMD2<Float> {
         guard let inverse = transform(of: node)?.inverted else {
             return input.pointer / Self.twipsPerPixel
         }
@@ -305,7 +305,7 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// Bounded walk over every clip in the tree.
-    public func forEachClip(_ body: (SWFDisplayObject) -> Void) {
+    func forEachClip(_ body: (SWFDisplayObject) -> Void) {
         var stack: [(node: SWFDisplayObject, depth: Int)] = [(root, 0)]
         while let entry = stack.popLast() {
             guard entry.depth < SWFDisplayObject.maximumTreeDepth else {

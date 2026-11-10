@@ -18,20 +18,13 @@ nonisolated public struct BinkAudioTrack: Equatable, Sendable {
     public let channelCount: Int
     /// Flags bit 12: the DCT codec, else the RDFT one.
     public let usesDCT: Bool
-
-    public init(id: UInt32, sampleRate: Int, channelCount: Int, usesDCT: Bool) {
-        self.id = id
-        self.sampleRate = sampleRate
-        self.channelCount = channelCount
-        self.usesDCT = usesDCT
-    }
 }
 
 /// One frame's bytes in the file.
 nonisolated public struct BinkFrameRange: Equatable, Sendable {
     public let offset: Int
     public let size: Int
-    public let isKeyframe: Bool
+    let isKeyframe: Bool
 }
 
 /// One frame's packets: an audio packet per track, nil when the track has none in this
@@ -63,7 +56,7 @@ nonisolated public struct BinkMovie: Sendable {
     public let audioTracks: [BinkAudioTrack]
     public let frames: [BinkFrameRange]
 
-    public var revision: UInt8 {
+    var revision: UInt8 {
         UInt8(codecTag >> 24)
     }
 

@@ -9,13 +9,13 @@ import OpenSkyFormatsCore
 nonisolated public struct XWMChunkScan: Sendable {
     /// `fmt ` fields exactly as stored, before any range validation.
     public struct RawFormat: Equatable, Sendable {
-        public let formatTag: UInt16
-        public let channelCount: Int
-        public let sampleRate: Int
-        public let averageBytesPerSecond: Int
-        public let blockAlign: Int
-        public let bitsPerSample: Int
-        public let extraData: Data
+        let formatTag: UInt16
+        let channelCount: Int
+        let sampleRate: Int
+        let averageBytesPerSecond: Int
+        let blockAlign: Int
+        let bitsPerSample: Int
+        let extraData: Data
     }
 
     private enum Layout {

@@ -25,9 +25,9 @@ nonisolated public struct SWFShapeSegment: Equatable, Sendable {
     public let fillStyle0: Int
     /// Fill on the right of the travel direction.
     public let fillStyle1: Int
-    public let lineStyle: Int
+    let lineStyle: Int
 
-    public var endPoint: (x: Int32, y: Int32) {
+    var endPoint: (x: Int32, y: Int32) {
         switch edge {
         case let .line(toX, toY): (toX, toY)
         case let .quadratic(_, _, toX, toY): (toX, toY)
@@ -87,7 +87,7 @@ nonisolated public struct SWFShapeDefinition: Equatable, Sendable {
     /// glyphs (spec chapter 6 "SHAPE", p. 125). Fill indices in the returned
     /// segments are the glyph convention: 0 = off, 1 = on. Used by font
     /// decoding.
-    public static func parseGlyphSegments(_ bits: inout SWFBitReader) throws -> [SWFShapeSegment] {
+    static func parseGlyphSegments(_ bits: inout SWFBitReader) throws -> [SWFShapeSegment] {
         try SWFShapeParser.parseGlyphShape(&bits)
     }
 }

@@ -15,13 +15,13 @@ nonisolated public struct ActorBase: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let female = Flags(rawValue: 0x0000_0001)
+        static let female = Flags(rawValue: 0x0000_0001)
         /// UESP NPC_ ACBS: an essential actor bleeds out instead of dying.
         public static let essential = Flags(rawValue: 0x0000_0002)
         /// "Auto calc stats": the actor's health/magicka/stamina come from
         /// race + class + level rather than from race plus the ACBS offsets
         /// alone (UESP NPC_ ACBS; CK "Stats Tab").
-        public static let autoCalcStats = Flags(rawValue: 0x0000_0010)
+        static let autoCalcStats = Flags(rawValue: 0x0000_0010)
         /// UESP NPC_ ACBS: a dead actor comes back when its cell resets.
         public static let respawns = Flags(rawValue: 0x0000_0008)
         public static let unique = Flags(rawValue: 0x0000_0020)
@@ -367,13 +367,13 @@ nonisolated extension ActorBase {
         public static let useSpellList = TemplateFlags(rawValue: 0x0008)
         public static let useAIData = TemplateFlags(rawValue: 0x0010)
         public static let useAIPackages = TemplateFlags(rawValue: 0x0020)
-        public static let useModelAnimation = TemplateFlags(rawValue: 0x0040)
+        static let useModelAnimation = TemplateFlags(rawValue: 0x0040)
         public static let useBaseData = TemplateFlags(rawValue: 0x0080)
         public static let useInventory = TemplateFlags(rawValue: 0x0100)
         public static let useScript = TemplateFlags(rawValue: 0x0200)
-        public static let useDefPackList = TemplateFlags(rawValue: 0x0400)
-        public static let useAttackData = TemplateFlags(rawValue: 0x0800)
-        public static let useKeywords = TemplateFlags(rawValue: 0x1000)
+        static let useDefPackList = TemplateFlags(rawValue: 0x0400)
+        static let useAttackData = TemplateFlags(rawValue: 0x0800)
+        static let useKeywords = TemplateFlags(rawValue: 0x1000)
     }
 
     /// One SNAM: the FACT the actor belongs to and its rank inside it.

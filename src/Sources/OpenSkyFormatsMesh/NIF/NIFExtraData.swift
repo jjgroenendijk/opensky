@@ -8,13 +8,8 @@ public import simd
 
 /// One extra data block: its name and its decoded value.
 nonisolated public struct NIFExtraData: Equatable, Sendable {
-    public let name: String?
+    let name: String?
     public let value: Value
-
-    public init(name: String?, value: Value) {
-        self.name = name
-        self.value = value
-    }
 
     public enum Value: Equatable, Sendable {
         case integer(UInt32)
@@ -41,20 +36,20 @@ nonisolated public struct NIFBSXFlags: OptionSet, Equatable, Sendable {
         self.rawValue = rawValue
     }
 
-    public static let animated = Self(rawValue: 1 << 0)
-    public static let havok = Self(rawValue: 1 << 1)
-    public static let ragdoll = Self(rawValue: 1 << 2)
-    public static let complex = Self(rawValue: 1 << 3)
+    static let animated = Self(rawValue: 1 << 0)
+    static let havok = Self(rawValue: 1 << 1)
+    static let ragdoll = Self(rawValue: 1 << 2)
+    static let complex = Self(rawValue: 1 << 3)
     /// The model holds add-on nodes (`BSValueNode`), such as flames.
-    public static let addon = Self(rawValue: 1 << 4)
-    public static let editorMarker = Self(rawValue: 1 << 5)
-    public static let dynamic = Self(rawValue: 1 << 6)
-    public static let articulated = Self(rawValue: 1 << 7)
-    public static let needsTransformUpdates = Self(rawValue: 1 << 8)
-    public static let externalEmittance = Self(rawValue: 1 << 9)
-    public static let magicShaderParticles = Self(rawValue: 1 << 10)
-    public static let lights = Self(rawValue: 1 << 11)
-    public static let breakable = Self(rawValue: 1 << 12)
+    static let addon = Self(rawValue: 1 << 4)
+    static let editorMarker = Self(rawValue: 1 << 5)
+    static let dynamic = Self(rawValue: 1 << 6)
+    static let articulated = Self(rawValue: 1 << 7)
+    static let needsTransformUpdates = Self(rawValue: 1 << 8)
+    static let externalEmittance = Self(rawValue: 1 << 9)
+    static let magicShaderParticles = Self(rawValue: 1 << 10)
+    static let lights = Self(rawValue: 1 << 11)
+    static let breakable = Self(rawValue: 1 << 12)
 }
 
 /// `BSInvMarker`: how the inventory turns and zooms the model.
@@ -79,26 +74,15 @@ nonisolated public struct NIFInventoryMarker: Equatable, Sendable {
 
 /// `BSDecalPlacementVectorExtraData`: points with normals where decals may go.
 nonisolated public struct NIFDecalPlacement: Equatable, Sendable {
-    public let value: Float
-    public let points: [SIMD3<Float>]
-    public let normals: [SIMD3<Float>]
-
-    public init(value: Float, points: [SIMD3<Float>], normals: [SIMD3<Float>]) {
-        self.value = value
-        self.points = points
-        self.normals = normals
-    }
+    let value: Float
+    let points: [SIMD3<Float>]
+    let normals: [SIMD3<Float>]
 }
 
 /// One `BSBoneLODExtraData` entry: a bone and the distance it belongs to.
 nonisolated public struct NIFBoneLOD: Equatable, Sendable {
-    public let distance: UInt32
-    public let boneName: String?
-
-    public init(distance: UInt32, boneName: String?) {
-        self.distance = distance
-        self.boneName = boneName
-    }
+    let distance: UInt32
+    let boneName: String?
 }
 
 nonisolated extension NIFBlockDecoders {
@@ -169,7 +153,7 @@ nonisolated extension NIFBlockDecoders {
 nonisolated extension NIFFile {
     /// The decoded extra data `block` names in its `NiObjectNET` list. A ref to a
     /// type with no decoder, or one that does not decode, is passed over.
-    public func extraData(of block: Int) -> [NIFExtraData] {
+    func extraData(of block: Int) -> [NIFExtraData] {
         guard blocks.indices.contains(block) else { return [] }
         var reader = BinaryReader(blocks[block].data)
         guard let net = attempt({ try NIFObjectNET(reader: &reader, header: header) })
@@ -188,7 +172,7 @@ nonisolated extension NIFFile {
     }
 
     /// The root's `BSXFlags`; empty when the model has none.
-    public var bsxFlags: NIFBSXFlags {
+    var bsxFlags: NIFBSXFlags {
         for case let .flags(flags) in rootExtraData.map(\.value) {
             return flags
         }

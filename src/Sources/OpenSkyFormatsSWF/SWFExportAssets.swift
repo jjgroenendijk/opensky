@@ -7,18 +7,18 @@ import OpenSkyFormatsCore
 
 /// One exported character: the id inside this movie plus the linkage name
 /// other movies and ActionScript address it by.
-nonisolated public struct SWFExportedAsset: Equatable, Sendable {
-    public let characterId: UInt16
-    public let name: String
+nonisolated struct SWFExportedAsset: Equatable, Sendable {
+    let characterId: UInt16
+    let name: String
 }
 
 /// One ExportAssets (56) tag.
 nonisolated public struct SWFExportedAssets: Equatable, Sendable {
     public static let tagCode: UInt16 = 56
 
-    public let assets: [SWFExportedAsset]
+    let assets: [SWFExportedAsset]
 
-    public static func parse(tag: SWFTag) throws -> SWFExportedAssets {
+    static func parse(tag: SWFTag) throws -> SWFExportedAssets {
         guard tag.code == tagCode else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }

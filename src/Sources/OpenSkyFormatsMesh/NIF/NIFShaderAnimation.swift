@@ -31,7 +31,7 @@ nonisolated public enum NIFShaderAnimation {
     }
 
     /// The material track of one shader property; nil when nothing it draws moves.
-    public static func animation(ofShader index: Int, file: NIFFile) throws -> MaterialAnimation? {
+    static func animation(ofShader index: Int, file: NIFFile) throws -> MaterialAnimation? {
         let tracks = try controllers(ofShader: index, file: file).compactMap(\.track)
         return tracks.isEmpty ? nil : MaterialAnimation(tracks: tracks)
     }

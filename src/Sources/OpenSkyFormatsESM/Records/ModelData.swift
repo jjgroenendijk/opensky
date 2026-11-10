@@ -11,7 +11,7 @@ nonisolated public struct ModelData: Equatable, Sendable {
         /// The shape's name in the mesh.
         public let shapeName: String
         public let textureSet: FormID
-        public let shapeIndex: Int32
+        let shapeIndex: Int32
     }
 
     /// Relative to `Data/meshes`.

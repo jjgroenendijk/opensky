@@ -4,22 +4,22 @@
 // Layout: docs/formats/nif-particles.md.
 
 import Foundation
-public import OpenSkyFormatsCore
-public import simd
+import OpenSkyFormatsCore
+import simd
 
 /// `NiPSysBombModifier`, before its bomb object is placed.
-nonisolated public struct NIFBombModifier: Equatable, Sendable {
-    public static let typeName = "NiPSysBombModifier"
+nonisolated struct NIFBombModifier: Equatable, Sendable {
+    static let typeName = "NiPSysBombModifier"
 
-    public let header: NIFParticleModifierHeader
-    public let bombObjectRef: Int32
-    public let axis: SIMD3<Float>
-    public let decay: Float
-    public let deltaV: Float
-    public let decayType: UInt32
-    public let symmetry: UInt32
+    let header: NIFParticleModifierHeader
+    let bombObjectRef: Int32
+    let axis: SIMD3<Float>
+    let decay: Float
+    let deltaV: Float
+    let decayType: UInt32
+    let symmetry: UInt32
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         self.header = try NIFParticleModifierHeader(reader: &reader, header: header)
         bombObjectRef = try reader.readNIFRef()
         axis = try reader.readVector3()
@@ -30,7 +30,7 @@ nonisolated public struct NIFBombModifier: Equatable, Sendable {
     }
 
     /// The bomb at the origin of its object, whose transform is in system space.
-    public func bomb(objectTransform: float4x4) -> ParticleBomb {
+    func bomb(objectTransform: float4x4) -> ParticleBomb {
         ParticleBomb(
             position: .zero, axis: axis, decay: decay, deltaV: deltaV,
             decayType: ParticleBomb.Decay(rawValue: decayType) ?? .none,
@@ -40,40 +40,40 @@ nonisolated public struct NIFBombModifier: Equatable, Sendable {
 }
 
 /// `NiPSysColliderManager`: the first collider of a chain.
-nonisolated public struct NIFColliderManager: Equatable, Sendable {
-    public static let typeName = "NiPSysColliderManager"
+nonisolated struct NIFColliderManager: Equatable, Sendable {
+    static let typeName = "NiPSysColliderManager"
 
-    public let header: NIFParticleModifierHeader
-    public let colliderRef: Int32
+    let header: NIFParticleModifierHeader
+    let colliderRef: Int32
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         self.header = try NIFParticleModifierHeader(reader: &reader, header: header)
         colliderRef = try reader.readNIFRef()
     }
 }
 
 /// nif.xml `NiPSysCollider` with its planar or spherical shape.
-nonisolated public struct NIFParticleCollider: Equatable, Sendable {
-    public static let planarType = "NiPSysPlanarCollider"
-    public static let sphericalType = "NiPSysSphericalCollider"
+nonisolated struct NIFParticleCollider: Equatable, Sendable {
+    static let planarType = "NiPSysPlanarCollider"
+    static let sphericalType = "NiPSysSphericalCollider"
 
-    public enum Shape: Equatable, Sendable {
+    enum Shape: Equatable, Sendable {
         /// Width and height along the two axes, in the collider object's space.
         case plane(width: Float, height: Float, xAxis: SIMD3<Float>, yAxis: SIMD3<Float>)
         case sphere(radius: Float)
     }
 
-    public let bounce: Float
+    let bounce: Float
     /// Vanilla colliders never spawn; the spawn modifier is kept for the preview.
-    public let spawnsOnCollide: Bool
-    public let diesOnCollide: Bool
-    public let spawnModifierRef: Int32
-    public let managerRef: Int32
-    public let nextColliderRef: Int32
-    public let colliderObjectRef: Int32
-    public let shape: Shape
+    let spawnsOnCollide: Bool
+    let diesOnCollide: Bool
+    let spawnModifierRef: Int32
+    let managerRef: Int32
+    let nextColliderRef: Int32
+    let colliderObjectRef: Int32
+    let shape: Shape
 
-    public init(reader: inout BinaryReader, planar: Bool) throws {
+    init(reader: inout BinaryReader, planar: Bool) throws {
         bounce = try reader.readFloat32()
         spawnsOnCollide = try reader.readUInt8() != 0
         diesOnCollide = try reader.readUInt8() != 0
@@ -92,7 +92,7 @@ nonisolated public struct NIFParticleCollider: Equatable, Sendable {
     }
 
     /// The collider around its object's origin, whose transform is in system space.
-    public func collider(objectTransform: float4x4) -> ParticleCollider {
+    func collider(objectTransform: float4x4) -> ParticleCollider {
         let local: ParticleCollider.Shape = switch shape {
         case let .plane(width, height, xAxis, yAxis):
             .plane(center: .zero, halfX: xAxis * width / 2, halfY: yAxis * height / 2)
@@ -105,16 +105,16 @@ nonisolated public struct NIFParticleCollider: Equatable, Sendable {
 }
 
 /// `BSPSysRecycleBoundModifier`, before its bound object is placed.
-nonisolated public struct NIFRecycleBoundModifier: Equatable, Sendable {
-    public static let typeName = "BSPSysRecycleBoundModifier"
+nonisolated struct NIFRecycleBoundModifier: Equatable, Sendable {
+    static let typeName = "BSPSysRecycleBoundModifier"
 
-    public let header: NIFParticleModifierHeader
-    public let offset: SIMD3<Float>
-    public let extent: SIMD3<Float>
+    let header: NIFParticleModifierHeader
+    let offset: SIMD3<Float>
+    let extent: SIMD3<Float>
     /// -1 for a box around the system itself.
-    public let boundObjectRef: Int32
+    let boundObjectRef: Int32
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         self.header = try NIFParticleModifierHeader(reader: &reader, header: header)
         offset = try reader.readVector3()
         extent = try reader.readVector3()
@@ -123,28 +123,28 @@ nonisolated public struct NIFRecycleBoundModifier: Equatable, Sendable {
 
     /// The offset is the box's lowest corner and the extent its size, from the
     /// bound object's position (docs/formats/nif-particles.md#recycle-bound).
-    public func bound(objectPosition: SIMD3<Float>) -> ParticleRecycleBound {
+    func bound(objectPosition: SIMD3<Float>) -> ParticleRecycleBound {
         ParticleRecycleBound(minimum: objectPosition + offset, size: extent)
     }
 }
 
 /// `BSPSysStripUpdateModifier`: how often a strip particle adds a trail point.
-nonisolated public enum NIFStripUpdateModifier {
-    public static let typeName = "BSPSysStripUpdateModifier"
+nonisolated enum NIFStripUpdateModifier {
+    static let typeName = "BSPSysStripUpdateModifier"
 }
 
 /// `NiPSysMeshUpdateModifier` and `BSPSysHavokUpdateModifier`: the shapes mesh
 /// particles draw. The Havok one also names a modifier it drives.
-nonisolated public struct NIFMeshUpdateModifier: Equatable, Sendable {
-    public static let typeName = "NiPSysMeshUpdateModifier"
-    public static let havokTypeName = "BSPSysHavokUpdateModifier"
+nonisolated struct NIFMeshUpdateModifier: Equatable, Sendable {
+    static let typeName = "NiPSysMeshUpdateModifier"
+    static let havokTypeName = "BSPSysHavokUpdateModifier"
 
-    public let header: NIFParticleModifierHeader
-    public let meshRefs: [Int32]
+    let header: NIFParticleModifierHeader
+    let meshRefs: [Int32]
     /// -1 for the plain mesh update modifier.
-    public let modifierRef: Int32
+    let modifierRef: Int32
 
-    public init(reader: inout BinaryReader, header: NIFHeader, havok: Bool) throws {
+    init(reader: inout BinaryReader, header: NIFHeader, havok: Bool) throws {
         self.header = try NIFParticleModifierHeader(reader: &reader, header: header)
         meshRefs = try reader.readNIFRefs(label: "particle mesh")
         modifierRef = havok ? try reader.readNIFRef() : -1
@@ -152,18 +152,18 @@ nonisolated public struct NIFMeshUpdateModifier: Equatable, Sendable {
 }
 
 /// `NiMeshPSysData`: particle data plus the pool of meshes the particles draw.
-nonisolated public struct NIFMeshParticleData: Sendable {
-    public static let typeName = "NiMeshPSysData"
-    public static let systemTypeName = "NiMeshParticleSystem"
+nonisolated struct NIFMeshParticleData: Sendable {
+    static let typeName = "NiMeshPSysData"
+    static let systemTypeName = "NiMeshParticleSystem"
 
-    public let data: NIFParticleData
-    public let defaultPoolSize: UInt32
-    public let fillsPoolsOnLoad: Bool
-    public let generations: [UInt32]
+    let data: NIFParticleData
+    let defaultPoolSize: UInt32
+    let fillsPoolsOnLoad: Bool
+    let generations: [UInt32]
     /// The `NiNode` whose children are the particle meshes.
-    public let particleMeshesRef: Int32
+    let particleMeshesRef: Int32
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         data = try NIFParticleData(reader: &reader, header: header)
         defaultPoolSize = try reader.readUInt32()
         fillsPoolsOnLoad = try reader.readUInt8() != 0
@@ -174,12 +174,12 @@ nonisolated public struct NIFMeshParticleData: Sendable {
 }
 
 /// A modifier parameter controller before its keys are read.
-nonisolated public struct NIFParticleModifierController: Equatable, Sendable {
-    public let parameter: ParticleModifierController.Parameter
-    public let base: NIFInterpolatedController
-    public let modifierName: String?
+nonisolated struct NIFParticleModifierController: Equatable, Sendable {
+    let parameter: ParticleModifierController.Parameter
+    let base: NIFInterpolatedController
+    let modifierName: String?
 
-    public init(
+    init(
         parameter: ParticleModifierController.Parameter,
         reader: inout BinaryReader,
         header: NIFHeader
@@ -191,8 +191,8 @@ nonisolated public struct NIFParticleModifierController: Equatable, Sendable {
 }
 
 /// `NiPSysUpdateCtlr`: tells the system to step its simulation each frame.
-nonisolated public enum NIFParticleUpdateController {
-    public static let typeName = "NiPSysUpdateCtlr"
+nonisolated enum NIFParticleUpdateController {
+    static let typeName = "NiPSysUpdateCtlr"
 }
 
 nonisolated extension NIFBlockDecoders {

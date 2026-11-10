@@ -20,29 +20,29 @@ nonisolated public enum PexError: Error, Equatable, Sendable {
 nonisolated public struct PexHeader: Equatable, Sendable {
     public let majorVersion: UInt8
     public let minorVersion: UInt8
-    public let gameID: UInt16
-    public let compilationTime: UInt64
+    let gameID: UInt16
+    let compilationTime: UInt64
     public let sourceFileName: String
-    public let userName: String
-    public let machineName: String
+    let userName: String
+    let machineName: String
 }
 
-nonisolated public struct PexDebugFunction: Equatable, Sendable {
-    public let objectName: String
-    public let stateName: String
-    public let functionName: String
-    public let functionType: UInt8
-    public let lineNumbers: [UInt16]
+nonisolated struct PexDebugFunction: Equatable, Sendable {
+    let objectName: String
+    let stateName: String
+    let functionName: String
+    let functionType: UInt8
+    let lineNumbers: [UInt16]
 }
 
 nonisolated public struct PexDebugInfo: Equatable, Sendable {
-    public let modificationTime: UInt64
-    public let functions: [PexDebugFunction]
+    let modificationTime: UInt64
+    let functions: [PexDebugFunction]
 }
 
 nonisolated public struct PexUserFlag: Equatable, Sendable {
-    public let name: String
-    public let bitIndex: UInt8
+    let name: String
+    let bitIndex: UInt8
 }
 
 nonisolated public struct PexFile: Equatable, Sendable {

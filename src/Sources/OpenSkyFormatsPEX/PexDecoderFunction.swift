@@ -3,7 +3,7 @@
 import Foundation
 
 nonisolated extension PexDecoder {
-    public mutating func decodeFunction(from objectReader: inout PexReader) throws -> PexFunction {
+    mutating func decodeFunction(from objectReader: inout PexReader) throws -> PexFunction {
         let returnType = try resolve(objectReader.readUInt16())
         let documentation = try resolve(objectReader.readUInt16())
         let userFlags = try objectReader.readUInt32()
@@ -64,7 +64,7 @@ nonisolated extension PexDecoder {
         return PexInstruction(opcode: opcode, operands: operands)
     }
 
-    public mutating func decodeValue(from objectReader: inout PexReader) throws -> PexValue {
+    mutating func decodeValue(from objectReader: inout PexReader) throws -> PexValue {
         let type = try objectReader.readUInt8()
         switch type {
         case 0:

@@ -84,12 +84,12 @@ nonisolated public struct HKPRigidBody: HKBClass, Equatable, Sendable {
     }
 
     /// Keyframed (4) or fixed (5): animation or nothing moves it, not forces.
-    public var isDrivenOrFixed: Bool {
+    var isDrivenOrFixed: Bool {
         motionType == 4 || motionType == 5
     }
 
     /// Zero for a body that never moves.
-    public var mass: Float {
+    var mass: Float {
         inertiaAndMassInverse.w > 0 ? 1 / inertiaAndMassInverse.w : 0
     }
 

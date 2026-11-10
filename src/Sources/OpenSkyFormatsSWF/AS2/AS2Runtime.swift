@@ -33,7 +33,7 @@ nonisolated public final class AS2Runtime {
 
     /// Registrations kept. A movie that registers more than this is either
     /// generated or malformed; the excess is tallied instead of stored.
-    public static let registeredClassLimit = 4096
+    static let registeredClassLimit = 4096
 
     public init(
         swfVersion: UInt8 = 9,
@@ -102,7 +102,7 @@ nonisolated public final class AS2Runtime {
     /// `Object.registerClass(symbolName, constructor)`. Passing a non-function
     /// clears the registration, which is the documented way to unregister.
     @discardableResult
-    public func registerClass(symbol: String, constructor: AS2Object?) -> Bool {
+    func registerClass(symbol: String, constructor: AS2Object?) -> Bool {
         guard let constructor else {
             registeredClasses[symbol] = nil
             return true
@@ -160,7 +160,7 @@ nonisolated public final class AS2Runtime {
     }
 
     /// The built-in prototype a primitive's members come from.
-    public func prototype(for value: AS2Value) -> AS2Object? {
+    func prototype(for value: AS2Value) -> AS2Object? {
         switch value {
         case .string: stringPrototype
         case .number: numberPrototype
@@ -171,7 +171,7 @@ nonisolated public final class AS2Runtime {
 
     // MARK: - Recording
 
-    public func noteUnimplemented(opcode: UInt8) {
+    func noteUnimplemented(opcode: UInt8) {
         tally.noteUnimplemented(opcode: opcode)
     }
 
@@ -179,15 +179,15 @@ nonisolated public final class AS2Runtime {
         tally.noteMissing(name)
     }
 
-    public func noteStackUnderflow() {
+    func noteStackUnderflow() {
         tally.noteStackUnderflow()
     }
 
-    public func note(fault: AS2Fault) {
+    func note(fault: AS2Fault) {
         tally.note(fault: fault)
     }
 
-    public func noteBlock(actions: Int) {
+    func noteBlock(actions: Int) {
         tally.noteBlock(actions: actions)
     }
 
@@ -195,7 +195,7 @@ nonisolated public final class AS2Runtime {
         tally.noteCall()
     }
 
-    public func trace(_ message: String) {
+    func trace(_ message: String) {
         traceLog.append(message)
     }
 

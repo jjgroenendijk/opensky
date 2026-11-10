@@ -4,18 +4,18 @@
 // Layout: docs/formats/nif-particles.md#parameter-modifiers.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import simd
 
 /// `NiPSysAgeDeathModifier`: particles die at the end of their life.
-nonisolated public struct NIFAgeDeathModifier: Equatable, Sendable {
-    public static let typeName = "NiPSysAgeDeathModifier"
+nonisolated struct NIFAgeDeathModifier: Equatable, Sendable {
+    static let typeName = "NiPSysAgeDeathModifier"
 
-    public let header: NIFParticleModifierHeader
-    public let spawnsOnDeath: Bool
-    public let spawnModifierRef: Int32
+    let header: NIFParticleModifierHeader
+    let spawnsOnDeath: Bool
+    let spawnModifierRef: Int32
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         self.header = try NIFParticleModifierHeader(reader: &reader, header: header)
         spawnsOnDeath = try reader.readUInt8() != 0
         spawnModifierRef = try reader.readNIFRef()
@@ -23,8 +23,8 @@ nonisolated public struct NIFAgeDeathModifier: Equatable, Sendable {
 }
 
 /// `NiPSysSpawnModifier`.
-nonisolated public enum NIFSpawnModifier {
-    public static let typeName = "NiPSysSpawnModifier"
+nonisolated enum NIFSpawnModifier {
+    static let typeName = "NiPSysSpawnModifier"
 
     static func body(_ reader: inout BinaryReader) throws -> ParticleSpawn {
         let generations = try reader.readUInt16()
@@ -41,15 +41,15 @@ nonisolated public enum NIFSpawnModifier {
 }
 
 /// `NiPSysGravityModifier`, before its gravity object is placed.
-nonisolated public struct NIFGravityModifier: Equatable, Sendable {
-    public static let typeName = "NiPSysGravityModifier"
+nonisolated struct NIFGravityModifier: Equatable, Sendable {
+    static let typeName = "NiPSysGravityModifier"
 
-    public let header: NIFParticleModifierHeader
-    public let gravityObjectRef: Int32
+    let header: NIFParticleModifierHeader
+    let gravityObjectRef: Int32
     /// At the origin of the gravity object, in that object's space.
-    public let gravity: ParticleGravity
+    let gravity: ParticleGravity
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         self.header = try NIFParticleModifierHeader(reader: &reader, header: header)
         (gravityObjectRef, gravity) = try Self.body(&reader)
     }
@@ -69,8 +69,8 @@ nonisolated public struct NIFGravityModifier: Equatable, Sendable {
 }
 
 /// `NiPSysRotationModifier`.
-nonisolated public enum NIFRotationModifier {
-    public static let typeName = "NiPSysRotationModifier"
+nonisolated enum NIFRotationModifier {
+    static let typeName = "NiPSysRotationModifier"
 
     static func body(_ reader: inout BinaryReader) throws -> ParticleRotation {
         try ParticleRotation(
@@ -83,15 +83,15 @@ nonisolated public enum NIFRotationModifier {
 }
 
 /// `NiPSysDragModifier`, before its drag object is placed.
-nonisolated public struct NIFDragModifier: Equatable, Sendable {
-    public static let typeName = "NiPSysDragModifier"
+nonisolated struct NIFDragModifier: Equatable, Sendable {
+    static let typeName = "NiPSysDragModifier"
 
-    public let header: NIFParticleModifierHeader
-    public let dragObjectRef: Int32
+    let header: NIFParticleModifierHeader
+    let dragObjectRef: Int32
     /// At the origin of the drag object, in that object's space.
-    public let drag: ParticleDrag
+    let drag: ParticleDrag
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         self.header = try NIFParticleModifierHeader(reader: &reader, header: header)
         (dragObjectRef, drag) = try Self.body(&reader)
     }
@@ -106,14 +106,14 @@ nonisolated public struct NIFDragModifier: Equatable, Sendable {
 }
 
 /// `BSPSysInheritVelocityModifier`: new particles take the inherit object's velocity.
-nonisolated public struct NIFInheritVelocityModifier: Equatable, Sendable {
-    public static let typeName = "BSPSysInheritVelocityModifier"
+nonisolated struct NIFInheritVelocityModifier: Equatable, Sendable {
+    static let typeName = "BSPSysInheritVelocityModifier"
 
-    public let header: NIFParticleModifierHeader
-    public let inheritObjectRef: Int32
-    public let inherit: ParticleInheritVelocity
+    let header: NIFParticleModifierHeader
+    let inheritObjectRef: Int32
+    let inherit: ParticleInheritVelocity
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         self.header = try NIFParticleModifierHeader(reader: &reader, header: header)
         (inheritObjectRef, inherit) = try Self.body(&reader)
     }
@@ -128,8 +128,8 @@ nonisolated public struct NIFInheritVelocityModifier: Equatable, Sendable {
 }
 
 /// `BSPSysSubTexModifier`.
-nonisolated public enum NIFSubTexModifier {
-    public static let typeName = "BSPSysSubTexModifier"
+nonisolated enum NIFSubTexModifier {
+    static let typeName = "BSPSysSubTexModifier"
 
     static func body(_ reader: inout BinaryReader) throws -> ParticleSubTexture {
         try ParticleSubTexture(

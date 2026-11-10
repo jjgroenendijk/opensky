@@ -10,14 +10,14 @@ nonisolated public struct Destructible: Equatable, Sendable {
     nonisolated public struct Stage: Equatable, Sendable {
         public var healthPercent: UInt8 = 0
         public var index: UInt8 = 0
-        public var modelDamageStage: UInt8 = 0
+        var modelDamageStage: UInt8 = 0
         /// 0x01 cap damage, 0x02 disable, 0x04 destroy, 0x08 ignore external damage.
         public var flags: UInt8 = 0
-        public var selfDamagePerSecond: Int32 = 0
+        var selfDamagePerSecond: Int32 = 0
         /// An EXPL and a DEBR.
-        public var explosion: FormID?
-        public var debris: FormID?
-        public var debrisCount: Int32 = 0
+        var explosion: FormID?
+        var debris: FormID?
+        var debrisCount: Int32 = 0
         /// DMDL with DMDT and DMDS.
         public var model: ModelData?
         /// True when the DSTF end marker closed the stage.
@@ -26,8 +26,8 @@ nonisolated public struct Destructible: Equatable, Sendable {
 
     public let health: Int32
     public let declaredStageCount: UInt8
-    public let isVATSTargetable: Bool
-    public let unknown: UInt16
+    let isVATSTargetable: Bool
+    let unknown: UInt16
     public var stages: [Stage] = []
 }
 
@@ -58,7 +58,7 @@ nonisolated extension RecordFields {
     }
 
     /// Every ATKD with the ATKE that follows it.
-    public mutating func attacks() -> [RaceAttack] {
+    mutating func attacks() -> [RaceAttack] {
         var attacks: [RaceAttack] = []
         for index in fields.indices where !isUsed(at: index) {
             switch fields[index].type {
@@ -79,7 +79,7 @@ nonisolated extension RecordFields {
     }
 
     /// Every CNTO with the COED that follows it. A COCT that differs is tallied.
-    public mutating func inventory() -> [Container.Entry] {
+    mutating func inventory() -> [Container.Entry] {
         let declared = uint32("COCT")
         var entries: [Container.Entry] = []
         for index in fields.indices where !isUsed(at: index) {

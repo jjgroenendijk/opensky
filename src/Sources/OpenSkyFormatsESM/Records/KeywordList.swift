@@ -15,7 +15,7 @@ nonisolated public struct KeywordList: Equatable, Sendable {
     public init() {}
 
     /// True when KSIZ is present and disagrees with the decoded KWDA length.
-    public var countMismatch: Bool {
+    var countMismatch: Bool {
         guard let declaredCount else { return false }
         return Int(declaredCount) != keywords.count
     }
@@ -42,7 +42,7 @@ nonisolated public struct KeywordList: Equatable, Sendable {
         return true
     }
 
-    public func contains(_ keyword: FormID) -> Bool {
+    func contains(_ keyword: FormID) -> Bool {
         keywords.contains(keyword)
     }
 }

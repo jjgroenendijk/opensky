@@ -75,7 +75,7 @@ nonisolated public struct MaterialType: Equatable, Sendable {
     }
 
     /// Test seam: a material built from decoded values rather than a record.
-    public init(
+    init(
         formID: FormID,
         editorID: String? = nil,
         materialName: String?,

@@ -5,7 +5,7 @@
 import Foundation
 
 nonisolated extension AS2Interpreter {
-    public func structureOp(
+    func structureOp(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow? {
@@ -72,7 +72,7 @@ nonisolated extension AS2Interpreter {
 
     /// Walks the object's `__proto__` chain looking for the constructor's
     /// `prototype`.
-    public func isInstance(_ value: AS2Value, of constructor: AS2Value) -> Bool {
+    func isInstance(_ value: AS2Value, of constructor: AS2Value) -> Bool {
         guard
             let object = value.objectValue,
             let target = constructor.objectValue?
@@ -115,7 +115,7 @@ nonisolated extension AS2Interpreter {
     /// prototype and whose calls keep the original `this`. Built from `base`,
     /// the running class's prototype, not from the receiver: that would make a
     /// three-level base constructor call itself. Nil without a parent.
-    public func superBinding(for thisValue: AS2Value, base: AS2Object? = nil) -> AS2Object? {
+    func superBinding(for thisValue: AS2Value, base: AS2Object? = nil) -> AS2Object? {
         guard let home = base ?? thisValue.objectValue?.prototype else {
             return nil
         }

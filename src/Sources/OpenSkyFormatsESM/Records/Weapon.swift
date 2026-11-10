@@ -29,9 +29,9 @@ nonisolated public struct Weapon: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let cannotDrop = Flags(rawValue: 0x0008)
-        public static let embeddedWeapon = Flags(rawValue: 0x0020)
-        public static let nonPlayable = Flags(rawValue: 0x0080)
+        static let cannotDrop = Flags(rawValue: 0x0008)
+        static let embeddedWeapon = Flags(rawValue: 0x0020)
+        static let nonPlayable = Flags(rawValue: 0x0080)
     }
 
     /// CRDT — critical-hit numbers plus the SPEL applied on a critical.
@@ -40,7 +40,7 @@ nonisolated public struct Weapon: Sendable {
         /// Chance multiplier; the CK constrains it to 0...1.5.
         public let percentMultiplier: Float
         /// True when the critical effect only fires on a killing blow.
-        public let onDeath: Bool
+        let onDeath: Bool
         /// SPEL applied on a critical hit; nil when unset.
         public let effect: FormID?
     }
@@ -238,25 +238,25 @@ nonisolated public struct Weapon: Sendable {
 /// docs/formats/item-records.md.
 nonisolated public struct WeaponDetails: Equatable, Sendable {
     /// MOD3 group — the model shown while aiming through a scope.
-    public let scopeModel: ModelData?
+    let scopeModel: ModelData?
     /// EFSD — the EFSH shown while scoped.
-    public let scopeEffect: FormID?
+    let scopeEffect: FormID?
     /// NNAM — the node an embedded weapon attaches to.
-    public let embeddedWeaponNode: String?
+    let embeddedWeaponNode: String?
     /// WNAM — the STAT drawn in first person.
-    public let firstPersonModel: FormID?
+    let firstPersonModel: FormID?
     /// BAMT — the MATT a block hits instead of the weapon's own.
-    public let alternateBlockMaterial: FormID?
-    public let attackSound: FormID?
-    public let attackSound2D: FormID?
-    public let attackLoopSound: FormID?
-    public let attackFailSound: FormID?
-    public let idleSound: FormID?
-    public let equipSound: FormID?
-    public let unequipSound: FormID?
+    let alternateBlockMaterial: FormID?
+    let attackSound: FormID?
+    let attackSound2D: FormID?
+    let attackLoopSound: FormID?
+    let attackFailSound: FormID?
+    let idleSound: FormID?
+    let equipSound: FormID?
+    let unequipSound: FormID?
     /// VNAM — detection sound level: 0 loud, 1 normal, 2 silent, 3 very loud.
     public let detectionSoundLevel: UInt32?
-    public let destructible: Destructible?
+    let destructible: Destructible?
 
     init(_ fields: inout RecordFields) {
         scopeModel = fields.model(path: "MOD3", hashes: "MO3T", alternates: "MO3S")
@@ -282,7 +282,7 @@ nonisolated extension Weapon {
         public let right: Float
         public let seconds: Float
 
-        public init(left: Float, right: Float, seconds: Float) {
+        init(left: Float, right: Float, seconds: Float) {
             self.left = left
             self.right = right
             self.seconds = seconds

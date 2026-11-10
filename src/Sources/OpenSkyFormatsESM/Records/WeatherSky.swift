@@ -27,10 +27,10 @@ nonisolated public struct WeatherCloudLayer: Equatable, Sendable {
     public var isDisabled = false
 }
 
-nonisolated public struct WeatherSound: Equatable, Sendable {
-    public let sound: FormID?
+nonisolated struct WeatherSound: Equatable, Sendable {
+    let sound: FormID?
     /// 0 default, 1 precipitation, 2 wind, 3 thunder.
-    public let type: UInt32
+    let type: UInt32
 }
 
 nonisolated public struct WeatherSky: Equatable, Sendable {
@@ -40,22 +40,22 @@ nonisolated public struct WeatherSky: Equatable, Sendable {
     /// MNAM, an SPGD.
     public let precipitation: FormID?
     /// NNAM, an RFCT.
-    public let visualEffect: FormID?
-    public let sounds: [WeatherSound]
+    let visualEffect: FormID?
+    let sounds: [WeatherSound]
     /// TNAM, STAT records.
-    public let skyStatics: [FormID]
+    let skyStatics: [FormID]
     /// IMSP, IMGS records.
     public let imageSpaces: TimeOfDayValues<FormID?>?
     /// HNAM, VOLI records.
     public let volumetricLighting: TimeOfDayValues<FormID?>?
     /// NAM2 and NAM3.
-    public let sunGlare: TimeOfDayValues<SIMD4<UInt8>>?
-    public let moonGlare: TimeOfDayValues<SIMD4<UInt8>>?
+    let sunGlare: TimeOfDayValues<SIMD4<UInt8>>?
+    let moonGlare: TimeOfDayValues<SIMD4<UInt8>>?
     public let auroraModel: ModelData?
     /// DNAM, CNAM, ANAM, BNAM: textures of the older 4-layer cloud set.
-    public let legacyCloudTextures: [String]
+    let legacyCloudTextures: [String]
     /// ONAM, the older 4-layer speeds. xEdit marks it unused.
-    public let legacyCloudSpeeds: Data?
+    let legacyCloudSpeeds: Data?
 
     init(_ fields: inout RecordFields) {
         maxCloudLayers = fields.uint32("LNAM")

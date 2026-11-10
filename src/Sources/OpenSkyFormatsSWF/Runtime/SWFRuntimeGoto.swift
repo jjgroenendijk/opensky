@@ -10,7 +10,7 @@ nonisolated extension SWFMovieRuntime {
     /// same accumulation `SWFDisplayListBuilder` performs for frame 1, kept as
     /// `SWFPlacement` rather than `SWFPlacedObject` so a placement's CLIPACTIONS
     /// handlers survive the walk.
-    public func accumulatedPlacements(
+    func accumulatedPlacements(
         to index: Int,
         frames: [SWFTimelineFrame]
     ) -> [UInt16: SWFPlacement] {

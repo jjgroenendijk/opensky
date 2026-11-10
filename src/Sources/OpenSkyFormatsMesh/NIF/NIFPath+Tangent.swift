@@ -41,7 +41,7 @@ nonisolated extension NIFPath {
 
     /// The unit direction of travel at `fraction`. With smoothing s and the allow-flip flag,
     /// the first and last s of each segment lean toward the neighbour's direction.
-    public func tangent(atFraction fraction: Float) -> SIMD3<Float>? {
+    func tangent(atFraction fraction: Float) -> SIMD3<Float>? {
         guard let base = rawTangent(atFraction: fraction) else { return nil }
         let smoothing = interpolator.smoothing
         guard
@@ -65,7 +65,7 @@ nonisolated extension NIFPath {
     }
 
     /// The signed bend about +Z at `fraction`: the change of heading per unit of length.
-    public func curvature(atFraction fraction: Float) -> Float {
+    func curvature(atFraction fraction: Float) -> Float {
         let step = Self.measureStep * 5
         guard
             let behind = tangent(atFraction: fraction - step),

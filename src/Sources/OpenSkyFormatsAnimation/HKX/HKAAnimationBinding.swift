@@ -8,8 +8,8 @@ nonisolated public struct HKAAnimationBinding: Sendable {
     public let originalSkeletonName: String?
     public let animationTarget: HKXPointerTarget?
     public let transformTrackToBoneIndices: [Int]
-    public let floatTrackToSlotIndices: [Int]
-    public let blendHint: Int
+    let floatTrackToSlotIndices: [Int]
+    let blendHint: Int
 
     public static let className = "hkaAnimationBinding"
 

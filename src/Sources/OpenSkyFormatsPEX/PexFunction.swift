@@ -16,8 +16,8 @@ nonisolated public struct PexFunctionFlags: OptionSet, Equatable, Sendable {
 
 nonisolated public struct PexFunction: Equatable, Sendable {
     public let returnTypeName: String
-    public let documentation: String
-    public let userFlags: UInt32
+    let documentation: String
+    let userFlags: UInt32
     public let flags: PexFunctionFlags
     public let parameters: [PexTypedName]
     public let localVariables: [PexTypedName]

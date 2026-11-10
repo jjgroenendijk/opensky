@@ -86,7 +86,7 @@ nonisolated public struct EngineLogLine: Equatable, Sendable {
 /// Error and fault lines since the last `drain()`, oldest first. It keeps the newest
 /// `limit` lines, so a process nobody drains does not grow.
 nonisolated public enum EngineLogTap {
-    public static let limit = 512
+    static let limit = 512
     private static let lines = Mutex(EngineLogRing(limit: limit))
 
     static func record(category: String, message: String) {

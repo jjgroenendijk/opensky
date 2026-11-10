@@ -106,7 +106,7 @@ nonisolated public struct SurfaceShading: Hashable, Sendable {
     public static let plain = SurfaceShading()
 
     /// Every texture key, for preloading.
-    public var textureKeys: [String] {
+    var textureKeys: [String] {
         [
             glowTexture, detailTexture, environmentTexture, environmentMaskTexture,
             innerLayerTexture, backLightTexture, projected?.diffuseTexture,

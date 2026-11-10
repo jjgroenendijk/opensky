@@ -24,7 +24,7 @@ nonisolated public enum ApparatusQuality: Equatable, Sendable {
         }
     }
 
-    public var rawValue: Int32 {
+    var rawValue: Int32 {
         switch self {
         case .novice: 0
         case .apprentice: 1

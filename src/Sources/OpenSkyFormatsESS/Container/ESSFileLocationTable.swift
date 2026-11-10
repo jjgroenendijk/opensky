@@ -7,7 +7,7 @@ nonisolated public struct ESSFileLocationTable: Equatable, Sendable {
     public let offsets: ESSSectionOffsets
     public let counts: ESSSectionCounts
 
-    public init(offsets: ESSSectionOffsets, counts: ESSSectionCounts) {
+    init(offsets: ESSSectionOffsets, counts: ESSSectionCounts) {
         self.offsets = offsets
         self.counts = counts
     }
@@ -69,18 +69,6 @@ nonisolated public struct ESSSectionOffsets: Equatable, Sendable {
     public let globalData2: UInt32
     public let changeForms: UInt32
     public let globalData3: UInt32
-
-    public init(
-        formIDArrayCount: UInt32, unknownTable3: UInt32, globalData1: UInt32,
-        globalData2: UInt32, changeForms: UInt32, globalData3: UInt32
-    ) {
-        self.formIDArrayCount = formIDArrayCount
-        self.unknownTable3 = unknownTable3
-        self.globalData1 = globalData1
-        self.globalData2 = globalData2
-        self.changeForms = changeForms
-        self.globalData3 = globalData3
-    }
 }
 
 nonisolated public struct ESSSectionCounts: Equatable, Sendable {
@@ -89,18 +77,6 @@ nonisolated public struct ESSSectionCounts: Equatable, Sendable {
     /// The game writes one less than the entries present; UESP calls it a harmless bug.
     public let globalData3: UInt32
     public let changeForms: UInt32
-
-    public init(
-        globalData1: UInt32,
-        globalData2: UInt32,
-        globalData3: UInt32,
-        changeForms: UInt32
-    ) {
-        self.globalData1 = globalData1
-        self.globalData2 = globalData2
-        self.globalData3 = globalData3
-        self.changeForms = changeForms
-    }
 }
 
 /// Section starts as positions in the decompressed body. `base` is what the table's

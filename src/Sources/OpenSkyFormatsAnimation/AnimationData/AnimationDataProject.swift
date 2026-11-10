@@ -7,11 +7,6 @@ import Foundation
 nonisolated public struct AnimationDataTrigger: Equatable, Sendable {
     public let name: String
     public let time: Float
-
-    public init(name: String, time: Float) {
-        self.name = name
-        self.time = time
-    }
 }
 
 nonisolated public struct AnimationDataClip: Equatable, Sendable {

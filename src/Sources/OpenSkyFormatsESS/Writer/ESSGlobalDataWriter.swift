@@ -5,7 +5,7 @@
 import Foundation
 
 nonisolated extension ESSMiscStat {
-    public static func table(_ stats: [Self]) throws(ESSError) -> ESSGlobalData {
+    static func table(_ stats: [Self]) throws(ESSError) -> ESSGlobalData {
         try ESSGlobalData(type: .miscStats) { writer throws(ESSError) in
             try writer.count32(stats.count, "misc stats")
             for stat in stats {

@@ -13,11 +13,11 @@ nonisolated public struct Spell: Sendable {
     public let effects: [MagicItemEffect]
     public let skipped: MagicEffectTally
 
-    public var editorID: String? {
+    var editorID: String? {
         header.fields.editorID
     }
 
-    public var name: LString? {
+    var name: LString? {
         header.fields.name
     }
 

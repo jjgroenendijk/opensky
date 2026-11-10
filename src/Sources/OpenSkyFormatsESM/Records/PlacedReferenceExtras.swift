@@ -15,7 +15,7 @@ nonisolated public enum LockLevel: Equatable, Sendable {
     case requiresKey
     case unknown(UInt8)
 
-    public init(rawValue: UInt8) {
+    init(rawValue: UInt8) {
         self = switch rawValue {
         case 1: .novice
         case 25: .apprentice
@@ -74,7 +74,7 @@ nonisolated public struct LockData: Equatable, Sendable {
 /// XESP: the reference whose enable state this one follows.
 nonisolated public struct EnableParent: Equatable, Sendable {
     public let parent: FormID
-    public let flags: UInt8
+    let flags: UInt8
 
     /// Flag bit 0x01: enabled while the parent is disabled.
     public var isOppositeOfParent: Bool {
@@ -82,7 +82,7 @@ nonisolated public struct EnableParent: Equatable, Sendable {
     }
 
     /// Flag bit 0x02: appear without fading in.
-    public var popsIn: Bool {
+    var popsIn: Bool {
         flags & 0x02 != 0
     }
 
@@ -110,10 +110,6 @@ nonisolated public struct MapMarkerType: Equatable, Hashable, Sendable {
 
     public let rawValue: UInt8
 
-    public init(rawValue: UInt8) {
-        self.rawValue = rawValue
-    }
-
     /// Nil for a value the xEdit table does not name.
     public var name: String? {
         Int(rawValue) < Self.names.count ? Self.names[Int(rawValue)] : nil
@@ -122,7 +118,7 @@ nonisolated public struct MapMarkerType: Equatable, Hashable, Sendable {
 
 /// The XMRK group: flags, name, and type of a map marker.
 nonisolated public struct MapMarker: Equatable, Sendable {
-    public let flags: UInt8
+    let flags: UInt8
     /// FULL, kept raw: a REFR decode does not know the plugin's localized flag.
     public let nameField: Data?
     public let type: MapMarkerType?
@@ -138,7 +134,7 @@ nonisolated public struct MapMarker: Equatable, Sendable {
     }
 
     /// FNAM bit 0x04: hidden from the "show all" map cheat.
-    public var isHiddenFromShowAll: Bool {
+    var isHiddenFromShowAll: Bool {
         flags & 0x04 != 0
     }
 

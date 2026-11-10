@@ -4,7 +4,7 @@
 // order, or 10 without the last; forward sits at indices 4 and 5. Layout:
 // docs/formats/records.md.
 
-public import Foundation
+import Foundation
 public import OpenSkyFormatsCore
 
 nonisolated public struct MovementType: Equatable, Sendable {
@@ -13,21 +13,21 @@ nonisolated public struct MovementType: Equatable, Sendable {
     /// where the bridge reads only the forward pair, because dropping fields at
     /// decode time is how a later consumer ends up re-parsing the record.
     public struct Speeds: Equatable, Sendable {
-        public let leftWalk: Float
-        public let leftRun: Float
-        public let rightWalk: Float
-        public let rightRun: Float
+        let leftWalk: Float
+        let leftRun: Float
+        let rightWalk: Float
+        let rightRun: Float
         public let forwardWalk: Float
         public let forwardRun: Float
-        public let backWalk: Float
-        public let backRun: Float
+        let backWalk: Float
+        let backRun: Float
         public let rotateInPlaceWalk: Float
-        public let rotateInPlaceRun: Float
+        let rotateInPlaceRun: Float
         /// Nil in the 10-float form the dragon flight types use.
-        public let rotateWhileMovingRun: Float?
+        let rotateWhileMovingRun: Float?
 
         /// The floats in file order, for round-trip tests and reporting.
-        public var values: [Float] {
+        var values: [Float] {
             [
                 leftWalk, leftRun, rightWalk, rightRun,
                 forwardWalk, forwardRun, backWalk, backRun,
@@ -35,14 +35,14 @@ nonisolated public struct MovementType: Equatable, Sendable {
             ] + (rotateWhileMovingRun.map { [$0] } ?? [])
         }
 
-        public static let floatCount = 11
+        static let floatCount = 11
         /// `Dragon_Flying_MT` and the other dragon types end after rotate in place run.
-        public static let shortFloatCount = 10
+        static let shortFloatCount = 10
 
         /// Decodes SPED, or nil when the field is neither 10 nor 11 finite floats. A
         /// truncated struct is dropped whole rather than zero-padded: a half-read speed
         /// would read as a legitimate "this actor cannot move".
-        public init?(field data: Data) {
+        init?(field data: Data) {
             guard
                 [Self.shortFloatCount, Self.floatCount].contains(data.count / 4),
                 data.count % 4 == 0
@@ -59,7 +59,7 @@ nonisolated public struct MovementType: Equatable, Sendable {
         }
 
         /// Builds from 10 or 11 file-order floats; nil for any other count.
-        public init?(values: [Float]) {
+        init?(values: [Float]) {
             guard [Self.shortFloatCount, Self.floatCount].contains(values.count) else {
                 return nil
             }
@@ -77,19 +77,19 @@ nonisolated public struct MovementType: Equatable, Sendable {
         }
     }
 
-    public let formID: FormID
-    public let editorID: String?
+    let formID: FormID
+    let editorID: String?
     /// MNAM — the name the behavior graph and the Creation Kit show. Distinct
     /// from EDID in vanilla (`NPC_Sneaking_MT` is named `NPCSneaking`).
-    public let name: String?
+    let name: String?
     /// SPED. Nil when the record carries none or carries a truncated one.
     public let speeds: Speeds?
     /// INAM anim change thresholds: directional and rotation speed in
     /// radians, movement speed in units per second.
-    public let animChangeThresholds: SIMD3<Float>?
-    public let skipped: FieldTally
+    let animChangeThresholds: SIMD3<Float>?
+    let skipped: FieldTally
 
-    public init(record: ESMRecord) throws {
+    init(record: ESMRecord) throws {
         guard record.type == "MOVT" else {
             throw ESMError.malformed("expected MOVT record, got \(record.type)")
         }
@@ -127,7 +127,7 @@ nonisolated public struct MovementTypeStore: Equatable, Sendable {
     public private(set) var types: [String: MovementType] = [:]
     /// By `MNAM` in lower case, the name a graph's `iState_*` constant carries.
     public private(set) var typesByName: [String: MovementType] = [:]
-    public private(set) var skippedRecords = SkippedRecords()
+    private(set) var skippedRecords = SkippedRecords()
 
     public static let empty = MovementTypeStore(types: [:])
 

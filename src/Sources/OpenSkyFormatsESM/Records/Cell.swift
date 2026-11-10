@@ -21,13 +21,13 @@ nonisolated public struct Cell: Sendable {
             self.rawValue = rawValue
         }
 
-        public static let interior = Flags(rawValue: 0x0001)
+        static let interior = Flags(rawValue: 0x0001)
         public static let hasWater = Flags(rawValue: 0x0002)
-        public static let noLODWater = Flags(rawValue: 0x0008)
+        static let noLODWater = Flags(rawValue: 0x0008)
         /// Trespass is no crime here: an inn or a shop.
         public static let publicArea = Flags(rawValue: 0x0020)
-        public static let showSky = Flags(rawValue: 0x0080)
-        public static let useSkyLighting = Flags(rawValue: 0x0100)
+        static let showSky = Flags(rawValue: 0x0080)
+        static let useSkyLighting = Flags(rawValue: 0x0100)
     }
 
     /// XCLC field: exterior grid slot. One cell spans 4096 game units.

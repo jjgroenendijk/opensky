@@ -97,7 +97,7 @@ nonisolated public struct NIFSkeleton: Sendable {
 
     /// Direct construction, for tests and for a caller that already has a bone
     /// table (the rigid-attachment bind lookup).
-    public init(boneTransforms: [String: float4x4]) {
+    init(boneTransforms: [String: float4x4]) {
         self.boneTransforms = boneTransforms
     }
 

@@ -34,7 +34,7 @@ public typealias PerkTally = SkipTally<PerkSkipKind>
 /// vanilla, `level` is always 0 and `rankCount` does not track the NNAM chain;
 /// walk `PerkStore.rankChain(from:)` for ranks.
 nonisolated public struct PerkHeaderData: Equatable, Sendable {
-    public static let byteCount = 5
+    static let byteCount = 5
 
     public let isTrait: Bool
     /// Minimum skill level the perk needs, 0 on a perk with no requirement.
@@ -45,7 +45,7 @@ nonisolated public struct PerkHeaderData: Equatable, Sendable {
     public let isPlayable: Bool
     public let isHidden: Bool
 
-    public init(field: ESMField) throws {
+    init(field: ESMField) throws {
         guard field.data.count >= Self.byteCount else {
             throw ESMError.malformed(
                 "PERK DATA has \(field.data.count) bytes, expected \(Self.byteCount)"

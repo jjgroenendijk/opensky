@@ -34,19 +34,19 @@ nonisolated public struct NIFRangeNode: Sendable {
     public static let blastType = "BSBlastNode"
     public static let damageStageType = "BSDamageStage"
 
-    public let node: NIFNode
-    public let min: UInt8
-    public let max: UInt8
-    public let current: UInt8
+    let node: NIFNode
+    let min: UInt8
+    let max: UInt8
+    let current: UInt8
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         node = try NIFNode(reader: &reader, header: header)
         min = try reader.readUInt8()
         max = try reader.readUInt8()
         current = try reader.readUInt8()
     }
 
-    public func contains(stage: Int) -> Bool {
+    func contains(stage: Int) -> Bool {
         Int(min) ... Swift.max(Int(min), Int(max)) ~= stage
     }
 }
@@ -55,11 +55,11 @@ nonisolated public struct NIFRangeNode: Sendable {
 nonisolated public struct NIFMasterParticleSystem: Sendable {
     public static let typeName = "BSMasterParticleSystem"
 
-    public let node: NIFNode
-    public let maxEmitterObjects: UInt16
-    public let particleSystemRefs: [Int32]
+    let node: NIFNode
+    let maxEmitterObjects: UInt16
+    let particleSystemRefs: [Int32]
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         node = try NIFNode(reader: &reader, header: header)
         maxEmitterObjects = try reader.readUInt16()
         particleSystemRefs = try reader.readNIFRefs(label: "particle system")

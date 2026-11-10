@@ -4,10 +4,10 @@
 
 import Foundation
 
-nonisolated public enum HKBEventListeners {
+nonisolated enum HKBEventListeners {
     /// The event ids the object waits for: a transition and its trigger and initiate
     /// windows, a state machine's own events, and the nodes that switch or count on one.
-    public static func eventIDs(of object: any HKBClass) -> [Int] {
+    static func eventIDs(of object: any HKBClass) -> [Int] {
         switch object {
         case let array as HKBStateMachineTransitionInfoArray:
             array.transitions.flatMap { transition in
@@ -50,11 +50,11 @@ nonisolated public struct HKXAnnotationHearing: Sendable {
 
     public init() {}
 
-    public mutating func addAnnotation(_ text: String, clipPath: String) {
+    mutating func addAnnotation(_ text: String, clipPath: String) {
         annotations[Self.project(of: clipPath), default: []].insert(text.lowercased())
     }
 
-    public mutating func addListened(_ names: [String], graphPath: String) {
+    mutating func addListened(_ names: [String], graphPath: String) {
         listened[Self.project(of: graphPath), default: []]
             .formUnion(names.map { $0.lowercased() })
     }

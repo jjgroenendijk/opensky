@@ -18,7 +18,7 @@ nonisolated public struct Grass: Equatable, Sendable {
         case eitherAtMostBelow
         case unknown(UInt32)
 
-        public init(rawValue: UInt32) {
+        init(rawValue: UInt32) {
             self = switch rawValue {
             case 0: .aboveAtLeast
             case 1: .aboveAtMost

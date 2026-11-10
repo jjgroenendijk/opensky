@@ -17,7 +17,7 @@ nonisolated public struct SWFColorTransform: Equatable, Sendable {
 
     /// Decodes a CXFORM (`hasAlpha == false`, alpha terms untouched) or
     /// CXFORMWITHALPHA record at the reader's position.
-    public static func parse(
+    static func parse(
         _ bits: inout SWFBitReader,
         hasAlpha: Bool
     ) throws -> SWFColorTransform {
@@ -47,7 +47,7 @@ nonisolated public struct SWFColorTransform: Equatable, Sendable {
 
     /// The transform equivalent to applying `inner` first, then `self` — the
     /// order a parent timeline wraps a child placement.
-    public func concatenating(_ inner: SWFColorTransform) -> SWFColorTransform {
+    func concatenating(_ inner: SWFColorTransform) -> SWFColorTransform {
         SWFColorTransform(
             multiply: multiply * inner.multiply,
             add: multiply * inner.add + add

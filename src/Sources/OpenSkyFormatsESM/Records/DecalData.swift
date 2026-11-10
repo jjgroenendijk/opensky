@@ -12,9 +12,9 @@ nonisolated public struct DecalData: Equatable, Sendable {
             self.rawValue = rawValue
         }
 
-        public static let parallax = Flags(rawValue: 0x01)
-        public static let alphaBlending = Flags(rawValue: 0x02)
-        public static let alphaTesting = Flags(rawValue: 0x04)
+        static let parallax = Flags(rawValue: 0x01)
+        static let alphaBlending = Flags(rawValue: 0x02)
+        static let alphaTesting = Flags(rawValue: 0x04)
         public static let noSubtextures = Flags(rawValue: 0x08)
     }
 

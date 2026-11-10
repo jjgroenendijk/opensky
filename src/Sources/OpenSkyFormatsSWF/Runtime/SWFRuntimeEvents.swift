@@ -89,7 +89,7 @@ nonisolated extension SWFMovieRuntime {
     /// The lifecycle a newly placed instance runs through, in the order the
     /// `ClipEventFlags` table implies: `initialize` before the registered
     /// class's constructor, then `construct`, then `load`.
-    public func dispatchPlacementLifecycle(_ node: SWFDisplayObject, phase: SWFClipLifecycle) {
+    func dispatchPlacementLifecycle(_ node: SWFDisplayObject, phase: SWFClipLifecycle) {
         switch phase {
         case .initialize:
             dispatchClipEvent(.initialize, to: node)
@@ -151,13 +151,13 @@ nonisolated extension SWFMovieRuntime {
     }
 
     /// A `_global` broadcaster by name (`Key`, `Mouse`, `Stage`, `Selection`).
-    public func globalBroadcaster(_ name: String) -> AS2Object? {
+    func globalBroadcaster(_ name: String) -> AS2Object? {
         runtime.globalObject.lookup(name)?.property.value.objectValue
     }
 }
 
 /// Where a placed instance is in its bring-up, for `dispatchPlacementLifecycle`.
-nonisolated public enum SWFClipLifecycle: Equatable, Sendable {
+nonisolated enum SWFClipLifecycle: Equatable, Sendable {
     /// The instance exists and its own frame 1 is built; the registered class
     /// constructor has not run yet.
     case initialize

@@ -2,28 +2,28 @@
 // and LE (stream 83) differ in the NiGeometry part: SSE has a bound, skin ref,
 // and vertex desc. Layout: docs/formats/nif-particles.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import simd
 
-nonisolated public struct NIFParticleSystem: Sendable {
-    public let object: NIFObjectPrefix
+nonisolated struct NIFParticleSystem: Sendable {
+    let object: NIFObjectPrefix
     /// NiPSysData block ref; -1 = none. Source differs by stream (see file
     /// header comment) but the resolved ref is the same either way.
-    public let dataRef: Int32
-    public let shaderPropertyRef: Int32
-    public let alphaPropertyRef: Int32
+    let dataRef: Int32
+    let shaderPropertyRef: Int32
+    let alphaPropertyRef: Int32
     /// nif.xml World Space (default true).
-    public let worldSpace: Bool
+    let worldSpace: Bool
     /// NiPSysModifier block refs in chain order; -1 entries kept positional.
-    public let modifierRefs: [Int32]
+    let modifierRefs: [Int32]
 
-    public init(data: Data, header: NIFHeader) throws {
+    init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         try self.init(reader: &reader, header: header)
     }
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         let streamVersion = header.bsStream?.version ?? 0
         guard streamVersion == 83 || streamVersion == 100 else {
             throw NIFError.unsupported(

@@ -27,7 +27,7 @@ nonisolated public struct ESSChangeFormSurvey: Equatable, Sendable {
     /// One row per type present, in type table order.
     public let types: [ESSChangeFormTypeCount]
 
-    public static let decodedSignatures: Set = [
+    static let decodedSignatures: Set = [
         "REFR", "ACHR", "PMIS", "PGRE", "PBEA", "PFLA", "PHZD", "PBAR", "PCON", "PARW",
         "NPC_", "QUST", "INFO"
     ]
@@ -50,11 +50,11 @@ nonisolated public struct ESSChangeFormSurvey: Equatable, Sendable {
         types = rows.keys.sorted().compactMap { rows[$0] }
     }
 
-    public var total: Int {
+    var total: Int {
         types.reduce(0) { $0 + $1.count }
     }
 
-    public func row(_ signature: String) -> ESSChangeFormTypeCount? {
+    func row(_ signature: String) -> ESSChangeFormTypeCount? {
         types.first { $0.signature == signature }
     }
 

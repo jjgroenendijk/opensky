@@ -25,12 +25,6 @@ nonisolated public struct LightRecord: Sendable {
         public let period: Float
         public let intensityAmplitude: Float
         public let movementAmplitude: Float
-
-        public init(period: Float, intensityAmplitude: Float, movementAmplitude: Float) {
-            self.period = period
-            self.intensityAmplitude = intensityAmplitude
-            self.movementAmplitude = movementAmplitude
-        }
     }
 
     public struct Flags: OptionSet, Equatable, Sendable {
@@ -41,17 +35,17 @@ nonisolated public struct LightRecord: Sendable {
         }
 
         public static let canBeCarried = Flags(rawValue: 0x0002)
-        public static let negative = Flags(rawValue: 0x0004)
+        static let negative = Flags(rawValue: 0x0004)
         public static let flicker = Flags(rawValue: 0x0008)
-        public static let offByDefault = Flags(rawValue: 0x0020)
+        static let offByDefault = Flags(rawValue: 0x0020)
         public static let flickerSlow = Flags(rawValue: 0x0040)
         public static let pulse = Flags(rawValue: 0x0080)
         public static let pulseSlow = Flags(rawValue: 0x0100)
-        public static let spotLight = Flags(rawValue: 0x0200)
-        public static let shadowSpotlight = Flags(rawValue: 0x0400)
-        public static let shadowHemisphere = Flags(rawValue: 0x0800)
-        public static let shadowOmnidirectional = Flags(rawValue: 0x1000)
-        public static let inverseSquare = Flags(rawValue: 0x4000)
+        static let spotLight = Flags(rawValue: 0x0200)
+        static let shadowSpotlight = Flags(rawValue: 0x0400)
+        static let shadowHemisphere = Flags(rawValue: 0x0800)
+        static let shadowOmnidirectional = Flags(rawValue: 0x1000)
+        static let inverseSquare = Flags(rawValue: 0x4000)
     }
 
     public let formID: FormID
@@ -167,18 +161,18 @@ nonisolated public struct LightRecord: Sendable {
 /// LIGH fields beyond the light itself; a carriable torch uses most of them.
 /// xEdit dev-4.1.6 `LIGH`.
 nonisolated public struct LightDetails: Equatable, Sendable {
-    public let bounds: ObjectBounds?
+    let bounds: ObjectBounds?
     public let model: ModelData?
     /// FULL — the name of a carriable light.
     public let name: LString?
-    public let iconPath: String?
-    public let messageIconPath: String?
+    let iconPath: String?
+    let messageIconPath: String?
     /// SNAM — the SNDR the light loops.
-    public let sound: FormID?
+    let sound: FormID?
     /// LNAM — lens flare.
-    public let lensFlare: FormID?
-    public let destructible: Destructible?
-    public let scriptData: ScriptData
+    let lensFlare: FormID?
+    let destructible: Destructible?
+    let scriptData: ScriptData
 
     init(_ fields: inout RecordFields) {
         bounds = fields.bounds()

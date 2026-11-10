@@ -16,56 +16,56 @@ nonisolated public struct GenderPair<Value: Equatable & Sendable>: Equatable, Se
 }
 
 nonisolated public struct RaceProperties: Equatable, Sendable {
-    nonisolated public struct SkillBoost: Equatable, Sendable {
+    nonisolated struct SkillBoost: Equatable, Sendable {
         /// An actor-value index, -1 for none.
-        public let skill: Int8
-        public let boost: Int8
+        let skill: Int8
+        let boost: Int8
     }
 
     /// Mount data: where a rider sits, steps off, and the camera goes.
     nonisolated public struct MountOffsets: Equatable, Sendable {
-        public let mount: SIMD3<Float>
+        let mount: SIMD3<Float>
         public let dismount: SIMD3<Float>
-        public let camera: SIMD3<Float>
+        let camera: SIMD3<Float>
 
         /// Where a rider steps off a race without mount data: left of the saddle, above it.
         public static let fallbackDismount = SIMD3<Float>(-50, 0, 65)
     }
 
-    public let skillBoosts: [SkillBoost]
+    let skillBoosts: [SkillBoost]
     /// Two bytes xEdit leaves unnamed.
-    public let unknown: UInt16
-    public let height: GenderPair<Float>
-    public let weight: GenderPair<Float>
+    let unknown: UInt16
+    let height: GenderPair<Float>
+    let weight: GenderPair<Float>
     /// The flags `Race.Flags` names in part.
-    public let flags: UInt32
-    public let startingHealth: Float
-    public let startingMagicka: Float
-    public let startingStamina: Float
-    public let baseCarryWeight: Float
-    public let baseMass: Float
-    public let accelerationRate: Float
-    public let decelerationRate: Float
+    let flags: UInt32
+    let startingHealth: Float
+    let startingMagicka: Float
+    let startingStamina: Float
+    let baseCarryWeight: Float
+    let baseMass: Float
+    let accelerationRate: Float
+    let decelerationRate: Float
     /// 0 small, 1 medium, 2 large, 3 extra large.
     public let size: UInt32
     /// Biped slot indices, -1 for none.
-    public let headBipedObject: Int32
-    public let hairBipedObject: Int32
+    let headBipedObject: Int32
+    let hairBipedObject: Int32
     public let injuredHealthPercent: Float
-    public let shieldBipedObject: Int32
-    public let healthRegen: Float
-    public let magickaRegen: Float
-    public let staminaRegen: Float
-    public let unarmedDamage: Float
-    public let unarmedReach: Float
-    public let bodyBipedObject: Int32
-    public let aimAngleTolerance: Float
-    public let flightRadius: Float
-    public let angularAccelerationRate: Float
-    public let angularTolerance: Float
+    let shieldBipedObject: Int32
+    let healthRegen: Float
+    let magickaRegen: Float
+    let staminaRegen: Float
+    let unarmedDamage: Float
+    let unarmedReach: Float
+    let bodyBipedObject: Int32
+    let aimAngleTolerance: Float
+    let flightRadius: Float
+    let angularAccelerationRate: Float
+    let angularTolerance: Float
     /// 0x01 advanced avoidance, 0x02 non-hostile, 0x10 allow mounted combat.
     /// Optional in xEdit.
-    public let flags2: UInt32?
+    let flags2: UInt32?
     public let mountOffsets: MountOffsets?
 
     init(_ reader: inout BinaryReader) throws {
@@ -110,23 +110,23 @@ nonisolated public struct RaceProperties: Equatable, Sendable {
 }
 
 /// ATKD plus its ATKE event.
-nonisolated public struct RaceAttack: Equatable, Sendable {
-    nonisolated public struct Properties: Equatable, Sendable {
-        public let damageMultiplier: Float
-        public let attackChance: Float
+nonisolated struct RaceAttack: Equatable, Sendable {
+    nonisolated struct Properties: Equatable, Sendable {
+        let damageMultiplier: Float
+        let attackChance: Float
         /// A SPEL or SHOU.
-        public let spell: FormID?
+        let spell: FormID?
         /// 0x01 ignore weapon, 0x02 bash, 0x04 power, 0x08 left, 0x10 rotating,
         /// 0x80000000 override.
-        public let flags: UInt32
-        public let attackAngle: Float
-        public let strikeAngle: Float
-        public let stagger: Float
+        let flags: UInt32
+        let attackAngle: Float
+        let strikeAngle: Float
+        let stagger: Float
         /// A KYWD.
-        public let attackType: FormID?
-        public let knockdown: Float
-        public let recoveryTime: Float
-        public let staminaMultiplier: Float
+        let attackType: FormID?
+        let knockdown: Float
+        let recoveryTime: Float
+        let staminaMultiplier: Float
 
         init(_ reader: inout BinaryReader) throws {
             damageMultiplier = try reader.readFloat32()
@@ -143,15 +143,15 @@ nonisolated public struct RaceAttack: Equatable, Sendable {
         }
     }
 
-    public var properties: Properties?
+    var properties: Properties?
     /// ATKE, the animation event that starts the attack.
-    public var event: String?
+    var event: String?
 }
 
 /// MTYP plus its optional SPED speed overrides.
-nonisolated public struct RaceMovementType: Equatable, Sendable {
+nonisolated struct RaceMovementType: Equatable, Sendable {
     /// A MOVT.
-    public var movementType: FormID?
+    var movementType: FormID?
     /// SPED: left, right, forward, back, rotate (walk then run), then one unnamed float.
-    public var overrides: [Float] = []
+    var overrides: [Float] = []
 }

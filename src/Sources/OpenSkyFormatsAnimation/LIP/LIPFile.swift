@@ -12,14 +12,14 @@ nonisolated public enum LIPError: Error, Equatable, Sendable {
 
 nonisolated public struct LIPHeader: Equatable, Sendable {
     /// The expanded size the file declares. It is the expanded body plus 16 bytes.
-    public let expandedSize: Int
+    let expandedSize: Int
     /// Curves with any motion in the line. Kept, not checked.
-    public let activeCurveCount: Int
+    let activeCurveCount: Int
     public let frameCount: Int
     /// The audio frame of grid row 0. Usually negative: rows before the audio starts.
     public let firstFrame: Int
     /// Speech targets: 16 for humanoid heads, 8 for creatures.
-    public let targetCount: Int
+    let targetCount: Int
     public let slotsPerFrame: Int
 }
 
@@ -73,7 +73,7 @@ nonisolated public struct LIPFile: Equatable, Sendable {
     }
 
     /// Slots that are not zero in at least one frame.
-    public var activeSlots: [Int] {
+    var activeSlots: [Int] {
         (0 ..< header.slotsPerFrame).filter { slot in
             (0 ..< header.frameCount).contains { value(frame: $0, slot: slot) != 0 }
         }
@@ -175,7 +175,7 @@ nonisolated private struct LIPDecoder {
 /// A `00` byte and a uint16 count stand for that many zero bytes; every other byte
 /// is itself. The grid is mostly zeros, so this is most of the saving.
 nonisolated public enum LIPZeroRun {
-    public static func expand(_ packed: some Collection<UInt8>, to size: Int) throws -> Data {
+    static func expand(_ packed: some Collection<UInt8>, to size: Int) throws -> Data {
         var output = Data(capacity: size)
         var index = packed.startIndex
         while index != packed.endIndex {

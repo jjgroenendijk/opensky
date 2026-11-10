@@ -3,10 +3,10 @@
 // mesh preview can show any block's decoded value.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 
 nonisolated public enum NIFBlockDecoders: Sendable {
-    public typealias Decode = @Sendable (inout BinaryReader, NIFHeader) throws -> any Sendable
+    typealias Decode = @Sendable (inout BinaryReader, NIFHeader) throws -> any Sendable
 
     private static let all: [String: Decode] = extraData
         .merging(nodes) { first, _ in first }
@@ -17,7 +17,7 @@ nonisolated public enum NIFBlockDecoders: Sendable {
         .merging(shaders) { first, _ in first }
         .merging(bounds) { first, _ in first }
 
-    public static func decoder(for typeName: String) -> Decode? {
+    static func decoder(for typeName: String) -> Decode? {
         all[typeName]
     }
 

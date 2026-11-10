@@ -14,7 +14,7 @@ nonisolated public struct EncounterZone: Equatable, Sendable {
 
         public static let neverResets = Flags(rawValue: 0x01)
         public static let matchesPlayerBelowMinimumLevel = Flags(rawValue: 0x02)
-        public static let disablesCombatBoundary = Flags(rawValue: 0x04)
+        static let disablesCombatBoundary = Flags(rawValue: 0x04)
     }
 
     public let formID: FormID

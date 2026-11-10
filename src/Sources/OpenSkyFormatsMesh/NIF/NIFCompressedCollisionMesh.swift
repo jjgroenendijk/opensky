@@ -3,36 +3,36 @@
 // translation + ushort / 1000, then the chunk transform). Strip winding
 // alternates. Sources: docs/formats/nif-collision.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 public import simd
 
-nonisolated public enum NIFCompressedCollisionMesh: Sendable {
-    public struct Soup: Sendable {
-        public let vertices: [SIMD3<Float>]
-        public let indices: [UInt32]
+nonisolated enum NIFCompressedCollisionMesh: Sendable {
+    struct Soup: Sendable {
+        let vertices: [SIMD3<Float>]
+        let indices: [UInt32]
         /// `SkyrimHavokMaterial` from the chunk-material table. Nil when the
         /// table is empty or the index is past it; the geometry is kept,
         /// because a surface without a material still stops the player.
-        public let material: UInt32?
+        let material: UInt32?
 
-        public init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
+        init(vertices: [SIMD3<Float>], indices: [UInt32], material: UInt32? = nil) {
             self.vertices = vertices
             self.indices = indices
             self.material = material
         }
     }
 
-    public struct ChunkTransform: Sendable {
-        public let translation: SIMD3<Float>
-        public let rotation: simd_quatf
+    struct ChunkTransform: Sendable {
+        let translation: SIMD3<Float>
+        let rotation: simd_quatf
 
-        public func apply(to point: SIMD3<Float>) -> SIMD3<Float> {
+        func apply(to point: SIMD3<Float>) -> SIMD3<Float> {
             rotation.act(point) + translation
         }
     }
 
-    public static func decode(data: Data, shapeScale: SIMD3<Float>) throws -> [Soup] {
+    static func decode(data: Data, shapeScale: SIMD3<Float>) throws -> [Soup] {
         var reader = BinaryReader(data)
         try readHeader(reader: &reader)
         try skipIntegerArray(reader: &reader, label: "32-bit materials")
@@ -182,11 +182,11 @@ nonisolated public enum NIFCompressedCollisionMesh: Sendable {
     /// saying it is a table index; every vanilla value observed is in range for
     /// the table, and the alternative reading — a raw `SkyrimHavokMaterial` —
     /// would have to be a value no material hashes to.
-    public static func material(at index: Int, in materials: [UInt32]) -> UInt32? {
+    static func material(at index: Int, in materials: [UInt32]) -> UInt32? {
         materials.indices.contains(index) ? materials[index] : nil
     }
 
-    public static func checkedCount(
+    static func checkedCount(
         reader: inout BinaryReader,
         stride: Int,
         label: String

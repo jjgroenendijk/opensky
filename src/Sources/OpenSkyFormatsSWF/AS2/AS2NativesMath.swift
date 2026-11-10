@@ -108,10 +108,10 @@ nonisolated extension AS2Natives {
 }
 
 /// Numeric parsing for the global `parseInt` and `parseFloat`.
-nonisolated public enum AS2NativeNumbers: Sendable {
+nonisolated enum AS2NativeNumbers: Sendable {
     /// ECMA-262 15.1.2.2. An explicit radix wins; otherwise a `0x` prefix means
     /// 16 and everything else means 10.
-    public static func parseInt(_ text: String, radix: Double) -> Double {
+    static func parseInt(_ text: String, radix: Double) -> Double {
         var body = Substring(text.trimmingCharacters(in: .whitespacesAndNewlines))
         var sign = 1.0
         if body.hasPrefix("-") {
@@ -143,7 +143,7 @@ nonisolated public enum AS2NativeNumbers: Sendable {
     }
 
     /// ECMA-262 15.1.2.3: the longest prefix that is a decimal literal.
-    public static func parseFloat(_ text: String) -> Double {
+    static func parseFloat(_ text: String) -> Double {
         let trimmed = Substring(
             text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(scanLimit)
         )
@@ -164,7 +164,7 @@ nonisolated public enum AS2NativeNumbers: Sendable {
 
     /// Longest prefix `parseFloat` examines. A number literal never needs more,
     /// and the scan is quadratic in the prefix length.
-    public static let scanLimit = 64
+    static let scanLimit = 64
 
     private static func literalValue(_ text: Substring) -> Double? {
         var body = text

@@ -23,8 +23,8 @@ nonisolated public struct ControlMapEvent: Equatable, Sendable {
     public let name: String
     /// An empty list means unmapped (`0xff`).
     public let keyboard: [ControlInput]
-    public let mouse: [ControlInput]
-    public let gamepad: [ControlInput]
+    let mouse: [ControlInput]
+    let gamepad: [ControlInput]
     public let remappableKeyboard: Bool
 }
 
@@ -39,7 +39,7 @@ nonisolated public struct ControlMapContext: Equatable, Sendable {
 }
 
 nonisolated public struct ControlMapFile: Equatable, Sendable {
-    public static let unmapped: UInt32 = 0xFF
+    static let unmapped: UInt32 = 0xFF
     /// The VFS key of the vanilla file.
     public static let path = "interface\\controls\\pc\\controlmap.txt"
 

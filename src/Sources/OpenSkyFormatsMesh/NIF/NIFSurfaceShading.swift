@@ -2,13 +2,13 @@
 // rules follow NifSkope's open renderer: docs/formats/nif-materials.md.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 
 nonisolated extension NIFLightingShaderProperty {
     private typealias ShaderType = NIFLightingShaderType
 
     /// A term whose texture slot is empty stays off.
-    public func surfaceShading(textures: NIFShaderTextureSet?) -> SurfaceShading {
+    func surfaceShading(textures: NIFShaderTextureSet?) -> SurfaceShading {
         var shading = parameters()
         let slot = { (index: Int) in textures?.path(slot: index) }
         let modelSpace = has(.modelSpaceNormals)

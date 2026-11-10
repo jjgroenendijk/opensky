@@ -3,17 +3,17 @@
 // the look-at interpolator. Layout: docs/formats/nif-controllers.md#interpolators.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import simd
 
 /// `NiBlendFloatInterpolator`, `NiBlendBoolInterpolator`, or `NiBlendPoint3Interpolator`.
 /// A controller a manager drives points at one; the playing sequence fills it.
-nonisolated public struct NIFBlendInterpolator: Equatable, Sendable {
-    public static let floatType = "NiBlendFloatInterpolator"
-    public static let boolType = "NiBlendBoolInterpolator"
-    public static let point3Type = "NiBlendPoint3Interpolator"
+nonisolated struct NIFBlendInterpolator: Equatable, Sendable {
+    static let floatType = "NiBlendFloatInterpolator"
+    static let boolType = "NiBlendBoolInterpolator"
+    static let point3Type = "NiBlendPoint3Interpolator"
 
-    public enum Value: Equatable, Sendable {
+    enum Value: Equatable, Sendable {
         /// Nil when the file stores `#INV_FLT#`, "not set".
         case float(Float?)
         /// Nil when the file stores 2, "not set".
@@ -21,22 +21,22 @@ nonisolated public struct NIFBlendInterpolator: Equatable, Sendable {
         case point3(SIMD3<Float>?)
     }
 
-    public struct Item: Equatable, Sendable {
-        public let interpolatorRef: Int32
-        public let weight: Float
-        public let normalizedWeight: Float
-        public let priority: UInt8
-        public let easeSpinner: Float
+    struct Item: Equatable, Sendable {
+        let interpolatorRef: Int32
+        let weight: Float
+        let normalizedWeight: Float
+        let priority: UInt8
+        let easeSpinner: Float
     }
 
     /// nif.xml `InterpBlendFlags`: bit 0 manager controlled, bit 1 highest weight only.
-    public let flags: UInt8
-    public let weightThreshold: Float
+    let flags: UInt8
+    let weightThreshold: Float
     /// Empty for a manager-controlled blend, which stores no items.
-    public let items: [Item]
-    public let value: Value
+    let items: [Item]
+    let value: Value
 
-    public init(reader: inout BinaryReader, typeName: String) throws {
+    init(reader: inout BinaryReader, typeName: String) throws {
         flags = try reader.readUInt8()
         let size = try Int(reader.readUInt8())
         weightThreshold = try reader.readFloat32()
@@ -79,7 +79,7 @@ nonisolated public struct NIFBlendInterpolator: Equatable, Sendable {
 /// `NiPathInterpolator`: moves an object along a spline of `NiPosData` keys, by the
 /// fraction of the path its `NiFloatData` keys give at each time.
 nonisolated public struct NIFPathInterpolator: Equatable, Sendable {
-    public static let typeName = "NiPathInterpolator"
+    static let typeName = "NiPathInterpolator"
 
     /// nif.xml `PathFlags`.
     public let flags: UInt16
@@ -88,10 +88,10 @@ nonisolated public struct NIFPathInterpolator: Equatable, Sendable {
     public let smoothing: Float
     /// 0, 1, or 2: the object axis that points along the path when it follows.
     public let followAxis: Int16
-    public let pathDataRef: Int32
-    public let percentDataRef: Int32
+    let pathDataRef: Int32
+    let percentDataRef: Int32
 
-    public init(reader: inout BinaryReader) throws {
+    init(reader: inout BinaryReader) throws {
         flags = try reader.readUInt16()
         bankDirection = try Int32(bitPattern: reader.readUInt32())
         maximumBankAngle = try reader.readFloat32()
@@ -102,47 +102,47 @@ nonisolated public struct NIFPathInterpolator: Equatable, Sendable {
     }
 
     /// Flag bit 4: equal distances take equal times, whatever the key spacing.
-    public var hasConstantVelocity: Bool {
+    var hasConstantVelocity: Bool {
         flags & 0x10 != 0
     }
 
     /// Flag bit 5: the object turns to face along the path.
-    public var follows: Bool {
+    var follows: Bool {
         flags & 0x20 != 0
     }
 
     /// Flag bit 2: a segment's ends lean toward the neighbour segments by the smoothing.
-    public var allowsFlip: Bool {
+    var allowsFlip: Bool {
         flags & 0x4 != 0
     }
 
     /// Flag bit 3: a following object tilts into a turn.
-    public var banks: Bool {
+    var banks: Bool {
         flags & 0x8 != 0
     }
 
     /// Flag bit 6: the follow axis points backwards along the path.
-    public var flips: Bool {
+    var flips: Bool {
         flags & 0x40 != 0
     }
 }
 
 /// `NiLookAtInterpolator`: turns an object to face another node.
-nonisolated public struct NIFLookAtInterpolator: Equatable, Sendable {
-    public static let typeName = "NiLookAtInterpolator"
+nonisolated struct NIFLookAtInterpolator: Equatable, Sendable {
+    static let typeName = "NiLookAtInterpolator"
 
     /// nif.xml `LookAtFlags`: bit 0 flip, bit 1 Y axis, bit 2 Z axis (else X).
-    public let flags: UInt16
-    public let lookAtRef: Int32
-    public let lookAtName: String?
-    public let translation: SIMD3<Float>?
-    public let rotation: simd_quatf?
-    public let scale: Float?
-    public let translationInterpolatorRef: Int32
-    public let rollInterpolatorRef: Int32
-    public let scaleInterpolatorRef: Int32
+    let flags: UInt16
+    let lookAtRef: Int32
+    let lookAtName: String?
+    let translation: SIMD3<Float>?
+    let rotation: simd_quatf?
+    let scale: Float?
+    let translationInterpolatorRef: Int32
+    let rollInterpolatorRef: Int32
+    let scaleInterpolatorRef: Int32
 
-    public init(reader: inout BinaryReader, header: NIFHeader) throws {
+    init(reader: inout BinaryReader, header: NIFHeader) throws {
         flags = try reader.readUInt16()
         lookAtRef = try reader.readNIFRef()
         lookAtName = try reader.readNIFString(header)
@@ -156,7 +156,7 @@ nonisolated public struct NIFLookAtInterpolator: Equatable, Sendable {
     }
 
     /// The object axis that points at the target.
-    public var lookAxis: SIMD3<Float> {
+    var lookAxis: SIMD3<Float> {
         let axis: SIMD3<Float> = flags & 0x2 != 0 ? SIMD3(0, 1, 0)
             : flags & 0x4 != 0 ? SIMD3(0, 0, 1) : SIMD3(1, 0, 0)
         return flags & 0x1 != 0 ? -axis : axis

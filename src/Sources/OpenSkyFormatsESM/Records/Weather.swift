@@ -69,14 +69,14 @@ nonisolated public struct Weather: Sendable {
         public let windSpeed: Float // 0-1
         public let transDelta: Float // 0-0.25
         public let sunGlare: Float // 0-1
-        public let sunDamage: Float // 0-1
-        public let precipitationBeginFadeIn: Float // 0-1
-        public let precipitationEndFadeOut: Float // 0-1
-        public let thunderBeginFadeIn: Float // 0-1
-        public let thunderEndFadeOut: Float // 0-1
-        public let thunderFrequency: UInt8 // raw: 255 low .. 15 high
+        let sunDamage: Float // 0-1
+        let precipitationBeginFadeIn: Float // 0-1
+        let precipitationEndFadeOut: Float // 0-1
+        let thunderBeginFadeIn: Float // 0-1
+        let thunderEndFadeOut: Float // 0-1
+        let thunderFrequency: UInt8 // raw: 255 low .. 15 high
         public let flags: UInt8 // raw classification/effect bitfield
-        public let lightningColor: SIMD3<Float> // 0-1 RGB
+        let lightningColor: SIMD3<Float> // 0-1 RGB
         public let windDirection: Float // degrees, 0-360
         public let windDirectionRange: Float // degrees, 0-180
 
@@ -104,8 +104,8 @@ nonisolated public struct Weather: Sendable {
     /// (RGBX bytes, pad dropped, like the NAM0 layers).
     public struct DirectionalAmbient: Equatable, Sendable {
         public let colors: DirectionalAmbientColors
-        public let specular: SIMD3<Float>
-        public let scale: Float
+        let specular: SIMD3<Float>
+        let scale: Float
     }
 
     /// The four DALC keyframes a WTHR carries, one per time of day. Record
@@ -297,15 +297,15 @@ nonisolated extension Weather {
         return colors[component.rawValue]
     }
 
-    public var skyUpper: Colors? {
+    var skyUpper: Colors? {
         colors(for: .skyUpper)
     }
 
-    public var horizon: Colors? {
+    var horizon: Colors? {
         colors(for: .horizon)
     }
 
-    public var sunGlare: Colors? {
+    var sunGlare: Colors? {
         colors(for: .sunGlare)
     }
 }

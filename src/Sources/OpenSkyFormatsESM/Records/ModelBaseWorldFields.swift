@@ -22,11 +22,11 @@ nonisolated public enum WorkbenchType: Equatable, Sendable {
         .enchantingExperiment, .alchemy, .alchemyExperiment, .smithingArmor
     ]
 
-    public init(rawValue: UInt8) {
+    init(rawValue: UInt8) {
         self = Int(rawValue) < Self.known.count ? Self.known[Int(rawValue)] : .unknown(rawValue)
     }
 
-    public var rawValue: UInt8 {
+    var rawValue: UInt8 {
         if case let .unknown(value) = self {
             return value
         }
@@ -39,11 +39,6 @@ nonisolated public struct Workbench: Equatable, Sendable {
     public let benchType: WorkbenchType
     /// Actor-value index, or -1 for none. Kept raw so an unknown index survives.
     public let skillIndex: Int8
-
-    public init(benchType: WorkbenchType, skillIndex: Int8) {
-        self.benchType = benchType
-        self.skillIndex = skillIndex
-    }
 
     /// The skill name for an index in xEdit's `wbSkillEnum` range (6-23), else nil.
     public var skillName: String? {
@@ -60,12 +55,6 @@ nonisolated public struct HarvestProduce: Equatable, Sendable {
     public let harvestSound: FormID?
     /// PFPC: percent chance in spring, summer, fall, winter. Nil when absent.
     public let seasonalChance: [UInt8]?
-
-    public init(ingredient: FormID?, harvestSound: FormID?, seasonalChance: [UInt8]?) {
-        self.ingredient = ingredient
-        self.harvestSound = harvestSound
-        self.seasonalChance = seasonalChance
-    }
 }
 
 /// The world-object fields one ModelBase field pass collects.

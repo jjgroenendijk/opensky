@@ -3,7 +3,7 @@
 // Layout, sources, and vanilla sweep: docs/formats/vmad.md.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 
 /// One fragment: the script that holds it and the generated function name.
 nonisolated public struct ScriptFragment: Equatable, Sendable {
@@ -24,9 +24,9 @@ nonisolated public struct ScenePhaseFragment: Equatable, Sendable {
 
 /// A decoded SCEN, PACK, or PERK tail.
 nonisolated public struct RecordFragmentSection: Equatable, Sendable {
-    public let extraBindDataVersion: Int8
+    let extraBindDataVersion: Int8
     /// SCEN: 0x01 begin, 0x02 end. PACK: 0x01 begin, 0x02 end, 0x04 change. PERK: nil.
-    public let flags: UInt8?
+    let flags: UInt8?
     public let fileName: String
     public let fragments: [ScriptFragment]
     /// SCEN only.
@@ -42,7 +42,7 @@ nonisolated extension ScriptDataDecoder {
     private static let recordFragmentOwners: Set<FourCC> = ["PACK", "PERK", "SCEN"]
 
     /// Decodes the SCEN, PACK, or PERK tail. False leaves the reader where it was.
-    public mutating func decodeRecordFragmentTail(ownerType: FourCC) -> RecordFragmentSection? {
+    mutating func decodeRecordFragmentTail(ownerType: FourCC) -> RecordFragmentSection? {
         guard Self.recordFragmentOwners.contains(ownerType) else { return nil }
         let start = reader.offset
         do {

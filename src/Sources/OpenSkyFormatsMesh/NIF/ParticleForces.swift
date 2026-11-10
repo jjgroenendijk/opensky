@@ -178,11 +178,6 @@ nonisolated public struct ParticleRecycleBound: Equatable, Sendable {
     /// The box's size on each axis; zero turns the wrap off on that axis.
     public let size: SIMD3<Float>
 
-    public init(minimum: SIMD3<Float>, size: SIMD3<Float>) {
-        self.minimum = minimum
-        self.size = size
-    }
-
     /// `point` moved back into the box by whole box sizes.
     public func wrapped(_ point: SIMD3<Float>) -> SIMD3<Float> {
         var result = point

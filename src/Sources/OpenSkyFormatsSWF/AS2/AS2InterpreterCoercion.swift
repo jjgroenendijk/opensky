@@ -49,7 +49,7 @@ nonisolated extension AS2Interpreter {
 
     /// The operand count an opcode popped, clamped so malformed bytecode cannot
     /// ask for a billion arguments.
-    public func toArgumentCount(_ value: AS2Value) throws(AS2Fault) -> Int {
+    func toArgumentCount(_ value: AS2Value) throws(AS2Fault) -> Int {
         let count = try toNumber(value)
         guard count.isFinite, count > 0 else {
             return 0
@@ -58,7 +58,7 @@ nonisolated extension AS2Interpreter {
     }
 
     /// `ActionEquals2` (0x49).
-    public func abstractEquals(_ left: AS2Value, _ right: AS2Value) throws(AS2Fault) -> Bool {
+    func abstractEquals(_ left: AS2Value, _ right: AS2Value) throws(AS2Fault) -> Bool {
         if left.isPrimitive == right.isPrimitive {
             return coercion.equals(left, right)
         }
@@ -67,7 +67,7 @@ nonisolated extension AS2Interpreter {
 
     /// `ActionLess2` (0x48), and `ActionGreater` (0x67) with the arguments
     /// swapped.
-    public func abstractLessThan(_ left: AS2Value, _ right: AS2Value) throws(AS2Fault) -> Bool {
+    func abstractLessThan(_ left: AS2Value, _ right: AS2Value) throws(AS2Fault) -> Bool {
         try coercion.lessThan(toPrimitive(left), toPrimitive(right))
     }
 }

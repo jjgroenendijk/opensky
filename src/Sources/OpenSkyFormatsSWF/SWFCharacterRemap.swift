@@ -9,12 +9,12 @@ import Foundation
 /// The shift saturates at `UInt16.max` instead of wrapping: an id that would
 /// leave the 16-bit space becomes a reference to nothing, which the display
 /// list already tolerates, and is counted in `saturatedReferences`.
-nonisolated public struct SWFCharacterRemap: Sendable {
-    public let offset: Int
+nonisolated struct SWFCharacterRemap: Sendable {
+    let offset: Int
     /// References that could not be shifted inside `UInt16` and were saturated.
-    public private(set) var saturatedReferences = 0
+    private(set) var saturatedReferences = 0
 
-    public mutating func id(_ value: UInt16) -> UInt16 {
+    mutating func id(_ value: UInt16) -> UInt16 {
         let shifted = Int(value) + offset
         guard shifted <= Int(UInt16.max) else {
             saturatedReferences += 1
@@ -23,7 +23,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         return UInt16(shifted)
     }
 
-    public mutating func id(optional value: UInt16?) -> UInt16? {
+    mutating func id(optional value: UInt16?) -> UInt16? {
         guard let value else {
             return nil
         }
@@ -35,7 +35,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
     /// The whole character dictionary, keys and internal references alike. A
     /// key that saturates would land on top of another character, so it is
     /// dropped rather than merged wrong; the count still records the loss.
-    public mutating func characters(_ source: [UInt16: SWFCharacter]) -> [UInt16: SWFCharacter] {
+    mutating func characters(_ source: [UInt16: SWFCharacter]) -> [UInt16: SWFCharacter] {
         var result: [UInt16: SWFCharacter] = [:]
         result.reserveCapacity(source.count)
         for key in source.keys.sorted() {
@@ -50,7 +50,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         return result
     }
 
-    public mutating func character(_ source: SWFCharacter) -> SWFCharacter {
+    mutating func character(_ source: SWFCharacter) -> SWFCharacter {
         switch source {
         case let .shape(shape): .shape(self.shape(shape))
         case let .bitmap(bitmap): .bitmap(self.bitmap(bitmap))
@@ -64,7 +64,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
 
     // MARK: - Definitions
 
-    public mutating func shape(_ source: SWFShapeDefinition) -> SWFShapeDefinition {
+    mutating func shape(_ source: SWFShapeDefinition) -> SWFShapeDefinition {
         SWFShapeDefinition(
             characterId: id(source.characterId),
             bounds: source.bounds,
@@ -76,7 +76,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         )
     }
 
-    public mutating func bitmap(_ source: SWFBitmap) -> SWFBitmap {
+    mutating func bitmap(_ source: SWFBitmap) -> SWFBitmap {
         SWFBitmap(
             characterId: id(source.characterId),
             width: source.width,
@@ -88,7 +88,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         )
     }
 
-    public mutating func font(_ source: SWFFontDefinition) -> SWFFontDefinition {
+    mutating func font(_ source: SWFFontDefinition) -> SWFFontDefinition {
         SWFFontDefinition(
             fontID: id(source.fontID),
             isHighResolution: source.isHighResolution,
@@ -100,7 +100,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         )
     }
 
-    public mutating func staticText(_ source: SWFTextDefinition) -> SWFTextDefinition {
+    mutating func staticText(_ source: SWFTextDefinition) -> SWFTextDefinition {
         SWFTextDefinition(
             characterId: id(source.characterId),
             bounds: source.bounds,
@@ -109,7 +109,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         )
     }
 
-    public mutating func editText(_ source: SWFEditText) -> SWFEditText {
+    mutating func editText(_ source: SWFEditText) -> SWFEditText {
         SWFEditText(
             characterId: id(source.characterId),
             bounds: source.bounds,
@@ -125,7 +125,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         )
     }
 
-    public mutating func sprite(_ source: SWFSprite) -> SWFSprite {
+    mutating func sprite(_ source: SWFSprite) -> SWFSprite {
         SWFSprite(
             characterId: id(source.characterId),
             frameCount: source.frameCount,
@@ -134,7 +134,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         )
     }
 
-    public mutating func button(_ source: SWFButton) -> SWFButton {
+    mutating func button(_ source: SWFButton) -> SWFButton {
         SWFButton(
             characterId: id(source.characterId),
             trackAsMenu: source.trackAsMenu,
@@ -153,7 +153,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
 
     // MARK: - Timelines
 
-    public mutating func timeline(_ source: SWFTimeline) -> SWFTimeline {
+    mutating func timeline(_ source: SWFTimeline) -> SWFTimeline {
         SWFTimeline(
             frames: source.frames.map { frame($0) },
             frame1: source.frame1.map { placedObject($0) },
@@ -161,13 +161,13 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         )
     }
 
-    public mutating func initActions(_ source: [SWFDoInitAction]) -> [SWFDoInitAction] {
+    mutating func initActions(_ source: [SWFDoInitAction]) -> [SWFDoInitAction] {
         source.map { SWFDoInitAction(spriteId: id($0.spriteId), actions: $0.actions) }
     }
 
     // MARK: - Name tables
 
-    public mutating func exportedNames(_ source: [String: UInt16]) -> [String: UInt16] {
+    mutating func exportedNames(_ source: [String: UInt16]) -> [String: UInt16] {
         var result: [String: UInt16] = [:]
         result.reserveCapacity(source.count)
         for name in source.keys.sorted() {
@@ -177,7 +177,7 @@ nonisolated public struct SWFCharacterRemap: Sendable {
         return result
     }
 
-    public mutating func importedNames(_ source: [UInt16: String]) -> [UInt16: String] {
+    mutating func importedNames(_ source: [UInt16: String]) -> [UInt16: String] {
         var result: [UInt16: String] = [:]
         result.reserveCapacity(source.count)
         for key in source.keys.sorted() {

@@ -49,7 +49,7 @@ nonisolated extension AS2Value {
     /// ECMAScript in two places: `typeof null` is `"null"` rather than
     /// `"object"`, and a display object reports its own name (`"movieclip"`),
     /// which an object carries in `AS2Object.typeOverride`.
-    public var typeName: String {
+    var typeName: String {
         switch self {
         case .undefined: "undefined"
         case .null: "null"

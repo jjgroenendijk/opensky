@@ -32,11 +32,11 @@ nonisolated public struct SWFBoundsBox: Equatable, Sendable {
         )
     }
 
-    public var width: Float {
+    var width: Float {
         isEmpty ? 0 : maxX - minX
     }
 
-    public var height: Float {
+    var height: Float {
         isEmpty ? 0 : maxY - minY
     }
 
@@ -77,7 +77,7 @@ nonisolated public struct SWFBoundsBox: Equatable, Sendable {
         return box
     }
 
-    public func contains(_ point: SIMD2<Float>) -> Bool {
+    func contains(_ point: SIMD2<Float>) -> Bool {
         guard !isEmpty else {
             return false
         }
@@ -117,7 +117,7 @@ nonisolated extension SWFMovieRuntime {
 
     /// The node's bounds in its parent's space — the box `_width`/`_height`
     /// report.
-    public func parentBounds(of node: SWFDisplayObject) -> SWFBoundsBox {
+    func parentBounds(of node: SWFDisplayObject) -> SWFBoundsBox {
         localBounds(of: node).transformed(by: SWFTransform(matrix: node.matrix))
     }
 }

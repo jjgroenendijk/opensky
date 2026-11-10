@@ -79,7 +79,7 @@ nonisolated public struct HKBStateMachineTransitionInfo: Equatable, Sendable {
         )
     }
 
-    public func references(index: Int) -> [HKBReference] {
+    func references(index: Int) -> [HKBReference] {
         HKBReference.optional("m_transitions[\(index)].m_transition", transition)
             + HKBReference.optional("m_transitions[\(index)].m_condition", condition)
     }

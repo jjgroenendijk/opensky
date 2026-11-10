@@ -12,20 +12,20 @@ nonisolated public struct HKBReference: Equatable, Sendable {
     public let field: String
     public let target: HKXPointerTarget
 
-    public init(_ field: String, _ target: HKXPointerTarget) {
+    init(_ field: String, _ target: HKXPointerTarget) {
         self.field = field
         self.target = target
     }
 
     /// Builds a reference for an optional pointer, dropping the absent case, so
     /// a class can list its members without a guard per member.
-    public static func optional(_ field: String, _ target: HKXPointerTarget?) -> [HKBReference] {
+    static func optional(_ field: String, _ target: HKXPointerTarget?) -> [HKBReference] {
         target.map { [HKBReference(field, $0)] } ?? []
     }
 
     /// Builds references for an index-preserving pointer array, naming each
     /// element by its index so a miss is locatable.
-    public static func each(_ field: String, _ targets: [HKXPointerTarget?]) -> [HKBReference] {
+    static func each(_ field: String, _ targets: [HKXPointerTarget?]) -> [HKBReference] {
         targets.enumerated().compactMap { index, target in
             target.map { HKBReference("\(field)[\(index)]", $0) }
         }
@@ -91,7 +91,7 @@ nonisolated public struct HKBNodeHeader: Equatable, Sendable {
         )
     }
 
-    public var references: [HKBReference] {
+    var references: [HKBReference] {
         HKBReference.optional("m_variableBindingSet", variableBindingSet)
     }
 }
@@ -110,11 +110,11 @@ nonisolated public struct HKBModifierHeader: Equatable, Sendable {
         )
     }
 
-    public var name: String? {
+    var name: String? {
         node.name
     }
 
-    public var references: [HKBReference] {
+    var references: [HKBReference] {
         node.references
     }
 }
@@ -149,7 +149,7 @@ nonisolated public struct HKBEventProperty: Equatable, Sendable {
         )
     }
 
-    public func references(named member: String) -> [HKBReference] {
+    func references(named member: String) -> [HKBReference] {
         HKBReference.optional("\(member).m_payload", payload)
     }
 }

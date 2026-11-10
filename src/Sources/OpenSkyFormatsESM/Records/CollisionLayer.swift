@@ -11,9 +11,9 @@ nonisolated public struct CollisionLayer: Equatable, Sendable {
             self.rawValue = rawValue
         }
 
-        public static let triggerVolume = Flags(rawValue: 0x01)
-        public static let sensor = Flags(rawValue: 0x02)
-        public static let navmeshObstacle = Flags(rawValue: 0x04)
+        static let triggerVolume = Flags(rawValue: 0x01)
+        static let sensor = Flags(rawValue: 0x02)
+        static let navmeshObstacle = Flags(rawValue: 0x04)
     }
 
     public let formID: FormID

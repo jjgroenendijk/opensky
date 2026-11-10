@@ -29,11 +29,11 @@ nonisolated public struct WaterSurfaceFields: Equatable, Sendable {
     public internal(set) var underwaterFogAmount: Float = 0
     public internal(set) var underwaterFogNear: Float = 0
     public internal(set) var underwaterFogFar: Float = 0
-    public internal(set) var aboveWaterFogAmount: Float = 0
+    var aboveWaterFogAmount: Float = 0
     /// How finely a river's flow noise repeats; 0 in the 228-byte size.
     public internal(set) var flowMapScale: Float = 0
 
-    public init(
+    init(
         sunSpecularPower: Float, reflectivity: Float, fresnelAmount: Float,
         fogNear: Float, fogFar: Float,
         windDirections: SIMD3<Float>, windSpeeds: SIMD3<Float>,
@@ -98,7 +98,7 @@ nonisolated public struct WaterDisplacementFields: Equatable, Sendable {
 
     public init() {}
 
-    public init(
+    init(
         startingSize: Float,
         force: Float,
         velocity: Float,

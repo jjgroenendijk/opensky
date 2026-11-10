@@ -20,20 +20,20 @@ nonisolated public enum NIFConstraintType: UInt32, CaseIterable, Sendable {
 /// nif.xml `bhkPositionConstraintMotor`: drives towards a target angle. This
 /// is the motor a posed ragdoll uses.
 nonisolated public struct NIFPositionMotor: Sendable {
-    public let maxForce: Float
-    public let tau: Float
-    public let isEnabled: Bool
+    let maxForce: Float
+    let tau: Float
+    let isEnabled: Bool
 }
 
 /// nif.xml `bhkVelocityConstraintMotor`.
 nonisolated public struct NIFVelocityMotor: Sendable {
-    public let isEnabled: Bool
+    let isEnabled: Bool
 }
 
 /// nif.xml `bhkSpringDamperConstraintMotor`.
 nonisolated public struct NIFSpringDamperMotor: Sendable {
-    public let springConstant: Float
-    public let isEnabled: Bool
+    let springConstant: Float
+    let isEnabled: Bool
 }
 
 /// nif.xml `bhkConstraintMotorCInfo`. The stored type byte selects which
@@ -51,7 +51,7 @@ nonisolated public enum NIFConstraintMotor: Sendable {
 nonisolated public struct NIFConstraintHingeFrame: Sendable {
     public let axis: SIMD3<Float>
     public let perpAxis1: SIMD3<Float>
-    public let perpAxis2: SIMD3<Float>
+    let perpAxis2: SIMD3<Float>
     public let pivot: SIMD3<Float>
 }
 
@@ -61,16 +61,16 @@ nonisolated public struct NIFConstraintHingeFrame: Sendable {
 nonisolated public struct NIFConstraintRagdollFrame: Sendable {
     public let twist: SIMD3<Float>
     public let plane: SIMD3<Float>
-    public let motor: SIMD3<Float>
+    let motor: SIMD3<Float>
     public let pivot: SIMD3<Float>
 }
 
 /// One body's end of a prismatic (rail) constraint.
-nonisolated public struct NIFConstraintPrismaticFrame: Sendable {
-    public let sliding: SIMD3<Float>
-    public let rotation: SIMD3<Float>
-    public let plane: SIMD3<Float>
-    public let pivot: SIMD3<Float>
+nonisolated struct NIFConstraintPrismaticFrame: Sendable {
+    let sliding: SIMD3<Float>
+    let rotation: SIMD3<Float>
+    let plane: SIMD3<Float>
+    let pivot: SIMD3<Float>
 }
 
 /// Three degrees of freedom bounded by a cone plus two orthogonal cones. The
@@ -85,7 +85,7 @@ nonisolated public struct NIFRagdollConstraint: Sendable {
     public let twistMinAngle: Float
     public let twistMaxAngle: Float
     public let maxFriction: Float
-    public let motor: NIFConstraintMotor
+    let motor: NIFConstraintMotor
 }
 
 /// One rotation axis, unbounded and unmotorized.
@@ -102,18 +102,18 @@ nonisolated public struct NIFLimitedHingeConstraint: Sendable {
     public let minAngle: Float
     public let maxAngle: Float
     public let maxFriction: Float
-    public let motor: NIFConstraintMotor
+    let motor: NIFConstraintMotor
 }
 
 /// Translation along one axis between `minDistance` and `maxDistance` engine
 /// units, all rotation fixed.
 nonisolated public struct NIFPrismaticConstraint: Sendable {
-    public let frameA: NIFConstraintPrismaticFrame
-    public let frameB: NIFConstraintPrismaticFrame
-    public let minDistance: Float
-    public let maxDistance: Float
-    public let friction: Float
-    public let motor: NIFConstraintMotor
+    let frameA: NIFConstraintPrismaticFrame
+    let frameB: NIFConstraintPrismaticFrame
+    let minDistance: Float
+    let maxDistance: Float
+    let friction: Float
+    let motor: NIFConstraintMotor
 }
 
 /// Point-to-point: hold both pivots at the same place, rotation free.
@@ -150,7 +150,7 @@ indirect nonisolated public enum NIFConstraintData: Sendable {
         }
     }
 
-    public var type: NIFConstraintType {
+    var type: NIFConstraintType {
         switch self {
         case .ballAndSocket: .ballAndSocket
         case .hinge: .hinge
@@ -176,10 +176,10 @@ nonisolated public struct NIFCollisionConstraint: Sendable {
     public let entityB: Int32
     /// nif.xml `ConstraintPriority`: 1 = solved at physics steps, 3 = also at
     /// time of impact.
-    public let priority: UInt32
+    let priority: UInt32
     public let data: NIFConstraintData
     /// The link of a ball-and-socket chain, which shares one block; 0 otherwise.
-    public internal(set) var link = 0
+    var link = 0
 
     public var type: NIFConstraintType {
         data.type

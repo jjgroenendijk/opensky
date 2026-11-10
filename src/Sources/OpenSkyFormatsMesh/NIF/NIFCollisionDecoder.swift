@@ -15,7 +15,7 @@ nonisolated extension NIFFile {
 }
 
 nonisolated public struct NIFCollisionDecoder: Sendable {
-    public static let maxShapeDepth = 64
+    static let maxShapeDepth = 64
 
     public let file: NIFFile
     public var unsupported: [String: Int] = [:]
@@ -241,7 +241,7 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
         return refs
     }
 
-    public func resolvedBlock(_ ref: Int32) throws -> (Int, NIFFile.Block)? {
+    func resolvedBlock(_ ref: Int32) throws -> (Int, NIFFile.Block)? {
         guard ref >= 0 else { return nil }
         let index = Int(ref)
         guard index < file.blocks.count else {
@@ -275,8 +275,8 @@ nonisolated public struct NIFCollisionDecoder: Sendable {
 /// What scene traversal knows about every block a collision object can target:
 /// where it is, and what it is called.
 nonisolated public struct SceneTargets: Sendable {
-    public let transforms: [Int: float4x4]
-    public let names: [Int: String]
+    let transforms: [Int: float4x4]
+    let names: [Int: String]
     public var currentPlanes: [NIFCurrentPlane] = []
 }
 

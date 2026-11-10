@@ -2,15 +2,15 @@
 // such as foliage use the test bit; translucency uses the blend bit.
 // Bit layout and sources: docs/formats/nif-materials.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 
 nonisolated public struct NIFAlphaProperty: Equatable, Sendable {
-    public let name: String?
+    let name: String?
     /// Raw AlphaFlags; derived accessors below.
-    public let flags: UInt16
+    let flags: UInt16
     /// Alpha-test cutoff, 0-255.
-    public let threshold: UInt8
+    let threshold: UInt8
 
     public var blendEnabled: Bool {
         flags & 0x0001 != 0
@@ -27,36 +27,36 @@ nonisolated public struct NIFAlphaProperty: Equatable, Sendable {
     }
 
     /// Blend with destination factor ONE: the shape only adds light.
-    public var isAdditive: Bool {
+    var isAdditive: Bool {
         blendEnabled && destinationBlendMode == 0
     }
 
     /// The additive blend, nil when the shape does not add light. Source ONE (0) adds
     /// the colour as it is; every other source factor is read as SRC_ALPHA.
-    public var additiveBlend: AdditiveBlend? {
+    var additiveBlend: AdditiveBlend? {
         guard isAdditive else { return nil }
         return sourceBlendMode == 0 ? .one : .sourceAlpha
     }
 
-    public var testEnabled: Bool {
+    var testEnabled: Bool {
         flags & 0x0200 != 0
     }
 
     /// nif.xml TestFunction: 0 ALWAYS … 4 GREATER (default) … 7 NEVER.
-    public var testFunction: UInt16 {
+    var testFunction: UInt16 {
         (flags >> 10) & 0x7
     }
 
-    public var noSorter: Bool {
+    var noSorter: Bool {
         flags & 0x2000 != 0
     }
 
     /// Threshold remapped for shader compare against sampled alpha.
-    public var testThreshold: Float {
+    var testThreshold: Float {
         Float(threshold) / 255
     }
 
-    public init(data: Data, header: NIFHeader) throws {
+    init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         name = try NIFObjectNET(reader: &reader, header: header).name
         flags = try reader.readUInt16()

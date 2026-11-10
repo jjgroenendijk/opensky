@@ -45,7 +45,7 @@ nonisolated public struct NIFEffectPose: Sendable {
     /// Alpha test thresholds by node, 0 to 1.
     private var alphaTests: [Int: Float] = [:]
     /// A `NiFloatExtraData` named with this prefix shows or hides the node it names.
-    public static let visibilityExtraDataPrefix = "hkVis:"
+    static let visibilityExtraDataPrefix = "hkVis:"
 
     /// Later sequences in `playing` win where two animate the same value.
     public init(scene: NIFEffectScene, playing: [Playing]) {

@@ -3,19 +3,13 @@
 
 public import Foundation
 
-nonisolated public struct ESSMiscStat: Equatable, Sendable {
-    public let name: String
+nonisolated struct ESSMiscStat: Equatable, Sendable {
+    let name: String
     /// 0 general, 1 quest, 2 combat, 3 magic, 4 crafting, 5 crime, 6 DLC.
-    public let category: UInt8
-    public let value: Int32
+    let category: UInt8
+    let value: Int32
 
-    public init(name: String, category: UInt8, value: Int32) {
-        self.name = name
-        self.category = category
-        self.value = value
-    }
-
-    public static func decodeAll(_ data: Data) throws(ESSError) -> [Self] {
+    static func decodeAll(_ data: Data) throws(ESSError) -> [Self] {
         var reader = ESSReader(data)
         let count = try reader.count32("misc stats", minimumElementSize: 7)
         var stats: [Self] = []
@@ -90,18 +84,18 @@ nonisolated public struct ESSCreatedObject: Equatable, Sendable {
         case weaponEnchantment, armorEnchantment, potion, poison
     }
 
-    nonisolated public struct Effect: Equatable, Sendable {
-        public let effect: ESSRefID
-        public let magnitude: Float
-        public let duration: UInt32
-        public let area: UInt32
-        public let price: Float
+    nonisolated struct Effect: Equatable, Sendable {
+        let effect: ESSRefID
+        let magnitude: Float
+        let duration: UInt32
+        let area: UInt32
+        let price: Float
     }
 
     public let kind: Kind
-    public let form: ESSRefID
-    public let timesUsed: UInt32
-    public let effects: [Effect]
+    let form: ESSRefID
+    let timesUsed: UInt32
+    let effects: [Effect]
 
     public static func decodeAll(_ data: Data) throws(ESSError) -> [Self] {
         var reader = ESSReader(data)
@@ -157,7 +151,7 @@ nonisolated public struct ESSWeather: Equatable, Sendable {
         self.transition = transition
     }
 
-    public static func decode(_ data: Data) throws(ESSError) -> Self {
+    static func decode(_ data: Data) throws(ESSError) -> Self {
         var reader = ESSReader(data)
         let climate = try reader.refID("climate")
         let weather = try reader.refID("weather")
@@ -176,7 +170,7 @@ nonisolated public struct ESSWeather: Equatable, Sendable {
 }
 
 nonisolated extension ESSFile {
-    public func miscStats() throws(ESSError) -> [ESSMiscStat] {
+    func miscStats() throws(ESSError) -> [ESSMiscStat] {
         guard let table = globalData(.miscStats) else { return [] }
         return try ESSMiscStat.decodeAll(table.data)
     }
@@ -201,7 +195,7 @@ nonisolated extension ESSFile {
         return try ESSPapyrus(data: table.data)
     }
 
-    public func weather() throws(ESSError) -> ESSWeather? {
+    func weather() throws(ESSError) -> ESSWeather? {
         guard let table = globalData(.weather) else { return nil }
         return try ESSWeather.decode(table.data)
     }

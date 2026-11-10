@@ -2,11 +2,11 @@
 // Reference + conversion: docs/formats/nif-collision.md.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 import simd
 
 nonisolated extension NIFCompressedCollisionMesh {
-    public static func readChunks(
+    static func readChunks(
         reader: inout BinaryReader,
         transforms: [ChunkTransform],
         scale: SIMD3<Float>,
@@ -174,7 +174,7 @@ nonisolated extension NIFCompressedCollisionMesh {
         }
     }
 
-    public static func appendValidated(
+    static func appendValidated(
         _ triangle: [UInt16],
         vertexCount: Int,
         into output: inout [UInt32]

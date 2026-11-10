@@ -9,7 +9,7 @@ nonisolated extension AS2Interpreter {
     /// `ActionDefineFunction` (0x9B) and `ActionDefineFunction2` (0x8E). The
     /// body is the next `bodySize` bytes of the same stream, so execution
     /// resumes after it.
-    public func defineFunction(
+    func defineFunction(
         _ record: SWFActionRecord,
         frame: AS2Frame
     ) throws(AS2Fault) -> AS2Flow {

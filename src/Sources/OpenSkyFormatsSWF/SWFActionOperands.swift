@@ -2,20 +2,20 @@
 // bytes; a malformed payload becomes a warning, not a thrown error.
 // Spec: SWF v19 chapter 5.
 
-public import Foundation
+import Foundation
 import OpenSkyFormatsCore
 
-nonisolated public enum SWFActionOperandDecoder: Sendable {
+nonisolated enum SWFActionOperandDecoder: Sendable {
     /// Opcodes with a typed decode below. Everything else frames to
     /// `SWFActionOperands.none` with its bytes retained.
-    public static let decodableCodes: Set<UInt8> = [
+    static let decodableCodes: Set<UInt8> = [
         0x81, 0x83, 0x87, 0x88, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
         0x94, 0x96, 0x99, 0x9A, 0x9B, 0x9D, 0x9F
     ]
 
     /// Decodes one record's operand payload, or nil when the opcode has no
     /// typed decode at this stage. Throws when the payload is malformed.
-    public static func decode(code: UInt8, operandBytes: Data) throws -> SWFActionOperands? {
+    static func decode(code: UInt8, operandBytes: Data) throws -> SWFActionOperands? {
         guard decodableCodes.contains(code) else {
             return nil
         }

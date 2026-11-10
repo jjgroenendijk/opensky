@@ -6,8 +6,8 @@ import Foundation
 
 /// One bit of `SkyrimShaderPropertyFlags1` (word 1) or `...Flags2` (word 2).
 nonisolated public struct NIFShaderFlag: Hashable, Sendable {
-    public let word: Int
-    public let bit: Int
+    let word: Int
+    let bit: Int
 
     public var name: String {
         let names = word == 1 ? Self.flags1Names : Self.flags2Names
@@ -15,7 +15,7 @@ nonisolated public struct NIFShaderFlag: Hashable, Sendable {
     }
 
     /// Every bit set in the two words, word 1 first.
-    public static func set(in flags1: UInt32, _ flags2: UInt32) -> [NIFShaderFlag] {
+    static func set(in flags1: UInt32, _ flags2: UInt32) -> [NIFShaderFlag] {
         (0 ..< 32).filter { flags1 & (1 << $0) != 0 }.map { NIFShaderFlag(word: 1, bit: $0) }
             + (0 ..< 32).filter { flags2 & (1 << $0) != 0 }.map { NIFShaderFlag(word: 2, bit: $0) }
     }

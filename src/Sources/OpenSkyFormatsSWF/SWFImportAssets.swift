@@ -22,7 +22,7 @@ nonisolated public struct SWFImportedAssets: Equatable, Sendable {
     public let url: String
     public let assets: [SWFImportedAsset]
 
-    public static func parse(tag: SWFTag) throws -> SWFImportedAssets {
+    static func parse(tag: SWFTag) throws -> SWFImportedAssets {
         guard tagCodes.contains(tag.code) else {
             throw SWFDisplayListError.unsupportedTag(tag.code)
         }

@@ -110,11 +110,11 @@ nonisolated public struct SoundDescriptor: Sendable {
     }
 
     public struct Parameters: Equatable, Sendable {
-        public let frequencyShiftPercent: Int
-        public let frequencyVariancePercent: Int
-        public let priority: Int
-        public let decibelVariance: Int
-        public let staticAttenuationDecibels: Float
+        let frequencyShiftPercent: Int
+        let frequencyVariancePercent: Int
+        let priority: Int
+        let decibelVariance: Int
+        let staticAttenuationDecibels: Float
     }
 
     /// `LNAM` byte 3: how much of the sound's level drives each rumble motor, 0 to 1.
@@ -122,7 +122,7 @@ nonisolated public struct SoundDescriptor: Sendable {
         public let small: Float
         public let big: Float
 
-        public init(small: Float, big: Float) {
+        init(small: Float, big: Float) {
             self.small = small
             self.big = big
         }

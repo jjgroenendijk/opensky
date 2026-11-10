@@ -5,7 +5,7 @@
 
 public import Foundation
 
-nonisolated public enum TranslationFileError: Error, Equatable, Sendable {
+nonisolated enum TranslationFileError: Error, Equatable, Sendable {
     /// Bytes are not decodable UTF-16 (odd byte count or an unpaired surrogate).
     case notUTF16
 }
@@ -17,11 +17,11 @@ nonisolated public struct TranslationFile: Equatable, Sendable {
     /// `$key` (verbatim, case-sensitive) -> translated value.
     public let entries: [String: String]
 
-    public var count: Int {
+    var count: Int {
         entries.count
     }
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         entries.isEmpty
     }
 
@@ -45,7 +45,7 @@ nonisolated public struct TranslationFile: Equatable, Sendable {
     }
 
     /// Looks up one value by full key (leading `$` included). Nil when absent.
-    public func value(forKey key: String) -> String? {
+    func value(forKey key: String) -> String? {
         entries[key]
     }
 

@@ -15,7 +15,7 @@ nonisolated public enum TopicInfoFragmentPhase: Equatable, Sendable, CaseIterabl
     case end
 
     /// Bit in the tail's flag byte that declares this phase present.
-    public var flagBit: UInt8 {
+    var flagBit: UInt8 {
         switch self {
         case .begin: 1 << 0
         case .end: 1 << 1
@@ -39,15 +39,15 @@ nonisolated public struct TopicInfoFragmentSection: Equatable, Sendable {
     /// The leading int8. Always 2 in shipped data; anything else means the
     /// Creation Kit would have failed to load the section, so it is recorded,
     /// not enforced.
-    public let extraBindDataVersion: Int8
+    let extraBindDataVersion: Int8
     /// The raw flag byte, kept because a bit outside 0x1 and 0x2 is a fact
     /// about the file that the decoded fragment list cannot express.
-    public let flags: UInt8
+    let flags: UInt8
     /// Generated fragment script, "TIF_<editorID>_<formID>" by convention.
-    public let fileName: String
+    let fileName: String
     public let fragments: [TopicInfoFragment]
 
-    public var isEmpty: Bool {
+    var isEmpty: Bool {
         fragments.isEmpty
     }
 

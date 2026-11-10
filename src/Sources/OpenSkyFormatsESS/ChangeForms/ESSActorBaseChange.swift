@@ -48,7 +48,7 @@ nonisolated public struct ESSActorBaseChange: Equatable, Sendable {
     public var name: String?
     /// The 52-byte `DNAM` block: 18 skill values, then 18 offsets, then more.
     public internal(set) var skills: Data?
-    public internal(set) var npcClass: ESSRefID?
+    var npcClass: ESSRefID?
     public var race: ESSRefID?
     public var face: ESSFace?
     public var isFemale: Bool?
@@ -59,14 +59,14 @@ nonisolated public struct ESSActorBaseChange: Equatable, Sendable {
 
     /// The level in `ACBS`, or nil without base data. A level-multiplier actor
     /// stores the multiplier times 1000 here.
-    public var level: UInt16? {
+    var level: UInt16? {
         guard let baseData, baseData.count >= 10 else { return nil }
         let start = baseData.startIndex + 8
         return UInt16(baseData[start]) | UInt16(baseData[start + 1]) << 8
     }
 
     /// The 18 skill values in actor value order, from One-handed to Enchanting.
-    public var skillValues: [UInt8]? {
+    var skillValues: [UInt8]? {
         skills.map { Array($0.prefix(18)) }
     }
 

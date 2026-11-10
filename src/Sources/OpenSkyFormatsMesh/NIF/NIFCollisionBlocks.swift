@@ -3,18 +3,18 @@
 // the ball-and-socket chain. Layout: docs/formats/nif-collision.md.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 public import simd
 
 /// nif.xml `bhkNiCollisionObject`: the target node, flags, and the body or phantom.
-nonisolated public struct NIFCollisionObjectBlock: Equatable, Sendable {
-    public static let phantomType = "bhkSPCollisionObject"
+nonisolated struct NIFCollisionObjectBlock: Equatable, Sendable {
+    static let phantomType = "bhkSPCollisionObject"
 
-    public let targetRef: Int32
-    public let flags: UInt16
-    public let bodyRef: Int32
+    let targetRef: Int32
+    let flags: UInt16
+    let bodyRef: Int32
 
-    public init(reader: inout BinaryReader) throws {
+    init(reader: inout BinaryReader) throws {
         targetRef = try reader.readNIFRef()
         flags = try reader.readUInt16()
         bodyRef = try reader.readNIFRef()
@@ -22,15 +22,15 @@ nonisolated public struct NIFCollisionObjectBlock: Equatable, Sendable {
 }
 
 /// `bhkSimpleShapePhantom`: a shape that reports overlaps and pushes nothing.
-nonisolated public struct NIFShapePhantom: Sendable {
-    public static let typeName = "bhkSimpleShapePhantom"
+nonisolated struct NIFShapePhantom: Sendable {
+    static let typeName = "bhkSimpleShapePhantom"
 
-    public let shapeRef: Int32
-    public let filter: NIFCollisionFilter
+    let shapeRef: Int32
+    let filter: NIFCollisionFilter
     /// Phantom to target node, translation in engine units.
-    public let transform: float4x4
+    let transform: float4x4
 
-    public init(reader: inout BinaryReader) throws {
+    init(reader: inout BinaryReader) throws {
         shapeRef = try reader.readNIFRef()
         filter = try NIFCollisionFilter(
             layer: reader.readUInt8(), flags: reader.readUInt8(), group: reader.readUInt16()
@@ -41,18 +41,18 @@ nonisolated public struct NIFShapePhantom: Sendable {
 }
 
 /// `bhkCylinderShape`: a cylinder between two points.
-nonisolated public struct NIFCylinderShape: Equatable, Sendable {
-    public static let typeName = "bhkCylinderShape"
+nonisolated struct NIFCylinderShape: Equatable, Sendable {
+    static let typeName = "bhkCylinderShape"
     /// Sides of the prism that stands in for the round wall.
     static let sides = 12
 
-    public let material: UInt32
-    public let first: SIMD3<Float>
-    public let second: SIMD3<Float>
+    let material: UInt32
+    let first: SIMD3<Float>
+    let second: SIMD3<Float>
     /// Engine units.
-    public let radius: Float
+    let radius: Float
 
-    public init(reader: inout BinaryReader) throws {
+    init(reader: inout BinaryReader) throws {
         material = try reader.readUInt32()
         reader.skip(4 + 8) // shell radius, unused bytes
         let scale = NIFCollisionModel.havokToEngineScale
@@ -63,7 +63,7 @@ nonisolated public struct NIFCylinderShape: Equatable, Sendable {
     }
 
     /// A prism around the axis, with its hull, so the convex path collides with it.
-    public var geometry: NIFCollisionGeometry {
+    var geometry: NIFCollisionGeometry {
         let axis = second - first
         let length = simd_length(axis)
         guard length > .ulpOfOne, radius > 0 else { return .sphere(radius: max(radius, 0)) }
@@ -91,17 +91,17 @@ nonisolated public struct NIFCylinderShape: Equatable, Sendable {
 }
 
 /// `bhkPlaneShape`: a plane, bounded by a box.
-nonisolated public struct NIFPlaneShape: Equatable, Sendable {
-    public static let typeName = "bhkPlaneShape"
+nonisolated struct NIFPlaneShape: Equatable, Sendable {
+    static let typeName = "bhkPlaneShape"
 
-    public let material: UInt32
-    public let normal: SIMD3<Float>
+    let material: UInt32
+    let normal: SIMD3<Float>
     /// Engine units from the origin along the normal.
-    public let constant: Float
-    public let halfExtents: SIMD3<Float>
-    public let center: SIMD3<Float>
+    let constant: Float
+    let halfExtents: SIMD3<Float>
+    let center: SIMD3<Float>
 
-    public init(reader: inout BinaryReader) throws {
+    init(reader: inout BinaryReader) throws {
         material = try reader.readUInt32()
         reader.skip(12)
         let scale = NIFCollisionModel.havokToEngineScale
@@ -112,7 +112,7 @@ nonisolated public struct NIFPlaneShape: Equatable, Sendable {
     }
 
     /// The part of the plane inside the box, as two triangles.
-    public var geometry: NIFCollisionGeometry {
+    var geometry: NIFCollisionGeometry {
         let length = simd_length(normal)
         guard length > .ulpOfOne else { return .triangleSoup(vertices: [], indices: []) }
         let unit = normal / length
@@ -132,17 +132,17 @@ nonisolated public struct NIFPlaneShape: Equatable, Sendable {
 }
 
 /// `bhkBallSocketConstraintChain`: entity `i` and entity `i + 1` share pivot pair `i`.
-nonisolated public struct NIFBallSocketChain: Sendable {
-    public static let typeName = "bhkBallSocketConstraintChain"
+nonisolated struct NIFBallSocketChain: Sendable {
+    static let typeName = "bhkBallSocketConstraintChain"
 
-    public let links: [NIFBallAndSocketConstraint]
-    public let tau: Float
-    public let damping: Float
-    public let constraintForceMixing: Float
-    public let maxErrorDistance: Float
-    public let entities: [Int32]
+    let links: [NIFBallAndSocketConstraint]
+    let tau: Float
+    let damping: Float
+    let constraintForceMixing: Float
+    let maxErrorDistance: Float
+    let entities: [Int32]
 
-    public init(reader: inout BinaryReader) throws {
+    init(reader: inout BinaryReader) throws {
         let pivots = try reader.readNIFCount(stride: 16, label: "chain pivot")
         links = try (0 ..< pivots / 2).map { _ in
             try NIFBallAndSocketConstraint(
@@ -159,7 +159,7 @@ nonisolated public struct NIFBallSocketChain: Sendable {
     }
 
     /// One ball-and-socket joint per link, each with the chain's block index.
-    public func constraints(block: Int) -> [NIFCollisionConstraint] {
+    func constraints(block: Int) -> [NIFCollisionConstraint] {
         links.enumerated().compactMap { link, joint in
             guard link + 1 < entities.count else { return nil }
             var constraint = NIFCollisionConstraint(

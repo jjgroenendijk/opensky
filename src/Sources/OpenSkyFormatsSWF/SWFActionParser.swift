@@ -10,7 +10,7 @@ nonisolated public enum SWFActionParser: Sendable {
     public static let doActionCode: UInt16 = 12
     public static let doInitActionCode: UInt16 = 59
     /// `ActionEndFlag`: the zero byte that terminates an action stream.
-    public static let endFlag: UInt8 = 0
+    static let endFlag: UInt8 = 0
 
     /// Frames an action byte stream. Record offsets are relative to the first
     /// byte of `data`.
@@ -31,7 +31,7 @@ nonisolated public enum SWFActionParser: Sendable {
     /// DoInitAction (59): `Sprite ID` UI16 then the action stream. Record
     /// offsets are relative to the stream, not to the tag body, so the sprite
     /// id does not shift them.
-    public static func parseDoInitAction(tag: SWFTag) throws -> SWFDoInitAction {
+    static func parseDoInitAction(tag: SWFTag) throws -> SWFDoInitAction {
         guard tag.code == doInitActionCode else {
             throw SWFActionError.unsupportedTag(tag.code)
         }

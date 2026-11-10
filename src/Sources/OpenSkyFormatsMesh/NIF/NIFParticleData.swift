@@ -3,31 +3,31 @@
 // presence flags, and atlas offsets are kept.
 // Layout: docs/formats/nif-particles.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import simd
 
-nonisolated public struct NIFParticleData: Sendable {
+nonisolated struct NIFParticleData: Sendable {
     /// nif.xml "BS Max Vertices": max simultaneous particles (capacity).
-    public let maxParticles: Int
-    public let hasRadii: Bool
-    public let hasSizes: Bool
-    public let hasRotations: Bool
-    public let hasRotationAngles: Bool
-    public let hasRotationAxes: Bool
-    public let hasRotationSpeeds: Bool
-    public let hasTextureIndices: Bool
+    let maxParticles: Int
+    let hasRadii: Bool
+    let hasSizes: Bool
+    let hasRotations: Bool
+    let hasRotationAngles: Bool
+    let hasRotationAxes: Bool
+    let hasRotationSpeeds: Bool
+    let hasTextureIndices: Bool
     /// UV atlas quads for BSPSysSubTexModifier; empty when unused.
-    public let subtextureOffsets: [SIMD4<Float>]
+    let subtextureOffsets: [SIMD4<Float>]
     /// BSStripPSysData "Max Point Count"; nil for a plain NiPSysData.
-    public let maxPointCount: Int?
+    let maxPointCount: Int?
 
-    public init(data: Data, header: NIFHeader, isStrip: Bool = false) throws {
+    init(data: Data, header: NIFHeader, isStrip: Bool = false) throws {
         var reader = BinaryReader(data)
         try self.init(reader: &reader, header: header, isStrip: isStrip)
     }
 
-    public init(reader: inout BinaryReader, header: NIFHeader, isStrip: Bool = false) throws {
+    init(reader: inout BinaryReader, header: NIFHeader, isStrip: Bool = false) throws {
         let streamVersion = header.bsStream?.version ?? 0
         // BS202 = file version 20.2.0.7 with a Bethesda stream; both Skyrim
         // streams qualify and share this layout.

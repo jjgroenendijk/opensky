@@ -2,93 +2,93 @@
 // this block a uint32 shader type comes before the name. The per-type tail is read
 // when present. Layout: docs/formats/nif-materials.md.
 
-public import Foundation
-public import OpenSkyFormatsCore
+import Foundation
+import OpenSkyFormatsCore
 import simd
 
-nonisolated public struct NIFLightingShaderProperty: Sendable {
+nonisolated struct NIFLightingShaderProperty: Sendable {
     /// nif.xml `BSLightingShaderType`; `NIFLightingShaderType` names the values.
-    public let shaderType: UInt32
-    public let name: String?
+    let shaderType: UInt32
+    let name: String?
     /// Raw SkyrimShaderPropertyFlags1/2; derived accessors below for the
     /// bits the renderer consumes.
-    public let shaderFlags1: UInt32
-    public let shaderFlags2: UInt32
-    public let uvOffset: SIMD2<Float>
-    public let uvScale: SIMD2<Float>
+    let shaderFlags1: UInt32
+    let shaderFlags2: UInt32
+    let uvOffset: SIMD2<Float>
+    let uvScale: SIMD2<Float>
     /// BSShaderTextureSet block ref; -1 = none.
-    public let textureSetRef: Int32
-    public let emissiveColor: SIMD3<Float>
-    public let emissiveMultiple: Float
+    let textureSetRef: Int32
+    let emissiveColor: SIMD3<Float>
+    let emissiveMultiple: Float
     /// Material opacity, 1 = opaque (vanilla range reaches past 1 to shape
     /// alpha falloff).
-    public let alpha: Float
+    let alpha: Float
     /// How far a refraction shape bends the scene behind it, 0 to 1.
-    public let refractionStrength: Float
+    let refractionStrength: Float
     /// Specular power.
-    public let glossiness: Float
-    public let specularColor: SIMD3<Float>
-    public let specularStrength: Float
+    let glossiness: Float
+    let specularColor: SIMD3<Float>
+    let specularStrength: Float
     /// Soft-lighting wrap amount.
-    public let lightingEffect1: Float
+    let lightingEffect1: Float
     /// Rim-light power.
-    public let lightingEffect2: Float
+    let lightingEffect2: Float
     /// The fields only one shader type has. Defaults when the block ends early.
-    public let tail: Tail
+    let tail: Tail
 
-    nonisolated public struct Tail: Equatable, Sendable {
+    nonisolated struct Tail: Equatable, Sendable {
         /// Type 1. Type 16 stores its eye cubemap scale here too.
-        public var environmentMapScale: Float = 1
+        var environmentMapScale: Float = 1
         /// Type 5 skin tint or type 6 hair tint; the game replaces it per actor.
-        public var tintColor: SIMD3<Float>?
+        var tintColor: SIMD3<Float>?
         /// Type 11.
-        public var innerLayerThickness: Float = 5
-        public var refractionScale: Float = 0.25
-        public var innerLayerScale = SIMD2<Float>(1, 1)
-        public var environmentStrength: Float = 1
+        var innerLayerThickness: Float = 5
+        var refractionScale: Float = 0.25
+        var innerLayerScale = SIMD2<Float>(1, 1)
+        var environmentStrength: Float = 1
         /// Type 14. The field meanings are not documented.
-        public var sparkle = SIMD4<Float>.zero
+        var sparkle = SIMD4<Float>.zero
 
-        public init() {}
+        init() {}
     }
 
     /// SLSF2 bit 4 Double_Sided -> cull mode none.
-    public var isDoubleSided: Bool {
+    var isDoubleSided: Bool {
         has(.doubleSided)
     }
 
     /// SLSF2 bit 29 Tree_Anim: the vertex alpha is the branch's wind weight, not opacity.
-    public var isTreeAnimated: Bool {
+    var isTreeAnimated: Bool {
         has(.treeAnim)
     }
 
     /// SLSF1 bit 15 Refraction: the shape bends what is behind it, such as the
     /// heat haze over a fire, and its slot 0 texture is a normal map.
-    public var isRefraction: Bool {
+    var isRefraction: Bool {
         has(.refraction)
     }
 
     /// Shader type 4: a FaceGen head, tinted by texture slot 6.
-    public var isFaceGen: Bool {
+    var isFaceGen: Bool {
         shaderType == NIFLightingShaderType.faceGen
     }
 
     /// Shader type 5 with SLSF1 bit 21: skin the actor's skin colour tints.
-    public var isSkinTint: Bool {
+    var isSkinTint: Bool {
         shaderType == NIFLightingShaderType.skinTint && has(.faceGenRGBTint)
     }
 
     /// SLSF1 bit 3: without it the vertex alpha is ignored. SLSF2 bit 5: the same for
     /// the vertex colour. Tree animation stores wind weight in the alpha.
-    public var usesVertexAlpha: Bool {
+    var usesVertexAlpha: Bool {
         has(.vertexAlpha) && !isTreeAnimated
     }
 
-    public var usesVertexColors: Bool {
+    var usesVertexColors: Bool {
         has(.vertexColors)
     }
 
-    public var drawState: MaterialDrawState {
+    var drawState: MaterialDrawState {
         var state = MaterialDrawState()
         state.depthTest = has(.zBufferTest)
         state.depthWrite = has(.zBufferWrite)
@@ -107,7 +107,7 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
         (flag.word == 1 ? shaderFlags1 : shaderFlags2) & (1 << flag.bit) != 0
     }
 
-    public init(data: Data, header: NIFHeader) throws {
+    init(data: Data, header: NIFHeader) throws {
         let streamVersion = header.bsStream?.version ?? 0
         guard streamVersion == 83 || streamVersion == 100 else {
             throw NIFError.unsupported(

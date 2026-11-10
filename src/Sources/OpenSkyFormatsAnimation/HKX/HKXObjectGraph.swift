@@ -158,12 +158,12 @@ nonisolated public struct HKXObjectGraph: Sendable {
     }
 
     /// Intra-section fixup target for a pointer stored at `offset`.
-    public func localTarget(section: Int, from offset: Int) -> Int? {
+    func localTarget(section: Int, from offset: Int) -> Int? {
         localTargets.indices.contains(section) ? localTargets[section][offset] : nil
     }
 
     /// Cross-section fixup target for a pointer stored at `offset`.
-    public func globalTarget(section: Int, from offset: Int) -> HKXPointerTarget? {
+    func globalTarget(section: Int, from offset: Int) -> HKXPointerTarget? {
         globalTargets.indices.contains(section) ? globalTargets[section][offset] : nil
     }
 

@@ -58,7 +58,7 @@ nonisolated public struct HKBGraphTopology: Sendable {
     }
 
     /// Every walked node of one class, in visit order.
-    public func nodes(ofClass className: String) -> [HKBGraphNode] {
+    func nodes(ofClass className: String) -> [HKBGraphNode] {
         nodes.filter { $0.object.className == className }
     }
 }
@@ -91,7 +91,7 @@ nonisolated public struct HKBDecodeReport: Sendable {
 
     /// Class names the file declares that no decoder covers, sorted for a
     /// stable assertion message.
-    public var uncoveredClassNames: [String] {
+    var uncoveredClassNames: [String] {
         skippedCounts.keys.sorted()
     }
 

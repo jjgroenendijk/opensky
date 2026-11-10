@@ -19,21 +19,12 @@ nonisolated public struct SpeedSampleProject: Equatable, Sendable {
         /// Sorted by ground speed, as the file stores them.
         public let pairs: [(ground: Float, blend: Float)]
 
-        public init(key: Float, pairs: [(ground: Float, blend: Float)]) {
-            self.key = key
-            self.pairs = pairs
-        }
-
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.key == rhs.key && lhs.pairs.elementsEqual(rhs.pairs) { $0 == $1 }
         }
     }
 
     public let states: [Int32: [Direction]]
-
-    public init(states: [Int32: [Direction]]) {
-        self.states = states
-    }
 
     /// The blend speed for `goal`, or nil where no table answers, so the caller keeps
     /// `goal`. The direction is the first key at or above the input; past the last

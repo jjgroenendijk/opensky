@@ -24,7 +24,7 @@ nonisolated public struct NIFTriShape: Sendable {
         public static let skinned = Self(rawValue: 1 << 6)
         public static let eyeData = Self(rawValue: 1 << 8)
         /// Ignored by the SSE record layout: positions are always full floats.
-        public static let fullPrecision = Self(rawValue: 1 << 10)
+        static let fullPrecision = Self(rawValue: 1 << 10)
     }
 
     public let object: NIFObjectPrefix
@@ -168,7 +168,7 @@ nonisolated public struct NIFTriShape: Sendable {
         public var boneIndices: [SIMD4<UInt16>] = []
     }
 
-    public static func readVertexRecords(
+    static func readVertexRecords(
         _ reader: inout BinaryReader,
         attributes: VertexAttributes,
         count: Int

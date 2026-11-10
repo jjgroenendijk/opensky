@@ -23,7 +23,7 @@ nonisolated extension AS2Object {
     }
 
     /// Appends to an array-like object.
-    public func appendElement(_ value: AS2Value) {
+    func appendElement(_ value: AS2Value) {
         setElement(value, at: arrayLength ?? 0)
     }
 
@@ -37,7 +37,7 @@ nonisolated extension AS2Object {
 
     /// Applies an array `length` assignment: shrinking drops the elements past
     /// the new end, growing only moves the mark.
-    public func resizeArray(to length: Int) {
+    func resizeArray(to length: Int) {
         let clamped = max(0, length)
         if let current = arrayLength, clamped < current {
             for index in clamped ..< current {
@@ -54,7 +54,7 @@ nonisolated extension AS2Object {
     /// Insertion order is used throughout, which the specification leaves
     /// implementation-defined; picking a fixed order keeps a menu's iteration
     /// deterministic across runs.
-    public func enumerableNames() -> [String] {
+    func enumerableNames() -> [String] {
         var names: [String] = []
         var seen: Set<String> = []
         var current: AS2Object? = self
@@ -79,7 +79,7 @@ nonisolated extension AS2Object {
     /// `ASSetPropFlags(object, names, setFlags, clearFlags)`. A nil name list
     /// means every own property. Clearing wins over setting for a bit named in
     /// both, matching the built-in's documented order of operations.
-    public func applyPropertyFlags(
+    func applyPropertyFlags(
         names: [String]?,
         adding: AS2PropertyFlags,
         removing: AS2PropertyFlags

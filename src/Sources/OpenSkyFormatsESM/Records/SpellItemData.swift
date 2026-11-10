@@ -20,18 +20,18 @@ nonisolated public struct SpellFlags: OptionSet, Equatable, Sendable {
     /// Bit 0 — the SPIT base cost is authored, not derived from the effects.
     public static let manualCostCalc = Self(rawValue: 1 << 0)
     /// Bit 16 — xEdit "Unknown 16"; vanilla sets it together with bit 18.
-    public static let unknown16 = Self(rawValue: 1 << 16)
+    static let unknown16 = Self(rawValue: 1 << 16)
     public static let pcStartSpell = Self(rawValue: 1 << 17)
     /// Bit 18 — xEdit "Unknown 18"; vanilla sets it together with bit 16.
-    public static let unknown18 = Self(rawValue: 1 << 18)
+    static let unknown18 = Self(rawValue: 1 << 18)
     public static let areaEffectIgnoresLineOfSight = Self(rawValue: 1 << 19)
     /// Bit 20 on SPEL.
     public static let ignoreResistance = Self(rawValue: 1 << 20)
     /// Bit 20 on SCRL — the same bit under the name xEdit gives it there.
-    public static let scriptEffectAlwaysApplies = Self(rawValue: 1 << 20)
+    static let scriptEffectAlwaysApplies = Self(rawValue: 1 << 20)
     public static let disallowAbsorbReflect = Self(rawValue: 1 << 21)
     /// Bit 22 — xEdit "Unknown 22".
-    public static let unknown22 = Self(rawValue: 1 << 22)
+    static let unknown22 = Self(rawValue: 1 << 22)
     public static let noDualCastModifications = Self(rawValue: 1 << 23)
 }
 
@@ -94,11 +94,11 @@ nonisolated public struct SpellItemData: Equatable, Sendable {
     public let halfCostPerk: FormID?
 
     /// True when the cost has to be derived from the effect list.
-    public var usesAutoCalculatedCost: Bool {
+    var usesAutoCalculatedCost: Bool {
         !flags.contains(.manualCostCalc)
     }
 
-    public var unknownEnumCount: Int {
+    var unknownEnumCount: Int {
         var count = 0
         if case .unknown = type {
             count += 1
@@ -113,7 +113,7 @@ nonisolated public struct SpellItemData: Equatable, Sendable {
     }
 
     /// A staff enchantment's `ENIT` read as a spell header, so a staff casts like a spell.
-    public init(staff data: EnchantmentItemData) {
+    init(staff data: EnchantmentItemData) {
         baseCost = UInt32(clamping: max(0, data.cost))
         flags = data.flags.contains(.manualCostCalc) ? .manualCostCalc : []
         type = .spell

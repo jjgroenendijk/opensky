@@ -11,7 +11,7 @@ nonisolated public enum SWFTimelineStep: Equatable, Sendable {
     case remove(SWFRemoval)
 
     /// The CLIPACTIONS handlers this step attaches to a placed sprite, if any.
-    public var clipActionBlocks: [SWFActionBlock] {
+    var clipActionBlocks: [SWFActionBlock] {
         guard case let .place(placement) = self, let clip = placement.clipActions else {
             return []
         }
@@ -19,7 +19,7 @@ nonisolated public enum SWFTimelineStep: Equatable, Sendable {
     }
 
     /// CLIPACTIONS framing problems recorded on this step.
-    public var clipActionWarnings: Int {
+    var clipActionWarnings: Int {
         guard case let .place(placement) = self, let clip = placement.clipActions else {
             return 0
         }
@@ -31,11 +31,11 @@ nonisolated public enum SWFTimelineStep: Equatable, Sendable {
 /// DoAction (12) blocks that run with it, and the FrameLabel (43) naming it.
 nonisolated public struct SWFTimelineFrame: Equatable, Sendable {
     public let steps: [SWFTimelineStep]
-    public let actions: [SWFActionBlock]
+    let actions: [SWFActionBlock]
     /// FrameLabel (43) attached to this frame, or nil when it has none.
     public let label: String?
 
-    public init(steps: [SWFTimelineStep], actions: [SWFActionBlock], label: String? = nil) {
+    init(steps: [SWFTimelineStep], actions: [SWFActionBlock], label: String? = nil) {
         self.steps = steps
         self.actions = actions
         self.label = label
@@ -72,7 +72,7 @@ nonisolated public struct SWFTimeline: Equatable, Sendable {
     /// Every action stream this timeline carries, frame by frame: the frame's
     /// DoAction blocks first, then the CLIPACTIONS handlers its placements
     /// attach.
-    public var actionBlocks: [SWFActionBlock] {
+    var actionBlocks: [SWFActionBlock] {
         frames.flatMap { frame in
             frame.actions + frame.steps.flatMap(\.clipActionBlocks)
         }

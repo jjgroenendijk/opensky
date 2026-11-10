@@ -1,7 +1,7 @@
 // `NiTransformData` keyframes: the rotation, translation, and scale keys of one
 // animated transform. Layout: docs/formats/nif.md#camera-animation.
 
-public import Foundation
+import Foundation
 import OpenSkyFormatsCore
 public import simd
 
@@ -10,14 +10,9 @@ public import simd
 nonisolated public struct NIFKey<Value: Equatable & Sendable>: Equatable, Sendable {
     public let time: Float
     public let value: Value
-
-    public init(time: Float, value: Value) {
-        self.time = time
-        self.value = value
-    }
 }
 
-nonisolated public enum NIFKeyType: UInt32, Equatable, Sendable {
+nonisolated enum NIFKeyType: UInt32, Equatable, Sendable {
     case linear = 1
     case quadratic = 2
     case tbc = 3
@@ -26,9 +21,9 @@ nonisolated public enum NIFKeyType: UInt32, Equatable, Sendable {
 }
 
 nonisolated public struct NIFTransformData: Equatable, Sendable {
-    public static let typeName = "NiTransformData"
+    static let typeName = "NiTransformData"
 
-    public let rotationType: NIFKeyType?
+    let rotationType: NIFKeyType?
     /// Quaternion keys, as `simd_quatf`. Empty for XYZ rotation data.
     public let rotations: [NIFKey<simd_quatf>]
     /// X, Y, and Z angle keys in radians, used when `rotationType` is `xyzRotation`.
@@ -36,7 +31,7 @@ nonisolated public struct NIFTransformData: Equatable, Sendable {
     public let translations: [NIFKey<SIMD3<Float>>]
     public let scales: [NIFKey<Float>]
 
-    public init(data: Data) throws {
+    init(data: Data) throws {
         var reader = BinaryReader(data)
         let rotationCount = try Int(reader.readUInt32())
         var rotationType: NIFKeyType?

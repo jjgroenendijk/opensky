@@ -19,20 +19,20 @@ nonisolated public struct Projectile: Equatable, Sendable {
         /// Travels instantly along a line rather than flying. Vanilla sets it
         /// on nothing an arrow fires, and the flight model refuses to
         /// integrate one.
-        public static let hitscan = Flags(rawValue: 0x0001)
+        static let hitscan = Flags(rawValue: 0x0001)
         public static let explosion = Flags(rawValue: 0x0002)
         public static let alternateTrigger = Flags(rawValue: 0x0004)
         public static let muzzleFlash = Flags(rawValue: 0x0008)
-        public static let canBeDisabled = Flags(rawValue: 0x0020)
+        static let canBeDisabled = Flags(rawValue: 0x0020)
         /// The projectile survives its impact as a pickup — what makes a spent
         /// arrow retrievable.
-        public static let canBePickedUp = Flags(rawValue: 0x0040)
-        public static let supersonic = Flags(rawValue: 0x0080)
-        public static let pinsLimbs = Flags(rawValue: 0x0100)
-        public static let passThroughSmallTransparent = Flags(rawValue: 0x0200)
-        public static let disableCombatAimCorrection = Flags(rawValue: 0x0400)
+        static let canBePickedUp = Flags(rawValue: 0x0040)
+        static let supersonic = Flags(rawValue: 0x0080)
+        static let pinsLimbs = Flags(rawValue: 0x0100)
+        static let passThroughSmallTransparent = Flags(rawValue: 0x0200)
+        static let disableCombatAimCorrection = Flags(rawValue: 0x0400)
         /// xEdit names bit 11 `Rotation`; UESP's table stops at bit 10.
-        public static let rotation = Flags(rawValue: 0x0800)
+        static let rotation = Flags(rawValue: 0x0800)
     }
 
     /// DATA type. Written as a bit value rather than an ordinal, but vanilla
@@ -172,7 +172,7 @@ nonisolated public struct Projectile: Equatable, Sendable {
     }
 
     /// Test seam: a record's decoded values without a file behind them.
-    public init(
+    init(
         formID: FormID,
         editorID: String? = nil,
         flags: Flags = [],
@@ -296,13 +296,13 @@ nonisolated public struct Projectile: Equatable, Sendable {
 
 /// PROJ fields flight does not read. xEdit dev-4.1.6 `PROJ`.
 nonisolated public struct ProjectileDetails: Equatable, Sendable {
-    public let name: LString?
+    let name: LString?
     /// MODT of the projectile model, raw.
-    public let modelTextureHashes: Data?
+    let modelTextureHashes: Data?
     /// NAM1 — muzzle flash model path; NAM2 its texture hashes, raw.
     public let muzzleFlashModelPath: String?
-    public let muzzleFlashTextureHashes: Data?
-    public let destructible: Destructible?
+    let muzzleFlashTextureHashes: Data?
+    let destructible: Destructible?
 
     init() {
         name = nil

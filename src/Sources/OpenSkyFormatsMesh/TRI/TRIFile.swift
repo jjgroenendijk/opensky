@@ -62,7 +62,7 @@ nonisolated public struct TRIFile: Equatable, Sendable {
         self.morphTargets = morphTargets
     }
 
-    public func target(named name: String) -> TRIMorphTarget? {
+    func target(named name: String) -> TRIMorphTarget? {
         morphTargets.first { $0.name == name }
     }
 }

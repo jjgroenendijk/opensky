@@ -8,8 +8,8 @@ public import simd
 
 nonisolated public struct NIFCameraTrack: Equatable, Sendable {
     public static let cameraTypeName = "NiCamera"
-    public static let controllerTypeName = "NiTransformController"
-    public static let interpolatorTypeName = "NiTransformInterpolator"
+    static let controllerTypeName = "NiTransformController"
+    static let interpolatorTypeName = "NiTransformInterpolator"
 
     /// The animated node's transform with no animation: the camera itself when
     /// nothing above it moves.

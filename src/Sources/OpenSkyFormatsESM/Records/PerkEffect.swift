@@ -12,7 +12,7 @@ nonisolated public enum PerkEffectType: Hashable, CustomStringConvertible, Senda
     case entryPoint
     case unknown(raw: UInt8)
 
-    public init(rawValue: UInt8) {
+    init(rawValue: UInt8) {
         switch rawValue {
         case 0: self = .quest
         case 1: self = .ability
@@ -60,14 +60,14 @@ nonisolated public enum PerkFunction: Hashable, CustomStringConvertible, Sendabl
         .multiplyOnePlusActorValueMultiplier, .setText
     ]
 
-    public init(rawValue: UInt8) {
+    init(rawValue: UInt8) {
         let index = Int(rawValue) - 1
         self = Self.known.indices.contains(index) ? Self.known[index] : .unknown(raw: rawValue)
     }
 
     /// The four functions whose EPFT=2 payload is an actor value and a factor
     /// rather than a pair of floats (`wbEPFDDecider`, line 1196).
-    public var readsActorValuePair: Bool {
+    var readsActorValuePair: Bool {
         switch self {
         case .addActorValueMultiplier,
              .setToActorValueMultiplier,
@@ -113,7 +113,7 @@ nonisolated public enum PerkFunctionType: Hashable, CustomStringConvertible, Sen
     case localizedText
     case unknown(raw: UInt8)
 
-    public init(rawValue: UInt8) {
+    init(rawValue: UInt8) {
         switch rawValue {
         case 0: self = .none
         case 1: self = .float
@@ -180,7 +180,7 @@ nonisolated public enum PerkFunctionData: Equatable, Sendable, CustomStringConve
     /// as xEdit rounds it. A payload outside `Int32`'s range, or a NaN, reads
     /// as -1 — the "no actor value" index the rest of the engine already uses —
     /// rather than trapping on the conversion.
-    public static func actorValueIndex(fromFloat value: Float) -> Int32 {
+    static func actorValueIndex(fromFloat value: Float) -> Int32 {
         let rounded = value.rounded()
         guard
             rounded.isFinite,
@@ -201,7 +201,7 @@ nonisolated public enum PerkFunctionData: Equatable, Sendable, CustomStringConve
 /// EPF3 — the flags an "add activate choice" function carries beside its
 /// button label.
 nonisolated public struct PerkScriptFlags: Equatable, Sendable {
-    public static let byteCount = 4
+    static let byteCount = 4
 
     public struct Options: OptionSet, Equatable, Sendable {
         public let rawValue: UInt16
@@ -230,7 +230,7 @@ nonisolated public struct PerkConditionTab: Equatable, Sendable {
 
 /// The DATA payload an entry-point effect declares.
 nonisolated public struct PerkEntryPointEffect: Equatable, Sendable {
-    public static let byteCount = 3
+    static let byteCount = 3
 
     public let entryPoint: PerkEntryPoint
     public let function: PerkFunction

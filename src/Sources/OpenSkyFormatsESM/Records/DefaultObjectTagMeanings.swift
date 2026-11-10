@@ -4,10 +4,10 @@
 // without rejecting the entry or pretending it has known engine semantics.
 
 import Foundation
-public import OpenSkyFormatsCore
+import OpenSkyFormatsCore
 
 nonisolated extension DefaultObjectTag {
-    public static let knownMeanings: [FourCC: String] = {
+    static let knownMeanings: [FourCC: String] = {
         let source = """
         AAAC	Action - Activate
         AAB1	Action - Bleedout Start

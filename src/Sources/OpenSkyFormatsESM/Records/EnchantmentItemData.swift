@@ -19,7 +19,7 @@ nonisolated public struct EnchantmentFlags: OptionSet, Equatable, Sendable {
     /// Bit 0 — the ENIT enchantment cost is authored, not derived.
     public static let manualCostCalc = Self(rawValue: 1 << 0)
     /// Bit 2 — recasting extends the running duration instead of restarting it.
-    public static let extendDurationOnRecast = Self(rawValue: 1 << 2)
+    static let extendDurationOnRecast = Self(rawValue: 1 << 2)
 }
 
 /// ENIT enchantment type. The two documented values are far apart rather than
@@ -30,7 +30,7 @@ nonisolated public enum EnchantmentType: Equatable, CustomStringConvertible, Sen
     case staffEnchantment
     case unknown(raw: UInt32)
 
-    public init(rawValue: UInt32) {
+    init(rawValue: UInt32) {
         self = switch rawValue {
         case 0x06: .enchantment
         case 0x0C: .staffEnchantment
@@ -50,9 +50,9 @@ nonisolated public enum EnchantmentType: Equatable, CustomStringConvertible, Sen
 nonisolated public struct EnchantmentItemData: Equatable, Sendable {
     /// The shortest ENIT the decoder accepts: the form-version-37 variant that
     /// omits the worn-restrictions link.
-    public static let minimumSize = 32
+    static let minimumSize = 32
     /// The full struct, worn-restrictions link included.
-    public static let fullSize = 36
+    static let fullSize = 36
 
     /// Magicka charged per use. Authoritative only under `.manualCostCalc`.
     public let cost: Int32
@@ -70,11 +70,11 @@ nonisolated public struct EnchantmentItemData: Equatable, Sendable {
     public let wornRestrictions: FormID?
 
     /// True when the cost has to be derived from the effect list.
-    public var usesAutoCalculatedCost: Bool {
+    var usesAutoCalculatedCost: Bool {
         !flags.contains(.manualCostCalc)
     }
 
-    public var unknownEnumCount: Int {
+    var unknownEnumCount: Int {
         var count = 0
         if case .unknown = castingType {
             count += 1
@@ -88,7 +88,7 @@ nonisolated public struct EnchantmentItemData: Equatable, Sendable {
         return count
     }
 
-    public init(field: ESMField) throws {
+    init(field: ESMField) throws {
         guard field.data.count >= Self.minimumSize else {
             throw ESMError.malformed(
                 "\(field.type) ENIT has \(field.data.count) bytes, expected "

@@ -26,7 +26,7 @@ nonisolated public struct Climate: Sendable {
         /// 0-100.
         public let volatility: Int
         /// Raw moons byte: phase length (bits 0-5) + masser/secunda flags.
-        public let moons: UInt8
+        let moons: UInt8
         /// Moon phase length in days (mask 0x3F).
         public var phaseLengthDays: Int {
             Int(moons & 0x3F)

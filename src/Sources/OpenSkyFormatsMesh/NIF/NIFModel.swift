@@ -37,7 +37,7 @@ nonisolated extension NIFFile {
         /// The block index of each mesh, in `meshes` order.
         public var meshBlocks: [Int] = []
         public var materials: [Material] = []
-        public var slotIndexes: [FlattenerSlotKey: Int] = [:]
+        var slotIndexes: [FlattenerSlotKey: Int] = [:]
         public var skippedShapeCount = 0
         public var editorMarkerShapeCount = 0
 
@@ -211,21 +211,21 @@ nonisolated extension NIFFile {
         }
     }
 
-    public struct FlattenerShapeGeometry: Sendable {
-        public let positions: [SIMD3<Float>]
-        public let normals: [SIMD3<Float>]
-        public let tangents: [SIMD3<Float>]
-        public let bitangents: [SIMD3<Float>]
-        public let uvs: [SIMD2<Float>]
-        public let colors: [SIMD4<Float>]
-        public let indices: [UInt16]
-        public let skinning: MeshSkinning?
+    struct FlattenerShapeGeometry: Sendable {
+        let positions: [SIMD3<Float>]
+        let normals: [SIMD3<Float>]
+        let tangents: [SIMD3<Float>]
+        let bitangents: [SIMD3<Float>]
+        let uvs: [SIMD2<Float>]
+        let colors: [SIMD4<Float>]
+        let indices: [UInt16]
+        let skinning: MeshSkinning?
     }
 
     /// Dedup key: which shader/alpha property blocks a shape referenced.
-    public struct FlattenerSlotKey: Hashable, Sendable {
-        public let shaderPropertyBlock: Int?
-        public let alphaPropertyBlock: Int?
+    struct FlattenerSlotKey: Hashable, Sendable {
+        let shaderPropertyBlock: Int?
+        let alphaPropertyBlock: Int?
     }
 }
 

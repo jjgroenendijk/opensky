@@ -2,34 +2,34 @@
 // need the filters and responses, simulation needs the inertial tail.
 // Field order: docs/formats/nif-collision.md and nif-rigid-body.md.
 
-public import Foundation
+import Foundation
 import OpenSkyFormatsCore
 public import simd
 
 /// Everything one rigid-body block holds, before scene transforms compose in.
-nonisolated public struct NIFRigidBodyRecord: Sendable {
-    public static let bodyTypeNames: Set = ["bhkRigidBody", "bhkRigidBodyT"]
+nonisolated struct NIFRigidBodyRecord: Sendable {
+    static let bodyTypeNames: Set = ["bhkRigidBody", "bhkRigidBodyT"]
     /// Refs are 4 bytes each and the body flags follow, so a count past this
     /// share of the remaining block cannot be real.
-    public static let maxConstraintCount = 256
+    static let maxConstraintCount = 256
 
-    public let shapeRef: Int32
-    public let worldFilter: NIFCollisionFilter
-    public let rigidBodyFilter: NIFCollisionFilter
+    let shapeRef: Int32
+    let worldFilter: NIFCollisionFilter
+    let rigidBodyFilter: NIFCollisionFilter
     /// nif.xml `hkResponseType` from `bhkEntityCInfo`.
-    public let entityResponse: UInt8
+    let entityResponse: UInt8
     /// The same enum repeated inside `bhkRigidBodyCInfo2010`.
-    public let rigidBodyResponse: UInt8
+    let rigidBodyResponse: UInt8
     /// The body's own translation + rotation. Applied only by `bhkRigidBodyT`;
     /// a plain `bhkRigidBody` serializes it and ignores it.
-    public let localTransform: float4x4
-    public let dynamics: NIFRigidBodyDynamics
+    let localTransform: float4x4
+    let dynamics: NIFRigidBodyDynamics
     /// Block refs to `bhkConstraint` subclasses, unresolved.
-    public let constraintRefs: [Int32]
+    let constraintRefs: [Int32]
     /// Bit 1 means the body responds to wind.
-    public let bodyFlags: UInt16
+    let bodyFlags: UInt16
 
-    public init(data: Data) throws {
+    init(data: Data) throws {
         var reader = BinaryReader(data)
         shapeRef = try reader.readNIFRef()
         worldFilter = try reader.readCollisionFilter()

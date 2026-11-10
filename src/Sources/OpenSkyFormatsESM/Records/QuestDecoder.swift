@@ -32,10 +32,10 @@ nonisolated extension Quest {
 
         /// NEXT: the CTDA run before it is the quest's dialogue condition set,
         /// the run after it belongs to the story manager.
-        public var sawConditionSeparator = false
+        var sawConditionSeparator = false
         /// ANAM: ends the objective run and opens the alias run, which is also
         /// what disambiguates the trailing NNAM and QSTA fields.
-        public var sawAliasMarker = false
+        var sawAliasMarker = false
         public var openStage: Stage?
         public var openLogEntry: LogEntry?
         public var openObjective: Objective?

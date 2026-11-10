@@ -9,7 +9,7 @@ nonisolated extension AS2Interpreter {
     /// Prefix the compiler gives a class property's generated getter.
     public static let getterPrefix = "__get__"
     /// Prefix the compiler gives a class property's generated setter.
-    public static let setterPrefix = "__set__"
+    static let setterPrefix = "__set__"
 
     public func getMember(
         _ name: String,
@@ -41,7 +41,7 @@ nonisolated extension AS2Interpreter {
     /// The prototype a method resolved on, where a `super` inside it starts.
     /// Nil when the receiver owns the slot; the caller then uses the
     /// receiver's own prototype.
-    public func memberHome(_ name: String, of value: AS2Value) -> AS2Object? {
+    func memberHome(_ name: String, of value: AS2Value) -> AS2Object? {
         guard
             let object = value.objectValue,
             let found = object.lookup(name),
@@ -52,7 +52,7 @@ nonisolated extension AS2Interpreter {
         return found.owner
     }
 
-    public func setMember(
+    func setMember(
         _ name: String,
         of value: AS2Value,
         to newValue: AS2Value,

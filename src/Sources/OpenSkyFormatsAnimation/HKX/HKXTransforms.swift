@@ -30,7 +30,7 @@ nonisolated public struct HKTransform: Equatable, Sendable {
     }
 
     /// True when every lane is finite and the rotation keeps lengths.
-    public var isRigid: Bool {
+    var isRigid: Bool {
         let product = rotation.transpose * rotation
         let columns = [product.columns.0, product.columns.1, product.columns.2]
         let identity = [SIMD3<Float>(1, 0, 0), SIMD3(0, 1, 0), SIMD3(0, 0, 1)]
@@ -74,7 +74,7 @@ nonisolated public struct HKQsTransform: Equatable, Sendable {
     }
 
     /// True when every lane is finite and the rotation is a unit quaternion.
-    public var isValid: Bool {
+    var isValid: Bool {
         translation.allFinite && scale.allFinite
             && abs(simd_length(rotation.vector) - 1) < 1e-3
     }

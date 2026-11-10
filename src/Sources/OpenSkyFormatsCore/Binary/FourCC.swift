@@ -38,7 +38,7 @@ nonisolated extension FourCC: ExpressibleByStringLiteral {
 nonisolated extension FourCC {
     /// Four zero bytes: a code literal of the wrong length. A record or field signature
     /// is printable ASCII, so this never matches one.
-    public static let invalidLiteral = FourCC(rawValue: 0)
+    static let invalidLiteral = FourCC(rawValue: 0)
 
     /// Text from a user, such as a command-line option: four ASCII characters, or nil.
     public init?(text: String) {

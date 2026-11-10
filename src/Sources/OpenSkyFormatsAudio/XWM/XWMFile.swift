@@ -34,7 +34,7 @@ nonisolated public struct XWMCodecParameters: Equatable, Sendable {
     /// Bytes one decoded PCM frame (one sample across all channels) occupies.
     /// This is the divisor xwma.c applies to the last `dpds` entry to get a
     /// sample count.
-    public var bytesPerDecodedFrame: Int {
+    var bytesPerDecodedFrame: Int {
         channelCount * bitsPerSample / 8
     }
 
@@ -129,7 +129,7 @@ nonisolated public struct XWMFile: Sendable {
 nonisolated extension XWMFile {
     /// Encoded payload: the `data` chunk body, a sequence of `blockAlign`
     /// sized packets. Copied out on demand so a framed file stays cheap.
-    public var payload: Data {
+    var payload: Data {
         source.subdata(
             in: (source.startIndex + payloadRange.lowerBound)
                 ..< (source.startIndex + payloadRange.upperBound)

@@ -29,7 +29,7 @@ nonisolated public struct DualCastData: Equatable, Sendable {
     }
 
     /// DATA is a fixed 24-byte struct: five FormIDs then a uint32 flag word.
-    public static let dataSize = 24
+    static let dataSize = 24
 
     public let formID: FormID
     public let editorID: String?
